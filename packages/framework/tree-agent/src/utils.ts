@@ -76,7 +76,7 @@ export function getOrCreate<K, V>(
  */
 export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<
 	TreeViewAlpha<TRoot>,
-	"root" | "fork" | "merge" | "schema"
+	"root" | "fork" | "merge" | "schema" | "events"
 >;
 
 /**

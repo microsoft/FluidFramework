@@ -31,7 +31,7 @@ export interface SharedTreeSemanticAgent {
 }
 
 // @alpha
-export type TreeView<TRoot extends ImplicitFieldSchema_2> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "schema">;
+export type TreeView<TRoot extends ImplicitFieldSchema_2> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "schema" | "events">;
 
 // (No @packageDocumentation comment for this package)
 

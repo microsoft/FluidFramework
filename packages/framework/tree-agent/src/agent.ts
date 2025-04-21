@@ -54,6 +54,8 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 {
 	#prompting: typeof this.prompting | undefined;
 	#messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
+	#treeHasChangedSinceLastQuery = false;
+	#offTreeChanged: () => void;
 
 	protected get prompting(): {
 		readonly branch: TreeViewAlpha<TRoot> & TreeBranch;
@@ -88,6 +90,17 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 	) {
 		const systemPrompt = this.getSystemPrompt(this.treeView);
 		this.#messages.push(new SystemMessage(systemPrompt));
+		if (this.options?.domainHints !== undefined) {
+			this.#messages.push(
+				new HumanMessage(
+					`Here is some information about my application domain: ${this.options.domainHints}\n\n`,
+				),
+			);
+		}
+		this.#offTreeChanged = treeView.events.on(
+			"changed",
+			() => (this.#treeHasChangedSinceLastQuery = true),
+		);
 		if (this.client.metadata?.modelName !== undefined) {
 			this.options?.log?.(`# Model\n\n`);
 			this.options?.log?.(`${this.client.metadata?.modelName}\n\n`);
@@ -138,17 +151,27 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 
 	public async query(userPrompt: string): Promise<string | undefined> {
 		this.setPrompting();
+		this.options?.log?.(`# User Prompt\n\n`);
+		if (this.#treeHasChangedSinceLastQuery) {
+			const stringified = this.stringifyTree(
+				this.prompting.branch.root,
+				this.prompting.idGenerator,
+			);
+			this.#messages.push(
+				new HumanMessage(
+					`The tree has changed since the last message. The new state of the tree is: \n\n\`\`\`JSON\n${stringified}\n\`\`\``,
+				),
+			);
+			this.options?.log?.(
+				`## Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query.\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
+			);
+			this.#treeHasChangedSinceLastQuery = false;
+		}
 		this.#messages.push(
 			new HumanMessage(
-				`${
-					this.options?.domainHints === undefined
-						? ""
-						: `Here is some information about my application domain: ${this.options?.domainHints}\n\n`
-				}${userPrompt}`,
+				`${this.#treeHasChangedSinceLastQuery ? "" : "The tree has not changed since your last message. "}${userPrompt}`,
 			),
 		);
-
-		this.options?.log?.(`# User Prompt\n\n`);
 		if (this.options?.domainHints === undefined) {
 			this.options?.log?.(`"${userPrompt}"\n\n`);
 		} else {
@@ -163,7 +186,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 			iterations += 1;
 			responseMessage =
 				(await this.client
-					.bindTools?.([this.editingTool, this.thinkingTool], { tool_choice: "auto" })
+					.bindTools?.([this.editingTool], { tool_choice: "auto" })
 					?.invoke(this.#messages)) ??
 				failUsage("LLM client must support function calling or tool use.");
 
@@ -188,7 +211,12 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 				for (const toolCall of responseMessage.tool_calls) {
 					switch (toolCall.name) {
 						case this.thinkingTool.name: {
+							this.#offTreeChanged?.();
 							this.#messages.push((await this.thinkingTool.invoke(toolCall)) as ToolMessage);
+							this.#offTreeChanged = this.treeView.events.on(
+								"changed",
+								() => (this.#treeHasChangedSinceLastQuery = true),
+							);
 							break;
 						}
 						case this.getTreeTool.name: {
