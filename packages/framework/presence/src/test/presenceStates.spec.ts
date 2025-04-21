@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import type {
 	JsonDeserialized,
 	JsonSerializable,
@@ -10,8 +12,14 @@ import type {
 
 import type { InternalTypes } from "../exposedInternalTypes.js";
 import type { Presence } from "../presence.js";
+import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
+import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+
+import { StateFactory } from "@fluidframework/presence/alpha";
+
+const testWorkspaceName = "name:testWorkspaceA";
 
 describe("Presence", () => {
 	describe("StatesWorkspace", () => {
@@ -21,7 +29,15 @@ describe("Presence", () => {
 		it("API use compiles", () => {});
 
 		addControlsTests((presence, controlSettings) => {
-			return presence.states.getWorkspace("name:testWorkspaceA", {}, controlSettings);
+			return presence.states.getWorkspace(testWorkspaceName, {}, controlSettings);
+		});
+
+		it(".presence provides Presence it was created under", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.states.getWorkspace(testWorkspaceName, {
+				obj: StateFactory.latest({}),
+			});
+			assert.strictEqual(states.presence, presence);
 		});
 	});
 });
