@@ -30,7 +30,7 @@ import type { IdCompressorMode } from "./summary/index.js";
  * batching, compression) are enabled by default despite not being compatible
  * with 1.x clients. Since the policy was introduced during 2.x's lifespan,
  * N/N-1 compatibility by **default** will be in effect starting with 3.0.
- * Importantly though, N/N-1 compatibility is still guaranteed with the proper
+ * Importantly though, N/N-2 compatibility is still guaranteed with the proper
  * configurations set.
  *
  * Further to distinguish unspecified `compatibilityVersion` from a specified
