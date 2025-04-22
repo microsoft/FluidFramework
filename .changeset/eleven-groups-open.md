@@ -10,20 +10,20 @@ code, pass any initial data in the `local` argument, and broadcast settings in t
 Before:
 
 ```ts
-	const statesWorkspace = presence.states.getWorkspace("name:workspace", {
-		cursor: StateFactory.latest(
-			{ x: 0, y: 0 },
-			{ allowableUpdateLatencyMs: 100 }),
-	});
+const statesWorkspace = presence.states.getWorkspace("name:workspace", {
+	cursor: StateFactory.latest(
+		{ x: 0, y: 0 },
+		{ allowableUpdateLatencyMs: 100 }),
+});
 ```
 
 After:
 
 ```ts
-	const statesWorkspace = presence.states.getWorkspace("name:workspace", {
-		cursor: StateFactory.latest({
-			local: { x: 0, y: 0 },
-			settings: { allowableUpdateLatencyMs: 100 },
-		}),
-	});
+const statesWorkspace = presence.states.getWorkspace("name:workspace", {
+	cursor: StateFactory.latest({
+		local: { x: 0, y: 0 },
+		settings: { allowableUpdateLatencyMs: 100 },
+	}),
+});
 ```
