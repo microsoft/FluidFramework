@@ -187,7 +187,7 @@ describe("tree indexes", () => {
 
 	it("can look up an inserted node", () => {
 		const { view, parent } = createView(); // create a parent with no child
-		const { assertContents } = createIndex(view);
+		const { index, assertContents } = createIndex(view);
 		parent.child = new IndexableChild({ childKey: childId });
 		const child = parent.child;
 		assert(child !== undefined);

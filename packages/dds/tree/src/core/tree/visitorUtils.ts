@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-
 import type { ICodecOptions } from "../../codec/index.js";
 import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
@@ -51,41 +49,53 @@ export function announceDelta(
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
 	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, combineVisitors([visitor], [visitor]), detachedFieldIndex, latestRevision);
+	visitDelta(delta, combineVisitors([visitor]), detachedFieldIndex, latestRevision);
 	visitor.free();
 }
 
+function isAnnouncedVisitor(
+	visitor: DeltaVisitor | AnnouncedVisitor,
+): visitor is AnnouncedVisitor {
+	return (visitor as AnnouncedVisitor).isAnnouncedVisitor === true;
+}
+
+function isCombinedVisitor(
+	visitor: CombinableVisitor | CombinedVisitor,
+): visitor is CombinedVisitor {
+	return (visitor as CombinedVisitor).isCombinedVisitor === true;
+}
+
+export interface CombinedVisitor extends DeltaVisitor {
+	readonly isCombinedVisitor: true;
+
+	visitors: readonly CombinableVisitor[];
+}
+
+export type CombinableVisitor = DeltaVisitor | AnnouncedVisitor;
+
 /**
+ * Combines multiple visitors into a single visitor.
  * @param visitors - The returned visitor invokes the corresponding events for all these visitors, in order.
- * @param announcedVisitors - Subset of `visitors` to also call {@link AnnouncedVisitor} methods on.
- * This must be a subset of `visitors`: if not the visitor will not have its path correctly set when the events are triggered.
- * When `visitors` are making changes to data, `announcedVisitors` can be used to get extra events before or after all the changes from all the visitors have been made.
- * This can, for example, enable visitors to have access to the tree in these extra events despite multiple separate visitors updating different tree related data-structures.
  * @returns a DeltaVisitor combining all `visitors`.
  */
-export function combineVisitors(
-	visitors: readonly DeltaVisitor[],
-	announcedVisitors: readonly AnnouncedVisitor[] = [],
-): DeltaVisitor {
-	{
-		const set = new Set(visitors);
-		for (const item of announcedVisitors) {
-			assert(set.has(item), 0x8c8 /* AnnouncedVisitor would not get traversed */);
-		}
-	}
+export function combineVisitors(visitors: readonly CombinableVisitor[]): CombinedVisitor {
+	const allVisitors = visitors.flatMap((v) => (isCombinedVisitor(v) ? v.visitors : [v]));
+	const announcedVisitors = allVisitors.filter(isAnnouncedVisitor);
 	return {
+		isCombinedVisitor: true,
+		visitors: allVisitors,
 		free: () => visitors.forEach((v) => v.free()),
 		create: (...args) => {
-			visitors.forEach((v) => v.create(...args));
+			allVisitors.forEach((v) => v.create(...args));
 			announcedVisitors.forEach((v) => v.afterCreate(...args));
 		},
 		destroy: (...args) => {
 			announcedVisitors.forEach((v) => v.beforeDestroy(...args));
-			visitors.forEach((v) => v.destroy(...args));
+			allVisitors.forEach((v) => v.destroy(...args));
 		},
 		attach: (source: FieldKey, count: number, destination: PlaceIndex) => {
 			announcedVisitors.forEach((v) => v.beforeAttach(source, count, destination));
-			visitors.forEach((v) => v.attach(source, count, destination));
+			allVisitors.forEach((v) => v.attach(source, count, destination));
 			announcedVisitors.forEach((v) =>
 				v.afterAttach(source, {
 					start: destination,
@@ -93,33 +103,22 @@ export function combineVisitors(
 				}),
 			);
 		},
-		detach: (source: Range, destination: FieldKey, id: DetachedNodeId) => {
-			announcedVisitors.forEach((v) => v.beforeDetach(source, destination));
-			visitors.forEach((v) => v.detach(source, destination, id));
-			announcedVisitors.forEach((v) =>
-				v.afterDetach(source.start, source.end - source.start, destination),
-			);
-		},
-		replace: (
-			newContent: FieldKey,
-			oldContent: Range,
-			oldContentDestination: FieldKey,
-			oldContentId: DetachedNodeId,
+		detach: (
+			source: Range,
+			destination: FieldKey,
+			id: DetachedNodeId,
+			isReplaced: boolean,
 		) => {
+			announcedVisitors.forEach((v) => v.beforeDetach(source, destination, isReplaced));
+			allVisitors.forEach((v) => v.detach(source, destination, id, isReplaced));
 			announcedVisitors.forEach((v) =>
-				v.beforeReplace(newContent, oldContent, oldContentDestination),
-			);
-			visitors.forEach((v) =>
-				v.replace(newContent, oldContent, oldContentDestination, oldContentId),
-			);
-			announcedVisitors.forEach((v) =>
-				v.afterReplace(newContent, oldContent, oldContentDestination),
+				v.afterDetach(source.start, source.end - source.start, destination, isReplaced),
 			);
 		},
-		enterNode: (...args) => visitors.forEach((v) => v.enterNode(...args)),
-		exitNode: (...args) => visitors.forEach((v) => v.exitNode(...args)),
-		enterField: (...args) => visitors.forEach((v) => v.enterField(...args)),
-		exitField: (...args) => visitors.forEach((v) => v.exitField(...args)),
+		enterNode: (...args) => allVisitors.forEach((v) => v.enterNode(...args)),
+		exitNode: (...args) => allVisitors.forEach((v) => v.exitNode(...args)),
+		enterField: (...args) => allVisitors.forEach((v) => v.enterField(...args)),
+		exitField: (...args) => allVisitors.forEach((v) => v.exitField(...args)),
 	};
 }
 
@@ -128,6 +127,7 @@ export function combineVisitors(
  * Must be freed after use.
  */
 export interface AnnouncedVisitor extends DeltaVisitor {
+	readonly isAnnouncedVisitor: true;
 	/**
 	 * A hook that is called after all nodes have been created.
 	 */
@@ -135,14 +135,13 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	beforeDestroy(field: FieldKey, count: number): void;
 	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
 	afterAttach(source: FieldKey, destination: Range): void;
-	beforeDetach(source: Range, destination: FieldKey): void;
-	afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
-	beforeReplace(
-		newContent: FieldKey,
-		oldContent: Range,
-		oldContentDestination: FieldKey,
+	beforeDetach(source: Range, destination: FieldKey, isReplaced: boolean): void;
+	afterDetach(
+		source: PlaceIndex,
+		count: number,
+		destination: FieldKey,
+		isReplaced: boolean,
 	): void;
-	afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void;
 }
 
 /**
@@ -154,6 +153,7 @@ export function createAnnouncedVisitor(
 ): AnnouncedVisitor {
 	const noOp = (): void => {};
 	return {
+		isAnnouncedVisitor: true,
 		free: visitorFunctions.free ?? noOp,
 		create: visitorFunctions.create ?? noOp,
 		afterCreate: visitorFunctions.afterCreate ?? noOp,
@@ -165,9 +165,6 @@ export function createAnnouncedVisitor(
 		beforeDetach: visitorFunctions.beforeDetach ?? noOp,
 		detach: visitorFunctions.detach ?? noOp,
 		afterDetach: visitorFunctions.afterDetach ?? noOp,
-		beforeReplace: visitorFunctions.beforeReplace ?? noOp,
-		replace: visitorFunctions.replace ?? noOp,
-		afterReplace: visitorFunctions.afterReplace ?? noOp,
 		enterNode: visitorFunctions.enterNode ?? noOp,
 		exitNode: visitorFunctions.exitNode ?? noOp,
 		enterField: visitorFunctions.enterField ?? noOp,

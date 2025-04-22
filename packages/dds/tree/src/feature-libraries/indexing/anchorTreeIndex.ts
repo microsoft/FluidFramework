@@ -139,27 +139,14 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				assert(parent !== undefined, 0xa99 /* must have a parent */);
 				this.reIndexSpine(parent);
 			},
-			afterDetach: () => {
-				assert(parent !== undefined, 0xa9a /* must have a parent */);
-				this.reIndexSpine(parent);
-			},
-			// when a replace happens, the keys of previously indexed nodes could be changed so we must re-index them
-			afterReplace: () => {
-				assert(parent !== undefined, 0xa8b /* must have a parent */);
-				const cursor = this.forest.allocateCursor();
-				this.forest.moveCursorToPath(parent, cursor);
-				assert(
-					cursor.mode === CursorLocationType.Nodes,
-					0xa8c /* replace should happen in a node */,
-				);
-				cursor.exitNode();
-				this.indexField(cursor);
-				if (!this.isShallowIndex) {
-					// we must also re-index the spine if the key finders allow for any value under a subtree to be the key
-					// this means that a replace can cause the key for any node up its spine to be changed
-					this.indexSpine(cursor);
+			afterDetach: (_source, _count_, _destination, isReplaced) => {
+				if (isReplaced) {
+					// If the node will be replaced, we defer re-indexing until the corresponding attach event.
+					// This has performance benefits but is also required to avoid experiencing the error case where the field that is used as the indexing key is empty.
+				} else {
+					assert(parent !== undefined, 0xa9a /* must have a parent */);
+					this.reIndexSpine(parent);
 				}
-				cursor.clear();
 			},
 			// the methods below are used to keep track of the path that has been traversed by the visitor
 			// this is required so that cursors can be moved to the correct location when index updates are required
@@ -315,17 +302,18 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 * Checks if the spine needs to be re-indexed and if so, re-indexes it starting from the given path.
 	 */
 	private reIndexSpine(path: UpPath): void {
+		const cursor = this.forest.allocateCursor();
+		this.forest.moveCursorToPath(path, cursor);
+		assert(
+			cursor.mode === CursorLocationType.Nodes,
+			0xa9b /* attach should happen in a node */,
+		);
+		cursor.exitNode();
+		this.indexField(cursor);
 		if (!this.isShallowIndex) {
-			const cursor = this.forest.allocateCursor();
-			this.forest.moveCursorToPath(path, cursor);
-			assert(
-				cursor.mode === CursorLocationType.Nodes,
-				0xa9b /* attach should happen in a node */,
-			);
-			cursor.exitNode();
 			this.indexSpine(cursor);
-			cursor.clear();
 		}
+		cursor.clear();
 	}
 
 	private checkNotDisposed(errorMessage?: string): void {
