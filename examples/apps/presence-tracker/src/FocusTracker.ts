@@ -7,7 +7,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Attendee,
-	Latest,
+	LatestRaw,
 	Presence,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
@@ -40,7 +40,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	/**
 	 * State that tracks the latest focus state of connected session clients.
 	 */
-	private readonly focus: Latest<IFocusState>;
+	private readonly focus: LatestRaw<IFocusState>;
 
 	constructor(
 		private readonly presence: Presence,
@@ -57,7 +57,9 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		// window.
 		statesWorkspace.add(
 			"focus",
-			StateFactory.latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
+			StateFactory.latest<IFocusState>({
+				local: { hasFocus: window.document.hasFocus() },
+			}),
 		);
 
 		// Save a reference to the focus state for easy access within the FocusTracker.

@@ -153,3 +153,13 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
 }
+
+/**
+ * Internal configs possibly implemented by IFuidDataStoreRuntimes, for use only within the runtime layer.
+ * For example, temporary layer compatibility details
+ *
+ * @internal
+ */
+export interface IFluidDataStoreRuntimeInternalConfig {
+	readonly submitMessagesWithoutEncodingHandles?: boolean;
+}
