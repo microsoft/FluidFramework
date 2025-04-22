@@ -182,7 +182,7 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
- * Arguments that are passed to the {@link Latest} function.
+ * Arguments that are passed to the {@link StateFactory.latest} function.
  *
  * @alpha
  */

@@ -490,7 +490,7 @@ class LatestMapValueManagerImpl<
 }
 
 /**
- * Arguments that are passed to the {@link latestMap} function.
+ * Arguments that are passed to the {@link StateFactory.latestMap} function.
  *
  * @alpha
  */
