@@ -28,7 +28,7 @@ function createLatestMapManager(
 	const states = presence.states.getWorkspace(testWorkspaceName, {
 		fixedMap: StateFactory.latestMap({
 			local: { key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
-			controls: valueControlSettings,
+			settings: valueControlSettings,
 		}),
 	});
 	return states.props.fixedMap;

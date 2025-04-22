@@ -146,7 +146,7 @@ describe("Presence", () => {
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
 						local: { num: 0 },
-						controls: { allowableUpdateLatencyMs: 0 },
+						settings: { allowableUpdateLatencyMs: 0 },
 					}),
 				});
 
@@ -378,7 +378,7 @@ describe("Presence", () => {
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
 						local: { num: 0 },
-						controls: { allowableUpdateLatencyMs: 100 },
+						settings: { allowableUpdateLatencyMs: 100 },
 					}),
 				});
 
@@ -500,11 +500,11 @@ describe("Presence", () => {
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
 						local: { num: 0 },
-						controls: { allowableUpdateLatencyMs: 100 },
+						settings: { allowableUpdateLatencyMs: 100 },
 					}),
 					immediateUpdate: StateFactory.latest({
 						local: { num: 0 },
-						controls: { allowableUpdateLatencyMs: 0 },
+						settings: { allowableUpdateLatencyMs: 0 },
 					}),
 				});
 
@@ -593,11 +593,11 @@ describe("Presence", () => {
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
 						local: { num: 0 },
-						controls: { allowableUpdateLatencyMs: 100 },
+						settings: { allowableUpdateLatencyMs: 100 },
 					}),
 					note: StateFactory.latest({
 						local: { message: "" },
-						controls: { allowableUpdateLatencyMs: 50 },
+						settings: { allowableUpdateLatencyMs: 50 },
 					}),
 				}); // will be queued, deadline is set to 1060
 
@@ -671,14 +671,14 @@ describe("Presence", () => {
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
 						local: { num: 0 },
-						controls: { allowableUpdateLatencyMs: 100 },
+						settings: { allowableUpdateLatencyMs: 100 },
 					}),
 				}); // will be queued, deadline is 1110
 
 				const stateWorkspace2 = presence.states.getWorkspace("name:testStateWorkspace2", {
 					note: StateFactory.latest({
 						local: { message: "" },
-						controls: { allowableUpdateLatencyMs: 60 },
+						settings: { allowableUpdateLatencyMs: 60 },
 					}),
 				}); // will be queued, deadline is 1070
 
@@ -870,7 +870,7 @@ describe("Presence", () => {
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
 						local: { num: 0 },
-						controls: { allowableUpdateLatencyMs: 100 },
+						settings: { allowableUpdateLatencyMs: 100 },
 					}),
 				}); // will be queued, deadline is 1110
 

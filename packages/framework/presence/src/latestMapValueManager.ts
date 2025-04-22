@@ -504,7 +504,7 @@ export interface LatestMapArguments<
 	local?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	};
-	controls?: BroadcastControlSettings | undefined;
+	settings?: BroadcastControlSettings | undefined;
 }
 
 /**
@@ -523,7 +523,7 @@ export function latestMap<
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMap<T, Keys>
 > {
-	const controls = args?.controls;
+	const settings = args?.settings;
 	const initialValues = args?.local;
 
 	const timestamp = Date.now();
@@ -552,7 +552,7 @@ export function latestMap<
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<
 			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
 			T,
@@ -562,7 +562,7 @@ export function latestMap<
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
-				controls,
+				settings,
 			),
 		),
 	});

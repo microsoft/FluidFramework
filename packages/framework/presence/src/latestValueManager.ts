@@ -191,7 +191,7 @@ export interface LatestArguments<T extends object> {
 	 * The initial value of the local state.
 	 */
 	local: JsonSerializable<T> & JsonDeserialized<T> & object;
-	controls?: BroadcastControlSettings | undefined;
+	settings?: BroadcastControlSettings | undefined;
 }
 
 /**
@@ -202,7 +202,7 @@ export interface LatestArguments<T extends object> {
 export function latest<T extends object, Key extends string = string>(
 	args: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
-	const { controls, local } = args;
+	const { settings, local } = args;
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
@@ -221,9 +221,9 @@ export function latest<T extends object, Key extends string = string>(
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<Latest<T>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
