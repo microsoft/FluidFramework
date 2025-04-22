@@ -252,7 +252,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 		>
 {
 	private readonly nodes: MapEntries<TSchema>;
-	public readonly props: StatesWorkspace<TSchema>["props"];
+	public readonly states: StatesWorkspace<TSchema>["states"];
 
 	public readonly controls: RequiredBroadcastControl;
 
@@ -296,7 +296,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 			// props is the public view of nodes that limits the entries types to
 			// the public interface of the State object with an additional type
 			// filter that beguiles the type system. So just reinterpret cast.
-			this.props = this.nodes as unknown as StatesWorkspace<TSchema>["props"];
+			this.states = this.nodes as unknown as StatesWorkspace<TSchema>["states"];
 
 			if (anyInitialValues) {
 				this.runtime.localUpdate(newValues, {

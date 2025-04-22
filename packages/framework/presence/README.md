@@ -159,7 +159,7 @@ const stateWorkspace = presence.states.getWorkspace("app:v1states",
 );
 
 // Temporarily set count updates to send as soon as possible
-const countState = stateWorkspace.props.count;
+const countState = stateWorkspace.states.count;
 countState.controls.allowableUpdateLatencyMs = 0;
 countState.local = { num: 5000 };
 
