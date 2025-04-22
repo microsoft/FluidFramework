@@ -123,11 +123,11 @@ export interface ISharedObjectRegistry {
 	get(name: string): IChannelFactory | undefined;
 }
 
-type RequireProps<T extends Record<never, unknown>, K extends keyof T> = Omit<T, K> &
+type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T, K> &
 	Required<Pick<T, K>>;
 
 interface IFluidDataStoreContextFeaturesToTypes {
-	[setReadOnlyState]: RequireProps<IFluidDataStoreContext, "readonly">;
+	[setReadOnlyState]: PickRequired<IFluidDataStoreContext, "readonly">;
 }
 
 function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(

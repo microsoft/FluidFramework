@@ -219,7 +219,6 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     makeLocallyVisible(): void;
     // (undocumented)
     readonly options: Record<string | number, any>;
-    // (undocumented)
     readonly readonly?: boolean;
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
