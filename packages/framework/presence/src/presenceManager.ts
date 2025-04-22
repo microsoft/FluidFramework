@@ -22,11 +22,11 @@ import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
-	StatesWorkspace,
-	WorkspaceAddress,
-	StatesWorkspaceSchema,
-	NotificationsWorkspaceSchema,
 	NotificationsWorkspace,
+	NotificationsWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceSchema,
+	WorkspaceAddress,
 } from "./types.js";
 
 import type {
