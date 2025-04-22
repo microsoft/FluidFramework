@@ -15,10 +15,10 @@ import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 export class SharedMapUndoRedoHandler {
 	constructor(private readonly stackManager: UndoRedoStackManager) {}
 
-	public attachMap(map: ISharedMap) {
+	public attachMap(map: ISharedMap): void {
 		map.on("valueChanged", this.mapDeltaHandler);
 	}
-	public detachMap(map: ISharedMap) {
+	public detachMap(map: ISharedMap): void {
 		map.off("valueChanged", this.mapDeltaHandler);
 	}
 
@@ -26,7 +26,7 @@ export class SharedMapUndoRedoHandler {
 		changed: IValueChanged,
 		local: boolean,
 		target: ISharedMap,
-	) => {
+	): void => {
 		if (local) {
 			this.stackManager.pushToCurrentOperation(new SharedMapRevertible(changed, target));
 		}
@@ -43,11 +43,11 @@ export class SharedMapRevertible implements IRevertible {
 		private readonly map: ISharedMap,
 	) {}
 
-	public revert() {
+	public revert(): void {
 		this.map.set(this.changed.key, this.changed.previousValue);
 	}
 
-	public discard() {
+	public discard(): void {
 		return;
 	}
 }
