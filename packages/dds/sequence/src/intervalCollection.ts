@@ -393,7 +393,7 @@ class IntervalCollectionIterator implements Iterator<SequenceIntervalClass> {
  * Change events emitted by `IntervalCollection`s
  * @legacy
  * @alpha
- * @remarks The generic version of this interface is no longer used and will be removed. Use {@link ISequenceIntervalCollectionEvents} instead.
+ * @deprecated The generic version of this interface is no longer used and will be removed. Use {@link ISequenceIntervalCollectionEvents} instead.
  */
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval>
 	extends IEvent {

@@ -186,8 +186,9 @@ class LatestValueManagerImpl<T, Key extends string>
  *
  * @alpha
  */
-export function latest<T extends object, Key extends string = string>(
-	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
+export function latest<T extends object | null, Key extends string = string>(
+	// eslint-disable-next-line @rushstack/no-new-null
+	initialValue: JsonSerializable<T> & JsonDeserialized<T> & (object | null),
 	controls?: BroadcastControlSettings,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
 	// Latest takes ownership of initialValue but makes a shallow
@@ -195,7 +196,7 @@ export function latest<T extends object, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: shallowCloneObject(initialValue),
+		value: initialValue === null ? initialValue : shallowCloneObject(initialValue),
 	};
 	const factory = (
 		key: Key,

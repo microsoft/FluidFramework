@@ -136,7 +136,7 @@ export namespace InternalUtilityTypes {
 }
 
 // @alpha
-export function latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+export function latest<T extends object | null, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & (object | null), controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
 // @alpha @sealed
 export interface LatestClientData<T> extends LatestData<T> {
@@ -153,7 +153,7 @@ export interface LatestData<T> {
 }
 
 // @alpha
-export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 }, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
