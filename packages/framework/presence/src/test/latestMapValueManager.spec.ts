@@ -87,6 +87,15 @@ describe("Presence", () => {
 			mapVM.local.delete("key1");
 			assert.strictEqual(localRemovalCount, 1);
 		});
+
+		it(".presence provides Presence it was created under", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.states.getWorkspace(testWorkspaceName, {
+				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
+			});
+
+			assert.strictEqual(states.props.fixedMap.presence, presence);
+		});
 	});
 });
 
@@ -128,6 +137,9 @@ export function checkCompiles(): void {
 		const value = props.fixedMap.local.get(key);
 		console.log(key, value);
 	}
+
+	// ----------------------------------
+	// pointers data
 
 	interface PointerData {
 		x: number;
@@ -175,4 +187,32 @@ export function checkCompiles(): void {
 	pointers.events.on("remoteUpdated", ({ attendee, items }) => {
 		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	});
+
+	// ----------------------------------
+	// primitive and null value support
+
+	workspace.add(
+		"primitiveMap",
+		StateFactory.latestMap({
+			// eslint-disable-next-line unicorn/no-null
+			null: null,
+			string: "string",
+			number: 0,
+			boolean: true,
+		}),
+	);
+
+	const localPrimitiveMap = workspace.props.primitiveMap.local;
+
+	// map value types are not matched to specific key
+	localPrimitiveMap.set("string", 1);
+	localPrimitiveMap.set("number", false);
+	// eslint-disable-next-line unicorn/no-null
+	localPrimitiveMap.set("boolean", null);
+	localPrimitiveMap.set("null", "null");
+
+	// @ts-expect-error with inferred keys only those named in init are accessible
+	localPrimitiveMap.set("key3", "value");
+	// @ts-expect-error value of type value is not assignable
+	localPrimitiveMap.set("null", { value: "value" });
 }

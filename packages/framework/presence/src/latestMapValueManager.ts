@@ -18,7 +18,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
 import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
-import type { AttendeeId, Attendee, SpecificAttendee } from "./presence.js";
+import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -312,6 +312,11 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  */
 export interface LatestMap<T, Keys extends string | number = string | number> {
 	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
+	/**
 	 * Events for LatestMap.
 	 */
 	readonly events: Listenable<LatestMapEvents<T, Keys>>;
@@ -370,6 +375,10 @@ class LatestMapValueManagerImpl<
 				});
 			},
 		);
+	}
+
+	public get presence(): Presence {
+		return this.datastore.presence;
 	}
 
 	public readonly local: StateMap<Keys, T>;
@@ -486,7 +495,7 @@ class LatestMapValueManagerImpl<
  * @alpha
  */
 export function latestMap<
-	T extends object,
+	T,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(

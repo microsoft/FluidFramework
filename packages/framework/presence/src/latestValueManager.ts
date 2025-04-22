@@ -18,7 +18,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
-import type { Attendee } from "./presence.js";
+import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -54,6 +54,11 @@ export interface LatestEvents<T> {
  * @alpha
  */
 export interface Latest<T> {
+	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
 	/**
 	 * Events for Latest.
 	 */
@@ -100,6 +105,10 @@ class LatestValueManagerImpl<T, Key extends string>
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
+	}
+
+	public get presence(): Presence {
+		return this.datastore.presence;
 	}
 
 	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {
@@ -177,8 +186,9 @@ class LatestValueManagerImpl<T, Key extends string>
  *
  * @alpha
  */
-export function latest<T extends object, Key extends string = string>(
-	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
+export function latest<T extends object | null, Key extends string = string>(
+	// eslint-disable-next-line @rushstack/no-new-null
+	initialValue: JsonSerializable<T> & JsonDeserialized<T> & (object | null),
 	controls?: BroadcastControlSettings,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
 	// Latest takes ownership of initialValue but makes a shallow
@@ -186,7 +196,7 @@ export function latest<T extends object, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: shallowCloneObject(initialValue),
+		value: initialValue === null ? initialValue : shallowCloneObject(initialValue),
 	};
 	const factory = (
 		key: Key,
