@@ -17,7 +17,6 @@ export type {
 	DefaultProvider,
 	typeNameSymbol,
 	InsertableObjectFromSchemaRecord,
-	ObjectFromSchemaRecord,
 	// Recursive Schema APIs
 	FieldHasDefaultUnsafe,
 	ObjectFromSchemaRecordUnsafe,
