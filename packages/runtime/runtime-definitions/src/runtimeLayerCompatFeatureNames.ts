@@ -5,7 +5,7 @@
 
 /**
  * This feature indicates the ContainerRuntime will encode handles
- * If the Runtime layer supports this feature, the DataStore layer need not encode handles (but do bind them)
+ * If the Runtime layer supports this feature, the DataStore layer should not encode handles (but do bind them)
  *
  * @internal
  */

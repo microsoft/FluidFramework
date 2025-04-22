@@ -22,6 +22,7 @@ export type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeExperimental,
 	IFluidDataStoreRuntimeEvents,
+	IFluidDataStoreRuntimeInternalConfig,
 	IDeltaManagerErased,
 } from "./dataStoreRuntime.js";
 export type {

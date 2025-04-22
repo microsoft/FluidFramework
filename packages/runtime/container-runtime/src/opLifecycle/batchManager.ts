@@ -10,7 +10,7 @@ import {
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 

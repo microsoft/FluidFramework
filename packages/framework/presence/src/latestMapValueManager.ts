@@ -18,7 +18,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
 import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
-import type { AttendeeId, Attendee, SpecificAttendee } from "./presence.js";
+import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -72,7 +72,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
  * @sealed
  * @alpha
  */
-export interface LatestMapEvents<T, K extends string | number> {
+export interface LatestMapRawEvents<T, K extends string | number> {
 	/**
 	 * Raised when any item's value for remote client is updated.
 	 * @param updates - Map of one or more values updated.
@@ -209,7 +209,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T, K>,
 		private readonly emitter: IEmitter<
-			Pick<LatestMapEvents<T, K>, "localItemUpdated" | "localItemRemoved">
+			Pick<LatestMapRawEvents<T, K>, "localItemUpdated" | "localItemRemoved">
 		>,
 		private readonly localUpdate: (
 			updates: InternalTypes.MapValueState<
@@ -310,11 +310,16 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  * @sealed
  * @alpha
  */
-export interface LatestMap<T, Keys extends string | number = string | number> {
+export interface LatestMapRaw<T, Keys extends string | number = string | number> {
 	/**
-	 * Events for LatestMap.
+	 * Containing {@link Presence}
 	 */
-	readonly events: Listenable<LatestMapEvents<T, Keys>>;
+	readonly presence: Presence;
+
+	/**
+	 * Events for LatestMapRaw.
+	 */
+	readonly events: Listenable<LatestMapRawEvents<T, Keys>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -339,15 +344,15 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
 }
 
-class LatestMapValueManagerImpl<
+class LatestMapRawValueManagerImpl<
 	T,
 	RegistrationKey extends string,
 	Keys extends string | number = string | number,
 > implements
-		LatestMap<T, Keys>,
+		LatestMapRaw<T, Keys>,
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
-	public readonly events = createEmitter<LatestMapEvents<T, Keys>>();
+	public readonly events = createEmitter<LatestMapRawEvents<T, Keys>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -370,6 +375,10 @@ class LatestMapValueManagerImpl<
 				});
 			},
 		);
+	}
+
+	public get presence(): Presence {
+		return this.datastore.presence;
 	}
 
 	public readonly local: StateMap<Keys, T>;
@@ -481,34 +490,57 @@ class LatestMapValueManagerImpl<
 }
 
 /**
- * Factory for creating a {@link LatestMap} State object.
+ * Arguments that are passed to the {@link StateFactory.latestMap} function.
+ *
+ * @alpha
+ */
+export interface LatestMapArguments<T, Keys extends string | number = string | number> {
+	/**
+	 * The initial value of the local state.
+	 */
+	local?: {
+		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+	};
+
+	/**
+	 * See {@link BroadcastControlSettings}.
+	 */
+	settings?: BroadcastControlSettings | undefined;
+}
+
+/**
+ * Factory for creating a {@link LatestMapRaw} State object.
  *
  * @alpha
  */
 export function latestMap<
-	T extends object,
+	T,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	initialValues?: {
-		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-	},
-	controls?: BroadcastControlSettings,
+	args?: LatestMapArguments<T, Keys>,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
-	LatestMap<T, Keys>
+	LatestMapRaw<T, Keys>
 > {
+	const settings = args?.settings;
+	const initialValues = args?.local;
+
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
 		T,
 		// This should be `Keys`, but will only work if properties are optional.
 		string | number
 	> = { rev: 0, items: {} };
-	// LatestMap takes ownership of values within initialValues.
+	// LatestMapRaw takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
 		for (const key of objectKeys(initialValues)) {
-			value.items[key] = { rev: 0, timestamp, value: initialValues[key] };
+			value.items[key] = {
+				rev: 0,
+				timestamp,
+				value: initialValues[key],
+			};
 		}
 	}
 	const factory = (
@@ -519,21 +551,21 @@ export function latestMap<
 		>,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
+		manager: InternalTypes.StateValue<LatestMapRaw<T, Keys>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<
-			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
+			LatestMapRawValueManagerImpl<T, RegistrationKey, Keys>,
 			T,
 			InternalTypes.MapValueState<T, Keys>
 		>(
-			new LatestMapValueManagerImpl(
+			new LatestMapRawValueManagerImpl(
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
-				controls,
+				settings,
 			),
 		),
 	});
-	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
+	return Object.assign(factory, { instanceBase: LatestMapRawValueManagerImpl });
 }

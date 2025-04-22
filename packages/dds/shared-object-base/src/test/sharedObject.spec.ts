@@ -5,29 +5,51 @@
 
 import { strict as assert } from "node:assert";
 
+// Add IFluidHandle import for mock handle
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { isSerializedHandle } from "@fluidframework/runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	MockHandle,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
+import sinon from "sinon";
 
-import { IFluidSerializer } from "../serializer.js";
+import { FluidSerializer, IFluidSerializer } from "../serializer.js";
 import { SharedObject, SharedObjectCore } from "../sharedObject.js";
 
 class MySharedObject extends SharedObject {
-	constructor(id: string) {
+	constructor(
+		id: string,
+		//* Move to Core
+		private readonly attached: boolean = false,
+	) {
 		super(
 			id,
 			undefined as unknown as IFluidDataStoreRuntime,
 			undefined as unknown as IChannelAttributes,
 			"",
 		);
+	}
+
+	// Make submitLocalMessage public for testing
+	public submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
+		super.submitLocalMessage(content, localOpMetadata);
+	}
+
+	public override isAttached(): boolean {
+		return this.attached;
 	}
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
@@ -52,15 +74,32 @@ class MySharedObject extends SharedObject {
 }
 
 class MySharedObjectCore extends SharedObjectCore {
-	constructor(id: string) {
-		super(
-			id,
-			undefined as unknown as IFluidDataStoreRuntime,
-			undefined as unknown as IChannelAttributes,
-		);
+	constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime(), // Use mock runtime
+		attributes: IChannelAttributes = { type: "test" } as unknown as IChannelAttributes,
+	) {
+		super(id, runtime, attributes);
 	}
 
-	protected readonly serializer = {} as unknown as IFluidSerializer;
+	// Make submitLocalMessage public for testing
+	public submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
+		super.submitLocalMessage(content, localOpMetadata);
+	}
+
+	public stubSubmitFn(submitFn: sinon.SinonSpy): void {
+		Object.assign(this, { services: { deltaConnection: { submit: submitFn } } });
+	}
+
+	// Override isAttached to always return true for simplified testing
+	public override isAttached(): boolean {
+		return true;
+	}
+
+	protected readonly serializer = new FluidSerializer({
+		inStagingMode: false,
+		channelsRoutingContext: {} as unknown as IFluidHandleContext,
+	});
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		throw new Error("Method not implemented.");
@@ -112,5 +151,104 @@ describe("SharedObjectCore", () => {
 		assert.throws(codeBlock, (e: Error) =>
 			validateAssertionError(e, "Id cannot contain slashes"),
 		);
+	});
+
+	describe("handle encoding in submitLocalMessage", () => {
+		let sharedObject: MySharedObjectCore;
+		let dataStoreRuntime: MockFluidDataStoreRuntime;
+		let submitSpy: sinon.SinonSpy;
+
+		// Define a mock handle object
+		const mockHandle = new MockHandle("some data");
+
+		// Define message content with the handle
+		const messageContentWithHandle = {
+			type: "opWithHandle",
+			handle: mockHandle,
+		};
+
+		const serializedMockHandleMatcher = sinon.match(
+			(value: unknown) => isSerializedHandle(value) && value.url === mockHandle.absolutePath,
+			"serialized handle string",
+		);
+
+		function set_submitMessagesWithoutEncodingHandles(value: boolean | undefined): void {
+			(
+				dataStoreRuntime as unknown as {
+					submitMessagesWithoutEncodingHandles?: boolean;
+				} satisfies Partial<IFluidDataStoreRuntimeInternalConfig>
+			).submitMessagesWithoutEncodingHandles = value;
+		}
+
+		beforeEach(() => {
+			dataStoreRuntime = new MockFluidDataStoreRuntime(); //* unneeded (same as default)
+			set_submitMessagesWithoutEncodingHandles(undefined); // Reset config
+
+			submitSpy = sinon.fake();
+
+			sharedObject = new MySharedObjectCore("testId", dataStoreRuntime);
+			sharedObject.stubSubmitFn(submitSpy); //* Move to ctor param
+		});
+
+		afterEach(() => {
+			// Reset the submit spy after each test
+			submitSpy.resetHistory();
+		});
+
+		it("submits handle object when submitMessagesWithoutEncodingHandles is true", () => {
+			set_submitMessagesWithoutEncodingHandles(true);
+
+			sharedObject.submitLocalMessage(messageContentWithHandle);
+
+			// Assert submit was called once with the exact object containing the handle object
+			assert(
+				submitSpy.calledOnceWithExactly(
+					messageContentWithHandle,
+					undefined /* localOpMetadata */,
+				),
+				"Submit should be called with the exact message content including the handle object",
+			);
+		});
+
+		it("submits stringified handle when submitMessagesWithoutEncodingHandles is false", () => {
+			set_submitMessagesWithoutEncodingHandles(false);
+
+			sharedObject.submitLocalMessage(messageContentWithHandle);
+
+			// Assert submit was called once with an object where 'handle' matches the serialized string pattern
+			assert(
+				submitSpy.calledOnceWith(
+					sinon.match({
+						type: messageContentWithHandle.type,
+						handle: serializedMockHandleMatcher,
+					}),
+					undefined /* localOpMetadata */,
+				),
+				"Submit should be called with message content including a serialized handle string",
+			);
+		});
+
+		it("submits stringified handle when submitMessagesWithoutEncodingHandles is undefined", () => {
+			assert.strictEqual(
+				(dataStoreRuntime as Partial<IFluidDataStoreRuntimeInternalConfig>)
+					.submitMessagesWithoutEncodingHandles,
+				undefined,
+				"Config should be undefined initially",
+			);
+
+			sharedObject.submitLocalMessage(messageContentWithHandle);
+
+			// Assert submit was called once with an object where 'handle' matches the serialized string pattern
+			assert(
+				submitSpy.calledOnceWith(
+					sinon.match({
+						type: messageContentWithHandle.type,
+						handle: serializedMockHandleMatcher, // Use the custom matcher
+					}),
+					undefined /* localOpMetadata */,
+				),
+				"Submit should be called with message content including a serialized handle string (default case)",
+			);
+		});
 	});
 });
