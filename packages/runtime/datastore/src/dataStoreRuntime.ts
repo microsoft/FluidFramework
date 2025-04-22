@@ -667,6 +667,11 @@ export class FluidDataStoreRuntime
 	}
 
 	private _readonly: boolean;
+	/**
+	 * This function is used by the datastore context to configure the
+	 * readonly state of this object. It should not be invoked by
+	 * any other callers.
+	 */
 	public setReadOnlyState(readonly: boolean) {
 		this.verifyNotClosed();
 		if (readonly !== this._readonly) {

@@ -205,37 +205,38 @@ export interface IFluidDataStoreContextEvents extends IEvent {
  *
  */
 class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
-	constructor(base: IDeltaManagerFull) {
+	constructor(
+		base: IDeltaManagerFull,
+		private readonly isReadOnly: () => boolean | undefined,
+	) {
 		super(base, {
-			onReadonly: (readonly, reason): void => this.setReadonly(readonly, reason),
+			onReadonly: (): void => {
+				/* readonly is controlled from the context which calls setReadonly */
+			},
 		});
-		this._readonly = base.readOnlyInfo.readonly;
 	}
 
 	public get readOnlyInfo(): ReadOnlyInfo {
-		if (this._readonly === this.deltaManager.readOnlyInfo.readonly) {
+		const readonly = this.isReadOnly();
+		if (readonly === this.deltaManager.readOnlyInfo.readonly) {
 			return this.deltaManager.readOnlyInfo;
 		} else {
-			return this._readonly === true
+			return readonly === true
 				? {
-						readonly: true,
+						readonly,
 						forced: false,
 						permissions: undefined,
 						storageOnly: false,
 					}
-				: { readonly: false };
+				: { readonly };
 		}
 	}
 
-	private _readonly: boolean | undefined;
 	public setReadonly(
 		readonly: boolean,
 		readonlyConnectionReason?: { reason: string; error?: IErrorBase },
 	): void {
-		if (this._readonly !== readonly) {
-			this._readonly = readonly;
-			this.emit("readonly", readonly, readonlyConnectionReason);
-		}
+		this.emit("readonly", readonly, readonlyConnectionReason);
 	}
 }
 
@@ -270,7 +271,7 @@ export abstract class FluidDataStoreContext
 
 	private readonly _contextDeltaManagerProxy: ContextDeltaManagerProxy;
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this._deltaManager;
+		return this._contextDeltaManagerProxy;
 	}
 
 	public get readonly(): boolean | undefined {
@@ -479,7 +480,10 @@ export abstract class FluidDataStoreContext
 
 		assert(isIDeltaManagerFull(this.parentContext.deltaManager), "Invalid delta manager");
 
-		this._deltaManager = new ContextDeltaManagerProxy(this.parentContext.deltaManager);
+		this._contextDeltaManagerProxy = new ContextDeltaManagerProxy(
+			this.parentContext.deltaManager,
+			() => this.readonly,
+		);
 	}
 
 	public dispose(): void {
@@ -679,7 +683,7 @@ export abstract class FluidDataStoreContext
 		this.verifyNotClosed("setReadOnlyState", false /* checkTombstone */);
 
 		this.channel?.setReadOnlyState?.(readonly);
-		this._deltaManager.setReadonly(readonly);
+		this._contextDeltaManagerProxy.setReadonly(readonly);
 	}
 
 	/**

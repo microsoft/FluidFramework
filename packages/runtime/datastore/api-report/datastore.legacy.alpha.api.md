@@ -90,7 +90,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
-    // (undocumented)
     setReadOnlyState(readonly: boolean): void;
     // (undocumented)
     submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;

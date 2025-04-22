@@ -1119,6 +1119,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
+	/**
+	 * Enumerates the contexts and calls setReadOnlyState on them.
+	 */
 	public setReadOnlyState(readonly: boolean): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
