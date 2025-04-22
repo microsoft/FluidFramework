@@ -48,11 +48,11 @@ export {
 export type {
 	latestMap,
 	LatestMap,
+	LatestMapArguments,
 	LatestMapClientData,
 	LatestMapEvents,
 	LatestMapItemRemovedClientData,
 	LatestMapItemUpdatedClientData,
-	LatestMapArguments,
 	StateMap,
 } from "./latestMapValueManager.js";
 export type {
