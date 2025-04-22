@@ -150,6 +150,9 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		// Although sweep is supported in 2.x, it is disabled by default until compatibilityVersion>=3.0.0 to be extra safe.
 		"3.0.0": { enableGCSweep: true },
 	} as const,
+	createBlobPlaceholders: {
+		"1.0.0": false,
+	},
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
 
 /**
