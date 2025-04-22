@@ -199,9 +199,9 @@ export interface IFluidDataStoreContextEvents extends IEvent {
  * Eventually we should remove the delta manger from being exposed to Datastore runtimes via the context. However to remove that exposure we need to add new
  * features, and those features themselves need forward and back compat. This proxy is here to enable that back compat. Each feature this proxy is used to
  * support should be listed below, and as layer compat support goes away for those feature, we should also remove them from this proxy, with the eventual goal
- * of completely remove this proxy.
+ * of completely removing this proxy.
  *
- * - Everything regarding readonly is to support older datastore runtimes which do not have the setReadonly function, so must get their readonly state via the delta manager.
+ * - Everything regarding readonly is to support older datastore runtimes which do not have the setReadonly function, so they must get their readonly state via the delta manager.
  *
  */
 class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
@@ -223,7 +223,7 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 						permissions: undefined,
 						storageOnly: false,
 					}
-				: { readonly: this._readonly };
+				: { readonly: false };
 		}
 	}
 
@@ -268,7 +268,7 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.baseLogger;
 	}
 
-	private readonly _deltaManager: ContextDeltaManagerProxy;
+	private readonly _contextDeltaManagerProxy: ContextDeltaManagerProxy;
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
 		return this._deltaManager;
 	}
