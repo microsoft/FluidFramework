@@ -10,7 +10,10 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
+import {
+	FluidDataStoreRegistry,
+	type SemanticVersion,
+} from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -35,6 +38,14 @@ import {
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
+
+/**
+ * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
+ */
+const compatModeTominVersionForCollab: Record<CompatibilityMode, SemanticVersion> = {
+	"1": "1.0.0", // TODO: Should this be the LTS version?
+	"2": "2.0.0",
+};
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
@@ -242,6 +253,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
 			provideEntryPoint,
+			minVersionForCollab: compatModeTominVersionForCollab[compatibilityMode],
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;

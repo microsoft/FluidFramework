@@ -334,6 +334,7 @@ export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
     context: IContainerContext;
     existing: boolean;
+    minVersionForCollab?: SemanticVersion;
     provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated
@@ -352,6 +353,9 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 
 // @alpha @deprecated
 export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
+
+// @alpha
+export type SemanticVersion = `${bigint}.${bigint}.${bigint}` | `${bigint}.${bigint}.${bigint}-${string}`;
 
 // @alpha
 export interface SubmitSummaryFailureData {

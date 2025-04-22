@@ -73,7 +73,6 @@ import {
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { getCompatibilityVersionDefaults } from "../compatUtils.js";
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
@@ -3626,9 +3625,9 @@ describe("Runtime", () => {
 			});
 		});
 
-		// TODO: Update these tests when compatibilityVersion API is implemented - ADO:36088
+		// TODO: Update these tests when minVersionForCollab API is implemented - ADO:36088
 		describe("Default Configurations", () => {
-			it("compatibilityVersion not provided", async () => {
+			it("minVersionForCollab not provided", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3663,16 +3662,16 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityVersion = 1.0.0", async () => {
-				const compatibilityVersion = "1.0.0";
-				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+			it("minVersionForCollab = 1.0.0", async () => {
+				const minVersionForCollab = "1.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: defaultRuntimeOptions,
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -3700,16 +3699,16 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it('compatibilityVersion = 2.0.0-defaults ("default")', async () => {
-				const compatibilityVersion = "2.0.0-defaults";
-				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
+				const minVersionForCollab = "2.0.0-defaults";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: defaultRuntimeOptions,
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -3737,16 +3736,16 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityVersion = 2.0.0 (explicit)", async () => {
-				const compatibilityVersion = "2.0.0";
-				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+			it("minVersionForCollab = 2.0.0 (explicit)", async () => {
+				const minVersionForCollab = "2.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: defaultRuntimeOptions,
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -3774,16 +3773,15 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityVersion = 2.20.0", async () => {
-				const compatibilityVersion = "2.20.0";
-				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+			it("minVersionForCollab = 2.20.0", async () => {
+				const minVersionForCollab = "2.20.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: defaultRuntimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -3811,7 +3809,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityVersion not provided, with manual configs for each property", async () => {
+			it("minVersionForCollab not provided, with manual configs for each property", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3914,7 +3912,8 @@ describe("Runtime", () => {
 				});
 
 			// Skipped since 3.0.0 is not an existing FF version yet
-			it.skip("compatibilityVersion = 3.0.0", async () => {
+			it.skip("minVersionForCollab = 3.0.0", async () => {
+				const minVersionForCollab = "3.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3922,6 +3921,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {

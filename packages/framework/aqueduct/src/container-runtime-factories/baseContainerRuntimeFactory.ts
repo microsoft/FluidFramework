@@ -11,6 +11,7 @@ import {
 	FluidDataStoreRegistry,
 	loadContainerRuntime,
 	type IContainerRuntimeOptions,
+	type SemanticVersion,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
@@ -61,6 +62,10 @@ export interface BaseContainerRuntimeFactoryProps {
 	 * created with this factory
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	/**
+	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it
+	 */
+	minVersionForCollab?: SemanticVersion;
 }
 
 /**

@@ -153,10 +153,11 @@ import {
 	wrapContext,
 } from "./channelCollection.js";
 import {
-	defaultCompatibilityVersion,
-	getCompatibilityVersionDefaults,
+	defaultminVersionForCollab,
+	getminVersionForCollabDefaults,
 	isValidCompatVersion,
 	type RuntimeOptionsAffectingDocSchema,
+	type SemanticVersion,
 } from "./compatUtils.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
@@ -667,6 +668,23 @@ export interface LoadContainerRuntimeParams {
 	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 * */
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+
+	/**
+	 * minVersionForCollab is used to determine the default configuration for {@link IContainerRuntimeOptionsInternal}
+	 * properties which affect the document schema. minVersionForCollab can be considered to be the minimum version of
+	 * the FF runtime that we should support compatibility with.
+	 *
+	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
+	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
+	 * understand the new op type. If a customer were to set minVersionForCollab to 2.0.0, then `bar` would be set to
+	 * enable `foo` by default. If a customer were to set minVersionForCollab to 1.0.0, then `bar` would be set to
+	 * disable `foo` by default.
+	 *
+	 * minVersionForCollab accepts a string that must be in valid semver format. It must include the minor and patch indicators as well (i.e. 1.0
+	 * is not acceptable, but 1.0.0 is). For example, use "2.0.0" to set the default configuration for clients running at least the 2.0.0 version
+	 * of the FF runtime.
+	 */
+	minVersionForCollab?: SemanticVersion;
 }
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
@@ -728,6 +746,7 @@ export class ContainerRuntime
 		 */
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		minVersionForCollab?: SemanticVersion;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
@@ -759,19 +778,17 @@ export class ContainerRuntime
 		const mc = loggerToMonitoringContext(logger);
 
 		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
-		// based on the compatibility mode.
-		// For example, if compatibility mode is set to "1.0.0", the default configs will ensure compatibility with FF runtime
-		// 1.0.0 or later. If the compatibility mode is set to "2.10.0", the default values will be generated to ensure compatibility
+		// based on the minVersionForCollab.
+		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
+		// 1.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
-		// TODO: We will add in a way for users to pass in compatibilityVersion in a follow up PR.
-		const compatibilityVersion = defaultCompatibilityVersion;
-		if (!isValidCompatVersion(compatibilityVersion)) {
+		const minVersionForCollab = params.minVersionForCollab ?? defaultminVersionForCollab;
+		if (!isValidCompatVersion(minVersionForCollab)) {
 			throw new UsageError(
-				`Invalid compatibility version: ${compatibilityVersion}. It must be an existing FF version (i.e. 2.22.1).`,
+				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 2.22.1).`,
 			);
 		}
-		const defaultVersionDependentConfigs =
-			getCompatibilityVersionDefaults(compatibilityVersion);
+		const defaultVersionDependentConfigs = getminVersionForCollabDefaults(minVersionForCollab);
 
 		// The following are the default values for the options that do not affect the DocumentSchema.
 		const defaultConfigsNonVersionDependent: Required<
