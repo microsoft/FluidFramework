@@ -597,10 +597,14 @@ export class BlobManager {
 			// If there is already an op for this storage ID, append the local ID to the list. Once any op for
 			// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
 			// blob alive in storage.
-			this.opsInFlight.set(
-				response.id,
-				this.opsInFlight.get(response.id)?.add(localId) ?? new Set([localId]),
-			);
+			let setForRemoteId = this.opsInFlight.get(response.id);
+			if (setForRemoteId === undefined) {
+				setForRemoteId = new Set();
+				this.opsInFlight.set(response.id, setForRemoteId);
+			}
+			// seeing the same localId twice can happen if a blob is being reuploaded and stashed.
+			// TODO: review stashing logic and see if we can avoid this, as well in tests.
+			setForRemoteId.add(localId);
 		}
 		return response;
 	}
