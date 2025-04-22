@@ -21,6 +21,11 @@ _virtualPatch_.
 
 ## internal version scheme
 
+> [!NOTE]
+> Fluid Framework no longer uses the internal version scheme. However, we still want to preserve the information and tooling for the internal version scheme because:
+> 1. We may still encounter internal versions in compatibility tests.
+> 2. We may choose to re-implement the internal version scheme in the future.
+
 The Fluid internal version scheme consists of two semver "triplets" of major/minor/patch. The first triplet is called
 the _public version_, and is stored in the typical semver positions in the version string.
 
