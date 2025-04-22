@@ -56,7 +56,6 @@ describe("SharedString fuzz with obliterate", () => {
 						deleteInterval: 1,
 						changeInterval: 1,
 						revertWeight: 0,
-						addPoisonedHandleText: 0,
 					},
 				}),
 			),

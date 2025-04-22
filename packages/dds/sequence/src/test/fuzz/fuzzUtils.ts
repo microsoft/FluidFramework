@@ -167,7 +167,6 @@ export interface SharedStringOperationGenerationConfig {
 		removeRange: number;
 		annotateRange: number;
 		obliterateRange: number;
-		addPoisonedHandleText: number;
 	};
 	propertyNamePool?: string[];
 }
@@ -194,7 +193,6 @@ export const defaultSharedStringOperationGenerationConfig: Required<SharedString
 			removeRange: 1,
 			annotateRange: 1,
 			obliterateRange: 1,
-			addPoisonedHandleText: 1,
 		},
 		propertyNamePool: ["prop1", "prop2", "prop3"],
 	};

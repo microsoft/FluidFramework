@@ -50,6 +50,20 @@ type FuzzTestState = SquashFuzzTestState<SharedStringFactory>;
 
 type SquashOperation = AddPoisonedText | Operation;
 
+interface SquashOperationGenerationConfig extends SharedStringOperationGenerationConfig {
+	weights: SharedStringOperationGenerationConfig["weights"] & {
+		addPoisonedHandleText: number;
+	};
+}
+
+const defaultSquashOperationGenerationConfig: SquashOperationGenerationConfig = {
+	...defaultIntervalOperationGenerationConfig,
+	weights: {
+		...defaultIntervalOperationGenerationConfig.weights,
+		addPoisonedHandleText: 1,
+	},
+};
+
 function makeExitingStagingModeGenerator() {
 	return (state: FuzzTestState): Operation | typeof done => {
 		// Rather than generate a normal op, only generate ops which remove existing poisoned handles.
@@ -81,7 +95,7 @@ function makeExitingStagingModeGenerator() {
 	};
 }
 
-function makeSquashOperationGenerator(optionsParam?: SharedStringOperationGenerationConfig) {
+function makeSquashOperationGenerator(optionsParam?: SquashOperationGenerationConfig) {
 	const baseGenerator = makeSharedStringOperationGenerator(optionsParam);
 
 	async function addPoisonedHandleText(state: FuzzTestState): Promise<AddPoisonedText> {
@@ -98,7 +112,7 @@ function makeSquashOperationGenerator(optionsParam?: SharedStringOperationGenera
 		state.client.stagingModeStatus === "staging";
 
 	const usableWeights =
-		optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
+		optionsParam?.weights ?? defaultSquashOperationGenerationConfig.weights;
 	return createWeightedAsyncGenerator<SquashOperation, FuzzTestState>([
 		[
 			baseGenerator,
@@ -125,7 +139,7 @@ function makeSquashReducer() {
 			const ref = client.channel.createLocalReferencePosition(
 				segment,
 				offset,
-				ReferenceType.Simple /* so that it detaches on remove */,
+				ReferenceType.Simple,
 				undefined,
 			);
 			client.channel.poisonedHandleLocations.push(ref);
