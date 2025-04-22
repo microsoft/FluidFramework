@@ -232,8 +232,8 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 		readonly: boolean,
 		readonlyConnectionReason?: { reason: string; error?: IErrorBase },
 	): void {
-		this._readonly = readonly;
 		if (this._readonly !== readonly) {
+			this._readonly = readonly;
 			this.emit("readonly", readonly, readonlyConnectionReason);
 		}
 	}
