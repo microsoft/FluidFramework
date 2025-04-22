@@ -241,14 +241,14 @@ describe("Presence", () => {
 		function setupSharedStatesWorkspace({
 			notifications,
 		}: { notifications?: true } = {}): void {
-			const states = presence.states.getWorkspace("name:testWorkspace", {
+			const statesWorkspace = presence.states.getWorkspace("name:testWorkspace", {
 				latest: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 				latestMap: StateFactory.latestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
 			});
-			latest = states.states.latest;
-			latestMap = states.states.latestMap;
+			latest = statesWorkspace.states.latest;
+			latestMap = statesWorkspace.states.latestMap;
 			if (notifications) {
-				const workspace: typeof states = states;
+				const workspace: typeof statesWorkspace = statesWorkspace;
 				workspace.add(
 					"notifications",
 					Notifications<{ newId: (id: number) => void }>({
@@ -274,12 +274,12 @@ describe("Presence", () => {
 			const notificationsWorkspace = presence.notifications.getWorkspace(
 				"name:testWorkspace",
 				{
-					notifications: Notifications<{ newId: (id: number) => void }>({
+					testEvents: Notifications<{ newId: (id: number) => void }>({
 						newId: (_attendee: Attendee, _id: number) => {},
 					}),
 				},
 			);
-			notificationManager = notificationsWorkspace.notifications.notifications;
+			notificationManager = notificationsWorkspace.notifications.testEvents;
 		}
 
 		function processUpdates(valueManagerUpdates: Record<string, UpdateContent>): void {
@@ -657,12 +657,12 @@ describe("Presence", () => {
 					const notificationsWorkspace = presence.notifications.getWorkspace(
 						workspaceAddress,
 						{
-							notifications: Notifications<{ newId: (id: number) => void }>({
+							testEvents: Notifications<{ newId: (id: number) => void }>({
 								newId: (_attendee: Attendee, _id: number) => {},
 							}),
 						},
 					);
-					notificationsWorkspace.notifications.notifications.notifications.on(
+					notificationsWorkspace.notifications.testEvents.notifications.on(
 						"newId",
 						notificationSpy,
 					);

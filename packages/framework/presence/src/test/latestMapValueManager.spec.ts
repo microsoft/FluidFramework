@@ -25,13 +25,13 @@ function createLatestMapManager(
 	presence: Presence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const states = presence.states.getWorkspace(testWorkspaceName, {
+	const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
 		fixedMap: StateFactory.latestMap(
 			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
 			valueControlSettings,
 		),
 	});
-	return states.states.fixedMap;
+	return statesWorkspace.states.fixedMap;
 }
 
 describe("Presence", () => {
@@ -51,10 +51,10 @@ describe("Presence", () => {
 			string
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.states.getWorkspace(testWorkspaceName, {
+			const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
 				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
 			});
-			return states.states.fixedMap;
+			return statesWorkspace.states.fixedMap;
 		}
 
 		it("localItemUpdated event is fired with new value when local value is updated", () => {
@@ -90,11 +90,11 @@ describe("Presence", () => {
 
 		it(".presence provides Presence it was created under", () => {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.states.getWorkspace(testWorkspaceName, {
+			const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
 				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
 			});
 
-			assert.strictEqual(states.states.fixedMap.presence, presence);
+			assert.strictEqual(statesWorkspace.states.fixedMap.presence, presence);
 		});
 	});
 });
