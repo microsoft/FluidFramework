@@ -74,7 +74,23 @@ const config: Config = {
 	// TODO: consider re-enabling after the following issue is resolved:
 	// <https://github.com/Azure/static-web-apps/issues/1036>
 	// trailingSlash: false,
-	plugins: ["docusaurus-plugin-sass"],
+	plugins: [
+		"docusaurus-plugin-sass",
+		function addTrustedTypesOutput() {
+			return {
+				name: "webpack-trusted-types",
+				configureWebpack() {
+					return {
+						output: {
+							trustedTypes: {
+								policyName: "ff#webpack",
+							},
+						},
+					};
+				},
+			};
+		},
+	],
 	presets: [
 		[
 			"classic",
