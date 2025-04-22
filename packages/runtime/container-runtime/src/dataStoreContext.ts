@@ -232,6 +232,13 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 		}
 	}
 
+	/**
+	 * Called by the owning datastore context to configure the readonly
+	 * state of the delta manger that is project down to the datastore
+	 * runtime. This state may not align with that of the true delta
+	 * manager if the context wishes to control the read only state
+	 * differently than the delta manager itself.
+	 */
 	public setReadonly(
 		readonly: boolean,
 		readonlyConnectionReason?: { reason: string; error?: IErrorBase },
