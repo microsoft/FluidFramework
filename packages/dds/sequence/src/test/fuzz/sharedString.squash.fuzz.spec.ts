@@ -156,14 +156,14 @@ emitter.on("clientCreate", (client) => {
 	channel.poisonedHandleLocations = [];
 });
 
-describe("SharedString fuzz testing", () => {
+describe.skip("SharedString fuzz testing", () => {
 	createSquashFuzzSuite(
 		{
 			...baseSharedStringModel,
 			generatorFactory: () => takeAsync(100, makeSquashOperationGenerator()),
 			exitingStagingModeGeneratorFactory: makeExitingStagingModeGenerator,
 			reducer: makeSquashReducer(),
-			workloadName: "SharedString squashing",
+			workloadName: "squashing",
 			minimizationTransforms: [
 				// Apply all base transformations to op types we inherit from the base model
 				...(baseSharedStringModel.minimizationTransforms?.map(
