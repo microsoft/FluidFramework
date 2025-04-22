@@ -909,16 +909,17 @@ export class AnchorSet implements AnchorLocator {
 			},
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
-				this.maybeWithNode((p) => {
-					p.events.emit("subtreeChanged", p);
-					if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
+				if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
+					this.maybeWithNode((p) => {
+						p.events.emit("subtreeChanged", p);
+
 						this.bufferedEvents.push({
 							node: p,
 							event: "subtreeChangedAfterBatch",
 						});
-						this.depthThresholdForSubtreeChanged--;
-					}
-				});
+					});
+					this.depthThresholdForSubtreeChanged--;
+				}
 				const parent = this.parent;
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;
