@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.32.0",
+	"version": "2.33.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -122,7 +122,7 @@
 		"@types/sinon": "^17.0.3",
 		"cross-env": "^7.0.3",
 		"mocha": "^10.8.2",
-		"semver": "^7.5.3",
+		"semver": "^7.7.1",
 		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^5.0.0",
@@ -142,7 +142,6 @@
 		"c8": "^8.0.1",
 		"eslint": "~8.55.0",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
 		"nock": "^13.3.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"

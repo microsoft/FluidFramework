@@ -7,7 +7,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ClientSessionId, ISessionClient } from "./presence.js";
+import type { AttendeeId, Attendee } from "./presence.js";
 
 import type { IRuntimeInternal } from "@fluidframework/presence/internal/container-definitions/internal";
 
@@ -18,7 +18,7 @@ export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState
 	// Caution: any particular item may or may not exist
 	// Typescript does not support absent keys without forcing type to also be undefined.
 	// See https://github.com/microsoft/TypeScript/issues/42810.
-	[ClientSessionId: ClientSessionId]: TValue;
+	[AttendeeId: AttendeeId]: TValue;
 }
 
 /**
@@ -44,9 +44,9 @@ export interface ValueManager<
 	TValueState extends
 		InternalTypes.ValueDirectoryOrState<TValue> = InternalTypes.ValueDirectoryOrState<TValue>,
 > {
-	// Most value managers should provide value - implement Required<ValueManager<...>>
+	// State objects should provide value - implement Required<ValueManager<...>>
 	readonly value?: TValueState;
-	update(client: ISessionClient, received: number, value: TValueState): PostUpdateAction[];
+	update(attendee: Attendee, received: number, value: TValueState): PostUpdateAction[];
 }
 
 /**

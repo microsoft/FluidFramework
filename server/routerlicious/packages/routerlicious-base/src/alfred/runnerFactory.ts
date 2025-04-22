@@ -9,6 +9,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { Constants } from "../utils";
@@ -50,6 +51,7 @@ export class AlfredResources implements core.IResources {
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
+		public collaborationSessionEventEmitter?: RedisEmitter,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
 		public readinessCheck?: IReadinessCheck,
@@ -241,7 +243,30 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// This.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
 
 		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
-		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
+		const redisClientConnectionManagerForInvalidTokenCache =
+			customizations?.redisClientConnectionManagerForInvalidTokenCache
+				? customizations.redisClientConnectionManagerForInvalidTokenCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig2.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
+		const redisCacheForInvalidToken = new services.RedisCache(
+			redisClientConnectionManagerForInvalidTokenCache,
+			{
+				expireAfterSeconds: redisConfig2.keyExpireAfterSeconds,
+				prefix: Constants.invalidTokenCachePrefix,
+			},
+		);
+		const tenantManager = new services.TenantManager(
+			authEndpoint,
+			internalHistorianUrl,
+			redisCacheForInvalidToken,
+		);
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
@@ -422,6 +447,18 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentsDenyListConfig,
 		);
 
+		const redisClientConnectionManagerForPub = new RedisClientConnectionManager(
+			undefined,
+			redisConfig,
+			redisConfig.enableClustering,
+			redisConfig.slotsRefreshTimeout,
+			undefined /* retryDelays */,
+			redisConfig.enableVerboseErrorLogging,
+		);
+		redisClientConnectionManagers.push(redisClientConnectionManagerForPub);
+
+		const redisEmitter = new RedisEmitter(redisClientConnectionManagerForPub.getRedisClient());
+
 		return new AlfredResources(
 			config,
 			producer,
@@ -443,6 +480,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			tokenRevocationManager,
 			revokedTokenChecker,
 			serviceMessageResourceManager,
+			redisEmitter,
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
 			customizations?.readinessCheck,
@@ -475,7 +513,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.startupCheck,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
-			undefined,
+			resources.collaborationSessionEventEmitter,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
 			resources.readinessCheck,

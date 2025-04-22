@@ -265,9 +265,9 @@ export const assertRemoved: <T extends Partial<IHasRemovalInfo> | undefined>(
  * ensures no further usage of the removed removal info is allowed. if continued use is required other
  * type coercion methods should be use to correctly re-type the variable.
  */
-export const removeRemovalInfo: (nodeLike: IHasRemovalInfo) => asserts nodeLike is never = (
-	nodeLike,
-) =>
+export const removeRemovalInfo: (
+	nodeLike: IHasRemovalInfo,
+) => asserts nodeLike is Record<keyof IHasRemovalInfo, never> = (nodeLike) =>
 	Object.assign<IHasRemovalInfo, Record<keyof IHasRemovalInfo, undefined>>(nodeLike, {
 		removes: undefined,
 	});

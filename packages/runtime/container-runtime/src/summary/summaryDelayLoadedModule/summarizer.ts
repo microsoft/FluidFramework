@@ -19,25 +19,36 @@ import {
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
-import { RunningSummarizer } from "./runningSummarizer.js";
-import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import {
-	EnqueueSummarizeResult,
 	IConnectableRuntime,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizeHeuristicData,
-	ISummarizeResults,
 	ISummarizer,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
 	type IRetriableFailureError,
 	type ISummaryConfiguration,
-} from "./summarizerTypes.js";
-import { SummaryCollection } from "./summaryCollection.js";
-import { SummarizeResultBuilder } from "./summaryGenerator.js";
+} from "../summarizerTypes.js";
+import { SummaryCollection } from "../summaryCollection.js";
+
+import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
+import { RunningSummarizer } from "./runningSummarizer.js";
+import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
+import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
+import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";
+
+/**
+ * The maximum number of summarization attempts that will be done by default in case of failures
+ * that can be retried.
+ */
+export const defaultMaxAttempts = 2;
+/**
+ * The default value for maximum number of summarization attempts that will be done for summarization failures where
+ * submit fails and the failure can be retried.
+ */
+export const defaultMaxAttemptsForSubmitFailures = 5;
 
 export class SummarizingWarning
 	extends LoggingError
