@@ -26,10 +26,10 @@ function createLatestManager(
 	presence: Presence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
+	const workspace = presence.states.getWorkspace(testWorkspaceName, {
 		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
 	});
-	return statesWorkspace.states.camera;
+	return workspace.states.camera;
 }
 
 describe("Presence", () => {
@@ -47,57 +47,57 @@ describe("Presence", () => {
 			});
 
 			it("can set and get empty object as initial value", () => {
-				const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
 					obj: StateFactory.latest({}),
 				});
-				assert.deepStrictEqual(statesWorkspace.states.obj.local, {});
+				assert.deepStrictEqual(workspace.states.obj.local, {});
 			});
 
 			it("can set and get object with properties as initial value", () => {
-				const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
 					obj: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 				});
-				assert.deepStrictEqual(statesWorkspace.states.obj.local, { x: 0, y: 0, z: 0 });
+				assert.deepStrictEqual(workspace.states.obj.local, { x: 0, y: 0, z: 0 });
 			});
 
 			it("can set and get empty array as initial value", () => {
-				const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
 					arr: StateFactory.latest([]),
 				});
-				assert.deepStrictEqual(statesWorkspace.states.arr.local, []);
+				assert.deepStrictEqual(workspace.states.arr.local, []);
 			});
 
 			it("can set and get array with elements as initial value", () => {
-				const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
 					arr: StateFactory.latest([1, 2, 3]),
 				});
-				assert.deepStrictEqual(statesWorkspace.states.arr.local, [1, 2, 3]);
+				assert.deepStrictEqual(workspace.states.arr.local, [1, 2, 3]);
 			});
 
 			it("can set and get null as initial value", () => {
-				const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
 					arr: StateFactory.latest(null),
 				});
-				assert.deepStrictEqual(statesWorkspace.states.arr.local, null);
+				assert.deepStrictEqual(workspace.states.arr.local, null);
 			});
 
 			it(".presence provides Presence it was created under", () => {
-				const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
 					camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 				});
 
-				assert.strictEqual(statesWorkspace.states.camera.presence, presence);
+				assert.strictEqual(workspace.states.camera.presence, presence);
 			});
 
 			it("can set and get null as modified local value", () => {
 				// Setup
-				const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
 					nullable: StateFactory.latest<{ x: number; y: number } | null>({ x: 0, y: 0 }),
 				});
 
 				// Act and Verify
-				statesWorkspace.states.nullable.local = null;
-				assert.deepStrictEqual(statesWorkspace.states.nullable.local, null);
+				workspace.states.nullable.local = null;
+				assert.deepStrictEqual(workspace.states.nullable.local, null);
 			});
 		});
 
@@ -106,10 +106,10 @@ describe("Presence", () => {
 		it("localUpdate event is fired with new value when local value is updated", () => {
 			// Setup
 			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const statesWorkspace = presence.states.getWorkspace(testWorkspaceName, {
+			const workspace = presence.states.getWorkspace(testWorkspaceName, {
 				camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 			});
-			const camera = statesWorkspace.states.camera;
+			const camera = workspace.states.camera;
 
 			let localUpdateCount = 0;
 			camera.events.on("localUpdated", (update) => {
