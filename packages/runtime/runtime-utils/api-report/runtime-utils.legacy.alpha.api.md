@@ -34,6 +34,9 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
 // @alpha
+export const isFluidPlaceholderHandle: <T>(handle: IFluidHandle<T>) => handle is IFluidPlaceholderHandle<T>;
+
+// @alpha
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
     // (undocumented)

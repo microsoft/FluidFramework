@@ -7,7 +7,8 @@ import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
-	IFluidHandleInternalPlaceholder,
+	IFluidPlaceholderHandle,
+	IFluidPlaceholderHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 
 /**
@@ -43,10 +44,27 @@ export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 /**
  * @internal
  */
-export const isFluidHandleInternalPlaceholder = (
+export const isFluidPlaceholderHandleInternal = (
 	fluidHandleInternal: IFluidHandleInternal,
-): fluidHandleInternal is IFluidHandleInternalPlaceholder =>
+): fluidHandleInternal is IFluidPlaceholderHandleInternal =>
 	"placeholder" in fluidHandleInternal && fluidHandleInternal.placeholder === true;
+
+/**
+ * Check if the handle is an IFluidPlaceholderHandle.
+ * @privateRemarks
+ * This should be true for locally-created BlobHandles currently. When IFluidPlaceholderHandle is merged
+ * to IFluidHandle, this type guard will no longer be necessary.
+ * @legacy
+ * @alpha
+ */
+export const isFluidPlaceholderHandle = <T>(
+	handle: IFluidHandle<T>,
+): handle is IFluidPlaceholderHandle<T> =>
+	"payloadState" in handle &&
+	(handle.payloadState === "local" ||
+		handle.payloadState === "shared" ||
+		handle.payloadState === "placeholder" ||
+		handle.payloadState === "failed");
 
 /**
  * Encodes the given IFluidHandle into a JSON-serializable form,
@@ -56,7 +74,7 @@ export const isFluidHandleInternalPlaceholder = (
  * @internal
  */
 export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISerializedHandle {
-	return isFluidHandleInternalPlaceholder(handle)
+	return isFluidPlaceholderHandleInternal(handle)
 		? {
 				type: "__fluid_handle__",
 				url: handle.absolutePath,
