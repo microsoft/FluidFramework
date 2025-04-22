@@ -268,7 +268,7 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.baseLogger;
 	}
 
-	private readonly _deltaManager: ContextDeltaManagerProxy;
+	private readonly _contextDeltaManagerProxy: ContextDeltaManagerProxy;
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
 		return this._deltaManager;
 	}
