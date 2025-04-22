@@ -208,17 +208,8 @@ export function latest<T extends object, Key extends string = string>(
 		manager: InternalTypes.StateValue<LatestRaw<T>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
-		manager: brandIVM<
-			LatestValueManagerImpl<T, Key>,
-			T,
-			InternalTypes.ValueRequiredState<T>
-		>(
-			new LatestValueManagerImpl(
-				key,
-				datastoreFromHandle(datastoreHandle),
-				value,
-				controls,
-			),
+		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
