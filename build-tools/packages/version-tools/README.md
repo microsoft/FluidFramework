@@ -123,7 +123,7 @@ EXAMPLES
   $ fluv autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v3.2.7/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/main/src/commands/autocomplete/index.ts)_
 
 ## `fluv help [COMMAND]`
 
@@ -143,7 +143,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.16/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/main/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 
@@ -230,11 +230,6 @@ _See code: [src/commands/version/latest.ts](https://github.com/microsoft/FluidFr
 This package outputs its build files to `lib/` instead of `dist/` like most of our other packages. The reason is that
 oclif uses the lib folder by convention, and there are oclif bugs that can be avoided by putting stuff in lib. See the
 PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
-
----
-
-Due to https://github.com/oclif/core/issues/630, the `build:manifest` node script uses an experimental flag. This can be
-removed once we have upgraded to Node 16 in the repo.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
