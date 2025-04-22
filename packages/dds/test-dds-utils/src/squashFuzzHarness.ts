@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import type {
 	AsyncGenerator,
 	AsyncReducer,
@@ -37,9 +39,13 @@ import {
 	type HarnessOperation,
 	defaultDDSFuzzSuiteOptions,
 	type CleanupFunction,
+	ReducerPreconditionError,
 } from "./ddsFuzzHarness.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
+/**
+ * @internal
+ */
 export interface SquashRandom extends DDSRandom {
 	/**
 	 * Generate a handle which should never be sent to other clients.
@@ -51,6 +57,9 @@ export interface SquashRandom extends DDSRandom {
 	poisonedHandle(): IFluidHandle;
 }
 
+/**
+ * @internal
+ */
 export interface SquashClient<TChannelFactory extends IChannelFactory>
 	extends Client<TChannelFactory> {
 	/**
@@ -60,6 +69,9 @@ export interface SquashClient<TChannelFactory extends IChannelFactory>
 	stagingModeStatus: "off" | "staging" | "exiting";
 }
 
+/**
+ * @internal
+ */
 export interface SquashFuzzModel<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
@@ -73,6 +85,21 @@ export interface SquashFuzzModel<
 	 * Once all poisoned content is removed, this generator should return "done" to indicate to the harness that it is safe to reconnect.
 	 */
 	exitingStagingModeGeneratorFactory: () => Generator<TOperation, TState>;
+
+	/**
+	 * Invoked whenever a client is about to exit squash mode (and therefore reconnect).
+	 * DDS model authors should use this to validate that the client has already undergone edits which should remove all poisoned content from this
+	 * client's view.
+	 * @throws - if the provided client has poisoned content still in its view of the document
+	 * @remarks
+	 * When a DDS does not correctly squash edits that insert and remove a piece of poisoned content, this generates the same sort of error
+	 * as if the edits removing the content had never been generated.
+	 *
+	 * Whereas the first is a valid bug that the model caught, the second is an invalid test case. Fuzz minimization logic tries to remove ops
+	 * that are not necessary to reproduce the error. When doing so, without this piece of validation, it could transform what was originally a
+	 * valid test case demonstrating a squashing bug into an invalid test case.
+	 */
+	validatePoisonedContentRemoved: (client: SquashClient<TChannelFactory>) => void;
 }
 
 /**
@@ -98,6 +125,9 @@ export interface SquashFuzzHarnessModel<
 	reducer: AsyncReducer<TOperation, TState> | Reducer<TOperation, TState>;
 }
 
+/**
+ * @internal
+ */
 export interface SquashFuzzSuiteOptions extends DDSFuzzSuiteOptions {
 	/**
 	 * TODO: Document expectations / consider reworking the API. Weird decisions right now.
@@ -107,6 +137,9 @@ export interface SquashFuzzSuiteOptions extends DDSFuzzSuiteOptions {
 	};
 }
 
+/**
+ * @internal
+ */
 export interface SquashFuzzTestState<TChannelFactory extends IChannelFactory>
 	extends DDSFuzzTestState<TChannelFactory> {
 	random: SquashRandom;
@@ -153,7 +186,7 @@ export function mixinStagingMode<
 					};
 				}
 
-				return await baseGenerator(state);
+				return baseGenerator(state);
 			};
 		};
 
@@ -161,15 +194,33 @@ export function mixinStagingMode<
 		| MinimizationTransform<TOperation | ChangeStagingMode>[]
 		| undefined;
 
+	const stageToNextStage = {
+		off: "staging",
+		staging: "exiting",
+		exiting: "off",
+	} as const;
+
 	const reducer: AsyncReducer<TOperation | ChangeStagingMode, TState> = async (
 		state,
 		operation,
 	) => {
 		if (operation.type === "changeStagingMode") {
-			state.client.stagingModeStatus = (operation as ChangeStagingMode).newStatus;
-			if ((operation as ChangeStagingMode).newStatus === "off") {
+			const currentStatus = state.client.stagingModeStatus;
+			const newStatus = (operation as ChangeStagingMode).newStatus;
+
+			state.client.stagingModeStatus = newStatus;
+			if (stageToNextStage[currentStatus] !== newStatus) {
+				// Minimization may attempt to remove changeStagingMode ops. Doing so usually causes the test case to become invalid,
+				// since this can cause poisoned content to be sent immediately.
+				// We guard against this with this precondition error.
+				throw new ReducerPreconditionError(
+					"changeStagingMode must cycle clients between off, staging, and exiting.",
+				);
+			}
+			if (newStatus === "off") {
+				model.validatePoisonedContentRemoved(state.client);
 				state.client.containerRuntime.connected = true;
-			} else if ((operation as ChangeStagingMode).newStatus === "staging") {
+			} else if (newStatus === "staging") {
 				state.client.containerRuntime.connected = false;
 			}
 			return state;
@@ -185,6 +236,36 @@ export function mixinStagingMode<
 	};
 }
 
+function setupClientState<TChannelFactory extends IChannelFactory>(
+	state: SquashFuzzTestState<TChannelFactory>,
+	client: SquashClient<TChannelFactory>,
+): CleanupFunction {
+	const baseCleanup = addClientContext(state, client);
+	// eslint-disable-next-line @typescript-eslint/unbound-method
+	const { poisonedHandle: oldPoisonedHandle } = state.random;
+	// eslint-disable-next-line unicorn/prefer-ternary
+	if (state.client.stagingModeStatus === "staging") {
+		state.random.poisonedHandle = () =>
+			new PoisonedDDSFuzzHandle(
+				state.random.pick(handles),
+				client.dataStoreRuntime,
+				client.channel.id,
+			);
+	} else {
+		state.random.poisonedHandle = () => {
+			// If you encounter this error, you probably need to check `state.client.stagingModeStatus` before generating poisoned handles.
+			// If you're generating poisoned handles using `createWeightedGenerator`, you might consider using an acceptance condition on the weights object.
+			throw new Error(
+				`Poisoned handles should only be generated while in staging mode, but state is currently: ${state.client.stagingModeStatus}. This indicates a bug in the DDS's model.`,
+			);
+		};
+	}
+	return () => {
+		baseCleanup();
+		state.random.poisonedHandle = oldPoisonedHandle;
+	};
+}
+
 const getFullModel = <
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
@@ -192,7 +273,7 @@ const getFullModel = <
 	ddsModel: SquashFuzzModel<TChannelFactory, TOperation>,
 	options: SquashFuzzSuiteOptions,
 ): SquashFuzzHarnessModel<TChannelFactory, TOperation | SquashHarnessOperation> => {
-	const isReconnectAllowed = (state: SquashFuzzTestState<TChannelFactory>) =>
+	const isReconnectAllowed = (state: SquashFuzzTestState<TChannelFactory>): boolean =>
 		// When staging mode is active, we don't want to generate any reconnect ops as they could result in poisoned handles being sent to other clients
 		// without the DDS model having a chance to remove their content.
 		state.client.stagingModeStatus === "off" && !state.isDetached;
@@ -201,33 +282,7 @@ const getFullModel = <
 		options,
 		isReconnectAllowed,
 	);
-	const setupClientState: (
-		state: SquashFuzzTestState<TChannelFactory>,
-		client: SquashClient<TChannelFactory>,
-	) => CleanupFunction = (state, client) => {
-		const baseCleanup = addClientContext(state, client);
-		const { poisonedHandle: oldPoisonedHandle } = state.random;
-		if (state.client.stagingModeStatus === "staging") {
-			state.random.poisonedHandle = () =>
-				new PoisonedDDSFuzzHandle(
-					state.random.pick(handles),
-					client.dataStoreRuntime,
-					client.channel.id,
-				);
-		} else {
-			state.random.poisonedHandle = () => {
-				// If you encounter this error, you probably need to check `state.client.stagingModeStatus` before generating poisoned handles.
-				// If you're generating poisoned handles using `createWeightedGenerator`, you might consider using an acceptance condition on the weights object.
-				throw new Error(
-					`Poisoned handles should only be generated while in staging mode, but state is currently: ${state.client.stagingModeStatus}. This indicates a bug in the DDS's model.`,
-				);
-			};
-		}
-		return () => {
-			baseCleanup();
-			state.random.poisonedHandle = oldPoisonedHandle;
-		};
-	};
+
 	const model = mixinAttach(
 		mixinSynchronization(
 			mixinNewClient(
@@ -242,7 +297,15 @@ const getFullModel = <
 		options,
 	);
 
-	return model;
+	// Sanity check that using base mixins didn't remove squash-specific properties--this also helps validate
+	// the cast on return is ok.
+	assert(
+		(model as SquashFuzzHarnessModel<TChannelFactory, TOperation | SquashHarnessOperation>)
+			.validatePoisonedContentRemoved !== undefined,
+		"model should still have validatePoisonedContentRemoved",
+	);
+
+	return model as SquashFuzzHarnessModel<TChannelFactory, TOperation | SquashHarnessOperation>;
 };
 
 const defaultSquashFuzzOptions: SquashFuzzSuiteOptions = {
@@ -255,7 +318,7 @@ const defaultSquashFuzzOptions: SquashFuzzSuiteOptions = {
 /**
  * Creates a fuzz test targetting correctness of a DDS's "squash" functionality while resubmitting ops.
  *
- * This model is an extension of {@link createDDSFuzzSuite}. In addition to whatever set of operations are defined in the DDS's
+ * This model is an extension of `createDDSFuzzSuite`. In addition to whatever set of operations are defined in the DDS's
  * eventual consistency model, this harness also injects the notion of each client entering/exiting a "staging mode".
  *
  * While in staging mode, DDS models should sometimes opt to add "poisoned content" to the document. They do so by generating a

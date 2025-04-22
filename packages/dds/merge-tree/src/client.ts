@@ -154,7 +154,7 @@ const UNBOUND_SEGMENT_ERROR = "The provided segment is not bound to this DDS.";
 /**
  * TODO: Plumb this through with a proper API.
  */
-const squash = true;
+const squash = false;
 
 /**
  * This class encapsulates a merge-tree, and provides a local client specific view over it and

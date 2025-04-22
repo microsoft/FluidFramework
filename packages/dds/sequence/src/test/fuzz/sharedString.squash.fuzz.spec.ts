@@ -5,11 +5,25 @@
 
 import { strict as assert } from "assert";
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	createWeightedAsyncGenerator,
+	takeAsync,
+	done,
+} from "@fluid-private/stochastic-test-utils";
 import {
 	createSquashFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type SquashFuzzTestState,
 } from "@fluid-private/test-dds-utils";
+import {
+	ReferenceType,
+	type LocalReferencePosition,
+} from "@fluidframework/merge-tree/internal";
+import { segmentIsRemoved } from "@fluidframework/merge-tree/internal";
+
+import type { SharedStringFactory } from "../../sequenceFactory.js";
+import type { ISharedString } from "../../sharedString.js";
 
 import {
 	baseSharedStringModel,
@@ -20,19 +34,6 @@ import {
 	type Operation,
 	type SharedStringOperationGenerationConfig,
 } from "./fuzzUtils.js";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { SharedStringFactory } from "../../sequenceFactory.js";
-import {
-	ReferenceType,
-	type LocalReferencePosition,
-} from "@fluidframework/merge-tree/internal";
-import {
-	createWeightedAsyncGenerator,
-	takeAsync,
-	done,
-} from "@fluid-private/stochastic-test-utils";
-import type { ISharedString } from "../../sharedString.js";
-import { segmentIsRemoved } from "@fluidframework/merge-tree/internal";
 
 export type PoisonedSharedString = ISharedString & {
 	poisonedHandleLocations: LocalReferencePosition[];
@@ -57,10 +58,12 @@ function makeExitingStagingModeGenerator() {
 		} = state;
 		assert(isPoisonedSharedString(sharedString));
 		const { poisonedHandleLocations } = sharedString;
+		// Mutating in the generator like this is not great practice, but it avoids having to define a special op type for 'removing poisoned content'
+		// which also handles removing values from `poisonedHandleLocations`.
+		// If debugging a situation where this test has strange behavior, consider adding that separate op type instead.
 		while (poisonedHandleLocations.length > 0) {
-			// Mutating in the generator like this is not great practice, but it avoids having to define a special op type for 'removing poisoned content'
-			// which also handles removing values from `poisonedHandleLocations`.
-			// If debugging a situation where this test has strange behavior, consider adding that separate op type instead.
+			// safe due to length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const lastPoisonedHandleLocation = poisonedHandleLocations.pop()!;
 			const pos = sharedString.localReferencePositionToPosition(lastPoisonedHandleLocation);
 			const segment = lastPoisonedHandleLocation.getSegment();
@@ -139,7 +142,7 @@ emitter.on("clientCreate", (client) => {
 	channel.poisonedHandleLocations = [];
 });
 
-describe.only("SharedString fuzz testing", () => {
+describe("SharedString fuzz testing", () => {
 	createSquashFuzzSuite(
 		{
 			...baseSharedStringModel,
@@ -163,6 +166,19 @@ describe.only("SharedString fuzz testing", () => {
 					}
 				},
 			],
+			validatePoisonedContentRemoved: (client) => {
+				assert(isPoisonedSharedString(client.channel));
+				const { poisonedHandleLocations } = client.channel;
+				if (poisonedHandleLocations.length > 0) {
+					for (const handle of poisonedHandleLocations) {
+						const segment = handle.getSegment();
+						assert(
+							segment === undefined || segmentIsRemoved(segment),
+							"Content with poisoned handle not removed from shared string.",
+						);
+					}
+				}
+			},
 		},
 		{
 			...defaultFuzzOptions,
@@ -170,12 +186,6 @@ describe.only("SharedString fuzz testing", () => {
 			stagingMode: {
 				changeStagingModeProbability: 0.1,
 			},
-			// TODO: Include something like staging state / invariant error / precondition to make minimization work.
-			// Right now the failure mode of "another client saw a handle it shouldn't" is too common to occur even when removing ops such that
-			// initially valid test cases can become invalid.
-			// Idea to fix minimization: have the harness emit an event when exiting staging mode which the DDS can use to see if it expects
-			// all poisoned content to actually have been removed. Then invalid minimizations will produce a precondition error.
-			// skipMinimization: true,
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 		},

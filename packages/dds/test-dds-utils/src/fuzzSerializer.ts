@@ -19,6 +19,7 @@ import {
 	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+
 import { PoisonedDDSFuzzHandle } from "./ddsFuzzHandle.js";
 
 /**
@@ -55,7 +56,6 @@ export class DDSFuzzSerializer implements IFluidSerializer {
 	public encode(input: unknown, bind: IFluidHandleInternal): unknown {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		return !!input && typeof input === "object"
 			? this.recursivelyReplace(input, this.encodeValue, bind)
 			: input;
@@ -73,7 +73,6 @@ export class DDSFuzzSerializer implements IFluidSerializer {
 	public decode(input: unknown): unknown {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		return !!input && typeof input === "object"
 			? this.recursivelyReplace(input, this.decodeValue)
 			: input;
@@ -164,7 +163,6 @@ export class DDSFuzzSerializer implements IFluidSerializer {
 		let clone: object | undefined;
 		for (const key of Object.keys(input)) {
 			const value: unknown = input[key];
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (!!value && typeof value === "object") {
 				// Note: Except for IFluidHandle, `input` must not contain circular references (as object must
 				//       be JSON serializable.)  Therefore, guarding against infinite recursion here would only

@@ -41,11 +41,13 @@ import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
+	IChannel,
 	IChannelFactory,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -1022,16 +1024,15 @@ export function addClientContext(
 	state: DDSFuzzTestState<IChannelFactory>,
 	client: Client<IChannelFactory>,
 ): CleanupFunction {
-	const {
-		client: oldClient,
-		random: { handle: oldHandle },
-	} = state;
+	const { client: oldClient, random } = state;
+	// eslint-disable-next-line @typescript-eslint/unbound-method
+	const { handle: oldHandle } = random;
 
 	state.client = client;
-	state.random.handle = () =>
-		new DDSFuzzHandle(state.random.pick(handles), client.dataStoreRuntime);
+	random.handle = () => new DDSFuzzHandle(random.pick(handles), client.dataStoreRuntime);
 	return () => {
 		state.client = oldClient;
+		// eslint-disable-next-line unicorn/consistent-destructuring
 		state.random.handle = oldHandle;
 	};
 }
@@ -1218,11 +1219,7 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 		dataStoreRuntime,
 		clientId,
 	);
-	// TODO: More legitimate way to inject this alternative serialization strategy
-	(channel as any)._serializer = new DDSFuzzSerializer(
-		dataStoreRuntime.channelsRoutingContext,
-		dataStoreRuntime.id,
-	);
+	setupFuzzSerializer(channel, dataStoreRuntime);
 
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
 		// only track remote ops(which enables initialize from stashed ops), if rehydrate is enabled
@@ -1262,6 +1259,15 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	);
 }
 
+function setupFuzzSerializer(
+	channel: IChannel,
+	dataStoreRuntime: MockFluidDataStoreRuntime,
+): void {
+	// TODO: More legitimate way to inject this alternative serialization strategy
+	(channel as unknown as { _serializer: IFluidSerializer })._serializer =
+		new DDSFuzzSerializer(dataStoreRuntime.channelsRoutingContext, dataStoreRuntime.id);
+}
+
 async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	loadData: ClientLoadData,
@@ -1295,11 +1301,7 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 		services,
 		factory.attributes,
 	)) as ReturnType<TChannelFactory["create"]>;
-	// TODO: More legitimate way to inject this alternative serialization strategy
-	(channel as any)._serializer = new DDSFuzzSerializer(
-		dataStoreRuntime.channelsRoutingContext,
-		dataStoreRuntime.id,
-	);
+	setupFuzzSerializer(channel, dataStoreRuntime);
 	channel.connect(services);
 
 	const newClient: ClientWithStashData<TChannelFactory> = {
@@ -1552,10 +1554,10 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 	});
 }
 
-type InternalOnlyAndSkip = {
+interface InternalOnlyAndSkip {
 	only: Set<number>;
 	skip: Set<number>;
-};
+}
 
 type InternalOptions = InternalOnlyAndSkip & Omit<DDSFuzzSuiteOptions, "only" | "skip">;
 
