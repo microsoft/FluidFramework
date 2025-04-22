@@ -12,7 +12,8 @@
 export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime" as const;
 
 /**
- *
+ * This feature indicates that the datastore context will call setReadOnlyState on the
+ * datastore runtime.
  * @internal
  */
-export const setReadonly = "setReadonly" as const;
+export const setReadOnlyState = "setReadOnlyState" as const;

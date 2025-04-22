@@ -56,7 +56,7 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	setReadonly,
+	setReadOnlyState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -127,7 +127,7 @@ type RequireProps<T extends Record<never, unknown>, K extends keyof T> = Omit<T,
 	Required<Pick<T, K>>;
 
 interface IFluidDataStoreContextFeaturesToTypes {
-	[setReadonly]: RequireProps<IFluidDataStoreContext, "readonly">;
+	[setReadOnlyState]: RequireProps<IFluidDataStoreContext, "readonly">;
 }
 
 function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
@@ -277,7 +277,7 @@ export class FluidDataStoreRuntime
 		const { ILayerCompatDetails } = dataStoreContext as FluidObject<ILayerCompatDetails>;
 		validateRuntimeCompatibility(ILayerCompatDetails, this.dispose.bind(this));
 
-		if (contextSupportsFeature(dataStoreContext, "setReadonly")) {
+		if (contextSupportsFeature(dataStoreContext, setReadOnlyState)) {
 			this._readonly = dataStoreContext.readonly;
 		} else {
 			this._readonly = this.dataStoreContext.deltaManager.readOnlyInfo.readonly === true;
