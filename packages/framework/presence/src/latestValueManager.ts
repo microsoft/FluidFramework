@@ -182,21 +182,39 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
+ * Arguments that are passed to the {@link StateFactory.latest} function.
+ *
+ * @alpha
+ */
+export interface LatestArguments<T extends object | null> {
+	/**
+	 * The initial value of the local state.
+	 */
+	// eslint-disable-next-line @rushstack/no-new-null
+	local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
+
+	/**
+	 * See {@link BroadcastControlSettings}.
+	 */
+	settings?: BroadcastControlSettings | undefined;
+}
+
+/**
  * Factory for creating a {@link LatestRaw} State object.
  *
  * @alpha
  */
 export function latest<T extends object | null, Key extends string = string>(
-	// eslint-disable-next-line @rushstack/no-new-null
-	initialValue: JsonSerializable<T> & JsonDeserialized<T> & (object | null),
-	controls?: BroadcastControlSettings,
+	args: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
-	// Latest takes ownership of initialValue but makes a shallow
+	const { local, settings } = args;
+
+	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: initialValue === null ? initialValue : shallowCloneObject(initialValue),
+		value: local === null ? local : shallowCloneObject(local),
 	};
 	const factory = (
 		key: Key,
@@ -208,9 +226,9 @@ export function latest<T extends object | null, Key extends string = string>(
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestRaw<T>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

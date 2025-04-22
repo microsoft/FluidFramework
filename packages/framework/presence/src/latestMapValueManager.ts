@@ -490,6 +490,25 @@ class LatestMapRawValueManagerImpl<
 }
 
 /**
+ * Arguments that are passed to the {@link StateFactory.latestMap} function.
+ *
+ * @alpha
+ */
+export interface LatestMapArguments<T, Keys extends string | number = string | number> {
+	/**
+	 * The initial value of the local state.
+	 */
+	local?: {
+		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+	};
+
+	/**
+	 * See {@link BroadcastControlSettings}.
+	 */
+	settings?: BroadcastControlSettings | undefined;
+}
+
+/**
  * Factory for creating a {@link LatestMapRaw} State object.
  *
  * @alpha
@@ -499,15 +518,15 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	initialValues?: {
-		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-	},
-	controls?: BroadcastControlSettings,
+	args?: LatestMapArguments<T, Keys>,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMapRaw<T, Keys>
 > {
+	const settings = args?.settings;
+	const initialValues = args?.local;
+
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
 		T,
@@ -517,7 +536,11 @@ export function latestMap<
 	// LatestMapRaw takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
 		for (const key of objectKeys(initialValues)) {
-			value.items[key] = { rev: 0, timestamp, value: initialValues[key] };
+			value.items[key] = {
+				rev: 0,
+				timestamp,
+				value: initialValues[key],
+			};
 		}
 	}
 	const factory = (
@@ -530,7 +553,7 @@ export function latestMap<
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestMapRaw<T, Keys>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<
 			LatestMapRawValueManagerImpl<T, RegistrationKey, Keys>,
 			T,
@@ -540,7 +563,7 @@ export function latestMap<
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
-				controls,
+				settings,
 			),
 		),
 	});

@@ -26,10 +26,10 @@ function createLatestMapManager(
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.states.getWorkspace(testWorkspaceName, {
-		fixedMap: StateFactory.latestMap(
-			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
-			valueControlSettings,
-		),
+		fixedMap: StateFactory.latestMap({
+			local: { key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
+			settings: valueControlSettings,
+		}),
 	});
 	return states.props.fixedMap;
 }
@@ -52,7 +52,7 @@ describe("Presence", () => {
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.states.getWorkspace(testWorkspaceName, {
-				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
+				fixedMap: StateFactory.latestMap({ local: { key1: { x: 0, y: 0 } } }),
 			});
 			return states.props.fixedMap;
 		}
@@ -91,7 +91,7 @@ describe("Presence", () => {
 		it(".presence provides Presence it was created under", () => {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.states.getWorkspace(testWorkspaceName, {
-				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
+				fixedMap: StateFactory.latestMap({ local: { key1: { x: 0, y: 0 } } }),
 			});
 
 			assert.strictEqual(states.props.fixedMap.presence, presence);
@@ -111,8 +111,10 @@ export function checkCompiles(): void {
 		"name:testStatesWorkspaceWithLatestMap",
 		{
 			fixedMap: StateFactory.latestMap({
-				key1: { x: 0, y: 0 },
-				key2: { ref: "default", someId: 0 },
+				local: {
+					key1: { x: 0, y: 0 },
+					key2: { ref: "default", someId: 0 },
+				},
 			}),
 		},
 	);
@@ -148,7 +150,7 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	workspace.add("pointers", StateFactory.latestMap<PointerData>({}));
+	workspace.add("pointers", StateFactory.latestMap<PointerData>({ local: {} }));
 
 	const pointers = workspace.props.pointers;
 	const localPointers = pointers.local;
@@ -194,11 +196,13 @@ export function checkCompiles(): void {
 	workspace.add(
 		"primitiveMap",
 		StateFactory.latestMap({
-			// eslint-disable-next-line unicorn/no-null
-			null: null,
-			string: "string",
-			number: 0,
-			boolean: true,
+			local: {
+				// eslint-disable-next-line unicorn/no-null
+				null: null,
+				string: "string",
+				number: 0,
+				boolean: true,
+			},
 		}),
 	);
 

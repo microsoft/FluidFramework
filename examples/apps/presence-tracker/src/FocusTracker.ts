@@ -57,7 +57,9 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		// window.
 		statesWorkspace.add(
 			"focus",
-			StateFactory.latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
+			StateFactory.latest<IFocusState>({
+				local: { hasFocus: window.document.hasFocus() },
+			}),
 		);
 
 		// Save a reference to the focus state for easy access within the FocusTracker.
