@@ -62,61 +62,15 @@ import {
 	createLoadDataFromStashData,
 	hasStashData,
 } from "./clientLoading.js";
-import { DDSFuzzHandle, PoisonedDDSFuzzHandle } from "./ddsFuzzHandle.js";
+import { DDSFuzzHandle } from "./ddsFuzzHandle.js";
 import { DDSFuzzSerializer } from "./fuzzSerializer.js";
-
-/*
-
-General options:
-
-1. Not use handle
-- E.g. sharedstring generates text with "!!!!" which should never be submitted (or some special char) which we can check for
-- How does this work for annotate?
-
-2. Use handles
-- An interesting case -
-
-
-General idea:
-
-add op "enter staging mode" and "exit staging mode"
-
-{
-	type: "enterStaging",
-	clientId: "A"
-}
-
-
-
-{
-	type: "exitStaging",
-	clientId: "A"
-}
-
-on application -
-
-enterStaging causes client A to disconnect
-
-in between, client A can perform ops which contain "to-be-removed" content
-
-exitStaging should make client A remove all "to-be-removed" content and then reconnect.
-No "to-be-removed" content should make its way into the op stream
-
-*/
+import { makeUnreachableCodePathProxy } from "./utils.js";
 
 /**
  * @internal
  */
 export interface DDSRandom extends IRandom {
 	handle(): IFluidHandle;
-	/**
-	 * Generate a handle which should never be sent to other clients.
-	 * This is used to simulate data that should be squashed when exiting staging mode / resubmitting ops,
-	 * and it is up to the test author to ensure that all such handles are removed before resubmission occurs.
-	 * A suggested approach to implement this is to store information about the location of all poisoned handles
-	 * in the test state while in staging mode, then listening to the "exitStaging" event to issue remove ops.
-	 */
-	poisonedHandle(): IFluidHandle;
 }
 
 /**
@@ -157,11 +111,6 @@ export interface ChangeConnectionState {
 	connected: boolean;
 }
 
-export interface ChangeStagingMode {
-	type: "changeStagingMode";
-	newStatus: "off" | "staging" | "exiting";
-}
-
 /**
  * @internal
  */
@@ -169,14 +118,6 @@ export interface StashClient {
 	type: "stashClient";
 	existingClientId: string;
 	newClientId: string;
-}
-
-/**
- * @internal
- */
-export interface HandlePicked {
-	type: "handlePicked";
-	handleId: string;
 }
 
 /**
@@ -224,6 +165,16 @@ export interface Synchronize {
 	type: "synchronize";
 	clients?: string[];
 }
+
+export type HarnessOperation =
+	| AddClient
+	| Attach
+	| Attaching
+	| Rehydrate
+	| ChangeConnectionState
+	| TriggerRebase
+	| Synchronize
+	| StashClient;
 
 /**
  * Represents a generic fuzz model for testing eventual consistency of a DDS.
@@ -487,13 +438,6 @@ export interface DDSFuzzSuiteOptions {
 	rebaseProbability: number;
 
 	/**
-	 * TODO: Document expectations / consider reworking the API. Weird decisions right now.
-	 */
-	stagingMode: {
-		changeStagingModeProbability: number;
-	};
-
-	/**
 	 * Seed which should be replayed from disk.
 	 *
 	 * This option is intended for quick, by-hand minimization of failure JSON. As such, it adds a `.only`
@@ -599,9 +543,6 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	saveFailures: false,
 	saveSuccesses: false,
 	validationStrategy: { type: "random", probability: 0.05 },
-	stagingMode: {
-		changeStagingModeProbability: 0,
-	},
 };
 
 /**
@@ -678,69 +619,6 @@ export function mixinNewClient<
 	};
 }
 
-export function mixinStagingMode<
-	TChannelFactory extends IChannelFactory,
-	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState<TChannelFactory>,
->(
-	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
-	options: DDSFuzzSuiteOptions,
-): DDSFuzzHarnessModel<TChannelFactory, TOperation | ChangeStagingMode, TState> {
-	const generatorFactory: () => AsyncGenerator<TOperation | ChangeStagingMode, TState> =
-		() => {
-			const baseGenerator = model.generatorFactory();
-			return async (state): Promise<TOperation | ChangeStagingMode | typeof done> => {
-				const baseOp = await baseGenerator(state);
-				if (state.client.stagingModeStatus === "exiting") {
-					return baseOp === done
-						? {
-								type: "changeStagingMode",
-								newStatus: "off",
-							}
-						: baseOp;
-				}
-				if (
-					!state.isDetached &&
-					state.random.bool(options.stagingMode.changeStagingModeProbability)
-				) {
-					return {
-						type: "changeStagingMode",
-						newStatus: state.client.stagingModeStatus === "off" ? "staging" : "exiting",
-					};
-				}
-
-				return baseOp;
-			};
-		};
-
-	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | ChangeStagingMode>[]
-		| undefined;
-
-	const reducer: AsyncReducer<TOperation | ChangeStagingMode, TState> = async (
-		state,
-		operation,
-	) => {
-		if (operation.type === "changeStagingMode") {
-			state.client.stagingModeStatus = (operation as ChangeStagingMode).newStatus;
-			if ((operation as ChangeStagingMode).newStatus === "off") {
-				state.client.containerRuntime.connected = true;
-			} else if ((operation as ChangeStagingMode).newStatus === "staging") {
-				state.client.containerRuntime.connected = false;
-			}
-			return state;
-		} else {
-			return model.reducer(state, operation as TOperation);
-		}
-	};
-	return {
-		...model,
-		minimizationTransforms,
-		generatorFactory,
-		reducer,
-	};
-}
-
 /**
  * Mixes in functionality to disconnect and reconnect clients in a DDS fuzz model.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -753,17 +631,14 @@ export function mixinReconnect<
 >(
 	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
+	isReconnectAllowed = (state: TState): boolean => !state.isDetached,
 ): DDSFuzzHarnessModel<TChannelFactory, TOperation | ChangeConnectionState, TState> {
 	const generatorFactory: () => AsyncGenerator<TOperation | ChangeConnectionState, TState> =
 		() => {
 			const baseGenerator = model.generatorFactory();
 			return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
 				const baseOp = baseGenerator(state);
-				if (
-					state.client.stagingModeStatus === "off" &&
-					!state.isDetached &&
-					state.random.bool(options.reconnectProbability)
-				) {
+				if (isReconnectAllowed(state) && state.random.bool(options.reconnectProbability)) {
 					return {
 						type: "changeConnectionState",
 						connected: !state.client.containerRuntime.connected,
@@ -1143,6 +1018,24 @@ export function mixinSynchronization<
 const isClientSpec = (op: unknown): op is ClientSpec =>
 	(op as ClientSpec).clientId !== undefined;
 
+export function addClientContext(
+	state: DDSFuzzTestState<IChannelFactory>,
+	client: Client<IChannelFactory>,
+): CleanupFunction {
+	const {
+		client: oldClient,
+		random: { handle: oldHandle },
+	} = state;
+
+	state.client = client;
+	state.random.handle = () =>
+		new DDSFuzzHandle(state.random.pick(handles), client.dataStoreRuntime);
+	return () => {
+		state.client = oldClient;
+		state.random.handle = oldHandle;
+	};
+}
+
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link DDSFuzzTestState.client}
@@ -1159,6 +1052,10 @@ export function mixinClientSelection<
 >(
 	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 	_: DDSFuzzSuiteOptions,
+	setupClientState: (
+		state: TState,
+		client: TState["client"],
+	) => CleanupFunction = addClientContext,
 ): DDSFuzzHarnessModel<TChannelFactory, TOperation, TState> {
 	const generatorFactory: () => AsyncGenerator<TOperation, TState> = () => {
 		const baseGenerator = model.generatorFactory();
@@ -1169,7 +1066,7 @@ export function mixinClientSelection<
 			// 2. Make it available to the subsequent reducer logic we're going to inject
 			// (so that we can recover the channel from serialized data)
 			const client = state.random.pick(state.clients);
-			const baseOp = await runInStateWithClient(state, client, async () =>
+			const baseOp = await runInStateWithClient(state, client, setupClientState, async () =>
 				baseGenerator(state),
 			);
 			return baseOp === done
@@ -1185,7 +1082,7 @@ export function mixinClientSelection<
 		assert(isClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.channel.id === operation.clientId);
 		assert(client !== undefined);
-		await runInStateWithClient(state, client, async () =>
+		await runInStateWithClient(state, client, setupClientState, async () =>
 			model.reducer(state, operation as TOperation),
 		);
 	};
@@ -1272,7 +1169,14 @@ export function mixinStashedClient<
 	};
 }
 
-const handles = Array.from({ length: 100 }, (_, index) => `handle_${index}`);
+export const handles = Array.from({ length: 100 }, (_, index) => `handle_${index}`);
+
+/**
+ * Callback invoked on "cleanup" of some associated operation.
+ *
+ * This is the same dispose callback pattern used by our eventing library in common-utils.
+ */
+export type CleanupFunction = () => void;
 
 /**
  * This modifies the value of "client" while callback is running, then restores it.
@@ -1283,37 +1187,15 @@ const handles = Array.from({ length: 100 }, (_, index) => `handle_${index}`);
 async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFactory>, Result>(
 	state: TState,
 	client: TState["client"],
+	setupClientState: (state: TState, client: TState["client"]) => CleanupFunction,
 	callback: (state: TState) => Promise<Result>,
 ): Promise<Result> {
-	const oldClient = state.client;
-	state.client = client;
-	state.random.handle = () =>
-		new DDSFuzzHandle(state.random.pick(handles), client.dataStoreRuntime);
-	state.random.poisonedHandle = () =>
-		new PoisonedDDSFuzzHandle(
-			state.random.pick(handles),
-			client.dataStoreRuntime,
-			client.channel.id,
-		);
-
+	const cleanup = setupClientState(state, client);
 	try {
 		return await callback(state);
 	} finally {
-		// This code is explicitly trying to "update" to the old value.
-		// eslint-disable-next-line require-atomic-updates
-		state.client = oldClient;
+		cleanup();
 	}
-}
-
-function makeUnreachableCodePathProxy<T extends object>(name: string): T {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	return new Proxy({} as T, {
-		get: (): never => {
-			throw new Error(
-				`Unexpected read of '${name}:' this indicates a bug in the DDS eventual consistency harness.`,
-			);
-		},
-	});
 }
 
 function createDetachedClient<TChannelFactory extends IChannelFactory>(
@@ -1335,6 +1217,11 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	const channel: ReturnType<typeof factory.create> = factory.create(
 		dataStoreRuntime,
 		clientId,
+	);
+	// TODO: More legitimate way to inject this alternative serialization strategy
+	(channel as any)._serializer = new DDSFuzzSerializer(
+		dataStoreRuntime.channelsRoutingContext,
+		dataStoreRuntime.id,
 	);
 
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
@@ -1560,7 +1447,6 @@ export async function runTestForSeed<
 			// These two properties are injected by client selection logic, which allows binding the handle
 			// to an appropriate client context. Nothing in the harness itself should need them.
 			handle: makeUnreachableCodePathProxy("random.handle"),
-			poisonedHandle: makeUnreachableCodePathProxy("random.poisonedHandle"),
 		},
 		client: makeUnreachableCodePathProxy("client"),
 		isDetached: startDetached,
@@ -1666,14 +1552,12 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 	});
 }
 
-type InternalOptions = Omit<DDSFuzzSuiteOptions, "only" | "skip"> & {
+type InternalOnlyAndSkip = {
 	only: Set<number>;
 	skip: Set<number>;
 };
 
-function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOptions {
-	return options.only instanceof Set && options.skip instanceof Set;
-}
+type InternalOptions = InternalOnlyAndSkip & Omit<DDSFuzzSuiteOptions, "only" | "skip">;
 
 /**
  * Some reducers require preconditions be met which are validated by their generator.
@@ -1716,29 +1600,19 @@ export async function replayTest<
 	await runTestForSeed(model, options, seed, saveInfo);
 }
 
-/**
- * Creates a suite of eventual consistency tests for a particular DDS model.
- * @internal
- */
-export function createDDSFuzzSuite<
-	TChannelFactory extends IChannelFactory,
-	TOperation extends BaseOperation,
->(
-	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
-	providedOptions?: Partial<DDSFuzzSuiteOptions>,
-): void {
-	const options = {
-		...defaultDDSFuzzSuiteOptions,
-		...providedOptions,
-	};
-
+export function convertOnlyAndSkip<TOptions extends DDSFuzzSuiteOptions>(
+	options: TOptions,
+): InternalOnlyAndSkip & Omit<TOptions, "only" | "skip"> {
 	const only = new Set(options.only);
 	const skip = new Set(options.skip);
 	Object.assign(options, { only, skip });
-	assert(isInternalOptions(options));
+	return options as unknown as InternalOnlyAndSkip & Omit<TOptions, "only" | "skip">;
+}
 
-	const model = getFullModel(ddsModel, options);
-
+export function createSuite<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+>(model: DDSFuzzHarnessModel<TChannelFactory, TOperation>, options: InternalOptions): void {
 	const describeFuzz = createFuzzDescribe({ defaultTestCount: options.defaultTestCount });
 	describeFuzz(model.workloadName, ({ testCount, stressMode }) => {
 		before(() => {
@@ -1789,25 +1663,13 @@ const getFullModel = <
 >(
 	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzHarnessModel<
-	TChannelFactory,
-	| TOperation
-	| AddClient
-	| Attach
-	| Attaching
-	| Rehydrate
-	| ChangeStagingMode
-	| ChangeConnectionState
-	| TriggerRebase
-	| Synchronize
-	| StashClient
-> =>
+): DDSFuzzHarnessModel<TChannelFactory, TOperation | HarnessOperation> =>
 	mixinAttach(
 		mixinSynchronization(
 			mixinNewClient(
 				mixinStashedClient(
 					mixinClientSelection(
-						mixinStagingMode(mixinReconnect(mixinRebase(ddsModel, options), options), options),
+						mixinReconnect(mixinRebase(ddsModel, options), options),
 						options,
 					),
 					options,
@@ -1818,6 +1680,22 @@ const getFullModel = <
 		),
 		options,
 	);
+
+/**
+ * Creates a suite of eventual consistency tests for a particular DDS model.
+ * @internal
+ */
+export function createDDSFuzzSuite<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+>(
+	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+	providedOptions?: Partial<DDSFuzzSuiteOptions>,
+): void {
+	const options = convertOnlyAndSkip({ ...defaultDDSFuzzSuiteOptions, ...providedOptions });
+	const model = getFullModel(ddsModel, options);
+	createSuite(model, options);
+}
 
 /**
  * {@inheritDoc (createDDSFuzzSuite:function)}
