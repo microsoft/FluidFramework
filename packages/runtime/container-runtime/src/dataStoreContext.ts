@@ -201,7 +201,7 @@ export interface IFluidDataStoreContextEvents extends IEvent {
  * support should be listed below, and as layer compat support goes away for those feature, we should also remove them from this proxy, with the eventual goal
  * of completely remove this proxy.
  *
- * - Everything regarding readonly is to support older datastore runtimes which do not have the setReadonly function, so must get their readonly state via the delta manager.
+ * - Everything regarding readonly is to support older datastore runtimes which do not have the setReadonly function, so they must get their readonly state via the delta manager.
  *
  */
 class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
