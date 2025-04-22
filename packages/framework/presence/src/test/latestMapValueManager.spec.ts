@@ -12,7 +12,7 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
-	LatestMap,
+	LatestMapRaw,
 	LatestMapItemUpdatedClientData,
 	Presence,
 } from "@fluidframework/presence/alpha";
@@ -43,7 +43,7 @@ describe("Presence", () => {
 
 		addControlsTests(createLatestMapManager);
 
-		function setupMapValueManager(): LatestMap<
+		function setupMapValueManager(): LatestMapRaw<
 			{
 				x: number;
 				y: number;

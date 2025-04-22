@@ -26,7 +26,7 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @alpha
  */
-export interface LatestEvents<T> {
+export interface LatestRawEvents<T> {
 	/**
 	 * Raised when remote client's value is updated, which may be the same value.
 	 *
@@ -53,16 +53,16 @@ export interface LatestEvents<T> {
  * @sealed
  * @alpha
  */
-export interface Latest<T> {
+export interface LatestRaw<T> {
 	/**
 	 * Containing {@link Presence}
 	 */
 	readonly presence: Presence;
 
 	/**
-	 * Events for Latest.
+	 * Events for LatestRaw.
 	 */
-	readonly events: Listenable<LatestEvents<T>>;
+	readonly events: Listenable<LatestRawEvents<T>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -93,9 +93,9 @@ export interface Latest<T> {
 }
 
 class LatestValueManagerImpl<T, Key extends string>
-	implements Latest<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
+	implements LatestRaw<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
-	public readonly events = createEmitter<LatestEvents<T>>();
+	public readonly events = createEmitter<LatestRawEvents<T>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -200,13 +200,13 @@ export interface LatestArguments<T extends object | null> {
 }
 
 /**
- * Factory for creating a {@link Latest} State object.
+ * Factory for creating a {@link LatestRaw} State object.
  *
  * @alpha
  */
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,
-): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
+): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
 	const { local, settings } = args;
 
 	// Latest takes ownership of the initial local value but makes a shallow
@@ -224,7 +224,7 @@ export function latest<T extends object | null, Key extends string = string>(
 		>,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<Latest<T>>;
+		manager: InternalTypes.StateValue<LatestRaw<T>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(

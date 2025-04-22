@@ -72,7 +72,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
  * @sealed
  * @alpha
  */
-export interface LatestMapEvents<T, K extends string | number> {
+export interface LatestMapRawEvents<T, K extends string | number> {
 	/**
 	 * Raised when any item's value for remote client is updated.
 	 * @param updates - Map of one or more values updated.
@@ -209,7 +209,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T, K>,
 		private readonly emitter: IEmitter<
-			Pick<LatestMapEvents<T, K>, "localItemUpdated" | "localItemRemoved">
+			Pick<LatestMapRawEvents<T, K>, "localItemUpdated" | "localItemRemoved">
 		>,
 		private readonly localUpdate: (
 			updates: InternalTypes.MapValueState<
@@ -310,16 +310,16 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  * @sealed
  * @alpha
  */
-export interface LatestMap<T, Keys extends string | number = string | number> {
+export interface LatestMapRaw<T, Keys extends string | number = string | number> {
 	/**
 	 * Containing {@link Presence}
 	 */
 	readonly presence: Presence;
 
 	/**
-	 * Events for LatestMap.
+	 * Events for LatestMapRaw.
 	 */
-	readonly events: Listenable<LatestMapEvents<T, Keys>>;
+	readonly events: Listenable<LatestMapRawEvents<T, Keys>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -344,15 +344,15 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
 }
 
-class LatestMapValueManagerImpl<
+class LatestMapRawValueManagerImpl<
 	T,
 	RegistrationKey extends string,
 	Keys extends string | number = string | number,
 > implements
-		LatestMap<T, Keys>,
+		LatestMapRaw<T, Keys>,
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
-	public readonly events = createEmitter<LatestMapEvents<T, Keys>>();
+	public readonly events = createEmitter<LatestMapRawEvents<T, Keys>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -509,7 +509,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 }
 
 /**
- * Factory for creating a {@link LatestMap} State object.
+ * Factory for creating a {@link LatestMapRaw} State object.
  *
  * @alpha
  */
@@ -522,7 +522,7 @@ export function latestMap<
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
-	LatestMap<T, Keys>
+	LatestMapRaw<T, Keys>
 > {
 	const settings = args?.settings;
 	const initialValues = args?.local;
@@ -533,7 +533,7 @@ export function latestMap<
 		// This should be `Keys`, but will only work if properties are optional.
 		string | number
 	> = { rev: 0, items: {} };
-	// LatestMap takes ownership of values within initialValues.
+	// LatestMapRaw takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
 		for (const key of objectKeys(initialValues)) {
 			value.items[key] = {
@@ -551,15 +551,15 @@ export function latestMap<
 		>,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
+		manager: InternalTypes.StateValue<LatestMapRaw<T, Keys>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<
-			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
+			LatestMapRawValueManagerImpl<T, RegistrationKey, Keys>,
 			T,
 			InternalTypes.MapValueState<T, Keys>
 		>(
-			new LatestMapValueManagerImpl(
+			new LatestMapRawValueManagerImpl(
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
@@ -567,5 +567,5 @@ export function latestMap<
 			),
 		),
 	});
-	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
+	return Object.assign(factory, { instanceBase: LatestMapRawValueManagerImpl });
 }
