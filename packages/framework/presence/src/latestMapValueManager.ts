@@ -495,7 +495,7 @@ class LatestMapValueManagerImpl<
  * @alpha
  */
 export function latestMap<
-	T extends object,
+	T,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
