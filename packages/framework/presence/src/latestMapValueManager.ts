@@ -504,6 +504,10 @@ export interface LatestMapArguments<
 	local?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	};
+
+	/**
+	 * See {@link BroadcastControlSettings}.
+	 */
 	settings?: BroadcastControlSettings | undefined;
 }
 

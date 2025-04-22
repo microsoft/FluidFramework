@@ -191,6 +191,10 @@ export interface LatestArguments<T extends object> {
 	 * The initial value of the local state.
 	 */
 	local: JsonSerializable<T> & JsonDeserialized<T> & object;
+
+	/**
+	 * See {@link BroadcastControlSettings}.
+	 */
 	settings?: BroadcastControlSettings | undefined;
 }
 

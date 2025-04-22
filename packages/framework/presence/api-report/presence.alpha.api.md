@@ -153,7 +153,6 @@ export function latest<T extends object, Key extends string = string>(args: Late
 // @alpha
 export interface LatestArguments<T extends object> {
     local: JsonSerializable<T> & JsonDeserialized<T> & object;
-    // (undocumented)
     settings?: BroadcastControlSettings | undefined;
 }
 
@@ -200,7 +199,6 @@ export interface LatestMapArguments<T extends object, Keys extends string | numb
     local?: {
         [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
     };
-    // (undocumented)
     settings?: BroadcastControlSettings | undefined;
 }
 
