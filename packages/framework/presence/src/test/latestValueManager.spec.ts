@@ -19,6 +19,8 @@ import { StateFactory } from "@fluidframework/presence/alpha";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
+/* eslint-disable unicorn/no-null */
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestManager(
 	presence: Presence,
@@ -72,12 +74,30 @@ describe("Presence", () => {
 				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
 			});
 
+			it("can set and get null as initial value", () => {
+				const states = presence.states.getWorkspace(testWorkspaceName, {
+					arr: StateFactory.latest(null),
+				});
+				assert.deepStrictEqual(states.props.arr.local, null);
+			});
+
 			it(".presence provides Presence it was created under", () => {
 				const states = presence.states.getWorkspace(testWorkspaceName, {
 					camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 				});
 
 				assert.strictEqual(states.props.camera.presence, presence);
+			});
+
+			it("can set and get null as modified local value", () => {
+				// Setup
+				const states = presence.states.getWorkspace(testWorkspaceName, {
+					nullable: StateFactory.latest<{ x: number; y: number } | null>({ x: 0, y: 0 }),
+				});
+
+				// Act and Verify
+				states.props.nullable.local = null;
+				assert.deepStrictEqual(states.props.nullable.local, null);
 			});
 		});
 
@@ -115,6 +135,7 @@ export function checkCompiles(): void {
 	const statesWorkspace = presence.states.getWorkspace("name:testStatesWorkspaceWithLatest", {
 		cursor: StateFactory.latest({ x: 0, y: 0 }),
 		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
+		nullablePoint: StateFactory.latest<null | { x: number; y: number }>(null),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
@@ -141,6 +162,9 @@ export function checkCompiles(): void {
 	// Update our cursor position
 	cursor.local = { x: 1, y: 2 };
 
+	// Set nullable point to non-null value
+	props.nullablePoint.local = { x: 10, y: -2 };
+
 	// Listen to others cursor updates
 	const cursorUpdatedOff = cursor.events.on("remoteUpdated", ({ attendee, value }) =>
 		console.log(`attendee ${attendee.attendeeId}'s cursor is now at (${value.x},${value.y})`),
@@ -156,3 +180,5 @@ export function checkCompiles(): void {
 		logClientValue({ attendee, value });
 	}
 }
+
+/* eslint-enable unicorn/no-null */
