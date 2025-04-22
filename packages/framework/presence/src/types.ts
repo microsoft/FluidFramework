@@ -101,7 +101,7 @@ export interface StatesWorkspace<
 	/**
 	 * Registry of State objects.
 	 */
-	readonly props: StatesWorkspaceEntries<TSchema>;
+	readonly states: StatesWorkspaceEntries<TSchema>;
 
 	/**
 	 * Default controls for management of broadcast updates.
@@ -166,7 +166,7 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	/**
 	 * Registry of `NotificationsManager`s.
 	 */
-	readonly props: StatesWorkspaceEntries<TSchema>;
+	readonly states: StatesWorkspaceEntries<TSchema>;
 
 	/**
 	 * Containing {@link Presence}

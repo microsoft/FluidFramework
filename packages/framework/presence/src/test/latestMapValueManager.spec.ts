@@ -31,7 +31,7 @@ function createLatestMapManager(
 			valueControlSettings,
 		),
 	});
-	return states.props.fixedMap;
+	return states.states.fixedMap;
 }
 
 describe("Presence", () => {
@@ -54,7 +54,7 @@ describe("Presence", () => {
 			const states = presence.states.getWorkspace(testWorkspaceName, {
 				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
 			});
-			return states.props.fixedMap;
+			return states.states.fixedMap;
 		}
 
 		it("localItemUpdated event is fired with new value when local value is updated", () => {
@@ -94,7 +94,7 @@ describe("Presence", () => {
 				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
 			});
 
-			assert.strictEqual(states.props.fixedMap.presence, presence);
+			assert.strictEqual(states.states.fixedMap.presence, presence);
 		});
 	});
 });
@@ -118,7 +118,7 @@ export function checkCompiles(): void {
 	);
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
-	const props = workspace.props;
+	const props = workspace.states;
 
 	props.fixedMap.local.get("key1");
 	// @ts-expect-error with inferred keys only those named it init are accessible
@@ -147,7 +147,7 @@ export function checkCompiles(): void {
 
 	workspace.add("pointers", StateFactory.latestMap<PointerData>({}));
 
-	const pointers = workspace.props.pointers;
+	const pointers = workspace.states.pointers;
 	const localPointers = pointers.local;
 
 	function logClientValue<T>({

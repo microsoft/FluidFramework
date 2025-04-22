@@ -27,7 +27,7 @@ function createLatestManager(
 	const states = presence.states.getWorkspace(testWorkspaceName, {
 		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
 	});
-	return states.props.camera;
+	return states.states.camera;
 }
 
 describe("Presence", () => {
@@ -48,28 +48,28 @@ describe("Presence", () => {
 				const states = presence.states.getWorkspace(testWorkspaceName, {
 					obj: StateFactory.latest({}),
 				});
-				assert.deepStrictEqual(states.props.obj.local, {});
+				assert.deepStrictEqual(states.states.obj.local, {});
 			});
 
 			it("can set and get object with properties as initial value", () => {
 				const states = presence.states.getWorkspace(testWorkspaceName, {
 					obj: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 				});
-				assert.deepStrictEqual(states.props.obj.local, { x: 0, y: 0, z: 0 });
+				assert.deepStrictEqual(states.states.obj.local, { x: 0, y: 0, z: 0 });
 			});
 
 			it("can set and get empty array as initial value", () => {
 				const states = presence.states.getWorkspace(testWorkspaceName, {
 					arr: StateFactory.latest([]),
 				});
-				assert.deepStrictEqual(states.props.arr.local, []);
+				assert.deepStrictEqual(states.states.arr.local, []);
 			});
 
 			it("can set and get array with elements as initial value", () => {
 				const states = presence.states.getWorkspace(testWorkspaceName, {
 					arr: StateFactory.latest([1, 2, 3]),
 				});
-				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
+				assert.deepStrictEqual(states.states.arr.local, [1, 2, 3]);
 			});
 
 			it(".presence provides Presence it was created under", () => {
@@ -77,7 +77,7 @@ describe("Presence", () => {
 					camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 				});
 
-				assert.strictEqual(states.props.camera.presence, presence);
+				assert.strictEqual(states.states.camera.presence, presence);
 			});
 		});
 
@@ -89,7 +89,7 @@ describe("Presence", () => {
 			const states = presence.states.getWorkspace(testWorkspaceName, {
 				camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 			});
-			const camera = states.props.camera;
+			const camera = states.states.camera;
 
 			let localUpdateCount = 0;
 			camera.events.on("localUpdated", (update) => {
@@ -118,16 +118,16 @@ export function checkCompiles(): void {
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
-	const props = workspace.props;
+	const props = workspace.states;
 
 	workspace.add("caret", StateFactory.latest({ id: "", pos: 0 }));
 
 	const fakeAdd =
-		workspace.props.caret.local.pos + props.camera.local.z + props.cursor.local.x;
+		workspace.states.caret.local.pos + props.camera.local.z + props.cursor.local.x;
 	console.log(fakeAdd);
 
 	// @ts-expect-error local may be set wholly, but partially it is readonly
-	workspace.props.caret.local.pos = 0;
+	workspace.states.caret.local.pos = 0;
 
 	function logClientValue<
 		T /* following extends should not be required: */ extends Record<string, unknown>,

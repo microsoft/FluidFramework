@@ -147,7 +147,7 @@ describe("Presence", () => {
 					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
 				});
 
-				const { count } = stateWorkspace.props;
+				const { count } = stateWorkspace.states;
 
 				clock.tick(10); // Time is now 1020
 
@@ -270,7 +270,7 @@ describe("Presence", () => {
 					count: StateFactory.latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
 				}); // will be queued; deadline is now 1070
 
-				const { count } = stateWorkspace.props;
+				const { count } = stateWorkspace.states;
 
 				clock.tick(10); // Time is now 1020
 				count.local = { num: 12 }; // will be queued; deadline remains 1070
@@ -372,7 +372,7 @@ describe("Presence", () => {
 					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				});
 
-				const { count } = stateWorkspace.props;
+				const { count } = stateWorkspace.states;
 
 				clock.tick(10); // Time is now 1020
 				count.local = { num: 12 }; // will be queued; deadline is set to 1120
@@ -492,7 +492,7 @@ describe("Presence", () => {
 					immediateUpdate: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
 				});
 
-				const { count, immediateUpdate } = stateWorkspace.props;
+				const { count, immediateUpdate } = stateWorkspace.states;
 
 				clock.tick(10); // Time is now 1020
 				count.local = { num: 12 }; // will be queued; deadline is set to 1120
@@ -579,7 +579,7 @@ describe("Presence", () => {
 					note: StateFactory.latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
 				}); // will be queued, deadline is set to 1060
 
-				const { count, note } = stateWorkspace.props;
+				const { count, note } = stateWorkspace.states;
 
 				clock.tick(10); // Time is now 1020
 				note.local = { message: "will be queued" }; // will be queued, deadline remains 1060
@@ -654,8 +654,8 @@ describe("Presence", () => {
 					note: StateFactory.latest({ message: "" }, { allowableUpdateLatencyMs: 60 }),
 				}); // will be queued, deadline is 1070
 
-				const { count } = stateWorkspace.props;
-				const { note } = stateWorkspace2.props;
+				const { count } = stateWorkspace.states;
+				const { note } = stateWorkspace2.states;
 
 				clock.tick(10); // Time is now 1020
 				note.local = { message: "will be queued" }; // will be queued, deadline is 1070
@@ -748,7 +748,7 @@ describe("Presence", () => {
 					),
 				);
 
-				const { testEvents } = notificationsWorkspace.props;
+				const { testEvents } = notificationsWorkspace.states;
 
 				clock.tick(40); // Time is now 1050
 
@@ -861,8 +861,8 @@ describe("Presence", () => {
 					),
 				);
 
-				const { count } = stateWorkspace.props;
-				const { testEvents } = notificationsWorkspace.props;
+				const { count } = stateWorkspace.states;
+				const { testEvents } = notificationsWorkspace.states;
 
 				testEvents.notifications.on("newId", (attendee, newId) => {
 					// do nothing

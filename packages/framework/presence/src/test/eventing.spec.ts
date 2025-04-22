@@ -245,8 +245,8 @@ describe("Presence", () => {
 				latest: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 				latestMap: StateFactory.latestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
 			});
-			latest = states.props.latest;
-			latestMap = states.props.latestMap;
+			latest = states.states.latest;
+			latestMap = states.states.latestMap;
 			if (notifications) {
 				const workspace: typeof states = states;
 				workspace.add(
@@ -255,7 +255,7 @@ describe("Presence", () => {
 						newId: (_attendee: Attendee, _id: number) => {},
 					}),
 				);
-				notificationManager = workspace.props.notifications;
+				notificationManager = workspace.states.notifications;
 			}
 		}
 
@@ -266,8 +266,8 @@ describe("Presence", () => {
 			const latesetMapStates = presence.states.getWorkspace("name:testWorkspace2", {
 				latestMap: StateFactory.latestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
 			});
-			latest = latestsStates.props.latest;
-			latestMap = latesetMapStates.props.latestMap;
+			latest = latestsStates.states.latest;
+			latestMap = latesetMapStates.states.latestMap;
 		}
 
 		function setupNotificationsWorkspace(): void {
@@ -279,7 +279,7 @@ describe("Presence", () => {
 					}),
 				},
 			);
-			notificationManager = notificationsWorkspace.props.notifications;
+			notificationManager = notificationsWorkspace.states.notifications;
 		}
 
 		function processUpdates(valueManagerUpdates: Record<string, UpdateContent>): void {
@@ -662,7 +662,7 @@ describe("Presence", () => {
 							}),
 						},
 					);
-					notificationsWorkspace.props.notifications.notifications.on(
+					notificationsWorkspace.states.notifications.notifications.on(
 						"newId",
 						notificationSpy,
 					);

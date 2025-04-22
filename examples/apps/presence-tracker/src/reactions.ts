@@ -47,7 +47,7 @@ export function initializeReactions(presence: Presence, mouseTracker: MouseTrack
 
 		// Check that we're connected before sending notifications.
 		if (presence.attendees.getMyself().getConnectionStatus() === "Connected") {
-			notificationsWorkspace.props.reactions.emit.broadcast(
+			notificationsWorkspace.states.reactions.emit.broadcast(
 				"reaction",
 				mouseTracker.getMyMousePosition(),
 				reactionValue ?? "?",

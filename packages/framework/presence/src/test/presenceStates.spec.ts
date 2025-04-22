@@ -77,7 +77,7 @@ export function checkCompiles(): void {
 
 	const initialCaret = { id: "", pos: 0 };
 	states.add("caret", createValueManager(initialCaret));
-	const statesProps = states.props;
+	const statesProps = states.states;
 
 	const fakeAdd = statesProps.camera.z + statesProps.cursor.x + statesProps.caret.pos;
 	console.log(fakeAdd);
