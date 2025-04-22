@@ -17,7 +17,11 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { LatestClientData, LatestData } from "./latestValueTypes.js";
+import type {
+	LatestClientData,
+	LatestData,
+	StateSchemaValidator,
+} from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -102,6 +106,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
+		private readonly validator: StateSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -130,9 +135,14 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
+				if (value.valid === true && this.validator !== undefined) {
+					const validData = this.validator(value.value);
+					value.valid = validData;
+				}
+
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: value.value,
+					value: value.valid === undefined ? undefined : value.value,
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
 			}
@@ -152,8 +162,15 @@ class LatestValueManagerImpl<T, Key extends string>
 		if (clientState === undefined) {
 			throw new Error("No entry for clientId");
 		}
+
+		// If
+		if (clientState.valid !== true && this.validator !== undefined) {
+			const validData = this.validator(clientState);
+			clientState.valid = validData;
+		}
+
 		return {
-			value: clientState.value,
+			value: clientState.valid === undefined ? undefined : clientState.value,
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -197,6 +214,7 @@ export interface LatestArguments<T extends object | null> {
 	 * See {@link BroadcastControlSettings}.
 	 */
 	settings?: BroadcastControlSettings | undefined;
+	validator?: StateSchemaValidator<T> | undefined;
 }
 
 /**
@@ -207,7 +225,7 @@ export interface LatestArguments<T extends object | null> {
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
-	const { local, settings } = args;
+	const { settings, local, validator } = args;
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
@@ -228,7 +246,13 @@ export function latest<T extends object | null, Key extends string = string>(
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings),
+			new LatestValueManagerImpl(
+				key,
+				datastoreFromHandle(datastoreHandle),
+				value,
+				validator,
+				settings,
+			),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

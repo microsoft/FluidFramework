@@ -33,7 +33,7 @@ export interface LatestMetadata {
  * @alpha
  */
 export interface LatestData<T> {
-	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
 	metadata: LatestMetadata;
 }
 
@@ -45,4 +45,39 @@ export interface LatestData<T> {
  */
 export interface LatestClientData<T> extends LatestData<T> {
 	attendee: Attendee;
+}
+
+/**
+ * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
+ * presence workspace and managed by a value manager.
+ *
+ * @alpha
+ */
+export type StateSchemaValidator<T> = (
+	unvalidatedData: unknown,
+	metadata?: StateSchemaValidatorMetadata,
+) => T | undefined;
+
+/**
+ * Optional metadata that is passed to a {@link StateSchemaValidator}.
+ *
+ * @alpha
+ *
+ * TODO: What else needs to be in the metadata?
+ */
+export interface StateSchemaValidatorMetadata {
+	/**
+	 * If the value being validated is a LatestValueMap value, this will be set to the value of the corresponding key.
+	 */
+	key?: string | number;
+}
+
+/**
+ * Type guard that checks if a value is a state schema validator.
+ * @param fn - A function that may be a schema validator.
+ */
+export function isStateSchemaValidator<T extends object>(
+	fn: unknown,
+): fn is StateSchemaValidator<T> {
+	return typeof fn === "function";
 }

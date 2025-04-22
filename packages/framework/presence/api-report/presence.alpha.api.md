@@ -105,11 +105,13 @@ export namespace InternalTypes {
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
+        valid?: TValue | undefined;
         // (undocumented)
         value?: JsonDeserialized<TValue>;
     }
     // (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
+        valid?: TValue | undefined;
         // (undocumented)
         value: JsonDeserialized<TValue>;
     }
@@ -142,6 +144,8 @@ export function latest<T extends object | null, Key extends string = string>(arg
 export interface LatestArguments<T extends object | null> {
     local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
     settings?: BroadcastControlSettings | undefined;
+    // (undocumented)
+    validator?: StateSchemaValidator<T> | undefined;
 }
 
 // @alpha @sealed
@@ -155,7 +159,7 @@ export interface LatestData<T> {
     // (undocumented)
     metadata: LatestMetadata;
     // (undocumented)
-    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
 }
 
 // @alpha
@@ -167,6 +171,8 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
         [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
     };
     settings?: BroadcastControlSettings | undefined;
+    // (undocumented)
+    validator?: StateSchemaValidator<T> | undefined;
 }
 
 // @alpha @sealed
@@ -341,6 +347,14 @@ export interface StateMap<K extends string | number, V> {
     set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
     // (undocumented)
     readonly size: number;
+}
+
+// @alpha
+export type StateSchemaValidator<T> = (unvalidatedData: unknown, metadata?: StateSchemaValidatorMetadata) => T | undefined;
+
+// @alpha
+export interface StateSchemaValidatorMetadata {
+    key?: string | number;
 }
 
 // @alpha @sealed
