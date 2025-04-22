@@ -223,7 +223,7 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 						permissions: undefined,
 						storageOnly: false,
 					}
-				: { readonly: this._readonly };
+				: { readonly: false };
 		}
 	}
 
