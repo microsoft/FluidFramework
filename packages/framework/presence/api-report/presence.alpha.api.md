@@ -148,7 +148,14 @@ export interface Latest<T> {
 }
 
 // @alpha
-export function latest<T extends object, Key extends string = string>(args: LatestProps<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+export function latest<T extends object, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
+// @alpha
+export interface LatestArguments<T extends object> {
+    local: JsonSerializable<T> & JsonDeserialized<T> & object;
+    // (undocumented)
+    settings?: BroadcastControlSettings | undefined;
+}
 
 // @alpha @sealed
 export interface LatestClientData<T> extends LatestData<T> {
@@ -186,7 +193,16 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 }
 
 // @alpha
-export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapProps<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+
+// @alpha
+export interface LatestMapArguments<T extends object, Keys extends string | number = string | number> {
+    local?: {
+        [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+    };
+    // (undocumented)
+    settings?: BroadcastControlSettings | undefined;
+}
 
 // @alpha @sealed
 export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
@@ -230,26 +246,10 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
     key: K;
 }
 
-// @alpha
-export interface LatestMapProps<T extends object, Keys extends string | number = string | number> {
-    local?: {
-        [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-    };
-    // (undocumented)
-    settings?: BroadcastControlSettings | undefined;
-}
-
 // @alpha @sealed
 export interface LatestMetadata {
     revision: number;
     timestamp: number;
-}
-
-// @alpha
-export interface LatestProps<T extends object> {
-    local: JsonSerializable<T> & JsonDeserialized<T> & object;
-    // (undocumented)
-    settings?: BroadcastControlSettings | undefined;
 }
 
 // @alpha @sealed
