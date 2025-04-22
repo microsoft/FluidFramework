@@ -77,7 +77,7 @@ class SharedTreeFunctioningAgent<
 		},
 	) {
 		const editingTool = tool(
-			({ functionCode }) => {
+			async ({ functionCode }) => {
 				this.options?.log?.(`## Editing Tool Invoked\n\n`);
 				this.options?.log?.(
 					`### Generated Code\n\n\`\`\`javascript\n${functionCode}\n\`\`\`\n\n`,
@@ -106,9 +106,11 @@ class SharedTreeFunctioningAgent<
 				};
 				const code = processLlmCode(functionCode);
 				// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-				const fn = new Function(paramsName, code) as (p: typeof params) => void;
+				const fn = new Function(paramsName, code) as (
+					p: typeof params,
+				) => Promise<void> | void;
 				try {
-					fn(params);
+					await fn(params);
 				} catch (error: unknown) {
 					this.options?.log?.(`### Error\n\n`);
 					const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
@@ -194,6 +196,7 @@ function ${functionName}({ root, create }) {
 
 If the user asks you to edit the data, you will use the ${this.editingTool.name} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
 The function must be named "${functionName}".
+It may be synchronous or asynchronous.
 The ${functionName} function must have a first parameter which has a \`root\` property that is the JSON object you are to mutate.
 The current state of the \`root\` object is:
 

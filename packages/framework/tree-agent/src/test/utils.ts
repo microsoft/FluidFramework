@@ -71,7 +71,7 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
 	switch (provider) {
 		case "openai": {
 			return new ChatOpenAI({
-				model: "o3-mini",
+				model: "o4-mini",
 				apiKey:
 					process.env.OPENAI_API_KEY ??
 					failUsage("Missing OPENAI_API_KEY environment variable"),
