@@ -3,25 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	type ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	DataProcessingError,
-	GenericError,
 	UsageError,
 	createChildLogger,
+	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
 	BatchManager,
 	BatchSequenceNumbers,
-	estimateSocketSize,
 	sequenceNumbersMatch,
 	type BatchId,
 } from "./batchManager.js";
@@ -35,6 +36,7 @@ import {
 } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
+import { serializeOp } from "./opSerialization.js";
 import { OpSplitter } from "./opSplitter.js";
 
 export interface IOutboxConfig {
@@ -66,7 +68,6 @@ export interface IOutboxParameters {
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
-	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
 
 /**
@@ -109,6 +110,55 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 }
 
 /**
+ * Convert from local batch to outbound batch, including computing contentSizeInBytes.
+ */
+export function localBatchToOutboundBatch(localBatch: LocalBatch): OutboundBatch {
+	// Shallow copy each message as we switch types
+	const outboundMessages = localBatch.messages.map<OutboundBatchMessage>(
+		({ runtimeOp, ...message }) => ({
+			contents: serializeOp(runtimeOp),
+			...message,
+		}),
+	);
+	const contentSizeInBytes = outboundMessages.reduce(
+		(acc, message) => acc + (message.contents?.length ?? 0),
+		0,
+	);
+
+	// Shallow copy the local batch, updating the messages to be outbound messages and adding contentSizeInBytes
+	const outboundBatch: OutboundBatch = {
+		...localBatch,
+		messages: outboundMessages,
+		contentSizeInBytes,
+	};
+
+	return outboundBatch;
+}
+
+/**
+ * Estimated size of the stringification overhead for an op accumulated
+ * from runtime to loader to the service.
+ */
+const opOverhead = 200;
+
+/**
+ * Estimates the real size in bytes on the socket for a given batch. It assumes that
+ * the envelope size (and the size of an empty op) is 200 bytes, taking into account
+ * extra overhead from stringification.
+ *
+ * @remarks
+ * Also content will be stringified, and that adds a lot of overhead due to a lot of escape characters.
+ * Not taking it into account, as compression work should help there - compressed payload will be
+ * initially stored as base64, and that requires only 2 extra escape characters.
+ *
+ * @param batch - the batch to inspect
+ * @returns An estimate of the payload size in bytes which will be produced when the batch is sent over the wire
+ */
+export const estimateSocketSize = (batch: OutboundBatch): number => {
+	return batch.contentSizeInBytes + opOverhead * batch.messages.length;
+};
+
+/**
  * The Outbox collects messages submitted by the ContainerRuntime into a batch,
  * and then flushes the batch when requested.
  *
@@ -135,18 +185,9 @@ export class Outbox {
 	constructor(private readonly params: IOutboxParameters) {
 		this.logger = createChildLogger({ logger: params.logger, namespace: "Outbox" });
 
-		const isCompressionEnabled =
-			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
-			Number.POSITIVE_INFINITY;
-		// We need to allow infinite size batches if we enable compression
-		const hardLimit = isCompressionEnabled
-			? Number.POSITIVE_INFINITY
-			: this.params.config.maxBatchSizeInBytes;
-
-		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
-		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.mainBatch = new BatchManager({ canRebase: true });
+		this.blobAttachBatch = new BatchManager({ canRebase: true });
 		this.idAllocationBatch = new BatchManager({
-			hardLimit,
 			canRebase: false,
 			ignoreBatchId: true,
 		});
@@ -276,34 +317,26 @@ export class Outbox {
 		batchManager: BatchManager,
 		message: LocalBatchMessage,
 	): void {
-		if (
-			!batchManager.push(
-				message,
-				this.isContextReentrant(),
-				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-			)
-		) {
-			throw new GenericError("BatchTooLarge", /* error */ undefined, {
-				opSize: message.serializedOp?.length ?? 0,
-				batchSize: batchManager.contentSizeInBytes,
-				count: batchManager.length,
-				limit: batchManager.options.hardLimit,
-			});
-		}
+		batchManager.push(
+			message,
+			this.isContextReentrant(),
+			this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+		);
 	}
 
 	/**
 	 * Flush all the batches to the ordering service.
 	 * This method is expected to be called at the end of a batch.
+	 *
+	 * @throws If called from a reentrant context, or if the batch being flushed is too large.
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
 	 */
 	public flush(resubmittingBatchId?: BatchId): void {
-		if (this.isContextReentrant()) {
-			const error = new UsageError("Flushing is not supported inside DDS event handlers");
-			this.params.closeContainer(error);
-			throw error;
-		}
+		assert(
+			!this.isContextReentrant(),
+			0xb7b /* Flushing must not happen while incoming changes are being processed */,
+		);
 
 		this.flushAll(resubmittingBatchId);
 	}
@@ -356,8 +389,8 @@ export class Outbox {
 		}
 
 		// Push the empty batch placeholder to the PendingStateManager
-		this.params.pendingStateManager.onFlushBatch(
-			[{ ...placeholderMessage, serializedOp: "", contents: undefined }], // placeholder message - serializedOp will never be used
+		this.params.pendingStateManager.onFlushEmptyBatch(
+			placeholderMessage,
 			clientSequenceNumber,
 		);
 		return;
@@ -425,7 +458,7 @@ export class Outbox {
 		this.rebasing = true;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
-				content: message.serializedOp,
+				runtimeOp: message.runtimeOp,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 			});
@@ -466,15 +499,7 @@ export class Outbox {
 	 */
 	private virtualizeBatch(localBatch: LocalBatch, groupingEnabled: boolean): OutboundBatch {
 		// Shallow copy the local batch, updating the messages to be outbound messages
-		const originalBatch: OutboundBatch = {
-			...localBatch,
-			messages: localBatch.messages.map<OutboundBatchMessage>(
-				({ serializedOp, ...message }) => ({
-					contents: serializedOp,
-					...message,
-				}),
-			),
-		};
+		const originalBatch = localBatchToOutboundBatch(localBatch);
 
 		const originalOrGroupedBatch = groupingEnabled
 			? this.params.groupingManager.groupBatch(originalBatch)
@@ -490,7 +515,6 @@ export class Outbox {
 		const singletonBatch = originalOrGroupedBatch as OutboundSingletonBatch;
 
 		if (
-			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				singletonBatch.contentSizeInBytes ||
 			this.params.submitBatchFn === undefined
@@ -507,15 +531,10 @@ export class Outbox {
 				: this.params.splitter.splitSingletonBatchMessage(compressedBatch);
 		}
 
+		// We want to distinguish this "BatchTooLarge" case from the generic "BatchTooLarge" case in sendBatch
 		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
-			throw new GenericError("BatchTooLarge", /* error */ undefined, {
-				batchSize: singletonBatch.contentSizeInBytes,
-				compressedBatchSize: compressedBatch.contentSizeInBytes,
-				count: compressedBatch.messages.length,
-				limit: this.params.config.maxBatchSizeInBytes,
-				chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
-				compressionOptions: JSON.stringify(this.params.config.compressionOptions),
-				socketSize: estimateSocketSize(singletonBatch),
+			throw this.makeBatchTooLargeError(compressedBatch, "CompressionInsufficient", {
+				uncompressedSizeInBytes: singletonBatch.contentSizeInBytes,
 			});
 		}
 
@@ -536,12 +555,7 @@ export class Outbox {
 
 		const socketSize = estimateSocketSize(batch);
 		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
-			this.logger.sendPerformanceEvent({
-				eventName: "LargeBatch",
-				length: batch.messages.length,
-				sizeInBytes: batch.contentSizeInBytes,
-				socketSize,
-			});
+			throw this.makeBatchTooLargeError(batch, "CannotSend");
 		}
 
 		let clientSequenceNumber: number;
@@ -571,6 +585,31 @@ export class Outbox {
 		clientSequenceNumber -= length - 1;
 		assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
 		return clientSequenceNumber;
+	}
+
+	private makeBatchTooLargeError(
+		batch: OutboundBatch,
+		codepath: string,
+		moreDetails?: ITelemetryBaseProperties,
+	): IFluidErrorBase {
+		return DataProcessingError.create(
+			"BatchTooLarge",
+			codepath,
+			/* sequencedMessage */ undefined,
+			{
+				errorDetails: {
+					opCount: batch.messages.length,
+					contentSizeInBytes: batch.contentSizeInBytes,
+					socketSize: estimateSocketSize(batch),
+					maxBatchSizeInBytes: this.params.config.maxBatchSizeInBytes,
+					groupedBatchingEnabled: this.params.groupingManager.groupedBatchingEnabled(),
+					compressionOptions: JSON.stringify(this.params.config.compressionOptions),
+					chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
+					chunkSizeInBytes: this.params.splitter.chunkSizeInBytes,
+					...moreDetails,
+				},
+			},
+		);
 	}
 
 	/**

@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
 import {
@@ -117,6 +118,9 @@ describe("OpGroupingManager", () => {
 			).createEmptyGroupedBatch(batchId, 0);
 
 			assert.deepStrictEqual(result.outboundBatch.messages, [expectedPlaceholderMessage]);
+
+			// contents not included on the returned placeholder message
+			delete expectedPlaceholderMessage.contents;
 			assert.deepStrictEqual(result.placeholderMessage, expectedPlaceholderMessage);
 		});
 
@@ -135,7 +139,7 @@ describe("OpGroupingManager", () => {
 						mockLogger,
 					).groupBatch(emptyBatch);
 				},
-				{ message: "Unexpected attempt to group an empty batch" },
+				(e: Error) => validateAssertionError(e, "Unexpected attempt to group an empty batch"),
 			);
 		});
 

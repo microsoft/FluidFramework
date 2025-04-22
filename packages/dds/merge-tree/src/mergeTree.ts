@@ -16,7 +16,6 @@ import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
 	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
 } from "./constants.js";
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
 import {
@@ -580,7 +579,10 @@ class Obliterates {
 	 * we should reconsider the indexing structure for seq ordered obliterates (right now it would be an O(# obliterates) operation)
 	 */
 	public removeLocalObliterate(obliterateInfo: ObliterateInfo): void {
-		assert(obliterateInfo.stamp.seq === UnassignedSequenceNumber, "Expected local obliterate");
+		assert(
+			obliterateInfo.stamp.seq === UnassignedSequenceNumber,
+			0xb6e /* Expected local obliterate */,
+		);
 		this.startOrdered.remove(obliterateInfo.start);
 	}
 
@@ -598,7 +600,7 @@ class Obliterates {
 					const info = start.properties?.obliterate as ObliterateInfo;
 					assert(
 						info?.start !== undefined && info?.end !== undefined,
-						"Expected obliterateInfo endpoint to map to its obliterate",
+						0xb6f /* Expected obliterateInfo endpoint to map to its obliterate */,
 					);
 					return { value: info, done: false };
 				}
@@ -1326,13 +1328,13 @@ export class MergeTree {
 				this.obliterates.addOrUpdate(obliterateInfo);
 				assert(
 					obliterateInfo.tiebreakTrackingGroup !== undefined,
-					"obliterateInfo should have a tiebreak tracking group on ack",
+					0xb70 /* obliterateInfo should have a tiebreak tracking group on ack */,
 				);
 				for (const segment of obliterateInfo.tiebreakTrackingGroup.tracked) {
 					segment.trackingCollection.unlink(obliterateInfo.tiebreakTrackingGroup);
 					assert(
 						isSegmentLeaf(segment) && isInsideObliterate(segment),
-						"Expected segment leaf inside obliterate",
+						0xb71 /* Expected segment leaf inside obliterate */,
 					);
 					segment.insertionRefSeqStamp = undefined;
 				}
@@ -1401,7 +1403,7 @@ export class MergeTree {
 		if (_segmentGroup === undefined) {
 			assert(
 				localSeq !== undefined,
-				"Local seq should be passed when creating new segment group",
+				0xb72 /* Local seq should be passed when creating new segment group */,
 			);
 			_segmentGroup = {
 				segments: [],
@@ -1685,7 +1687,7 @@ export class MergeTree {
 			if (newest !== undefined && opstampUtils.isLocal(newest.stamp)) {
 				assert(
 					newest?.tiebreakTrackingGroup !== undefined,
-					"Expected local obliterateinfo to have tiebreak group",
+					0xb73 /* Expected local obliterateinfo to have tiebreak group */,
 				);
 				newest.tiebreakTrackingGroup.link(newSegment);
 				overwriteInfo<ISegmentInsideObliterateInfo>(newSegment, {
@@ -1813,7 +1815,14 @@ export class MergeTree {
 		stamp: OperationStamp,
 		context: InsertContext,
 	): void {
-		const { remainder } = this.insertRecursive(this.root, pos, perspective, stamp, context);
+		const { remainder } = this.insertRecursive(
+			this.root,
+			pos,
+			perspective,
+			stamp,
+			context,
+			true,
+		);
 		if (remainder !== undefined) {
 			this.updateRoot(remainder);
 		}
@@ -1825,7 +1834,7 @@ export class MergeTree {
 		perspective: Perspective,
 		stamp: OperationStamp,
 		context: InsertContext,
-		isLastChildBlock: boolean = true,
+		isLastBlock: boolean,
 	): InsertResult {
 		let _pos: number = pos;
 
@@ -1837,10 +1846,12 @@ export class MergeTree {
 		let hadChanges = false;
 		for (childIndex = 0; childIndex < block.childCount; childIndex++) {
 			child = children[childIndex];
-			// ensure we walk down the far edge of the tree, even if all sub-tree is eligible for zamboni
-			const isLastNonLeafBlock =
-				isLastChildBlock && !child.isLeaf() && childIndex === block.childCount - 1;
-			const len = this.nodeLength(child, perspective) ?? (isLastChildBlock ? 0 : undefined);
+			// removed blocks below the min seq will have an undefined length, and be skipped
+			// however if it is the last block in the layer of the tree we don't want to skip it, so we correctly
+			// walk down the far edge of the tree.
+			const isLastChildOfLastBlock = isLastBlock && childIndex === block.childCount - 1;
+			const len =
+				this.nodeLength(child, perspective) ?? (isLastChildOfLastBlock ? 0 : undefined);
 
 			if (len === undefined) {
 				// if the seg len is undefined, the segment
@@ -1868,15 +1879,14 @@ export class MergeTree {
 						return { remainder: undefined, hadChanges };
 					}
 				} else {
-					const childBlock = child;
 					// Internal node
 					const insertResult = this.insertRecursive(
-						childBlock,
+						child,
 						_pos,
 						perspective,
 						stamp,
 						context,
-						isLastNonLeafBlock,
+						isLastChildOfLastBlock,
 					);
 					hadChanges ||= insertResult.hadChanges;
 					if (insertResult.remainder === undefined) {
@@ -2366,6 +2376,10 @@ export class MergeTree {
 	 * Revert an unacked local op
 	 */
 	public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup): void {
+		const rollbackStamp: OperationStamp = {
+			seq: TreeMaintenanceSequenceNumber,
+			clientId: NonCollabClient,
+		};
 		if (op.type === MergeTreeDeltaType.REMOVE) {
 			const pendingSegmentGroup = this.pendingSegments.pop()?.data;
 			if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
@@ -2386,17 +2400,11 @@ export class MergeTree {
 						segment.removes[0].type === "setRemove",
 					0x39d /* Rollback segment removedClientId does not match local client */,
 				);
-				let updateNode: MergeBlock | undefined = segment.parent;
 				// This also removes obliterates, but that should be ok as we can only remove a segment once.
 				// If we were able to remove it locally, that also means there are no remote removals (since rollback is synchronous).
 				removeRemovalInfo(segment);
 
-				for (updateNode; updateNode !== undefined; updateNode = updateNode.parent) {
-					this.blockUpdateLength(updateNode, {
-						seq: UnassignedSequenceNumber,
-						clientId: this.collabWindow.clientId,
-					});
-				}
+				this.blockUpdatePathLengths(segment.parent, rollbackStamp);
 
 				// Note: optional chaining short-circuits:
 				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
@@ -2435,14 +2443,12 @@ export class MergeTree {
 				if (op.type === MergeTreeDeltaType.INSERT) {
 					segment.insert = {
 						type: "insert",
-						seq: UniversalSequenceNumber,
-						clientId: this.collabWindow.clientId,
+						...rollbackStamp,
 					};
 					const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
 					const removeStamp: SetRemoveOperationStamp = {
 						type: "setRemove",
-						seq: UniversalSequenceNumber,
-						clientId: this.collabWindow.clientId,
+						...rollbackStamp,
 					};
 					this.markRangeRemoved(
 						start,
@@ -2454,16 +2460,13 @@ export class MergeTree {
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
 					const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props);
-					const annotateStamp: OperationStamp = {
-						seq: UniversalSequenceNumber,
-						clientId: this.collabWindow.clientId,
-					};
+
 					this.annotateRange(
 						start,
 						start + segment.cachedLength,
 						{ props },
 						this.localPerspective,
-						annotateStamp,
+						rollbackStamp,
 						{ op: annotateOp, rollback: true },
 					);
 					i++;
@@ -2739,7 +2742,7 @@ export class MergeTree {
 						isSegmentLeaf(segment) &&
 							isInsideObliterate(segment) &&
 							segment.insertionRefSeqStamp !== undefined,
-						"Expected segment leaf inside obliterate with insertionRefSeqStamp",
+						0xb74 /* Expected segment leaf inside obliterate with insertionRefSeqStamp */,
 					);
 					// This may have changed as a result of segments shuffling: outstanding local obliterates that previously surrounded a segment may no longer surround it.
 					const newObliteratePrecedingInsertion = this.computeObliteratePrecedingInsertion(

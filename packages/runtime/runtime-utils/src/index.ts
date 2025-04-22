@@ -6,10 +6,8 @@
 export { generateHandleContextPath } from "./dataStoreHandleContextUtils.js";
 export {
 	create404Response,
-	createDataStoreFactory,
 	createResponseError,
 	exceptionToResponse,
-	Factory,
 	responseToException,
 } from "./dataStoreHelpers.js";
 export {

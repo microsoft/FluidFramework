@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-drivers",
-	"version": "2.32.0",
+	"version": "2.33.0",
 	"description": "A driver abstraction and implementations for testing against server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -69,7 +69,7 @@
 		"@fluidframework/tool-utils": "workspace:~",
 		"agentkeepalive": "^4.5.0",
 		"axios": "^1.8.4",
-		"semver": "^7.5.3",
+		"semver": "^7.7.1",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
