@@ -490,11 +490,11 @@ class LatestMapValueManagerImpl<
 }
 
 /**
- * Props passed to the {@link latestMap} function.
+ * Arguments that are passed to the {@link latestMap} function.
  *
  * @alpha
  */
-export interface LatestMapProps<
+export interface LatestMapArguments<
 	T extends object,
 	Keys extends string | number = string | number,
 > {
@@ -517,14 +517,14 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	props?: LatestMapProps<T, Keys>,
+	args?: LatestMapArguments<T, Keys>,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMap<T, Keys>
 > {
-	const controls = props?.controls;
-	const initialValues = props?.local;
+	const controls = args?.controls;
+	const initialValues = args?.local;
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<

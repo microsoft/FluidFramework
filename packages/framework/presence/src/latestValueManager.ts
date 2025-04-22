@@ -200,16 +200,16 @@ export interface LatestArguments<T extends object> {
  * @alpha
  */
 export function latest<T extends object, Key extends string = string>(
-	props: LatestArguments<T>,
+	args: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
-	const { controls, local: initialValue } = props;
+	const { controls, local } = args;
 
-	// Latest takes ownership of initialValue but makes a shallow
+	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: shallowCloneObject(initialValue),
+		value: shallowCloneObject(local),
 	};
 	const factory = (
 		key: Key,
