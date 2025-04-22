@@ -202,7 +202,7 @@ export function checkCompiles(): void {
 		}),
 	);
 
-	const localPrimitiveMap = workspace.props.primitiveMap.local;
+	const localPrimitiveMap = workspace.states.primitiveMap.local;
 
 	// map value types are not matched to specific key
 	localPrimitiveMap.set("string", 1);

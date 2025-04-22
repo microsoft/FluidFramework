@@ -78,7 +78,7 @@ describe("Presence", () => {
 				const states = presence.states.getWorkspace(testWorkspaceName, {
 					arr: StateFactory.latest(null),
 				});
-				assert.deepStrictEqual(states.props.arr.local, null);
+				assert.deepStrictEqual(states.states.arr.local, null);
 			});
 
 			it(".presence provides Presence it was created under", () => {
@@ -96,8 +96,8 @@ describe("Presence", () => {
 				});
 
 				// Act and Verify
-				states.props.nullable.local = null;
-				assert.deepStrictEqual(states.props.nullable.local, null);
+				states.states.nullable.local = null;
+				assert.deepStrictEqual(states.states.nullable.local, null);
 			});
 		});
 
