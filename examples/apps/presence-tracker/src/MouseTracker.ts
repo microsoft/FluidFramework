@@ -8,7 +8,7 @@ import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Presence,
 	Attendee,
-	Latest,
+	LatestRaw,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
 import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
@@ -41,7 +41,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * State that tracks the latest mouse position  of connected session clients.
 	 */
-	private readonly cursor: Latest<IMousePosition>;
+	private readonly cursor: LatestRaw<IMousePosition>;
 
 	constructor(
 		private readonly presence: Presence,
