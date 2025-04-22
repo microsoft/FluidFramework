@@ -151,7 +151,7 @@ export class MockDeltaManager
 		return undefined as any as IClientConfiguration;
 	}
 
-	public readonly active: boolean = true;
+	public active: boolean = true;
 
 	public close(): void {}
 

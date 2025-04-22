@@ -101,9 +101,11 @@ export enum FieldKind {
 	 */
 	Required,
 	/**
-	 * A special field used for node identifiers.
+	 * A special readonly field used for node identifier strings.
 	 * @remarks
 	 * Only allows exactly one child.
+	 *
+	 * See {@link SchemaFactory.identifier} for more details.
 	 */
 	Identifier,
 }
