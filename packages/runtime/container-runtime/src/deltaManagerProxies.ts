@@ -26,6 +26,61 @@ import type { PendingStateManager } from "./pendingStateManager.js";
 import { summarizerClientType } from "./summary/index.js";
 
 /**
+ * Interface defining event handlers for the BaseDeltaManagerProxy.
+ * These handlers allow customization of behavior for various DeltaManager events.
+ */
+export interface BaseDeltaManagerProxyEventHandlers {
+	/**
+	 * Event handler triggered when the readonly state changes.
+	 * @param readonly - Indicates if the connection is readonly.
+	 * @param readonlyConnectionReason - Optional reason and error details for the readonly state.
+	 */
+	onReadonly: (
+		readonly: boolean,
+		readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+	) => void;
+
+	/**
+	 * Event handler triggered before sending a message.
+	 * @param messageBuffer - The buffer of messages to be sent.
+	 */
+	onPrepareSend: (messageBuffer: unknown[]) => void;
+
+	/**
+	 * Event handler triggered when an operation is submitted.
+	 * @param message - The document message being submitted.
+	 */
+	onSubmitOp: (message: IDocumentMessage) => void;
+
+	/**
+	 * Event handler triggered when an operation is received.
+	 * @param message - The sequenced document message received.
+	 * @param processingTime - The time taken to process the message.
+	 */
+	onOp: (message: ISequencedDocumentMessage, processingTime: number) => void;
+
+	/**
+	 * Event handler triggered when a pong response is received.
+	 * @param latency - The latency of the pong response.
+	 */
+	onPong: (latency: number) => void;
+
+	/**
+	 * Event handler triggered when a connection is established.
+	 * @param details - The connection details.
+	 * @param opsBehind - Optional number of operations behind the latest state.
+	 */
+	onConnect: (details: IConnectionDetails, opsBehind?: number) => void;
+
+	/**
+	 * Event handler triggered when a disconnection occurs.
+	 * @param reason - The reason for the disconnection.
+	 * @param error - Optional error details for the disconnection.
+	 */
+	onDisconnect: (reason: string, error?: IAnyDriverError) => void;
+}
+
+/**
  * Base class for DeltaManager proxy that proxy's access to the real DeltaManager.
  *
  * This class allows us to build proxy functionality without actually having to implement all the methods
@@ -99,29 +154,63 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.readOnlyInfo;
 	}
 
-	constructor(protected readonly deltaManager: IDeltaManagerFull) {
+	private readonly eventHandlers: BaseDeltaManagerProxyEventHandlers;
+
+	constructor(
+		protected readonly deltaManager: IDeltaManagerFull,
+		overrides?: Partial<BaseDeltaManagerProxyEventHandlers>,
+	) {
 		super();
+
+		this.eventHandlers = {
+			onPrepareSend: (messageBuffer: unknown[]): void => {
+				this.emit("prepareSend", messageBuffer);
+			},
+			onSubmitOp: (message: IDocumentMessage): void => {
+				this.emit("submitOp", message);
+			},
+			onOp: (message: ISequencedDocumentMessage, processingTime: number): void => {
+				this.emit("op", message, processingTime);
+			},
+			onPong: (latency: number): void => {
+				this.emit("pong", latency);
+			},
+			onConnect: (details: IConnectionDetails, opsBehind?: number): void => {
+				this.emit("connect", details, opsBehind);
+			},
+			onDisconnect: (reason: string, error?: IAnyDriverError): void => {
+				this.emit("disconnect", reason, error);
+			},
+			onReadonly: (
+				readonly: boolean,
+				readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+			): void => {
+				this.emit("readonly", readonly, readonlyConnectionReason);
+			},
+
+			...overrides,
+		};
 
 		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
 		super.setMaxListeners(0);
 
-		this.deltaManager.on("prepareSend", this.onPrepareSend);
-		this.deltaManager.on("submitOp", this.onSubmitOp);
-		this.deltaManager.on("op", this.onOp);
-		this.deltaManager.on("pong", this.onPong);
-		this.deltaManager.on("connect", this.onConnect);
-		this.deltaManager.on("disconnect", this.onDisconnect);
-		this.deltaManager.on("readonly", this.onReadonly);
+		this.deltaManager.on("prepareSend", this.eventHandlers.onPrepareSend);
+		this.deltaManager.on("submitOp", this.eventHandlers.onSubmitOp);
+		this.deltaManager.on("op", this.eventHandlers.onOp);
+		this.deltaManager.on("pong", this.eventHandlers.onPong);
+		this.deltaManager.on("connect", this.eventHandlers.onConnect);
+		this.deltaManager.on("disconnect", this.eventHandlers.onDisconnect);
+		this.deltaManager.on("readonly", this.eventHandlers.onReadonly);
 	}
 
 	public dispose(): void {
-		this.deltaManager.off("prepareSend", this.onPrepareSend);
-		this.deltaManager.off("submitOp", this.onSubmitOp);
-		this.deltaManager.off("op", this.onOp);
-		this.deltaManager.off("pong", this.onPong);
-		this.deltaManager.off("connect", this.onConnect);
-		this.deltaManager.off("disconnect", this.onDisconnect);
-		this.deltaManager.off("readonly", this.onReadonly);
+		this.deltaManager.off("prepareSend", this.eventHandlers.onPrepareSend);
+		this.deltaManager.off("submitOp", this.eventHandlers.onSubmitOp);
+		this.deltaManager.off("op", this.eventHandlers.onOp);
+		this.deltaManager.off("pong", this.eventHandlers.onPong);
+		this.deltaManager.off("connect", this.eventHandlers.onConnect);
+		this.deltaManager.off("disconnect", this.eventHandlers.onDisconnect);
+		this.deltaManager.off("readonly", this.eventHandlers.onReadonly);
 	}
 
 	public submitSignal(content: string, targetClientId?: string): void {
@@ -131,34 +220,6 @@ export abstract class BaseDeltaManagerProxy
 	public flush(): void {
 		return this.deltaManager.flush();
 	}
-
-	private readonly onPrepareSend = (messageBuffer: unknown[]): void => {
-		this.emit("prepareSend", messageBuffer);
-	};
-	private readonly onSubmitOp = (message: IDocumentMessage): void => {
-		this.emit("submitOp", message);
-	};
-	protected readonly onOp = (
-		message: ISequencedDocumentMessage,
-		processingTime: number,
-	): void => {
-		this.emit("op", message, processingTime);
-	};
-	private readonly onPong = (latency: number): void => {
-		this.emit("pong", latency);
-	};
-	private readonly onConnect = (details: IConnectionDetails, opsBehind?: number): void => {
-		this.emit("connect", details, opsBehind);
-	};
-	private readonly onDisconnect = (reason: string, error?: IAnyDriverError): void => {
-		this.emit("disconnect", reason, error);
-	};
-	private readonly onReadonly = (
-		readonly: boolean,
-		readonlyConnectionReason?: { reason: string; error?: IErrorBase },
-	): void => {
-		this.emit("readonly", readonly, readonlyConnectionReason);
-	};
 }
 
 /**
@@ -167,31 +228,34 @@ export abstract class BaseDeltaManagerProxy
  * - Summarizer client should not be active to layers below the container runtime to restrict local changes.
  */
 export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
+	public static wrapIfSummarizer(deltaManager: IDeltaManagerFull): IDeltaManagerFull {
+		if (deltaManager.clientDetails.type === summarizerClientType) {
+			return new DeltaManagerSummarizerProxy(deltaManager);
+		}
+		return deltaManager;
+	}
+
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get active(): boolean {
 		// Summarize clients should not be active. There shouldn't be any local changes (writes) in the summarizer
 		// except for the SummarizeOp which is generated by the runtime.
-		return !this.isSummarizerClient && this.deltaManager.active;
+		return false;
 	}
 
 	public get readOnlyInfo(): ReadOnlyInfo {
 		// Summarizer clients should be read-only as far as the runtime and layers below are concerned. There shouldn't
 		// be any local changes (writes) in the summarizer except for the summarize op which is generated by the runtime.
-		if (this.isSummarizerClient) {
-			return {
-				readonly: true,
-				forced: false,
-				permissions: undefined,
-				storageOnly: false,
-			};
-		}
-		return this.deltaManager.readOnlyInfo;
+
+		return {
+			readonly: true,
+			forced: false,
+			permissions: undefined,
+			storageOnly: false,
+		};
 	}
 
-	private readonly isSummarizerClient: boolean;
-
 	constructor(protected readonly deltaManager: IDeltaManagerFull) {
-		super(deltaManager);
-		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
+		super(deltaManager, { onReadonly: () => {} });
 	}
 }
 
@@ -228,17 +292,6 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 		};
 	}
 
-	protected readonly onOp = (
-		message: ISequencedDocumentMessage,
-		processingTime: number,
-	): void => {
-		const messageIntercept = {
-			...message,
-			minimumSequenceNumber: this.minimumSequenceNumber,
-		};
-		this.emit("op", messageIntercept, processingTime);
-	};
-
 	constructor(
 		protected readonly deltaManager: IDeltaManagerFull,
 		private readonly pendingStateManager: Pick<
@@ -246,6 +299,14 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 			"minimumPendingMessageSequenceNumber"
 		>,
 	) {
-		super(deltaManager);
+		super(deltaManager, {
+			onOp: (message: ISequencedDocumentMessage, processingTime: number): void => {
+				const messageIntercept = {
+					...message,
+					minimumSequenceNumber: this.minimumSequenceNumber,
+				};
+				this.emit("op", messageIntercept, processingTime);
+			},
+		});
 	}
 }

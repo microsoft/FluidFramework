@@ -13,7 +13,7 @@ import {
 	TreeViewConfiguration,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
-import { TreeFactory } from "../../../treeFactory.js";
+import { SharedTree } from "../../../treeFactory.js";
 import { getView, validateUsageError } from "../../utils.js";
 import { independentView, Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -25,7 +25,7 @@ class NodeMap extends schema.map("NoteMap", schema.string) {}
 class NodeList extends schema.array("NoteList", schema.string) {}
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-const factory = new TreeFactory({});
+const factory = SharedTree.getFactory();
 
 describe("simple-tree tree", () => {
 	it("ListRoot", () => {
@@ -242,8 +242,7 @@ describe("simple-tree tree", () => {
 		assert(idFromInitialize !== idFromHydration);
 	});
 
-	// TODO: AB#9127: fix unhydrated custom identifier Tree.shortId case which blocks this from running.
-	it.skip("custom identifier copied from tree", () => {
+	it("custom identifier copied from tree", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
 		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
 		const treeSrc = factory.create(
@@ -270,8 +269,7 @@ describe("simple-tree tree", () => {
 		assert.equal(idFromUnhydrated, idFromHydrated);
 	});
 
-	// TODO: AB#9128: this asserts instead of throwing a usage error.
-	it.skip("viewWith twice errors", () => {
+	it("viewWith twice errors", () => {
 		class Empty extends schema.object("Empty", {}) {}
 		const config = new TreeViewConfiguration({ schema: Empty });
 		const tree = factory.create(
@@ -280,9 +278,12 @@ describe("simple-tree tree", () => {
 		);
 
 		const view = tree.viewWith(config);
-		assert.throws(() => {
-			const view2 = tree.viewWith(config);
-		}, validateUsageError(/views/));
+		assert.throws(
+			() => {
+				const view2 = tree.viewWith(config);
+			},
+			validateUsageError(/second tree view/),
+		);
 	});
 
 	it("accessing view.root does not leak LazyEntities", () => {

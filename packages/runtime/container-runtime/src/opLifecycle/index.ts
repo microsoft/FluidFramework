@@ -14,6 +14,7 @@ export {
 export {
 	LocalBatch,
 	LocalBatchMessage,
+	LocalEmptyBatchPlaceholder,
 	OutboundBatch,
 	OutboundBatchMessage,
 	OutboundSingletonBatch,
