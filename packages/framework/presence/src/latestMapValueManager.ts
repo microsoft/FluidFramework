@@ -18,9 +18,9 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
 import type {
-	LatestRawClientData,
-	LatestRawData,
-	LatestRawMetadata,
+	LatestClientData,
+	LatestData,
+	LatestMetadata,
 } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -32,7 +32,7 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @alpha
  */
-export interface LatestMapRawClientData<
+export interface LatestMapClientData<
 	T,
 	Keys extends string | number,
 	SpecificAttendeeId extends AttendeeId = AttendeeId,
@@ -46,7 +46,7 @@ export interface LatestMapRawClientData<
 	 * @privateRemarks This could be regular map currently as no Map is
 	 * stored internally and a new instance is created for every request.
 	 */
-	items: ReadonlyMap<Keys, LatestRawData<T>>;
+	items: ReadonlyMap<Keys, LatestData<T>>;
 }
 
 /**
@@ -55,8 +55,8 @@ export interface LatestMapRawClientData<
  * @sealed
  * @alpha
  */
-export interface LatestMapRawItemUpdatedClientData<T, K extends string | number>
-	extends LatestRawClientData<T> {
+export interface LatestMapItemUpdatedClientData<T, K extends string | number>
+	extends LatestClientData<T> {
 	key: K;
 }
 
@@ -66,10 +66,10 @@ export interface LatestMapRawItemUpdatedClientData<T, K extends string | number>
  * @sealed
  * @alpha
  */
-export interface LatestMapRawItemRemovedClientData<K extends string | number> {
+export interface LatestMapItemRemovedClientData<K extends string | number> {
 	attendee: Attendee;
 	key: K;
-	metadata: LatestRawMetadata;
+	metadata: LatestMetadata;
 }
 
 /**
@@ -85,7 +85,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	remoteUpdated: (updates: LatestMapRawClientData<T, K>) => void;
+	remoteUpdated: (updates: LatestMapClientData<T, K>) => void;
 
 	/**
 	 * Raised when specific item's value of remote client is updated.
@@ -93,7 +93,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	remoteItemUpdated: (updatedItem: LatestMapRawItemUpdatedClientData<T, K>) => void;
+	remoteItemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
 
 	/**
 	 * Raised when specific item of remote client is removed.
@@ -101,7 +101,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	remoteItemRemoved: (removedItem: LatestMapRawItemRemovedClientData<K>) => void;
+	remoteItemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
 
 	/**
 	 * Raised when specific local item's value is updated.
@@ -337,7 +337,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Iterable access to remote clients' map of values.
 	 */
-	getRemotes(): IterableIterator<LatestMapRawClientData<T, Keys>>;
+	getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
 	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
@@ -345,7 +345,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestRawData<T>>;
+	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
 }
 
 class LatestMapRawValueManagerImpl<
@@ -387,7 +387,7 @@ class LatestMapRawValueManagerImpl<
 
 	public readonly local: StateMap<Keys, T>;
 
-	public *getRemotes(): IterableIterator<LatestMapRawClientData<T, Keys>> {
+	public *getRemotes(): IterableIterator<LatestMapClientData<T, Keys>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const attendeeId of objectKeys(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
@@ -405,14 +405,14 @@ class LatestMapRawValueManagerImpl<
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestRawData<T>> {
+	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const attendeeId = attendee.attendeeId;
 		const clientStateMap = allKnownStates.states[attendeeId];
 		if (clientStateMap === undefined) {
 			throw new Error("No entry for attendee");
 		}
-		const items = new Map<Keys, LatestRawData<T>>();
+		const items = new Map<Keys, LatestData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
 			const value = item.value;
 			if (value !== undefined) {
@@ -458,7 +458,7 @@ class LatestMapRawValueManagerImpl<
 		}
 		const allUpdates = {
 			attendee,
-			items: new Map<Keys, LatestRawData<T>>(),
+			items: new Map<Keys, LatestData<T>>(),
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {

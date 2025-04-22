@@ -13,7 +13,7 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type {
 	BroadcastControlSettings,
 	LatestMapRaw,
-	LatestMapRawItemUpdatedClientData,
+	LatestMapItemUpdatedClientData,
 	Presence,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
@@ -155,7 +155,7 @@ export function checkCompiles(): void {
 		key,
 		value,
 	}: Pick<
-		LatestMapRawItemUpdatedClientData<T, string | number>,
+		LatestMapItemUpdatedClientData<T, string | number>,
 		"attendee" | "key" | "value"
 	>): void {
 		console.log(attendee.attendeeId, key, value);

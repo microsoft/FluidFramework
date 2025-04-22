@@ -17,7 +17,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { LatestRawClientData, LatestRawData } from "./latestValueTypes.js";
+import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -32,7 +32,7 @@ export interface LatestRawEvents<T> {
 	 *
 	 * @eventProperty
 	 */
-	remoteUpdated: (update: LatestRawClientData<T>) => void;
+	remoteUpdated: (update: LatestClientData<T>) => void;
 
 	/**
 	 * Raised when local client's value is updated, which may be the same value.
@@ -81,7 +81,7 @@ export interface LatestRaw<T> {
 	/**
 	 * Iterable access to remote clients' values.
 	 */
-	getRemotes(): IterableIterator<LatestRawClientData<T>>;
+	getRemotes(): IterableIterator<LatestClientData<T>>;
 	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
@@ -89,10 +89,10 @@ export interface LatestRaw<T> {
 	/**
 	 * Access to a specific attendee's value.
 	 */
-	getRemote(attendee: Attendee): LatestRawData<T>;
+	getRemote(attendee: Attendee): LatestData<T>;
 }
 
-class LatestRawValueManagerImpl<T, Key extends string>
+class LatestValueManagerImpl<T, Key extends string>
 	implements LatestRaw<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
 	public readonly events = createEmitter<LatestRawEvents<T>>();
@@ -126,7 +126,7 @@ class LatestRawValueManagerImpl<T, Key extends string>
 		this.events.emit("localUpdated", { value });
 	}
 
-	public *getRemotes(): IterableIterator<LatestRawClientData<T>> {
+	public *getRemotes(): IterableIterator<LatestClientData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
@@ -146,7 +146,7 @@ class LatestRawValueManagerImpl<T, Key extends string>
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public getRemote(attendee: Attendee): LatestRawData<T> {
+	public getRemote(attendee: Attendee): LatestData<T> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
@@ -209,11 +209,11 @@ export function latest<T extends object, Key extends string = string>(
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<
-			LatestRawValueManagerImpl<T, Key>,
+			LatestValueManagerImpl<T, Key>,
 			T,
 			InternalTypes.ValueRequiredState<T>
 		>(
-			new LatestRawValueManagerImpl(
+			new LatestValueManagerImpl(
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
@@ -221,5 +221,5 @@ export function latest<T extends object, Key extends string = string>(
 			),
 		),
 	});
-	return Object.assign(factory, { instanceBase: LatestRawValueManagerImpl });
+	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
 }
