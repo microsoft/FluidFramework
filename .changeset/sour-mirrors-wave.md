@@ -47,8 +47,10 @@ The following API changes have been made to improve clarity and consistency:
 | `PresenceEvents.attendeeDisconnected` | `AttendeesEvents.attendeeDisconnected`|
 | `PresenceEvents.attendeeJoined` | `AttendeesEvents.attendeeConnected`|
 | `PresenceNotifications` | `NotificationsWorkspace` |
+| `PresenceNotifications.props` | `NotificationsWorkspace.notifications` |
 | `PresenceNotificationsSchema` | `NotificationsWorkspaceSchema` |
 | `PresenceStates` | `StatesWorkspace` |
+| `PresenceStates.props` | `StatesWorkspace.states` |
 | `PresenceStatesEntries` | `StatesWorkspaceEntries` |
 | `PresenceStatesSchema` | `StatesWorkspaceSchema` |
 | `PresenceWorkspaceAddress` | `WorkspaceAddress` |
