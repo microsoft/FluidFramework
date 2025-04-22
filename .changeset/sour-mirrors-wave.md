@@ -23,26 +23,26 @@ The following API changes have been made to improve clarity and consistency:
 | `ISessionClient` | `Attendee` |
 | `Latest` (import) | `StateFactory` |
 | `Latest` (call) | `StateFactory.latest` |
-| `LatestEvents.updated` | `LatestEvents.remoteUpdated` |
+| `LatestEvents.updated` | `LatestRawEvents.remoteUpdated` |
 | `LatestMap` (import) | `StateFactory` |
 | `LatestMap` (call) | `StateFactory.latestMap` |
-| `LatestMapEvents.itemRemoved` | `LatestMapEvents.remoteItemRemoved` |
-| `LatestMapEvents.itemUpdated` | `LatestMapEvents.remoteItemUpdated` |
-| `LatestMapEvents.updated` | `LatestMapEvents.remoteUpdated` |
+| `LatestMapEvents.itemRemoved` | `LatestMapRawEvents.remoteItemRemoved` |
+| `LatestMapEvents.itemUpdated` | `LatestMapRawEvents.remoteItemUpdated` |
+| `LatestMapEvents.updated` | `LatestMapRawEvents.remoteUpdated` |
 | `LatestMapItemValueClientData` | `LatestMapItemUpdatedClientData` |
 | `LatestMapValueClientData` | `LatestMapClientData` |
-| `LatestMapValueManager` | `LatestMap` |
-| `LatestMapValueManager.clients` | `LatestMap.getStateAttendees` |
-| `LatestMapValueManager.clientValue` | `LatestMap.getRemote` |
-| `LatestMapValueManager.clientValues` | `LatestMap.getRemotes` |
-| `LatestMapValueManagerEvents` | `LatestMapEvents` |
+| `LatestMapValueManager` | `LatestMapRaw` |
+| `LatestMapValueManager.clients` | `LatestMapRaw.getStateAttendees` |
+| `LatestMapValueManager.clientValue` | `LatestMapRaw.getRemote` |
+| `LatestMapValueManager.clientValues` | `LatestMapRaw.getRemotes` |
+| `LatestMapValueManagerEvents` | `LatestMapRawEvents` |
 | `LatestValueClientData` | `LatestClientData` |
 | `LatestValueData` | `LatestData` |
-| `LatestValueManager` | `Latest` |
-| `LatestValueManager.clients` | `Latest.getStateAttendees` |
-| `LatestValueManager.clientValue` | `Latest.getRemote` |
-| `LatestValueManager.clientValues` | `Latest.getRemotes` |
-| `LatestValueManagerEvents` | `LatestEvents` |
+| `LatestValueManager` | `LatestRaw` |
+| `LatestValueManager.clients` | `LatestRaw.getStateAttendees` |
+| `LatestValueManager.clientValue` | `LatestRaw.getRemote` |
+| `LatestValueManager.clientValues` | `LatestRaw.getRemotes` |
+| `LatestValueManagerEvents` | `LatestRawEvents` |
 | `LatestValueMetadata` | `LatestMetadata` |
 | `PresenceEvents.attendeeDisconnected` | `AttendeesEvents.attendeeDisconnected`|
 | `PresenceEvents.attendeeJoined` | `AttendeesEvents.attendeeConnected`|
