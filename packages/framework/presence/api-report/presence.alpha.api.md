@@ -148,11 +148,11 @@ export interface Latest<T> {
 }
 
 // @alpha
-export function latest<T extends object, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @alpha
-export interface LatestArguments<T extends object> {
-    local: JsonSerializable<T> & JsonDeserialized<T> & object;
+export interface LatestArguments<T extends object | null> {
+    local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
     settings?: BroadcastControlSettings | undefined;
 }
 
@@ -192,10 +192,10 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 }
 
 // @alpha
-export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
 // @alpha
-export interface LatestMapArguments<T extends object, Keys extends string | number = string | number> {
+export interface LatestMapArguments<T, Keys extends string | number = string | number> {
     local?: {
         [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
     };

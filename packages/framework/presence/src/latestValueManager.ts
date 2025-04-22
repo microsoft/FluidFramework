@@ -186,11 +186,12 @@ class LatestValueManagerImpl<T, Key extends string>
  *
  * @alpha
  */
-export interface LatestArguments<T extends object> {
+export interface LatestArguments<T extends object | null> {
 	/**
 	 * The initial value of the local state.
 	 */
-	local: JsonSerializable<T> & JsonDeserialized<T> & object;
+	// eslint-disable-next-line @rushstack/no-new-null
+	local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
 
 	/**
 	 * See {@link BroadcastControlSettings}.
@@ -203,17 +204,17 @@ export interface LatestArguments<T extends object> {
  *
  * @alpha
  */
-export function latest<T extends object, Key extends string = string>(
+export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
-	const { settings, local } = args;
+	const { local, settings } = args;
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: shallowCloneObject(local),
+		value: local === null ? local : shallowCloneObject(local),
 	};
 	const factory = (
 		key: Key,

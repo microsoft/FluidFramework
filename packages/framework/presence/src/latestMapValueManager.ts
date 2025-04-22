@@ -494,10 +494,7 @@ class LatestMapValueManagerImpl<
  *
  * @alpha
  */
-export interface LatestMapArguments<
-	T extends object,
-	Keys extends string | number = string | number,
-> {
+export interface LatestMapArguments<T, Keys extends string | number = string | number> {
 	/**
 	 * The initial value of the local state.
 	 */
@@ -517,7 +514,7 @@ export interface LatestMapArguments<
  * @alpha
  */
 export function latestMap<
-	T extends object,
+	T,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(

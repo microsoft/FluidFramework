@@ -140,6 +140,9 @@ export function checkCompiles(): void {
 		console.log(key, value);
 	}
 
+	// ----------------------------------
+	// pointers data
+
 	interface PointerData {
 		x: number;
 		y: number;
@@ -186,4 +189,34 @@ export function checkCompiles(): void {
 	pointers.events.on("remoteUpdated", ({ attendee, items }) => {
 		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	});
+
+	// ----------------------------------
+	// primitive and null value support
+
+	workspace.add(
+		"primitiveMap",
+		StateFactory.latestMap({
+			local: {
+				// eslint-disable-next-line unicorn/no-null
+				null: null,
+				string: "string",
+				number: 0,
+				boolean: true,
+			},
+		}),
+	);
+
+	const localPrimitiveMap = workspace.props.primitiveMap.local;
+
+	// map value types are not matched to specific key
+	localPrimitiveMap.set("string", 1);
+	localPrimitiveMap.set("number", false);
+	// eslint-disable-next-line unicorn/no-null
+	localPrimitiveMap.set("boolean", null);
+	localPrimitiveMap.set("null", "null");
+
+	// @ts-expect-error with inferred keys only those named in init are accessible
+	localPrimitiveMap.set("key3", "value");
+	// @ts-expect-error value of type value is not assignable
+	localPrimitiveMap.set("null", { value: "value" });
 }
