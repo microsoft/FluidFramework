@@ -1231,7 +1231,6 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 		containerRuntime,
 		dataStoreRuntime,
 		channel: channel as ReturnType<TChannelFactory["create"]>,
-		stagingModeStatus: "off",
 	};
 	options.emitter.emit("clientCreate", newClient);
 	return newClient;
@@ -1309,7 +1308,6 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 		containerRuntime,
 		dataStoreRuntime,
 		stashData,
-		stagingModeStatus: "off",
 	};
 
 	options.emitter.emit("clientCreate", newClient);
@@ -1359,7 +1357,6 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 		channel,
 		containerRuntime,
 		dataStoreRuntime,
-		stagingModeStatus: "off",
 	};
 	options.emitter.emit("clientCreate", newClient);
 	return newClient;

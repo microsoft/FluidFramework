@@ -66,7 +66,7 @@ export interface SquashClient<TChannelFactory extends IChannelFactory>
 	 * 'exiting' phase means "it's up to the DDS to apply edits which remove any poisoned handles from the document".
 	 *
 	 * During this phase, a generator produced by `exitingStagingModeGeneratorFactory` will be invoked to create operations.
-	 * See {@link createSquashFuzzSuite} for more details.
+	 * See `createSquashFuzzSuite` for more details.
 	 */
 	stagingModeStatus: "off" | "staging" | "exiting";
 }
@@ -353,6 +353,9 @@ export function createSquashFuzzSuite<
 	options.emitter.on("testStart", (state) => {
 		(state.random as SquashRandom).poisonedHandle =
 			makeUnreachableCodePathProxy("random.poisonedHandle");
+	});
+	options.emitter.on("clientCreate", (client) => {
+		(client as SquashClient<TChannelFactory>).stagingModeStatus = "off";
 	});
 	const model = getFullModel(ddsModel, options);
 	createSuite(model as unknown as DDSFuzzHarnessModel<TChannelFactory, TOperation>, options);
