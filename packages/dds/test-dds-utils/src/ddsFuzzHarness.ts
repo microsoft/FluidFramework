@@ -1439,15 +1439,14 @@ export async function runTestForSeed<
 				),
 			);
 	const summarizerClient = initialClient;
-	// let handleGenerated = false;
 	const initialState: DDSFuzzTestState<TChannelFactory> = {
 		clients,
 		summarizerClient,
 		containerRuntimeFactory,
 		random: {
 			...random,
-			// These two properties are injected by client selection logic, which allows binding the handle
-			// to an appropriate client context. Nothing in the harness itself should need them.
+			// This is injected by client selection logic, which allows binding the handle
+			// to an appropriate client context.
 			handle: makeUnreachableCodePathProxy("random.handle"),
 		},
 		client: makeUnreachableCodePathProxy("client"),
@@ -1486,14 +1485,6 @@ export async function runTestForSeed<
 	// Sanity-check that the generator produced at least one operation. If it failed to do so,
 	// this usually indicates an error on the part of the test author.
 	assert(operationCount > 0, "Generator should have produced at least one operation.");
-
-	// if (options.handleGenerationDisabled !== true) {
-	// 	assert(
-	// 		handleGenerated,
-	// 		"no handles were generated; tests should generate and use handle via random.handle, or disable handles for the test",
-	// 	);
-	// }
-
 	options.emitter.emit("testEnd", finalState);
 
 	return finalState;

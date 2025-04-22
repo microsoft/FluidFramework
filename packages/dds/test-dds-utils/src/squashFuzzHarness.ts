@@ -63,8 +63,10 @@ export interface SquashRandom extends DDSRandom {
 export interface SquashClient<TChannelFactory extends IChannelFactory>
 	extends Client<TChannelFactory> {
 	/**
-	 * 'exiting' means "it's up to the DDS to apply edits which remove any poisoned handles from the document".
-	 * They should use TODO to do so
+	 * 'exiting' phase means "it's up to the DDS to apply edits which remove any poisoned handles from the document".
+	 *
+	 * During this phase, a generator produced by `exitingStagingModeGeneratorFactory` will be invoked to create operations.
+	 * See {@link createSquashFuzzSuite} for more details.
 	 */
 	stagingModeStatus: "off" | "staging" | "exiting";
 }
@@ -353,7 +355,6 @@ export function createSquashFuzzSuite<
 			makeUnreachableCodePathProxy("random.poisonedHandle");
 	});
 	const model = getFullModel(ddsModel, options);
-	// TODO: Is getting the generic typing to work out is more effort than it's worth?
 	createSuite(model as unknown as DDSFuzzHarnessModel<TChannelFactory, TOperation>, options);
 }
 
