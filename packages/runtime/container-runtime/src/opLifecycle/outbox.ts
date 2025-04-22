@@ -17,7 +17,7 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
