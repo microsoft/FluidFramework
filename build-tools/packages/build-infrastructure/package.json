@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-infrastructure",
-	"version": "0.56.0",
+	"version": "0.57.0",
 	"description": "Fluid build infrastructure",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,7 +75,7 @@
 		"oclif": "^4.15.16",
 		"picocolors": "^1.1.1",
 		"read-pkg-up": "^7.0.1",
-		"semver": "^7.6.3",
+		"semver": "^7.7.1",
 		"simple-git": "^3.27.0",
 		"sort-package-json": "1.57.0",
 		"type-fest": "^2.19.0",
@@ -94,7 +94,7 @@
 		"@types/micromatch": "^4.0.9",
 		"@types/mocha": "^10.0.9",
 		"@types/node": "^18.19.59",
-		"@types/semver": "^7.5.8",
+		"@types/semver": "^7.7.0",
 		"c8": "^7.14.0",
 		"chai": "^4.5.0",
 		"chai-arrays": "^2.2.0",
