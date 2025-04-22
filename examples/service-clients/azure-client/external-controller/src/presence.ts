@@ -36,7 +36,7 @@ export interface DiceValues {
  */
 const statesSchema = {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	lastRoll: StateFactory.latest({ initialValue: {} as DiceValues }),
+	lastRoll: StateFactory.latest({ local: {} as DiceValues }),
 	lastDiceRolls: StateFactory.latestMap<{ value: DieValue }, `die${number}`>(),
 } satisfies StatesWorkspaceSchema;
 

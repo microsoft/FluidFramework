@@ -148,7 +148,7 @@ export interface Latest<T> {
 }
 
 // @alpha
-export function latest<T extends object, Key extends string = string>(props: LatestProps<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+export function latest<T extends object, Key extends string = string>(args: LatestProps<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @alpha @sealed
 export interface LatestClientData<T> extends LatestData<T> {
@@ -186,7 +186,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 }
 
 // @alpha
-export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(props?: LatestMapProps<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapProps<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
@@ -232,11 +232,11 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
 
 // @alpha
 export interface LatestMapProps<T extends object, Keys extends string | number = string | number> {
-    // (undocumented)
-    controls?: BroadcastControlSettings | undefined;
     local?: {
         [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
     };
+    // (undocumented)
+    settings?: BroadcastControlSettings | undefined;
 }
 
 // @alpha @sealed
@@ -247,9 +247,9 @@ export interface LatestMetadata {
 
 // @alpha
 export interface LatestProps<T extends object> {
-    // (undocumented)
-    controls?: BroadcastControlSettings | undefined;
     local: JsonSerializable<T> & JsonDeserialized<T> & object;
+    // (undocumented)
+    settings?: BroadcastControlSettings | undefined;
 }
 
 // @alpha @sealed
