@@ -27,13 +27,48 @@ export interface LatestMetadata {
 }
 
 /**
- * State of a value and its metadata.
+ * Direct access to a value.
+ *
+ * @privateRemarks
+ * Change to `InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>` to break tsc.
  *
  * @sealed
  * @alpha
  */
-export interface LatestData<T> {
-	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+export type RawValueAccessor<_T> = "raw";
+
+/**
+ * Access to a value via a function call, which may result in no value.
+ *
+ * @privateRemarks
+ * Change to `() => InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined` to break tsc.
+ *
+ * @sealed
+ * @alpha
+ */
+export type ProxiedValueAccessor<_T> = "proxied";
+
+/**
+ * Union of possible accessor types for a value.
+ *
+ * @sealed
+ * @alpha
+ */
+export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
+
+/**
+ * State of a value and its metadata.
+ *
+ * @privateRemarks
+ * Set `value` to just `TValueAccessor` with above `*ValueAccessor` changes to break tsc.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
+	value: TValueAccessor extends RawValueAccessor<T>
+		? InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>
+		: () => InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
 	metadata: LatestMetadata;
 }
 
@@ -43,6 +78,7 @@ export interface LatestData<T> {
  * @sealed
  * @alpha
  */
-export interface LatestClientData<T> extends LatestData<T> {
+export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>>
+	extends LatestData<T, TValueAccessor> {
 	attendee: Attendee;
 }
