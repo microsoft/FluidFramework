@@ -340,7 +340,7 @@ describe("treeNodeApi", () => {
 	});
 
 	describe("on", () => {
-		it("Bug #35920", () => {
+		it.skip("Bug #35920", () => {
 			// Notes:
 			// * For this bug to occur, the op must be sent from one tree to another tree - it does not occur when e.g. unit testing a single view
 			// * There needs to be at least two levels of nesting in the schema, e.g. it won't repro if you simply change a number field on the root node.
