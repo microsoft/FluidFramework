@@ -293,7 +293,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 				}
 			}
 			this.nodes = nodes;
-			// props is the public view of nodes that limits the entries types to
+			// states is the public view of nodes that limits the entries types to
 			// the public interface of the State object with an additional type
 			// filter that beguiles the type system. So just reinterpret cast.
 			this.states = this.nodes as unknown as StatesWorkspace<TSchema>["states"];
