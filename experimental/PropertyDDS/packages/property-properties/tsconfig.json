@@ -8,7 +8,7 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"composite": true,
-		// Updating to ES 2022 causes to failing tests.
+		// Updating to ES 2022 causes some failing tests.
 		// Resolving these issues is not a priority right now.
 		"target": "ES2021",
 	},
