@@ -209,6 +209,8 @@ stages:
           artifactName: 'perf-test-outputs_execution-time'
         condition: succeededOrFailed()
 
+      - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
+
   - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
     parameters:
       stageId: perf_unit_tests_runtime
@@ -336,6 +338,8 @@ stages:
           artifactName: 'perf-test-outputs_memory-usage'
         condition: succeededOrFailed()
 
+      - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
+
   - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
     parameters:
       stageId: perf_unit_tests_memory
@@ -461,6 +465,8 @@ stages:
           targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
           artifactName: 'perf-test-outputs_custom-data'
         condition: succeededOrFailed()
+
+      - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
   - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
     parameters:
@@ -662,6 +668,8 @@ stages:
               ls -laR ${{ variables.memoryUsageTestOutputFolder }};
               echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
               rm -rf ${{ variables.memoryUsageTestOutputFolder }};
+
+        - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
     - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
       parameters:

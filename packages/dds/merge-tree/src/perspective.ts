@@ -3,18 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { LocalClientId, UnassignedSequenceNumber } from "./constants.js";
-import { type MergeTree } from "./mergeTree.js";
-import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
-import { seqLTE, type ISegmentLeaf } from "./mergeTreeNodes.js";
-import { isInserted, toMoveInfo, toRemovalInfo } from "./segmentInfos.js";
+import { NonCollabClient } from "./constants.js";
+import { seqLTE, type ISegment } from "./mergeTreeNodes.js";
+import { isInserted, isRemoved } from "./segmentInfos.js";
 import * as opstampUtils from "./stamps.js";
-import type { OperationStamp, InsertOperationStamp, RemoveOperationStamp } from "./stamps.js";
+import type { OperationStamp, RemoveOperationStamp } from "./stamps.js";
 
 /**
  * A perspective which includes some subset of operations known to the local client.
  *
  * This helps the local client reason about the state of other clients when they issued an operation.
+ * @internal
  */
 export interface Perspective {
 	/**
@@ -47,104 +46,23 @@ export interface Perspective {
 	/**
 	 * @returns Whether the segment is present (visible) from this perspective
 	 */
-	isSegmentPresent(segment: ISegmentLeaf): boolean;
+	isSegmentPresent(segment: ISegment): boolean;
 
 	/**
 	 * @returns Whether this perspective has seen the given operation.
 	 */
-	hasOccurred(stamp: RemoveOperationStamp | InsertOperationStamp): boolean;
-
-	nextSegment(mergeTree: MergeTree, segment: ISegmentLeaf, forward?: boolean): ISegmentLeaf;
-	previousSegment(mergeTree: MergeTree, segment: ISegmentLeaf): ISegmentLeaf;
+	hasOccurred(stamp: OperationStamp): boolean;
 }
 
 abstract class PerspectiveBase {
-	abstract hasOccurred(stamp: RemoveOperationStamp | InsertOperationStamp): boolean;
+	abstract hasOccurred(stamp: OperationStamp): boolean;
 
-	/**
-	 * Returns the immediately adjacent segment in the specified direction from this perspective.
-	 * There may actually be multiple segments between the given segment and the returned segment,
-	 * but they were either inserted after this perspective, or have been removed before this perspective.
-	 *
-	 * @param segment - The segment to start from.
-	 * @param forward - The direction to search.
-	 * @returns the next segment in the specified direction, or the start or end of the tree if there is no next segment.
-	 */
-	public nextSegment(
-		mergeTree: MergeTree,
-		segment: ISegmentLeaf,
-		forward: boolean = true,
-	): ISegmentLeaf {
-		let next: ISegmentLeaf | undefined;
-		const action = (seg: ISegmentLeaf): boolean | undefined => {
-			if (this.isSegmentPresent(seg)) {
-				next = seg;
-				return LeafAction.Exit;
-			}
-		};
-		(forward ? forwardExcursion : backwardExcursion)(segment, action);
-		return next ?? (forward ? mergeTree.endOfTree : mergeTree.startOfTree);
-	}
-
-	/**
-	 * Finds the segment prior to the given segment.
-	 * @param segment - The segment to start from.
-	 * @returns the previous segment, or the start of the tree if there is no previous segment.
-	 * @remarks This is a convenient equivalent to calling `nextSegment(segment, false)`.
-	 */
-	public previousSegment(mergeTree: MergeTree, segment: ISegmentLeaf): ISegmentLeaf {
-		return this.nextSegment(mergeTree, segment, false);
-	}
-
-	public isSegmentPresent(seg: ISegmentLeaf): boolean {
-		const insert: InsertOperationStamp = {
-			type: "insert",
-			clientId: seg.clientId,
-			seq: seg.seq,
-			localSeq: seg.localSeq,
-		};
-		if (isInserted(seg) && !this.hasOccurred(insert)) {
+	public isSegmentPresent(seg: ISegment): boolean {
+		if (isInserted(seg) && !this.hasOccurred(seg.insert)) {
 			return false;
 		}
 
-		const removes: RemoveOperationStamp[] = [];
-		const removalInfo = toRemovalInfo(seg);
-		if (removalInfo !== undefined) {
-			removes.push(
-				...removalInfo.removedClientIds.map((clientId) =>
-					(clientId === LocalClientId || clientId === 0) &&
-					removalInfo.localRemovedSeq !== undefined
-						? ({
-								type: "setRemove",
-								seq: UnassignedSequenceNumber,
-								clientId,
-								localSeq: removalInfo.localRemovedSeq,
-							} as const)
-						: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							({ type: "setRemove", seq: removalInfo.removedSeq, clientId } as const),
-				),
-			);
-		}
-
-		const moveInfo = toMoveInfo(seg);
-		if (moveInfo !== undefined) {
-			removes.push(
-				...moveInfo.movedClientIds.map((clientId, index) =>
-					(clientId === LocalClientId || clientId === 0) &&
-					moveInfo.localMovedSeq !== undefined
-						? ({
-								type: "sliceRemove",
-								seq: UnassignedSequenceNumber,
-								clientId,
-								localSeq: moveInfo.localMovedSeq,
-							} as const)
-						: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							({ type: "setRemove", seq: moveInfo.movedSeqs[index]!, clientId } as const),
-				),
-			);
-		}
-
-		if (removes.some((remove) => this.hasOccurred(remove))) {
+		if (isRemoved(seg) && seg.removes.some((remove) => this.hasOccurred(remove))) {
 			return false;
 		}
 
@@ -200,6 +118,21 @@ export class LocalReconnectingPerspective extends PerspectiveBase implements Per
 }
 
 /**
+ * A perspective which includes edits which were either:
+ * - acked and at or before some reference sequence number
+ * - unacked, but at or before some local sequence number
+ *
+ * @internal
+ */
+export function createLocalReconnectingPerspective(
+	refSeq: number,
+	clientId: number,
+	localSeq: number,
+): Perspective {
+	return new LocalReconnectingPerspective(refSeq, clientId, localSeq);
+}
+
+/**
  * A perspective which includes all known edits.
  *
  * This is the perspective that the application sees.
@@ -234,16 +167,26 @@ export class RemoteObliteratePerspective extends PerspectiveBase implements Pers
 		super();
 	}
 
-	public hasOccurred(stamp: InsertOperationStamp | RemoveOperationStamp): boolean {
+	public hasOccurred(stamp: OperationStamp): boolean {
 		// Local-only removals are not visible to an obliterate operation, since this means the local removal was concurrent
 		// to a remote obliterate and we may need to mark the segment appropriately to reflect this overlapping remove.
 		// Every other type of operation is visible: obliterates do not affect segments that have already been removed and acked,
 		// and they always affect segments within their range that have not been removed, even if those segments were inserted
 		// after the obliterate's refSeq.
-		if (stamp.type !== "insert" && opstampUtils.isLocal(stamp)) {
+		if (isRemoveOperationStamp(stamp) && opstampUtils.isLocal(stamp)) {
 			return false;
 		}
 
 		return true;
 	}
 }
+
+function isRemoveOperationStamp(stamp: OperationStamp): stamp is RemoveOperationStamp {
+	const { type } = stamp as unknown as RemoveOperationStamp;
+	return type === "setRemove" || type === "sliceRemove";
+}
+
+export const allAckedChangesPerspective = new PriorPerspective(
+	Number.MAX_SAFE_INTEGER,
+	NonCollabClient,
+);

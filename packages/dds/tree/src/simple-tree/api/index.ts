@@ -9,6 +9,8 @@ export {
 	type ViewableTree,
 	type TreeViewEvents,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
+	type TreeSchema,
 	type ITreeViewConfiguration,
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
@@ -22,7 +24,7 @@ export {
 	SchemaFactory,
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
-	type schemaStatics,
+	type SchemaStatics,
 } from "./schemaFactory.js";
 export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
@@ -37,16 +39,6 @@ export {
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi, tryGetSchema } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable, createFromCursor } from "./create.js";
-export type {
-	SimpleTreeSchema,
-	SimpleNodeSchema,
-	SimpleFieldSchema,
-	SimpleLeafNodeSchema,
-	SimpleMapNodeSchema,
-	SimpleArrayNodeSchema,
-	SimpleObjectNodeSchema,
-	SimpleNodeSchemaBase,
-} from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -62,6 +54,7 @@ export {
 	type JsonFieldSchema,
 	type JsonLeafSchemaType,
 } from "./jsonSchema.js";
+export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export { ViewSchema } from "./view.js";
@@ -85,13 +78,17 @@ export type {
 	TreeNodeSchemaClassUnsafe,
 	TreeNodeSchemaUnsafe,
 	AllowedTypesUnsafe,
+	ImplicitAllowedTypesUnsafe,
+	ImplicitFieldSchemaUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
 	InsertableTreeNodeFromAllowedTypesUnsafe,
+	FieldSchemaAlphaUnsafe,
+	ArrayNodeCustomizableSchemaUnsafe,
+	MapNodeCustomizableSchemaUnsafe,
 } from "./typesUnsafe.js";
 
 export {
 	type VerboseTreeNode,
-	type ParseOptions,
 	type VerboseTree,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
@@ -100,7 +97,7 @@ export {
 } from "./verboseTree.js";
 
 export {
-	type EncodeOptions,
+	type TreeEncodingOptions,
 	customFromCursorStored,
 	type CustomTreeNode,
 	type CustomTreeValue,
@@ -142,6 +139,7 @@ export {
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
+export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
 // These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639

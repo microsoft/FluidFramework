@@ -5,9 +5,8 @@
 
 import type { JsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { ISessionClient } from "./presence.js";
-
-import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
+import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import type { Attendee } from "./presence.js";
 
 /**
  * Metadata for the value state.
@@ -15,7 +14,7 @@ import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exp
  * @sealed
  * @alpha
  */
-export interface LatestValueMetadata {
+export interface LatestMetadata {
 	/**
 	 * The revision number for value that increases as value is changed.
 	 */
@@ -33,17 +32,17 @@ export interface LatestValueMetadata {
  * @sealed
  * @alpha
  */
-export interface LatestValueData<T> {
+export interface LatestData<T> {
 	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-	metadata: LatestValueMetadata;
+	metadata: LatestMetadata;
 }
 
 /**
- * State of a specific client's value and its metadata.
+ * State of a specific attendee's value and its metadata.
  *
  * @sealed
  * @alpha
  */
-export interface LatestValueClientData<T> extends LatestValueData<T> {
-	client: ISessionClient;
+export interface LatestClientData<T> extends LatestData<T> {
+	attendee: Attendee;
 }

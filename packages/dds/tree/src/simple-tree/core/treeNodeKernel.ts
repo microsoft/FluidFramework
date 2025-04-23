@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
 import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
@@ -19,14 +20,12 @@ import {
 	assertFlexTreeEntityNotFreed,
 	ContextSlot,
 	flexTreeSlot,
-	isFreedSymbol,
 	LazyEntity,
 	TreeStatus,
 	treeStatusFromAnchorCache,
 	type FlexTreeNode,
 } from "../../feature-libraries/index.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
-import { fail } from "../../util/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
@@ -74,7 +73,7 @@ export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema
 /** The {@link HydrationState} of a {@link TreeNodeKernel} before the kernel is hydrated */
 interface UnhydratedState {
 	off: Off;
-	innerNode: UnhydratedFlexTreeNode;
+	readonly innerNode: UnhydratedFlexTreeNode;
 }
 
 /** The {@link HydrationState} of a {@link TreeNodeKernel} after the kernel is hydrated */
@@ -82,9 +81,9 @@ interface HydratedState {
 	/** The flex node for this kernel (lazy - undefined if it has not yet been demanded) */
 	innerNode?: FlexTreeNode;
 	/** The {@link AnchorNode} that this node is associated with. */
-	anchorNode: AnchorNode;
+	readonly anchorNode: AnchorNode;
 	/** All {@link Off | event deregistration functions} that should be run when the kernel is disposed. */
-	offAnchorNode: Set<Off>;
+	readonly offAnchorNode: Set<Off>;
 }
 
 /** State within a {@link TreeNodeKernel} that is related to the hydration process */
@@ -156,15 +155,20 @@ export class TreeNodeKernel {
 						changedFields,
 					});
 
-					let n: UnhydratedFlexTreeNode | undefined = innerNode;
-					while (n !== undefined) {
-						const treeNode = unhydratedFlexTreeNodeToTreeNodeInternal.get(n);
+					let unhydratedNode: UnhydratedFlexTreeNode | undefined = innerNode;
+					while (unhydratedNode !== undefined) {
+						const treeNode = unhydratedFlexTreeNodeToTreeNodeInternal.get(unhydratedNode);
 						if (treeNode !== undefined) {
 							const kernel = getKernel(treeNode);
 							kernel.#unhydratedEvents.value.emit("subtreeChangedAfterBatch");
 						}
-						// This cast is safe because the parent (if it exists) of an unhydrated flex node is always another unhydrated flex node.
-						n = n.parentField.parent.parent as UnhydratedFlexTreeNode | undefined;
+						const parentNode: FlexTreeNode | undefined =
+							unhydratedNode.parentField.parent.parent;
+						assert(
+							parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
+							0xb76 /* Unhydrated node's parent should be an unhydrated node */,
+						);
+						unhydratedNode = parentNode;
 					}
 				}),
 			};
@@ -244,7 +248,7 @@ export class TreeNodeKernel {
 		const flex = this.#hydrationState.anchorNode.slots.get(flexTreeSlot);
 		if (flex !== undefined) {
 			assert(flex instanceof LazyEntity, 0x9b4 /* Unexpected flex node implementation */);
-			if (flex[isFreedSymbol]()) {
+			if (flex.isFreed()) {
 				return TreeStatus.Deleted;
 			}
 		}
@@ -284,35 +288,46 @@ export class TreeNodeKernel {
 	 *
 	 * For hydrated nodes it returns a FlexTreeNode backed by the forest.
 	 * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
+	 *
+	 * If `allowDeleted` is false, this will throw a UsageError if the node is deleted.
 	 */
-	public getOrCreateInnerNode(allowFreed = false): InnerNode {
+	public getOrCreateInnerNode(allowDeleted = false): InnerNode {
 		if (!isHydrated(this.#hydrationState)) {
+			debugAssert(
+				() =>
+					this.#hydrationState.innerNode?.context.isDisposed() === false ||
+					"Unhydrated node should never be disposed",
+			);
 			return this.#hydrationState.innerNode; // Unhydrated case
 		}
 
-		if (this.#hydrationState.innerNode !== undefined) {
-			return this.#hydrationState.innerNode; // Cooked case
+		if (this.#hydrationState.innerNode === undefined) {
+			// Marinated case -> cooked
+			const anchorNode = this.#hydrationState.anchorNode;
+			// The proxy is bound to an anchor node, but it may or may not have an actual flex node yet
+			const flexNode = anchorNode.slots.get(flexTreeSlot);
+			if (flexNode !== undefined) {
+				// If the flex node already exists, use it...
+				this.#hydrationState.innerNode = flexNode;
+			} else {
+				// ...otherwise, the flex node must be created
+				const context =
+					anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
+				const cursor = context.checkout.forest.allocateCursor("getFlexNode");
+				context.checkout.forest.moveCursorToPath(anchorNode, cursor);
+				this.#hydrationState.innerNode = makeTree(context, cursor);
+				cursor.free();
+				// Calling this is a performance improvement, however, do this only after demand to avoid momentarily having no anchors to anchorNode
+				anchorForgetters?.get(this.node)?.();
+				if (!allowDeleted) {
+					assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
+				}
+			}
 		}
 
-		// Marinated case -> cooked
-		const anchorNode = this.#hydrationState.anchorNode;
-		// The proxy is bound to an anchor node, but it may or may not have an actual flex node yet
-		const flexNode = anchorNode.slots.get(flexTreeSlot);
-		if (flexNode !== undefined) {
-			// If the flex node already exists, use it...
-			this.#hydrationState.innerNode = flexNode;
-		} else {
-			// ...otherwise, the flex node must be created
-			const context =
-				anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
-			const cursor = context.checkout.forest.allocateCursor("getFlexNode");
-			context.checkout.forest.moveCursorToPath(anchorNode, cursor);
-			this.#hydrationState.innerNode = makeTree(context, cursor);
-			cursor.free();
-			// Calling this is a performance improvement, however, do this only after demand to avoid momentarily having no anchors to anchorNode
-			anchorForgetters?.get(this.node)?.();
-			if (!allowFreed) {
-				assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
+		if (!allowDeleted) {
+			if (this.#hydrationState.innerNode.context.isDisposed()) {
+				throw new UsageError("Cannot access a Deleted node.");
 			}
 		}
 
@@ -414,31 +429,38 @@ export const unhydratedFlexTreeNodeToTreeNode =
  */
 export const proxySlot = anchorSlot<TreeNode>();
 
+/**
+ * Dispose a TreeNode (if any) for an existing anchor without disposing the anchor.
+ */
 export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 	const treeNode = anchorNode.slots.get(proxySlot);
 	if (treeNode !== undefined) {
 		const kernel = getKernel(treeNode);
 		kernel.dispose();
+		anchorNode.slots.delete(proxySlot);
 	}
 }
 
 /**
- * Lookup a TreeNodeSchema from a Hydrated FlexTreeNode.
- * @privateRemarks
- * This provides a way to access simple tree schema from the flex tree without depending on {@link FlexTreeSchema} which is in the process of being removed.
- * This is currently limited to hydrated nodes: this limitation will have to be fixed before {@link FlexTreeSchema} can be fully removed.
+ * Gets the {@link TreeNodeSchema} for the {@link InnerNode}.
  */
-export function getTreeNodeSchemaFromHydratedFlexNode(flexNode: FlexTreeNode): TreeNodeSchema {
-	assert(
-		flexNode.context.isHydrated(),
-		0xa56 /* getTreeNodeSchemaFromHydratedFlexNode only allows hydrated flex tree nodes */,
-	);
+export function getSimpleNodeSchemaFromInnerNode(innerNode: InnerNode): TreeNodeSchema {
+	const context: Context = getSimpleContextFromInnerNode(innerNode);
+	return context.schema.get(innerNode.schema) ?? fail(0xb3f /* missing schema from context */);
+}
 
-	const context =
-		flexNode.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
-		fail(0xb43 /* Missing SimpleContextSlot */);
+/**
+ * Gets the {@link Context} for the {@link InnerNode}.
+ */
+export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
+	if (innerNode instanceof UnhydratedFlexTreeNode) {
+		return innerNode.simpleContext;
+	}
 
-	return context.schema.get(flexNode.schema) ?? fail(0xb44 /* Missing schema */);
+	const context = innerNode.anchorNode.anchorSet.slots.get(SimpleContextSlot);
+	assert(context !== undefined, 0xa55 /* missing simple tree context */);
+
+	return context;
 }
 
 /**
@@ -448,10 +470,12 @@ export function getTreeNodeSchemaFromHydratedFlexNode(flexNode: FlexTreeNode): T
  *
  * For hydrated nodes it returns a FlexTreeNode backed by the forest.
  * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
+ *
+ * If `allowDeleted` is false, this will throw a UsageError if the node is deleted.
  */
-export function getOrCreateInnerNode(treeNode: TreeNode, allowFreed = false): InnerNode {
+export function getOrCreateInnerNode(treeNode: TreeNode, allowDeleted = false): InnerNode {
 	const kernel = getKernel(treeNode);
-	return kernel.getOrCreateInnerNode(allowFreed);
+	return kernel.getOrCreateInnerNode(allowDeleted);
 }
 
 /**
@@ -482,8 +506,20 @@ export function treeNodeFromAnchor(anchorNode: AnchorNode): TreeNode | TreeValue
 	}
 
 	const flexNode = flexNodeFromAnchor(anchorNode);
-	const classSchema = getTreeNodeSchemaFromHydratedFlexNode(flexNode);
+	return createTreeNodeFromInner(flexNode);
+}
+
+/**
+ * Constructs a TreeNode from an InnerNode.
+ * @remarks
+ * This does not do caching or validation: caller must ensure duplicate nodes for a given inner node are not created, and that the inner node is valid.
+ */
+export function createTreeNodeFromInner(innerNode: InnerNode): TreeNode | TreeValue {
+	const classSchema = getSimpleNodeSchemaFromInnerNode(innerNode);
+	const internal = innerNode as unknown as InternalTreeNode;
 	return typeof classSchema === "function"
-		? new classSchema(flexNode as unknown as InternalTreeNode)
-		: (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
+		? new classSchema(internal)
+		: (classSchema as { create(data: InternalTreeNode): TreeNode | TreeValue }).create(
+				internal,
+			);
 }

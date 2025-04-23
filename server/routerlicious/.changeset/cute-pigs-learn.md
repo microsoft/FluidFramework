@@ -4,6 +4,7 @@
 "@fluidframework/server-local-server": major
 "@fluidframework/server-routerlicious-base": major
 "@fluidframework/server-services-core": major
+"__section": other
 ---
 
 Cleanup underlying orderer connection when last socket disconnects from a session

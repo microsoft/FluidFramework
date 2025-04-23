@@ -5,7 +5,7 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
@@ -19,7 +19,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
-import { fail, cloneWithReplacements } from "../../util/index.js";
+import { cloneWithReplacements } from "../../util/index.js";
 import type { TreeLeafValue } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import {
@@ -33,25 +33,19 @@ import { isObjectNodeSchema } from "../objectNodeTypes.js";
 import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 
 /**
- * Options for how to encode a tree.
+ * Options for how to interpret or encode a tree when schema information is available.
  * @alpha
  */
-export interface EncodeOptions {
+export interface TreeEncodingOptions {
 	/**
-	 * If true, interpret the input keys of object nodes as stored keys.
-	 * If false, interpret them as property keys.
+	 * If true, use the stored keys of object nodes.
+	 * If false, use the property keys.
+	 * @remarks
+	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
 	 * @defaultValue false.
 	 */
 	readonly useStoredKeys?: boolean;
 }
-
-/**
- * Options for how to transcode handles.
- * @remarks
- * Can be applied using {@link replaceHandles}.
- * @alpha
- */
-export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 /**
  * Options for how to interpret a `ConciseTree<TCustom>` without relying on schema.
@@ -86,11 +80,11 @@ export type CustomTreeNode<TChild> = TChild[] | { [key: string]: TChild };
  */
 export function customFromCursor<TChild>(
 	reader: ITreeCursor,
-	options: Required<EncodeOptions>,
+	options: Required<TreeEncodingOptions>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 	childHandler: (
 		reader: ITreeCursor,
-		options: Required<EncodeOptions>,
+		options: Required<TreeEncodingOptions>,
 		schema: ReadonlyMap<string, TreeNodeSchema>,
 	) => TChild,
 ): CustomTree<TChild> {
@@ -202,6 +196,14 @@ export function tryStoredSchemaAsArray(
 		}
 	}
 }
+
+/**
+ * Options for how to transcode handles.
+ * @remarks
+ * Can be applied using {@link replaceHandles}.
+ * @alpha
+ */
+export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 /**
  * Clones tree, replacing any handles.
