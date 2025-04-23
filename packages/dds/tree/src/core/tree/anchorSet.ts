@@ -730,25 +730,32 @@ export class AnchorSet implements AnchorLocator {
 			 */
 			bufferedEvents: [] as BufferedEvent[],
 
-			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
-			// subtreeChangedAfterBatch events.
-			// The algorithm works as follows:
-			// - Initialize both to 0.
-			// - As we walk the tree from the root towards the leaves, when we enter a node increment currentDepth by 1.
-			// - When we edit a node, set depthThresholdForSubtreeChanged = currentDepth.
-			//   Intuitively, depthThresholdForSubtreeChanged means "as you walk the tree towards the root, when you exit a
-			//   node at this depth you should emit a subtreeChangedAfterBatch event".
-			// - When we exit a node, if d === currentDepth then emit a subtreeChangedAfterBatch and decrement d by 1.
-			//   Then decrement currentDepth unconditionally.
-			// Note that the event will be emitted when exiting a node that was edited (depthThresholdForSubtreeChanged will
-			// have been set to the current depth when the edit happened), it will be emitted when exiting a node that is the
-			// parent of a node that already emitted the event (because both depthThresholdForSubtreeChanged and currentDepth
-			// get decremented when exiting a node so they stay in sync), and if we're already emitting the event but start
-			// walking the tree back towards the leaves in a path where no edits happen, currentDepth will be increased again
-			// as we walk that path, depthThresholdForSubtreeChanged will not, and thus no event will be emitted when walking
-			// back up that path, until we get back to the depth where we were already emitting the event, and will continue
-			// emitting it on the way to the root.
+			/**
+			 * 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
+			 * subtreeChangedAfterBatch events.
+			 * The algorithm works as follows:
+			 *
+			 * - Initialize both to 0.
+			 * - As we walk the tree from the root towards the leaves, when we enter a node increment currentDepth by 1.
+			 * - When we edit a node, set depthThresholdForSubtreeChanged = currentDepth.
+			 * Intuitively, depthThresholdForSubtreeChanged means "as you walk the tree towards the root, when you exit a
+			 * node at this depth you should emit a subtreeChangedAfterBatch event".
+			 * - When we exit a node, if d === currentDepth then emit a subtreeChangedAfterBatch and decrement d by 1.
+			 * Then decrement currentDepth unconditionally.
+			 *
+			 * Note that the event will be emitted when exiting a node that was edited (depthThresholdForSubtreeChanged will
+			 * have been set to the current depth when the edit happened), it will be emitted when exiting a node that is the
+			 * parent of a node that already emitted the event (because both depthThresholdForSubtreeChanged and currentDepth
+			 * get decremented when exiting a node so they stay in sync), and if we're already emitting the event but start
+			 * walking the tree back towards the leaves in a path where no edits happen, currentDepth will be increased again
+			 * as we walk that path, depthThresholdForSubtreeChanged will not, and thus no event will be emitted when walking
+			 * back up that path, until we get back to the depth where we were already emitting the event, and will continue
+			 * emitting it on the way to the root.
+			 */
 			currentDepth: 0,
+			/**
+			 * See {@link visitor.currentDepth}.
+			 */
 			depthThresholdForSubtreeChanged: 0,
 
 			free() {
@@ -909,16 +916,17 @@ export class AnchorSet implements AnchorLocator {
 			},
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
-				this.maybeWithNode((p) => {
-					p.events.emit("subtreeChanged", p);
-					if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
+				if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
+					this.maybeWithNode((p) => {
+						p.events.emit("subtreeChanged", p);
+
 						this.bufferedEvents.push({
 							node: p,
 							event: "subtreeChangedAfterBatch",
 						});
-						this.depthThresholdForSubtreeChanged--;
-					}
-				});
+					});
+					this.depthThresholdForSubtreeChanged--;
+				}
 				const parent = this.parent;
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;

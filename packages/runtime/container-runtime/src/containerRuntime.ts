@@ -165,6 +165,7 @@ import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import {
+	BaseDeltaManagerProxy,
 	DeltaManagerPendingOpsProxy,
 	DeltaManagerSummarizerProxy,
 } from "./deltaManagerProxies.js";
@@ -256,7 +257,6 @@ import {
 	idCompressorBlobName,
 	metadataBlobName,
 	rootHasIsolatedChannels,
-	summarizerClientType,
 	wrapSummaryInChannelsTree,
 	formCreateSummarizerFn,
 	summarizerRequestUrl,
@@ -268,6 +268,7 @@ import {
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	isSummariesDisabled,
+	summarizerClientType,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -1127,6 +1128,8 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
+	public readonly isReadOnly = (): boolean => this.deltaManager.readOnlyInfo.readonly === true;
+
 	/**
 	 * Current session schema - defines what options are on & off.
 	 * It's overlap of document schema (controlled by summary & ops) and options controlling this session.
@@ -1741,6 +1744,7 @@ export class ContainerRuntime
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
+		this._deltaManager.on("readonly", this.notifyReadOnlyState);
 
 		this.blobManager = new BlobManager({
 			routeContext: this.handleContext,
@@ -2130,6 +2134,9 @@ export class ContainerRuntime
 		this.pendingStateManager.dispose();
 		this.inboundBatchAggregator.dispose();
 		this.deltaScheduler.dispose();
+		if (this._deltaManager instanceof BaseDeltaManagerProxy) {
+			this._deltaManager.dispose();
+		}
 		this.emit("dispose");
 		this.removeAllListeners();
 	}
@@ -2581,6 +2588,9 @@ export class ContainerRuntime
 		}
 		return this._loadIdCompressor;
 	}
+
+	private readonly notifyReadOnlyState = (readonly: boolean): void =>
+		this.channelCollection.notifyReadOnlyState(readonly);
 
 	public setConnectionState(connected: boolean, clientId?: string): void {
 		// Validate we have consistent state

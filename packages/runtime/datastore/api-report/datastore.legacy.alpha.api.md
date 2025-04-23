@@ -64,9 +64,11 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     readonly ILayerCompatDetails?: unknown;
     // (undocumented)
     get isAttached(): boolean;
+    readonly isReadOnly: () => boolean;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
+    notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): this;
     // (undocumented)
