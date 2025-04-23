@@ -226,7 +226,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
  * {@link Unenforced} version of {@link InsertableTreeNodeFromAllowedTypes}.
  * @see {@link Input}
  * @privateRemarks
- * TODO: it seems like the order of the union this produces is what is non-deterministic in incremental builds
+ * TODO: AB#36348: it seems like the order of the union this produces is what is non-deterministic in incremental builds
  * of the JsonAsTree schema.
  * @system @public
  */
