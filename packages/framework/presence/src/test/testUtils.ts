@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "@fluidframework/core-interfaces/internal";
+import type {
+	InternalUtilityTypes,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers, SinonSpy } from "sinon";
@@ -163,7 +166,7 @@ export function assertFinalExpectations(
  */
 export function createNullValidator<T extends object>(): StateSchemaValidator<T> {
 	const nullValidator: StateSchemaValidator<T> = (data: unknown) => {
-		return data as T;
+		return data as JsonDeserialized<T>;
 	};
 	return nullValidator;
 }
@@ -185,7 +188,7 @@ export function createSpiedValidator<T extends object>(
 
 	const nullValidatorSpy: StateSchemaValidator<T> = (data: unknown) => {
 		spy.callCount++;
-		return validator(data) as T;
+		return validator(data) as JsonDeserialized<T>;
 	};
 	return [nullValidatorSpy, spy];
 }
