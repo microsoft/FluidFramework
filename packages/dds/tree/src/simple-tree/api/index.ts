@@ -30,6 +30,7 @@ export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
+	allowUnused,
 } from "./schemaFactoryRecursive.js";
 export {
 	adaptEnum,

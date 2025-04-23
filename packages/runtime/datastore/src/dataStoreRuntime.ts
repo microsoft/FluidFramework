@@ -59,6 +59,7 @@ import {
 	type IRuntimeMessagesContent,
 	// eslint-disable-next-line import/no-deprecated
 	type IContainerRuntimeBaseExperimental,
+	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -106,8 +107,12 @@ import {
 import { pkgVersion } from "./packageVersion.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
 
+type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T, K> &
+	Required<Pick<T, K>>;
+
 interface IFluidDataStoreContextFeaturesToTypes {
 	[encodeHandlesInContainerRuntime]: IFluidDataStoreContext; // No difference in typing with this feature
+	[notifiesReadOnlyState]: PickRequired<IFluidDataStoreContext, "isReadOnly">;
 }
 
 function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
@@ -155,6 +160,11 @@ export class FluidDataStoreRuntime
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
 	}
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isReadOnly}
+	 */
+	public readonly isReadOnly = (): boolean => this._readonly;
 
 	public get clientId(): string | undefined {
 		return this.dataStoreContext.clientId;
@@ -282,6 +292,15 @@ export class FluidDataStoreRuntime
 		const { ILayerCompatDetails: runtimeCompatDetails } =
 			dataStoreContext as FluidObject<ILayerCompatDetails>;
 		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this));
+
+		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
+			this._readonly = dataStoreContext.isReadOnly();
+		} else {
+			this._readonly = this.dataStoreContext.deltaManager.readOnlyInfo.readonly === true;
+			this.dataStoreContext.deltaManager.on("readonly", (readonly) =>
+				this.notifyReadOnlyState(readonly),
+			);
+		}
 
 		this.submitMessagesWithoutEncodingHandles = contextSupportsFeature(
 			dataStoreContext,
@@ -680,6 +699,20 @@ export class FluidDataStoreRuntime
 		}
 
 		raiseConnectedEvent(this.logger, this, connected, clientId);
+	}
+
+	private _readonly: boolean;
+	/**
+	 * This function is used by the datastore context to configure the
+	 * readonly state of this object. It should not be invoked by
+	 * any other callers.
+	 */
+	public notifyReadOnlyState(readonly: boolean): void {
+		this.verifyNotClosed();
+		if (readonly !== this._readonly) {
+			this._readonly = readonly;
+			this.emit("readonly", readonly);
+		}
 	}
 
 	public getQuorum(): IQuorumClients {

@@ -395,6 +395,11 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	setConnectionState(connected: boolean, clientId?: string);
 
 	/**
+	 * Notifies this object about changes in the readonly state
+	 */
+	notifyReadOnlyState?(readonly: boolean): void;
+
+	/**
 	 * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
 	 * @param type - The type of the original message.
 	 * @param content - The content of the original message.
@@ -464,6 +469,11 @@ export interface IFluidParentContext
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
+	/**
+	 * Indicates if the parent context is readonly. If isReadOnly is true, the consumer of
+	 * the context should also consider themselves readonly.
+	 */
+	readonly isReadOnly?: () => boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;

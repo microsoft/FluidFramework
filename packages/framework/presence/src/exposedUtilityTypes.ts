@@ -19,15 +19,6 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace InternalUtilityTypes {
 	/**
-	 * Recursively/deeply makes all properties of a type readonly.
-	 *
-	 * @system
-	 */
-	export type FullyReadonly<T> = {
-		readonly [K in keyof T]: FullyReadonly<T[K]>;
-	};
-
-	/**
 	 * `true` iff the given type is an acceptable shape for a notification.
 	 *
 	 * @system
