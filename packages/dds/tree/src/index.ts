@@ -233,6 +233,7 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	allowUnused,
 	type LeafSchema,
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodePojoEmulationSchema,
@@ -240,6 +241,7 @@ export {
 	type MapNodeCustomizableSchema,
 	type MapNodePojoEmulationSchema,
 	MapNodeSchema,
+	type ObjectFromSchemaRecord,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

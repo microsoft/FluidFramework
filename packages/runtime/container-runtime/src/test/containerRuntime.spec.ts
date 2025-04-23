@@ -73,7 +73,7 @@ import {
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { getConfigsForCompatMode } from "../compatUtils.js";
+import { getCompatibilityVersionDefaults } from "../compatUtils.js";
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
@@ -3626,9 +3626,9 @@ describe("Runtime", () => {
 			});
 		});
 
-		// TODO: Update these tests when compatibilityMode API is implemented - ADO:36088
+		// TODO: Update these tests when compatibilityVersion API is implemented - ADO:36088
 		describe("Default Configurations", () => {
-			it("compatibilityMode not provided", async () => {
+			it("compatibilityVersion not provided", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3663,9 +3663,9 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityMode = 1.0.0", async () => {
-				const compatibilityMode = "1.0.0";
-				const defaultRuntimeOptions = getConfigsForCompatMode(compatibilityMode);
+			it("compatibilityVersion = 1.0.0", async () => {
+				const compatibilityVersion = "1.0.0";
+				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3700,9 +3700,9 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityMode = 2.0.0", async () => {
-				const compatibilityMode = "2.0.0";
-				const defaultRuntimeOptions = getConfigsForCompatMode(compatibilityMode);
+			it('compatibilityVersion = 2.0.0-defaults ("default")', async () => {
+				const compatibilityVersion = "2.0.0-defaults";
+				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3737,9 +3737,9 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityMode = 2.20.0", async () => {
-				const compatibilityMode = "2.20.0";
-				const defaultRuntimeOptions = getConfigsForCompatMode(compatibilityMode);
+			it("compatibilityVersion = 2.0.0 (explicit)", async () => {
+				const compatibilityVersion = "2.0.0";
+				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3774,7 +3774,44 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityMode not provided, with manual configs for each property", async () => {
+			it("compatibilityVersion = 2.20.0", async () => {
+				const compatibilityVersion = "2.20.0";
+				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: defaultRuntimeOptions,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: true,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+					},
+				]);
+			});
+
+			it("compatibilityVersion not provided, with manual configs for each property", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3819,12 +3856,14 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("all options explicitly undefined", async () => {
-				const logger = new MockLogger();
-				await ContainerRuntime.loadRuntime({
-					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
-					existing: false,
+			for (const { desc, runtimeOptions } of [
+				{ desc: "all options unspecified", runtimeOptions: {} },
+				{
+					// This case tests degenerate specification that is permissible
+					// with exactOptionalPropertyTypes disabled. Even when enabled,
+					// this should be tested in case callers violate exactness.
+					// (use @ts-expect-error or `as` to ignore when needed)
+					desc: "all options explicitly undefined",
 					runtimeOptions: {
 						summaryOptions: undefined,
 						gcOptions: undefined,
@@ -3837,36 +3876,45 @@ describe("Runtime", () => {
 						compressionOptions: undefined,
 						explicitSchemaControl: undefined,
 					},
-					provideEntryPoint: mockProvideEntryPoint,
+				},
+			])
+				it(desc, async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime({
+						context: getMockContext({ logger }) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions,
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+						summaryOptions: {},
+						gcOptions: {},
+						loadSequenceNumberVerification: "close",
+						flushMode: FlushMode.TurnBased,
+						compressionOptions: {
+							minimumBatchSizeInBytes: 614400,
+							compressionAlgorithm: CompressionAlgorithms.lz4,
+						},
+						maxBatchSizeInBytes: 716800,
+						chunkSizeInBytes: 204800,
+						enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
+						enableGroupedBatching: true,
+						explicitSchemaControl: false,
+					};
+
+					logger.assertMatchAny([
+						{
+							eventName: "ContainerRuntime:ContainerLoadStats",
+							category: "generic",
+							options: JSON.stringify(expectedRuntimeOptions),
+						},
+					]);
 				});
 
-				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: FlushMode.TurnBased,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 614400,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
-					enableGroupedBatching: true,
-					explicitSchemaControl: false,
-				};
-
-				logger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:ContainerLoadStats",
-						category: "generic",
-						options: JSON.stringify(expectedRuntimeOptions),
-					},
-				]);
-			});
-
 			// Skipped since 3.0.0 is not an existing FF version yet
-			it.skip("compatibilityMode = 3.0.0", async () => {
+			it.skip("compatibilityVersion = 3.0.0", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,

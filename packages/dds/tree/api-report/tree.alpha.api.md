@@ -21,6 +21,9 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 // @public
 type AllowedTypesUnsafe = readonly LazyItem<TreeNodeSchemaUnsafe>[];
 
+// @alpha
+export function allowUnused<T>(t?: T): void;
+
 // @public
 type ApplyKind<T, Kind extends FieldKind> = {
     [FieldKind.Required]: T;
@@ -367,7 +370,6 @@ declare namespace InternalTypes {
         DefaultProvider,
         typeNameSymbol,
         InsertableObjectFromSchemaRecord,
-        ObjectFromSchemaRecord,
         FieldHasDefaultUnsafe,
         ObjectFromSchemaRecordUnsafe,
         TreeObjectNodeUnsafe,
@@ -621,7 +623,7 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 export const noopValidator: JsonValidator;
 
 // @public
-type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
+export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
 };
 

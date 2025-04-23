@@ -490,7 +490,6 @@ declare namespace InternalTypes {
         DefaultProvider,
         typeNameSymbol,
         InsertableObjectFromSchemaRecord,
-        ObjectFromSchemaRecord,
         FieldHasDefaultUnsafe,
         ObjectFromSchemaRecordUnsafe,
         TreeObjectNodeUnsafe,
@@ -642,7 +641,7 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 }
 
 // @public
-type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
+export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
 };
 

@@ -53,25 +53,16 @@ export function announceDelta(
 	visitor.free();
 }
 
-function isAnnouncedVisitor(
-	visitor: DeltaVisitor | AnnouncedVisitor,
-): visitor is AnnouncedVisitor {
-	return (visitor as AnnouncedVisitor).isAnnouncedVisitor === true;
-}
-
-function isCombinedVisitor(
-	visitor: CombinableVisitor | CombinedVisitor,
-): visitor is CombinedVisitor {
-	return (visitor as CombinedVisitor).isCombinedVisitor === true;
-}
-
 export interface CombinedVisitor extends DeltaVisitor {
-	readonly isCombinedVisitor: true;
+	readonly type: "Combined";
 
-	visitors: readonly CombinableVisitor[];
+	readonly visitors: readonly CombinableVisitor[];
 }
 
-export type CombinableVisitor = DeltaVisitor | AnnouncedVisitor;
+export type CombinableVisitor =
+	| (DeltaVisitor & { type?: never })
+	| AnnouncedVisitor
+	| CombinedVisitor;
 
 /**
  * Combines multiple visitors into a single visitor.
@@ -79,10 +70,12 @@ export type CombinableVisitor = DeltaVisitor | AnnouncedVisitor;
  * @returns a DeltaVisitor combining all `visitors`.
  */
 export function combineVisitors(visitors: readonly CombinableVisitor[]): CombinedVisitor {
-	const allVisitors = visitors.flatMap((v) => (isCombinedVisitor(v) ? v.visitors : [v]));
-	const announcedVisitors = allVisitors.filter(isAnnouncedVisitor);
+	const allVisitors = visitors.flatMap((v) => (v.type === "Combined" ? v.visitors : [v]));
+	const announcedVisitors = allVisitors.filter(
+		(v): v is AnnouncedVisitor => v.type === "Announced",
+	);
 	return {
-		isCombinedVisitor: true,
+		type: "Combined",
 		visitors: allVisitors,
 		free: () => visitors.forEach((v) => v.free()),
 		create: (...args) => {
@@ -127,7 +120,7 @@ export function combineVisitors(visitors: readonly CombinableVisitor[]): Combine
  * Must be freed after use.
  */
 export interface AnnouncedVisitor extends DeltaVisitor {
-	readonly isAnnouncedVisitor: true;
+	readonly type: "Announced";
 	/**
 	 * A hook that is called after all nodes have been created.
 	 */
@@ -153,7 +146,7 @@ export function createAnnouncedVisitor(
 ): AnnouncedVisitor {
 	const noOp = (): void => {};
 	return {
-		isAnnouncedVisitor: true,
+		type: "Announced",
 		free: visitorFunctions.free ?? noOp,
 		create: visitorFunctions.create ?? noOp,
 		afterCreate: visitorFunctions.afterCreate ?? noOp,
