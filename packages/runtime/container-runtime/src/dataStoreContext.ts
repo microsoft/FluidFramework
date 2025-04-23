@@ -508,6 +508,7 @@ export abstract class FluidDataStoreContext
 				})
 				.catch((error) => {});
 		}
+		this._contextDeltaManagerProxy.dispose();
 	}
 
 	/**

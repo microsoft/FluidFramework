@@ -165,6 +165,7 @@ import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import {
+	BaseDeltaManagerProxy,
 	DeltaManagerPendingOpsProxy,
 	DeltaManagerSummarizerProxy,
 } from "./deltaManagerProxies.js";
@@ -1723,7 +1724,7 @@ export class ContainerRuntime
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
-		this._deltaManager.on("readonly", (readonly) => this.notifyReadOnlyState(readonly));
+		this._deltaManager.on("readonly", this.notifyReadOnlyState);
 
 		this.blobManager = new BlobManager({
 			routeContext: this.handleContext,
@@ -2113,6 +2114,9 @@ export class ContainerRuntime
 		this.pendingStateManager.dispose();
 		this.inboundBatchAggregator.dispose();
 		this.deltaScheduler.dispose();
+		if (this._deltaManager instanceof BaseDeltaManagerProxy) {
+			this._deltaManager.dispose();
+		}
 		this.emit("dispose");
 		this.removeAllListeners();
 	}
@@ -2565,9 +2569,8 @@ export class ContainerRuntime
 		return this._loadIdCompressor;
 	}
 
-	public notifyReadOnlyState(readonly: boolean): void {
+	private readonly notifyReadOnlyState = (readonly: boolean): void =>
 		this.channelCollection.notifyReadOnlyState(readonly);
-	}
 
 	public setConnectionState(connected: boolean, clientId?: string): void {
 		// Validate we have consistent state
