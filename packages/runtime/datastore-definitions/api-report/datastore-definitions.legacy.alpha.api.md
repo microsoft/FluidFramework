@@ -91,7 +91,6 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly idCompressor: IIdCompressor | undefined;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
-    // (undocumented)
     readonly isReadOnly: () => boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;

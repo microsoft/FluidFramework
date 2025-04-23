@@ -159,6 +159,9 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.connected;
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isReadOnly}
+	 */
 	public readonly isReadOnly = (): boolean => this._readonly;
 
 	public get clientId(): string | undefined {
