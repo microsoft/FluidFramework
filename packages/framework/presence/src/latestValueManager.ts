@@ -20,6 +20,7 @@ import { objectEntries } from "./internalUtils.js";
 import type {
 	LatestClientData,
 	LatestData,
+	ProxiedValueAccessor,
 	RawValueAccessor,
 	StateSchemaValidator,
 	ValueAccessor,
@@ -51,24 +52,13 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
 }
 
 /**
- * State that provides the latest known value from this client to others and read access to their values.
- * All participant clients must provide a value.
- *
- * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
- *
- * @sealed
  * @alpha
  */
-export interface LatestRaw<T> {
+export interface LatestCommon<T> {
 	/**
 	 * Containing {@link Presence}
 	 */
 	readonly presence: Presence;
-
-	/**
-	 * Events for LatestRaw.
-	 */
-	readonly events: Listenable<LatestEvents<T, RawValueAccessor<T>>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -85,21 +75,68 @@ export interface LatestRaw<T> {
 	set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 
 	/**
-	 * Iterable access to remote clients' values.
-	 */
-	getRemotes(): IterableIterator<LatestClientData<T, ValueAccessor<T>>>;
-	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
 	getStateAttendees(): Attendee[];
+}
+
+/**
+ * State that provides the latest known value from this client to others and read access to their values.
+ * All participant clients must provide a value.
+ *
+ * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface LatestRaw<T> extends LatestCommon<T> {
+	/**
+	 * Events for LatestRaw.
+	 */
+	readonly events: Listenable<LatestEvents<T, RawValueAccessor<T>>>;
+
+	/**
+	 * Iterable access to remote clients' values.
+	 */
+	getRemotes(): IterableIterator<LatestClientData<T, RawValueAccessor<T>>>;
+
 	/**
 	 * Access to a specific attendee's value.
 	 */
-	getRemote(attendee: Attendee): LatestData<T, ValueAccessor<T>>;
+	getRemote(attendee: Attendee): LatestData<T, RawValueAccessor<T>>;
+}
+
+/**
+ * State that provides the latest known value from this client to others and read access to their values.
+ * All participant clients must provide a value.
+ *
+ * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface Latest<T> extends LatestCommon<T> {
+	/**
+	 * Events for LatestRaw.
+	 */
+	readonly events: Listenable<LatestEvents<T, ProxiedValueAccessor<T>>>;
+
+	/**
+	 * Iterable access to remote clients' values.
+	 */
+	getRemotes(): IterableIterator<LatestClientData<T, ProxiedValueAccessor<T>>>;
+
+	/**
+	 * Access to a specific attendee's value.
+	 */
+	getRemote(attendee: Attendee): LatestData<T, ProxiedValueAccessor<T>>;
 }
 
 class LatestValueManagerImpl<T, Key extends string>
-	implements LatestRaw<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
+	implements
+		LatestRaw<T>,
+		Latest<T>,
+		Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
 	public readonly events = createEmitter<LatestEvents<T, ValueAccessor<T>>>();
 	public readonly controls: OptionalBroadcastControl;
@@ -108,7 +145,6 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
-		private readonly validator: StateSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -207,6 +243,16 @@ export interface LatestArguments<T extends object | null> {
 	validator?: StateSchemaValidator<T> | undefined;
 }
 
+// Overload signatures
+/**
+ * Factory for creating a {@link Latest} State object.
+ *
+ * @alpha
+ */
+export function latest<T extends object | null, Key extends string = string>(
+	args: LatestArguments<T> & { validator: StateSchemaValidator<T> },
+): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
 /**
  * Factory for creating a {@link LatestRaw} State object.
  *
@@ -214,7 +260,18 @@ export interface LatestArguments<T extends object | null> {
  */
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,
-): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
+): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+
+/**
+ * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
+ *
+ * @alpha
+ */
+export function latest<T extends object | null, Key extends string = string>(
+	args: LatestArguments<T>,
+):
+	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>
+	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
 	const { local, settings } = args;
 
 	// Latest takes ownership of the initial local value but makes a shallow

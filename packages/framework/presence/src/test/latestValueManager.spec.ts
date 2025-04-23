@@ -14,6 +14,7 @@ import type {
 	BroadcastControlSettings,
 	LatestClientData,
 	Presence,
+	RawValueAccessor,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
 
@@ -158,7 +159,7 @@ export function checkCompiles(): void {
 	function logClientValue<T>({
 		attendee,
 		value,
-	}: Pick<LatestClientData<T>, "attendee" | "value">): void {
+	}: Pick<LatestClientData<T, RawValueAccessor<T>>, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value);
 	}
 

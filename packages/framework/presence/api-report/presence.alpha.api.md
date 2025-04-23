@@ -106,14 +106,10 @@ export namespace InternalTypes {
     // (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
-        validData?: JsonDeserialized<TValue> | undefined;
-        // (undocumented)
         value?: JsonDeserialized<TValue>;
     }
     // (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-        // (undocumented)
-        validData?: JsonDeserialized<TValue> | undefined;
         // (undocumented)
         value: JsonDeserialized<TValue>;
     }
@@ -139,6 +135,18 @@ export namespace InternalUtilityTypes {
     };
 }
 
+// @alpha @sealed
+export interface Latest<T> extends LatestCommon<T> {
+    readonly events: Listenable<LatestEvents<T, ProxiedValueAccessor<T>>>;
+    getRemote(attendee: Attendee): LatestData<T, ProxiedValueAccessor<T>>;
+    getRemotes(): IterableIterator<LatestClientData<T, ProxiedValueAccessor<T>>>;
+}
+
+// @alpha
+export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T> & {
+    validator: StateSchemaValidator<T>;
+}): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
 // @alpha
 export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
@@ -154,6 +162,15 @@ export interface LatestArguments<T extends object | null> {
 export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> extends LatestData<T, TValueAccessor> {
     // (undocumented)
     attendee: Attendee;
+}
+
+// @alpha (undocumented)
+export interface LatestCommon<T> {
+    readonly controls: BroadcastControls;
+    getStateAttendees(): Attendee[];
+    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+    readonly presence: Presence;
 }
 
 // @alpha @sealed
@@ -232,9 +249,9 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number, TV
 // @alpha @sealed
 export interface LatestMapRaw<T, Keys extends string | number = string | number> {
     readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestMapEvents<T, Keys, RawValueAccessor<T>>>;
+    readonly events: Listenable<LatestMapEvents<T, Keys, ValueAccessor<T>>>;
     getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, RawValueAccessor<T>>>;
-    getRemotes(): IterableIterator<LatestMapClientData<T, Keys, RawValueAccessor<T>>>;
+    getRemotes(): IterableIterator<LatestMapClientData<T, Keys, ValueAccessor<T>>>;
     getStateAttendees(): Attendee[];
     readonly local: StateMap<Keys, T>;
     readonly presence: Presence;
@@ -247,15 +264,10 @@ export interface LatestMetadata {
 }
 
 // @alpha @sealed
-export interface LatestRaw<T> {
-    readonly controls: BroadcastControls;
+export interface LatestRaw<T> extends LatestCommon<T> {
     readonly events: Listenable<LatestEvents<T, RawValueAccessor<T>>>;
     getRemote(attendee: Attendee): LatestData<T, RawValueAccessor<T>>;
     getRemotes(): IterableIterator<LatestClientData<T, RawValueAccessor<T>>>;
-    getStateAttendees(): Attendee[];
-    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
-    readonly presence: Presence;
 }
 
 // @alpha @sealed
