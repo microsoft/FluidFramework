@@ -32,6 +32,22 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
+// @alpha @legacy
+export interface ContainerRuntimeOptions {
+    readonly chunkSizeInBytes: number;
+    readonly compressionOptions: ICompressionRuntimeOptions;
+    // @deprecated
+    readonly enableGroupedBatching: boolean;
+    readonly enableRuntimeIdCompressor: IdCompressorMode;
+    readonly explicitSchemaControl: boolean;
+    // (undocumented)
+    readonly gcOptions: IGCRuntimeOptions;
+    readonly loadSequenceNumberVerification: "close" | "log" | "bypass";
+    readonly maxBatchSizeInBytes: number;
+    // (undocumented)
+    readonly summaryOptions: ISummaryRuntimeOptions;
+}
+
 // @alpha @legacy (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
@@ -98,20 +114,7 @@ export interface ICompressionRuntimeOptions {
 }
 
 // @alpha @legacy
-export interface IContainerRuntimeOptions {
-    readonly chunkSizeInBytes?: number;
-    readonly compressionOptions?: ICompressionRuntimeOptions;
-    // @deprecated
-    readonly enableGroupedBatching?: boolean;
-    readonly enableRuntimeIdCompressor?: IdCompressorMode;
-    readonly explicitSchemaControl?: boolean;
-    // (undocumented)
-    readonly gcOptions?: IGCRuntimeOptions;
-    readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
-    readonly maxBatchSizeInBytes?: number;
-    // (undocumented)
-    readonly summaryOptions?: ISummaryRuntimeOptions;
-}
+export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 
 // @alpha @legacy
 export type IdCompressorMode = "on" | "delayed" | undefined;

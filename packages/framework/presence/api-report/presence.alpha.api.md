@@ -128,10 +128,6 @@ export namespace InternalTypes {
 // @alpha @system
 export namespace InternalUtilityTypes {
     // @system
-    export type FullyReadonly<T> = {
-        readonly [K in keyof T]: FullyReadonly<T[K]>;
-    };
-    // @system
     export type IsNotificationListener<Event> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, true, false> : false;
     // @system
     export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
@@ -163,7 +159,7 @@ export interface LatestData<T> {
     // (undocumented)
     metadata: LatestMetadata;
     // (undocumented)
-    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+    value: DeepReadonly<JsonDeserialized<T>>;
 }
 
 // @alpha
@@ -219,7 +215,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
     }) => void;
     // @eventProperty
     localItemUpdated: (updatedItem: {
-        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
         key: K;
     }) => void;
     // @eventProperty
@@ -243,7 +239,7 @@ export interface LatestRaw<T> {
     getRemote(attendee: Attendee): LatestData<T>;
     getRemotes(): IterableIterator<LatestClientData<T>>;
     getStateAttendees(): Attendee[];
-    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+    get local(): DeepReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
     readonly presence: Presence;
 }
@@ -252,7 +248,7 @@ export interface LatestRaw<T> {
 export interface LatestRawEvents<T> {
     // @eventProperty
     localUpdated: (update: {
-        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
     }) => void;
     // @eventProperty
     remoteUpdated: (update: LatestClientData<T>) => void;
@@ -341,8 +337,8 @@ export interface StateMap<K extends string | number, V> {
     clear(): void;
     // (undocumented)
     delete(key: K): boolean;
-    forEach(callbackfn: (value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
-    get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
+    forEach(callbackfn: (value: DeepReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
+    get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
     // (undocumented)
     has(key: K): boolean;
     keys(): IterableIterator<K>;
