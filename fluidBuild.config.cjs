@@ -622,6 +622,9 @@ module.exports = {
 
 	releaseNotes: {
 		sections: {
+			// Note: Breaking changes should be reserved for major releases, which practically speaking means server.
+			// Client releases with breaking _legacy_ changes should be in the "legacy" section instead.
+			breaking: { heading: "🚨 Breaking Changes" },
 			feature: { heading: "✨ New Features" },
 			tree: { heading: "🌳 SharedTree DDS Changes" },
 			fix: { heading: "🐛 Bug Fixes" },

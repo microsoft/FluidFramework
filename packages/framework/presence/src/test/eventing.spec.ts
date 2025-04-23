@@ -14,7 +14,11 @@ import type { Attendee, WorkspaceAddress } from "../index.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
 
-import type { Latest, LatestMap, NotificationsManager } from "@fluidframework/presence/alpha";
+import type {
+	LatestRaw,
+	LatestMapRaw,
+	NotificationsManager,
+} from "@fluidframework/presence/alpha";
 import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
@@ -122,7 +126,7 @@ const latestMapItemRemovedAndLatestUpdate = {
 	itemRemovedMapUpdate,
 } as const;
 const notificationsUpdate = {
-	"notifications": {
+	"testEvents": {
 		"attendeeId-1": {
 			"rev": 0,
 			"timestamp": 0,
@@ -138,8 +142,8 @@ describe("Presence", () => {
 		let logger: EventAndErrorTrackingLogger;
 		let clock: SinonFakeTimers;
 		let presence: ReturnType<typeof prepareConnectedPresence>;
-		let latest: Latest<{ x: number; y: number; z: number }>;
-		let latestMap: LatestMap<{ a: number; b: number } | { c: number; d: number }>;
+		let latest: LatestRaw<{ x: number; y: number; z: number }>;
+		let latestMap: LatestMapRaw<{ a: number; b: number } | { c: number; d: number }>;
 		let notificationManager: NotificationsManager<{ newId: (id: number) => void }>;
 
 		interface LatestMapValueExpected {
@@ -241,45 +245,49 @@ describe("Presence", () => {
 		function setupSharedStatesWorkspace({
 			notifications,
 		}: { notifications?: true } = {}): void {
-			const states = presence.states.getWorkspace("name:testWorkspace", {
-				latest: StateFactory.latest({ x: 0, y: 0, z: 0 }),
-				latestMap: StateFactory.latestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+			const statesWorkspace = presence.states.getWorkspace("name:testWorkspace", {
+				latest: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
+				latestMap: StateFactory.latestMap({
+					local: { key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } },
+				}),
 			});
-			latest = states.props.latest;
-			latestMap = states.props.latestMap;
+			latest = statesWorkspace.states.latest;
+			latestMap = statesWorkspace.states.latestMap;
 			if (notifications) {
-				const workspace: typeof states = states;
+				const workspace: typeof statesWorkspace = statesWorkspace;
 				workspace.add(
-					"notifications",
+					"testEvents",
 					Notifications<{ newId: (id: number) => void }>({
 						newId: (_attendee: Attendee, _id: number) => {},
 					}),
 				);
-				notificationManager = workspace.props.notifications;
+				notificationManager = workspace.states.testEvents;
 			}
 		}
 
 		function setupMultipleStatesWorkspaces(): void {
 			const latestsStates = presence.states.getWorkspace("name:testWorkspace1", {
-				latest: StateFactory.latest({ x: 0, y: 0, z: 0 }),
+				latest: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 			});
 			const latesetMapStates = presence.states.getWorkspace("name:testWorkspace2", {
-				latestMap: StateFactory.latestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+				latestMap: StateFactory.latestMap({
+					local: { key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } },
+				}),
 			});
-			latest = latestsStates.props.latest;
-			latestMap = latesetMapStates.props.latestMap;
+			latest = latestsStates.states.latest;
+			latestMap = latesetMapStates.states.latestMap;
 		}
 
 		function setupNotificationsWorkspace(): void {
 			const notificationsWorkspace = presence.notifications.getWorkspace(
 				"name:testWorkspace",
 				{
-					notifications: Notifications<{ newId: (id: number) => void }>({
+					testEvents: Notifications<{ newId: (id: number) => void }>({
 						newId: (_attendee: Attendee, _id: number) => {},
 					}),
 				},
 			);
-			notificationManager = notificationsWorkspace.props.notifications;
+			notificationManager = notificationsWorkspace.notifications.testEvents;
 		}
 
 		function processUpdates(valueManagerUpdates: Record<string, UpdateContent>): void {
@@ -657,12 +665,12 @@ describe("Presence", () => {
 					const notificationsWorkspace = presence.notifications.getWorkspace(
 						workspaceAddress,
 						{
-							notifications: Notifications<{ newId: (id: number) => void }>({
+							testEvents: Notifications<{ newId: (id: number) => void }>({
 								newId: (_attendee: Attendee, _id: number) => {},
 							}),
 						},
 					);
-					notificationsWorkspace.props.notifications.notifications.on(
+					notificationsWorkspace.notifications.testEvents.notifications.on(
 						"newId",
 						notificationSpy,
 					);
