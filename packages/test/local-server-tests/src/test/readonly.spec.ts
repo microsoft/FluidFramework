@@ -50,8 +50,8 @@ class DefaultDataStore {
 	get DefaultDataStore() {
 		return this;
 	}
-	get readonly() {
-		return this.runtime.readonly;
+	isReadOnly() {
+		return this.runtime.isReadOnly();
 	}
 
 	get handle() {
@@ -151,7 +151,7 @@ describe("readonly", () => {
 			"container entrypoint must be DefaultDataStore",
 		);
 
-		assert(entrypoint.DefaultDataStore.readonly === false, "shouldn't be readonly");
+		assert(entrypoint.DefaultDataStore.isReadOnly() === false, "shouldn't be readonly");
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
@@ -159,7 +159,7 @@ describe("readonly", () => {
 
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 
-		assert(entrypoint.DefaultDataStore.readonly === false, "shouldn't be readonly");
+		assert(entrypoint.DefaultDataStore.isReadOnly() === false, "shouldn't be readonly");
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
@@ -178,7 +178,7 @@ describe("readonly", () => {
 			"container entrypoint must be DefaultDataStore",
 		);
 
-		assert(entrypoint.DefaultDataStore.readonly === false, "shouldn't be readonly");
+		assert(entrypoint.DefaultDataStore.isReadOnly() === false, "shouldn't be readonly");
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
@@ -199,7 +199,7 @@ describe("readonly", () => {
 
 		loadedContainer.forceReadonly?.(true);
 
-		assert(entrypoint.DefaultDataStore.readonly === true, "should be readonly");
+		assert(entrypoint.DefaultDataStore.isReadOnly() === true, "should be readonly");
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 1,
 			"should be any readonly events",
@@ -220,7 +220,7 @@ describe("readonly", () => {
 			"container entrypoint must be DefaultDataStore",
 		);
 
-		assert(entrypoint.DefaultDataStore.readonly === true, "should be readonly");
+		assert(entrypoint.DefaultDataStore.isReadOnly() === true, "should be readonly");
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",

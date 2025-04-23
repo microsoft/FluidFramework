@@ -446,7 +446,7 @@ export interface IFluidParentContext
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
 	/**
-	 * Indicates if the parent context is readonly. If readonly is true, the consumer of
+	 * Indicates if the parent context is readonly. If isReadOnly is true, the consumer of
 	 * the context should also consider themselves readonly.
 	 */
 	readonly isReadOnly?: () => boolean;
