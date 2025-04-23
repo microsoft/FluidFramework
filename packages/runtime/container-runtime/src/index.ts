@@ -4,6 +4,8 @@
  */
 
 export {
+	ContainerRuntimeOptions,
+	ContainerRuntimeOptionsInternal,
 	ISummaryRuntimeOptions,
 	IContainerRuntimeOptions,
 	IContainerRuntimeOptionsInternal,
