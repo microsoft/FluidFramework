@@ -23,6 +23,7 @@ import type {
 	LatestMetadata,
 	ProxiedValueAccessor,
 	RawValueAccessor,
+	StateSchemaValidator,
 	ValueAccessor,
 } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";

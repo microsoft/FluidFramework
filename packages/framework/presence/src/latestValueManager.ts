@@ -21,6 +21,7 @@ import type {
 	LatestClientData,
 	LatestData,
 	RawValueAccessor,
+	StateSchemaValidator,
 	ValueAccessor,
 } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
@@ -47,19 +48,6 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
 	localUpdated: (update: {
 		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
 	}) => void;
-}
-
-/**
- * @sealed
- * @alpha
- */
-export interface LatestEvents<T> extends LatestRawEvents<T> {
-	/**
-	 * Raised when remote client's value is updated, which may be the same value.
-	 *
-	 * @eventProperty
-	 */
-	remoteUpdated: (update: LatestRawClientData<T>) => void;
 }
 
 /**
@@ -138,7 +126,6 @@ class LatestRawValueManagerImpl<T, Key extends string>
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
 		this.value.value = value;
-		this.value.validData = value;
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
@@ -146,27 +133,23 @@ class LatestRawValueManagerImpl<T, Key extends string>
 		this.events.emit("localUpdated", { value });
 	}
 
-	public *getRemotes(): IterableIterator<LatestRawClientData<T>> {
+	public *getRemotes(): IterableIterator<LatestClientData<T, RawValueAccessor<T>>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [attendeeId, requiredState] of objectEntries(allKnownStates.states)) {
+		for (const [attendeeId, clientState] of objectEntries(allKnownStates.states)) {
 			if (this.validator === undefined) {
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: requiredState.value,
+					value: clientState.value,
 					metadata: {
-						revision: requiredState.rev,
-						timestamp: requiredState.timestamp,
-						validated: requiredState.validated,
+						revision: clientState.rev,
+						timestamp: clientState.timestamp,
 					},
 				};
 				continue;
 			}
 			let validData: JsonDeserialized<T> | undefined;
 			if (attendeeId !== allKnownStates.self) {
-				if (!requiredState.validated) {
-					requiredState.validData = this.validator(requiredState.value);
-					requiredState.validated = true;
-				}
+				validData = this.validator(clientState.value);
 
 				if (validData === undefined) {
 					// skip data that was invalid
@@ -177,126 +160,8 @@ class LatestRawValueManagerImpl<T, Key extends string>
 					attendee: this.datastore.lookupClient(attendeeId),
 					value: validData,
 					metadata: {
-						revision: requiredState.rev,
-						timestamp: requiredState.timestamp,
-						validated: requiredState.validated,
-					},
-				};
-			}
-		}
-	}
-
-	public getStateAttendees(): Attendee[] {
-		const allKnownStates = this.datastore.knownValues(this.key);
-		return Object.keys(allKnownStates.states)
-			.filter((attendeeId) => attendeeId !== allKnownStates.self)
-			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
-	}
-
-	public getRemote(attendee: Attendee): LatestRawData<T> {
-		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientState = allKnownStates.states[attendee.attendeeId];
-		if (clientState === undefined) {
-			throw new Error("No entry for clientId");
-		}
-
-		return {
-			value: clientState.value,
-			metadata: { revision: clientState.rev, timestamp: Date.now(), validated: false },
-		};
-	}
-
-	public update(
-		attendee: Attendee,
-		_received: number,
-		value: InternalTypes.ValueRequiredState<T>,
-	): PostUpdateAction[] {
-		const allKnownStates = this.datastore.knownValues(this.key);
-		const attendeeId = attendee.attendeeId;
-		const currentState = allKnownStates.states[attendeeId];
-		if (currentState !== undefined && currentState.rev >= value.rev) {
-			return [];
-		}
-		this.datastore.update(this.key, attendeeId, value);
-		return [
-			() =>
-				this.events.emit("remoteUpdated", {
-					attendee,
-					value: value.value,
-					metadata: { revision: value.rev, timestamp: value.timestamp, validated: false },
-				}),
-		];
-	}
-}
-
-class LatestValueManagerImpl2<T, Key extends string>
-	implements Latest<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
-{
-	public readonly events = createEmitter<LatestEvents<T>>();
-	public readonly controls: OptionalBroadcastControl;
-
-	public constructor(
-		private readonly key: Key,
-		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
-		public readonly value: InternalTypes.ValueRequiredState<T>,
-		private readonly validator: StateSchemaValidator<T> | undefined,
-		controlSettings: BroadcastControlSettings | undefined,
-	) {
-		this.controls = new OptionalBroadcastControl(controlSettings);
-	}
-
-	public get presence(): Presence {
-		return this.datastore.presence;
-	}
-
-	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {
-		return this.value.value;
-	}
-
-	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
-		this.value.rev += 1;
-		this.value.timestamp = Date.now();
-		this.value.value = value;
-		this.value.validData = value;
-		this.datastore.localUpdate(this.key, this.value, {
-			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
-		});
-
-		this.events.emit("localUpdated", { value });
-	}
-
-	public *getRemotes(): IterableIterator<LatestClientData<T, RawValueAccessor<T>>> {
-		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [attendeeId, requiredState] of objectEntries(allKnownStates.states)) {
-			// if (this.validator === undefined) {
-			// 	yield {
-			// 		attendee: this.datastore.lookupClient(attendeeId),
-			// 		value: () => requiredState.value,
-			// 		metadata: {
-			// 			revision: requiredState.rev,
-			// 			timestamp: requiredState.timestamp,
-			// 			validated: requiredState.validated,
-			// 		},
-			// 	};
-			// 	continue;
-			// }
-			let validData: JsonDeserialized<T> | undefined;
-			if (attendeeId !== allKnownStates.self) {
-				yield {
-					attendee: this.datastore.lookupClient(attendeeId),
-					value: () => {
-						if (this.validator === undefined) {
-							// throw new Error(`ValueManager has no validator.`);
-							return this.value.value;
-						}
-						validData = this.validator(requiredState.value);
-						requiredState.validated = true;
-						return validData;
-					},
-					metadata: {
-						revision: requiredState.rev,
-						timestamp: requiredState.timestamp,
-						validated: requiredState.validated,
+						revision: clientState.rev,
+						timestamp: clientState.timestamp,
 					},
 				};
 			}
@@ -317,25 +182,9 @@ class LatestValueManagerImpl2<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 
-		// Validate the data if a validator was provided
-		let validData: JsonDeserialized<T> | undefined;
-
-		if (this.validator) {
-			validData = this.validator(clientState);
-			// clientState.validated = true;
-		}
-
 		return {
-			value: () => {
-				if (this.validator === undefined) {
-					// throw new Error(`ValueManager has no validator.`);
-					return this.value.value;
-				}
-				validData = this.validator(clientState.value);
-				// clientState.validated = true;
-				return validData;
-			},
-	metadata: { revision: clientState.rev, timestamp: Date.now(), validated:true },
+			value: clientState.value,
+			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
 
@@ -388,9 +237,7 @@ export interface LatestArguments<T extends object | null> {
  */
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,
-):
-	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>
-	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
+): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
 	const { settings, local, validator } = args;
 
 	// Latest takes ownership of the initial local value but makes a shallow
@@ -398,7 +245,6 @@ export function latest<T extends object | null, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		validated: false,
 		value: local === null ? local : shallowCloneObject(local),
 	};
 	const factory = (

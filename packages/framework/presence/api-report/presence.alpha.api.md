@@ -105,13 +105,11 @@ export namespace InternalTypes {
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-        valid?: TValue | undefined;
         // (undocumented)
         value?: JsonDeserialized<TValue>;
     }
     // (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-        valid?: TValue | undefined;
         // (undocumented)
         value: JsonDeserialized<TValue>;
     }
@@ -137,13 +135,8 @@ export namespace InternalUtilityTypes {
     };
 }
 
-// @alpha (undocumented)
-export interface Latest<T> extends LatestRaw<T> {
-    readonly events: Listenable<LatestEvents<T>>;
-}
-
 // @alpha
-export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> | InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
 // @alpha
 export interface LatestArguments<T extends object | null> {
@@ -159,25 +152,11 @@ export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> ex
     attendee: Attendee;
 }
 
-// @alpha @sealed (undocumented)
-export interface LatestClientDataValidated<T> extends LatestClientData<T> {
-    validated?: boolean;
-}
-
 // @alpha @sealed
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     // (undocumented)
     metadata: LatestMetadata;
     // (undocumented)
-<<<<<<< HEAD
-    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
-}
-
-// @alpha @sealed (undocumented)
-export interface LatestEvents<T> extends LatestRawEvents<T> {
-    // @eventProperty
-    remoteUpdated: (update: LatestClientDataValidated<T>) => void;
-=======
     value: TValueAccessor extends RawValueAccessor<T> ? InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> : () => InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
 }
 
@@ -189,7 +168,6 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
     }) => void;
     // @eventProperty
     remoteUpdated: (update: LatestClientData<T, TRemoteValueAccessor>) => void;
->>>>>>> upstream/presence/runtime-verification-API-support-no-impl
 }
 
 // @alpha
@@ -376,7 +354,7 @@ export interface StateMap<K extends string | number, V> {
 }
 
 // @alpha
-export type StateSchemaValidator<T> = (unvalidatedData: unknown, metadata?: StateSchemaValidatorMetadata) => T | undefined;
+export type StateSchemaValidator<T> = (unvalidatedData: unknown, metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
 
 // @alpha
 export interface StateSchemaValidatorMetadata {
