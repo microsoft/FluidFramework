@@ -21,20 +21,20 @@ const githubDocsUrl = `${githubMainBranchUrl}/docs`;
 // See https://docusaurus.io/docs/api/plugin-methods/lifecycle-apis and
 // https://webpack.js.org/configuration/output/#outputtrustedtypes for more information about
 // the trusted types plugin and how to use it.
-const trustedTypesPlugin = () =>{
+const trustedTypesPlugin = () => {
+	return {
+		name: "webpack-trusted-types",
+		configureWebpack() {
 			return {
-				name: "webpack-trusted-types",
-				configureWebpack() {
-					return {
-						output: {
-							trustedTypes: {
-								policyName: "ff#webpack",
-							},
-						},
-					};
+				output: {
+					trustedTypes: {
+						policyName: "ff#webpack",
+					},
 				},
 			};
-		};
+		},
+	};
+};
 
 // #region Generate the Docusaurus versions from our versions config.
 
@@ -92,10 +92,7 @@ const config: Config = {
 	// TODO: consider re-enabling after the following issue is resolved:
 	// <https://github.com/Azure/static-web-apps/issues/1036>
 	// trailingSlash: false,
-	plugins: [
-		"docusaurus-plugin-sass",
-		trustedTypesPlugin,
-	],
+	plugins: ["docusaurus-plugin-sass", trustedTypesPlugin],
 	presets: [
 		[
 			"classic",
