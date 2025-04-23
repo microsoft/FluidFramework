@@ -35,7 +35,7 @@ describe("Presence", () => {
 		it(".presence provides Presence it was created under", () => {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.states.getWorkspace(testWorkspaceName, {
-				obj: StateFactory.latest({}),
+				obj: StateFactory.latest({ local: {} }),
 			});
 			assert.strictEqual(states.presence, presence);
 		});
@@ -77,7 +77,7 @@ export function checkCompiles(): void {
 
 	const initialCaret = { id: "", pos: 0 };
 	states.add("caret", createValueManager(initialCaret));
-	const statesProps = states.props;
+	const statesProps = states.states;
 
 	const fakeAdd = statesProps.camera.z + statesProps.cursor.x + statesProps.caret.pos;
 	console.log(fakeAdd);

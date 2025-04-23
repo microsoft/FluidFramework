@@ -26,7 +26,7 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @alpha
  */
-export interface LatestEvents<T> {
+export interface LatestRawEvents<T> {
 	/**
 	 * Raised when remote client's value is updated, which may be the same value.
 	 *
@@ -53,16 +53,16 @@ export interface LatestEvents<T> {
  * @sealed
  * @alpha
  */
-export interface Latest<T> {
+export interface LatestRaw<T> {
 	/**
 	 * Containing {@link Presence}
 	 */
 	readonly presence: Presence;
 
 	/**
-	 * Events for Latest.
+	 * Events for LatestRaw.
 	 */
-	readonly events: Listenable<LatestEvents<T>>;
+	readonly events: Listenable<LatestRawEvents<T>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -93,9 +93,9 @@ export interface Latest<T> {
 }
 
 class LatestValueManagerImpl<T, Key extends string>
-	implements Latest<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
+	implements LatestRaw<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
-	public readonly events = createEmitter<LatestEvents<T>>();
+	public readonly events = createEmitter<LatestRawEvents<T>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -182,20 +182,39 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
- * Factory for creating a {@link Latest} State object.
+ * Arguments that are passed to the {@link StateFactory.latest} function.
  *
  * @alpha
  */
-export function latest<T extends object, Key extends string = string>(
-	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
-	controls?: BroadcastControlSettings,
-): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
-	// Latest takes ownership of initialValue but makes a shallow
+export interface LatestArguments<T extends object | null> {
+	/**
+	 * The initial value of the local state.
+	 */
+	// eslint-disable-next-line @rushstack/no-new-null
+	local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
+
+	/**
+	 * See {@link BroadcastControlSettings}.
+	 */
+	settings?: BroadcastControlSettings | undefined;
+}
+
+/**
+ * Factory for creating a {@link LatestRaw} State object.
+ *
+ * @alpha
+ */
+export function latest<T extends object | null, Key extends string = string>(
+	args: LatestArguments<T>,
+): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
+	const { local, settings } = args;
+
+	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: shallowCloneObject(initialValue),
+		value: local === null ? local : shallowCloneObject(local),
 	};
 	const factory = (
 		key: Key,
@@ -205,11 +224,11 @@ export function latest<T extends object, Key extends string = string>(
 		>,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<Latest<T>>;
+		manager: InternalTypes.StateValue<LatestRaw<T>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

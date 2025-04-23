@@ -19,15 +19,20 @@ import { StateFactory } from "@fluidframework/presence/alpha";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
+/* eslint-disable unicorn/no-null -- API null support must be tested */
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestManager(
 	presence: Presence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const states = presence.states.getWorkspace(testWorkspaceName, {
-		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
+	const workspace = presence.states.getWorkspace(testWorkspaceName, {
+		camera: StateFactory.latest({
+			local: { x: 0, y: 0, z: 0 },
+			settings: valueControlSettings,
+		}),
 	});
-	return states.props.camera;
+	return workspace.states.camera;
 }
 
 describe("Presence", () => {
@@ -45,39 +50,59 @@ describe("Presence", () => {
 			});
 
 			it("can set and get empty object as initial value", () => {
-				const states = presence.states.getWorkspace(testWorkspaceName, {
-					obj: StateFactory.latest({}),
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
+					obj: StateFactory.latest({ local: {} }),
 				});
-				assert.deepStrictEqual(states.props.obj.local, {});
+				assert.deepStrictEqual(workspace.states.obj.local, {});
 			});
 
 			it("can set and get object with properties as initial value", () => {
-				const states = presence.states.getWorkspace(testWorkspaceName, {
-					obj: StateFactory.latest({ x: 0, y: 0, z: 0 }),
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
+					obj: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 				});
-				assert.deepStrictEqual(states.props.obj.local, { x: 0, y: 0, z: 0 });
+				assert.deepStrictEqual(workspace.states.obj.local, { x: 0, y: 0, z: 0 });
 			});
 
 			it("can set and get empty array as initial value", () => {
-				const states = presence.states.getWorkspace(testWorkspaceName, {
-					arr: StateFactory.latest([]),
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
+					arr: StateFactory.latest({ local: [] }),
 				});
-				assert.deepStrictEqual(states.props.arr.local, []);
+				assert.deepStrictEqual(workspace.states.arr.local, []);
 			});
 
 			it("can set and get array with elements as initial value", () => {
-				const states = presence.states.getWorkspace(testWorkspaceName, {
-					arr: StateFactory.latest([1, 2, 3]),
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
+					arr: StateFactory.latest({ local: [1, 2, 3] }),
 				});
-				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
+				assert.deepStrictEqual(workspace.states.arr.local, [1, 2, 3]);
+			});
+
+			it("can set and get null as initial value", () => {
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
+					nullable: StateFactory.latest({ local: null }),
+				});
+				assert.deepStrictEqual(workspace.states.nullable.local, null);
 			});
 
 			it(".presence provides Presence it was created under", () => {
-				const states = presence.states.getWorkspace(testWorkspaceName, {
-					camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
+					camera: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 				});
 
-				assert.strictEqual(states.props.camera.presence, presence);
+				assert.strictEqual(workspace.states.camera.presence, presence);
+			});
+
+			it("can set and get null as modified local value", () => {
+				// Setup
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
+					nullable: StateFactory.latest<{ x: number; y: number } | null>({
+						local: { x: 0, y: 0 },
+					}),
+				});
+
+				// Act and Verify
+				workspace.states.nullable.local = null;
+				assert.deepStrictEqual(workspace.states.nullable.local, null);
 			});
 		});
 
@@ -86,10 +111,10 @@ describe("Presence", () => {
 		it("localUpdate event is fired with new value when local value is updated", () => {
 			// Setup
 			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.states.getWorkspace(testWorkspaceName, {
-				camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
+			const workspace = presence.states.getWorkspace(testWorkspaceName, {
+				camera: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 			});
-			const camera = states.props.camera;
+			const camera = workspace.states.camera;
 
 			let localUpdateCount = 0;
 			camera.events.on("localUpdated", (update) => {
@@ -113,25 +138,27 @@ export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as Presence;
 	const statesWorkspace = presence.states.getWorkspace("name:testStatesWorkspaceWithLatest", {
-		cursor: StateFactory.latest({ x: 0, y: 0 }),
-		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
+		cursor: StateFactory.latest({ local: { x: 0, y: 0 } }),
+		camera: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
+		nullablePoint: StateFactory.latest<null | { x: number; y: number }>({ local: null }),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
-	const props = workspace.props;
+	const props = workspace.states;
 
-	workspace.add("caret", StateFactory.latest({ id: "", pos: 0 }));
+	workspace.add("caret", StateFactory.latest({ local: { id: "", pos: 0 } }));
 
 	const fakeAdd =
-		workspace.props.caret.local.pos + props.camera.local.z + props.cursor.local.x;
+		workspace.states.caret.local.pos + props.camera.local.z + props.cursor.local.x;
 	console.log(fakeAdd);
 
 	// @ts-expect-error local may be set wholly, but partially it is readonly
-	workspace.props.caret.local.pos = 0;
+	workspace.states.caret.local.pos = 0;
 
-	function logClientValue<
-		T /* following extends should not be required: */ extends Record<string, unknown>,
-	>({ attendee, value }: Pick<LatestClientData<T>, "attendee" | "value">): void {
+	function logClientValue<T>({
+		attendee,
+		value,
+	}: Pick<LatestClientData<T>, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value);
 	}
 
@@ -140,6 +167,9 @@ export function checkCompiles(): void {
 
 	// Update our cursor position
 	cursor.local = { x: 1, y: 2 };
+
+	// Set nullable point to non-null value
+	props.nullablePoint.local = { x: 10, y: -2 };
 
 	// Listen to others cursor updates
 	const cursorUpdatedOff = cursor.events.on("remoteUpdated", ({ attendee, value }) =>
@@ -156,3 +186,5 @@ export function checkCompiles(): void {
 		logClientValue({ attendee, value });
 	}
 }
+
+/* eslint-enable unicorn/no-null */
