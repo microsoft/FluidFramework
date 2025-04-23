@@ -340,10 +340,10 @@ describe("treeNodeApi", () => {
 	});
 
 	describe("on", () => {
-		it.skip("Bug #35920", () => {
+		it("Editing a node without an anchor still triggers 'treeChanged' event above it", () => {
 			// Notes:
-			// * For this bug to occur, the op must be sent from one tree to another tree - it does not occur when e.g. unit testing a single view
-			// * There needs to be at least two levels of nesting in the schema, e.g. it won't repro if you simply change a number field on the root node.
+			// * For this bug to occur, the edit must change a node that does not have an anchor (and thus hasn't been viewed yet).
+			// * Using the public API this can only be done via collaborative editing or branch merging.
 			const sf = new SchemaFactory(undefined);
 			class Child extends sf.object("Child", {
 				value: sf.number,
@@ -355,7 +355,7 @@ describe("treeNodeApi", () => {
 			const config = new TreeViewConfiguration({ schema: Parent });
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
-			// Intialize the first tree with a value of "0"
+			// Initialize the first tree with a value of "0"
 			const view1 = tree1.viewWith(config);
 			view1.initialize(
 				new Parent({
@@ -367,17 +367,19 @@ describe("treeNodeApi", () => {
 			provider.synchronizeMessages();
 			const view2 = tree2.viewWith(config);
 			// Count the number of times treeChanged fires
-			let invals = 0;
+			let invalidations = 0;
 			Tree.on(view2.root, "treeChanged", () => {
-				invals += 1;
+				invalidations += 1;
 			});
 			// Change the first tree to a value of "3"
 			view1.root.node.value = 3;
+			// Remove the no longer needed view1 to simplify debugging.
+			view1.dispose();
 			provider.synchronizeMessages();
 			// Ensure that the second tree received the change...
 			assert.equal(view2.root.node.value, 3);
 			// ...and also that the event fired
-			assert.equal(invals, 1, "treeChanged should have fired once");
+			assert.equal(invalidations, 1);
 		});
 
 		describe("object node", () => {

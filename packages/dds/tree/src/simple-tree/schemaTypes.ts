@@ -886,13 +886,14 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitA
  * @typeparam TList - AllowedTypes to process
  * @system @public
  */
-export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> =
-	TList extends readonly [
+export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = [TList] extends [
+	readonly [
 		LazyItem<infer TSchema extends TreeNodeSchema>,
 		...infer Rest extends AllowedTypes,
-	]
-		? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest>
-		: never;
+	],
+]
+	? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest>
+	: never;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
