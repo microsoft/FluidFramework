@@ -34,6 +34,10 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "op", listener: (message: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "connected", listener: (clientId: string) => void);
+	/* 
+	 * The readonly event is fired when the readonly state of the datastore runtime changes.
+	 * The isReadOnly will express the new readonly state.
+	 */
 	(event: "readonly", listener: (isReadOnly: boolean) => void);
 }
 
