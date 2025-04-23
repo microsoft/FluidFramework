@@ -148,6 +148,15 @@ function isValueDirectory<
 	return "items" in value;
 }
 
+function excludeKeys<T extends object, K extends keyof T>(
+	obj: T,
+	keysToExclude: K[],
+): Omit<T, K> {
+	return Object.fromEntries(
+		Object.entries(obj).filter(([key]) => !keysToExclude.includes(key as K)),
+	) as Omit<T, K>;
+}
+
 /**
  * Merge a value directory.
  *
@@ -165,7 +174,8 @@ export function mergeValueDirectory<
 ): TValueState | InternalTypes.ValueDirectory<T> {
 	if (!isValueDirectory(update)) {
 		if (base === undefined || update.rev > base.rev) {
-			return { ...update, timestamp: update.timestamp + timeDelta };
+			const newObj = { ...update, timestamp: update.timestamp + timeDelta };
+			return excludeKeys(newObj, ["validData"]) as TValueState;
 		}
 		return base;
 	}

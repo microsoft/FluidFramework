@@ -30,7 +30,7 @@ export namespace InternalTypes {
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
 		value?: JsonDeserialized<TValue>;
-		// validData: JsonDeserialized<TValue> | undefined;
+		validData?: JsonDeserialized<TValue> | undefined;
 	}
 
 	/**
@@ -38,7 +38,7 @@ export namespace InternalTypes {
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
 		value: JsonDeserialized<TValue>;
-		// validData: JsonDeserialized<TValue> | undefined;
+		validData?: JsonDeserialized<TValue> | undefined;
 	}
 
 	/**

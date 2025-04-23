@@ -305,7 +305,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value };
+			this.value.items[key] = { rev: 0, timestamp: 0, value, validData: undefined };
 		}
 		this.updateItem(key, value);
 		this.emitter.emit("localItemUpdated", { key, value });
@@ -575,6 +575,7 @@ export function latestMap<
 				rev: 0,
 				timestamp,
 				value: initialValues[key],
+				validData: undefined,
 			};
 		}
 	}
