@@ -1040,7 +1040,7 @@ export class MockFluidDataStoreRuntime
 		return;
 	}
 
-	public setReadOnlyState(readonly: boolean) {
+	public setReadOnlyState(readonly: boolean): void {
 		this.readonly = readonly;
 	}
 

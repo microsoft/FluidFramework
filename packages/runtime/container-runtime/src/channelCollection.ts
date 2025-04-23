@@ -149,7 +149,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		get attachState() {
 			return context.attachState;
 		},
-		get readonly() {
+		get readonly(): boolean | undefined {
 			return context.readonly;
 		},
 		containerRuntime: context.containerRuntime,

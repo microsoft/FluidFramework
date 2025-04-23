@@ -692,7 +692,7 @@ export class FluidDataStoreRuntime
 	 * readonly state of this object. It should not be invoked by
 	 * any other callers.
 	 */
-	public setReadOnlyState(readonly: boolean) {
+	public setReadOnlyState(readonly: boolean): void {
 		this.verifyNotClosed();
 		if (readonly !== this._readonly) {
 			this._readonly = readonly;
