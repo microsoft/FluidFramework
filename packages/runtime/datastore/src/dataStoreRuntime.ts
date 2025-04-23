@@ -16,6 +16,7 @@ import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
+	debugAssert,
 	Deferred,
 	LazyPromise,
 	unreachableCase,
@@ -56,6 +57,7 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	encodeHandlesInContainerRuntime,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -101,6 +103,18 @@ import {
 } from "./localChannelContext.js";
 import { pkgVersion } from "./packageVersion.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
+
+interface IFluidDataStoreContextFeaturesToTypes {
+	[encodeHandlesInContainerRuntime]: IFluidDataStoreContext; // No difference in typing with this feature
+}
+
+function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
+	obj: IFluidDataStoreContext,
+	feature: K,
+): obj is IFluidDataStoreContextFeaturesToTypes[K] {
+	const { ILayerCompatDetails } = obj as FluidObject<ILayerCompatDetails>;
+	return ILayerCompatDetails?.supportedFeatures.has(feature) ?? false;
+}
 
 /**
  * @legacy
@@ -230,6 +244,15 @@ export class FluidDataStoreRuntime
 	public readonly ILayerCompatDetails?: unknown = dataStoreCompatDetailsForRuntime;
 
 	/**
+	 * See IFluidDataStoreRuntimeInternalConfig.submitMessagesWithoutEncodingHandles
+	 *
+	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
+	 * and we keep this property as private, but consumers may optimistically cast
+	 * to the internal interface to access this property.
+	 */
+	private readonly submitMessagesWithoutEncodingHandles: boolean;
+
+	/**
 	 * Create an instance of a DataStore runtime.
 	 *
 	 * @param dataStoreContext - Context object for the runtime.
@@ -254,11 +277,16 @@ export class FluidDataStoreRuntime
 		);
 
 		// Validate that the Runtime is compatible with this DataStore.
-		const maybeRuntimeCompatDetails = dataStoreContext as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(
-			maybeRuntimeCompatDetails.ILayerCompatDetails,
-			this.dispose.bind(this),
+		const { ILayerCompatDetails: runtimeCompatDetails } =
+			dataStoreContext as FluidObject<ILayerCompatDetails>;
+		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this));
+
+		this.submitMessagesWithoutEncodingHandles = contextSupportsFeature(
+			dataStoreContext,
+			encodeHandlesInContainerRuntime,
 		);
+		// We read this property here to avoid a compiler error (unused private member)
+		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
 
 		this.mc = createChildMonitoringContext({
 			logger: dataStoreContext.baseLogger,
