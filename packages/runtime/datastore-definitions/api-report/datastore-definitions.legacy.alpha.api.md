@@ -91,6 +91,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly idCompressor: IIdCompressor | undefined;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
+    readonly isReadOnly: () => boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
@@ -120,6 +121,8 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
+    // (undocumented)
+    (event: "readonly", listener: (isReadOnly: boolean) => void): any;
 }
 
 // @alpha (undocumented)

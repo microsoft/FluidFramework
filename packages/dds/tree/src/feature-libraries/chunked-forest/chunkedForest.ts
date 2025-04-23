@@ -289,10 +289,7 @@ export class ChunkedForest implements IEditableForest {
 
 		const announcedVisitors: AnnouncedVisitor[] = [];
 		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
-		const combinedVisitor = combineVisitors(
-			[forestVisitor, ...announcedVisitors],
-			announcedVisitors,
-		);
+		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;
 	}
