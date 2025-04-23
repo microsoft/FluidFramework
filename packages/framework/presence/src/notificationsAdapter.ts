@@ -23,9 +23,13 @@ export class NotificationsWorkspaceAdapter<TSchema extends NotificationsWorkspac
 {
 	public constructor(private readonly statesWorkspace: StatesWorkspace<TSchema>) {}
 
-	public readonly notifications: StatesWorkspaceEntries<TSchema> = this.statesWorkspace.states;
+	public get notifications(): StatesWorkspaceEntries<TSchema> {
+		return this.statesWorkspace.states;
+	}
 
-	public readonly presence: Presence = this.statesWorkspace.presence;
+	public get presence(): Presence {
+		return this.statesWorkspace.presence;
+	}
 
 	public add<
 		TKey extends string,
