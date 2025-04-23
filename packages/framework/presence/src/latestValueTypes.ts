@@ -111,13 +111,3 @@ export interface StateSchemaValidatorMetadata {
 	 */
 	key?: string | number;
 }
-
-/**
- * Type guard that checks if a value is a state schema validator.
- * @param fn - A function that may be a schema validator.
- */
-export function isStateSchemaValidator<T extends object>(
-	fn: unknown,
-): fn is StateSchemaValidator<T> {
-	return typeof fn === "function";
-}

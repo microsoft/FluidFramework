@@ -13,11 +13,11 @@ import { latest } from "./latestValueManager.js";
  */
 export const StateFactory = {
 	/**
-	 * {@inheritdoc latest}
+	 * {@inheritdoc latestValueManager#latest}
 	 */
 	latest,
 	/**
-	 * {@inheritdoc latestMap}
+	 * {@inheritdoc latestMapValueManager#latestMap}
 	 */
 	latestMap,
 };
