@@ -20,6 +20,8 @@ import {
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
 	type IDeltaHandler,
+	// eslint-disable-next-line import/no-deprecated
+	type IFluidDataStoreRuntimeExperimental,
 	type IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import {
@@ -145,7 +147,12 @@ export abstract class SharedObjectCore<
 
 		assert(!id.includes("/"), 0x304 /* Id cannot contain slashes */);
 
-		this.handle = new SharedObjectHandle(this, id, runtime.IFluidHandleContext);
+		this.handle = new SharedObjectHandle(
+			this,
+			id,
+			// eslint-disable-next-line import/no-deprecated
+			runtime as IFluidDataStoreRuntimeExperimental,
+		);
 
 		this.logger = createChildLogger({
 			logger: runtime.logger,
@@ -775,7 +782,7 @@ export abstract class SharedObject<
 	) {
 		super(id, runtime, attributes);
 
-		this._serializer = new FluidSerializer(this.runtime);
+		this._serializer = new FluidSerializer(this.runtime.IFluidHandleContext);
 	}
 
 	/**
@@ -840,7 +847,7 @@ export abstract class SharedObject<
 
 		let gcData: IGarbageCollectionData;
 		try {
-			const handleVisitor = new GCHandleVisitor(this.runtime);
+			const handleVisitor = new GCHandleVisitor(this.runtime.IFluidHandleContext);
 			this.processGCDataCore(handleVisitor);
 			// The GC data for this shared object contains a single GC node. The outbound routes of this node are the
 			// routes of handles serialized during summarization.

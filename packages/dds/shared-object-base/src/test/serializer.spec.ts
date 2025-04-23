@@ -40,12 +40,8 @@ describe("FluidSerializer", () => {
 
 	describe("vanilla JSON", () => {
 		const channelsRoutingContext = new MockHandleContext();
-		const serializer = new FluidSerializer({
-			channelsRoutingContext,
-			inStagingMode: false,
-		});
+		const serializer = new FluidSerializer(channelsRoutingContext);
 		const handle = new RemoteFluidObjectHandle("/root", channelsRoutingContext);
-
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
 		// are of particular interest.
 		// eslint-disable-next-line unicorn/no-null -- Explicitly testing null.
@@ -169,7 +165,7 @@ describe("FluidSerializer", () => {
 
 	describe("JSON w/embedded handles", () => {
 		const channelsRoutingContext = new MockHandleContext();
-		const serializer = new FluidSerializer({ channelsRoutingContext, inStagingMode: false });
+		const serializer = new FluidSerializer(channelsRoutingContext);
 		const handle = new RemoteFluidObjectHandle("/root", channelsRoutingContext);
 		const serializedHandle = {
 			type: "__fluid_handle__",
@@ -281,10 +277,7 @@ describe("FluidSerializer", () => {
 		const rootContext = new MockHandleContext("");
 		const dsContext = new MockHandleContext("/default", rootContext);
 		// Create serialized with a handle context whose parent is a root handle context.
-		const serializer = new FluidSerializer({
-			channelsRoutingContext: dsContext,
-			inStagingMode: false,
-		});
+		const serializer = new FluidSerializer(dsContext);
 
 		it("can parse handles with absolute path", () => {
 			const serializedHandle = JSON.stringify({
@@ -333,10 +326,7 @@ describe("FluidSerializer", () => {
 	});
 
 	describe("Utils", () => {
-		const serializer = new FluidSerializer({
-			channelsRoutingContext: new MockHandleContext(),
-			inStagingMode: false,
-		});
+		const serializer = new FluidSerializer(new MockHandleContext());
 		it("makeSerializable is idempotent", () => {
 			const bind = new RemoteFluidObjectHandle("/", new MockHandleContext());
 			const handle = new RemoteFluidObjectHandle("/okay", new MockHandleContext());
