@@ -4,10 +4,10 @@
 "__section": tree
 ---
 
-Add `allowUnused` utility
+New allowUnused utility function
 
-Add an `allowUnused` utility function which discards its type or runtime argument.
-This can be used to enable use of [ValidateRecursiveSchema](https://fluidframework.com/docs/api/fluid-framework/validaterecursiveschema-typealias) in environments where TypeScript is configured to reject code with unused locals.
+The new `allowUnused` utility function discards its type or runtime argument.
+When TypeScript is configured to reject code with unused locals, this function can be used to suppress that error enabling use of [ValidateRecursiveSchema](https://fluidframework.com/docs/api/fluid-framework/validaterecursiveschema-typealias) to compile.
 
 ```typescript
 class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
