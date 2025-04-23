@@ -24,6 +24,29 @@ export interface LatestMetadata {
 	 * @remarks Currently this is a placeholder for future implementation.
 	 */
 	timestamp: number;
+
+	// validated: boolean;
+}
+
+/**
+ * State of a value and its metadata.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface LatestRawData<T> {
+	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+	metadata: LatestMetadata;
+}
+
+/**
+ * State of a specific attendee's value and its metadata.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface LatestRawClientData<T> extends LatestRawData<T> {
+	attendee: Attendee;
 }
 
 /**
@@ -33,13 +56,11 @@ export interface LatestMetadata {
  * @alpha
  */
 export interface LatestData<T> {
-	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
+	value: () => InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
 	metadata: LatestMetadata;
 }
 
 /**
- * State of a specific attendee's value and its metadata.
- *
  * @sealed
  * @alpha
  */
@@ -51,12 +72,14 @@ export interface LatestClientData<T> extends LatestData<T> {
  * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
  * presence workspace and managed by a value manager.
  *
+ * @returns The validated data, or `undefined` if the data is invalid.
+ *
  * @alpha
  */
 export type StateSchemaValidator<T> = (
 	unvalidatedData: unknown,
 	metadata?: StateSchemaValidatorMetadata,
-) => T | undefined;
+) => JsonDeserialized<T> | undefined;
 
 /**
  * Optional metadata that is passed to a {@link StateSchemaValidator}.
@@ -67,7 +90,7 @@ export type StateSchemaValidator<T> = (
  */
 export interface StateSchemaValidatorMetadata {
 	/**
-	 * If the value being validated is a LatestValueMap value, this will be set to the value of the corresponding key.
+	 * If the value being validated is a LatestMap value, this will be set to the value of the corresponding key.
 	 */
 	key?: string | number;
 }

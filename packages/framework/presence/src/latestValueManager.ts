@@ -18,8 +18,10 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
-	LatestClientData,
+	LatestRawClientData,
+	LatestRawData,
 	LatestData,
+	LatestClientData,
 	StateSchemaValidator,
 } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
@@ -36,7 +38,7 @@ export interface LatestRawEvents<T> {
 	 *
 	 * @eventProperty
 	 */
-	remoteUpdated: (update: LatestClientData<T>) => void;
+	remoteUpdated: (update: LatestRawClientData<T>) => void;
 
 	/**
 	 * Raised when local client's value is updated, which may be the same value.
@@ -46,6 +48,19 @@ export interface LatestRawEvents<T> {
 	localUpdated: (update: {
 		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
 	}) => void;
+}
+
+/**
+ * @sealed
+ * @alpha
+ */
+export interface LatestEvents<T> extends LatestRawEvents<T> {
+	/**
+	 * Raised when remote client's value is updated, which may be the same value.
+	 *
+	 * @eventProperty
+	 */
+	remoteUpdated: (update: LatestRawClientData<T>) => void;
 }
 
 /**
@@ -85,7 +100,7 @@ export interface LatestRaw<T> {
 	/**
 	 * Iterable access to remote clients' values.
 	 */
-	getRemotes(): IterableIterator<LatestClientData<T>>;
+	getRemotes(): IterableIterator<LatestRawClientData<T>>;
 	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
@@ -93,10 +108,31 @@ export interface LatestRaw<T> {
 	/**
 	 * Access to a specific attendee's value.
 	 */
+	getRemote(attendee: Attendee): LatestRawData<T>;
+}
+
+/**
+ *
+ * @alpha
+ */
+export interface Latest<T> extends Omit<LatestRaw<T>, "events" | "getRemote" | "getRemotes"> {
+	/**
+	 * Events for Latest.
+	 */
+	readonly events: Listenable<LatestEvents<T>>;
+
+	/**
+	 * Iterable access to remote clients' values.
+	 */
+	getRemotes(): IterableIterator<LatestClientData<T>>;
+
+	/**
+	 * Access to a specific attendee's value.
+	 */
 	getRemote(attendee: Attendee): LatestData<T>;
 }
 
-class LatestValueManagerImpl<T, Key extends string>
+class LatestRawValueManagerImpl<T, Key extends string>
 	implements LatestRaw<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
 	public readonly events = createEmitter<LatestRawEvents<T>>();
@@ -124,6 +160,126 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
 		this.value.value = value;
+		this.value.validData = value;
+		this.datastore.localUpdate(this.key, this.value, {
+			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
+		});
+
+		this.events.emit("localUpdated", { value });
+	}
+
+	public *getRemotes(): IterableIterator<LatestRawClientData<T>> {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		for (const [attendeeId, requiredState] of objectEntries(allKnownStates.states)) {
+			if (this.validator === undefined) {
+				yield {
+					attendee: this.datastore.lookupClient(attendeeId),
+					value: requiredState.value,
+					metadata: {
+						revision: requiredState.rev,
+						timestamp: requiredState.timestamp,
+						validated: requiredState.validated,
+					},
+				};
+				continue;
+			}
+			let validData: JsonDeserialized<T> | undefined;
+			if (attendeeId !== allKnownStates.self) {
+				if (!requiredState.validated) {
+					requiredState.validData = this.validator(requiredState.value);
+					requiredState.validated = true;
+				}
+
+				if (validData === undefined) {
+					// skip data that was invalid
+					continue;
+				}
+
+				yield {
+					attendee: this.datastore.lookupClient(attendeeId),
+					value: validData,
+					metadata: {
+						revision: requiredState.rev,
+						timestamp: requiredState.timestamp,
+						validated: requiredState.validated,
+					},
+				};
+			}
+		}
+	}
+
+	public getStateAttendees(): Attendee[] {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		return Object.keys(allKnownStates.states)
+			.filter((attendeeId) => attendeeId !== allKnownStates.self)
+			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
+	}
+
+	public getRemote(attendee: Attendee): LatestRawData<T> {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		const clientState = allKnownStates.states[attendee.attendeeId];
+		if (clientState === undefined) {
+			throw new Error("No entry for clientId");
+		}
+
+		return {
+			value: clientState.value,
+			metadata: { revision: clientState.rev, timestamp: Date.now(), validated: false },
+		};
+	}
+
+	public update(
+		attendee: Attendee,
+		_received: number,
+		value: InternalTypes.ValueRequiredState<T>,
+	): PostUpdateAction[] {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		const attendeeId = attendee.attendeeId;
+		const currentState = allKnownStates.states[attendeeId];
+		if (currentState !== undefined && currentState.rev >= value.rev) {
+			return [];
+		}
+		this.datastore.update(this.key, attendeeId, value);
+		return [
+			() =>
+				this.events.emit("remoteUpdated", {
+					attendee,
+					value: value.value,
+					metadata: { revision: value.rev, timestamp: value.timestamp, validated: false },
+				}),
+		];
+	}
+}
+
+class LatestValueManagerImpl2<T, Key extends string>
+	implements Latest<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
+{
+	public readonly events = createEmitter<LatestEvents<T>>();
+	public readonly controls: OptionalBroadcastControl;
+
+	public constructor(
+		private readonly key: Key,
+		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
+		public readonly value: InternalTypes.ValueRequiredState<T>,
+		private readonly validator: StateSchemaValidator<T> | undefined,
+		controlSettings: BroadcastControlSettings | undefined,
+	) {
+		this.controls = new OptionalBroadcastControl(controlSettings);
+	}
+
+	public get presence(): Presence {
+		return this.datastore.presence;
+	}
+
+	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {
+		return this.value.value;
+	}
+
+	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
+		this.value.rev += 1;
+		this.value.timestamp = Date.now();
+		this.value.value = value;
+		this.value.validData = value;
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
@@ -133,17 +289,37 @@ class LatestValueManagerImpl<T, Key extends string>
 
 	public *getRemotes(): IterableIterator<LatestClientData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
+		for (const [attendeeId, requiredState] of objectEntries(allKnownStates.states)) {
+			// if (this.validator === undefined) {
+			// 	yield {
+			// 		attendee: this.datastore.lookupClient(attendeeId),
+			// 		value: () => requiredState.value,
+			// 		metadata: {
+			// 			revision: requiredState.rev,
+			// 			timestamp: requiredState.timestamp,
+			// 			validated: requiredState.validated,
+			// 		},
+			// 	};
+			// 	continue;
+			// }
+			let validData: JsonDeserialized<T> | undefined;
 			if (attendeeId !== allKnownStates.self) {
-				if (value.valid === true && this.validator !== undefined) {
-					const validData = this.validator(value.value);
-					value.valid = validData;
-				}
-
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: value.valid === undefined ? undefined : value.value,
-					metadata: { revision: value.rev, timestamp: value.timestamp },
+					value: () => {
+						if (this.validator === undefined) {
+							// throw new Error(`ValueManager has no validator.`);
+							return this.value.value;
+						}
+						validData = this.validator(requiredState.value);
+						requiredState.validated = true;
+						return validData;
+					},
+					metadata: {
+						revision: requiredState.rev,
+						timestamp: requiredState.timestamp,
+						validated: requiredState.validated,
+					},
 				};
 			}
 		}
@@ -163,15 +339,25 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 
-		// If
-		if (clientState.valid !== true && this.validator !== undefined) {
-			const validData = this.validator(clientState);
-			clientState.valid = validData;
+		// Validate the data if a validator was provided
+		let validData: JsonDeserialized<T> | undefined;
+
+		if (this.validator) {
+			validData = this.validator(clientState);
+			// clientState.validated = true;
 		}
 
 		return {
-			value: clientState.valid === undefined ? undefined : clientState.value,
-			metadata: { revision: clientState.rev, timestamp: Date.now() },
+			value: () => {
+				if (this.validator === undefined) {
+					// throw new Error(`ValueManager has no validator.`);
+					return this.value.value;
+				}
+				validData = this.validator(clientState.value);
+				// clientState.validated = true;
+				return validData;
+			},
+	metadata: { revision: clientState.rev, timestamp: Date.now(), validated:true },
 		};
 	}
 
@@ -224,7 +410,9 @@ export interface LatestArguments<T extends object | null> {
  */
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,
-): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
+):
+	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>
+	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
 	const { settings, local, validator } = args;
 
 	// Latest takes ownership of the initial local value but makes a shallow
@@ -232,6 +420,7 @@ export function latest<T extends object | null, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
+		validated: false,
 		value: local === null ? local : shallowCloneObject(local),
 	};
 	const factory = (
@@ -245,8 +434,12 @@ export function latest<T extends object | null, Key extends string = string>(
 		manager: InternalTypes.StateValue<LatestRaw<T>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
-		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(
+		manager: brandIVM<
+			LatestRawValueManagerImpl<T, Key>,
+			T,
+			InternalTypes.ValueRequiredState<T>
+		>(
+			new LatestRawValueManagerImpl(
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
@@ -255,5 +448,5 @@ export function latest<T extends object | null, Key extends string = string>(
 			),
 		),
 	});
-	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
+	return Object.assign(factory, { instanceBase: LatestRawValueManagerImpl });
 }

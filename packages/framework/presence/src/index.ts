@@ -57,13 +57,16 @@ export type {
 } from "./latestMapValueManager.js";
 export type {
 	latest,
+	Latest,
+	LatestEvents,
 	LatestArguments,
 	LatestRaw,
 	LatestRawEvents,
 } from "./latestValueManager.js";
 export type {
-	LatestClientData,
-	LatestData,
+	LatestRawClientData as LatestClientData,
+	LatestRawClientData as LatestClientDataValidated,
+	LatestRawData as LatestData,
 	LatestMetadata,
 	StateSchemaValidator,
 	StateSchemaValidatorMetadata,

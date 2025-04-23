@@ -137,8 +137,13 @@ export namespace InternalUtilityTypes {
     };
 }
 
+// @alpha (undocumented)
+export interface Latest<T> extends LatestRaw<T> {
+    readonly events: Listenable<LatestEvents<T>>;
+}
+
 // @alpha
-export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> | InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @alpha
 export interface LatestArguments<T extends object | null> {
@@ -154,12 +159,23 @@ export interface LatestClientData<T> extends LatestData<T> {
     attendee: Attendee;
 }
 
+// @alpha @sealed (undocumented)
+export interface LatestClientDataValidated<T> extends LatestClientData<T> {
+    validated?: boolean;
+}
+
 // @alpha @sealed
 export interface LatestData<T> {
     // (undocumented)
     metadata: LatestMetadata;
     // (undocumented)
     value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
+}
+
+// @alpha @sealed (undocumented)
+export interface LatestEvents<T> extends LatestRawEvents<T> {
+    // @eventProperty
+    remoteUpdated: (update: LatestClientDataValidated<T>) => void;
 }
 
 // @alpha

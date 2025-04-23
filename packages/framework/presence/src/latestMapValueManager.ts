@@ -18,8 +18,8 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
 import type {
-	LatestClientData,
-	LatestData,
+	LatestRawClientData,
+	LatestRawData,
 	LatestMetadata,
 	StateSchemaValidator,
 } from "./latestValueTypes.js";
@@ -47,7 +47,7 @@ export interface LatestMapClientData<
 	 * @privateRemarks This could be regular map currently as no Map is
 	 * stored internally and a new instance is created for every request.
 	 */
-	items: ReadonlyMap<Keys, LatestData<T>>;
+	items: ReadonlyMap<Keys, LatestRawData<T>>;
 }
 
 /**
@@ -57,7 +57,7 @@ export interface LatestMapClientData<
  * @alpha
  */
 export interface LatestMapItemUpdatedClientData<T, K extends string | number>
-	extends LatestClientData<T> {
+	extends LatestRawClientData<T> {
 	key: K;
 }
 
@@ -354,7 +354,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
+	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestRawData<T>>;
 }
 
 class LatestMapRawValueManagerImpl<
@@ -416,14 +416,14 @@ class LatestMapRawValueManagerImpl<
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>> {
+	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestRawData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const attendeeId = attendee.attendeeId;
 		const clientStateMap = allKnownStates.states[attendeeId];
 		if (clientStateMap === undefined) {
 			throw new Error("No entry for attendee");
 		}
-		const items = new Map<Keys, LatestData<T>>();
+		const items = new Map<Keys, LatestRawData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
 			if (item.value !== undefined) {
 				const value = item.value;
@@ -471,7 +471,7 @@ class LatestMapRawValueManagerImpl<
 		}
 		const allUpdates = {
 			attendee,
-			items: new Map<Keys, LatestData<T>>(),
+			items: new Map<Keys, LatestRawData<T>>(),
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
