@@ -271,7 +271,11 @@ export function latest<T extends object | null, Key extends string = string>(
 ):
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
-	const { local, settings } = args;
+	const { local, settings, validator } = args;
+
+	if (validator !== undefined) {
+		throw new Error(`Validators are not yet implemented.`);
+	}
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.

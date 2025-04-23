@@ -328,16 +328,20 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  * @sealed
  * @alpha
  */
-export interface LatestMapRaw<T, Keys extends string | number = string | number> {
+export interface LatestMap<
+	T,
+	Keys extends string | number = string | number,
+	TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
+> {
 	/**
 	 * Containing {@link Presence}
 	 */
 	readonly presence: Presence;
 
 	/**
-	 * Events for LatestMapRaw.
+	 * Events for LatestMap.
 	 */
-	readonly events: Listenable<LatestMapEvents<T, Keys, RawValueAccessor<T>>>;
+	readonly events: Listenable<LatestMapEvents<T, Keys, TRemoteAccessor>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -351,7 +355,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Iterable access to remote clients' map of values.
 	 */
-	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, RawValueAccessor<T>>>;
+	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, TRemoteAccessor>>;
 	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
@@ -359,7 +363,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, RawValueAccessor<T>>>;
+	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, TRemoteAccessor>>;
 }
 
 /**
@@ -373,39 +377,11 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
  * @sealed
  * @alpha
  */
-export interface LatestMap<T, Keys extends string | number = string | number> {
-	/**
-	 * Containing {@link Presence}
-	 */
-	readonly presence: Presence;
-
-	/**
-	 * Events for LatestMapRaw.
-	 */
-	readonly events: Listenable<LatestMapEvents<T, Keys, ProxiedValueAccessor<T>>>;
-
-	/**
-	 * Controls for management of sending updates.
-	 */
-	readonly controls: BroadcastControls;
-
-	/**
-	 * Current value map for this client.
-	 */
-	readonly local: StateMap<Keys, T>;
-	/**
-	 * Iterable access to remote clients' map of values.
-	 */
-	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, ProxiedValueAccessor<T>>>;
-	/**
-	 * Array of {@link Attendee}s that have provided states.
-	 */
-	getStateAttendees(): Attendee[];
-	/**
-	 * Access to a specific client's map of values.
-	 */
-	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, ProxiedValueAccessor<T>>>;
-}
+export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<
+	T,
+	Keys,
+	RawValueAccessor<T>
+>;
 
 class LatestMapValueManagerImpl<
 	T,
@@ -611,7 +587,7 @@ export function latestMap<
 >;
 
 /**
- * Factory for creating a {@link LatestMapRaw} State object.
+ * Factory for creating a {@link LatestMap} State object.
  *
  * @alpha
  */
@@ -634,6 +610,11 @@ export function latestMap<
 	  > {
 	const settings = args?.settings;
 	const initialValues = args?.local;
+	const validator = args?.validator;
+
+	if (validator !== undefined) {
+		throw new Error(`Validators are not yet implemented.`);
+	}
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<

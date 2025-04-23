@@ -175,7 +175,7 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     // (undocumented)
     metadata: LatestMetadata;
     // (undocumented)
-    value: TValueAccessor extends RawValueAccessor<T> ? DeepReadonly<JsonDeserialized<T>> : () => DeepReadonly<JsonDeserialized<T>> | undefined;
+    value: TValueAccessor extends ProxiedValueAccessor<T> ? () => DeepReadonly<JsonDeserialized<T>> | undefined : TValueAccessor extends RawValueAccessor<T> ? DeepReadonly<JsonDeserialized<T>> : never;
 }
 
 // @alpha @sealed (undocumented)
@@ -189,11 +189,11 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
 }
 
 // @alpha @sealed
-export interface LatestMap<T, Keys extends string | number = string | number> {
+export interface LatestMap<T, Keys extends string | number = string | number, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestMapEvents<T, Keys, ProxiedValueAccessor<T>>>;
-    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, ProxiedValueAccessor<T>>>;
-    getRemotes(): IterableIterator<LatestMapClientData<T, Keys, ProxiedValueAccessor<T>>>;
+    readonly events: Listenable<LatestMapEvents<T, Keys, TRemoteAccessor>>;
+    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, TRemoteAccessor>>;
+    getRemotes(): IterableIterator<LatestMapClientData<T, Keys, TRemoteAccessor>>;
     getStateAttendees(): Attendee[];
     readonly local: StateMap<Keys, T>;
     readonly presence: Presence;
@@ -260,15 +260,7 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number, TV
 }
 
 // @alpha @sealed
-export interface LatestMapRaw<T, Keys extends string | number = string | number> {
-    readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestMapEvents<T, Keys, RawValueAccessor<T>>>;
-    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, RawValueAccessor<T>>>;
-    getRemotes(): IterableIterator<LatestMapClientData<T, Keys, RawValueAccessor<T>>>;
-    getStateAttendees(): Attendee[];
-    readonly local: StateMap<Keys, T>;
-    readonly presence: Presence;
-}
+export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<T, Keys, RawValueAccessor<T>>;
 
 // @alpha @sealed
 export interface LatestMetadata {
