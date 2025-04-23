@@ -105,7 +105,7 @@ export function makeSchemaCodec(
 export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
 	return makeCodecFamily([
 		[1, makeV1CodecWithVersion(options, 1)],
-		[5, makeV1CodecWithVersion(options, 5)],
+		[2, makeV1CodecWithVersion(options, 2)],
 	]);
 }
 
@@ -114,7 +114,7 @@ export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStore
  */
 function makeV1CodecWithVersion(
 	options: ICodecOptions,
-	version: 1 | 5,
+	version: 1 | 2,
 ): IJsonCodec<TreeStoredSchema> {
 	switch (version) {
 		case 1:
@@ -122,7 +122,7 @@ function makeV1CodecWithVersion(
 				encode: (data: TreeStoredSchema) => encodeRepoV1(data),
 				decode: (data: FormatV1) => decode(data),
 			};
-		case 5:
+		case 2:
 			return {
 				encode: (data: TreeStoredSchema) => encodeRepoV2(data),
 				decode: (data: FormatV2) => decode(data),
