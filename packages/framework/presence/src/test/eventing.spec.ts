@@ -126,7 +126,7 @@ const latestMapItemRemovedAndLatestUpdate = {
 	itemRemovedMapUpdate,
 } as const;
 const notificationsUpdate = {
-	"notifications": {
+	"testEvents": {
 		"attendeeId-1": {
 			"rev": 0,
 			"timestamp": 0,
@@ -256,12 +256,12 @@ describe("Presence", () => {
 			if (notifications) {
 				const workspace: typeof statesWorkspace = statesWorkspace;
 				workspace.add(
-					"notifications",
+					"testEvents",
 					Notifications<{ newId: (id: number) => void }>({
 						newId: (_attendee: Attendee, _id: number) => {},
 					}),
 				);
-				notificationManager = workspace.states.notifications;
+				notificationManager = workspace.states.testEvents;
 			}
 		}
 
