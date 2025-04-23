@@ -1135,7 +1135,7 @@ describe("Outbox", () => {
 			validateCounts(0, 0, 2);
 		});
 
-		it("batch has a single reentrant op - do rebase", () => {
+		it("batch has a single reentrant op - don't rebase", () => {
 			const outbox = getOutbox({
 				context: getMockContext(),
 				opGroupingConfig: {
@@ -1151,7 +1151,7 @@ describe("Outbox", () => {
 
 			outbox.flush();
 
-			validateCounts(0, 0, 1);
+			validateCounts(1, 1, 0);
 		});
 
 		it("should group the batch", () => {

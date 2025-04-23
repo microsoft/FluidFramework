@@ -59,7 +59,7 @@ export function makeGenerator<T extends BaseOperation>(
 				type: "uploadBlob",
 				tag: state.tag("blob"),
 			}),
-			0,
+			0, // Blob Upload doesn't interact properly with Staging Mode
 			// local server doesn't support detached blobs
 			(state) => state.client.container.attachState !== AttachState.Detached,
 		],

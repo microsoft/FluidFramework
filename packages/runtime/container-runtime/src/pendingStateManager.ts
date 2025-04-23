@@ -78,7 +78,7 @@ export interface IPendingMessage {
 		/**
 		 * If true, this batch is staged and should not actually be submitted on replayPendingStates.
 		 */
-		staged?: boolean;
+		staged: boolean;
 	};
 }
 
@@ -118,7 +118,7 @@ export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	applyStashedOp(serializedOp: string): Promise<unknown>;
-	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId, staged?: boolean): void;
+	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId, staged: boolean): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -327,30 +327,31 @@ export class PendingStateManager implements IDisposable {
 	public onFlushEmptyBatch(
 		placeholder: LocalEmptyBatchPlaceholder,
 		clientSequenceNumber: number | undefined,
-		staged: boolean = false,
+		staged: boolean,
 	): void {
 		// We have to cast because runtimeOp doesn't apply for empty batches and is missing on LocalEmptyBatchPlaceholder
 		this.onFlushBatch(
 			[placeholder satisfies Omit<LocalBatchMessage, "runtimeOp"> as LocalBatchMessage],
 			clientSequenceNumber,
-			undefined /* ignoreBatchId */,
 			staged,
+			undefined /* ignoreBatchId */,
 		);
 	}
+
 	/**
 	 * The given batch has been flushed, and needs to be tracked locally until the corresponding
 	 * acks are processed, to ensure it is successfully sent.
 	 * @param batch - The batch that was flushed
 	 * @param clientSequenceNumber - The CSN of the first message in the batch,
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
-	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 * @param staged - Indicates whether batch is staged (not to be submitted while runtime is in Staging Mode)
+	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 */
 	public onFlushBatch(
 		batch: LocalBatchMessage[],
 		clientSequenceNumber: number | undefined,
+		staged: boolean,
 		ignoreBatchId?: boolean,
-		staged: boolean = false,
 	): void {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
@@ -631,7 +632,7 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
-		assert(pendingMessage.batchInfo.staged !== true, "Can't get an ack from a staged batch");
+		assert(!pendingMessage.batchInfo.staged, "Can't get an ack from a staged batch");
 
 		// If this batch became empty on resubmit, batch.messages will be empty (but keyMessage is always set)
 		// and the next pending message should be an empty batch marker.
@@ -719,6 +720,7 @@ export class PendingStateManager implements IDisposable {
 			let pendingMessage = this.pendingMessages.shift()!;
 			remainingPendingMessagesCount--;
 
+			//* Unit tests
 			// Re-queue pre-staging messages if we are only processing staged batches
 			if (onlyStagedBatches) {
 				if (!pendingMessage.batchInfo.staged) {
@@ -865,6 +867,6 @@ function patchbatchInfo(
 	const batchInfo: IPendingMessageFromStash["batchInfo"] = message.batchInfo;
 	if (batchInfo === undefined) {
 		// Using uuid guarantees uniqueness, retaining existing behavior
-		message.batchInfo = { clientId: uuid(), batchStartCsn: -1, length: -1 };
+		message.batchInfo = { clientId: uuid(), batchStartCsn: -1, length: -1, staged: false };
 	}
 }

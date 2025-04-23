@@ -18,7 +18,11 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/internal
 import { type FluidObject } from "@fluidframework/core-interfaces/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
-import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import {
+	encodeHandleForSerialization,
+	isFluidHandle,
+	toFluidHandleInternal,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
@@ -27,19 +31,18 @@ import {
 import { createLoader } from "../utils.js";
 
 /**
- * This is the parent DataObject, which is also a datastore. It has a
- * synchronous method to create child datastores, which could be called
- * in response to synchronous user input, like a key press.
+ * A DataObject implementation that is used to test Staging Mode.
+ * Supports entering staging mode, adding new DDSes, and concisely enumerating the data store's data.
  */
-class RootDataObject extends DataObject {
+class DataObjectWithStagingMode extends DataObject {
 	private static instanceCount: number = 0;
 	private readonly instanceNumber =
 		this.context.containerRuntime.clientDetails.capabilities.interactive === false
 			? -1
-			: RootDataObject.instanceCount++;
+			: DataObjectWithStagingMode.instanceCount++;
 
-	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental = this.context
-		.containerRuntime satisfies IContainerRuntimeBaseExperimental;
+	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
+		this.context.containerRuntime;
 	get ParentDataObject() {
 		return this;
 	}
@@ -53,17 +56,23 @@ class RootDataObject extends DataObject {
 		this.root.set(`${prefix}-${this.instanceNumber}`, newMap.handle);
 	}
 
-	public get state(): Record<string, unknown> {
+	/**
+	 * Enumerate the data store's data, encoding handles to get a synchronously-available representation.
+	 */
+	public enumerateDataSynchronous(): Record<string, unknown> {
 		return [...this.root.keys()].reduce<Record<string, unknown>>((pv, cv) => {
 			const value = (pv[cv] = this.root.get(cv));
 			if (isFluidHandle(value)) {
-				pv[cv] = toFluidHandleInternal(value).absolutePath;
+				pv[cv] = encodeHandleForSerialization(toFluidHandleInternal(value));
 			}
 			return pv;
 		}, {});
 	}
 
-	public async loadState(): Promise<Record<string, unknown>> {
+	/**
+	 * Enumerate the data store's data, leaving handles in their encoded form.
+	 */
+	public async enumerateDataWithHandlesResolved(): Promise<Record<string, unknown>> {
 		const state: Record<string, unknown> = {};
 		const loadStateInt = async (map) => {
 			for (const key of map.keys()) {
@@ -86,13 +95,9 @@ class RootDataObject extends DataObject {
 	}
 }
 
-/**
- * This is the parent DataObjects factory. It specifies the child data stores
- * factory in a sub-registry. This is requires for synchronous creation of the child.
- */
-const parentDataObjectFactory = new DataObjectFactory(
-	"ParentDataObject",
-	RootDataObject,
+const dataObjectFactory = new DataObjectFactory(
+	"TheDataObject",
+	DataObjectWithStagingMode,
 	undefined,
 	{},
 );
@@ -107,18 +112,11 @@ const runtimeFactory: IRuntimeFactory = {
 		return loadContainerRuntime({
 			context,
 			existing,
-			registryEntries: [
-				[
-					parentDataObjectFactory.type,
-					// the parent is still async in the container registry
-					// this allows things like code splitting for dynamic loading
-					Promise.resolve(parentDataObjectFactory),
-				],
-			],
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			provideEntryPoint: async (rt) => {
 				const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
 				if (maybeRoot === undefined) {
-					const ds = await rt.createDataStore(parentDataObjectFactory.type);
+					const ds = await rt.createDataStore(dataObjectFactory.type);
 					await ds.trySetAlias("default");
 				}
 				const root = await rt.getAliasedDataStoreEntryPoint("default");
@@ -129,8 +127,8 @@ const runtimeFactory: IRuntimeFactory = {
 	},
 };
 
-async function getDataObject(container: IContainer): Promise<RootDataObject> {
-	const entrypoint: FluidObject<RootDataObject> = await container.getEntryPoint();
+async function getDataObject(container: IContainer): Promise<DataObjectWithStagingMode> {
+	const entrypoint: FluidObject<DataObjectWithStagingMode> = await container.getEntryPoint();
 	const dataObject = entrypoint.ParentDataObject;
 	assert(dataObject !== undefined, "dataObject must be defined");
 	return dataObject;
@@ -138,7 +136,7 @@ async function getDataObject(container: IContainer): Promise<RootDataObject> {
 
 interface Client {
 	container: IContainer;
-	dataObject: RootDataObject;
+	dataObject: DataObjectWithStagingMode;
 }
 
 const waitForSave = async (clients: Client[] | Record<string, Client>) =>
@@ -193,31 +191,23 @@ const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer)
 	await waitForSave(clients);
 
 	assert.deepStrictEqual(
-		original.dataObject.state,
-		loaded.dataObject.state,
+		original.dataObject.enumerateDataSynchronous(),
+		loaded.dataObject.enumerateDataSynchronous(),
 		"initial states should match after save",
 	);
 
 	return clients;
 };
 
-describe("Scenario Test", () => {
-	/**
-	 * Test cases to add:
-	 * - Existing change before staging
-	 * --- Reconnect during staging mode (should resubmit that before we exit)
-	 * --- No reconnect during staging mode (state still pending, wait for ack)
-	 * --- Offline during staging mode (state still pending, wait for reconnect)
-	 * - Reentrancy while in staging mode
-	 */
+describe("Staging Mode", () => {
 	it("enter staging mode and merge", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
 		const branchData = clients.original.dataObject.enterStagingMode();
 		assert.deepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after branch",
 		);
 
@@ -225,8 +215,8 @@ describe("Scenario Test", () => {
 		clients.loaded.dataObject.makeEdit("after-branch");
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match before save",
 		);
 
@@ -236,12 +226,12 @@ describe("Scenario Test", () => {
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match after save",
 		);
 
-		const branchState = clients.original.dataObject.state;
+		const branchState = clients.original.dataObject.enumerateDataSynchronous();
 		assert.notEqual(
 			Object.keys(branchState).find((k) => k.startsWith("after-branch")),
 			undefined,
@@ -253,8 +243,8 @@ describe("Scenario Test", () => {
 		await waitForSave(clients);
 
 		assert.deepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after save",
 		);
 	});
@@ -265,8 +255,8 @@ describe("Scenario Test", () => {
 
 		const branchData = clients.original.dataObject.enterStagingMode();
 		assert.deepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after branch",
 		);
 
@@ -274,8 +264,8 @@ describe("Scenario Test", () => {
 		clients.loaded.dataObject.makeEdit("after-branch");
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match before save",
 		);
 
@@ -285,12 +275,12 @@ describe("Scenario Test", () => {
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match after save",
 		);
 
-		const branchState = clients.original.dataObject.state;
+		const branchState = clients.original.dataObject.enumerateDataSynchronous();
 		assert.notEqual(
 			Object.keys(branchState).find((k) => k.startsWith("after-branch")),
 			undefined,
@@ -302,8 +292,8 @@ describe("Scenario Test", () => {
 		await waitForSave(clients);
 
 		assert.deepStrictEqual(
-			await clients.original.dataObject.loadState(),
-			await clients.loaded.dataObject.loadState(),
+			await clients.original.dataObject.enumerateDataWithHandlesResolved(),
+			await clients.loaded.dataObject.enumerateDataWithHandlesResolved(),
 			"states should match after save",
 		);
 	});
@@ -314,36 +304,36 @@ describe("Scenario Test", () => {
 
 		const branchData = clients.original.dataObject.enterStagingMode();
 		assert.deepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after branch",
 		);
 
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
-		const remoteState = { ...clients.loaded.dataObject.state };
+		const remoteState = { ...clients.loaded.dataObject.enumerateDataSynchronous() };
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match before save",
 		);
 		assert.deepStrictEqual(
 			remoteState,
-			clients.loaded.dataObject.state,
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after save",
 		);
 
 		await waitForSave([clients.loaded]);
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match after save",
 		);
 		assert.deepStrictEqual(
 			remoteState,
-			clients.loaded.dataObject.state,
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after save",
 		);
 
@@ -353,13 +343,13 @@ describe("Scenario Test", () => {
 
 		assert.deepStrictEqual(
 			remoteState,
-			clients.original.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
 			"states should match after save",
 		);
 
 		assert.deepStrictEqual(
 			remoteState,
-			clients.loaded.dataObject.state,
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after save",
 		);
 	});
