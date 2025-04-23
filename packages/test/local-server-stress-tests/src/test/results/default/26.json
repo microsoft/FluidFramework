@@ -1,0 +1,117 @@
+[
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/",
+            "value": "Ly"
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "attach"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-3"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-4"
+    },
+    {
+        "type": "enterStagingMode",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "tag": "channel-2",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "exitStagingMode",
+        "commit": false,
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/",
+            "value": {
+                "tag": "channel-2",
+                "absolutePath": "/A/channel-2",
+                "isAttached": true
+            }
+        },
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "delete",
+            "key": "prop1",
+            "path": "/"
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "enterStagingMode",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "delete",
+            "key": "prop1",
+            "path": "/"
+        },
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "tag": "channel-6",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-2"
+    },
+    {
+        "type": "exitStagingMode",
+        "commit": false,
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-6"
+    },
+    {
+        "type": "synchronize"
+    }
+]

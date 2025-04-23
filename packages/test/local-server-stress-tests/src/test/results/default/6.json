@@ -1,0 +1,105 @@
+[
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/",
+            "value": "rbSx"
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "attach"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-2"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-3"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-4"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/",
+            "value": "PK8"
+        },
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "enterStagingMode",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "delete",
+            "key": "prop2",
+            "path": "/"
+        },
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "delete",
+            "key": "prop2",
+            "path": "/"
+        },
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "clear",
+            "path": "/"
+        },
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "changeConnectionState",
+        "connected": false,
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "exitStagingMode",
+        "commit": false,
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    }
+]

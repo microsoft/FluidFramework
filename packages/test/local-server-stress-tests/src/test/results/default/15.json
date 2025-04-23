@@ -1,0 +1,114 @@
+[
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir1",
+            "path": "/"
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir2",
+            "path": "/dir1"
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "attach"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-2"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-3"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-4"
+    },
+    {
+        "type": "enterStagingMode",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "deleteSubDirectory",
+            "name": "dir2",
+            "path": "/dir1"
+        },
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "tag": "channel-4",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/dir1/dir2",
+            "value": {
+                "tag": "channel-4",
+                "absolutePath": "/A/channel-4",
+                "isAttached": true
+            }
+        },
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "deleteSubDirectory",
+            "name": "dir2",
+            "path": "/dir1"
+        },
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "exitStagingMode",
+        "commit": false,
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-4"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "clear",
+            "path": "/"
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    }
+]

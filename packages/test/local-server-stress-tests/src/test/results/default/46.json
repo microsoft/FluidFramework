@@ -1,0 +1,88 @@
+[
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir3",
+            "path": "/"
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/",
+            "value": {
+                "tag": "root",
+                "absolutePath": "/A/root",
+                "isAttached": true
+            }
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "attach"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-3"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-4"
+    },
+    {
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "tag": "channel-2",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "enterStagingMode",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "delete",
+            "key": "prop3",
+            "path": "/"
+        },
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "clear",
+            "path": "/"
+        },
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "exitStagingMode",
+        "commit": false,
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-2"
+    },
+    {
+        "type": "synchronize"
+    }
+]

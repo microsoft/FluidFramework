@@ -1,0 +1,111 @@
+[
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/",
+            "value": "gi"
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "attach"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-2"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-3"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-4"
+    },
+    {
+        "type": "uploadBlob",
+        "tag": "blob-1",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "createDataStore",
+        "asChild": false,
+        "tag": "datastore-1",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "clear",
+            "path": "/"
+        },
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "enterStagingMode",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-1",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/",
+            "value": {
+                "tag": "datastore-1",
+                "absolutePath": "/da55dde7-383f-47ec-975d-0c46ea2d67ef",
+                "isAttached": false
+            }
+        },
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/",
+            "value": {
+                "tag": "blob-1",
+                "absolutePath": "/_blobs/0304defe-172e-495d-a191-629599c3cd86",
+                "isAttached": true
+            }
+        },
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "exitStagingMode",
+        "commit": false,
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-1",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    }
+]
