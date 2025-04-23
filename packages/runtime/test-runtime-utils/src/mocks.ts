@@ -856,7 +856,6 @@ export class MockFluidDataStoreRuntime
 	public get objectsRoutingContext(): IFluidHandleContext {
 		return this;
 	}
-	public readonly inStagingMode = false;
 
 	public readonly documentId: string = undefined as any;
 	public readonly id: string;

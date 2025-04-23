@@ -445,8 +445,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     ILayerCompatDetails?: unknown;
     // (undocumented)
-    readonly inStagingMode = false;
-    // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
     readonly loader: ILoader;
