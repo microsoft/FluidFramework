@@ -19,7 +19,7 @@ import { StateFactory } from "@fluidframework/presence/alpha";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
-/* eslint-disable unicorn/no-null */
+/* eslint-disable unicorn/no-null -- API null support must be tested */
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestManager(
@@ -155,9 +155,10 @@ export function checkCompiles(): void {
 	// @ts-expect-error local may be set wholly, but partially it is readonly
 	workspace.props.caret.local.pos = 0;
 
-	function logClientValue<
-		T /* following extends should not be required: */ extends Record<string, unknown>,
-	>({ attendee, value }: Pick<LatestClientData<T>, "attendee" | "value">): void {
+	function logClientValue<T>({
+		attendee,
+		value,
+	}: Pick<LatestClientData<T>, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value);
 	}
 
