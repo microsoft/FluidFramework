@@ -114,8 +114,7 @@ export interface ICompressionRuntimeOptions {
 }
 
 // @alpha
-export interface IContainerRuntimeOptions extends Partial<ContainerRuntimeOptions> {
-}
+export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 
 // @alpha
 export type IdCompressorMode = "on" | "delayed" | undefined;

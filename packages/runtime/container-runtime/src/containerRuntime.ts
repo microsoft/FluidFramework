@@ -413,12 +413,12 @@ export interface ContainerRuntimeOptions {
  * @legacy
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IContainerRuntimeOptions extends Partial<ContainerRuntimeOptions> {}
+export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 
 /**
- * Internal extension of @see ContainerRuntimeOptions
+ * Internal extension of {@link ContainerRuntimeOptions}
  *
+ * @privateRemarks
  * These options are not available to consumers when creating a new container runtime,
  * but we do need to expose them for internal use, e.g. when configuring the container runtime
  * to ensure compatibility with older versions.
@@ -446,7 +446,7 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 }
 
 /**
- * Internal extension of @see IContainerRuntimeOptions
+ * Internal extension of {@link IContainerRuntimeOptions}
  *
  * @internal
  */
