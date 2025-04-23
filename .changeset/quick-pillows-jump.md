@@ -1,9 +1,7 @@
 ---
-"fluid-framework": minor
 "@fluidframework/tree": minor
----
----
-"section": tree
+"fluid-framework": minor
+"__section": tree
 ---
 
 Add `allowUnused` utility.
