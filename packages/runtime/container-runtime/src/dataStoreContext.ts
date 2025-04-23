@@ -686,10 +686,10 @@ export abstract class FluidDataStoreContext
 		this.channel!.setConnectionState(connected, clientId);
 	}
 
-	public setReadOnlyState(readonly: boolean): void {
-		this.verifyNotClosed("setReadOnlyState", false /* checkTombstone */);
+	public notifyReadOnlyState(readonly: boolean): void {
+		this.verifyNotClosed("notifyReadOnlyState", false /* checkTombstone */);
 
-		this.channel?.setReadOnlyState?.(readonly);
+		this.channel?.notifyReadOnlyState?.(readonly);
 		this._contextDeltaManagerProxy.setReadonly(readonly);
 	}
 

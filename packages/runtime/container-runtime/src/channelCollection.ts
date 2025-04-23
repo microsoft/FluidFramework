@@ -1120,12 +1120,12 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	/**
-	 * Enumerates the contexts and calls setReadOnlyState on them.
+	 * Enumerates the contexts and calls notifyReadOnlyState on them.
 	 */
-	public setReadOnlyState(readonly: boolean): void {
+	public notifyReadOnlyState(readonly: boolean): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
-				context.setReadOnlyState(readonly);
+				context.notifyReadOnlyState(readonly);
 			} catch (error) {
 				this.mc.logger.sendErrorEvent(
 					{

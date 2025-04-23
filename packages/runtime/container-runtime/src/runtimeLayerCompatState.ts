@@ -11,7 +11,7 @@ import {
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	encodeHandlesInContainerRuntime,
-	setReadOnlyState,
+	notifiesReadOnlyState,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -69,7 +69,7 @@ export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
 	/**
 	 * The features supported by the Runtime layer across the Runtime / DataStore boundary.
 	 */
-	supportedFeatures: new Set<string>([encodeHandlesInContainerRuntime, setReadOnlyState]),
+	supportedFeatures: new Set<string>([encodeHandlesInContainerRuntime, notifiesReadOnlyState]),
 };
 
 /**

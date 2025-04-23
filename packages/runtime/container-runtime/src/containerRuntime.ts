@@ -1723,7 +1723,7 @@ export class ContainerRuntime
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
-		this._deltaManager.on("readonly", (readonly) => this.setReadOnlyState(readonly));
+		this._deltaManager.on("readonly", (readonly) => this.notifyReadOnlyState(readonly));
 
 		this.blobManager = new BlobManager({
 			routeContext: this.handleContext,
@@ -2565,8 +2565,8 @@ export class ContainerRuntime
 		return this._loadIdCompressor;
 	}
 
-	public setReadOnlyState(readonly: boolean): void {
-		this.channelCollection.setReadOnlyState(readonly);
+	public notifyReadOnlyState(readonly: boolean): void {
+		this.channelCollection.notifyReadOnlyState(readonly);
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string): void {

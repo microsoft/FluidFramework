@@ -55,7 +55,7 @@ export type {
 } from "./protocol.js";
 export {
 	encodeHandlesInContainerRuntime,
-	setReadOnlyState,
+	notifiesReadOnlyState,
 } from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	CreateChildSummarizerNodeParam,

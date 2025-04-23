@@ -57,7 +57,7 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	setReadOnlyState,
+	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -110,7 +110,7 @@ type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T,
 
 interface IFluidDataStoreContextFeaturesToTypes {
 	[encodeHandlesInContainerRuntime]: IFluidDataStoreContext; // No difference in typing with this feature
-	[setReadOnlyState]: PickRequired<IFluidDataStoreContext, "readonly">;
+	[notifiesReadOnlyState]: PickRequired<IFluidDataStoreContext, "readonly">;
 }
 
 function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
@@ -290,12 +290,12 @@ export class FluidDataStoreRuntime
 			dataStoreContext as FluidObject<ILayerCompatDetails>;
 		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this));
 
-		if (contextSupportsFeature(dataStoreContext, setReadOnlyState)) {
+		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
 			this._readonly = dataStoreContext.readonly;
 		} else {
 			this._readonly = this.dataStoreContext.deltaManager.readOnlyInfo.readonly === true;
 			this.dataStoreContext.deltaManager.on("readonly", (readonly) =>
-				this.setReadOnlyState(readonly),
+				this.notifyReadOnlyState(readonly),
 			);
 		}
 
@@ -692,7 +692,7 @@ export class FluidDataStoreRuntime
 	 * readonly state of this object. It should not be invoked by
 	 * any other callers.
 	 */
-	public setReadOnlyState(readonly: boolean): void {
+	public notifyReadOnlyState(readonly: boolean): void {
 		this.verifyNotClosed();
 		if (readonly !== this._readonly) {
 			this._readonly = readonly;

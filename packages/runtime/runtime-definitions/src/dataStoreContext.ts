@@ -373,7 +373,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	/**
 	 * Notifies this object about changes in the readonly state
 	 */
-	setReadOnlyState?(readonly: boolean): void;
+	notifyReadOnlyState?(readonly: boolean): void;
 
 	/**
 	 * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
