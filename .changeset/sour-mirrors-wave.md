@@ -23,12 +23,12 @@ The following API changes have been made to improve clarity and consistency:
 | `ISessionClient` | `Attendee` |
 | `Latest` (import) | `StateFactory` |
 | `Latest` (call) | `StateFactory.latest` |
-| `LatestEvents.updated` | `LatestRawEvents.remoteUpdated` |
+| `LatestEvents.updated` | `LatestEvents.remoteUpdated` |
 | `LatestMap` (import) | `StateFactory` |
 | `LatestMap` (call) | `StateFactory.latestMap` |
-| `LatestMapEvents.itemRemoved` | `LatestMapRawEvents.remoteItemRemoved` |
-| `LatestMapEvents.itemUpdated` | `LatestMapRawEvents.remoteItemUpdated` |
-| `LatestMapEvents.updated` | `LatestMapRawEvents.remoteUpdated` |
+| `LatestMapEvents.itemRemoved` | `LatestMapEvents.remoteItemRemoved` |
+| `LatestMapEvents.itemUpdated` | `LatestMapEvents.remoteItemUpdated` |
+| `LatestMapEvents.updated` | `LatestMapEvents.remoteUpdated` |
 | `LatestMapItemValueClientData` | `LatestMapItemUpdatedClientData` |
 | `LatestMapValueClientData` | `LatestMapClientData` |
 | `LatestMapValueManager` | `LatestMapRaw` |
@@ -42,7 +42,7 @@ The following API changes have been made to improve clarity and consistency:
 | `LatestValueManager.clients` | `LatestRaw.getStateAttendees` |
 | `LatestValueManager.clientValue` | `LatestRaw.getRemote` |
 | `LatestValueManager.clientValues` | `LatestRaw.getRemotes` |
-| `LatestValueManagerEvents` | `LatestRawEvents` |
+| `LatestValueManagerEvents` | `LatestEvents` |
 | `LatestValueMetadata` | `LatestMetadata` |
 | `PresenceEvents.attendeeDisconnected` | `AttendeesEvents.attendeeDisconnected`|
 | `PresenceEvents.attendeeJoined` | `AttendeesEvents.attendeeConnected`|

@@ -48,28 +48,28 @@ export {
 export type {
 	latestMap,
 	LatestMapArguments,
-	LatestMapRaw,
 	LatestMapClientData,
-	LatestMapRawEvents,
+	LatestMapEvents,
 	LatestMapItemRemovedClientData,
 	LatestMapItemUpdatedClientData,
+	LatestMapRaw,
 	StateMap,
 } from "./latestMapValueManager.js";
 export type {
 	latest,
 	Latest,
-	LatestEvents,
 	LatestArguments,
+	LatestEvents,
 	LatestRaw,
-	LatestRawEvents,
 } from "./latestValueManager.js";
 export type {
-	LatestRawClientData as LatestClientData,
-	LatestRawClientData as LatestClientDataValidated,
-	LatestRawData as LatestData,
+	LatestClientData,
 	LatestMetadata,
 	StateSchemaValidator,
 	StateSchemaValidatorMetadata,
+	ProxiedValueAccessor,
+	RawValueAccessor,
+	ValueAccessor,
 } from "./latestValueTypes.js";
 
 export {

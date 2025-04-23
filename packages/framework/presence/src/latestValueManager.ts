@@ -18,11 +18,10 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
-	LatestRawClientData,
-	LatestRawData,
-	LatestData,
 	LatestClientData,
-	StateSchemaValidator,
+	LatestData,
+	RawValueAccessor,
+	ValueAccessor,
 } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -32,13 +31,13 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @alpha
  */
-export interface LatestRawEvents<T> {
+export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> {
 	/**
 	 * Raised when remote client's value is updated, which may be the same value.
 	 *
 	 * @eventProperty
 	 */
-	remoteUpdated: (update: LatestRawClientData<T>) => void;
+	remoteUpdated: (update: LatestClientData<T, TRemoteValueAccessor>) => void;
 
 	/**
 	 * Raised when local client's value is updated, which may be the same value.
@@ -81,7 +80,7 @@ export interface LatestRaw<T> {
 	/**
 	 * Events for LatestRaw.
 	 */
-	readonly events: Listenable<LatestRawEvents<T>>;
+	readonly events: Listenable<LatestEvents<T, RawValueAccessor<T>>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -100,7 +99,7 @@ export interface LatestRaw<T> {
 	/**
 	 * Iterable access to remote clients' values.
 	 */
-	getRemotes(): IterableIterator<LatestRawClientData<T>>;
+	getRemotes(): IterableIterator<LatestClientData<T, RawValueAccessor<T>>>;
 	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
@@ -108,34 +107,13 @@ export interface LatestRaw<T> {
 	/**
 	 * Access to a specific attendee's value.
 	 */
-	getRemote(attendee: Attendee): LatestRawData<T>;
-}
-
-/**
- *
- * @alpha
- */
-export interface Latest<T> extends Omit<LatestRaw<T>, "events" | "getRemote" | "getRemotes"> {
-	/**
-	 * Events for Latest.
-	 */
-	readonly events: Listenable<LatestEvents<T>>;
-
-	/**
-	 * Iterable access to remote clients' values.
-	 */
-	getRemotes(): IterableIterator<LatestClientData<T>>;
-
-	/**
-	 * Access to a specific attendee's value.
-	 */
-	getRemote(attendee: Attendee): LatestData<T>;
+	getRemote(attendee: Attendee): LatestData<T, RawValueAccessor<T>>;
 }
 
 class LatestRawValueManagerImpl<T, Key extends string>
 	implements LatestRaw<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
-	public readonly events = createEmitter<LatestRawEvents<T>>();
+	public readonly events = createEmitter<LatestEvents<T, RawValueAccessor<T>>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -287,7 +265,7 @@ class LatestValueManagerImpl2<T, Key extends string>
 		this.events.emit("localUpdated", { value });
 	}
 
-	public *getRemotes(): IterableIterator<LatestClientData<T>> {
+	public *getRemotes(): IterableIterator<LatestClientData<T, RawValueAccessor<T>>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const [attendeeId, requiredState] of objectEntries(allKnownStates.states)) {
 			// if (this.validator === undefined) {
@@ -332,7 +310,7 @@ class LatestValueManagerImpl2<T, Key extends string>
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public getRemote(attendee: Attendee): LatestData<T> {
+	public getRemote(attendee: Attendee): LatestData<T, RawValueAccessor<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
