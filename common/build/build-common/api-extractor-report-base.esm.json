@@ -4,6 +4,14 @@
 	"docModel": {
 		"enabled": false
 	},
+	"apiReport": {
+		// Add `@sealed` and `@system` to the list of tags included in API reports.
+		// These tags have breaking change implications, so they provide useful context during code reviews.
+		"tagsToReport": {
+			"@sealed": true,
+			"@system": true
+		}
+	},
 	"messages": {
 		"extractorMessageReporting": {
 			// Since we generate API reports for different release levels, it is possible (and valid) for `@link` tags
