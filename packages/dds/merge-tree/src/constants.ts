@@ -34,3 +34,5 @@ export const LocalClientId = -1;
  * @internal
  */
 export const NonCollabClient = -2;
+
+export const SquashClient = -3;

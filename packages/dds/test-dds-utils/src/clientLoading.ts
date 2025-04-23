@@ -21,6 +21,16 @@ export interface Client<TChannelFactory extends IChannelFactory> {
 	channel: ReturnType<TChannelFactory["create"]>;
 	dataStoreRuntime: MockFluidDataStoreRuntime;
 	containerRuntime: MockContainerRuntimeForReconnection;
+	/**
+	 * TODO: When real API for this is more settled, it probably makes more sense for something like this
+	 * to be on the container runtime (and mock container runtime above) rather than a separate property here.
+	 */
+	// isInStagingMode: boolean;
+	/**
+	 * 'exiting' means "it's up to the DDS to apply edits which remove any poisoned handles from the document".
+	 * They should use TODO to do so
+	 */
+	stagingModeStatus: "off" | "staging" | "exiting";
 }
 
 /**

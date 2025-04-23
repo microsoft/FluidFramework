@@ -36,10 +36,10 @@ import {
 } from "@fluidframework/merge-tree/internal";
 
 import {
-	IntervalCollection,
-	toSequencePlace,
-	ISequenceIntervalCollection,
 	toOptionalSequencePlace,
+	toSequencePlace,
+	type IntervalCollection,
+	type ISequenceIntervalCollection,
 } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
@@ -70,6 +70,14 @@ export interface AddText {
 	type: "addText";
 	index: number;
 	content: string;
+	properties?: PropertySet;
+}
+
+export interface AddPoisonedText {
+	type: "addPoisonedText";
+	index: number;
+	content: string;
+	properties?: PropertySet;
 }
 
 export interface RemoveRange extends RangeSpec {
@@ -239,11 +247,11 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 
 type ClientOpState = FuzzTestState;
 
-export function makeReducer(
+export function makeReducer<TState extends FuzzTestState>(
 	loggingInfo?: LoggingInfo,
-): Reducer<Operation | RevertOperation, ClientOpState> {
+): Reducer<Operation, TState> {
 	const withLogging =
-		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
+		(baseReducer: Reducer<Operation, TState>): Reducer<Operation, TState> =>
 		(state, operation) => {
 			if (loggingInfo !== undefined) {
 				logCurrentState(state, loggingInfo);
@@ -253,9 +261,9 @@ export function makeReducer(
 			baseReducer(state, operation);
 		};
 
-	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
-		addText: ({ client }, { index, content }) => {
-			client.channel.insertText(index, content);
+	const reducer = combineReducers<Operation, TState>({
+		addText: ({ client }, { index, content, properties }) => {
+			client.channel.insertText(index, content, properties);
 		},
 		removeRange: ({ client }, { start, end }) => {
 			client.channel.removeRange(start, end);
