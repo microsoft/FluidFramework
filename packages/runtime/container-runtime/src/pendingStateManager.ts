@@ -197,10 +197,17 @@ export function findFirstCharacterMismatched(
 	return [index, charA, charB];
 }
 
-function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
+/**
+ * Returns a shallow copy of the given message with the non-serializable properties removed.
+ * Note that the runtimeOp's data has already been serialized in the content property.
+ */
+function toSerializableForm(
+	message: IPendingMessage,
+): IPendingMessage & { runtimeOp: undefined; localOpMetadata: undefined } {
 	return {
 		...message,
 		localOpMetadata: undefined,
+		runtimeOp: undefined,
 	};
 }
 
@@ -290,7 +297,7 @@ export class PendingStateManager implements IDisposable {
 		return {
 			pendingStates: [
 				...newSavedOps,
-				...this.pendingMessages.toArray().map((message) => withoutLocalOpMetadata(message)),
+				...this.pendingMessages.toArray().map((message) => toSerializableForm(message)),
 			],
 		};
 	}
@@ -553,7 +560,7 @@ export class PendingStateManager implements IDisposable {
 		);
 
 		pendingMessage.sequenceNumber = sequenceNumber;
-		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
+		this.savedOps.push(toSerializableForm(pendingMessage));
 
 		this.pendingMessages.shift();
 

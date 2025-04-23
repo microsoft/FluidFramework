@@ -28,7 +28,12 @@ import {
 	TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
-import { chunkFromJsonableTrees, getView, validateUsageError } from "../../utils.js";
+import {
+	chunkFromJsonableTrees,
+	getView,
+	TestTreeProviderLite,
+	validateUsageError,
+} from "../../utils.js";
 import { getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
@@ -335,6 +340,46 @@ describe("treeNodeApi", () => {
 	});
 
 	describe("on", () => {
+		it.skip("Bug #35920", () => {
+			// Notes:
+			// * For this bug to occur, the op must be sent from one tree to another tree - it does not occur when e.g. unit testing a single view
+			// * There needs to be at least two levels of nesting in the schema, e.g. it won't repro if you simply change a number field on the root node.
+			const sf = new SchemaFactory(undefined);
+			class Child extends sf.object("Child", {
+				value: sf.number,
+			}) {}
+			class Parent extends sf.object("Parent", {
+				node: Child,
+			}) {}
+
+			const config = new TreeViewConfiguration({ schema: Parent });
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			// Intialize the first tree with a value of "0"
+			const view1 = tree1.viewWith(config);
+			view1.initialize(
+				new Parent({
+					node: new Child({
+						value: 0,
+					}),
+				}),
+			);
+			provider.synchronizeMessages();
+			const view2 = tree2.viewWith(config);
+			// Count the number of times treeChanged fires
+			let invals = 0;
+			Tree.on(view2.root, "treeChanged", () => {
+				invals += 1;
+			});
+			// Change the first tree to a value of "3"
+			view1.root.node.value = 3;
+			provider.synchronizeMessages();
+			// Ensure that the second tree received the change...
+			assert.equal(view2.root.node.value, 3);
+			// ...and also that the event fired
+			assert.equal(invals, 1, "treeChanged should have fired once");
+		});
+
 		describe("object node", () => {
 			const sb = new SchemaFactory("object-node-in-root");
 			class myObject extends sb.object("object", {

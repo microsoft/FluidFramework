@@ -198,7 +198,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     constructor(getClientId?: (() => string) | undefined);
     // (undocumented)
-    readonly active: boolean;
+    active: boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)

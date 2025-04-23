@@ -22,6 +22,7 @@ import {
 	type IDeltaHandler,
 	// eslint-disable-next-line import/no-deprecated
 	type IFluidDataStoreRuntimeExperimental,
+	type IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IDocumentMessage,
@@ -59,7 +60,7 @@ import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
-import { makeHandlesSerializable, parseHandles } from "./utils.js";
+import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
  * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
@@ -466,8 +467,13 @@ export abstract class SharedObjectCore<
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// NOTE: We may also be encoding in the ContainerRuntime layer.
-			// Once the layer-compat window passes we can stop encoding here and only bind
-			const contentToSubmit = makeHandlesSerializable(content, this.serializer, this.handle);
+			// Once the layer-compat window passes we can remove the encoding codepath here altogether
+			const onlyBind =
+				(this.runtime as IFluidDataStoreRuntimeInternalConfig)
+					.submitMessagesWithoutEncodingHandles === true;
+			const contentToSubmit = onlyBind
+				? bindHandles(content, this.serializer, this.handle)
+				: makeHandlesSerializable(content, this.serializer, this.handle);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
