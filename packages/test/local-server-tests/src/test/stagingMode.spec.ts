@@ -32,7 +32,7 @@ import { createLoader } from "../utils.js";
 
 /**
  * A DataObject implementation that is used to test Staging Mode.
- * Supports entering staging mode, adding new DDSes, and concisely enumerating the data store's data (state).
+ * Supports entering staging mode, adding new DDSes, and concisely enumerating the data store's data.
  */
 class DataObjectWithStagingMode extends DataObject {
 	private static instanceCount: number = 0;
@@ -56,7 +56,10 @@ class DataObjectWithStagingMode extends DataObject {
 		this.root.set(`${prefix}-${this.instanceNumber}`, newMap.handle);
 	}
 
-	public get state(): Record<string, unknown> {
+	/**
+	 * Enumerate the data store's data, encoding handles to get a synchronously-available representation.
+	 */
+	public enumerateDataSynchronous(): Record<string, unknown> {
 		return [...this.root.keys()].reduce<Record<string, unknown>>((pv, cv) => {
 			const value = (pv[cv] = this.root.get(cv));
 			if (isFluidHandle(value)) {
@@ -66,8 +69,10 @@ class DataObjectWithStagingMode extends DataObject {
 		}, {});
 	}
 
-	//* TODO: consolidate this logic with state getter if possible
-	public async loadState(): Promise<Record<string, unknown>> {
+	/**
+	 * Enumerate the data store's data, leaving handles in their encoded form.
+	 */
+	public async enumerateDataWithHandlesResolved(): Promise<Record<string, unknown>> {
 		const state: Record<string, unknown> = {};
 		const loadStateInt = async (map) => {
 			for (const key of map.keys()) {
@@ -186,8 +191,8 @@ const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer)
 	await waitForSave(clients);
 
 	assert.deepStrictEqual(
-		original.dataObject.state,
-		loaded.dataObject.state,
+		original.dataObject.enumerateDataSynchronous(),
+		loaded.dataObject.enumerateDataSynchronous(),
 		"initial states should match after save",
 	);
 
@@ -201,8 +206,8 @@ describe("Staging Mode", () => {
 
 		const branchData = clients.original.dataObject.enterStagingMode();
 		assert.deepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after branch",
 		);
 
@@ -210,8 +215,8 @@ describe("Staging Mode", () => {
 		clients.loaded.dataObject.makeEdit("after-branch");
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match before save",
 		);
 
@@ -221,12 +226,12 @@ describe("Staging Mode", () => {
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match after save",
 		);
 
-		const branchState = clients.original.dataObject.state;
+		const branchState = clients.original.dataObject.enumerateDataSynchronous();
 		assert.notEqual(
 			Object.keys(branchState).find((k) => k.startsWith("after-branch")),
 			undefined,
@@ -238,8 +243,8 @@ describe("Staging Mode", () => {
 		await waitForSave(clients);
 
 		assert.deepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after save",
 		);
 	});
@@ -250,8 +255,8 @@ describe("Staging Mode", () => {
 
 		const branchData = clients.original.dataObject.enterStagingMode();
 		assert.deepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after branch",
 		);
 
@@ -259,8 +264,8 @@ describe("Staging Mode", () => {
 		clients.loaded.dataObject.makeEdit("after-branch");
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match before save",
 		);
 
@@ -270,12 +275,12 @@ describe("Staging Mode", () => {
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match after save",
 		);
 
-		const branchState = clients.original.dataObject.state;
+		const branchState = clients.original.dataObject.enumerateDataSynchronous();
 		assert.notEqual(
 			Object.keys(branchState).find((k) => k.startsWith("after-branch")),
 			undefined,
@@ -287,8 +292,8 @@ describe("Staging Mode", () => {
 		await waitForSave(clients);
 
 		assert.deepStrictEqual(
-			await clients.original.dataObject.loadState(),
-			await clients.loaded.dataObject.loadState(),
+			await clients.original.dataObject.enumerateDataWithHandlesResolved(),
+			await clients.loaded.dataObject.enumerateDataWithHandlesResolved(),
 			"states should match after save",
 		);
 	});
@@ -299,36 +304,36 @@ describe("Staging Mode", () => {
 
 		const branchData = clients.original.dataObject.enterStagingMode();
 		assert.deepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after branch",
 		);
 
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
-		const remoteState = { ...clients.loaded.dataObject.state };
+		const remoteState = { ...clients.loaded.dataObject.enumerateDataSynchronous() };
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match before save",
 		);
 		assert.deepStrictEqual(
 			remoteState,
-			clients.loaded.dataObject.state,
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after save",
 		);
 
 		await waitForSave([clients.loaded]);
 
 		assert.notDeepStrictEqual(
-			clients.original.dataObject.state,
-			clients.loaded.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"should not match after save",
 		);
 		assert.deepStrictEqual(
 			remoteState,
-			clients.loaded.dataObject.state,
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after save",
 		);
 
@@ -338,13 +343,13 @@ describe("Staging Mode", () => {
 
 		assert.deepStrictEqual(
 			remoteState,
-			clients.original.dataObject.state,
+			clients.original.dataObject.enumerateDataSynchronous(),
 			"states should match after save",
 		);
 
 		assert.deepStrictEqual(
 			remoteState,
-			clients.loaded.dataObject.state,
+			clients.loaded.dataObject.enumerateDataSynchronous(),
 			"states should match after save",
 		);
 	});

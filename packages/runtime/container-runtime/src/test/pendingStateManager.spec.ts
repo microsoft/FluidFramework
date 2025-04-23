@@ -180,6 +180,7 @@ describe("Pending State Manager", () => {
 					localOpMetadata,
 				})),
 				clientSequenceNumber ?? messages[0]?.clientSequenceNumber,
+				false /* staged */,
 			);
 		};
 
@@ -473,6 +474,7 @@ describe("Pending State Manager", () => {
 						},
 					],
 					0 /* clientSequenceNumber */,
+					false /* staged */,
 				);
 
 				assert.throws(
@@ -521,6 +523,7 @@ describe("Pending State Manager", () => {
 						},
 					],
 					0 /* clientSequenceNumber */,
+					false /* staged */,
 				);
 
 				assert.throws(
@@ -736,6 +739,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				})),
 				0,
+				false /* staged */,
 			);
 			pendingStateManager.replayPendingStates();
 			assert.strictEqual(resubmittedBatchIds[0], `${clientId}_[0]`);
@@ -767,7 +771,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 10,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
 				},
 				{
 					type: "message",
@@ -775,7 +779,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 11,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
 				},
 			];
 
@@ -805,7 +809,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 10,
 					opMetadata: undefined,
 					localOpMetadata: { emptyBatch: true },
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
 				},
 			];
 
@@ -890,6 +894,7 @@ describe("Pending State Manager", () => {
 						},
 					],
 					0,
+					false /* staged */,
 				);
 			}
 			assert.strictEqual(
@@ -930,6 +935,7 @@ describe("Pending State Manager", () => {
 						},
 					],
 					0,
+					false /* staged */,
 				);
 			}
 			assert.strictEqual(
@@ -953,7 +959,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
 			},
 			{
 				type: "message",
@@ -961,7 +967,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
 			},
 			{
 				type: "message",
@@ -969,7 +975,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 3, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 3, length: 1, staged: false },
 			},
 			{
 				type: "message",
@@ -977,7 +983,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 4, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 4, length: 1, staged: false },
 			},
 		];
 		const forFlushedMessages = forInitialMessages.map<LocalBatchMessage>(
@@ -1040,6 +1046,7 @@ describe("Pending State Manager", () => {
 						},
 					],
 					0,
+					false /* staged */,
 				);
 			}
 

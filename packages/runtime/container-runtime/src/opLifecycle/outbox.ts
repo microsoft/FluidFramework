@@ -475,8 +475,8 @@ export class Outbox {
 		this.params.pendingStateManager.onFlushBatch(
 			rawBatch.messages,
 			clientSequenceNumber,
-			batchManager.options.ignoreBatchId,
 			staged,
+			batchManager.options.ignoreBatchId,
 		);
 	}
 
