@@ -207,7 +207,7 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 	constructor(
 		base: IDeltaManagerFull,
-		private readonly isReadOnly: () => boolean | undefined,
+		private readonly isReadOnly: () => boolean,
 	) {
 		super(base, {
 			onReadonly: (): void => {
@@ -281,8 +281,8 @@ export abstract class FluidDataStoreContext
 		return this._contextDeltaManagerProxy;
 	}
 
-	public get readonly(): boolean | undefined {
-		return this.parentContext.readonly;
+	public get readonly(): boolean {
+		return this.parentContext.readonly ?? false;
 	}
 
 	public get connected(): boolean {
