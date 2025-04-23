@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type {
+	DeepReadonly,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { Attendee } from "./presence.js";
 
 /**
@@ -67,8 +69,8 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 	value: TValueAccessor extends RawValueAccessor<T>
-		? InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>
-		: () => InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
+		? DeepReadonly<JsonDeserialized<T>>
+		: () => DeepReadonly<JsonDeserialized<T>> | undefined;
 	metadata: LatestMetadata;
 }
 

@@ -6,6 +6,7 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import type {
+	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
@@ -14,9 +15,8 @@ import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { objectEntries } from "./internalUtils.js";
+import { asDeeplyReadonly, objectEntries } from "./internalUtils.js";
 import type {
 	LatestClientData,
 	LatestData,
@@ -47,7 +47,7 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
 	 * @eventProperty
 	 */
 	localUpdated: (update: {
-		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
 	}) => void;
 }
 
@@ -71,7 +71,7 @@ export interface LatestCommon<T> {
 	 * @remarks Manager assumes ownership of the value and its references. Make a deep clone before
 	 * setting, if needed. No comparison is done to detect changes; all sets are transmitted.
 	 */
-	get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+	get local(): DeepReadonly<JsonDeserialized<T>>;
 	set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 
 	/**
@@ -154,8 +154,8 @@ class LatestValueManagerImpl<T, Key extends string>
 		return this.datastore.presence;
 	}
 
-	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {
-		return this.value.value;
+	public get local(): DeepReadonly<JsonDeserialized<T>> {
+		return asDeeplyReadonly(this.value.value);
 	}
 
 	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
@@ -166,7 +166,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
 
-		this.events.emit("localUpdated", { value });
+		this.events.emit("localUpdated", { value: asDeeplyReadonly(value) });
 	}
 
 	public *getRemotes(): IterableIterator<LatestClientData<T, ValueAccessor<T>>> {
@@ -175,7 +175,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			if (attendeeId !== allKnownStates.self) {
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: value.value,
+					value: asDeeplyReadonly(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
 			}
@@ -196,7 +196,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 		return {
-			value: clientState.value,
+			value: asDeeplyReadonly(clientState.value),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -217,7 +217,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					value: value.value,
+					value: asDeeplyReadonly(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];

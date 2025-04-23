@@ -7,6 +7,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import type {
+	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
@@ -14,9 +15,8 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { objectEntries, objectKeys } from "./internalUtils.js";
+import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
 import type {
 	LatestClientData,
 	LatestData,
@@ -124,7 +124,7 @@ export interface LatestMapEvents<
 	 * @eventProperty
 	 */
 	localItemUpdated: (updatedItem: {
-		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
 		key: K;
 	}) => void;
 
@@ -168,7 +168,7 @@ export interface StateMap<K extends string | number, V> {
 	 */
 	forEach(
 		callbackfn: (
-			value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>,
+			value: DeepReadonly<JsonDeserialized<V>>,
 			key: K,
 			map: StateMap<K, V>,
 		) => void,
@@ -179,7 +179,7 @@ export interface StateMap<K extends string | number, V> {
 	 * Returns a specified element from the StateMap object.
 	 * @returns Returns the element associated with the specified key. If no element is associated with the specified key, undefined is returned.
 	 */
-	get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
+	get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
 
 	/**
 	 * @returns boolean indicating whether an element with the specified key exists or not.
@@ -204,12 +204,12 @@ export interface StateMap<K extends string | number, V> {
 	/**
 	 * Returns an iterable of entries in the map.
 	 */
-	// [Symbol.iterator](): IterableIterator<[K, InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>]>;
+	// [Symbol.iterator](): IterableIterator<[K, DeepReadonly<JsonDeserialized<V>>]>;
 
 	/**
 	 * Returns an iterable of key, value pairs for every entry in the map.
 	 */
-	// entries(): IterableIterator<[K, InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>]>;
+	// entries(): IterableIterator<[K, DeepReadonly<JsonDeserialized<V>>]>;
 
 	/**
 	 * Returns an iterable of keys in the map.
@@ -219,7 +219,7 @@ export interface StateMap<K extends string | number, V> {
 	/**
 	 * Returns an iterable of values in the map.
 	 */
-	// values(): IterableIterator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>>;
+	// values(): IterableIterator<DeepReadonly<JsonDeserialized<V>>>;
 }
 
 class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
@@ -276,7 +276,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	}
 	public forEach(
 		callbackfn: (
-			value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>,
+			value: DeepReadonly<JsonDeserialized<T>>,
 			key: K,
 			map: StateMap<K, T>,
 		) => void,
@@ -284,12 +284,12 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	): void {
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(item.value, key, this);
+				callbackfn(asDeeplyReadonly(item.value), key, this);
 			}
 		}
 	}
-	public get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined {
-		return this.value.items[key]?.value;
+	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
+		return asDeeplyReadonly(this.value.items[key]?.value);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -300,7 +300,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 			this.value.items[key] = { rev: 0, timestamp: 0, value };
 		}
 		this.updateItem(key, value);
-		this.emitter.emit("localItemUpdated", { key, value });
+		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
 		return this;
 	}
 	public get size(): number {
@@ -474,14 +474,12 @@ class LatestMapValueManagerImpl<
 		}
 		const items = new Map<Keys, LatestData<T, ValueAccessor<T>>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			if (item.value !== undefined) {
-				const value = item.value;
-				if (value !== undefined) {
-					items.set(key, {
-						value,
-						metadata: { revision: item.rev, timestamp: item.timestamp },
-					});
-				}
+			const value = item.value;
+			if (value !== undefined) {
+				items.set(key, {
+					value: asDeeplyReadonly(value),
+					metadata: { revision: item.rev, timestamp: item.timestamp },
+				});
 			}
 		}
 		return items;
@@ -533,7 +531,7 @@ class LatestMapValueManagerImpl<
 				timestamp: item.timestamp,
 			};
 			if (item.value !== undefined) {
-				const itemValue = item.value;
+				const itemValue = asDeeplyReadonly(item.value);
 				const updatedItem = {
 					attendee,
 					key,

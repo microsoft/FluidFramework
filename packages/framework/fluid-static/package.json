@@ -122,7 +122,7 @@
 		"@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@2.32.0",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.5",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
