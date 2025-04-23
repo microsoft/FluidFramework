@@ -586,11 +586,7 @@ export function latestMap<
 	LatestMapRaw<T, Keys>
 >;
 
-/**
- * Factory for creating a {@link LatestMap} State object.
- *
- * @alpha
- */
+/* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
 export function latestMap<
 	T,
 	Keys extends string | number = string | number,
@@ -658,3 +654,4 @@ export function latestMap<
 	});
 	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
 }
+/* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */

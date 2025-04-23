@@ -244,11 +244,7 @@ export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
-/**
- * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
- *
- * @alpha
- */
+/* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,
 ):
@@ -284,3 +280,4 @@ export function latest<T extends object | null, Key extends string = string>(
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
 }
+/* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
