@@ -14,7 +14,7 @@ import type {
 	BroadcastControlSettings,
 	LatestClientData,
 	Presence,
-	RawValueAccessor,
+	ValueAccessor,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
 
@@ -156,10 +156,10 @@ export function checkCompiles(): void {
 	// @ts-expect-error local may be set wholly, but partially it is readonly
 	workspace.states.caret.local.pos = 0;
 
-	function logClientValue<T>({
+	function logClientValue<T, TValueAccessor extends ValueAccessor<T>>({
 		attendee,
 		value,
-	}: Pick<LatestClientData<T>, "attendee" | "value">): void {
+	}: Pick<LatestClientData<T, TValueAccessor>, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value);
 	}
 

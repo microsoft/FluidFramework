@@ -101,7 +101,7 @@ describe("Presence", () => {
 					}),
 				});
 
-				const { count } = stateWorkspace.props;
+				const { count } = stateWorkspace.states;
 
 				// Act & Verify
 				count.local = { num: 84 };
@@ -125,7 +125,7 @@ describe("Presence", () => {
 					}),
 				});
 
-				const { count } = stateWorkspace.props;
+				const { count } = stateWorkspace.states;
 				count.local = { num: 84 };
 
 				// Act & Verify
@@ -151,7 +151,7 @@ describe("Presence", () => {
 					}),
 				});
 
-				const { count } = stateWorkspace.props;
+				const { count } = stateWorkspace.states;
 				count.local = 84 as unknown as { num: number };
 
 				// Act & Verify
@@ -194,7 +194,7 @@ describe("Presence", () => {
 					}),
 				});
 
-				const { count } = stateWorkspace.props;
+				const { count } = stateWorkspace.states;
 
 				// Act & Verify
 				count.local.set("key1", { num: 84 });
@@ -217,7 +217,7 @@ describe("Presence", () => {
 					}),
 				});
 
-				const { count } = stateWorkspace.props;
+				const { count } = stateWorkspace.states;
 				count.local.set("key1", { num: 84 });
 
 				// Act & Verify
