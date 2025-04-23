@@ -295,8 +295,8 @@ export type NotificationSubscriptions<E extends InternalUtilityTypes.Notificatio
 // @alpha @sealed
 export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends NotificationsManager<any>>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is NotificationsWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>>;
+    readonly notifications: StatesWorkspaceEntries<TSchema>;
     readonly presence: Presence;
-    readonly props: StatesWorkspaceEntries<TSchema>;
 }
 
 // @alpha
@@ -370,7 +370,7 @@ export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManager
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
     readonly presence: Presence;
-    readonly props: StatesWorkspaceEntries<TSchema>;
+    readonly states: StatesWorkspaceEntries<TSchema>;
 }
 
 // @alpha @sealed

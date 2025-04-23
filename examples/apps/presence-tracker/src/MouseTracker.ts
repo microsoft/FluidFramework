@@ -61,7 +61,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		);
 
 		// Save a reference to the cursor state for easy access within the MouseTracker.
-		this.cursor = statesWorkspace.props.cursor;
+		this.cursor = statesWorkspace.states.cursor;
 
 		// When the cursor state is updated, the MouseTracker should emit the mousePositionChanged event.
 		this.cursor.events.on("remoteUpdated", () => {
