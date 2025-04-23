@@ -359,7 +359,7 @@ export class Outbox {
 			// by the rest of the system, including remote clients.
 			// In some cases we *must* resubmit the empty batch (to match up with a non-empty version tracked locally by a container fork), so we do it always.
 			if (resubmittingBatchId) {
-				this.flushEmptyBatch(resubmittingBatchId, resubmittingStagedBatch);
+				this.flushEmptyBatch(resubmittingBatchId, resubmittingStagedBatch === true);
 			}
 			return;
 		}
@@ -386,7 +386,7 @@ export class Outbox {
 
 	private flushEmptyBatch(
 		resubmittingBatchId: BatchId,
-		resubmittingStagedBatch: boolean = false, // We know we're resubmitting, so default to false is ok
+		resubmittingStagedBatch: boolean,
 	): void {
 		const referenceSequenceNumber =
 			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
@@ -431,10 +431,11 @@ export class Outbox {
 
 		const rawBatch = batchManager.popBatch(resubmittingBatchId);
 
+		//* Consider using a RunCounter to ignore global StagingMode bit when resubmitting
 		// When resubmitting, we respect the staged state of the original batch.
 		// In this case rawBatch.staged will match the state of inStagingMode when
 		// the resubmit occurred, which is not relevant.
-		const staged = resubmittingStagedBatch ?? rawBatch.staged;
+		const staged = resubmittingStagedBatch ?? rawBatch.staged === true;
 
 		const groupingEnabled =
 			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
@@ -443,8 +444,8 @@ export class Outbox {
 			rawBatch.hasReentrantOps === true &&
 			// NOTE: This is too restrictive. We should rebase for any reentrant op, not just if it's going to be a grouped batch
 			// However there is some test that is depending on this behavior so we haven't removed these conditions yet. See AB#33427
-			groupingEnabled
-			//* && rawBatch.messages.length > 1
+			groupingEnabled &&
+			rawBatch.messages.length > 1
 		) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)

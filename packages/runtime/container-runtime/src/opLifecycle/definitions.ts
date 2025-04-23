@@ -28,6 +28,9 @@ export interface LocalBatchMessage {
 	 * Reference sequence number this op is based on
 	 */
 	referenceSequenceNumber: number;
+	/**
+	 * If true, this op is not to be submitted to the ordering service yet, since it was submitted during Staging Mode
+	 */
 	staged?: boolean;
 
 	/**
@@ -63,6 +66,9 @@ export type OutboundBatchMessage = IBatchMessage & {
  * A batch of messages we have accumulated locally, but haven't sent to the ordering service yet.
  */
 export interface LocalBatch extends IBatch<LocalBatchMessage[]> {
+	/**
+	 * If true, this batch is not to be submitted to the ordering service yet, since it was submitted during Staging Mode
+	 */
 	staged?: boolean;
 }
 
@@ -111,8 +117,6 @@ interface IBatch<TMessages extends LocalBatchMessage[] | OutboundBatchMessage[]>
 	 * reference sequence number to be in agreement about the data model state.
 	 */
 	readonly hasReentrantOps?: boolean;
-
-	readonly staged?: boolean;
 }
 
 export interface IBatchCheckpoint {

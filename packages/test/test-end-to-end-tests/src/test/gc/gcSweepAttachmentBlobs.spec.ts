@@ -1339,7 +1339,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 					const defaultDataStoreContainer2 =
 						(await container2.getEntryPoint()) as ITestDataObject;
 					const handle = manufactureHandle<ITestDataObject>(
-						defaultDataStoreContainer2._runtime,
+						defaultDataStoreContainer2._context.IFluidHandleContext,
 						blob1NodePath,
 					);
 					await assert.rejects(

@@ -87,6 +87,7 @@ describe("Local Server Stress with rollback", () => {
 		defaultTestCount: 100,
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
+		// only: [91],
 		saveFailures,
 		// saveSuccesses,
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },

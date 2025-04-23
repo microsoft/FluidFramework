@@ -3174,6 +3174,7 @@ export class ContainerRuntime
 		// eslint-disable-next-line import/no-deprecated
 		let stageControls: StageControlsExperimental | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
+			//* Unit Test these conditions
 			if (!this.batchRunner.running && !this.inStagingMode) {
 				stageControls = this.enterStagingMode();
 			}
@@ -3239,12 +3240,24 @@ export class ContainerRuntime
 
 	// eslint-disable-next-line import/no-deprecated
 	private stageControls: StageControlsExperimental | undefined;
+
+	/**
+	 * If true, the ContainerRuntime is not submitting any new ops to the ordering service.
+	 * Ops submitted to the ContainerRuntime while in Staging Mode will be queued in the PendingStateManager,
+	 * either to be discarded or committed later (via the Stage Controls returned from enterStagingMode).
+	 */
 	public get inStagingMode(): boolean {
 		return this.stageControls !== undefined;
 	}
 
+	/**
+	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
+	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
+	 *
+	 * @returns StageControlsExperimental - Controls for exiting Staging Mode.
+	 */
 	// eslint-disable-next-line import/no-deprecated
-	enterStagingMode = (): StageControlsExperimental => {
+	public enterStagingMode = (): StageControlsExperimental => {
 		if (this.stageControls !== undefined) {
 			throw new Error("already in staging mode");
 		}
@@ -3254,6 +3267,7 @@ export class ContainerRuntime
 		this.outbox.flush();
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			// Final flush of any last staged changes
+			//* NIT: Don't need to pass true.  And then these two params can be joined into an atomic object?
 			this.outbox.flush(undefined, true /* staged */);
 
 			this.stageControls = undefined;
@@ -4296,6 +4310,7 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: LocalBatchMessage = {
 					runtimeOp: idAllocationMessage,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					//* Need tests for this - is it an ok strategy?
 					// Note: For now, we will never stage ID Allocation messages.
 					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
 					staged: false,
@@ -4387,8 +4402,6 @@ export class ContainerRuntime
 			if (flushImmediatelyOnSubmit) {
 				this.flush();
 			} else {
-				// Note: We don't pass 'inStagingMode', since exiting Staging Mode would flush the outbox,
-				// and whenever this scheduled flush runs it should check the current state as of then.
 				this.scheduleFlush();
 			}
 		} catch (error) {
