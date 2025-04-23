@@ -540,6 +540,12 @@ describe("SchemaFactory Recursive methods", () => {
 				// @ts-expect-error Maps accept allowed types, not field schema.
 				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
 			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => {}]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
 		});
 
 		it("AllowUnused", () => {
@@ -549,8 +555,8 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 
 			{
-				class Test extends sf.arrayRecursive("Test", () => Test) {}
-				// @ts-expect-error Missing [] around allowed types.
+				class Test extends sf.arrayRecursive("Test", [() => {}]) {}
+				// @ts-expect-error referenced type not a schema.
 				allowUnused<ValidateRecursiveSchema<typeof Test>>();
 			}
 		});
