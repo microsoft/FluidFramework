@@ -128,10 +128,10 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
-import { validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
+import { validateRuntimeCompatibility } from "./loaderLayerCompatState.js";
 import {
 	serializeMemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
@@ -727,6 +727,9 @@ export class Container
 	/**
 	 * Get the package info for the code details that were used to load the container.
 	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined otherwise
+	 * @deprecated To be removed in 2.40.
+	 * Use getLoadedCodeDetails instead; see https://github.com/microsoft/FluidFramework/issues/23898 for details.
+	 * Deprecating the function here to avoid polluting public container api surface.
 	 */
 	public getContainerPackageInfo?(): IContainerPackageInfo | undefined {
 		return getPackageName(this._loadedCodeDetails);
@@ -1001,10 +1004,12 @@ export class Container
 		);
 
 		this.detachedBlobStorage =
-			detachedBlobStorage ??
-			(this.mc.config.getBoolean("Fluid.Container.MemoryBlobStorageEnabled") === true
-				? createMemoryDetachedBlobStorage()
-				: undefined);
+			this.attachState === AttachState.Attached
+				? undefined
+				: (detachedBlobStorage ??
+					(this.mc.config.getBoolean("Fluid.Container.MemoryBlobStorageEnabled") === false
+						? undefined
+						: createMemoryDetachedBlobStorage()));
 
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,
@@ -2473,6 +2478,7 @@ export class Container
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
 
+		// Validate that the Runtime is compatible with this Loader.
 		const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
 		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
 			this.dispose(error),

@@ -28,6 +28,7 @@ export {
 	isTokenValid,
 	extractTokenFromHeader,
 	getValidAccessToken,
+	getJtiClaimFromAccessToken,
 } from "./auth";
 export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 export { parseBoolean } from "./conversion";
@@ -67,3 +68,4 @@ export {
 export { ITenantKeyGenerator, TenantKeyGenerator } from "./tenantKeyGenerator";
 export { ResponseSizeMiddleware } from "./responseSizeMiddleware";
 export { logHttpMetrics } from "./httpRequestMetricsLogger";
+export { DenyList, denyListMiddleware } from "./denyList";

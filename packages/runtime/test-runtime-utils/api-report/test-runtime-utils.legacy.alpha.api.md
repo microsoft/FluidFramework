@@ -10,6 +10,8 @@ export interface IInternalMockRuntimeMessage {
     content: any;
     // (undocumented)
     localOpMetadata?: unknown;
+    // (undocumented)
+    referenceSequenceNumber?: number;
 }
 
 // @alpha
@@ -148,7 +150,6 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         minimumSequenceNumber?: number;
         trackRemoteOps?: boolean;
     });
-    // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
     // (undocumented)
@@ -183,8 +184,6 @@ export class MockDeltaConnection implements IDeltaConnection {
     dirty(): void;
     // (undocumented)
     handler: IDeltaHandler | undefined;
-    // @deprecated (undocumented)
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
@@ -197,9 +196,9 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // @alpha
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-    constructor(getClientId?: (() => string) | undefined);
+    constructor(getClientId?: (() => string | undefined) | undefined);
     // (undocumented)
-    readonly active: boolean;
+    active: boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
@@ -339,6 +338,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
+    ILayerCompatDetails?: unknown;
+    // (undocumented)
     isLocalDataStore: boolean;
     // (undocumented)
     makeLocallyVisible(): void;
@@ -352,6 +353,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     options: Record<string | number, any>;
     // (undocumented)
     packagePath: readonly string[];
+    // (undocumented)
+    readonly: boolean;
     // (undocumented)
     scope: FluidObject;
     // (undocumented)
@@ -442,7 +445,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
+    ILayerCompatDetails?: unknown;
+    // (undocumented)
     get isAttached(): boolean;
+    // (undocumented)
+    readonly isReadOnly: () => boolean;
     // (undocumented)
     readonly loader: ILoader;
     // @deprecated (undocumented)
@@ -453,13 +460,13 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
+    notifyReadOnlyState(readonly: boolean): void;
+    // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
     // (undocumented)
     options: Record<string | number, any>;
     // (undocumented)
     readonly path = "";
-    // @deprecated (undocumented)
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)

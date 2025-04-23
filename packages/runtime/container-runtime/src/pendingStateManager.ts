@@ -23,10 +23,12 @@ import {
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import {
 	BatchId,
-	BatchMessage,
+	LocalBatchMessage,
 	getEffectiveBatchId,
 	BatchStartInfo,
 	InboundMessageResult,
+	serializeOp,
+	type LocalEmptyBatchPlaceholder,
 } from "./opLifecycle/index.js";
 
 /**
@@ -38,7 +40,15 @@ import {
 export interface IPendingMessage {
 	type: "message";
 	referenceSequenceNumber: number;
+	/**
+	 * Serialized copy of runtimeOp
+	 */
 	content: string;
+	/**
+	 * The original runtime op that was submitted to the ContainerRuntime
+	 * Unless this pending message came from stashed content, in which case this was roundtripped through string
+	 */
+	runtimeOp?: LocalContainerRuntimeMessage | undefined; // Undefined for empty batches and initial messages before parsing
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
@@ -94,13 +104,16 @@ export interface IPendingLocalState {
  */
 export type PendingMessageResubmitData = Pick<
 	IPendingMessage,
-	"content" | "localOpMetadata" | "opMetadata"
->;
+	"runtimeOp" | "localOpMetadata" | "opMetadata"
+> & {
+	// Required (it's only missing on IPendingMessage for empty batch, which will be resubmitted as an empty array)
+	runtimeOp: LocalContainerRuntimeMessage;
+};
 
 export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
-	applyStashedOp(content: string): Promise<unknown>;
+	applyStashedOp(serializedOp: string): Promise<unknown>;
 	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
@@ -134,7 +147,7 @@ function scrubAndStringify(
 	// Scrub the whole object in case there are unexpected keys
 	const scrubbed: Record<string, unknown> = typesOfKeys(message);
 
-	// For these known/expected keys, we can either drill in (for contents)
+	// For these known/expected keys, we can either drill into the object (for contents)
 	// or just use the value as-is (since it's not personal info)
 	scrubbed.contents = message.contents && typesOfKeys(message.contents);
 	scrubbed.type = message.type;
@@ -145,7 +158,7 @@ function scrubAndStringify(
 /**
  * Finds and returns the index where the strings diverge, and the character at that index in each string (or undefined if not applicable)
  */
-export function findFirstCharacterMismatched(
+function findFirstRawCharacterMismatched(
 	a: string,
 	b: string,
 ): [index: number, charA?: string, charB?: string] {
@@ -164,10 +177,33 @@ export function findFirstCharacterMismatched(
 		: [minLength, a[minLength], b[minLength]];
 }
 
-function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
+/**
+ * Finds and returns the index where the strings diverge, and the character at that index in each string (or undefined if not applicable)
+ * It scrubs non-ASCII characters since they convey more meaning (privacy consideration)
+ */
+export function findFirstCharacterMismatched(
+	a: string,
+	b: string,
+): [index: number, charA?: string, charB?: string] {
+	const [index, rawCharA, rawCharB] = findFirstRawCharacterMismatched(a, b);
+
+	const charA = (rawCharA?.codePointAt(0) ?? 0) <= 0x7f ? rawCharA : "[non-ASCII]";
+	const charB = (rawCharB?.codePointAt(0) ?? 0) <= 0x7f ? rawCharB : "[non-ASCII]";
+
+	return [index, charA, charB];
+}
+
+/**
+ * Returns a shallow copy of the given message with the non-serializable properties removed.
+ * Note that the runtimeOp's data has already been serialized in the content property.
+ */
+function toSerializableForm(
+	message: IPendingMessage,
+): IPendingMessage & { runtimeOp: undefined; localOpMetadata: undefined } {
 	return {
 		...message,
 		localOpMetadata: undefined,
+		runtimeOp: undefined,
 	};
 }
 
@@ -257,7 +293,7 @@ export class PendingStateManager implements IDisposable {
 		return {
 			pendingStates: [
 				...newSavedOps,
-				...this.pendingMessages.toArray().map((message) => withoutLocalOpMetadata(message)),
+				...this.pendingMessages.toArray().map((message) => toSerializableForm(message)),
 			],
 		};
 	}
@@ -281,6 +317,17 @@ export class PendingStateManager implements IDisposable {
 	public readonly dispose = (): void => this.disposeOnce.value;
 
 	/**
+	 * We've flushed an empty batch, and need to track it locally until the corresponding
+	 * ack is processed, to properly track batch IDs
+	 */
+	public onFlushEmptyBatch(
+		placeholder: LocalEmptyBatchPlaceholder,
+		clientSequenceNumber: number | undefined,
+	): void {
+		// We have to cast because runtimeOp doesn't apply for empty batches and is missing on LocalEmptyBatchPlaceholder
+		this.onFlushBatch([placeholder as LocalBatchMessage], clientSequenceNumber);
+	}
+	/**
 	 * The given batch has been flushed, and needs to be tracked locally until the corresponding
 	 * acks are processed, to ensure it is successfully sent.
 	 * @param batch - The batch that was flushed
@@ -289,7 +336,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 */
 	public onFlushBatch(
-		batch: BatchMessage[],
+		batch: LocalBatchMessage[],
 		clientSequenceNumber: number | undefined,
 		ignoreBatchId?: boolean,
 	): void {
@@ -309,7 +356,7 @@ export class PendingStateManager implements IDisposable {
 
 		for (const message of batch) {
 			const {
-				contents: content = "",
+				runtimeOp,
 				referenceSequenceNumber,
 				localOpMetadata,
 				metadata: opMetadata,
@@ -317,7 +364,8 @@ export class PendingStateManager implements IDisposable {
 			const pendingMessage: IPendingMessage = {
 				type: "message",
 				referenceSequenceNumber,
-				content,
+				content: serializeOp(runtimeOp),
+				runtimeOp,
 				localOpMetadata,
 				opMetadata,
 				// Note: We only will read this off the first message, but put it on all for simplicity
@@ -359,6 +407,11 @@ export class PendingStateManager implements IDisposable {
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
 				if (this.stateHandler.isAttached()) {
 					nextMessage.localOpMetadata = localOpMetadata;
+					// NOTE: This runtimeOp has been roundtripped through string, which is technically lossy.
+					// e.g. At this point, handles are in their encoded form.
+					nextMessage.runtimeOp = JSON.parse(
+						nextMessage.content,
+					) as LocalContainerRuntimeMessage;
 					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
 					patchbatchInfo(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
@@ -492,7 +545,7 @@ export class PendingStateManager implements IDisposable {
 		);
 
 		pendingMessage.sequenceNumber = sequenceNumber;
-		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
+		this.savedOps.push(toSerializableForm(pendingMessage));
 
 		this.pendingMessages.shift();
 
@@ -656,6 +709,11 @@ export class PendingStateManager implements IDisposable {
 				continue;
 			}
 
+			assert(
+				pendingMessage.runtimeOp !== undefined,
+				"viableOp is only undefined for empty batches",
+			);
+
 			/**
 			 * We must preserve the distinct batches on resubmit.
 			 * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
@@ -667,7 +725,7 @@ export class PendingStateManager implements IDisposable {
 				this.stateHandler.reSubmitBatch(
 					[
 						{
-							content: pendingMessage.content,
+							runtimeOp: pendingMessage.runtimeOp,
 							localOpMetadata: pendingMessage.localOpMetadata,
 							opMetadata: pendingMessage.opMetadata,
 						},
@@ -687,12 +745,17 @@ export class PendingStateManager implements IDisposable {
 
 			// check is >= because batch end may be last pending message
 			while (remainingPendingMessagesCount >= 0) {
+				assert(
+					pendingMessage.runtimeOp !== undefined,
+					"viableOp is only undefined for empty batches",
+				);
 				batch.push({
-					content: pendingMessage.content,
+					runtimeOp: pendingMessage.runtimeOp,
 					localOpMetadata: pendingMessage.localOpMetadata,
 					opMetadata: pendingMessage.opMetadata,
 				});
 
+				// End of the batch
 				if (pendingMessage.opMetadata?.batch === false) {
 					break;
 				}

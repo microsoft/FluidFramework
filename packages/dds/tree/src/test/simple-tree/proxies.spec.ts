@@ -9,7 +9,6 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 // TODO: import and unit test other things from "proxies" file.
 
-import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	type booleanSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
@@ -167,11 +166,14 @@ describe("SharedTreeObject", () => {
 		const schemaWithIdentifier = sb.object("parent", {
 			identifier: sb.identifier,
 		});
-		const nodeKeyManager = new MockNodeKeyManager();
-		const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+
 		const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 
-		const view = getView(config, nodeKeyManager);
+		const view = getView(config);
+		const nodeKeyManager = view.nodeKeyManager;
+		const id = nodeKeyManager.stabilizeNodeIdentifier(
+			nodeKeyManager.generateLocalNodeIdentifier(),
+		);
 		view.initialize({ identifier: id });
 		const { root } = view;
 

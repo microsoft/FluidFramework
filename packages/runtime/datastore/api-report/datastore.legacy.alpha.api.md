@@ -61,17 +61,19 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get idCompressor(): IIdCompressor | undefined;
     // (undocumented)
     get IFluidHandleContext(): this;
+    readonly ILayerCompatDetails?: unknown;
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
+    readonly isReadOnly: () => boolean;
+    // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
+    notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): this;
     // (undocumented)
     readonly options: Record<string | number, any>;
-    // @deprecated
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
     processSignal(message: IInboundSignalMessage, local: boolean): void;

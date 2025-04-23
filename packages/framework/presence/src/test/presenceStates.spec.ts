@@ -3,26 +3,41 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import type {
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { IPresence } from "../presence.js";
+import type { InternalTypes } from "../exposedInternalTypes.js";
+import type { Presence } from "../presence.js";
+import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
+import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
+import { StateFactory } from "@fluidframework/presence/alpha";
+
+const testWorkspaceName = "name:testWorkspaceA";
 
 describe("Presence", () => {
-	describe("PresenceStates", () => {
+	describe("StatesWorkspace", () => {
 		/**
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
 
 		addControlsTests((presence, controlSettings) => {
-			return presence.getStates("name:testWorkspaceA", {}, controlSettings);
+			return presence.states.getWorkspace(testWorkspaceName, {}, controlSettings);
+		});
+
+		it(".presence provides Presence it was created under", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.states.getWorkspace(testWorkspaceName, {
+				obj: StateFactory.latest({ local: {} }),
+			});
+			assert.strictEqual(states.presence, presence);
 		});
 	});
 });
@@ -47,8 +62,8 @@ declare function createValueManager<T, Key extends string>(
  */
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	const presence = {} as IPresence;
-	const statesWorkspace = presence.getStates("name:testWorkspaceA", {
+	const presence = {} as Presence;
+	const statesWorkspace = presence.states.getWorkspace("name:testWorkspaceA", {
 		cursor: createValueManager({ x: 0, y: 0 }),
 		// eslint-disable-next-line prefer-object-spread
 		camera: Object.assign({ instanceBase: undefined as unknown as new () => unknown }, () => ({
@@ -62,7 +77,7 @@ export function checkCompiles(): void {
 
 	const initialCaret = { id: "", pos: 0 };
 	states.add("caret", createValueManager(initialCaret));
-	const statesProps = states.props;
+	const statesProps = states.states;
 
 	const fakeAdd = statesProps.camera.z + statesProps.cursor.x + statesProps.caret.pos;
 	console.log(fakeAdd);

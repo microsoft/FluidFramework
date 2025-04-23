@@ -21,26 +21,24 @@ import type {
 	WithType,
 	TreeNode,
 } from "../core/index.js";
-import type { FieldSchemaUnsafe, Unenforced } from "./typesUnsafe.js";
+import type { FieldSchemaAlphaUnsafe, ImplicitAllowedTypesUnsafe } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
-	Types extends Unenforced<ImplicitAllowedTypes>,
+	Types extends ImplicitAllowedTypesUnsafe,
+	TCustomMetadata = unknown,
 >(
 	kind: Kind,
 	allowedTypes: Types,
-	props: FieldProps | undefined,
-): FieldSchemaUnsafe<Kind, Types> {
+	props?: FieldProps<TCustomMetadata>,
+): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata> {
 	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
-	return createFieldSchema(
-		kind,
-		allowedTypes as ImplicitAllowedTypes,
-		props,
-	) as FieldSchemaUnsafe<Kind, Types>;
+	return createFieldSchema(kind, allowedTypes as ImplicitAllowedTypes & Types, props);
 }
 
 /**
  * Compile time check for validity of a recursive schema.
+ * This type also serves as a central location for documenting the requirements and issues related to recursive schema.
  *
  * @example
  * ```typescript
@@ -50,12 +48,36 @@ export function createFieldSchemaUnsafe<
  * }
  * ```
  * @remarks
- * The type of a recursive schema can be passed to this, and a compile error will be produced for some of the cases of malformed schema.
+ * In this context recursive schema are defined as all {@link FieldSchema} and {@link TreeNodeSchema} schema which are part of a cycle such that walking down through each {@link TreeNodeSchemaCore.childTypes} the given starting schema can be reached again.
+ * Schema referencing the recursive schema and schema they reference that are not part of a cycle are not considered recursive.
+ *
+ * TypeScript puts a lot of limitations on the typing of recursive schema.
+ * To help avoid running into these limitations and thus getting schema that do not type check (or only type checks sometimes!),
+ * {@link SchemaFactory} provides APIs (postfixed with `Recursive`) for writing recursive schema.
+ * These APIs when combined with the patterns documented below should ensure that the schema provide robust type checking.
+ * These special patterns (other than {@link LazyItem} forward references which are not recursion specific)
+ * are not required for correct runtime behavior: they exist entirely to mitigate TypeScript type checking limitations and bugs.
+ * Ideally TypeScript's type checker would be able to handle all of these cases and more, removing the need for recursive type specific guidance, rules and APIs.
+ * Currently however there are open issues preventing this:
+ * {@link https://github.com/microsoft/TypeScript/issues/59550 | 1},
+ * {@link https://github.com/microsoft/TypeScript/issues/55832 | 2},
+ * {@link https://github.com/microsoft/TypeScript/issues/55758 | 3}.
+ * Note that the proposed resolution to some of these issues is for the compiler to error rather than allow the case,
+ * so even if these are all resolved the recursive type workarounds may still be needed.
+ *
+ * # Patterns
+ *
+ * Below are patterns for how to use recursive schema.
+ *
+ * ## General Patterns
+ *
+ * When defining a recursive {@link TreeNodeSchema}, use the `*Recursive` {@link SchemaFactory} methods.
+ * The returned class should be used as the base class for the recursive schema, which should then be passed to {@link ValidateRecursiveSchema}.
+ *
+ * Using {@link ValidateRecursiveSchema} will provide compile error for some of the cases of malformed schema.
  * This can be used to help mitigate the issue that recursive schema definitions are {@link Unenforced}.
  * If an issue is encountered where a mistake in a recursive schema is made which produces an invalid schema but is not rejected by this checker,
  * it should be considered a bug and this should be updated to handle that case (or have a disclaimer added to these docs that it misses that case).
- *
- * # Recursive Schema
  *
  * The non-recursive versions of the schema building methods will run into several issues when used recursively.
  * Consider the following example:
@@ -95,20 +117,35 @@ export function createFieldSchemaUnsafe<
  * Be very careful when declaring recursive schema.
  * Due to the removed extends clauses, subtle mistakes will compile just fine but cause strange errors when the schema is used.
  *
- * For example if the square brackets around the allowed types are forgotten:
+ * For example if a reference to a schema is malformed (in this case boxed inside an object):
  *
  * ```typescript
- * class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+ * class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {} // Bad
  * ```
  * This schema will still compile, and some (but not all) usages of it may look like they work correctly while other usages will produce generally unintelligible compile errors.
  * This issue can be partially mitigated using {@link ValidateRecursiveSchema}:
  *
  * ```typescript
- * class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+ * class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {} // Bad
  * {
  *     type _check = ValidateRecursiveSchema<typeof Test>; // Reports compile error due to invalid schema above.
  * }
  * ```
+ *
+ * If your TypeScript configuration objects to this patten due to the unused local, you can use {@link allowUnused} to suppress the error:
+ *
+ * ```typescript
+ * class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {} // Bad
+ * allowUnused<ValidateRecursiveSchema<typeof Test>>(); // Reports compile error due to invalid schema above.
+ * ```
+ *
+ * ## Object Schema
+ *
+ * When defining fields, if the fields is part of the recursive cycle, use the `*Recursive` {@link SchemaFactory} methods for defining the {@link FieldSchema}.
+ *
+ * ## Array Schema
+ *
+ * See {@link FixRecursiveArraySchema} for array specific details.
  *
  * @privateRemarks
  * There are probably mistakes this misses: it's hard to guess all the wrong things people will accidentally do and defend against them.
@@ -116,6 +153,8 @@ export function createFieldSchemaUnsafe<
  *
  * This check duplicates logic that ideally would be entirely decided by the actual schema building methods.
  * Therefore changes to those methods may require updating `ValidateRecursiveSchema`.
+ *
+ * TODO: this currently does not reject `any`, but ideally should.
  * @public
  */
 export type ValidateRecursiveSchema<
@@ -150,6 +189,19 @@ export type ValidateRecursiveSchema<
 		}[T["kind"]]
 	>,
 > = true;
+
+/**
+ * Does nothing with the provided value, but appears to use it to make unused locals warnings and errors go away.
+ *
+ * @remarks
+ * When TypeScript is configured with "noUnusedLocals", it will produce an error if a local variable is declared but never used.
+ * When you want to have this check enabled, but not follow it for a specific variable, you can pass the type or value to this function.
+ *
+ * Instead of using this, consider disabling "noUnusedLocals" in your tsconfig.json file, and enabling a similar check via a linter.
+ * This will allow you to still have the check, but have more control over it, for example being able to suppress it, or enable patterns like allowing unused locals with an "_" prefix.
+ * @alpha
+ */
+export function allowUnused<T>(t?: T): void {}
 
 /**
  * Workaround for fixing errors resulting from an issue with recursive ArrayNode schema exports.

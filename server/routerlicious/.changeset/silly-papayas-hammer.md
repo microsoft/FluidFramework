@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-routerlicious-base": major
+"__section": feature
 ---
 
 Added support for Redis graceful shutdown

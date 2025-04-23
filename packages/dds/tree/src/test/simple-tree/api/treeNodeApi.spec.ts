@@ -11,9 +11,9 @@ import {
 
 import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	TreeStatus,
-	type StableNodeKey,
+	type StableNodeIdentifier,
 } from "../../../feature-libraries/index.js";
 import {
 	isTreeNode,
@@ -28,7 +28,12 @@ import {
 	TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
-import { chunkFromJsonableTrees, getView, validateUsageError } from "../../utils.js";
+import {
+	chunkFromJsonableTrees,
+	getView,
+	TestTreeProviderLite,
+	validateUsageError,
+} from "../../utils.js";
 import { getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
@@ -217,13 +222,15 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = new MockNodeKeyManager();
-			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
 			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-			const view = getView(config, nodeKeyManager);
+			const view = getView(config);
+			const nodeKeyManager = view.nodeKeyManager;
+			const id = nodeKeyManager.stabilizeNodeIdentifier(
+				nodeKeyManager.generateLocalNodeIdentifier(),
+			);
 			view.initialize({ identifier: id });
 
-			assert.equal(Tree.shortId(view.root), nodeKeyManager.localizeNodeKey(id));
+			assert.equal(Tree.shortId(view.root), nodeKeyManager.localizeNodeIdentifier(id));
 		});
 		it("returns undefined when an identifier fieldkind does not exist.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
@@ -250,9 +257,9 @@ describe("treeNodeApi", () => {
 				identifier: schema.identifier,
 			});
 			// Create a valid stableNodeKey which is not known by the tree's idCompressor.
-			const nodeKeyManager = new MockNodeKeyManager();
-			const stableNodeKey = nodeKeyManager.stabilizeNodeKey(
-				nodeKeyManager.generateLocalNodeKey(),
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const stableNodeKey = nodeKeyManager.stabilizeNodeIdentifier(
+				nodeKeyManager.generateLocalNodeIdentifier(),
 			);
 
 			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
@@ -313,13 +320,16 @@ describe("treeNodeApi", () => {
 
 			// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
 			it("returns string when unhydrated then local id when hydrated", () => {
-				const nodeKeyManager = new MockNodeKeyManager();
 				const config = new TreeViewConfiguration({ schema: HasIdentifier });
-				const view = getView(config, nodeKeyManager);
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
 				view.initialize({});
 				const identifier = view.root.identifier;
 				const shortId = Tree.shortId(view.root);
-				assert.equal(shortId, nodeKeyManager.localizeNodeKey(identifier as StableNodeKey));
+				assert.equal(
+					shortId,
+					nodeKeyManager.localizeNodeIdentifier(identifier as StableNodeIdentifier),
+				);
 
 				const node = new HasIdentifier({ identifier });
 				assert.equal(Tree.shortId(node), identifier);
@@ -330,6 +340,46 @@ describe("treeNodeApi", () => {
 	});
 
 	describe("on", () => {
+		it.skip("Bug #35920", () => {
+			// Notes:
+			// * For this bug to occur, the op must be sent from one tree to another tree - it does not occur when e.g. unit testing a single view
+			// * There needs to be at least two levels of nesting in the schema, e.g. it won't repro if you simply change a number field on the root node.
+			const sf = new SchemaFactory(undefined);
+			class Child extends sf.object("Child", {
+				value: sf.number,
+			}) {}
+			class Parent extends sf.object("Parent", {
+				node: Child,
+			}) {}
+
+			const config = new TreeViewConfiguration({ schema: Parent });
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			// Intialize the first tree with a value of "0"
+			const view1 = tree1.viewWith(config);
+			view1.initialize(
+				new Parent({
+					node: new Child({
+						value: 0,
+					}),
+				}),
+			);
+			provider.synchronizeMessages();
+			const view2 = tree2.viewWith(config);
+			// Count the number of times treeChanged fires
+			let invals = 0;
+			Tree.on(view2.root, "treeChanged", () => {
+				invals += 1;
+			});
+			// Change the first tree to a value of "3"
+			view1.root.node.value = 3;
+			provider.synchronizeMessages();
+			// Ensure that the second tree received the change...
+			assert.equal(view2.root.node.value, 3);
+			// ...and also that the event fired
+			assert.equal(invals, 1, "treeChanged should have fired once");
+		});
+
 		describe("object node", () => {
 			const sb = new SchemaFactory("object-node-in-root");
 			class myObject extends sb.object("object", {
@@ -1264,6 +1314,10 @@ describe("treeNodeApi", () => {
 					});
 				}
 			}
+		});
+
+		it("export-undefined", () => {
+			assert.equal(TreeAlpha.exportConcise(undefined), undefined);
 		});
 	});
 

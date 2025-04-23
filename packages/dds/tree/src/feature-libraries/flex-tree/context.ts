@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert } from "@fluidframework/core-utils/internal";
 
 import {
 	type ForestEvents,
@@ -14,10 +14,10 @@ import {
 } from "../../core/index.js";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
-import type { NodeKeyManager } from "../node-key/index.js";
+import type { NodeIdentifierManager } from "../node-identifier/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
-import { type LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
+import type { LazyEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 
@@ -43,6 +43,11 @@ export interface FlexTreeContext {
 	 * If false, this context was created for use in a unhydrated tree, and the full document schema is unknown.
 	 */
 	isHydrated(): this is FlexTreeHydratedContext;
+
+	/**
+	 * If true, none of the nodes in this context can be used.
+	 */
+	isDisposed(): boolean;
 }
 
 /**
@@ -56,7 +61,7 @@ export interface FlexTreeHydratedContext extends FlexTreeContext {
 	 */
 	get root(): FlexTreeField;
 
-	readonly nodeKeyManager: NodeKeyManager;
+	readonly nodeKeyManager: NodeIdentifierManager;
 
 	/**
 	 * The checkout object associated with this context.
@@ -90,7 +95,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	public constructor(
 		public readonly schemaPolicy: SchemaPolicy,
 		public readonly checkout: ITreeCheckout,
-		public readonly nodeKeyManager: NodeKeyManager,
+		public readonly nodeKeyManager: NodeIdentifierManager,
 	) {
 		this.eventUnregister = [
 			this.checkout.forest.events.on("beforeChange", () => {
@@ -106,7 +111,12 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	}
 
 	public isHydrated(): this is FlexTreeHydratedContext {
+		debugAssert(() => !this.disposed || "Disposed");
 		return true;
+	}
+
+	public isDisposed(): boolean {
+		return this.disposed;
 	}
 
 	public get schema(): TreeStoredSchema {
@@ -120,7 +130,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	private prepareForEdit(): void {
 		assert(this.disposed === false, 0x802 /* use after dispose */);
 		for (const target of this.withCursors) {
-			target[prepareForEditSymbol]();
+			target.prepareForEdit();
 		}
 		assert(this.withCursors.size === 0, 0x773 /* prepareForEdit should remove all cursors */);
 	}
@@ -178,7 +188,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 export function getTreeContext(
 	schema: SchemaPolicy,
 	checkout: ITreeCheckout,
-	nodeKeyManager: NodeKeyManager,
+	nodeKeyManager: NodeIdentifierManager,
 ): Context {
 	return new Context(schema, checkout, nodeKeyManager);
 }

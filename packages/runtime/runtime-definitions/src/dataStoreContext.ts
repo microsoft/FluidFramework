@@ -329,13 +329,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Process messages for this channel. The messages here are contiguous messages in a batch.
 	 * @param messageCollection - The collection of messages to process.
 	 */
-	processMessages?(messageCollection: IRuntimeMessageCollection): void;
-
-	/**
-	 * Processes the op.
-	 * @deprecated processMessages should be used instead to process messages for a channel.
-	 */
-	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+	processMessages(messageCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Processes the signal.
@@ -375,6 +369,11 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * it's new client ID when we are connecting or connected.
 	 */
 	setConnectionState(connected: boolean, clientId?: string);
+
+	/**
+	 * Notifies this object about changes in the readonly state
+	 */
+	notifyReadOnlyState?(readonly: boolean): void;
 
 	/**
 	 * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
@@ -446,6 +445,11 @@ export interface IFluidParentContext
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
+	/**
+	 * Indicates if the parent context is readonly. If isReadOnly is true, the consumer of
+	 * the context should also consider themselves readonly.
+	 */
+	readonly isReadOnly?: () => boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;

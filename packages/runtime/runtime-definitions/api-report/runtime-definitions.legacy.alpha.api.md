@@ -129,9 +129,8 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
-    // @deprecated
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    processMessages?(messageCollection: IRuntimeMessageCollection): void;
+    notifyReadOnlyState?(readonly: boolean): void;
+    processMessages(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -216,6 +215,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
+    readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
     // (undocumented)

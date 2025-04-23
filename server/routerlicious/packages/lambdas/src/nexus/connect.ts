@@ -26,6 +26,7 @@ import {
 	type IWebSocket,
 	ICollaborationSessionClient,
 	clusterDrainingRetryTimeInMs,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
@@ -34,7 +35,7 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import safeStringify from "json-stringify-safe";
-import { createRoomJoinMessage, createRuntimeMessage, generateClientId } from "../utils";
+import { createRoomJoinMessage, generateClientId } from "../utils";
 import {
 	getMessageMetadata,
 	handleServerErrorAndConvertToNetworkError,
@@ -46,7 +47,6 @@ import {
 import { StageTrace, sampleMessages } from "./trace";
 import { ProtocolVersions, checkProtocolVersion } from "./protocol";
 import type {
-	IBroadcastSignalEventPayload,
 	IConnectedClient,
 	INexusLambdaConnectionStateTrackers,
 	INexusLambdaDependencies,
@@ -406,7 +406,9 @@ async function checkClusterDraining(
 	}
 	let clusterInDraining = false;
 	try {
-		clusterInDraining = await clusterDrainingChecker.isClusterDraining();
+		clusterInDraining = await clusterDrainingChecker.isClusterDraining({
+			tenantId: message.tenantId,
+		});
 	} catch (error) {
 		Lumberjack.error(
 			"Failed to get cluster draining status. Will allow requests to proceed.",
@@ -417,7 +419,6 @@ async function checkClusterDraining(
 	}
 
 	if (clusterInDraining) {
-		// TODO: add a new error class
 		Lumberjack.info("Reject connect document request because cluster is draining.", {
 			...properties,
 			tenantId: message.tenantId,
@@ -589,58 +590,6 @@ async function addMessageClientToClientManager(
 	}
 }
 
-/**
- * Sets up a listener for broadcast signals from external API and broadcasts them to the room.
- *
- * @param socket - Websocket instance
- * @param room - Current room
- * @param lambdaDependencies - Lambda dependencies including collaborationSessionEventEmitter and logger
- * @returns Dispose function to remove the added listener
- */
-function setUpSignalListenerForRoomBroadcasting(
-	socket: IWebSocket,
-	room: IRoom,
-	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
-): () => void {
-	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
-		const { signalRoom, signalContent } = broadcastSignal;
-
-		// No-op if the room (collab session) that signal came in from is different
-		// than the current room. We reuse websockets so there could be multiple rooms
-		// that we are sending the signal to, and we don't want to do that.
-		if (signalRoom.documentId === room.documentId && signalRoom.tenantId === room.tenantId) {
-			try {
-				const runtimeMessage = createRuntimeMessage(signalContent);
-
-				try {
-					socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
-				} catch (error) {
-					const errorMsg = `Failed to broadcast signal from external API.`;
-					Lumberjack.error(
-						errorMsg,
-						getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
-						error,
-					);
-				}
-			} catch (error) {
-				const errorMsg = `broadcast-signal content body is malformed`;
-				throw handleServerErrorAndConvertToNetworkError(
-					logger,
-					errorMsg,
-					room.documentId,
-					room.tenantId,
-					error,
-				);
-			}
-		}
-	};
-	collaborationSessionEventEmitter?.on("broadcastSignal", broadCastSignalListener);
-	const disposeBroadcastSignalListener = (): void => {
-		collaborationSessionEventEmitter?.off("broadcastSignal", broadCastSignalListener);
-	};
-	return disposeBroadcastSignalListener;
-}
-
 export async function connectDocument(
 	socket: IWebSocket,
 	lambdaDependencies: INexusLambdaDependencies,
@@ -648,6 +597,7 @@ export async function connectDocument(
 	lambdaConnectionStateTrackers: INexusLambdaConnectionStateTrackers,
 	message: IConnect,
 	properties: Record<string, any>,
+	denyList?: IDenyList,
 ): Promise<IConnectedClient> {
 	const { isTokenExpiryEnabled, maxTokenLifetimeSec } = lambdaSettings;
 	const { expirationTimer } = lambdaConnectionStateTrackers;
@@ -675,6 +625,21 @@ export async function connectDocument(
 		tenantId = claims.tenantId;
 		documentId = claims.documentId;
 		connectionTrace.stampStage(ConnectDocumentStage.TokenVerified);
+		if (denyList?.isTenantDenied(tenantId)) {
+			Lumberjack.error("Tenant is in the deny list", {
+				...properties,
+				tenantId,
+			});
+			throw new NetworkError(500, `Unable to process request for tenant id: ${tenantId}`);
+		}
+		if (denyList?.isDocumentDenied(documentId)) {
+			Lumberjack.error("Document is in the deny list", {
+				...properties,
+				tenantId,
+				documentId,
+			});
+			throw new NetworkError(500, `Unable to process request for document id: ${documentId}`);
+		}
 
 		await checkClusterDraining(lambdaDependencies, message, properties);
 
@@ -776,13 +741,6 @@ export async function connectDocument(
 			lambdaDependencies,
 		);
 
-		const disposeSignalListenerForRoomBroadcasting = setUpSignalListenerForRoomBroadcasting(
-			socket,
-			room,
-			lambdaDependencies,
-		);
-		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
-
 		const result = {
 			connection: connectedMessage,
 			connectVersions,
@@ -807,7 +765,6 @@ export async function connectDocument(
 			connectVersions,
 			details: messageClient,
 			dispose: (): void => {
-				disposeSignalListenerForRoomBroadcasting();
 				disposeOrdererConnectionListener();
 			},
 		};

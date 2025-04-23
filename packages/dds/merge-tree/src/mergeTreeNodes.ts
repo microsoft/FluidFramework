@@ -7,12 +7,18 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { IAttributionCollection } from "./attributionCollection.js";
-import { LocalClientId, UnassignedSequenceNumber } from "./constants.js";
+import {
+	LocalClientId,
+	NonCollabClient,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
-import { TrackingGroupCollection } from "./mergeTreeTracking.js";
+import { TrackingGroupCollection, type ITrackingGroup } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
+import { LocalDefaultPerspective, PriorPerspective, type Perspective } from "./perspective.js";
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
 import { ReferencePosition } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
@@ -20,16 +26,18 @@ import {
 	hasProp,
 	isInserted,
 	isMergeNodeInfo as isMergeNode,
-	isMoved,
 	isRemoved,
 	overwriteInfo,
-	type IInsertionInfo,
+	type IHasInsertionInfo,
 	type IMergeNodeInfo,
-	type IMoveInfo,
-	type IRemovalInfo,
+	type IHasRemovalInfo,
 	type SegmentWithInfo,
+	ISegmentInsideObliterateInfo,
+	isInsideObliterate,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
+import type { Side } from "./sequencePlace.js";
+import type { OperationStamp, SliceRemoveOperationStamp } from "./stamps.js";
 
 /**
  * This interface exposes internal things to dds that leverage merge tree,
@@ -72,26 +80,9 @@ export interface ISegmentInternal extends ISegment {
 export interface ISegmentPrivate extends ISegmentInternal {
 	segmentGroups?: SegmentGroupCollection;
 	propertyManager?: PropertiesManager;
-	/**
-	 * Populated iff this segment was inserted into a range affected by concurrent obliterates at the time of its insertion.
-	 * Contains information about the 'most recent' (i.e. 'winning' in the sense below) obliterate.
-	 *
-	 * BEWARE: We have opted for a certain form of last-write wins (LWW) semantics for obliterates:
-	 * the client which last obliterated a range is considered to have "won ownership" of that range and may insert into it
-	 * without that insertion being obliterated by other clients' concurrent obliterates.
-	 *
-	 * Therefore, this field can be populated even if the segment has not been obliterated (i.e. is still visible).
-	 * This happens precisely when the segment was inserted by the same client that 'won' the obliterate (in a scenario where
-	 * a client first issues a sided obliterate impacting a range, then inserts into that range before the server has acked the obliterate).
-	 *
-	 * See the test case "obliterate with mismatched final states" for an example of such a scenario.
-	 *
-	 * TODO:AB#29553: This property is not persisted in the summary, but it should be.
-	 */
-	obliteratePrecedingInsertion?: ObliterateInfo;
 }
 /**
- * Segment leafs are segments that have both IMergeNodeInfo and IInsertionInfo. This means they
+ * Segment leafs are segments that have both IMergeNodeInfo and IHasInsertionInfo. This means they
  * are inserted at a position, and bound via their parent MergeBlock to the merge tree. MergeBlocks'
  * children are either a segment leaf, or another merge block for interior nodes of the tree. When working
  * within the tree it is generally unnecessary to use type coercions methods common to the infos, and segment
@@ -99,7 +90,7 @@ export interface ISegmentPrivate extends ISegmentInternal {
  * merge tree, like via client's public methods, it becomes necessary to use the type coercions methods
  * to ensure the passed in segment objects are correctly bound to the merge tree.
  */
-export type ISegmentLeaf = SegmentWithInfo<IMergeNodeInfo & IInsertionInfo>;
+export type ISegmentLeaf = SegmentWithInfo<IMergeNodeInfo & IHasInsertionInfo>;
 /**
  * A type-guard which determines if the segment has segment leaf, and
  * returns true if it does, along with applying strong typing.
@@ -130,7 +121,7 @@ export const assertSegmentLeaf: (segmentLike: unknown) => asserts segmentLike is
  * type as segments may not yet be bound to the tree, so lack merge node info which is required for
  * segment leafs.
  */
-export type IMergeNodeBuilder = MergeBlock | SegmentWithInfo<IInsertionInfo>;
+export type IMergeNodeBuilder = MergeBlock | SegmentWithInfo<IHasInsertionInfo>;
 
 /**
  * This type is used by MergeBlocks to define their children, which are either segments or other
@@ -211,24 +202,36 @@ export interface ISegmentAction<TClientData> {
 	): boolean;
 }
 export interface ISegmentChanges {
-	next?: SegmentWithInfo<IInsertionInfo>;
-	replaceCurrent?: SegmentWithInfo<IInsertionInfo>;
+	next?: SegmentWithInfo<IHasInsertionInfo>;
+	replaceCurrent?: SegmentWithInfo<IHasInsertionInfo>;
 }
 
 export interface InsertContext {
-	candidateSegment?: SegmentWithInfo<IInsertionInfo>;
+	candidateSegment?: SegmentWithInfo<IHasInsertionInfo>;
 	leaf: (segment: ISegmentLeaf | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
 
 export interface ObliterateInfo {
 	start: LocalReferencePosition;
+	startSide: Side;
 	end: LocalReferencePosition;
+	endSide: Side;
 	refSeq: number;
-	clientId: number;
-	seq: number;
-	localSeq: number | undefined;
+	stamp: SliceRemoveOperationStamp;
 	segmentGroup: SegmentGroup | undefined;
+	/**
+	 * Defined only for unacked obliterates.
+	 *
+	 * Contains all segments inserted into the range this obliterate affects where at the time of insertion,
+	 * this obliterate was the newest concurrent obliterate that overlapped the insertion point (this information
+	 * is relevant for the tiebreak policy of allowing last-obliterater to insert).
+	 *
+	 * We need to keep this around for unacked ops because on reconnect, outstanding local obliterates may have set `obliteratePrecedingInsertion`
+	 * (tiebreak) on segments they no longer apply to, since the reissued obliterate may affect a smaller range than the original one when content
+	 * near the obliterate's endpoints was removed by another client between the time of the original obliterate and reissuing.
+	 */
+	tiebreakTrackingGroup: ITrackingGroup | undefined;
 }
 
 export interface SegmentGroup {
@@ -358,26 +361,18 @@ export abstract class BaseSegment implements ISegment {
 	protected cloneInto(b: ISegment): void {
 		const seg: ISegmentPrivate = b;
 		if (isInserted(this)) {
-			overwriteInfo<IInsertionInfo>(seg, {
-				clientId: this.clientId,
-				seq: this.seq,
+			overwriteInfo<IHasInsertionInfo>(seg, {
+				insert: this.insert,
 			});
 		}
 		// TODO: deep clone properties
 		seg.properties = clone(this.properties);
 		if (isRemoved(this)) {
-			overwriteInfo<IRemovalInfo>(seg, {
-				removedSeq: this.removedSeq,
-				removedClientIds: [...this.removedClientIds],
+			overwriteInfo<IHasRemovalInfo>(seg, {
+				removes: [...this.removes],
 			});
 		}
-		if (isMoved(this)) {
-			overwriteInfo<IMoveInfo>(seg, {
-				movedSeq: this.movedSeq,
-				movedSeqs: [...this.movedSeqs],
-				movedClientIds: [...this.movedClientIds],
-			});
-		}
+
 		seg.attribution = this.attribution?.clone();
 	}
 
@@ -421,25 +416,17 @@ export abstract class BaseSegment implements ISegment {
 		}
 
 		if (isInserted(this)) {
-			overwriteInfo<IInsertionInfo>(leafSegment, {
-				seq: this.seq,
-				localSeq: this.localSeq,
-				clientId: this.clientId,
-			});
+			overwriteInfo<IHasInsertionInfo>(leafSegment, { insert: this.insert });
 		}
 		if (isRemoved(this)) {
-			overwriteInfo<IRemovalInfo>(leafSegment, {
-				removedClientIds: [...this.removedClientIds],
-				removedSeq: this.removedSeq,
-				localRemovedSeq: this.localRemovedSeq,
+			overwriteInfo<IHasRemovalInfo>(leafSegment, {
+				removes: [...this.removes],
 			});
 		}
-		if (isMoved(this)) {
-			overwriteInfo<IMoveInfo>(leafSegment, {
-				movedClientIds: [...this.movedClientIds],
-				movedSeq: this.movedSeq,
-				movedSeqs: [...this.movedSeqs],
-				localMovedSeq: this.localMovedSeq,
+		if (isInsideObliterate(this)) {
+			overwriteInfo<ISegmentInsideObliterateInfo>(leafSegment, {
+				obliteratePrecedingInsertion: this.obliteratePrecedingInsertion,
+				insertionRefSeqStamp: this.insertionRefSeqStamp,
 			});
 		}
 
@@ -584,6 +571,32 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 }
 
 /**
+ * Returns a stamp that occurs at the minimum sequence number.
+ * @privateRemarks
+ * This is a free function over something obtainable on CollaborationWindow to avoid exposing Perspective
+ * and OperationStamp from the package (even internally), at least for now.
+ * If/when `Client`'s API is refactored to be structured similarly to MergeTree (so that SharedString passes in
+ * things closer to `Perspective`s when calling methods on `Client` rather than refSeq/localSeq/clientId etc),
+ * it may be more reasonable to expose this more directly on `CollaborationWindow`.
+ */
+export function getMinSeqStamp(collabWindow: CollaborationWindow): OperationStamp {
+	return { seq: collabWindow.minSeq, clientId: NonCollabClient };
+}
+
+/**
+ * Returns a perspective representing a readonly client's view of the tree at the minimum sequence number.
+ * @privateRemarks
+ * This is a free function over something obtainable on CollaborationWindow to avoid exposing Perspective
+ * and OperationStamp from the package (even internally), at least for now.
+ * If/when `Client`'s API is refactored to be structured similarly to MergeTree (so that SharedString passes in
+ * things closer to `Perspective`s when calling methods on `Client` rather than refSeq/localSeq/clientId etc),
+ * it may be more reasonable to expose this more directly on `CollaborationWindow`.
+ */
+export function getMinSeqPerspective(collabWindow: CollaborationWindow): Perspective {
+	return new PriorPerspective(collabWindow.minSeq, NonCollabClient);
+}
+
+/**
  * This class is used to track facts about the current window of collaboration. This window is defined by the server
  * specified minimum sequence number to the last sequence number seen. Additionally, it track state for outstanding
  * local operations.
@@ -667,11 +680,25 @@ export class CollaborationWindow {
 	 */
 	localSeq = 0;
 
-	loadFrom(a: CollaborationWindow): void {
+	public localPerspective: Perspective = new LocalDefaultPerspective(this.clientId);
+
+	public loadFrom(a: CollaborationWindow): void {
 		this.clientId = a.clientId;
 		this.collaborating = a.collaborating;
 		this.minSeq = a.minSeq;
 		this.currentSeq = a.currentSeq;
+	}
+
+	public mintNextLocalOperationStamp(): OperationStamp {
+		if (this.collaborating) {
+			this.localSeq++;
+		}
+
+		return {
+			seq: this.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+			clientId: this.clientId,
+			localSeq: this.localSeq,
+		};
 	}
 }
 
