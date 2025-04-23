@@ -53,7 +53,6 @@ describe("Presence", () => {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const workspace = presence.states.getWorkspace(testWorkspaceName, {
 				fixedMap: StateFactory.latestMap({ local: { key1: { x: 0, y: 0 } } }),
-
 			});
 			return workspace.states.fixedMap;
 		}
