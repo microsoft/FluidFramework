@@ -734,13 +734,15 @@ export class AnchorSet implements AnchorLocator {
 			 * 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
 			 * subtreeChangedAfterBatch events.
 			 * The algorithm works as follows:
+			 *
 			 * - Initialize both to 0.
 			 * - As we walk the tree from the root towards the leaves, when we enter a node increment currentDepth by 1.
 			 * - When we edit a node, set depthThresholdForSubtreeChanged = currentDepth.
-			 *   Intuitively, depthThresholdForSubtreeChanged means "as you walk the tree towards the root, when you exit a
-			 *   node at this depth you should emit a subtreeChangedAfterBatch event".
+			 * Intuitively, depthThresholdForSubtreeChanged means "as you walk the tree towards the root, when you exit a
+			 * node at this depth you should emit a subtreeChangedAfterBatch event".
 			 * - When we exit a node, if d === currentDepth then emit a subtreeChangedAfterBatch and decrement d by 1.
-			 *   Then decrement currentDepth unconditionally.
+			 * Then decrement currentDepth unconditionally.
+			 *
 			 * Note that the event will be emitted when exiting a node that was edited (depthThresholdForSubtreeChanged will
 			 * have been set to the current depth when the edit happened), it will be emitted when exiting a node that is the
 			 * parent of a node that already emitted the event (because both depthThresholdForSubtreeChanged and currentDepth
