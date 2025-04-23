@@ -396,7 +396,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				);
 
 				const untrackedHandle = manufactureHandle(
-					dataObject._runtime,
+					dataObject._context.IFluidHandleContext,
 					`/${unreferencedId}/unrecognizedSubPath`,
 				);
 				await assert.rejects(

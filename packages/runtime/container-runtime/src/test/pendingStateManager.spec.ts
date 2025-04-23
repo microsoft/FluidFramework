@@ -750,6 +750,7 @@ describe("Pending State Manager", () => {
 					metadata: { batchId: "batchId" },
 				},
 				0,
+				false /* staged */,
 			);
 			pendingStateManager.replayPendingStates();
 			assert.strictEqual(resubmittedBatchIds[0], "batchId");

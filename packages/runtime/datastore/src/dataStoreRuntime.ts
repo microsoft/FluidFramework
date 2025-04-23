@@ -145,7 +145,6 @@ export interface ISharedObjectRegistry {
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
-	// eslint-disable-next-line import/no-deprecated
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**

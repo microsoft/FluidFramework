@@ -291,8 +291,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	private stageControls: StageControlsExperimental | undefined;
 	// eslint-disable-next-line import/no-deprecated
 	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
-		// eslint-disable-next-line import/no-deprecated
-		this.context.containerRuntime satisfies IContainerRuntimeBaseExperimental;
+		this.context.containerRuntime;
 	public enterStagingMode() {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
@@ -310,7 +309,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	public exitStagingMode(commit: boolean) {
-		assert(this.stageControls !== undefined, "must have staging mode handle");
+		assert(this.stageControls !== undefined, "must have staging mode controls");
 		if (commit) {
 			this.stageControls.commitChanges();
 		} else {

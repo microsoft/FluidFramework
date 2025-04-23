@@ -39,9 +39,10 @@ describe("FluidSerializer", () => {
 	}
 
 	describe("vanilla JSON", () => {
-		const channelsRoutingContext = new MockHandleContext();
-		const serializer = new FluidSerializer(channelsRoutingContext);
-		const handle = new RemoteFluidObjectHandle("/root", channelsRoutingContext);
+		const context = new MockHandleContext();
+		const serializer = new FluidSerializer(context);
+		const handle = new RemoteFluidObjectHandle("/root", context);
+
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
 		// are of particular interest.
 		// eslint-disable-next-line unicorn/no-null -- Explicitly testing null.
@@ -164,9 +165,9 @@ describe("FluidSerializer", () => {
 	});
 
 	describe("JSON w/embedded handles", () => {
-		const channelsRoutingContext = new MockHandleContext();
-		const serializer = new FluidSerializer(channelsRoutingContext);
-		const handle = new RemoteFluidObjectHandle("/root", channelsRoutingContext);
+		const context = new MockHandleContext();
+		const serializer = new FluidSerializer(context);
+		const handle = new RemoteFluidObjectHandle("/root", context);
 		const serializedHandle = {
 			type: "__fluid_handle__",
 			url: "/root",
