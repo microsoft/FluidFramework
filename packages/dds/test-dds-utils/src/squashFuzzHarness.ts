@@ -20,7 +20,7 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import { type Client } from "./clientLoading.js";
 import { PoisonedDDSFuzzHandle } from "./ddsFuzzHandle.js";
 import {
-	addClientContext,
+	setupClientContext,
 	createSuite,
 	handles,
 	mixinAttach,
@@ -77,7 +77,7 @@ export interface SquashClient<TChannelFactory extends IChannelFactory>
 export interface SquashFuzzModel<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState<TChannelFactory> = SquashFuzzTestState<TChannelFactory>,
+	TState extends SquashFuzzTestState<TChannelFactory> = SquashFuzzTestState<TChannelFactory>,
 > extends DDSFuzzModel<TChannelFactory, TOperation, TState> {
 	/**
 	 * This generator will be invoked when the selected client is exiting staging mode.
@@ -131,9 +131,6 @@ export interface SquashFuzzHarnessModel<
  * @internal
  */
 export interface SquashFuzzSuiteOptions extends DDSFuzzSuiteOptions {
-	/**
-	 * TODO: Document expectations / consider reworking the API. Weird decisions right now.
-	 */
 	stagingMode: {
 		changeStagingModeProbability: number;
 	};
@@ -242,7 +239,7 @@ function setupClientState<TChannelFactory extends IChannelFactory>(
 	state: SquashFuzzTestState<TChannelFactory>,
 	client: SquashClient<TChannelFactory>,
 ): CleanupFunction {
-	const baseCleanup = addClientContext(state, client);
+	const baseCleanup = setupClientContext(state, client);
 	// eslint-disable-next-line @typescript-eslint/unbound-method
 	const { poisonedHandle: oldPoisonedHandle } = state.random;
 	// eslint-disable-next-line unicorn/prefer-ternary

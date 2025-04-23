@@ -1020,7 +1020,7 @@ export function mixinSynchronization<
 const isClientSpec = (op: unknown): op is ClientSpec =>
 	(op as ClientSpec).clientId !== undefined;
 
-export function addClientContext(
+export function setupClientContext(
 	state: DDSFuzzTestState<IChannelFactory>,
 	client: Client<IChannelFactory>,
 ): CleanupFunction {
@@ -1056,7 +1056,7 @@ export function mixinClientSelection<
 	setupClientState: (
 		state: TState,
 		client: TState["client"],
-	) => CleanupFunction = addClientContext,
+	) => CleanupFunction = setupClientContext,
 ): DDSFuzzHarnessModel<TChannelFactory, TOperation, TState> {
 	const generatorFactory: () => AsyncGenerator<TOperation, TState> = () => {
 		const baseGenerator = model.generatorFactory();
@@ -1262,9 +1262,26 @@ function setupFuzzSerializer(
 	channel: IChannel,
 	dataStoreRuntime: MockFluidDataStoreRuntime,
 ): void {
-	// TODO: More legitimate way to inject this alternative serialization strategy
+	// TODO:AB#36300 tracks refactoring code to allow something like this without access violation.
+	assert(
+		isFluidSerializerLike(
+			(channel as unknown as { _serializer: IFluidSerializer })._serializer,
+		),
+		"expected SharedObject to store its serializer at key '_serializer'.",
+	);
 	(channel as unknown as { _serializer: IFluidSerializer })._serializer =
 		new DDSFuzzSerializer(dataStoreRuntime.channelsRoutingContext, dataStoreRuntime.id);
+}
+
+function isFluidSerializerLike(object: unknown): object is IFluidSerializer {
+	return (
+		typeof object === "object" &&
+		object !== null &&
+		"encode" in object &&
+		"decode" in object &&
+		"stringify" in object &&
+		"parse" in object
+	);
 }
 
 async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
