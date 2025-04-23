@@ -373,7 +373,7 @@ describe("treeNodeApi", () => {
 			});
 			// Change the first tree to a value of "3"
 			view1.root.node.value = 3;
-			// Remove the no longer needed vie1 1 to simplify debugging.
+			// Remove the no longer needed view1 to simplify debugging.
 			view1.dispose();
 			provider.synchronizeMessages();
 			// Ensure that the second tree received the change...
