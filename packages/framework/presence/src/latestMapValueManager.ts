@@ -87,7 +87,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 export interface LatestMapEvents<
 	T,
 	K extends string | number,
-	TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
+	TRemoteValueAccessor extends ValueAccessor<T>,
 > {
 	/**
 	 * Raised when any item's value for remote client is updated.
@@ -227,7 +227,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T, K>,
 		private readonly emitter: IEmitter<
-			Pick<LatestMapEvents<T, K>, "localItemUpdated" | "localItemRemoved">
+			Pick<LatestMapEvents<T, K, ValueAccessor<T>>, "localItemUpdated" | "localItemRemoved">
 		>,
 		private readonly localUpdate: (
 			updates: InternalTypes.MapValueState<
@@ -351,7 +351,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Iterable access to remote clients' map of values.
 	 */
-	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, ValueAccessor<T>>>;
+	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, RawValueAccessor<T>>>;
 	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
@@ -362,12 +362,58 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, RawValueAccessor<T>>>;
 }
 
+/**
+ * State that provides a `Map` of latest known values from this client to
+ * others and read access to their values.
+ * Entries in the map may vary over time and by client, but all values are expected to
+ * be of the same type, which may be a union type.
+ *
+ * @remarks Create using {@link StateFactory.latestMap} registered to {@link StatesWorkspace}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface LatestMap<T, Keys extends string | number = string | number> {
+	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
+	/**
+	 * Events for LatestMapRaw.
+	 */
+	readonly events: Listenable<LatestMapEvents<T, Keys, ProxiedValueAccessor<T>>>;
+
+	/**
+	 * Controls for management of sending updates.
+	 */
+	readonly controls: BroadcastControls;
+
+	/**
+	 * Current value map for this client.
+	 */
+	readonly local: StateMap<Keys, T>;
+	/**
+	 * Iterable access to remote clients' map of values.
+	 */
+	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, ProxiedValueAccessor<T>>>;
+	/**
+	 * Array of {@link Attendee}s that have provided states.
+	 */
+	getStateAttendees(): Attendee[];
+	/**
+	 * Access to a specific client's map of values.
+	 */
+	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, ProxiedValueAccessor<T>>>;
+}
+
 class LatestMapValueManagerImpl<
 	T,
 	RegistrationKey extends string,
 	Keys extends string | number = string | number,
 > implements
 		LatestMapRaw<T, Keys>,
+		LatestMap<T, Keys>,
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
 	public readonly events = createEmitter<LatestMapEvents<T, Keys, RawValueAccessor<T>>>();
@@ -533,6 +579,23 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 }
 
 /**
+ * Factory for creating a {@link LatestMap} State object.
+ *
+ * @alpha
+ */
+export function latestMap<
+	T,
+	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
+>(
+	args?: LatestMapArguments<T, Keys> & { validator: StateSchemaValidator<T> },
+): InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMap<T, Keys>
+>;
+
+/**
  * Factory for creating a {@link LatestMapRaw} State object.
  *
  * @alpha
@@ -547,7 +610,30 @@ export function latestMap<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMapRaw<T, Keys>
-> {
+>;
+
+/**
+ * Factory for creating a {@link LatestMapRaw} State object.
+ *
+ * @alpha
+ */
+export function latestMap<
+	T,
+	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
+>(
+	args?: LatestMapArguments<T, Keys>,
+):
+	| InternalTypes.ManagerFactory<
+			RegistrationKey,
+			InternalTypes.MapValueState<T, Keys>,
+			LatestMapRaw<T, Keys>
+	  >
+	| InternalTypes.ManagerFactory<
+			RegistrationKey,
+			InternalTypes.MapValueState<T, Keys>,
+			LatestMap<T, Keys>
+	  > {
 	const settings = args?.settings;
 	const initialValues = args?.local;
 

@@ -24,8 +24,6 @@ export interface LatestMetadata {
 	 * @remarks Currently this is a placeholder for future implementation.
 	 */
 	timestamp: number;
-
-	// validated: boolean;
 }
 
 /**

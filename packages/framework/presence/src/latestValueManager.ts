@@ -243,7 +243,6 @@ export interface LatestArguments<T extends object | null> {
 	validator?: StateSchemaValidator<T> | undefined;
 }
 
-// Overload signatures
 /**
  * Factory for creating a {@link Latest} State object.
  *

@@ -191,6 +191,22 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
     remoteUpdated: (update: LatestClientData<T, TRemoteValueAccessor>) => void;
 }
 
+// @alpha @sealed
+export interface LatestMap<T, Keys extends string | number = string | number> {
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestMapEvents<T, Keys, ProxiedValueAccessor<T>>>;
+    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, ProxiedValueAccessor<T>>>;
+    getRemotes(): IterableIterator<LatestMapClientData<T, Keys, ProxiedValueAccessor<T>>>;
+    getStateAttendees(): Attendee[];
+    readonly local: StateMap<Keys, T>;
+    readonly presence: Presence;
+}
+
+// @alpha
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys> & {
+    validator: StateSchemaValidator<T>;
+}): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+
 // @alpha
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
@@ -212,7 +228,7 @@ export interface LatestMapClientData<T, Keys extends string | number, TValueAcce
 }
 
 // @alpha @sealed (undocumented)
-export interface LatestMapEvents<T, K extends string | number, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
+export interface LatestMapEvents<T, K extends string | number, TRemoteValueAccessor extends ValueAccessor<T>> {
     // @eventProperty
     localItemRemoved: (removedItem: {
         key: K;
@@ -251,7 +267,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapEvents<T, Keys, ValueAccessor<T>>>;
     getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, RawValueAccessor<T>>>;
-    getRemotes(): IterableIterator<LatestMapClientData<T, Keys, ValueAccessor<T>>>;
+    getRemotes(): IterableIterator<LatestMapClientData<T, Keys, RawValueAccessor<T>>>;
     getStateAttendees(): Attendee[];
     readonly local: StateMap<Keys, T>;
     readonly presence: Presence;
