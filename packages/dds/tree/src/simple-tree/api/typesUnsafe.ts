@@ -225,15 +225,21 @@ export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromAllowedTypes}.
  * @see {@link Input}
+ * @privateRemarks
+ * TODO: it seems like the order of the union this produces is what is non-deterministic in incremental builds
+ * of the JsonAsTree schema.
  * @system @public
  */
-export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> =
-	TList extends readonly [
+export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = [
+	TList,
+] extends [
+	readonly [
 		LazyItem<infer TSchema extends TreeNodeSchemaUnsafe>,
 		...infer Rest extends AllowedTypesUnsafe,
-	]
-		? InsertableTypedNodeUnsafe<TSchema> | InsertableTreeNodeFromAllowedTypesUnsafe<Rest>
-		: never;
+	],
+]
+	? InsertableTypedNodeUnsafe<TSchema> | InsertableTreeNodeFromAllowedTypesUnsafe<Rest>
+	: never;
 
 /**
  * {@link Unenforced} version of {@link InsertableTypedNode}.

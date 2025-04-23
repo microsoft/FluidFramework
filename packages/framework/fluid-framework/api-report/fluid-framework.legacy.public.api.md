@@ -483,9 +483,13 @@ LazyItem<infer TSchema extends TreeNodeSchema>,
 ] ? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest> : never;
 
 // @public
-export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = TList extends readonly [
+export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = [
+TList
+] extends [
+readonly [
 LazyItem<infer TSchema extends TreeNodeSchemaUnsafe>,
 ...infer Rest extends AllowedTypesUnsafe
+]
 ] ? InsertableTypedNodeUnsafe<TSchema> | InsertableTreeNodeFromAllowedTypesUnsafe<Rest> : never;
 
 // @public
