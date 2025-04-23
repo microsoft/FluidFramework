@@ -13,6 +13,7 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 import type {
 	IChannelView,
 	IFluidSerializer,
+	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	UsageError,
@@ -192,11 +193,16 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
  * TODO: detail compatibility requirements.
  */
 @breakingClass
-export class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange> {
+export class SharedTreeKernel
+	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
+	implements SharedKernel
+{
 	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
 	}
+
+	public readonly view: ITreePrivate;
 
 	public constructor(
 		breaker: Breakable,
@@ -331,6 +337,21 @@ export class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, Shar
 				}
 			}
 		});
+
+		this.view = {
+			contentSnapshot: () => this.contentSnapshot(),
+			exportSimpleSchema: () => this.exportSimpleSchema(),
+			exportVerbose: () => this.exportVerbose(),
+			viewWith: this.viewWith.bind(this),
+			handle: sharedObject.handle,
+			get IFluidLoadable() {
+				return sharedObject;
+			},
+			id: sharedObject.id,
+			attributes: sharedObject.attributes,
+			isAttached: () => sharedObject.isAttached(),
+			kernel: this,
+		};
 	}
 
 	public exportVerbose(): VerboseTree | undefined {

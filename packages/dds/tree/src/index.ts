@@ -246,6 +246,7 @@ export {
 export {
 	SharedTree,
 	configuredSharedTree,
+	treeKernelFactory,
 } from "./treeFactory.js";
 export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 
