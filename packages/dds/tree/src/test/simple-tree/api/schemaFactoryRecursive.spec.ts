@@ -546,6 +546,12 @@ describe("SchemaFactory Recursive methods", () => {
 				// @ts-expect-error referenced type not a schema.
 				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
 		});
 
 		it("AllowUnused", () => {
@@ -558,6 +564,12 @@ describe("SchemaFactory Recursive methods", () => {
 				class Test extends sf.arrayRecursive("Test", [() => {}]) {}
 				// @ts-expect-error referenced type not a schema.
 				allowUnused<ValidateRecursiveSchema<typeof Test>>();
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
 		});
 

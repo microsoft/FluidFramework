@@ -117,16 +117,16 @@ export function createFieldSchemaUnsafe<
  * Be very careful when declaring recursive schema.
  * Due to the removed extends clauses, subtle mistakes will compile just fine but cause strange errors when the schema is used.
  *
- * For example if the square brackets around the allowed types are forgotten:
+ * For example if a reference to a schema is malformed (in this case boxed inside an object):
  *
  * ```typescript
- * class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+ * class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {} // Bad
  * ```
  * This schema will still compile, and some (but not all) usages of it may look like they work correctly while other usages will produce generally unintelligible compile errors.
  * This issue can be partially mitigated using {@link ValidateRecursiveSchema}:
  *
  * ```typescript
- * class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+ * class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {} // Bad
  * {
  *     type _check = ValidateRecursiveSchema<typeof Test>; // Reports compile error due to invalid schema above.
  * }
@@ -135,14 +135,7 @@ export function createFieldSchemaUnsafe<
  * If your TypeScript configuration objects to this patten due to the unused local, you can use {@link allowUnused} to suppress the error:
  *
  * ```typescript
- * class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
- * allowUnused<ValidateRecursiveSchema<typeof Test>>(); // Reports compile error due to invalid schema above.
- * ```
- *
- * If your TypeScript configuration objects to this patten due to the unused local, you can use {@link allowUnused} to suppress the error:
- *
- * ```typescript
- * class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+ * class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {} // Bad
  * allowUnused<ValidateRecursiveSchema<typeof Test>>(); // Reports compile error due to invalid schema above.
  * ```
  *
