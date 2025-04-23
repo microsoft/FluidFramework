@@ -78,7 +78,7 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
 				reasoningEffort: "high",
 				maxTokens: 20000,
 				metadata: {
-					modelName: "OpenAI: o3 Mini",
+					modelName: "o3 Mini",
 				},
 			});
 		}
@@ -91,7 +91,7 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
 				thinking: { type: "enabled", budget_tokens: 10000 },
 				maxTokens: 20000,
 				metadata: {
-					modelName: "Anthropic: Claude 3.7 Sonnet",
+					modelName: "Claude 3.7 Sonnet",
 				},
 			});
 		}
@@ -103,7 +103,7 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
 					failUsage("Missing GOOGLE_API_KEY environment variable"),
 				maxOutputTokens: 20000,
 				metadata: {
-					modelName: "Google GenAI: Gemini 2.5 Pro Exp",
+					modelName: "Gemini 2.5 Pro Exp",
 				},
 			});
 		}
@@ -203,7 +203,7 @@ function formatDate(date: Date): string {
 export function describeIntegrationTests(
 	tests: LLMIntegrationTest<UnsafeUnknownSchema>[],
 ): void {
-	describe.skip(`LLM integration tests`, () => {
+	describe(`LLM integration tests`, () => {
 		const results: TestResult[] = [];
 		let startTime: Date | undefined;
 		before(() => {

@@ -78,9 +78,9 @@ class SharedTreeFunctioningAgent<
 	) {
 		const editingTool = tool(
 			async ({ functionCode }) => {
-				this.options?.log?.(`## Editing Tool Invoked\n\n`);
+				this.options?.log?.(`### Editing Tool Invoked\n\n`);
 				this.options?.log?.(
-					`### Generated Code\n\n\`\`\`javascript\n${functionCode}\n\`\`\`\n\n`,
+					`#### Generated Code\n\n\`\`\`javascript\n${functionCode}\n\`\`\`\n\n`,
 				);
 				const { branch, idGenerator } = this.prompting;
 				const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
@@ -92,7 +92,7 @@ class SharedTreeFunctioningAgent<
 					create[name] = (input: FactoryContentObject) => constructObjectNode(schema, input);
 				});
 				if (options?.validator?.(functionCode) === false) {
-					this.options?.log?.(`### Code Validation Failed\n\n`);
+					this.options?.log?.(`#### Code Validation Failed\n\n`);
 					return "Code validation failed";
 				}
 				const params = {
@@ -112,13 +112,13 @@ class SharedTreeFunctioningAgent<
 				try {
 					await fn(params);
 				} catch (error: unknown) {
-					this.options?.log?.(`### Error\n\n`);
+					this.options?.log?.(`#### Error\n\n`);
 					const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
 					this.options?.log?.(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
 					this.setPrompting();
 					return `Running the function produced an error. The state of the tree will be reset to its initial state. Please try again. Here is the error: ${errorMessage}`;
 				}
-				this.options?.log?.(`### New Tree State\n\n`);
+				this.options?.log?.(`#### New Tree State\n\n`);
 				this.options?.log?.(
 					`${
 						this.options.treeToString?.(branch.root) ??
@@ -192,7 +192,7 @@ function ${functionName}({ root, create }) {
 		const rootTypes = [...schema.root.allowedTypesIdentifiers];
 		const prompt = `${this.getSystemPromptPreamble(domainTypes, domainRoot)}
 
-## Editing
+### Editing
 
 If the user asks you to edit the data, you will use the ${this.editingTool.name} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
 The function must be named "${functionName}".
@@ -206,7 +206,7 @@ ${stringified}
 
 You may set the \`root\` property to be a new root object if necessary, but you must ensure that the new object is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
 
-### Editing Arrays
+#### Editing Arrays
 
 There is a notable restriction: the arrays in the tree cannot be mutated in the normal way.
 Instead, they must be mutated via methods on the following TypeScript interface:
@@ -217,7 +217,7 @@ ${getTreeArrayNodeDocumentation(arrayInterfaceName)}
 
 Outside of mutation, they behave like normal JavaScript arrays - you can create them, read from them, and call non-mutating methods on them (e.g. \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.).
 
-## Additional Notes
+### Additional Notes
 
 Before outputting the ${functionName} function, you should check that it is valid according to both the application tree's schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
 

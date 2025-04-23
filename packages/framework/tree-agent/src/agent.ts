@@ -89,29 +89,41 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 			| undefined,
 	) {
 		const systemPrompt = this.getSystemPrompt(this.treeView);
+		this.options?.log?.(`# Fluid Framework SharedTree AI Agent Log\n\n`);
+		const now = new Date();
+		const formattedDate = now.toLocaleString(undefined, {
+			weekday: "long",
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+			hour: "numeric",
+			minute: "2-digit",
+			second: "2-digit",
+		});
+		this.options?.log?.(`Agent created: **${formattedDate}**\n\n`);
+		if (this.client.metadata?.modelName !== undefined) {
+			this.options?.log?.(`Model: **${this.client.metadata?.modelName}**\n\n`);
+		}
 		this.#messages.push(new SystemMessage(systemPrompt));
+		this.options?.log?.(`## System Prompt\n\n${systemPrompt}\n\n`);
 		if (this.options?.domainHints !== undefined) {
 			this.#messages.push(
 				new HumanMessage(
 					`Here is some information about my application domain: ${this.options.domainHints}\n\n`,
 				),
 			);
+			this.options?.log?.(`## Domain Hints\n\n"${this.options.domainHints}"\n\n`);
 		}
 		this.#offTreeChanged = treeView.events.on(
 			"changed",
 			() => (this.#treeHasChangedSinceLastQuery = true),
 		);
-		if (this.client.metadata?.modelName !== undefined) {
-			this.options?.log?.(`# Model\n\n`);
-			this.options?.log?.(`${this.client.metadata?.modelName}\n\n`);
-		}
-		this.options?.log?.(`# System Prompt\n\n${systemPrompt}\n\n`);
 	}
 
 	protected thinkingTool = tool(
 		// eslint-disable-next-line unicorn/consistent-function-scoping
 		({ thoughts }) => {
-			this.options?.log?.(`## Thinking Tool Invoked\n\n${thoughts}\n\n`);
+			this.options?.log?.(`### Thinking Tool Invoked\n\n${thoughts}\n\n`);
 			return thoughts;
 		},
 		{
@@ -151,7 +163,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 
 	public async query(userPrompt: string): Promise<string | undefined> {
 		this.setPrompting();
-		this.options?.log?.(`# User Prompt\n\n`);
+		this.options?.log?.(`## User Query\n\n${userPrompt}\n\n`);
 		if (this.#treeHasChangedSinceLastQuery) {
 			const stringified = this.stringifyTree(
 				this.prompting.branch.root,
@@ -163,7 +175,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 				),
 			);
 			this.options?.log?.(
-				`## Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query.\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
+				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
 			);
 			this.#treeHasChangedSinceLastQuery = false;
 		}
@@ -172,12 +184,6 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 				`${this.#treeHasChangedSinceLastQuery ? "" : "The tree has not changed since your last message. "}${userPrompt}`,
 			),
 		);
-		if (this.options?.domainHints === undefined) {
-			this.options?.log?.(`"${userPrompt}"\n\n`);
-		} else {
-			this.options?.log?.(`## Domain Hints\n\n"${this.options?.domainHints}"\n\n`);
-			this.options?.log?.(`## Prompt\n\n"${userPrompt}"\n\n`);
-		}
 
 		let loggedChainOfThought = false;
 		let responseMessage: AIMessage;
@@ -193,7 +199,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 			this.#messages.push(responseMessage);
 
 			// We start with one message, and then add two more for each subsequent correspondence
-			this.options?.log?.(`# LLM Response ${(this.#messages.length - 1) / 2}\n\n`);
+			this.options?.log?.(`## Response ${(this.#messages.length - 1) / 2}\n\n`);
 
 			// This is a special case for Claude Sonnet, the only supported model that exposes its Chain of Thought.
 			if (!loggedChainOfThought) {
