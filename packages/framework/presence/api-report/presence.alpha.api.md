@@ -133,10 +133,15 @@ export namespace InternalUtilityTypes {
 }
 
 // @alpha @sealed
-export interface Latest<T> extends LatestCommon<T> {
-    readonly events: Listenable<LatestEvents<T, ProxiedValueAccessor<T>>>;
-    getRemote(attendee: Attendee): LatestData<T, ProxiedValueAccessor<T>>;
-    getRemotes(): IterableIterator<LatestClientData<T, ProxiedValueAccessor<T>>>;
+export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestEvents<T, TRemoteAccessor>>;
+    getRemote(attendee: Attendee): LatestData<T, TRemoteAccessor>;
+    getRemotes(): IterableIterator<LatestClientData<T, TRemoteAccessor>>;
+    getStateAttendees(): Attendee[];
+    get local(): DeepReadonly<JsonDeserialized<T>>;
+    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+    readonly presence: Presence;
 }
 
 // @alpha
@@ -159,15 +164,6 @@ export interface LatestArguments<T extends object | null> {
 export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> extends LatestData<T, TValueAccessor> {
     // (undocumented)
     attendee: Attendee;
-}
-
-// @alpha (undocumented)
-export interface LatestCommon<T> {
-    readonly controls: BroadcastControls;
-    getStateAttendees(): Attendee[];
-    get local(): DeepReadonly<JsonDeserialized<T>>;
-    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
-    readonly presence: Presence;
 }
 
 // @alpha @sealed
@@ -269,11 +265,7 @@ export interface LatestMetadata {
 }
 
 // @alpha @sealed
-export interface LatestRaw<T> extends LatestCommon<T> {
-    readonly events: Listenable<LatestEvents<T, RawValueAccessor<T>>>;
-    getRemote(attendee: Attendee): LatestData<T, RawValueAccessor<T>>;
-    getRemotes(): IterableIterator<LatestClientData<T, RawValueAccessor<T>>>;
-}
+export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
 
 // @alpha @sealed
 export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationListeners<E>> {

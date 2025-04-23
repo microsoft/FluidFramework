@@ -52,13 +52,38 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
 }
 
 /**
+ * State that provides the latest known value from this client to others and read access to their values.
+ * All participant clients must provide a value.
+ *
+ * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
+ *
+ * @sealed
  * @alpha
  */
-export interface LatestCommon<T> {
+export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
+
+/**
+ * State that provides the latest known value from this client to others and read access to their values.
+ * All participant clients must provide a value.
+ *
+ * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface Latest<
+	T,
+	TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
+> {
 	/**
 	 * Containing {@link Presence}
 	 */
 	readonly presence: Presence;
+
+	/**
+	 * Events for LatestRaw.
+	 */
+	readonly events: Listenable<LatestEvents<T, TRemoteAccessor>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -78,58 +103,16 @@ export interface LatestCommon<T> {
 	 * Array of {@link Attendee}s that have provided states.
 	 */
 	getStateAttendees(): Attendee[];
-}
-
-/**
- * State that provides the latest known value from this client to others and read access to their values.
- * All participant clients must provide a value.
- *
- * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
- *
- * @sealed
- * @alpha
- */
-export interface LatestRaw<T> extends LatestCommon<T> {
-	/**
-	 * Events for LatestRaw.
-	 */
-	readonly events: Listenable<LatestEvents<T, RawValueAccessor<T>>>;
 
 	/**
 	 * Iterable access to remote clients' values.
 	 */
-	getRemotes(): IterableIterator<LatestClientData<T, RawValueAccessor<T>>>;
+	getRemotes(): IterableIterator<LatestClientData<T, TRemoteAccessor>>;
 
 	/**
 	 * Access to a specific attendee's value.
 	 */
-	getRemote(attendee: Attendee): LatestData<T, RawValueAccessor<T>>;
-}
-
-/**
- * State that provides the latest known value from this client to others and read access to their values.
- * All participant clients must provide a value.
- *
- * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
- *
- * @sealed
- * @alpha
- */
-export interface Latest<T> extends LatestCommon<T> {
-	/**
-	 * Events for LatestRaw.
-	 */
-	readonly events: Listenable<LatestEvents<T, ProxiedValueAccessor<T>>>;
-
-	/**
-	 * Iterable access to remote clients' values.
-	 */
-	getRemotes(): IterableIterator<LatestClientData<T, ProxiedValueAccessor<T>>>;
-
-	/**
-	 * Access to a specific attendee's value.
-	 */
-	getRemote(attendee: Attendee): LatestData<T, ProxiedValueAccessor<T>>;
+	getRemote(attendee: Attendee): LatestData<T, TRemoteAccessor>;
 }
 
 class LatestValueManagerImpl<T, Key extends string>
