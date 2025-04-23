@@ -96,10 +96,7 @@ class MySharedObjectCore extends SharedObjectCore {
 		return true;
 	}
 
-	protected readonly serializer = new FluidSerializer({
-		inStagingMode: false,
-		channelsRoutingContext: {} as unknown as IFluidHandleContext,
-	});
+	protected readonly serializer = new FluidSerializer({} as unknown as IFluidHandleContext);
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		throw new Error("Method not implemented.");
