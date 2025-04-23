@@ -990,6 +990,9 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
+	/**
+	 * @deprecated No implementation required and will be removed in 2.50.
+	 */
 	public submitMessage(type: MessageType, content: any) {
 		return null;
 	}
@@ -1010,9 +1013,7 @@ export class MockFluidDataStoreRuntime
 		return this.containerRuntime.dirty();
 	}
 
-	public submitSignal(type: string, content: any) {
-		return null;
-	}
+	public submitSignal: IFluidDataStoreRuntime["submitSignal"] = () => null;
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
 		if (this.disposed) {

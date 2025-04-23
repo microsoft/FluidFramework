@@ -22,12 +22,19 @@ export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export {
 	ContainerMessageType,
+	ContainerRuntimeAliasMessage,
+	ContainerRuntimeDataStoreOpMessage,
+	InternalUtilityTypes,
+	OutboundContainerRuntimeAttachMessage,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 export { IBlobManagerLoadInfo } from "./blobManager/index.js";
+export type { IDataStoreAliasMessage } from "./dataStore.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
 	detectOutboundReferences,
+	type AddressedSignalEnvelope,
+	type IFluidRootParentContext,
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
@@ -109,7 +116,7 @@ export {
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
-export { ChannelCollection } from "./channelCollection.js";
+export { ChannelCollection, ComposableChannelCollection } from "./channelCollection.js";
 export {
 	IFluidDataStoreContextInternal,
 	ISnapshotDetails,
