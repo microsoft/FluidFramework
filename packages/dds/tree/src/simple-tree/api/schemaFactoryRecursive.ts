@@ -194,7 +194,7 @@ export type ValidateRecursiveSchema<
  * Does nothing with the provided value, but appears to use it to make unused locals warnings and errors go away.
  *
  * @remarks
- * When TypeScript is configured to with "noUnusedLocals", it will produce an error if a local variable is declared but never used.
+ * When TypeScript is configured with "noUnusedLocals", it will produce an error if a local variable is declared but never used.
  * When you want to have this check enabled, but not follow it for a specific variable, you can pass the type or value to this function.
  *
  * Instead of using this, consider disabling "noUnusedLocals" in your tsconfig.json file, and enabling a similar check via a linter.
