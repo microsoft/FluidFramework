@@ -337,7 +337,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Events for LatestMapRaw.
 	 */
-	readonly events: Listenable<LatestMapEvents<T, Keys, ValueAccessor<T>>>;
+	readonly events: Listenable<LatestMapEvents<T, Keys, RawValueAccessor<T>>>;
 
 	/**
 	 * Controls for management of sending updates.

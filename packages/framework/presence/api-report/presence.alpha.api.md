@@ -265,7 +265,7 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number, TV
 // @alpha @sealed
 export interface LatestMapRaw<T, Keys extends string | number = string | number> {
     readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestMapEvents<T, Keys, ValueAccessor<T>>>;
+    readonly events: Listenable<LatestMapEvents<T, Keys, RawValueAccessor<T>>>;
     getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, RawValueAccessor<T>>>;
     getRemotes(): IterableIterator<LatestMapClientData<T, Keys, RawValueAccessor<T>>>;
     getStateAttendees(): Attendee[];
