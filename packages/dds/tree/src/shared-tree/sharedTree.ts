@@ -67,6 +67,7 @@ import {
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
+	makeSchemaCodec,
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 import {
@@ -197,6 +198,10 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 	[
 		4,
 		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
+	],
+	[
+		5,
+		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
 	],
 ]);
 
@@ -347,9 +352,15 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			idCompressor,
 			options,
 		);
-		const schemaSummarizer = new SchemaSummarizer(schema, options, {
-			getCurrentSeq: lastSequenceNumber,
-		});
+		const schemaCodec = makeSchemaCodec(options, options.formatVersion);
+		const schemaSummarizer = new SchemaSummarizer(
+			schema,
+			options,
+			{
+				getCurrentSeq: lastSequenceNumber,
+			},
+			schemaCodec,
+		);
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
 		const encoderContext = {

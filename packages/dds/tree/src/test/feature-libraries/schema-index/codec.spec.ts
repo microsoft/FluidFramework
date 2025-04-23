@@ -28,7 +28,12 @@ import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
-const codec = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaFormatVersion.V1);
+const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaFormatVersion.V1);
+const codecV2 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaFormatVersion.V2);
+const codecs = new Map([
+	[SchemaFormatVersion.V1, codecV1],
+	[SchemaFormatVersion.V2, codecV2],
+]);
 
 const schema2 = toStoredSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 
@@ -53,7 +58,7 @@ describe("SchemaIndex", () => {
 			} satisfies FormatV1,
 		];
 		for (const data of cases) {
-			codec.decode(data);
+			codecV1.decode(data);
 		}
 	});
 
@@ -72,7 +77,7 @@ describe("SchemaIndex", () => {
 			} satisfies FormatV2,
 		];
 		for (const data of cases) {
-			codec.decode(data);
+			codecV2.decode(data);
 		}
 	});
 
@@ -93,6 +98,7 @@ describe("SchemaIndex", () => {
 				{ version: 1, nodeSchema: [], extraField: 0 },
 			];
 			for (const data of badCases) {
+				const codec = codecs.get(format.version) ?? assert.fail("Missing codec.");
 				assert.throws(() => codec.decode(data as unknown as typeof format));
 			}
 		});
@@ -106,7 +112,7 @@ describe("SchemaIndex", () => {
 			],
 		};
 
-		makeEncodingTestSuite(makeCodecFamily([[1, codec]]), testCasesV1, (a, b) => {
+		makeEncodingTestSuite(makeCodecFamily([[1, codecV1]]), testCasesV1, (a, b) => {
 			assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
 			assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));
 		});
@@ -118,7 +124,7 @@ describe("SchemaIndex", () => {
 			],
 		};
 
-		makeEncodingTestSuite(makeCodecFamily([[1, codec]]), testCasesV2, (a, b) => {
+		makeEncodingTestSuite(makeCodecFamily([[1, codecV2]]), testCasesV2, (a, b) => {
 			assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
 			assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));
 		});

@@ -19,7 +19,7 @@ import {
 	type MutableTreeStoredSchema,
 	type TreeStoredSchema,
 	schemaDataIsEmpty,
-	SchemaFormatVersion,
+	type SchemaFormatVersion,
 } from "../../core/index.js";
 import type {
 	Summarizable,
@@ -28,8 +28,7 @@ import type {
 } from "../../shared-tree-core/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
-import { encodeRepo, makeSchemaCodec } from "./codec.js";
-import type { Format } from "./formatV1.js";
+import { encodeRepo } from "./codec.js";
 import type { JsonCompatible } from "../../util/index.js";
 
 const schemaStringKey = "SchemaString";
@@ -39,20 +38,14 @@ const schemaStringKey = "SchemaString";
 export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
-	private readonly codec: IJsonCodec<TreeStoredSchema, Format>;
-
 	private schemaIndexLastChangedSeq: number | undefined;
 
 	public constructor(
 		private readonly schema: MutableTreeStoredSchema,
 		options: ICodecOptions,
 		collabWindow: CollabWindow,
+		private readonly codec: IJsonCodec<TreeStoredSchema>,
 	) {
-		// TODO: Which format version should this use?
-		this.codec = makeSchemaCodec(options, SchemaFormatVersion.V1) as IJsonCodec<
-			TreeStoredSchema,
-			Format
-		>;
 		this.schema.events.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
 			// We are assuming that schema changes from remote ops are valid, as we are in a summarization context.

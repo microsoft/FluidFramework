@@ -5,8 +5,11 @@
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
+	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
+	makeCodecFamily,
+	makeVersionDispatchingCodec,
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import {
@@ -91,10 +94,48 @@ function decode(f: Format): TreeStoredSchema {
 	};
 }
 
+export function makeSchemaCodec(
+	options: ICodecOptions,
+	writeVersion: number,
+): IJsonCodec<TreeStoredSchema> {
+	const family = makeSchemaCodecs(options);
+	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
+}
+
+export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
+	return makeCodecFamily([
+		[1, makeV1CodecWithVersion(options, 1)],
+		[5, makeV1CodecWithVersion(options, 5)],
+	]);
+}
+
 /**
  * Creates a codec which performs synchronous monolithic encoding of schema content.
  */
-export function makeSchemaCodec(
+function makeV1CodecWithVersion(
+	options: ICodecOptions,
+	version: 1 | 5,
+): IJsonCodec<TreeStoredSchema> {
+	switch (version) {
+		case 1:
+			return {
+				encode: (data: TreeStoredSchema) => encodeRepoV1(data),
+				decode: (data: FormatV1) => decode(data),
+			};
+		case 5:
+			return {
+				encode: (data: TreeStoredSchema) => encodeRepoV2(data),
+				decode: (data: FormatV2) => decode(data),
+			};
+		default:
+			unreachableCase(version);
+	}
+}
+
+/**
+ * Creates a codec which performs synchronous monolithic encoding of schema content.
+ */
+export function makeSchemaCodecOld(
 	options: ICodecOptions,
 	version: SchemaFormatVersion,
 ): IJsonCodec<TreeStoredSchema> {
