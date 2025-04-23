@@ -23,10 +23,10 @@
 		"reportTempFolder": "<projectFolder>/_api-extractor-temp/",
 		"reportVariants": ["public", "beta", "alpha"], // TODO: add "complete"?
 
-		// Add `@sealed` and `@system` to the list of tags included in API reports.
+		// Add `@legacy` and `@system` to the list of tags included in API reports.
 		// These tags have breaking change implications, so they provide useful context during code reviews.
 		"tagsToReport": {
-			"@sealed": true,
+			"@legacy": true,
 			"@system": true
 		}
 	},
