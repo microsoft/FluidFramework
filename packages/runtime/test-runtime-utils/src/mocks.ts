@@ -841,7 +841,8 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 	}
-	public readonly: boolean = false;
+	private readonly: boolean = false;
+	public readonly isReadOnly = () => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 

@@ -1106,9 +1106,7 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public get readonly(): boolean {
-		return this.deltaManager.readOnlyInfo.readonly === true;
-	}
+	public readonly isReadOnly = (): boolean => this.deltaManager.readOnlyInfo.readonly === true;
 
 	/**
 	 * Current session schema - defines what options are on & off.

@@ -92,13 +92,13 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
+    readonly isReadOnly: () => boolean;
+    // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)
     readonly options: Record<string | number, any>;
-    // (undocumented)
-    readonly readonly: boolean;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;

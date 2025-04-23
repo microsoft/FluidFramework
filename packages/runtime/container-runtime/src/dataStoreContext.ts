@@ -281,9 +281,7 @@ export abstract class FluidDataStoreContext
 		return this._contextDeltaManagerProxy;
 	}
 
-	public get readonly(): boolean {
-		return this.parentContext.readonly ?? false;
-	}
+	public isReadOnly = (): boolean => this.parentContext.isReadOnly?.() ?? false;
 
 	public get connected(): boolean {
 		return this.parentContext.connected;
@@ -489,7 +487,7 @@ export abstract class FluidDataStoreContext
 
 		this._contextDeltaManagerProxy = new ContextDeltaManagerProxy(
 			this.parentContext.deltaManager,
-			() => this.readonly,
+			() => this.isReadOnly(),
 		);
 	}
 

@@ -70,7 +70,7 @@ export interface IFluidDataStoreRuntime
 
 	readonly connected: boolean;
 
-	readonly readonly: boolean;
+	readonly isReadOnly: () => boolean;
 
 	readonly logger: ITelemetryBaseLogger;
 

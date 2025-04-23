@@ -449,7 +449,7 @@ export interface IFluidParentContext
 	 * Indicates if the parent context is readonly. If readonly is true, the consumer of
 	 * the context should also consider themselves readonly.
 	 */
-	readonly readonly?: boolean;
+	readonly isReadOnly?: () => boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;

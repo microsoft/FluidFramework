@@ -65,6 +65,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
+    readonly isReadOnly: () => boolean;
+    // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
     notifyReadOnlyState(readonly: boolean): void;
@@ -75,8 +77,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
     processSignal(message: IInboundSignalMessage, local: boolean): void;
-    // (undocumented)
-    get readonly(): boolean;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)

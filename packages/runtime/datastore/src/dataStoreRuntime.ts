@@ -110,7 +110,7 @@ type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T,
 
 interface IFluidDataStoreContextFeaturesToTypes {
 	[encodeHandlesInContainerRuntime]: IFluidDataStoreContext; // No difference in typing with this feature
-	[notifiesReadOnlyState]: PickRequired<IFluidDataStoreContext, "readonly">;
+	[notifiesReadOnlyState]: PickRequired<IFluidDataStoreContext, "isReadOnly">;
 }
 
 function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
@@ -159,9 +159,7 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.connected;
 	}
 
-	public get readonly(): boolean {
-		return this._readonly;
-	}
+	public readonly isReadOnly = (): boolean => this._readonly;
 
 	public get clientId(): string | undefined {
 		return this.dataStoreContext.clientId;
@@ -291,7 +289,7 @@ export class FluidDataStoreRuntime
 		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this));
 
 		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
-			this._readonly = dataStoreContext.readonly;
+			this._readonly = dataStoreContext.isReadOnly();
 		} else {
 			this._readonly = this.dataStoreContext.deltaManager.readOnlyInfo.readonly === true;
 			this.dataStoreContext.deltaManager.on("readonly", (readonly) =>

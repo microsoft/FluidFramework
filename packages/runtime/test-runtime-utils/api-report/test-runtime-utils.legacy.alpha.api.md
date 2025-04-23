@@ -449,6 +449,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
+    readonly isReadOnly: () => boolean;
+    // (undocumented)
     readonly loader: ILoader;
     // @deprecated (undocumented)
     get local(): boolean;
@@ -471,8 +473,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     processSignal(message: any, local: boolean): void;
     // (undocumented)
     quorum: MockQuorumClients;
-    // (undocumented)
-    readonly: boolean;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)

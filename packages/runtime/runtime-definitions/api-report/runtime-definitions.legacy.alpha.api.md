@@ -215,11 +215,11 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
+    readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
     // (undocumented)
     readonly options: Record<string | number, any>;
-    readonly readonly?: boolean;
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
