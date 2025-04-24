@@ -273,6 +273,18 @@ export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, 
     bind(handle: IFluidHandleInternal): void;
 }
 
+// @alpha @legacy
+export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
+    readonly events: IEventProvider<IFluidHandlePayloadPendingEvents>;
+    readonly payloadState: PayloadState;
+}
+
+// @alpha @legacy
+export interface IFluidHandlePayloadPendingEvents extends IEvent {
+    (event: "shared", listener: () => void): any;
+    (event: "failed", listener: (error: unknown) => void): any;
+}
+
 // @public (undocumented)
 export const IFluidLoadable: keyof IProvideFluidLoadable;
 
@@ -387,6 +399,9 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
 export type Off = () => void;
+
+// @alpha @legacy
+export type PayloadState = "local" | "shared" | "pending" | "failed";
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {

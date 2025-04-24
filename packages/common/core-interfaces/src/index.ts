@@ -32,7 +32,10 @@ export type {
 	IProvideFluidHandle,
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,
+	IFluidHandlePayloadPending,
+	IFluidHandlePayloadPendingEvents,
 	IFluidHandleErased,
+	PayloadState,
 } from "./handles.js";
 export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";
 

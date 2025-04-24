@@ -4,6 +4,7 @@
  */
 
 import type { ErasedType } from "./erasedType.js";
+import type { IEvent, IEventProvider } from "./events.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
 
 /**
@@ -115,6 +116,52 @@ export interface IFluidHandleInternalPayloadPending<
 	 * For instance, the BlobManager can generate handles before completing the blob upload/attach.
 	 */
 	readonly payloadPending: boolean;
+}
+
+/**
+ * The state of the handle's payload.
+ * - "local" - The payload is only available to the local client, and not to remote collaborators
+ * - "shared" - The payload is availabe to both the local client and remote collaborators
+ * - "pending" - The payload is not yet available to the local client
+ * - "failed" - The payload is available to the local client but has failed in sharing to remote collaborators
+ * @legacy
+ * @alpha
+ */
+export type PayloadState = "local" | "shared" | "pending" | "failed";
+
+/**
+ * Events which fire as the handle's payload state transitions.
+ * @legacy
+ * @alpha
+ */
+export interface IFluidHandlePayloadPendingEvents extends IEvent {
+	/**
+	 * Emitted when the payload becomes available to all clients.
+	 */
+	(event: "shared", listener: () => void);
+	/**
+	 * Emitted for locally created handles when the payload fails sharing to remote collaborators.
+	 */
+	(event: "failed", listener: (error: unknown) => void);
+}
+
+/**
+ * Observable state on the handle regarding its payload sharing state.
+ *
+ * @privateRemarks
+ * Contents to be merged to IFluidHandle, and then this separate interface should be removed.
+ * @legacy
+ * @alpha
+ */
+export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
+	/**
+	 * The current state of the handle's payload.
+	 */
+	readonly payloadState: PayloadState;
+	/**
+	 * Event provider, with events that emit as the payload state transitions.
+	 */
+	readonly events: IEventProvider<IFluidHandlePayloadPendingEvents>;
 }
 
 /**
