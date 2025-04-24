@@ -739,8 +739,7 @@ export class PendingStateManager implements IDisposable {
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
 			const batchId = getEffectiveBatchId(pendingMessage);
 
-			//* TODO: Make staged required
-			const staged = pendingMessage.batchInfo.staged === true;
+			const staged = pendingMessage.batchInfo.staged;
 
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				// Resubmit no messages, with the batchId. Will result in another empty batch marker.
