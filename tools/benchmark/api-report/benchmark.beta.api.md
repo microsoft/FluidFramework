@@ -154,12 +154,12 @@ export function isResultError(result: BenchmarkResult): result is BenchmarkError
 
 // @public (undocumented)
 export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, BenchmarkDescription {
-    allowedDeviationBytes?: number;
-    readonly baselineMemoryUsage?: number | undefined;
-    maxBenchmarkDurationSeconds?: number;
-    maxRelativeMarginOfError?: number;
-    minSampleCount?: number;
-    samplePercentageToUse?: number;
+    readonly allowedDeviationBytes?: number;
+    readonly baselineMemoryUsage?: number;
+    readonly maxBenchmarkDurationSeconds?: number;
+    readonly maxRelativeMarginOfError?: number;
+    readonly minSampleCount?: number;
+    readonly samplePercentageToUse?: number;
 }
 
 // @public

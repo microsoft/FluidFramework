@@ -43,8 +43,6 @@ describe("SharedMap memory usage", () => {
 		new (class implements IMemoryTestObject {
 			public readonly title = "Create empty map";
 			public readonly minSampleCount = 500;
-			public readonly baselineMemoryUsage = 0; // Example: Baseline memory usage in bytes
-			public readonly allowedDeviationBytes = 10; // Example: Allow 10 bytes deviation from the baseline
 			private map: ISharedMap = createLocalMap("testMap");
 
 			public async run(): Promise<void> {
@@ -87,6 +85,7 @@ describe("SharedMap memory usage", () => {
 					}
 					this.map.clear();
 				}
+
 				public beforeIteration(): void {
 					this.map = createLocalMap("testMap");
 				}

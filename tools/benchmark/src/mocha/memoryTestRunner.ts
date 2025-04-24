@@ -24,7 +24,12 @@ import { timer } from "../timer";
 
 import { supportParentProcess } from "./runner";
 
-const ENABLE_MEM_REGRESSION = process.env.ENABLE_MEM_REGRESSION === "true";
+/**
+ * This is a flag to enable/disable error throwing for memory regression tests.
+ * Disabling this will allow running the tests in CI without failing the build, but still get a warning.
+ * Set to 1 to enable error throwing in memory regression tests.
+ */
+const ENABLE_MEM_REGRESSION = process.env.ENABLE_MEM_REGRESSION === "1";
 
 // TODO:
 // Much of the logic and interfaces here were duplicated from the runtime benchmark code.
@@ -91,7 +96,7 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 	 * Elapsed time gets checked between iterations of the test that is being benchmarked.
 	 * Defaults to 30 seconds.
 	 */
-	maxBenchmarkDurationSeconds?: number;
+	readonly maxBenchmarkDurationSeconds?: number;
 
 	/**
 	 * The min sample count to reach.
@@ -99,7 +104,7 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 	 *
 	 * @remarks This takes precedence over {@link MemoryTestObjectProps.maxBenchmarkDurationSeconds}.
 	 */
-	minSampleCount?: number;
+	readonly minSampleCount?: number;
 
 	/**
 	 * The benchmark will iterate the test as many times as necessary to try to get the absolute value of
@@ -110,27 +115,27 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 	 * @remarks {@link MemoryTestObjectProps.maxBenchmarkDurationSeconds} takes precedence over this, since a
 	 * benchmark with a very high measurement variance might never get a low enough RME.
 	 */
-	maxRelativeMarginOfError?: number;
+	readonly maxRelativeMarginOfError?: number;
 
 	/**
 	 * Percentage of samples (0.1 - 1) to use for calculating the statistics.
 	 * Defaults to 0.95.
 	 * Use a lower number to drop the highest/lowest measurements.
 	 */
-	samplePercentageToUse?: number;
+	readonly samplePercentageToUse?: number;
 
 	/**
 	 * The baseline memory usage to compare against for the test, which is used to determine if the test regressed.
 	 * If not specified, the test will not be compared against a baseline and will only be run to measure the memory usage.
 	 * @remarks Should be specified in bytes.
 	 */
-	readonly baselineMemoryUsage?: number | undefined;
+	readonly baselineMemoryUsage?: number;
 
 	/**
 	 * The allowed deviation from the `baselineMemoryUsage`, measured in bytes.
 	 * Has no effect if `baselineMemoryUsage` is not specified.
 	 * */
-	allowedDeviationBytes?: number;
+	readonly allowedDeviationBytes?: number;
 }
 
 /**
@@ -173,6 +178,30 @@ export interface MemorySampleData {
 }
 
 /**
+ * Validates the values passed in for memory regression tests.
+ * @param baselineMemoryUsage - baseline memory usage to compare against for the test, which is used to determine if the test regressed.
+ * @param allowedDeviationBytes - allowed deviation from the `baselineMemoryUsage`, measured in bytes.
+ * @throws Error if baselineMemoryUsage XOR allowedDeviationBytes are set or if either is negative.
+ */
+function validateMemoryBaselineValues(
+	baselineMemoryUsage?: number,
+	allowedDeviationBytes?: number,
+): void {
+	const onlyOneIsSet =
+		(baselineMemoryUsage === undefined) !== (allowedDeviationBytes === undefined);
+	if (onlyOneIsSet) {
+		throw new Error("Both baselineMemoryUsage and allowedDeviationBytes must be defined");
+	}
+
+	if (baselineMemoryUsage !== undefined && baselineMemoryUsage < 0) {
+		throw new Error("baselineMemoryUsage must be a positive number.");
+	}
+
+	if (allowedDeviationBytes !== undefined && allowedDeviationBytes < 0) {
+		throw new Error("allowedDeviationBytes must be a positive number.");
+	}
+}
+/**
  * This is wrapper for Mocha's 'it()' function, that runs a memory benchmark.
  *
  * Here is how this benchmarking works at a high-level:
@@ -205,6 +234,7 @@ export interface MemorySampleData {
  */
 export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 	// Setting to -1 to indicate that baselineMemoryUsage or allowedDeviationBytes variables are not set.
+	validateMemoryBaselineValues(testObject.baselineMemoryUsage, testObject.allowedDeviationBytes);
 	const baselineMemoryUsage = testObject.baselineMemoryUsage ?? -1;
 	const allowedDeviationBytes = testObject.allowedDeviationBytes ?? -1;
 
@@ -218,12 +248,11 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		type: testObject.type ?? BenchmarkType.Measurement,
 		samplePercentageToUse: testObject.samplePercentageToUse ?? 0.95,
 		category: testObject.category ?? "",
-		allowedDeviationBytes: testObject.allowedDeviationBytes ?? 5, // Default to 5% deviation if not specified
+		allowedDeviationBytes,
 	};
 
 	return supportParentProcess({
 		title: qualifiedTitle({ ...testObject, testType: TestType.MemoryUsage }),
-		baselineMemoryUsage,
 		only: args.only,
 		run: async () => {
 			let runs = 0;
@@ -320,11 +349,10 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						const avgHeapUsed = heapUsedStats.arithmeticMean;
 						const lowerBound = baselineMemoryUsage - args.allowedDeviationBytes;
 						const upperBound = baselineMemoryUsage + args.allowedDeviationBytes;
-						const tolerance = (args.allowedDeviationBytes / baselineMemoryUsage) * 100;
 						// Throw errors on regressions/improvements if `ENABLE_MEM_REGRESSION` is set and a warning otherwise.
 						// This allows us to run the tests in CI without failing the build, but still get a warning.
 						if (avgHeapUsed > upperBound) {
-							const message = `Memory Regression detected for ${testObject.title}: Used ${avgHeapUsed} bytes, exceeding the ${tolerance}% tolerance of the baseline of ${args.baselineMemoryUsage} bytes.`;
+							const message = `Memory Regression detected for test '${testObject.title}': Used '${avgHeapUsed}' bytes, with baseline'${args.baselineMemoryUsage}' and tolerance of '${allowedDeviationBytes} bytes.`;
 							if (ENABLE_MEM_REGRESSION) {
 								throw new Error(message);
 							} else {
@@ -332,7 +360,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 							}
 						}
 						if (avgHeapUsed < lowerBound) {
-							const message = `Possible memory improvement detected for ${testObject.title}: Used ${avgHeapUsed} bytes, below the ${tolerance}% allowed tolerance of the baseline of ${args.baselineMemoryUsage} bytes. Consider updating the baseline.`;
+							const message = `Possible memory improvement detected for test '${testObject.title}'. Used '${avgHeapUsed}' bytes with baseline '${args.baselineMemoryUsage} and tolerance of '${allowedDeviationBytes} bytes. Consider updating the baseline.`;
 							if (ENABLE_MEM_REGRESSION) {
 								throw new Error(message);
 							} else {
