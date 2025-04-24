@@ -92,15 +92,6 @@ export namespace TableSchema {
 			WithType<ScopedSchemaName<Scope, "Column">>;
 		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnSchemaFields>;
 
-		// TypeScript is unable to narrow the type of `fields` correctly here.
-		// Derive a type that replaces the constructor of `Column` with one that returns a compatible type.
-		// See: https://github.com/microsoft/TypeScript/issues/52144
-		type ColumnModified = {
-			[K in keyof typeof Column]: (typeof Column)[K];
-		} & (new (
-			...args: ConstructorParameters<typeof Column>
-		) => Column & Pick<IColumn<TFieldsSchema>, "fields">);
-
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
 		// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
@@ -113,7 +104,7 @@ export namespace TableSchema {
 			/* TInsertable */ object & ColumnInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof columnSchemaFields
-		> = Column as unknown as ColumnModified;
+		> = Column;
 
 		return ColumnSchemaType;
 	}
