@@ -23,4 +23,3 @@ export {
 	OverlappingIntervalsIndex,
 	ISequenceOverlappingIntervalsIndex,
 } from "./overlappingIntervalsIndex.js";
-export { createOverlappingSequenceIntervalsIndex } from "./overlappingSequenceIntervalsIndex.js";

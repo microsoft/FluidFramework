@@ -1045,13 +1045,17 @@ export function createAlwaysFinalizedIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore {
-	const compressor =
-		sessionIdOrLogger === undefined
-			? createIdCompressor()
-			: typeof sessionIdOrLogger === "string"
-				? createIdCompressor(sessionIdOrLogger, loggerOrUndefined)
-				: createIdCompressor(sessionIdOrLogger);
+	const sessionId =
+		typeof sessionIdOrLogger === "string" ? sessionIdOrLogger : createSessionId();
+	const logger =
+		(loggerOrUndefined ?? typeof sessionIdOrLogger === "object")
+			? (sessionIdOrLogger as ITelemetryBaseLogger)
+			: undefined;
+	// This local session is unused, but it needs to not collide with the GhostSession, so allocate a random one.
+	// This causes the compressor to serialize non-deterministically even when provided an explicit SessionId.
+	// This can be fixed in the future if needed.
+	const compressor = createIdCompressor(createSessionId(), logger);
 	// Permanently put the compressor in a ghost session
-	(compressor as IdCompressor).startGhostSession(createSessionId());
+	(compressor as IdCompressor).startGhostSession(sessionId);
 	return compressor;
 }

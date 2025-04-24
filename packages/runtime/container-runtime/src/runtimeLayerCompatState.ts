@@ -9,6 +9,10 @@ import {
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	encodeHandlesInContainerRuntime,
+	notifiesReadOnlyState,
+} from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -63,9 +67,9 @@ export const loaderSupportRequirements: ILayerCompatSupportRequirements = {
 export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
 	...runtimeCoreCompatDetails,
 	/**
-	 * The features supported by the Runtime layer across the Runtime / Loader boundary.
+	 * The features supported by the Runtime layer across the Runtime / DataStore boundary.
 	 */
-	supportedFeatures: new Set<string>(),
+	supportedFeatures: new Set<string>([encodeHandlesInContainerRuntime, notifiesReadOnlyState]),
 };
 
 /**

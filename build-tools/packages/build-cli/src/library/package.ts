@@ -350,8 +350,8 @@ export async function isReleased(
 	}
 
 	log?.verbose(`Checking for tag '${tagName}'`);
-	const rawTag = await gitRepo.gitClient.tags({ list: tagName });
-	return rawTag.all?.[0] === tagName;
+	const rawTag = await gitRepo.gitClient.tag(["--list", tagName]);
+	return rawTag.trim() === tagName;
 }
 
 /**

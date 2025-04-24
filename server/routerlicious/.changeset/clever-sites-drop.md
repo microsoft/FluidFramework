@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-services-core": major
+"__section": feature
 ---
 
 Adds support to call the `/accesstoken` Riddler API

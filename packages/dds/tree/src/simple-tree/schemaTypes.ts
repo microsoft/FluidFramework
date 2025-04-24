@@ -81,9 +81,10 @@ export function isTreeNodeSchemaClass<
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 /**
- * Kind of a field on a node.
+ * Kind of a field on an {@link TreeObjectNode}.
  * @remarks
  * More kinds may be added over time, so do not assume this is an exhaustive set.
+ * See {@link FieldSchema} for where these are used, and {@link SchemaFactory} for how to create schema which use them.
  * @public
  */
 export enum FieldKind {
@@ -100,9 +101,11 @@ export enum FieldKind {
 	 */
 	Required,
 	/**
-	 * A special field used for node identifiers.
+	 * A special readonly field used for node identifier strings.
 	 * @remarks
 	 * Only allows exactly one child.
+	 *
+	 * See {@link SchemaFactory.identifier} for more details.
 	 */
 	Identifier,
 }
@@ -883,13 +886,14 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitA
  * @typeparam TList - AllowedTypes to process
  * @system @public
  */
-export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> =
-	TList extends readonly [
+export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = [TList] extends [
+	readonly [
 		LazyItem<infer TSchema extends TreeNodeSchema>,
 		...infer Rest extends AllowedTypes,
-	]
-		? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest>
-		: never;
+	],
+]
+	? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest>
+	: never;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.

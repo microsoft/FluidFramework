@@ -1,5 +1,6 @@
 ---
-"@fluidframework/server-services": minor
+"@fluidframework/server-services": major
+"__section": feature
 ---
 
 Added Collaboration Session Tracking implementations

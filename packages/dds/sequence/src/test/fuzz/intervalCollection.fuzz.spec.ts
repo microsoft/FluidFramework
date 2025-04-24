@@ -76,6 +76,11 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
+		// Interval collection and obliterate with reconnect+rebase have bugs in the case of repeatedly
+		// resubmitting operations. This likely boils down to bugs in normalization which are known (see AB#6552 and AB#34898),
+		// but any additional fixes necessary are tracked by AB#31001.
+		// These cases should be somewhat rare in practice and the issue occurs at resubmission time, meaning they don't
+		// result in data corruption, just data loss.
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
