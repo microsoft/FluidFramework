@@ -151,8 +151,11 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		"3.0.0": { enableGCSweep: true },
 	} as const,
 	createBlobPlaceholders: {
+		// This feature is new and disabled by default. In the future we will enable it by default, but we have not
+		// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
+		// exposed on the public API surface.
 		"1.0.0": false,
-	},
+	} as const,
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
 
 /**
