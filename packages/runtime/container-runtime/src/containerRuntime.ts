@@ -155,7 +155,7 @@ import {
 import {
 	defaultminVersionForCollab,
 	getminVersionForCollabDefaults,
-	isValidCompatVersion,
+	isValidMinVersionForCollab,
 	type RuntimeOptionsAffectingDocSchema,
 	type SemanticVersion,
 } from "./compatUtils.js";
@@ -808,7 +808,7 @@ export class ContainerRuntime
 		// 1.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
 		const minVersionForCollab = params.minVersionForCollab ?? defaultminVersionForCollab;
-		if (!isValidCompatVersion(minVersionForCollab)) {
+		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(
 				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 2.22.1).`,
 			);
