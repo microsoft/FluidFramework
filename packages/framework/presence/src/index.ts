@@ -14,21 +14,22 @@
 export type { ClientConnectionId } from "./baseTypes.js";
 
 export type {
-	PresenceNotifications,
-	PresenceNotificationsSchema,
-	PresenceStates,
-	PresenceStatesEntries,
-	PresenceStatesSchema,
-	PresenceWorkspaceAddress,
-	PresenceWorkspaceEntry,
+	NotificationsWorkspace,
+	NotificationsWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceEntries,
+	StatesWorkspaceSchema,
+	StatesWorkspaceEntry,
+	WorkspaceAddress,
 } from "./types.js";
 
 export {
-	type ClientSessionId,
-	type IPresence,
-	type ISessionClient,
+	type Attendee,
+	type AttendeesEvents,
+	type AttendeeId,
+	AttendeeStatus,
+	type Presence,
 	type PresenceEvents,
-	SessionClientStatus,
 } from "./presence.js";
 
 export type {
@@ -36,32 +37,34 @@ export type {
 	BroadcastControlSettings,
 } from "./broadcastControls.js";
 
-export { acquirePresence } from "./experimentalAccess.js";
+export { getPresence } from "./experimentalAccess.js";
 
 export {
-	acquirePresenceViaDataObject,
+	getPresenceViaDataObject,
 	type ExperimentalPresenceDO,
 	ExperimentalPresenceManager,
 } from "./datastorePresenceManagerFactory.js";
 
-export {
-	LatestMap,
-	type LatestMapItemRemovedClientData,
-	type LatestMapItemValueClientData,
-	type LatestMapValueClientData,
-	type LatestMapValueManager,
-	type LatestMapValueManagerEvents,
-	type ValueMap,
+export type {
+	latestMap,
+	LatestMapArguments,
+	LatestMapRaw,
+	LatestMapClientData,
+	LatestMapRawEvents,
+	LatestMapItemRemovedClientData,
+	LatestMapItemUpdatedClientData,
+	StateMap,
 } from "./latestMapValueManager.js";
-export {
-	Latest,
-	type LatestValueManager,
-	type LatestValueManagerEvents,
+export type {
+	latest,
+	LatestArguments,
+	LatestRaw,
+	LatestRawEvents,
 } from "./latestValueManager.js";
 export type {
-	LatestValueClientData,
-	LatestValueData,
-	LatestValueMetadata,
+	LatestClientData,
+	LatestData,
+	LatestMetadata,
 } from "./latestValueTypes.js";
 
 export {
@@ -72,6 +75,8 @@ export {
 	type NotificationsManager,
 	type NotificationsManagerEvents,
 } from "./notificationsManager.js";
+
+export { StateFactory } from "./stateFactory.js";
 
 export type { InternalTypes } from "./exposedInternalTypes.js";
 export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";

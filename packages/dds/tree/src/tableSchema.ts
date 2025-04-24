@@ -19,6 +19,7 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeNode,
 	type TreeNodeFromImplicitAllowedTypes,
+	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
 	type WithType,
 } from "./simple-tree/index.js";
@@ -155,7 +156,7 @@ export namespace TableSchema {
 
 		/**
 		 * Sets the cell in the specified column.
-		 * @remarks To delete a cell, call {@link TableSchema.IRow.deleteCell} instead.
+		 * @remarks To remove a cell, call {@link TableSchema.IRow.removeCell} instead.
 		 * @privateRemarks TODO: add overload that takes column ID.
 		 */
 		setCell(
@@ -164,10 +165,10 @@ export namespace TableSchema {
 		): void;
 
 		/**
-		 * Deletes the cell in the specified column.
+		 * Removes the cell in the specified column.
 		 * @privateRemarks TODO: add overload that takes column ID.
 		 */
-		deleteCell(column: TreeNodeFromImplicitAllowedTypes<TColumnSchema>): void;
+		removeCell(column: TreeNodeFromImplicitAllowedTypes<TColumnSchema>): void;
 	}
 
 	/**
@@ -222,7 +223,7 @@ export namespace TableSchema {
 				this.cells.set(column.id, value);
 			}
 
-			public deleteCell(column: ColumnValueType): void {
+			public removeCell(column: ColumnValueType): void {
 				if (!this.cells.has(column.id)) return;
 				this.cells.delete(column.id);
 			}
@@ -390,7 +391,7 @@ export namespace TableSchema {
 
 		/**
 		 * Sets the cell at the specified location in the table.
-		 * @remarks To delete a cell, call {@link TableSchema.ITable.deleteCell} instead.
+		 * @remarks To remove a cell, call {@link TableSchema.ITable.removeCell} instead.
 		 * @privateRemarks TODO: add overload that takes column/row nodes?
 		 */
 		setCell(
@@ -408,30 +409,88 @@ export namespace TableSchema {
 		removeColumn: (column: TreeNodeFromImplicitAllowedTypes<TColumnSchema>) => void;
 
 		/**
-		 * Deletes 0 or more rows from the table.
+		 * Removes 0 or more rows from the table.
 		 * @privateRemarks TODO: policy for when 1 or more rows are not in the table.
 		 */
-		deleteRows: (rows: readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[]) => void;
+		removeRows: (rows: readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[]) => void;
 
 		/**
-		 * Deletes all rows from the table.
+		 * Removes all rows from the table.
 		 */
-		deleteAllRows: () => void;
+		removeAllRows: () => void;
 
 		/**
-		 * Deletes the cell at the specified location in the table.
+		 * Removes the cell at the specified location in the table.
 		 * @privateRemarks TODO: add overload that takes column/row nodes?
 		 */
-		deleteCell: (key: CellKey) => void;
+		removeCell: (key: CellKey) => void;
+	}
+
+	/**
+	 * Factory for creating new table schema without specifying row or column schema.
+	 * @internal
+	 */
+	export function createTable<
+		const TInputScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		_cellSchema: TCell,
+	): ReturnType<typeof createTableInternal<TInputScope, TCell>>;
+	/**
+	 * Factory for creating new table schema without specifyint row schema
+	 * @internal
+	 */
+	export function createTable<
+		const TInputScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+		const TColumn extends ColumnSchemaBase<TInputScope>,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		_cellSchema: TCell,
+		columnSchema: TColumn,
+	): ReturnType<typeof createTableInternal<TInputScope, TCell, TColumn>>;
+	/**
+	 * Factory for creating new table schema.
+	 * @internal
+	 */
+	export function createTable<
+		const TInputScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+		const TColumn extends ColumnSchemaBase<TInputScope>,
+		const TRow extends RowSchemaBase<TInputScope, TCell, TColumn>,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		_cellSchema: TCell,
+		columnSchema: TColumn,
+		rowSchema: TRow,
+	): ReturnType<typeof createTableInternal<TInputScope, TCell, TColumn, TRow>>;
+	export function createTable<
+		const TInputScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+		const TColumn extends ColumnSchemaBase<TInputScope>,
+		const TRow extends RowSchemaBase<TInputScope, TCell, TColumn>,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		_cellSchema: TCell,
+		columnSchema?: TColumn,
+		rowSchema?: TRow,
+	): TreeNodeSchema {
+		const column = columnSchema ?? createColumn(inputSchemaFactory);
+		return createTableInternal(
+			inputSchemaFactory,
+			_cellSchema,
+			column as TColumn,
+			rowSchema ?? (createRow(inputSchemaFactory, _cellSchema, column) as TRow),
+		);
 	}
 
 	/**
 	 * Factory for creating new table schema.
-	 * @privateRemarks TODO: add overloads to make column/row schema optional.
-	 * @internal
+	 * @system @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
-	export function createTable<
+	export function createTableInternal<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TColumnFieldsSchema extends ImplicitFieldSchema,
@@ -566,22 +625,22 @@ export namespace TableSchema {
 				this.columns.removeAt(index);
 			}
 
-			public deleteRows(rows: readonly RowValueType[]): void {
-				// If there are no rows to delete, do nothing
+			public removeRows(rows: readonly RowValueType[]): void {
+				// If there are no rows to remove, do nothing
 				if (rows.length === 0) {
 					return;
 				}
 
-				// If there is only one row to delete, delete it
+				// If there is only one row to remove, remove it
 				if (rows.length === 1) {
 					const index = this.rows.indexOf(rows[0] ?? oob());
 					this.rows.removeAt(index);
 					return;
 				}
-				// If there are multiple rows to delete, delete them in a transaction
+				// If there are multiple rows to remove, remove them in a transaction
 				// This is to avoid the performance issues of deleting multiple rows at once
 				Tree.runTransaction(this, () => {
-					// Iterate over the rows and delete them
+					// Iterate over the rows and remove them
 					for (const row of rows) {
 						const index = this.rows.indexOf(row);
 						this.rows.removeAt(index);
@@ -589,17 +648,17 @@ export namespace TableSchema {
 				});
 			}
 
-			public deleteAllRows(): void {
+			public removeAllRows(): void {
 				this.rows.removeRange();
 			}
 
-			public deleteCell(key: CellKey): void {
+			public removeCell(key: CellKey): void {
 				const { columnId, rowId } = key;
 				const row = this.getRow(rowId);
 				if (row !== undefined) {
 					const column = this.getColumn(columnId);
 					if (column !== undefined) {
-						row.deleteCell(column);
+						row.removeCell(column);
 					}
 				}
 			}

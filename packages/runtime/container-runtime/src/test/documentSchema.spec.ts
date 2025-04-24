@@ -29,6 +29,7 @@ describe("Runtime", () => {
 			compressionLz4: true,
 			idCompressorMode: "delayed",
 			// opGroupingEnabled: undefined,
+			// createBlobPayloadPending: true,
 		},
 	};
 
@@ -37,6 +38,7 @@ describe("Runtime", () => {
 		compressionLz4: true,
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
+		createBlobPayloadPending: false,
 		disallowedVersions: [],
 	};
 
@@ -301,6 +303,7 @@ describe("Runtime", () => {
 					compressionLz4: boolToProp(featuresModified.compressionLz4),
 					idCompressorMode: featuresModified.idCompressorMode,
 					opGroupingEnabled: boolToProp(featuresModified.opGroupingEnabled),
+					createBlobPayloadPending: boolToProp(featuresModified.createBlobPayloadPending),
 					disallowedVersions: arrayToProp(featuresModified.disallowedVersions),
 				},
 			};

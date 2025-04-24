@@ -169,9 +169,12 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	// Other
 	type VerboseTreeNode,
-	type EncodeOptions,
-	type ParseOptions,
+	type TreeEncodingOptions,
+	type TreeSchemaEncodingOptions,
+	type TreeSchema,
+	TreeViewConfigurationAlpha,
 	type VerboseTree,
 	extractPersistedSchema,
 	comparePersistedSchema,
@@ -230,6 +233,7 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	allowUnused,
 	type LeafSchema,
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodePojoEmulationSchema,
@@ -237,6 +241,7 @@ export {
 	type MapNodeCustomizableSchema,
 	type MapNodePojoEmulationSchema,
 	MapNodeSchema,
+	type ObjectFromSchemaRecord,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

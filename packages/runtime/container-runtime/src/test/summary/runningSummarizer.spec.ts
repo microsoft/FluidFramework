@@ -37,7 +37,6 @@ import {
 	ISummarizerRuntime,
 	ISummaryCancellationToken,
 	RetriableSummaryError,
-	RunningSummarizer,
 	SubmitSummaryResult,
 	SummarizeHeuristicData,
 	SummaryCollection,
@@ -48,8 +47,8 @@ import {
 import {
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../summary/runningSummarizer.js";
+	RunningSummarizer,
+} from "../../summary/index.js";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	disposed = false;
