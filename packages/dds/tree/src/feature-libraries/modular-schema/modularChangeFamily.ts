@@ -40,6 +40,10 @@ import {
 	type DeltaDetachedNodeRename,
 	newChangeAtomIdRangeMap,
 	offsetChangeAtomId,
+	type ChangeAtomIdRangeMap,
+	newChangeAtomIdTransform,
+	subtractChangeAtomIds,
+	makeChangeAtomId,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -55,6 +59,7 @@ import {
 	type TupleBTree,
 	RangeMap,
 	balancedReduce,
+	type RangeQueryEntry,
 } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
@@ -90,13 +95,6 @@ import {
 	type NodeId,
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
-import {
-	makeChangeAtomId,
-	newChangeAtomIdTransform,
-	subtractChangeAtomIds,
-	type ChangeAtomIdRangeMap,
-} from "../../core/rebase/types.js";
-import type { RangeQueryEntry } from "../../util/rangeMap.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
