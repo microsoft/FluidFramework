@@ -55,7 +55,10 @@ export type {
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
 } from "./protocol.js";
-export { encodeHandlesInContainerRuntime } from "./runtimeLayerCompatFeatureNames.js";
+export {
+	encodeHandlesInContainerRuntime,
+	notifiesReadOnlyState,
+} from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,

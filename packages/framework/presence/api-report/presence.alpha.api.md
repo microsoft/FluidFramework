@@ -59,8 +59,9 @@ export function getPresence(fluidContainer: IFluidContainer): Presence;
 // @alpha
 export function getPresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence;
 
-// @alpha
+// @alpha @system
 export namespace InternalTypes {
+    // @system
     export type ManagerFactory<TKey extends string, TValue extends ValueDirectoryOrState<any>, TManager> = {
         instanceBase: new (...args: any[]) => any;
     } & ((key: TKey, datastoreHandle: StateDatastoreHandle<TKey, TValue>) => {
@@ -70,7 +71,7 @@ export namespace InternalTypes {
         };
         manager: StateValue<TManager>;
     });
-    // (undocumented)
+    // @system (undocumented)
     export interface MapValueState<T, Keys extends string | number> {
         // (undocumented)
         items: {
@@ -79,20 +80,22 @@ export namespace InternalTypes {
         // (undocumented)
         rev: number;
     }
-    // (undocumented)
+    // @system (undocumented)
     export interface NotificationType {
         // (undocumented)
         args: (JsonSerializable<unknown> & JsonDeserialized<unknown>)[];
         // (undocumented)
         name: string;
     }
-    // (undocumented)
+    // @system (undocumented)
     export class StateDatastoreHandle<TKey, TValue extends ValueDirectoryOrState<any>> {
     }
+    // @system
     export type StateValue<T> = T & StateValueBrand<T>;
+    // @system
     export class StateValueBrand<T> {
     }
-    // (undocumented)
+    // @system (undocumented)
     export interface ValueDirectory<T> {
         // (undocumented)
         items: {
@@ -101,19 +104,19 @@ export namespace InternalTypes {
         // (undocumented)
         rev: number;
     }
-    // (undocumented)
+    // @system (undocumented)
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
-    // (undocumented)
+    // @system (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
         value?: JsonDeserialized<TValue>;
     }
-    // (undocumented)
+    // @system (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
         // (undocumented)
         value: JsonDeserialized<TValue>;
     }
-    // (undocumented)
+    // @system (undocumented)
     export interface ValueStateMetadata {
         // (undocumented)
         rev: number;
@@ -122,14 +125,15 @@ export namespace InternalTypes {
     }
 }
 
-// @alpha
+// @alpha @system
 export namespace InternalUtilityTypes {
-    export type FullyReadonly<T> = {
-        readonly [K in keyof T]: FullyReadonly<T[K]>;
-    };
+    // @system
     export type IsNotificationListener<Event> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, true, false> : false;
+    // @system
     export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
+    // @system
     export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
+    // @system
     export type NotificationListeners<E> = {
         [P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
     };
@@ -155,7 +159,7 @@ export interface LatestData<T> {
     // (undocumented)
     metadata: LatestMetadata;
     // (undocumented)
-    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+    value: DeepReadonly<JsonDeserialized<T>>;
 }
 
 // @alpha
@@ -211,7 +215,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
     }) => void;
     // @eventProperty
     localItemUpdated: (updatedItem: {
-        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
         key: K;
     }) => void;
     // @eventProperty
@@ -235,7 +239,7 @@ export interface LatestRaw<T> {
     getRemote(attendee: Attendee): LatestData<T>;
     getRemotes(): IterableIterator<LatestClientData<T>>;
     getStateAttendees(): Attendee[];
-    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+    get local(): DeepReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
     readonly presence: Presence;
 }
@@ -244,7 +248,7 @@ export interface LatestRaw<T> {
 export interface LatestRawEvents<T> {
     // @eventProperty
     localUpdated: (update: {
-        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
     }) => void;
     // @eventProperty
     remoteUpdated: (update: LatestClientData<T>) => void;
@@ -287,8 +291,8 @@ export type NotificationSubscriptions<E extends InternalUtilityTypes.Notificatio
 // @alpha @sealed
 export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends NotificationsManager<any>>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is NotificationsWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>>;
+    readonly notifications: StatesWorkspaceEntries<TSchema>;
     readonly presence: Presence;
-    readonly props: StatesWorkspaceEntries<TSchema>;
 }
 
 // @alpha
@@ -333,8 +337,8 @@ export interface StateMap<K extends string | number, V> {
     clear(): void;
     // (undocumented)
     delete(key: K): boolean;
-    forEach(callbackfn: (value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
-    get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
+    forEach(callbackfn: (value: DeepReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
+    get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
     // (undocumented)
     has(key: K): boolean;
     keys(): IterableIterator<K>;
@@ -348,7 +352,7 @@ export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManager
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
     readonly presence: Presence;
-    readonly props: StatesWorkspaceEntries<TSchema>;
+    readonly states: StatesWorkspaceEntries<TSchema>;
 }
 
 // @alpha @sealed

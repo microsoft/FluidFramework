@@ -4,42 +4,42 @@
 
 ```ts
 
-// @alpha
+// @alpha @legacy
 export function createChildLogger(props?: {
     logger?: ITelemetryBaseLogger;
     namespace?: string;
     properties?: ITelemetryLoggerPropertyBags;
 }): ITelemetryLoggerExt;
 
-// @alpha
+// @alpha @legacy
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
     constructor(errorHandler: (eventName: EventEmitterEventType, error: any) => void);
     // (undocumented)
     emit(event: EventEmitterEventType, ...args: unknown[]): boolean;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
     eventName: string;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     category?: TelemetryEventCategory;
     eventName: string;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
     sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type ITelemetryLoggerPropertyBag = Record<string, TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes)>;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface ITelemetryLoggerPropertyBags {
     // (undocumented)
     all?: ITelemetryLoggerPropertyBag;
@@ -47,21 +47,21 @@ export interface ITelemetryLoggerPropertyBags {
     error?: ITelemetryLoggerPropertyBag;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
     duration?: number;
 }
 
-// @alpha
+// @alpha @legacy
 export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
 
-// @alpha
+// @alpha @legacy
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// @alpha
+// @alpha @legacy
 export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | Record<string, string | number | boolean | undefined | (string | number | boolean)[]>;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 // (No @packageDocumentation comment for this package)
