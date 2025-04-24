@@ -42,7 +42,7 @@ import {
 /**
  * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
  */
-const compatModeTominVersionForCollab: Record<CompatibilityMode, SemanticVersion> = {
+const compatibilityModeToMinVersionForCollab: Record<CompatibilityMode, SemanticVersion> = {
 	"1": "1.0.0", // TODO: Should this be the LTS version?
 	"2": "2.0.0",
 };
@@ -253,7 +253,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
 			provideEntryPoint,
-			minVersionForCollab: compatModeTominVersionForCollab[compatibilityMode],
+			minVersionForCollab: compatibilityModeToMinVersionForCollab[compatibilityMode],
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;

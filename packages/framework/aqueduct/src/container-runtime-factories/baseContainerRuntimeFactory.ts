@@ -93,6 +93,7 @@ export class BaseContainerRuntimeFactory
 	// eslint-disable-next-line import/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	private readonly minVersionForCollab?: SemanticVersion;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();
@@ -103,6 +104,7 @@ export class BaseContainerRuntimeFactory
 		this.provideEntryPoint = props.provideEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
+		this.minVersionForCollab = props.minVersionForCollab;
 	}
 
 	/**
@@ -151,6 +153,7 @@ export class BaseContainerRuntimeFactory
 			// eslint-disable-next-line import/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
+			minVersionForCollab: this.minVersionForCollab,
 		});
 	}
 
