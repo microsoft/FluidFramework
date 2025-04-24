@@ -694,8 +694,8 @@ export interface LoadContainerRuntimeParams {
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 	/**
-	 * minVersionForCollab is used to determine the default configuration for {@link IContainerRuntimeOptionsInternal}
-	 * properties which affect the document schema. minVersionForCollab can be considered to be the minimum version of
+	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal}
+	 * properties, which affect the document schema. It can be considered to be the minimum version of
 	 * the FF runtime that we should support compatibility with.
 	 *
 	 * @example
