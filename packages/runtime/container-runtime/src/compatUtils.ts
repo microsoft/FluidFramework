@@ -22,7 +22,7 @@ import { pkgVersion } from "./packageVersion.js";
 /**
  * Our policy is to support N/N-1 compatibility by default, where N is the most
  * recent public major release of the runtime.
- * Therefore, if the customer does not provide a compatibility mode, we will
+ * Therefore, if the customer does not provide a minVersionForCollab, we will
  * default to use N-1.
  *
  * However, this is not consistent with today's behavior. Some options (i.e.
@@ -197,7 +197,7 @@ export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknow
 			if (semverGte(minVersionForCollab, version)) {
 				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];
 			} else {
-				// If the compatibility mode is less than the version, we break out of the loop since we don't need to check
+				// If the minVersionForCollab is less than the version, we break out of the loop since we don't need to check
 				// any later versions.
 				break;
 			}
