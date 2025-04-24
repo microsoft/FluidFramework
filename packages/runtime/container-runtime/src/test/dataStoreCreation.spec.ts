@@ -19,7 +19,10 @@ import {
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockDeltaManager,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
 import { createRootSummarizerNodeWithGC } from "../summary/index.js";
@@ -111,6 +114,7 @@ describe("Data Store Creation Tests", () => {
 				IFluidDataStoreRegistry: globalRegistry,
 				baseLogger: createChildLogger(),
 				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
+				deltaManager: new MockDeltaManager(),
 			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 			const summarizerNode = createRootSummarizerNodeWithGC(
 				createChildLogger(),

@@ -5,6 +5,7 @@
 "@fluidframework/server-services-core": major
 "@fluidframework/server-services-ordering-rdkafka": major
 "@fluidframework/server-test-utils": major
+"__section": feature
 ---
 
 Added pause and resume methods for lambdas

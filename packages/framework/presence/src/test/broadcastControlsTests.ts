@@ -6,7 +6,7 @@
 import assert from "node:assert";
 
 import type { BroadcastControls, BroadcastControlSettings } from "../broadcastControls.js";
-import type { IPresence } from "../presence.js";
+import type { Presence } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -20,7 +20,7 @@ const testDefaultAllowableUpdateLatencyMs = 100;
  */
 export function addControlsTests(
 	createControls: (
-		presence: IPresence,
+		presence: Presence,
 		controlSettings?: BroadcastControlSettings,
 	) => { controls: BroadcastControls },
 ): void {

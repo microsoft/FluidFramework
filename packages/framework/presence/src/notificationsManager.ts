@@ -10,7 +10,7 @@ import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import type { ISessionClient } from "./presence.js";
+import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -24,11 +24,7 @@ export interface NotificationsManagerEvents {
 	 *
 	 * @eventProperty
 	 */
-	unattendedNotification: (
-		name: string,
-		sender: ISessionClient,
-		...content: unknown[]
-	) => void;
+	unattendedNotification: (name: string, sender: Attendee, ...content: unknown[]) => void;
 }
 
 /**
@@ -55,7 +51,7 @@ export interface NotificationListenable<
 	on<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(
 		notificationName: K,
 		listener: (
-			sender: ISessionClient,
+			sender: Attendee,
 			...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>
 		) => void,
 	): Off;
@@ -71,7 +67,7 @@ export interface NotificationListenable<
 	off<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(
 		notificationName: K,
 		listener: (
-			sender: ISessionClient,
+			sender: Attendee,
 			...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>
 		) => void,
 	): void;
@@ -87,7 +83,7 @@ export type NotificationSubscriptions<
 	E extends InternalUtilityTypes.NotificationListeners<E>,
 > = {
 	[K in string & keyof InternalUtilityTypes.NotificationListeners<E>]: (
-		sender: ISessionClient,
+		sender: Attendee,
 		...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>
 	) => void;
 };
@@ -110,23 +106,24 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
 	): void;
 
 	/**
-	 * Emits a notification with the specified name and arguments, notifying a single client.
+	 * Emits a notification with the specified name and arguments, notifying a single attendee.
 	 * @param notificationName - the name of the notification to fire
-	 * @param targetClient - the single client to notify
+	 * @param targetAttendee - the single attendee to notify
 	 * @param args - the arguments sent with the notification
 	 */
 	unicast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(
 		notificationName: K,
-		targetClient: ISessionClient,
+		targetAttendee: Attendee,
 		...args: Parameters<E[K]>
 	): void;
 }
 
 /**
- * Value manager that provides notifications from this client to others and subscription
+ * Provides notifications from this client to others and subscription
  * to their notifications.
  *
- * @remarks Create using {@link Notifications} registered to {@link PresenceStates}.
+ * @remarks Create using {@link Notifications} registered to
+ * {@link NotificationsWorkspace} or {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha
@@ -134,6 +131,11 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
 export interface NotificationsManager<
 	T extends InternalUtilityTypes.NotificationListeners<T>,
 > {
+	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
 	/**
 	 * Events for Notifications manager.
 	 */
@@ -182,7 +184,7 @@ class NotificationsManagerImpl<
 				{ allowableUpdateLatencyMs: 0 },
 			);
 		},
-		unicast: (name, targetClient, ...args) => {
+		unicast: (name, targetAttendee, ...args) => {
 			this.datastore.localUpdate(
 				this.key,
 				{
@@ -192,7 +194,7 @@ class NotificationsManagerImpl<
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.
-				{ allowableUpdateLatencyMs: 0, targetClientId: targetClient.getConnectionId() },
+				{ allowableUpdateLatencyMs: 0, targetClientId: targetAttendee.getConnectionId() },
 			);
 		},
 	};
@@ -226,8 +228,12 @@ class NotificationsManagerImpl<
 		}
 	}
 
+	public get presence(): Presence {
+		return this.datastore.presence;
+	}
+
 	public update(
-		client: ISessionClient,
+		attendee: Attendee,
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): PostUpdateAction[] {
@@ -236,7 +242,7 @@ class NotificationsManagerImpl<
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.
 			// For now we assume the user is sending the correct types and there is no corruption along the way.
-			const args = [client, ...value.value.args] as Parameters<
+			const args = [attendee, ...value.value.args] as Parameters<
 				NotificationSubscriptions<T>[typeof eventName]
 			>;
 			postUpdateActions.push(() => this.notificationsInternal.emit(eventName, ...args));
@@ -245,7 +251,7 @@ class NotificationsManagerImpl<
 				this.events.emit(
 					"unattendedNotification",
 					value.value.name,
-					client,
+					attendee,
 					...value.value.args,
 				),
 			);

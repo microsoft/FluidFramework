@@ -8,6 +8,7 @@ import * as fs from "fs";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	loadExistingContainer,
+	waitContainerToCatchUp,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
@@ -145,6 +146,7 @@ export async function createContainerAndExecute(
 				},
 			},
 		});
+		await waitContainerToCatchUp(container);
 
 		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
 			try {

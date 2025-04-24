@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IRevertible {
     // (undocumented)
     discard(): void;
@@ -12,7 +12,7 @@ export interface IRevertible {
     revert(): void;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface ISharedMatrix<T = any> extends IEventProvider<ISharedMatrixEvents<T>>, IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>>, IChannel {
     insertCols(colStart: number, count: number): void;
     insertRows(rowStart: number, count: number): void;
@@ -24,27 +24,27 @@ export interface ISharedMatrix<T = any> extends IEventProvider<ISharedMatrixEven
     switchSetCellPolicy(): void;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ISharedMatrixEvents<T> extends IEvent {
     (event: "conflict", listener: (row: number, col: number, currentValue: MatrixItem<T>, conflictingValue: MatrixItem<T>, target: IEventThisPlaceHolder) => void): void;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IUndoConsumer {
     // (undocumented)
     pushToCurrentOperation(revertible: IRevertible): void;
 }
 
-// @alpha
+// @alpha @legacy
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
-// @alpha
+// @alpha @legacy
 export const SharedMatrix: ISharedObjectKind<ISharedMatrix<any>> & SharedObjectKind<ISharedMatrix<any>>;
 
-// @alpha
+// @alpha @legacy
 export type SharedMatrix<T = any> = ISharedMatrix<T>;
 
-// @alpha @deprecated
+// @alpha @deprecated @legacy
 export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;

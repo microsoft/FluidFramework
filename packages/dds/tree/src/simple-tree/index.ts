@@ -138,6 +138,7 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	allowUnused,
 	type FieldSchemaAlphaUnsafe,
 	type TreeSchema,
 } from "./api/index.js";
