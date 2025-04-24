@@ -135,10 +135,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.createRow}.
 	 * @sealed @internal
 	 */
-	export interface IRow<
-		TCellSchema extends ImplicitAllowedTypes,
-		TColumnSchema extends ImplicitAllowedTypes,
-	> {
+	export interface IRow<TCellSchema extends ImplicitAllowedTypes> {
 		/**
 		 * The unique identifier of the row.
 		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
@@ -146,26 +143,11 @@ export namespace TableSchema {
 		readonly id: string;
 
 		/**
-		 * Gets the cell in the specified column.
-		 * @returns The cell if it exists, otherwise undefined.
-		 */
-		getCell(
-			column: TreeNodeFromImplicitAllowedTypes<TColumnSchema>,
-		): TreeNodeFromImplicitAllowedTypes<TCellSchema> | undefined;
-		/**
 		 * Gets the cell in the specified column, denoted by column ID.
 		 * @returns The cell if it exists, otherwise undefined.
 		 */
 		getCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCellSchema> | undefined;
 
-		/**
-		 * Sets the cell in the specified column.
-		 * @remarks To remove a cell, call {@link TableSchema.IRow.removeCell} instead.
-		 */
-		setCell(
-			column: TreeNodeFromImplicitAllowedTypes<TColumnSchema>,
-			value: InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>,
-		): void;
 		/**
 		 * Sets the cell in the specified column, denoted by column ID.
 		 * @remarks To remove a cell, call {@link TableSchema.IRow.removeCell} instead.
@@ -175,10 +157,6 @@ export namespace TableSchema {
 			value: InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>,
 		): void;
 
-		/**
-		 * Removes the cell in the specified column.
-		 */
-		removeCell(column: TreeNodeFromImplicitAllowedTypes<TColumnSchema>): void;
 		/**
 		 * Removes the cell in the specified column, denoted by column ID.
 		 */
@@ -194,23 +172,12 @@ export namespace TableSchema {
 	export function createRow<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
-		const TColumnFieldsSchema extends ImplicitFieldSchema,
-		const TColumnSchema extends ColumnSchemaBase<
-			TInputScope,
-			TColumnFieldsSchema
-		> = ColumnSchemaBase<TInputScope, TColumnFieldsSchema>,
-	>(
-		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		cellSchema: TCellSchema,
-		_columnSchema: TColumnSchema,
-	) {
+	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, cellSchema: TCellSchema) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
 		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>;
-
-		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
 
 		/**
 		 * {@link Row} fields.
@@ -225,25 +192,16 @@ export namespace TableSchema {
 		/**
 		 * The Row schema - this is a map of Cells where the key is the column id
 		 */
-		class Row
-			extends schemaFactory.object("Row", rowFields)
-			implements IRow<TCellSchema, TColumnSchema>
-		{
-			public getCell(columnOrId: ColumnValueType | string): CellValueType | undefined {
-				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+		class Row extends schemaFactory.object("Row", rowFields) implements IRow<TCellSchema> {
+			public getCell(columnId: string): CellValueType | undefined {
 				return this.cells.get(columnId) as CellValueType | undefined;
 			}
 
-			public setCell(
-				columnOrId: ColumnValueType | string,
-				value: CellInsertableType | undefined,
-			): void {
-				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+			public setCell(columnId: string, value: CellInsertableType | undefined): void {
 				this.cells.set(columnId, value);
 			}
 
-			public removeCell(columnOrId: ColumnValueType | string): void {
-				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+			public removeCell(columnId: string): void {
 				if (!this.cells.has(columnId)) {
 					return;
 				}
@@ -252,7 +210,7 @@ export namespace TableSchema {
 		}
 
 		type RowValueType = TreeNode &
-			IRow<TCellSchema, TColumnSchema> &
+			IRow<TCellSchema> &
 			WithType<ScopedSchemaName<Scope, "Row">>;
 		type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
 
@@ -280,12 +238,7 @@ export namespace TableSchema {
 	export type RowSchemaBase<
 		TScope extends string | undefined,
 		TCellSchema extends ImplicitAllowedTypes,
-		TColumnFieldsSchema extends ImplicitFieldSchema,
-		TColumnSchema extends ColumnSchemaBase<TScope, TColumnFieldsSchema> = ColumnSchemaBase<
-			TScope,
-			TColumnFieldsSchema
-		>,
-	> = ReturnType<typeof createRow<TScope, TCellSchema, TColumnSchema>>;
+	> = ReturnType<typeof createRow<TScope, TCellSchema>>;
 
 	// #endregion
 
@@ -482,7 +435,7 @@ export namespace TableSchema {
 		const TCell extends ImplicitAllowedTypes,
 		const TColumnFields extends ImplicitFieldSchema,
 		const TColumn extends ColumnSchemaBase<TInputScope, TColumnFields>,
-		const TRow extends RowSchemaBase<TInputScope, TCell, TColumn>,
+		const TRow extends RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
@@ -495,7 +448,7 @@ export namespace TableSchema {
 		const TCell extends ImplicitAllowedTypes,
 		const TColumnFields extends ImplicitFieldSchema,
 		const TColumn extends ColumnSchemaBase<TInputScope, TColumnFields>,
-		const TRow extends RowSchemaBase<TInputScope, TCell, TColumn>,
+		const TRow extends RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
@@ -507,7 +460,7 @@ export namespace TableSchema {
 			inputSchemaFactory,
 			_cellSchema,
 			column as TColumn,
-			rowSchema ?? (createRow(inputSchemaFactory, _cellSchema, column) as TRow),
+			rowSchema ?? (createRow(inputSchemaFactory, _cellSchema) as TRow),
 		);
 	}
 
@@ -524,10 +477,9 @@ export namespace TableSchema {
 			TInputScope,
 			TColumnFieldsSchema
 		> = ColumnSchemaBase<TInputScope, TColumnFieldsSchema>,
-		const TRow extends RowSchemaBase<TInputScope, TCellSchema, TColumnSchema> = RowSchemaBase<
+		const TRow extends RowSchemaBase<TInputScope, TCellSchema> = RowSchemaBase<
 			TInputScope,
-			TCellSchema,
-			TColumnSchema
+			TCellSchema
 		>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
@@ -725,7 +677,7 @@ export namespace TableSchema {
 			TScope,
 			TColumnFields
 		>,
-		TRow extends RowSchemaBase<TScope, TCell, TColumn> = RowSchemaBase<TScope, TCell, TColumn>,
+		TRow extends RowSchemaBase<TScope, TCell> = RowSchemaBase<TScope, TCell>,
 	> = ReturnType<typeof createTable<TScope, TCell, TColumnFields, TColumn, TRow>>;
 
 	// #endregion
