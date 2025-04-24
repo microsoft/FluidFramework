@@ -47,12 +47,38 @@ export type RawValueAccessor<_T> = "raw";
 export type ProxiedValueAccessor<_T> = "proxied";
 
 /**
+ * NOTE: copied from SharedTree for convenience.
+ *
+ * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
+ * @privateRemarks
+ * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
+ * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
+ * @system @public
+ */
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
+	k: infer U,
+) => unknown
+	? U
+	: never;
+
+/**
  * Union of possible accessor types for a value.
  *
  * @sealed
  * @alpha
  */
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
+
+// export type ValueAccessorIntersection<T> = UnionToIntersection<ValueAccessor<T>>;
+
+/**
+ * @alpha
+ */
+export type Accessor<T extends ValueAccessor<T>> = T extends ProxiedValueAccessor<T>
+	? () => DeepReadonly<JsonDeserialized<T>> | undefined
+	: T extends RawValueAccessor<T>
+		? DeepReadonly<JsonDeserialized<T>>
+		: never;
 
 /**
  * State of a value and its metadata.
@@ -69,6 +95,7 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 		: TValueAccessor extends RawValueAccessor<T>
 			? DeepReadonly<JsonDeserialized<T>>
 			: never;
+	// value: Accessor<TValueAccessor>;
 	metadata: LatestMetadata;
 }
 
@@ -87,12 +114,17 @@ export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>>
  * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
  * presence workspace and managed by a value manager.
  *
+ * @param unvalidatedData - The unknown data that should be validated. **This data should not be mutated.**
+ *
  * @returns The validated data, or `undefined` if the data is invalid.
  *
  * @alpha
  */
 export type StateSchemaValidator<T> = (
-	unvalidatedData: unknown,
+	/**
+	 * Unknown data that should be validated. **This data should not be mutated.**
+	 */
+	unvalidatedData: Readonly<unknown>,
 	metadata?: StateSchemaValidatorMetadata,
 ) => JsonDeserialized<T> | undefined;
 
