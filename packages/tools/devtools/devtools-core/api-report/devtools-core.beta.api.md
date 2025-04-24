@@ -10,7 +10,7 @@ export type ContainerKey = string;
 // @beta
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
 
-// @beta @sealed
+// @beta @sealed @system
 export interface HasContainerKey {
     readonly containerKey: ContainerKey;
 }

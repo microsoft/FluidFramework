@@ -14,6 +14,7 @@ import {
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -24,6 +25,7 @@ import {
 	validateTokenScopeClaims,
 	getBooleanFromConfig,
 	getTelemetryContextPropertiesWithHttpInfo,
+	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
 import {
 	getBooleanParam,
@@ -50,7 +52,13 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
-import { Constants, getSession, StageTrace } from "../../../utils";
+import {
+	Constants,
+	generateCacheKey,
+	getSession,
+	setGetSessionResultInCache,
+	StageTrace,
+} from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 import type { RequestHandler } from "express-serve-static-core";
 
@@ -92,6 +100,10 @@ async function generateCreateDocumentResponseBody(
 		externalDeltaStreamUrl: string;
 		messageBrokerId?: string;
 	},
+	isEphemeral: boolean,
+	redisCacheForGetSession?: ICache,
+	ephemeralDocumentTTLSec?: number,
+	sessionCacheTTLSec?: number,
 ): Promise<ICreateDocumentResponseBody> {
 	const authorizationHeader = request.header("Authorization");
 	let newDocumentAccessToken: string | undefined;
@@ -121,6 +133,21 @@ async function generateCreateDocumentResponseBody(
 			session.messageBrokerId = sessionInfo.messageBrokerId;
 		}
 		newDocumentSession = session;
+		if (redisCacheForGetSession) {
+			// If ephemeral, set TTL to 95% of ephemeralDocumentTTLSec
+			// to account for latency in reaching here.
+			const ephemeralDocumentTTLWithLatencyMargin = ephemeralDocumentTTLSec
+				? Math.floor(ephemeralDocumentTTLSec * 0.95)
+				: undefined;
+			// Set session information in cache
+			await setGetSessionResultInCache(
+				tenantId,
+				documentId,
+				session,
+				redisCacheForGetSession,
+				isEphemeral ? ephemeralDocumentTTLWithLatencyMargin : sessionCacheTTLSec,
+			);
+		}
 	}
 	return {
 		id: documentId,
@@ -142,6 +169,8 @@ export function create(
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	clusterDrainingChecker?: IClusterDrainingChecker,
+	redisCacheForGetSession?: ICache,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -160,6 +189,10 @@ export function create(
 	);
 	const ephemeralDocumentTTLSec: number | undefined = config.get(
 		"storage:ephemeralDocumentTTLSec",
+	);
+	const sessionCacheTTLSec: number | undefined = config.get("alfred:sessionCacheTTLSec");
+	const sessionCacheTTLForDeletedDocumentsSec: number | undefined = config.get(
+		"alfred:sessionCacheTTLForDeletedDocumentsSec",
 	);
 
 	const ignoreEphemeralFlag: boolean = config.get("alfred:ignoreEphemeralFlag") ?? true;
@@ -215,6 +248,7 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		(request, response, next) => {
 			const tenantId = request.params.tenantId;
 			const documentId = request.params.id;
@@ -255,6 +289,7 @@ export function create(
 			tokenCache: singleUseTokenCache,
 			revokedTokenChecker,
 		}),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			// Tenant and document
@@ -336,6 +371,10 @@ export function create(
 						externalDeltaStreamUrl,
 						messageBrokerId,
 					},
+					isEphemeral,
+					redisCacheForGetSession,
+					ephemeralDocumentTTLSec,
+					sessionCacheTTLSec,
 				);
 				return handleResponse(
 					Promise.all([createP, generateResponseBodyP]).then(
@@ -395,6 +434,7 @@ export function create(
 			getSessionTenantThrottleOptions,
 		),
 		verifyStorageTokenForGetSession(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = request.params.id;
@@ -445,6 +485,9 @@ export function create(
 				connectionTrace,
 				readDocumentRetryDelay,
 				readDocumentMaxRetries,
+				redisCacheForGetSession,
+				sessionCacheTTLSec,
+				sessionCacheTTLForDeletedDocumentsSec,
 			);
 
 			const onSuccess = (result: ISession): void => {
@@ -477,6 +520,7 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = request.params.id;
@@ -484,8 +528,30 @@ export function create(
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
 
+			let deleteSessionCacheP: Promise<boolean> | undefined;
+			if (redisCacheForGetSession?.delete) {
+				deleteSessionCacheP = redisCacheForGetSession
+					.delete(generateCacheKey(tenantId, documentId))
+					.catch((error) => {
+						// Log error but don't fail the request
+						Lumberjack.error(
+							"Failed to delete getSession cache",
+							lumberjackProperties,
+							error,
+						);
+						return true;
+					});
+			}
 			const deleteP = documentDeleteService.deleteDocument(tenantId, documentId);
-			return handleResponse(deleteP, response, undefined, undefined, 204);
+			return handleResponse(
+				Promise.all([deleteP, deleteSessionCacheP]).then(
+					([deletePResponse]) => deletePResponse,
+				),
+				response,
+				undefined,
+				undefined,
+				204,
+			);
 		},
 	);
 
@@ -498,6 +564,7 @@ export function create(
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = request.params.id;

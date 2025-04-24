@@ -104,7 +104,7 @@ describe("AnchorSet", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.detach({ start: 4, end: 5 }, detachedField, detachId);
+			v.detach({ start: 4, end: 5 }, detachedField, detachId, false);
 			v.exitField(fieldFoo);
 			v.destroy(detachedField, 1);
 		});
@@ -136,7 +136,7 @@ describe("AnchorSet", () => {
 
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.detach({ start: 5, end: 6 }, detachedField, detachId);
+			v.detach({ start: 5, end: 6 }, detachedField, detachId, false);
 			v.exitField(fieldFoo);
 			v.destroy(detachedField, 1);
 		});
@@ -153,7 +153,7 @@ describe("AnchorSet", () => {
 		checkEquality(anchors.locate(anchor2), path2);
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.detach({ start: 3, end: 4 }, detachedField, detachId);
+			v.detach({ start: 3, end: 4 }, detachedField, detachId, false);
 			v.exitField(fieldFoo);
 			v.destroy(detachedField, 1);
 		});
@@ -165,7 +165,7 @@ describe("AnchorSet", () => {
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.detach({ start: 3, end: 4 }, detachedField, detachId);
+			v.detach({ start: 3, end: 4 }, detachedField, detachId, false);
 			v.exitField(fieldFoo);
 			v.destroy(detachedField, 1);
 		});
@@ -330,7 +330,7 @@ describe("AnchorSet", () => {
 			// This moves anchor4 (the only anchor under anchor1) out from under anchor1.
 			// If the visitor did not increase the ref count of anchor1 on its way down,
 			// anchor1 will be disposed as part of this operation.
-			v.detach({ start: 4, end: 5 }, detachedField, detachId);
+			v.detach({ start: 4, end: 5 }, detachedField, detachId, false);
 			v.exitField(fieldBar);
 			// If anchor1 is be disposed. This will throw.
 			v.exitNode(5);
@@ -351,7 +351,7 @@ describe("AnchorSet", () => {
 
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.detach({ start: 0, end: 5 }, detachedField, detachId);
+			v.detach({ start: 0, end: 5 }, detachedField, detachId, false);
 			v.exitField(fieldFoo);
 		});
 
@@ -371,7 +371,7 @@ describe("AnchorSet", () => {
 
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.detach({ start: 0, end: 5 }, detachedField, detachId);
+			v.detach({ start: 0, end: 5 }, detachedField, detachId, false);
 			v.attach(detachedField, 3, 0);
 			v.exitField(fieldFoo);
 		});
@@ -514,14 +514,13 @@ describe("AnchorSet", () => {
 	it("childrenChangedAfterBatch event includes the changed fields", () => {
 		const fieldOne: FieldKey = brand("one");
 		const fieldTwo: FieldKey = brand("two");
-		const fieldThree: FieldKey = brand("three");
 
 		const anchors = new AnchorSet();
 
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 
-		const expectedChangedFields = new Set<FieldKey>([fieldOne, fieldTwo, fieldThree]);
+		const expectedChangedFields = new Set<FieldKey>([fieldOne, fieldTwo]);
 		let listenerFired = false;
 		node0.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
 			// This is the main validation of this test
@@ -529,24 +528,16 @@ describe("AnchorSet", () => {
 			listenerFired = true;
 		});
 
-		// Try to test all cases of changes happening on a delta visitor: attaches, detaches, replaces
+		// Try to test all cases of changes happening on a delta visitor: attaches and detaches
 		withVisitor(anchors, (v) => {
 			v.enterField(rootFieldKey);
 			v.enterNode(0);
 			v.enterField(fieldOne);
-			v.detach({ start: 0, end: 1 }, brand("fakeDetachDestination"), detachId);
+			v.detach({ start: 0, end: 1 }, brand("fakeDetachDestination"), detachId, false);
 			v.exitField(fieldOne);
 			v.enterField(fieldTwo);
 			v.attach(brand("fakeAttachSource"), 1, 0);
 			v.exitField(fieldTwo);
-			v.enterField(fieldThree);
-			v.replace(
-				brand("fakeReplaceSource"),
-				{ start: 0, end: 1 },
-				brand("fakeReplaceDestination"),
-				detachId,
-			);
-			v.exitField(fieldThree);
 			v.exitNode(0);
 			v.exitField(rootFieldKey);
 		});

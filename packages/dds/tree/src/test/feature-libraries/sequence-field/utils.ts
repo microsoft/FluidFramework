@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "node:assert";
+import { strict as assert } from "node:assert";
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 
 import {
@@ -68,7 +67,6 @@ import {
 	type Mutable,
 	type RangeQueryResult,
 	brand,
-	fail,
 	fakeIdAllocator,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
@@ -115,9 +113,9 @@ export function assertChangesetsEqual(
 	if (ignoreMoveIds) {
 		const normalizedActual = normalizeMoveIds(actual);
 		const normalizedExpected = normalizeMoveIds(expected);
-		strict.deepEqual(normalizedActual, normalizedExpected);
+		assert.deepEqual(normalizedActual, normalizedExpected);
 	} else {
-		strict.deepEqual(actual, expected);
+		assert.deepEqual(actual, expected);
 	}
 }
 
@@ -187,7 +185,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				return normalized as TEffect;
 			}
 			default:
-				fail(`Unexpected mark type: ${(effect as SF.Mark).type}`);
+				assert.fail(`Unexpected mark type: ${(effect as SF.Mark).type}`);
 		}
 	}
 	const output = new MarkListFactory();
@@ -233,7 +231,7 @@ export function composeNoVerify(
 export function composeShallow(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
 	return composeI(
 		changes,
-		(id1, id2) => id1 ?? id2 ?? fail("Should not compose two undefined IDs"),
+		(id1, id2) => id1 ?? id2 ?? assert.fail("Should not compose two undefined IDs"),
 	);
 }
 
@@ -270,7 +268,7 @@ export function shallowCompose(
 				child1 === undefined || child2 === undefined,
 				"Should only have one child to compose",
 			);
-			return child1 ?? child2 ?? fail("One of the children should be defined");
+			return child1 ?? child2 ?? assert.fail("One of the children should be defined");
 		},
 		revInfos,
 	);
@@ -549,7 +547,7 @@ export class DetachedNodeTracker {
 		for (const mark of change.change) {
 			const inputLength: number = getInputLength(mark);
 			if (markEmptiesCells(mark)) {
-				assert(isDetach(mark), 0x70d /* Only detach marks should empty cells */);
+				assert(isDetach(mark), "Only detach marks should empty cells");
 				const newNodes: Map<number, CellId> = new Map();
 				const after = index + inputLength;
 				for (const [k, v] of this.nodes) {
@@ -565,7 +563,7 @@ export class DetachedNodeTracker {
 										change.rollbackOf ??
 										mark.revision ??
 										change.revision ??
-										fail("Unable to track detached nodes"),
+										assert.fail("Unable to track detached nodes"),
 									localId: brand((mark.id as number) + (k - index)),
 								},
 							});
@@ -590,7 +588,7 @@ export class DetachedNodeTracker {
 						newNodes.set(k, v);
 					}
 				}
-				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
+				const detachEvent = mark.cellId ?? assert.fail("Unable to track detached nodes");
 				for (let i = 0; i < mark.count; ++i) {
 					newNodes.set(index + i, {
 						revision: detachEvent.revision,
@@ -614,7 +612,7 @@ export class DetachedNodeTracker {
 	public isApplicable(change: Changeset): boolean {
 		for (const mark of change) {
 			if (isActiveReattach(mark)) {
-				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
+				const detachEvent = mark.cellId ?? assert.fail("Unable to track detached nodes");
 				const revision = detachEvent.revision;
 				for (let i = 0; i < mark.count; ++i) {
 					const localId = brand<ChangesetLocalId>((detachEvent.localId as number) + i);
@@ -710,7 +708,7 @@ export function areRebasable(branch: Changeset, target: Changeset): boolean {
 		if (isActiveReattach(mark)) {
 			const list = getOrAddEmptyToMap(indexToReattach, index);
 			for (let i = 0; i < mark.count; ++i) {
-				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
+				const detachEvent = mark.cellId ?? assert.fail("Unable to track detached nodes");
 				const entry: CellId = {
 					...detachEvent,
 					localId: brand((detachEvent.localId as number) + i),
@@ -718,7 +716,7 @@ export function areRebasable(branch: Changeset, target: Changeset): boolean {
 				const key = `${entry.revision}|${entry.localId}`;
 				assert(
 					!reattachToIndex.has(key),
-					0x506 /* First changeset as inconsistent characterization of detached nodes */,
+					"First changeset as inconsistent characterization of detached nodes",
 				);
 				list.push(key);
 				reattachToIndex.set(key, index);
@@ -732,7 +730,7 @@ export function areRebasable(branch: Changeset, target: Changeset): boolean {
 		if (isActiveReattach(mark)) {
 			const list = getOrAddEmptyToMap(indexToReattach, index);
 			for (let i = 0; i < mark.count; ++i) {
-				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
+				const detachEvent = mark.cellId ?? assert.fail("Unable to track detached nodes");
 				const entry: CellId = {
 					...detachEvent,
 					localId: brand((detachEvent.localId as number) + i),

@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { type IdAllocator, fail } from "../../util/index.js";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+
+import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
+import type { IdAllocator } from "../../util/index.js";
 import type {
 	ComposeNodeManager,
 	ContextualizedFieldChange,
@@ -50,7 +52,6 @@ import {
 	settleMark,
 	withNodeChange,
 } from "./utils.js";
-import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
 
 /**
  * Composes a sequence of changesets into a single changeset.

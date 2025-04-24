@@ -32,8 +32,6 @@ export {
 	IIntervalCollection,
 	ISequenceIntervalCollection,
 	ISequenceIntervalCollectionEvents,
-	IntervalLocator,
-	intervalLocatorFromEndpoint,
 } from "./intervalCollection.js";
 export {
 	IntervalIndex,
@@ -41,15 +39,8 @@ export {
 	SequenceIntervalIndexes,
 	IOverlappingIntervalsIndex,
 	ISequenceOverlappingIntervalsIndex,
-	createOverlappingIntervalsIndex,
-	createOverlappingSequenceIntervalsIndex,
-	IEndpointInRangeIndex,
-	IStartpointInRangeIndex,
-	createEndpointInRangeIndex,
-	createStartpointInRangeIndex,
-	IIdIntervalIndex,
-	createIdIntervalIndex,
 	IEndpointIndex,
+	createOverlappingIntervalsIndex,
 	createEndpointIndex,
 } from "./intervalIndex/index.js";
 export {

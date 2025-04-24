@@ -32,11 +32,6 @@ import {
 } from "../src/container/index.js";
 import { BlobCollectionView, DebugView } from "../src/view.js";
 
-// To allow blob creation while the container is detached, we need the container to provide
-// us with memory blob storage.  This is currently controlled by a feature flag which we
-// can control by setting this value in sessionStorage.
-sessionStorage.setItem("Fluid.Container.MemoryBlobStorageEnabled", "true");
-
 const urlResolver = new LocalResolver();
 const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 const codeLoader: ICodeDetailsLoader = {

@@ -27,7 +27,6 @@ import {
 import type {
 	ITreeCheckout,
 	SchematizingSimpleTreeView,
-	SharedTree,
 	TreeCheckout,
 } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
@@ -45,10 +44,13 @@ import {
 } from "../../../simple-tree/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-// eslint-disable-next-line import/no-internal-modules
-import type { SharedTreeOptionsInternal } from "../../../shared-tree/sharedTree.js";
+import type {
+	SharedTreeOptionsInternal,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../shared-tree/sharedTree.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import type { FuzzView } from "./fuzzEditGenerators.js";
+import type { ISharedTree } from "../../../treeFactory.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {
@@ -161,8 +163,8 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
 	 */
 	public constructor(
-		protected override readonly onCreate: (tree: SharedTree) => void,
-		protected override readonly onLoad?: (tree: SharedTree) => void,
+		protected override readonly onCreate: (tree: ISharedTree) => void,
+		protected override readonly onLoad?: (tree: ISharedTree) => void,
 		options: SharedTreeOptionsInternal = {},
 	) {
 		super(onCreate, onLoad, {

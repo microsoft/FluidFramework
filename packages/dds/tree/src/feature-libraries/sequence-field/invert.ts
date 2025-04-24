@@ -149,8 +149,9 @@ function invertMark(
 				revision: isRollback ? mark.revision : revision,
 			};
 
-			// XXX: Do we always need an override?
-			removeMark.idOverride = isRollback ? inputId : { revision, localId: mark.id };
+			if (isRollback) {
+				removeMark.idOverride = isRollback ? inputId : { revision, localId: mark.id };
+			}
 
 			return applyMovedChanges(removeMark, mark.revision, crossFieldManager, isRollback);
 		}

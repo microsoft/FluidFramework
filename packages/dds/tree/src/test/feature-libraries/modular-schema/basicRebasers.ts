@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import { type TUnsafe, Type } from "@sinclair/typebox";
 
 import { makeCodecFamily } from "../../../codec/index.js";
@@ -19,7 +20,6 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { fail } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -83,7 +83,7 @@ export const valueHandler = {
 		makeCodecFamily([
 			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
 		]),
-	editor: { buildChildChanges: () => fail("Child changes not supported") },
+	editor: { buildChildChanges: () => assert.fail("Child changes not supported") },
 
 	intoDelta: (change): DeltaFieldChanges => {
 		if (change !== 0) {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type ChangeAtomId,
@@ -14,7 +14,7 @@ import {
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 } from "../../core/index.js";
-import { type Mutable, brand, fail } from "../../util/index.js";
+import { type Mutable, brand } from "../../util/index.js";
 import {
 	CrossFieldTarget,
 	type NodeId,
@@ -57,7 +57,6 @@ export function createEmpty(): Changeset {
 export function getNestedChanges(change: Changeset): NestedChangesIndices {
 	const output: NestedChangesIndices = [];
 	let inputIndex = 0;
-	let outputIndex = 0;
 	for (const mark of change) {
 		const { changes, count } = mark;
 		if (changes !== undefined) {
@@ -65,10 +64,6 @@ export function getNestedChanges(change: Changeset): NestedChangesIndices {
 		}
 		if (!areInputCellsEmpty(mark)) {
 			inputIndex += count;
-		}
-
-		if (!areOutputCellsEmpty(mark)) {
-			outputIndex += count;
 		}
 	}
 	return output;

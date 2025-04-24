@@ -16,7 +16,7 @@ import {
 	type NormalizedUpPath,
 } from "../../core/index.js";
 import type { ITreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
-import { type JsonCompatible, brand, fail, makeArray } from "../../util/index.js";
+import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
 	chunkFromJsonableTrees,
@@ -3075,7 +3075,7 @@ describe("Editing", () => {
 				tree.transaction.commit();
 				expectJsonTree(tree, [{ foo: "B" }]);
 
-				const changedFooAtoB = stack.undoStack[0] ?? fail("Missing undo");
+				const changedFooAtoB = stack.undoStack[0] ?? assert.fail("Missing undo");
 
 				// This change should not violate the constraint in the inverse because it is changing
 				// a different node on filed "bar".
@@ -3109,7 +3109,7 @@ describe("Editing", () => {
 				tree.transaction.commit();
 				expectJsonTree(tree, [{ foo: "B" }]);
 
-				const changedFooAtoB = stack.undoStack[0] ?? fail("Missing undo");
+				const changedFooAtoB = stack.undoStack[0] ?? assert.fail("Missing undo");
 
 				// This change should violate the inverse constraint because it changes the
 				// node "B" to "C" on field "foo".
@@ -3155,7 +3155,7 @@ describe("Editing", () => {
 				// and doesn't go through any more rebases. This validates the scenario where an inverse is
 				// directly applied without any rebases.
 				tree.merge(branch);
-				const changedBarOldToNew = stack.undoStack[0] ?? fail("Missing undo");
+				const changedBarOldToNew = stack.undoStack[0] ?? assert.fail("Missing undo");
 
 				expectJsonTree(tree, [{ foo: "C", bar: "new" }]);
 

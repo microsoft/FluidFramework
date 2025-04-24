@@ -27,6 +27,7 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandleInternalPayloadPending } from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
 	MockLogger,
@@ -104,6 +105,7 @@ export class MockRuntime
 			isBlobDeleted: (blobPath: string) => this.isBlobDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: stashed[1] as IPendingBlobs | undefined,
+			createBlobPayloadPending: false,
 		});
 	}
 
@@ -160,7 +162,10 @@ export class MockRuntime
 	): Promise<ArrayBufferLike> {
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
-		return this.blobManager.getBlob(blobId);
+		const payloadPending = isFluidHandleInternalPayloadPending(blobHandle)
+			? blobHandle.payloadPending
+			: false;
+		return this.blobManager.getBlob(blobId, payloadPending);
 	}
 
 	public async getPendingLocalState(): Promise<(unknown[] | IPendingBlobs | undefined)[]> {
@@ -743,7 +748,7 @@ describe("BlobManager", () => {
 		});
 
 		await assert.rejects(
-			async () => runtime.blobManager.getBlob(someId),
+			async () => runtime.blobManager.getBlob(someId, false),
 			(e: Error) => e.message === "BOOM!",
 			"Expected getBlob to throw with test error message",
 		);
@@ -758,6 +763,29 @@ describe("BlobManager", () => {
 			[{ category: "generic", eventName: "BlobManager:AttachmentReadBlob_cancel" }],
 			"Expected the _cancel event to be logged with 'generic' category",
 		);
+	});
+
+	it("waits for blobs from handles with pending payloads without error", async () => {
+		await runtime.attach();
+
+		// Part of remoteUpload, but stop short of processing the message
+		const response = await runtime.storage.createBlob(IsoBuffer.from("blob", "utf8"));
+		const op = { metadata: { localId: uuid(), blobId: response.id } };
+
+		await assert.rejects(
+			runtime.blobManager.getBlob(op.metadata.localId, false),
+			"Rejects when attempting to get non-existent, shared-payload blobs",
+		);
+
+		// Try to get the blob that we haven't processed the attach op for yet.
+		// This simulates having found this ID in a handle with a pending payload that the remote client would have sent
+		const blobP = runtime.blobManager.getBlob(op.metadata.localId, true);
+
+		// Process the op as if it were arriving from the remote client, which should cause the blobP promise to resolve
+		runtime.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, false);
+
+		// Await the promise to confirm it settles and does not reject
+		await blobP;
 	});
 
 	describe("Abort Signal", () => {

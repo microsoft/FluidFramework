@@ -30,7 +30,7 @@ import {
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { brand, fail } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 import {
 	type ChildStateGenerator,
 	type FieldStateTree,
@@ -299,7 +299,7 @@ const codecOptions: ICodecOptions = {
 };
 
 const fieldKindConfiguration: FieldKindConfiguration =
-	fieldKindConfigurations.get(4) ?? fail("Field kind configuration not found");
+	fieldKindConfigurations.get(4) ?? assert.fail("Field kind configuration not found");
 assert(
 	fieldKindConfigurations.get(5) === undefined,
 	"There's a newer configuration. It probably should be used.",
