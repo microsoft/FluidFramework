@@ -88,7 +88,7 @@ export class FluidSerializer implements IFluidSerializer {
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		return !!input && typeof input === "object"
-			? this.recursivelyReplace(input, this.encodeValue, bind)
+			? this.recursivelyReplace(input, this.encodeValue.bind(this), bind)
 			: input;
 	}
 
@@ -106,7 +106,7 @@ export class FluidSerializer implements IFluidSerializer {
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		return !!input && typeof input === "object"
-			? this.recursivelyReplace(input, this.decodeValue)
+			? this.recursivelyReplace(input, this.decodeValue.bind(this))
 			: input;
 	}
 
@@ -131,20 +131,20 @@ export class FluidSerializer implements IFluidSerializer {
 	 * If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	 * Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
 	 */
-	private readonly encodeValue = (value: unknown, bind?: IFluidHandleInternal): unknown => {
+	protected encodeValue(value: unknown, bind?: IFluidHandleInternal): unknown {
 		// If 'value' is an IFluidHandle return its encoded form.
 		if (isFluidHandle(value)) {
 			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
 			return this.bindAndEncodeHandle(toFluidHandleInternal(value), bind);
 		}
 		return value;
-	};
+	}
 
 	/**
 	 * If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
 	 * Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
 	 */
-	private readonly decodeValue = (value: unknown): unknown => {
+	protected decodeValue(value: unknown): unknown {
 		// If 'value' is a serialized IFluidHandle return the deserialized result.
 		if (isSerializedHandle(value)) {
 			// Old documents may have handles with relative path in their summaries. Convert these to absolute
@@ -157,7 +157,7 @@ export class FluidSerializer implements IFluidSerializer {
 		} else {
 			return value;
 		}
-	};
+	}
 
 	/**
 	 * Invoked for non-null objects to recursively replace references to IFluidHandles.
