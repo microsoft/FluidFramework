@@ -33,7 +33,7 @@ describe("TableFactory unit tests", () => {
 			schemaFactory.optional(ColumnFields),
 		) {}
 
-		class Row extends TableSchema.createRow(schemaFactory, Cell, Column) {}
+		class Row extends TableSchema.createRow(schemaFactory, Cell) {}
 
 		class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
 
@@ -76,7 +76,15 @@ describe("TableFactory unit tests", () => {
 
 			treeView.initialize(
 				new Table({
-					columns: [new Column({ id: "column-0" }), { id: "column-1" }],
+					columns: [
+						new Column({
+							id: "column-0",
+							fields: {
+								label: "Column 0",
+							},
+						}),
+						new Column({ id: "column-1", fields: { label: "Column 1" } }),
+					],
 					rows: [
 						{ id: "row-0", cells: {} },
 						{
@@ -121,7 +129,7 @@ describe("TableFactory unit tests", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({ rows: [], columns: [] });
 
-			treeView.root.insertColumn({ index: 0, column: { id: "column-0" } });
+			treeView.root.insertColumn({ index: 0, column: { id: "column-0", fields: undefined } });
 
 			assertEqualTrees(treeView.root, {
 				columns: [
@@ -135,9 +143,15 @@ describe("TableFactory unit tests", () => {
 
 		it("Insert new column into non-empty list", () => {
 			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
+			treeView.initialize({
+				rows: [],
+				columns: [
+					{ id: "column-a", fields: undefined },
+					{ id: "column-b", fields: undefined },
+				],
+			});
 
-			treeView.root.insertColumn({ index: 1, column: { id: "column-c" } });
+			treeView.root.insertColumn({ index: 1, column: { id: "column-c", fields: undefined } });
 
 			assertEqualTrees(treeView.root, {
 				columns: [
@@ -157,10 +171,16 @@ describe("TableFactory unit tests", () => {
 
 		it("Append new column", () => {
 			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
+			treeView.initialize({
+				rows: [],
+				columns: [
+					{ id: "column-a", fields: undefined },
+					{ id: "column-b", fields: undefined },
+				],
+			});
 
 			// By not specifying an index, the column should be appended to the end of the list.
-			treeView.root.insertColumn({ column: { id: "column-c" } });
+			treeView.root.insertColumn({ column: { id: "column-c", fields: undefined } });
 
 			assertEqualTrees(treeView.root, {
 				columns: [
@@ -182,10 +202,16 @@ describe("TableFactory unit tests", () => {
 		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
 		it.skip("Appending existing column errors", () => {
 			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
+			treeView.initialize({
+				rows: [],
+				columns: [
+					{ id: "column-a", fields: undefined },
+					{ id: "column-b", fields: undefined },
+				],
+			});
 
 			assert.throws(
-				() => treeView.root.insertColumn({ column: { id: "column-b" } }),
+				() => treeView.root.insertColumn({ column: { id: "column-b", fields: undefined } }),
 				validateUsageError(/Placeholder usage error/),
 			);
 		});
@@ -374,6 +400,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						fields: undefined,
 					},
 				],
 				rows: [
@@ -413,13 +440,14 @@ describe("TableFactory unit tests", () => {
 		});
 
 		// TODO: There is currently no policy from prohibiting insertion of an invalid cell.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be un-skipped.
 		it.skip("setting cell in an invalid location errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
 					{
 						id: "column-0",
+						fields: undefined,
 					},
 				],
 				rows: [
@@ -451,6 +479,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						fields: undefined,
 					},
 				],
 				rows: [
@@ -473,8 +502,8 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		// TODO: There is currently no policy from prohibiting removal of non-existant columns.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
+		// TODO: There is currently no policy from prohibiting removal of non-existent columns.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be un-skipped.
 		it.skip("removing column that does not exist on table errors", () => {
 			const { treeView, Column } = createTableTree();
 			treeView.initialize({
@@ -483,7 +512,10 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => treeView.root.removeColumn(new Column({ id: "unhydrated-column" })),
+				() =>
+					treeView.root.removeColumn(
+						new Column({ id: "unhydrated-column", fields: undefined }),
+					),
 				validateUsageError(/Placeholder usage error/),
 			);
 		});
@@ -603,6 +635,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						fields: undefined,
 					},
 				],
 				rows: [
@@ -642,6 +675,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						fields: undefined,
 					},
 				],
 				rows: [
@@ -672,13 +706,14 @@ describe("TableFactory unit tests", () => {
 		});
 
 		// TODO: There is currently no usage error for deleting invalid cells.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be un-skipped.
 		it.skip("removing cell from nonexistent row and column errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
 					{
 						id: "column-0",
+						fields: undefined,
 					},
 				],
 				rows: [
@@ -700,11 +735,24 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
+	it("can read column fields", () => {
+		const { treeView, Column } = createTableTree();
+
+		const column = new Column({ id: "column-0", fields: { label: "Column 0" } });
+
+		treeView.initialize({
+			columns: [column],
+			rows: [],
+		});
+
+		assert.equal(column.fields?.label, "Column 0");
+	});
+
 	it("gets proper table elements with getter methods", () => {
 		const { treeView, Column, Row, Cell } = createTableTree();
 
 		const cell0 = new Cell({ value: "Hello World!" });
-		const column0 = new Column({ id: "column-0" });
+		const column0 = new Column({ id: "column-0", fields: undefined });
 		const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 } });
 
 		treeView.initialize({

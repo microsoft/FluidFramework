@@ -66,8 +66,8 @@ export namespace TableSchema {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumn<
 		const TInputScope extends string | undefined,
-		const TFields extends ImplicitFieldSchema,
-	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, fields: TFields) {
+		const TFieldsSchema extends ImplicitFieldSchema,
+	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, columnFieldsSchema: TFieldsSchema) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
@@ -76,20 +76,21 @@ export namespace TableSchema {
 		 * @remarks Extracted for re-use in returned type signature defined later in this function.
 		 * The implicit typing is intentional.
 		 */
-		const columnFields = {
+		const columnSchemaFields = {
 			id: schemaFactory.identifier,
-			fields,
-		} as const satisfies Record<string, ImplicitFieldSchema>;
+			fields: columnFieldsSchema,
+			// TODO: check for existing issues around this
+		} as const; // satisfies Record<string, ImplicitFieldSchema>;
 
 		/**
 		 * A column in a table.
 		 */
-		class Column extends schemaFactory.object("Column", columnFields) {}
+		class Column extends schemaFactory.object("Column", columnSchemaFields) {}
 
 		type ColumnValueType = TreeNode &
-			IColumn<TFields> &
+			IColumn<TFieldsSchema> &
 			WithType<ScopedSchemaName<Scope, "Column">>;
-		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
+		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnSchemaFields>;
 
 		// TypeScript is unable to narrow the type of `fields` correctly here.
 		// Derive a type that replaces the constructor of `Column` with one that returns a compatible type.
@@ -98,7 +99,7 @@ export namespace TableSchema {
 			[K in keyof typeof Column]: (typeof Column)[K];
 		} & (new (
 			...args: ConstructorParameters<typeof Column>
-		) => Column & Pick<IColumn<TFields>, "fields">);
+		) => Column & Pick<IColumn<TFieldsSchema>, "fields">);
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
@@ -111,7 +112,7 @@ export namespace TableSchema {
 			/* TNode */ ColumnValueType,
 			/* TInsertable */ object & ColumnInsertableType,
 			/* ImplicitlyConstructable */ true,
-			/* Info */ typeof columnFields
+			/* Info */ typeof columnSchemaFields
 		> = Column as unknown as ColumnModified;
 
 		return ColumnSchemaType;
@@ -444,8 +445,7 @@ export namespace TableSchema {
 	export function createTable<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumnFields extends ImplicitFieldSchema,
-		const TColumn extends ColumnSchemaBase<TInputScope, TColumnFields>,
+		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitAllowedTypes>,
 		const TRow extends RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
