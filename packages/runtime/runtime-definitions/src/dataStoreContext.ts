@@ -367,13 +367,19 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param value - New connection state.
 	 * @param clientId - ID of the client. It's old ID when in disconnected state and
 	 * it's new client ID when we are connecting or connected.
+	 * @deprecated This is replaced by notifyStateChange
 	 */
 	setConnectionState(connected: boolean, clientId?: string);
 
 	/**
 	 * Notifies this object about changes in the readonly state
 	 */
-	notifyReadOnlyState?(readonly: boolean): void;
+	notifyStateChange?(changes: {
+		readonly?: boolean;
+		connected?: boolean;
+		clientId?: string;
+		attachState?: AttachState.Attached | AttachState.Attaching;
+	}): void;
 
 	/**
 	 * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
@@ -404,6 +410,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 	request(request: IRequest): Promise<IResponse>;
 
+	/**
+	 * @deprecated This is replaced by notifyStateChange
+	 */
 	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
 

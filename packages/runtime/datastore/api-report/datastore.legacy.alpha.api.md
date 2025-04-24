@@ -64,12 +64,16 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     readonly ILayerCompatDetails?: unknown;
     // (undocumented)
     get isAttached(): boolean;
-    // (undocumented)
     readonly isReadOnly: () => boolean;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
-    notifyReadOnlyState(readonly: boolean): void;
+    notifyStateChange(changes: {
+        readonly?: boolean;
+        connected?: boolean;
+        clientId?: string;
+        attachState?: AttachState.Attaching | AttachState.Attached;
+    }): void;
     // (undocumented)
     get objectsRoutingContext(): this;
     // (undocumented)

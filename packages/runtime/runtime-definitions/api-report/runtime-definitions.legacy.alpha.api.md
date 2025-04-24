@@ -129,15 +129,21 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
-    notifyReadOnlyState?(readonly: boolean): void;
+    notifyStateChange?(changes: {
+        readonly?: boolean;
+        connected?: boolean;
+        clientId?: string;
+        attachState?: AttachState.Attached | AttachState.Attaching;
+    }): void;
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    // @deprecated
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;

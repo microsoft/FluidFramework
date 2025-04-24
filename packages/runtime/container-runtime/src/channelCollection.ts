@@ -35,11 +35,8 @@ import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
 	IFluidParentContext,
 	ISummarizeResult,
-	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
 	IInboundSignalMessage,
 	gcDataBlobKey,
@@ -96,7 +93,6 @@ import {
 	createAttributesBlob,
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
-import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
@@ -244,7 +240,7 @@ export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
  * @internal
  */
-export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
+export class ChannelCollection implements IDisposable {
 	// Stores tracked by the Domain
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
 	// 0.24 back-compat attachingBeforeSummary
@@ -421,7 +417,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					this.pendingAttach.has(attachMessage.id),
 					0x15e /* "Local object does not have matching attach message id" */,
 				);
-				this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
+				this.contexts
+					.get(attachMessage.id)
+					?.notifyStateChange({ attachState: AttachState.Attached });
 				this.pendingAttach.delete(attachMessage.id);
 				continue;
 			}
@@ -578,7 +576,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 */
 		if (this.parentContext.attachState !== AttachState.Detached) {
 			this.submitAttachChannelOp(localContext);
-			localContext.setAttachState(AttachState.Attaching);
+			localContext.notifyStateChange({ attachState: AttachState.Attaching });
 		}
 
 		this.contexts.bind(id);
@@ -1095,59 +1093,32 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		context.processSignal(message, local);
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string): void {
-		for (const [fluidDataStoreId, context] of this.contexts) {
-			try {
-				context.setConnectionState(connected, clientId);
-			} catch (error) {
-				this.mc.logger.sendErrorEvent(
-					{
-						eventName: "SetConnectionStateError",
-						clientId,
-						...tagCodeArtifacts({
-							fluidDataStoreId,
-						}),
-						details: JSON.stringify({
-							runtimeConnected: this.parentContext.connected,
-							connected,
-						}),
-					},
-					error,
-				);
-			}
-		}
-	}
-
 	/**
 	 * Enumerates the contexts and calls notifyReadOnlyState on them.
 	 */
-	public notifyReadOnlyState(readonly: boolean): void {
+	public notifyStateChange(changes: {
+		readonly?: boolean;
+		connected?: boolean;
+		clientId?: string;
+		attachState?: AttachState.Attached | AttachState.Attaching;
+	}): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
-				context.notifyReadOnlyState(readonly);
+				context.notifyStateChange(changes);
 			} catch (error) {
 				this.mc.logger.sendErrorEvent(
 					{
-						eventName: "SetReadOnlyStateError",
+						eventName: "notifyStateChangeError",
 						...tagCodeArtifacts({
 							fluidDataStoreId,
 						}),
 						details: {
 							runtimeReadonly: this.parentContext.isReadOnly?.(),
-							readonly,
+							...changes,
 						},
 					},
 					error,
 				);
-			}
-		}
-	}
-
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-		for (const [, context] of this.contexts) {
-			// Fire only for bounded stores.
-			if (!this.contexts.isNotBound(context.id)) {
-				context.setAttachState(attachState);
 			}
 		}
 	}
@@ -1435,7 +1406,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 		// Update the used routes in each data store. Used routes is empty for unused data stores.
 		for (const [contextId, context] of this.contexts) {
-			context.setTombstone(tombstonedDataStoresSet.has(contextId));
+			context.notifyStateChange({ tombstone: tombstonedDataStoresSet.has(contextId) });
 		}
 	}
 
@@ -1616,48 +1587,5 @@ export function detectOutboundReferences(
 	const fromPath = ["", address, ddsAddress].join("/");
 	for (const toPath of outboundPaths) {
 		addedOutboundReference(fromPath, toPath);
-	}
-}
-
-/**
- * @internal
- */
-export class ChannelCollectionFactory<T extends ChannelCollection = ChannelCollection>
-	implements IFluidDataStoreFactory
-{
-	public readonly type = "ChannelCollectionChannel";
-
-	public IFluidDataStoreRegistry: IFluidDataStoreRegistry;
-
-	constructor(
-		registryEntries: NamedFluidDataStoreRegistryEntries,
-		// ADO:7302 We need a better type here
-		private readonly provideEntryPoint: (
-			runtime: IFluidDataStoreChannel,
-		) => Promise<FluidObject>,
-		private readonly ctor: (...args: ConstructorParameters<typeof ChannelCollection>) => T,
-	) {
-		this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(registryEntries);
-	}
-
-	public get IFluidDataStoreFactory(): ChannelCollectionFactory<T> {
-		return this;
-	}
-
-	public async instantiateDataStore(
-		context: IFluidDataStoreContext,
-		_existing: boolean,
-	): Promise<IFluidDataStoreChannel> {
-		const runtime = this.ctor(
-			context.baseSnapshot,
-			context, // parentContext
-			context.baseLogger,
-			() => {}, // gcNodeUpdated
-			(_nodePath: string) => false, // isDataStoreDeleted
-			new Map(), // aliasMap
-			this.provideEntryPoint,
-		);
-
-		return runtime;
 	}
 }

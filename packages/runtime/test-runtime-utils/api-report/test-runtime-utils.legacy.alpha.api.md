@@ -460,7 +460,12 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
-    notifyReadOnlyState(readonly: boolean): void;
+    notifyStateChange(changes: {
+        readonly?: boolean;
+        connected?: boolean;
+        clientId?: string;
+        attachState?: AttachState.Attaching | AttachState.Attached;
+    }): void;
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
     // (undocumented)

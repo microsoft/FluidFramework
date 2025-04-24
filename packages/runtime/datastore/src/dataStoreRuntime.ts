@@ -296,7 +296,7 @@ export class FluidDataStoreRuntime
 		} else {
 			this._readonly = this.dataStoreContext.deltaManager.readOnlyInfo.readonly === true;
 			this.dataStoreContext.deltaManager.on("readonly", (readonly) =>
-				this.notifyReadOnlyState(readonly),
+				this.notifyStateChange({ readonly }),
 			);
 		}
 
@@ -693,11 +693,25 @@ export class FluidDataStoreRuntime
 	 * readonly state of this object. It should not be invoked by
 	 * any other callers.
 	 */
-	public notifyReadOnlyState(readonly: boolean): void {
+	public notifyStateChange(changes: {
+		readonly?: boolean;
+		connected?: boolean;
+		clientId?: string;
+		attachState?: AttachState.Attaching | AttachState.Attached;
+	}): void {
 		this.verifyNotClosed();
-		if (readonly !== this._readonly) {
-			this._readonly = readonly;
-			this.emit("readonly", readonly);
+		const { readonly, connected, clientId, attachState } = changes;
+		if (readonly !== undefined) {
+			if (readonly !== this._readonly) {
+				this._readonly = readonly;
+				this.emit("readonly", readonly);
+			}
+		}
+		if (connected !== undefined) {
+			this.setConnectionState(connected, clientId);
+		}
+		if (attachState !== undefined) {
+			this.setAttachState(attachState);
 		}
 	}
 
