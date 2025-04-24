@@ -55,7 +55,7 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
  * These are all `@system` types, and thus should not be used directly.
  * @privateRemarks
  * Due to limitations of API-Extractor, all types in this namespace are treated as `@public`:
- * therefor non-public types should not bn included in this namespace.
+ * therefore, non-public types should not be included in this namespace.
  * @system @public
  */
 export namespace System_Unsafe {
