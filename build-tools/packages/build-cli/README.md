@@ -61,11 +61,6 @@ This package outputs its build files to `lib/` instead of `dist/` like most of o
 oclif uses the lib folder by convention, and there are oclif bugs that can be avoided by putting stuff in lib. See the
 PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
 
----
-
-Due to https://github.com/oclif/core/issues/630, the `build:manifest` node script uses an experimental flag. This can be
-removed once we have upgraded to Node 16 in the repo.
-
 ### Testing
 
 The `release` command provides a `testMode` flag, which subclasses are expected to check when handling states. If in
