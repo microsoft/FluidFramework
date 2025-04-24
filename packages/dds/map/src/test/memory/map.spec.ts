@@ -43,6 +43,7 @@ describe("SharedMap memory usage", () => {
 		new (class implements IMemoryTestObject {
 			public readonly title = "Create empty map";
 			public readonly minSampleCount = 500;
+
 			private map: ISharedMap = createLocalMap("testMap");
 
 			public async run(): Promise<void> {
