@@ -37,7 +37,6 @@ import {
 	type Mutable,
 	type RangeQueryResult,
 	brand,
-	fail,
 	idAllocatorFromMaxId,
 	newTupleBTree,
 } from "../../../util/index.js";
@@ -366,14 +365,14 @@ function addNodeToField(
 	return changeHandler.rebaser.compose(
 		fieldWithChange,
 		fieldChangeset,
-		(node1, node2) => node1 ?? node2 ?? fail("Should not compose two undefined nodes"),
+		(node1, node2) => node1 ?? node2 ?? assert.fail("Should not compose two undefined nodes"),
 		idAllocator,
 		dummyComposeManager,
 		dummyRevisionMetadata,
 	);
 }
 
-const unsupportedFunc = () => fail("Not supported");
+const unsupportedFunc = () => assert.fail("Not supported");
 
 const dummyComposeManager: ComposeNodeManager = {
 	getNewChangesForBaseDetach(

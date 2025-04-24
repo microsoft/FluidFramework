@@ -12,7 +12,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { ClientSessionId, ISessionClient, PresenceEvents } from "./presence.js";
+import type { AttendeeId, Attendee, Presence, PresenceEvents } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	RuntimeLocalUpdateOptions,
@@ -27,15 +27,18 @@ import {
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
-	PresenceStates,
-	PresenceStatesSchema,
-	PresenceWorkspaceAddress,
+	AnyWorkspace,
+	NotificationsWorkspace,
+	NotificationsWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceSchema,
+	WorkspaceAddress,
 } from "./types.js";
 
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
-interface PresenceWorkspaceEntry<TSchema extends PresenceStatesSchema> {
-	public: PresenceStates<TSchema>;
+interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
+	public: AnyWorkspace<TSchema>;
 	internal: PresenceStatesInternal;
 }
 
@@ -43,16 +46,16 @@ interface SystemDatastore {
 	"system:presence": SystemWorkspaceDatastore;
 }
 
-type InternalWorkspaceAddress = `${"s" | "n"}:${PresenceWorkspaceAddress}`;
+type InternalWorkspaceAddress = `${"s" | "n"}:${WorkspaceAddress}`;
 
 type PresenceDatastore = SystemDatastore & {
-	[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
+	[WorkspaceAddress: string]: ValueElementMap<StatesWorkspaceSchema>;
 };
 
 interface GeneralDatastoreMessageContent {
 	[WorkspaceAddress: string]: {
 		[StateValueManagerKey: string]: {
-			[ClientSessionId: ClientSessionId]: ClientUpdateEntry;
+			[AttendeeId: AttendeeId]: ClientUpdateEntry;
 		};
 	};
 }
@@ -97,11 +100,15 @@ function isPresenceMessage(
  */
 export interface PresenceDatastoreManager {
 	joinSession(clientId: ClientConnectionId): void;
-	getWorkspace<TSchema extends PresenceStatesSchema>(
-		internalWorkspaceAddress: InternalWorkspaceAddress,
+	getWorkspace<TSchema extends StatesWorkspaceSchema>(
+		internalWorkspaceAddress: `s:${WorkspaceAddress}`,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
-	): PresenceStates<TSchema>;
+	): StatesWorkspace<TSchema>;
+	getWorkspace<TSchema extends NotificationsWorkspaceSchema>(
+		internalWorkspaceAddress: `n:${WorkspaceAddress}`,
+		requestedContent: TSchema,
+	): NotificationsWorkspace<TSchema>;
 	processSignal(message: IExtensionMessage, local: boolean): void;
 }
 
@@ -122,10 +129,10 @@ function mergeGeneralDatastoreMessageContent(
 
 		// Iterate over each value manager and its data, merging it as needed.
 		for (const [valueManagerKey, valueManagerValue] of objectEntries(workspaceData)) {
-			for (const [clientSessionId, value] of objectEntries(valueManagerValue)) {
+			for (const [attendeeId, value] of objectEntries(valueManagerValue)) {
 				const mergeObject = (mergedData[valueManagerKey] ??= {});
-				const oldData = mergeObject[clientSessionId];
-				mergeObject[clientSessionId] = mergeValueDirectory(
+				const oldData = mergeObject[attendeeId];
+				mergeObject[attendeeId] = mergeValueDirectory(
 					oldData,
 					value,
 					0, // local values do not need a time shift
@@ -149,19 +156,17 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
 	private readonly timer = new TimerManager();
-	private readonly workspaces = new Map<
-		string,
-		PresenceWorkspaceEntry<PresenceStatesSchema>
-	>();
+	private readonly workspaces = new Map<string, AnyWorkspaceEntry<StatesWorkspaceSchema>>();
 
 	public constructor(
-		private readonly clientSessionId: ClientSessionId,
+		private readonly attendeeId: AttendeeId,
 		private readonly runtime: IEphemeralRuntime,
-		private readonly lookupClient: (clientId: ClientSessionId) => ISessionClient,
+		private readonly lookupClient: (clientId: AttendeeId) => Attendee,
 		private readonly logger: ITelemetryLoggerExt | undefined,
-		private readonly events: IEmitter<Pick<PresenceEvents, "workspaceActivated">>,
+		private readonly events: IEmitter<PresenceEvents>,
+		private readonly presence: Presence,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
-		systemWorkspace: PresenceWorkspaceEntry<PresenceStatesSchema>,
+		systemWorkspace: AnyWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
@@ -186,17 +191,17 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		} satisfies ClientJoinMessage["content"]);
 	}
 
-	public getWorkspace<TSchema extends PresenceStatesSchema>(
+	public getWorkspace<TSchema extends StatesWorkspaceSchema>(
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
-	): PresenceStates<TSchema> {
+	): AnyWorkspace<TSchema> {
 		const existing = this.workspaces.get(internalWorkspaceAddress);
 		if (existing) {
 			return existing.internal.ensureContent(requestedContent, controls);
 		}
 
-		let workspaceDatastore: ValueElementMap<PresenceStatesSchema> | undefined =
+		let workspaceDatastore: ValueElementMap<StatesWorkspaceSchema> | undefined =
 			this.datastore[internalWorkspaceAddress];
 		if (workspaceDatastore === undefined) {
 			workspaceDatastore = this.datastore[internalWorkspaceAddress] = {};
@@ -213,7 +218,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 			const updates: GeneralDatastoreMessageContent[InternalWorkspaceAddress] = {};
 			for (const [key, value] of Object.entries(states)) {
-				updates[key] = { [this.clientSessionId]: value };
+				updates[key] = { [this.attendeeId]: value };
 			}
 
 			this.enqueueMessage(
@@ -226,7 +231,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		const entry = createPresenceStates(
 			{
-				clientSessionId: this.clientSessionId,
+				presence: this.presence,
+				attendeeId: this.attendeeId,
 				lookupClient: this.lookupClient,
 				localUpdate,
 			},
@@ -346,7 +352,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	public processSignal(
 		// Note: IInboundSignalMessage is used here in place of IExtensionMessage
 		// as IExtensionMessage's strictly JSON `content` creates type compatibility
-		// issues with `ClientSessionId` keys and really unknown value content.
+		// issues with `AttendeeId` keys and really unknown value content.
 		// IExtensionMessage is a subset of IInboundSignalMessage so this is safe.
 		// Change types of DatastoreUpdateMessage | ClientJoinMessage to
 		// IExtensionMessage<> derivatives to see the issues.
@@ -403,7 +409,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// Separate internal type prefix from public workspace address
 			const match = workspaceAddress.match(/^([^:]):([^:]+:.+)$/) as
 				| null
-				| [string, string, PresenceWorkspaceAddress];
+				| [string, string, WorkspaceAddress];
 
 			if (match === null) {
 				continue;

@@ -9,13 +9,18 @@ import {
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
-import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
+import {
+	denyListMiddleware,
+	IThrottleMiddlewareOptions,
+	throttle,
+} from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
+import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
@@ -56,7 +61,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.getHeader(sha, useCache);
@@ -76,7 +80,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.getFullTree(sha, useCache);
@@ -87,6 +90,7 @@ export function create(
 		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const headerP = getHeader(
@@ -104,6 +108,7 @@ export function create(
 		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const headerP = getTree(

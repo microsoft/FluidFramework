@@ -1,5 +1,13 @@
 # @fluidframework/ai-collab
 
+## 2.32.0
+
+Dependency updates only.
+
+## 2.31.0
+
+Dependency updates only.
+
 ## 2.30.0
 
 Dependency updates only.

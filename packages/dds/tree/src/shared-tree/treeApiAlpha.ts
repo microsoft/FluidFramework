@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -30,15 +30,14 @@ import {
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
-	type ParseOptions,
+	type TreeEncodingOptions,
 	type VerboseTree,
 	toStoredSchema,
-	type EncodeOptions,
 	extractPersistedSchema,
 	TreeViewConfiguration,
 	type TreeBranch,
 } from "../simple-tree/index.js";
-import { fail, type JsonCompatible } from "../util/index.js";
+import type { JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
 import type { ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -129,20 +128,20 @@ export const TreeAlpha: {
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: Partial<ParseOptions>,
+		options?: Partial<TreeEncodingOptions>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
 	 */
-	exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree;
+	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}, allowing undefined.
 	 */
 	exportConcise(
 		node: TreeNode | TreeLeafValue | undefined,
-		options?: EncodeOptions,
+		options?: TreeEncodingOptions,
 	): ConciseTree | undefined;
 
 	/**
@@ -159,7 +158,7 @@ export const TreeAlpha: {
 	 *
 	 * 3. When easy access to the type is desired.
 	 */
-	exportVerbose(node: TreeNode | TreeLeafValue, options?: EncodeOptions): VerboseTree;
+	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
 
 	/**
 	 * Export the content of the provided `tree` in a compressed JSON compatible format.
@@ -167,7 +166,7 @@ export const TreeAlpha: {
 	 * If an `idCompressor` is provided, it will be used to compress identifiers and thus will be needed to decompress the data.
 	 *
 	 * Always uses "stored" keys.
-	 * See {@link EncodeOptions.useStoredKeys} for details.
+	 * See {@link TreeEncodingOptions.useStoredKeys} for details.
 	 * @privateRemarks
 	 * TODO: It is currently not clear how to work with the idCompressors correctly in the package API.
 	 * Better APIs should probably be provided as there is currently no way to associate an un-hydrated tree with an idCompressor,
@@ -243,9 +242,9 @@ export const TreeAlpha: {
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: ParseOptions,
+		options?: TreeEncodingOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-		const config: ParseOptions = { ...options };
+		const config: TreeEncodingOptions = { ...options };
 		// Create a config which is standalone, and thus can be used without having to refer back to the schema.
 		const schemalessConfig = applySchemaToParserOptions(schema, config);
 		if (data === undefined) {
@@ -261,8 +260,8 @@ export const TreeAlpha: {
 
 	exportConcise,
 
-	exportVerbose(node: TreeNode | TreeLeafValue, options?: EncodeOptions): VerboseTree {
-		const config: EncodeOptions = { ...options };
+	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree {
+		const config: TreeEncodingOptions = { ...options };
 
 		const cursor = borrowCursorFromTreeNodeOrValue(node);
 		return verboseFromCursor(
@@ -314,21 +313,24 @@ export const TreeAlpha: {
 	},
 };
 
-function exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree;
+function exportConcise(
+	node: TreeNode | TreeLeafValue,
+	options?: TreeEncodingOptions,
+): ConciseTree;
 
 function exportConcise(
 	node: TreeNode | TreeLeafValue | undefined,
-	options?: EncodeOptions,
+	options?: TreeEncodingOptions,
 ): ConciseTree | undefined;
 
 function exportConcise(
 	node: TreeNode | TreeLeafValue | undefined,
-	options?: EncodeOptions,
+	options?: TreeEncodingOptions,
 ): ConciseTree | undefined {
 	if (node === undefined) {
 		return undefined;
 	}
-	const config: EncodeOptions = { ...options };
+	const config: TreeEncodingOptions = { ...options };
 
 	const cursor = borrowCursorFromTreeNodeOrValue(node);
 	return conciseFromCursor(

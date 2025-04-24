@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -15,7 +15,7 @@ import {
 	type Value,
 	forEachNode,
 } from "../../../core/index.js";
-import { fail, getOrCreate } from "../../../util/index.js";
+import { getOrCreate } from "../../../util/index.js";
 import type { FlexFieldKind } from "../../modular-schema/index.js";
 
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
@@ -66,7 +66,7 @@ export type Shape = ShapeGeneric<EncodedChunkShape>;
  */
 export interface KeyedFieldEncoder {
 	readonly key: FieldKey;
-	readonly shape: FieldEncoder;
+	readonly encoder: FieldEncoder;
 }
 
 /**

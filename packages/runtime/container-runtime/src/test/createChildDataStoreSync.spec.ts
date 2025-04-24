@@ -18,7 +18,10 @@ import {
 	type ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockDeltaManager,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	FluidDataStoreContext,
@@ -31,7 +34,12 @@ describe("createChildDataStore", () => {
 	};
 	const testContext = class TestContext extends FluidDataStoreContext {
 		protected pkg = ["ParentDataStore"];
-		public registry: IFluidDataStoreRegistry | undefined;
+		// This is a override of a protected property to expose it publicly, however TypeScript does not allow override to be used here to make this explicit.
+		// This TypeScript issue is tracked by https://github.com/microsoft/TypeScript/issues/51515.
+		// When targeting ES2022 or newer, TypeScript uses ESM properties here, which would overwrite the base property giving the error:
+		// "Property 'registry' will overwrite the base property in 'FluidDataStoreContext'. If this is intentional, add an initializer. Otherwise, add a 'declare' modifier or remove the redundant declaration.ts(2612)"
+		// This is mitigated using `declare` to indicate that this property is only here for TypeScript typing reasons, and its declaration should have no effect at runtime.
+		public declare registry: IFluidDataStoreRegistry | undefined;
 		public getInitialSnapshotDetails = throwNYI;
 		public setAttachState = throwNYI;
 		public getAttachSummary = throwNYI;
@@ -84,6 +92,7 @@ describe("createChildDataStore", () => {
 					});
 				},
 			} satisfies Partial<IContainerRuntimeBase> as unknown as IContainerRuntimeBase,
+			deltaManager: new MockDeltaManager(),
 		} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 
 		const context = new testContext(

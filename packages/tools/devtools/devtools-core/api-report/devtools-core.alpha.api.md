@@ -22,7 +22,7 @@ export interface FluidDevtoolsProps {
     logger?: IDevtoolsLogger;
 }
 
-// @beta @sealed
+// @beta @sealed @system
 export interface HasContainerKey {
     readonly containerKey: ContainerKey;
 }

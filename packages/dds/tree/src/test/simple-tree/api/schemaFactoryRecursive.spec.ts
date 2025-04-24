@@ -24,8 +24,9 @@ import {
 	type NodeBuilderData,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
-import type {
-	ValidateRecursiveSchema,
+import {
+	allowUnused,
+	type ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import type {
@@ -36,7 +37,7 @@ import type {
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
-import { TreeFactory } from "../../../treeFactory.js";
+import { SharedTree } from "../../../treeFactory.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
@@ -63,7 +64,6 @@ const sf = new SchemaFactory("recursive");
 describe("SchemaFactory Recursive methods", () => {
 	describe("objectRecursive", () => {
 		it("End-to-end with recursive object", () => {
-			const factory = new TreeFactory({});
 			const schema = new SchemaFactory("com.example");
 
 			/**
@@ -86,8 +86,11 @@ describe("SchemaFactory Recursive methods", () => {
 
 			const config = new TreeViewConfiguration({ schema: Box });
 
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			const tree = SharedTree.create(
+				new MockFluidDataStoreRuntime({
+					idCompressor: createIdCompressor(),
+					registry: [SharedTree.getFactory()],
+				}),
 				"tree",
 			);
 
@@ -536,6 +539,37 @@ describe("SchemaFactory Recursive methods", () => {
 				) {}
 				// @ts-expect-error Maps accept allowed types, not field schema.
 				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => {}]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+		});
+
+		it("AllowUnused", () => {
+			{
+				class Test extends sf.arrayRecursive("Test", [() => Test]) {}
+				allowUnused<ValidateRecursiveSchema<typeof Test>>();
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => {}]) {}
+				// @ts-expect-error referenced type not a schema.
+				allowUnused<ValidateRecursiveSchema<typeof Test>>();
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
 		});
 

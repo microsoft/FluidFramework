@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import {
 	type ChangeAtomId,
 	type DeltaFieldChanges,
@@ -10,7 +11,6 @@ import {
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
-import { fail } from "../../util/index.js";
 import {
 	type FieldChangeHandler,
 	type FieldEditor,
