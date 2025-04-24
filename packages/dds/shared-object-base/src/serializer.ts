@@ -153,7 +153,11 @@ export class FluidSerializer implements IFluidSerializer {
 				? value.url
 				: generateHandleContextPath(value.url, this.context);
 
-			return new RemoteFluidObjectHandle(absolutePath, this.root, value.placeholder === true);
+			return new RemoteFluidObjectHandle(
+				absolutePath,
+				this.root,
+				value.payloadPending === true,
+			);
 		} else {
 			return value;
 		}

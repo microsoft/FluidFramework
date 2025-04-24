@@ -15,7 +15,7 @@ export {
 	ISerializedHandle,
 	isSerializedHandle,
 	isFluidHandle,
-	isFluidHandleInternalPlaceholder,
+	isFluidHandleInternalPayloadPending,
 	toFluidHandleErased,
 	toFluidHandleInternal,
 	FluidHandleBase,

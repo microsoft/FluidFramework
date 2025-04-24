@@ -23,9 +23,9 @@ export enum RuntimeHeaders {
 	 */
 	viaHandle = "viaHandle",
 	/**
-	 * True if the request is coming from a placeholder handle.
+	 * True if the request is coming from a handle with a pending payload.
 	 */
-	placeholder = "placeholder",
+	payloadPending = "payloadPending",
 }
 
 /**

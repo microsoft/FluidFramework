@@ -27,7 +27,7 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
-import { isFluidHandleInternalPlaceholder } from "@fluidframework/runtime-utils/internal";
+import { isFluidHandleInternalPayloadPending } from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
 	MockLogger,
@@ -105,7 +105,7 @@ export class MockRuntime
 			isBlobDeleted: (blobPath: string) => this.isBlobDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: stashed[1] as IPendingBlobs | undefined,
-			createBlobPlaceholders: false,
+			createBlobPayloadPending: false,
 		});
 	}
 
@@ -162,10 +162,10 @@ export class MockRuntime
 	): Promise<ArrayBufferLike> {
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
-		const placeholder = isFluidHandleInternalPlaceholder(blobHandle)
-			? blobHandle.placeholder
+		const payloadPending = isFluidHandleInternalPayloadPending(blobHandle)
+			? blobHandle.payloadPending
 			: false;
-		return this.blobManager.getBlob(blobId, placeholder);
+		return this.blobManager.getBlob(blobId, payloadPending);
 	}
 
 	public async getPendingLocalState(): Promise<(unknown[] | IPendingBlobs | undefined)[]> {
@@ -765,7 +765,7 @@ describe("BlobManager", () => {
 		);
 	});
 
-	it("waits for placeholder blobs without error", async () => {
+	it("waits for blobs from handles with pending payloads without error", async () => {
 		await runtime.attach();
 
 		// Part of remoteUpload, but stop short of processing the message
@@ -774,11 +774,11 @@ describe("BlobManager", () => {
 
 		await assert.rejects(
 			runtime.blobManager.getBlob(op.metadata.localId, false),
-			"Rejects when attempting to get non-existent, non-placeholder blobs",
+			"Rejects when attempting to get non-existent, shared-payload blobs",
 		);
 
-		// Try to get the blob that we haven't processed the attach op for yet, as a placeholder
-		// Simulating having found this ID in a placeholder handle that the remote client would have sent
+		// Try to get the blob that we haven't processed the attach op for yet.
+		// This simulates having found this ID in a handle with a pending payload that the remote client would have sent
 		const blobP = runtime.blobManager.getBlob(op.metadata.localId, true);
 
 		// Process the op as if it were arriving from the remote client, which should cause the blobP promise to resolve

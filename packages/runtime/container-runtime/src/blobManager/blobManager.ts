@@ -18,7 +18,7 @@ import type {
 	IEventProvider,
 	IFluidHandleContext,
 	IFluidHandleInternal,
-	IFluidHandleInternalPlaceholder,
+	IFluidHandleInternalPayloadPending,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -65,7 +65,7 @@ import {
  */
 export class BlobHandle
 	extends FluidHandleBase<ArrayBufferLike>
-	implements IFluidHandleInternalPlaceholder<ArrayBufferLike>
+	implements IFluidHandleInternalPayloadPending<ArrayBufferLike>
 {
 	private attached: boolean = false;
 
@@ -79,7 +79,7 @@ export class BlobHandle
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
 		public get: () => Promise<ArrayBufferLike>,
-		public readonly placeholder: boolean,
+		public readonly payloadPending: boolean,
 		private readonly onAttachGraph?: () => void,
 	) {
 		super();
@@ -226,7 +226,7 @@ export class BlobManager {
 		readonly runtime: IBlobManagerRuntime;
 		stashedBlobs: IPendingBlobs | undefined;
 		readonly localBlobIdGenerator?: (() => string) | undefined;
-		readonly createBlobPlaceholders: boolean;
+		readonly createBlobPayloadPending: boolean;
 	}) {
 		const {
 			routeContext,
@@ -362,7 +362,7 @@ export class BlobManager {
 		return this.redirectTable.get(blobId) !== undefined;
 	}
 
-	public async getBlob(blobId: string, placeholder: boolean): Promise<ArrayBufferLike> {
+	public async getBlob(blobId: string, payloadPending: boolean): Promise<ArrayBufferLike> {
 		// Verify that the blob is not deleted, i.e., it has not been garbage collected. If it is, this will throw
 		// an error, failing the call.
 		this.verifyBlobNotDeleted(blobId);
@@ -385,11 +385,11 @@ export class BlobManager {
 			storageId = blobId;
 		} else {
 			const attachedStorageId = this.redirectTable.get(blobId);
-			if (!placeholder) {
+			if (!payloadPending) {
 				assert(!!attachedStorageId, 0x11f /* "requesting unknown blobs" */);
 			}
 			// If we didn't find it in the redirectTable, assume the attach op is coming eventually and wait.
-			// We do this even if the local client doesn't have the blob placeholder flag enabled, in case a
+			// We do this even if the local client doesn't have the blob payloadPending flag enabled, in case a
 			// remote client does have it enabled. This wait may be infinite if the uploading client failed
 			// the upload and doesn't exist anymore.
 			storageId =
@@ -441,7 +441,7 @@ export class BlobManager {
 			getGCNodePathFromBlobId(localId),
 			this.routeContext,
 			async () => this.getBlob(localId, false),
-			false, // placeholder
+			false, // payloadPending
 			callback,
 		);
 	}

@@ -31,7 +31,7 @@ export type {
 	IProvideFluidHandleContext,
 	IProvideFluidHandle,
 	IFluidHandleInternal,
-	IFluidHandleInternalPlaceholder,
+	IFluidHandleInternalPayloadPending,
 	IFluidHandleErased,
 } from "./handles.js";
 export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";

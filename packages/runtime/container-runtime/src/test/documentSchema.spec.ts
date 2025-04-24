@@ -29,7 +29,7 @@ describe("Runtime", () => {
 			compressionLz4: true,
 			idCompressorMode: "delayed",
 			// opGroupingEnabled: undefined,
-			// createBlobPlaceholders: true,
+			// createBlobPayloadPending: true,
 		},
 	};
 
@@ -38,7 +38,7 @@ describe("Runtime", () => {
 		compressionLz4: true,
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
-		createBlobPlaceholders: false,
+		createBlobPayloadPending: false,
 		disallowedVersions: [],
 	};
 
@@ -303,7 +303,7 @@ describe("Runtime", () => {
 					compressionLz4: boolToProp(featuresModified.compressionLz4),
 					idCompressorMode: featuresModified.idCompressorMode,
 					opGroupingEnabled: boolToProp(featuresModified.opGroupingEnabled),
-					createBlobPlaceholders: boolToProp(featuresModified.createBlobPlaceholders),
+					createBlobPayloadPending: boolToProp(featuresModified.createBlobPayloadPending),
 					disallowedVersions: arrayToProp(featuresModified.disallowedVersions),
 				},
 			};

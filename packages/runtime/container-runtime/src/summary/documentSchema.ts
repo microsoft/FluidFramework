@@ -96,7 +96,7 @@ export interface IDocumentSchemaFeatures {
 	compressionLz4: boolean;
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
-	createBlobPlaceholders: boolean;
+	createBlobPayloadPending: boolean;
 
 	/**
 	 * List of disallowed versions of the runtime.
@@ -228,7 +228,7 @@ const documentSchemaSupportedConfigs = {
 	idCompressorMode: new IdCompressorProperty(["delayed", "on"]),
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
-	createBlobPlaceholders: new TrueOrUndefined(),
+	createBlobPayloadPending: new TrueOrUndefined(),
 	disallowedVersions: new CheckVersions(),
 };
 
@@ -484,7 +484,7 @@ export class DocumentsSchemaController {
 				compressionLz4: boolToProp(features.compressionLz4),
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
-				createBlobPlaceholders: boolToProp(features.createBlobPlaceholders),
+				createBlobPayloadPending: boolToProp(features.createBlobPayloadPending),
 				disallowedVersions: arrayToProp(features.disallowedVersions),
 			},
 		};

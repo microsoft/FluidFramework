@@ -147,7 +147,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		// Although sweep is supported in 2.x, it is disabled by default until compatibilityVersion>=3.0.0 to be extra safe.
 		"3.0.0": { enableGCSweep: true },
 	} as const,
-	createBlobPlaceholders: {
+	createBlobPayloadPending: {
 		// This feature is new and disabled by default. In the future we will enable it by default, but we have not
 		// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
 		// exposed on the public API surface.

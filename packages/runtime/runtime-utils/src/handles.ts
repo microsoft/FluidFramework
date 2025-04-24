@@ -7,7 +7,7 @@ import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
-	IFluidHandleInternalPlaceholder,
+	IFluidHandleInternalPayloadPending,
 } from "@fluidframework/core-interfaces/internal";
 
 /**
@@ -22,15 +22,15 @@ export interface ISerializedHandle {
 	url: string;
 
 	/**
-	 * The handle may be a placeholder, as determined by and resolvable by the subsystem that the handle
-	 * relates to.  For instance, the BlobManager uses this to distinguish blob handles which may
-	 * not yet have an attached blob yet.
+	 * The handle may have a pending payload, as determined by and resolvable by the subsystem that
+	 * the handle relates to.  For instance, the BlobManager uses this to distinguish blob handles
+	 * which may not yet have an attached blob yet.
 	 *
 	 * @remarks
-	 * Will only exist if the handle is a placeholder, will be omitted entirely from the serialized format
-	 * if the handle is not a placeholder.
+	 * Will only exist if the handle was created with a pending payload, will be omitted entirely from
+	 * the serialized format if the handle was created with an already-shared payload.
 	 */
-	readonly placeholder?: true;
+	readonly payloadPending?: true;
 }
 
 /**
@@ -43,10 +43,10 @@ export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 /**
  * @internal
  */
-export const isFluidHandleInternalPlaceholder = (
+export const isFluidHandleInternalPayloadPending = (
 	fluidHandleInternal: IFluidHandleInternal,
-): fluidHandleInternal is IFluidHandleInternalPlaceholder =>
-	"placeholder" in fluidHandleInternal && fluidHandleInternal.placeholder === true;
+): fluidHandleInternal is IFluidHandleInternalPayloadPending =>
+	"payloadPending" in fluidHandleInternal && fluidHandleInternal.payloadPending === true;
 
 /**
  * Encodes the given IFluidHandle into a JSON-serializable form,
@@ -56,11 +56,11 @@ export const isFluidHandleInternalPlaceholder = (
  * @internal
  */
 export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISerializedHandle {
-	return isFluidHandleInternalPlaceholder(handle)
+	return isFluidHandleInternalPayloadPending(handle)
 		? {
 				type: "__fluid_handle__",
 				url: handle.absolutePath,
-				placeholder: true,
+				payloadPending: true,
 			}
 		: {
 				type: "__fluid_handle__",

@@ -44,7 +44,7 @@ describe("FluidSerializer", () => {
 		const handle = new RemoteFluidObjectHandle(
 			"/root",
 			context,
-			false, // placeholder
+			false, // payloadPending
 		);
 
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
@@ -174,7 +174,7 @@ describe("FluidSerializer", () => {
 		const handle = new RemoteFluidObjectHandle(
 			"/root",
 			context,
-			false, // placeholder
+			false, // payloadPending
 		);
 		const serializedHandle = {
 			type: "__fluid_handle__",
@@ -340,12 +340,12 @@ describe("FluidSerializer", () => {
 			const bind = new RemoteFluidObjectHandle(
 				"/",
 				new MockHandleContext(),
-				false, // placeholder
+				false, // payloadPending
 			);
 			const handle = new RemoteFluidObjectHandle(
 				"/okay",
 				new MockHandleContext(),
-				false, // placeholder
+				false, // payloadPending
 			);
 			const input = { x: handle, y: 123 };
 			const serializedOnce = makeHandlesSerializable(input, serializer, bind) as {

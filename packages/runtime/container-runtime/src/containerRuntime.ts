@@ -409,10 +409,10 @@ export interface ContainerRuntimeOptions {
 	readonly explicitSchemaControl: boolean;
 
 	/**
-	 * Create blob placeholders when calling createBlob (default is false).
+	 * Create blob handles with pending payloads when calling createBlob (default is false).
 	 * When enabled, createBlob will return a handle before the blob upload completes.
 	 */
-	readonly createBlobPlaceholders: boolean;
+	readonly createBlobPayloadPending: boolean;
 }
 
 /**
@@ -836,7 +836,7 @@ export class ContainerRuntime
 			compressionOptions = enableGroupedBatching === false
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
-			createBlobPlaceholders = defaultConfigs.createBlobPlaceholders,
+			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
@@ -1020,7 +1020,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
-				createBlobPlaceholders,
+				createBlobPayloadPending,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -1046,7 +1046,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor,
 			enableGroupedBatching,
 			explicitSchemaControl,
-			createBlobPlaceholders,
+			createBlobPayloadPending,
 		};
 
 		const runtime = new containerRuntimeCtor(
@@ -1781,7 +1781,7 @@ export class ContainerRuntime
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
-			createBlobPlaceholders: this.sessionSchema.createBlobPlaceholders === true,
+			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
 		});
 
 		this.deltaScheduler = new DeltaScheduler(
@@ -2331,7 +2331,7 @@ export class ContainerRuntime
 
 			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
 				const localId = requestParser.pathParts[1];
-				const placeholder = requestParser.headers?.[RuntimeHeaders.placeholder] === true;
+				const payloadPending = requestParser.headers?.[RuntimeHeaders.payloadPending] === true;
 				if (
 					!this.blobManager.hasBlob(localId) &&
 					requestParser.headers?.[RuntimeHeaders.wait] === false
@@ -2339,7 +2339,7 @@ export class ContainerRuntime
 					return create404Response(request);
 				}
 
-				const blob = await this.blobManager.getBlob(localId, placeholder);
+				const blob = await this.blobManager.getBlob(localId, payloadPending);
 				return {
 					status: 200,
 					mimeType: "fluid/object",
