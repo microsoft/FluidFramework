@@ -1131,7 +1131,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
-				context.notifyStateChange(changes);
+				context.notifyStateChange({
+					...changes,
+					attachState: this.contexts.isNotBound(context.id) ? undefined : changes.attachState,
+				});
 			} catch (error) {
 				this.mc.logger.sendErrorEvent(
 					{

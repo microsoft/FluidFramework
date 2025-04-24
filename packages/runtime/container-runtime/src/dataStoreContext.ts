@@ -697,6 +697,9 @@ export abstract class FluidDataStoreContext
 					this.setAttachState(attachState);
 				}
 			} else {
+				if (attachState !== undefined) {
+					this._attachState = attachState;
+				}
 				this.channel.notifyStateChange(changes);
 			}
 		}
@@ -971,14 +974,14 @@ export abstract class FluidDataStoreContext
 		// It may read current state of the system when channel was created, but it was not getting any updates
 		// through creation process and could have missed events. So update it on current state.
 		// Once this.loaded is set (above), it will stat receiving events.
-		if (channel.notifyStateChange) {
-			channel.notifyStateChange?.({
+		if (channel.notifyStateChange === undefined) {
+			channel.setConnectionState(this.connected, this.clientId);
+		} else {
+			channel.notifyStateChange({
 				connected: this.connected,
 				clientId: this.clientId,
 				readonly: this.isReadOnly(),
 			});
-		} else {
-			channel.setConnectionState(this.connected, this.clientId);
 		}
 
 		// Freeze the package path to ensure that someone doesn't modify it when it is
@@ -1224,7 +1227,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	 *
 	 * 4. attach op for this data store is processed - setAttachState() is called.
 	 */
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {}
+	protected setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {}
 
 	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
@@ -1365,7 +1368,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					0x14d /* "Should move from detached to attaching" */,
 				);
 				this._attachState = AttachState.Attaching;
-				if (this.channel?.setAttachState) {
+				if (this.channel?.notifyStateChange) {
+					this.channel.notifyStateChange({ attachState });
+				} else if (this.channel?.setAttachState) {
 					this.channel.setAttachState(attachState);
 				} else if (this.channel) {
 					// back-compat! To be removed in the future
@@ -1387,8 +1392,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 						0x14e /* "Should move from attaching to attached" */,
 					);
 					this._attachState = AttachState.Attached;
-					this.channel?.setAttachState?.(attachState);
-					if (this.channel?.setAttachState) {
+					if (this.channel?.notifyStateChange) {
+						this.channel.notifyStateChange({ attachState });
+					} else if (this.channel?.setAttachState) {
 						this.channel.setAttachState(attachState);
 					} else if (this.channel) {
 						// back-compat! To be removed in the future
