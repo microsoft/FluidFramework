@@ -309,6 +309,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			0xa9b /* attach should happen in a node */,
 		);
 		cursor.exitNode();
+		// TODO ADO:36390 avoid re-indexing the whole field when not necessary
 		this.indexField(cursor);
 		if (!this.isShallowIndex) {
 			this.indexSpine(cursor);
