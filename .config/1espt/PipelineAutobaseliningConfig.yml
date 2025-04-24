@@ -31,7 +31,7 @@ pipelines:
         credscan:
           lastModifiedDate: 2025-01-17
         binskim:
-          lastModifiedDate: 2025-01-17
+          lastModifiedDate: 2025-04-24
         spotbugs:
           lastModifiedDate: 2025-01-17
         roslyn:
