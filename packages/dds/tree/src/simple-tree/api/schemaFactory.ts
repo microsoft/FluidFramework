@@ -311,7 +311,7 @@ const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 });
 
 // The following overloads for optional and required are used to get around the fact that
-// the compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T 
+// the compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T
 
 function optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 	t: T,
