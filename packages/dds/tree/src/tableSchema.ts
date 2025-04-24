@@ -181,10 +181,10 @@ export namespace TableSchema {
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TColumnFieldsSchema extends ImplicitFieldSchema,
-		const TColumnSchema extends ColumnSchemaBase<TInputScope, TColumnFieldsSchema> = ColumnSchemaBase<
+		const TColumnSchema extends ColumnSchemaBase<
 			TInputScope,
 			TColumnFieldsSchema
-		>,
+		> = ColumnSchemaBase<TInputScope, TColumnFieldsSchema>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		cellSchema: TCellSchema,
@@ -494,10 +494,10 @@ export namespace TableSchema {
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TColumnFieldsSchema extends ImplicitFieldSchema,
-		const TColumnSchema extends ColumnSchemaBase<TInputScope, TColumnFieldsSchema> = ColumnSchemaBase<
+		const TColumnSchema extends ColumnSchemaBase<
 			TInputScope,
 			TColumnFieldsSchema
-		>,
+		> = ColumnSchemaBase<TInputScope, TColumnFieldsSchema>,
 		const TRow extends RowSchemaBase<TInputScope, TCellSchema, TColumnSchema> = RowSchemaBase<
 			TInputScope,
 			TCellSchema,

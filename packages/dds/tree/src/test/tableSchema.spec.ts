@@ -74,18 +74,20 @@ describe("TableFactory unit tests", () => {
 		it("Non-empty", () => {
 			const { treeView, Table, Column } = createTableTree();
 
-			treeView.initialize(new Table({
-				columns: [new Column({ id: "column-0" }), { id: "column-1" }],
-				rows: [
-					{ id: "row-0", cells: {} },
-					{
-						id: "row-1",
-						cells: {
-							"column-1": { value: "Hello world!" },
+			treeView.initialize(
+				new Table({
+					columns: [new Column({ id: "column-0" }), { id: "column-1" }],
+					rows: [
+						{ id: "row-0", cells: {} },
+						{
+							id: "row-1",
+							cells: {
+								"column-1": { value: "Hello world!" },
+							},
 						},
-					},
-				],
-			}));
+					],
+				}),
+			);
 
 			assertEqualTrees(treeView.root, {
 				columns: [
