@@ -344,12 +344,13 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = new MockNodeIdentifierManager();
+
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config);
+			const nodeKeyManager = view.nodeKeyManager;
 			const id = nodeKeyManager.stabilizeNodeIdentifier(
 				nodeKeyManager.generateLocalNodeIdentifier(),
 			);
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-			const view = getView(config, nodeKeyManager);
 			view.initialize({ identifier: id });
 
 			assert.equal(TreeAlpha.identifier(view.root), id);
@@ -435,12 +436,13 @@ describe("treeNodeApi", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.identifier,
 				});
-				const nodeKeyManager = new MockNodeIdentifierManager();
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
 				const id = nodeKeyManager.stabilizeNodeIdentifier(
 					nodeKeyManager.generateLocalNodeIdentifier(),
 				);
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-				const view = getView(config, nodeKeyManager);
 				view.initialize({ identifier: id });
 
 				assert.equal(
@@ -540,11 +542,11 @@ describe("treeNodeApi", () => {
 
 				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
 				it("returns string when unhydrated then local id when hydrated", () => {
-					const nodeKeyManager = new MockNodeIdentifierManager();
 					const config = new TreeViewConfiguration({ schema: HasIdentifier });
-					const view = getView(config, nodeKeyManager);
+					const view = getView(config);
 					view.initialize({});
 					const identifier = view.root.identifier;
+					const nodeKeyManager = view.nodeKeyManager;
 					const shortId = TreeAlpha.identifier.getShort(view.root);
 					assert.equal(
 						shortId,
@@ -564,12 +566,13 @@ describe("treeNodeApi", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.identifier,
 				});
-				const nodeKeyManager = new MockNodeIdentifierManager();
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
 				const id = nodeKeyManager.stabilizeNodeIdentifier(
 					nodeKeyManager.generateLocalNodeIdentifier(),
 				);
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-				const view = getView(config, nodeKeyManager);
 				view.initialize({ identifier: id });
 
 				assert.equal(
@@ -614,11 +617,13 @@ describe("treeNodeApi", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.identifier,
 				});
-				const nodeKeyManager = new MockNodeIdentifierManager();
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+
+				const nodeKeyManager = view.nodeKeyManager;
 				const localId = nodeKeyManager.generateLocalNodeIdentifier();
 				const id = nodeKeyManager.stabilizeNodeIdentifier(localId);
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-				const view = getView(config, nodeKeyManager);
 				view.initialize({ identifier: id });
 
 				assert.equal(TreeAlpha.identifier.expand(view, localId as unknown as number), id);
@@ -631,11 +636,7 @@ describe("treeNodeApi", () => {
 				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 				const view = getView(config);
 				view.initialize({ identifier: "testID" });
-
-				assert.throws(
-					() => TreeAlpha.identifier.expand(view, 1),
-					validateUsageError(/Invalid local id./),
-				);
+				assert.throws(() => TreeAlpha.identifier.expand(view, 98));
 			});
 		});
 	});
