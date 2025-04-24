@@ -14,18 +14,16 @@ import {
 	schemaStatics,
 	type SchemaFactoryObjectOptions,
 } from "./schemaFactory.js";
-import {
-	normalizeToAnnotatedAllowedType,
-	type AnnotatedAllowedType,
-	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type ImplicitAnnotatedFieldSchema,
-	type ImplicitFieldSchema,
-	type NodeSchemaOptions,
+import type {
+	ImplicitAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
+	ImplicitAnnotatedFieldSchema,
+	ImplicitFieldSchema,
+	NodeSchemaOptions,
 } from "../schemaTypes.js";
 import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type { NodeKind, TreeNodeSchema, TreeNodeSchemaClass } from "../core/index.js";
+import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
 import type {
 	ImplicitAllowedTypesUnsafe,
 	ImplicitFieldSchemaUnsafe,
@@ -38,7 +36,6 @@ import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
 import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
-import type { LazyItem } from "../flexList.js";
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -57,26 +54,6 @@ export class SchemaFactoryAlpha<
 		return (
 			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
 		) as ScopedSchemaName<TScope, Name>;
-	}
-
-	/**
-	 * Declares a type enablable in a set of {@link AllowedTypes}.
-	 *
-	 * @remarks
-	 * t is frozen and should not be modified after being passed in.
-	 */
-	public enablable<const T extends LazyItem<TreeNodeSchema>>(
-		t: T | AnnotatedAllowedType<T>,
-	): AnnotatedAllowedType<T> {
-		Object.freeze(t);
-		const annotatedType = normalizeToAnnotatedAllowedType(t);
-		return {
-			type: annotatedType.type,
-			metadata: {
-				...annotatedType.metadata,
-				enabledUponSchemaUpgrade: "TODO generate upgrade token",
-			},
-		};
 	}
 
 	/**
