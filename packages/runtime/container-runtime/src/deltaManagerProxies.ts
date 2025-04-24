@@ -211,6 +211,7 @@ export abstract class BaseDeltaManagerProxy
 		this.deltaManager.off("connect", this.eventHandlers.onConnect);
 		this.deltaManager.off("disconnect", this.eventHandlers.onDisconnect);
 		this.deltaManager.off("readonly", this.eventHandlers.onReadonly);
+		this.removeAllListeners();
 	}
 
 	public submitSignal(content: string, targetClientId?: string): void {

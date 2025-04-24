@@ -47,6 +47,7 @@ export {
 
 export type {
 	latestMap,
+	LatestMapArguments,
 	LatestMapRaw,
 	LatestMapClientData,
 	LatestMapRawEvents,
@@ -56,6 +57,7 @@ export type {
 } from "./latestMapValueManager.js";
 export type {
 	latest,
+	LatestArguments,
 	LatestRaw,
 	LatestRawEvents,
 } from "./latestValueManager.js";

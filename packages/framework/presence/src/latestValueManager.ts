@@ -6,6 +6,7 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import type {
+	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
@@ -14,9 +15,8 @@ import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { objectEntries } from "./internalUtils.js";
+import { asDeeplyReadonly, objectEntries } from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -40,7 +40,7 @@ export interface LatestRawEvents<T> {
 	 * @eventProperty
 	 */
 	localUpdated: (update: {
-		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
 	}) => void;
 }
 
@@ -75,7 +75,7 @@ export interface LatestRaw<T> {
 	 * @remarks Manager assumes ownership of the value and its references. Make a deep clone before
 	 * setting, if needed. No comparison is done to detect changes; all sets are transmitted.
 	 */
-	get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+	get local(): DeepReadonly<JsonDeserialized<T>>;
 	set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 
 	/**
@@ -111,8 +111,8 @@ class LatestValueManagerImpl<T, Key extends string>
 		return this.datastore.presence;
 	}
 
-	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {
-		return this.value.value;
+	public get local(): DeepReadonly<JsonDeserialized<T>> {
+		return asDeeplyReadonly(this.value.value);
 	}
 
 	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
@@ -123,7 +123,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
 
-		this.events.emit("localUpdated", { value });
+		this.events.emit("localUpdated", { value: asDeeplyReadonly(value) });
 	}
 
 	public *getRemotes(): IterableIterator<LatestClientData<T>> {
@@ -132,7 +132,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			if (attendeeId !== allKnownStates.self) {
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: value.value,
+					value: asDeeplyReadonly(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
 			}
@@ -153,7 +153,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 		return {
-			value: clientState.value,
+			value: asDeeplyReadonly(clientState.value),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -174,11 +174,29 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					value: value.value,
+					value: asDeeplyReadonly(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];
 	}
+}
+
+/**
+ * Arguments that are passed to the {@link StateFactory.latest} function.
+ *
+ * @alpha
+ */
+export interface LatestArguments<T extends object | null> {
+	/**
+	 * The initial value of the local state.
+	 */
+	// eslint-disable-next-line @rushstack/no-new-null
+	local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
+
+	/**
+	 * See {@link BroadcastControlSettings}.
+	 */
+	settings?: BroadcastControlSettings | undefined;
 }
 
 /**
@@ -187,16 +205,16 @@ class LatestValueManagerImpl<T, Key extends string>
  * @alpha
  */
 export function latest<T extends object | null, Key extends string = string>(
-	// eslint-disable-next-line @rushstack/no-new-null
-	initialValue: JsonSerializable<T> & JsonDeserialized<T> & (object | null),
-	controls?: BroadcastControlSettings,
+	args: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
-	// Latest takes ownership of initialValue but makes a shallow
+	const { local, settings } = args;
+
+	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: initialValue === null ? initialValue : shallowCloneObject(initialValue),
+		value: local === null ? local : shallowCloneObject(local),
 	};
 	const factory = (
 		key: Key,
@@ -208,9 +226,9 @@ export function latest<T extends object | null, Key extends string = string>(
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestRaw<T>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

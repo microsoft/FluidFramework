@@ -57,11 +57,13 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		// window.
 		statesWorkspace.add(
 			"focus",
-			StateFactory.latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
+			StateFactory.latest<IFocusState>({
+				local: { hasFocus: window.document.hasFocus() },
+			}),
 		);
 
 		// Save a reference to the focus state for easy access within the FocusTracker.
-		this.focus = statesWorkspace.props.focus;
+		this.focus = statesWorkspace.states.focus;
 
 		// When the focus state is updated, the FocusTracker should emit the focusChanged event.
 		this.focus.events.on("remoteUpdated", ({ attendee, value }) => {

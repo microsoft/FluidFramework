@@ -16,9 +16,8 @@ import {
 	disabledCompressionConfig,
 	enabledCompressionConfig,
 } from "./compressionDefinitions.js";
-import type { IContainerRuntimeOptionsInternal } from "./containerRuntime.js";
+import type { ContainerRuntimeOptionsInternal } from "./containerRuntime.js";
 import { pkgVersion } from "./packageVersion.js";
-import type { IdCompressorMode } from "./summary/index.js";
 
 /**
  * Our policy is to support N/N-1 compatibility by default, where N is the most
@@ -68,29 +67,27 @@ export type ConfigMap<T extends Record<string, unknown>> = {
 };
 
 /**
- * Subset of the {@link IContainerRuntimeOptionsInternal} properties which
+ * Subset of the {@link ContainerRuntimeOptionsInternal} properties which
  * affect {@link IDocumentSchemaFeatures}.
  *
  * @remarks
- * When a new option is added to {@link IContainerRuntimeOptionsInternal}, we
+ * When a new option is added to {@link ContainerRuntimeOptionsInternal}, we
  * must consider if it changes the DocumentSchema. If so, then a corresponding
  * entry must be added to {@link runtimeOptionsAffectingDocSchemaConfigMap}
  * below. If not, then it must be omitted from this type.
  *
  * Note: `Omit` is used instead of `Pick` to ensure that all new options are
  * included in this type by default. If any new properties are added to
- * {@link IContainerRuntimeOptionsInternal}, they will be included in this
+ * {@link ContainerRuntimeOptionsInternal}, they will be included in this
  * type unless explicitly omitted. This will prevent us from forgetting to
  * account for any new properties in the future.
  */
-export type RuntimeOptionsAffectingDocSchema = Required<
-	Omit<
-		IContainerRuntimeOptionsInternal,
-		| "chunkSizeInBytes"
-		| "maxBatchSizeInBytes"
-		| "loadSequenceNumberVerification"
-		| "summaryOptions"
-	>
+export type RuntimeOptionsAffectingDocSchema = Omit<
+	ContainerRuntimeOptionsInternal,
+	| "chunkSizeInBytes"
+	| "maxBatchSizeInBytes"
+	| "loadSequenceNumberVerification"
+	| "summaryOptions"
 >;
 
 /**
@@ -120,7 +117,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		// However, to satisfy the Required<> constraint while
 		// `exactOptionalPropertyTypes` is `false` (TODO: AB#8215), we need
 		// to have it defined, so we trick the type checker here.
-		"1.0.0": undefined as unknown as Exclude<IdCompressorMode, undefined>,
+		"1.0.0": undefined,
 		// We do not yet want to enable idCompressor by default since it will
 		// increase bundle sizes, and not all customers will benefit from it.
 		// Therefore, we will require customers to explicitly enable it. We
