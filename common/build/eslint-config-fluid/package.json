@@ -65,7 +65,7 @@
 			"serialize-javascript - CVE-2024-11831 impacts version 6.0.0 which is pinned by mocha 10.4.0, which in turn comes from mocha-multi-reporters 1.5.1 (which has no updated version at this time)"
 		],
 		"overrides": {
-			"serialize-javascript": "^6.0.2"
+			"mocha>serialize-javascript@6.0.0": "^6.0.2"
 		}
 	}
 }
