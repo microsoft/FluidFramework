@@ -3625,7 +3625,6 @@ describe("Runtime", () => {
 			});
 		});
 
-		// TODO: Update these tests when minVersionForCollab API is implemented - ADO:36088
 		describe("Default Configurations", () => {
 			it("minVersionForCollab not provided", async () => {
 				const logger = new MockLogger();

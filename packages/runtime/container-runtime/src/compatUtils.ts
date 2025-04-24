@@ -40,6 +40,11 @@ import { pkgVersion } from "./packageVersion.js";
 export const defaultminVersionForCollab = "2.0.0-defaults" as const;
 
 /**
+ * We don't want to allow anyone to use a version less than 1.0.0 for minVersionForCollab.
+ */
+const lowestMinVersionForCollab = "1.0.0" as const;
+
+/**
  * String in a valid semver format specifying bottom of a minor version
  * or special "defaults" prerelease of a major.
  * @remarks Only 2.0.0-defaults is expected, but index signatures cannot be a
@@ -203,6 +208,7 @@ export function isValidCompatVersion(minVersionForCollab: SemanticVersion): bool
 	return (
 		minVersionForCollab !== undefined &&
 		semverValid(minVersionForCollab) !== null &&
+		semverGte(minVersionForCollab, lowestMinVersionForCollab) &&
 		semverLte(minVersionForCollab, pkgVersion)
 	);
 }
