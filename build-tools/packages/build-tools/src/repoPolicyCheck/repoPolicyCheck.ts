@@ -13,7 +13,6 @@ import { Handler } from "./common";
 import { handler as assertShortCodeHandler } from "./handlers/assertShortCode";
 import { handlers as copyrightFileHeaderHandlers } from "./handlers/copyrightFileHeader";
 import { handlers as npmPackageContentsHandlers } from "./handlers/npmPackages";
-import { handler as dockerfilePackageHandler } from "./handlers/dockerfilePackages";
 import { handler as fluidCaseHandler } from "./handlers/fluidCase";
 import { handlers as lockfilesHandlers } from "./handlers/lockfiles";
 
@@ -57,15 +56,14 @@ if (program.path) {
 const handlers: Handler[] = [
     ...copyrightFileHeaderHandlers,
     ...npmPackageContentsHandlers,
-    dockerfilePackageHandler,
     fluidCaseHandler,
     ...lockfilesHandlers,
     assertShortCodeHandler,
 ];
 
-const handlerActionPerf = new Map<"handle" | "resolve" | "final",Map<string, number>>();
+const handlerActionPerf = new Map<"handle" | "resolve" | "final", Map<string, number>>();
 
-function runWithPerf<T>(name: string, action: "handle" | "resolve" | "final", run: ()=>T): T{
+function runWithPerf<T>(name: string, action: "handle" | "resolve" | "final", run: () => T): T {
     const actionMap = handlerActionPerf.get(action) ?? new Map<string, number>();
     let dur = actionMap.get(name) ?? 0;
 
@@ -82,13 +80,13 @@ function runWithPerf<T>(name: string, action: "handle" | "resolve" | "final", ru
 // synchronize output, exit code, and resolve decision for all handlers
 function routeToHandlers(file: string) {
     handlers.filter(handler => handler.match.test(file) && handlerRegex.test(handler.name)).map(handler => {
-        const result = runWithPerf(handler.name, "handle", ()=>handler.handler(file, pathToGitRoot));
+        const result = runWithPerf(handler.name, "handle", () => handler.handler(file, pathToGitRoot));
         if (result) {
             let output = newline + 'file failed policy check: ' + file + newline + result;
             const resolver = handler.resolver;
             if (program.resolve && resolver) {
                 output += newline + 'attempting to resolve: ' + file;
-                const resolveResult = runWithPerf(handler.name, "resolve", ()=>resolver(file, pathToGitRoot));
+                const resolveResult = runWithPerf(handler.name, "resolve", () => resolver(file, pathToGitRoot));
 
                 if (resolveResult.message) {
                     output += newline + resolveResult.message;
@@ -138,12 +136,12 @@ lineReader.on('line', line => {
     }
 });
 
-lineReader.once("close",()=>{
-    handlers.forEach((h)=>{
+lineReader.once("close", () => {
+    handlers.forEach((h) => {
         const final = h.final;
-        if(final){
-            const result = runWithPerf(h.name, "final", ()=>final(pathToGitRoot, program.resolve));
-            if(result?.error){
+        if (final) {
+            const result = runWithPerf(h.name, "final", () => final(pathToGitRoot, program.resolve));
+            if (result?.error) {
                 process.exitCode = 1;
                 console.log(result.error);
             }
@@ -154,10 +152,10 @@ lineReader.once("close",()=>{
 
 process.on("beforeExit", () => {
     writeOutLine(`Statistics: ${processed} processed, ${count - processed} excluded, ${count} total`);
-    handlerActionPerf.forEach((handlerPerf, action)=>{
+    handlerActionPerf.forEach((handlerPerf, action) => {
         writeOutLine(`Performance for "${action}":`);
-        handlerPerf.forEach((dur, handler)=>{
-            writeOutLine(`\t${handler}: ${dur/1000}:`);
+        handlerPerf.forEach((dur, handler) => {
+            writeOutLine(`\t${handler}: ${dur / 1000}:`);
         });
     });
 });
