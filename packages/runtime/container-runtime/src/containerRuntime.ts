@@ -674,6 +674,7 @@ export interface LoadContainerRuntimeParams {
 	 * properties which affect the document schema. minVersionForCollab can be considered to be the minimum version of
 	 * the FF runtime that we should support compatibility with.
 	 *
+	 * @example
 	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
 	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
 	 * understand the new op type. If a customer were to set minVersionForCollab to 2.0.0, then `bar` would be set to
