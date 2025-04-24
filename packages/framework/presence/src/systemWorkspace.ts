@@ -14,7 +14,7 @@ import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import { TimerManager } from "./timerManager.js";
-import type { StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
+import type { AnyWorkspace, StatesWorkspaceSchema } from "./types.js";
 
 /**
  * The system workspace's datastore structure.
@@ -300,7 +300,7 @@ export function createSystemWorkspace(
 	workspace: SystemWorkspace;
 	statesEntry: {
 		internal: PresenceStatesInternal;
-		public: StatesWorkspace<StatesWorkspaceSchema>;
+		public: AnyWorkspace<StatesWorkspaceSchema>;
 	};
 } {
 	const workspace = new SystemWorkspaceImpl(attendeeId, datastore, events, audience);
@@ -308,7 +308,7 @@ export function createSystemWorkspace(
 		workspace,
 		statesEntry: {
 			internal: workspace,
-			public: undefined as unknown as StatesWorkspace<StatesWorkspaceSchema>,
+			public: undefined as unknown as AnyWorkspace<StatesWorkspaceSchema>,
 		},
 	};
 }

@@ -15,7 +15,7 @@ import type {
 	LatestMapRaw,
 	LatestMapItemUpdatedClientData,
 	Presence,
-	ValueAccessor,
+	RawValueAccessor,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
 
@@ -156,15 +156,12 @@ export function checkCompiles(): void {
 	const pointers = workspace.states.pointers;
 	const localPointers = pointers.local;
 
-	function logClientValue<
-		T,
-		TRemoteValueAccessor extends ValueAccessor<T> = ValueAccessor<T>,
-	>({
+	function logClientValue<T>({
 		attendee,
 		key,
 		value,
 	}: Pick<
-		LatestMapItemUpdatedClientData<T, string | number, TRemoteValueAccessor>,
+		LatestMapItemUpdatedClientData<T, string | number, RawValueAccessor<T>>,
 		"attendee" | "key" | "value"
 	>): void {
 		console.log(attendee.attendeeId, key, value);

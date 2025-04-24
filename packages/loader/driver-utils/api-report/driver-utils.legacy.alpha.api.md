@@ -12,7 +12,7 @@ export interface ICompressionStorageConfig {
     minSizeToCompress: number;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export class RateLimiter {
     constructor(maxRequests: number);
     // (undocumented)

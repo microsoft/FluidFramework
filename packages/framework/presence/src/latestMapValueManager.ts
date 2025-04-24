@@ -7,6 +7,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import type {
+	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
@@ -14,9 +15,8 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { objectEntries, objectKeys } from "./internalUtils.js";
+import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
 import type {
 	LatestClientData,
 	LatestData,
@@ -124,7 +124,7 @@ export interface LatestMapEvents<
 	 * @eventProperty
 	 */
 	localItemUpdated: (updatedItem: {
-		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
 		key: K;
 	}) => void;
 
@@ -168,7 +168,7 @@ export interface StateMap<K extends string | number, V> {
 	 */
 	forEach(
 		callbackfn: (
-			value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>,
+			value: DeepReadonly<JsonDeserialized<V>>,
 			key: K,
 			map: StateMap<K, V>,
 		) => void,
@@ -179,7 +179,7 @@ export interface StateMap<K extends string | number, V> {
 	 * Returns a specified element from the StateMap object.
 	 * @returns Returns the element associated with the specified key. If no element is associated with the specified key, undefined is returned.
 	 */
-	get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
+	get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
 
 	/**
 	 * @returns boolean indicating whether an element with the specified key exists or not.
@@ -204,12 +204,12 @@ export interface StateMap<K extends string | number, V> {
 	/**
 	 * Returns an iterable of entries in the map.
 	 */
-	// [Symbol.iterator](): IterableIterator<[K, InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>]>;
+	// [Symbol.iterator](): IterableIterator<[K, DeepReadonly<JsonDeserialized<V>>]>;
 
 	/**
 	 * Returns an iterable of key, value pairs for every entry in the map.
 	 */
-	// entries(): IterableIterator<[K, InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>]>;
+	// entries(): IterableIterator<[K, DeepReadonly<JsonDeserialized<V>>]>;
 
 	/**
 	 * Returns an iterable of keys in the map.
@@ -219,7 +219,7 @@ export interface StateMap<K extends string | number, V> {
 	/**
 	 * Returns an iterable of values in the map.
 	 */
-	// values(): IterableIterator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>>;
+	// values(): IterableIterator<DeepReadonly<JsonDeserialized<V>>>;
 }
 
 class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
@@ -277,7 +277,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	}
 	public forEach(
 		callbackfn: (
-			value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>,
+			value: DeepReadonly<JsonDeserialized<T>>,
 			key: K,
 			map: StateMap<K, T>,
 		) => void,
@@ -286,18 +286,18 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		// TODO: This is a data read, so we need to validate.
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(item.value, key, this);
+				callbackfn(asDeeplyReadonly(item.value), key, this);
 			}
 		}
 	}
-	public get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined {
+	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
 		const data = this.value.items[key]?.value;
 		if (this.validator === undefined) {
 			return data;
 		}
 		const maybeValid = this.validator(data, { key });
 		// TODO: Cast shouldn't be necessary.
-		return maybeValid as InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
+		return maybeValid as DeepReadonly<JsonDeserialized<T>> | undefined;
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -308,7 +308,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 			this.value.items[key] = { rev: 0, timestamp: 0, value, validData: undefined };
 		}
 		this.updateItem(key, value);
-		this.emitter.emit("localItemUpdated", { key, value });
+		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
 		return this;
 	}
 	public get size(): number {
@@ -336,16 +336,20 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  * @sealed
  * @alpha
  */
-export interface LatestMapRaw<T, Keys extends string | number = string | number> {
+export interface LatestMap<
+	T,
+	Keys extends string | number = string | number,
+	TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
+> {
 	/**
 	 * Containing {@link Presence}
 	 */
 	readonly presence: Presence;
 
 	/**
-	 * Events for LatestMapRaw.
+	 * Events for LatestMap.
 	 */
-	readonly events: Listenable<LatestMapEvents<T, Keys, RawValueAccessor<T>>>;
+	readonly events: Listenable<LatestMapEvents<T, Keys, TRemoteAccessor>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -359,7 +363,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Iterable access to remote clients' map of values.
 	 */
-	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, RawValueAccessor<T>>>;
+	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, TRemoteAccessor>>;
 	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
@@ -367,7 +371,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, RawValueAccessor<T>>>;
+	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, TRemoteAccessor>>;
 }
 
 /**
@@ -381,39 +385,11 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
  * @sealed
  * @alpha
  */
-export interface LatestMap<T, Keys extends string | number = string | number> {
-	/**
-	 * Containing {@link Presence}
-	 */
-	readonly presence: Presence;
-
-	/**
-	 * Events for LatestMapRaw.
-	 */
-	readonly events: Listenable<LatestMapEvents<T, Keys, ProxiedValueAccessor<T>>>;
-
-	/**
-	 * Controls for management of sending updates.
-	 */
-	readonly controls: BroadcastControls;
-
-	/**
-	 * Current value map for this client.
-	 */
-	readonly local: StateMap<Keys, T>;
-	/**
-	 * Iterable access to remote clients' map of values.
-	 */
-	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, ProxiedValueAccessor<T>>>;
-	/**
-	 * Array of {@link Attendee}s that have provided states.
-	 */
-	getStateAttendees(): Attendee[];
-	/**
-	 * Access to a specific client's map of values.
-	 */
-	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, ProxiedValueAccessor<T>>>;
-}
+export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<
+	T,
+	Keys,
+	RawValueAccessor<T>
+>;
 
 class LatestMapValueManagerImpl<
 	T,
@@ -484,14 +460,12 @@ class LatestMapValueManagerImpl<
 		}
 		const items = new Map<Keys, LatestData<T, ValueAccessor<T>>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			if (item.value !== undefined) {
-				const value = item.value;
-				if (value !== undefined) {
-					items.set(key, {
-						value,
-						metadata: { revision: item.rev, timestamp: item.timestamp },
-					});
-				}
+			const value = item.value;
+			if (value !== undefined) {
+				items.set(key, {
+					value: asDeeplyReadonly(value),
+					metadata: { revision: item.rev, timestamp: item.timestamp },
+				});
 			}
 		}
 		return items;
@@ -543,7 +517,7 @@ class LatestMapValueManagerImpl<
 				timestamp: item.timestamp,
 			};
 			if (item.value !== undefined) {
-				const itemValue = item.value;
+				const itemValue = asDeeplyReadonly(item.value);
 				const updatedItem = {
 					attendee,
 					key,
@@ -622,11 +596,7 @@ export function latestMap<
 	LatestMapRaw<T, Keys>
 >;
 
-/**
- * Factory for creating a {@link LatestMapRaw} State object.
- *
- * @alpha
- */
+/* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
 export function latestMap<
 	T,
 	Keys extends string | number = string | number,
@@ -647,6 +617,10 @@ export function latestMap<
 	const settings = args?.settings;
 	const initialValues = args?.local;
 	const validator = args?.validator;
+
+	if (validator !== undefined) {
+		throw new Error(`Validators are not yet implemented.`);
+	}
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
@@ -692,3 +666,4 @@ export function latestMap<
 	});
 	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
 }
+/* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */

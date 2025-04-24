@@ -18,7 +18,10 @@ import {
 	type SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockDeltaManager,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	LocalFluidDataStoreContext,
@@ -58,6 +61,7 @@ export function createParentContext(
 		baseLogger: logger,
 		clientDetails,
 		submitMessage: () => {},
+		deltaManager: new MockDeltaManager(),
 	} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 }
 

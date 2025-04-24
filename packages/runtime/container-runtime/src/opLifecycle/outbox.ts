@@ -267,7 +267,7 @@ export class Outbox {
 							? "generic"
 							: "error",
 					eventName: "ReferenceSequenceNumberMismatch",
-					Data_details: {
+					details: {
 						expectedDueToReentrancy,
 						mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
 						mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,

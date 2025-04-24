@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type {
+	DeepReadonly,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { Attendee } from "./presence.js";
 
 /**
@@ -29,10 +31,7 @@ export interface LatestMetadata {
 }
 
 /**
- * Direct access to a value.
- *
- * @privateRemarks
- * Change to `InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>` to break tsc.
+ * Represents a value that is accessed directly.
  *
  * @sealed
  * @alpha
@@ -40,10 +39,7 @@ export interface LatestMetadata {
 export type RawValueAccessor<_T> = "raw";
 
 /**
- * Access to a value via a function call, which may result in no value.
- *
- * @privateRemarks
- * Change to `() => InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined` to break tsc.
+ * Represents a value that is accessed via a function call, which may result in no value.
  *
  * @sealed
  * @alpha
@@ -68,9 +64,11 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
  * @alpha
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
-	value: TValueAccessor extends RawValueAccessor<T>
-		? InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>
-		: () => InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
+	value: TValueAccessor extends ProxiedValueAccessor<T>
+		? () => DeepReadonly<JsonDeserialized<T>> | undefined
+		: TValueAccessor extends RawValueAccessor<T>
+			? DeepReadonly<JsonDeserialized<T>>
+			: never;
 	metadata: LatestMetadata;
 }
 
