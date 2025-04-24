@@ -5,7 +5,10 @@
 
 import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type {
+	IFluidHandleInternal,
+	IFluidHandleInternalPayloadPending,
+} from "@fluidframework/core-interfaces/internal";
 
 /**
  * JSON serialized form of an IFluidHandle
@@ -17,6 +20,17 @@ export interface ISerializedHandle {
 
 	// URL to the object. Relative URLs are relative to the handle context passed to the stringify.
 	url: string;
+
+	/**
+	 * The handle may have a pending payload, as determined by and resolvable by the subsystem that
+	 * the handle relates to.  For instance, the BlobManager uses this to distinguish blob handles
+	 * which may not yet have an attached blob yet.
+	 *
+	 * @remarks
+	 * Will only exist if the handle was created with a pending payload, will be omitted entirely from
+	 * the serialized format if the handle was created with an already-shared payload.
+	 */
+	readonly payloadPending?: true;
 }
 
 /**
@@ -27,6 +41,14 @@ export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 	value?.type === "__fluid_handle__";
 
 /**
+ * @internal
+ */
+export const isFluidHandleInternalPayloadPending = (
+	fluidHandleInternal: IFluidHandleInternal,
+): fluidHandleInternal is IFluidHandleInternalPayloadPending =>
+	"payloadPending" in fluidHandleInternal && fluidHandleInternal.payloadPending === true;
+
+/**
  * Encodes the given IFluidHandle into a JSON-serializable form,
  * @param handle - The IFluidHandle to serialize.
  * @returns The serialized handle.
@@ -34,10 +56,16 @@ export const isSerializedHandle = (value: any): value is ISerializedHandle =>
  * @internal
  */
 export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISerializedHandle {
-	return {
-		type: "__fluid_handle__",
-		url: handle.absolutePath,
-	};
+	return isFluidHandleInternalPayloadPending(handle)
+		? {
+				type: "__fluid_handle__",
+				url: handle.absolutePath,
+				payloadPending: true,
+			}
+		: {
+				type: "__fluid_handle__",
+				url: handle.absolutePath,
+			};
 }
 
 /**
