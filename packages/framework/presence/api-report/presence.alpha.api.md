@@ -157,13 +157,12 @@ export function latest<T extends object | null, Key extends string = string>(arg
 }): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @alpha
-export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+export function latest<T extends object | null, Key extends string = string>(args: Omit<LatestArguments<T>, "validator">): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
 // @alpha
 export interface LatestArguments<T extends object | null> {
     local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
     settings?: BroadcastControlSettings | undefined;
-    // (undocumented)
     validator?: StateSchemaValidator<T> | undefined;
 }
 
@@ -374,7 +373,8 @@ export interface StateMap<K extends string | number, V> {
 }
 
 // @alpha
-export type StateSchemaValidator<T> = (unvalidatedData: unknown, metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
+export type StateSchemaValidator<T> = (
+unvalidatedData: Readonly<unknown>, metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
 
 // @alpha
 export interface StateSchemaValidatorMetadata {
