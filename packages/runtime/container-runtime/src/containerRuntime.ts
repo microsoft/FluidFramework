@@ -1596,6 +1596,11 @@ export class ContainerRuntime
 			outerDeltaManager = pendingOpsDeltaManagerProxy;
 		}
 
+		// always wrap the exposed delta manager in at least on layer of proxying
+		if (outerDeltaManager instanceof BaseDeltaManagerProxy) {
+			outerDeltaManager = new BaseDeltaManagerProxy(this.innerDeltaManager);
+		}
+
 		this._deltaManager = outerDeltaManager;
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
