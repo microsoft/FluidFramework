@@ -37,7 +37,7 @@ import { pkgVersion } from "./packageVersion.js";
  * any 2.0.0+ version, we will use a special value of `2.0.0-defaults`, which
  * is semantically less than 2.0.0.
  */
-export const defaultminVersionForCollab = "2.0.0-defaults" as const;
+export const defaultMinVersionForCollab = "2.0.0-defaults" as const;
 
 /**
  * We don't want to allow anyone to use a version less than 1.0.0 for minVersionForCollab.
@@ -136,7 +136,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		// to >=2.0.0 (explicitly). This is different than other 2.0 defaults
 		// because it was not enabled by default prior to the implementation of
 		// `minVersionForCollab`.
-		// `defaultminVersionForCollab` is set to "2.0.0-defaults" which "2.0.0"
+		// `defaultMinVersionForCollab` is set to "2.0.0-defaults" which "2.0.0"
 		// does not satisfy to avoiding enabling this option by default as of
 		// `minVersionForCollab` introduction, which could be unexpected.
 		// Only enable as a default when `minVersionForCollab` is specified at
