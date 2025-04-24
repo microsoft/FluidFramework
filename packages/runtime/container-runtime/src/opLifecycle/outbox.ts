@@ -431,7 +431,6 @@ export class Outbox {
 
 		const rawBatch = batchManager.popBatch(resubmittingBatchId);
 
-		//* Consider using a RunCounter to ignore global StagingMode bit when resubmitting
 		// When resubmitting, we respect the staged state of the original batch.
 		// In this case rawBatch.staged will match the state of inStagingMode when
 		// the resubmit occurred, which is not relevant.

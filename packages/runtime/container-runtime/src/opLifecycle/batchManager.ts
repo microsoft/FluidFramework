@@ -128,7 +128,6 @@ export class BatchManager {
 	 * Gets the pending batch and clears state for the next batch.
 	 */
 	public popBatch(batchId?: BatchId): LocalBatch {
-		//* Consider promoting `staged` to be on the BatchManager itself
 		assert(this.pendingBatch[0] !== undefined, "expected non-empty batch");
 		const batch: LocalBatch = {
 			messages: this.pendingBatch,

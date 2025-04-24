@@ -3299,7 +3299,6 @@ export class ContainerRuntime
 		this.outbox.flush();
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			// Final flush of any last staged changes
-			//* NIT: Don't need to pass true.  And then these two params can be joined into an atomic object?
 			this.outbox.flush(undefined, true /* staged */);
 
 			this.stageControls = undefined;
