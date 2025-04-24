@@ -1439,7 +1439,8 @@ export class ContainerRuntime
 			snapshotWithContents,
 		} = context;
 
-		this._getConnected = () => connected;
+		// eslint-disable-next-line unicorn/consistent-destructuring
+		this._getConnected = () => context.connected;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
