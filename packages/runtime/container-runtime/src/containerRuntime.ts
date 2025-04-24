@@ -4342,7 +4342,6 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: LocalBatchMessage = {
 					runtimeOp: idAllocationMessage,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					//* Need tests for this - is it an ok strategy?
 					// Note: For now, we will never stage ID Allocation messages.
 					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
 					staged: false,
