@@ -29,7 +29,6 @@ import {
 	type ViewContent,
 	type ConciseTree,
 	TreeAlpha,
-	SchemaFormatVersion,
 } from "@fluidframework/tree/alpha";
 import { type Static, Type } from "@sinclair/typebox";
 
@@ -158,7 +157,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 					oldestCompatibleClient: FluidClientVersion.v2_3,
 					idCompressor,
 				}),
-				schema: extractPersistedSchema(List, SchemaFormatVersion.V1),
+				schema: extractPersistedSchema(List, 1),
 				idCompressor: idCompressor.serialize(true),
 			};
 			return file as JsonCompatible;

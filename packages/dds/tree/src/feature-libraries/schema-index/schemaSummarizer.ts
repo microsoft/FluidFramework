@@ -19,7 +19,6 @@ import {
 	type MutableTreeStoredSchema,
 	type TreeStoredSchema,
 	schemaDataIsEmpty,
-	type SchemaFormatVersion,
 } from "../../core/index.js";
 import type {
 	Summarizable,
@@ -115,9 +114,6 @@ export class SchemaSummarizer implements Summarizable {
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
  */
-export function encodeTreeSchema(
-	schema: TreeStoredSchema,
-	version: SchemaFormatVersion,
-): JsonCompatible {
+export function encodeTreeSchema(schema: TreeStoredSchema, version: 1 | 2): JsonCompatible {
 	return encodeRepo(schema, version);
 }

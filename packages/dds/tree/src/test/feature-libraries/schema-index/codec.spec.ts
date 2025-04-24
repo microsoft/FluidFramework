@@ -8,11 +8,7 @@ import { strict as assert } from "node:assert";
 // Allow importing from this specific file which is being tested:
 
 import { makeCodecFamily } from "../../../codec/index.js";
-import {
-	SchemaFormatVersion,
-	type FieldKindIdentifier,
-	type TreeStoredSchema,
-} from "../../../core/index.js";
+import type { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 /* eslint-disable-next-line import/no-internal-modules */
@@ -28,11 +24,11 @@ import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
-const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaFormatVersion.V1);
-const codecV2 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaFormatVersion.V2);
+const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, 1);
+const codecV2 = makeSchemaCodec({ jsonValidator: typeboxValidator }, 2);
 const codecs = new Map([
-	[SchemaFormatVersion.V1, codecV1],
-	[SchemaFormatVersion.V2, codecV2],
+	[1, codecV1],
+	[2, codecV2],
 ]);
 
 const schema2 = toStoredSchema(SchemaFactory.optional(JsonAsTree.Primitive));
@@ -81,7 +77,7 @@ describe("SchemaIndex", () => {
 		}
 	});
 
-	for (const format of [FormatV1, FormatV2]) {
+	for (const formatVersion of [1, 2]) {
 		it("rejects malformed data", () => {
 			// TODO: should test way more cases
 			// TODO: maybe well formed but semantically invalid data should be rejected (ex: with duplicates keys)?
@@ -98,7 +94,8 @@ describe("SchemaIndex", () => {
 				{ version: 1, nodeSchema: [], extraField: 0 },
 			];
 			for (const data of badCases) {
-				const codec = codecs.get(format.version) ?? assert.fail("Missing codec.");
+				const format = formats[formatVersion - 1];
+				const codec = codecs.get(formatVersion) ?? assert.fail("Missing codec.");
 				assert.throws(() => codec.decode(data as unknown as typeof format));
 			}
 		});

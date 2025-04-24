@@ -4,7 +4,7 @@
  */
 
 import type { ICodecOptions } from "../../codec/index.js";
-import { SchemaFormatVersion, type TreeStoredSchema } from "../../core/index.js";
+import type { TreeStoredSchema } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
@@ -50,7 +50,7 @@ import { ViewSchema } from "./view.js";
  */
 export function extractPersistedSchema(
 	schema: ImplicitFieldSchema,
-	version: SchemaFormatVersion,
+	version: 1 | 2,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema);
 	return encodeTreeSchema(stored, version);
@@ -93,7 +93,7 @@ export function comparePersistedSchema(
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
 	// TODO: Switch on format?
-	const schemaCodec = makeSchemaCodec(options, SchemaFormatVersion.V1);
+	const schemaCodec = makeSchemaCodec(options, 1);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);

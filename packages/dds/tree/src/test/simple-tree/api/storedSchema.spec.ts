@@ -13,21 +13,20 @@ import {
 import { testSimpleTrees } from "../../testTrees.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
-import { SchemaFormatVersion } from "../../../core/index.js";
 
 describe("simple-tree storedSchema", () => {
 	describe("test-schema", () => {
 		useSnapshotDirectory("simple-tree-storedSchema");
 		for (const test of testSimpleTrees) {
 			it(test.name, () => {
-				const persisted = extractPersistedSchema(test.schema, SchemaFormatVersion.V2);
+				const persisted = extractPersistedSchema(test.schema, 2);
 				takeJsonSnapshot(persisted);
 			});
 
 			// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
 			// but might as will give it a simple smoke test for the various test schema.
 			it(`comparePersistedSchema to self ${test.name}`, () => {
-				const persistedA = extractPersistedSchema(test.schema, SchemaFormatVersion.V2);
+				const persistedA = extractPersistedSchema(test.schema, 2);
 				const status = comparePersistedSchema(
 					persistedA,
 					test.schema,

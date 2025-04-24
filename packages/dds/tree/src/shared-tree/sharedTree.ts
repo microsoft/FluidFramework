@@ -352,7 +352,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			idCompressor,
 			options,
 		);
-		const schemaCodec = makeSchemaCodec(options, options.formatVersion);
+		const schemaCodec = makeSchemaCodec(options, codecVersions.schema);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
 			options,

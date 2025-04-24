@@ -10,10 +10,8 @@ import {
 	type IJsonCodec,
 	makeCodecFamily,
 	makeVersionDispatchingCodec,
-	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import {
-	SchemaFormatVersion,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
@@ -26,16 +24,16 @@ import {
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 
-import { Format as FormatV1 } from "./formatV1.js";
-import { Format as FormatV2 } from "./formatV2.js";
+import type { Format as FormatV1 } from "./formatV1.js";
+import type { Format as FormatV2 } from "./formatV2.js";
 
 type Format = FormatV1 | FormatV2;
 
-export function encodeRepo(repo: TreeStoredSchema, version: SchemaFormatVersion): Format {
+export function encodeRepo(repo: TreeStoredSchema, version: 1 | 2): Format {
 	switch (version) {
-		case SchemaFormatVersion.V1:
+		case 1:
 			return encodeRepoV1(repo);
-		case SchemaFormatVersion.V2:
+		case 2:
 			return encodeRepoV2(repo);
 		default:
 			unreachableCase(version);
@@ -127,39 +125,6 @@ function makeV1CodecWithVersion(
 				encode: (data: TreeStoredSchema) => encodeRepoV2(data),
 				decode: (data: FormatV2) => decode(data),
 			};
-		default:
-			unreachableCase(version);
-	}
-}
-
-/**
- * Creates a codec which performs synchronous monolithic encoding of schema content.
- */
-export function makeSchemaCodecOld(
-	options: ICodecOptions,
-	version: SchemaFormatVersion,
-): IJsonCodec<TreeStoredSchema> {
-	switch (version) {
-		case SchemaFormatVersion.V1:
-			return makeVersionedValidatedCodec(
-				options,
-				new Set([schemaFormatV1.version]),
-				FormatV1,
-				{
-					encode: (data: TreeStoredSchema) => encodeRepoV1(data),
-					decode: (data: FormatV1) => decode(data),
-				},
-			);
-		case SchemaFormatVersion.V2:
-			return makeVersionedValidatedCodec(
-				options,
-				new Set([schemaFormatV2.version]),
-				FormatV2,
-				{
-					encode: (data: TreeStoredSchema) => encodeRepoV2(data),
-					decode: (data: FormatV2) => decode(data),
-				},
-			);
 		default:
 			unreachableCase(version);
 	}

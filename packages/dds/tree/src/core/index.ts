@@ -150,7 +150,6 @@ export {
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
-	SchemaFormatVersion,
 } from "./schema-stored/index.js";
 
 export {

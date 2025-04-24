@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFormatVersion, storedEmptyFieldSchema } from "../../../core/index.js";
+import { storedEmptyFieldSchema } from "../../../core/index.js";
 import {
 	encodeTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
@@ -21,16 +21,13 @@ describe("schemaSummarizer", () => {
 					rootFieldSchema: storedEmptyFieldSchema,
 					nodeSchema: new Map(),
 				},
-				SchemaFormatVersion.V2,
+				2,
 			);
 			takeJsonSnapshot(encoded);
 		});
 
 		it("simple encoded schema", () => {
-			const encoded = encodeTreeSchema(
-				toStoredSchema(JsonAsTree.Tree),
-				SchemaFormatVersion.V2,
-			);
+			const encoded = encodeTreeSchema(toStoredSchema(JsonAsTree.Tree), 2);
 			takeJsonSnapshot(encoded);
 		});
 	});

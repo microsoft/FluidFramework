@@ -24,7 +24,6 @@ export {
 	toTreeNodeSchemaDataFormat,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
-	SchemaFormatVersion,
 } from "./schema.js";
 export {
 	type TreeStoredSchemaSubscription,

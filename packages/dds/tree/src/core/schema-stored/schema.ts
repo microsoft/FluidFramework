@@ -25,16 +25,6 @@ import type { Multiplicity } from "./multiplicity.js";
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
 /**
- * Indicates the version of the Stored Schema format.
- *
- * @alpha
- */
-export enum SchemaFormatVersion {
-	V1 = 1,
-	V2 = 2,
-}
-
-/**
  * Schema for what {@link TreeLeafValue} is allowed on a Leaf node.
  * @privateRemarks
  * See also {@link TreeValue}.
