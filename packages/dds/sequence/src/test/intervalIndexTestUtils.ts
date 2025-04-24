@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { type SequencePlace, Side } from "@fluidframework/merge-tree/internal";
 import type { TestClient } from "@fluidframework/merge-tree/internal/test";
-import { v4 as uuid } from "uuid";
 
 import {
 	createSequenceInterval,
@@ -17,8 +16,6 @@ import {
 	type SequenceInterval,
 } from "../intervals/index.js";
 import type { ISharedString } from "../sharedString.js";
-
-const reservedIntervalIdKey = "intervalId";
 
 export interface RandomIntervalOptions {
 	random: IRandom;
@@ -58,6 +55,7 @@ export function assertOrderedSequenceIntervals(
 	}
 }
 
+let currentId = 0;
 /**
  * Creates a new (regular) Interval object with the specified start and end values.
  * @param start - The start value of the interval.
@@ -65,9 +63,15 @@ export function assertOrderedSequenceIntervals(
  * @returns The created Interval object.
  */
 export function createTestSequenceInterval(client: TestClient, p1: number, p2: number) {
-	const id = uuid();
-	const interval = createSequenceInterval(id, p1, p2, client, IntervalType.SlideOnRemove);
-	interval.properties[reservedIntervalIdKey] = id;
+	const id = `${currentId++}`;
+	const interval = createSequenceInterval(
+		"test",
+		id,
+		p1,
+		p2,
+		client,
+		IntervalType.SlideOnRemove,
+	);
 	return interval;
 }
 

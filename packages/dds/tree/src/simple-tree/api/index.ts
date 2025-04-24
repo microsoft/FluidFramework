@@ -9,6 +9,8 @@ export {
 	type ViewableTree,
 	type TreeViewEvents,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
+	type TreeSchema,
 	type ITreeViewConfiguration,
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
@@ -28,6 +30,7 @@ export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
+	allowUnused,
 } from "./schemaFactoryRecursive.js";
 export {
 	adaptEnum,
@@ -56,6 +59,7 @@ export {
 	type JsonFieldSchema,
 	type JsonLeafSchemaType,
 } from "./jsonSchema.js";
+export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export { ViewSchema } from "./view.js";
@@ -90,7 +94,6 @@ export type {
 
 export {
 	type VerboseTreeNode,
-	type ParseOptions,
 	type VerboseTree,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
@@ -99,7 +102,7 @@ export {
 } from "./verboseTree.js";
 
 export {
-	type EncodeOptions,
+	type TreeEncodingOptions,
 	customFromCursorStored,
 	type CustomTreeNode,
 	type CustomTreeValue,

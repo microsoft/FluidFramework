@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { LoaderCompatDetails } from "./layerCompatState.js";
+import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
@@ -71,8 +71,12 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		return this._getConnected();
 	}
 
+	/**
+	 * The compatibility details of the Loader layer that is exposed to the Runtime layer
+	 * for validating Runtime-Loader compatibility.
+	 */
 	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return LoaderCompatDetails;
+		return loaderCompatDetailsForRuntime;
 	}
 
 	constructor(

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
 	SchemaFactory,
 	type TreeNode,
@@ -99,7 +99,7 @@ describe("simple tree indexes", () => {
 		};
 		const anchor = forest.anchors.track(path);
 		const anchorNode =
-			forest.anchors.locate(anchor) ?? fail("should be able to find anchor to child");
+			forest.anchors.locate(anchor) ?? assert.fail("should be able to find anchor to child");
 		assert.equal(anchorNode.slots.has(flexTreeSlot), false);
 
 		const children = index.get(childId);
