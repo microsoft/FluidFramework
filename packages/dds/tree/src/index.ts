@@ -233,6 +233,7 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	allowUnused,
 	type LeafSchema,
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodePojoEmulationSchema,

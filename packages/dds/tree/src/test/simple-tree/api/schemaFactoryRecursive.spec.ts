@@ -24,8 +24,9 @@ import {
 	type NodeBuilderData,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
-import type {
-	ValidateRecursiveSchema,
+import {
+	allowUnused,
+	type ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import type {
@@ -538,6 +539,37 @@ describe("SchemaFactory Recursive methods", () => {
 				) {}
 				// @ts-expect-error Maps accept allowed types, not field schema.
 				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => {}]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+		});
+
+		it("AllowUnused", () => {
+			{
+				class Test extends sf.arrayRecursive("Test", [() => Test]) {}
+				allowUnused<ValidateRecursiveSchema<typeof Test>>();
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => {}]) {}
+				// @ts-expect-error referenced type not a schema.
+				allowUnused<ValidateRecursiveSchema<typeof Test>>();
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
 		});
 

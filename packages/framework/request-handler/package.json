@@ -129,7 +129,7 @@
 		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@2.32.0",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.5",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",

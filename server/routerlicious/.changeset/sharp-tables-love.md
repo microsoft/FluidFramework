@@ -1,8 +1,9 @@
 ---
 "@fluidframework/server-routerlicious-base": major
+"__section": fix
 ---
 
-Fix Signal Notifications API replacing `TypedEventEmitter` with `@socket.io/redis-emitter`.
+Fix Signal Notifications API replacing `TypedEventEmitter` with `@socket.io/redis-emitter`
 
 Some breaking changes were introduced by replacing `TypedEventEmitter` with `@socket.io/redis-emitter` (`RedisEmitter`). All of the changes modfify the signature of existing functions, used to create Alfred instances. The type of `collaborationSessionEventEmitter` was changed from `TypedEventEmitter` to `RedisEmitter`.
 

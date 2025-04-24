@@ -7,6 +7,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import type {
+	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
@@ -14,9 +15,8 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { objectEntries, objectKeys } from "./internalUtils.js";
+import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
 import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -106,7 +106,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
 	 * @eventProperty
 	 */
 	localItemUpdated: (updatedItem: {
-		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
 		key: K;
 	}) => void;
 
@@ -150,7 +150,7 @@ export interface StateMap<K extends string | number, V> {
 	 */
 	forEach(
 		callbackfn: (
-			value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>,
+			value: DeepReadonly<JsonDeserialized<V>>,
 			key: K,
 			map: StateMap<K, V>,
 		) => void,
@@ -161,7 +161,7 @@ export interface StateMap<K extends string | number, V> {
 	 * Returns a specified element from the StateMap object.
 	 * @returns Returns the element associated with the specified key. If no element is associated with the specified key, undefined is returned.
 	 */
-	get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
+	get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
 
 	/**
 	 * @returns boolean indicating whether an element with the specified key exists or not.
@@ -186,12 +186,12 @@ export interface StateMap<K extends string | number, V> {
 	/**
 	 * Returns an iterable of entries in the map.
 	 */
-	// [Symbol.iterator](): IterableIterator<[K, InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>]>;
+	// [Symbol.iterator](): IterableIterator<[K, DeepReadonly<JsonDeserialized<V>>]>;
 
 	/**
 	 * Returns an iterable of key, value pairs for every entry in the map.
 	 */
-	// entries(): IterableIterator<[K, InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>]>;
+	// entries(): IterableIterator<[K, DeepReadonly<JsonDeserialized<V>>]>;
 
 	/**
 	 * Returns an iterable of keys in the map.
@@ -201,7 +201,7 @@ export interface StateMap<K extends string | number, V> {
 	/**
 	 * Returns an iterable of values in the map.
 	 */
-	// values(): IterableIterator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>>;
+	// values(): IterableIterator<DeepReadonly<JsonDeserialized<V>>>;
 }
 
 class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
@@ -258,7 +258,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	}
 	public forEach(
 		callbackfn: (
-			value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>,
+			value: DeepReadonly<JsonDeserialized<T>>,
 			key: K,
 			map: StateMap<K, T>,
 		) => void,
@@ -266,12 +266,12 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	): void {
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(item.value, key, this);
+				callbackfn(asDeeplyReadonly(item.value), key, this);
 			}
 		}
 	}
-	public get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined {
-		return this.value.items[key]?.value;
+	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
+		return asDeeplyReadonly(this.value.items[key]?.value);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -282,7 +282,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 			this.value.items[key] = { rev: 0, timestamp: 0, value };
 		}
 		this.updateItem(key, value);
-		this.emitter.emit("localItemUpdated", { key, value });
+		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
 		return this;
 	}
 	public get size(): number {
@@ -413,7 +413,7 @@ class LatestMapRawValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
-					value,
+					value: asDeeplyReadonly(value),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -464,7 +464,7 @@ class LatestMapRawValueManagerImpl<
 			currentState.items[key] = item;
 			const metadata = { revision: item.rev, timestamp: item.timestamp };
 			if (item.value !== undefined) {
-				const itemValue = item.value;
+				const itemValue = asDeeplyReadonly(item.value);
 				const updatedItem = {
 					attendee,
 					key,
@@ -490,6 +490,25 @@ class LatestMapRawValueManagerImpl<
 }
 
 /**
+ * Arguments that are passed to the {@link StateFactory.latestMap} function.
+ *
+ * @alpha
+ */
+export interface LatestMapArguments<T, Keys extends string | number = string | number> {
+	/**
+	 * The initial value of the local state.
+	 */
+	local?: {
+		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+	};
+
+	/**
+	 * See {@link BroadcastControlSettings}.
+	 */
+	settings?: BroadcastControlSettings | undefined;
+}
+
+/**
  * Factory for creating a {@link LatestMapRaw} State object.
  *
  * @alpha
@@ -499,15 +518,15 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	initialValues?: {
-		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-	},
-	controls?: BroadcastControlSettings,
+	args?: LatestMapArguments<T, Keys>,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMapRaw<T, Keys>
 > {
+	const settings = args?.settings;
+	const initialValues = args?.local;
+
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
 		T,
@@ -517,7 +536,11 @@ export function latestMap<
 	// LatestMapRaw takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
 		for (const key of objectKeys(initialValues)) {
-			value.items[key] = { rev: 0, timestamp, value: initialValues[key] };
+			value.items[key] = {
+				rev: 0,
+				timestamp,
+				value: initialValues[key],
+			};
 		}
 	}
 	const factory = (
@@ -530,7 +553,7 @@ export function latestMap<
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestMapRaw<T, Keys>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<
 			LatestMapRawValueManagerImpl<T, RegistrationKey, Keys>,
 			T,
@@ -540,7 +563,7 @@ export function latestMap<
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
-				controls,
+				settings,
 			),
 		),
 	});
