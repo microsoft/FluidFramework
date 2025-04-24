@@ -47,7 +47,7 @@ if (isInternalVersionScheme(verString, true, true)) {
 		},
 	});
 	console.warn(
-		`The version string ${verString} is a Fluid internal version string. The version string in the bundled code will be replaced with ${newVersion}.`,
+		`The version string '${verString}' is a Fluid internal version string. The version string in the bundled code will be replaced with '${newVersion}'.`,
 	);
 }
 
