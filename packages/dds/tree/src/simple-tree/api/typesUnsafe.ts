@@ -51,6 +51,11 @@ import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 /**
+ * A collection of {@link Unenforced} types that are used in the implementation of recursive schema.
+ * These are all `@system` types, and thus should not be used directly.
+ * @privateRemarks
+ * Due to limitations of API-Extractor, all types in this namespace are treated as `@public`:
+ * therefor non-public types should not bn included in this namespace.
  * @system @public
  */
 export namespace System_Unsafe {
