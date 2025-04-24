@@ -1587,6 +1587,7 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
+				createBlobPayloadPending: false, // Redundant, but makes the JSON.stringify yield the same result as the logs
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
@@ -3650,6 +3651,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3687,6 +3689,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3724,6 +3727,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3761,6 +3765,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3797,6 +3802,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3824,6 +3830,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: "on",
 						enableGroupedBatching: false, // By turning off batching, we will also disable compression automatically
 						explicitSchemaControl: true,
+						createBlobPayloadPending: false,
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -3842,6 +3849,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3872,6 +3880,7 @@ describe("Runtime", () => {
 						enableGroupedBatching: undefined,
 						compressionOptions: undefined,
 						explicitSchemaControl: undefined,
+						createBlobPayloadPending: undefined,
 					},
 				},
 			])
@@ -3899,6 +3908,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
 						enableGroupedBatching: true,
 						explicitSchemaControl: false,
+						createBlobPayloadPending: false,
 					};
 
 					logger.assertMatchAny([
@@ -3937,6 +3947,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
