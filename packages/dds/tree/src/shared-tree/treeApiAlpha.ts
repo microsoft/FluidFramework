@@ -57,7 +57,7 @@ import { independentInitializedView, type ViewContent } from "./independentView.
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { treeApi } from "./treeApi.js";
 
-const identifier: IdentifierUtils = (node: TreeNode): string | undefined => {
+const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	const nodeIdentifier = getIdentifierFromNode(node, false);
 	if (typeof nodeIdentifier === "number") {
 		throw new TypeError("identifier should be uncompressed.");
@@ -80,13 +80,6 @@ identifier.expand = (branch: TreeBranch, nodeIdentifier: number): string => {
 	);
 };
 
-identifier.expand2 = (branch: TreeBranch, nodeIdentifier: number): string | undefined => {
-	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
-		.nodeKeyManager;
-	const stableId = nodeKeyManager.tryStabilizeNodeIdentifier(nodeIdentifier);
-	return stableId;
-};
-
 identifier.getShort = (node: TreeNode): number | string | undefined => {
 	return treeApi.shortId(node);
 };
@@ -96,7 +89,7 @@ Object.freeze(identifier);
 /**
  * @alpha @sealed
  */
-export interface IdentifierUtils {
+export interface TreeIdentifierUtils {
 	/**
 	 * Returns the contents of a node's {@link SchemaFactory.identifier} field as a stable identifier.
 	 * If the identifier field does not exist, returns undefined.
@@ -120,23 +113,11 @@ export interface IdentifierUtils {
 	/**
 	 * Returns the stable id as a string if the identifier is decompressible and known by the id compressor. Otherwise, it will throw an error.
 	 *
-	 * @param branch - TreeBranch from where you get the idCompressor to do the decompression.
+	 * @param branch - TreeBranch from where you want to get the id compressor to do the decompression.
 	 * @param nodeIdentifier - The local identifier that needs to be expanded.
-	 *
-	 * TODO: remove one of the expand methods once we determine which one we get.
 	 *
 	 */
 	expand(branch: TreeBranch, nodeIdentifier: number): string;
-
-	/**
-	 * Returns the stable id as a string if the identifier is decompressible and known by the id compressor.
-	 * If the node identifier unknown by the id compressor, it will return undefined.
-	 *
-	 * @param branch - TreeBranch from where you get the idCompressor to do the decompression.
-	 * @param nodeIdentifier - The local identifier that needs to be expanded.
-	 *
-	 */
-	expand2(branch: TreeBranch, nodeIdentifier: number): string | undefined;
 
 	/**
 	 * Returns the {@link SchemaFactory.identifier | identifier} of the given node in the most compressed form possible.
@@ -309,7 +290,7 @@ export const TreeAlpha: {
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
-	identifier: IdentifierUtils;
+	identifier: TreeIdentifierUtils;
 } = {
 	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);

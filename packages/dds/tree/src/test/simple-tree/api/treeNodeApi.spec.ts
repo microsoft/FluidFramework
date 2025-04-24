@@ -603,6 +603,36 @@ describe("treeNodeApi", () => {
 				assert.equal(TreeAlpha.identifier.shorten(view, invalidId), undefined);
 			});
 		});
+
+		describe("expand", () => {
+			it("returns the stable identifier for a known, local identifier.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+				const nodeKeyManager = new MockNodeIdentifierManager();
+				const localId = nodeKeyManager.generateLocalNodeIdentifier();
+				const id = nodeKeyManager.stabilizeNodeIdentifier(localId);
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config, nodeKeyManager);
+				view.initialize({ identifier: id });
+
+				assert.equal(TreeAlpha.identifier.expand(view, localId as unknown as number), id);
+			});
+
+			it("unknown local identifier, throws usage error", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.string,
+				});
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: "testID" });
+
+				assert.throws(
+					() => TreeAlpha.identifier.expand(view, 1),
+					validateUsageError(/Invalid local id./),
+				);
+			});
+		});
 	});
 
 	describe("on", () => {
