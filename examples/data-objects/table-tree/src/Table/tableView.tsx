@@ -58,7 +58,7 @@ const TableRowView: React.FC<TableRowViewProps> = ({
 		>
 			<TableCell className="custom-cell id-cell">
 				<span style={{ display: "flex", alignItems: "center" }}>
-				<Button
+					<Button
 						appearance="subtle"
 						size="small"
 						onClick={() => onRemoveRow(index)}
@@ -138,11 +138,11 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 	};
 
 	const handleAddColumn = () => {
-		if(newColumnId.trim() !== ""){
-			tableModel.treeView.root.insertColumn({ index: 0, column: {id: newColumnId} })
+		if (newColumnId.trim() !== "") {
+			tableModel.treeView.root.insertColumn({ index: 0, column: { id: newColumnId } });
 		}
-		setNewColumnId("")
-	}
+		setNewColumnId("");
+	};
 
 	const handleDragStart = (index: number) => {
 		setDraggedRowIndex(index);
@@ -203,7 +203,11 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 					onChange={(e) => setNewColumnId(e.target.value)}
 					className="add-column-input"
 				/>
-				<Button appearance="primary" onClick={handleAddColumn} disabled={newColumnId.trim() === ""}>
+				<Button
+					appearance="primary"
+					onClick={handleAddColumn}
+					disabled={newColumnId.trim() === ""}
+				>
 					Add Column
 				</Button>
 			</div>
