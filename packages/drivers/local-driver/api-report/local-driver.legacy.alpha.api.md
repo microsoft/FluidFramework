@@ -4,10 +4,10 @@
 
 ```ts
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest;
 
-// @alpha
+// @alpha @legacy
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(localDeltaConnectionServer: ILocalDeltaConnectionServer, policies?: IDocumentServicePolicies | undefined, innerDocumentService?: IDocumentService | undefined);
     // (undocumented)
@@ -17,7 +17,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any): void;
 }
 
-// @alpha
+// @alpha @legacy
 export class LocalResolver implements IUrlResolver {
     constructor();
     // (undocumented)
