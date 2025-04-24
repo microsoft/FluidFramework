@@ -388,11 +388,7 @@ function visitNode(
 
 /**
  * Performs the following:
- * - Performs all root creations
- * - Collects all roots that may need a detach pass
  * - Collects all roots that may need an attach pass
- * - Collects all relocates
- * - Collects all destructions
  * - Executes detaches (bottom-up)
  */
 function detachPass(

@@ -183,7 +183,7 @@ export class ChunkedForest implements IEditableForest {
 			 * If not specified, the detached range is destroyed.
 			 */
 			detachEdit(source: Range, destination: FieldKey | undefined): void {
-				// TODO: optimize this to perform in-place replace in uniform chunks when attach edits being the chunk back to its original shape.
+				// TODO: optimize this to perform in-place replace in uniform chunks when attach edits bring the chunk back to its original shape.
 				// This should result in 3 cases:
 				// 1. In-place update of uniform chunk. No allocations, no ref count changes, no new TreeChunks.
 				// 2. Uniform chunk is shared: copy it (and parent path as needed), and update the copy.
