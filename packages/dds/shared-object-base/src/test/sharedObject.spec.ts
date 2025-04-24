@@ -30,26 +30,13 @@ import { FluidSerializer, IFluidSerializer } from "../serializer.js";
 import { SharedObject, SharedObjectCore } from "../sharedObject.js";
 
 class MySharedObject extends SharedObject {
-	constructor(
-		id: string,
-		//* Move to Core
-		private readonly attached: boolean = false,
-	) {
+	constructor(id: string) {
 		super(
 			id,
 			undefined as unknown as IFluidDataStoreRuntime,
 			undefined as unknown as IChannelAttributes,
 			"",
 		);
-	}
-
-	// Make submitLocalMessage public for testing
-	public submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
-		super.submitLocalMessage(content, localOpMetadata);
-	}
-
-	public override isAttached(): boolean {
-		return this.attached;
 	}
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
@@ -74,12 +61,24 @@ class MySharedObject extends SharedObject {
 }
 
 class MySharedObjectCore extends SharedObjectCore {
-	constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime(), // Use mock runtime
-		attributes: IChannelAttributes = { type: "test" } as unknown as IChannelAttributes,
-	) {
+	constructor({
+		id,
+		runtime = new MockFluidDataStoreRuntime(),
+		attributes = { type: "test" } as unknown as IChannelAttributes,
+		submitFnOverride = sinon.fake(),
+		attached = false,
+	}: {
+		id: string;
+		runtime?: IFluidDataStoreRuntime;
+		attributes?: IChannelAttributes;
+		submitFnOverride?: sinon.SinonSpy;
+		attached?: boolean;
+	}) {
 		super(id, runtime, attributes);
+
+		this.attached = attached;
+		// See call site in SharedObjectCore.submitLocalMessage
+		Object.assign(this, { services: { deltaConnection: { submit: submitFnOverride } } });
 	}
 
 	// Make submitLocalMessage public for testing
@@ -88,13 +87,14 @@ class MySharedObjectCore extends SharedObjectCore {
 	}
 
 	public stubSubmitFn(submitFn: sinon.SinonSpy): void {
+		// See call site in SharedObjectCore.submitLocalMessage
 		Object.assign(this, { services: { deltaConnection: { submit: submitFn } } });
 	}
 
-	// Override isAttached to always return true for simplified testing
 	public override isAttached(): boolean {
-		return true;
+		return this.attached;
 	}
+	private readonly attached: boolean;
 
 	protected readonly serializer = new FluidSerializer({} as unknown as IFluidHandleContext);
 
@@ -144,7 +144,7 @@ describe("SharedObject", () => {
 describe("SharedObjectCore", () => {
 	it("rejects slashes in id", () => {
 		const invalidId = "beforeSlash/afterSlash";
-		const codeBlock = (): SharedObjectCore => new MySharedObjectCore(invalidId);
+		const codeBlock = (): SharedObjectCore => new MySharedObjectCore({ id: invalidId });
 		assert.throws(codeBlock, (e: Error) =>
 			validateAssertionError(e, "Id cannot contain slashes"),
 		);
@@ -178,13 +178,18 @@ describe("SharedObjectCore", () => {
 		}
 
 		beforeEach(() => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime(); //* unneeded (same as default)
+			dataStoreRuntime = new MockFluidDataStoreRuntime();
 			set_submitMessagesWithoutEncodingHandles(undefined); // Reset config
 
 			submitSpy = sinon.fake();
 
-			sharedObject = new MySharedObjectCore("testId", dataStoreRuntime);
-			sharedObject.stubSubmitFn(submitSpy); //* Move to ctor param
+			sharedObject = new MySharedObjectCore({
+				id: "testId",
+				runtime: dataStoreRuntime,
+				attached: true,
+				submitFnOverride: submitSpy,
+			});
+			sharedObject.stubSubmitFn(submitSpy);
 		});
 
 		afterEach(() => {
