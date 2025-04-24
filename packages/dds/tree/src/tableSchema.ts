@@ -419,13 +419,12 @@ export namespace TableSchema {
 	export function createTable<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumnFields extends ImplicitFieldSchema,
-		const TColumn extends ColumnSchemaBase<TInputScope, TColumnFields>,
+		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
 		columnSchema: TColumn,
-	): ReturnType<typeof createTableInternal<TInputScope, TCell, TColumnFields, TColumn>>;
+	): ReturnType<typeof createTableInternal<TInputScope, TCell, TColumn>>;
 	/**
 	 * Factory for creating new table schema.
 	 * @internal
@@ -433,15 +432,14 @@ export namespace TableSchema {
 	export function createTable<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumnFields extends ImplicitFieldSchema,
-		const TColumn extends ColumnSchemaBase<TInputScope, TColumnFields>,
+		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
 		const TRow extends RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
 		columnSchema: TColumn,
 		rowSchema: TRow,
-	): ReturnType<typeof createTableInternal<TInputScope, TCell, TColumnFields, TColumn, TRow>>;
+	): ReturnType<typeof createTableInternal<TInputScope, TCell, TColumn, TRow>>;
 	/** `createTable` implementation */
 	export function createTable<
 		const TInputScope extends string | undefined,
@@ -472,11 +470,10 @@ export namespace TableSchema {
 	export function createTableInternal<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
-		const TColumnFieldsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 		const TColumnSchema extends ColumnSchemaBase<
 			TInputScope,
-			TColumnFieldsSchema
-		> = ColumnSchemaBase<TInputScope, TColumnFieldsSchema>,
+			ImplicitFieldSchema
+		> = ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
 		const TRow extends RowSchemaBase<TInputScope, TCellSchema> = RowSchemaBase<
 			TInputScope,
 			TCellSchema
@@ -672,13 +669,12 @@ export namespace TableSchema {
 	export type TableSchemaBase<
 		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
-		TColumnFields extends ImplicitFieldSchema,
-		TColumn extends ColumnSchemaBase<TScope, TColumnFields> = ColumnSchemaBase<
+		TColumn extends ColumnSchemaBase<TScope, ImplicitFieldSchema> = ColumnSchemaBase<
 			TScope,
-			TColumnFields
+			ImplicitFieldSchema
 		>,
 		TRow extends RowSchemaBase<TScope, TCell> = RowSchemaBase<TScope, TCell>,
-	> = ReturnType<typeof createTable<TScope, TCell, TColumnFields, TColumn, TRow>>;
+	> = ReturnType<typeof createTable<TScope, TCell, TColumn, TRow>>;
 
 	// #endregion
 }
