@@ -67,7 +67,16 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
  */
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
-export type ValueAccessorIntersection<T> = UnionToIntersection<ValueAccessor<T>>;
+// export type ValueAccessorIntersection<T> = UnionToIntersection<ValueAccessor<T>>;
+
+/**
+ * @alpha
+ */
+export type Accessor<T extends ValueAccessor<T>> = T extends ProxiedValueAccessor<T>
+	? () => DeepReadonly<JsonDeserialized<T>> | undefined
+	: T extends RawValueAccessor<T>
+		? DeepReadonly<JsonDeserialized<T>>
+		: never;
 
 /**
  * State of a value and its metadata.
@@ -79,11 +88,12 @@ export type ValueAccessorIntersection<T> = UnionToIntersection<ValueAccessor<T>>
  * @alpha
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
-	value: [TValueAccessor] extends [ProxiedValueAccessor<T>]
+	value: TValueAccessor extends ProxiedValueAccessor<T>
 		? () => DeepReadonly<JsonDeserialized<T>> | undefined
-		: [TValueAccessor] extends [RawValueAccessor<T>]
+		: TValueAccessor extends RawValueAccessor<T>
 			? DeepReadonly<JsonDeserialized<T>>
 			: never;
+	// value: Accessor<TValueAccessor>;
 	metadata: LatestMetadata;
 }
 
