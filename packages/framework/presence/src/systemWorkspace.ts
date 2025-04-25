@@ -133,7 +133,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
-			const attendeeId = value.rawValue;
+			const attendeeId = value.value;
 			const { attendee, isJoining } = this.ensureAttendee(
 				attendeeId,
 				clientConnectionId,
@@ -153,7 +153,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			if (knownSessionId === undefined) {
 				this.datastore.clientToSessionId[clientConnectionId] = value;
 			} else {
-				assert(knownSessionId.rawValue === value.rawValue, 0xa5a /* Mismatched SessionId */);
+				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
 			}
 		}
 
@@ -169,8 +169,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		this.datastore.clientToSessionId[clientConnectionId] = {
 			rev: this.selfAttendee.order++,
 			timestamp: Date.now(),
-			rawValue: this.selfAttendee.attendeeId,
-			validated: false,
+			value: this.selfAttendee.attendeeId,
+			// validated: false,
 		};
 
 		// Mark 'Connected' remote attendees connections as stale

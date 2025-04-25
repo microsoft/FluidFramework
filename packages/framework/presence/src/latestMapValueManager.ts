@@ -246,7 +246,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	/**
 	 * Note: caller must ensure key exists in this.value.items.
 	 */
-	private updateItem(key: K, value: InternalTypes.ValueOptionalState<T>["rawValue"]): void {
+	private updateItem(key: K, value: InternalTypes.ValueOptionalState<T>["value"]): void {
 		this.value.rev += 1;
 		// Caller is required to ensure key exists.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -254,9 +254,9 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		item.rev += 1;
 		item.timestamp = Date.now();
 		if (value === undefined) {
-			delete item.rawValue;
+			delete item.value;
 		} else {
-			item.rawValue = value;
+			item.value = value;
 		}
 		const update = { rev: this.value.rev, items: { [key]: item } };
 		this.localUpdate(update);
@@ -267,7 +267,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	}
 	public delete(key: K): boolean {
 		const { items } = this.value;
-		const hasKey = items[key]?.rawValue !== undefined;
+		const hasKey = items[key]?.value !== undefined;
 		if (hasKey) {
 			this.countDefined -= 1;
 			this.updateItem(key, undefined);
@@ -285,13 +285,13 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	): void {
 		// TODO: This is a data read, so we need to validate.
 		for (const [key, item] of objectEntries(this.value.items)) {
-			if (item.rawValue !== undefined) {
-				callbackfn(asDeeplyReadonly(item.rawValue), key, this);
+			if (item.value !== undefined) {
+				callbackfn(asDeeplyReadonly(item.value), key, this);
 			}
 		}
 	}
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
-		const data = this.value.items[key]?.rawValue;
+		const data = this.value.items[key]?.value;
 		if (this.validator === undefined) {
 			return asDeeplyReadonly(data);
 		}
@@ -299,12 +299,12 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		return asDeeplyReadonly(maybeValid);
 	}
 	public has(key: K): boolean {
-		return this.value.items[key]?.rawValue !== undefined;
+		return this.value.items[key]?.value !== undefined;
 	}
 	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, rawValue: value, validated: false };
+			this.value.items[key] = { rev: 0, timestamp: 0, value };
 		}
 		this.updateItem(key, value);
 		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
@@ -316,7 +316,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public keys(): IterableIterator<K> {
 		const keys: K[] = [];
 		for (const [key, item] of objectEntries(this.value.items)) {
-			if (item.rawValue !== undefined) {
+			if (item.value !== undefined) {
 				keys.push(key);
 			}
 		}
@@ -459,7 +459,7 @@ class LatestMapValueManagerImpl<
 		}
 		const items = new Map<Keys, LatestData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			const rawValue = item.rawValue;
+			const rawValue = item.value;
 			if (rawValue !== undefined) {
 				items.set(key, {
 					rawValue: asDeeplyReadonly(rawValue),
@@ -469,7 +469,7 @@ class LatestMapValueManagerImpl<
 							return asDeeplyReadonly(rawValue);
 						}
 
-						if (item.validated) {
+						if (item.validated === true) {
 							// Data was previously validated, so return the validated value, which may be undefined.
 							return asDeeplyReadonly(item.validatedValue);
 						}
@@ -529,14 +529,14 @@ class LatestMapValueManagerImpl<
 		for (const key of updatedItemKeys) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const item = value.items[key]!;
-			const hadPriorValue = currentState.items[key]?.rawValue;
+			const hadPriorValue = currentState.items[key]?.value;
 			currentState.items[key] = item;
 			const metadata = {
 				revision: item.rev,
 				timestamp: item.timestamp,
 			};
-			if (item.rawValue !== undefined) {
-				const itemValue = asDeeplyReadonly(item.rawValue);
+			if (item.value !== undefined) {
+				const itemValue = asDeeplyReadonly(item.value);
 				const updatedItem = {
 					attendee,
 					key,
@@ -554,7 +554,7 @@ class LatestMapValueManagerImpl<
 							return itemValue;
 						}
 
-						if (item.validated) {
+						if (item.validated === true) {
 							// Data was previously validated, so return the validated value, which may be undefined.
 							return asDeeplyReadonly(item.validatedValue);
 						}
@@ -674,8 +674,8 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				rawValue: initialValues[key],
-				validated: false,
+				value: initialValues[key],
+				// validated: false,
 			};
 		}
 	}

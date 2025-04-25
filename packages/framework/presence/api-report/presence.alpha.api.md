@@ -108,17 +108,19 @@ export namespace InternalTypes {
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // @system (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-        // (undocumented)
-        rawValue?: JsonDeserialized<TValue>;
+        validated?: boolean;
         // (undocumented)
         validatedValue?: JsonDeserialized<TValue>;
+        // (undocumented)
+        value?: JsonDeserialized<TValue>;
     }
     // @system (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-        // (undocumented)
-        rawValue: JsonDeserialized<TValue>;
+        validated?: boolean;
         // (undocumented)
         validatedValue?: JsonDeserialized<TValue>;
+        // (undocumented)
+        value: JsonDeserialized<TValue>;
     }
     // @system (undocumented)
     export interface ValueStateMetadata {
@@ -126,7 +128,6 @@ export namespace InternalTypes {
         rev: number;
         // (undocumented)
         timestamp: number;
-        validated: boolean;
     }
 }
 

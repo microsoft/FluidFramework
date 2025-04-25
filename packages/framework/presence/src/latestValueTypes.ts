@@ -161,15 +161,15 @@ export function createValidatedGetter<T>(
 	return () => {
 		if (validator === undefined) {
 			// No validator, so return the raw value
-			return asDeeplyReadonly(clientState.rawValue);
+			return asDeeplyReadonly(clientState.value);
 		}
 
-		if (clientState.validated) {
+		if (clientState.validated === true) {
 			// Data was previously validated, so return the validated value, which may be undefined.
 			return asDeeplyReadonly(clientState.validatedValue);
 		}
 
-		const validData = validator(clientState.rawValue);
+		const validData = validator(clientState.value);
 		clientState.validated = true;
 		// FIXME: Cast shouldn't be needed
 		clientState.validatedValue = validData as JsonDeserialized<T>;

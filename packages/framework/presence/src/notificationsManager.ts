@@ -177,9 +177,9 @@ class NotificationsManagerImpl<
 				{
 					rev: 0,
 					timestamp: 0,
-					rawValue: { name, args: [...(args as JsonTypeWith<never>[])] },
+					value: { name, args: [...(args as JsonTypeWith<never>[])] },
 					ignoreUnmonitored: true,
-					validated: false,
+					// validated: false,
 				},
 				// This is a notification, so we want to send it immediately.
 				{ allowableUpdateLatencyMs: 0 },
@@ -191,9 +191,9 @@ class NotificationsManagerImpl<
 				{
 					rev: 0,
 					timestamp: 0,
-					rawValue: { name, args: [...(args as JsonTypeWith<never>[])] },
+					value: { name, args: [...(args as JsonTypeWith<never>[])] },
 					ignoreUnmonitored: true,
-					validated: false,
+					// validated: false,
 				},
 				// This is a notification, so we want to send it immediately.
 				{ allowableUpdateLatencyMs: 0, targetClientId: targetAttendee.getConnectionId() },
@@ -240,11 +240,11 @@ class NotificationsManagerImpl<
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): PostUpdateAction[] {
 		const postUpdateActions: PostUpdateAction[] = [];
-		const eventName = value.rawValue.name as keyof Listeners<NotificationSubscriptions<T>>;
+		const eventName = value.value.name as keyof Listeners<NotificationSubscriptions<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.
 			// For now we assume the user is sending the correct types and there is no corruption along the way.
-			const args = [attendee, ...value.rawValue.args] as Parameters<
+			const args = [attendee, ...value.value.args] as Parameters<
 				NotificationSubscriptions<T>[typeof eventName]
 			>;
 			postUpdateActions.push(() => this.notificationsInternal.emit(eventName, ...args));
@@ -252,9 +252,9 @@ class NotificationsManagerImpl<
 			postUpdateActions.push(() =>
 				this.events.emit(
 					"unattendedNotification",
-					value.rawValue.name,
+					value.value.name,
 					attendee,
-					...value.rawValue.args,
+					...value.value.args,
 				),
 			);
 		}

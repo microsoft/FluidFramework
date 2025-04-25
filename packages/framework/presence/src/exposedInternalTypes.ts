@@ -23,29 +23,34 @@ export namespace InternalTypes {
 	export interface ValueStateMetadata {
 		rev: number;
 		timestamp: number;
-
-		/**
-		 * Will be true if the value has been validated; false otherwise.
-		 */
-		validated: boolean;
 	}
 
 	/**
 	 * @system
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-		rawValue?: JsonDeserialized<TValue>;
+		value?: JsonDeserialized<TValue>;
 		// value: () => JsonDeserialized<TValue> | undefined;
 		validatedValue?: JsonDeserialized<TValue>;
+
+		/**
+		 * Will be true if the value has been validated; false otherwise.
+		 */
+		validated?: boolean;
 	}
 
 	/**
 	 * @system
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-		rawValue: JsonDeserialized<TValue>;
+		value: JsonDeserialized<TValue>;
 		// value: () => JsonDeserialized<TValue> | undefined;
 		validatedValue?: JsonDeserialized<TValue>;
+
+		/**
+		 * Will be true if the value has been validated; false otherwise.
+		 */
+		validated?: boolean;
 	}
 
 	/**

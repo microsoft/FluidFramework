@@ -177,7 +177,12 @@ export function mergeValueDirectory<
 			const newObj = { ...update, timestamp: update.timestamp + timeDelta };
 			return excludeKeys(newObj, ["validated", "validatedValue"]) as TValueState;
 		}
+
+		console.log(`base is a valueDir? ${isValueDirectory(base)}`);
 		return base;
+		// return isValueDirectory(base)
+		// 	? base
+		// 	: (excludeKeys(base, ["validated", "validatedValue"]) as TValueState);
 	}
 
 	let mergeBase: InternalTypes.ValueDirectory<T>;
@@ -188,7 +193,7 @@ export function mergeValueDirectory<
 		if (base.rev >= update.rev) {
 			if (!baseIsDirectory) {
 				// base is leaf value that is more recent - nothing to do
-				return base;
+				return excludeKeys(base, ["validated", "validatedValue"]) as TValueState;
 			}
 			// While base has more advanced revision, assume mis-ordering or
 			// missed and catchup update needs merged in.

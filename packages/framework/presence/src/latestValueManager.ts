@@ -140,13 +140,13 @@ class LatestValueManagerImpl<T, Key extends string>
 	}
 
 	public get local(): DeepReadonly<JsonDeserialized<T>> {
-		return asDeeplyReadonly(this.value.rawValue);
+		return asDeeplyReadonly(this.value.value);
 	}
 
 	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
-		this.value.rawValue = value;
+		this.value.value = value;
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
@@ -162,10 +162,10 @@ class LatestValueManagerImpl<T, Key extends string>
 				value: () => {
 					if (this.validator === undefined) {
 						// No validator, so return the raw value
-						return asDeeplyReadonly(clientState.rawValue);
+						return asDeeplyReadonly(clientState.value);
 					}
 
-					if (clientState.validated) {
+					if (clientState.validated === true) {
 						// Data was previously validated, so return the validated value, which may be undefined.
 						return asDeeplyReadonly(clientState.validatedValue);
 					}
@@ -173,14 +173,14 @@ class LatestValueManagerImpl<T, Key extends string>
 					// let validData: JsonDeserialized<T> | undefined;
 					// Skip the current attendee since we want to enumerate only other remote attendees
 					if (attendeeId !== allKnownStates.self) {
-						const validData = this.validator(clientState.rawValue);
+						const validData = this.validator(clientState.value);
 						clientState.validated = true;
 						// FIXME: Cast shouldn't be needed
 						clientState.validatedValue = validData as JsonDeserialized<T>;
 						return asDeeplyReadonly(clientState.validatedValue);
 					}
 				},
-				rawValue: asDeeplyReadonly(clientState.rawValue),
+				rawValue: asDeeplyReadonly(clientState.value),
 				metadata: {
 					revision: clientState.rev,
 					timestamp: clientState.timestamp,
@@ -204,7 +204,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		}
 
 		return {
-			rawValue: asDeeplyReadonly(clientState.rawValue),
+			rawValue: asDeeplyReadonly(clientState.value),
 			value: createValidatedGetter(clientState, this.validator),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
@@ -226,8 +226,8 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					rawValue: asDeeplyReadonly(value.rawValue),
-					value: () => asDeeplyReadonly(value.rawValue),
+					rawValue: asDeeplyReadonly(value.value),
+					value: () => asDeeplyReadonly(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];
@@ -292,8 +292,8 @@ export function latest<T extends object | null, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		rawValue: local === null ? local : shallowCloneObject(local),
-		validated: false,
+		value: local === null ? local : shallowCloneObject(local),
+		// validated: false,
 	};
 	const factory = (
 		key: Key,
