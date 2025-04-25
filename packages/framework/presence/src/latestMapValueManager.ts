@@ -17,15 +17,14 @@ import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
-import {
-	createValidatedGetter,
-	type LatestClientData,
-	type LatestData,
-	type LatestMetadata,
-	type ProxiedValueAccessor,
-	type RawValueAccessor,
-	type StateSchemaValidator,
-	type ValueAccessor,
+import type {
+	LatestClientData,
+	LatestData,
+	LatestMetadata,
+	ProxiedValueAccessor,
+	RawValueAccessor,
+	StateSchemaValidator,
+	ValueAccessor,
 } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -560,11 +559,11 @@ class LatestMapValueManagerImpl<
 							return asDeeplyReadonly(item.validatedValue);
 						}
 
-						const validData = this.validator(clientState.rawValue);
+						const validData = this.validator(itemValue);
 						item.validated = true;
 						// FIXME: Cast shouldn't be needed
 						item.validatedValue = validData as JsonDeserialized<T>;
-						return asDeeplyReadonly(clientState.validatedValue);
+						return asDeeplyReadonly(item.validatedValue);
 					},
 				});
 			} else if (hadPriorValue !== undefined) {
