@@ -19,7 +19,7 @@ module.exports = {
 				// Test files are run in node only so additional node libraries can be used.
 				"import/no-nodejs-modules": [
 					"error",
-					{ allow: ["node:assert", "node:crypto", "node:util/types", "node:fs", "node:path"] },
+					{ allow: ["node:assert", "node:crypto", "node:fs", "node:path"] },
 				],
 			},
 		},
