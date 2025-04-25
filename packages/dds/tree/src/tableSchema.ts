@@ -78,6 +78,9 @@ export namespace TableSchema {
 		 * {@link Column} fields.
 		 * @remarks Extracted for re-use in returned type signature defined later in this function.
 		 * The implicit typing is intentional.
+		 * Note: ideally we would add a satisfies clause here to ensure that this satisfies
+		 * `Record<string, ImplicitFieldSchema>`, but doing so causes TypeScript to prematurely and incorrectly evaluate the type of `propsSchema`.
+		 * Likely related to the following issue: https://github.com/microsoft/TypeScript/issues/52394
 		 */
 		const columnFields = {
 			id: schemaFactory.identifier,
@@ -198,6 +201,9 @@ export namespace TableSchema {
 		 * {@link Row} fields.
 		 * @remarks Extracted for re-use in returned type signature defined later in this function.
 		 * The implicit typing is intentional.
+		 * Note: ideally we would add a satisfies clause here to ensure that this satisfies
+		 * `Record<string, ImplicitFieldSchema>`, but doing so causes TypeScript to prematurely and incorrectly evaluate the type of `propsSchema`.
+		 * Likely related to the following issue: https://github.com/microsoft/TypeScript/issues/52394
 		 */
 		const rowFields = {
 			id: schemaFactory.identifier,
