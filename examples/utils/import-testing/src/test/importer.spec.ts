@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { JsonAsTree } from "@fluidframework/tree/alpha";
+// eslint-disable-next-line import/no-internal-modules
+import { JsonAsTree, SchemaFactoryAlpha, TableSchema } from "@fluidframework/tree/internal";
 import type {
 	areSafelyAssignable,
 	requireTrue,
@@ -24,6 +25,20 @@ describe("import tests", () => {
 	it("JsonArray", () => {
 		const r = new JsonAsTree.Array([1]);
 		assert.equal(r[0], 1);
+	});
+
+	describe("TableSchema", () => {
+		it("Column schema", () => {
+			const schemaFactory = new SchemaFactoryAlpha("com.example");
+			// TODO: use overload that does not require columnFields
+			class Column extends TableSchema.createColumn(schemaFactory, SchemaFactoryAlpha.null) {}
+			const column = new Column({
+				// eslint-disable-next-line unicorn/no-null
+				fields: null,
+			});
+			// eslint-disable-next-line unicorn/no-null
+			assert.equal(column.fields, null);
+		});
 	});
 
 	// See also the unit tests for JsonAsTree in tree's jsonDomainSchema.spec.ts
