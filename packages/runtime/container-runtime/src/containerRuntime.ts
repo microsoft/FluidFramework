@@ -1548,8 +1548,8 @@ export class ContainerRuntime
 
 		this.messageAtLastSummary = lastMessageFromMetadata(metadata);
 
-		// We use the initial connected state from the context and
-		// readonly info to determine if container can send ops.
+		// We use the initial connected state from the container context
+		// as well as the readonly info to determine if container can send ops.
 		// Later updates to canSendOps come through calls to setConnectionState.
 		this.canSendOps = connected && !this.innerDeltaManager.readOnlyInfo.readonly;
 
