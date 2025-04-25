@@ -659,7 +659,6 @@ export function latestMap<
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
-				validator,
 				settings,
 				validator,
 			),
