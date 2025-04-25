@@ -15,7 +15,6 @@ import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/in
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
-import { NotificationsWorkspaceAdapter } from "./notificationsAdapter.js";
 import type { AttendeesEvents, AttendeeId, Presence, PresenceEvents } from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
@@ -66,13 +65,8 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		getWorkspace: <TSchema extends NotificationsWorkspaceSchema>(
 			workspaceAddress: WorkspaceAddress,
 			requestedContent: TSchema,
-		): NotificationsWorkspace<TSchema> => {
-			const statesWorkspace = this.datastoreManager.getWorkspace(
-				`n:${workspaceAddress}`,
-				requestedContent,
-			);
-			return new NotificationsWorkspaceAdapter(statesWorkspace);
-		},
+		): NotificationsWorkspace<TSchema> =>
+			this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent),
 	};
 
 	private readonly mc: MonitoringContext | undefined = undefined;

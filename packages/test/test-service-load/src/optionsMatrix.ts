@@ -116,6 +116,7 @@ export function generateRuntimeOptions(
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
+		createBlobPayloadPending: [true, false],
 		explicitSchemaControl: [true, false],
 	};
 

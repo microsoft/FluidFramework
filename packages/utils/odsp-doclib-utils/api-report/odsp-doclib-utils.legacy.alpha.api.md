@@ -4,13 +4,13 @@
 
 ```ts
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export function getDriveId(server: string, account: string, library: string | undefined, authRequestInfo: IOdspAuthRequestInfo): Promise<string>;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export const getOdspScope: (server: string) => string;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IOdspAuthRequestInfo {
     // (undocumented)
     accessToken: string;
@@ -18,7 +18,7 @@ export interface IOdspAuthRequestInfo {
     refreshTokenFn?: () => Promise<string>;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
 // (No @packageDocumentation comment for this package)

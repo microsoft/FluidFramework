@@ -122,7 +122,8 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
  * Provides notifications from this client to others and subscription
  * to their notifications.
  *
- * @remarks Create using {@link Notifications} registered to {@link StatesWorkspace}.
+ * @remarks Create using {@link Notifications} registered to
+ * {@link NotificationsWorkspace} or {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha

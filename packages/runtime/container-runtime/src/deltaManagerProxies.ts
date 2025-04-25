@@ -86,7 +86,7 @@ export interface BaseDeltaManagerProxyEventHandlers {
  * This class allows us to build proxy functionality without actually having to implement all the methods
  * of the DeltaManager.
  */
-export abstract class BaseDeltaManagerProxy
+export class BaseDeltaManagerProxy
 	extends TypedEventEmitter<IDeltaManagerEvents>
 	implements IDeltaManagerFull
 {
