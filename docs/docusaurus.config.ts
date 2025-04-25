@@ -192,7 +192,7 @@ const config: Config = {
 	},
 	scripts: [
 		{
-			src: "/trusted-types-policy.cjs",
+			src: "/trusted-types-policy.ts",
 			async: false,
 		},
 	],
