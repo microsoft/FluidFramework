@@ -190,6 +190,12 @@ const config: Config = {
 	customFields: {
 		INSTRUMENTATION_KEY: process.env.INSTRUMENTATION_KEY,
 	},
+	scripts: [
+		{
+			src: "/trusted-types-policy.js",
+			async: false,
+		},
+	],
 };
 
 export default config;

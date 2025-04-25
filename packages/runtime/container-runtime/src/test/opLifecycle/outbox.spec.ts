@@ -596,13 +596,15 @@ describe("Outbox", () => {
 		assert.equal(state.batchesSubmitted.length, 2);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
-		assert.deepEqual(state.batchesCompressed, [
-			toOutboundBatch([messages[2]]),
-			groupedMessages,
-		]);
+		assert.deepEqual(
+			state.batchesCompressed,
+			[toOutboundBatch([messages[2]]), groupedMessages],
+			"Compressed batches don't match expected",
+		);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
 			[[toSubmittedMessage(messages[2])], [toSubmittedMessage(groupedMessages.messages[0])]],
+			"Submitted batches don't match expected",
 		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
@@ -623,6 +625,7 @@ describe("Outbox", () => {
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
+			"Pending messages don't match expected order/properties",
 		);
 	});
 
