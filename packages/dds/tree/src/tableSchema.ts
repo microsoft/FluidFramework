@@ -337,12 +337,12 @@ export namespace TableSchema {
 		/**
 		 * The table's columns.
 		 */
-		columns: TreeArrayNode<TColumnSchema>;
+		readonly columns: TreeArrayNode<TColumnSchema>;
 
 		/**
 		 * The table's rows.
 		 */
-		rows: TreeArrayNode<TRowSchema>;
+		readonly rows: TreeArrayNode<TRowSchema>;
 
 		/**
 		 * Gets a table column by its {@link TableSchema.IRow.id}.
