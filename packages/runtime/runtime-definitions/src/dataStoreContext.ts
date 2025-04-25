@@ -323,6 +323,13 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
 	enterStagingMode?(): StageControlsExperimental;
 	readonly inStagingMode?: boolean;
 }
+/**
+ * @legacy
+ * @alpha
+ */
+export interface IFluidDataStoreChannelPolicies {
+	readonly readonlyInStagingMode: boolean;
+}
 
 /**
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
@@ -333,6 +340,8 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
  * @alpha
  */
 export interface IFluidDataStoreChannel extends IDisposable {
+	readonly policies?: IFluidDataStoreChannelPolicies;
+
 	/**
 	 * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
 	 * bound handles that represent its dependencies in the container's graph.
