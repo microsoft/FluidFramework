@@ -108,13 +108,18 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 		const driverSupportRequirementsOverride =
 			driverSupportRequirements as ILayerCompatSupportRequirementsOverride;
 		let originalRequiredFeatures: readonly string[];
+		let originalMinSupportedGeneration: number;
 
 		beforeEach(() => {
 			originalRequiredFeatures = driverSupportRequirementsOverride.requiredFeatures;
+			originalMinSupportedGeneration =
+				driverSupportRequirementsOverride.minSupportedGeneration;
 		});
 
 		afterEach(() => {
 			driverSupportRequirementsOverride.requiredFeatures = [...originalRequiredFeatures];
+			driverSupportRequirementsOverride.minSupportedGeneration =
+				originalMinSupportedGeneration;
 		});
 
 		it(`Driver is compatible with Loader`, async () => {
