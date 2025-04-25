@@ -61,7 +61,7 @@ async function start() {
 		({ container } = await client.getContainer(id, containerSchema, "2"));
 	}
 
-	const useDataObject = location.search.includes("useDataObject");
+	const useDataObject = new URLSearchParams(location.search).has("useDataObject");
 	const presence = useDataObject
 		? // Retrieve a reference to the presence APIs via the data object.
 			getPresenceViaDataObject(container.initialObjects.presence)
