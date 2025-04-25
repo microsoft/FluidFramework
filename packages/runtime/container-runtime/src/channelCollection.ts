@@ -121,9 +121,21 @@ interface FluidDataStoreMessage {
 }
 
 /**
+ * This version of the interface is private to to the package. it should never be exported under any tag.
+ * It is use to manage interaction between layers within the package itself. If something is needed
+ * cross package, it is likely it is also being used cross layer (ContainerRuntime * DataStoreRuntime).
+ * If that is the case, the change likely need to be stage directly on IFluidParentContext. Changes
+ * being staged on IFluidParentContext can be added here as well, likely with optionality removed,
+ * to ease interactions between layer within this packages.
+ */
+export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "isReadOnly"> {
+	readonly isReadOnly: () => boolean;
+}
+
+/**
  * Creates a shallow wrapper of {@link IFluidParentContext}. The wrapper can then have its methods overwritten as needed
  */
-export function wrapContext(context: IFluidParentContext): IFluidParentContext {
+export function wrapContext(context: IFluidParentContextPrivate): IFluidParentContextPrivate {
 	const isReadOnly = context.isReadOnly;
 	return {
 		get IFluidDataStoreRegistry() {
@@ -150,7 +162,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		get attachState() {
 			return context.attachState;
 		},
-		isReadOnly: isReadOnly === undefined ? undefined : () => isReadOnly(),
+		isReadOnly: () => isReadOnly(),
 		containerRuntime: context.containerRuntime,
 		scope: context.scope,
 		gcThrowOnTombstoneUsage: context.gcThrowOnTombstoneUsage,
@@ -201,8 +213,8 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
  */
 function wrapContextForInnerChannel(
 	id: string,
-	parentContext: IFluidParentContext,
-): IFluidParentContext {
+	parentContext: IFluidParentContextPrivate,
+): IFluidParentContextPrivate {
 	const context = wrapContext(parentContext);
 
 	context.submitMessage = (type: string, content: unknown, localOpMetadata: unknown) => {
@@ -274,7 +286,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	constructor(
 		protected readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined,
-		public readonly parentContext: IFluidParentContext,
+		public readonly parentContext: IFluidParentContextPrivate,
 		baseLogger: ITelemetryBaseLogger,
 		private readonly gcNodeUpdated: (props: IGCNodeUpdatedProps) => void,
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
@@ -372,7 +384,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	private shouldSendAttachLog = true;
 
-	protected wrapContextForInnerChannel(id: string): IFluidParentContext {
+	protected wrapContextForInnerChannel(id: string): IFluidParentContextPrivate {
 		return wrapContextForInnerChannel(id, this.parentContext);
 	}
 
@@ -1133,7 +1145,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 							fluidDataStoreId,
 						}),
 						details: {
-							runtimeReadonly: this.parentContext.isReadOnly?.(),
+							runtimeReadonly: this.parentContext.isReadOnly(),
 							readonly,
 						},
 					},
@@ -1635,7 +1647,6 @@ export class ChannelCollectionFactory<T extends ChannelCollection = ChannelColle
 		private readonly provideEntryPoint: (
 			runtime: IFluidDataStoreChannel,
 		) => Promise<FluidObject>,
-		private readonly ctor: (...args: ConstructorParameters<typeof ChannelCollection>) => T,
 	) {
 		this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(registryEntries);
 	}
@@ -1648,7 +1659,21 @@ export class ChannelCollectionFactory<T extends ChannelCollection = ChannelColle
 		context: IFluidDataStoreContext,
 		_existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const runtime = this.ctor(
+		// when work is done to complete nested datastores
+		// this class should move to a new package
+		// and IFluidDataStoreContext will need to support
+		// all the cross layer needs of the channel context,
+		// and the below assert should be removed.
+		//
+		// for now this will continue to work if both
+		// this factory and the container runtime are
+		// from the same package.
+		assert(
+			context instanceof FluidDataStoreContext,
+			"we don't support the layer boundary here today",
+		);
+
+		const runtime = new ChannelCollection(
 			context.baseSnapshot,
 			context, // parentContext
 			context.baseLogger,
