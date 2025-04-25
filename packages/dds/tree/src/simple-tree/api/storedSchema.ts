@@ -19,6 +19,9 @@ import { ViewSchema } from "./view.js";
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable, but unspecified format.
  *
+ * @param schema - The field schema to encode.
+ * @param writeVersion - The schema write version.
+ * 
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
  *
@@ -48,10 +51,10 @@ import { ViewSchema } from "./view.js";
  */
 export function extractPersistedSchema(
 	schema: ImplicitFieldSchema,
-	version: 1 | 2,
+	writeVersion: 1 | 2,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema);
-	return encodeTreeSchema(stored, version);
+	return encodeTreeSchema(stored, writeVersion);
 }
 
 /**

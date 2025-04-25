@@ -130,7 +130,7 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha
-export function extractPersistedSchema(schema: ImplicitFieldSchema, version: 1 | 2): JsonCompatible;
+export function extractPersistedSchema(schema: ImplicitFieldSchema, writeVersion: 1 | 2): JsonCompatible;
 
 // @alpha
 export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;
