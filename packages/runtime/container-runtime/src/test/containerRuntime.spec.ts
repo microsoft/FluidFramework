@@ -1050,6 +1050,7 @@ describe("Runtime", () => {
 						},
 					],
 					1,
+					false /* staged */,
 				);
 
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
@@ -2090,7 +2091,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2138,7 +2139,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2212,7 +2213,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
