@@ -175,7 +175,7 @@ export function mergeValueDirectory<
 	if (!isValueDirectory(update)) {
 		if (base === undefined || update.rev > base.rev) {
 			const newObj = { ...update, timestamp: update.timestamp + timeDelta };
-			return excludeKeys(newObj, ["validData"]) as TValueState;
+			return excludeKeys(newObj, ["validated", "validatedValue"]) as TValueState;
 		}
 		return base;
 	}

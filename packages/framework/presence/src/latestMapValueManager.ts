@@ -17,14 +17,15 @@ import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
-import type {
-	LatestClientData,
-	LatestData,
-	LatestMetadata,
-	ProxiedValueAccessor,
-	RawValueAccessor,
-	StateSchemaValidator,
-	ValueAccessor,
+import {
+	createValidatedGetter,
+	type LatestClientData,
+	type LatestData,
+	type LatestMetadata,
+	type ProxiedValueAccessor,
+	type RawValueAccessor,
+	type StateSchemaValidator,
+	type ValueAccessor,
 } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -51,7 +52,7 @@ export interface LatestMapClientData<
 	 * @privateRemarks This could be regular map currently as no Map is
 	 * stored internally and a new instance is created for every request.
 	 */
-	items: ReadonlyMap<Keys, LatestData<T, TValueAccessor>>;
+	items: ReadonlyMap<Keys, LatestData<T>>;
 }
 
 /**
@@ -64,7 +65,7 @@ export interface LatestMapItemUpdatedClientData<
 	T,
 	K extends string | number,
 	TValueAccessor extends ValueAccessor<T>,
-> extends LatestClientData<T, TValueAccessor> {
+> extends Omit<LatestClientData<T, TValueAccessor>, "value"> {
 	key: K;
 }
 
@@ -246,7 +247,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	/**
 	 * Note: caller must ensure key exists in this.value.items.
 	 */
-	private updateItem(key: K, value: InternalTypes.ValueOptionalState<T>["value"]): void {
+	private updateItem(key: K, value: InternalTypes.ValueOptionalState<T>["rawValue"]): void {
 		this.value.rev += 1;
 		// Caller is required to ensure key exists.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -254,9 +255,9 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		item.rev += 1;
 		item.timestamp = Date.now();
 		if (value === undefined) {
-			delete item.value;
+			delete item.rawValue;
 		} else {
-			item.value = value;
+			item.rawValue = value;
 		}
 		const update = { rev: this.value.rev, items: { [key]: item } };
 		this.localUpdate(update);
@@ -267,7 +268,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	}
 	public delete(key: K): boolean {
 		const { items } = this.value;
-		const hasKey = items[key]?.value !== undefined;
+		const hasKey = items[key]?.rawValue !== undefined;
 		if (hasKey) {
 			this.countDefined -= 1;
 			this.updateItem(key, undefined);
@@ -285,27 +286,26 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	): void {
 		// TODO: This is a data read, so we need to validate.
 		for (const [key, item] of objectEntries(this.value.items)) {
-			if (item.value !== undefined) {
-				callbackfn(asDeeplyReadonly(item.value), key, this);
+			if (item.rawValue !== undefined) {
+				callbackfn(asDeeplyReadonly(item.rawValue), key, this);
 			}
 		}
 	}
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
-		const data = this.value.items[key]?.value;
+		const data = this.value.items[key]?.rawValue;
 		if (this.validator === undefined) {
 			return asDeeplyReadonly(data);
 		}
 		const maybeValid = this.validator(data, { key });
-		// TODO: Cast shouldn't be necessary.
 		return asDeeplyReadonly(maybeValid);
 	}
 	public has(key: K): boolean {
-		return this.value.items[key]?.value !== undefined;
+		return this.value.items[key]?.rawValue !== undefined;
 	}
 	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value, validData: undefined };
+			this.value.items[key] = { rev: 0, timestamp: 0, rawValue: value, validated: false };
 		}
 		this.updateItem(key, value);
 		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
@@ -317,7 +317,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public keys(): IterableIterator<K> {
 		const keys: K[] = [];
 		for (const [key, item] of objectEntries(this.value.items)) {
-			if (item.value !== undefined) {
+			if (item.rawValue !== undefined) {
 				keys.push(key);
 			}
 		}
@@ -371,7 +371,7 @@ export interface LatestMap<
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, TRemoteAccessor>>;
+	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
 }
 
 /**
@@ -411,7 +411,7 @@ class LatestMapValueManagerImpl<
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
-		validator?: StateSchemaValidator<T>,
+		private readonly validator?: StateSchemaValidator<T>,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 
@@ -451,19 +451,39 @@ class LatestMapValueManagerImpl<
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, ValueAccessor<T>>> {
+	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const attendeeId = attendee.attendeeId;
 		const clientStateMap = allKnownStates.states[attendeeId];
 		if (clientStateMap === undefined) {
 			throw new Error("No entry for attendee");
 		}
-		const items = new Map<Keys, LatestData<T, ValueAccessor<T>>>();
+		const items = new Map<Keys, LatestData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			const value = item.value;
-			if (value !== undefined) {
+			const rawValue = item.rawValue;
+			if (rawValue !== undefined) {
 				items.set(key, {
-					value: asDeeplyReadonly(value),
+					rawValue: asDeeplyReadonly(rawValue),
+					value: () => {
+						if (this.validator === undefined) {
+							// No validator, so return the raw value
+							return asDeeplyReadonly(rawValue);
+						}
+
+						if (item.validated) {
+							// Data was previously validated, so return the validated value, which may be undefined.
+							return asDeeplyReadonly(item.validatedValue);
+						}
+
+						// Skip the current attendee since we want to enumerate only other remote attendees
+						if (attendeeId !== allKnownStates.self) {
+							const validData = this.validator(rawValue);
+							item.validated = true;
+							// FIXME: Cast shouldn't be needed
+							item.validatedValue = validData as JsonDeserialized<T>;
+							return asDeeplyReadonly(item.validatedValue);
+						}
+					},
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -504,28 +524,49 @@ class LatestMapValueManagerImpl<
 		}
 		const allUpdates = {
 			attendee,
-			items: new Map<Keys, LatestData<T, ValueAccessor<T>>>(),
+			items: new Map<Keys, LatestData<T>>(),
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const item = value.items[key]!;
-			const hadPriorValue = currentState.items[key]?.value;
+			const hadPriorValue = currentState.items[key]?.rawValue;
 			currentState.items[key] = item;
 			const metadata = {
 				revision: item.rev,
 				timestamp: item.timestamp,
 			};
-			if (item.value !== undefined) {
-				const itemValue = asDeeplyReadonly(item.value);
+			if (item.rawValue !== undefined) {
+				const itemValue = asDeeplyReadonly(item.rawValue);
 				const updatedItem = {
 					attendee,
 					key,
-					value: itemValue,
+					rawValue: itemValue,
 					metadata,
-				};
+				} satisfies LatestMapItemUpdatedClientData<T, Keys, ValueAccessor<T>>;
 				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
-				allUpdates.items.set(key, { value: itemValue, metadata });
+				allUpdates.items.set(key, {
+					rawValue: itemValue,
+					metadata,
+					// value: createValidatedGetter(item, this.validator),
+					value: () => {
+						if (this.validator === undefined) {
+							// No validator, so return the raw value
+							return itemValue;
+						}
+
+						if (item.validated) {
+							// Data was previously validated, so return the validated value, which may be undefined.
+							return asDeeplyReadonly(item.validatedValue);
+						}
+
+						const validData = this.validator(clientState.rawValue);
+						item.validated = true;
+						// FIXME: Cast shouldn't be needed
+						item.validatedValue = validData as JsonDeserialized<T>;
+						return asDeeplyReadonly(clientState.validatedValue);
+					},
+				});
 			} else if (hadPriorValue !== undefined) {
 				postUpdateActions.push(() =>
 					this.events.emit("remoteItemRemoved", {
@@ -634,8 +675,8 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				value: initialValues[key],
-				validData: undefined,
+				rawValue: initialValues[key],
+				validated: false,
 			};
 		}
 	}

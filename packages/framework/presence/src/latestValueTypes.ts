@@ -8,6 +8,8 @@ import type {
 	JsonDeserialized,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
+import type { InternalTypes } from "./exposedInternalTypes.js";
+import { asDeeplyReadonly } from "./internalUtils.js";
 import type { Attendee } from "./presence.js";
 
 /**
@@ -89,13 +91,15 @@ export type Accessor<T extends ValueAccessor<T>> = T extends ProxiedValueAccesso
  * @sealed
  * @alpha
  */
-export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
-	value: TValueAccessor extends ProxiedValueAccessor<T>
-		? () => DeepReadonly<JsonDeserialized<T>> | undefined
-		: TValueAccessor extends RawValueAccessor<T>
-			? DeepReadonly<JsonDeserialized<T>>
-			: never;
+export interface LatestData<T> {
+	value: () => DeepReadonly<JsonDeserialized<T>> | undefined;
+	// value: TValueAccessor extends ProxiedValueAccessor<T>
+	// 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
+	// 	: TValueAccessor extends RawValueAccessor<T>
+	// 		? DeepReadonly<JsonDeserialized<T>>
+	// 		: never;
 	// value: Accessor<TValueAccessor>;
+	rawValue: DeepReadonly<JsonDeserialized<T>>;
 	metadata: LatestMetadata;
 }
 
@@ -106,7 +110,7 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
  * @alpha
  */
 export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>>
-	extends LatestData<T, TValueAccessor> {
+	extends LatestData<T> {
 	attendee: Attendee;
 }
 
@@ -140,4 +144,35 @@ export interface StateSchemaValidatorMetadata {
 	 * If the value being validated is a LatestMap value, this will be set to the value of the corresponding key.
 	 */
 	key?: string | number;
+}
+
+/**
+ * Creates a getter for a state value that validates the data with a validator if one is provided.
+ *
+ * @param clientState - The client state to be validated.
+ * @param validator - The validator function to run.
+ * @returns A function that will validate the data, returning the validated data if it was valid, and `undefined`
+ * otherwise.
+ */
+export function createValidatedGetter<T>(
+	clientState: InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
+	validator?: StateSchemaValidator<T>,
+): () => DeepReadonly<JsonDeserialized<T>> | undefined {
+	return () => {
+		if (validator === undefined) {
+			// No validator, so return the raw value
+			return asDeeplyReadonly(clientState.rawValue);
+		}
+
+		if (clientState.validated) {
+			// Data was previously validated, so return the validated value, which may be undefined.
+			return asDeeplyReadonly(clientState.validatedValue);
+		}
+
+		const validData = validator(clientState.rawValue);
+		clientState.validated = true;
+		// FIXME: Cast shouldn't be needed
+		clientState.validatedValue = validData as JsonDeserialized<T>;
+		return asDeeplyReadonly(clientState.validatedValue);
+	};
 }
