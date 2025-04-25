@@ -1211,7 +1211,7 @@ export class ContainerRuntime
 		return this._deltaManager;
 	}
 
-	private readonly _deltaManager: IDeltaManagerFull;
+	private readonly _deltaManager: BaseDeltaManagerProxy;
 
 	/**
 	 * The delta manager provided by the container context. By default, using the default delta manager (proxy)
@@ -1606,7 +1606,11 @@ export class ContainerRuntime
 			outerDeltaManager = pendingOpsDeltaManagerProxy;
 		}
 
-		this._deltaManager = outerDeltaManager;
+		// always wrap the exposed delta manager in at least on layer of proxying
+		this._deltaManager =
+			outerDeltaManager instanceof BaseDeltaManagerProxy
+				? outerDeltaManager
+				: new BaseDeltaManagerProxy(outerDeltaManager);
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -2145,9 +2149,7 @@ export class ContainerRuntime
 		this.pendingStateManager.dispose();
 		this.inboundBatchAggregator.dispose();
 		this.deltaScheduler.dispose();
-		if (this._deltaManager instanceof BaseDeltaManagerProxy) {
-			this._deltaManager.dispose();
-		}
+		this._deltaManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
 	}
