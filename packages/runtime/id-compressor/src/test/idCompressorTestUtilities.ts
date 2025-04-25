@@ -145,10 +145,12 @@ export function getClusterSize(compressor: ReadonlyIdCompressor): number {
 
 function verifyCompressorLike(compressor: ReadonlyIdCompressor | IIdCompressor): void {
 	assert(
-		// Some IdCompressor tests wrap underlying compressors with proxies--allow this for now
+		// Some IdCompressor tests wrap underlying compressors with proxies--allow this for now.
+		// Because of id-compressor's dynamic import in container-runtime, instanceof checks for IdCompressor
+		// also won't necessarily work nicely. Get a small amount of validation that this function should work
+		// as intended by at least verifying the property name exists.
 		// eslint-disable-next-line @typescript-eslint/dot-notation
-		(isProxy(compressor) && typeof compressor["nextRequestedClusterSize"] === "number") ||
-			compressor instanceof IdCompressor,
+		typeof compressor["nextRequestedClusterSize"] === "number",
 	);
 }
 
