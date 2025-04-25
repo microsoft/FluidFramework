@@ -14334,6 +14334,9 @@ importers:
       '@fluidframework/id-compressor':
         specifier: workspace:~
         version: link:../../runtime/id-compressor
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../drivers/local-driver
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../dds/map
