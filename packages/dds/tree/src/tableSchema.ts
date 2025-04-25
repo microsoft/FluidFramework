@@ -652,7 +652,7 @@ export namespace TableSchema {
 				const { columnId, rowId } = key;
 				const row = this.getRow(rowId);
 				if (row !== undefined) {
-					const column: ColumnValueType | undefined = this.getColumn(columnId);
+					const column = this.getColumn(columnId);
 					if (column !== undefined) {
 						row.removeCell(column.id);
 					}
