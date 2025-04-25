@@ -494,11 +494,11 @@ export namespace TableSchema {
 			TInputScope,
 			ImplicitAllowedTypes
 		> = ColumnSchemaBase<TInputScope, ImplicitAllowedTypes>,
-		const TRow extends RowSchemaBase<
+		const TRow extends RowSchemaBase<TInputScope, TCell, ImplicitAllowedTypes> = RowSchemaBase<
 			TInputScope,
 			TCell,
 			ImplicitAllowedTypes
-		> = RowSchemaBase<TInputScope, TCell, ImplicitAllowedTypes>,
+		>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
