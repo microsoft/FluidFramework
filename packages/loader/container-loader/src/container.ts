@@ -1237,7 +1237,7 @@ export class Container
 		factory: ContainerExtensionFactory<T, TUseContext, TRuntimeProperties>,
 		...context: TUseContext
 	): T {
-		const runtime = this.runtime as Partial<IRuntimeInternal>;
+		const runtime: Partial<IRuntimeInternal> = this.runtime;
 		if (runtime.acquireExtension === undefined) {
 			throw new Error("Runtime does not support container extensions feature");
 		}
