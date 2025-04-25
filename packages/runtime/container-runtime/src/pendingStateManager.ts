@@ -334,7 +334,6 @@ export class PendingStateManager implements IDisposable {
 			[placeholder satisfies Omit<LocalBatchMessage, "runtimeOp"> as LocalBatchMessage],
 			clientSequenceNumber,
 			staged,
-			undefined /* ignoreBatchId */,
 		);
 	}
 
