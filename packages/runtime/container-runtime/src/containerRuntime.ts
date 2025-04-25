@@ -3206,7 +3206,6 @@ export class ContainerRuntime
 		// eslint-disable-next-line import/no-deprecated
 		let stageControls: StageControlsExperimental | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
-			//* Unit Test these conditions
 			if (!this.batchRunner.running && !this.inStagingMode) {
 				stageControls = this.enterStagingMode();
 			}
@@ -3299,7 +3298,6 @@ export class ContainerRuntime
 		this.outbox.flush();
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			// Final flush of any last staged changes
-			//* NIT: Don't need to pass true.  And then these two params can be joined into an atomic object?
 			this.outbox.flush(undefined, true /* staged */);
 
 			this.stageControls = undefined;
@@ -4342,7 +4340,6 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: LocalBatchMessage = {
 					runtimeOp: idAllocationMessage,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					//* Need tests for this - is it an ok strategy?
 					// Note: For now, we will never stage ID Allocation messages.
 					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
 					staged: false,

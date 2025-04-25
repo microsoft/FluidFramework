@@ -720,7 +720,6 @@ export class PendingStateManager implements IDisposable {
 			let pendingMessage = this.pendingMessages.shift()!;
 			remainingPendingMessagesCount--;
 
-			//* Unit tests
 			// Re-queue pre-staging messages if we are only processing staged batches
 			if (onlyStagedBatches) {
 				if (!pendingMessage.batchInfo.staged) {
