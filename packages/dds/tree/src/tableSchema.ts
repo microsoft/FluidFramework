@@ -158,6 +158,7 @@ export namespace TableSchema {
 		/**
 		 * Removes the cell in the specified column, denoted by column ID.
 		 */
+		// TODO: return removed cell
 		removeCell(columnId: string): void;
 
 		/**
