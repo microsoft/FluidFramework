@@ -28,10 +28,16 @@ describe("import tests", () => {
 	});
 
 	describe("TableSchema", () => {
+		// TODO: Add tests for other TableSchema factory functions as they are stabilized.
+
 		it("Column schema", () => {
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
-			// TODO: use overload that does not require columnFields
-			class Column extends TableSchema.createColumn(schemaFactory, SchemaFactoryAlpha.null) {}
+
+			class Column extends TableSchema.createColumn(
+				schemaFactory,
+				// TODO: use overload that does not require columnFields
+				SchemaFactoryAlpha.null,
+			) {}
 			const column = new Column({
 				// eslint-disable-next-line unicorn/no-null
 				fields: null,
