@@ -1265,7 +1265,7 @@ export class ContainerRuntime
 
 	/**
 	 * Indicates whether the container is in a state where it is able to send
-	 * ops or not (connected to op stream and not in readonly mode).
+	 * ops (connected to op stream and not in readonly mode).
 	 */
 	public get connected(): boolean {
 		return this.canSendOps;
