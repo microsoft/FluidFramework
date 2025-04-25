@@ -57,6 +57,10 @@ export enum AttachState {
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
+ *
+ * @privateremarks
+ * Implementors of this interface should implement {@link IRuntimeInternal} instead/directly.
+ *
  * @legacy
  * @alpha
  */
@@ -116,6 +120,13 @@ export interface IRuntime extends IDisposable {
 }
 
 /**
+ * Version of {@link IRuntime} that is constructed internally by the framework
+ * and provides access to `@internal` APIs.
+ *
+ * @remarks
+ * Without another guarantee, users given an {@link IRuntime} instance should
+ * not call internal APIs without checking for the presence of those properties.
+ *
  * @internal
  */
 export interface IRuntimeInternal extends IRuntime, ContainerExtensionStore {}
