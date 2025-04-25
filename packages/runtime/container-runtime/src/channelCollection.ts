@@ -121,12 +121,12 @@ interface FluidDataStoreMessage {
 }
 
 /**
- * This version of the interface is private to to the package. it should never be exported under any tag.
- * It is use to manage interaction between layers within the package itself. If something is needed
+ * This version of the interface is private to this the package. it should never be exported under any tag.
+ * It is used to manage interactions between layers within the package itself. If something is needed
  * cross package, it is likely it is also being used cross layer (ContainerRuntime * DataStoreRuntime).
- * If that is the case, the change likely need to be stage directly on IFluidParentContext. Changes
+ * If that is the case, the change likely needs to be staged directly on IFluidParentContext. Changes
  * being staged on IFluidParentContext can be added here as well, likely with optionality removed,
- * to ease interactions between layer within this packages.
+ * to ease interactions between layers within this package.
  */
 export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "isReadOnly"> {
 	readonly isReadOnly: () => boolean;
