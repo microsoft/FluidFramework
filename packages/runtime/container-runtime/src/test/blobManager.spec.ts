@@ -969,7 +969,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
-			it("abort after blob suceeds", async function () {
+			it("abort after blob succeeds", async function () {
 				if (createBlobPayloadPending) {
 					// Blob creation with pending payload doesn't support abort
 					this.skip();
