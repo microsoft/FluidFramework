@@ -210,7 +210,7 @@ export class IntervalCollectionMap {
 		if (isMapOperation(content)) {
 			const localValue = this.data.get(content.key);
 
-			assert(localValue !== undefined, "Local value expected on rollback");
+			assert(localValue !== undefined, 0xb7e /* Local value expected on rollback */);
 
 			localValue.rollback(content.value, localOpMetadata as IMapMessageLocalMetadata);
 
