@@ -1006,4 +1006,9 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
 	 * used as the `description` property.
 	 */
 	readonly description?: string | undefined;
+
+	/**
+	 * Metadata defined at schema creation time.
+	 */
+	readonly persistedData?: string | undefined;
 }

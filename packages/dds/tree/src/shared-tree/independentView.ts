@@ -25,7 +25,7 @@ import {
 	initializeForest,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../feature-libraries/schema-index/format.js";
+import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
@@ -92,7 +92,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
 	const fieldBatchCodec = makeFieldBatchCodec(options, 1);
-	const schemaCodec = makeSchemaCodec(options);
+	const schemaCodec = makeSchemaCodec(options, 1);
 
 	const schema = new TreeStoredSchemaRepository(schemaCodec.decode(content.schema as Format));
 	const forest = buildConfiguredForest(

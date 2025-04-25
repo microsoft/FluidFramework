@@ -303,7 +303,7 @@ export const TreeAlpha: {
 		} & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const content: ViewContent = {
-			schema: extractPersistedSchema(schema),
+			schema: extractPersistedSchema(schema, 2),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};

@@ -630,7 +630,8 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 	assert.deepEqual(actual, expected);
 }
 
-const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
+// TODO: Test multiple schema formats.
+const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator }, 1);
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {

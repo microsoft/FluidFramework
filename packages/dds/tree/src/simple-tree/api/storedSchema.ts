@@ -10,8 +10,6 @@ import {
 	encodeTreeSchema,
 	makeSchemaCodec,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
 import { toStoredSchema } from "../toStoredSchema.js";
@@ -20,6 +18,9 @@ import { ViewSchema } from "./view.js";
 
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable, but unspecified format.
+ *
+ * @param schema - The field schema to encode.
+ * @param writeVersion - The schema write version.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
@@ -48,9 +49,12 @@ import { ViewSchema } from "./view.js";
  * Public API surface uses "persisted" terminology while internally we use "stored".
  * @alpha
  */
-export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible {
+export function extractPersistedSchema(
+	schema: ImplicitFieldSchema,
+	writeVersion: number,
+): JsonCompatible {
 	const stored = toStoredSchema(schema);
-	return encodeTreeSchema(stored);
+	return encodeTreeSchema(stored, writeVersion);
 }
 
 /**
@@ -88,9 +92,10 @@ export function comparePersistedSchema(
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
 	canInitialize: boolean,
+	writeVersion: number,
 ): SchemaCompatibilityStatus {
-	const schemaCodec = makeSchemaCodec(options);
-	const stored = schemaCodec.decode(persisted as Format);
+	const schemaCodec = makeSchemaCodec(options, writeVersion);
+	const stored = schemaCodec.decode(persisted);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);
 }

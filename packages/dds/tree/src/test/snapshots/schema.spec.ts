@@ -11,10 +11,12 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 describe("schema snapshots", () => {
 	useSnapshotDirectory("schema-files");
 
-	for (const { name, schemaData } of testTrees) {
-		it(name, () => {
-			const encoded = encodeTreeSchema(schemaData);
-			takeJsonSnapshot(encoded);
-		});
+	for (const schemaFormatVersion of [1, 2]) {
+		for (const { name, schemaData } of testTrees) {
+			it(`${name} FormatV${schemaFormatVersion}`, () => {
+				const encoded = encodeTreeSchema(schemaData, schemaFormatVersion);
+				takeJsonSnapshot(encoded);
+			});
+		}
 	}
 });
