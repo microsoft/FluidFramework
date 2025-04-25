@@ -75,7 +75,6 @@ describe("Presence", () => {
 		});
 
 		describe("LatestValueManager", () => {
-			// let stateWorkspace: PresenceStates<{ num: 0 }>;
 			let validatorFunction: StateSchemaValidator<{ num: number }>;
 			let validatorSpy: ValidatorSpy;
 
@@ -90,7 +89,7 @@ describe("Presence", () => {
 				assert.equal(validatorSpy.callCount, 0);
 			});
 
-			// TODO: not yet implemented
+			// TODO: test needs to have multiple connected clients so that remote data can be read.
 			it.skip("validator is called when data is read", () => {
 				// Setup
 				// Configure a state workspace
@@ -114,7 +113,7 @@ describe("Presence", () => {
 				assert.equal(value.num, 84);
 			});
 
-			// TODO: not yet implemented
+			// TODO: test needs to have multiple connected clients so that remote data can be read.
 			it.skip("validator is not called multiple times for the same data", () => {
 				// Setup
 				// Configure a state workspace
@@ -140,7 +139,7 @@ describe("Presence", () => {
 				assert.equal(value.value()?.num, 84);
 			});
 
-			// TODO: not yet implemented
+			// TODO: test needs to have multiple connected clients so that remote data can be read.
 			it.skip("returns undefined with invalid data", () => {
 				// Setup
 				// Configure a state workspace
@@ -167,8 +166,8 @@ describe("Presence", () => {
 			});
 		});
 
-		// TODO: tests are failing
-		describe.skip("LatestMapValueManager", () => {
+		// TODO: test needs to have multiple connected clients so that remote data can be read.
+		describe("LatestMapValueManager", () => {
 			// let stateWorkspace: PresenceStates<{ num: 0 }>;
 			let validatorFunction: StateSchemaValidator<{ num: number }>;
 			let validatorSpy: ValidatorSpy;
@@ -184,7 +183,8 @@ describe("Presence", () => {
 				assert.equal(validatorSpy.callCount, 0);
 			});
 
-			it("validator is called when data is read", () => {
+			// TODO: test needs to have multiple connected clients so that remote data can be read.
+			it.skip("validator is called when data is read", () => {
 				// Setup
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
@@ -207,7 +207,7 @@ describe("Presence", () => {
 				assert.equal(value.get("key1")?.value()?.num, 84);
 			});
 
-			it("validator is not called multiple times for the same data", () => {
+			it.skip("validator is not called multiple times for the same data", () => {
 				// Setup
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {

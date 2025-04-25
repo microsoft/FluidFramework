@@ -64,7 +64,7 @@ export interface LatestMapItemUpdatedClientData<
 	T,
 	K extends string | number,
 	TValueAccessor extends ValueAccessor<T>,
-> extends Omit<LatestClientData<T, TValueAccessor>, "value"> {
+> extends LatestClientData<T, TValueAccessor> {
 	key: K;
 }
 
@@ -537,10 +537,30 @@ class LatestMapValueManagerImpl<
 			};
 			if (item.value !== undefined) {
 				const itemValue = asDeeplyReadonly(item.value);
+				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+				const valueGetter = () => {
+					if (this.validator === undefined) {
+						// No validator, so return the raw value
+						return itemValue;
+					}
+
+					if (item.validated === true) {
+						// Data was previously validated, so return the validated value, which may be undefined.
+						return asDeeplyReadonly(item.validatedValue);
+					}
+
+					const validData = this.validator(itemValue);
+					item.validated = true;
+					// FIXME: Cast shouldn't be needed
+					item.validatedValue = validData as JsonDeserialized<T>;
+					return asDeeplyReadonly(item.validatedValue);
+				};
 				const updatedItem = {
 					attendee,
 					key,
 					rawValue: itemValue,
+					value: valueGetter,
+					// createValidatedGetter(item, this.validator),
 					metadata,
 				} satisfies LatestMapItemUpdatedClientData<T, Keys, ValueAccessor<T>>;
 				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
@@ -548,23 +568,7 @@ class LatestMapValueManagerImpl<
 					rawValue: itemValue,
 					metadata,
 					// value: createValidatedGetter(item, this.validator),
-					value: () => {
-						if (this.validator === undefined) {
-							// No validator, so return the raw value
-							return itemValue;
-						}
-
-						if (item.validated === true) {
-							// Data was previously validated, so return the validated value, which may be undefined.
-							return asDeeplyReadonly(item.validatedValue);
-						}
-
-						const validData = this.validator(itemValue);
-						item.validated = true;
-						// FIXME: Cast shouldn't be needed
-						item.validatedValue = validData as JsonDeserialized<T>;
-						return asDeeplyReadonly(item.validatedValue);
-					},
+					value: valueGetter,
 				});
 			} else if (hadPriorValue !== undefined) {
 				postUpdateActions.push(() =>
@@ -657,10 +661,6 @@ export function latestMap<
 	const settings = args?.settings;
 	const initialValues = args?.local;
 	const validator = args?.validator;
-
-	if (validator !== undefined) {
-		throw new Error(`Validators are not yet implemented.`);
-	}
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<

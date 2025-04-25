@@ -108,7 +108,6 @@ export namespace InternalTypes {
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // @system (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-        validated?: boolean;
         // (undocumented)
         validatedValue?: JsonDeserialized<TValue>;
         // (undocumented)
@@ -116,7 +115,6 @@ export namespace InternalTypes {
     }
     // @system (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-        validated?: boolean;
         // (undocumented)
         validatedValue?: JsonDeserialized<TValue>;
         // (undocumented)
@@ -128,6 +126,7 @@ export namespace InternalTypes {
         rev: number;
         // (undocumented)
         timestamp: number;
+        validated?: boolean;
     }
 }
 
@@ -264,7 +263,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 }
 
 // @alpha @sealed
-export interface LatestMapItemUpdatedClientData<T, K extends string | number, TValueAccessor extends ValueAccessor<T>> extends Omit<LatestClientData<T, TValueAccessor>, "value"> {
+export interface LatestMapItemUpdatedClientData<T, K extends string | number, TValueAccessor extends ValueAccessor<T>> extends LatestClientData<T, TValueAccessor> {
     // (undocumented)
     key: K;
 }

@@ -111,8 +111,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 
 		for (const { attendee, value } of this.focus.getRemotes()) {
 			if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
-				const { hasFocus } = value;
-				statuses.set(attendee, hasFocus);
+				statuses.set(attendee, value()?.hasFocus ?? false);
 			}
 		}
 

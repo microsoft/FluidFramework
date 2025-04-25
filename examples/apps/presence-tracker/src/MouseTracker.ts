@@ -93,7 +93,11 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 
 		for (const { attendee, value } of this.cursor.getRemotes()) {
 			if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
-				statuses.set(attendee, value);
+				const v = value();
+				if (v === undefined) {
+					continue;
+				}
+				statuses.set(attendee, v);
 			}
 		}
 		return statuses;
