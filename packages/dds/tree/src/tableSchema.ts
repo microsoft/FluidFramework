@@ -79,7 +79,7 @@ export namespace TableSchema {
 		 * @remarks Extracted for re-use in returned type signature defined later in this function.
 		 * The implicit typing is intentional.
 		 */
-		const fields = {
+		const columnFields = {
 			id: schemaFactory.identifier,
 			props: schemaFactory.required(propsSchema),
 			// TODO: check for existing issues around this
@@ -88,13 +88,13 @@ export namespace TableSchema {
 		/**
 		 * A column in a table.
 		 */
-		class Column extends schemaFactory.object("Column", fields) {}
+		class Column extends schemaFactory.object("Column", columnFields) {}
 
 		type ColumnValueType = TreeNode &
 			IColumn<TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Column">>;
 
-		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof fields>;
+		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
@@ -107,7 +107,7 @@ export namespace TableSchema {
 			/* TNode */ ColumnValueType,
 			/* TInsertable */ object & ColumnInsertableType,
 			/* ImplicitlyConstructable */ true,
-			/* Info */ typeof fields
+			/* Info */ typeof columnFields
 		> = Column;
 
 		return ColumnSchemaType;
