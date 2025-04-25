@@ -22,6 +22,11 @@ export {
 	ILoaderServices,
 	Loader,
 } from "./loader.js";
+export {
+	driverSupportRequirements,
+	loaderCoreCompatDetails,
+	runtimeSupportRequirements,
+} from "./loaderLayerCompatState.js";
 export { loadContainerPaused } from "./loadPaused.js";
 export {
 	isLocationRedirectionError,
