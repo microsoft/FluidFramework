@@ -125,6 +125,12 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "readonly", listener: (isReadOnly: boolean) => void): any;
 }
 
+// @alpha @sealed @deprecated @legacy (undocumented)
+export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
+    // (undocumented)
+    readonly inStagingMode?: boolean;
+}
+
 // @alpha @legacy (undocumented)
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
     // (undocumented)
