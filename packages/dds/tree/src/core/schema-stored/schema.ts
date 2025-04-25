@@ -129,7 +129,9 @@ export interface TreeFieldStoredSchema {
 	readonly types: TreeTypeSet;
 
 	/**
-	 * Persisted metadata. Part of the v2 stored schema format.
+	 * Portion of the metadata which can be persisted.
+	 * @remarks
+	 * Discarded when encoding to {@link SchemaFormatVersion.V1}.
 	 */
 	persistedData?: PersistedMetadataFormat;
 }
