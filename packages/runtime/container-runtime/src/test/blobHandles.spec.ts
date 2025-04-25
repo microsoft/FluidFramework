@@ -52,6 +52,7 @@ function createBlobManager(
 			localBlobIdGenerator: undefined,
 			isBlobDeleted: () => false,
 			blobRequested: () => {},
+			createBlobPayloadPending: false,
 			// overrides
 			...overrides,
 		}),
@@ -67,7 +68,7 @@ const blobAttachMessage = {
 	timestamp: Date.now(),
 };
 
-describe("BlobManager ", () => {
+describe("BlobHandles", () => {
 	it("Create blob", async () => {
 		// Deferred promise that will be resolve once we send a blob attach. It is used mainly
 		// to simulate correct order or blob operations: create -> onUploadResolve -> process.

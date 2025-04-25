@@ -90,7 +90,7 @@ export class BlobHandle
 
 	public readonly absolutePath: string;
 
-	constructor(
+	public constructor(
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
 		public get: () => Promise<ArrayBufferLike>,
@@ -422,7 +422,9 @@ export class BlobManager {
 		} else {
 			const attachedStorageId = this.redirectTable.get(blobId);
 			if (!payloadPending) {
-				assert(!!attachedStorageId, 0x11f /* "requesting unknown blobs" */);
+				// Only blob handles explicitly marked with pending payload are permitted to exist without
+				// yet knowing their storage id. Otherwise they must already be associated with a storage id.
+				assert(attachedStorageId !== undefined, 0x11f /* "requesting unknown blobs" */);
 			}
 			// If we didn't find it in the redirectTable, assume the attach op is coming eventually and wait.
 			// We do this even if the local client doesn't have the blob payloadPending flag enabled, in case a
