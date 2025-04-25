@@ -29,6 +29,38 @@ import type { Format as FormatV2 } from "./formatV2.js";
 
 type Format = FormatV1 | FormatV2;
 
+/**
+ * Create a schema codec.
+ * @param options - Specifies common codec options, including which `validator` to use.
+ * @param writeVersion - The schema write version.
+ * @returns The composed codec.
+ */
+export function makeSchemaCodec(
+	options: ICodecOptions,
+	writeVersion: number,
+): IJsonCodec<TreeStoredSchema> {
+	const family = makeSchemaCodecs(options);
+	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
+}
+
+/**
+ * Create a family of schema codecs.
+ * @param options - Specifies common codec options, including which `validator` to use.
+ * @returns The composed codec family.
+ */
+export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
+	return makeCodecFamily([
+		[1, makeV1CodecWithVersion(options, 1)],
+		[2, makeV1CodecWithVersion(options, 2)],
+	]);
+}
+
+/**
+ * Encode an in-memory TreeStoredSchema into the specified format version.
+ * @param repo - The in-memory schema.
+ * @param version - The schema write version.
+ * @returns The encoded schema.
+ */
 export function encodeRepo(repo: TreeStoredSchema, version: 1 | 2): Format {
 	switch (version) {
 		case 1:
@@ -90,21 +122,6 @@ function decode(f: Format): TreeStoredSchema {
 		rootFieldSchema: decodeFieldSchema(f.root),
 		nodeSchema,
 	};
-}
-
-export function makeSchemaCodec(
-	options: ICodecOptions,
-	writeVersion: number,
-): IJsonCodec<TreeStoredSchema> {
-	const family = makeSchemaCodecs(options);
-	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
-}
-
-export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
-	return makeCodecFamily([
-		[1, makeV1CodecWithVersion(options, 1)],
-		[2, makeV1CodecWithVersion(options, 2)],
-	]);
 }
 
 /**
