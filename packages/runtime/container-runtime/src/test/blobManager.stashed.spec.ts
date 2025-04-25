@@ -51,7 +51,7 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 			blobManagerLoadInfo: {},
 			stashedBlobs: undefined,
 			localBlobIdGenerator: undefined,
-			storage: failProxy() as unknown as IDocumentStorageService,
+			storage: failProxy<IDocumentStorageService>(),
 			sendBlobAttachOp: () => {},
 			blobRequested: () => {},
 			isBlobDeleted: () => false,
