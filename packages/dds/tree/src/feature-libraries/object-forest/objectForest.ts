@@ -236,20 +236,6 @@ export class ObjectForest implements IEditableForest {
 					parent.fields.delete(key);
 				}
 			}
-			public replace(
-				newContentSource: FieldKey,
-				range: Range,
-				oldContentDestination: FieldKey,
-				oldContentId: DeltaDetachedNodeId,
-			): void {
-				preEdit();
-				assert(
-					newContentSource !== oldContentDestination,
-					0x7ba /* Replace detached source field and detached destination field must be different */,
-				);
-				this.detachEdit(range, oldContentDestination);
-				this.attachEdit(newContentSource, range.end - range.start, range.start);
-			}
 			public enterNode(index: number): void {
 				cursor.enterNode(index);
 			}

@@ -142,7 +142,7 @@ describe("combineVisitors", () => {
 			new LoggingVisitor("v", actual),
 			combineVisitors([new LoggingAnnouncedVisitor("av2", actual)]),
 		]);
-		combined.detach({ start: 0, end: 1 }, fieldKey, { minor: 42 });
+		combined.detach({ start: 0, end: 1 }, fieldKey, { minor: 42 }, false);
 		actual.push("---");
 		combined.attach(fieldKey, 1, 42);
 		const expected = [

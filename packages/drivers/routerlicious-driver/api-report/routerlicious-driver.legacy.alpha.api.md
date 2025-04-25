@@ -4,10 +4,10 @@
 
 ```ts
 
-// @alpha
+// @alpha @legacy
 export function createRouterliciousDocumentServiceFactory(tokenProvider: ITokenProvider): IDocumentServiceFactory;
 
-// @alpha
+// @alpha @legacy
 export interface IRouterliciousResolvedUrl extends IResolvedUrl {
     createAsEphemeral?: boolean;
     routerliciousResolvedUrl: true;

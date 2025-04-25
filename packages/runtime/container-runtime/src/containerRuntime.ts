@@ -105,6 +105,7 @@ import {
 import {
 	GCDataBuilder,
 	RequestParser,
+	RuntimeHeaders,
 	TelemetryContext,
 	addBlobToSummary,
 	addSummarizeResultToSummary,
@@ -410,6 +411,12 @@ export interface ContainerRuntimeOptions {
 	 * are engaged as they become available, without giving legacy clients any chance to fail predictably.
 	 */
 	readonly explicitSchemaControl: boolean;
+
+	/**
+	 * Create blob handles with pending payloads when calling createBlob (default is false).
+	 * When enabled, createBlob will return a handle before the blob upload completes.
+	 */
+	readonly createBlobPayloadPending: boolean;
 }
 
 /**
@@ -835,6 +842,7 @@ export class ContainerRuntime
 			compressionOptions = enableGroupedBatching === false
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
+			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
@@ -1018,6 +1026,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
+				createBlobPayloadPending,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -1043,6 +1052,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor,
 			enableGroupedBatching,
 			explicitSchemaControl,
+			createBlobPayloadPending,
 		};
 
 		const runtime = new containerRuntimeCtor(
@@ -1207,7 +1217,7 @@ export class ContainerRuntime
 		return this._deltaManager;
 	}
 
-	private readonly _deltaManager: IDeltaManagerFull;
+	private readonly _deltaManager: BaseDeltaManagerProxy;
 
 	/**
 	 * The delta manager provided by the container context. By default, using the default delta manager (proxy)
@@ -1602,7 +1612,11 @@ export class ContainerRuntime
 			outerDeltaManager = pendingOpsDeltaManagerProxy;
 		}
 
-		this._deltaManager = outerDeltaManager;
+		// always wrap the exposed delta manager in at least on layer of proxying
+		this._deltaManager =
+			outerDeltaManager instanceof BaseDeltaManagerProxy
+				? outerDeltaManager
+				: new BaseDeltaManagerProxy(outerDeltaManager);
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1777,6 +1791,7 @@ export class ContainerRuntime
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
+			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
 		});
 
 		this.deltaScheduler = new DeltaScheduler(
@@ -2140,9 +2155,7 @@ export class ContainerRuntime
 		this.pendingStateManager.dispose();
 		this.inboundBatchAggregator.dispose();
 		this.deltaScheduler.dispose();
-		if (this._deltaManager instanceof BaseDeltaManagerProxy) {
-			this._deltaManager.dispose();
-		}
+		this._deltaManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
 	}
@@ -2325,7 +2338,16 @@ export class ContainerRuntime
 			}
 
 			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
-				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+				const localId = requestParser.pathParts[1];
+				const payloadPending = requestParser.headers?.[RuntimeHeaders.payloadPending] === true;
+				if (
+					!this.blobManager.hasBlob(localId) &&
+					requestParser.headers?.[RuntimeHeaders.wait] === false
+				) {
+					return create404Response(request);
+				}
+
+				const blob = await this.blobManager.getBlob(localId, payloadPending);
 				return {
 					status: 200,
 					mimeType: "fluid/object",
