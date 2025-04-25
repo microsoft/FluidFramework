@@ -489,30 +489,30 @@ export namespace TableSchema {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createTableInternal<
 		const TInputScope extends string | undefined,
-		const TCellSchema extends ImplicitAllowedTypes,
-		const TColumnSchema extends ColumnSchemaBase<
+		const TCell extends ImplicitAllowedTypes,
+		const TColumn extends ColumnSchemaBase<
 			TInputScope,
 			ImplicitAllowedTypes
 		> = ColumnSchemaBase<TInputScope, ImplicitAllowedTypes>,
 		const TRow extends RowSchemaBase<
 			TInputScope,
-			TCellSchema,
+			TCell,
 			ImplicitAllowedTypes
-		> = RowSchemaBase<TInputScope, TCellSchema, ImplicitAllowedTypes>,
+		> = RowSchemaBase<TInputScope, TCell, ImplicitAllowedTypes>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		_cellSchema: TCellSchema,
-		columnSchema: TColumnSchema,
+		_cellSchema: TCell,
+		columnSchema: TColumn,
 		rowSchema: TRow,
 	) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
-		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
-		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>;
+		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
+		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
 
-		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
-		type ColumnInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>;
+		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumn>;
+		type ColumnInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		type RowValueType = TreeNodeFromImplicitAllowedTypes<TRow>;
 		type RowInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TRow>;
@@ -532,7 +532,7 @@ export namespace TableSchema {
 		 */
 		class Table
 			extends schemaFactory.object("Table", tableFields)
-			implements ITable<TCellSchema, TColumnSchema, TRow>
+			implements ITable<TCell, TColumn, TRow>
 		{
 			public getColumn(id: string): ColumnValueType | undefined {
 				// TypeScript is unable to narrow the types correctly here, hence the casts.
@@ -661,7 +661,7 @@ export namespace TableSchema {
 		}
 
 		type TableValueType = TreeNode &
-			ITable<TCellSchema, TColumnSchema, TRow> &
+			ITable<TCell, TColumn, TRow> &
 			WithType<ScopedSchemaName<Scope, "Table">>;
 		type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
 
