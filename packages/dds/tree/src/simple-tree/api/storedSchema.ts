@@ -10,8 +10,6 @@ import {
 	encodeTreeSchema,
 	makeSchemaCodec,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { FormatV1 as Format } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
 import { toStoredSchema } from "../toStoredSchema.js";
@@ -91,10 +89,10 @@ export function comparePersistedSchema(
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
 	canInitialize: boolean,
+	writeVersion: 1 | 2,
 ): SchemaCompatibilityStatus {
-	// TODO: Switch on format?
-	const schemaCodec = makeSchemaCodec(options, 1);
-	const stored = schemaCodec.decode(persisted as Format);
+	const schemaCodec = makeSchemaCodec(options, writeVersion);
+	const stored = schemaCodec.decode(persisted);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);
 }

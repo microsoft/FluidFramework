@@ -26,7 +26,9 @@ describe("simple-tree storedSchema", () => {
 			// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
 			// but might as will give it a simple smoke test for the various test schema.
 			it(`comparePersistedSchema to self ${test.name}`, () => {
-				const persistedA = extractPersistedSchema(test.schema, 2);
+				// TODO: Parameterize
+				const schemaWriteVersion = 2;
+				const persistedA = extractPersistedSchema(test.schema, schemaWriteVersion);
 				const status = comparePersistedSchema(
 					persistedA,
 					test.schema,
@@ -34,6 +36,7 @@ describe("simple-tree storedSchema", () => {
 						jsonValidator: typeboxValidator,
 					},
 					false,
+					schemaWriteVersion,
 				);
 				assert.deepEqual(status, {
 					isEquivalent: true,

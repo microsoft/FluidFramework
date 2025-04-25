@@ -133,6 +133,8 @@ describe("schema", () => {
 			for (let viewIndex = 0; viewIndex < historicalSchema.length; viewIndex++) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				it(`document ${historicalSchema[documentIndex]!.version} vs view version ${historicalSchema[viewIndex]!.version}`, () => {
+					// TODO: Parameterize
+					const schemaWriteVersion = 2;
 					const compat = comparePersistedSchema(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						historicalSchema[documentIndex]!.schema,
@@ -140,6 +142,7 @@ describe("schema", () => {
 						historicalSchema[viewIndex]!.viewSchema,
 						options,
 						false,
+						schemaWriteVersion,
 					);
 
 					// We do not expect duplicates in historicalSchema.
