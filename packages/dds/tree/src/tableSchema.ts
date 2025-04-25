@@ -170,7 +170,13 @@ export namespace TableSchema {
 
 	/**
 	 * Factory for creating new table row schema.
-	 * @privateRemarks TODO: add overloads to make column schema optional.
+	 *
+	 * @privateRemarks
+	 * TODO:
+	 * - Add overloads to make propsSchema optional.
+	 * - Take field schema rather than node schema for `propsSchema`, in particular to allow making
+	 * the additional properties optional.
+	 *
 	 * @sealed @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
