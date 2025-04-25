@@ -43,7 +43,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.createColumn}.
 	 * @sealed @internal
 	 */
-	export interface IColumn<TPropsSchema extends ImplicitAllowedTypes> {
+	export interface IColumn<TPropsSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
 		/**
 		 * The unique identifier of the column.
 		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
@@ -135,7 +135,7 @@ export namespace TableSchema {
 	 */
 	export interface IRow<
 		TCellSchema extends ImplicitAllowedTypes,
-		TPropsSchema extends ImplicitAllowedTypes,
+		TPropsSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> {
 		/**
 		 * The unique identifier of the row.
@@ -144,14 +144,27 @@ export namespace TableSchema {
 		readonly id: string;
 
 		/**
+		 * Gets the cell in the specified column.
+		 * @returns The cell if it exists, otherwise undefined.
+		 */
+		getCell(column: IColumn): TreeNodeFromImplicitAllowedTypes<TCellSchema> | undefined;
+		/**
 		 * Gets the cell in the specified column, denoted by column ID.
 		 * @returns The cell if it exists, otherwise undefined.
 		 */
 		getCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCellSchema> | undefined;
 
 		/**
+		 * Sets the cell in the specified column.
+		 * @remarks To remove a cell, call {@link TableSchema.IRow.(removeCell:1)} instead.
+		 */
+		setCell(
+			column: IColumn,
+			value: InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>,
+		): void;
+		/**
 		 * Sets the cell in the specified column, denoted by column ID.
-		 * @remarks To remove a cell, call {@link TableSchema.IRow.removeCell} instead.
+		 * @remarks To remove a cell, call {@link TableSchema.IRow.(removeCell:2)} instead.
 		 */
 		setCell(
 			columnId: string,
@@ -159,9 +172,14 @@ export namespace TableSchema {
 		): void;
 
 		/**
-		 * Removes the cell in the specified column, denoted by column ID.
+		 * Removes the cell in the specified column.
+		 * @privateRemarks TODO: return removed cell
 		 */
-		// TODO: return removed cell
+		removeCell(column: IColumn): void;
+		/**
+		 * Removes the cell in the specified column, denoted by column ID.
+		 * @privateRemarks TODO: return removed cell
+		 */
 		removeCell(columnId: string): void;
 
 		/**
@@ -219,15 +237,21 @@ export namespace TableSchema {
 			extends schemaFactory.object("Row", rowFields)
 			implements IRow<TCellSchema, TPropsSchema>
 		{
-			public getCell(columnId: string): CellValueType | undefined {
+			public getCell(columnOrId: IColumn | string): CellValueType | undefined {
+				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 				return this.cells.get(columnId) as CellValueType | undefined;
 			}
 
-			public setCell(columnId: string, value: CellInsertableType | undefined): void {
+			public setCell(
+				columnOrId: IColumn | string,
+				value: CellInsertableType | undefined,
+			): void {
+				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 				this.cells.set(columnId, value);
 			}
 
-			public removeCell(columnId: string): void {
+			public removeCell(columnOrId: IColumn | string): void {
+				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 				if (!this.cells.has(columnId)) {
 					return;
 				}
