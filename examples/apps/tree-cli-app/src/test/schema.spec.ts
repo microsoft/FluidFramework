@@ -110,48 +110,50 @@ const historicalSchema: {
 ];
 
 describe("schema", () => {
-	it("current schema matches latest historical schema", () => {
-		const current = extractPersistedSchema(List, 2);
+	for (const schemaFormatVersion of [1, 2]) {
+		it(`current schema matches latest historical schema FormatV${schemaFormatVersion}`, () => {
+			const current = extractPersistedSchema(List, schemaFormatVersion);
 
-		// For compatibility with deep equality and simple objects, round trip via JSON to erase prototypes.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const currentRoundTripped: JsonCompatible = JSON.parse(JSON.stringify(current));
+			// For compatibility with deep equality and simple objects, round trip via JSON to erase prototypes.
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const currentRoundTripped: JsonCompatible = JSON.parse(JSON.stringify(current));
 
-		const previous = historicalSchema.at(-1);
-		assert(previous !== undefined);
-		// This ensures that historicalSchema's last entry is up to date with the current application code.
-		// This can catch:
-		// 1. Forgetting to update historicalSchema when intentionally making schema changes.
-		// 2. Accidentally changing schema in a way that impacts document compatibility.
-		assert.deepEqual(currentRoundTripped, previous.schema);
-	});
+			const previous = historicalSchema.at(-1);
+			assert(previous !== undefined);
+			// This ensures that historicalSchema's last entry is up to date with the current application code.
+			// This can catch:
+			// 1. Forgetting to update historicalSchema when intentionally making schema changes.
+			// 2. Accidentally changing schema in a way that impacts document compatibility.
+			assert.deepEqual(currentRoundTripped, previous.schema);
+		});
+	}
 
 	describe("historical schema can be upgraded to current schema", () => {
 		const options: ForestOptions & ICodecOptions = { jsonValidator: typeboxValidator };
 
-		for (let documentIndex = 0; documentIndex < historicalSchema.length; documentIndex++) {
-			for (let viewIndex = 0; viewIndex < historicalSchema.length; viewIndex++) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				it(`document ${historicalSchema[documentIndex]!.version} vs view version ${historicalSchema[viewIndex]!.version}`, () => {
-					// TODO: Parameterize
-					const schemaWriteVersion = 2;
-					const compat = comparePersistedSchema(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						historicalSchema[documentIndex]!.schema,
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						historicalSchema[viewIndex]!.viewSchema,
-						options,
-						false,
-						schemaWriteVersion,
-					);
+		for (const schemaFormatVersion of [1, 2]) {
+			for (let documentIndex = 0; documentIndex < historicalSchema.length; documentIndex++) {
+				for (let viewIndex = 0; viewIndex < historicalSchema.length; viewIndex++) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					it(`document ${historicalSchema[documentIndex]!.version} vs view version ${historicalSchema[viewIndex]!.version} FormatV${schemaFormatVersion}`, () => {
+						const compat = comparePersistedSchema(
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							historicalSchema[documentIndex]!.schema,
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							historicalSchema[viewIndex]!.viewSchema,
+							options,
+							false,
+							schemaFormatVersion,
+						);
 
-					// We do not expect duplicates in historicalSchema.
-					assert.equal(compat.isEquivalent, documentIndex === viewIndex);
-					// Currently collaboration is only allowed between identical versions
-					assert.equal(compat.canView, documentIndex === viewIndex);
-					// Older versions should be upgradable to newer versions, but not the reverse.
-					assert.equal(compat.canUpgrade, documentIndex <= viewIndex);
-				});
+						// We do not expect duplicates in historicalSchema.
+						assert.equal(compat.isEquivalent, documentIndex === viewIndex);
+						// Currently collaboration is only allowed between identical versions
+						assert.equal(compat.canView, documentIndex === viewIndex);
+						// Older versions should be upgradable to newer versions, but not the reverse.
+						assert.equal(compat.canUpgrade, documentIndex <= viewIndex);
+					});
+				}
 			}
 		}
 	});
