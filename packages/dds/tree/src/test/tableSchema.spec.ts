@@ -30,7 +30,10 @@ describe("TableFactory unit tests", () => {
 		}) {}
 		class Column extends TableSchema.createColumn(schemaFactory, ColumnProps) {}
 
-		class Row extends TableSchema.createRow(schemaFactory, Cell) {}
+		class RowProps extends schemaFactory.object("table-row-props", {
+			label: schemaFactory.optional(schemaFactory.string),
+		}) {}
+		class Row extends TableSchema.createRow(schemaFactory, Cell, RowProps) {}
 
 		class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
 
@@ -83,12 +86,13 @@ describe("TableFactory unit tests", () => {
 						new Column({ id: "column-1", props: { label: "Column 1" } }),
 					],
 					rows: [
-						{ id: "row-0", cells: {} },
+						{ id: "row-0", cells: {}, props: {} },
 						{
 							id: "row-1",
 							cells: {
 								"column-1": { value: "Hello world!" },
 							},
+							props: {},
 						},
 					],
 				}),
@@ -109,6 +113,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-1",
@@ -117,6 +122,7 @@ describe("TableFactory unit tests", () => {
 								value: "Hello world!",
 							},
 						},
+						props: {},
 					},
 				],
 			});
@@ -257,6 +263,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -267,6 +274,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -279,10 +287,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-a",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-b",
 						cells: {},
+						props: {},
 					},
 				],
 				columns: [],
@@ -294,10 +304,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-c",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-d",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -308,18 +320,22 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-a",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-c",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-d",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-b",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -332,10 +348,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-a",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-b",
 						cells: {},
+						props: {},
 					},
 				],
 				columns: [],
@@ -346,10 +364,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-c",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-d",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -360,18 +380,22 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-a",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-b",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-c",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-d",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -386,10 +410,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-a",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-b",
 						cells: {},
+						props: {},
 					},
 				],
 				columns: [],
@@ -402,6 +428,7 @@ describe("TableFactory unit tests", () => {
 							{
 								id: "row-a",
 								cells: {},
+								props: {},
 							},
 						],
 					}),
@@ -424,6 +451,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -452,6 +480,7 @@ describe("TableFactory unit tests", () => {
 								value: "Hello world!",
 							},
 						},
+						props: {},
 					},
 				],
 			});
@@ -472,6 +501,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -504,6 +534,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -515,6 +546,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -553,8 +585,8 @@ describe("TableFactory unit tests", () => {
 
 		it("remove single row", () => {
 			const { treeView, Row } = createTableTree();
-			const row0 = new Row({ id: "row-0", cells: {} });
-			const row1 = new Row({ id: "row-1", cells: {} });
+			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
+			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
 			treeView.initialize({
 				columns: [],
 				rows: [row0, row1],
@@ -564,7 +596,7 @@ describe("TableFactory unit tests", () => {
 			treeView.root.removeRows([row0]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
-				rows: [{ id: "row-1", cells: {} }],
+				rows: [{ id: "row-1", cells: {}, props: {} }],
 			});
 
 			// Remove row1
@@ -577,10 +609,10 @@ describe("TableFactory unit tests", () => {
 
 		it("remove multiple rows", () => {
 			const { treeView, Row } = createTableTree();
-			const row0 = new Row({ id: "row-0", cells: {} });
-			const row1 = new Row({ id: "row-1", cells: {} });
-			const row2 = new Row({ id: "row-2", cells: {} });
-			const row3 = new Row({ id: "row-3", cells: {} });
+			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
+			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
+			const row2 = new Row({ id: "row-2", cells: {}, props: {} });
+			const row3 = new Row({ id: "row-3", cells: {}, props: {} });
 			treeView.initialize({
 				columns: [],
 				rows: [row0, row1, row2, row3],
@@ -594,10 +626,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-2",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -618,7 +652,7 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => treeView.root.removeRows([new Row({ id: "row-0", cells: {} })]),
+				() => treeView.root.removeRows([new Row({ id: "row-0", cells: {}, props: {} })]),
 				validateUsageError(/Expected non-negative index, got -1./),
 			);
 		});
@@ -633,8 +667,8 @@ describe("TableFactory unit tests", () => {
 			assert.throws(
 				() =>
 					treeView.root.removeRows([
-						new Row({ id: "row-0", cells: {} }),
-						new Row({ id: "row-1", cells: {} }),
+						new Row({ id: "row-0", cells: {}, props: {} }),
+						new Row({ id: "row-1", cells: {}, props: {} }),
 					]),
 				// TODO: The usage error here comes from the arrayNode layer.
 				// Once removeRows gets updated to return a usage error that makes more sense, update usage error here.
@@ -657,6 +691,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -680,6 +715,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -698,6 +734,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -717,6 +754,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -737,6 +775,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -752,7 +791,7 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	it("can read column fields", () => {
+	it("can read column props", () => {
 		const { treeView, Column } = createTableTree();
 
 		const column = new Column({ id: "column-0", props: { label: "Column 0" } });
@@ -765,12 +804,25 @@ describe("TableFactory unit tests", () => {
 		assert.equal(column.props?.label, "Column 0");
 	});
 
+	it("can read row props", () => {
+		const { treeView, Row } = createTableTree();
+
+		const row = new Row({ id: "row-0", cells: {}, props: { label: "Row 0" } });
+
+		treeView.initialize({
+			columns: [],
+			rows: [row],
+		});
+
+		assert.equal(row.props?.label, "Row 0");
+	});
+
 	it("gets proper table elements with getter methods", () => {
 		const { treeView, Column, Row, Cell } = createTableTree();
 
 		const cell0 = new Cell({ value: "Hello World!" });
 		const column0 = new Column({ id: "column-0", props: {} });
-		const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 } });
+		const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 }, props: {} });
 
 		treeView.initialize({
 			columns: [column0],

@@ -35,8 +35,8 @@ describe("import tests", () => {
 
 			class Column extends TableSchema.createColumn(
 				schemaFactory,
-				// TODO: use overload that does not require columnFields
-				SchemaFactoryAlpha.null,
+				// TODO: use overload that does not require props
+				schemaFactory.null,
 			) {}
 			const column = new Column({
 				// eslint-disable-next-line unicorn/no-null
@@ -44,6 +44,27 @@ describe("import tests", () => {
 			});
 			// eslint-disable-next-line unicorn/no-null
 			assert.equal(column.props, null);
+		});
+
+		it("Row schema", () => {
+			const schemaFactory = new SchemaFactoryAlpha("com.example");
+
+			class Cell extends schemaFactory.object("Cell", {
+				value: schemaFactory.number,
+			}) {}
+			class Row extends TableSchema.createRow(
+				schemaFactory,
+				Cell,
+				// TODO: use overload that does not require props
+				schemaFactory.null,
+			) {}
+			const row = new Row({
+				cells: {},
+				// eslint-disable-next-line unicorn/no-null
+				props: null,
+			});
+			// eslint-disable-next-line unicorn/no-null
+			assert.equal(row.props, null);
 		});
 	});
 
