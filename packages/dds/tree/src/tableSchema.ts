@@ -82,8 +82,7 @@ export namespace TableSchema {
 		const columnFields = {
 			id: schemaFactory.identifier,
 			props: schemaFactory.required(propsSchema),
-			// TODO: check for existing issues around this
-		} as const; // satisfies Record<string, ImplicitFieldSchema>;
+		} as const;
 
 		/**
 		 * A column in a table.
@@ -204,7 +203,7 @@ export namespace TableSchema {
 			id: schemaFactory.identifier,
 			cells: schemaFactory.map("Row.cells", cellSchema),
 			props: schemaFactory.required(propsSchema),
-		} as const satisfies Record<string, ImplicitFieldSchema>;
+		} as const;
 
 		/**
 		 * The Row schema - this is a map of Cells where the key is the column id
