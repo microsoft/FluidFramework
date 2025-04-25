@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+// import diff from "microdiff";
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
@@ -179,10 +180,11 @@ describe("Presence", () => {
 			);
 
 			for (const { manager, expectedValue } of verifications) {
+				// console.log(diff(latest.getRemote(attendee).value() ?? {}, expectedValue));
 				switch (manager) {
 					case "latest": {
 						assert.deepEqual(
-							latest.getRemote(attendee).value,
+							latest.getRemote(attendee).value(),
 							expectedValue,
 							"Eventing does not reflect latest value",
 						);
@@ -190,12 +192,12 @@ describe("Presence", () => {
 					}
 					case "latestMap": {
 						assert.deepEqual(
-							latestMap.getRemote(attendee).get("key1")?.value,
+							latestMap.getRemote(attendee).get("key1")?.value(),
 							expectedValue.key1,
 							"Eventing does not reflect latest map value",
 						);
 						assert.deepEqual(
-							latestMap.getRemote(attendee).get("key2")?.value,
+							latestMap.getRemote(attendee).get("key2")?.value(),
 							expectedValue.key2,
 							"Eventing does not reflect latest map value",
 						);
