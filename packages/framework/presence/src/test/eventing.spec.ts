@@ -12,7 +12,11 @@ import { useFakeTimers, spy } from "sinon";
 import type { Attendee, WorkspaceAddress } from "../index.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
+import {
+	assertFinalExpectations,
+	prepareConnectedPresence,
+	attendeeId1,
+} from "./testUtils.js";
 
 import type {
 	LatestRaw,
@@ -31,13 +35,13 @@ const attendeeUpdate = {
 		"client1": {
 			"rev": 0,
 			"timestamp": 0,
-			"value": "attendeeId-1",
+			"value": attendeeId1,
 		},
 	},
 } as const;
 const latestUpdate = {
 	"latest": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 1,
 			"timestamp": 0,
 			"value": { x: 1, y: 1, z: 1 },
@@ -46,7 +50,7 @@ const latestUpdate = {
 } as const;
 const latestMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 1,
 			"items": {
 				"key1": {
@@ -65,7 +69,7 @@ const latestMapUpdate = {
 } as const;
 const latestUpdateRev2 = {
 	"latest": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 2,
 			"timestamp": 50,
 			"value": { x: 2, y: 2, z: 2 },
@@ -74,7 +78,7 @@ const latestUpdateRev2 = {
 } as const;
 const itemRemovedMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 2,
 			"items": {
 				"key2": {
@@ -87,7 +91,7 @@ const itemRemovedMapUpdate = {
 } as const;
 const itemRemovedAndItemUpdatedMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 2,
 			"items": {
 				"key2": {
@@ -105,7 +109,7 @@ const itemRemovedAndItemUpdatedMapUpdate = {
 };
 const itemUpdatedAndItemRemoveddMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 2,
 			"items": {
 				"key1": {
@@ -127,7 +131,7 @@ const latestMapItemRemovedAndLatestUpdate = {
 } as const;
 const notificationsUpdate = {
 	"testEvents": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 0,
 			"timestamp": 0,
 			"value": { "name": "newId", "args": [42] },

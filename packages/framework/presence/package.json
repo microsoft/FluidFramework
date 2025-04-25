@@ -22,10 +22,6 @@
 				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./internal/container-definitions/internal": {
-			"import": "./lib/container-definitions/index.js",
-			"require": "./dist/container-definitions/index.js"
 		}
 	},
 	"files": [

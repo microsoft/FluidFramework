@@ -27,6 +27,7 @@ import {
 	ISignalEnvelope,
 	type IErrorBase,
 	type ITelemetryBaseLogger,
+	type JsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
@@ -81,6 +82,7 @@ import {
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
+	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
 } from "../containerRuntime.js";
 import {
@@ -133,12 +135,14 @@ const changeConnectionState = (
 };
 
 interface ISignalEnvelopeWithClientIds {
-	envelope: ISignalEnvelope;
+	envelope: ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }>;
 	clientId: string;
 	targetClientId?: string;
 }
 
-function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
+function isSignalEnvelope(
+	obj: unknown,
+): obj is ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }> {
 	return (
 		typeof obj === "object" &&
 		obj !== null &&
@@ -1015,7 +1019,7 @@ describe("Runtime", () => {
 			function patchRuntime(
 				pendingStateManager: PendingStateManager,
 				_maxReconnects: number | undefined = undefined,
-			) {
+			): void {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- Modifying private properties
 				const runtime = containerRuntime as any;
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -1024,7 +1028,6 @@ describe("Runtime", () => {
 				runtime.channelCollection = getMockChannelCollection();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 				runtime.maxConsecutiveReconnects = _maxReconnects ?? runtime.maxConsecutiveReconnects;
-				return runtime as ContainerRuntime;
 			}
 
 			/**
@@ -1565,7 +1568,7 @@ describe("Runtime", () => {
 				mockLogger = new MockLogger();
 			});
 
-			const runtimeOptions: IContainerRuntimeOptionsInternal = {
+			const runtimeOptions = {
 				compressionOptions: {
 					minimumBatchSizeInBytes: 1024 * 1024,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -1573,9 +1576,9 @@ describe("Runtime", () => {
 				chunkSizeInBytes: 800 * 1024,
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 				enableGroupedBatching: true,
-			};
+			} as const satisfies IContainerRuntimeOptionsInternal;
 
-			const defaultRuntimeOptions: IContainerRuntimeOptionsInternal = {
+			const defaultRuntimeOptions = {
 				summaryOptions: {},
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
@@ -1590,8 +1593,9 @@ describe("Runtime", () => {
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
 				createBlobPayloadPending: false, // Redundant, but makes the JSON.stringify yield the same result as the logs
-			};
-			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
+				pathBasedAddressing: undefined,
+			} as const satisfies ContainerRuntimeOptionsInternal;
+			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions } as const;
 
 			it("Container load stats", async () => {
 				await ContainerRuntime.loadRuntime({
@@ -1959,7 +1963,10 @@ describe("Runtime", () => {
 					 * This always returns the same snapshot. Basically, when container runtime receives an ack for the
 					 * deleted snapshot and tries to fetch the latest snapshot, return the latest snapshot.
 					 */
-					async getSnapshotTree(version?: IVersion, scenarioName?: string) {
+					async getSnapshotTree(
+						version?: IVersion,
+						scenarioName?: string,
+					): Promise<ISnapshotTree> {
 						assert.strictEqual(
 							version,
 							latestVersion,
@@ -1974,7 +1981,7 @@ describe("Runtime", () => {
 						count: number,
 						scenarioName?: string,
 						fetchSource?: FetchSource,
-					) {
+					): Promise<IVersion[]> {
 						return [latestVersion];
 					}
 
@@ -1982,7 +1989,10 @@ describe("Runtime", () => {
 					 * Validates that this is not called by container runtime with the deleted snapshot id even
 					 * though it received an ack for it.
 					 */
-					async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext) {
+					async uploadSummaryWithContext(
+						summary: ISummaryTree,
+						context: ISummaryContext,
+					): Promise<string> {
 						assert.notStrictEqual(
 							context.ackHandle,
 							deletedSnapshotId,
@@ -1995,7 +2005,7 @@ describe("Runtime", () => {
 					 * Called by container runtime to read document attributes. Return the sequence number as 0 which
 					 * is lower than the deleted snapshot's reference sequence number.
 					 */
-					async readBlob(id: string) {
+					async readBlob(id: string): Promise<ArrayBufferLike> {
 						assert.strictEqual(id, "attributesBlob", "Not implemented");
 						const attributes: IDocumentAttributes = {
 							sequenceNumber: 0,
@@ -2496,7 +2506,7 @@ describe("Runtime", () => {
 				logger.clear();
 			});
 
-			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true) {
+			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true): void {
 				if (addMissingDatastore) {
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
 						blobs: { ".component": "id" },
@@ -2847,7 +2857,7 @@ describe("Runtime", () => {
 				logger.clear();
 			});
 
-			function sendSignals(count: number) {
+			function sendSignals(count: number): void {
 				for (let i = 0; i < count; i++) {
 					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i + 1}`);
 					assert(
@@ -2863,7 +2873,7 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSignals(signals: ISignalEnvelopeWithClientIds[], count: number) {
+			function processSignals(signals: ISignalEnvelopeWithClientIds[], count: number): void {
 				const signalsToProcess = signals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					if (signal.targetClientId === undefined) {
@@ -2901,7 +2911,7 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processWithNoTargetSupport(count: number) {
+			function processWithNoTargetSupport(count: number): void {
 				const signalsToProcess = submittedSignals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					for (const runtime of runtimes.values()) {
@@ -2920,15 +2930,15 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSubmittedSignals(count: number) {
+			function processSubmittedSignals(count: number): void {
 				processSignals(submittedSignals, count);
 			}
 
-			function processDroppedSignals(count: number) {
+			function processDroppedSignals(count: number): void {
 				processSignals(droppedSignals, count);
 			}
 
-			function dropSignals(count: number) {
+			function dropSignals(count: number): void {
 				const signalsToDrop = submittedSignals.splice(0, count);
 				droppedSignals.push(...signalsToDrop);
 			}
@@ -3391,7 +3401,7 @@ describe("Runtime", () => {
 				let remoteContainerRuntime: ContainerRuntime;
 				let remoteLogger: MockLogger;
 
-				function sendRemoteSignals(count: number) {
+				function sendRemoteSignals(count: number): void {
 					for (let i = 0; i < count; i++) {
 						remoteContainerRuntime.submitSignal(
 							"TestSignalType",

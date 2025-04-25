@@ -16,9 +16,16 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
 	assertIdenticalTypes,
+	connectionId2,
 	createInstanceOf,
+	createSpecificAttendeeId,
 	prepareConnectedPresence,
+	attendeeId2,
 } from "./testUtils.js";
+
+const attendeeId3 = createSpecificAttendeeId("attendeeId-3");
+// Really a ClientConnectionId, but typed as AttendeeId for TypeScript workaround.
+const connectionId3 = createSpecificAttendeeId("client3");
 
 describe("Presence", () => {
 	describe("NotificationsManager", () => {
@@ -112,23 +119,25 @@ describe("Presence", () => {
 			clock.tick(10);
 
 			runtime.signalsExpected.push([
-				"Pres:DatastoreUpdate",
 				{
-					"sendTimestamp": 1020,
-					"avgLatency": 10,
-					"data": {
-						"system:presence": {
-							"clientToSessionId": {
-								"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
+					type: "Pres:DatastoreUpdate",
+					content: {
+						"sendTimestamp": 1020,
+						"avgLatency": 10,
+						"data": {
+							"system:presence": {
+								"clientToSessionId": {
+									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+								},
 							},
-						},
-						"n:name:testNotificationWorkspace": {
-							"testEvents": {
-								"attendeeId-2": {
-									"rev": 0,
-									"timestamp": 0,
-									"value": { "name": "newId", "args": [42] },
-									"ignoreUnmonitored": true,
+							"n:name:testNotificationWorkspace": {
+								"testEvents": {
+									[attendeeId2]: {
+										"rev": 0,
+										"timestamp": 0,
+										"value": { "name": "newId", "args": [42] },
+										"ignoreUnmonitored": true,
+									},
 								},
 							},
 						},
@@ -163,30 +172,32 @@ describe("Presence", () => {
 			clock.tick(10);
 
 			runtime.signalsExpected.push([
-				"Pres:DatastoreUpdate",
 				{
-					"sendTimestamp": 1020,
-					"avgLatency": 10,
-					"data": {
-						"system:presence": {
-							"clientToSessionId": {
-								"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
+					type: "Pres:DatastoreUpdate",
+					content: {
+						"sendTimestamp": 1020,
+						"avgLatency": 10,
+						"data": {
+							"system:presence": {
+								"clientToSessionId": {
+									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+								},
 							},
-						},
-						"n:name:testNotificationWorkspace": {
-							"testEvents": {
-								"attendeeId-2": {
-									"rev": 0,
-									"timestamp": 0,
-									"value": { "name": "newId", "args": [42] },
-									"ignoreUnmonitored": true,
+							"n:name:testNotificationWorkspace": {
+								"testEvents": {
+									[attendeeId2]: {
+										"rev": 0,
+										"timestamp": 0,
+										"value": { "name": "newId", "args": [42] },
+										"ignoreUnmonitored": true,
+									},
 								},
 							},
 						},
 					},
+					// Targeting self for simplicity
+					targetClientId: "client2",
 				},
-				// Targeting self for simplicity
-				"client2",
 			]);
 
 			// Act & Verify
@@ -204,7 +215,7 @@ describe("Presence", () => {
 			};
 
 			function originalEventHandler(attendee: Attendee, id: number): void {
-				assert.equal(attendee.attendeeId, "attendeeId-3");
+				assert.equal(attendee.attendeeId, attendeeId3);
 				assert.equal(id, 42);
 				eventHandlerCalls.original.push({ attendee, id });
 			}
@@ -248,12 +259,12 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									"client3": { "rev": 0, "timestamp": 1000, "value": "attendeeId-3" },
+									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									"attendeeId-3": {
+									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
 										"value": { "name": "newId", "args": [42] },
@@ -309,7 +320,7 @@ describe("Presence", () => {
 
 			testEvents.events.on("unattendedNotification", (name, sender, ...content) => {
 				assert.equal(name, "oldId");
-				assert.equal(sender.attendeeId, "attendeeId-3");
+				assert.equal(sender.attendeeId, attendeeId3);
 				assert.deepEqual(content, [41]);
 				assert(!unattendedEventCalled);
 				unattendedEventCalled = true;
@@ -326,12 +337,12 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									"client3": { "rev": 0, "timestamp": 1000, "value": "attendeeId-3" },
+									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									"attendeeId-3": {
+									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
 										"value": { "name": "oldId", "args": [41] },
@@ -373,7 +384,7 @@ describe("Presence", () => {
 
 			testEvents.events.on("unattendedNotification", (name, sender, ...content) => {
 				assert.equal(name, "newId");
-				assert.equal(sender.attendeeId, "attendeeId-3");
+				assert.equal(sender.attendeeId, attendeeId3);
 				assert.deepEqual(content, [43]);
 				assert(!unattendedEventCalled);
 				unattendedEventCalled = true;
@@ -392,12 +403,12 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									"client3": { "rev": 0, "timestamp": 1000, "value": "attendeeId-3" },
+									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									"attendeeId-3": {
+									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
 										"value": { "name": "newId", "args": [43] },
@@ -419,7 +430,7 @@ describe("Presence", () => {
 			let originalEventHandlerCalled = false;
 
 			function originalEventHandler(attendee: Attendee, id: number): void {
-				assert.equal(attendee.attendeeId, "attendeeId-3");
+				assert.equal(attendee.attendeeId, attendeeId3);
 				assert.equal(id, 44);
 				assert.equal(originalEventHandlerCalled, false);
 				originalEventHandlerCalled = true;
@@ -464,12 +475,12 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									"client3": { "rev": 0, "timestamp": 1000, "value": "attendeeId-3" },
+									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									"attendeeId-3": {
+									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
 										"value": { "name": "newId", "args": [44] },
