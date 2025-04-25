@@ -21,7 +21,7 @@ import { ViewSchema } from "./view.js";
  *
  * @param schema - The field schema to encode.
  * @param writeVersion - The schema write version.
- * 
+ *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
  *
@@ -51,7 +51,7 @@ import { ViewSchema } from "./view.js";
  */
 export function extractPersistedSchema(
 	schema: ImplicitFieldSchema,
-	writeVersion: 1 | 2,
+	writeVersion: number,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema);
 	return encodeTreeSchema(stored, writeVersion);
@@ -92,7 +92,7 @@ export function comparePersistedSchema(
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
 	canInitialize: boolean,
-	writeVersion: 1 | 2,
+	writeVersion: number,
 ): SchemaCompatibilityStatus {
 	const schemaCodec = makeSchemaCodec(options, writeVersion);
 	const stored = schemaCodec.decode(persisted);

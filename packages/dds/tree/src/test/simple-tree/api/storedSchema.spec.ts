@@ -17,34 +17,34 @@ import { typeboxValidator } from "../../../external-utilities/index.js";
 describe("simple-tree storedSchema", () => {
 	describe("test-schema", () => {
 		useSnapshotDirectory("simple-tree-storedSchema");
-		for (const test of testSimpleTrees) {
-			it(test.name, () => {
-				const persisted = extractPersistedSchema(test.schema, 2);
-				takeJsonSnapshot(persisted);
-			});
-
-			// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
-			// but might as will give it a simple smoke test for the various test schema.
-			it(`comparePersistedSchema to self ${test.name}`, () => {
-				// TODO: Parameterize
-				const schemaWriteVersion = 2;
-				const persistedA = extractPersistedSchema(test.schema, schemaWriteVersion);
-				const status = comparePersistedSchema(
-					persistedA,
-					test.schema,
-					{
-						jsonValidator: typeboxValidator,
-					},
-					false,
-					schemaWriteVersion,
-				);
-				assert.deepEqual(status, {
-					isEquivalent: true,
-					canView: true,
-					canUpgrade: true,
-					canInitialize: false,
+		for (const schemaFormatVersion of [1, 2]) {
+			for (const test of testSimpleTrees) {
+				it(`${test.name} FormatV${schemaFormatVersion}`, () => {
+					const persisted = extractPersistedSchema(test.schema, schemaFormatVersion);
+					takeJsonSnapshot(persisted);
 				});
-			});
+
+				// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
+				// but might as will give it a simple smoke test for the various test schema.
+				it(`comparePersistedSchema to self ${test.name} FormatV${schemaFormatVersion}`, () => {
+					const persistedA = extractPersistedSchema(test.schema, schemaFormatVersion);
+					const status = comparePersistedSchema(
+						persistedA,
+						test.schema,
+						{
+							jsonValidator: typeboxValidator,
+						},
+						false,
+						schemaFormatVersion,
+					);
+					assert.deepEqual(status, {
+						isEquivalent: true,
+						canView: true,
+						canUpgrade: true,
+						canInitialize: false,
+					});
+				});
+			}
 		}
 	});
 });

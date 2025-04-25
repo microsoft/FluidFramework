@@ -86,7 +86,7 @@ export interface CommitMetadata {
 }
 
 // @alpha
-export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions, canInitialize: boolean, writeVersion: 1 | 2): SchemaCompatibilityStatus;
+export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions, canInitialize: boolean, writeVersion: number): SchemaCompatibilityStatus;
 
 // @alpha
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
@@ -130,7 +130,7 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha
-export function extractPersistedSchema(schema: ImplicitFieldSchema, writeVersion: 1 | 2): JsonCompatible;
+export function extractPersistedSchema(schema: ImplicitFieldSchema, writeVersion: number): JsonCompatible;
 
 // @alpha
 export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;

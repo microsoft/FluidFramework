@@ -15,20 +15,22 @@ import { JsonAsTree } from "../../../jsonDomainSchema.js";
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
 		useSnapshotDirectory("encodeTreeSchema");
-		it("empty", () => {
-			const encoded = encodeTreeSchema(
-				{
-					rootFieldSchema: storedEmptyFieldSchema,
-					nodeSchema: new Map(),
-				},
-				2,
-			);
-			takeJsonSnapshot(encoded);
-		});
+		for (const schemaFormatVersion of [1, 2]) {
+			it(`empty FormatV${schemaFormatVersion}`, () => {
+				const encoded = encodeTreeSchema(
+					{
+						rootFieldSchema: storedEmptyFieldSchema,
+						nodeSchema: new Map(),
+					},
+					schemaFormatVersion,
+				);
+				takeJsonSnapshot(encoded);
+			});
 
-		it("simple encoded schema", () => {
-			const encoded = encodeTreeSchema(toStoredSchema(JsonAsTree.Tree), 2);
-			takeJsonSnapshot(encoded);
-		});
+			it(`simple encoded schema FormatV${schemaFormatVersion}`, () => {
+				const encoded = encodeTreeSchema(toStoredSchema(JsonAsTree.Tree), schemaFormatVersion);
+				takeJsonSnapshot(encoded);
+			});
+		}
 	});
 });

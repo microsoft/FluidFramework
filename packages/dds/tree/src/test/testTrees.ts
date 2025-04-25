@@ -64,7 +64,6 @@ interface TestTree {
 	readonly schemaData: TreeStoredSchema;
 	readonly policy: FullSchemaPolicy;
 	readonly treeFactory: (idCompressor?: IIdCompressor) => JsonableTree[];
-	readonly formatVersion?: number;
 }
 
 function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
@@ -80,28 +79,6 @@ function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 		root: normalizedLazy as () => InsertableField<UnsafeUnknownSchema>,
 		ambiguous,
 	};
-}
-
-/**
- * Split a single test into a set of field schema format version-specific tests.
- * @param data - The test to split.
- * @returns The split tests.
- */
-function splitTestTreeTestsForSchemaFormats(data: TestTree): TestTree[] {
-	const tests: TestTree[] = [];
-
-	// TODO: Find a better way to expose the format range so that it doesn't need to be changed everywhere each time a new schema
-	// format is introduced.
-	for (let formatVersion = 1; formatVersion <= 2; formatVersion++) {
-		const { name, formatVersion: _, ...restOfData } = data;
-		tests.push({
-			name: `${name}_FormatV${formatVersion}`,
-			formatVersion,
-			...restOfData,
-		});
-	}
-
-	return tests;
 }
 
 function convertSimpleTreeTest(data: TestSimpleTree): TestTree {
@@ -286,7 +263,7 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 	),
 ];
 
-const testTreesWithoutVersion: readonly TestTree[] = [
+export const testTrees: readonly TestTree[] = [
 	...testSimpleTrees.map(convertSimpleTreeTest),
 	test(
 		"numericSequence",
@@ -354,10 +331,6 @@ const testTreesWithoutVersion: readonly TestTree[] = [
 		],
 	),
 ];
-
-export const testTrees: readonly TestTree[] = testTreesWithoutVersion.flatMap(
-	splitTestTreeTestsForSchemaFormats,
-);
 
 // TODO: integrate data sources for wide and deep trees from ops size testing and large data generators for cursor performance testing.
 // TODO: whiteboard like data with near term and eventual schema approaches

@@ -114,6 +114,6 @@ export class SchemaSummarizer implements Summarizable {
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
  */
-export function encodeTreeSchema(schema: TreeStoredSchema, version: 1 | 2): JsonCompatible {
-	return encodeRepo(schema, version);
+export function encodeTreeSchema(schema: TreeStoredSchema, version: number): JsonCompatible {
+	return encodeRepo(schema, version as 1 | 2);
 }
