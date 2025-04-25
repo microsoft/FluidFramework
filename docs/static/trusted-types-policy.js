@@ -3,20 +3,6 @@
  * Licensed under the MIT License.
  */
 
-interface Window {
-	trustedTypes?: {
-		createPolicy: (
-			name: string,
-			rules: {
-				createHTML: (input: string) => string;
-				createScript: (input: string) => string;
-				createScriptURL: (input: string) => string;
-			},
-		) => void;
-		getPolicy: (name: string) => unknown;
-	};
-}
-
 if (
 	typeof window !== "undefined" &&
 	window.trustedTypes &&
