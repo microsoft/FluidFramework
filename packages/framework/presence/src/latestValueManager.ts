@@ -128,6 +128,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
+		private readonly validator: StateSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -154,14 +155,27 @@ class LatestValueManagerImpl<T, Key extends string>
 
 	public *getRemotes(): IterableIterator<LatestClientData<T, ValueAccessor<T>>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
-			if (attendeeId !== allKnownStates.self) {
-				yield {
-					attendee: this.datastore.lookupClient(attendeeId),
-					value: asDeeplyReadonly(value.value),
-					metadata: { revision: value.rev, timestamp: value.timestamp },
-				};
-			}
+		for (const [attendeeId, clientState] of objectEntries(allKnownStates.states)) {
+			yield {
+				attendee: this.datastore.lookupClient(attendeeId),
+				value:
+					this.validator === undefined
+						? asDeeplyReadonly(clientState.value)
+						: () => {
+								if (this.validator === undefined) {
+									throw new Error(`No validator found`);
+								}
+								// let validData: JsonDeserialized<T> | undefined;
+								if (attendeeId !== allKnownStates.self) {
+									clientState.validData = this.validator(clientState.value);
+								}
+								return asDeeplyReadonly(clientState.validData);
+							},
+				metadata: {
+					revision: clientState.rev,
+					timestamp: clientState.timestamp,
+				},
+			};
 		}
 	}
 
@@ -178,8 +192,19 @@ class LatestValueManagerImpl<T, Key extends string>
 		if (clientState === undefined) {
 			throw new Error("No entry for clientId");
 		}
+
 		return {
-			value: asDeeplyReadonly(clientState.value),
+			value:
+				this.validator === undefined
+					? asDeeplyReadonly(clientState.value)
+					: () => {
+							if (this.validator === undefined) {
+								throw new Error(`No validator found`);
+							}
+							// let validData: JsonDeserialized<T> | undefined;
+							clientState.validData = this.validator(clientState.value);
+							return asDeeplyReadonly(clientState.validData);
+						},
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -266,6 +291,7 @@ export function latest<T extends object | null, Key extends string = string>(
 		rev: 0,
 		timestamp: Date.now(),
 		value: local === null ? local : shallowCloneObject(local),
+		validData: undefined,
 	};
 	const factory = (
 		key: Key,
@@ -279,7 +305,13 @@ export function latest<T extends object | null, Key extends string = string>(
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings),
+			new LatestValueManagerImpl(
+				key,
+				datastoreFromHandle(datastoreHandle),
+				value,
+				validator,
+				settings,
+			),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

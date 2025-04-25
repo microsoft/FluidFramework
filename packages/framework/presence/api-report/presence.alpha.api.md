@@ -109,10 +109,14 @@ export namespace InternalTypes {
     // @system (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
+        validData?: JsonDeserialized<TValue> | undefined;
+        // (undocumented)
         value?: JsonDeserialized<TValue>;
     }
     // @system (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
+        // (undocumented)
+        validData?: JsonDeserialized<TValue> | undefined;
         // (undocumented)
         value: JsonDeserialized<TValue>;
     }
@@ -374,7 +378,7 @@ export interface StateMap<K extends string | number, V> {
 
 // @alpha
 export type StateSchemaValidator<T> = (
-unvalidatedData: Readonly<unknown>, metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
+unvalidatedData: unknown, metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
 
 // @alpha
 export interface StateSchemaValidatorMetadata {

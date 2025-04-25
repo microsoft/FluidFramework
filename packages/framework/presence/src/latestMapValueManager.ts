@@ -236,6 +236,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 				string | number
 			>,
 		) => void,
+		private readonly validator?: StateSchemaValidator<T>,
 	) {
 		// All initial items are expected to be defined.
 		// TODO assert all defined and/or update type.
@@ -282,6 +283,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		) => void,
 		thisArg?: unknown,
 	): void {
+		// TODO: This is a data read, so we need to validate.
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
 				callbackfn(asDeeplyReadonly(item.value), key, this);
@@ -289,7 +291,13 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		}
 	}
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
-		return asDeeplyReadonly(this.value.items[key]?.value);
+		const data = this.value.items[key]?.value;
+		if (this.validator === undefined) {
+			return asDeeplyReadonly(data);
+		}
+		const maybeValid = this.validator(data, { key });
+		// TODO: Cast shouldn't be necessary.
+		return asDeeplyReadonly(maybeValid);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -297,7 +305,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value };
+			this.value.items[key] = { rev: 0, timestamp: 0, value, validData: undefined };
 		}
 		this.updateItem(key, value);
 		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
@@ -403,6 +411,7 @@ class LatestMapValueManagerImpl<
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
+		validator?: StateSchemaValidator<T>,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 
@@ -414,6 +423,7 @@ class LatestMapValueManagerImpl<
 					allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 				});
 			},
+			validator,
 		);
 	}
 
@@ -625,6 +635,7 @@ export function latestMap<
 				rev: 0,
 				timestamp,
 				value: initialValues[key],
+				validData: undefined,
 			};
 		}
 	}
@@ -649,6 +660,7 @@ export function latestMap<
 				datastoreFromHandle(datastoreHandle),
 				value,
 				settings,
+				validator,
 			),
 		),
 	});
