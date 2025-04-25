@@ -378,7 +378,7 @@ export interface StateMap<K extends string | number, V> {
 
 // @alpha
 export type StateSchemaValidator<T> = (
-unvalidatedData: Readonly<unknown>, metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
+unvalidatedData: unknown, metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
 
 // @alpha
 export interface StateSchemaValidatorMetadata {

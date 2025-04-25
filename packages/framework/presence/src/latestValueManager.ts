@@ -160,7 +160,7 @@ class LatestValueManagerImpl<T, Key extends string>
 				attendee: this.datastore.lookupClient(attendeeId),
 				value:
 					this.validator === undefined
-						? clientState.value
+						? asDeeplyReadonly(clientState.value)
 						: () => {
 								if (this.validator === undefined) {
 									throw new Error(`No validator found`);
@@ -169,7 +169,7 @@ class LatestValueManagerImpl<T, Key extends string>
 								if (attendeeId !== allKnownStates.self) {
 									clientState.validData = this.validator(clientState.value);
 								}
-								return clientState.validData;
+								return asDeeplyReadonly(clientState.validData);
 							},
 				metadata: {
 					revision: clientState.rev,
@@ -196,14 +196,14 @@ class LatestValueManagerImpl<T, Key extends string>
 		return {
 			value:
 				this.validator === undefined
-					? clientState.value
+					? asDeeplyReadonly(clientState.value)
 					: () => {
 							if (this.validator === undefined) {
 								throw new Error(`No validator found`);
 							}
 							// let validData: JsonDeserialized<T> | undefined;
 							clientState.validData = this.validator(clientState.value);
-							return clientState.validData;
+							return asDeeplyReadonly(clientState.validData);
 						},
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};

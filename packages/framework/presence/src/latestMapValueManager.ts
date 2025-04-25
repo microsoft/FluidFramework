@@ -236,7 +236,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 				string | number
 			>,
 		) => void,
-		private readonly validator: StateSchemaValidator<T> | undefined,
+		private readonly validator?: StateSchemaValidator<T>,
 	) {
 		// All initial items are expected to be defined.
 		// TODO assert all defined and/or update type.
@@ -293,11 +293,11 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
 		const data = this.value.items[key]?.value;
 		if (this.validator === undefined) {
-			return data;
+			return asDeeplyReadonly(data);
 		}
 		const maybeValid = this.validator(data, { key });
 		// TODO: Cast shouldn't be necessary.
-		return maybeValid as DeepReadonly<JsonDeserialized<T>> | undefined;
+		return asDeeplyReadonly(maybeValid);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -410,8 +410,8 @@ class LatestMapValueManagerImpl<
 			InternalTypes.MapValueState<T, Keys>
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
-		validator: StateSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
+		validator?: StateSchemaValidator<T>,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 
@@ -661,6 +661,7 @@ export function latestMap<
 				value,
 				validator,
 				settings,
+				validator,
 			),
 		),
 	});

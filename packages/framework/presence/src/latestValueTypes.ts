@@ -124,7 +124,7 @@ export type StateSchemaValidator<T> = (
 	/**
 	 * Unknown data that should be validated. **This data should not be mutated.**
 	 */
-	unvalidatedData: Readonly<unknown>,
+	unvalidatedData: unknown,
 	metadata?: StateSchemaValidatorMetadata,
 ) => JsonDeserialized<T> | undefined;
 
