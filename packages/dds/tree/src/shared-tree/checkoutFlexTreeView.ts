@@ -54,7 +54,7 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 	}
 
 	public [disposeSymbol](): void {
-		assert(!this.disposed, "Double disposed");
+		assert(!this.disposed, 0xb80 /* Double disposed */);
 		this.disposed = true;
 
 		for (const anchorNode of this.checkout.forest.anchors) {
@@ -70,7 +70,7 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
 	 */
 	public fork(): CheckoutFlexTreeView<ITreeCheckout & ITreeCheckoutFork> {
-		assert(!this.disposed, "disposed");
+		assert(!this.disposed, 0xb81 /* disposed */);
 		const branch = this.checkout.branch();
 		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
 	}

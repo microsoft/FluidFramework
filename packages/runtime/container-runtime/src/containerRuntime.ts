@@ -3331,7 +3331,10 @@ export class ContainerRuntime
 			discardChanges: exitStagingMode(() => {
 				// Pop all staged batches from the PSM and roll them back in LIFO order
 				this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
-					assert(runtimeOp !== undefined, "Staged batches expected to have runtimeOp defined");
+					assert(
+						runtimeOp !== undefined,
+						0xb82 /* Staged batches expected to have runtimeOp defined */,
+					);
 					this.rollback(runtimeOp, localOpMetadata);
 				});
 				if (this.attachState === AttachState.Attached) {
