@@ -1050,6 +1050,7 @@ describe("Runtime", () => {
 						},
 					],
 					1,
+					false /* staged */,
 				);
 
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
@@ -1588,6 +1589,7 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
+				createBlobPayloadPending: false, // Redundant, but makes the JSON.stringify yield the same result as the logs
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
@@ -2089,7 +2091,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2137,7 +2139,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2211,7 +2213,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -3652,6 +3654,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3689,6 +3692,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3726,6 +3730,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3763,6 +3768,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3800,6 +3806,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3827,6 +3834,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: "on",
 						enableGroupedBatching: false, // By turning off batching, we will also disable compression automatically
 						explicitSchemaControl: true,
+						createBlobPayloadPending: false,
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -3845,6 +3853,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3875,6 +3884,7 @@ describe("Runtime", () => {
 						enableGroupedBatching: undefined,
 						compressionOptions: undefined,
 						explicitSchemaControl: undefined,
+						createBlobPayloadPending: undefined,
 					},
 				},
 			])
@@ -3902,6 +3912,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
 						enableGroupedBatching: true,
 						explicitSchemaControl: false,
+						createBlobPayloadPending: false,
 					};
 
 					logger.assertMatchAny([
@@ -3938,6 +3949,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([

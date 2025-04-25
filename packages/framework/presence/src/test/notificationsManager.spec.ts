@@ -85,9 +85,9 @@ describe("Presence", () => {
 			);
 
 			// Verify
-			assert.notEqual(notificationsWorkspace.props.testEvents, undefined);
+			assert.notEqual(notificationsWorkspace.notifications.testEvents, undefined);
 			assertIdenticalTypes(
-				notificationsWorkspace.props.testEvents,
+				notificationsWorkspace.notifications.testEvents,
 				createInstanceOf<NotificationsManager<{ newId: (id: number) => void }>>(),
 			);
 		});
@@ -107,7 +107,7 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			clock.tick(10);
 
@@ -158,7 +158,7 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			clock.tick(10);
 
@@ -222,7 +222,7 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			testEvents.events.on("unattendedNotification", (name) => {
 				fail(`Unexpected unattendedNotification: ${name}`);
@@ -305,7 +305,7 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			testEvents.events.on("unattendedNotification", (name, sender, ...content) => {
 				assert.equal(name, "oldId");
@@ -369,7 +369,7 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			testEvents.events.on("unattendedNotification", (name, sender, ...content) => {
 				assert.equal(name, "newId");
@@ -438,7 +438,7 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			testEvents.events.on("unattendedNotification", (name) => {
 				fail(`Unexpected unattendedNotification: ${name}`);
@@ -503,7 +503,7 @@ describe("Presence", () => {
 				),
 			);
 
-			assert.strictEqual(notificationsWorkspace.props.testEvents.presence, presence);
+			assert.strictEqual(notificationsWorkspace.notifications.testEvents.presence, presence);
 			assert.strictEqual(notificationsWorkspace.presence, presence);
 		});
 	});

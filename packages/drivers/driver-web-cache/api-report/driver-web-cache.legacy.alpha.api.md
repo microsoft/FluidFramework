@@ -4,10 +4,10 @@
 
 ```ts
 
-// @alpha
+// @alpha @legacy
 export function deleteFluidCacheIndexDbInstance(deleteDBCallbacks?: DeleteDBCallbacks): Promise<void>;
 
-// @alpha
+// @alpha @legacy
 export class FluidCache implements IPersistedCache {
     constructor(config: FluidCacheConfig);
     // (undocumented)
@@ -18,7 +18,7 @@ export class FluidCache implements IPersistedCache {
     removeEntries(file: IFileEntry): Promise<void>;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface FluidCacheConfig {
     closeDbAfterMs?: number;
     logger?: ITelemetryBaseLogger;

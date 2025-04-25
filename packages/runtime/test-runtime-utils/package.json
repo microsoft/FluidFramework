@@ -137,7 +137,7 @@
 		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.32.0",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.5",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
@@ -153,7 +153,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_MockFluidDataStoreContext": {
+				"forwardCompat": false
+			},
+			"Class_MockFluidDataStoreRuntime": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

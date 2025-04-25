@@ -16,7 +16,7 @@ export abstract class ErasedType<out Name = unknown> {
 // @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
-// @alpha
+// @alpha @legacy
 export const FluidErrorTypes: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
@@ -25,7 +25,7 @@ export const FluidErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
 // @public
@@ -249,10 +249,10 @@ export interface IFluidHandle<out T = unknown> {
     readonly isAttached: boolean;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export const IFluidHandleContext: keyof IProvideFluidHandleContext;
 
-// @alpha
+// @alpha @legacy
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly absolutePath: string;
     attachGraph(): void;
@@ -266,7 +266,7 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
 export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
 }
 
-// @alpha
+// @alpha @legacy
 export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
     readonly absolutePath: string;
     attachGraph(): void;
@@ -282,18 +282,18 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     readonly handle: IFluidHandle;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha @deprecated @legacy (undocumented)
 export interface IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly [IFluidHandle]: IFluidHandleInternal;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IProvideFluidHandleContext {
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
@@ -357,7 +357,7 @@ export interface ITelemetryBaseProperties {
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.throttlingError;
     // (undocumented)

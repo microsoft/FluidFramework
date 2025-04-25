@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IFluidSerializer {
     decode(input: unknown): unknown;
     encode(value: unknown, bind: IFluidHandle): unknown;
@@ -12,12 +12,12 @@ export interface IFluidSerializer {
     stringify(value: unknown, bind: IFluidHandle): string;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
     (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -25,19 +25,19 @@ export interface ISharedObjectEvents extends IErrorEvent {
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ISharedObjectKind<TSharedObject> {
     create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
     getFactory(): IChannelFactory<TSharedObject>;
 }
 
-// @alpha
+// @alpha @legacy
 export function makeHandlesSerializable(value: unknown, serializer: IFluidSerializer, bind: IFluidHandle): unknown;
 
-// @alpha
+// @alpha @legacy
 export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown;
 
-// @alpha
+// @alpha @legacy
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
     getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
@@ -49,7 +49,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
 }
 
-// @alpha
+// @alpha @legacy
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     protected abstract applyStashedOp(content: unknown): void;

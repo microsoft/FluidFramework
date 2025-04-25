@@ -58,8 +58,8 @@ importers:
         specifier: ^5.5.1
         version: 5.5.1(eslint@8.55.0)(typescript@5.7.3)
       '@microsoft/api-extractor':
-        specifier: ^7.50.1
-        version: 7.50.1(@types/node@18.19.76)
+        specifier: ^7.52.5
+        version: 7.52.5(@types/node@18.19.76)
       '@types/chai':
         specifier: ^4.3.4
         version: 4.3.4
@@ -421,11 +421,11 @@ packages:
   '@microsoft/api-extractor-model@7.28.2':
     resolution: {integrity: sha512-vkojrM2fo3q4n4oPh4uUZdjJ2DxQ2+RnDQL/xhTWSRUNPF6P4QyrvY357HBxbnltKcYu+nNNolVqc6TIGQ73Ig==}
 
-  '@microsoft/api-extractor-model@7.30.3':
-    resolution: {integrity: sha512-yEAvq0F78MmStXdqz9TTT4PZ05Xu5R8nqgwI5xmUmQjWBQ9E6R2n8HB/iZMRciG4rf9iwI2mtuQwIzDXBvHn1w==}
+  '@microsoft/api-extractor-model@7.30.5':
+    resolution: {integrity: sha512-0ic4rcbcDZHz833RaTZWTGu+NpNgrxVNjVaor0ZDUymfDFzjA/Uuk8hYziIUIOEOSTfmIQqyzVwlzxZxPe7tOA==}
 
-  '@microsoft/api-extractor@7.50.1':
-    resolution: {integrity: sha512-L18vz0ARLNaBLKwWe0DdEf7eijDsb7ERZspgZK7PxclLoQrc+9hJZo8y4OVfCHxNVyxlwVywY2WdE/3pOFViLQ==}
+  '@microsoft/api-extractor@7.52.5':
+    resolution: {integrity: sha512-6WWgjjg6FkoDWpF/O3sjB05OkszpI5wtKJqd8fUIR/JJUv8IqNCGr1lJUZJnc1HegcT9gAvyf98KfH0wFncU0w==}
     hasBin: true
 
   '@microsoft/tsdoc-config@0.16.2':
@@ -517,8 +517,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@rushstack/node-core-library@5.11.0':
-    resolution: {integrity: sha512-I8+VzG9A0F3nH2rLpPd7hF8F7l5Xb7D+ldrWVZYegXM6CsKkvWc670RlgK3WX8/AseZfXA/vVrh0bpXe2Y2UDQ==}
+  '@rushstack/node-core-library@5.13.0':
+    resolution: {integrity: sha512-IGVhy+JgUacAdCGXKUrRhwHMTzqhWwZUI+qEPcdzsb80heOw0QPbhhoVsoiMF7Klp8eYsp7hzpScMXmOa3Uhfg==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
@@ -528,8 +528,8 @@ packages:
   '@rushstack/rig-package@0.5.3':
     resolution: {integrity: sha512-olzSSjYrvCNxUFZowevC3uz8gvKr3WTpHQ7BkpjtRpA3wK+T0ybep/SRUMfr195gBzJm5gaXw0ZMgjIyHqJUow==}
 
-  '@rushstack/terminal@0.15.0':
-    resolution: {integrity: sha512-vXQPRQ+vJJn4GVqxkwRe+UGgzNxdV8xuJZY2zem46Y0p3tlahucH9/hPmLGj2i9dQnUBFiRnoM9/KW7PYw8F4Q==}
+  '@rushstack/terminal@0.15.2':
+    resolution: {integrity: sha512-7Hmc0ysK5077R/IkLS9hYu0QuNafm+TbZbtYVzCMbeOdMjaRboLKrhryjwZSRJGJzu+TV1ON7qZHeqf58XfLpA==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
@@ -539,8 +539,8 @@ packages:
   '@rushstack/tree-pattern@0.3.1':
     resolution: {integrity: sha512-2yn4qTkXZTByQffL3ymS6viYuyZk3YnJT49bopGBlm9Thtyfa7iuFUV6tt+09YIRO1sjmSWILf4dPj6+Dr5YVA==}
 
-  '@rushstack/ts-command-line@4.23.5':
-    resolution: {integrity: sha512-jg70HfoK44KfSP3MTiL5rxsZH7X1ktX3cZs9Sl8eDu1/LxJSbPsh0MOFRC710lIuYYSgxWjI5AjbCBAl7u3RxA==}
+  '@rushstack/ts-command-line@5.0.0':
+    resolution: {integrity: sha512-SW6nqZVxH26Rxz25+lJQRlnXI/YCrNH7NfDEWPPm9i0rwkSE6Rgtmzw96cuZgQjacOh0sw77d6V4SvgarAfr8g==}
 
   '@technote-space/anchor-markdown-header@1.1.42':
     resolution: {integrity: sha512-iJ5qu1EO3kZDthq9zbMQ9ufB4jd0XwhHJ+4RNpTUEVTIZFitCV++IUfH1YCACGasct41pQRxGmWQNoaRZmn7EQ==}
@@ -2992,6 +2992,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@5.8.2:
+    resolution: {integrity: sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   unbox-primitive@1.0.2:
     resolution: {integrity: sha512-61pPlCD9h51VoreyJ0BReideM3MDKMKnh6+V9L08331ipq6Q8OFXZYiqP6n/tbHx4s5I9uRhcye6BrbkizkBDw==}
 
@@ -3579,29 +3584,29 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor-model@7.30.3(@types/node@18.19.76)':
+  '@microsoft/api-extractor-model@7.30.5(@types/node@18.19.76)':
     dependencies:
       '@microsoft/tsdoc': 0.15.1
       '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.11.0(@types/node@18.19.76)
+      '@rushstack/node-core-library': 5.13.0(@types/node@18.19.76)
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.50.1(@types/node@18.19.76)':
+  '@microsoft/api-extractor@7.52.5(@types/node@18.19.76)':
     dependencies:
-      '@microsoft/api-extractor-model': 7.30.3(@types/node@18.19.76)
+      '@microsoft/api-extractor-model': 7.30.5(@types/node@18.19.76)
       '@microsoft/tsdoc': 0.15.1
       '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.11.0(@types/node@18.19.76)
+      '@rushstack/node-core-library': 5.13.0(@types/node@18.19.76)
       '@rushstack/rig-package': 0.5.3
-      '@rushstack/terminal': 0.15.0(@types/node@18.19.76)
-      '@rushstack/ts-command-line': 4.23.5(@types/node@18.19.76)
+      '@rushstack/terminal': 0.15.2(@types/node@18.19.76)
+      '@rushstack/ts-command-line': 5.0.0(@types/node@18.19.76)
       lodash: 4.17.21
       minimatch: 3.0.8
       resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.7.3
+      typescript: 5.8.2
     transitivePeerDependencies:
       - '@types/node'
 
@@ -3763,7 +3768,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 18.19.76
 
-  '@rushstack/node-core-library@5.11.0(@types/node@18.19.76)':
+  '@rushstack/node-core-library@5.13.0(@types/node@18.19.76)':
     dependencies:
       ajv: 8.13.0
       ajv-draft-04: 1.0.0(ajv@8.13.0)
@@ -3781,18 +3786,18 @@ snapshots:
       resolve: 1.22.8
       strip-json-comments: 3.1.1
 
-  '@rushstack/terminal@0.15.0(@types/node@18.19.76)':
+  '@rushstack/terminal@0.15.2(@types/node@18.19.76)':
     dependencies:
-      '@rushstack/node-core-library': 5.11.0(@types/node@18.19.76)
+      '@rushstack/node-core-library': 5.13.0(@types/node@18.19.76)
       supports-color: 8.1.1
     optionalDependencies:
       '@types/node': 18.19.76
 
   '@rushstack/tree-pattern@0.3.1': {}
 
-  '@rushstack/ts-command-line@4.23.5(@types/node@18.19.76)':
+  '@rushstack/ts-command-line@5.0.0(@types/node@18.19.76)':
     dependencies:
-      '@rushstack/terminal': 0.15.0(@types/node@18.19.76)
+      '@rushstack/terminal': 0.15.2(@types/node@18.19.76)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.1
@@ -6653,6 +6658,8 @@ snapshots:
   typescript@5.4.5: {}
 
   typescript@5.7.3: {}
+
+  typescript@5.8.2: {}
 
   unbox-primitive@1.0.2:
     dependencies:
