@@ -25,10 +25,10 @@ describe("TableFactory unit tests", () => {
 			value: schemaFactory.string,
 		}) {}
 
-		class ColumnFields extends schemaFactory.object("table-column-fields", {
+		class ColumnProps extends schemaFactory.object("table-column-props", {
 			label: schemaFactory.optional(schemaFactory.string),
 		}) {}
-		class Column extends TableSchema.createColumn(schemaFactory, ColumnFields) {}
+		class Column extends TableSchema.createColumn(schemaFactory, ColumnProps) {}
 
 		class Row extends TableSchema.createRow(schemaFactory, Cell) {}
 
@@ -76,11 +76,11 @@ describe("TableFactory unit tests", () => {
 					columns: [
 						new Column({
 							id: "column-0",
-							fields: {
+							props: {
 								label: "Column 0",
 							},
 						}),
-						new Column({ id: "column-1", fields: { label: "Column 1" } }),
+						new Column({ id: "column-1", props: { label: "Column 1" } }),
 					],
 					rows: [
 						{ id: "row-0", cells: {} },
@@ -98,11 +98,11 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
-						fields: { label: "Column 0" },
+						props: { label: "Column 0" },
 					},
 					{
 						id: "column-1",
-						fields: { label: "Column 1" },
+						props: { label: "Column 1" },
 					},
 				],
 				rows: [
@@ -130,14 +130,14 @@ describe("TableFactory unit tests", () => {
 
 			treeView.root.insertColumn({
 				index: 0,
-				column: { id: "column-0", fields: {} },
+				column: { id: "column-0", props: {} },
 			});
 
 			assertEqualTrees(treeView.root, {
 				columns: [
 					{
 						id: "column-0",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [],
@@ -149,29 +149,29 @@ describe("TableFactory unit tests", () => {
 			treeView.initialize({
 				rows: [],
 				columns: [
-					{ id: "column-a", fields: {} },
-					{ id: "column-b", fields: {} },
+					{ id: "column-a", props: {} },
+					{ id: "column-b", props: {} },
 				],
 			});
 
 			treeView.root.insertColumn({
 				index: 1,
-				column: { id: "column-c", fields: {} },
+				column: { id: "column-c", props: {} },
 			});
 
 			assertEqualTrees(treeView.root, {
 				columns: [
 					{
 						id: "column-a",
-						fields: {},
+						props: {},
 					},
 					{
 						id: "column-c",
-						fields: {},
+						props: {},
 					},
 					{
 						id: "column-b",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [],
@@ -183,29 +183,29 @@ describe("TableFactory unit tests", () => {
 			treeView.initialize({
 				rows: [],
 				columns: [
-					{ id: "column-a", fields: {} },
-					{ id: "column-b", fields: {} },
+					{ id: "column-a", props: {} },
+					{ id: "column-b", props: {} },
 				],
 			});
 
 			// By not specifying an index, the column should be appended to the end of the list.
 			treeView.root.insertColumn({
-				column: { id: "column-c", fields: {} },
+				column: { id: "column-c", props: {} },
 			});
 
 			assertEqualTrees(treeView.root, {
 				columns: [
 					{
 						id: "column-a",
-						fields: {},
+						props: {},
 					},
 					{
 						id: "column-b",
-						fields: {},
+						props: {},
 					},
 					{
 						id: "column-c",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [],
@@ -219,15 +219,15 @@ describe("TableFactory unit tests", () => {
 			treeView.initialize({
 				rows: [],
 				columns: [
-					{ id: "column-a", fields: {} },
-					{ id: "column-b", fields: {} },
+					{ id: "column-a", props: {} },
+					{ id: "column-b", props: {} },
 				],
 			});
 
 			assert.throws(
 				() =>
 					treeView.root.insertColumn({
-						column: { id: "column-b", fields: {} },
+						column: { id: "column-b", props: {} },
 					}),
 				validateUsageError(/Placeholder usage error/),
 			);
@@ -417,7 +417,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [
@@ -441,7 +441,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [
@@ -465,7 +465,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [
@@ -497,7 +497,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
-						fields: { label: "Column 0" },
+						props: { label: "Column 0" },
 					},
 				],
 				rows: [
@@ -530,7 +530,7 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => treeView.root.removeColumn(new Column({ id: "unhydrated-column", fields: {} })),
+				() => treeView.root.removeColumn(new Column({ id: "unhydrated-column", props: {} })),
 				validateUsageError(/Placeholder usage error/),
 			);
 		});
@@ -650,7 +650,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [
@@ -673,7 +673,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [
@@ -691,7 +691,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [
@@ -710,7 +710,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [
@@ -730,7 +730,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
-						fields: {},
+						props: {},
 					},
 				],
 				rows: [
@@ -755,21 +755,21 @@ describe("TableFactory unit tests", () => {
 	it("can read column fields", () => {
 		const { treeView, Column } = createTableTree();
 
-		const column = new Column({ id: "column-0", fields: { label: "Column 0" } });
+		const column = new Column({ id: "column-0", props: { label: "Column 0" } });
 
 		treeView.initialize({
 			columns: [column],
 			rows: [],
 		});
 
-		assert.equal(column.fields?.label, "Column 0");
+		assert.equal(column.props?.label, "Column 0");
 	});
 
 	it("gets proper table elements with getter methods", () => {
 		const { treeView, Column, Row, Cell } = createTableTree();
 
 		const cell0 = new Cell({ value: "Hello World!" });
-		const column0 = new Column({ id: "column-0", fields: {} });
+		const column0 = new Column({ id: "column-0", props: {} });
 		const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 } });
 
 		treeView.initialize({

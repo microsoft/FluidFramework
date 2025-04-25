@@ -48,7 +48,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.createColumn}.
 	 * @sealed @internal
 	 */
-	export interface IColumn<TFieldsSchema extends ImplicitAllowedTypes> {
+	export interface IColumn<TPropsSchema extends ImplicitAllowedTypes> {
 		/**
 		 * The unique identifier of the column.
 		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
@@ -56,21 +56,26 @@ export namespace TableSchema {
 		readonly id: string;
 
 		/**
-		 * User-provided column fields.
+		 * User-provided column properties.
 		 */
-		get fields(): TreeNodeFromImplicitAllowedTypes<TFieldsSchema>;
-		set fields(value: InsertableTreeNodeFromImplicitAllowedTypes<TFieldsSchema>);
+		get props(): TreeNodeFromImplicitAllowedTypes<TPropsSchema>;
+		set props(value: InsertableTreeNodeFromImplicitAllowedTypes<TPropsSchema>);
 	}
 
 	/**
 	 * Factory for creating new table column schema.
+	 * @privateRemarks
+	 * TODO:
+	 * - Add overloads to make propsSchema optional.
+	 * - Take field schema rather than node schema for `propsSchema`, in particular to allow making
+	 * the additional properties optional.
 	 * @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumn<
 		const TInputScope extends string | undefined,
-		const TFieldsSchema extends ImplicitAllowedTypes,
-	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, columnFieldsSchema: TFieldsSchema) {
+		const TPropsSchema extends ImplicitAllowedTypes,
+	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, propsSchema: TPropsSchema) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
@@ -79,27 +84,22 @@ export namespace TableSchema {
 		 * @remarks Extracted for re-use in returned type signature defined later in this function.
 		 * The implicit typing is intentional.
 		 */
-		const columnSchemaFields = {
+		const fields = {
 			id: schemaFactory.identifier,
-			fields: schemaFactory.required(columnFieldsSchema),
+			props: schemaFactory.required(propsSchema),
 			// TODO: check for existing issues around this
 		} as const; // satisfies Record<string, ImplicitFieldSchema>;
 
 		/**
 		 * A column in a table.
 		 */
-		class Column extends schemaFactory.object("Column", columnSchemaFields) {}
+		class Column extends schemaFactory.object("Column", fields) {}
 
 		type ColumnValueType = TreeNode &
-			IColumn<TFieldsSchema> &
+			IColumn<TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Column">>;
 
-		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnSchemaFields>;
-		// // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-		// type ColumnInsertableType = {
-		// 	readonly id?: string | undefined;
-		// 	readonly fields: InsertableTreeNodeFromImplicitAllowedTypes<TFieldsSchema>;
-		// };
+		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof fields>;
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
@@ -112,7 +112,7 @@ export namespace TableSchema {
 			/* TNode */ ColumnValueType,
 			/* TInsertable */ object & ColumnInsertableType,
 			/* ImplicitlyConstructable */ true,
-			/* Info */ typeof columnSchemaFields
+			/* Info */ typeof fields
 		> = Column;
 
 		return ColumnSchemaType;
@@ -124,8 +124,8 @@ export namespace TableSchema {
 	 */
 	export type ColumnSchemaBase<
 		TScope extends string | undefined,
-		TFields extends ImplicitAllowedTypes,
-	> = ReturnType<typeof createColumn<TScope, TFields>>;
+		TPropsSchema extends ImplicitAllowedTypes,
+	> = ReturnType<typeof createColumn<TScope, TPropsSchema>>;
 
 	// #endregion
 

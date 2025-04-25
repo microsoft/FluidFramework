@@ -40,10 +40,10 @@ describe("import tests", () => {
 			) {}
 			const column = new Column({
 				// eslint-disable-next-line unicorn/no-null
-				fields: null,
+				props: null,
 			});
 			// eslint-disable-next-line unicorn/no-null
-			assert.equal(column.fields, null);
+			assert.equal(column.props, null);
 		});
 	});
 
