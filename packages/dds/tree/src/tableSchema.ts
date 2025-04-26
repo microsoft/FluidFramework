@@ -7,6 +7,11 @@ import { oob } from "@fluidframework/core-utils/internal";
 
 import { Tree } from "./shared-tree/index.js";
 import {
+	/* eslint-disable @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports */
+	type FieldHasDefault,
+	type FieldKind,
+	type FieldSchema,
+	type LeafSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableObjectFromSchemaRecord,
@@ -20,6 +25,9 @@ import {
 	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
 	type WithType,
+	type TreeFieldFromImplicitField,
+	type InsertableTreeFieldFromImplicitField,
+	/* eslint-enable @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports */
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
@@ -43,7 +51,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.createColumn}.
 	 * @sealed @internal
 	 */
-	export interface IColumn<TPropsSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
+	export interface IColumn<TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 		/**
 		 * The unique identifier of the column.
 		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
@@ -53,8 +61,8 @@ export namespace TableSchema {
 		/**
 		 * User-provided column properties.
 		 */
-		get props(): TreeNodeFromImplicitAllowedTypes<TPropsSchema>;
-		set props(value: InsertableTreeNodeFromImplicitAllowedTypes<TPropsSchema>);
+		get props(): TreeFieldFromImplicitField<TPropsSchema> | undefined;
+		set props(value: InsertableTreeFieldFromImplicitField<TPropsSchema>);
 	}
 
 	/**
@@ -69,10 +77,15 @@ export namespace TableSchema {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumn<
 		const TInputScope extends string | undefined,
-		const TPropsSchema extends ImplicitAllowedTypes,
+		const TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, propsSchema: TPropsSchema) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
+
+		// KLUDGE: extracted for use in inline type definitions below.
+		const columnFieldsPropsPartKludge = {
+			props: propsSchema,
+		} as const;
 
 		/**
 		 * {@link Column} fields.
@@ -83,8 +96,8 @@ export namespace TableSchema {
 		 * Likely related to the following issue: https://github.com/microsoft/TypeScript/issues/52394
 		 */
 		const columnFields = {
+			...columnFieldsPropsPartKludge,
 			id: schemaFactory.identifier,
-			props: schemaFactory.required(propsSchema),
 		} as const;
 
 		/**
@@ -96,21 +109,34 @@ export namespace TableSchema {
 			IColumn<TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Column">>;
 
-		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
+		// type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
+
+		// KLUDGE: inline typing to avoid generated .d.ts file issues.
+		type ColumnInsertableType = {
+			readonly id?: string | undefined;
+			readonly props?: InsertableTreeFieldFromImplicitField<TPropsSchema> | undefined;
+		} & {
+			// `props` does not have a known default; make it required.
+			readonly [Property in keyof typeof columnFieldsPropsPartKludge as FieldHasDefault<
+				(typeof columnFieldsPropsPartKludge)[Property & string]
+			> extends false
+				? Property
+				: never]: InsertableTreeFieldFromImplicitField<(typeof columnFieldsPropsPartKludge)[Property & string]>;
+		};
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
 		// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
 		// This is avoided by doing this type conversion.
-		// The conversion is done via assignment instead of `as` to get stronger type safety.
-		const ColumnSchemaType: TreeNodeSchemaClass<
+		// TODO: The conversion is done via assignment instead of `as` to get stronger type safety.
+		const ColumnSchemaType = Column as TreeNodeSchemaClass<
 			/* Name */ ScopedSchemaName<Scope, "Column">,
 			/* Kind */ NodeKind.Object,
 			/* TNode */ ColumnValueType,
 			/* TInsertable */ object & ColumnInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof columnFields
-		> = Column;
+		>;
 
 		return ColumnSchemaType;
 	}
@@ -121,7 +147,7 @@ export namespace TableSchema {
 	 */
 	export type ColumnSchemaBase<
 		TScope extends string | undefined,
-		TPropsSchema extends ImplicitAllowedTypes,
+		TPropsSchema extends ImplicitFieldSchema,
 	> = ReturnType<typeof createColumn<TScope, TPropsSchema>>;
 
 	// #endregion
@@ -470,7 +496,7 @@ export namespace TableSchema {
 	export function createTable<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitAllowedTypes>,
+		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
@@ -483,7 +509,7 @@ export namespace TableSchema {
 	export function createTable<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitAllowedTypes>,
+		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
 		const TRow extends RowSchemaBase<TInputScope, TCell, ImplicitAllowedTypes>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
@@ -495,7 +521,7 @@ export namespace TableSchema {
 	export function createTable<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitAllowedTypes>,
+		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
 		const TRow extends RowSchemaBase<TInputScope, TCell, ImplicitAllowedTypes>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
@@ -503,7 +529,9 @@ export namespace TableSchema {
 		columnSchema?: TColumn,
 		rowSchema?: TRow,
 	): TreeNodeSchema {
-		const column = columnSchema ?? createColumn(inputSchemaFactory, inputSchemaFactory.null);
+		const column =
+			columnSchema ??
+			createColumn(inputSchemaFactory, inputSchemaFactory.optional(inputSchemaFactory.null));
 		return createTableInternal(
 			inputSchemaFactory,
 			_cellSchema,
@@ -523,8 +551,8 @@ export namespace TableSchema {
 		const TCell extends ImplicitAllowedTypes,
 		const TColumn extends ColumnSchemaBase<
 			TInputScope,
-			ImplicitAllowedTypes
-		> = ColumnSchemaBase<TInputScope, ImplicitAllowedTypes>,
+			ImplicitFieldSchema
+		> = ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
 		const TRow extends RowSchemaBase<TInputScope, TCell, ImplicitAllowedTypes> = RowSchemaBase<
 			TInputScope,
 			TCell,
@@ -721,9 +749,9 @@ export namespace TableSchema {
 	export type TableSchemaBase<
 		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
-		TColumn extends ColumnSchemaBase<TScope, ImplicitAllowedTypes> = ColumnSchemaBase<
+		TColumn extends ColumnSchemaBase<TScope, ImplicitFieldSchema> = ColumnSchemaBase<
 			TScope,
-			ImplicitAllowedTypes
+			ImplicitFieldSchema
 		>,
 		TRow extends RowSchemaBase<TScope, TCell, ImplicitAllowedTypes> = RowSchemaBase<
 			TScope,
