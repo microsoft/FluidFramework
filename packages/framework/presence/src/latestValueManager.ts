@@ -199,7 +199,21 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 		return {
-			value: asDeeplyReadonly(clientState.value),
+			value:
+				this.validator === undefined
+					? asDeeplyReadonly(clientState.value)
+					: () => {
+							if (clientState.validated === true) {
+								// Data was previously validated, so return the validated value, which may be undefined.
+								return asDeeplyReadonly(clientState.validatedValue);
+							}
+
+							const validData = this.validator?.(clientState.value);
+							clientState.validated = true;
+							// FIXME: Cast shouldn't be needed
+							clientState.validatedValue = validData as JsonDeserialized<T>;
+							return asDeeplyReadonly(clientState.validatedValue);
+						},
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
