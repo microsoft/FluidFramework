@@ -112,12 +112,7 @@ export function makeDiceValuesView(
 ): void {
 	const children = makeDiceHeaderElement();
 	for (const clientValue of lastRoll.getRemotes()) {
-		children.push(
-			...makeDiceValueElement(
-				clientValue.attendee.attendeeId,
-				clientValue.value,
-			),
-		);
+		children.push(...makeDiceValueElement(clientValue.attendee.attendeeId, clientValue.value));
 	}
 	target.replaceChildren(...children);
 }
