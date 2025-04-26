@@ -148,7 +148,7 @@ export namespace InternalUtilityTypes {
 export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestEvents<T, TRemoteAccessor>>;
-    getRemote(attendee: Attendee): LatestData<T>;
+    getRemote(attendee: Attendee): LatestData<T, TRemoteAccessor>;
     getRemotes(): IterableIterator<LatestClientData<T, TRemoteAccessor>>;
     getStateAttendees(): Attendee[];
     get local(): DeepReadonly<JsonDeserialized<T>>;
@@ -172,19 +172,17 @@ export interface LatestArguments<T extends object | null> {
 }
 
 // @alpha @sealed
-export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> extends LatestData<T> {
+export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> extends LatestData<T, TValueAccessor> {
     // (undocumented)
     attendee: Attendee;
 }
 
 // @alpha @sealed
-export interface LatestData<T> {
+export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     // (undocumented)
     metadata: LatestMetadata;
     // (undocumented)
-    rawValue: DeepReadonly<JsonDeserialized<T>>;
-    // (undocumented)
-    value: () => DeepReadonly<JsonDeserialized<T>> | undefined;
+    value: TValueAccessor extends ProxiedValueAccessor<T> ? () => DeepReadonly<JsonDeserialized<T>> | undefined : TValueAccessor extends RawValueAccessor<T> ? DeepReadonly<JsonDeserialized<T>> : never;
 }
 
 // @alpha @sealed (undocumented)
@@ -201,7 +199,7 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
 export interface LatestMap<T, Keys extends string | number = string | number, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapEvents<T, Keys, TRemoteAccessor>>;
-    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
+    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, TRemoteAccessor>>;
     getRemotes(): IterableIterator<LatestMapClientData<T, Keys, TRemoteAccessor>>;
     getStateAttendees(): Attendee[];
     readonly local: StateMap<Keys, T>;
@@ -230,7 +228,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 export interface LatestMapClientData<T, Keys extends string | number, TValueAccessor extends ValueAccessor<T>, SpecificAttendeeId extends AttendeeId = AttendeeId> {
     attendee: Attendee<SpecificAttendeeId>;
     // (undocumented)
-    items: ReadonlyMap<Keys, LatestData<T>>;
+    items: ReadonlyMap<Keys, LatestData<T, TValueAccessor>>;
 }
 
 // @alpha @sealed (undocumented)

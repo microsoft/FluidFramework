@@ -28,8 +28,6 @@ export interface LatestMetadata {
 	 * @remarks Currently this is a placeholder for future implementation.
 	 */
 	timestamp: number;
-
-	// validated: boolean;
 }
 
 /**
@@ -49,29 +47,12 @@ export type RawValueAccessor<_T> = "raw";
 export type ProxiedValueAccessor<_T> = "proxied";
 
 /**
- * NOTE: copied from SharedTree for convenience.
- *
- * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
- * @privateRemarks
- * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
- * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
- * @system @public
- */
-export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
-	k: infer U,
-) => unknown
-	? U
-	: never;
-
-/**
  * Union of possible accessor types for a value.
  *
  * @sealed
  * @alpha
  */
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
-
-// export type ValueAccessorIntersection<T> = UnionToIntersection<ValueAccessor<T>>;
 
 /**
  * @alpha
@@ -91,15 +72,13 @@ export type Accessor<T extends ValueAccessor<T>> = T extends ProxiedValueAccesso
  * @sealed
  * @alpha
  */
-export interface LatestData<T> {
-	value: () => DeepReadonly<JsonDeserialized<T>> | undefined;
-	// value: TValueAccessor extends ProxiedValueAccessor<T>
-	// 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
-	// 	: TValueAccessor extends RawValueAccessor<T>
-	// 		? DeepReadonly<JsonDeserialized<T>>
-	// 		: never;
+export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
+	value: TValueAccessor extends ProxiedValueAccessor<T>
+		? () => DeepReadonly<JsonDeserialized<T>> | undefined
+		: TValueAccessor extends RawValueAccessor<T>
+			? DeepReadonly<JsonDeserialized<T>>
+			: never;
 	// value: Accessor<TValueAccessor>;
-	rawValue: DeepReadonly<JsonDeserialized<T>>;
 	metadata: LatestMetadata;
 }
 
@@ -110,7 +89,7 @@ export interface LatestData<T> {
  * @alpha
  */
 export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>>
-	extends LatestData<T> {
+	extends LatestData<T, TValueAccessor> {
 	attendee: Attendee;
 }
 

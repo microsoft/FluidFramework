@@ -159,12 +159,12 @@ export function checkCompiles(): void {
 	function logClientValue<T>({
 		attendee,
 		key,
-		rawValue,
+		value,
 	}: Pick<
 		LatestMapItemUpdatedClientData<T, string | number, RawValueAccessor<T>>,
-		"attendee" | "key" | "rawValue"
+		"attendee" | "key" | "value"
 	>): void {
-		console.log(attendee.attendeeId, key, rawValue);
+		console.log(attendee.attendeeId, key, value);
 	}
 
 	localPointers.set("pen", { x: 1, y: 2 });
@@ -174,24 +174,24 @@ export function checkCompiles(): void {
 
 	for (const attendee of pointers.getStateAttendees()) {
 		const items = pointers.getRemote(attendee);
-		for (const [key, { rawValue }] of items.entries()) {
-			logClientValue({ attendee, key, rawValue });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
 		}
 	}
 
 	for (const { attendee, items } of pointers.getRemotes()) {
-		for (const [key, { rawValue }] of items.entries()) {
-			logClientValue({ attendee, key, rawValue });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
 		}
 	}
 
 	pointers.events.on("remoteItemRemoved", ({ attendee, key }) =>
-		logClientValue<string>({ attendee, key, rawValue: "<removed>" }),
+		logClientValue<string>({ attendee, key, value: "<removed>" }),
 	);
 
 	pointers.events.on("remoteUpdated", ({ attendee, items }) => {
-		for (const [key, { rawValue }] of items.entries()) {
-			logClientValue({ attendee, key, rawValue });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
 		}
 	});
 

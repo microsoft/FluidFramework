@@ -17,14 +17,13 @@ import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries } from "./internalUtils.js";
-import {
-	createValidatedGetter,
-	type LatestClientData,
-	type LatestData,
-	type ProxiedValueAccessor,
-	type RawValueAccessor,
-	type StateSchemaValidator,
-	type ValueAccessor,
+import type {
+	LatestClientData,
+	LatestData,
+	ProxiedValueAccessor,
+	RawValueAccessor,
+	StateSchemaValidator,
+	ValueAccessor,
 } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -113,7 +112,7 @@ export interface Latest<
 	/**
 	 * Access to a specific attendee's value.
 	 */
-	getRemote(attendee: Attendee): LatestData<T>;
+	getRemote(attendee: Attendee): LatestData<T, TRemoteAccessor>;
 }
 
 class LatestValueManagerImpl<T, Key extends string>
@@ -159,28 +158,25 @@ class LatestValueManagerImpl<T, Key extends string>
 		for (const [attendeeId, clientState] of objectEntries(allKnownStates.states)) {
 			yield {
 				attendee: this.datastore.lookupClient(attendeeId),
-				value: () => {
-					if (this.validator === undefined) {
-						// No validator, so return the raw value
-						return asDeeplyReadonly(clientState.value);
-					}
+				value:
+					this.validator === undefined
+						? asDeeplyReadonly(clientState.value)
+						: () => {
+								if (clientState.validated === true) {
+									// Data was previously validated, so return the validated value, which may be undefined.
+									return asDeeplyReadonly(clientState.validatedValue);
+								}
 
-					if (clientState.validated === true) {
-						// Data was previously validated, so return the validated value, which may be undefined.
-						return asDeeplyReadonly(clientState.validatedValue);
-					}
-
-					// let validData: JsonDeserialized<T> | undefined;
-					// Skip the current attendee since we want to enumerate only other remote attendees
-					if (attendeeId !== allKnownStates.self) {
-						const validData = this.validator(clientState.value);
-						clientState.validated = true;
-						// FIXME: Cast shouldn't be needed
-						clientState.validatedValue = validData as JsonDeserialized<T>;
-						return asDeeplyReadonly(clientState.validatedValue);
-					}
-				},
-				rawValue: asDeeplyReadonly(clientState.value),
+								// let validData: JsonDeserialized<T> | undefined;
+								// Skip the current attendee since we want to enumerate only other remote attendees
+								if (attendeeId !== allKnownStates.self) {
+									const validData = this.validator?.(clientState.value);
+									clientState.validated = true;
+									// FIXME: Cast shouldn't be needed
+									clientState.validatedValue = validData as JsonDeserialized<T>;
+									return asDeeplyReadonly(clientState.validatedValue);
+								}
+							},
 				metadata: {
 					revision: clientState.rev,
 					timestamp: clientState.timestamp,
@@ -196,16 +192,14 @@ class LatestValueManagerImpl<T, Key extends string>
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public getRemote(attendee: Attendee): LatestData<T> {
+	public getRemote(attendee: Attendee): LatestData<T, ValueAccessor<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
 			throw new Error("No entry for clientId");
 		}
-
 		return {
-			rawValue: asDeeplyReadonly(clientState.value),
-			value: createValidatedGetter(clientState, this.validator),
+			value: asDeeplyReadonly(clientState.value),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -226,8 +220,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					rawValue: asDeeplyReadonly(value.value),
-					value: () => asDeeplyReadonly(value.value),
+					value: asDeeplyReadonly(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];
@@ -289,7 +282,6 @@ export function latest<T extends object | null, Key extends string = string>(
 		rev: 0,
 		timestamp: Date.now(),
 		value: local === null ? local : shallowCloneObject(local),
-		// validated: false,
 	};
 	const factory = (
 		key: Key,
