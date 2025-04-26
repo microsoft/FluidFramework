@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import type { StateSchemaValidator } from "@fluidframework/presence/alpha";
 import { type Static, Type } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules

@@ -115,7 +115,7 @@ export function makeDiceValuesView(
 		children.push(
 			...makeDiceValueElement(
 				clientValue.attendee.attendeeId,
-				clientValue.value() ?? clientValue.rawValue,
+				clientValue.value,
 			),
 		);
 	}
