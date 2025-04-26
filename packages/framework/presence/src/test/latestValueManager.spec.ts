@@ -14,6 +14,7 @@ import type {
 	BroadcastControlSettings,
 	LatestClientData,
 	Presence,
+	ProxiedValueAccessor,
 	RawValueAccessor,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
@@ -142,6 +143,10 @@ export function checkCompiles(): void {
 		cursor: StateFactory.latest({ local: { x: 0, y: 0 } }),
 		camera: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 		nullablePoint: StateFactory.latest<null | { x: number; y: number }>({ local: null }),
+		validated: StateFactory.latest({
+			local: { num: 22 },
+			validator: (data: unknown) => data as { num: number },
+		}),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
@@ -161,6 +166,13 @@ export function checkCompiles(): void {
 		value,
 	}: Pick<LatestClientData<T, RawValueAccessor<T>>, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value);
+	}
+
+	function logRemoteValue<T>({
+		attendee,
+		value,
+	}: Pick<LatestClientData<T, ProxiedValueAccessor<T>>, "attendee" | "value">): void {
+		console.log(attendee.attendeeId, value());
 	}
 
 	// Create new cursor state
@@ -188,6 +200,29 @@ export function checkCompiles(): void {
 	for (const { attendee, value } of cursor.getRemotes()) {
 		logClientValue({ attendee, value });
 	}
+
+	const remoteCursor = cursor.getRemote(presence.attendees.getMyself());
+	logClientValue({ attendee: presence.attendees.getMyself(), value: remoteCursor.value });
+
+	// Validated value
+	const latestData = props.validated.getRemote(presence.attendees.getMyself());
+
+	// The next line correctly does not compile because props.validated is Latest, while raw is LatestRaw
+	// const raw: LatestRaw<{num: number}> = props.validated; // Latest<{num: number}>
+
+	// The next line correctly does not compile because props.cursor is LatestRaw while validated is Latest
+	// const validated: Latest<{ x: number, y: number }> = props.cursor; // LatestRaw<{ x: number, y: number }>
+
+	// The next line correctly does not compile because the value argument must be a RawValueAccessor
+	// logClientValue({attendee: presence.attendees.getMyself(), value: latestData.value} );
+
+	// This line does compile because logRemoteValue expects a ProxiedValueAccessor
+	logRemoteValue({ attendee: presence.attendees.getMyself(), value: latestData.value });
+
+	assert(typeof latestData.value === "function");
+	const remoteValue = latestData.value();
+	assert(remoteValue !== undefined);
+	assert(remoteValue.num === 22);
 }
 
 /* eslint-enable unicorn/no-null */
