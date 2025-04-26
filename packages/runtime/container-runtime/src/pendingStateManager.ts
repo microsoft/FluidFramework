@@ -359,7 +359,7 @@ export class PendingStateManager implements IDisposable {
 		// This will guarantee uniqueness of the batchId, and is a suitable fallback since clientId/CSN is only needed if the batch was actually sent/sequenced.
 		const batchWasSent = clientSequenceNumber !== undefined;
 		if (batchWasSent) {
-			assert(!staged, "Staged batches should not have been submitted");
+			assert(!staged, 0xb84 /* Staged batches should not have been submitted */);
 		}
 		const [clientId, batchStartCsn] = batchWasSent
 			? [this.stateHandler.clientId(), clientSequenceNumber]
@@ -631,7 +631,7 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
-		assert(!pendingMessage.batchInfo.staged, "Can't get an ack from a staged batch");
+		assert(!pendingMessage.batchInfo.staged, 0xb85 /* Can't get an ack from a staged batch */);
 
 		// If this batch became empty on resubmit, batch.messages will be empty (but keyMessage is always set)
 		// and the next pending message should be an empty batch marker.
@@ -722,7 +722,7 @@ export class PendingStateManager implements IDisposable {
 			// Re-queue pre-staging messages if we are only processing staged batches
 			if (onlyStagedBatches) {
 				if (!pendingMessage.batchInfo.staged) {
-					assert(!seenStagedBatch, "Staged batch was followed by non-staged batch");
+					assert(!seenStagedBatch, 0xb86 /* Staged batch was followed by non-staged batch */);
 					this.pendingMessages.push(pendingMessage);
 					continue;
 				}
@@ -747,7 +747,7 @@ export class PendingStateManager implements IDisposable {
 
 			assert(
 				pendingMessage.runtimeOp !== undefined,
-				"viableOp is only undefined for empty batches",
+				0xb87 /* viableOp is only undefined for empty batches */,
 			);
 
 			/**
@@ -784,7 +784,7 @@ export class PendingStateManager implements IDisposable {
 			while (remainingPendingMessagesCount >= 0) {
 				assert(
 					pendingMessage.runtimeOp !== undefined,
-					"viableOp is only undefined for empty batches",
+					0xb88 /* viableOp is only undefined for empty batches */,
 				);
 				batch.push({
 					runtimeOp: pendingMessage.runtimeOp,
@@ -851,7 +851,7 @@ export class PendingStateManager implements IDisposable {
 		}
 		assert(
 			this.pendingMessages.toArray().every((m) => m.batchInfo.staged !== true),
-			"Shouldn't be any more staged messages",
+			0xb89 /* Shouldn't be any more staged messages */,
 		);
 	}
 }

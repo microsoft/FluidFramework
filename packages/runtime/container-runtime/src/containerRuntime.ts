@@ -413,10 +413,10 @@ export interface ContainerRuntimeOptions {
 	readonly explicitSchemaControl: boolean;
 
 	/**
-	 * Create blob handles with pending payloads when calling createBlob (default is false).
-	 * When enabled, createBlob will return a handle before the blob upload completes.
+	 * Create blob handles with pending payloads when calling createBlob (default is `undefined` (disabled)).
+	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
 	 */
-	readonly createBlobPayloadPending: boolean;
+	readonly createBlobPayloadPending: true | undefined;
 }
 
 /**
@@ -3331,7 +3331,10 @@ export class ContainerRuntime
 			discardChanges: exitStagingMode(() => {
 				// Pop all staged batches from the PSM and roll them back in LIFO order
 				this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
-					assert(runtimeOp !== undefined, "Staged batches expected to have runtimeOp defined");
+					assert(
+						runtimeOp !== undefined,
+						0xb82 /* Staged batches expected to have runtimeOp defined */,
+					);
 					this.rollback(runtimeOp, localOpMetadata);
 				});
 				if (this.attachState === AttachState.Attached) {

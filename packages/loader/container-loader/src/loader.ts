@@ -266,6 +266,8 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  * Manages Fluid resource loading
  * @legacy
  * @alpha
+ *
+ * @remarks The Loader class is deprecated and will be removed in a future release. Use the free-form functions instead (See issue #24450 for more details).
  */
 export class Loader implements IHostLoader {
 	public readonly services: ILoaderServices;

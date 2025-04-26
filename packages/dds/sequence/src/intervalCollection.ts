@@ -1093,7 +1093,7 @@ export class IntervalCollection
 				break;
 			}
 			case "change": {
-				assert(previous !== undefined, "must have previous for change");
+				assert(previous !== undefined, 0xb7c /* must have previous for change */);
 
 				const endpointsChanged = value.start !== undefined && value.end !== undefined;
 				const start = endpointsChanged
@@ -1115,7 +1115,7 @@ export class IntervalCollection
 				break;
 			}
 			case "delete": {
-				assert(previous !== undefined, "must have previous for delete");
+				assert(previous !== undefined, 0xb7d /* must have previous for delete */);
 				this.add({
 					id,
 					start: toSequencePlace(previous.start, previous.startSide),
