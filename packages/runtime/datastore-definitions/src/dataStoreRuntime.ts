@@ -77,8 +77,9 @@ export interface IFluidDataStoreRuntime
 	readonly attachState: AttachState;
 
 	/**
-	 * An optional id compressor.
-	 * When provided, can be used to compress and decompress ids stored in this datastore.
+	 * An optional ID compressor.
+	 * @remarks
+	 * When provided, can be used to compress and decompress IDs stored in this datastore.
 	 * Some SharedObjects, like SharedTree, require this.
 	 */
 	readonly idCompressor: IIdCompressor | undefined;
