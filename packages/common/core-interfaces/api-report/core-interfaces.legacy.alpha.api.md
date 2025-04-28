@@ -275,14 +275,14 @@ export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, 
 
 // @alpha @legacy
 export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
-    readonly events: IEventProvider<IFluidHandlePayloadPendingEvents>;
+    readonly events: Listenable<IFluidHandlePayloadPendingEvents>;
     readonly payloadState: PayloadState;
 }
 
 // @alpha @legacy
-export interface IFluidHandlePayloadPendingEvents extends IEvent {
-    (event: "shared", listener: () => void): any;
-    (event: "failed", listener: (error: unknown) => void): any;
+export interface IFluidHandlePayloadPendingEvents {
+    failed: (error: unknown) => void;
+    shared: () => void;
 }
 
 // @public (undocumented)

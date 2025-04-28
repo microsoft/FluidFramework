@@ -6,6 +6,7 @@
 import {
 	TypedEventEmitter,
 	bufferToString,
+	createEmitter,
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -21,6 +22,7 @@ import type {
 	IFluidHandleInternalPayloadPending,
 	IFluidHandlePayloadPending,
 	IFluidHandlePayloadPendingEvents,
+	Listenable,
 	PayloadState,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
@@ -78,8 +80,8 @@ export class BlobHandle
 		return this.routeContext.isAttached && this.attached;
 	}
 
-	private readonly _events = new TypedEventEmitter<IFluidHandlePayloadPendingEvents>();
-	public get events(): IEventProvider<IFluidHandlePayloadPendingEvents> {
+	private readonly _events = createEmitter<IFluidHandlePayloadPendingEvents>();
+	public get events(): Listenable<IFluidHandlePayloadPendingEvents> {
 		return this._events;
 	}
 

@@ -518,8 +518,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				const onFailed = (error: unknown): void => {
 					failed = true;
 					assert.strictEqual((error as Error).message, "fake driver error");
+					handle.events.off("failed", onFailed);
 				};
-				handle.events.once("failed", onFailed);
+				handle.events.on("failed", onFailed);
 				await runtime.processHandles();
 				await runtime.processBlobs(false);
 				runtime.processOps();
@@ -555,8 +556,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				let shared = false;
 				const onShared = (): void => {
 					shared = true;
+					handle.events.off("shared", onShared);
 				};
-				handle.events.once("shared", onShared);
+				handle.events.on("shared", onShared);
 				await runtime.processHandles();
 				await runtime.processBlobs(true);
 				runtime.processOps();

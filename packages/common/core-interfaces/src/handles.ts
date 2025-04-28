@@ -4,8 +4,8 @@
  */
 
 import type { ErasedType } from "./erasedType.js";
-import type { IEvent, IEventProvider } from "./events.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
+import type { Listenable } from "./internal.js";
 
 /**
  * @legacy
@@ -127,9 +127,9 @@ export interface IFluidHandleInternalPayloadPending<
  *
  * @remarks
  * The client generating the payload will observe the handle start with "local" state and see a transition
- * of "local" -> "shared" in the case of successful sharing, or "local" -> "failed" in the case of failed sharing.
+ * of "local" to "shared" in the case of successful sharing, or "local" to "failed" in the case of failed sharing.
  *
- * Receiving clients will see a transition of "pending" -> "shared" when the payload has been shared.
+ * Receiving clients will see a transition of "pending" to "shared" when the payload has been shared.
  * @legacy
  * @alpha
  */
@@ -140,15 +140,15 @@ export type PayloadState = "local" | "shared" | "pending" | "failed";
  * @legacy
  * @alpha
  */
-export interface IFluidHandlePayloadPendingEvents extends IEvent {
+export interface IFluidHandlePayloadPendingEvents {
 	/**
 	 * Emitted when the payload becomes available to all clients.
 	 */
-	(event: "shared", listener: () => void);
+	shared: () => void;
 	/**
 	 * Emitted for locally created handles when the payload fails sharing to remote collaborators.
 	 */
-	(event: "failed", listener: (error: unknown) => void);
+	failed: (error: unknown) => void;
 }
 
 /**
@@ -165,9 +165,9 @@ export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
 	 */
 	readonly payloadState: PayloadState;
 	/**
-	 * Event provider, with events that emit as the payload state transitions.
+	 * Event emitter, with events that emit as the payload state transitions.
 	 */
-	readonly events: IEventProvider<IFluidHandlePayloadPendingEvents>;
+	readonly events: Listenable<IFluidHandlePayloadPendingEvents>;
 }
 
 /**
