@@ -15,6 +15,7 @@ import type {
 	LatestMapRaw,
 	LatestMapItemUpdatedClientData,
 	Presence,
+	RawValueAccessor,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
 
@@ -160,7 +161,7 @@ export function checkCompiles(): void {
 		key,
 		value,
 	}: Pick<
-		LatestMapItemUpdatedClientData<T, string | number>,
+		LatestMapItemUpdatedClientData<T, string | number, RawValueAccessor<T>>,
 		"attendee" | "key" | "value"
 	>): void {
 		console.log(attendee.attendeeId, key, value);
@@ -179,7 +180,9 @@ export function checkCompiles(): void {
 	}
 
 	for (const { attendee, items } of pointers.getRemotes()) {
-		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
+		}
 	}
 
 	pointers.events.on("remoteItemRemoved", ({ attendee, key }) =>
@@ -187,7 +190,9 @@ export function checkCompiles(): void {
 	);
 
 	pointers.events.on("remoteUpdated", ({ attendee, items }) => {
-		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
+		}
 	});
 
 	// ----------------------------------
