@@ -124,17 +124,7 @@ export {
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 	type AllowedTypes,
-	type ImplicitAllowedTypesUnsafe,
-	type ImplicitFieldSchemaUnsafe,
-	type TreeObjectNodeUnsafe,
-	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	type TreeArrayNodeUnsafe,
-	type TreeMapNodeUnsafe,
-	type InsertableObjectFromSchemaRecordUnsafe,
-	type InsertableTreeFieldFromImplicitFieldUnsafe,
-	type FieldSchemaUnsafe,
-	type TreeNodeSchemaClassUnsafe,
-	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type System_Unsafe,
 	type FieldSchemaAlphaUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
