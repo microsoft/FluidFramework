@@ -385,7 +385,7 @@ export function applyAgentEdit(
 					array,
 				);
 			} else {
-				throw new UsageError("Invalid source for move edit");
+				throw new Error("Invalid source for move edit");
 			}
 			return { edit: treeEdit, uiDiff };
 		}
