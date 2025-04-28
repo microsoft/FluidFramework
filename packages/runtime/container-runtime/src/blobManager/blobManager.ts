@@ -10,6 +10,7 @@ import {
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
+	IEmitter,
 	IEventProvider,
 	IFluidHandleContext,
 	IFluidHandleInternal,
@@ -74,9 +75,12 @@ export class BlobHandle
 		return this.routeContext.isAttached && this.attached;
 	}
 
-	private readonly _events = createEmitter<IFluidHandlePayloadPendingEvents>();
+	private _events:
+		| (Listenable<IFluidHandlePayloadPendingEvents> &
+				IEmitter<IFluidHandlePayloadPendingEvents>)
+		| undefined;
 	public get events(): Listenable<IFluidHandlePayloadPendingEvents> {
-		return this._events;
+		return (this._events ??= createEmitter<IFluidHandlePayloadPendingEvents>());
 	}
 
 	private _state: PayloadState = "local";
@@ -99,12 +103,12 @@ export class BlobHandle
 
 	public readonly notifyShared = (): void => {
 		this._state = "shared";
-		this._events.emit("shared");
+		this._events?.emit("shared");
 	};
 
 	public readonly notifyFailed = (error: unknown): void => {
 		this._state = "failed";
-		this._events.emit("failed", error);
+		this._events?.emit("failed", error);
 	};
 
 	public attachGraph(): void {
