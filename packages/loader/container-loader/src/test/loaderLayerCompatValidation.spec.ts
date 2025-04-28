@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import type {
 	ILayerCompatDetails,
 	ILayerCompatSupportRequirements,
-	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
 import {
@@ -16,11 +15,8 @@ import {
 	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces/internal";
 import {
-	type IDocumentServiceFactory,
-	type IDocumentService,
 	type IResolvedUrl,
 	type IUrlResolver,
-	type IDocumentStorageService,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
@@ -36,7 +32,10 @@ import {
 import { pkgVersion } from "../packageVersion.js";
 
 import { failSometimeProxy } from "./failProxy.js";
-import { createTestCodeLoader } from "./testCodeLoader.js";
+import {
+	createTestCodeLoaderProxy,
+	createTestDocumentServiceFactoryProxy,
+} from "./testProxies.js";
 
 type ILayerCompatSupportRequirementsOverride = Omit<
 	ILayerCompatSupportRequirements,
@@ -278,20 +277,6 @@ describe("Loader Layer compatibility", () => {
 			resolve: async () => resolvedUrl,
 		});
 
-		function createDocumentServiceFactory(
-			compatibilityDetails?: ILayerCompatDetails,
-		): IDocumentServiceFactory {
-			return failSometimeProxy<IDocumentServiceFactory>({
-				createContainer: async () =>
-					failSometimeProxy<IDocumentService & IProvideLayerCompatDetails>({
-						policies: {},
-						resolvedUrl,
-						ILayerCompatDetails: compatibilityDetails,
-						connectToStorage: async () => failSometimeProxy<IDocumentStorageService>({}),
-					}),
-			});
-		}
-
 		async function createAndAttachContainer(loader: Loader): Promise<void> {
 			const container = await loader.createDetachedContainer({ package: "none" });
 			await container.attach({ url: "none" });
@@ -301,8 +286,8 @@ describe("Loader Layer compatibility", () => {
 			describe(`Validate ${testCase.layerType} Compatibility`, () => {
 				it(`Older ${testCase.layerType} is compatible`, async () => {
 					const loader = new Loader({
-						codeLoader: createTestCodeLoader(),
-						documentServiceFactory: createDocumentServiceFactory(),
+						codeLoader: createTestCodeLoaderProxy(),
+						documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
 						urlResolver,
 					});
 					await assert.doesNotReject(
@@ -318,10 +303,11 @@ describe("Loader Layer compatibility", () => {
 						supportedFeatures: new Set(),
 					};
 					const loader = new Loader({
-						codeLoader: createTestCodeLoader(
+						codeLoader: createTestCodeLoaderProxy(
 							testCase.layerType === "Runtime" ? { layerCompatDetails } : {},
 						),
-						documentServiceFactory: createDocumentServiceFactory(
+						documentServiceFactory: createTestDocumentServiceFactoryProxy(
+							resolvedUrl,
 							testCase.layerType === "Driver" ? layerCompatDetails : undefined,
 						),
 						urlResolver,
@@ -341,10 +327,11 @@ describe("Loader Layer compatibility", () => {
 						supportedFeatures: new Set(),
 					};
 					const loader = new Loader({
-						codeLoader: createTestCodeLoader(
+						codeLoader: createTestCodeLoaderProxy(
 							testCase.layerType === "Runtime" ? { layerCompatDetails } : {},
 						),
-						documentServiceFactory: createDocumentServiceFactory(
+						documentServiceFactory: createTestDocumentServiceFactoryProxy(
+							resolvedUrl,
 							testCase.layerType === "Driver" ? layerCompatDetails : undefined,
 						),
 						urlResolver,

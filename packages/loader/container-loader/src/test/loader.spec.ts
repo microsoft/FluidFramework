@@ -8,9 +8,6 @@ import assert from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
 import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	type IDocumentStorageService,
 	type IResolvedUrl,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
@@ -28,7 +25,10 @@ import { Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
 import { failProxy, failSometimeProxy } from "./failProxy.js";
-import { createTestCodeLoader } from "./testCodeLoader.js";
+import {
+	createTestCodeLoaderProxy,
+	createTestDocumentServiceFactoryProxy,
+} from "./testProxies.js";
 
 describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with invalid format", async () => {
@@ -53,7 +53,7 @@ describe("loader unit test", () => {
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format", async () => {
 		const loader = new Loader({
-			codeLoader: createTestCodeLoader(),
+			codeLoader: createTestCodeLoaderProxy(),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 		});
@@ -69,7 +69,7 @@ describe("loader unit test", () => {
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
 		const loader = new Loader({
-			codeLoader: createTestCodeLoader({ createDetachedBlob: true }),
+			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 		});
@@ -85,7 +85,7 @@ describe("loader unit test", () => {
 
 	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching", async () => {
 		const loader = new Loader({
-			codeLoader: createTestCodeLoader(),
+			codeLoader: createTestCodeLoaderProxy(),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 			configProvider: {
@@ -121,18 +121,8 @@ describe("loader unit test", () => {
 			url: "none",
 		};
 		const loader = new Loader({
-			codeLoader: createTestCodeLoader({ createDetachedBlob: true }),
-			documentServiceFactory: failSometimeProxy<IDocumentServiceFactory>({
-				createContainer: async () =>
-					failSometimeProxy<IDocumentService>({
-						policies: {},
-						resolvedUrl,
-						connectToStorage: async () =>
-							failSometimeProxy<IDocumentStorageService>({
-								createBlob: async () => ({ id: uuid() }),
-							}),
-					}),
-			}),
+			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
+			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
 			urlResolver: failSometimeProxy<IUrlResolver>({
 				resolve: async () => resolvedUrl,
 			}),
@@ -186,7 +176,7 @@ describe("loader unit test", () => {
 		new Container({
 			urlResolver: failProxy(),
 			documentServiceFactory: failProxy(),
-			codeLoader: createTestCodeLoader(),
+			codeLoader: createTestCodeLoaderProxy(),
 			options: {},
 			scope: {},
 			subLogger: logger.logger,
