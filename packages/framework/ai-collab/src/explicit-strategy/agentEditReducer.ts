@@ -148,14 +148,7 @@ export function applyAgentEdit(
 				if (allowedType.identifier === schemaIdentifier && typeof allowedType === "function") {
 					const simpleNodeSchema = allowedType as unknown as new (dummy: unknown) => TreeNode;
 					const insertNode = new simpleNodeSchema(treeEdit.content);
-					try {
-						validator?.(insertNode);
-					} catch (error) {
-						if (error instanceof Error) {
-							throw new UsageError(error.message);
-						}
-						throw error;
-					}
+					validator?.(insertNode);
 
 					array.insertAt(index, insertNode as unknown as IterableTreeArrayContent<never>);
 					return {
@@ -234,7 +227,6 @@ export function applyAgentEdit(
 			const schemaIdentifier = (modification as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
-			// // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			const uiDiff = createModifyUiDiff(treeEdit, idGenerator);
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
 			if (isPrimitive(modification)) {
@@ -267,14 +259,8 @@ export function applyAgentEdit(
 				const simpleSchema = fieldSchema as unknown as new (dummy: unknown) => TreeNode;
 				populateDefaults(modification, definitionMap);
 				const constructedModification = new simpleSchema(modification);
-				try {
-					validator?.(constructedModification);
-				} catch (error) {
-					if (error instanceof Error) {
-						throw new UsageError(error.message);
-					}
-					throw error;
-				}
+				validator?.(constructedModification);
+
 				insertedObject = constructedModification;
 
 				if (Array.isArray(modification)) {
