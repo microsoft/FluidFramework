@@ -114,7 +114,7 @@ export function getSchemaIdentifier(content: TreeEditValue): string {
 }
 
 /**
- * Converts A tree node from an {@link TreeEdit} to a json format with the proper object ids.
+ * Converts a tree node from a {@link TreeEdit} to a `TreeEditObject` with the proper object ids.
  */
 export function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditObject {
 	return JSON.parse(toDecoratedJson(idGenerator, content)) as TreeEditObject;
