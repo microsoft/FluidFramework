@@ -12,14 +12,12 @@ import type {
 	ValidateRecursiveSchema,
 	// #region Unused imports to make d.ts cleaner
 	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
-	InsertableTypedNodeUnsafe,
+	System_Unsafe,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaClass,
-	TreeMapNodeUnsafe,
 	NodeKind,
 	TreeNodeSchemaCore,
 	WithType,
-	TreeArrayNodeUnsafe,
 	LeafSchema,
 	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 	// #endregion

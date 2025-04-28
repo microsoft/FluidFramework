@@ -7,22 +7,10 @@ import type { Mutable } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 import type { TreeChunk } from "./chunk.js";
 
-import type { DetachedNodeId, FieldChanges, Mark, Root } from "./delta.js";
+import type { DetachedNodeId, FieldChanges, Root } from "./delta.js";
 import { rootFieldKey } from "./types.js";
 
 export const emptyDelta: Root = {};
-
-export function isAttachMark(mark: Mark): boolean {
-	return mark.attach !== undefined && mark.detach === undefined;
-}
-
-export function isDetachMark(mark: Mark): boolean {
-	return mark.detach !== undefined && mark.attach === undefined;
-}
-
-export function isReplaceMark(mark: Mark): boolean {
-	return mark.detach !== undefined && mark.attach !== undefined;
-}
 
 export function deltaForRootInitialization(content: TreeChunk): Root {
 	if (content.topLevelLength === 0) {

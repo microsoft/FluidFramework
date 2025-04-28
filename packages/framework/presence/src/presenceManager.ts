@@ -20,7 +20,13 @@ import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { createSystemWorkspace } from "./systemWorkspace.js";
-import type { StatesWorkspace, WorkspaceAddress, StatesWorkspaceSchema } from "./types.js";
+import type {
+	NotificationsWorkspace,
+	NotificationsWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceSchema,
+	WorkspaceAddress,
+} from "./types.js";
 
 import type {
 	IContainerExtension,
@@ -56,10 +62,10 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			this.datastoreManager.getWorkspace(`s:${workspaceAddress}`, requestedContent, settings),
 	};
 	public readonly notifications = {
-		getWorkspace: <TSchema extends StatesWorkspaceSchema>(
+		getWorkspace: <TSchema extends NotificationsWorkspaceSchema>(
 			workspaceAddress: WorkspaceAddress,
 			requestedContent: TSchema,
-		): StatesWorkspace<TSchema> =>
+		): NotificationsWorkspace<TSchema> =>
 			this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent),
 	};
 
@@ -77,6 +83,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			runtime,
 			this.events,
 			this.mc?.logger,
+			this,
 		);
 		this.attendees = this.systemWorkspace;
 
@@ -138,6 +145,7 @@ function setupSubComponents(
 	events: Listenable<PresenceEvents & AttendeesEvents> &
 		IEmitter<PresenceEvents & AttendeesEvents>,
 	logger: ITelemetryLoggerExt | undefined,
+	presence: Presence,
 ): [PresenceDatastoreManager, SystemWorkspace] {
 	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {
 		clientToSessionId: {},
@@ -154,6 +162,7 @@ function setupSubComponents(
 		systemWorkspaceConfig.workspace.getAttendee.bind(systemWorkspaceConfig.workspace),
 		logger,
 		events,
+		presence,
 		systemWorkspaceDatastore,
 		systemWorkspaceConfig.statesEntry,
 	);

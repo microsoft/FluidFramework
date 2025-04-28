@@ -21,7 +21,14 @@
 		"reportFileName": "<unscopedPackageName>",
 		"reportFolder": "<projectFolder>/api-report/",
 		"reportTempFolder": "<projectFolder>/_api-extractor-temp/",
-		"reportVariants": ["public", "beta", "alpha"] // TODO: add "complete"?
+		"reportVariants": ["public", "beta", "alpha"], // TODO: add "complete"?
+
+		// Add `@legacy` and `@system` to the list of tags included in API reports.
+		// These tags have breaking change implications, so they provide useful context during code reviews.
+		"tagsToReport": {
+			"@legacy": true,
+			"@system": true
+		}
 	},
 
 	/**
