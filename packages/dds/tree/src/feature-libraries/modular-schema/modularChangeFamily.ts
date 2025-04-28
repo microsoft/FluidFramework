@@ -329,6 +329,10 @@ export class ModularChangeFamily
 		assert(context !== undefined, 0x8cc /* Should have context for every invalidated field */);
 		const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
 
+		crossFieldTable.pendingCompositions.affectedBaseFields.delete(
+			fieldIdKeyFromFieldId(context.fieldId),
+		);
+
 		const rebaser = getChangeHandler(this.fieldKinds, composedChange.fieldKind).rebaser;
 		const composeNodes = (child1: NodeId | undefined, child2: NodeId | undefined): NodeId => {
 			if (
@@ -374,54 +378,53 @@ export class ModularChangeFamily
 		metadata: RevisionMetadataSource,
 	): void {
 		const pending = table.pendingCompositions;
-		while (
-			table.invalidatedFields.size > 0 ||
-			pending.nodeIdsToCompose.length > 0 ||
-			pending.affectedBaseFields.length > 0
-		) {
-			// Note that the call to `composeNodesById` can add entries to `crossFieldTable.nodeIdPairs`.
-			for (const [id1, id2] of pending.nodeIdsToCompose) {
-				this.composeNodesById(
-					table.baseChange.nodeChanges,
-					table.newChange.nodeChanges,
-					composedNodes,
-					composedNodeToParent,
-					nodeAliases,
-					id1,
-					id2,
-					genId,
-					table,
-					metadata,
-				);
-			}
-
-			pending.nodeIdsToCompose.length = 0;
+		while (pending.nodeIdsToCompose.length > 0 || pending.affectedBaseFields.length > 0) {
+			this.processPendingNodeCompositions(
+				table,
+				composedNodes,
+				composedNodeToParent,
+				nodeAliases,
+				genId,
+				metadata,
+			);
 
 			this.composeAffectedFields(
 				table,
 				table.baseChange,
-				true,
 				pending.affectedBaseFields,
 				composedFields,
 				composedNodes,
 				genId,
 				metadata,
 			);
-
-			this.processInvalidatedCompositions(table, genId, metadata);
 		}
 	}
 
-	private processInvalidatedCompositions(
+	private processPendingNodeCompositions(
 		table: ComposeTable,
+		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
+		composedNodeToParent: ChangeAtomIdBTree<FieldId>,
+		nodeAliases: ChangeAtomIdBTree<NodeId>,
 		genId: IdAllocator,
 		metadata: RevisionMetadataSource,
 	): void {
-		const fieldsToUpdate = table.invalidatedFields;
-		table.invalidatedFields = new Set();
-		for (const fieldChange of fieldsToUpdate) {
-			this.composeInvalidatedField(fieldChange, table, genId, metadata);
+		// Note that the call to `composeNodesById` can add entries to `crossFieldTable.nodeIdPairs`.
+		for (const [id1, id2] of table.pendingCompositions.nodeIdsToCompose) {
+			this.composeNodesById(
+				table.baseChange.nodeChanges,
+				table.newChange.nodeChanges,
+				composedNodes,
+				composedNodeToParent,
+				nodeAliases,
+				id1,
+				id2,
+				genId,
+				table,
+				metadata,
+			);
 		}
+
+		table.pendingCompositions.nodeIdsToCompose.length = 0;
 	}
 
 	/**
@@ -438,14 +441,16 @@ export class ModularChangeFamily
 	private composeAffectedFields(
 		table: ComposeTable,
 		change: ModularChangeset,
-		areBaseFields: boolean,
 		affectedFields: BTree<FieldIdKey, true>,
 		composedFields: FieldChangeMap,
 		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
 		genId: IdAllocator,
 		metadata: RevisionMetadataSource,
 	): void {
-		for (const fieldIdKey of affectedFields.keys()) {
+		const fieldsToProcess = affectedFields.clone();
+		affectedFields.clear();
+
+		for (const fieldIdKey of fieldsToProcess.keys()) {
 			const fieldId = normalizeFieldId(fieldIdFromFieldIdKey(fieldIdKey), change.nodeAliases);
 			const fieldChange = fieldChangeFromId(change.fieldChanges, change.nodeChanges, fieldId);
 
@@ -453,51 +458,60 @@ export class ModularChangeFamily
 				table.fieldToContext.has(fieldChange) ||
 				table.newFieldToBaseField.has(fieldChange)
 			) {
-				// This function handles fields which were not part of the intersection of the two changesets but which need to be updated anyway.
-				// If we've already processed this field then either it is up to date
-				// or there is pending inval which will be handled in processInvalidatedCompositions.
-				// XXX: Ensure when processing a field we remove its entry from affectedBaseFields
-				// so we avoid rerunning the field unnecessarily.
-				table.invalidatedFields.add(fieldChange);
-				continue;
+				this.composeInvalidatedField(fieldChange, table, genId, metadata);
+			} else {
+				this.composeFieldWithNoNewChange(
+					table,
+					fieldChange,
+					fieldId,
+					composedFields,
+					composedNodes,
+					genId,
+					metadata,
+				);
 			}
+		}
+	}
 
-			const emptyChange = this.createEmptyFieldChange(fieldChange.fieldKind);
-			const [change1, change2] = areBaseFields
-				? [fieldChange, emptyChange]
-				: [emptyChange, fieldChange];
+	private composeFieldWithNoNewChange(
+		table: ComposeTable,
+		baseFieldChange: FieldChange,
+		fieldId: FieldId,
+		composedFields: FieldChangeMap,
+		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
+		genId: IdAllocator,
+		metadata: RevisionMetadataSource,
+	): void {
+		const emptyChange = this.createEmptyFieldChange(baseFieldChange.fieldKind);
 
-			const composedField = this.composeFieldChanges(
-				fieldId,
-				change1,
-				change2,
-				genId,
-				table,
-				metadata,
-			);
+		const composedField = this.composeFieldChanges(
+			fieldId,
+			baseFieldChange,
+			emptyChange,
+			genId,
+			table,
+			metadata,
+		);
 
-			if (fieldId.nodeId === undefined) {
-				composedFields.set(fieldId.field, composedField);
-				continue;
-			}
-
-			const nodeId =
-				getFromChangeAtomIdMap(table.newToBaseNodeId, fieldId.nodeId) ?? fieldId.nodeId;
-
-			let nodeChangeset = nodeChangeFromId(composedNodes, nodeId);
-			if (!table.composedNodes.has(nodeChangeset)) {
-				nodeChangeset = cloneNodeChangeset(nodeChangeset);
-				setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
-			}
-
-			if (nodeChangeset.fieldChanges === undefined) {
-				nodeChangeset.fieldChanges = new Map();
-			}
-
-			nodeChangeset.fieldChanges.set(fieldId.field, composedField);
+		if (fieldId.nodeId === undefined) {
+			composedFields.set(fieldId.field, composedField);
+			return;
 		}
 
-		affectedFields.clear();
+		const nodeId =
+			getFromChangeAtomIdMap(table.newToBaseNodeId, fieldId.nodeId) ?? fieldId.nodeId;
+
+		let nodeChangeset = nodeChangeFromId(composedNodes, nodeId);
+		if (!table.composedNodes.has(nodeChangeset)) {
+			nodeChangeset = cloneNodeChangeset(nodeChangeset);
+			setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
+		}
+
+		if (nodeChangeset.fieldChanges === undefined) {
+			nodeChangeset.fieldChanges = new Map();
+		}
+
+		nodeChangeset.fieldChanges.set(fieldId.field, composedField);
 	}
 
 	private composeFieldMaps(
@@ -720,13 +734,13 @@ export class ModularChangeFamily
 		const genId: IdAllocator = idAllocatorFromMaxId(change.change.maxId ?? -1);
 
 		const crossFieldTable: InvertTable = {
-			...newCrossFieldTable<FieldChange>(),
 			change: change.change,
 			entries: newChangeAtomIdRangeMap(),
 			originalFieldToContext: new Map(),
 			invertRevision: revisionForInvert,
 			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
 			invertedRoots: invertRootTable(change.change),
+			invalidatedFields: new Set(),
 		};
 		const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 		const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
@@ -904,7 +918,6 @@ export class ModularChangeFamily
 			nodesToRebase,
 		);
 		const crossFieldTable: RebaseTable = {
-			...newCrossFieldTable<FieldChange>(),
 			entries: newDetachedEntryMap(),
 			newChange: change,
 			baseChange: over.change,
@@ -1058,8 +1071,6 @@ export class ModularChangeFamily
 			);
 
 			if (crossFieldTable.baseFieldToContext.has(baseFieldChange)) {
-				// XXX: Ensure when processing a field we remove its entry from affectedBaseFields
-				// so we avoid rerunning the field unnecessarily.
 				crossFieldTable.affectedBaseFields.set(fieldIdKey, true);
 				continue;
 			}
@@ -1176,7 +1187,6 @@ export class ModularChangeFamily
 		idAllocator: IdAllocator,
 	): void {
 		for (const field of table.fieldsWithUnattachedChild) {
-			table.invalidatedFields.delete(field);
 			this.rebaseInvalidatedField(field, table, metadata, idAllocator, true);
 		}
 	}
@@ -2234,13 +2244,7 @@ export function getChangeHandler(
 	return getFieldKind(fieldKinds, kind).changeHandler;
 }
 
-// TODO: TFieldData could instead just be a numeric ID generated by the CrossFieldTable
-// The CrossFieldTable could have a generic field ID to context table
-interface CrossFieldTable<TFieldData> {
-	invalidatedFields: Set<TFieldData>;
-}
-
-interface InvertTable extends CrossFieldTable<FieldChange> {
+interface InvertTable {
 	change: ModularChangeset;
 
 	// Entries are keyed on attach ID
@@ -2249,6 +2253,7 @@ interface InvertTable extends CrossFieldTable<FieldChange> {
 	invertedRoots: RootNodeTable;
 	invertedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	invertRevision: RevisionTag;
+	invalidatedFields: Set<FieldChange>;
 }
 
 interface InvertContext {
@@ -2256,7 +2261,7 @@ interface InvertContext {
 	invertedField: FieldChange;
 }
 
-interface RebaseTable extends CrossFieldTable<FieldChange> {
+interface RebaseTable {
 	// Entries are keyed on attach ID
 	readonly entries: CrossFieldMap<DetachedNodeEntry>;
 	readonly baseChange: ModularChangeset;
@@ -2310,7 +2315,6 @@ function newComposeTable(
 	pendingCompositions: PendingCompositions,
 ): ComposeTable {
 	return {
-		...newCrossFieldTable<FieldChange>(),
 		entries: newChangeAtomIdRangeMap(),
 		baseChange,
 		newChange,
@@ -2326,7 +2330,7 @@ function newComposeTable(
 	};
 }
 
-interface ComposeTable extends CrossFieldTable<FieldChange> {
+interface ComposeTable {
 	// Entries are keyed on detach ID
 	readonly entries: CrossFieldMap<NodeId>;
 	readonly baseChange: ModularChangeset;
@@ -2367,12 +2371,6 @@ interface ComposeFieldContext {
 	change1: FieldChangeset;
 	change2: FieldChangeset;
 	composedChange: FieldChange;
-}
-
-function newCrossFieldTable<T>(): CrossFieldTable<T> {
-	return {
-		invalidatedFields: new Set(),
-	};
 }
 
 /**
