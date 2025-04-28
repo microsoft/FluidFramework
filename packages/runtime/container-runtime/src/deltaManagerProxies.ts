@@ -86,7 +86,7 @@ export interface BaseDeltaManagerProxyEventHandlers {
  * This class allows us to build proxy functionality without actually having to implement all the methods
  * of the DeltaManager.
  */
-export abstract class BaseDeltaManagerProxy
+export class BaseDeltaManagerProxy
 	extends TypedEventEmitter<IDeltaManagerEvents>
 	implements IDeltaManagerFull
 {
@@ -211,6 +211,7 @@ export abstract class BaseDeltaManagerProxy
 		this.deltaManager.off("connect", this.eventHandlers.onConnect);
 		this.deltaManager.off("disconnect", this.eventHandlers.onDisconnect);
 		this.deltaManager.off("readonly", this.eventHandlers.onReadonly);
+		this.removeAllListeners();
 	}
 
 	public submitSignal(content: string, targetClientId?: string): void {

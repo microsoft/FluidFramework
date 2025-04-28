@@ -4,6 +4,8 @@
  */
 
 export {
+	ContainerRuntimeOptions,
+	ContainerRuntimeOptionsInternal,
 	ISummaryRuntimeOptions,
 	IContainerRuntimeOptions,
 	IContainerRuntimeOptionsInternal,
@@ -14,9 +16,9 @@ export {
 	DeletedResponseHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
-	ICompressionRuntimeOptions,
 	RuntimeHeaderData,
 } from "./containerRuntime.js";
+export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export {
 	ContainerMessageType,

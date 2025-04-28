@@ -101,7 +101,7 @@ export interface StatesWorkspace<
 	/**
 	 * Registry of State objects.
 	 */
-	readonly props: StatesWorkspaceEntries<TSchema>;
+	readonly states: StatesWorkspaceEntries<TSchema>;
 
 	/**
 	 * Default controls for management of broadcast updates.
@@ -140,7 +140,7 @@ export interface NotificationsWorkspaceSchema {
  * @privateRemarks
  * This should be kept mostly in sync with {@link StatesWorkspace}. Notably the
  * return type of `add` is limited here and the `controls` property is omitted.
- * The `PresenceStatesImpl` class implements `StatesWorkspace` and therefore
+ * The `PresenceStatesImpl` class implements `AnyWorkspace` and therefore
  * `NotificationsWorkspace`, so long as this is proper subset.
  *
  * @sealed
@@ -166,7 +166,7 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	/**
 	 * Registry of `NotificationsManager`s.
 	 */
-	readonly props: StatesWorkspaceEntries<TSchema>;
+	readonly notifications: StatesWorkspaceEntries<TSchema>;
 
 	/**
 	 * Containing {@link Presence}
@@ -175,3 +175,15 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 }
 
 // #endregion NotificationsWorkspace
+
+/**
+ * `AnyWorkspace` is a superset of {@link StatesWorkspace} and {@link NotificationsWorkspace}.
+ *
+ * @internal
+ */
+export interface AnyWorkspace<
+	TSchema extends StatesWorkspaceSchema,
+	TManagerConstraints = unknown,
+> extends StatesWorkspace<TSchema, TManagerConstraints> {
+	readonly notifications: StatesWorkspaceEntries<TSchema>;
+}

@@ -13,6 +13,7 @@
 "@fluidframework/server-services-utils": major
 "@fluidframework/server-test-utils": major
 "tinylicious": major
+"__section": other
 ---
 
 Types altered to account for undefined and null values
