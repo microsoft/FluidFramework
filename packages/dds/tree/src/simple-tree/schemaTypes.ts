@@ -96,7 +96,11 @@ export interface AnnotatedAllowedTypes {
 export function isAnnotatedAllowedTypes(
 	allowedTypes: ImplicitAnnotatedAllowedTypes,
 ): allowedTypes is AnnotatedAllowedTypes {
-	return "metadata" in allowedTypes && "types" in allowedTypes;
+	return (
+		typeof allowedTypes === "object" &&
+		"metadata" in allowedTypes &&
+		"types" in allowedTypes
+	);
 }
 
 /**
@@ -623,8 +627,11 @@ export function unannotateImplicitAllowedTypes<Types extends ImplicitAnnotatedAl
 export function unannotateSchemaRecord<
 	Schema extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 >(schemaRecord: Schema): UnannotateSchemaRecord<Schema> {
-	return Object.entries(schemaRecord).map(([_, schema]) =>
-		schema instanceof FieldSchema ? schema : unannotateImplicitAllowedTypes(schema),
+	return Object.fromEntries(
+		Object.entries(schemaRecord).map(([key, schema]) => [
+			key,
+			schema instanceof FieldSchema ? schema : unannotateImplicitAllowedTypes(schema),
+		]),
 	) as UnannotateSchemaRecord<Schema>;
 }
 
