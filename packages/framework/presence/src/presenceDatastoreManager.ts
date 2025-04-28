@@ -404,7 +404,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 			// It is okay to continue processing the contained updates even if we are not
 			// connected.
-		} else if (message.type === ackknowledgementMessageType) {
+		} else if (message.type === acknowledgementMessageType) {
 			// TODO: Handle acknowledgement message type.
 			return;
 		} else {
