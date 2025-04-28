@@ -3,7 +3,7 @@
 "@fluidframework/sequence": minor
 "__section": deprecation
 ---
-Replace generic types for IntervalCollections with non-generic types
+Generic types for IntervalCollections have been replaced with non-generic types
 
 This change deprecates the following generic types and provides non-generic alternatives where necessary:
 
