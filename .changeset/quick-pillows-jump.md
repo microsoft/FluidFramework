@@ -3,7 +3,6 @@
 "fluid-framework": minor
 "__section": tree
 ---
-
 New allowUnused utility function
 
 The new `allowUnused` utility function discards its type or runtime argument.
