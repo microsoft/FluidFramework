@@ -46,7 +46,7 @@ import {
 
 function makeTestContainerConfig(
 	registry: ChannelFactoryRegistry,
-	createBlobPayloadPending: boolean,
+	createBlobPayloadPending: true | undefined,
 ): ITestContainerConfig {
 	return {
 		runtimeOptions: {
@@ -95,7 +95,7 @@ const ContainerStateEventsOrErrors: ExpectedEvents = {
 	],
 };
 
-for (const createBlobPayloadPending of [false, true]) {
+for (const createBlobPayloadPending of [undefined, true] as const) {
 	describeCompat(
 		`blobs (createBlobPayloadPending: ${createBlobPayloadPending})`,
 		"FullCompat",

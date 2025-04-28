@@ -36,7 +36,7 @@ import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlob
 const mapId = "map";
 const directoryId = "directoryKey";
 
-for (const createBlobPayloadPending of [false, true]) {
+for (const createBlobPayloadPending of [undefined, true] as const) {
 	describeCompat(
 		`blob handle isAttached (createBlobPayloadPending: ${createBlobPayloadPending})`,
 		"NoCompat",
