@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-Move "Unsafe" `@system` types to `System_Unsafe` namespace
+"Unsafe" @system types moved to System_Unsafe namespace
 
 Working code conforming to the [rules regarding API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags#api-support-levels) should be unaffected, but this resolves an issue which required violating these rules and directly referencing `@system` types.
 
