@@ -58,8 +58,8 @@ export class LocalDocumentService
 	}
 
 	/**
-	 * The compatibility details of the Loader layer that is exposed to the Runtime layer
-	 * for validating Runtime-Loader compatibility.
+	 * The compatibility details of the Local Driver layer that is exposed to the Loader layer
+	 * for validating Loader-Driver compatibility.
 	 */
 	public get ILayerCompatDetails(): ILayerCompatDetails {
 		return localDriverCompatDetailsForLoader;
