@@ -39,10 +39,11 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluentui/react-components": "^9.47.5",
+		"@fluentui/react-icons": "^2.0.233",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluentui/react-components": "^9.47.5",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
