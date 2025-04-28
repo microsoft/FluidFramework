@@ -11,6 +11,7 @@ import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-sta
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { TreeViewConfiguration, SchemaFactory, type TreeView } from "@fluidframework/tree";
 import {
+	allowUnused,
 	asTreeViewAlpha,
 	SharedTree,
 	Tree,
@@ -302,9 +303,7 @@ for (const testOpts of testMatrix) {
 					// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 					nested: sf.optionalRecursive([() => Doll]),
 				}) {}
-				{
-					type _check = ValidateRecursiveSchema<typeof Doll>;
-				}
+				allowUnused<ValidateRecursiveSchema<typeof Doll>>();
 
 				const { container } = await client.createContainer(schema, "2");
 				await container.attach();
