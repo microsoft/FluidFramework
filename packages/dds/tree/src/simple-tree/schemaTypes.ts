@@ -97,9 +97,7 @@ export function isAnnotatedAllowedTypes(
 	allowedTypes: ImplicitAnnotatedAllowedTypes,
 ): allowedTypes is AnnotatedAllowedTypes {
 	return (
-		typeof allowedTypes === "object" &&
-		"metadata" in allowedTypes &&
-		"types" in allowedTypes
+		typeof allowedTypes === "object" && "metadata" in allowedTypes && "types" in allowedTypes
 	);
 }
 
