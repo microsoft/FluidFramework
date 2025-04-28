@@ -154,7 +154,7 @@ export function applyAgentEdit(
 						if (error instanceof Error) {
 							throw new UsageError(error.message);
 						}
-						throw new Error("The node provided for insertion is not valid");
+						throw error;
 					}
 
 					array.insertAt(index, insertNode as unknown as IterableTreeArrayContent<never>);
@@ -273,7 +273,7 @@ export function applyAgentEdit(
 					if (error instanceof Error) {
 						throw new UsageError(error.message);
 					}
-					throw new Error("The node provided for insertion is not valid");
+					throw error;
 				}
 				insertedObject = constructedModification;
 
