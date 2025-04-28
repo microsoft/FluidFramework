@@ -3,19 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-	TypedEventEmitter,
-	bufferToString,
-	createEmitter,
-	stringToBuffer,
-} from "@fluid-internal/client-utils";
+import { bufferToString, createEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
-	IEvent,
 	IEventProvider,
 	IFluidHandleContext,
 	IFluidHandleInternal,
@@ -131,7 +125,7 @@ export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
 	"attachState" | "connected" | "baseLogger" | "clientDetails" | "disposed"
 > &
-	TypedEventEmitter<IContainerRuntimeEvents>;
+	IEventProvider<IContainerRuntimeEvents>;
 
 type ICreateBlobResponseWithTTL = ICreateBlobResponse &
 	Partial<Record<"minTTLInSeconds", number>>;
@@ -160,14 +154,14 @@ export interface IPendingBlobs {
 	};
 }
 
-export interface IBlobManagerEvents extends IEvent {
-	(event: "noPendingBlobs", listener: () => void);
+export interface IBlobManagerEvents {
+	noPendingBlobs: () => void;
 }
 
-interface IBlobManagerInternalEvents extends IEvent {
-	(event: "uploadFailed", listener: (localId: string, error: unknown) => void);
-	(event: "handleAttached", listener: (pending: PendingBlob) => void);
-	(event: "processedBlobAttach", listener: (localId: string, storageId: string) => void);
+interface IBlobManagerInternalEvents {
+	uploadFailed: (localId: string, error: unknown) => void;
+	handleAttached: (pending: PendingBlob) => void;
+	processedBlobAttach: (localId: string, storageId: string) => void;
 }
 
 const stashedPendingBlobOverrides: Pick<
@@ -185,11 +179,11 @@ export const blobManagerBasePath = "_blobs" as const;
 export class BlobManager {
 	private readonly mc: MonitoringContext;
 
-	private readonly publicEvents = new TypedEventEmitter<IBlobManagerEvents>();
-	public get events(): IEventProvider<IBlobManagerEvents> {
+	private readonly publicEvents = createEmitter<IBlobManagerEvents>();
+	public get events(): Listenable<IBlobManagerEvents> {
 		return this.publicEvents;
 	}
-	private readonly internalEvents = new TypedEventEmitter<IBlobManagerInternalEvents>();
+	private readonly internalEvents = createEmitter<IBlobManagerInternalEvents>();
 
 	/**
 	 * Map of local IDs to storage IDs. Contains identity entries (storageId → storageId) for storage IDs. All requested IDs should
@@ -637,7 +631,7 @@ export class BlobManager {
 				// the promise but not throw any error outside.
 				this.pendingBlobs.get(localId)?.handleP.reject(error);
 				this.deletePendingBlob(localId);
-				this.internalEvents.emit("uploadFailed", localId);
+				this.internalEvents.emit("uploadFailed", localId, error);
 			},
 		);
 	}
@@ -776,8 +770,8 @@ export class BlobManager {
 		// set identity (id -> id) entry
 		this.setRedirection(blobId, blobId);
 
+		assert(localId !== undefined, 0x50e /* local ID not present in blob attach message */);
 		if (local) {
-			assert(localId !== undefined, 0x50e /* local ID not present in blob attach message */);
 			const waitingBlobs = this.opsInFlight.get(blobId);
 			if (waitingBlobs !== undefined) {
 				// For each op corresponding to this storage ID that we are waiting for, resolve the pending blob.
