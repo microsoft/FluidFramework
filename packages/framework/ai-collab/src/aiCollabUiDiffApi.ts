@@ -94,7 +94,7 @@ export interface ModifyDiff extends DiffBase {
 }
 
 /**
- * An object that describes the removal of a node from a tree.
+ * An object that describes the removal of one or more nodes from a tree.
  * @alpha
  */
 export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
