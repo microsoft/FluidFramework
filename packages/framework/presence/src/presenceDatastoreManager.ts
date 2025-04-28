@@ -90,10 +90,10 @@ interface ClientJoinMessage extends IInboundSignalMessage {
 	};
 }
 
-const ackknowledgementMessageType = "Pres:Ack";
+const acknowledgementMessageType = "Pres:Ack";
 
 interface AcknowledgementMessage extends IInboundSignalMessage {
-	type: typeof ackknowledgementMessageType;
+	type: typeof acknowledgementMessageType;
 	content: {
 		sendTimestamp: number;
 		avgLatency: number;
