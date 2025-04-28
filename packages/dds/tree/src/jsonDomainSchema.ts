@@ -3,12 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import {
-	SchemaFactory,
-	type AllowedTypes,
-	type FixRecursiveArraySchema,
-	type TreeNodeFromImplicitAllowedTypes,
-	type ValidateRecursiveSchema,
+import { SchemaFactory } from "./simple-tree/index.js";
+
+import type {
+	AllowedTypes,
+	FixRecursiveArraySchema,
+	TreeNodeFromImplicitAllowedTypes,
+	ValidateRecursiveSchema,
+	// #region Unused imports to make d.ts cleaner
+	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	System_Unsafe,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaClass,
+	NodeKind,
+	TreeNodeSchemaCore,
+	WithType,
+	LeafSchema,
+	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	// #endregion
 } from "./simple-tree/index.js";
 
 const sf = new SchemaFactory("com.fluidframework.json");
@@ -34,10 +46,10 @@ export namespace JsonAsTree {
 	 * @alpha
 	 */
 	export const Primitive = [
-		sf.null,
-		sf.boolean,
-		sf.number,
-		sf.string,
+		SchemaFactory.null,
+		SchemaFactory.number,
+		SchemaFactory.string,
+		SchemaFactory.boolean,
 	] as const satisfies AllowedTypes;
 
 	/**
@@ -51,9 +63,14 @@ export namespace JsonAsTree {
 	 * ```typescript
 	 * const tree = TreeAlpha.importConcise(JsonAsTree.Union, { example: { nested: true }, value: 5 });
 	 * ```
+	 * @privateRemarks
+	 * The order here should not matter for any functionality related reasons.
+	 * In an attempt to improve readability of derived types (in errors, api-reports, IntelliSense etc.)
+	 * and possibly reduce incremental build related order dependence issues,
+	 * the simpler non-recursive types are listed first, followed by the recursive types.
 	 * @alpha
 	 */
-	export const Tree = [() => JsonObject, () => Array, ...Primitive] as const;
+	export const Tree = [...Primitive, () => JsonObject, () => Array] as const;
 
 	/**
 	 * @alpha

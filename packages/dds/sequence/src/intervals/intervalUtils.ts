@@ -7,10 +7,6 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
-	Client,
-	// eslint-disable-next-line import/no-deprecated
-	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
 	SequencePlace,
@@ -172,10 +168,6 @@ export interface ISerializableInterval extends IInterval {
 	getIntervalId(): string;
 }
 
-export type ISerializableIntervalPrivate<T extends ISerializableInterval> = T & {
-	propertyManager?: PropertiesManager;
-};
-
 /**
  * Represents a change that should be applied to an existing interval.
  * Changes can modify any of start/end/properties, with `undefined` signifying no change should be made.
@@ -214,40 +206,6 @@ export type CompressedSerializedInterval =
 			IntervalStickiness,
 	  ]
 	| [number | "start" | "end", number | "start" | "end", number, IntervalType, PropertySet];
-
-/**
- * @sealed
- * @deprecated The methods within have substitutions
- * @internal
- */
-export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
-	/**
-	 *
-	 * @param label - label of the interval collection this interval is being added to. This parameter is
-	 * irrelevant for transient intervals.
-	 * @param start - numerical start position of the interval
-	 * @param end - numerical end position of the interval
-	 * @param client - client creating the interval
-	 * @param intervalType - Type of interval to create. Default is SlideOnRemove
-	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
-	 * @param fromSnapshot - If this create came from loading a snapshot. Default is false.
-	 * @param startSide - The side on which the start position lays. See
-	 * {@link @fluidframework/merge-tree#SequencePlace} for additional context
-	 * @param endSide - The side on which the end position lays. See
-	 * {@link @fluidframework/merge-tree#SequencePlace} for additional context
-	 */
-	create(
-		label: string,
-		start: SequencePlace | undefined,
-		end: SequencePlace | undefined,
-		// eslint-disable-next-line import/no-deprecated
-		client: Client | undefined,
-		intervalType: IntervalType,
-		op?: ISequencedDocumentMessage,
-		fromSnapshot?: boolean,
-		useNewSlidingBehavior?: boolean,
-	): TInterval;
-}
 
 /**
  * Determines how an interval should expand when segments are inserted adjacent

@@ -9,19 +9,17 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
-import type { ISessionClient } from "../index.js";
+import type { Attendee, WorkspaceAddress } from "../index.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
 
-import {
-	Latest,
-	LatestMap,
-	Notifications,
-	type LatestMapValueManager,
-	type LatestValueManager,
-	type NotificationsManager,
+import type {
+	LatestRaw,
+	LatestMapRaw,
+	NotificationsManager,
 } from "@fluidframework/presence/alpha";
+import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
 
@@ -33,13 +31,13 @@ const attendeeUpdate = {
 		"client1": {
 			"rev": 0,
 			"timestamp": 0,
-			"value": "sessionId-1",
+			"value": "attendeeId-1",
 		},
 	},
 } as const;
 const latestUpdate = {
 	"latest": {
-		"sessionId-1": {
+		"attendeeId-1": {
 			"rev": 1,
 			"timestamp": 0,
 			"value": { x: 1, y: 1, z: 1 },
@@ -48,7 +46,7 @@ const latestUpdate = {
 } as const;
 const latestMapUpdate = {
 	"latestMap": {
-		"sessionId-1": {
+		"attendeeId-1": {
 			"rev": 1,
 			"items": {
 				"key1": {
@@ -67,7 +65,7 @@ const latestMapUpdate = {
 } as const;
 const latestUpdateRev2 = {
 	"latest": {
-		"sessionId-1": {
+		"attendeeId-1": {
 			"rev": 2,
 			"timestamp": 50,
 			"value": { x: 2, y: 2, z: 2 },
@@ -76,7 +74,7 @@ const latestUpdateRev2 = {
 } as const;
 const itemRemovedMapUpdate = {
 	"latestMap": {
-		"sessionId-1": {
+		"attendeeId-1": {
 			"rev": 2,
 			"items": {
 				"key2": {
@@ -89,7 +87,7 @@ const itemRemovedMapUpdate = {
 } as const;
 const itemRemovedAndItemUpdatedMapUpdate = {
 	"latestMap": {
-		"sessionId-1": {
+		"attendeeId-1": {
 			"rev": 2,
 			"items": {
 				"key2": {
@@ -107,7 +105,7 @@ const itemRemovedAndItemUpdatedMapUpdate = {
 };
 const itemUpdatedAndItemRemoveddMapUpdate = {
 	"latestMap": {
-		"sessionId-1": {
+		"attendeeId-1": {
 			"rev": 2,
 			"items": {
 				"key1": {
@@ -128,8 +126,8 @@ const latestMapItemRemovedAndLatestUpdate = {
 	itemRemovedMapUpdate,
 } as const;
 const notificationsUpdate = {
-	"notifications": {
-		"sessionId-1": {
+	"testEvents": {
+		"attendeeId-1": {
 			"rev": 0,
 			"timestamp": 0,
 			"value": { "name": "newId", "args": [42] },
@@ -144,8 +142,8 @@ describe("Presence", () => {
 		let logger: EventAndErrorTrackingLogger;
 		let clock: SinonFakeTimers;
 		let presence: ReturnType<typeof prepareConnectedPresence>;
-		let latest: LatestValueManager<{ x: number; y: number; z: number }>;
-		let latestMap: LatestMapValueManager<{ a: number; b: number } | { c: number; d: number }>;
+		let latest: LatestRaw<{ x: number; y: number; z: number }>;
+		let latestMap: LatestMapRaw<{ a: number; b: number } | { c: number; d: number }>;
 		let notificationManager: NotificationsManager<{ newId: (id: number) => void }>;
 
 		interface LatestMapValueExpected {
@@ -167,15 +165,12 @@ describe("Presence", () => {
 					expectedValue: LatestMapValueExpected;
 			  };
 
-		function verifyFinalState(
-			attendee: ISessionClient,
-			verifications: StateVerification[],
-		): void {
+		function verifyState(attendee: Attendee, verifications: StateVerification[]): void {
 			assert.ok(attendee, "Eventing does not reflect new attendee");
 			assert.strictEqual(
-				attendee.sessionId,
-				"sessionId-1",
-				"Eventing does not reflect new attendee's sessionId",
+				attendee.attendeeId,
+				"attendeeId-1",
+				"Eventing does not reflect new attendee's attendeeId",
 			);
 			assert.strictEqual(
 				attendee.getConnectionId(),
@@ -187,7 +182,7 @@ describe("Presence", () => {
 				switch (manager) {
 					case "latest": {
 						assert.deepEqual(
-							latest.clientValue(attendee).value,
+							latest.getRemote(attendee).value,
 							expectedValue,
 							"Eventing does not reflect latest value",
 						);
@@ -195,12 +190,12 @@ describe("Presence", () => {
 					}
 					case "latestMap": {
 						assert.deepEqual(
-							latestMap.clientValue(attendee).get("key1")?.value,
+							latestMap.getRemote(attendee).get("key1")?.value,
 							expectedValue.key1,
 							"Eventing does not reflect latest map value",
 						);
 						assert.deepEqual(
-							latestMap.clientValue(attendee).get("key2")?.value,
+							latestMap.getRemote(attendee).get("key2")?.value,
 							expectedValue.key2,
 							"Eventing does not reflect latest map value",
 						);
@@ -220,7 +215,7 @@ describe("Presence", () => {
 		beforeEach(() => {
 			logger = new EventAndErrorTrackingLogger();
 			runtime = new MockEphemeralRuntime(logger);
-			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+			presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
 		});
 
 		afterEach(function (done: Mocha.Done) {
@@ -250,42 +245,49 @@ describe("Presence", () => {
 		function setupSharedStatesWorkspace({
 			notifications,
 		}: { notifications?: true } = {}): void {
-			const states = presence.getStates("name:testWorkspace", {
-				latest: Latest({ x: 0, y: 0, z: 0 }),
-				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+			const statesWorkspace = presence.states.getWorkspace("name:testWorkspace", {
+				latest: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
+				latestMap: StateFactory.latestMap({
+					local: { key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } },
+				}),
 			});
-			latest = states.props.latest;
-			latestMap = states.props.latestMap;
+			latest = statesWorkspace.states.latest;
+			latestMap = statesWorkspace.states.latestMap;
 			if (notifications) {
-				const workspace: typeof states = states;
+				const workspace: typeof statesWorkspace = statesWorkspace;
 				workspace.add(
-					"notifications",
+					"testEvents",
 					Notifications<{ newId: (id: number) => void }>({
-						newId: (_client: ISessionClient, _id: number) => {},
+						newId: (_attendee: Attendee, _id: number) => {},
 					}),
 				);
-				notificationManager = workspace.props.notifications;
+				notificationManager = workspace.states.testEvents;
 			}
 		}
 
 		function setupMultipleStatesWorkspaces(): void {
-			const latestsStates = presence.getStates("name:testWorkspace1", {
-				latest: Latest({ x: 0, y: 0, z: 0 }),
+			const latestsStates = presence.states.getWorkspace("name:testWorkspace1", {
+				latest: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 			});
-			const latesetMapStates = presence.getStates("name:testWorkspace2", {
-				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+			const latesetMapStates = presence.states.getWorkspace("name:testWorkspace2", {
+				latestMap: StateFactory.latestMap({
+					local: { key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } },
+				}),
 			});
-			latest = latestsStates.props.latest;
-			latestMap = latesetMapStates.props.latestMap;
+			latest = latestsStates.states.latest;
+			latestMap = latesetMapStates.states.latestMap;
 		}
 
 		function setupNotificationsWorkspace(): void {
-			const notificationsWorkspace = presence.getNotifications("name:testWorkspace", {
-				notifications: Notifications<{ newId: (id: number) => void }>({
-					newId: (_client: ISessionClient, _id: number) => {},
-				}),
-			});
-			notificationManager = notificationsWorkspace.props.notifications;
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testWorkspace",
+				{
+					testEvents: Notifications<{ newId: (id: number) => void }>({
+						newId: (_attendee: Attendee, _id: number) => {},
+					}),
+				},
+			);
+			notificationManager = notificationsWorkspace.notifications.testEvents;
 		}
 
 		function processUpdates(valueManagerUpdates: Record<string, UpdateContent>): void {
@@ -306,8 +308,8 @@ describe("Presence", () => {
 			);
 		}
 
-		function getTestAttendee(): ISessionClient {
-			return presence.getAttendee("sessionId-1");
+		function getTestAttendee(): Attendee {
+			return presence.attendees.getAttendee("attendeeId-1");
 		}
 
 		describe("states workspace", () => {
@@ -319,7 +321,7 @@ describe("Presence", () => {
 				let atteendeeEventSpy: SinonSpy;
 
 				function verify(): void {
-					verifyFinalState(getTestAttendee(), [
+					verifyState(getTestAttendee(), [
 						{ manager: "latest", expectedValue: { x: 1, y: 1, z: 1 } },
 						{
 							manager: "latestMap",
@@ -350,10 +352,10 @@ describe("Presence", () => {
 					itemUpdatedEventSpy = spy(verify);
 					atteendeeEventSpy = spy(verify);
 
-					latest.events.on("updated", latestUpdatedEventSpy);
-					latestMap.events.on("updated", latestMapUpdatedEventSpy);
-					latestMap.events.on("itemUpdated", itemUpdatedEventSpy);
-					presence.events.on("attendeeJoined", atteendeeEventSpy);
+					latest.events.on("remoteUpdated", latestUpdatedEventSpy);
+					latestMap.events.on("remoteUpdated", latestMapUpdatedEventSpy);
+					latestMap.events.on("remoteItemUpdated", itemUpdatedEventSpy);
+					presence.attendees.events.on("attendeeConnected", atteendeeEventSpy);
 				}
 
 				it("'latest' update comes before 'latestMap' update in single workspace", async () => {
@@ -416,7 +418,7 @@ describe("Presence", () => {
 
 				describe("and 'latest' value updated", () => {
 					function verify(): void {
-						verifyFinalState(getTestAttendee(), [
+						verifyState(getTestAttendee(), [
 							{ manager: "latest", expectedValue: { x: 2, y: 2, z: 2 } },
 							{
 								manager: "latestMap",
@@ -429,9 +431,9 @@ describe("Presence", () => {
 						itemRemovedEventSpy = spy(verify);
 						latestUpdatedEventSpy = spy(verify);
 						latestMapUpdatedEventSpy = spy(verify);
-						latest.events.on("updated", latestUpdatedEventSpy);
-						latestMap.events.on("updated", latestMapUpdatedEventSpy);
-						latestMap.events.on("itemRemoved", itemRemovedEventSpy);
+						latest.events.on("remoteUpdated", latestUpdatedEventSpy);
+						latestMap.events.on("remoteUpdated", latestMapUpdatedEventSpy);
+						latestMap.events.on("remoteItemRemoved", itemRemovedEventSpy);
 					}
 
 					function assertSpies(): void {
@@ -488,7 +490,7 @@ describe("Presence", () => {
 
 				describe("and map item is updated", () => {
 					function verify(): void {
-						verifyFinalState(getTestAttendee(), [
+						verifyState(getTestAttendee(), [
 							{
 								manager: "latestMap",
 								expectedValue: { key1: { a: 2, b: 2 }, key2: undefined },
@@ -501,9 +503,9 @@ describe("Presence", () => {
 						latestMapUpdatedEventSpy = spy(verify);
 						itemUpdatedEventSpy = spy(verify);
 
-						latestMap.events.on("updated", latestMapUpdatedEventSpy);
-						latestMap.events.on("itemUpdated", itemUpdatedEventSpy);
-						latestMap.events.on("itemRemoved", itemRemovedEventSpy);
+						latestMap.events.on("remoteUpdated", latestMapUpdatedEventSpy);
+						latestMap.events.on("remoteItemUpdated", itemUpdatedEventSpy);
+						latestMap.events.on("remoteItemRemoved", itemRemovedEventSpy);
 					}
 
 					function assertSpies(): void {
@@ -564,7 +566,7 @@ describe("Presence", () => {
 			let latestMapSpy: SinonSpy;
 
 			function verify(): void {
-				verifyFinalState(getTestAttendee(), [
+				verifyState(getTestAttendee(), [
 					{ manager: "latest", expectedValue: { x: 1, y: 1, z: 1 } },
 					{
 						manager: "latestMap",
@@ -580,9 +582,9 @@ describe("Presence", () => {
 				latestMapSpy = spy(verify);
 
 				notificationManager.notifications.on("newId", notificationSpy);
-				latest.events.on("updated", latestSpy);
-				latestMap.events.on("updated", latestMapSpy);
-				presence.events.on("attendeeJoined", attendeeSpy);
+				latest.events.on("remoteUpdated", latestSpy);
+				latestMap.events.on("remoteUpdated", latestMapSpy);
+				presence.attendees.events.on("attendeeConnected", attendeeSpy);
 			}
 
 			function assertSpies(): void {
@@ -653,6 +655,86 @@ describe("Presence", () => {
 				processUpdates(workspace);
 				// Verify
 				assertSpies();
+			});
+
+			it("from unregistered workspace triggers 'workspaceActivated' event", async () => {
+				// Setup
+				notificationSpy = spy();
+				const workspaceActivatedEventSpy = spy((workspaceAddress: WorkspaceAddress) => {
+					// Once activated, register the notifications workspace and listener for it's event
+					const notificationsWorkspace = presence.notifications.getWorkspace(
+						workspaceAddress,
+						{
+							testEvents: Notifications<{ newId: (id: number) => void }>({
+								newId: (_attendee: Attendee, _id: number) => {},
+							}),
+						},
+					);
+					notificationsWorkspace.notifications.testEvents.notifications.on(
+						"newId",
+						notificationSpy,
+					);
+				});
+				presence.events.on("workspaceActivated", (workspaceAddress, type) => {
+					if (workspaceAddress === "name:testWorkspace" && type === "Notifications") {
+						workspaceActivatedEventSpy(workspaceAddress);
+					}
+				});
+				const workspace = {
+					"n:name:testWorkspace": notificationsUpdate,
+				};
+				// Act
+				processUpdates(workspace);
+
+				// Verify
+				assert.ok(
+					workspaceActivatedEventSpy.calledOnce,
+					"workspace activated event not fired",
+				);
+				assert.ok(
+					notificationSpy.calledOnce,
+					`notification event not fired exactly once ${notificationSpy.callCount}`,
+				);
+			});
+
+			it("from an unregistered workspace arrives with state updates", async () => {
+				setupMultipleStatesWorkspaces();
+
+				const initialWorkspaceUpdate = {
+					"s:name:testWorkspace1": latestUpdate,
+					"s:name:testWorkspace2": latestMapUpdate,
+				};
+				const secondWorkspaceUpdate = {
+					"s:name:testWorkspace1": latestUpdateRev2,
+					"n:name:testWorkspace": notificationsUpdate,
+					"s:name:testWorkspace2": itemUpdatedAndItemRemoveddMapUpdate,
+				};
+
+				presence.events.on("workspaceActivated", (_, type) => {
+					if (type === "Notifications") {
+						// Verify initial state maintains consistency
+						verifyState(getTestAttendee(), [
+							{ manager: "latest", expectedValue: { x: 1, y: 1, z: 1 } },
+							{
+								manager: "latestMap",
+								expectedValue: { key1: { a: 1, b: 1 }, key2: { c: 1, d: 1 } },
+							},
+						]);
+					}
+				});
+
+				// Act
+				processUpdates(initialWorkspaceUpdate);
+				processUpdates(secondWorkspaceUpdate);
+
+				// Verify
+				verifyState(getTestAttendee(), [
+					{ manager: "latest", expectedValue: { x: 2, y: 2, z: 2 } },
+					{
+						manager: "latestMap",
+						expectedValue: { key1: { a: 2, b: 2 }, key2: undefined },
+					},
+				]);
 			});
 		});
 	});

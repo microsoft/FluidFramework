@@ -4,11 +4,10 @@
  */
 
 export {
-	type ISharedTree,
 	type ITreePrivate,
 	type SharedTreeOptionsInternal,
 	type SharedTreeOptions,
-	SharedTree,
+	SharedTreeKernel,
 	getBranch,
 	type ForestType,
 	type SharedTreeContentSnapshot,
@@ -21,6 +20,7 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	exportSimpleSchema,
 } from "./sharedTree.js";
 
 export {
@@ -39,7 +39,11 @@ export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
 export { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
-export type { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.js";
+export type {
+	ISharedTreeEditor,
+	ISchemaEditor,
+	SharedTreeEditBuilder,
+} from "./sharedTreeEditBuilder.js";
 
 export {
 	treeApi as Tree,
@@ -54,3 +58,5 @@ export {
 	type ViewContent,
 	independentView,
 } from "./independentView.js";
+
+export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -21,7 +21,7 @@ import {
 	iterateCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { disposeSymbol, fail, getOrCreate } from "../../util/index.js";
+import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import {
 	FieldKinds,
 	MappedEditBuilder,
@@ -46,14 +46,7 @@ import {
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
-import {
-	LazyEntity,
-	anchorSymbol,
-	cursorSymbol,
-	forgetAnchorSymbol,
-	isFreedSymbol,
-	tryMoveCursorToAnchorSymbol,
-} from "./lazyEntity.js";
+import { LazyEntity } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 import { cursorForMapTreeField } from "../mapTreeCursor.js";
@@ -167,36 +160,36 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public get parent(): FlexTreeNode | undefined {
-		if (this[anchorSymbol].parent === undefined) {
+		if (this.anchor.parent === undefined) {
 			return undefined;
 		}
 
-		const cursor = this[cursorSymbol];
+		const cursor = this.cursor;
 		cursor.exitField();
 		const output = makeTree(this.context, cursor);
 		cursor.enterField(this.key);
 		return output;
 	}
 
-	protected override [tryMoveCursorToAnchorSymbol](
+	protected override tryMoveCursorToAnchor(
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.checkout.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
+		return this.context.checkout.forest.tryMoveCursorToField(this.anchor, cursor);
 	}
 
-	protected override [forgetAnchorSymbol](): void {
+	protected override forgetAnchor(): void {
 		this.offAfterDestroy?.();
-		if (this[anchorSymbol].parent === undefined) return;
-		this.context.checkout.forest.anchors.forget(this[anchorSymbol].parent);
+		if (this.anchor.parent === undefined) return;
+		this.context.checkout.forest.anchors.forget(this.anchor.parent);
 	}
 
 	public get length(): number {
-		return this[cursorSymbol].getFieldLength();
+		return this.cursor.getFieldLength();
 	}
 
 	public atIndex(index: number): FlexTreeUnknownUnboxed {
-		return inCursorNode(this[cursorSymbol], index, (cursor) =>
-			unboxedFlexNode(this.context, cursor, this[anchorSymbol]),
+		return inCursorNode(this.cursor, index, (cursor) =>
+			unboxedFlexNode(this.context, cursor, this.anchor),
 		);
 	}
 
@@ -207,9 +200,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			return undefined;
 		}
 
-		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
-			makeTree(this.context, cursor),
-		);
+		return inCursorNode(this.cursor, finalIndex, (cursor) => makeTree(this.context, cursor));
 	}
 
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
@@ -217,12 +208,12 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeNode> {
-		return iterateCursorField(this[cursorSymbol], (cursor) => makeTree(this.context, cursor));
+		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
 	}
 
 	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
-		return iterateCursorField(this[cursorSymbol], (cursor) =>
-			unboxedFlexNode(this.context, cursor, this[anchorSymbol]),
+		return iterateCursorField(this.cursor, (cursor) =>
+			unboxedFlexNode(this.context, cursor, this.anchor),
 		);
 	}
 
@@ -235,10 +226,10 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): NormalizedFieldUpPath {
-		if (!this[isFreedSymbol]()) {
+		if (!this.isFreed()) {
 			if (
 				// Only allow editing if we are the root document field...
-				(this.parent === undefined && this[anchorSymbol].fieldKey === rootFieldKey) ||
+				(this.parent === undefined && this.anchor.fieldKey === rootFieldKey) ||
 				// ...or are under a node in the document
 				(this.parent !== undefined &&
 					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument)

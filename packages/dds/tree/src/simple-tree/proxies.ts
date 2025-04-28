@@ -4,7 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
+import { fail } from "@fluidframework/core-utils/internal";
 import {
 	EmptyKey,
 	type IForestSubscription,
@@ -20,7 +20,7 @@ import {
 	type FlexTreeRequiredField,
 	type FlexTreeOptionalField,
 } from "../feature-libraries/index.js";
-import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
+import { type Mutable, isReadonlyArray } from "../util/index.js";
 import {
 	getKernel,
 	type TreeNode,

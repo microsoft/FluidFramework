@@ -96,6 +96,7 @@ export interface IDocumentSchemaFeatures {
 	compressionLz4: boolean;
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
+	createBlobPayloadPending: true | undefined;
 
 	/**
 	 * List of disallowed versions of the runtime.
@@ -227,6 +228,7 @@ const documentSchemaSupportedConfigs = {
 	idCompressorMode: new IdCompressorProperty(["delayed", "on"]),
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
+	createBlobPayloadPending: new TrueOrUndefined(),
 	disallowedVersions: new CheckVersions(),
 };
 
@@ -482,6 +484,7 @@ export class DocumentsSchemaController {
 				compressionLz4: boolToProp(features.compressionLz4),
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
+				createBlobPayloadPending: features.createBlobPayloadPending,
 				disallowedVersions: arrayToProp(features.disallowedVersions),
 			},
 		};
@@ -598,23 +601,6 @@ export class DocumentsSchemaController {
 				},
 			);
 		}
-	}
-
-	/**
-	 * Process document schema change message
-	 * Called by ContainerRuntime whenever it sees document schema messages.
-	 * @param content - content of the message
-	 * @param local - whether op is local
-	 * @param sequenceNumber - sequence number of the op
-	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
-	 * @deprecated It has been replaced by processDocumentSchemaMessages instead.
-	 */
-	public processDocumentSchemaOp(
-		content: IDocumentSchemaChangeMessage,
-		local: boolean,
-		sequenceNumber: number,
-	): boolean {
-		return this.processDocumentSchemaMessages([content], local, sequenceNumber);
 	}
 
 	/**

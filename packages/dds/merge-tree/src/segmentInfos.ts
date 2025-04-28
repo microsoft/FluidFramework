@@ -6,14 +6,19 @@
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber } from "./constants.js";
-import { ISegmentInternal, ISegmentPrivate, MergeBlock } from "./mergeTreeNodes.js";
-import type { ReferencePosition } from "./referencePositions.js";
+import {
+	ISegmentInternal,
+	ISegmentPrivate,
+	MergeBlock,
+	type ObliterateInfo,
+} from "./mergeTreeNodes.js";
+import type { InsertOperationStamp, OperationStamp, RemoveOperationStamp } from "./stamps.js";
 
 export interface StringToType {
 	"string": string;
 	"number": number;
 	"object": object;
-	"array": [];
+	"array": unknown[];
 	"boolean": boolean;
 }
 
@@ -46,25 +51,36 @@ export function propInstanceOf<P extends string, T>(
 /**
  * Contains insertion information associated to an {@link ISegment}.
  */
-export interface IInsertionInfo {
+export interface IHasInsertionInfo {
+	insert: InsertOperationStamp;
+}
+
+export interface ISegmentInsideObliterateInfo {
 	/**
-	 * Short clientId for the client that inserted this segment.
-	 */
-	clientId: number;
-	/**
-	 * Local seq at which this segment was inserted.
-	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
-	 * Once the segment is acked, this field is cleared.
+	 * Populated iff this segment was inserted into a range affected by concurrent obliterates at the time of its insertion.
+	 * Contains information about the 'most recent' (i.e. 'winning' in the sense below) obliterate.
 	 *
-	 * @privateRemarks
-	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
+	 * BEWARE: We have opted for a certain form of last-write wins (LWW) semantics for obliterates:
+	 * the client which last obliterated a range is considered to have "won ownership" of that range and may insert into it
+	 * without that insertion being obliterated by other clients' concurrent obliterates.
+	 *
+	 * Therefore, this field can be populated even if the segment has not been obliterated (i.e. is still visible).
+	 * This happens precisely when the segment was inserted by the same client that 'won' the obliterate (in a scenario where
+	 * a client first issues a sided obliterate impacting a range, then inserts into that range before the server has acked the obliterate).
+	 *
+	 * See the test case "obliterate with mismatched final states" for an example of such a scenario.
+	 *
+	 * TODO:AB#29553: This property is not persisted in the V1 summary, but it should be.
 	 */
-	localSeq?: number;
+	obliteratePrecedingInsertion?: ObliterateInfo;
 	/**
-	 * Seq at which this segment was inserted.
-	 * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
+	 * Populated iff this segment was inserted into a range concurrently removed by a local obliterate operation.
+	 * This field is unset once the newest such overlapping obliterate is acked, and allows recomputing {@link obliteratePrecedingInsertion}
+	 * if that local obliterate is resubmitted.
+	 *
+	 * TODO:AB#29553: This property is not persisted in the V1 summary, but it should be.
 	 */
-	seq: number;
+	insertionRefSeqStamp?: OperationStamp;
 }
 
 /**
@@ -73,10 +89,14 @@ export interface IInsertionInfo {
  * @param segmentLike - The segment-like object to convert.
  * @returns The insertion info object if the conversion is possible, otherwise undefined.
  */
-export const toInsertionInfo = (segmentLike: unknown): IInsertionInfo | undefined =>
-	hasProp(segmentLike, "clientId", "number") && hasProp(segmentLike, "seq", "number")
-		? segmentLike
+export const toInsertionInfo = (segmentLike: unknown): IHasInsertionInfo | undefined => {
+	return segmentLike !== undefined &&
+		hasProp(segmentLike, "insert", "object") &&
+		hasProp(segmentLike.insert, "clientId", "number") &&
+		hasProp(segmentLike.insert, "seq", "number")
+		? (segmentLike as IHasInsertionInfo)
 		: undefined;
+};
 
 /**
  * A type-guard which determines if the segment has insertion info, and
@@ -85,8 +105,13 @@ export const toInsertionInfo = (segmentLike: unknown): IInsertionInfo | undefine
  * @param segmentLike - The segment-like object to check.
  * @returns True if the segment has insertion info, otherwise false.
  */
-export const isInserted = (segmentLike: unknown): segmentLike is IInsertionInfo =>
+export const isInserted = (segmentLike: unknown): segmentLike is IHasInsertionInfo =>
 	toInsertionInfo(segmentLike) !== undefined;
+
+export const isInsideObliterate = (
+	segmentLike: unknown,
+): segmentLike is ISegmentInsideObliterateInfo =>
+	segmentLike !== undefined && hasProp(segmentLike, "obliteratePrecedingInsertion", "object");
 
 /**
  * Asserts that the segment has insertion info. Usage of this function should not produce a user facing error.
@@ -94,9 +119,9 @@ export const isInserted = (segmentLike: unknown): segmentLike is IInsertionInfo 
  * @param segmentLike - The segment-like object to check.
  * @throws Will throw an error if the segment does not have insertion info.
  */
-export const assertInserted: <T extends Partial<IInsertionInfo> | undefined>(
-	segmentLike: ISegmentInternal | Partial<IInsertionInfo> | T,
-) => asserts segmentLike is IInsertionInfo | Exclude<T, Partial<IInsertionInfo>> = (
+export const assertInserted: <T extends Partial<IHasInsertionInfo> | undefined>(
+	segmentLike: ISegmentInternal | Partial<IHasInsertionInfo> | T,
+) => asserts segmentLike is IHasInsertionInfo | Exclude<T, Partial<IHasInsertionInfo>> = (
 	segmentLike,
 ) =>
 	assert(
@@ -181,24 +206,15 @@ export const removeMergeNodeInfo: (nodeLike: IMergeNodeInfo) => asserts nodeLike
 	});
 
 /**
- * Contains removal information associated to an {@link ISegment}.
+ * Contains removal information associated with an {@link ISegment}.
+ *
+ * Segments can be removed concurrently by multiple clients.
  */
-export interface IRemovalInfo {
+export interface IHasRemovalInfo {
 	/**
-	 * Local seq at which this segment was removed, if the removal is yet-to-be acked.
+	 * Operation stamps which have removed this segment. This list is sorted by stamp order, where removes[0] is the earliest removal.
 	 */
-	localRemovedSeq?: number;
-	/**
-	 * Seq at which this segment was removed.
-	 */
-	removedSeq: number;
-	/**
-	 * List of client IDs that have removed this segment.
-	 * The client that actually removed the segment (i.e. whose removal op was sequenced first) is stored as the first
-	 * client in this list. Other clients in the list have all issued concurrent ops to remove the segment.
-	 * @remarks When this list has length \> 1, this is referred to as the "overlapping remove" case.
-	 */
-	removedClientIds: number[];
+	removes: RemoveOperationStamp[];
 }
 
 /**
@@ -207,11 +223,14 @@ export interface IRemovalInfo {
  * @param segmentLike - The segment-like object to convert.
  * @returns The removal info object if the conversion is possible, otherwise undefined.
  */
-export const toRemovalInfo = (segmentLike: unknown): IRemovalInfo | undefined =>
-	hasProp(segmentLike, "removedClientIds", "array") &&
-	hasProp(segmentLike, "removedSeq", "number")
-		? segmentLike
+export const toRemovalInfo = (segmentLike: unknown): IHasRemovalInfo | undefined => {
+	return hasProp(segmentLike, "removes", "array") &&
+		segmentLike.removes.length > 0 &&
+		hasProp(segmentLike.removes[0], "clientId", "number") &&
+		hasProp(segmentLike.removes[0], "seq", "number")
+		? (segmentLike as IHasRemovalInfo)
 		: undefined;
+};
 
 /**
  * A type-guard which determines if the segment has removal info, and
@@ -220,7 +239,10 @@ export const toRemovalInfo = (segmentLike: unknown): IRemovalInfo | undefined =>
  * @param segmentLike - The segment-like object to check.
  * @returns True if the segment has removal info, otherwise false.
  */
-export const isRemoved = (segmentLike: unknown): segmentLike is IRemovalInfo =>
+// export const isRemoved = (segmentLike: unknown): segmentLike is IHasRemovalInfo =>
+// 	toRemovalInfo(segmentLike) !== undefined;
+
+export const isRemoved = (segmentLike: unknown): segmentLike is IHasRemovalInfo =>
 	toRemovalInfo(segmentLike) !== undefined;
 
 /**
@@ -229,9 +251,11 @@ export const isRemoved = (segmentLike: unknown): segmentLike is IRemovalInfo =>
  * @param segmentLike - The segment-like object to check.
  * @throws Will throw an error if the segment does not have removal info.
  */
-export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
-	segmentLike: ISegmentInternal | Partial<IRemovalInfo> | T,
-) => asserts segmentLike is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (segmentLike) =>
+export const assertRemoved: <T extends Partial<IHasRemovalInfo> | undefined>(
+	segmentLike: ISegmentInternal | Partial<IHasRemovalInfo> | T,
+) => asserts segmentLike is IHasRemovalInfo | Exclude<T, Partial<IHasRemovalInfo>> = (
+	segmentLike,
+) =>
 	assert(segmentLike === undefined || isRemoved(segmentLike), 0xaa2 /* must be removalInfo */);
 
 /**
@@ -241,83 +265,15 @@ export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
  * ensures no further usage of the removed removal info is allowed. if continued use is required other
  * type coercion methods should be use to correctly re-type the variable.
  */
-export const removeRemovalInfo: (nodeLike: IRemovalInfo) => asserts nodeLike is never = (
-	nodeLike,
-) =>
-	Object.assign<IRemovalInfo, Record<keyof IRemovalInfo, undefined>>(nodeLike, {
-		localRemovedSeq: undefined,
-		removedClientIds: undefined,
-		removedSeq: undefined,
+export const removeRemovalInfo: (
+	nodeLike: IHasRemovalInfo,
+) => asserts nodeLike is Record<keyof IHasRemovalInfo, never> = (nodeLike) =>
+	Object.assign<IHasRemovalInfo, Record<keyof IHasRemovalInfo, undefined>>(nodeLike, {
+		removes: undefined,
 	});
 
 /**
- * Tracks information about when and where this segment was moved to.
- *
- * Note that merge-tree does not currently support moving and only supports
- * obliterate. The fields below include "move" in their names to avoid renaming
- * in the future, when moves _are_ supported.
- */
-export interface IMoveInfo {
-	/**
-	 * Local seq at which this segment was moved if the move is yet-to-be
-	 * acked.
-	 */
-	localMovedSeq?: number;
-
-	/**
-	 * The first seq at which this segment was moved.
-	 */
-	movedSeq: number;
-
-	/**
-	 * All seqs at which this segment was moved. In the case of overlapping,
-	 * concurrent moves this array will contain multiple seqs.
-	 *
-	 * The seq at  `movedSeqs[i]` corresponds to the client id at `movedClientIds[i]`.
-	 *
-	 * The first element corresponds to the seq of the first move
-	 */
-	movedSeqs: number[];
-
-	/**
-	 * A reference to the inserted destination segment corresponding to this
-	 * segment's move.
-	 *
-	 * If undefined, the move was an obliterate.
-	 *
-	 * Currently this field is unused, as we only support obliterate operations
-	 */
-	moveDst?: ReferencePosition;
-
-	/**
-	 * List of client IDs that have moved this segment.
-	 *
-	 * The client that actually moved the segment (i.e. whose move op was sequenced
-	 * first) is stored as the first client in this list. Other clients in the
-	 * list have all issued concurrent ops to move the segment.
-	 */
-	movedClientIds: number[];
-}
-
-export const toMoveInfo = (segmentLike: unknown): IMoveInfo | undefined =>
-	hasProp(segmentLike, "movedClientIds", "array") &&
-	hasProp(segmentLike, "movedSeq", "number") &&
-	hasProp(segmentLike, "movedSeqs", "array")
-		? segmentLike
-		: undefined;
-
-/**
- * A type-guard which determines if the segment has move info, and
- * returns true if it does, along with applying strong typing.
- *
- * @param segmentLike - The segment-like object to check.
- * @returns True if the segment has move info, otherwise false.
- */
-export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
-	toMoveInfo(segmentLike) !== undefined;
-
-/**
- * Returns whether this segment was marked moved as soon as its insertion was acked.
+ * Returns whether this segment was marked removed as soon as its insertion was acked.
  *
  * This can happen when an an insert occurs concurrent to an obliterate over the range the segment was inserted into,
  * and the obliterate was sequenced first.
@@ -325,32 +281,25 @@ export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
  * When this happens, the segment is only ever visible to the client that inserted the segment
  * (and only until that client has seen the obliterate which removed their segment).
  */
-export function wasMovedOnInsert(segment: IInsertionInfo & ISegmentPrivate): boolean {
-	const moveInfo = toMoveInfo(segment);
-	const movedSeq = moveInfo?.movedSeq;
-	if (movedSeq === undefined || movedSeq === UnassignedSequenceNumber) {
+export function wasRemovedOnInsert(segment: IHasInsertionInfo & ISegmentPrivate): boolean {
+	const removeInfo = toRemovalInfo(segment);
+	const removedSeq = removeInfo?.removes[0].seq;
+	if (removedSeq === undefined || removedSeq === UnassignedSequenceNumber) {
 		return false;
 	}
 
-	const insertSeq = segment.seq;
-	return insertSeq === UnassignedSequenceNumber || insertSeq > movedSeq;
+	const insertSeq = segment.insert.seq;
+	return insertSeq === UnassignedSequenceNumber || insertSeq > removedSeq;
 }
-
-/**
- * Asserts that the segment has move info. Usage of this function should not produce a user facing error.
- *
- * @param segmentLike - The segment-like object to check.
- * @throws Will throw an error if the segment does not have move info.
- */
-export const assertMoved: <T extends Partial<IMoveInfo> | undefined>(
-	segmentLike: ISegmentInternal | Partial<IMoveInfo> | T,
-) => asserts segmentLike is IMoveInfo | Exclude<T, Partial<IMoveInfo>> = (segmentLike) =>
-	assert(segmentLike === undefined || isMoved(segmentLike), 0xaa3 /* must be moveInfo */);
 
 /**
  * A union type representing any segment info.
  */
-export type SegmentInfo = IMergeNodeInfo | IInsertionInfo | IMoveInfo | IRemovalInfo;
+export type SegmentInfo =
+	| IMergeNodeInfo
+	| IHasInsertionInfo
+	| IHasRemovalInfo
+	| ISegmentInsideObliterateInfo;
 
 /**
  * A type representing a segment with additional info.

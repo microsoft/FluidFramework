@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import type { TreeValue } from "../../../core/index.js";
-import { fail } from "../../../util/index.js";
 import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
 
 import {

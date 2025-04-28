@@ -59,6 +59,7 @@ import {
 	VisibilityState,
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -107,17 +108,6 @@ export class MockDeltaConnection implements IDeltaConnection {
 	public setConnectionState(connected: boolean) {
 		this._connected = connected;
 		this.handler?.setConnectionState(connected);
-	}
-
-	/**
-	 * @deprecated - This has been replaced by processMessages
-	 */
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		this.handler?.process(message, local, localOpMetadata);
 	}
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
@@ -192,6 +182,7 @@ const makeContainerRuntimeOptions = (
 export interface IInternalMockRuntimeMessage {
 	content: any;
 	localOpMetadata?: unknown;
+	referenceSequenceNumber?: number;
 }
 
 /**
@@ -270,6 +261,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		const message: IInternalMockRuntimeMessage = {
 			content: messageContent,
 			localOpMetadata,
+			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 		};
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
@@ -419,6 +411,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			};
 			return {
 				content: allocationOp,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			};
 		}
 		return undefined;
@@ -430,7 +423,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			{
 				clientSequenceNumber,
 				contents: message.content,
-				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				referenceSequenceNumber:
+					message.referenceSequenceNumber ?? this.deltaManager.lastSequenceNumber,
 				type: MessageType.Operation,
 			},
 		]);
@@ -444,7 +438,14 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		if (this.isAllocationMessage(message.contents)) {
 			this.finalizeIdRange(message.contents.contents);
 		} else {
-			this.dataStoreRuntime.process(message, local, localOpMetadata);
+			const messagesContent: IRuntimeMessagesContent[] = [
+				{
+					contents: message.contents,
+					clientSequenceNumber: message.clientSequenceNumber,
+					localOpMetadata,
+				},
+			];
+			this.dataStoreRuntime.processMessages({ envelope: message, local, messagesContent });
 		}
 	}
 
@@ -840,6 +841,8 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 	}
+	private readonly: boolean = false;
+	public readonly isReadOnly = () => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
@@ -929,6 +932,11 @@ export class MockFluidDataStoreRuntime
 		return factory.create(this, id ?? uuid());
 	}
 
+	/**
+	 * @remarks This is for internal use only.
+	 */
+	public ILayerCompatDetails?: unknown;
+
 	public addChannel(channel: IChannel): void {}
 
 	public get isAttached(): boolean {
@@ -1008,36 +1016,12 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	/**
-	 * @deprecated - This has been replaced by processMessages
-	 */
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		this.deltaConnections.forEach((dc) => {
-			dc.process(message, local, localOpMetadata);
-		});
-	}
-
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		if (this.disposed) {
+			return;
+		}
 		this.deltaConnections.forEach((dc) => {
-			if (dc.processMessages !== undefined) {
-				dc.processMessages(messageCollection);
-			} else {
-				for (const {
-					contents,
-					localOpMetadata,
-					clientSequenceNumber,
-				} of messageCollection.messagesContent) {
-					dc.process(
-						{ ...messageCollection.envelope, contents, clientSequenceNumber },
-						messageCollection.local,
-						localOpMetadata,
-					);
-				}
-			}
+			dc.processMessages(messageCollection);
 		});
 	}
 
@@ -1055,6 +1039,10 @@ export class MockFluidDataStoreRuntime
 		}
 		this.deltaConnections.forEach((dc) => dc.setConnectionState(connected));
 		return;
+	}
+
+	public notifyReadOnlyState(readonly: boolean): void {
+		this.readonly = readonly;
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
