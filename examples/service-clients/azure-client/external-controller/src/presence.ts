@@ -37,7 +37,11 @@ export interface DiceValues {
 const statesSchema = {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	lastRoll: StateFactory.latest({ local: {} as DiceValues }),
-	lastDiceRolls: StateFactory.latestMap<{ value: DieValue }, `die${number}`>(),
+
+	lastDiceRolls: StateFactory.latestMap<{ value: DieValue }, `die${number}`>({
+		// TODO: Why is the typing wrong if the arguments are completely omitted?
+		validator: undefined,
+	}),
 } satisfies StatesWorkspaceSchema;
 
 export type DicePresence = StatesWorkspace<typeof statesSchema>;

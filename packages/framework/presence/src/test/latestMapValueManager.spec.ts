@@ -15,6 +15,7 @@ import type {
 	LatestMapRaw,
 	LatestMapItemUpdatedClientData,
 	Presence,
+	RawValueAccessor,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
 
@@ -160,7 +161,7 @@ export function checkCompiles(): void {
 		key,
 		value,
 	}: Pick<
-		LatestMapItemUpdatedClientData<T, string | number>,
+		LatestMapItemUpdatedClientData<T, string | number, RawValueAccessor<T>>,
 		"attendee" | "key" | "value"
 	>): void {
 		console.log(attendee.attendeeId, key, value);
