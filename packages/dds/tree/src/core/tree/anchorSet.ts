@@ -105,18 +105,6 @@ export interface AnchorEvents {
 	childrenChanging(anchor: AnchorNode): void;
 
 	/**
-	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if one or more of this node's
-	 * direct children just changed due to updates from the batch.
-	 *
-	 * @remarks
-	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this
-	 * node's fields.
-	 *
-	 * Compare to {@link AnchorEvents.childrenChangedAfterBatch} which is emitted after the whole batch has been applied.
-	 */
-	childrenChanged(anchor: AnchorNode): void;
-
-	/**
 	 * Emitted after a batch of changes has been applied (i.e. when a delta visit completes), if one or more of this node's
 	 * direct children changed due to updates from the batch.
 	 *
@@ -133,36 +121,6 @@ export interface AnchorEvents {
 	}): void;
 
 	/**
-	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
-	 * rooted at `anchor` _may_ be about to change due to updates from the batch.
-	 *
-	 * @remarks
-	 * Called on every parent (transitively) when a change is occurring.
-	 */
-	subtreeChanging(anchor: AnchorNode): void;
-
-	/**
-	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
-	 * rooted at `anchor` _may_ have just changed due to updates from the batch.
-	 *
-	 * @remarks
-	 * While this event is always emitted in the presence of changes to the subtree,
-	 * it may also be emitted even though no changes have been made to the subtree.
-	 * It may be emitted multiple times within the application of a single edit or transaction.
-	 *
-	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well, at
-	 * least once on each ancestor.
-	 *
-	 * Compare to {@link AnchorEvents.subtreeChangedAfterBatch} which is emitted after the whole batch has been applied.
-	 *
-	 * @privateRemarks
-	 * The delta visit algorithm is complicated and it may fire this event multiple times for the same change to a node.
-	 * The change to the tree may not be visible until the event fires for the last time.
-	 * Refer to the documentation of the delta visit algorithm for more details.
-	 */
-	subtreeChanged(anchor: AnchorNode): void;
-
-	/**
 	 * Emitted after a batch of changes has been applied (i.e. when a delta visit completes), if something in the subtree
 	 * rooted at `anchor` changed due to updates from the batch.
 	 *
@@ -170,13 +128,6 @@ export interface AnchorEvents {
 	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well, from bottom to top.
 	 *
 	 * This event is guaranteed to be emitted on a given node only once per batch.
-	 *
-	 * Compare to {@link AnchorEvents.subtreeChanged} which is emitted in the middle of the batch/delta-visit.
-	 *
-	 * @privateRemarks
-	 * Note that because this is fired after the full batch of changes is applied, it guarantees that something in the
-	 * subtree changed, compared to {@link AnchorEvents.subtreeChanged} or {@link AnchorEvents.subtreeChanging} which
-	 * fire when something _may_ have changed or _may_ be about to change.
 	 */
 	subtreeChangedAfterBatch(): void;
 }
@@ -192,11 +143,6 @@ export interface AnchorEvents {
  * - Add more events.
  */
 export interface AnchorSetRootEvents {
-	/**
-	 * What children are at the root is changing.
-	 */
-	childrenChanging(anchors: AnchorSet): void;
-
 	/**
 	 * Something in the tree is changing.
 	 */
@@ -798,10 +744,7 @@ export class AnchorSet implements AnchorLocator {
 				}
 			},
 			notifyChildrenChanging(): void {
-				this.maybeWithNode(
-					(p) => p.events.emit("childrenChanging", p),
-					() => this.anchorSet.#events.emit("childrenChanging", this.anchorSet),
-				);
+				this.maybeWithNode((p) => p.events.emit("childrenChanging", p));
 			},
 			notifyChildrenChanged(): void {
 				this.maybeWithNode(
@@ -810,7 +753,6 @@ export class AnchorSet implements AnchorLocator {
 							this.parentField !== undefined,
 							0xa24 /* Must be in a field to modify its contents */,
 						);
-						p.events.emit("childrenChanged", p);
 						this.bufferedEvents.push({
 							node: p,
 							event: "childrenChangedAfterBatch",
@@ -909,17 +851,12 @@ export class AnchorSet implements AnchorLocator {
 					parentIndex: index,
 				};
 				this.parentField = undefined;
-				this.maybeWithNode((p) => {
-					p.events.emit("subtreeChanging", p);
-				});
 				this.currentDepth++;
 			},
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
 					this.maybeWithNode((p) => {
-						p.events.emit("subtreeChanged", p);
-
 						this.bufferedEvents.push({
 							node: p,
 							event: "subtreeChangedAfterBatch",

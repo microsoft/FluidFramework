@@ -446,11 +446,10 @@ describe("AnchorSet", () => {
 		});
 	});
 
-	it("triggers childrenChanging, childrenChanged, treeChanging, subtreeChanging, and afterDestroy callbacks", () => {
+	it("triggers childrenChanging, treeChanging, and afterDestroy callbacks", () => {
 		// AnchorSet does not guarantee event ordering within a batch so use UnorderedTestLogger.
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
-		anchors.events.on("childrenChanging", log.logger("root childrenChange"));
 		anchors.events.on("treeChanging", log.logger("root treeChange"));
 
 		const detachMark: DeltaMark = {
@@ -471,8 +470,6 @@ describe("AnchorSet", () => {
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 
 		node0.events.on("childrenChanging", log.logger("childrenChanging"));
-		node0.events.on("childrenChanged", log.logger("childrenChanged"));
-		node0.events.on("subtreeChanging", log.logger("subtreeChange"));
 		node0.events.on("afterDestroy", log.logger("afterDestroy"));
 
 		log.expect([]);
