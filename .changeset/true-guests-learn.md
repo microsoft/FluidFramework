@@ -8,8 +8,8 @@ Improve handling of deleted nodes
 [TreeNodes](https://fluidframework.com/docs/api/fluid-framework/treenode-class) which are [deleted](https://fluidframework.com/docs/api/fluid-framework/treestatus-enum#deleted-enummember) were not handled correctly.
 This has been improved in two ways:
 
-1. Accessing fields of deleted nodes now consistently throws a usage error indicating that this is invalid.
-Previously this would throw an assertion error, which was a bug.
-2. When a `TreeNode` is deleted, but the node still exists within the [`ITree`](https://fluidframework.com/docs/api/driver-definitions/itree-interface), then becomes accessible again later, now a new `TreeNode` is allocated instead of trying to reuse the deleted one.
+1. Accessing fields of deleted nodes now consistently throws a usage error indicating that doing so is invalid.
+Previously, this would throw an assertion error, which was a bug.
+2. When a `TreeNode` is deleted, but that node still exists within the [`ITree`](https://fluidframework.com/docs/api/driver-definitions/itree-interface), then becomes accessible again later, a new `TreeNode` is now allocated instead of trying to reuse the deleted one.
 Note that this can only happen when the entire view of the `ITree` is disposed then recreated.
 This happens when disposing and recreating a [TreeView](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) or when the contents of the view are disposed due to being out of schema (another client did a schema upgrade), then brought back into schema (the schema upgrade was undone).

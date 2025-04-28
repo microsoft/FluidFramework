@@ -2,7 +2,6 @@
 "@fluidframework/presence": minor
 "__section": other
 ---
-
 Presence APIs have been renamed
 
 The following API changes have been made to improve clarity and consistency:
@@ -59,4 +58,5 @@ The following API changes have been made to improve clarity and consistency:
 | `ValueMap` | `StateMap` |
 
 > [!NOTE]
-> To fully replace the former `Latest` and `LatestMap` functions, you should import `StateFactory` and call `StateFactory.latest` and `StateFactory.latestMap` respectively. The new `LatestRaw` and `LatestMapRaw` APIs replace `LatestValueManager` and `LatestMapValueManager` respectively.
+> To fully replace the former `Latest` and `LatestMap` functions, you should import `StateFactory` and call `StateFactory.latest` and `StateFactory.latestMap` respectively.
+> The new `LatestRaw` and `LatestMapRaw` APIs replace `LatestValueManager` and `LatestMapValueManager` respectively.

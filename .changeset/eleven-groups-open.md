@@ -2,10 +2,11 @@
 "@fluidframework/presence": minor
 "__section": other
 ---
-StateFactory.latest/latestMap now takes an object as its only argument
+StateFactory.latest/latestMap take an object as its only argument
 
-The `StateFactory.latest` and `StateFactory.latestMap` functions now take a single object argument. To convert existing
-code, pass any initial data in the `local` argument, and broadcast settings in the `settings` argument. For example:
+The `StateFactory.latest` and `StateFactory.latestMap` functions now take a single object argument.
+To convert existing code, pass any initial data in the `local` argument and broadcast settings in the `settings` argument.
+For example:
 
 Before:
 
