@@ -51,7 +51,7 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 export function TaskCard(props: {
 	sharedTreeBranch: TreeView<typeof SharedTreeAppState>;
-	uiDiffs?: Diff[];
+	readonly uiDiffs: readonly Diff[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 	sharedTreeTask: SharedTreeTask;
 }): JSX.Element {
