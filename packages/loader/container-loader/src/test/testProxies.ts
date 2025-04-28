@@ -72,6 +72,8 @@ export function createTestCodeLoaderProxy(props?: {
 									getPendingLocalState: () => ({
 										pending: [],
 									}),
+									disposed: false,
+									setConnectionState: () => {},
 									ILayerCompatDetails: props?.layerCompatDetails,
 								});
 							},
