@@ -413,10 +413,10 @@ export interface ContainerRuntimeOptions {
 	readonly explicitSchemaControl: boolean;
 
 	/**
-	 * Create blob handles with pending payloads when calling createBlob (default is false).
-	 * When enabled, createBlob will return a handle before the blob upload completes.
+	 * Create blob handles with pending payloads when calling createBlob (default is `undefined` (disabled)).
+	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
 	 */
-	readonly createBlobPayloadPending: boolean;
+	readonly createBlobPayloadPending: true | undefined;
 }
 
 /**
