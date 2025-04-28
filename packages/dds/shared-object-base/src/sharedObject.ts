@@ -145,7 +145,7 @@ export abstract class SharedObjectCore<
 
 		assert(!id.includes("/"), 0x304 /* Id cannot contain slashes */);
 
-		this.handle = new SharedObjectHandle(this, id, runtime.IFluidHandleContext);
+		this.handle = new SharedObjectHandle(this, id, runtime);
 
 		this.logger = createChildLogger({
 			logger: runtime.logger,

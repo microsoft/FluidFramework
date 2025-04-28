@@ -36,7 +36,7 @@ export enum ContainerMessageType {
 export interface ContainerRuntimeOptions {
     readonly chunkSizeInBytes: number;
     readonly compressionOptions: ICompressionRuntimeOptions;
-    readonly createBlobPayloadPending: boolean;
+    readonly createBlobPayloadPending: true | undefined;
     // @deprecated
     readonly enableGroupedBatching: boolean;
     readonly enableRuntimeIdCompressor: IdCompressorMode;

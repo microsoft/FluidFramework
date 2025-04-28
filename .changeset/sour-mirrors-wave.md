@@ -2,7 +2,6 @@
 "@fluidframework/presence": minor
 "__section": other
 ---
-
 Presence APIs have been renamed
 
 The following API changes have been made to improve clarity and consistency:
