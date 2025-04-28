@@ -90,9 +90,19 @@ interface ClientJoinMessage extends IInboundSignalMessage {
 	};
 }
 
+const ackknowledgementMessageType = "Pres:Ack";
+
+interface AcknowledgementMessage extends IInboundSignalMessage {
+	type: typeof ackknowledgementMessageType;
+	content: {
+		sendTimestamp: number;
+		avgLatency: number;
+	};
+}
+
 function isPresenceMessage(
 	message: IInboundSignalMessage,
-): message is DatastoreUpdateMessage | ClientJoinMessage {
+): message is DatastoreUpdateMessage | ClientJoinMessage | AcknowledgementMessage {
 	return message.type.startsWith("Pres:");
 }
 /**
@@ -356,7 +366,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// IExtensionMessage is a subset of IInboundSignalMessage so this is safe.
 		// Change types of DatastoreUpdateMessage | ClientJoinMessage to
 		// IExtensionMessage<> derivatives to see the issues.
-		message: IInboundSignalMessage | DatastoreUpdateMessage | ClientJoinMessage,
+		message:
+			| IInboundSignalMessage
+			| DatastoreUpdateMessage
+			| ClientJoinMessage
+			| AcknowledgementMessage,
 		local: boolean,
 	): void {
 		const received = Date.now();
@@ -390,6 +404,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 			// It is okay to continue processing the contained updates even if we are not
 			// connected.
+		} else if (message.type === ackknowledgementMessageType) {
+			// TODO: Handle acknowledgement message type once implemented.
+			return;
 		} else {
 			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);
 			if (message.content.isComplete) {
