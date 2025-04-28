@@ -121,9 +121,15 @@ export interface IFluidHandleInternalPayloadPending<
 /**
  * The state of the handle's payload.
  * - "local" - The payload is only available to the local client, and not to remote collaborators
- * - "shared" - The payload is availabe to both the local client and remote collaborators
+ * - "shared" - The payload is available to both the local client and remote collaborators
  * - "pending" - The payload is not yet available to the local client
  * - "failed" - The payload is available to the local client but has failed in sharing to remote collaborators
+ *
+ * @remarks
+ * The client generating the payload will observe the handle start with "local" state and see a transition
+ * of "local" -> "shared" in the case of successful sharing, or "local" -> "failed" in the case of failed sharing.
+ *
+ * Receiving clients will see a transition of "pending" -> "shared" when the payload has been shared.
  * @legacy
  * @alpha
  */
