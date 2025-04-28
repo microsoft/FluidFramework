@@ -367,10 +367,10 @@ export interface PlanningPromptStarted extends EventFlowDebugEvent {
 }
 
 // @alpha
-export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
+export type RemoveDiff = RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
 
 // @alpha
-export interface RemoveFieldDiff extends DiffBase {
+export interface RemoveNodeDiff extends DiffBase {
     nodeContent: unknown;
     nodePath: NodePath;
     // (undocumented)

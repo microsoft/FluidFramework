@@ -30,8 +30,8 @@ import type {
 	MoveRangeDiff,
 	MoveSingleDiff,
 	NodePath,
-	RemoveFieldDiff,
-	// RemoveFieldDiff,
+	RemoveNodeDiff,
+	// RemoveNodeDiff,
 } from "../../aiCollabUiDiffApi.js";
 import {
 	applyAgentEdit,
@@ -1733,7 +1733,7 @@ describe("Diff Creation", () => {
 			};
 			const expectedNodeContent: unknown = JSON.parse(JSON.stringify(optionalFieldObject));
 			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
-			const expectedUiDiff: RemoveFieldDiff = {
+			const expectedUiDiff: RemoveNodeDiff = {
 				type: "remove",
 				subType: "remove-field",
 				nodePath: [

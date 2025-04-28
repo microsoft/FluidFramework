@@ -97,13 +97,13 @@ export interface ModifyDiff extends DiffBase {
  * An object that describes the removal of one or more nodes from a tree.
  * @alpha
  */
-export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
+export type RemoveDiff = RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
 
 /**
  * An object that describes a field being removed from a SharedTree.
  * @alpha
  */
-export interface RemoveFieldDiff extends DiffBase {
+export interface RemoveNodeDiff extends DiffBase {
 	type: "remove";
 	subType: "remove-field";
 	/**

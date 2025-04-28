@@ -63,7 +63,7 @@ export {
 	type InsertDiff,
 	type ModifyDiff,
 	type RemoveDiff,
-	type RemoveFieldDiff,
+	type RemoveNodeDiff,
 	type ArraySingleRemoveDiff,
 	type ArrayRangeRemoveDiff,
 	type MoveDiff,

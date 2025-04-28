@@ -31,7 +31,7 @@ import type {
 	MoveRangeDiff,
 	MoveSingleDiff,
 	NodePath,
-	RemoveFieldDiff,
+	RemoveNodeDiff,
 	Diff,
 } from "../aiCollabUiDiffApi.js";
 
@@ -171,7 +171,7 @@ export function applyAgentEdit(
 		}
 		case "remove": {
 			const source = treeEdit.source;
-			let uiDiff: RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
+			let uiDiff: RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
 			if (isObjectTarget(source)) {
 				const node = getNodeFromTarget(source, idGenerator);
 				const parentNode = Tree.parent(node);
@@ -696,7 +696,7 @@ function createModifyUiDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyD
 function createRemoveUiDiff(
 	treeEdit: Remove,
 	idGenerator: IdGenerator,
-): RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff {
+): RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff {
 	const source = treeEdit.source;
 	if (isObjectTarget(source)) {
 		const node = getNodeFromTarget(source, idGenerator);
