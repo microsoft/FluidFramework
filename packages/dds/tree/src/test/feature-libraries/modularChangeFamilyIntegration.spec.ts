@@ -61,6 +61,7 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import {
 	assertEqual,
+	assertModularChangesetsEqual,
 	Change,
 	normalizeDelta,
 	removeAliases,

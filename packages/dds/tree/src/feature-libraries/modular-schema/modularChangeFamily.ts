@@ -722,7 +722,7 @@ export class ModularChangeFamily
 		const crossFieldTable: InvertTable = {
 			...newCrossFieldTable<FieldChange>(),
 			change: change.change,
-			entries: newChangeAtomIdRangeMap(), // XXX: Handle splitting entries
+			entries: newChangeAtomIdRangeMap(),
 			originalFieldToContext: new Map(),
 			invertRevision: revisionForInvert,
 			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
@@ -905,7 +905,7 @@ export class ModularChangeFamily
 		);
 		const crossFieldTable: RebaseTable = {
 			...newCrossFieldTable<FieldChange>(),
-			entries: newChangeAtomIdRangeMap(), // XXX: Handle splitting entries
+			entries: newDetachedEntryMap(),
 			newChange: change,
 			baseChange: over.change,
 			baseFieldToContext: new Map(),
@@ -2311,7 +2311,7 @@ function newComposeTable(
 ): ComposeTable {
 	return {
 		...newCrossFieldTable<FieldChange>(),
-		entries: newChangeAtomIdRangeMap(), // XXX: Handle splitting entries
+		entries: newChangeAtomIdRangeMap(),
 		baseChange,
 		newChange,
 		fieldToContext: new Map(),
@@ -2328,7 +2328,7 @@ function newComposeTable(
 
 interface ComposeTable extends CrossFieldTable<FieldChange> {
 	// Entries are keyed on detach ID
-	readonly entries: CrossFieldMap<DetachedNodeEntry>;
+	readonly entries: CrossFieldMap<NodeId>;
 	readonly baseChange: ModularChangeset;
 	readonly newChange: ModularChangeset;
 
@@ -2675,7 +2675,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			// The base detach might be part of a move.
 			// We check if we've previously seen a node change at the move destination.
 			const entry = this.table.entries.getFirst(baseDetachId, count);
-			result = { ...entry, value: entry.value?.nodeChange };
+			result = { ...entry, value: entry.value };
 		}
 
 		// TODO: Consider moving this to a separate method so that this method can be side-effect free.
@@ -2751,9 +2751,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			if (detachFields.length > 0) {
 				// XXX: Handle the case where some of the IDs in the range have a detach and some do not.
 				// The base attach is part of a move in the base changeset.
-				setInCrossFieldMap(this.table.entries, baseDetachId, 1, {
-					nodeChange: newChanges,
-				});
+				setInCrossFieldMap(this.table.entries, baseDetachId, 1, newChanges);
 			} else {
 				const baseNodeId = getFromChangeAtomIdMap(
 					this.table.baseChange.rootNodes.nodeChanges,
@@ -3660,4 +3658,19 @@ function replaceRootTableRevision(
 	);
 
 	return { oldToNewId, newToOldId, nodeChanges };
+}
+
+function newDetachedEntryMap(): ChangeAtomIdRangeMap<DetachedNodeEntry> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds, offsetDetachedNodeEntry);
+}
+
+function offsetDetachedNodeEntry(entry: DetachedNodeEntry, count: number): DetachedNodeEntry {
+	assert(
+		count <= 1 || entry.nodeChange === undefined,
+		"Cannot split an entry with a node change",
+	);
+
+	return entry.detachId !== undefined
+		? { detachId: offsetChangeAtomId(entry.detachId, count) }
+		: entry;
 }
