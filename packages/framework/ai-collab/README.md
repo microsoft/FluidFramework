@@ -245,7 +245,7 @@ Debug Events in ai-collab have two different types of trace id's:
 ## Ui Visualizations
 ai-collab provides an array of `UiDiff` objects with its response. Each of these objects allows developers to identify tree nodes that have been modified as a result of ai collaboration and visualize them according to their needs.
 
-Every `UiDiff` will include either a single `NodePath` or multiple in the case of multiple nodes being targeted by a single edit created by the ai agent. A `NodePath` provides an array leading from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call which will be at the end of the array, along with an explanation directly from the ai agent as to why is performed an edit.
+Every `UiDiff` will include either a single `NodePath` or multiple in the case of multiple nodes being targeted by a single edit created by the ai agent. A `NodePath` is an array whose items represent segment paths, beginning from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call (at the end of the array), along with an explanation directly from the ai agent as to why it performed an edit.
 
 Lets take a look at some examples for the following SharedTree application schema
 ```ts
