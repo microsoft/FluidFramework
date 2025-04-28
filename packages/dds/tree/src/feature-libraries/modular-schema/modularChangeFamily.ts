@@ -1478,7 +1478,8 @@ export class ModularChangeFamily
 		);
 
 		for (const [_detachId, nodeId] of rebasedRoots.nodeChanges.entries()) {
-			// XXX
+			// XXX: This is only incorrect if the rebased changeset attaches the node.
+			// Efficiently computing this would require maintaining a mapping from node ID to attach ID.
 			const detachedInOutput = true;
 			this.updateConstraintsForNode(
 				nodeId,
@@ -1502,8 +1503,8 @@ export class ModularChangeFamily
 		for (const field of fields.values()) {
 			const handler = getChangeHandler(this.fieldKinds, field.fieldKind);
 			for (const [nodeId] of handler.getNestedChanges(field.change)) {
-				// XXX: MCS doesn't have an inversion to efficiently look up whether there's a detach for this node
-				// Instead of output index, field should give us detach ID or undefined?
+				// XXX: This is only incorrect in the case where the rebased changeset detaches this node.
+				// Efficiently computing this would require maintaining a mapping from node ID to detach ID.
 				const isOutputDetached = false;
 				const outputAttachState =
 					parentOutputAttachState === NodeAttachState.Detached || isOutputDetached
