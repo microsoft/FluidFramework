@@ -22,6 +22,7 @@ import type {
 	IDeltaManager,
 	IDeltaManagerFull,
 	ILoader,
+	IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
@@ -1827,6 +1828,11 @@ export class ContainerRuntime
 				minimumSequenceNumber: attributes.minimumSequenceNumber,
 				lastProcessedSequenceNumber,
 			},
+		});
+		this.deltaManager.on("connect", (details: IConnectionDetails, _) => {
+			if (details.checkpointSequenceNumber) {
+				this.inbox.updateLastKnownSequenceNumber(details.checkpointSequenceNumber);
+			}
 		});
 
 		this.skipSafetyFlushDuringProcessStack =

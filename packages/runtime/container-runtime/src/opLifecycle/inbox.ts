@@ -29,7 +29,7 @@ import {
 	getSingleUseLegacyLogCallback,
 	getUnknownMessageTypeError,
 	isUnpackedRuntimeMessage,
-// eslint-disable-next-line import/no-deprecated, import/namespace
+	// eslint-disable-next-line import/no-deprecated, import/namespace
 } from "../containerRuntime.js";
 import type { GarbageCollectionMessage, IGarbageCollector } from "../gc/index.js";
 import {
@@ -46,10 +46,7 @@ import type {
 
 import type { DuplicateBatchDetector } from "./duplicateBatchDetector.js";
 import { ensureContentsDeserialized } from "./opSerialization.js";
-import {
-	type BatchStartInfo,
-	type RemoteMessageProcessor,
-} from "./remoteMessageProcessor.js";
+import { type BatchStartInfo, type RemoteMessageProcessor } from "./remoteMessageProcessor.js";
 
 interface IInboxEvents extends IEvent {
 	(event: "op", listener: () => void);
@@ -585,5 +582,9 @@ export class Inbox extends TypedEventEmitter<IInboxEvents> implements IOpProcess
 	private updateLastProcessedMessage(message: ISequencedDocumentMessage): void {
 		this._lastProcessedSequenceNumber = message.sequenceNumber;
 		this._lastProcessedMessage = { ...message };
+	}
+
+	public updateLastKnownSequenceNumber(sequenceNumber: number): void {
+		this._lastKnownSeqNumber = sequenceNumber;
 	}
 }
