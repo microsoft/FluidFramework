@@ -17,8 +17,6 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 
 // @alpha
 export interface AllowedTypeMetadata {
-    // (undocumented)
-    enabledUponSchemaUpgrade?: SchemaUpgradeToken;
 }
 
 // @public
@@ -60,7 +58,7 @@ Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
 // @alpha @sealed
-export interface ArrayNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Array, TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<TCustomMetadata> {
+export interface ArrayNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Array, TreeArrayNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Array, T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<TCustomMetadata> {
 }
 
 // @alpha @sealed
@@ -70,7 +68,7 @@ export interface ArrayNodeCustomizableSchemaUnsafe<out TName extends string, in 
 }
 
 // @alpha @sealed
-export interface ArrayNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Array, TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<TCustomMetadata> {
+export interface ArrayNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Array, TreeArrayNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Array, T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<TCustomMetadata> {
 }
 
 // @alpha
@@ -206,8 +204,10 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     protected constructor(kind: Kind, types: Types, annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes, props?: FieldProps<TCustomMetadata>);
     // (undocumented)
     get allowedTypesIdentifiers(): ReadonlySet<string>;
+    readonly allowedTypesMetadata: AllowedTypesMetadata;
     // (undocumented)
     readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes;
+    get annotatedAllowedTypeSet(): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>;
 }
 
 // @alpha @sealed
@@ -837,9 +837,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 
 // @alpha
 export class SchemaFactoryAlpha<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
-    arrayAlpha<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
+    arrayAlpha<const Name extends TName, const T extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     arrayRecursive<const Name extends TName, const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): ArrayNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
-    enablable<const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>): AnnotatedAllowedType<T>;
     static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha_2<FieldKind_2.Identifier, LeafSchema_2<"string", string> & SimpleLeafNodeSchema_2, TCustomMetadata>;
     static readonly leaves: readonly [LeafSchema_2<"string", string> & SimpleLeafNodeSchema_2, LeafSchema_2<"number", number> & SimpleLeafNodeSchema_2, LeafSchema_2<"boolean", boolean> & SimpleLeafNodeSchema_2, LeafSchema_2<"null", null> & SimpleLeafNodeSchema_2, LeafSchema_2<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema_2];
     mapAlpha<Name extends TName, const T extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
@@ -884,9 +883,6 @@ export interface SchemaStatics {
     readonly requiredRecursive: <const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
     readonly string: LeafSchema<"string", string>;
 }
-
-// @alpha (undocumented)
-export type SchemaUpgradeToken = string;
 
 // @alpha
 export interface SchemaValidationFunction<Schema extends TSchema> {
@@ -1298,16 +1294,16 @@ const typeNameSymbol: unique symbol;
 // @public
 export const typeSchemaSymbol: unique symbol;
 
-// @alpha (undocumented)
+// @alpha
 export type UnannotateAllowedType<T extends AnnotatedAllowedType> = T extends AnnotatedAllowedType<infer X> ? [X] : T;
 
-// @alpha (undocumented)
+// @alpha
 export type UnannotateAllowedTypeOrLazyItem<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> = T extends AnnotatedAllowedType<infer X> ? X : T;
 
-// @alpha (undocumented)
+// @alpha
 export type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> = UnannotateAllowedTypesList<T["types"]>;
 
-// @alpha (undocumented)
+// @alpha
 export type UnannotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
     [I in keyof T]: UnannotateAllowedTypeOrLazyItem<T[I]>;
 };

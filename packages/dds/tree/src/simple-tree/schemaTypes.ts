@@ -918,7 +918,7 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
  * Annotated schema for a field of a tree node.
  * @alpha
  */
-export type ImplicitAnnotatedFieldSchema = FieldSchemaAlpha | ImplicitAnnotatedAllowedTypes;
+export type ImplicitAnnotatedFieldSchema = FieldSchema | ImplicitAnnotatedAllowedTypes;
 
 /**
  * Removes annotations from an annotated field schema.
