@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import {
 	type ICodecOptions,
 	type IJsonCodec,
@@ -16,9 +17,8 @@ import {
 	encodeFieldSchema,
 	schemaFormat,
 	storedSchemaDecodeDispatcher,
-	toTreeNodeSchemaDataFormat,
 } from "../../core/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 
 import { Format } from "./format.js";
 
@@ -32,7 +32,7 @@ export function encodeRepo(repo: TreeStoredSchema): Format {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: toTreeNodeSchemaDataFormat(schema.encode()),
+			value: schema.encode(),
 		});
 	}
 	return {

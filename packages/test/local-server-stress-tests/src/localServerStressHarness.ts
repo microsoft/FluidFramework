@@ -585,7 +585,10 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 				if (client.container.closed || client.container.disposed === true) {
 					throw new Error(`Client ${client.tag} is closed`);
 				}
-				return client.container.connectionState !== ConnectionState.Disconnected;
+				return (
+					client.container.connectionState !== ConnectionState.Disconnected &&
+					!client.entryPoint.inStagingMode()
+				);
 			});
 
 			if (connectedClients.length > 0) {
@@ -595,7 +598,7 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 						await model.validateConsistency(client, validationClient);
 					} catch (error: unknown) {
 						if (error instanceof Error) {
-							error.message = `Comparing client ${validationClient.tag} vs client ${client.tag}\n${error.message}`;
+							error.message = `Comparing client ${client.tag} vs client ${validationClient.tag}\n${error.message}`;
 						}
 						throw error;
 					}
@@ -918,6 +921,9 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		if (operation.type === finalSynchronization.type) {
 			const { clients, validationClient } = state;
 			for (const client of clients) {
+				if (client.entryPoint.inStagingMode()) {
+					client.entryPoint.exitStagingMode(true);
+				}
 				if (client.container.connectionState === ConnectionState.Disconnected) {
 					client.container.connect();
 				}

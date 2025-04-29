@@ -21,7 +21,7 @@ export interface DevtoolsProps {
     readonly logger?: IDevtoolsLogger;
 }
 
-// @beta @sealed
+// @beta @sealed @system
 export interface HasContainerKey {
     readonly containerKey: ContainerKey;
 }

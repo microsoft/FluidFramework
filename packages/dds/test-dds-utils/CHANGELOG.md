@@ -1,5 +1,17 @@
 # @fluid-private/test-dds-utils
 
+## 2.33.0
+
+Dependency updates only.
+
+## 2.32.0
+
+Dependency updates only.
+
+## 2.31.0
+
+Dependency updates only.
+
 ## 2.30.0
 
 Dependency updates only.
@@ -60,9 +72,9 @@ Dependency updates only.
 
 ### Minor Changes
 
--   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-    Update package implementations to use TypeScript 5.4.5.
+  Update package implementations to use TypeScript 5.4.5.
 
 ## 2.0.0-rc.4.0.0
 
@@ -92,10 +104,10 @@ Dependency updates only.
 
 ### Minor Changes
 
--   @fluid-internal/test-dds-utils renamed to @fluid-private/test-dds-utils ([#17703](https://github.com/microsoft/FluidFramework/issues/17703)) [5bd40df610](https://github.com/microsoft/FluidFramework/commits/5bd40df61030395879ee8dd212d693f927dbb794)
+- @fluid-internal/test-dds-utils renamed to @fluid-private/test-dds-utils ([#17703](https://github.com/microsoft/FluidFramework/issues/17703)) [5bd40df610](https://github.com/microsoft/FluidFramework/commits/5bd40df61030395879ee8dd212d693f927dbb794)
 
-    The @fluid-internal/test-dds-utils has been renamed to @fluid-private/test-dds-utils. This package is intended for use
-    within the Fluid Framework repo and is not published externally.
+  The @fluid-internal/test-dds-utils has been renamed to @fluid-private/test-dds-utils. This package is intended for use
+  within the Fluid Framework repo and is not published externally.
 
 ## 2.0.0-internal.7.2.0
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, oob } from "@fluidframework/core-utils/internal";
+import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
@@ -38,7 +38,6 @@ import {
 	type TreeNodeSchemaClass,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
-import { fail } from "../util/index.js";
 import {
 	getKernel,
 	UnhydratedFlexTreeNode,
@@ -46,7 +45,7 @@ import {
 } from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
-import type { ImplicitAllowedTypesUnsafe } from "./api/index.js";
+import type { System_Unsafe } from "./api/index.js";
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
@@ -76,7 +75,7 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
  * @sealed @public
  */
 export interface TreeArrayNode<
-	TAllowedTypes extends ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
+	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
 	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
 		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
 		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,

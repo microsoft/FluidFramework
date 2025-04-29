@@ -52,14 +52,14 @@ describe("Presence", () => {
 
 		it("sends join when connected during initialization", () => {
 			// Setup, Act (call to createPresenceManager), & Verify (post createPresenceManager call)
-			prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+			prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
 		});
 
 		describe("responds to ClientJoin", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+				presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -85,7 +85,7 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": "sessionId-2",
+										"value": "attendeeId-2",
 									},
 								},
 							},
@@ -155,7 +155,7 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": "sessionId-2",
+										"value": "attendeeId-2",
 									},
 								},
 							},
@@ -174,11 +174,7 @@ describe("Presence", () => {
 			});
 		});
 
-		/**
-		 * These tests are skipped as 'workspaceActivated' event is not yet implemented.
-		 * TODO: Re-enable tests once {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/29939} is completed
-		 */
-		describe.skip("receiving DatastoreUpdate", () => {
+		describe("receiving DatastoreUpdate", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
 
 			const systemWorkspaceUpdate = {
@@ -186,14 +182,14 @@ describe("Presence", () => {
 					"client1": {
 						"rev": 0,
 						"timestamp": 0,
-						"value": "sessionId-1",
+						"value": "attendeeId-1",
 					},
 				},
 			};
 
 			const statesWorkspaceUpdate = {
 				"latest": {
-					"sessionId-1": {
+					"attendeeId-1": {
 						"rev": 1,
 						"timestamp": 0,
 						"value": {},
@@ -203,7 +199,7 @@ describe("Presence", () => {
 
 			const notificationsWorkspaceUpdate = {
 				"testEvents": {
-					"sessionId-1": {
+					"attendeeId-1": {
 						"rev": 0,
 						"timestamp": 0,
 						"value": {},
@@ -213,7 +209,7 @@ describe("Presence", () => {
 			};
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+				presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -234,7 +230,7 @@ describe("Presence", () => {
 							avgLatency: 20,
 							data: {
 								"system:presence": systemWorkspaceUpdate,
-								"n:name:testStateWorkspace": statesWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -246,6 +242,7 @@ describe("Presence", () => {
 				assert.strictEqual(listener.calledOnce, true);
 				assert.strictEqual(listener.calledWith("name:testStateWorkspace", "States"), true);
 			});
+
 			it("with unregistered Notifications workspace 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
@@ -276,6 +273,7 @@ describe("Presence", () => {
 					true,
 				);
 			});
+
 			it("with unregistered workspace of unknown type emits 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
@@ -293,7 +291,7 @@ describe("Presence", () => {
 								"system:presence": systemWorkspaceUpdate,
 								"u:name:testUnknownWorkspace": {
 									"latest": {
-										"sessionId-1": {
+										"attendeeId-1": {
 											"rev": 1,
 											"timestamp": 0,
 											"value": { x: 1, y: 1, z: 1 },
@@ -309,17 +307,15 @@ describe("Presence", () => {
 
 				// Verify
 				assert.strictEqual(listener.calledOnce, true);
-				assert.strictEqual(
-					listener.calledWith("name:name:testUnknownWorkspace", "Unknown"),
-					true,
-				);
+				assert.strictEqual(listener.calledWith("name:testUnknownWorkspace", "Unknown"), true);
 			});
+
 			it("with registered workspace does NOT emit 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
 				presence.events.on("workspaceActivated", listener);
-				presence.getStates("name:testStateWorkspace", {});
-				presence.getNotifications("name:testNotificationWorkspace", {});
+				presence.states.getWorkspace("name:testStateWorkspace", {});
+				presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
 				// Act
 				presence.processSignal(
@@ -331,7 +327,7 @@ describe("Presence", () => {
 							avgLatency: 20,
 							data: {
 								"system:presence": systemWorkspaceUpdate,
-								"n:name:testStateWorkspace": statesWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
 								"n:name:testNotificationWorkspace": notificationsWorkspaceUpdate,
 							},
 						},
@@ -342,6 +338,104 @@ describe("Presence", () => {
 
 				// Verify
 				assert.strictEqual(listener.called, false);
+			});
+
+			it("with workspace that has an unrecognized internal address does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								// Unrecognized internal address
+								"sn:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.called, false);
+			});
+
+			it("with workspace that has an invalid public address does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								// Invalid public address (must be `${string}:${string}`)
+								"s:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.called, false);
+			});
+
+			it("with workspace that has already been seen does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 20,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+				// Verify
+				assert.strictEqual(listener.callCount, 1);
 			});
 		});
 	});

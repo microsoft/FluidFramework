@@ -841,6 +841,8 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 	}
+	private readonly: boolean = false;
+	public readonly isReadOnly = () => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
@@ -930,6 +932,11 @@ export class MockFluidDataStoreRuntime
 		return factory.create(this, id ?? uuid());
 	}
 
+	/**
+	 * @remarks This is for internal use only.
+	 */
+	public ILayerCompatDetails?: unknown;
+
 	public addChannel(channel: IChannel): void {}
 
 	public get isAttached(): boolean {
@@ -1010,6 +1017,9 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		if (this.disposed) {
+			return;
+		}
 		this.deltaConnections.forEach((dc) => {
 			dc.processMessages(messageCollection);
 		});
@@ -1029,6 +1039,10 @@ export class MockFluidDataStoreRuntime
 		}
 		this.deltaConnections.forEach((dc) => dc.setConnectionState(connected));
 		return;
+	}
+
+	public notifyReadOnlyState(readonly: boolean): void {
+		this.readonly = readonly;
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {

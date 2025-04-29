@@ -24,19 +24,16 @@ import {
 	type NodeBuilderData,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
-import type {
-	ValidateRecursiveSchema,
+import {
+	allowUnused,
+	type ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import type {
-	FieldSchemaUnsafe,
-	InsertableTreeFieldFromImplicitFieldUnsafe,
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeFieldFromImplicitFieldUnsafe,
-	TreeNodeFromImplicitAllowedTypesUnsafe,
+	System_Unsafe,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
-import { TreeFactory } from "../../../treeFactory.js";
+import { SharedTree } from "../../../treeFactory.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
@@ -63,7 +60,6 @@ const sf = new SchemaFactory("recursive");
 describe("SchemaFactory Recursive methods", () => {
 	describe("objectRecursive", () => {
 		it("End-to-end with recursive object", () => {
-			const factory = new TreeFactory({});
 			const schema = new SchemaFactory("com.example");
 
 			/**
@@ -86,8 +82,11 @@ describe("SchemaFactory Recursive methods", () => {
 
 			const config = new TreeViewConfiguration({ schema: Box });
 
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			const tree = SharedTree.create(
+				new MockFluidDataStoreRuntime({
+					idCompressor: createIdCompressor(),
+					registry: [SharedTree.getFactory()],
+				}),
 				"tree",
 			);
 
@@ -127,9 +126,9 @@ describe("SchemaFactory Recursive methods", () => {
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
 				? ApplyKindInput<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 				: "Not a FieldSchema";
-			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+			type XTypes = XSchema extends System_Unsafe.FieldSchemaUnsafe<infer Kind, infer Types>
 				? Types
-				: "Not A FieldSchemaUnsafe";
+				: "Not A System_Unsafe.FieldSchemaUnsafe";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
 			type Field4 = FlexListToUnion<XTypes>;
 			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive>>;
@@ -186,9 +185,9 @@ describe("SchemaFactory Recursive methods", () => {
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
 				? ApplyKindInput<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 				: "Not a FieldSchema";
-			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+			type XTypes = XSchema extends System_Unsafe.FieldSchemaUnsafe<infer Kind, infer Types>
 				? Types
-				: "Not A FieldSchemaUnsafe";
+				: "Not A System_Unsafe.FieldSchemaUnsafe";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
 			type Field4 = FlexListToUnion<XTypes>;
 			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive | number>>;
@@ -330,12 +329,13 @@ describe("SchemaFactory Recursive methods", () => {
 				const field = ObjectRecursive.info.x;
 				type Field = typeof field;
 				type IC = (typeof ObjectRecursive)["implicitlyConstructable"];
-				type Xa = TreeFieldFromImplicitFieldUnsafe<Field>;
-				type Xb = InsertableTreeFieldFromImplicitFieldUnsafe<Field>;
+				type Xa = System_Unsafe.TreeFieldFromImplicitFieldUnsafe<Field>;
+				type Xb = System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<Field>;
 
 				type AllowedTypes = Field["allowedTypes"];
-				type X2a = TreeNodeFromImplicitAllowedTypesUnsafe<AllowedTypes>;
-				type X2b = InsertableTreeNodeFromImplicitAllowedTypesUnsafe<AllowedTypes>;
+				type X2a = System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<AllowedTypes>;
+				type X2b =
+					System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<AllowedTypes>;
 			}
 
 			const tree = hydrate(ObjectRecursive, new ObjectRecursive({ x: undefined }));
@@ -536,6 +536,37 @@ describe("SchemaFactory Recursive methods", () => {
 				) {}
 				// @ts-expect-error Maps accept allowed types, not field schema.
 				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => {}]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+		});
+
+		it("AllowUnused", () => {
+			{
+				class Test extends sf.arrayRecursive("Test", [() => Test]) {}
+				allowUnused<ValidateRecursiveSchema<typeof Test>>();
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => {}]) {}
+				// @ts-expect-error referenced type not a schema.
+				allowUnused<ValidateRecursiveSchema<typeof Test>>();
+			}
+
+			{
+				class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {}
+				// @ts-expect-error referenced type not a schema.
+				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
 		});
 

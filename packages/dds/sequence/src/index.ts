@@ -15,14 +15,9 @@
  *
  * @packageDocumentation
  */
-export {
-	IMapMessageLocalMetadata,
-	IValueOpEmitter,
-	SequenceOptions,
-} from "./intervalCollectionMapInterfaces.js";
+export { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 export {
 	IInterval,
-	Interval,
 	IntervalOpType,
 	IntervalType,
 	ISerializableInterval,
@@ -30,8 +25,6 @@ export {
 	SequenceInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
-	IIntervalHelpers,
-	sequenceIntervalHelpers,
 } from "./intervals/index.js";
 export {
 	DeserializeCallback,
@@ -39,8 +32,6 @@ export {
 	IIntervalCollection,
 	ISequenceIntervalCollection,
 	ISequenceIntervalCollectionEvents,
-	IntervalLocator,
-	intervalLocatorFromEndpoint,
 } from "./intervalCollection.js";
 export {
 	IntervalIndex,
@@ -48,15 +39,8 @@ export {
 	SequenceIntervalIndexes,
 	IOverlappingIntervalsIndex,
 	ISequenceOverlappingIntervalsIndex,
-	createOverlappingIntervalsIndex,
-	createOverlappingSequenceIntervalsIndex,
-	IEndpointInRangeIndex,
-	IStartpointInRangeIndex,
-	createEndpointInRangeIndex,
-	createStartpointInRangeIndex,
-	IIdIntervalIndex,
-	createIdIntervalIndex,
 	IEndpointIndex,
+	createOverlappingIntervalsIndex,
 	createEndpointIndex,
 } from "./intervalIndex/index.js";
 export {

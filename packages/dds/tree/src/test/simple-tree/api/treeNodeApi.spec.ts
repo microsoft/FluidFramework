@@ -28,7 +28,12 @@ import {
 	TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
-import { chunkFromJsonableTrees, getView, validateUsageError } from "../../utils.js";
+import {
+	chunkFromJsonableTrees,
+	getView,
+	TestTreeProviderLite,
+	validateUsageError,
+} from "../../utils.js";
 import { getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
@@ -217,12 +222,12 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = new MockNodeIdentifierManager();
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config);
+			const nodeKeyManager = view.nodeKeyManager;
 			const id = nodeKeyManager.stabilizeNodeIdentifier(
 				nodeKeyManager.generateLocalNodeIdentifier(),
 			);
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-			const view = getView(config, nodeKeyManager);
 			view.initialize({ identifier: id });
 
 			assert.equal(Tree.shortId(view.root), nodeKeyManager.localizeNodeIdentifier(id));
@@ -315,9 +320,9 @@ describe("treeNodeApi", () => {
 
 			// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
 			it("returns string when unhydrated then local id when hydrated", () => {
-				const nodeKeyManager = new MockNodeIdentifierManager();
 				const config = new TreeViewConfiguration({ schema: HasIdentifier });
-				const view = getView(config, nodeKeyManager);
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
 				view.initialize({});
 				const identifier = view.root.identifier;
 				const shortId = Tree.shortId(view.root);
@@ -335,6 +340,48 @@ describe("treeNodeApi", () => {
 	});
 
 	describe("on", () => {
+		it("Editing a node without an anchor still triggers 'treeChanged' event above it", () => {
+			// Notes:
+			// * For this bug to occur, the edit must change a node that does not have an anchor (and thus hasn't been viewed yet).
+			// * Using the public API this can only be done via collaborative editing or branch merging.
+			const sf = new SchemaFactory(undefined);
+			class Child extends sf.object("Child", {
+				value: sf.number,
+			}) {}
+			class Parent extends sf.object("Parent", {
+				node: Child,
+			}) {}
+
+			const config = new TreeViewConfiguration({ schema: Parent });
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			// Initialize the first tree with a value of "0"
+			const view1 = tree1.viewWith(config);
+			view1.initialize(
+				new Parent({
+					node: new Child({
+						value: 0,
+					}),
+				}),
+			);
+			provider.synchronizeMessages();
+			const view2 = tree2.viewWith(config);
+			// Count the number of times treeChanged fires
+			let invalidations = 0;
+			Tree.on(view2.root, "treeChanged", () => {
+				invalidations += 1;
+			});
+			// Change the first tree to a value of "3"
+			view1.root.node.value = 3;
+			// Remove the no longer needed view1 to simplify debugging.
+			view1.dispose();
+			provider.synchronizeMessages();
+			// Ensure that the second tree received the change...
+			assert.equal(view2.root.node.value, 3);
+			// ...and also that the event fired
+			assert.equal(invalidations, 1);
+		});
+
 		describe("object node", () => {
 			const sb = new SchemaFactory("object-node-in-root");
 			class myObject extends sb.object("object", {
@@ -1269,6 +1316,10 @@ describe("treeNodeApi", () => {
 					});
 				}
 			}
+		});
+
+		it("export-undefined", () => {
+			assert.equal(TreeAlpha.exportConcise(undefined), undefined);
 		});
 	});
 

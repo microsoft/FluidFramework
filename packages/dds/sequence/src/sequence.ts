@@ -69,14 +69,10 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import {
-	SequenceIntervalCollectionValueType,
-	type ISequenceIntervalCollection,
-} from "./intervalCollection.js";
+import { type ISequenceIntervalCollection } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
 import {
 	IMapMessageLocalMetadata,
-	IValueChanged,
 	type SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
 import {
@@ -566,7 +562,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				this.inFlightRefSeqs.push(this.currentRefSeq);
 				this.submitLocalMessage(op, localOpMetadata);
 			},
-			new SequenceIntervalCollectionValueType(),
 			options,
 		);
 	}
@@ -802,6 +797,21 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
+	 * Revert an op
+	 */
+	protected rollback(content: any, localOpMetadata: unknown): void {
+		const originalRefSeq = this.inFlightRefSeqs.pop();
+		assert(
+			originalRefSeq !== undefined,
+			0xb7f /* Expected a recorded refSeq when rolling back an op  */,
+		);
+
+		if (!this.intervalCollections.tryRollback(content, localOpMetadata)) {
+			this.client.rollback(content, localOpMetadata);
+		}
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService) {
@@ -996,17 +1006,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	private initializeIntervalCollections() {
 		// Listen and initialize new SharedIntervalCollections
-		this.intervalCollections.eventEmitter.on(
-			"create",
-			({ key, previousValue }: IValueChanged, local: boolean) => {
+		this.intervalCollections.events.on(
+			"createIntervalCollection",
+			(key: string, local: boolean) => {
 				const intervalCollection = this.intervalCollections.get(key);
 				if (!intervalCollection.attached) {
 					intervalCollection.attachGraph(this.client, key);
 				}
-				assert(
-					previousValue === undefined,
-					0x2c1 /* "Creating an interval collection that already exists?" */,
-				);
 				this.emit("createIntervalCollection", key, local, this);
 			},
 		);

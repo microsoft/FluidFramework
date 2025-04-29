@@ -50,6 +50,7 @@ import {
 import {
 	GCDataBuilder,
 	RequestParser,
+	RuntimeHeaders,
 	SummaryTreeBuilder,
 	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
@@ -106,21 +107,6 @@ import {
 } from "./summary/index.js";
 
 /**
- * Accepted header keys for requests coming to the runtime.
- * @internal
- */
-export enum RuntimeHeaders {
-	/**
-	 * True to wait for a data store to be created and loaded before returning it.
-	 */
-	wait = "wait",
-	/**
-	 * True if the request is coming from an IFluidHandle.
-	 */
-	viaHandle = "viaHandle",
-}
-
-/**
  * True if a tombstoned object should be returned without erroring
  * @legacy
  * @alpha
@@ -138,6 +124,7 @@ interface FluidDataStoreMessage {
  * Creates a shallow wrapper of {@link IFluidParentContext}. The wrapper can then have its methods overwritten as needed
  */
 export function wrapContext(context: IFluidParentContext): IFluidParentContext {
+	const isReadOnly = context.isReadOnly;
 	return {
 		get IFluidDataStoreRegistry() {
 			return context.IFluidDataStoreRegistry;
@@ -163,6 +150,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		get attachState() {
 			return context.attachState;
 		},
+		isReadOnly: isReadOnly === undefined ? undefined : () => isReadOnly(),
 		containerRuntime: context.containerRuntime,
 		scope: context.scope,
 		gcThrowOnTombstoneUsage: context.gcThrowOnTombstoneUsage,
@@ -1123,6 +1111,31 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 							runtimeConnected: this.parentContext.connected,
 							connected,
 						}),
+					},
+					error,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Enumerates the contexts and calls notifyReadOnlyState on them.
+	 */
+	public notifyReadOnlyState(readonly: boolean): void {
+		for (const [fluidDataStoreId, context] of this.contexts) {
+			try {
+				context.notifyReadOnlyState(readonly);
+			} catch (error) {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "SetReadOnlyStateError",
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
+						details: {
+							runtimeReadonly: this.parentContext.isReadOnly?.(),
+							readonly,
+						},
 					},
 					error,
 				);

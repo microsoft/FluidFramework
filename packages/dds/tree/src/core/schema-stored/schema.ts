@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ErasedType } from "@fluidframework/core-interfaces";
+import { fail } from "@fluidframework/core-utils/internal";
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
-import { type MakeNominal, brand, fail, invertMap } from "../../util/index.js";
+import { type MakeNominal, brand, invertMap } from "../../util/index.js";
 import {
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -20,7 +20,10 @@ import type { Multiplicity } from "./multiplicity.js";
  * Schema for what {@link TreeLeafValue} is allowed on a Leaf node.
  * @privateRemarks
  * See also {@link TreeValue}.
- * @internal
+ * If further stabilizing this,
+ * consider the implications of how this might prevent adding of new leaf types in the future.
+ * Maybe add a disclaimer that it might be extended like on {@link NodeKind}?
+ * @alpha
  */
 export enum ValueSchema {
 	Number,
@@ -145,24 +148,6 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 export const identifierFieldKindIdentifier = "Identifier";
 
 /**
- * Opaque type erased handle to the encoded representation of the contents of a stored schema.
- */
-export interface ErasedTreeNodeSchemaDataFormat
-	extends ErasedType<"TreeNodeSchemaDataFormat"> {}
-
-function toErasedTreeNodeSchemaDataFormat(
-	data: TreeNodeSchemaDataFormat,
-): ErasedTreeNodeSchemaDataFormat {
-	return data as unknown as ErasedTreeNodeSchemaDataFormat;
-}
-
-export function toTreeNodeSchemaDataFormat(
-	data: ErasedTreeNodeSchemaDataFormat,
-): TreeNodeSchemaDataFormat {
-	return data as unknown as TreeNodeSchemaDataFormat;
-}
-
-/**
  */
 export abstract class TreeNodeStoredSchema {
 	protected _typeCheck!: MakeNominal;
@@ -173,7 +158,7 @@ export abstract class TreeNodeStoredSchema {
 	 * This is uses an opaque type to avoid leaking these types out of the package,
 	 * and is runtime validated by the codec.
 	 */
-	public abstract encode(): ErasedTreeNodeSchemaDataFormat;
+	public abstract encode(): TreeNodeSchemaDataFormat;
 
 	/**
 	 * Returns the schema for the provided field.
@@ -198,7 +183,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): ErasedTreeNodeSchemaDataFormat {
+	public override encode(): TreeNodeSchemaDataFormat {
 		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
@@ -212,9 +197,9 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 				),
 			});
 		}
-		return toErasedTreeNodeSchemaDataFormat({
+		return {
 			object: fieldsObject,
-		});
+		};
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
@@ -237,10 +222,10 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): ErasedTreeNodeSchemaDataFormat {
-		return toErasedTreeNodeSchemaDataFormat({
+	public override encode(): TreeNodeSchemaDataFormat {
+		return {
 			map: encodeFieldSchema(this.mapFields),
-		});
+		};
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
@@ -267,10 +252,10 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): ErasedTreeNodeSchemaDataFormat {
-		return toErasedTreeNodeSchemaDataFormat({
+	public override encode(): TreeNodeSchemaDataFormat {
+		return {
 			leaf: encodeValueSchema(this.leafValue),
-		});
+		};
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {

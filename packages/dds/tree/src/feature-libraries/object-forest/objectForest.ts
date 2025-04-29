@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 
@@ -43,7 +43,6 @@ import {
 	assertValidIndex,
 	assertValidRange,
 	brand,
-	fail,
 } from "../../util/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
@@ -237,20 +236,6 @@ export class ObjectForest implements IEditableForest {
 					parent.fields.delete(key);
 				}
 			}
-			public replace(
-				newContentSource: FieldKey,
-				range: Range,
-				oldContentDestination: FieldKey,
-				oldContentId: DeltaDetachedNodeId,
-			): void {
-				preEdit();
-				assert(
-					newContentSource !== oldContentDestination,
-					0x7ba /* Replace detached source field and detached destination field must be different */,
-				);
-				this.detachEdit(range, oldContentDestination);
-				this.attachEdit(newContentSource, range.end - range.start, range.start);
-			}
 			public enterNode(index: number): void {
 				cursor.enterNode(index);
 			}
@@ -268,10 +253,7 @@ export class ObjectForest implements IEditableForest {
 		const forestVisitor = new Visitor(this);
 		const announcedVisitors: AnnouncedVisitor[] = [];
 		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
-		const combinedVisitor = combineVisitors(
-			[forestVisitor, ...announcedVisitors],
-			announcedVisitors,
-		);
+		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;
 	}

@@ -82,7 +82,7 @@ const treeFactories: ITestTreeFactory[] = [
 			}
 
 			const textHelper = new MergeTreeTextHelper(mergeTree);
-			assert.equal(textHelper.getText(UniversalSequenceNumber, localClientId), initialText);
+			assert.equal(textHelper.getText(mergeTree.localPerspective), initialText);
 
 			const nodes: MergeBlock[] = [mergeTree.root];
 			while (nodes.length > 0) {
@@ -197,7 +197,9 @@ describe("MergeTree.insertingWalk", () => {
 						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
-					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
+					const currentValue = testData.textHelper.getText(
+						testData.mergeTree.localPerspective,
+					);
 					assert.equal(currentValue.length, testData.initialText.length + 1);
 					assert.equal(currentValue, `a${testData.initialText}`);
 				});
@@ -215,7 +217,9 @@ describe("MergeTree.insertingWalk", () => {
 						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
-					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
+					const currentValue = testData.textHelper.getText(
+						testData.mergeTree.localPerspective,
+					);
 					assert.equal(currentValue.length, testData.initialText.length + 1);
 					assert.equal(currentValue, `${testData.initialText}a`);
 				});
@@ -233,7 +237,9 @@ describe("MergeTree.insertingWalk", () => {
 						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
-					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
+					const currentValue = testData.textHelper.getText(
+						testData.mergeTree.localPerspective,
+					);
 					assert.equal(currentValue.length, testData.initialText.length + 1);
 					assert.equal(
 						currentValue,
@@ -273,7 +279,7 @@ describe("MergeTree.insertingWalk", () => {
 		const textHelper = new MergeTreeTextHelper(mergeTree);
 
 		assert.equal(mergeTree.root.childCount, 2);
-		assert.equal(textHelper.getText(0, localClientId), "GFEDCBA0");
+		assert.equal(textHelper.getText(mergeTree.localPerspective), "GFEDCBA0");
 		// Remove "DCBA"
 		mergeTree.markRangeRemoved(
 			3,
@@ -282,7 +288,7 @@ describe("MergeTree.insertingWalk", () => {
 			mergeTree.collabWindow.mintNextLocalOperationStamp(),
 			undefined as never,
 		);
-		assert.equal(textHelper.getText(0, localClientId), "GFE0");
+		assert.equal(textHelper.getText(mergeTree.localPerspective), "GFE0");
 		// Simulate another client inserting concurrently with the above operations. Because
 		// all segments but the 0 are unacked, this insert should place the segment directly
 		// before the 0. Prior to this regression test, an issue with `rightExcursion` in the

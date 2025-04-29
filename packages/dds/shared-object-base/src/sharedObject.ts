@@ -20,6 +20,7 @@ import {
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
 	type IDeltaHandler,
+	type IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IDocumentMessage,
@@ -53,11 +54,11 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
-import { SummarySerializer } from "./summarySerializer.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
-import { makeHandlesSerializable, parseHandles } from "./utils.js";
+import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
  * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
@@ -144,7 +145,7 @@ export abstract class SharedObjectCore<
 
 		assert(!id.includes("/"), 0x304 /* Id cannot contain slashes */);
 
-		this.handle = new SharedObjectHandle(this, id, runtime.IFluidHandleContext);
+		this.handle = new SharedObjectHandle(this, id, runtime);
 
 		this.logger = createChildLogger({
 			logger: runtime.logger,
@@ -458,11 +459,17 @@ export abstract class SharedObjectCore<
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
+			// NOTE: We may also be encoding in the ContainerRuntime layer.
+			// Once the layer-compat window passes we can remove the encoding codepath here altogether
+			const onlyBind =
+				(this.runtime as IFluidDataStoreRuntimeInternalConfig)
+					.submitMessagesWithoutEncodingHandles === true;
+			const contentToSubmit = onlyBind
+				? bindHandles(content, this.serializer, this.handle)
+				: makeHandlesSerializable(content, this.serializer, this.handle);
+
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(
-				makeHandlesSerializable(content, this.serializer, this.handle),
-				localOpMetadata,
-			);
+			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
 		}
 	}
 
@@ -742,10 +749,10 @@ export abstract class SharedObject<
 
 	protected get serializer(): IFluidSerializer {
 		/**
-		 * During garbage collection, the SummarySerializer keeps track of IFluidHandles that are serialized. These
+		 * During garbage collection, the GCHandleVisitor "serializer" keeps track of IFluidHandles that are serialized. These
 		 * handles represent references to other Fluid objects.
 		 *
-		 * This is fine for now. However, if we implement delay loading in DDss, they may load and de-serialize content
+		 * This is fine for now. However, if we implement delay loading in DDSes, they may load and de-serialize content
 		 * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
 		 */
 		assert(
@@ -824,8 +831,7 @@ export abstract class SharedObject<
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}
 	 */
 	public getGCData(fullGC: boolean = false): IGarbageCollectionData {
-		// Set _isGCing to true. This flag is used to ensure that we only use SummarySerializer to serialize handles
-		// in this object's data.
+		// Set _isGCing to true. This flag is used to ensure that we only use GCHandleVisitor in this codepath and not when trying to truly serialize.
 		assert(
 			!this._isGCing,
 			0x078 /* "Possible re-entrancy! Summary should not already be in progress." */,
@@ -834,11 +840,11 @@ export abstract class SharedObject<
 
 		let gcData: IGarbageCollectionData;
 		try {
-			const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-			this.processGCDataCore(serializer);
+			const handleVisitor = new GCHandleVisitor(this.runtime.channelsRoutingContext);
+			this.processGCDataCore(handleVisitor);
 			// The GC data for this shared object contains a single GC node. The outbound routes of this node are the
 			// routes of handles serialized during summarization.
-			gcData = { gcNodes: { "/": serializer.getSerializedRoutes() } };
+			gcData = { gcNodes: { "/": handleVisitor.getVisitedHandlePaths() } };
 			assert(
 				this._isGCing,
 				0x079 /* "Possible re-entrancy! Summary should have been in progress." */,
@@ -853,6 +859,12 @@ export abstract class SharedObject<
 	/**
 	 * Calls the serializer over all data in this object that reference other GC nodes.
 	 * Derived classes must override this to provide custom list of references to other GC nodes.
+	 *
+	 * @remarks Serialization itself doesn't matter (the result is ignored). We're tapping into the serialization infrastructure
+	 * as a way to visit all the content in this content that may reference other objects via handle.
+	 *
+	 * @param serializer - The "serializer" (more like handle visitor) to use.
+	 * Implementations should ensure that serialize is called on all handles, as the way to visit them.
 	 */
 	protected processGCDataCore(serializer: IFluidSerializer): void {
 		// We run the full summarize logic to get the list of outbound routes from this object. This is a little
