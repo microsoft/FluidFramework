@@ -102,6 +102,22 @@ export interface IFluidHandleInternal<
 }
 
 /**
+ * @privateRemarks
+ * To be merged onto IFluidHandleInternal in accordance with breaking change policy
+ * @internal
+ */
+export interface IFluidHandleInternalPayloadPending<
+	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
+	out T = unknown, // FluidObject & IFluidLoadable,
+> extends IFluidHandleInternal<T> {
+	/**
+	 * Whether the handle has a pending payload, meaning that it may exist before its payload is retrievable.
+	 * For instance, the BlobManager can generate handles before completing the blob upload/attach.
+	 */
+	readonly payloadPending: boolean;
+}
+
+/**
  * Symbol which must only be used on an {@link (IFluidHandle:interface)}, and is used to identify such objects.
  *
  * @remarks

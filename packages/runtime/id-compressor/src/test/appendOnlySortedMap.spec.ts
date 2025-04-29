@@ -5,7 +5,6 @@
 
 /* eslint-disable no-bitwise */
 
-// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "node:assert";
 
 import { AppendOnlySortedMap } from "../appendOnlySortedMap.js";

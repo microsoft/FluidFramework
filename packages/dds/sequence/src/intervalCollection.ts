@@ -393,7 +393,7 @@ class IntervalCollectionIterator implements Iterator<SequenceIntervalClass> {
  * Change events emitted by `IntervalCollection`s
  * @legacy
  * @alpha
- * @remarks The generic version of this interface is no longer used and will be removed. Use {@link ISequenceIntervalCollectionEvents} instead.
+ * @deprecated The generic version of this interface is no longer used and will be removed. Use {@link ISequenceIntervalCollectionEvents} instead.
  */
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval>
 	extends IEvent {
@@ -1093,7 +1093,7 @@ export class IntervalCollection
 				break;
 			}
 			case "change": {
-				assert(previous !== undefined, "must have previous for change");
+				assert(previous !== undefined, 0xb7c /* must have previous for change */);
 
 				const endpointsChanged = value.start !== undefined && value.end !== undefined;
 				const start = endpointsChanged
@@ -1115,7 +1115,7 @@ export class IntervalCollection
 				break;
 			}
 			case "delete": {
-				assert(previous !== undefined, "must have previous for delete");
+				assert(previous !== undefined, 0xb7d /* must have previous for delete */);
 				this.add({
 					id,
 					start: toSequencePlace(previous.start, previous.startSide),

@@ -44,7 +44,9 @@ import {
 } from "../../simple-tree/schemaTypes.js";
 import type {
 	areSafelyAssignable,
+	isAssignableTo,
 	requireAssignableTo,
+	requireFalse,
 	requireTrue,
 	RestrictiveStringRecord,
 	UnionToIntersection,
@@ -178,6 +180,12 @@ describe("schemaTypes", () => {
 			{
 				type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B]>;
 				type _check = requireAssignableTo<A | B, T>;
+			}
+
+			{
+				type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B] | [typeof A]>;
+				type _check = requireAssignableTo<A, T>;
+				type _check2 = requireFalse<isAssignableTo<B, T>>;
 			}
 		}
 

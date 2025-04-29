@@ -90,7 +90,7 @@ import {
 	objectWithArrayOfFunctionsWithProperties,
 	objectWithArrayOfObjectAndFunctions,
 	objectWithArrayOfBigintOrObjects,
-	objectWithArrayOfSymbolsOrObjects,
+	objectWithArrayOfSymbolOrObjects,
 	objectWithReadonlyArrayOfNumbers,
 	objectWithOptionalNumberNotPresent,
 	objectWithOptionalNumberUndefined,
@@ -112,6 +112,7 @@ import {
 	stringRecordOfUndefined,
 	stringRecordOfUnknown,
 	stringOrNumberRecordOfStrings,
+	stringOrNumberRecordOfObjects,
 	partialStringRecordOfNumbers,
 	partialStringRecordOfUnknown,
 	templatedRecordOfNumbers,
@@ -140,7 +141,9 @@ import {
 	selfRecursiveObjectAndFunction,
 	objectInheritingOptionalRecursionAndWithNestedSymbol,
 	simpleJson,
+	simpleImmutableJson,
 	jsonObject,
+	immutableJsonObject,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
 	classInstanceWithPrivateGetter,
@@ -522,6 +525,10 @@ describe("JsonDeserialized", () => {
 				const resultRead = passThru(stringOrNumberRecordOfStrings);
 				assertIdenticalTypes(resultRead, stringOrNumberRecordOfStrings);
 			});
+			it("`string`|`number` indexed record of objects", () => {
+				const resultRead = passThru(stringOrNumberRecordOfObjects);
+				assertIdenticalTypes(resultRead, stringOrNumberRecordOfObjects);
+			});
 			it("`string` indexed record of `number`|`string`s with known properties", () => {
 				const resultRead = passThru(stringRecordOfNumbersOrStringsWithKnownProperties);
 				assertIdenticalTypes(resultRead, stringRecordOfNumbersOrStringsWithKnownProperties);
@@ -581,6 +588,10 @@ describe("JsonDeserialized", () => {
 			it("simple non-null object json (`NonNullJsonObjectWith<never>`)", () => {
 				const resultRead = passThru(jsonObject);
 				assertIdenticalTypes(resultRead, jsonObject);
+			});
+			it("simple read-only non-null object json (`ReadonlyNonNullJsonObjectWith<never>`)", () => {
+				const resultRead = passThru(immutableJsonObject);
+				assertIdenticalTypes(resultRead, immutableJsonObject);
 			});
 
 			it("non-const enum", () => {
@@ -956,7 +967,7 @@ describe("JsonDeserialized", () => {
 					);
 				});
 				it("object with array of partially supported (symbols or basic object) is modified with null", () => {
-					const resultRead = passThru(objectWithArrayOfSymbolsOrObjects, {
+					const resultRead = passThru(objectWithArrayOfSymbolOrObjects, {
 						arrayOfSymbolOrObjects: [null],
 					});
 					assertIdenticalTypes(
@@ -1371,6 +1382,10 @@ describe("JsonDeserialized", () => {
 			it("simple json (`JsonTypeWith<never>`)", () => {
 				const resultRead = passThru(simpleJson);
 				assertIdenticalTypes(resultRead, simpleJson);
+			});
+			it("simple read-only json (`ReadonlyJsonTypeWith<never>`)", () => {
+				const resultRead = passThru(simpleImmutableJson);
+				assertIdenticalTypes(resultRead, simpleImmutableJson);
 			});
 		});
 

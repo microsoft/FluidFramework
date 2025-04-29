@@ -26,12 +26,19 @@ import {
 } from "./presenceStates.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
-import type { StatesWorkspace, StatesWorkspaceSchema, WorkspaceAddress } from "./types.js";
+import type {
+	AnyWorkspace,
+	NotificationsWorkspace,
+	NotificationsWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceSchema,
+	WorkspaceAddress,
+} from "./types.js";
 
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
-interface StatesWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
-	public: StatesWorkspace<TSchema>;
+interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
+	public: AnyWorkspace<TSchema>;
 	internal: PresenceStatesInternal;
 }
 
@@ -94,10 +101,14 @@ function isPresenceMessage(
 export interface PresenceDatastoreManager {
 	joinSession(clientId: ClientConnectionId): void;
 	getWorkspace<TSchema extends StatesWorkspaceSchema>(
-		internalWorkspaceAddress: InternalWorkspaceAddress,
+		internalWorkspaceAddress: `s:${WorkspaceAddress}`,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
 	): StatesWorkspace<TSchema>;
+	getWorkspace<TSchema extends NotificationsWorkspaceSchema>(
+		internalWorkspaceAddress: `n:${WorkspaceAddress}`,
+		requestedContent: TSchema,
+	): NotificationsWorkspace<TSchema>;
 	processSignal(message: IExtensionMessage, local: boolean): void;
 }
 
@@ -145,7 +156,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
 	private readonly timer = new TimerManager();
-	private readonly workspaces = new Map<string, StatesWorkspaceEntry<StatesWorkspaceSchema>>();
+	private readonly workspaces = new Map<string, AnyWorkspaceEntry<StatesWorkspaceSchema>>();
 
 	public constructor(
 		private readonly attendeeId: AttendeeId,
@@ -155,7 +166,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly events: IEmitter<PresenceEvents>,
 		private readonly presence: Presence,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
-		systemWorkspace: StatesWorkspaceEntry<StatesWorkspaceSchema>,
+		systemWorkspace: AnyWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
@@ -184,7 +195,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
-	): StatesWorkspace<TSchema> {
+	): AnyWorkspace<TSchema> {
 		const existing = this.workspaces.get(internalWorkspaceAddress);
 		if (existing) {
 			return existing.internal.ensureContent(requestedContent, controls);

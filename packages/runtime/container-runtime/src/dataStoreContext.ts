@@ -5,11 +5,17 @@
 
 import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaManager,
+	isIDeltaManagerFull,
+	type IDeltaManagerFull,
+	type ReadOnlyInfo,
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseProperties,
+	type IErrorBase,
 	type IEvent,
 } from "@fluidframework/core-interfaces";
 import {
@@ -75,6 +81,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
+import { BaseDeltaManagerProxy } from "./deltaManagerProxies.js";
 import {
 	runtimeCompatDetailsForDataStore,
 	validateDatastoreCompatibility,
@@ -189,6 +196,58 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 }
 
 /**
+ * Eventually we should remove the delta manger from being exposed to Datastore runtimes via the context. However to remove that exposure we need to add new
+ * features, and those features themselves need forward and back compat. This proxy is here to enable that back compat. Each feature this proxy is used to
+ * support should be listed below, and as layer compat support goes away for those feature, we should also remove them from this proxy, with the eventual goal
+ * of completely removing this proxy.
+ *
+ * - Everything regarding readonly is to support older datastore runtimes which do not have the setReadonly function, so they must get their readonly state via the delta manager.
+ *
+ */
+class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
+	constructor(
+		base: IDeltaManagerFull,
+		private readonly isReadOnly: () => boolean,
+	) {
+		super(base, {
+			onReadonly: (): void => {
+				/* readonly is controlled from the context which calls setReadonly */
+			},
+		});
+	}
+
+	public get readOnlyInfo(): ReadOnlyInfo {
+		const readonly = this.isReadOnly();
+		if (readonly === this.deltaManager.readOnlyInfo.readonly) {
+			return this.deltaManager.readOnlyInfo;
+		} else {
+			return readonly === true
+				? {
+						readonly,
+						forced: false,
+						permissions: undefined,
+						storageOnly: false,
+					}
+				: { readonly };
+		}
+	}
+
+	/**
+	 * Called by the owning datastore context to configure the readonly
+	 * state of the delta manger that is project down to the datastore
+	 * runtime. This state may not align with that of the true delta
+	 * manager if the context wishes to control the read only state
+	 * differently than the delta manager itself.
+	 */
+	public setReadonly(
+		readonly: boolean,
+		readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+	): void {
+		this.emit("readonly", readonly, readonlyConnectionReason);
+	}
+}
+
+/**
  * Represents the context for the store. This context is passed to the store runtime.
  * @internal
  */
@@ -217,9 +276,12 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.baseLogger;
 	}
 
+	private readonly _contextDeltaManagerProxy: ContextDeltaManagerProxy;
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this.parentContext.deltaManager;
+		return this._contextDeltaManagerProxy;
 	}
+
+	public isReadOnly = (): boolean => this.parentContext.isReadOnly?.() ?? false;
 
 	public get connected(): boolean {
 		return this.parentContext.connected;
@@ -420,6 +482,16 @@ export abstract class FluidDataStoreContext
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+
+		assert(
+			isIDeltaManagerFull(this.parentContext.deltaManager),
+			0xb83 /* Invalid delta manager */,
+		);
+
+		this._contextDeltaManagerProxy = new ContextDeltaManagerProxy(
+			this.parentContext.deltaManager,
+			() => this.isReadOnly(),
+		);
 	}
 
 	public dispose(): void {
@@ -437,6 +509,7 @@ export abstract class FluidDataStoreContext
 				})
 				.catch((error) => {});
 		}
+		this._contextDeltaManagerProxy.dispose();
 	}
 
 	/**
@@ -613,6 +686,13 @@ export abstract class FluidDataStoreContext
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.channel!.setConnectionState(connected, clientId);
+	}
+
+	public notifyReadOnlyState(readonly: boolean): void {
+		this.verifyNotClosed("notifyReadOnlyState", false /* checkTombstone */);
+
+		this.channel?.notifyReadOnlyState?.(readonly);
+		this._contextDeltaManagerProxy.setReadonly(readonly);
 	}
 
 	/**
