@@ -616,7 +616,8 @@ const createNodePathRecursive = (
 };
 
 /**
- * Creates a UI diff for an Insert TreeEdit. This should be executed AFTER an insertion is made.
+ * Creates a diff for an Insert TreeEdit.
+ * @remarks This should be executed AFTER an insertion is made.
  */
 function createInsertdiff(
 	newlyInsertedNode: TreeNode,
