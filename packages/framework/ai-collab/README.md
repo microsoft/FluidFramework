@@ -250,7 +250,7 @@ ai-collab provides an array of `Diff` objects with its response. Each of these o
 
 Every `Diff` will include one or more `NodePaths` representing the nodes affected by a single edit created by the ai agent. A `NodePath` is an array whose items represent segment paths, beginning from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call (at the end of the array), along with an explanation directly from the AI agent as to why it performed an edit.
 
-Let's take a look at some examples for the following SharedTree application schema
+Let's take a look at some examples for the following SharedTree application schema.
 
 ```ts
 import { aiCollab, DebugEvent, Diff } from "@fluidframework/ai-collab/alpha";
