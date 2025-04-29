@@ -293,7 +293,6 @@ const uiDiffs: UiDiff[] = response.uiDiffs
 
 Each UiDiff will contain one or more `NodePath`'s. Each `NodePath` provides an array of objects that detail the path from the root node passed to ai-collab, down to the node targeted for editing. The first index in the `NodePath` is an object pointing to the target node and the last index is always the root node.
 
-
 Lets look at an example of the Insert Ui Diff
 The following `InsertDiff` is an example of a `UiDiff` that would result from if the ai agent inserts an object into index 1 of `TestAppRootObject.rootVectors`
 ### Example Insert Ui Diff
