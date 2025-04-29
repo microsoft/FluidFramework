@@ -59,7 +59,7 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 export function TaskGroup(props: {
 	treeView: TreeView<typeof SharedTreeAppState>;
 	branchDifferences?: Difference[];
-	readonly diffs?: Diff[];
+	readonly diffs?: readonly Diff[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 }): JSX.Element {
 	const { enqueueSnackbar } = useSnackbar();
