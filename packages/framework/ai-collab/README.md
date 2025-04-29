@@ -294,7 +294,7 @@ const response = aiCollab({
 	debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
 });
 
-const Diffs: diff[] = response.Diffs
+const diffs: Diff[] = response.diffs;
 ```
 
 Each Diff includes one or more NodePath objects. A `NodePath` is an array of objects representing the path from the root node (provided to ai-collab) to the specific node being edited. The array starts with the target node and ends with the root node.
