@@ -342,7 +342,8 @@ The simplest way is to use the `shortId`, where you can use the following code t
 
 **Note that the shortId field will only exist for objects that have a field defined as the `SchemaFactory.identifier` field.** See the above example app schema in this section to see the schema field defined as `sf.identifier`
 
-Lets take a look at another UI example of using an array of Diffs to render changes
+Let's take a look at another UI example of using an array of Diffs to render changes.
+
 ```ts
 import { Tree } from "@fluidframework/tree"
 
