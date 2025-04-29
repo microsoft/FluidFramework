@@ -9,10 +9,10 @@ export function aiCollab(options: AiCollabOptions): Promise<AiCollabSuccessRespo
 
 // @alpha
 export interface AiCollabErrorResponse {
+    readonly diffs: Diff[];
     readonly errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted" | "unexpectedError";
     readonly status: "failure" | "partial-failure";
     readonly tokensUsed: TokenUsage;
-    readonly uiDiffs: Diff[];
 }
 
 // @alpha
@@ -37,9 +37,9 @@ export interface AiCollabOptions {
 
 // @alpha
 export interface AiCollabSuccessResponse {
+    readonly diffs: Diff[];
     readonly status: "success";
     readonly tokensUsed: TokenUsage;
-    readonly uiDiffs: Diff[];
 }
 
 // @alpha

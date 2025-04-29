@@ -174,7 +174,7 @@ export interface AiCollabSuccessResponse {
 	 * A list of diffs that represent the changes made by the AI collaboration.
 	 * @remarks This is intended to be used to update your applications UI view with the changes made by the AI collaboration.
 	 */
-	readonly uiDiffs: readonly Diff[];
+	readonly diffs: Diff[];
 }
 
 /**
@@ -211,7 +211,7 @@ export interface AiCollabErrorResponse {
 	 * A list of diffs that represent the changes made by the AI collaboration.
 	 * @remarks This is intended to be used to update your applications UI view with the changes made by the AI collaboration.
 	 */
-	readonly uiDiffs: Diff[];
+	readonly diffs: Diff[];
 }
 
 /**

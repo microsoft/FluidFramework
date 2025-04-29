@@ -51,7 +51,7 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 export function TaskCard(props: {
 	sharedTreeBranch: TreeView<typeof SharedTreeAppState>;
-	readonly uiDiffs: readonly Diff[];
+	readonly diffs: readonly Diff[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 	sharedTreeTask: SharedTreeTask;
 }): JSX.Element {
@@ -68,7 +68,7 @@ export function TaskCard(props: {
 
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTask, logId: "TaskCard" });
 
-	const [uiDiffs, setUiDiffs] = useState(props.uiDiffs);
+	const [diffs, setdiffs] = useState(props.diffs);
 
 	const deleteTask = (): void => {
 		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
@@ -87,7 +87,7 @@ export function TaskCard(props: {
 		changes: {} satisfies Record<string, ModifyDiff>,
 	};
 
-	for (const uiDiff of uiDiffs ?? []) {
+	for (const uiDiff of diffs ?? []) {
 		if (uiDiff.type === "insert") {
 			fieldDifferences.isNewCreation = true;
 		}
@@ -221,9 +221,9 @@ export function TaskCard(props: {
 				autoHideDuration: 5000,
 			});
 			console.log("ai-collab Branch Task AFTER:", { ...newBranchTask });
-			console.log("ai-collab Branch Task differences:", response.uiDiffs);
+			console.log("ai-collab Branch Task differences:", response.diffs);
 
-			setUiDiffs(response.uiDiffs);
+			setdiffs(response.diffs);
 			// Note that we don't ask for user approval before merging changes at a task level for simplicites sake.
 			currentBranch.merge(newBranchTree);
 		} catch (error) {

@@ -242,14 +242,14 @@ Debug Events in ai-collab have two different types of trace id's:
 - `traceId`: This field exists on all debug events and can be used to correlate all debug events that happened in a single execution of `aiCollab()`. Sorting the events by timestamp will show the proper chronological order of the events. Note that the events should already be emitted in chronological order.
 - `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to correlate all events from a particular event flow. Additionally all LLM api call events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
 
-## Ui Visualizations
-ai-collab provides an array of `UiDiff` objects with its response. Each of these objects allows developers to identify tree nodes that have been modified as a result of ai collaboration and visualize them according to their needs.
+## Edit Difference Visualizations
+ai-collab provides an array of `Diff` objects with its response. Each of these objects allows developers to identify tree nodes that have been modified as a result of ai collaboration and visualize them according to their needs.
 
-Every `UiDiff` will include either a single `NodePath` or multiple in the case of multiple nodes being targeted by a single edit created by the ai agent. A `NodePath` is an array whose items represent segment paths, beginning from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call (at the end of the array), along with an explanation directly from the ai agent as to why it performed an edit.
+Every `Diff` will include either a single `NodePath` or multiple in the case of multiple nodes being targeted by a single edit created by the ai agent. A `NodePath` is an array whose items represent segment paths, beginning from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call (at the end of the array), along with an explanation directly from the ai agent as to why it performed an edit.
 
 Let's take a look at some examples for the following SharedTree application schema
 ```ts
-import { aiCollab, DebugEvent, UiDiff } from "@fluidframework/ai-collab/alpha";
+import { aiCollab, DebugEvent, Diff } from "@fluidframework/ai-collab/alpha";
 
 const sf = new SchemaFactory("testApp");
 
@@ -288,13 +288,14 @@ const response = aiCollab({
 	debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
 });
 
-const uiDiffs: UiDiff[] = response.uiDiffs
+const Diffs: diff[] = response.Diffs
 ```
 
-Each UiDiff will contain one or more `NodePath`'s. Each `NodePath` provides an array of objects that detail the path from the root node passed to ai-collab, down to the node targeted for editing. The first index in the `NodePath` is an object pointing to the target node and the last index is always the root node.
+Each Diff will contain one or more `NodePath`'s. Each `NodePath` provides an array of objects that detail the path from the root node passed to ai-collab, down to the node targeted for editing. The first index in the `NodePath` is an object pointing to the target node and the last index is always the root node.
 
-Lets look at an example of the Insert Ui Diff
-The following `InsertDiff` is an example of a `UiDiff` that would result from if the ai agent inserts an object into index 1 of `TestAppRootObject.rootVectors`
+
+Lets look at an example of the Insert Diff
+The following `InsertDiff` is an example of a `Diff` that would result from if the ai agent inserts an object into index 1 of `TestAppRootObject.rootVectors`
 ### Example Insert Ui Diff
 ```json
 type: "insert",
@@ -330,19 +331,19 @@ The simplest way is to use the `shortId` where you can use the following code to
 
 **Note that the shortId field will only exist for objects that have a field defined as the `SchemaFactory.identifier` field.** See the above example app schema in this section to see the schema field defined as `sf.identifier`
 
-Lets take a look at another UI example of using an array of UiDiffs to render changes
+Lets take a look at another UI example of using an array of Diffs to render changes
 ```ts
 import { Tree } from "@fluidframework/tree/alpha"
 
-function renderTodoWithUiDiffs(todo: Todo, uiDiffs: UiDiff[]) {
-const modifyDiffs = uiDiffs.filter((diff): diff is ModifyDiff => diff.type === "modify") ?? [];
+function renderTodoWithDiffs(todo: Todo, Diffs: diff[]) {
+const modifyDiffs = Diffs.filter((diff): diff is ModifyDiff => diff.type === "modify") ?? [];
 const matchingModifyDiffs = modifyDiffs.filter(
 	(diff: ModifyDiff) =>
 		// Modify diffs are a field level edit, so the first path will be the field on the target node and the second will be the node itself.
 		diff.nodePath.length > 1 && diff.nodePath[1]?.shortId === Tree.shortId(task),
 );
 
-const insertDiffs = uiDiffs.filter((diff): diff is InsertDiff => diff.type === "insert") ?? [];
+const insertDiffs = Diffs.filter((diff): diff is InsertDiff => diff.type === "insert") ?? [];
 const matchingInsertDiffs = insertDiffs.filter(
 	(diff: InsertDiff) =>
 		// Insert diffs are a node level edit, so the first path will be the node.
@@ -360,7 +361,7 @@ if (insertDiffs.length > 0) {
 }
 
 ```
-You can also use the `type` and `schemaIdentifier` fields to group related `UiDiff`'s
+You can also use the `type` and `schemaIdentifier` fields to group related `diff`'s
 ```ts
 
 const result = aiCollab({
@@ -384,15 +385,15 @@ const result = aiCollab({
 	debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
 });
 
-const uiDiffs: UiDiff[] = result.uiDiffs;
+const Diffs: diff[] = result.diffs;
 
-const insertDiffs = result.uiDiffs.filter(diff => diff.type === 'insert');
+const insertDiffs = result.diffs.filter(diff => diff.type === 'insert');
 
 const insertedVectorsDiffs = insertDiffs.filter(diff => diff.path[0]?.schemaIdentifier === TestVector.identifier)
 
 ```
 
-Other `UiDiff` types follow the same basic structure.
+Other `Diff` types follow the same basic structure.
 Read the tsdoc [here](./src/aiCollabUiDiffApi.ts) for more info.
 
 
