@@ -457,4 +457,20 @@ describe("Odsp Driver Resolver", () => {
 			`https://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` + `${testFilePath}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 	});
+	it("Should create request with containerPackageName and resolve it", async () => {
+		request = createOdspCreateContainerRequest(
+			siteUrl,
+			driveId,
+			filePath,
+			fileName,
+			undefined,
+			{ name: "testContainerPackageName" }, // Container package info variable,
+		);
+		const resolvedUrl = await resolver.resolve(request);
+		assert.strictEqual(
+			resolvedUrl.codeHint?.containerPackageName,
+			"testContainerPackageName",
+			"containerPackageName should match",
+		);
+	});
 });
