@@ -92,24 +92,6 @@ declare type current_as_old_for_Function_loadContainerRuntime = requireAssignabl
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ContainerRuntimeOptions": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ContainerRuntimeOptions = requireAssignableTo<TypeOnly<old.ContainerRuntimeOptions>, TypeOnly<current.ContainerRuntimeOptions>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ContainerRuntimeOptions": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ContainerRuntimeOptions = requireAssignableTo<TypeOnly<current.ContainerRuntimeOptions>, TypeOnly<old.ContainerRuntimeOptions>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_IAckedSummary": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IAckedSummary = requireAssignableTo<TypeOnly<old.IAckedSummary>, TypeOnly<current.IAckedSummary>>
@@ -212,6 +194,24 @@ declare type old_as_current_for_Interface_ICompressionRuntimeOptions = requireAs
  * "Interface_ICompressionRuntimeOptions": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_ICompressionRuntimeOptions = requireAssignableTo<TypeOnly<current.ICompressionRuntimeOptions>, TypeOnly<old.ICompressionRuntimeOptions>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IContainerRuntimeOptions": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IContainerRuntimeOptions = requireAssignableTo<TypeOnly<old.IContainerRuntimeOptions>, TypeOnly<current.IContainerRuntimeOptions>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IContainerRuntimeOptions": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IContainerRuntimeOptions = requireAssignableTo<TypeOnly<current.IContainerRuntimeOptions>, TypeOnly<old.IContainerRuntimeOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -716,24 +716,6 @@ declare type old_as_current_for_TypeAlias_EnqueueSummarizeResult = requireAssign
  * "TypeAlias_EnqueueSummarizeResult": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_EnqueueSummarizeResult = requireAssignableTo<TypeOnly<current.EnqueueSummarizeResult>, TypeOnly<old.EnqueueSummarizeResult>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IContainerRuntimeOptions": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_IContainerRuntimeOptions = requireAssignableTo<TypeOnly<old.IContainerRuntimeOptions>, TypeOnly<current.IContainerRuntimeOptions>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IContainerRuntimeOptions": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_IContainerRuntimeOptions = requireAssignableTo<TypeOnly<current.IContainerRuntimeOptions>, TypeOnly<old.IContainerRuntimeOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

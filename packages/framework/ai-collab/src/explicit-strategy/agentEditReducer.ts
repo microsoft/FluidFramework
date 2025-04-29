@@ -154,7 +154,7 @@ export function applyAgentEdit(
 							...treeEdit,
 							content: contentWithIds(insertNode, idGenerator),
 						},
-						diff: createInsertdiff(insertNode, treeEdit.explanation, idGenerator),
+						diff: createInsertDiff(insertNode, treeEdit.explanation, idGenerator),
 					};
 				}
 			}
@@ -225,7 +225,7 @@ export function applyAgentEdit(
 			const schemaIdentifier = (modification as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
-			const diff = createModifydiff(treeEdit, idGenerator);
+			const diff = createModifyDiff(treeEdit, idGenerator);
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
 			if (isPrimitive(modification)) {
 				try {
@@ -616,10 +616,10 @@ const createNodePathRecursive = (
 };
 
 /**
- * Creates a diff for an Insert TreeEdit.
+ * Creates a diff for an Insert TreeEdit to record a successful explicit operation.
  * @remarks This should be executed AFTER an insertion is made.
  */
-function createInsertdiff(
+function createInsertDiff(
 	newlyInsertedNode: TreeNode,
 	aiExplanation: string,
 	idGenerator: IdGenerator,
@@ -645,9 +645,10 @@ function removeAgentObjectIdField(oldValue: unknown): unknown {
 }
 
 /**
- * This function should be executed BEFORE a modify edit is applied.
+ * Creates a diff for a Modify TreeEdit, original node index should be recorded before operation.
+ * @remark This function should be executed BEFORE a modify edit is applied.
  */
-function createModifydiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyDiff {
+function createModifyDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyDiff {
 	const targetNode = getNodeFromTarget(treeEdit.target, idGenerator);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 	const targetNodeAtField: unknown = (targetNode as any)[treeEdit.field];
