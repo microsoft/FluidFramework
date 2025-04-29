@@ -50,7 +50,7 @@ import { ViewSchema } from "./view.js";
  */
 export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible {
 	const stored = toStoredSchema(schema);
-	return encodeTreeSchema(stored);
+	return encodeTreeSchema(stored, 1);
 }
 
 /**
@@ -88,8 +88,9 @@ export function comparePersistedSchema(
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
 	canInitialize: boolean,
+	schemaWriteVersion: number,
 ): SchemaCompatibilityStatus {
-	const schemaCodec = makeSchemaCodec(options);
+	const schemaCodec = makeSchemaCodec(options, schemaWriteVersion);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);

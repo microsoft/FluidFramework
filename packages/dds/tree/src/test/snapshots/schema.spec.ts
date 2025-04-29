@@ -13,7 +13,7 @@ describe("schema snapshots", () => {
 
 	for (const { name, schemaData } of testTrees) {
 		it(name, () => {
-			const encoded = encodeTreeSchema(schemaData);
+			const encoded = encodeTreeSchema(schemaData, 1);
 			takeJsonSnapshot(encoded);
 		});
 	}

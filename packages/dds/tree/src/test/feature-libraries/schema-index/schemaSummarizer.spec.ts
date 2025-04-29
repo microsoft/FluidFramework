@@ -16,15 +16,18 @@ describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
 		useSnapshotDirectory("encodeTreeSchema");
 		it("empty", () => {
-			const encoded = encodeTreeSchema({
-				rootFieldSchema: storedEmptyFieldSchema,
-				nodeSchema: new Map(),
-			});
+			const encoded = encodeTreeSchema(
+				{
+					rootFieldSchema: storedEmptyFieldSchema,
+					nodeSchema: new Map(),
+				},
+				1,
+			);
 			takeJsonSnapshot(encoded);
 		});
 
 		it("simple encoded schema", () => {
-			const encoded = encodeTreeSchema(toStoredSchema(JsonAsTree.Tree));
+			const encoded = encodeTreeSchema(toStoredSchema(JsonAsTree.Tree), 1);
 			takeJsonSnapshot(encoded);
 		});
 	});
