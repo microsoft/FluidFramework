@@ -244,11 +244,11 @@ Debug Events in ai-collab have two different types of trace id's:
 - `traceId`: This field exists on all debug events and can be used to correlate all debug events that happened in a single execution of `aiCollab()`. Sorting the events by timestamp will show the proper chronological order of the events. Note that the events should already be emitted in chronological order.
 - `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to correlate all events from a particular event flow. Additionally all LLM api call events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
 
-## Edit Difference Visualizations
+## Edit Differences
 
-ai-collab provides an array of `Diff` objects with its response. Each of these objects allows developers to identify tree nodes that have been modified as a result of ai collaboration and visualize them according to their needs.
+ai-collab provides an array of `Diff` objects with its response. Each of these objects allows developers to identify tree nodes that have been modified as a result of AI collaboration and visualize them according to their needs.
 
-Every `Diff` will include one or more `NodePaths` representing the nodes affected by a single edit created by the ai agent. A `NodePath` is an array whose items represent segment paths, beginning from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call (at the end of the array), along with an explanation directly from the ai agent as to why it performed an edit.
+Every `Diff` will include one or more `NodePaths` representing the nodes affected by a single edit created by the ai agent. A `NodePath` is an array whose items represent segment paths, beginning from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call (at the end of the array), along with an explanation directly from the AI agent as to why it performed an edit.
 
 Let's take a look at some examples for the following SharedTree application schema
 
@@ -278,7 +278,7 @@ const response = aiCollab({
 		}),
 		modelName: "gpt-4o",
 	},
-	treeNode: view.root,
+		userAsk: "user-defined prompt for what they're asking the LLM to accomplish",
 	prompt: {
 		systemRoleContext:
 			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
@@ -295,11 +295,14 @@ const response = aiCollab({
 const Diffs: diff[] = response.Diffs
 ```
 
-Each Diff will contain one or more `NodePath`'s. Each `NodePath` provides an array of objects that detail the path from the root node passed to ai-collab, down to the node targeted for editing. The first index in the `NodePath` is an object pointing to the target node and the last index is always the root node.
+Each Diff includes one or more NodePath objects. A `NodePath` is an array of objects representing the path from the root node (provided to ai-collab) to the specific node being edited. The array starts with the target node and ends with the root node.
 
-Lets look at an example of the Insert Diff
-The following `InsertDiff` is an example of a `Diff` that would result from if the ai agent inserts an object into index 1 of `TestAppRootObject.rootVectors`
-### Example Insert Ui Diff
+Let's look at an example of the Insert Diff.
+
+### Example Insert Diff
+
+The following `InsertDiff` is an example of a `Diff` that would result from an AI agent inserting an object into index 1 of `TestAppRootObject.rootVectors`
+
 ```json
 type: "insert",
 nodePath: [
@@ -321,14 +324,19 @@ nodePath: [
 	],
   	aiExplanation: "I need to insert a todo within the todos array",
   	nodeContent: {
-		id: "f75951b0-df9d-4daa-aaf2-c322f2f462a8",
-		title: "Example Todo Title",
+Using a `Diff`, you can identify the modified node in a number of different ways.
+```
+As you can see, the object at the beginning of the `nodePath` array directly points to the newly inserted node, while each subsequent object is the parent of the preceding node, terminating in the root node that was passed to the `ai-collab` function call.
 		description: "Example Todo Description"
 	},
 ```
-As you can see, the object at the beginning of the `nodePath` array directly points to the newly inserted node while each next object is the parent of the preceding node until you hit the root node passed to the ai-collab function call.
+The simplest way is to use the `shortId`, where you can use the following code to identify the newly inserted node within the SharedTree.
 
-Using the following ui diff, you can identify the modified node in a number of different ways.
+> [!NOTE]
+> The `shortId` field will only exist for objects that have a field defined as the `SchemaFactory.identifier` field.
+Let's take a look at another UI example of using an array of Diffs to render changes.
+
+import { Tree } from "@fluidframework/tree"
 
 The simplest way is to use the `shortId` where you can use the following code to identify the newly inserted node within the SharedTree.
 
@@ -336,28 +344,27 @@ The simplest way is to use the `shortId` where you can use the following code to
 
 Lets take a look at another UI example of using an array of Diffs to render changes
 ```ts
-import { Tree } from "@fluidframework/tree/alpha"
+import { Tree } from "@fluidframework/tree"
 
 function renderTodoWithDiffs(todo: Todo, Diffs: diff[]) {
-const modifyDiffs = Diffs.filter((diff): diff is ModifyDiff => diff.type === "modify") ?? [];
-const matchingModifyDiffs = modifyDiffs.filter(
-	(diff: ModifyDiff) =>
-		// Modify diffs are a field level edit, so the first path will be the field on the target node and the second will be the node itself.
-		diff.nodePath.length > 1 && diff.nodePath[1]?.shortId === Tree.shortId(task),
-);
+	const modifyDiffs = Diffs.filter((diff): diff is ModifyDiff => diff.type === "modify") ?? [];
+	const matchingModifyDiffs = modifyDiffs.filter(
+		(diff: ModifyDiff) =>
+			// Modify diffs are a field level edit, so the first path will be the field on the target node and the second will be the node itself.diff.nodePath.length > 1 && diff.nodePath[1]?.shortId === Tree.shortId(task),
+		);
 
-const insertDiffs = Diffs.filter((diff): diff is InsertDiff => diff.type === "insert") ?? [];
-const matchingInsertDiffs = insertDiffs.filter(
-	(diff: InsertDiff) =>
-		// Insert diffs are a node level edit, so the first path will be the node.
-		diff.nodePath[0]?.shortId === Tree.shortId(task),
-);
+	const insertDiffs = Diffs.filter((diff): diff is InsertDiff => diff.type === "insert") ?? [];
+	const matchingInsertDiffs = insertDiffs.filter(
+		(diff: InsertDiff) =>
+			// Insert diffs are a node level edit, so the first path will be the node.
+			diff.nodePath[0]?.shortId === Tree.shortId(task),
+	);
 }
 
 if (insertDiffs.length > 0) {
 	renderNewlyInsertedTodo(todo)
 } else if (modifyDiffs.length > 0) {
-	const modifiedFields: [] = matchingModifyDiffs.map(diff => diff.nodePath[0].parentField);
+You can also use the `type` and `schemaIdentifier` fields to group related `diff`s.
 	renderModifiedTodo(todo, modifiedFields)
 } else {
 	renderTodo(todo)
@@ -365,8 +372,9 @@ if (insertDiffs.length > 0) {
 
 ```
 You can also use the `type` and `schemaIdentifier` fields to group related `diff`'s
-```ts
 
+```ts
+		userAsk: "user-defined prompt for what they're asking the LLM to accomplish",
 const result = aiCollab({
 	openAI: {
 		client: new OpenAI({
@@ -385,7 +393,7 @@ const result = aiCollab({
 	}
 	planningStep: true,
 	finalReviewStep: true,
-	debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
+Read [their documentation](./src/aiCollabUiDiffApi.ts) for more info.
 });
 
 const Diffs: diff[] = result.diffs;

@@ -33,7 +33,7 @@ import type {
 	NodePath,
 	RemoveNodeDiff,
 	Diff,
-} from "../aiCollabUiDiffApi.js";
+} from "../aiCollabdiffApi.js";
 
 import {
 	type TreeEdit,
@@ -102,9 +102,7 @@ export function getSchemaIdentifier(content: TreeEditValue): string {
 			if (isFluidHandle(content)) {
 				return SchemaFactory.handle.identifier;
 			}
-			if (Tree.is(content, NodeKind.Map as unknown as ImplicitAllowedTypes)) {
-				throw new UsageError("Map Nodes are not currently supported in this context");
-			}
+
 			return content[typeField];
 		}
 		default: {
@@ -114,7 +112,7 @@ export function getSchemaIdentifier(content: TreeEditValue): string {
 }
 
 /**
- * Converts a tree node from a {@link TreeEdit} to a `TreeEditObject` with the proper object ids.
+  * Converts a tree node from a {@link TreeEdit} to a {@link TreeEditObject} with the proper object IDs.
  */
 export function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditObject {
 	return JSON.parse(toDecoratedJson(idGenerator, content)) as TreeEditObject;
@@ -128,7 +126,7 @@ export function applyAgentEdit(
 	idGenerator: IdGenerator,
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	validator?: (edit: TreeNode) => void,
-): { edit: TreeEdit; uiDiff: Diff } {
+): { edit: TreeEdit; diff: Diff } {
 	assertObjectIdsExist(treeEdit, idGenerator);
 	switch (treeEdit.type) {
 		case "insert": {
@@ -156,7 +154,7 @@ export function applyAgentEdit(
 							...treeEdit,
 							content: contentWithIds(insertNode, idGenerator),
 						},
-						uiDiff: createInsertUiDiff(insertNode, treeEdit.explanation, idGenerator),
+						diff: createInsertdiff(insertNode, treeEdit.explanation, idGenerator),
 					};
 				}
 			}
@@ -164,7 +162,7 @@ export function applyAgentEdit(
 		}
 		case "remove": {
 			const source = treeEdit.source;
-			let uiDiff: RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
+			let diff: RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
 			if (isObjectTarget(source)) {
 				const node = getNodeFromTarget(source, idGenerator);
 				const parentNode = Tree.parent(node);
@@ -176,7 +174,7 @@ export function applyAgentEdit(
 				} else if (Tree.schema(parentNode).kind === NodeKind.Array) {
 					const nodeIndex = Tree.key(node) as number;
 					const parentArrayNode = parentNode as TreeArrayNode;
-					uiDiff = createRemoveUiDiff(treeEdit, idGenerator);
+					diff = createRemovediff(treeEdit, idGenerator);
 					parentArrayNode.removeAt(nodeIndex);
 				} else {
 					const fieldKey = Tree.key(node);
@@ -185,7 +183,7 @@ export function applyAgentEdit(
 						(parentSchema.info as Record<string, ImplicitFieldSchema>)[fieldKey] ??
 						fail("Expected field schema");
 					if (fieldSchema instanceof FieldSchema && fieldSchema.kind === FieldKind.Optional) {
-						uiDiff = createRemoveUiDiff(treeEdit, idGenerator);
+						diff = createRemovediff(treeEdit, idGenerator);
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 						(parentNode as any)[fieldKey] = undefined;
 					} else {
@@ -196,13 +194,13 @@ export function applyAgentEdit(
 				}
 			} else if (isRange(source)) {
 				const { array, startIndex, endIndex } = getRangeInfo(source, idGenerator);
-				uiDiff = createRemoveUiDiff(treeEdit, idGenerator);
+				diff = createRemovediff(treeEdit, idGenerator);
 				array.removeRange(startIndex, endIndex);
 			} else {
 				throw new UsageError("Invalid source for remove edit");
 			}
 
-			return { edit: treeEdit, uiDiff };
+			return { edit: treeEdit, diff };
 		}
 		case "modify": {
 			const node = getNodeFromTarget(treeEdit.target, idGenerator);
@@ -227,7 +225,7 @@ export function applyAgentEdit(
 			const schemaIdentifier = (modification as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
-			const uiDiff = createModifyUiDiff(treeEdit, idGenerator);
+			const diff = createModifydiff(treeEdit, idGenerator);
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
 			if (isPrimitive(modification)) {
 				try {
@@ -305,13 +303,13 @@ export function applyAgentEdit(
 			}
 
 			return insertedObject === undefined
-				? { edit: treeEdit, uiDiff }
+				? { edit: treeEdit, diff }
 				: {
 						edit: {
 							...treeEdit,
 							modification: contentWithIds(insertedObject, idGenerator),
 						},
-						uiDiff,
+						diff,
 					};
 		}
 		case "move": {
@@ -322,7 +320,7 @@ export function applyAgentEdit(
 				destination,
 				idGenerator,
 			);
-			const uiDiff: MoveSingleDiff | MoveRangeDiff = createMoveDiff(treeEdit, idGenerator);
+			const diff: MoveSingleDiff | MoveRangeDiff = createMoveDiff(treeEdit, idGenerator);
 			if (isObjectTarget(source)) {
 				const sourceNode = getNodeFromTarget(source, idGenerator);
 				const sourceIndex = Tree.key(sourceNode) as number;
@@ -373,7 +371,7 @@ export function applyAgentEdit(
 			} else {
 				throw new Error("Invalid source for move edit");
 			}
-			return { edit: treeEdit, uiDiff };
+			return { edit: treeEdit, diff };
 		}
 		default: {
 			fail("invalid tree edit");
@@ -620,7 +618,7 @@ const createNodePathRecursive = (
 /**
  * Creates a UI diff for an Insert TreeEdit. This should be executed AFTER an insertion is made.
  */
-function createInsertUiDiff(
+function createInsertdiff(
 	newlyInsertedNode: TreeNode,
 	aiExplanation: string,
 	idGenerator: IdGenerator,
@@ -648,7 +646,7 @@ function removeAgentObjectIdField(oldValue: unknown): unknown {
 /**
  * This function should be executed BEFORE a modify edit is applied.
  */
-function createModifyUiDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyDiff {
+function createModifydiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyDiff {
 	const targetNode = getNodeFromTarget(treeEdit.target, idGenerator);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 	const targetNodeAtField: unknown = (targetNode as any)[treeEdit.field];
@@ -679,7 +677,7 @@ function createModifyUiDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyD
 	};
 }
 
-function createRemoveUiDiff(
+function createRemovediff(
 	treeEdit: Remove,
 	idGenerator: IdGenerator,
 ): RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff {
