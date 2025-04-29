@@ -102,7 +102,7 @@ export function TaskCard(props: {
 			fieldDifferences.changes[targetField] = uiDiff;
 		}
 
-		if (uiDiff.type === "move" && uiDiff.subType === "move-single") {
+		if (uiDiff.type === "move" && uiDiff.moveType === "move-single") {
 			fieldDifferences.moved = {
 				uiDiff,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

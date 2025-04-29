@@ -9,7 +9,7 @@ export function aiCollab(options: AiCollabOptions): Promise<AiCollabSuccessRespo
 
 // @alpha
 export interface AiCollabErrorResponse {
-    readonly diffs: Diff[];
+    readonly diffs: readonly Diff[];
     readonly errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted" | "unexpectedError";
     readonly status: "failure" | "partial-failure";
     readonly tokensUsed: TokenUsage;
@@ -73,7 +73,7 @@ export interface ArrayRangeRemoveDiff extends DiffBase {
     nodeContents: unknown[];
     nodePaths: NodePath[];
     // (undocumented)
-    subType: "remove-array-range";
+    removalType: "remove-array-range";
     // (undocumented)
     type: "remove";
 }
@@ -83,7 +83,7 @@ export interface ArraySingleRemoveDiff extends DiffBase {
     nodeContent: unknown;
     nodePath: NodePath;
     // (undocumented)
-    subType: "remove-array-single";
+    removalType: "remove-array-single";
     // (undocumented)
     type: "remove";
 }
@@ -299,10 +299,10 @@ export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
 // @alpha
 export interface MoveRangeDiff extends DiffBase {
     destinationNodePath: NodePath;
+    // (undocumented)
+    moveType: "move-range";
     nodeContents: unknown[];
     sourceNodePaths: NodePath[];
-    // (undocumented)
-    subType: "move-range";
     // (undocumented)
     type: "move";
 }
@@ -310,10 +310,10 @@ export interface MoveRangeDiff extends DiffBase {
 // @alpha
 export interface MoveSingleDiff extends DiffBase {
     destinationNodePath: NodePath;
+    // (undocumented)
+    moveType: "move-single";
     nodeContent: unknown;
     sourceNodePath: NodePath;
-    // (undocumented)
-    subType: "move-single";
     // (undocumented)
     type: "move";
 }
@@ -374,7 +374,7 @@ export interface RemoveNodeDiff extends DiffBase {
     nodeContent: unknown;
     nodePath: NodePath;
     // (undocumented)
-    subType: "remove-field";
+    removalType: "remove-field";
     // (undocumented)
     type: "remove";
 }

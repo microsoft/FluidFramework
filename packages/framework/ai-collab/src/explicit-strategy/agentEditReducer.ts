@@ -703,7 +703,7 @@ function createRemoveUiDiff(
 
 			return {
 				type: "remove",
-				subType: "remove-array-single",
+				removalType: "remove-array-single",
 				nodePath: createNodePathRecursive(targetRemovedNode as TreeNode, idGenerator, []),
 				aiExplanation: treeEdit.explanation,
 				nodeContent: removeAgentObjectIdField(JSON.parse(JSON.stringify(targetRemovedNode))),
@@ -722,7 +722,7 @@ function createRemoveUiDiff(
 
 			return {
 				type: "remove",
-				subType: "remove-field",
+				removalType: "remove-field",
 				nodePath: createNodePathRecursive(targetNodeAtField as TreeNode, idGenerator, []),
 				aiExplanation: treeEdit.explanation,
 				nodeContent: removeAgentObjectIdField(JSON.parse(JSON.stringify(targetNodeAtField))),
@@ -744,7 +744,7 @@ function createRemoveUiDiff(
 		}
 		return {
 			type: "remove",
-			subType: "remove-array-range",
+			removalType: "remove-array-range",
 			nodePaths: removedNodePaths,
 			aiExplanation: treeEdit.explanation,
 			nodeContents: removedNodes.map((node) =>
@@ -770,7 +770,7 @@ function createMoveDiff(
 		const node = getNodeFromTarget(source, idGenerator);
 		return {
 			type: "move",
-			subType: "move-single",
+			moveType: "move-single",
 			sourceNodePath: createNodePathRecursive(node, idGenerator, []),
 			destinationNodePath: createNodePathRecursive(destinationArrayNode, idGenerator, []),
 			aiExplanation: treeEdit.explanation,
@@ -795,7 +795,7 @@ function createMoveDiff(
 
 		return {
 			type: "move",
-			subType: "move-range",
+			moveType: "move-range",
 			sourceNodePaths: movedNodePaths,
 			destinationNodePath: createNodePathRecursive(destinationArrayNode, idGenerator, []),
 			aiExplanation: treeEdit.explanation,

@@ -105,7 +105,7 @@ export type RemoveDiff = RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemo
  */
 export interface RemoveNodeDiff extends DiffBase {
 	type: "remove";
-	subType: "remove-field";
+	removalType: "remove-field";
 	/**
 	 * The path from the root of the tree to the node being removed.
 	 */
@@ -122,7 +122,7 @@ export interface RemoveNodeDiff extends DiffBase {
  */
 export interface ArraySingleRemoveDiff extends DiffBase {
 	type: "remove";
-	subType: "remove-array-single";
+	removalType: "remove-array-single";
 	/**
 	 * The path from the root of the tree to the node being removed from the array node.
 	 */
@@ -139,7 +139,7 @@ export interface ArraySingleRemoveDiff extends DiffBase {
  */
 export interface ArrayRangeRemoveDiff extends DiffBase {
 	type: "remove";
-	subType: "remove-array-range";
+	removalType: "remove-array-range";
 	/**
 	 * The paths to each node being removed from the array node.
 	 */
@@ -162,7 +162,7 @@ export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
  */
 export interface MoveSingleDiff extends DiffBase {
 	type: "move";
-	subType: "move-single";
+	moveType: "move-single";
 	/**
 	 * The path from the root of the tree to the source node.
 	 * The last value in the path will be the node being moved
@@ -184,7 +184,7 @@ export interface MoveSingleDiff extends DiffBase {
  */
 export interface MoveRangeDiff extends DiffBase {
 	type: "move";
-	subType: "move-range";
+	moveType: "move-range";
 	/**
 	 * The paths to each node being moved from the source array node.
 	 */

@@ -1689,7 +1689,7 @@ describe("Diff Creation", () => {
 			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
 			const expectedUIDiff: ArraySingleRemoveDiff = {
 				type: "remove",
-				subType: "remove-array-single",
+				removalType: "remove-array-single",
 				nodePath: [
 					{
 						shortId: vectorShortId,
@@ -1735,7 +1735,7 @@ describe("Diff Creation", () => {
 			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
 			const expectedUiDiff: RemoveNodeDiff = {
 				type: "remove",
-				subType: "remove-field",
+				removalType: "remove-field",
 				nodePath: [
 					{
 						shortId: optionaFieldObjectShortId,
@@ -1814,7 +1814,7 @@ describe("Diff Creation", () => {
 			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
 			const expectedUiDiff: ArrayRangeRemoveDiff = {
 				type: "remove",
-				subType: "remove-array-range",
+				removalType: "remove-array-range",
 				nodePaths: expectedSourceNodePaths,
 				aiExplanation: removeEdit.explanation,
 				nodeContents: expectedSourceNodes.map(
@@ -1854,7 +1854,7 @@ describe("Diff Creation", () => {
 			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
 			const expectedUiDiff: MoveSingleDiff = {
 				type: "move",
-				subType: "move-single",
+				moveType: "move-single",
 				sourceNodePath: [
 					{
 						shortId: sourceVectorShortId,
@@ -1921,7 +1921,7 @@ describe("Diff Creation", () => {
 			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
 			const expectedUiDiff: MoveSingleDiff = {
 				type: "move",
-				subType: "move-single",
+				moveType: "move-single",
 				sourceNodePath: [
 					{
 						shortId: sourceVectorShortId,
@@ -2034,7 +2034,7 @@ describe("Diff Creation", () => {
 
 			const expectedUiDiff: MoveRangeDiff = {
 				type: "move",
-				subType: "move-range",
+				moveType: "move-range",
 				sourceNodePaths: expectedSourceNodePaths,
 				destinationNodePath: [
 					{
@@ -2129,7 +2129,7 @@ describe("Diff Creation", () => {
 
 			const expectedUiDiff: MoveRangeDiff = {
 				type: "move",
-				subType: "move-range",
+				moveType: "move-range",
 				sourceNodePaths: expectedSourceNodePaths,
 				destinationNodePath: [
 					{
