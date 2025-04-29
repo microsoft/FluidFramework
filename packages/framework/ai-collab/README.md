@@ -210,6 +210,7 @@ aiCollab({
 All debug events implement the `DebugEvent` interface. Some also implement `EventFlowDebugEvent`, which lets them mark a progress point in a specific logic flow within a given execution of `aiCollab()`.
 
 ### Event flow Overview
+
 To see detailed information about each event, please read their cooresponding [tsdoc](./src/explicit-strategy/debugEvents.ts#L46)
 
 1. **Core Event Loop** - The start and end of a single execution of aiCollab.
@@ -238,11 +239,13 @@ To see detailed information about each event, please read their cooresponding [t
 
 
 ### Using Trace Id's
+
 Debug Events in ai-collab have two different types of trace id's:
 - `traceId`: This field exists on all debug events and can be used to correlate all debug events that happened in a single execution of `aiCollab()`. Sorting the events by timestamp will show the proper chronological order of the events. Note that the events should already be emitted in chronological order.
 - `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to correlate all events from a particular event flow. Additionally all LLM api call events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
 
 ## Edit Difference Visualizations
+
 ai-collab provides an array of `Diff` objects with its response. Each of these objects allows developers to identify tree nodes that have been modified as a result of ai collaboration and visualize them according to their needs.
 
 Every `Diff` will include either a single `NodePath` or multiple in the case of multiple nodes being targeted by a single edit created by the ai agent. A `NodePath` is an array whose items represent segment paths, beginning from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call (at the end of the array), along with an explanation directly from the ai agent as to why it performed an edit.
@@ -292,7 +295,6 @@ const Diffs: diff[] = response.Diffs
 ```
 
 Each Diff will contain one or more `NodePath`'s. Each `NodePath` provides an array of objects that detail the path from the root node passed to ai-collab, down to the node targeted for editing. The first index in the `NodePath` is an object pointing to the target node and the last index is always the root node.
-
 
 Lets look at an example of the Insert Diff
 The following `InsertDiff` is an example of a `Diff` that would result from if the ai agent inserts an object into index 1 of `TestAppRootObject.rootVectors`

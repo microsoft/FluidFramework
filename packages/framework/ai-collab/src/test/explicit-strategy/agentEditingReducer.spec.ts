@@ -1586,7 +1586,7 @@ describe("Diff Creation", () => {
 			};
 			assert.deepEqual(result.uiDiff, expectedUDiff);
 		});
-		// it("insert primitive into array node via ObjectPlace - NOT SUPPORTED - see agentEditReducer line 143, typeof allowedType === function prevents this", () => {});
+		// it("insert primitive into array node via ObjectPlace
 		// it("insert primitive into array node via ArrayPlace - NOT SUPPORTED - see agentEditReducer line 143, typeof allowedType === function prevents this", () => {})
 	});
 
