@@ -632,7 +632,7 @@ function TaskGroupDiffModal(props: {
 	onAccept: () => void;
 	onDecline: () => void;
 	treeView: TreeView<typeof SharedTreeAppState>;
-	diffs: Diff[];
+	readonly diffs: readonly Diff[];
 	newBranchTargetNode: SharedTreeTaskGroup;
 }): JSX.Element {
 	const { isOpen, onClose, onAccept, onDecline, treeView, newBranchTargetNode, diffs } = props;
