@@ -151,7 +151,7 @@ export type InsertableObjectFromSchemaRecord<
 		>;
 
 /**
- * TODO
+ * Helper used to remove annotations from a schema record before calling {@link InsertableObjectFromSchemaRecord}.
  * @alpha
  */
 export type InsertableObjectFromAnnotatedSchemaRecord<
@@ -507,8 +507,6 @@ export function objectSchema<
 
 		public static readonly identifier = identifier;
 		public static readonly info = info;
-		// this might be better?
-		// public static readonly annotatedInfo = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {

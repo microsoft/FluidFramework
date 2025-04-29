@@ -23,6 +23,7 @@ import {
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
@@ -35,6 +36,8 @@ import {
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateImplicitAllowedTypes,
+	type UnannotateImplicitFieldSchema,
+	type UnannotateSchemaRecord,
 	areImplicitFieldSchemaEqual,
 	normalizeAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
@@ -43,6 +46,7 @@ import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
+	RestrictiveStringRecord,
 	UnionToIntersection,
 } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -289,6 +293,21 @@ describe("schemaTypes", () => {
 					ImplicitAllowedTypes
 				>;
 			}
+		}
+
+		// UnannotateImplicitFieldSchema
+		{
+			type T = ImplicitAnnotatedFieldSchema;
+			type _check = requireAssignableTo<UnannotateImplicitFieldSchema<T>, ImplicitFieldSchema>;
+		}
+
+		// UnannotateSchemaRecord
+		{
+			type T = RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>;
+			type _check = requireAssignableTo<
+				UnannotateSchemaRecord<T>,
+				RestrictiveStringRecord<ImplicitFieldSchema>
+			>;
 		}
 	}
 
