@@ -63,7 +63,6 @@ export class SchemaFactoryAlpha<
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
 	 * @param options - Additional options for the schema.
 	 */
-	// TODO rename and consolidate with alpha, note that it's a breaking change in the changeset
 	public objectAlpha<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
