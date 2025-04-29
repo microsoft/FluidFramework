@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/datastore-definitions",
-	"version": "2.33.0",
+	"version": "2.40.0",
 	"description": "Fluid data store definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
