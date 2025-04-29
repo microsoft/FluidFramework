@@ -6,7 +6,9 @@
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
+	type FixRecursiveRecursionLimit,
 	type ImplicitFieldSchema,
+	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 
 // Test the limits of how large/deep a schema can be before hitting TypeScript compiler limits.
@@ -707,29 +709,6 @@ describe("largeSchema", () => {
 		class Empty001 extends schema.object("001", {}) {}
 		class Empty000 extends schema.object("000", {}) {}
 
-		const union20 = [
-			Empty019,
-			Empty018,
-			Empty017,
-			Empty016,
-			Empty015,
-			Empty014,
-			Empty013,
-			Empty012,
-			Empty011,
-			Empty010,
-			Empty009,
-			Empty008,
-			Empty007,
-			Empty006,
-			Empty005,
-			Empty004,
-			Empty003,
-			Empty002,
-			Empty001,
-			Empty000,
-		] as const;
-
 		const union40 = [
 			Empty039,
 			Empty038,
@@ -882,42 +861,26 @@ describe("largeSchema", () => {
 				schema: union100,
 				enableSchemaValidation: true,
 			});
+
+			const field1 = schema.required(union100);
+			const field2 = schema.optional(union100);
+
+			// Workaround for recursion limit in union inside a schema.
+			// Uses a dummy object with the same schema but using the recursive APIs then uses the repeated ValidateRecursiveSchema workaround.
+			{
+				class ObjectNodeDummy extends schema.objectRecursive("ObjectNode", {
+					data: union100,
+				}) {}
+				// @ts-expect-error Recursion limit
+				type _check1 = ValidateRecursiveSchema<typeof ObjectNodeDummy>;
+				type _check2 = ValidateRecursiveSchema<typeof ObjectNodeDummy>;
+			}
+
+			// This fails to compile if the above dummy object isn't in included.
+			class ObjectNode extends schema.object("ObjectNode", {
+				data: union100,
+			}) {}
 		}
-
-		// {
-		// 	// @ts-expect-error Recursion limit
-		// 	class ArrayNode extends schema.array("ArrayNode", union100) {}
-		// 	const config = new TreeViewConfiguration({
-		// 		schema: ArrayNode,
-		// 		enableSchemaValidation: true,
-		// 	});
-		// }
-
-		// // This same as above and fails to compile if the above case is commented out making it hard to pin down the exact size limit in tests like this.
-		// // Seems like earlier schema can precompute things to make later ones build in more cases.
-		// {
-		// 	class ArrayNode extends schema.array("ArrayNode", union100) {}
-		// 	const config = new TreeViewConfiguration({
-		// 		schema: ArrayNode,
-		// 		enableSchemaValidation: true,
-		// 	});
-		// }
-
-		// {
-		// 	class ArrayNode extends schema.array("ArrayNode", union20) {}
-		// 	const config = new TreeViewConfiguration({
-		// 		schema: ArrayNode,
-		// 		enableSchemaValidation: true,
-		// 	});
-		// }
-
-		// {
-		// 	class ArrayNode extends schema.array("ArrayNode", union40) {}
-		// 	const config = new TreeViewConfiguration({
-		// 		schema: ArrayNode,
-		// 		enableSchemaValidation: true,
-		// 	});
-		// }
 
 		// This case works fine.
 		{
@@ -969,6 +932,232 @@ describe("largeSchema", () => {
 			const AreEqualBase = schema.objectRecursive("AreEqual", {
 				id: schema.identifier,
 				operands: MapNode,
+			});
+		}
+	});
+
+	it("large recursive union", () => {
+		const schema = new SchemaFactory("com.example");
+
+		const union = [
+			() => Empty100,
+			() => Empty099,
+			() => Empty098,
+			() => Empty097,
+			() => Empty096,
+			() => Empty095,
+			() => Empty094,
+			() => Empty093,
+			() => Empty092,
+			() => Empty091,
+			() => Empty090,
+			() => Empty089,
+			() => Empty088,
+			() => Empty087,
+			() => Empty086,
+			() => Empty085,
+			() => Empty084,
+			() => Empty083,
+			() => Empty082,
+			() => Empty081,
+			() => Empty080,
+			() => Empty079,
+			() => Empty078,
+			() => Empty077,
+			() => Empty076,
+			() => Empty075,
+			() => Empty074,
+			() => Empty073,
+			() => Empty072,
+			() => Empty071,
+			() => Empty070,
+			() => Empty069,
+			() => Empty068,
+			() => Empty067,
+			() => Empty066,
+			() => Empty065,
+			() => Empty064,
+			() => Empty063,
+			() => Empty062,
+			() => Empty061,
+			() => Empty060,
+			() => Empty059,
+			() => Empty058,
+			() => Empty057,
+			() => Empty056,
+			() => Empty055,
+			() => Empty054,
+			() => Empty053,
+			() => Empty052,
+			() => Empty051,
+			() => Empty050,
+			() => Empty049,
+			() => Empty048,
+			() => Empty047,
+			() => Empty046,
+			() => Empty045,
+			() => Empty044,
+			() => Empty043,
+			() => Empty042,
+			() => Empty041,
+			() => Empty040,
+			() => Empty039,
+			() => Empty038,
+			() => Empty037,
+			() => Empty036,
+			() => Empty035,
+			() => Empty034,
+			() => Empty033,
+			() => Empty032,
+			() => Empty031,
+			() => Empty030,
+			() => Empty029,
+			() => Empty028,
+			() => Empty027,
+			() => Empty026,
+			() => Empty025,
+			() => Empty024,
+			() => Empty023,
+			() => Empty022,
+			() => Empty021,
+			() => Empty020,
+			() => Empty019,
+			() => Empty018,
+			() => Empty017,
+			() => Empty016,
+			() => Empty015,
+			() => Empty014,
+			() => Empty013,
+			() => Empty012,
+			() => Empty011,
+			() => Empty010,
+			() => Empty009,
+			() => Empty008,
+			() => Empty007,
+			() => Empty006,
+			() => Empty005,
+			() => Empty004,
+			() => Empty003,
+			() => Empty002,
+			() => Empty001,
+			() => Empty000,
+		] as const;
+
+		class Empty100 extends schema.objectRecursive("100", { x: union }) {}
+		class Empty099 extends schema.objectRecursive("099", { x: union }) {}
+		class Empty098 extends schema.objectRecursive("098", { x: union }) {}
+		class Empty097 extends schema.objectRecursive("097", { x: union }) {}
+		class Empty096 extends schema.objectRecursive("096", { x: union }) {}
+		class Empty095 extends schema.objectRecursive("095", { x: union }) {}
+		class Empty094 extends schema.objectRecursive("094", { x: union }) {}
+		class Empty093 extends schema.objectRecursive("093", { x: union }) {}
+		class Empty092 extends schema.objectRecursive("092", { x: union }) {}
+		class Empty091 extends schema.objectRecursive("091", { x: union }) {}
+		class Empty090 extends schema.objectRecursive("090", { x: union }) {}
+		class Empty089 extends schema.objectRecursive("089", { x: union }) {}
+		class Empty088 extends schema.objectRecursive("088", { x: union }) {}
+		class Empty087 extends schema.objectRecursive("087", { x: union }) {}
+		class Empty086 extends schema.objectRecursive("086", { x: union }) {}
+		class Empty085 extends schema.objectRecursive("085", { x: union }) {}
+		class Empty084 extends schema.objectRecursive("084", { x: union }) {}
+		class Empty083 extends schema.objectRecursive("083", { x: union }) {}
+		class Empty082 extends schema.objectRecursive("082", { x: union }) {}
+		class Empty081 extends schema.objectRecursive("081", { x: union }) {}
+		class Empty080 extends schema.objectRecursive("080", { x: union }) {}
+		class Empty079 extends schema.objectRecursive("079", { x: union }) {}
+		class Empty078 extends schema.objectRecursive("078", { x: union }) {}
+		class Empty077 extends schema.objectRecursive("077", { x: union }) {}
+		class Empty076 extends schema.objectRecursive("076", { x: union }) {}
+		class Empty075 extends schema.objectRecursive("075", { x: union }) {}
+		class Empty074 extends schema.objectRecursive("074", { x: union }) {}
+		class Empty073 extends schema.objectRecursive("073", { x: union }) {}
+		class Empty072 extends schema.objectRecursive("072", { x: union }) {}
+		class Empty071 extends schema.objectRecursive("071", { x: union }) {}
+		class Empty070 extends schema.objectRecursive("070", { x: union }) {}
+		class Empty069 extends schema.objectRecursive("069", { x: union }) {}
+		class Empty068 extends schema.objectRecursive("068", { x: union }) {}
+		class Empty067 extends schema.objectRecursive("067", { x: union }) {}
+		class Empty066 extends schema.objectRecursive("066", { x: union }) {}
+		class Empty065 extends schema.objectRecursive("065", { x: union }) {}
+		class Empty064 extends schema.objectRecursive("064", { x: union }) {}
+		class Empty063 extends schema.objectRecursive("063", { x: union }) {}
+		class Empty062 extends schema.objectRecursive("062", { x: union }) {}
+		class Empty061 extends schema.objectRecursive("061", { x: union }) {}
+		class Empty060 extends schema.objectRecursive("060", { x: union }) {}
+		class Empty059 extends schema.objectRecursive("059", { x: union }) {}
+		class Empty058 extends schema.objectRecursive("058", { x: union }) {}
+		class Empty057 extends schema.objectRecursive("057", { x: union }) {}
+		class Empty056 extends schema.objectRecursive("056", { x: union }) {}
+		class Empty055 extends schema.objectRecursive("055", { x: union }) {}
+		class Empty054 extends schema.objectRecursive("054", { x: union }) {}
+		class Empty053 extends schema.objectRecursive("053", { x: union }) {}
+		class Empty052 extends schema.objectRecursive("052", { x: union }) {}
+		class Empty051 extends schema.objectRecursive("051", { x: union }) {}
+		class Empty050 extends schema.objectRecursive("050", { x: union }) {}
+		class Empty049 extends schema.objectRecursive("049", { x: union }) {}
+		class Empty048 extends schema.objectRecursive("048", { x: union }) {}
+		class Empty047 extends schema.objectRecursive("047", { x: union }) {}
+		class Empty046 extends schema.objectRecursive("046", { x: union }) {}
+		class Empty045 extends schema.objectRecursive("045", { x: union }) {}
+		class Empty044 extends schema.objectRecursive("044", { x: union }) {}
+		class Empty043 extends schema.objectRecursive("043", { x: union }) {}
+		class Empty042 extends schema.objectRecursive("042", { x: union }) {}
+		class Empty041 extends schema.objectRecursive("041", { x: union }) {}
+		class Empty040 extends schema.objectRecursive("040", { x: union }) {}
+		class Empty039 extends schema.objectRecursive("039", { x: union }) {}
+		class Empty038 extends schema.objectRecursive("038", { x: union }) {}
+		class Empty037 extends schema.objectRecursive("037", { x: union }) {}
+		class Empty036 extends schema.objectRecursive("036", { x: union }) {}
+		class Empty035 extends schema.objectRecursive("035", { x: union }) {}
+		class Empty034 extends schema.objectRecursive("034", { x: union }) {}
+		class Empty033 extends schema.objectRecursive("033", { x: union }) {}
+		class Empty032 extends schema.objectRecursive("032", { x: union }) {}
+		class Empty031 extends schema.objectRecursive("031", { x: union }) {}
+		class Empty030 extends schema.objectRecursive("030", { x: union }) {}
+		class Empty029 extends schema.objectRecursive("029", { x: union }) {}
+		class Empty028 extends schema.objectRecursive("028", { x: union }) {}
+		class Empty027 extends schema.objectRecursive("027", { x: union }) {}
+		class Empty026 extends schema.objectRecursive("026", { x: union }) {}
+		class Empty025 extends schema.objectRecursive("025", { x: union }) {}
+		class Empty024 extends schema.objectRecursive("024", { x: union }) {}
+		class Empty023 extends schema.objectRecursive("023", { x: union }) {}
+		class Empty022 extends schema.objectRecursive("022", { x: union }) {}
+		class Empty021 extends schema.objectRecursive("021", { x: union }) {}
+		class Empty020 extends schema.objectRecursive("020", { x: union }) {}
+		class Empty019 extends schema.objectRecursive("019", { x: union }) {}
+		class Empty018 extends schema.objectRecursive("018", { x: union }) {}
+		class Empty017 extends schema.objectRecursive("017", { x: union }) {}
+		class Empty016 extends schema.objectRecursive("016", { x: union }) {}
+		class Empty015 extends schema.objectRecursive("015", { x: union }) {}
+		class Empty014 extends schema.objectRecursive("014", { x: union }) {}
+		class Empty013 extends schema.objectRecursive("013", { x: union }) {}
+		class Empty012 extends schema.objectRecursive("012", { x: union }) {}
+		class Empty011 extends schema.objectRecursive("011", { x: union }) {}
+		class Empty010 extends schema.objectRecursive("010", { x: union }) {}
+		class Empty009 extends schema.objectRecursive("009", { x: union }) {}
+		class Empty008 extends schema.objectRecursive("008", { x: union }) {}
+		class Empty007 extends schema.objectRecursive("007", { x: union }) {}
+		class Empty006 extends schema.objectRecursive("006", { x: union }) {}
+		class Empty005 extends schema.objectRecursive("005", { x: union }) {}
+		class Empty004 extends schema.objectRecursive("004", { x: union }) {}
+		class Empty003 extends schema.objectRecursive("003", { x: union }) {}
+		class Empty002 extends schema.objectRecursive("002", { x: union }) {}
+		class Empty001 extends schema.objectRecursive("001", { x: union }) {}
+		class Empty000 extends schema.objectRecursive("000", { x: union }) {}
+
+		{
+			// @ts-expect-error Recursion limit
+			type _check1 = FixRecursiveRecursionLimit<typeof Empty000>;
+			type _check2 = FixRecursiveRecursionLimit<typeof Empty000>;
+			type _check3 = ValidateRecursiveSchema<typeof Empty000>;
+		}
+
+		{
+			// This fails if the ValidateRecursiveSchema above is removed.
+			class ObjectNode extends schema.object("ObjectNode", { x: union }) {}
+			const config = new TreeViewConfiguration({
+				schema: union,
+				enableSchemaValidation: true,
 			});
 		}
 	});
