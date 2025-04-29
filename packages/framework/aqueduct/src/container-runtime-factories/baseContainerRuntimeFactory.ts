@@ -63,9 +63,10 @@ export interface BaseContainerRuntimeFactoryProps {
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	/**
-	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it
+	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
 	 */
-	minVersionForCollab?: SemanticVersion;
+	minVersionForCollab?: SemanticVersion | undefined;
 }
 
 /**
@@ -93,7 +94,7 @@ export class BaseContainerRuntimeFactory
 	// eslint-disable-next-line import/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-	private readonly minVersionForCollab?: SemanticVersion;
+	private readonly minVersionForCollab: SemanticVersion | undefined;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();

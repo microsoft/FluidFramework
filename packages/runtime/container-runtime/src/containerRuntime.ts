@@ -705,20 +705,23 @@ export interface LoadContainerRuntimeParams {
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 	/**
-	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal}
-	 * properties, which affect the document schema. It can be considered to be the minimum version of
-	 * the FF runtime that we should support compatibility with.
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * The input should be a string that represents the minimum version of the FF runtime that should be
+	 * supported for collaboration. The format of the string must be in valid semver format.
+	 *
+	 * The inputted version will be used to determine the default configuration for
+	 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified version.
 	 *
 	 * @example
+	 * minVersionForCollab: "2.0.0"
+	 *
+	 * @privateRemarks
+	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
 	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
 	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
 	 * understand the new op type. If a customer were to set minVersionForCollab to 2.0.0, then `bar` would be set to
 	 * enable `foo` by default. If a customer were to set minVersionForCollab to 1.0.0, then `bar` would be set to
 	 * disable `foo` by default.
-	 *
-	 * minVersionForCollab accepts a string that must be in valid semver format. It must include the minor and patch indicators as well (i.e. 1.0
-	 * is not acceptable, but 1.0.0 is). For example, use "2.0.0" to set the default configuration for clients running at least the 2.0.0 version
-	 * of the FF runtime.
 	 */
 	minVersionForCollab?: SemanticVersion;
 }

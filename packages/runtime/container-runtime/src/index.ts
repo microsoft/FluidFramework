@@ -31,7 +31,7 @@ export {
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
-export { SemanticVersion } from "./compatUtils.js";
+export type { SemanticVersion } from "./compatUtils.js";
 export {
 	GCNodeType,
 	IGCMetadata,
