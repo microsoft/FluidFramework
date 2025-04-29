@@ -438,5 +438,29 @@ describe("Presence", () => {
 				assert.strictEqual(listener.callCount, 1);
 			});
 		});
+
+		describe("receiving AcknowledgementMessage", () => {
+			it("accpets passively without failing", () => {
+				const presence = prepareConnectedPresence(
+					runtime,
+					"attendeeId-2",
+					"client2",
+					clock,
+					logger,
+				);
+
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:Ack",
+						content: {
+							messageId: "messageId",
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+			});
+		});
 	});
 });

@@ -94,10 +94,7 @@ const acknowledgementMessageType = "Pres:Ack";
 
 interface AcknowledgementMessage extends IInboundSignalMessage {
 	type: typeof acknowledgementMessageType;
-	content: {
-		sendTimestamp: number;
-		avgLatency: number;
-	};
+	content: unknown;
 }
 
 function isPresenceMessage(
@@ -378,6 +375,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (!isPresenceMessage(message)) {
 			return;
 		}
+
+		// Here we accept acknowledgement messages passively.
+		// Once implemented, these will be used for tracking message delivery status.
+		// For now, we just skip processing these messages.
+		if (message.type === acknowledgementMessageType) {
+			return;
+		}
+
 		if (local) {
 			const deliveryDelta = received - message.content.sendTimestamp;
 			// Limit returnedMessages count to 256 such that newest message
@@ -404,9 +409,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 			// It is okay to continue processing the contained updates even if we are not
 			// connected.
-		} else if (message.type === acknowledgementMessageType) {
-			// TODO: Handle acknowledgement message type.
-			return;
 		} else {
 			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);
 			if (message.content.isComplete) {
