@@ -372,7 +372,7 @@ You can also use the `type` and `schemaIdentifier` fields to group related `diff
 }
 
 ```
-You can also use the `type` and `schemaIdentifier` fields to group related `diff`'s
+You can also use the `type` and `schemaIdentifier` fields to group related `diff`s.
 
 ```ts
 		userAsk: "user-defined prompt for what they're asking the LLM to accomplish",
