@@ -616,7 +616,9 @@ const createNodePathRecursive = (
 };
 
 /**
- * Creates a diff for an Insert TreeEdit to record a successful explicit operation.
+ * Creates a diff for an Insert TreeEdit. This function is only invoked within the "insert" case block.
+ * It generates the insert diff after the node has been successfully inserted, as the node's index may
+ * be required to support undoing the insert operation.
  * @remarks This should be executed AFTER an insertion is made.
  */
 function createInsertDiff(
@@ -645,8 +647,9 @@ function removeAgentObjectIdField(oldValue: unknown): unknown {
 }
 
 /**
- * Creates a diff for a Modify TreeEdit, original node index should be recorded before operation.
- * @remark This function should be executed BEFORE a modify edit is applied.
+ * Creates a diff for a Modify TreeEdit. For move operations, the diff is created before the node(s) have been successfully moved,
+ * since the original index is needed to restore the node(s) if the move operation need to undo.
+ * @remarks This function should be executed BEFORE a modify edit is applied.
  */
 function createModifyDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyDiff {
 	const targetNode = getNodeFromTarget(treeEdit.target, idGenerator);
