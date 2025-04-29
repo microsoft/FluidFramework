@@ -284,7 +284,7 @@ const response = aiCollab({
 	prompt: {
 		systemRoleContext:
 			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
-		userAsk: userAsk,
+		userAsk: "user-defined prompt for what they're asking the LLM to accomplish",
 	},
 	limiters: {
 		maxModelCalls: 25
