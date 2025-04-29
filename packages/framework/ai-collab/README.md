@@ -326,6 +326,7 @@ nodePath: [
   	nodeContent: {
 Using a `Diff`, you can identify the modified node in a number of different ways.
 ```
+
 As you can see, the object at the beginning of the `nodePath` array directly points to the newly inserted node, while each subsequent object is the parent of the preceding node, terminating in the root node that was passed to the `ai-collab` function call.
 		description: "Example Todo Description"
 	},
