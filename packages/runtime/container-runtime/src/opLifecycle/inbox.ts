@@ -439,6 +439,32 @@ export class Inbox extends TypedEventEmitter<IInboxEvents> implements IOpProcess
 	}
 
 	/**
+	 * Observes messages that are not intended for the runtime layer, updating/notifying Runtime systems as needed.
+	 * @param message - non-runtime message to process.
+	 */
+	private observeNonRuntimeMessage(message: ISequencedDocumentMessage): void {
+		this.processedClientSequenceNumber = message.clientSequenceNumber;
+
+		// If there are no more pending messages after processing a local message,
+		// the document is no longer dirty.
+		if (!this.params.hasPendingMessages()) {
+			this.params.updateDocumentDirtyState(false);
+		}
+
+		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
+		// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
+		if (
+			typeof message.contents === "string" &&
+			message.contents !== "" &&
+			message.type !== MessageType.ClientLeave
+		) {
+			message.contents = JSON.parse(message.contents);
+		}
+
+		this.emit("op", message, false /* runtimeMessage */);
+	}
+
+	/**
 	 * Process runtime messages. The messages here are contiguous messages in a batch.
 	 * Assuming the messages in the given bunch are also a TypedContainerRuntimeMessage, checks its type and dispatch
 	 * the messages to the appropriate handler in the runtime.
@@ -520,32 +546,6 @@ export class Inbox extends TypedEventEmitter<IInboxEvents> implements IOpProcess
 				throw error;
 			}
 		}
-	}
-
-	/**
-	 * Observes messages that are not intended for the runtime layer, updating/notifying Runtime systems as needed.
-	 * @param message - non-runtime message to process.
-	 */
-	private observeNonRuntimeMessage(message: ISequencedDocumentMessage): void {
-		this.processedClientSequenceNumber = message.clientSequenceNumber;
-
-		// If there are no more pending messages after processing a local message,
-		// the document is no longer dirty.
-		if (!this.params.hasPendingMessages()) {
-			this.params.updateDocumentDirtyState(false);
-		}
-
-		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
-		// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
-		if (
-			typeof message.contents === "string" &&
-			message.contents !== "" &&
-			message.type !== MessageType.ClientLeave
-		) {
-			message.contents = JSON.parse(message.contents);
-		}
-
-		this.emit("op", message, false /* runtimeMessage */);
 	}
 
 	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
