@@ -298,7 +298,7 @@ describeHydration(
 			assert.equal(node.x, null);
 		});
 
-		describe("supports setting", () => {
+		describe("supports setting fields", () => {
 			describe("primitives", () => {
 				it("required", () => {
 					class Root extends schemaFactory.object("", {
@@ -350,7 +350,7 @@ describeHydration(
 				});
 			});
 
-			describe("required object", () => {
+			describe("required TreeNode", () => {
 				const Child = schemaFactory.object("child", {
 					objId: schemaFactory.number,
 				});
@@ -369,7 +369,7 @@ describeHydration(
 				});
 			});
 
-			describe("optional object", () => {
+			describe("optional TreeNode", () => {
 				const Child = schemaFactory.object("child", {
 					objId: schemaFactory.number,
 				});
@@ -390,48 +390,16 @@ describeHydration(
 				});
 			});
 
-			describe.skip("required list", () => {
-				// const _ = new SchemaFactory("test");
-				// const list = _.fieldNode("List<string>", _.sequence(_.string));
-				// const parent = _.struct("parent", {
-				// 	list,
-				// });
-				// const schema = _.intoSchema(parent);
-				// const before: string[] = [];
-				// const after = ["A"];
-				// it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-				// 	const root = getRoot(schema, { list: before });
-				// 	assert.deepEqual(root.list, before);
-				// 	root.list = after;
-				// 	assert.deepEqual(root.list, after);
-				// });
-			});
-
-			describe.skip("optional list", () => {
-				// const _ = new SchemaFactory("test");
-				// const list = _.fieldNode("List<string>", _.sequence(_.string));
-				// const parent = _.struct("parent", {
-				// 	list: _.optional(list),
-				// });
-				// const schema = _.intoSchema(parent);
-				// const before: string[] = [];
-				// const after = ["A"];
-				// it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-				// 	const root = getRoot(schema, { list: undefined });
-				// 	assert.equal(root.list, undefined);
-				// 	root.list = before;
-				// 	assert.deepEqual(root.list, before);
-				// 	root.list = after;
-				// 	assert.deepEqual(root.list, after);
-				// });
-			});
-
-			describe.skip("required map", () => {
-				// TODO
-			});
-
-			describe.skip("optional map", () => {
-				// TODO
+			it("identifier", () => {
+				class Schema extends schemaFactory.object("parent", {
+					id: schemaFactory.identifier,
+				}) {}
+				const root = init(Schema, { id: "a" });
+				assert.throws(() => {
+					// TODO: AB#35799 this should not compile!
+					// If it does compile, it must be a UsageError.
+					root.id = "b";
+				});
 			});
 		});
 

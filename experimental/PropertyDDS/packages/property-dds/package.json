@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-dds",
-	"version": "2.32.0",
+	"version": "2.40.0",
 	"description": "definition of the property distributed data store",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -70,7 +70,7 @@
 		"lz4js": "^0.2.0",
 		"msgpackr": "^1.10.1",
 		"pako": "^2.0.4",
-		"uuid": "^11.1.0"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -89,10 +89,11 @@
 		"@fluidframework/server-local-server": "^5.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.5",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
 		"chai": "^4.2.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
@@ -101,7 +102,6 @@
 		"eslint": "~8.55.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},

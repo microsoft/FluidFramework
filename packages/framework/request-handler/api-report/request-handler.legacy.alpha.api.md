@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @deprecated
+// @alpha @deprecated @legacy
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
 // (No @packageDocumentation comment for this package)

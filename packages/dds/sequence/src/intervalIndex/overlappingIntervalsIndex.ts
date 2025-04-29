@@ -14,9 +14,8 @@ import {
 import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
 	ISerializableInterval,
-	IntervalType,
 	SequenceInterval,
-	createSequenceInterval,
+	createTransientInterval,
 } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
@@ -27,7 +26,7 @@ import { IntervalIndex, type SequenceIntervalIndex } from "./intervalIndex.js";
  * Use {@link ISequenceOverlappingIntervalsIndex} instead.
  * @legacy
  * @alpha
- * @remarks The generic version of this interface is no longer used and will be removed. Use {@link ISequenceOverlappingIntervalsIndex} instead.
+ * @deprecated The generic version of this interface is no longer used and will be removed. Use {@link ISequenceOverlappingIntervalsIndex} instead.
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
@@ -108,12 +107,10 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				});
 			}
 		} else {
-			const transientInterval: SequenceInterval = createSequenceInterval(
-				"transient",
+			const transientInterval: SequenceInterval = createTransientInterval(
 				start ?? "start",
 				end ?? "end",
 				this.client,
-				IntervalType.Transient,
 			);
 
 			if (start === undefined) {
@@ -184,13 +181,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		) {
 			return [];
 		}
-		const transientInterval = createSequenceInterval(
-			"transient",
-			start,
-			end,
-			this.client,
-			IntervalType.Transient,
-		);
+		const transientInterval = createTransientInterval(start, end, this.client);
 
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
 		return overlappingIntervalNodes.map((node) => node.key);

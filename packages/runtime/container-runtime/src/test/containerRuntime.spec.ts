@@ -14,6 +14,7 @@ import { AttachState, ICriticalContainerError } from "@fluidframework/container-
 import {
 	ContainerErrorTypes,
 	IContainerContext,
+	type IBatchMessage,
 } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -72,13 +73,15 @@ import {
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
+import { getCompatibilityVersionDefaults } from "../compatUtils.js";
+import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
-	CompressionAlgorithms,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
+	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
 } from "../containerRuntime.js";
 import {
@@ -304,7 +307,7 @@ describe("Runtime", () => {
 			});
 		});
 
-		describe("Flushing and Replaying", () => {
+		describe("Batching", () => {
 			it("Default flush mode", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
@@ -445,6 +448,88 @@ describe("Runtime", () => {
 						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
 					}
 				});
+
+			// NOTE: This test is examining a case that only occurs with an old Loader that doesn't tell ContainerRuntime when processing system ops.
+			// In other words, when the MockDeltaManager bumps its lastSequenceNumber, ContainerRuntime.process would be called in the current code, but not with legacy loader.
+			for (const skipSafetyFlushDuringProcessStack of [true, undefined]) {
+				it(`Inbound (non-runtime) op triggers flush due to refSeq changing [skipSafetyFlush=${skipSafetyFlushDuringProcessStack}]`, async () => {
+					const submittedBatches: {
+						messages: IBatchMessage[];
+						referenceSequenceNumber: number;
+					}[] = [];
+
+					const mockContext = getMockContext({
+						settings: {
+							"Fluid.ContainerRuntime.DisableFlushBeforeProcess":
+								skipSafetyFlushDuringProcessStack,
+						},
+					});
+					(
+						mockContext as { submitBatchFn: IContainerContext["submitBatchFn"] }
+					).submitBatchFn = (
+						messages: IBatchMessage[],
+						referenceSequenceNumber: number = -1,
+					) => {
+						submittedOps.push(...messages); // Reusing submittedOps since submitFn won't be invoked due to submitBatchFn's presence
+						submittedBatches.push({ messages, referenceSequenceNumber });
+						return 999; // CSN not used in test asserts below
+					};
+
+					const containerRuntime = await ContainerRuntime.loadRuntime({
+						context: mockContext as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					// Submit the first message
+					submitDataStoreOp(containerRuntime, "1", "testMessage1");
+					assert.strictEqual(submittedOps.length, 0, "No ops submitted yet");
+
+					// Bump lastSequenceNumber and trigger the "op" event artificially to simulate processing a non-runtime op
+					// When [skipSafetyFlushDuringProcessStack: FALSE], this will trigger a flush, which allows us to safely submit more ops next
+					const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
+					++mockDeltaManager.lastSequenceNumber;
+					mockDeltaManager.emit("op", {
+						clientId: mockClientId,
+						sequenceNumber: mockDeltaManager.lastSequenceNumber,
+						clientSequenceNumber: 1,
+						type: MessageType.ClientJoin,
+						contents: "test content",
+					});
+
+					const expectedSubmitCount = skipSafetyFlushDuringProcessStack ? 0 : 1;
+					assert.equal(
+						submittedOps.length,
+						expectedSubmitCount,
+						"Submitted op count wrong after first op",
+					);
+
+					// Submit the second message
+					// When [skipSafetyFlushDuringProcessStack: TRUE], this will trigger a flush via Outbox.maybeFlushPartialBatch
+					submitDataStoreOp(containerRuntime, "2", "testMessage2");
+					assert.equal(
+						submittedOps.length,
+						1,
+						"By now we expect the first op to have been submitted in both configurations",
+					);
+
+					// Wait for the next tick for the second message to be flushed
+					await Promise.resolve();
+
+					// Validate that the messages were submitted
+					assert.equal(submittedOps.length, 2, "Two messages should be submitted");
+					assert.deepEqual(
+						submittedBatches,
+						[
+							{ messages: [submittedOps[0]], referenceSequenceNumber: 0 }, // The first op
+							{ messages: [submittedOps[1]], referenceSequenceNumber: 1 }, // The second op
+						],
+						"Two batches should be submitted with different refSeq",
+					);
+				});
+			}
 		});
 
 		describe("orderSequentially", () => {
@@ -955,8 +1040,18 @@ describe("Runtime", () => {
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
 				pendingStateManager.onFlushBatch(
-					[{ serializedOp: "", referenceSequenceNumber: 0 }],
+					[
+						{
+							// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+							runtimeOp: {
+								type: ContainerMessageType.FluidDataStoreOp,
+								contents: "" as unknown,
+							} as LocalContainerRuntimeMessage,
+							referenceSequenceNumber: 0,
+						},
+					],
 					1,
+					false /* staged */,
 				);
 
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
@@ -1471,7 +1566,7 @@ describe("Runtime", () => {
 				mockLogger = new MockLogger();
 			});
 
-			const runtimeOptions: IContainerRuntimeOptionsInternal = {
+			const runtimeOptions = {
 				compressionOptions: {
 					minimumBatchSizeInBytes: 1024 * 1024,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -1479,9 +1574,9 @@ describe("Runtime", () => {
 				chunkSizeInBytes: 800 * 1024,
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 				enableGroupedBatching: true,
-			};
+			} as const satisfies IContainerRuntimeOptionsInternal;
 
-			const defaultRuntimeOptions: IContainerRuntimeOptionsInternal = {
+			const defaultRuntimeOptions = {
 				summaryOptions: {},
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
@@ -1495,7 +1590,8 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
-			};
+				createBlobPayloadPending: undefined,
+			} as const satisfies ContainerRuntimeOptionsInternal;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
 			it("Container load stats", async () => {
@@ -1996,7 +2092,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2044,7 +2140,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2118,7 +2214,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -3530,6 +3626,331 @@ describe("Runtime", () => {
 						"Container should throw when op compression is on and op grouping is off",
 					);
 				});
+			});
+		});
+
+		// TODO: Update these tests when compatibilityVersion API is implemented - ADO:36088
+		describe("Default Configurations", () => {
+			it("compatibilityVersion not provided", async () => {
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: false,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+					},
+				]);
+			});
+
+			it("compatibilityVersion = 1.0.0", async () => {
+				const compatibilityVersion = "1.0.0";
+				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: defaultRuntimeOptions,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.Immediate,
+					compressionOptions: {
+						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: false,
+					explicitSchemaControl: false,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+					},
+				]);
+			});
+
+			it('compatibilityVersion = 2.0.0-defaults ("default")', async () => {
+				const compatibilityVersion = "2.0.0-defaults";
+				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: defaultRuntimeOptions,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: false,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+					},
+				]);
+			});
+
+			it("compatibilityVersion = 2.0.0 (explicit)", async () => {
+				const compatibilityVersion = "2.0.0";
+				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: defaultRuntimeOptions,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: true,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+					},
+				]);
+			});
+
+			it("compatibilityVersion = 2.20.0", async () => {
+				const compatibilityVersion = "2.20.0";
+				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: defaultRuntimeOptions,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: true,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+					},
+				]);
+			});
+
+			it("compatibilityVersion not provided, with manual configs for each property", async () => {
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						summaryOptions: { initialSummarizerDelayMs: 1 },
+						gcOptions: { enableGCSweep: true },
+						loadSequenceNumberVerification: "bypass",
+						flushMode: FlushMode.Immediate,
+						maxBatchSizeInBytes: 100,
+						chunkSizeInBytes: 200,
+						enableRuntimeIdCompressor: "on",
+						enableGroupedBatching: false, // By turning off batching, we will also disable compression automatically
+						explicitSchemaControl: true,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: { initialSummarizerDelayMs: 1 },
+					gcOptions: { enableGCSweep: true },
+					loadSequenceNumberVerification: "bypass",
+					flushMode: FlushMode.Immediate,
+					compressionOptions: {
+						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 100,
+					chunkSizeInBytes: 200,
+					enableRuntimeIdCompressor: "on",
+					enableGroupedBatching: false,
+					explicitSchemaControl: true,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+					},
+				]);
+			});
+
+			for (const { desc, runtimeOptions } of [
+				{ desc: "all options unspecified", runtimeOptions: {} },
+				{
+					// This case tests degenerate specification that is permissible
+					// with exactOptionalPropertyTypes disabled. Even when enabled,
+					// this should be tested in case callers violate exactness.
+					// (use @ts-expect-error or `as` to ignore when needed)
+					desc: "all options explicitly undefined",
+					runtimeOptions: {
+						summaryOptions: undefined,
+						gcOptions: undefined,
+						loadSequenceNumberVerification: undefined,
+						flushMode: undefined,
+						maxBatchSizeInBytes: undefined,
+						chunkSizeInBytes: undefined,
+						enableRuntimeIdCompressor: undefined,
+						enableGroupedBatching: undefined,
+						compressionOptions: undefined,
+						explicitSchemaControl: undefined,
+						createBlobPayloadPending: undefined,
+					},
+				},
+			])
+				it(desc, async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime({
+						context: getMockContext({ logger }) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions,
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+						summaryOptions: {},
+						gcOptions: {},
+						loadSequenceNumberVerification: "close",
+						flushMode: FlushMode.TurnBased,
+						compressionOptions: {
+							minimumBatchSizeInBytes: 614400,
+							compressionAlgorithm: CompressionAlgorithms.lz4,
+						},
+						maxBatchSizeInBytes: 716800,
+						chunkSizeInBytes: 204800,
+						enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
+						enableGroupedBatching: true,
+						explicitSchemaControl: false,
+					};
+
+					logger.assertMatchAny([
+						{
+							eventName: "ContainerRuntime:ContainerLoadStats",
+							category: "generic",
+							options: JSON.stringify(expectedRuntimeOptions),
+						},
+					]);
+				});
+
+			// Skipped since 3.0.0 is not an existing FF version yet
+			it.skip("compatibilityVersion = 3.0.0", async () => {
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: { enableGCSweep: true },
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: true,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+					},
+				]);
 			});
 		});
 	});

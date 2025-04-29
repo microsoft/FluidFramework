@@ -124,6 +124,7 @@ interface FluidDataStoreMessage {
  * Creates a shallow wrapper of {@link IFluidParentContext}. The wrapper can then have its methods overwritten as needed
  */
 export function wrapContext(context: IFluidParentContext): IFluidParentContext {
+	const isReadOnly = context.isReadOnly;
 	return {
 		get IFluidDataStoreRegistry() {
 			return context.IFluidDataStoreRegistry;
@@ -149,6 +150,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		get attachState() {
 			return context.attachState;
 		},
+		isReadOnly: isReadOnly === undefined ? undefined : () => isReadOnly(),
 		containerRuntime: context.containerRuntime,
 		scope: context.scope,
 		gcThrowOnTombstoneUsage: context.gcThrowOnTombstoneUsage,
@@ -607,11 +609,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	protected createDataStoreId(): string {
 		/**
-		 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
-		 * in the snapshot.
-		 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
+		 * Return uuid if short-ids are explicitly disabled via feature flags.
 		 */
-		if (this.mc.config.getBoolean("Fluid.Runtime.IsShortIdEnabled") === true) {
+		if (this.mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
+			return uuid();
+		} else {
 			// We use three non-overlapping namespaces:
 			// - detached state: even numbers
 			// - attached state: odd numbers
@@ -627,7 +629,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}
 			return id;
 		}
-		return uuid();
 	}
 
 	public createDetachedDataStore(
@@ -1110,6 +1111,31 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 							runtimeConnected: this.parentContext.connected,
 							connected,
 						}),
+					},
+					error,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Enumerates the contexts and calls notifyReadOnlyState on them.
+	 */
+	public notifyReadOnlyState(readonly: boolean): void {
+		for (const [fluidDataStoreId, context] of this.contexts) {
+			try {
+				context.notifyReadOnlyState(readonly);
+			} catch (error) {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "SetReadOnlyStateError",
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
+						details: {
+							runtimeReadonly: this.parentContext.isReadOnly?.(),
+							readonly,
+						},
 					},
 					error,
 				);

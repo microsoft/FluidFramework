@@ -77,21 +77,8 @@ export interface ViewableTree {
 	 * Only one schematized view may exist for a given ITree at a time.
 	 * If creating a second, the first must be disposed before calling `viewWith` again.
 	 *
-	 *
-	 * TODO: Provide a way to make a generic view schema for any document.
+	 * @privateRemarks
 	 * TODO: Support adapters for handling out-of-schema data.
-	 *
-	 * Doing initialization here allows a small API that is hard to use incorrectly.
-	 * Other approaches tend to have easy-to-make mistakes.
-	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing documents,
-	 * or call it unconditionally leaving an app that can only create new documents.
-	 * It also would require the schema to be passed into separate places and could cause issues if they didn't match.
-	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
-	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
-	 * on the create code-path (for example how a schematized factory might do it),
-	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
-	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
-	 * this initialization could become just another out of schema content adapter and this initialization is no longer a special case.
 	 */
 	viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
