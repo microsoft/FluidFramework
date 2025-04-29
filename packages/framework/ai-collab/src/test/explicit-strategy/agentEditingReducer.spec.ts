@@ -32,7 +32,7 @@ import type {
 	NodePath,
 	RemoveNodeDiff,
 	// RemoveNodeDiff,
-} from "../../aiCollabUiDiffApi.js";
+} from "../../diffTypes.js";
 import {
 	applyAgentEdit,
 	getRangeInfo,
@@ -1538,7 +1538,7 @@ describe("Diff Creation", () => {
 				aiExplanation: insertEdit.explanation,
 				nodeContent: JSON.parse(JSON.stringify(newlyInsertedNode)) as unknown,
 			};
-			assert.deepEqual(result.uiDiff, expectedUDiff);
+			assert.deepEqual(result.diff, expectedUDiff);
 		});
 
 		it("insert non-primitive into array node via ArrayPlace", () => {
@@ -1584,7 +1584,7 @@ describe("Diff Creation", () => {
 				aiExplanation: insertEdit.explanation,
 				nodeContent: JSON.parse(JSON.stringify(newlyInsertedNode)) as unknown,
 			};
-			assert.deepEqual(result.uiDiff, expectedUDiff);
+			assert.deepEqual(result.diff, expectedUDiff);
 		});
 		// it("insert primitive into array node via ObjectPlace
 		// it("insert primitive into array node via ArrayPlace - NOT SUPPORTED - see agentEditReducer line 143, typeof allowedType === function prevents this", () => {})
@@ -1627,7 +1627,7 @@ describe("Diff Creation", () => {
 				oldValue: expectedOldValue,
 				newValue: modifyEdit.modification,
 			};
-			assert.deepEqual(result.uiDiff, expectedUIDiff);
+			assert.deepEqual(result.diff, expectedUIDiff);
 		});
 
 		it("modify primitive node via ObjectTarget", () => {
@@ -1667,7 +1667,7 @@ describe("Diff Creation", () => {
 				oldValue: expectedOldValue,
 				newValue: modifyEdit.modification,
 			};
-			assert.deepEqual(result.uiDiff, expectedUIDiff);
+			assert.deepEqual(result.diff, expectedUIDiff);
 		});
 	});
 
@@ -1710,7 +1710,7 @@ describe("Diff Creation", () => {
 				nodeContent: expectedNodeContent,
 				aiExplanation: removeEdit.explanation,
 			};
-			assert.deepEqual(result.uiDiff, expectedUIDiff);
+			assert.deepEqual(result.diff, expectedUIDiff);
 		});
 		// it("Remove non primitive single array node via ArrayPlace - NOT SUPPORTED - remove edit can only point to an object node via ObjectTarget or Range", () => { });
 		// it("Remove primitive single array node via ObjectPlace -  NOT SUPPORTED - remove edit can only point to an object node via ObjectTarget or Range", () => {});
@@ -1751,7 +1751,7 @@ describe("Diff Creation", () => {
 				nodeContent: expectedNodeContent,
 				aiExplanation: removeEdit.explanation,
 			};
-			assert.deepEqual(result.uiDiff, expectedUiDiff);
+			assert.deepEqual(result.diff, expectedUiDiff);
 		});
 		// it("Remove primitive field value - THIS IS NOT SUPPORTED - remove edit source can only point to an object node via ObjectTarget or Range", () => {});
 
@@ -1821,7 +1821,7 @@ describe("Diff Creation", () => {
 					(node) => JSON.parse(JSON.stringify(node)) as unknown,
 				),
 			};
-			assert.deepEqual(result.uiDiff, expectedUiDiff);
+			assert.deepEqual(result.diff, expectedUiDiff);
 		});
 		// it("Remove primitive range from array node - THIS IS NOT SUPPORTED - remove edit source can only point to an object node via ObjectTarget or Range", () => {})
 	});
@@ -1892,7 +1892,7 @@ describe("Diff Creation", () => {
 				nodeContent: JSON.parse(JSON.stringify(sourceVector)) as unknown,
 				aiExplanation: moveEdit.explanation,
 			};
-			assert.deepEqual(result.uiDiff, expectedUiDiff);
+			assert.deepEqual(result.diff, expectedUiDiff);
 		});
 
 		it("Move single non primitive node via source ObjectTarget and destination ArrayPlace", () => {
@@ -1959,7 +1959,7 @@ describe("Diff Creation", () => {
 				nodeContent: JSON.parse(JSON.stringify(sourceVector)) as unknown,
 				aiExplanation: moveEdit.explanation,
 			};
-			assert.deepEqual(result.uiDiff, expectedUiDiff);
+			assert.deepEqual(result.diff, expectedUiDiff);
 		});
 		// it("Move single primitive node via source ObjectTarget and destination ObjectPlace - THIS IS NOT SUPPORTED - move edit source can only point to an object node via ObjectTarget or Range", () => {});
 
@@ -2058,7 +2058,7 @@ describe("Diff Creation", () => {
 				),
 				aiExplanation: moveEdit.explanation,
 			};
-			assert.deepEqual(result.uiDiff, expectedUiDiff);
+			assert.deepEqual(result.diff, expectedUiDiff);
 		});
 
 		it("Move non-primitive range of nodes via source Range and destination ArrayPlace", () => {
@@ -2153,7 +2153,7 @@ describe("Diff Creation", () => {
 				),
 				aiExplanation: moveEdit.explanation,
 			};
-			assert.deepEqual(result.uiDiff, expectedUiDiff);
+			assert.deepEqual(result.diff, expectedUiDiff);
 		});
 
 		// it("Move primitive range of nodes via source Range and destination ObjectPlace - THIS IS NOT SUPPORTED - move edit source can only point to an object node via ObjectTarget or Range", () => {});

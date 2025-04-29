@@ -39,18 +39,18 @@ export type NodePath = {
 	 * The short id of the node.
 	 * @remarks the root tree node and nodes without a defined SchemaFactory.identifier field will not have a short id.
 	 */
-	shortId: string | number | undefined;
+	readonly shortId: string | number | undefined;
 	/**
 	 * The schema of the node.
 	 */
-	schemaIdentifier: string;
+	readonly schemaIdentifier: string;
 	/**
 	 * The field within the parent node that the node is located at.
 	 * @remarks
 	 * The root node will have a parentField name of 'rootFieldKey'.
 	 * Nodes in an array use numbers to represent their index within the array.
 	 */
-	parentField: string | number;
+	readonly parentField: string | number;
 }[];
 
 /**
@@ -59,17 +59,17 @@ export type NodePath = {
  * @alpha
  */
 export interface InsertDiff extends DiffBase {
-	type: "insert";
+	readonly type: "insert";
 	/**
 	 * The path from the root node to the newly inserted node.
 	 * The last value in the path will be the newly inserted node.
 	 * If the newly inserted node is a primitive value, the last value in the path will be the parent array node.
 	 */
-	nodePath: NodePath;
+	readonly nodePath: NodePath;
 	/**
 	 * The content of the newly inserted node.
 	 */
-	nodeContent: unknown;
+	readonly nodeContent: unknown;
 }
 
 /**
@@ -78,19 +78,19 @@ export interface InsertDiff extends DiffBase {
  * @alpha
  */
 export interface ModifyDiff extends DiffBase {
-	type: "modify";
+	readonly type: "modify";
 	/**
 	 * The path from the root node to the ndoe being modified.
 	 */
-	nodePath: NodePath;
+	readonly nodePath: NodePath;
 	/**
 	 * The new value of the node.
 	 */
-	newValue: unknown;
+	readonly newValue: unknown;
 	/**
 	 * The old value of the node.
 	 */
-	oldValue: unknown;
+	readonly oldValue: unknown;
 }
 
 /**
@@ -104,16 +104,19 @@ export type RemoveDiff = RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemo
  * @alpha
  */
 export interface RemoveNodeDiff extends DiffBase {
-	type: "remove";
-	removalType: "remove-field";
+	readonly type: "remove";
+	/**
+	 * The type of removal being performed.
+	 */
+	readonly removalType: "remove-field";
 	/**
 	 * The path from the root of the tree to the node being removed.
 	 */
-	nodePath: NodePath;
+	readonly nodePath: NodePath;
 	/**
 	 * The content of the node being removed.
 	 */
-	nodeContent: unknown;
+	readonly nodeContent: unknown;
 }
 
 /**
@@ -121,16 +124,19 @@ export interface RemoveNodeDiff extends DiffBase {
  * @alpha
  */
 export interface ArraySingleRemoveDiff extends DiffBase {
-	type: "remove";
-	removalType: "remove-array-single";
+	readonly type: "remove";
+	/**
+	 * The type of removal being performed.
+	 */
+	readonly removalType: "remove-array-single";
 	/**
 	 * The path from the root of the tree to the node being removed from the array node.
 	 */
-	nodePath: NodePath;
+	readonly nodePath: NodePath;
 	/**
 	 * The content of the node being removed from the array node.
 	 */
-	nodeContent: unknown;
+	readonly nodeContent: unknown;
 }
 
 /**
@@ -138,16 +144,19 @@ export interface ArraySingleRemoveDiff extends DiffBase {
  * @alpha
  */
 export interface ArrayRangeRemoveDiff extends DiffBase {
-	type: "remove";
-	removalType: "remove-array-range";
+	readonly type: "remove";
+	/**
+	 * The type of removal being performed.
+	 */
+	readonly removalType: "remove-array-range";
 	/**
 	 * The paths to each node being removed from the array node.
 	 */
-	nodePaths: NodePath[];
+	readonly nodePaths: NodePath[];
 	/**
 	 * The content of each of the nodes being removed from the array node.
 	 */
-	nodeContents: unknown[];
+	readonly nodeContents: unknown[];
 }
 
 /**
@@ -161,21 +170,24 @@ export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
  * @alpha
  */
 export interface MoveSingleDiff extends DiffBase {
-	type: "move";
-	moveType: "move-single";
+	readonly type: "move";
+	/**
+	 * The type of movement being performed.
+	 */
+	readonly moveType: "move-single";
 	/**
 	 * The path from the root of the tree to the source node.
 	 * The last value in the path will be the node being moved
 	 */
-	sourceNodePath: NodePath;
+	readonly sourceNodePath: NodePath;
 	/**
 	 * The path from the root of the tree to the destination array node.
 	 */
-	destinationNodePath: NodePath;
+	readonly destinationNodePath: NodePath;
 	/**
 	 * The content of the node being moved from the source array node to the destination array node.
 	 */
-	nodeContent: unknown;
+	readonly nodeContent: unknown;
 }
 
 /**
@@ -183,18 +195,21 @@ export interface MoveSingleDiff extends DiffBase {
  * @alpha
  */
 export interface MoveRangeDiff extends DiffBase {
-	type: "move";
-	moveType: "move-range";
+	readonly type: "move";
+	/**
+	 * The type of movement being performed.
+	 */
+	readonly moveType: "move-range";
 	/**
 	 * The paths to each node being moved from the source array node.
 	 */
-	sourceNodePaths: NodePath[];
+	readonly sourceNodePaths: NodePath[];
 	/**
 	 * The path from the root of the tree to the destination array node.
 	 */
-	destinationNodePath: NodePath;
+	readonly destinationNodePath: NodePath;
 	/**
 	 * The content of each of the nodes being moved from the source array node to the destination array node.
 	 */
-	nodeContents: unknown[];
+	readonly nodeContents: unknown[];
 }

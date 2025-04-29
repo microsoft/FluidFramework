@@ -70,22 +70,20 @@ export interface ApplyEditSuccess extends EventFlowDebugEvent {
 
 // @alpha
 export interface ArrayRangeRemoveDiff extends DiffBase {
-    nodeContents: unknown[];
-    nodePaths: NodePath[];
+    readonly nodeContents: unknown[];
+    readonly nodePaths: NodePath[];
+    readonly removalType: "remove-array-range";
     // (undocumented)
-    removalType: "remove-array-range";
-    // (undocumented)
-    type: "remove";
+    readonly type: "remove";
 }
 
 // @alpha
 export interface ArraySingleRemoveDiff extends DiffBase {
-    nodeContent: unknown;
-    nodePath: NodePath;
+    readonly nodeContent: unknown;
+    readonly nodePath: NodePath;
+    readonly removalType: "remove-array-single";
     // (undocumented)
-    removalType: "remove-array-single";
-    // (undocumented)
-    type: "remove";
+    readonly type: "remove";
 }
 
 // @alpha
@@ -260,10 +258,10 @@ export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
 
 // @alpha
 export interface InsertDiff extends DiffBase {
-    nodeContent: unknown;
-    nodePath: NodePath;
+    readonly nodeContent: unknown;
+    readonly nodePath: NodePath;
     // (undocumented)
-    type: "insert";
+    readonly type: "insert";
 }
 
 // @alpha
@@ -286,11 +284,11 @@ export type LlmTreeEdit = Record<string, unknown>;
 
 // @alpha
 export interface ModifyDiff extends DiffBase {
-    newValue: unknown;
-    nodePath: NodePath;
-    oldValue: unknown;
+    readonly newValue: unknown;
+    readonly nodePath: NodePath;
+    readonly oldValue: unknown;
     // (undocumented)
-    type: "modify";
+    readonly type: "modify";
 }
 
 // @alpha
@@ -298,31 +296,29 @@ export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
 
 // @alpha
 export interface MoveRangeDiff extends DiffBase {
-    destinationNodePath: NodePath;
+    readonly destinationNodePath: NodePath;
+    readonly moveType: "move-range";
+    readonly nodeContents: unknown[];
+    readonly sourceNodePaths: NodePath[];
     // (undocumented)
-    moveType: "move-range";
-    nodeContents: unknown[];
-    sourceNodePaths: NodePath[];
-    // (undocumented)
-    type: "move";
+    readonly type: "move";
 }
 
 // @alpha
 export interface MoveSingleDiff extends DiffBase {
-    destinationNodePath: NodePath;
+    readonly destinationNodePath: NodePath;
+    readonly moveType: "move-single";
+    readonly nodeContent: unknown;
+    readonly sourceNodePath: NodePath;
     // (undocumented)
-    moveType: "move-single";
-    nodeContent: unknown;
-    sourceNodePath: NodePath;
-    // (undocumented)
-    type: "move";
+    readonly type: "move";
 }
 
 // @alpha
 export type NodePath = {
-    shortId: string | number | undefined;
-    schemaIdentifier: string;
-    parentField: string | number;
+    readonly shortId: string | number | undefined;
+    readonly schemaIdentifier: string;
+    readonly parentField: string | number;
 }[];
 
 // @alpha
@@ -371,12 +367,11 @@ export type RemoveDiff = RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemo
 
 // @alpha
 export interface RemoveNodeDiff extends DiffBase {
-    nodeContent: unknown;
-    nodePath: NodePath;
+    readonly nodeContent: unknown;
+    readonly nodePath: NodePath;
+    readonly removalType: "remove-field";
     // (undocumented)
-    removalType: "remove-field";
-    // (undocumented)
-    type: "remove";
+    readonly type: "remove";
 }
 
 // @alpha

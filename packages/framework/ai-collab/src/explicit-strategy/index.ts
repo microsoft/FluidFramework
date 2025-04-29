@@ -25,7 +25,7 @@ import type {
 	TokenLimits,
 	TokenUsage,
 } from "../aiCollabApi.js";
-import type { Diff } from "../aiCollabUiDiffApi.js";
+import type { Diff } from "../diffTypes.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
@@ -172,7 +172,7 @@ export async function generateTreeEdits(
 				);
 				const explanation = result.edit.explanation;
 				editLog.push({ edit: { ...result.edit, explanation } });
-				diffs.push(result.uiDiff);
+				diffs.push(result.diff);
 				sequentialErrorCount = 0;
 
 				options.debugEventLogHandler?.({

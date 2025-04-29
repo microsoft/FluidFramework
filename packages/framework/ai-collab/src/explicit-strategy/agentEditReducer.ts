@@ -33,7 +33,7 @@ import type {
 	NodePath,
 	RemoveNodeDiff,
 	Diff,
-} from "../aiCollabdiffApi.js";
+} from "../diffTypes.js";
 
 import {
 	type TreeEdit,
@@ -112,7 +112,7 @@ export function getSchemaIdentifier(content: TreeEditValue): string {
 }
 
 /**
-  * Converts a tree node from a {@link TreeEdit} to a {@link TreeEditObject} with the proper object IDs.
+ * Converts a tree node from a {@link TreeEdit} to a {@link TreeEditObject} with the proper object IDs.
  */
 export function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditObject {
 	return JSON.parse(toDecoratedJson(idGenerator, content)) as TreeEditObject;

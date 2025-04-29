@@ -69,6 +69,6 @@ export {
 	type MoveDiff,
 	type MoveSingleDiff,
 	type MoveRangeDiff,
-} from "./aiCollabUiDiffApi.js";
+} from "./diffTypes.js";
 
 export { aiCollab } from "./aiCollab.js";

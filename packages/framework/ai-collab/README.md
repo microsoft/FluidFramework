@@ -393,7 +393,7 @@ const result = aiCollab({
 	}
 	planningStep: true,
 	finalReviewStep: true,
-Read [their documentation](./src/aiCollabUiDiffApi.ts) for more info.
+Read [their documentation](./src/diffTypes.ts) for more info.
 });
 
 const Diffs: diff[] = result.diffs;
@@ -405,7 +405,7 @@ const insertedVectorsDiffs = insertDiffs.filter(diff => diff.path[0]?.schemaIden
 ```
 
 Other `Diff` types follow the same basic structure.
-Read the tsdoc [here](./src/aiCollabUiDiffApi.ts) for more info.
+Read the tsdoc [here](./src/diffTypes.ts) for more info.
 
 
 ## Known Issues & limitations
