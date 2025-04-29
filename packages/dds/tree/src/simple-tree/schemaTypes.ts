@@ -82,7 +82,7 @@ export function isTreeNodeSchemaClass<
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 /**
- * TODO
+ * Stores annotations for a set of allowed types.
  * @alpha
  */
 export interface AnnotatedAllowedTypes {
@@ -91,7 +91,7 @@ export interface AnnotatedAllowedTypes {
 }
 
 /**
- * TODO
+ * Checks if the input is an {@link AnnotatedAllowedTypes}.
  */
 export function isAnnotatedAllowedTypes(
 	allowedTypes: ImplicitAnnotatedAllowedTypes,
@@ -102,13 +102,13 @@ export function isAnnotatedAllowedTypes(
 }
 
 /**
- * TODO does it make sense to define this while empty? prob fine
+ * Annotations that apply to a set of allowed types.
  * @alpha
  */
 export interface AllowedTypesMetadata {}
 
 /**
- * TODO
+ * Stores annotations for an individual allowed type.
  * @alpha
  */
 export interface AnnotatedAllowedType<
@@ -119,7 +119,7 @@ export interface AnnotatedAllowedType<
 }
 
 /**
- * TODO
+ * Checks if the given allowed type is annotated with {@link AllowedTypeMetadata}.
  */
 export function isAnnotatedAllowedType(
 	allowedType: AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
@@ -128,18 +128,12 @@ export function isAnnotatedAllowedType(
 }
 
 /**
- * TODO
+ * Annotations that apply to an individual allowed type.
  * @alpha
  */
 export interface AllowedTypeMetadata {
-	// see section on using AllowedTypeMetadata for schema upgrades below
-	enabledUponSchemaUpgrade?: SchemaUpgradeToken;
+	// TODO metadata for enablable types will be added here
 }
-
-/**
- * @alpha
- */
-export type SchemaUpgradeToken = string;
 
 /**
  * Kind of a field on a node.
@@ -475,7 +469,11 @@ export class FieldSchemaAlpha<
 {
 	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
 	private readonly lazyAnnotatedTypes: Lazy<ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>>;
-	private readonly allowedTypesMetadata: AllowedTypesMetadata;
+
+	/**
+	 * Metadata on the types of tree nodes allowed on this field.
+	 */
+	public readonly allowedTypesMetadata: AllowedTypesMetadata;
 
 	static {
 		createFieldSchemaPrivate = <
@@ -516,6 +514,14 @@ export class FieldSchemaAlpha<
 
 	public get allowedTypesIdentifiers(): ReadonlySet<string> {
 		return this.lazyIdentifiers.value;
+	}
+
+	/**
+	 * What types of tree nodes are allowed in this field and their annotations.
+	 * @remarks Counterpart to {@link FieldSchemaAlpha.annotatedAllowedTypes}, with any lazy definitions evaluated.
+	 */
+	public get annotatedAllowedTypeSet(): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata> {
+		return this.lazyAnnotatedTypes.value;
 	}
 }
 
@@ -580,7 +586,7 @@ export function normalizeAllowedTypes(
 }
 
 /**
- * Normalizes an allowed type to an {@link AnnotatedAllowedType}s, by adding empty annotations if they don't already exist.
+ * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
  *
  * @internal
  */
@@ -620,7 +626,7 @@ export function unannotateImplicitAllowedTypes<Types extends ImplicitAnnotatedAl
 }
 
 /**
- * TODO
+ * Removes annotations from a schema record.
  */
 export function unannotateSchemaRecord<
 	Schema extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
@@ -843,7 +849,8 @@ export function markSchemaMostDerived(
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 /**
- * TODO
+ * Types of {@link TreeNode|TreeNodes} or {@link TreeLeafValue|TreeLeafValues} allowed at a location in a tree with
+ * additional metadata associated with the location they're allowed at.
  * @alpha
  */
 export type ImplicitAnnotatedAllowedTypes =
@@ -868,6 +875,7 @@ export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTyp
 					: never;
 
 /**
+ * Removes annotations from a list of allowed types that may contain annotations.
  * @alpha
  */
 export type UnannotateAllowedTypesList<
@@ -877,6 +885,7 @@ export type UnannotateAllowedTypesList<
 };
 
 /**
+ * Removes annotations from an allowed type that may contain annotations.
  * @alpha
  */
 export type UnannotateAllowedTypeOrLazyItem<
@@ -884,12 +893,14 @@ export type UnannotateAllowedTypeOrLazyItem<
 > = T extends AnnotatedAllowedType<infer X> ? X : T;
 
 /**
+ * Removes all annotations from a set of allowed types.
  * @alpha
  */
 export type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> =
 	UnannotateAllowedTypesList<T["types"]>;
 
 /**
+ * Removes annotations from an allowed type.
  * @alpha
  */
 export type UnannotateAllowedType<T extends AnnotatedAllowedType> =
@@ -904,20 +915,20 @@ export type UnannotateAllowedType<T extends AnnotatedAllowedType> =
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 /**
- * TODO
+ * Annotated schema for a field of a tree node.
  * @alpha
  */
-export type ImplicitAnnotatedFieldSchema = FieldSchema | ImplicitAnnotatedAllowedTypes;
+export type ImplicitAnnotatedFieldSchema = FieldSchemaAlpha | ImplicitAnnotatedAllowedTypes;
 
 /**
- * TODO
+ * Removes annotations from an annotated field schema.
  * @alpha
  */
 export type UnannotateImplicitFieldSchema<T extends ImplicitAnnotatedFieldSchema> =
 	T extends ImplicitAnnotatedAllowedTypes ? UnannotateImplicitAllowedTypes<T> : T;
 
 /**
- * TODO
+ * Removes annotations from field schemas in a schema record.
  * @alpha
  */
 export type UnannotateSchemaRecord<

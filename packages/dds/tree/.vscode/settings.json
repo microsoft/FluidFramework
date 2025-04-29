@@ -20,13 +20,14 @@
 		"contravariantly",
 		"covariantly",
 		"deprioritized",
+		"enablable",
 		"endregion",
 		"fluidframework",
 		"insertable",
 		"reentrantly",
 		"typeparam",
 		"unannotate",
-		"unhydrated",
+		"unhydrated"
 	],
 
 	// Enable biome as default formatter, and disable rules that disagree with it
