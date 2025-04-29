@@ -338,7 +338,7 @@ Let's take a look at another UI example of using an array of Diffs to render cha
 
 import { Tree } from "@fluidframework/tree"
 
-The simplest way is to use the `shortId` where you can use the following code to identify the newly inserted node within the SharedTree.
+The simplest way is to use the `shortId`, where you can use the following code to identify the newly inserted node within the SharedTree.
 
 **Note that the shortId field will only exist for objects that have a field defined as the `SchemaFactory.identifier` field.** See the above example app schema in this section to see the schema field defined as `sf.identifier`
 
