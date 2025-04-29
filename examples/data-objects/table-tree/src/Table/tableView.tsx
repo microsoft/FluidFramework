@@ -33,9 +33,9 @@ interface TableRowViewProps {
 	row: Row;
 	columns: Column[];
 	index: number;
-	onDragStart: (index: number) => void;
-	onDragOver: (event: DragEvent<HTMLTableRowElement>) => void;
-	onDrop: (index: number) => void;
+	onRowDragStart: (index: number) => void;
+	onRowDragOver: (event: DragEvent<HTMLTableRowElement>) => void;
+	onRowDrop: (index: number) => void;
 	onRemoveRow: (index: number) => void;
 }
 
@@ -43,17 +43,17 @@ const TableRowView: React.FC<TableRowViewProps> = ({
 	row,
 	columns,
 	index,
-	onDragStart,
-	onDragOver,
-	onDrop,
+	onRowDragStart,
+	onRowDragOver,
+	onRowDrop,
 	onRemoveRow,
 }) => (
 	<TableRow
 		key={row.id}
 		draggable
-		onDragStart={() => onDragStart(index)}
-		onDragOver={onDragOver}
-		onDrop={() => onDrop(index)}
+		onDragStart={() => onRowDragStart(index)}
+		onDragOver={onRowDragOver}
+		onDrop={() => onRowDrop(index)}
 		className={`custom-table-row ${index % 2 === 0 ? "even" : "odd"}`}
 	>
 		<TableCell className="custom-cell id-cell">
@@ -282,9 +282,9 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 							row={row}
 							columns={columns}
 							index={index}
-							onDragStart={handleRowDragStart}
-							onDragOver={handleRowDragOver}
-							onDrop={handleRowDrop}
+							onRowDragStart={handleRowDragStart}
+							onRowDragOver={handleRowDragOver}
+							onRowDrop={handleRowDrop}
 							onRemoveRow={handleRemoveRow}
 						/>
 					))}
