@@ -271,6 +271,8 @@ class TestAppRootObject extends sf.object("TestAppRootObject", {
 	}),
 }) {}
 
+const view = /* Code that creates a view of the SharedTree */ ;
+
 const response = aiCollab({
 	openAI: {
 		client: new OpenAI({
