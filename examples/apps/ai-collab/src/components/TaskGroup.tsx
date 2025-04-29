@@ -71,7 +71,7 @@ export function TaskGroup(props: {
 	const [popoverAnchor, setPopoverAnchor] = useState<HTMLButtonElement | undefined>(undefined);
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 	const [llmBranchData, setLlmBranchData] = useState<{
-		diffs: Diff[];
+		readonly diffs: readonly  Diff[];
 		originalBranch: TreeViewAlpha<typeof SharedTreeAppState>;
 		aiCollabBranch: TreeViewAlpha<typeof SharedTreeAppState>;
 		newBranchTargetNode: SharedTreeTaskGroup;
