@@ -101,7 +101,7 @@ export interface GenerateTreeEditsOptions {
 interface GenerateTreeEditsSuccessResponse {
 	status: "success";
 	tokensUsed: TokenUsage;
-	diffs: Diff[];
+	readonly diffs: readonly Diff[];
 }
 
 interface GenerateTreeEditsErrorResponse {
