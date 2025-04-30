@@ -739,8 +739,10 @@ export class ModularChangeFamily
 			originalFieldToContext: new Map(),
 			invertRevision: revisionForInvert,
 			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
-			invertedRoots: invertRootTable(change.change),
 			invalidatedFields: new Set(),
+			invertedRoots: invertRootTable(change.change),
+			attachToDetachId: newChangeAtomIdTransform(),
+			detachToAttachId: newChangeAtomIdTransform(),
 		};
 		const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 		const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
@@ -799,6 +801,8 @@ export class ModularChangeFamily
 		}
 
 		const crossFieldKeys = this.makeCrossFieldKeyTable(invertedFields, invertedNodes);
+
+		this.processInvertRenames(crossFieldTable);
 
 		return makeModularChangeset({
 			fieldChanges: invertedFields,
@@ -893,6 +897,37 @@ export class ModularChangeFamily
 		}
 
 		return inverse;
+	}
+
+	private processInvertRenames(table: InvertTable): void {
+		for (const {
+			start: newAttachId,
+			value: originalDetachId,
+			length,
+		} of table.attachToDetachId.entries()) {
+			renameNodes(
+				table.invertedRoots,
+				originalDetachId,
+				newAttachId,
+				length,
+				table.invertedRoots.newToOldId,
+			);
+		}
+
+		for (const {
+			start: newDetachId,
+			value: originalAttachId,
+			length,
+		} of table.detachToAttachId.entries()) {
+			renameNodes(
+				table.invertedRoots,
+				newDetachId,
+				originalAttachId,
+				length,
+				undefined,
+				table.invertedRoots.oldToNewId,
+			);
+		}
 	}
 
 	public rebase(
@@ -1968,14 +2003,6 @@ export function* relevantRemovedRoots(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<DeltaDetachedNodeId> {
-	yield* relevantRemovedRootsFromFields(change.fieldChanges, change.nodeChanges, fieldKinds);
-}
-
-function* relevantRemovedRootsFromFields(
-	change: FieldChangeMap,
-	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): Iterable<DeltaDetachedNodeId> {
 	// XXX
 }
 
@@ -2251,10 +2278,20 @@ interface InvertTable {
 	// Entries are keyed on attach ID
 	entries: CrossFieldMap<NodeId>;
 	originalFieldToContext: Map<FieldChange, InvertContext>;
-	invertedRoots: RootNodeTable;
 	invertedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	invertRevision: RevisionTag;
 	invalidatedFields: Set<FieldChange>;
+	invertedRoots: RootNodeTable;
+
+	/**
+	 * Maps from attach ID in the inverted changeset to the corresponding detach ID in the base changeset.
+	 */
+	attachToDetachId: ChangeAtomIdRangeMap<ChangeAtomId>;
+
+	/**
+	 * Maps from detach ID in the inverted changeset to the corresponding attach ID in the base changeset.
+	 */
+	detachToAttachId: ChangeAtomIdRangeMap<ChangeAtomId>;
 }
 
 interface InvertContext {
@@ -2399,26 +2436,13 @@ class InvertNodeManagerI implements InvertNodeManager {
 		newAttachId: ChangeAtomId,
 	): void {
 		if (!areEqualChangeAtomIds(detachId, newAttachId)) {
-			// XXX: Consider renames
-			const attachEntry = this.table.change.crossFieldKeys.getFirst(
-				{
-					...detachId,
-					target: CrossFieldTarget.Destination,
-				},
-				count,
-			);
-
-			assert(attachEntry.length === count, "XXX");
-			if (attachEntry.value === undefined) {
-				// We are creating an attach for a node which was detached by the base changeset.
-				renameNodes(this.table.invertedRoots, detachId, newAttachId, count);
-			} else {
-				// We are creating an attach for a node which was moved by the base changeset.
-			}
+			this.table.attachToDetachId.set(newAttachId, count, detachId);
 		}
 
 		if (nodeChange !== undefined) {
 			assert(count === 1, "A node change should only affect one node");
+
+			// XXX: Merge this with rename check above.
 			const attachEntry = firstAttachIdFromDetachId(
 				this.table.change.rootNodes,
 				detachId,
@@ -2453,24 +2477,39 @@ class InvertNodeManagerI implements InvertNodeManager {
 	public invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
-		invertRenames: boolean,
+		newDetachId: ChangeAtomId,
 	): RangeQueryResult<ChangeAtomId, NodeId> {
-		if (!invertRenames) {
-			deleteNodeRename(this.table.invertedRoots, attachId, count);
-		}
-
-		const detachEntry = firstDetachIdFromAttachId(
+		const detachIdEntry = firstDetachIdFromAttachId(
 			this.table.change.rootNodes,
 			attachId,
 			count,
 		);
 
-		assert(detachEntry.length === count, "XXX");
+		assert(detachIdEntry.length === count, "XXX");
+
+		if (!areEqualChangeAtomIdOpts(attachId, newDetachId)) {
+			const detachEntry = this.table.change.crossFieldKeys.getFirst(
+				{ target: CrossFieldTarget.Source, ...detachIdEntry.value },
+				count,
+			);
+
+			assert(detachEntry.length === count, "XXX");
+
+			if (detachEntry.value === undefined) {
+				// The original changeset does not reattach these nodes, and we can discard any existing renames.
+				deleteNodeRename(this.table.invertedRoots, attachId, count);
+			} else {
+				// The original changeset moves these nodes.
+				// If the original changeset has a rename between the detach and the attach,
+				// we need to make sure that the inverted attach and detach are still linked by a rename.
+				this.table.detachToAttachId.set(newDetachId, count, attachId);
+			}
+		}
 
 		// XXX: This needs to look at all IDs in the range, not just the first.
 		const nodeId = getFromChangeAtomIdMap(
 			this.table.change.rootNodes.nodeChanges,
-			detachEntry.value,
+			detachIdEntry.value,
 		);
 
 		const result: RangeQueryResult<ChangeAtomId, NodeId> =

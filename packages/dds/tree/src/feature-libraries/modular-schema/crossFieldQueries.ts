@@ -50,12 +50,12 @@ export interface InvertNodeManager {
 	 * This implies that all attaches in the field must be inverted.
 	 * @param attachId - The ID of the attach to invert.
 	 * @param count - The number of nodes being attached.
-	 * @param invertRenames - Whether to invert the renames associated with this attach.
+	 * @param newDetachId - The ID of the detach in the inverted changeset.
 	 */
 	invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
-		invertRenames: boolean,
+		newDetachId: ChangeAtomId,
 	): RangeQueryResult<ChangeAtomId, NodeId>;
 }
 

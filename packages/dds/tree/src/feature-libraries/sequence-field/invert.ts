@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type { RevisionTag } from "../../core/index.js";
+import type { ChangeAtomId, RevisionTag } from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
 import type { InvertNodeManager, NodeId } from "../modular-schema/index.js";
 
@@ -23,6 +23,7 @@ import {
 	type Rename,
 } from "./types.js";
 import {
+	areEqualCellIds,
 	getInputCellId,
 	getOutputCellId,
 	isImpactful,
@@ -94,7 +95,7 @@ function invertMark(
 				// This means it should be safe to always restore the input cell ID (as opposed to only doing it on rollbacks).
 				// Despite that, we still only do it on rollback for the sake of consistency: once a cell has been assigned an ID,
 				// the only way for that cell to be assigned that ID again is if it is rolled back to that state.
-				idOverride: isRollback ? inputId : { localId: inputId.localId },
+				idOverride: isRollback ? inputId : { revision, localId: inputId.localId },
 			};
 			return [withNodeChange(inverse, mark.changes)];
 		}
@@ -138,18 +139,24 @@ function invertMark(
 		case "Insert": {
 			const inputId = getInputCellId(mark);
 			assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
+
+			const detachId: ChangeAtomId = {
+				revision: isRollback ? mark.revision : revision,
+				localId: mark.id,
+			};
+
 			const removeMark: Mutable<CellMark<Remove>> = {
 				type: "Remove",
 				count: mark.count,
-				id: mark.id,
-				revision: isRollback ? mark.revision : revision,
+				id: detachId.localId,
+				revision: detachId.revision,
 			};
 
-			if (isRollback) {
-				removeMark.idOverride = isRollback ? inputId : { revision, localId: mark.id };
+			if (isRollback && !areEqualCellIds(inputId, detachId)) {
+				removeMark.idOverride = inputId;
 			}
 
-			return applyMovedChanges(removeMark, mark.revision, crossFieldManager, isRollback);
+			return applyMovedChanges(removeMark, mark.revision, crossFieldManager, detachId);
 		}
 		default:
 			unreachableCase(type);
@@ -160,9 +167,9 @@ function applyMovedChanges(
 	mark: CellMark<Detach>,
 	revision: RevisionTag | undefined,
 	manager: InvertNodeManager,
-	isRollback: boolean,
+	newDetachId: ChangeAtomId,
 ): Mark[] {
-	const entry = manager.invertAttach({ revision, localId: mark.id }, mark.count, isRollback);
+	const entry = manager.invertAttach({ revision, localId: mark.id }, mark.count, newDetachId);
 
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);
@@ -171,7 +178,7 @@ function applyMovedChanges(
 				? withNodeChange<CellMark<Detach>, Detach>(mark1, entry.value)
 				: mark1;
 
-		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager, isRollback)];
+		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager, newDetachId)];
 	}
 
 	if (entry.value !== undefined) {
