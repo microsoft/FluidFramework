@@ -1319,7 +1319,7 @@ describe("largeSchema", () => {
 				enableSchemaValidation: true,
 			});
 
-			const node = new ObjectNode({ x: new Empty000(new Empty041({ x: null })) });
+			const node = new ObjectNode({ x: new Empty000({ x: new Empty041({ x: null }) }) });
 		}
 	});
 });
