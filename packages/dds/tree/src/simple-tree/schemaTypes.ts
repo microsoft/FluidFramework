@@ -17,6 +17,7 @@ import {
 	type requireTrue,
 	type areOnlyKeys,
 	getOrCreate,
+	type IsUnion,
 } from "../util/index.js";
 import type {
 	Unhydrated,
@@ -884,16 +885,21 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitA
  * @see {@link Input}
  *
  * @typeparam TList - AllowedTypes to process
+ *
+ * @privateRemarks
+ * This loop is manually unrolled to allow larger unions before hitting the recursion limit in TypeScript.
  * @system @public
  */
-export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = [TList] extends [
-	readonly [
-		LazyItem<infer TSchema extends TreeNodeSchema>,
-		...infer Rest extends AllowedTypes,
-	],
-]
-	? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest>
-	: never;
+export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> =
+	IsUnion<TList> extends true
+		? never
+		: {
+				readonly [Property in keyof TList]: TList[Property] extends LazyItem<
+					infer TSchema extends TreeNodeSchema
+				>
+					? InsertableTypedNode<TSchema>
+					: never;
+			}[number];
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.

@@ -8,7 +8,6 @@
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
-	type FixRecursiveRecursionLimit,
 	type ValidateRecursiveSchema,
 	allowUnused,
 } from "@fluidframework/tree/alpha";
@@ -427,10 +426,6 @@ export class Empty002 extends schema.objectRecursive("002", { x: largeUnion }) {
 export class Empty001 extends schema.objectRecursive("001", { x: largeUnion }) {}
 export class Empty000 extends schema.objectRecursive("000", { x: largeUnion }) {}
 
-// This is enough if not exported and imported.
-// @ts-expect-error Recursion limit
-allowUnused<FixRecursiveRecursionLimit<typeof Empty000>>();
-allowUnused<FixRecursiveRecursionLimit<typeof Empty000>>();
 allowUnused<ValidateRecursiveSchema<typeof Empty000>>();
 
 // This fails if the ValidateRecursiveSchema above is removed.

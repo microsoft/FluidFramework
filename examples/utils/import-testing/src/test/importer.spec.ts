@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	allowUnused,
 	JsonAsTree,
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -18,8 +17,6 @@ import type {
 	areSafelyAssignable,
 	requireTrue,
 	requireAssignableTo,
-	FixRecursiveRecursionLimit,
-	ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
@@ -146,18 +143,6 @@ describe("import tests", () => {
 
 	it("LargeImport", () => {
 		const schema = new SchemaFactory("com.example");
-
-		// Workaround TypeScript recursion limit
-		{
-			class LargeUnionObjectNode_Fix extends schema.objectRecursive("ObjectNode", {
-				x: largeUnion,
-			}) {}
-
-			// @ts-expect-error Recursion limit
-			allowUnused<FixRecursiveRecursionLimit<typeof LargeUnionObjectNode_Fix>>();
-			allowUnused<FixRecursiveRecursionLimit<typeof LargeUnionObjectNode_Fix>>();
-			allowUnused<ValidateRecursiveSchema<typeof LargeUnionObjectNode_Fix>>();
-		}
 
 		// Fails to compile without the above workaround.
 		class LargeUnionObjectNode extends schema.object("ObjectNode", { x: largeUnion }) {}

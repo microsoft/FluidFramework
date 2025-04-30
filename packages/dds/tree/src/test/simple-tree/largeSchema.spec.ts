@@ -6,7 +6,6 @@
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
-	type FixRecursiveRecursionLimit,
 	type ImplicitFieldSchema,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
@@ -587,13 +586,13 @@ describe("largeSchema", () => {
 				enableSchemaValidation: true,
 			});
 
-			const deep30 = deepObject10("x", deep20);
+			const deep30 = deepObject10("y", deep20);
 			const config30 = new TreeViewConfiguration({
 				schema: deep30,
 				enableSchemaValidation: true,
 			});
 
-			const deep40 = deepObject10("x", deep30);
+			const deep40 = deepObject10("z", deep30);
 			const config40 = new TreeViewConfiguration({
 				schema: deep40,
 				enableSchemaValidation: true,
@@ -607,7 +606,107 @@ describe("largeSchema", () => {
 
 		const schema = new SchemaFactory("com.example");
 
+		class Empty199 extends schema.object("199", {}) {}
+		class Empty198 extends schema.object("198", {}) {}
+		class Empty197 extends schema.object("197", {}) {}
+		class Empty196 extends schema.object("196", {}) {}
+		class Empty195 extends schema.object("195", {}) {}
+		class Empty194 extends schema.object("194", {}) {}
+		class Empty193 extends schema.object("193", {}) {}
+		class Empty192 extends schema.object("192", {}) {}
+		class Empty191 extends schema.object("191", {}) {}
+		class Empty190 extends schema.object("190", {}) {}
+		class Empty189 extends schema.object("189", {}) {}
+		class Empty188 extends schema.object("188", {}) {}
+		class Empty187 extends schema.object("187", {}) {}
+		class Empty186 extends schema.object("186", {}) {}
+		class Empty185 extends schema.object("185", {}) {}
+		class Empty184 extends schema.object("184", {}) {}
+		class Empty183 extends schema.object("183", {}) {}
+		class Empty182 extends schema.object("182", {}) {}
+		class Empty181 extends schema.object("181", {}) {}
+		class Empty180 extends schema.object("180", {}) {}
+		class Empty179 extends schema.object("179", {}) {}
+		class Empty178 extends schema.object("178", {}) {}
+		class Empty177 extends schema.object("177", {}) {}
+		class Empty176 extends schema.object("176", {}) {}
+		class Empty175 extends schema.object("175", {}) {}
+		class Empty174 extends schema.object("174", {}) {}
+		class Empty173 extends schema.object("173", {}) {}
+		class Empty172 extends schema.object("172", {}) {}
+		class Empty171 extends schema.object("171", {}) {}
+		class Empty170 extends schema.object("170", {}) {}
+		class Empty169 extends schema.object("169", {}) {}
+		class Empty168 extends schema.object("168", {}) {}
+		class Empty167 extends schema.object("167", {}) {}
+		class Empty166 extends schema.object("166", {}) {}
+		class Empty165 extends schema.object("165", {}) {}
+		class Empty164 extends schema.object("164", {}) {}
+		class Empty163 extends schema.object("163", {}) {}
+		class Empty162 extends schema.object("162", {}) {}
+		class Empty161 extends schema.object("161", {}) {}
+		class Empty160 extends schema.object("160", {}) {}
+		class Empty159 extends schema.object("159", {}) {}
+		class Empty158 extends schema.object("158", {}) {}
+		class Empty157 extends schema.object("157", {}) {}
+		class Empty156 extends schema.object("156", {}) {}
+		class Empty155 extends schema.object("155", {}) {}
+		class Empty154 extends schema.object("154", {}) {}
+		class Empty153 extends schema.object("153", {}) {}
+		class Empty152 extends schema.object("152", {}) {}
+		class Empty151 extends schema.object("151", {}) {}
+		class Empty150 extends schema.object("150", {}) {}
+		class Empty149 extends schema.object("149", {}) {}
+		class Empty148 extends schema.object("148", {}) {}
+		class Empty147 extends schema.object("147", {}) {}
+		class Empty146 extends schema.object("146", {}) {}
+		class Empty145 extends schema.object("145", {}) {}
+		class Empty144 extends schema.object("144", {}) {}
+		class Empty143 extends schema.object("143", {}) {}
+		class Empty142 extends schema.object("142", {}) {}
+		class Empty141 extends schema.object("141", {}) {}
+		class Empty140 extends schema.object("140", {}) {}
+		class Empty139 extends schema.object("139", {}) {}
+		class Empty138 extends schema.object("138", {}) {}
+		class Empty137 extends schema.object("137", {}) {}
+		class Empty136 extends schema.object("136", {}) {}
+		class Empty135 extends schema.object("135", {}) {}
+		class Empty134 extends schema.object("134", {}) {}
+		class Empty133 extends schema.object("133", {}) {}
+		class Empty132 extends schema.object("132", {}) {}
+		class Empty131 extends schema.object("131", {}) {}
+		class Empty130 extends schema.object("130", {}) {}
+		class Empty129 extends schema.object("129", {}) {}
+		class Empty128 extends schema.object("128", {}) {}
+		class Empty127 extends schema.object("127", {}) {}
+		class Empty126 extends schema.object("126", {}) {}
+		class Empty125 extends schema.object("125", {}) {}
+		class Empty124 extends schema.object("124", {}) {}
+		class Empty123 extends schema.object("123", {}) {}
+		class Empty122 extends schema.object("122", {}) {}
+		class Empty121 extends schema.object("121", {}) {}
+		class Empty120 extends schema.object("120", {}) {}
+		class Empty119 extends schema.object("119", {}) {}
+		class Empty118 extends schema.object("118", {}) {}
+		class Empty117 extends schema.object("117", {}) {}
+		class Empty116 extends schema.object("116", {}) {}
+		class Empty115 extends schema.object("115", {}) {}
+		class Empty114 extends schema.object("114", {}) {}
+		class Empty113 extends schema.object("113", {}) {}
+		class Empty112 extends schema.object("112", {}) {}
+		class Empty111 extends schema.object("111", {}) {}
+		class Empty110 extends schema.object("110", {}) {}
+		class Empty109 extends schema.object("109", {}) {}
+		class Empty108 extends schema.object("108", {}) {}
+		class Empty107 extends schema.object("107", {}) {}
+		class Empty106 extends schema.object("106", {}) {}
+		class Empty105 extends schema.object("105", {}) {}
+		class Empty104 extends schema.object("104", {}) {}
+		class Empty103 extends schema.object("103", {}) {}
+		class Empty102 extends schema.object("102", {}) {}
+		class Empty101 extends schema.object("101", {}) {}
 		class Empty100 extends schema.object("100", {}) {}
+
 		class Empty099 extends schema.object("099", {}) {}
 		class Empty098 extends schema.object("098", {}) {}
 		class Empty097 extends schema.object("097", {}) {}
@@ -753,7 +852,6 @@ describe("largeSchema", () => {
 		] as const;
 
 		const union100 = [
-			Empty100,
 			Empty099,
 			Empty098,
 			Empty097,
@@ -856,74 +954,139 @@ describe("largeSchema", () => {
 			Empty000,
 		] as const;
 
+		const union200 = [
+			...union100,
+			Empty199,
+			Empty198,
+			Empty197,
+			Empty196,
+			Empty195,
+			Empty194,
+			Empty193,
+			Empty192,
+			Empty191,
+			Empty190,
+			Empty189,
+			Empty188,
+			Empty187,
+			Empty186,
+			Empty185,
+			Empty184,
+			Empty183,
+			Empty182,
+			Empty181,
+			Empty180,
+			Empty179,
+			Empty178,
+			Empty177,
+			Empty176,
+			Empty175,
+			Empty174,
+			Empty173,
+			Empty172,
+			Empty171,
+			Empty170,
+			Empty169,
+			Empty168,
+			Empty167,
+			Empty166,
+			Empty165,
+			Empty164,
+			Empty163,
+			Empty162,
+			Empty161,
+			Empty160,
+			Empty159,
+			Empty158,
+			Empty157,
+			Empty156,
+			Empty155,
+			Empty154,
+			Empty153,
+			Empty152,
+			Empty151,
+			Empty150,
+			Empty149,
+			Empty148,
+			Empty147,
+			Empty146,
+			Empty145,
+			Empty144,
+			Empty143,
+			Empty142,
+			Empty141,
+			Empty140,
+			Empty139,
+			Empty138,
+			Empty137,
+			Empty136,
+			Empty135,
+			Empty134,
+			Empty133,
+			Empty132,
+			Empty131,
+			Empty130,
+			Empty129,
+			Empty128,
+			Empty127,
+			Empty126,
+			Empty125,
+			Empty124,
+			Empty123,
+			Empty122,
+			Empty121,
+			Empty120,
+			Empty119,
+			Empty118,
+			Empty117,
+			Empty116,
+			Empty115,
+			Empty114,
+			Empty113,
+			Empty112,
+			Empty111,
+			Empty110,
+			Empty109,
+			Empty108,
+			Empty107,
+			Empty106,
+			Empty105,
+			Empty104,
+			Empty103,
+			Empty102,
+			Empty101,
+			Empty100,
+		] as const;
+
 		{
 			const config = new TreeViewConfiguration({
-				schema: union100,
+				schema: union200,
 				enableSchemaValidation: true,
 			});
 
-			const field1 = schema.required(union100);
-			const field2 = schema.optional(union100);
-
-			// Workaround for recursion limit in union inside a schema.
-			// Uses a dummy object with the same schema but using the recursive APIs then uses the repeated ValidateRecursiveSchema workaround.
-			{
-				class ObjectNodeDummy extends schema.objectRecursive("ObjectNode", {
-					data: union100,
-				}) {}
-				// @ts-expect-error Recursion limit
-				type _check1 = FixRecursiveRecursionLimit<typeof ObjectNodeDummy>;
-				type _check2 = FixRecursiveRecursionLimit<typeof ObjectNodeDummy>;
-				type _check3 = ValidateRecursiveSchema<typeof ObjectNodeDummy>;
-			}
+			const field1 = schema.required(union200);
+			const field2 = schema.optional(union200);
 
 			// This fails to compile if the above dummy object isn't in included.
 			class ObjectNode extends schema.object("ObjectNode", {
-				data: union100,
+				data: union200,
 			}) {}
 		}
 
-		// This case works fine.
 		{
-			class ArrayNode extends schema.array("ArrayNode", [
-				// Empty043,
-				Empty042,
-				Empty041,
-				Empty040,
-				...union40,
-			]) {}
+			class ArrayNode extends schema.array("ArrayNode", union200) {}
 			const config = new TreeViewConfiguration({
 				schema: ArrayNode,
 				enableSchemaValidation: true,
 			});
 
 			const field = schema.required(ArrayNode);
+
+			const node = new ArrayNode([new Empty000({})]);
 		}
 
-		// This fails to compile if the above tests are commented out making it hard to pin down the exact size limit in tests like this.
 		{
-			class ArrayNode extends schema.array("ArrayNode", [
-				Empty043,
-				Empty042,
-				Empty041,
-				Empty040,
-				...union40,
-			]) {}
-			const config = new TreeViewConfiguration({
-				schema: ArrayNode,
-				enableSchemaValidation: true,
-			});
-			const field = schema.required(ArrayNode);
-		}
-
-		// This fails to compile if the above tests are commented out making it hard to pin down the exact size limit in tests like this.
-		{
-			class MapNode extends schema.map("MapNode", [
-				Empty042,
-				Empty041,
-				Empty040,
-				...union40,
-			]) {}
+			class MapNode extends schema.map("MapNode", union200) {}
 			const config = new TreeViewConfiguration({
 				schema: MapNode,
 				enableSchemaValidation: true,
@@ -1147,14 +1310,10 @@ describe("largeSchema", () => {
 		class Empty000 extends schema.objectRecursive("000", { x: union }) {}
 
 		{
-			// @ts-expect-error Recursion limit
-			type _check1 = FixRecursiveRecursionLimit<typeof Empty000>;
-			type _check2 = FixRecursiveRecursionLimit<typeof Empty000>;
 			type _check3 = ValidateRecursiveSchema<typeof Empty000>;
 		}
 
 		{
-			// This fails if the ValidateRecursiveSchema above is removed.
 			class ObjectNode extends schema.object("ObjectNode", { x: union }) {}
 			const config = new TreeViewConfiguration({
 				schema: union,
