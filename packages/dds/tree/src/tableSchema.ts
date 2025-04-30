@@ -83,6 +83,9 @@ export namespace TableSchema {
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		// KLUDGE: extracted for use in inline type definitions below.
+		const columnFieldsBuiltInParts = {
+			id: schemaFactory.identifier,
+		} as const;
 		const columnFieldsPropsPartKludge = {
 			props: propsSchema,
 		} as const;
@@ -96,8 +99,8 @@ export namespace TableSchema {
 		 * Likely related to the following issue: https://github.com/microsoft/TypeScript/issues/52394
 		 */
 		const columnFields = {
+			...columnFieldsBuiltInParts,
 			...columnFieldsPropsPartKludge,
-			id: schemaFactory.identifier,
 		} as const;
 
 		/**
@@ -112,8 +115,9 @@ export namespace TableSchema {
 		// type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 
 		// KLUDGE: inline typing to avoid generated .d.ts file issues.
-		type ColumnInsertableType = {
-			readonly id?: string | undefined;
+		type ColumnInsertableType = InsertableObjectFromSchemaRecord<
+			typeof columnFieldsBuiltInParts
+		> & {
 			readonly props?: InsertableTreeFieldFromImplicitField<TPropsSchema> | undefined;
 		} & {
 			// `props` does not have a known default; make it required.
