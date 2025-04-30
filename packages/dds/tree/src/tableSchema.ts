@@ -240,7 +240,8 @@ export namespace TableSchema {
 		removeCell(columnId: string): void;
 
 		/**
-		 * User-provided row properties.
+		 * The row's properties.
+		 * @remarks This is a user-defined schema that can be used to store additional information about the row.
 		 */
 		get props(): TreeFieldFromImplicitField<TPropsSchema>;
 		set props(value: InsertableTreeFieldFromImplicitField<TPropsSchema>);
@@ -342,15 +343,15 @@ export namespace TableSchema {
 			(FieldHasDefault<TPropsSchema> extends true
 				? {
 						/**
-						 * The column's properties.
-						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
+						 * The row's properties.
+						 * @remarks This is a user-defined schema that can be used to store additional information about the row.
 						 */
 						props?: InsertableTreeFieldFromImplicitField<TPropsSchema>;
 					}
 				: {
 						/**
-						 * The column's properties.
-						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
+						 * The row's properties.
+						 * @remarks This is a user-defined schema that can be used to store additional information about the row.
 						 */
 						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
 					});
