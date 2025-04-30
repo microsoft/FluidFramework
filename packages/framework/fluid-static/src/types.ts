@@ -209,6 +209,8 @@ export interface IConnection {
 	 * Whether the connection is in read or read/write mode.
 	 */
 	readonly mode: "write" | "read";
+
+	readonly userData: IMember;
 }
 
 /**
