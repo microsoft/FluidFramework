@@ -20,9 +20,9 @@ Now all such unions produce `never` for their insertable node types (just like t
 This case was not intentionally supported, and as documented in [input types](https://fluidframework.com/docs/api/fluid-framework/input-typealias), non-exact types, like these unions,
 are not guaranteed to produce anything other than `never`.
 
-If providing exact schema is not possible and the previous behavior is required, convert the union of arrays to an array of unions.
+If providing exact schema is impractical and the previous behavior is required, convert the union of arrays to an array of unions.
 The above example can be turned into `[typeof A, typeof B | typeof A]`.
 
-In addition to allowing much larger unions to compile, this change also fixes a case where
+This is also fix for a case where
 [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias)
-was order dependent, which it is documented not to be.
+was order dependent, which violates its documented order independence.
