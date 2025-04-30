@@ -157,6 +157,7 @@ export type ValidateRecursiveSchema<
 > = true;
 
 /**
+ * Validation logic used by {@link ValidateRecursiveSchema}.
  * @system @public
  */
 export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNodeSchema<
@@ -243,6 +244,7 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
  * @privateRemarks
  * Using this is real sketchy, and leads to a lot of issues (errors which depend on how the schema is compiled, making different build setups produce different results and complicating exports).
  * This is being kept as internal for now: if a customer really needs it, we have this as a documented workaround, but it would be much better to find an alternative solution before using this one.
+ * This uses ValidateRecursiveSchemaTemplate since it was found to evaluate enough of the type to work.
  * @internal
  */
 export type FixRecursiveRecursionLimit<T extends TreeNodeSchema> =
