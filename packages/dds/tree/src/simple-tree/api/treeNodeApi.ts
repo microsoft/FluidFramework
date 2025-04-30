@@ -267,10 +267,9 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
  * If isCompressed is set to `false`:
  * - If the node contains an identifier field, the uncompressed identifier is returned.
  */
-export function getIdentifierFromNode(
-	node: TreeNode,
-	isCompressed: boolean,
-): number | string | undefined {
+export function getIdentifierFromNode(node: TreeNode, preferCompressed: true): number | string | undefined;
+export function getIdentifierFromNode(node: TreeNode, preferCompressed: false): string | undefined;
+export function getIdentifierFromNode(node: TreeNode, preferCompressed: boolean): number | string | undefined {
 	const schema = node[typeSchemaSymbol];
 	if (!isObjectNodeSchema(schema)) {
 		return undefined;
@@ -298,9 +297,7 @@ export function getIdentifierFromNode(
 			);
 			const identifierValue = identifier.value as string;
 
-			if (isCompressed) {
-				// TODO: We are currently retrieving the uncompressed identifier, and then recompressing again.
-				// A fast track for accessing the in-memory compressed identifiers should be made.
+			if (preferCompressed) {
 				const localNodeKey =
 					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
 				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
@@ -313,6 +310,7 @@ export function getIdentifierFromNode(
 			);
 	}
 }
+
 
 /**
  * Gets the stored key with which the provided node is associated in the parent.

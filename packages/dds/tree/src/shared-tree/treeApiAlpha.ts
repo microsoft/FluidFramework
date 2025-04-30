@@ -71,7 +71,7 @@ identifier.shorten = (branch: TreeBranch, nodeIdentifier: string): number | unde
 	return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
 };
 
-identifier.expand = (branch: TreeBranch, nodeIdentifier: number): string => {
+identifier.lengthen = (branch: TreeBranch, nodeIdentifier: number): string => {
 	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
 		.nodeKeyManager;
 	return nodeKeyManager.stabilizeNodeIdentifier(
@@ -86,6 +86,12 @@ identifier.getShort = (node: TreeNode): number | string | undefined => {
 Object.freeze(identifier);
 
 /**
+ * A utility interface for retrieving or converting node identifiers.
+ *
+ * This provides methods to:
+ * - Retrieve uncompressed or compressed identifiers from nodes
+ * - Convert between stable identifiers and local identifiers
+ * 
  * @alpha @sealed
  */
 export interface TreeIdentifierUtils {
@@ -99,9 +105,12 @@ export interface TreeIdentifierUtils {
 	(node: TreeNode): string | undefined;
 
 	/**
-	 * Returns the local node identifier as a number for a stable identifier known by the id compressor on the branch.
-	 *
+	 * Returns the shortened identifier as a number given long identifier known by the id compressor on the branch if possible.
+	 * Otherwise, it will return the original string identifier provided.
 	 * If the id does not exist, or is unknown by the id compressor, it returns undefined.
+	 * 
+	 * This method is the inverse of {@link TreeIdentifierUtils.lengthen}. If you shorten an identifier
+	 * and then immediately pass it to {@link TreeIdentifierUtils.lengthen}, you will get the original string back.
 	 *
 	 * @param branch - TreeBranch from where you get the idCompressor to do the decompression.
 	 * @param nodeIdentifier - the stable identifier that needs to be shortened.
@@ -112,11 +121,14 @@ export interface TreeIdentifierUtils {
 	/**
 	 * Returns the stable id as a string if the identifier is decompressible and known by the id compressor. Otherwise, it will throw an error.
 	 *
+	 * This method is the inverse of {@link TreeIdentifierUtils.shorten}. If you lengthen an identifier
+	 * and then immediately pass it to {@link TreeIdentifierUtils.shorten}, you will get the original short identifier back.
+	 * 
 	 * @param branch - TreeBranch from where you want to get the id compressor to do the decompression.
 	 * @param nodeIdentifier - The local identifier that needs to be expanded.
 	 *
 	 */
-	expand(branch: TreeBranch, nodeIdentifier: number): string;
+	lengthen(branch: TreeBranch, nodeIdentifier: number): string;
 
 	/**
 	 * Returns the {@link SchemaFactory.identifier | identifier} of the given node in the most compressed form possible.

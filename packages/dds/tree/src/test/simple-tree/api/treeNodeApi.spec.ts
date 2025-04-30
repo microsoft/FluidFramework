@@ -612,7 +612,7 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		describe("expand", () => {
+		describe("lengthen", () => {
 			it("returns the stable identifier for a known, local identifier.", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.identifier,
@@ -626,7 +626,7 @@ describe("treeNodeApi", () => {
 				const id = nodeKeyManager.stabilizeNodeIdentifier(localId);
 				view.initialize({ identifier: id });
 
-				assert.equal(TreeAlpha.identifier.expand(view, localId as unknown as number), id);
+				assert.equal(TreeAlpha.identifier.lengthen(view, localId as unknown as number), id);
 			});
 
 			it("unknown local identifier, throws usage error", () => {
@@ -636,7 +636,7 @@ describe("treeNodeApi", () => {
 				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 				const view = getView(config);
 				view.initialize({ identifier: "testID" });
-				assert.throws(() => TreeAlpha.identifier.expand(view, 98));
+				assert.throws(() => TreeAlpha.identifier.lengthen(view, 98));
 			});
 		});
 	});
