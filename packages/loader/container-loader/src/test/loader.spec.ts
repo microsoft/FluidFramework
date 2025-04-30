@@ -62,6 +62,8 @@ const createCodeLoader = (props?: { createDetachedBlob?: boolean }): ICodeDetail
 									pending: [],
 								}),
 								ILayerCompatDetails: undefined,
+								disposed: false,
+								setConnectionState: () => {},
 							});
 						},
 					},
