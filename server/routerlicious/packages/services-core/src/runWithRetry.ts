@@ -41,8 +41,10 @@ export async function runWithRetry<T>(
 	onErrorFn?: (error) => void,
 	telemetryEnabled = false,
 	shouldLogInitialSuccessVerbose = false,
+	maxRetryDelayMs = 30 * 1000, // 30 seconds
 ): Promise<T> {
 	let retryCount = 0;
+	let totalRetryDelayMs = 0;
 	let success = false;
 	let metric: Lumber<LumberEventName.RunWithRetry> | undefined;
 	let latestResultError: unknown;
@@ -104,6 +106,22 @@ export async function runWithRetry<T>(
 				}
 
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
+				totalRetryDelayMs += intervalMs;
+				if (totalRetryDelayMs > maxRetryDelayMs) {
+					Lumberjack.error(
+						"Max retry delay will be exceeded, rejecting",
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+							totalRetryDelayMs,
+							maxRetryDelayMs,
+						},
+						error,
+					);
+					throw error;
+				}
 				await delay(intervalMs);
 				retryCount++;
 			}
@@ -114,6 +132,8 @@ export async function runWithRetry<T>(
 			metric.setProperty("callName", callName);
 			metric.setProperty("maxRetries", maxRetries);
 			metric.setProperty("retryAfterMs", retryAfterMs);
+			metric.setProperty("totalRetryDelayMs", totalRetryDelayMs);
+			metric.setProperty("maxRetryDelayMs", maxRetryDelayMs);
 			if (success) {
 				// If we turn on the flag of shouldLogInitialSuccessVerbose and there is no retry,
 				// log as verbose level, otherwise log as info level. By default the flag is off.
@@ -172,8 +192,10 @@ export async function requestWithRetry<T>(
 	) => number = calculateRetryIntervalForNetworkError,
 	onErrorFn?: (error) => void,
 	telemetryEnabled = false,
+	maxRetryDelayMs = 30 * 1000, // 30 seconds
 ): Promise<T> {
 	let retryCount = 0;
+	let totalRetryDelayMs = 0;
 	let success = false;
 	let metric: Lumber<LumberEventName.RequestWithRetry> | undefined;
 	let latestResultError: unknown;
@@ -236,6 +258,22 @@ export async function requestWithRetry<T>(
 				// TODO: if error is a NetworkError, we should respect NetworkError.retryAfter
 				// or NetworkError.retryAfterMs
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
+				totalRetryDelayMs += intervalMs;
+				if (totalRetryDelayMs > maxRetryDelayMs) {
+					Lumberjack.error(
+						"Max retry delay will be exceeded, rejecting",
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+							totalRetryDelayMs,
+							maxRetryDelayMs,
+						},
+						error,
+					);
+					throw error;
+				}
 				await delay(intervalMs);
 				retryCount++;
 			}
