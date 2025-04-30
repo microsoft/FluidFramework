@@ -75,7 +75,7 @@ export function isTreeNodeSchemaClass<
  * way to declare and manipulate unordered sets of types in TypeScript.
  *
  * Duplicate entries in this array are not allowed and will produce runtime errors.
- * Duplicate types however are allowed,
+ * Duplicate types are allowed,
  * but this must only be reflected in the type and not the runtime values.
  * This duplication can be used to encode the typing when the number of items in the array is not know at compile time
  * but some of the items are known to be present unconditionally.

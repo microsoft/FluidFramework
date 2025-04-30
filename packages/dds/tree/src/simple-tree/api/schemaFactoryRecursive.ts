@@ -196,9 +196,9 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
  * @remarks
  *
  * Generally this workaround should be avoided if possible,
- * especially for exported types as it is likely to result in issues when exporting or importing schema forcing the user to use the workaround as well.
- * This is particularly problematic since in some cases the user replicating the pattern might not be possible.
- * Additionally which cases hit these limits may vary based on TypeScript version and implementation details of this library.
+ * especially for exported types, as it is likely to result in issues when exporting or importing schema where the user will be forced to use the workaround as well.
+ * This is particularly problematic since in some cases it may not be possible for the user to replicate the pattern.
+ * Additionally, which cases hit these limits may vary based on TypeScript version and implementation details of this library.
  *
  * This workaround is provided and documented as a last resort to be able to keep an app compiling.
  * Future version of SharedTree should provide schema type erasure functionality as a better alternative for most cases.
@@ -221,7 +221,7 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
  *
  * For non-recursive types, they can be ported to the more flexible recursive APIs and use the pattern above.
  *
- * Non-recursive types can also use this workaround by making a duplicate copy of the schema causing the error but written using the recursive APIs.
+ * Non-recursive types can also use this workaround by making a duplicate copy of the problematic schema written using the recursive APIs.
  * Then this pattern can be applied to the duplicate copy.
  *
  * ```typescript
@@ -241,7 +241,7 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
  * 	class LargeUnionObjectNode extends schema.object("ObjectNode", { x: largeUnion }) {}
  * ```
  * @privateRemarks
- * Using this is real sketchy, and leads to a lot of issues (errors which depend on how something the schema is compiled, making different build setups produce different results and complicating exports).
+ * Using this is real sketchy, and leads to a lot of issues (errors which depend on how the schema is compiled, making different build setups produce different results and complicating exports).
  * This is being kept as internal for now: if a customer really needs it, we have this as a documented workaround, but it would be much better to find an alternative solution before using this one.
  * @internal
  */
