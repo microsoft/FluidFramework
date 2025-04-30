@@ -13,6 +13,8 @@ import {
 // Test the limits of how large/deep a schema can be before hitting TypeScript compiler limits.
 // For large schema, TypeScript can report "Type instantiation is excessively deep and possibly infinite.ts(2589)":
 // These tests ensure that large schema remain supported and don't hit this limit too early.
+// In the past recursive processing of AllowedTypes arrays hit this limit around 43 items.
+// These tests are larger than that to ensure that issue does not return and similar limitations ones are not introduced.
 
 describe("largeSchema", () => {
 	it("deep object", () => {
@@ -1067,10 +1069,11 @@ describe("largeSchema", () => {
 			const field1 = schema.required(union200);
 			const field2 = schema.optional(union200);
 
-			// This fails to compile if the above dummy object isn't in included.
 			class ObjectNode extends schema.object("ObjectNode", {
 				data: union200,
 			}) {}
+
+			const node = new ObjectNode({ data: new Empty000({}) });
 		}
 
 		{
@@ -1092,11 +1095,6 @@ describe("largeSchema", () => {
 				enableSchemaValidation: true,
 			});
 			const field = schema.optional([() => MapNode]);
-
-			const AreEqualBase = schema.objectRecursive("AreEqual", {
-				id: schema.identifier,
-				operands: MapNode,
-			});
 		}
 	});
 
@@ -1104,6 +1102,7 @@ describe("largeSchema", () => {
 		const schema = new SchemaFactory("com.example");
 
 		const union = [
+			SchemaFactory.null,
 			() => Empty100,
 			() => Empty099,
 			() => Empty098,
@@ -1319,6 +1318,8 @@ describe("largeSchema", () => {
 				schema: union,
 				enableSchemaValidation: true,
 			});
+
+			const node = new ObjectNode({ x: new Empty000(new Empty041({ x: null })) });
 		}
 	});
 });
