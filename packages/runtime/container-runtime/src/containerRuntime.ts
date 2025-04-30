@@ -2632,7 +2632,7 @@ export class ContainerRuntime
 	private readonly notifyReadOnlyState = (readonly: boolean): void =>
 		this.channelCollection.notifyReadOnlyState(readonly);
 
-	public setConnectionState(connected: boolean, clientId?: string): void {
+	public setConnectionState(canSendOps: boolean, clientId?: string): void {
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -2641,11 +2641,11 @@ export class ContainerRuntime
 			0x978 /* this.clientId does not match Audience */,
 		);
 
-		if (connected && this.sessionSchema.idCompressorMode === "delayed") {
+		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
 		}
-		if (connected === false && this.delayConnectClientId !== undefined) {
+		if (canSendOps === false && this.delayConnectClientId !== undefined) {
 			this.delayConnectClientId = undefined;
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "UnsuccessfulConnectedTransition",
@@ -2654,14 +2654,14 @@ export class ContainerRuntime
 			return;
 		}
 
-		if (!connected) {
+		if (!canSendOps) {
 			this.documentsSchemaController.onDisconnect();
 		}
 
 		// If there are stashed blobs in the pending state, we need to delay
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
-		const connecting = connected && !this.canSendOps;
+		const connecting = canSendOps && !this.canSendOps;
 		if (connecting && this.blobManager.hasPendingStashedUploads()) {
 			assert(
 				!this.delayConnectClientId,
@@ -2672,7 +2672,7 @@ export class ContainerRuntime
 			return;
 		}
 
-		this.setConnectionStateCore(connected, clientId);
+		this.setConnectionStateCore(canSendOps, clientId);
 	}
 
 	/**
@@ -4334,7 +4334,8 @@ export class ContainerRuntime
 		if (this.innerDeltaManager.readOnlyInfo.readonly) {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
-				connected: this.connected,
+				connected: this._getTrueConnectedState(),
+				canSendOps: this.canSendOps,
 			});
 		}
 

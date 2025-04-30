@@ -2507,13 +2507,9 @@ export class Container
 	 */
 	private setContextConnectedState(connected: boolean, readonly: boolean): void {
 		if (this._runtime?.disposed === false && this.loaded) {
-			/**
-			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
-			 * ops getting through to the DeltaManager.
-			 * The ContainerRuntime's "connected" state simply means it is ok to send ops
-			 * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
-			 */
-			this.runtime.setConnectionState(connected && !readonly, this.clientId);
+
+			this.runtime.setConnectionState(connected && !readonly
+				 /* container can send ops if connected to service and not in readonly mode */, this.clientId);
 		}
 	}
 
