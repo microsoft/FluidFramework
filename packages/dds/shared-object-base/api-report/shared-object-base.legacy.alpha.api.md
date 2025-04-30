@@ -39,7 +39,8 @@ export function parseHandles(value: unknown, serializer: IFluidSerializer): unkn
 
 // @alpha @legacy
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes,
+    telemetryContextPrefix: string);
     getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     protected processGCDataCore(serializer: IFluidSerializer): void;
@@ -51,9 +52,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
 // @alpha @legacy
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    constructor(
+    id: string,
+    runtime: IFluidDataStoreRuntime,
+    attributes: IChannelAttributes);
     protected abstract applyStashedOp(content: unknown): void;
-    // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
     connect(services: IChannelServices): void;
@@ -65,7 +68,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly handle: IFluidHandleInternal;
-    // (undocumented)
     id: string;
     // (undocumented)
     get IFluidLoadable(): this;
@@ -83,7 +85,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
     protected rollback(content: unknown, localOpMetadata: unknown): void;
-    // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
     protected abstract get serializer(): IFluidSerializer;
     protected submitLocalMessage(content: unknown, localOpMetadata?: unknown): void;
