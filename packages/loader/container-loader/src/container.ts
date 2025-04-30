@@ -2507,9 +2507,11 @@ export class Container
 	 */
 	private setContextConnectedState(connected: boolean, readonly: boolean): void {
 		if (this._runtime?.disposed === false && this.loaded) {
-
-			this.runtime.setConnectionState(connected && !readonly
-				 /* container can send ops if connected to service and not in readonly mode */, this.clientId);
+			this.runtime.setConnectionState(
+				connected && !readonly,
+				/* container can send ops if connected to service and not in readonly mode */ this
+					.clientId,
+			);
 		}
 	}
 

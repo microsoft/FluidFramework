@@ -397,7 +397,7 @@ export interface IRuntime extends IDisposable {
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
-    setConnectionState(connected: boolean, clientId?: string): any;
+    setConnectionState(canSendOps: boolean, clientId?: string): any;
 }
 
 // @alpha @legacy (undocumented)
