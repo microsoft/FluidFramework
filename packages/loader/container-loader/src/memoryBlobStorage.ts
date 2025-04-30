@@ -67,7 +67,10 @@ export function createMemoryDetachedBlobStorage(): MemoryDetachedBlobStorage {
 		},
 		getBlobIds: (): string[] => blobs.map((_, i) => `${i}`),
 		dispose: () => blobs.splice(0),
-		serialize: () => JSON.stringify(blobs.map((b) => bufferToString(b, "utf8"))),
+		serialize: () =>
+			blobs.length > 0
+				? JSON.stringify(blobs.map((b) => bufferToString(b, "utf8")))
+				: undefined,
 		initialize: (attachmentBlobs: string[]) =>
 			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf8"))),
 	};
