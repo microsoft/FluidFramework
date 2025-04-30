@@ -17,24 +17,6 @@ export type {
 	DefaultProvider,
 	typeNameSymbol,
 	InsertableObjectFromSchemaRecord,
-	// Recursive Schema APIs
-	FieldHasDefaultUnsafe,
-	ObjectFromSchemaRecordUnsafe,
-	TreeObjectNodeUnsafe,
-	TreeFieldFromImplicitFieldUnsafe,
-	TreeNodeFromImplicitAllowedTypesUnsafe,
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeArrayNodeUnsafe,
-	TreeMapNodeUnsafe,
-	InsertableObjectFromSchemaRecordUnsafe,
-	InsertableTreeFieldFromImplicitFieldUnsafe,
-	InsertableTypedNodeUnsafe,
-	NodeBuilderDataUnsafe,
-	NodeFromSchemaUnsafe,
-	ReadonlyMapInlined,
-	TreeNodeSchemaUnsafe,
-	AllowedTypesUnsafe,
-	TreeNodeSchemaNonClassUnsafe,
 } from "./simple-tree/index.js";
 export type { FlexList, FlexListToUnion, ExtractItemType } from "./simple-tree/index.js";
 

@@ -57,6 +57,8 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	// eslint-disable-next-line import/no-deprecated
+	type IContainerRuntimeBaseExperimental,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 } from "@fluidframework/runtime-definitions/internal";
@@ -403,6 +405,18 @@ export class FluidDataStoreRuntime
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+
+		// eslint-disable-next-line import/no-deprecated
+		const base: IContainerRuntimeBaseExperimental | undefined =
+			// eslint-disable-next-line import/no-deprecated
+			this.dataStoreContext.containerRuntime satisfies IContainerRuntimeBaseExperimental;
+		if (base !== undefined && "inStagingMode" in base) {
+			Object.defineProperty(this, "inStagingMode", {
+				get: () => {
+					return base.inStagingMode;
+				},
+			});
+		}
 	}
 
 	get deltaManager(): IDeltaManagerErased {

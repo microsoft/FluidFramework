@@ -483,7 +483,10 @@ export abstract class FluidDataStoreContext
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
-		assert(isIDeltaManagerFull(this.parentContext.deltaManager), "Invalid delta manager");
+		assert(
+			isIDeltaManagerFull(this.parentContext.deltaManager),
+			0xb83 /* Invalid delta manager */,
+		);
 
 		this._contextDeltaManagerProxy = new ContextDeltaManagerProxy(
 			this.parentContext.deltaManager,
