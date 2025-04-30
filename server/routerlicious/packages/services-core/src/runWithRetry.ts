@@ -26,6 +26,7 @@ import { isNetworkError, NetworkError } from "@fluidframework/server-services-cl
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
  * @param shouldLogInitialSuccessVerbose - whether to log successful telemetry as verbose level if there is no retry, default is false
+ * @param maxRetryDelayMs - Maximum cumulative delay time in milliseconds across all retry attempts
  * @internal
  */
 export async function runWithRetry<T>(
@@ -106,8 +107,7 @@ export async function runWithRetry<T>(
 				}
 
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
-				totalRetryDelayMs += intervalMs;
-				if (totalRetryDelayMs > maxRetryDelayMs) {
+				if (totalRetryDelayMs + intervalMs > maxRetryDelayMs) {
 					Lumberjack.error(
 						"Max retry delay will be exceeded, rejecting",
 						{
@@ -115,6 +115,7 @@ export async function runWithRetry<T>(
 							callName,
 							retryCount,
 							maxRetries,
+							intervalMs,
 							totalRetryDelayMs,
 							maxRetryDelayMs,
 						},
@@ -122,6 +123,7 @@ export async function runWithRetry<T>(
 					);
 					throw error;
 				}
+				totalRetryDelayMs += intervalMs;
 				await delay(intervalMs);
 				retryCount++;
 			}
@@ -176,6 +178,7 @@ export async function runWithRetry<T>(
  * and retries so far
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
+ * @param maxRetryDelayMs - Maximum cumulative delay time in milliseconds across all retry attempts
  * @internal
  */
 export async function requestWithRetry<T>(
@@ -258,8 +261,7 @@ export async function requestWithRetry<T>(
 				// TODO: if error is a NetworkError, we should respect NetworkError.retryAfter
 				// or NetworkError.retryAfterMs
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
-				totalRetryDelayMs += intervalMs;
-				if (totalRetryDelayMs > maxRetryDelayMs) {
+				if (totalRetryDelayMs + intervalMs > maxRetryDelayMs) {
 					Lumberjack.error(
 						"Max retry delay will be exceeded, rejecting",
 						{
@@ -267,6 +269,7 @@ export async function requestWithRetry<T>(
 							callName,
 							retryCount,
 							maxRetries,
+							intervalMs,
 							totalRetryDelayMs,
 							maxRetryDelayMs,
 						},
@@ -274,6 +277,7 @@ export async function requestWithRetry<T>(
 					);
 					throw error;
 				}
+				totalRetryDelayMs += intervalMs;
 				await delay(intervalMs);
 				retryCount++;
 			}
