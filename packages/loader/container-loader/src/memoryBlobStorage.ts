@@ -10,6 +10,12 @@ import type {
 	IDocumentStorageService,
 } from "@fluidframework/driver-definitions/internal";
 
+/**
+ * An interface used to manage blobs in memory for detached containers.
+ * On attach of the container the blobs are read, and uploaded to the server.
+ * The interface also supports serialization and initialization which is
+ * used when serializing and rehydrating a detached container with blobs.
+ */
 export interface MemoryDetachedBlobStorage
 	extends Pick<IDocumentStorageService, "createBlob" | "readBlob"> {
 	size: number;

@@ -1833,8 +1833,11 @@ export class Container
 	}: IPendingDetachedContainerState): Promise<void> {
 		if (hasAttachmentBlobs) {
 			if (attachmentBlobs !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage!, attachmentBlobs);
+				assert(
+					this.detachedBlobStorage !== undefined,
+					"detached blob storage should always exist when detached",
+				);
+				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
 			}
 			assert(
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
