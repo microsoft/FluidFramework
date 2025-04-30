@@ -142,7 +142,7 @@ export namespace TableSchema {
 
 		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
 		// typed correctly in terms of our insertable and value types.
-		type ColumnSchemaType = Omit<
+		type ColumnSchemaModifiedType = Omit<
 			{
 				[Property in keyof typeof ColumnSchema]: (typeof ColumnSchema)[Property];
 			},
@@ -166,7 +166,7 @@ export namespace TableSchema {
 			/* TInsertable */ object & ColumnInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof columnFields
-		> = ColumnSchema as ColumnSchemaType;
+		> = ColumnSchema as ColumnSchemaModifiedType;
 
 		return ColumnSchemaType;
 	}
