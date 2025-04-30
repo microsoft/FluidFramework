@@ -12,4 +12,4 @@ This change removes the following deprecated generic types and provides non-gene
 - `IOverlappingIntervalsIndex` is replaced by `ISequenceOverlappingIntervalsIndex`
 - `ISharedIntervalCollection` is deprecated without replacement
 
-These types are no longer required to be generic, and replacing them with non-generic alternatives keeps our typing less complex.
+These types are no longer required to be generic, and replacing them with non-generic alternatives keeps the typing less complex.
