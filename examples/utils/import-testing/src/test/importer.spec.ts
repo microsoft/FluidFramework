@@ -39,7 +39,10 @@ describe("import tests", () => {
 		class ColumnProps extends schemaFactory.object("table-column-props", {
 			label: schemaFactory.optional(schemaFactory.string),
 		}) {}
-		class Column extends TableSchema.createColumn(schemaFactory, schemaFactory.optional(ColumnProps)) {}
+		class Column extends TableSchema.createColumn(
+			schemaFactory,
+			schemaFactory.optional(ColumnProps),
+		) {}
 
 		class RowProps extends schemaFactory.object("table-row-props", {
 			label: schemaFactory.optional(schemaFactory.string),
