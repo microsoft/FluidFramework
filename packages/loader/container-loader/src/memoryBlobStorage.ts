@@ -39,6 +39,12 @@ export function tryInitializeMemoryDetachedBlobStorage(
 	detachedStorage.initialize(maybeAttachmentBlobs);
 }
 
+/**
+ * Creates a new instance of `MemoryDetachedBlobStorage`.
+ * The returned storage allows for creating, reading, and managing blobs in memory.
+ * It also provides methods for serialization and initialization with attachment blobs.
+ * @returns A new `MemoryDetachedBlobStorage` instance.
+ */
 // eslint-disable-next-line import/no-deprecated
 export function createMemoryDetachedBlobStorage(): MemoryDetachedBlobStorage {
 	const blobs: ArrayBufferLike[] = [];
