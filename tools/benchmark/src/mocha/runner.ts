@@ -110,11 +110,16 @@ export function supportParentProcess<
 			const childProcess = await import("node:child_process");
 			const result = childProcess.spawnSync(command, childArgs, { encoding: "utf8" });
 
+			if (result.stdout) {
+				console.log(result.stdout);
+			}
+
 			if (result.error) {
 				assert.fail(`Child process reported an error: ${result.error.message}`);
 			}
 
 			if (result.stderr !== "") {
+				console.error(result.stderr);
 				assert.fail(`Child process logged errors: ${result.stderr}`);
 			}
 

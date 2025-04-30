@@ -352,19 +352,31 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						// Throw errors on regressions/improvements if `ENABLE_MEM_REGRESSION` is set and a warning otherwise.
 						// This allows us to run the tests in CI without failing the build, but still get a warning.
 						if (avgHeapUsed > upperBound) {
-							const message = `Memory Regression detected for test '${testObject.title}': Used '${avgHeapUsed}' bytes, with baseline'${args.baselineMemoryUsage}' and tolerance of '${allowedDeviationBytes} bytes.`;
+							const message = `Memory Regression detected for test '${
+								testObject.title
+							}': Used '${avgHeapUsed.toPrecision(6)}' bytes, with baseline'${
+								args.baselineMemoryUsage
+							}' and tolerance of '${allowedDeviationBytes} bytes.\n`;
 							if (ENABLE_MEM_REGRESSION) {
-								throw new Error(message);
+								process.stderr.write(message);
+								// eslint-disable-next-line unicorn/no-process-exit
+								process.exit(1);
 							} else {
-								console.warn(message);
+								process.stdout.write(message);
 							}
 						}
 						if (avgHeapUsed < lowerBound) {
-							const message = `Possible memory improvement detected for test '${testObject.title}'. Used '${avgHeapUsed}' bytes with baseline '${args.baselineMemoryUsage} and tolerance of '${allowedDeviationBytes} bytes. Consider updating the baseline.`;
+							const message = `Possible memory improvement detected for test '${
+								testObject.title
+							}'. Used '${avgHeapUsed.toPrecision(6)}' bytes with baseline '${
+								args.baselineMemoryUsage
+							} and tolerance of '${allowedDeviationBytes} bytes. Consider updating the baseline.\n`;
 							if (ENABLE_MEM_REGRESSION) {
-								throw new Error(message);
+								process.stderr.write(message);
+								// eslint-disable-next-line unicorn/no-process-exit
+								process.exit(1);
 							} else {
-								console.warn(message);
+								process.stdout.write(message);
 							}
 						}
 					}
