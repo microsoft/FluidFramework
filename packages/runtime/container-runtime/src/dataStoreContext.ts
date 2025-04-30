@@ -521,15 +521,7 @@ export abstract class FluidDataStoreContext
 		this.deleted = true;
 	}
 
-	public setTombstone(tombstone: boolean): void {
-		if (this.tombstoned === tombstone) {
-			return;
-		}
-
-		this._tombstoned = tombstone;
-	}
-
-	public abstract setAttachState(
+	protected abstract setAttachState(
 		attachState: AttachState.Attaching | AttachState.Attached,
 	): void;
 
@@ -673,7 +665,7 @@ export abstract class FluidDataStoreContext
 	 * @param clientId - ID of the client. Its old ID when in disconnected state and
 	 * its new client ID when we are connecting or connected.
 	 */
-	public setConnectionState(connected: boolean, clientId?: string): void {
+	private setConnectionState(connected: boolean, clientId?: string): void {
 		// ConnectionState should not fail in tombstone mode as this is internally run
 		this.verifyNotClosed("setConnectionState", false /* checkTombstone */);
 
@@ -688,11 +680,39 @@ export abstract class FluidDataStoreContext
 		this.channel!.setConnectionState(connected, clientId);
 	}
 
-	public notifyReadOnlyState(readonly: boolean): void {
+	public notifyStateChange(changes: {
+		readonly?: boolean;
+		connected?: boolean;
+		clientId?: string;
+		attachState?: AttachState.Attaching | AttachState.Attached;
+		tombstone?: boolean;
+	}): void {
 		this.verifyNotClosed("notifyReadOnlyState", false /* checkTombstone */);
 
-		this.channel?.notifyReadOnlyState?.(readonly);
-		this._contextDeltaManagerProxy.setReadonly(readonly);
+		const { connected, clientId, attachState, readonly, tombstone } = changes;
+
+		if (this.channel) {
+			if (this.channel.notifyStateChange === undefined) {
+				if (connected) {
+					this.setConnectionState(connected, clientId);
+				}
+				if (attachState) {
+					this.setAttachState(attachState);
+				}
+			} else {
+				if (attachState !== undefined) {
+					this._attachState = attachState;
+				}
+				this.channel.notifyStateChange(changes);
+			}
+		}
+
+		if (readonly) {
+			this._contextDeltaManagerProxy.setReadonly(readonly);
+		}
+		if (tombstone) {
+			this._tombstoned = tombstone;
+		}
 	}
 
 	/**
@@ -957,7 +977,15 @@ export abstract class FluidDataStoreContext
 		// It may read current state of the system when channel was created, but it was not getting any updates
 		// through creation process and could have missed events. So update it on current state.
 		// Once this.loaded is set (above), it will stat receiving events.
-		channel.setConnectionState(this.connected, this.clientId);
+		if (channel.notifyStateChange === undefined) {
+			channel.setConnectionState(this.connected, this.clientId);
+		} else {
+			channel.notifyStateChange({
+				connected: this.connected,
+				clientId: this.clientId,
+				readonly: this.isReadOnly(),
+			});
+		}
 
 		// Freeze the package path to ensure that someone doesn't modify it when it is
 		// returned in packagePath().
@@ -1202,7 +1230,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	 *
 	 * 4. attach op for this data store is processed - setAttachState() is called.
 	 */
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {}
+	protected setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {}
 
 	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
@@ -1335,7 +1363,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		this.snapshotTree = props.snapshotTree;
 	}
 
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+	protected setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		switch (attachState) {
 			case AttachState.Attaching: {
 				assert(
@@ -1343,7 +1371,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					0x14d /* "Should move from detached to attaching" */,
 				);
 				this._attachState = AttachState.Attaching;
-				if (this.channel?.setAttachState) {
+				if (this.channel?.notifyStateChange) {
+					this.channel.notifyStateChange({ attachState });
+				} else if (this.channel?.setAttachState) {
 					this.channel.setAttachState(attachState);
 				} else if (this.channel) {
 					// back-compat! To be removed in the future
@@ -1365,8 +1395,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 						0x14e /* "Should move from attaching to attached" */,
 					);
 					this._attachState = AttachState.Attached;
-					this.channel?.setAttachState?.(attachState);
-					if (this.channel?.setAttachState) {
+					if (this.channel?.notifyStateChange) {
+						this.channel.notifyStateChange({ attachState });
+					} else if (this.channel?.setAttachState) {
 						this.channel.setAttachState(attachState);
 					} else if (this.channel) {
 						// back-compat! To be removed in the future

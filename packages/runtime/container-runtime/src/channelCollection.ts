@@ -421,7 +421,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					this.pendingAttach.has(attachMessage.id),
 					0x15e /* "Local object does not have matching attach message id" */,
 				);
-				this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
+				this.contexts
+					.get(attachMessage.id)
+					?.notifyStateChange({ attachState: AttachState.Attached });
 				this.pendingAttach.delete(attachMessage.id);
 				continue;
 			}
@@ -578,7 +580,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 */
 		if (this.parentContext.attachState !== AttachState.Detached) {
 			this.submitAttachChannelOp(localContext);
-			localContext.setAttachState(AttachState.Attaching);
+			localContext.notifyStateChange({ attachState: AttachState.Attaching });
 		}
 
 		this.contexts.bind(id);
@@ -1098,7 +1100,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public setConnectionState(connected: boolean, clientId?: string): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
-				context.setConnectionState(connected, clientId);
+				context.notifyStateChange({ connected, clientId });
 			} catch (error) {
 				this.mc.logger.sendErrorEvent(
 					{
@@ -1121,20 +1123,28 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	/**
 	 * Enumerates the contexts and calls notifyReadOnlyState on them.
 	 */
-	public notifyReadOnlyState(readonly: boolean): void {
+	public notifyStateChange(changes: {
+		readonly?: boolean;
+		connected?: boolean;
+		clientId?: string;
+		attachState?: AttachState.Attached | AttachState.Attaching;
+	}): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
-				context.notifyReadOnlyState(readonly);
+				context.notifyStateChange({
+					...changes,
+					attachState: this.contexts.isNotBound(context.id) ? undefined : changes.attachState,
+				});
 			} catch (error) {
 				this.mc.logger.sendErrorEvent(
 					{
-						eventName: "SetReadOnlyStateError",
+						eventName: "notifyStateChangeError",
 						...tagCodeArtifacts({
 							fluidDataStoreId,
 						}),
 						details: {
 							runtimeReadonly: this.parentContext.isReadOnly?.(),
-							readonly,
+							...changes,
 						},
 					},
 					error,
@@ -1147,7 +1157,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		for (const [, context] of this.contexts) {
 			// Fire only for bounded stores.
 			if (!this.contexts.isNotBound(context.id)) {
-				context.setAttachState(attachState);
+				context.notifyStateChange({ attachState });
 			}
 		}
 	}
@@ -1435,7 +1445,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 		// Update the used routes in each data store. Used routes is empty for unused data stores.
 		for (const [contextId, context] of this.contexts) {
-			context.setTombstone(tombstonedDataStoresSet.has(contextId));
+			context.notifyStateChange({ tombstone: tombstonedDataStoresSet.has(contextId) });
 		}
 	}
 

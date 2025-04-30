@@ -1764,7 +1764,9 @@ export class ContainerRuntime
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
-		this._deltaManager.on("readonly", this.notifyReadOnlyState);
+		this._deltaManager.on("readonly", (readonly) =>
+			this.channelCollection.notifyStateChange({ readonly }),
+		);
 
 		this.blobManager = new BlobManager({
 			routeContext: this.handleContext,
@@ -2617,9 +2619,6 @@ export class ContainerRuntime
 		return this._loadIdCompressor;
 	}
 
-	private readonly notifyReadOnlyState = (readonly: boolean): void =>
-		this.channelCollection.notifyReadOnlyState(readonly);
-
 	public setConnectionState(connected: boolean, clientId?: string): void {
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
@@ -2718,7 +2717,7 @@ export class ContainerRuntime
 			this.replayPendingStates();
 		}
 
-		this.channelCollection.setConnectionState(connected, clientId);
+		this.channelCollection.notifyStateChange({ connected, clientId });
 		this.garbageCollector.setConnectionState(connected, clientId);
 
 		raiseConnectedEvent(this.mc.logger, this, connected, clientId);
@@ -3522,7 +3521,7 @@ export class ContainerRuntime
 		if (attachState === AttachState.Attached && !this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
 		}
-		this.channelCollection.setAttachState(attachState);
+		this.channelCollection.notifyStateChange({ attachState });
 	}
 
 	/**

@@ -1041,8 +1041,17 @@ export class MockFluidDataStoreRuntime
 		return;
 	}
 
-	public notifyReadOnlyState(readonly: boolean): void {
-		this.readonly = readonly;
+	public notifyStateChange(changes: {
+		readonly?: boolean;
+		connected?: boolean;
+		clientId?: string;
+		attachState?: AttachState.Attaching | AttachState.Attached;
+	}): void {
+		if (changes.readonly !== undefined) this.readonly = changes.readonly;
+		if (changes.connected !== undefined)
+			this.setConnectionState(this.connected, this.clientId);
+
+		if (changes.attachState) this.setAttachState(changes.attachState);
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {

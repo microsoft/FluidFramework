@@ -158,7 +158,7 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
 	(containerRuntime as any).channelCollection = {
-		setConnectionState: (_connected: boolean, _clientId?: string) => {},
+		notifyStateChange: () => {},
 		// Pass data store op right back to ContainerRuntime
 		reSubmit: (type: string, envelope: IEnvelope, localOpMetadata: unknown) => {
 			submitDataStoreOp(
@@ -168,7 +168,7 @@ function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime)
 				localOpMetadata,
 			);
 		},
-	} as ChannelCollection;
+	} as unknown as ChannelCollection;
 }
 
 describe("Runtime", () => {
@@ -986,7 +986,7 @@ describe("Runtime", () => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
 					processMessages: (..._args) => {},
-					setConnectionState: (..._args) => {},
+					notifyStateChange: (..._args) => {},
 				} as ChannelCollection;
 			};
 
@@ -1291,7 +1291,7 @@ describe("Runtime", () => {
 				};
 
 				patched.channelCollection = {
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					notifyStateChange: () => {},
 					// Pass data store op right back to ContainerRuntime
 					reSubmit: (type: string, envelope: IEnvelope, localOpMetadata: unknown) => {
 						submitDataStoreOp(

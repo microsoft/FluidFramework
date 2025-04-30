@@ -504,9 +504,9 @@ describe("Data Store Context Tests", () => {
 					snapshotTree: undefined,
 				});
 
-				localDataStoreContext.setTombstone(true);
+				localDataStoreContext.notifyStateChange({ tombstone: true });
 				assert(localDataStoreContext.tombstoned, `Local data store should be tombstoned!`);
-				localDataStoreContext.setTombstone(false);
+				localDataStoreContext.notifyStateChange({ tombstone: false });
 				assert(
 					!localDataStoreContext.tombstoned,
 					`Local data store should not be tombstoned!`,
@@ -963,9 +963,9 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 				});
 
-				remoteDataStoreContext.setTombstone(true);
+				remoteDataStoreContext.notifyStateChange({ tombstone: true });
 				assert(remoteDataStoreContext.tombstoned, `Local data store should be tombstoned!`);
-				remoteDataStoreContext.setTombstone(false);
+				remoteDataStoreContext.notifyStateChange({ tombstone: false });
 				assert(
 					!remoteDataStoreContext.tombstoned,
 					`Local data store should not be tombstoned!`,
