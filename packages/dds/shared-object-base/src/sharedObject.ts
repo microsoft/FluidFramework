@@ -506,7 +506,10 @@ export abstract class SharedObjectCore<
 	}
 
 	protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
-		if (this.runtime.options.allowStagingModeWithoutSquashing ?? false) {
+		if (
+			(this.runtime.options.allowStagingModeWithoutSquashing as boolean | undefined) ??
+			false
+		) {
 			this.reSubmitCore(content, localOpMetadata);
 		} else {
 			this.throwUnsupported("reSubmitSquashed");
