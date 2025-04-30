@@ -803,7 +803,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		const originalRefSeq = this.inFlightRefSeqs.pop();
 		assert(
 			originalRefSeq !== undefined,
-			"Expected a recorded refSeq when rolling back an op ",
+			0xb7f /* Expected a recorded refSeq when rolling back an op  */,
 		);
 
 		if (!this.intervalCollections.tryRollback(content, localOpMetadata)) {

@@ -163,6 +163,17 @@ export interface IFluidDataStoreRuntime
 }
 
 /**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
+	readonly inStagingMode?: boolean;
+}
+
+/**
  * Internal configs possibly implemented by IFuidDataStoreRuntimes, for use only within the runtime layer.
  * For example, temporary layer compatibility details
  *

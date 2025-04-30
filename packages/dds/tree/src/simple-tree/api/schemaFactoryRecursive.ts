@@ -21,11 +21,11 @@ import type {
 	WithType,
 	TreeNode,
 } from "../core/index.js";
-import type { FieldSchemaAlphaUnsafe, ImplicitAllowedTypesUnsafe } from "./typesUnsafe.js";
+import type { FieldSchemaAlphaUnsafe, System_Unsafe } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
-	Types extends ImplicitAllowedTypesUnsafe,
+	Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 	TCustomMetadata = unknown,
 >(
 	kind: Kind,
@@ -215,7 +215,7 @@ export function allowUnused<T>(t?: T): void {}
  *
  * This type always evaluates to `undefined` to ensure the dummy export (which doesn't exist at runtime) is typed correctly.
  *
- * [TypeScript Issue 59550](https://github.com/microsoft/TypeScript/issues/59550) tracks a suggestion which would make this workaround unnecessary.
+ * {@link https://github.com/microsoft/TypeScript/issues/59550|TypeScript Issue 59550} tracks a suggestion which would make this workaround unnecessary.
  *
  * @example Usage
  * Since recursive type handling in TypeScript is order dependent, putting just the right kind of usages of the type before the declarations can cause it to not hit this error.
