@@ -10,6 +10,7 @@ import {
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
+	ContainerRuntime,
 	loadContainerRuntime,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
@@ -22,6 +23,9 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+// Valid export as per package.json export map
+// eslint-disable-next-line import/no-internal-modules
+import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type {
 	// eslint-disable-next-line import/no-deprecated
@@ -335,6 +339,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 				initialSummarizerDelayMs: 0,
 			} as any,
 		},
+		enableRuntimeIdCompressor: "on",
 	};
 
 	return {
@@ -362,6 +367,17 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					return aliasedDefault.get();
 				},
 			});
+			// id compressor isn't made available via the interface right now.
+			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way
+			// that would avoid this instanceof check, but most customers shouldn't really have a need for it.
+			assert(runtime instanceof ContainerRuntime, "Expected to create a ContainerRuntime");
+			assert(
+				runtime.idCompressor !== undefined,
+				"IdCompressor should be enabled by stress test options.",
+			);
+			// Forcing the cluster size to a low value makes it more likely to generate staging mode scenarios with more
+			// interesting interleaving of id allocation ops and normal ops.
+			modifyClusterSize(runtime.idCompressor, 2);
 
 			if (!existing) {
 				const ds = await runtime.createDataStore(defaultStressDataObjectFactory.type);

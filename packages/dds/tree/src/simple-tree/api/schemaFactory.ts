@@ -1132,6 +1132,7 @@ export class SchemaFactory<
 	 * @remarks
 	 * This version of `SchemaFactory.array` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 * See also {@link FixRecursiveArraySchema} for additional information specific to recursive arrays schema exports.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public arrayRecursive<
