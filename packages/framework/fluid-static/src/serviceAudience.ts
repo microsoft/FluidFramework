@@ -117,7 +117,7 @@ class ServiceAudience<TMember extends IMember = IMember>
 					users.set(userId, user);
 					connectionDetails = {...user, connections: undefined}
 				}else{
-					connectionDetails = {...user, connections: user.connections};
+					connectionDetails = {...user, connections: undefined};
 				}
 
 				// Add this connection to their collection
