@@ -872,8 +872,9 @@ describe("largeSchema", () => {
 					data: union100,
 				}) {}
 				// @ts-expect-error Recursion limit
-				type _check1 = ValidateRecursiveSchema<typeof ObjectNodeDummy>;
-				type _check2 = ValidateRecursiveSchema<typeof ObjectNodeDummy>;
+				type _check1 = FixRecursiveRecursionLimit<typeof ObjectNodeDummy>;
+				type _check2 = FixRecursiveRecursionLimit<typeof ObjectNodeDummy>;
+				type _check3 = ValidateRecursiveSchema<typeof ObjectNodeDummy>;
 			}
 
 			// This fails to compile if the above dummy object isn't in included.
