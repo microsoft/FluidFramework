@@ -61,6 +61,7 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import {
 	assertEqual,
+	assertModularChangesetsEqual,
 	Change,
 	normalizeDelta,
 	removeAliases,
@@ -82,6 +83,7 @@ const fieldC: FieldKey = brand("FieldC");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
+const tag4: RevisionTag = mintRevisionTag();
 
 // Tests the integration of ModularChangeFamily with the default field kinds.
 describe("ModularChangeFamily integration", () => {
@@ -936,6 +938,55 @@ describe("ModularChangeFamily integration", () => {
 			).change;
 
 			assertEqual(inverse, expected);
+		});
+
+		it("Undo move with rename", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+
+			// Make a transaction which moves the same node twice.
+			editor.enterTransaction();
+			moveWithin(editor, fieldAPath, 0, 1, 1);
+			moveWithin(editor, fieldAPath, 0, 1, 1);
+			editor.exitTransaction();
+
+			const [move1, move2] = getChanges();
+			const move = tagChangeInline(
+				family.compose([tagChangeInline(move1, tag1), tagChangeInline(move2, tag2)]),
+				tag3,
+			);
+
+			const undo = family.invert(move, false, tag4);
+
+			const id1Original: ChangeAtomId = { revision: tag3, localId: brand(0) };
+			const id1Undo: ChangeAtomId = { revision: tag4, localId: brand(0) };
+
+			const id2Original: ChangeAtomId = { revision: tag3, localId: brand(2) };
+			const id2Undo: ChangeAtomId = { revision: tag4, localId: brand(2) };
+
+			const expected = Change.build(
+				{
+					family,
+					revisions: [{ revision: tag4 }],
+					maxId: 3,
+					renames: [
+						{
+							oldId: id2Undo,
+							newId: id1Undo,
+							count: 1,
+						},
+					],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.insert(1, id1Original, { revision: tag4 }),
+					MarkMaker.rename(1, id2Original, { revision: tag4, localId: brand(1) }),
+					MarkMaker.remove(1, id2Undo),
+				]),
+			);
+
+			assertEqual(undo, expected);
 		});
 	});
 

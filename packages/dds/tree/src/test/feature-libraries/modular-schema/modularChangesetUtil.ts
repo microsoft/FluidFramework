@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ChangeAtomId,
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	DeltaRoot,
-	FieldKey,
-	FieldKindIdentifier,
-	RevisionInfo,
-	RevisionMetadataSource,
+import {
+	areEqualChangeAtomIdOpts,
+	areEqualChangeAtomIds,
+	type ChangeAtomId,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaMark,
+	type DeltaRoot,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type RevisionInfo,
+	type RevisionMetadataSource,
 } from "../../../core/index.js";
 import type {
 	ComposeNodeManager,
@@ -26,6 +28,7 @@ import type {
 import {
 	newCrossFieldRangeTable,
 	type ChangeAtomIdBTree,
+	type CrossFieldKey,
 	type CrossFieldKeyTable,
 	type FieldChange,
 	type FieldId,
@@ -35,6 +38,7 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
+	type RangeMap,
 	type RangeQueryResult,
 	brand,
 	idAllocatorFromMaxId,
@@ -53,6 +57,7 @@ import {
 import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+import type { RangeQueryEntry } from "../../../util/rangeMap.js";
 
 export const Change = {
 	build,
@@ -79,6 +84,78 @@ export function assertEqual<T>(actual: T, expected: T): void {
 	assertStructuralEquality(actual, expected, (item) =>
 		item instanceof BTree ? item.toArray() : item,
 	);
+}
+
+export function assertModularChangesetsEqual(a: ModularChangeset, b: ModularChangeset): void {
+	// Some changesets end up with different maxID values after rebase despite being otherwise equal.
+	const aMaxId = a.maxId;
+	const bMaxId = b.maxId;
+	const maxId =
+		aMaxId !== undefined || bMaxId !== undefined
+			? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				Math.max((aMaxId ?? bMaxId)!, (bMaxId ?? aMaxId)!)
+			: undefined;
+
+	// Removing aliases ensures that we don't consider the changesets different if they only differ in their aliases.
+	// It also means that we risk treating some changesets that are the same (once you consider aliases) as different.
+	const aNormalized = { ...removeAliases(normalizeCrossFieldKeys(a)), maxId };
+	const bNormalized = { ...removeAliases(normalizeCrossFieldKeys(b)), maxId };
+
+	assertEqual(aNormalized, bNormalized);
+}
+
+function normalizeCrossFieldKeys(change: ModularChangeset): ModularChangeset {
+	const normalized = { ...change };
+	normalized.crossFieldKeys = normalizeRangeMap(
+		normalized.crossFieldKeys,
+		areEqualCrossFieldKeys,
+		areEqualFieldIds,
+	);
+
+	return normalized;
+}
+
+function normalizeRangeMap<K, V>(
+	map: RangeMap<K, V>,
+	areEqualKeys: EqualityFunc<K>,
+	areEqualValues: EqualityFunc<V>,
+): RangeMap<K, V> {
+	const normalized = map.clone();
+	normalized.clear();
+
+	let prevEntry: RangeQueryEntry<K, V> | undefined;
+
+	for (const entry of map.entries()) {
+		if (prevEntry !== undefined) {
+			if (
+				areEqualKeys(map.offsetKey(prevEntry.start, prevEntry.length), entry.start) &&
+				areEqualValues(map.offsetValue(prevEntry.value, prevEntry.length), entry.value)
+			) {
+				prevEntry = { ...prevEntry, length: prevEntry.length + entry.length };
+			} else {
+				map.set(prevEntry.start, prevEntry.length, prevEntry.value);
+				prevEntry = entry;
+			}
+		} else {
+			prevEntry = entry;
+		}
+	}
+
+	if (prevEntry !== undefined) {
+		map.set(prevEntry.start, prevEntry.length, prevEntry.value);
+	}
+
+	return normalized;
+}
+
+type EqualityFunc<T> = (a: T, b: T) => boolean;
+
+function areEqualCrossFieldKeys(a: CrossFieldKey, b: CrossFieldKey): boolean {
+	return areEqualChangeAtomIds(a, b) && a.target === b.target;
+}
+
+function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
+	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
 }
 
 export function empty(): ModularChangeset {

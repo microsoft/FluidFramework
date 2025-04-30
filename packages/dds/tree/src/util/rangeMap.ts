@@ -34,8 +34,8 @@ export class RangeMap<K, V> {
 	 * If `offsetValue` is left unspecified, all keys in a block will be given the same value.
 	 */
 	public constructor(
-		private readonly offsetKey: (key: K, offset: number) => K,
-		private readonly subtractKeys: (a: K, b: K) => number,
+		public readonly offsetKey: (key: K, offset: number) => K,
+		public readonly subtractKeys: (a: K, b: K) => number,
 		public readonly offsetValue: (value: V, offset: number) => V = defaultValueOffsetFn,
 	) {
 		this.tree = new BTree(undefined, subtractKeys);
