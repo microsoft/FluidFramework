@@ -118,7 +118,11 @@ export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	applyStashedOp(serializedOp: string): Promise<unknown>;
-	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId, staged: boolean): void;
+	reSubmitBatch(
+		batch: PendingMessageResubmitData[],
+		batchId: BatchId,
+		stagingInfo: { staged: boolean; squash: boolean },
+	): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -719,6 +723,8 @@ export class PendingStateManager implements IDisposable {
 			let pendingMessage = this.pendingMessages.shift()!;
 			remainingPendingMessagesCount--;
 
+			const wasStaged = pendingMessage.batchInfo.staged;
+
 			// Re-queue pre-staging messages if we are only processing staged batches
 			if (onlyStagedBatches) {
 				if (!pendingMessage.batchInfo.staged) {
@@ -741,7 +747,7 @@ export class PendingStateManager implements IDisposable {
 
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				// Resubmit no messages, with the batchId. Will result in another empty batch marker.
-				this.stateHandler.reSubmitBatch([], batchId, staged);
+				this.stateHandler.reSubmitBatch([], batchId, { staged, squash: wasStaged });
 				continue;
 			}
 
@@ -767,7 +773,7 @@ export class PendingStateManager implements IDisposable {
 						},
 					],
 					batchId,
-					staged,
+					{ staged, squash: wasStaged },
 				);
 				continue;
 			}
@@ -807,7 +813,7 @@ export class PendingStateManager implements IDisposable {
 				);
 			}
 
-			this.stateHandler.reSubmitBatch(batch, batchId, staged);
+			this.stateHandler.reSubmitBatch(batch, batchId, { staged, squash: wasStaged });
 		}
 
 		// pending ops should no longer depend on previous sequenced local ops after resubmit

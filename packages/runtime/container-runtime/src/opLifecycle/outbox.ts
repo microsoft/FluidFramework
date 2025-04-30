@@ -66,7 +66,7 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (message: PendingMessageResubmitData) => void;
+	readonly reSubmit: (message: PendingMessageResubmitData, squash: boolean) => void;
 	readonly opReentrancy: () => boolean;
 }
 
@@ -490,12 +490,16 @@ export class Outbox {
 		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
+		const squash = false;
 		for (const message of rawBatch.messages) {
-			this.params.reSubmit({
-				runtimeOp: message.runtimeOp,
-				localOpMetadata: message.localOpMetadata,
-				opMetadata: message.metadata,
-			});
+			this.params.reSubmit(
+				{
+					runtimeOp: message.runtimeOp,
+					localOpMetadata: message.localOpMetadata,
+					opMetadata: message.metadata,
+				},
+				squash,
+			);
 		}
 
 		if (this.batchRebasesToReport > 0) {

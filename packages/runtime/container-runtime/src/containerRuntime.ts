@@ -3342,13 +3342,7 @@ export class ContainerRuntime
 				}
 			}),
 			commitChanges: exitStagingMode(() => {
-				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
-				// FUTURE: Have this do squash-rebase instead of resubmitting all intermediate changes
-				if (this.connected) {
-					this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
-				} else {
-					this.pendingStateManager.clearStagingFlags();
-				}
+				this.pendingStateManager.replayPendingStates(true /* onlyStagedBatches */);
 			}),
 		};
 
@@ -4548,11 +4542,11 @@ export class ContainerRuntime
 	private reSubmitBatch(
 		batch: PendingMessageResubmitData[],
 		batchId: BatchId,
-		staged: boolean,
+		{ staged, squash }: { staged: boolean; squash: boolean },
 	): void {
 		this.batchRunner.run(() => {
 			for (const message of batch) {
-				this.reSubmit(message);
+				this.reSubmit(message, squash);
 			}
 		});
 
@@ -4561,8 +4555,8 @@ export class ContainerRuntime
 		this.flush(this.offlineEnabled ? batchId : undefined, staged);
 	}
 
-	private reSubmit(message: PendingMessageResubmitData): void {
-		this.reSubmitCore(message.runtimeOp, message.localOpMetadata, message.opMetadata);
+	private reSubmit(message: PendingMessageResubmitData, squash: boolean): void {
+		this.reSubmitCore(message.runtimeOp, message.localOpMetadata, message.opMetadata, squash);
 	}
 
 	/**
@@ -4576,6 +4570,7 @@ export class ContainerRuntime
 		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
+		squash: boolean,
 	): void {
 		assert(
 			this._summarizer === undefined,
@@ -4587,7 +4582,12 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias: {
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
-				this.channelCollection.reSubmit(message.type, message.contents, localOpMetadata);
+				this.channelCollection.reSubmit(
+					message.type,
+					message.contents,
+					localOpMetadata,
+					squash,
+				);
 				break;
 			}
 			case ContainerMessageType.IdAllocation: {

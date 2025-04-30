@@ -143,8 +143,9 @@ export interface IDeltaHandler {
 	 * at all.
 	 * @param message - The original message that was submitted.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - TODO: Document
 	 */
-	reSubmit(message: any, localOpMetadata: unknown): void;
+	reSubmit(message: any, localOpMetadata: unknown, squash?: boolean): void;
 
 	/**
 	 * Apply changes from an op just as if a local client has made the change,

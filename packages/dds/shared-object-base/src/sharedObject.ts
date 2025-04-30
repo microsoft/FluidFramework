@@ -51,6 +51,7 @@ import {
 	tagCodeArtifacts,
 	type ICustomData,
 	type IFluidErrorBase,
+	LoggingError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -504,6 +505,14 @@ export abstract class SharedObjectCore<
 		this.submitLocalMessage(content, localOpMetadata);
 	}
 
+	protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		if (this.runtime.options.allowStagingModeWithoutSquashing ?? false) {
+			this.reSubmitCore(content, localOpMetadata);
+		} else {
+			this.throwUnsupported("reSubmitSquashed");
+		}
+	}
+
 	/**
 	 * Promises that are waiting for an ack from the server before resolving should use this instead of new Promise.
 	 * It ensures that if something changes that will interrupt that ack (e.g. the FluidDataStoreRuntime disposes),
@@ -550,8 +559,8 @@ export abstract class SharedObjectCore<
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
-			reSubmit: (content: unknown, localOpMetadata: unknown) => {
-				this.reSubmit(content, localOpMetadata);
+			reSubmit: (content: unknown, localOpMetadata: unknown, squash?: boolean) => {
+				this.reSubmit(content, localOpMetadata, squash);
 			},
 			applyStashedOp: (content: unknown): void => {
 				this.applyStashedOp(parseHandles(content, this.serializer));
@@ -669,15 +678,21 @@ export abstract class SharedObjectCore<
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	private reSubmit(content: unknown, localOpMetadata: unknown): void {
-		this.reSubmitCore(content, localOpMetadata);
+	private reSubmit(content: unknown, localOpMetadata: unknown, squash?: boolean): void {
+		// Back-compat: squash argument may not be provided by container-runtime layer.
+		// Default to previous behavior (no squash).
+		if (squash ?? false) {
+			this.reSubmitSquashed(content, localOpMetadata);
+		} else {
+			this.reSubmitCore(content, localOpMetadata);
+		}
 	}
 
 	/**
 	 * Revert an op
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
-		throw new Error("rollback not supported");
+		this.throwUnsupported("rollback");
 	}
 
 	/**
@@ -725,6 +740,13 @@ export abstract class SharedObjectCore<
 	 */
 	private emitInternal(event: EventEmitterEventType, ...args: unknown[]): boolean {
 		return super.emit(event, ...args);
+	}
+
+	private throwUnsupported(featureName: string): never {
+		throw new LoggingError("Unsupported DDS feature", {
+			featureName,
+			...tagCodeArtifacts({ ddsType: this.attributes.type }),
+		});
 	}
 }
 
