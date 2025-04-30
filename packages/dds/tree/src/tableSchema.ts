@@ -27,11 +27,11 @@ import {
 	type WithType,
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
+	type InternalTreeNode,
 	/* eslint-enable @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports */
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
-// - Custom fields on Table/Row/Column (props pattern from Nick's demo)
 // - Overloads to make Column/Row schema optional when constructing Tables
 // - Record-like type parameters / input parameters?
 // - Move `@system` types into separate / sub scope?
@@ -59,7 +59,8 @@ export namespace TableSchema {
 		readonly id: string;
 
 		/**
-		 * User-provided column properties.
+		 * The column's properties.
+		 * @remarks This is a user-defined schema that can be used to store additional information about the column.
 		 */
 		get props(): TreeFieldFromImplicitField<TPropsSchema> | undefined;
 		set props(value: InsertableTreeFieldFromImplicitField<TPropsSchema>);
@@ -82,67 +83,90 @@ export namespace TableSchema {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
-		// KLUDGE: extracted for use in inline type definitions below.
+		// Note: `columnFields` is broken into two parts to work around a TypeScript bug
+		// that results in broken `.d.ts` output.
+		// See definition of `ColumnInsertableType` below.
 		const columnFieldsBuiltInParts = {
 			id: schemaFactory.identifier,
 		} as const;
-		const columnFieldsPropsPartKludge = {
+		const columnFieldsPropsPart = {
 			props: propsSchema,
 		} as const;
 
 		/**
-		 * {@link Column} fields.
-		 * @remarks Extracted for re-use in returned type signature defined later in this function.
+		 * {@link ColumnSchema} fields.
+		 *
+		 * @remarks
+		 * Extracted for re-use in returned type signature defined later in this function.
 		 * The implicit typing is intentional.
+		 *
 		 * Note: ideally we would add a satisfies clause here to ensure that this satisfies
 		 * `Record<string, ImplicitFieldSchema>`, but doing so causes TypeScript to prematurely and incorrectly evaluate the type of `propsSchema`.
 		 * Likely related to the following issue: https://github.com/microsoft/TypeScript/issues/52394
 		 */
 		const columnFields = {
 			...columnFieldsBuiltInParts,
-			...columnFieldsPropsPartKludge,
-		} as const;
+			...columnFieldsPropsPart,
+		} as const; // satisfies Record<string, ImplicitFieldSchema>;
 
 		/**
 		 * A column in a table.
 		 */
-		class Column extends schemaFactory.object("Column", columnFields) {}
+		class ColumnSchema extends schemaFactory.object("Column", columnFields) {}
+
+		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof columnFields>`,
+		// but that results in broken `.d.ts` output due to a TypeScript bug.
+		// Instead we extract and inline the typing of the "props" field here, which seems to sufficiently work around the issue.
+		type ColumnInsertableType = InsertableObjectFromSchemaRecord<
+			typeof columnFieldsBuiltInParts
+		> &
+			(FieldHasDefault<TPropsSchema> extends true
+				? {
+						/**
+						 * The column's properties.
+						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
+						 */
+						props?: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+					}
+				: {
+						/**
+						 * The column's properties.
+						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
+						 */
+						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+					});
 
 		type ColumnValueType = TreeNode &
 			IColumn<TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Column">>;
 
-		// type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
-
-		// KLUDGE: inline typing to avoid generated .d.ts file issues.
-		type ColumnInsertableType = InsertableObjectFromSchemaRecord<
-			typeof columnFieldsBuiltInParts
-		> & {
-			readonly props?: InsertableTreeFieldFromImplicitField<TPropsSchema> | undefined;
-		} & {
-			// `props` does not have a known default; make it required.
-			readonly [Property in keyof typeof columnFieldsPropsPartKludge as FieldHasDefault<
-				(typeof columnFieldsPropsPartKludge)[Property & string]
-			> extends false
-				? Property
-				: never]: InsertableTreeFieldFromImplicitField<
-				(typeof columnFieldsPropsPartKludge)[Property & string]
-			>;
-		};
+		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
+		// typed correctly in terms of our insertable and value types.
+		type ColumnSchemaType = Omit<
+			{
+				[Property in keyof typeof ColumnSchema]: (typeof ColumnSchema)[Property];
+			},
+			"createFromInsertable"
+		> &
+			(new (
+				props: InternalTreeNode | ColumnInsertableType,
+			) => ColumnValueType) & {
+				createFromInsertable(props: ColumnInsertableType): ColumnValueType;
+			};
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
 		// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
 		// This is avoided by doing this type conversion.
-		// TODO: The conversion is done via assignment instead of `as` to get stronger type safety.
-		const ColumnSchemaType = Column as TreeNodeSchemaClass<
+		// The conversion is done via assignment instead of `as` to get stronger type safety.
+		const ColumnSchemaType: TreeNodeSchemaClass<
 			/* Name */ ScopedSchemaName<Scope, "Column">,
 			/* Kind */ NodeKind.Object,
 			/* TNode */ ColumnValueType,
 			/* TInsertable */ object & ColumnInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof columnFields
-		>;
+		> = ColumnSchema as ColumnSchemaType;
 
 		return ColumnSchemaType;
 	}
