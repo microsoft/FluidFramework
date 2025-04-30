@@ -237,9 +237,6 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 // @alpha
 export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema ? undefined : undefined;
 
-// @alpha
-export type FixRecursiveRecursionLimit<T extends TreeNodeSchema> = T extends ValidateRecursiveSchemaTemplate<T> ? undefined : undefined;
-
 // @public @system
 type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];

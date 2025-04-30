@@ -240,8 +240,10 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
  * 	// Fails to compile without the above workaround.
  * 	class LargeUnionObjectNode extends schema.object("ObjectNode", { x: largeUnion }) {}
  * ```
- *
- * @alpha
+ * @privateRemarks
+ * Using this is real sketchy, and leads to a lot of issues (errors which depend on how something the schema is compiled, making different build setups produce different results and complicating exports).
+ * This is being kept as internal for now: if a customer really needs it, we have this as a documented workaround, but it would be much better to find an alternative solution before using this one.
+ * @internal
  */
 export type FixRecursiveRecursionLimit<T extends TreeNodeSchema> =
 	T extends ValidateRecursiveSchemaTemplate<T> ? undefined : undefined;
