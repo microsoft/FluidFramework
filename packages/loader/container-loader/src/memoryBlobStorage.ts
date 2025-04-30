@@ -12,6 +12,8 @@ import type {
 
 /**
  * An interface used to manage blobs in memory for detached containers.
+ * 
+ * @remarks
  * On attach of the container the blobs are read, and uploaded to the server.
  * The interface also supports serialization and initialization which is
  * used when serializing and rehydrating a detached container with blobs.
