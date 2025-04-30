@@ -20,7 +20,7 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
-import { largeUnion } from "../largeExport.js";
+import { Empty001, Empty020, largeUnion } from "../largeExport.js";
 import { BadArraySelf, GoodArraySelf, RecursiveMap } from "../testExports.js";
 
 describe("import tests", () => {
@@ -144,12 +144,16 @@ describe("import tests", () => {
 	it("LargeImport", () => {
 		const schema = new SchemaFactory("com.example");
 
-		// Fails to compile without the above workaround.
 		class LargeUnionObjectNode extends schema.object("ObjectNode", { x: largeUnion }) {}
 
 		const config = new TreeViewConfiguration({
 			schema: LargeUnionObjectNode,
 			enableSchemaValidation: true,
+		});
+
+		const node = new LargeUnionObjectNode({
+			// eslint-disable-next-line unicorn/no-null
+			x: new Empty020({ x: new Empty001({ x: null }) }),
 		});
 	});
 });

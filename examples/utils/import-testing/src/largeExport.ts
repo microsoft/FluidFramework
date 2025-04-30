@@ -15,6 +15,7 @@ import {
 const schema = new SchemaFactory("com.example");
 
 const largeUnionInternal = [
+	SchemaFactory.null,
 	() => Empty199,
 	() => Empty198,
 	() => Empty197,
