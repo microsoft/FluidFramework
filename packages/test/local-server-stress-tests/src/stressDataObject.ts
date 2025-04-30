@@ -26,6 +26,7 @@ import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type {
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeBaseExperimental,
+	IFluidDataStoreEntryPointPolicies,
 	// eslint-disable-next-line import/no-deprecated
 	StageControlsExperimental,
 } from "@fluidframework/runtime-definitions/internal";
@@ -74,6 +75,10 @@ export class StressDataObject extends DataObject {
 		{},
 		[["StressDataObject", new LazyPromise(async () => StressDataObject.factory)]],
 	);
+
+	public static readonly policies: Partial<IFluidDataStoreEntryPointPolicies> = {
+		readonlyInStagingMode: false,
+	};
 
 	get StressDataObject() {
 		return this;

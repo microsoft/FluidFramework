@@ -18,7 +18,7 @@ export type {
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
-	IFluidDataStoreChannelPolicies,
+	IFluidDataStoreEntryPointPolicies,
 	IFluidDataStoreContext,
 	IFluidParentContext,
 	IFluidDataStoreContextDetached,

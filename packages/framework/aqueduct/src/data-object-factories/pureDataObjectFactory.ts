@@ -35,11 +35,20 @@ import type {
 } from "@fluidframework/synthesize/internal";
 
 import type {
+	DataObjectConstructor,
 	DataObjectTypes,
-	IDataObjectProps,
 	PureDataObject,
 } from "../data-objects/index.js";
 
+interface CreateDataObjectProps<TObj extends PureDataObject, I extends DataObjectTypes> {
+	ctor: DataObjectConstructor<TObj, I>;
+	context: IFluidDataStoreContext;
+	sharedObjectRegistry: ISharedObjectRegistry;
+	optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+	runtimeClassArg: typeof FluidDataStoreRuntime;
+	existing: boolean;
+	initialState?: I["InitialState"];
+}
 /**
  * Proxy over PureDataObject
  * Does delayed creation & initialization of PureDataObject
@@ -47,15 +56,15 @@ import type {
 async function createDataObject<
 	TObj extends PureDataObject,
 	I extends DataObjectTypes = DataObjectTypes,
->(
-	ctor: new (props: IDataObjectProps<I>) => TObj,
-	context: IFluidDataStoreContext,
-	sharedObjectRegistry: ISharedObjectRegistry,
-	optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
-	runtimeClassArg: typeof FluidDataStoreRuntime,
-	existing: boolean,
-	initProps?: I["InitialState"],
-): Promise<{
+>({
+	ctor,
+	context,
+	sharedObjectRegistry,
+	optionalProviders,
+	runtimeClassArg,
+	existing,
+	initialState: initProps,
+}: CreateDataObjectProps<TObj, I>): Promise<{
 	instance: TObj;
 	runtime: FluidDataStoreRuntime;
 }> {
@@ -92,6 +101,7 @@ async function createDataObject<
 			await instance.finishInitialization(true);
 			return instance;
 		} /* provideEntryPoint */,
+		ctor.policies,
 	);
 
 	// Create object right away.
@@ -141,27 +151,34 @@ export class PureDataObjectFactory<
 	I extends DataObjectTypes = DataObjectTypes,
 > implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
-	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly registry: IFluidDataStoreRegistry | undefined;
+	private readonly props: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
 
 	public constructor(
 		/**
 		 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
 		 */
 		public readonly type: string,
-		private readonly ctor: new (props: IDataObjectProps<I>) => TObj,
+		ctor: DataObjectConstructor<TObj, I>,
 		sharedObjects: readonly IChannelFactory[],
-		private readonly optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
+		optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
-		private readonly runtimeClass: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+		runtimeClass: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 	) {
 		if (this.type === "") {
 			throw new Error("undefined type member");
 		}
+
+		this.props = {
+			ctor,
+			optionalProviders,
+			sharedObjectRegistry: new Map(sharedObjects.map((ext) => [ext.type, ext])),
+			runtimeClassArg: runtimeClass,
+		};
+
 		if (registryEntries !== undefined) {
 			this.registry = new FluidDataStoreRegistry(registryEntries);
 		}
-		this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
 	}
 
 	/**
@@ -195,14 +212,7 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const { runtime } = await createDataObject(
-			this.ctor,
-			context,
-			this.sharedObjectRegistry,
-			this.optionalProviders,
-			this.runtimeClass,
-			existing,
-		);
+		const { runtime } = await createDataObject({ ...this.props, context, existing });
 
 		return runtime;
 	}
@@ -297,15 +307,12 @@ export class PureDataObjectFactory<
 			packagePath ?? [this.type],
 			loadingGroupId,
 		);
-		const { instance, runtime } = await createDataObject(
-			this.ctor,
+		const { instance, runtime } = await createDataObject({
+			...this.props,
 			context,
-			this.sharedObjectRegistry,
-			this.optionalProviders,
-			this.runtimeClass,
-			false, // existing
+			existing: false,
 			initialState,
-		);
+		});
 		const dataStore = await context.attachRuntime(this, runtime);
 
 		return [instance, dataStore];
@@ -330,15 +337,12 @@ export class PureDataObjectFactory<
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
 		const context = runtime.createDetachedDataStore([this.type]);
-		const { instance, runtime: dataStoreRuntime } = await createDataObject(
-			this.ctor,
+		const { instance, runtime: dataStoreRuntime } = await createDataObject({
+			...this.props,
 			context,
-			this.sharedObjectRegistry,
-			this.optionalProviders,
-			this.runtimeClass,
-			false, // existing
+			existing: false,
 			initialState,
-		);
+		});
 		const dataStore = await context.attachRuntime(this, dataStoreRuntime);
 		const result = await dataStore.trySetAlias(rootDataStoreId);
 		if (result !== "Success") {
@@ -363,15 +367,12 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContextDetached,
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
-		const { instance, runtime } = await createDataObject(
-			this.ctor,
+		const { instance, runtime } = await createDataObject({
+			...this.props,
 			context,
-			this.sharedObjectRegistry,
-			this.optionalProviders,
-			this.runtimeClass,
-			false, // existing
+			existing: false,
 			initialState,
-		);
+		});
 
 		await context.attachRuntime(this, runtime);
 

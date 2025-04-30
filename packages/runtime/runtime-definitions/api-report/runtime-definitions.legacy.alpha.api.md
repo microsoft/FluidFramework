@@ -138,6 +138,8 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
     notifyReadOnlyState?(readonly: boolean): void;
+    // (undocumented)
+    readonly policies?: IFluidDataStoreEntryPointPolicies;
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
@@ -169,6 +171,12 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 // @alpha @legacy (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
     attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<IDataStore>;
+}
+
+// @alpha @legacy (undocumented)
+export interface IFluidDataStoreEntryPointPolicies {
+    // (undocumented)
+    readonly readonlyInStagingMode: boolean;
 }
 
 // @alpha @legacy (undocumented)

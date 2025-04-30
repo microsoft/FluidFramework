@@ -17,11 +17,26 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IFluidDataStoreEntryPointPolicies,
+	IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 import type { AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";
 
 import type { DataObjectTypes, IDataObjectProps } from "./types.js";
+
+/**
+ * @legacy
+ * @alpha
+ */
+export interface DataObjectConstructor<
+	TObj extends PureDataObject,
+	I extends DataObjectTypes,
+> {
+	readonly policies?: Partial<IFluidDataStoreEntryPointPolicies>;
+	new (props: IDataObjectProps<I>): TObj;
+}
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -39,6 +54,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
 {
+	public static readonly policies?: Partial<IFluidDataStoreEntryPointPolicies>;
+
 	/**
 	 * This is your FluidDataStoreRuntime object
 	 */

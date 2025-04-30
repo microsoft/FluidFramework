@@ -327,7 +327,7 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
  * @legacy
  * @alpha
  */
-export interface IFluidDataStoreChannelPolicies {
+export interface IFluidDataStoreEntryPointPolicies {
 	readonly readonlyInStagingMode: boolean;
 }
 
@@ -340,7 +340,7 @@ export interface IFluidDataStoreChannelPolicies {
  * @alpha
  */
 export interface IFluidDataStoreChannel extends IDisposable {
-	readonly policies?: IFluidDataStoreChannelPolicies;
+	readonly policies?: IFluidDataStoreEntryPointPolicies;
 
 	/**
 	 * Makes the data store channel visible in the container. Also, runs through its graph and attaches all

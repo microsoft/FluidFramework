@@ -1155,6 +1155,27 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
+	public notifyStagingMode(staging: boolean): void {
+		for (const [fluidDataStoreId, context] of this.contexts) {
+			try {
+				context.notifyStagingMode(staging);
+			} catch (error) {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "notifyStagingModeError",
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
+						details: {
+							staging,
+						},
+					},
+					error,
+				);
+			}
+		}
+	}
+
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		for (const [, context] of this.contexts) {
 			// Fire only for bounded stores.
@@ -1634,9 +1655,7 @@ export function detectOutboundReferences(
 /**
  * @internal
  */
-export class ChannelCollectionFactory<T extends ChannelCollection = ChannelCollection>
-	implements IFluidDataStoreFactory
-{
+export class ChannelCollectionFactory implements IFluidDataStoreFactory {
 	public readonly type = "ChannelCollectionChannel";
 
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry;
@@ -1651,7 +1670,7 @@ export class ChannelCollectionFactory<T extends ChannelCollection = ChannelColle
 		this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(registryEntries);
 	}
 
-	public get IFluidDataStoreFactory(): ChannelCollectionFactory<T> {
+	public get IFluidDataStoreFactory(): ChannelCollectionFactory {
 		return this;
 	}
 

@@ -14,7 +14,11 @@ import {
 import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
 
-import type { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects/index.js";
+import type {
+	DataObject,
+	DataObjectConstructor,
+	DataObjectTypes,
+} from "../data-objects/index.js";
 
 import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
 
@@ -34,7 +38,7 @@ export class DataObjectFactory<
 > extends PureDataObjectFactory<TObj, I> {
 	public constructor(
 		type: string,
-		ctor: new (props: IDataObjectProps<I>) => TObj,
+		ctor: DataObjectConstructor<TObj, I>,
 		sharedObjects: readonly IChannelFactory[] = [],
 		optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,

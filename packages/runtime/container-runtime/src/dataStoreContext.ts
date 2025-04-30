@@ -15,7 +15,6 @@ import {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseProperties,
-	type IErrorBase,
 	type IEvent,
 } from "@fluidframework/core-interfaces";
 import {
@@ -94,7 +93,6 @@ import {
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	hasIsolatedChannels,
-	summarizerClientType,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 
@@ -230,11 +228,8 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 	 * manager if the context wishes to control the read only state
 	 * differently than the delta manager itself.
 	 */
-	public setReadonly(
-		readonly: boolean,
-		readonlyConnectionReason?: { reason: string; error?: IErrorBase },
-	): void {
-		this.emit("readonly", readonly, readonlyConnectionReason);
+	public emitReadonly(): void {
+		this.emit("readonly", this.isReadOnly());
 	}
 }
 
@@ -271,7 +266,8 @@ export abstract class FluidDataStoreContext
 		return this._contextDeltaManagerProxy;
 	}
 
-	public isReadOnly = (): boolean => this.parentContext.isReadOnly();
+	private forceReadonly: boolean = false;
+	public isReadOnly = (): boolean => this.forceReadonly || this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
 		return this.parentContext.connected;
@@ -681,8 +677,15 @@ export abstract class FluidDataStoreContext
 	public notifyReadOnlyState(readonly: boolean): void {
 		this.verifyNotClosed("notifyReadOnlyState", false /* checkTombstone */);
 
-		this.channel?.notifyReadOnlyState?.(readonly);
-		this._contextDeltaManagerProxy.setReadonly(readonly);
+		this.channel?.notifyReadOnlyState?.(this.isReadOnly());
+		this._contextDeltaManagerProxy.emitReadonly();
+	}
+
+	public notifyStagingMode(staging: boolean): void {
+		if (this.channel?.policies?.readonlyInStagingMode !== false) {
+			this.forceReadonly = staging;
+			this.notifyReadOnlyState(this.isReadOnly());
+		}
 	}
 
 	/**
@@ -868,7 +871,7 @@ export abstract class FluidDataStoreContext
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
 		// Summarizer clients should not submit messages.
-		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
+		this.identifyLocalChangeWhileReadonly("DataStoreMessageWhileReadonly", type);
 
 		this.parentContext.submitMessage(type, content, localOpMetadata);
 	}
@@ -1103,11 +1106,8 @@ export abstract class FluidDataStoreContext
 	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */
-	protected identifyLocalChangeInSummarizer(eventName: string, type?: string): void {
-		if (
-			this.clientDetails.type !== summarizerClientType ||
-			this.localChangesTelemetryCount <= 0
-		) {
+	protected identifyLocalChangeWhileReadonly(eventName: string, type?: string): void {
+		if (!this.isReadOnly() || this.localChangesTelemetryCount <= 0) {
 			return;
 		}
 
@@ -1119,6 +1119,9 @@ export abstract class FluidDataStoreContext
 			type,
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(30),
+			clientType: this.clientDetails.type,
+			readonly: this.isReadOnly(),
+			forceReadonly: this.forceReadonly,
 		});
 		this.localChangesTelemetryCount--;
 	}
@@ -1320,7 +1323,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		);
 
 		// Summarizer client should not create local data stores.
-		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
+		this.identifyLocalChangeWhileReadonly("DataStoreCreatedInSummarizer");
 
 		this.snapshotTree = props.snapshotTree;
 	}

@@ -30,6 +30,7 @@ export {
 	PureDataObject,
 	TreeDataObject,
 	createDataObjectKind,
+	type DataObjectConstructor,
 } from "./data-objects/index.js";
 export {
 	BaseContainerRuntimeFactory,
