@@ -409,8 +409,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 	}
 
-	// AB#29483: This test is flaky on local server.
-	it.skip("Can summarize after hitting nack on unsummarized ops", async function () {
+	it("Can summarize after hitting nack on unsummarized ops", async function () {
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
@@ -481,7 +480,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		await flushPromises();
 		assert.strictEqual(sharedString1.getLength(), 203);
 		assert.strictEqual(sharedString2.getLength(), 203);
-	});
+	}).timeout(5000);
 
 	itExpects(
 		"attempt last summary if parent container disconnects",

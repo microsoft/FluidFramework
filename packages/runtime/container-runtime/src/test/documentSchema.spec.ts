@@ -12,7 +12,7 @@ import {
 	type IDocumentSchemaFeatures,
 } from "../summary/index.js";
 
-function boolToProp(b: boolean) {
+function boolToProp(b: boolean | undefined) {
 	return b ? true : undefined;
 }
 
@@ -33,14 +33,14 @@ describe("Runtime", () => {
 		},
 	};
 
-	const features: IDocumentSchemaFeatures = {
+	const features = {
 		explicitSchemaControl: true,
 		compressionLz4: true,
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
-		createBlobPayloadPending: false,
+		createBlobPayloadPending: undefined,
 		disallowedVersions: [],
-	};
+	} as const satisfies IDocumentSchemaFeatures;
 
 	function createController(config: unknown) {
 		return new DocumentsSchemaController(
@@ -303,7 +303,7 @@ describe("Runtime", () => {
 					compressionLz4: boolToProp(featuresModified.compressionLz4),
 					idCompressorMode: featuresModified.idCompressorMode,
 					opGroupingEnabled: boolToProp(featuresModified.opGroupingEnabled),
-					createBlobPayloadPending: boolToProp(featuresModified.createBlobPayloadPending),
+					createBlobPayloadPending: featuresModified.createBlobPayloadPending,
 					disallowedVersions: arrayToProp(featuresModified.disallowedVersions),
 				},
 			};
