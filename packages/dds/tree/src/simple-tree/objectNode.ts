@@ -92,9 +92,7 @@ export type TreeObjectNode<
 > = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
 /**
- * Type utility for determining if an implicit field schema is known to always have a default value.
- *
- * @remarks If unknown, returns `false`.
+ * Type utility for determining whether or not an implicit field schema has a default value.
  *
  * @privateRemarks
  * TODO: Account for field schemas with default value providers.
@@ -102,9 +100,9 @@ export type TreeObjectNode<
  *
  * @system @public
  */
-export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
-	FieldSchema<FieldKind.Optional | FieldKind.Identifier>,
-]
+export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
+	FieldKind.Optional | FieldKind.Identifier
+>
 	? true
 	: false;
 
