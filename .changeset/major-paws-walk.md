@@ -10,6 +10,8 @@ In many cases (such as ArrayNode and MapNode schema) much larger arrays can be p
 
 > "Type instantiation is excessively deep and possibly infinite.ts"
 
+Previously arrays of around 43 schema would start having this issue, but now arrays of hundreds work correctly.
+
 This optimization has resulted in a small change in behavior for how [input types](https://fluidframework.com/docs/api/fluid-framework/input-typealias) are computed.
 When the `AllowedTypes` array has a type that is a union of two arrays, and the two arrays start with the same subsequence of types, for example `[typeof A] | [typeof A, typeof B]`,
 previously this would allow the types from the common prefix of the arrays.
