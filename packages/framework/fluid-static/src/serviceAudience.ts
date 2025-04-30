@@ -111,17 +111,13 @@ class ServiceAudience<TMember extends IMember = IMember>
 				const userId = member.user.id;
 				// Ensure we're tracking the user
 				let user = users.get(userId);
-				let connectionDetails;
+				const connectionDetails = this.createServiceMember(member);
 				if (user === undefined) {
-					user = this.createServiceMember(member);
+					user = {...connectionDetails};
 					users.set(userId, user);
-					connectionDetails = {...user, connections: undefined}
-				}else{
-					connectionDetails = {...user, connections: undefined};
 				}
-
-				// Add this connection to their collection
-				user.connections.push({ id: clientId, mode: member.mode, userData: connectionDetails });
+                // Add this connection to their collection
+                user.connections.push({ id: clientId, mode: member.mode, userData :{...connectionDetails, connections: undefined}});
 				clientMemberMap.set(clientId, user);
 			}
 		}
