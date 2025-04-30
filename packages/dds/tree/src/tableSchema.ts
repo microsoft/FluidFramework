@@ -299,7 +299,7 @@ export namespace TableSchema {
 		const rowFields = {
 			...rowFieldsBuiltInParts,
 			...rowFieldsPropsPart,
-		} as const;
+		} as const; // satisfies Record<string, ImplicitFieldSchema>;
 
 		/**
 		 * The Row schema - this is a map of Cells where the key is the column id
