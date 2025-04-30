@@ -94,7 +94,7 @@ export namespace TableSchema {
 		} as const;
 
 		/**
-		 * {@link ColumnSchema} fields.
+		 * {@link Column} fields.
 		 *
 		 * @remarks
 		 * Extracted for re-use in returned type signature defined later in this function.
@@ -112,11 +112,16 @@ export namespace TableSchema {
 		/**
 		 * A column in a table.
 		 */
-		class ColumnSchema extends schemaFactory.object("Column", columnFields) {}
+		class Column extends schemaFactory.object("Column", columnFields) {}
+
+		type ColumnValueType = TreeNode &
+			IColumn<TPropsSchema> &
+			WithType<ScopedSchemaName<Scope, "Column">>;
 
 		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof columnFields>`,
 		// but that results in broken `.d.ts` output due to a TypeScript bug.
 		// Instead we extract and inline the typing of the "props" field here, which seems to sufficiently work around the issue.
+		// type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 		type ColumnInsertableType = InsertableObjectFromSchemaRecord<
 			typeof columnFieldsBuiltInParts
 		> &
@@ -136,22 +141,18 @@ export namespace TableSchema {
 						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
 					});
 
-		type ColumnValueType = TreeNode &
-			IColumn<TPropsSchema> &
-			WithType<ScopedSchemaName<Scope, "Column">>;
-
 		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
-		// typed correctly in terms of our insertable and value types.
+		// typed correctly in terms of our insertable type.
 		type ColumnSchemaModifiedType = Omit<
 			{
-				[Property in keyof typeof ColumnSchema]: (typeof ColumnSchema)[Property];
+				[Property in keyof typeof Column]: (typeof Column)[Property];
 			},
 			"createFromInsertable"
 		> &
 			(new (
 				props: InternalTreeNode | ColumnInsertableType,
-			) => ColumnValueType) & {
-				createFromInsertable(props: ColumnInsertableType): ColumnValueType;
+			) => Column) & {
+				createFromInsertable(props: ColumnInsertableType): Column;
 			};
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
@@ -166,7 +167,7 @@ export namespace TableSchema {
 			/* TInsertable */ object & ColumnInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof columnFields
-		> = ColumnSchema as ColumnSchemaModifiedType;
+		> = Column as ColumnSchemaModifiedType;
 
 		return ColumnSchemaType;
 	}
@@ -272,12 +273,18 @@ export namespace TableSchema {
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
 		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>;
 
-		// KLUDGE: extracted for use in inline type definitions below.
+		// Note: `rowFields` is broken into two parts to work around a TypeScript bug
+		// that results in broken `.d.ts` output.
+		// See definition of `RowInsertableType` below.
 		const rowFieldsBuiltInParts = {
 			id: schemaFactory.identifier,
-			cells: schemaFactory.map("Row.cells", cellSchema),
+			cells: schemaFactory.required(schemaFactory.map("Row.cells", cellSchema), {
+				metadata: {
+					description: "The cells of the table row, keyed by column ID.",
+				},
+			}),
 		} as const;
-		const rowFieldsPropsPartKludge = {
+		const rowFieldsPropsPart = {
 			props: propsSchema,
 		} as const;
 
@@ -291,7 +298,7 @@ export namespace TableSchema {
 		 */
 		const rowFields = {
 			...rowFieldsBuiltInParts,
-			...rowFieldsPropsPartKludge,
+			...rowFieldsPropsPart,
 		} as const;
 
 		/**
@@ -326,35 +333,55 @@ export namespace TableSchema {
 		type RowValueType = TreeNode &
 			IRow<TCellSchema, TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Row">>;
-		// type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
 
-		// KLUDGE: inline typing to avoid generated .d.ts file issues.
-		type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFieldsBuiltInParts> & {
-			readonly props?: InsertableTreeFieldFromImplicitField<TPropsSchema> | undefined;
-		} & {
-			// `props` does not have a known default; make it required.
-			readonly [Property in keyof typeof rowFieldsPropsPartKludge as FieldHasDefault<
-				(typeof rowFieldsPropsPartKludge)[Property & string]
-			> extends false
-				? Property
-				: never]: InsertableTreeFieldFromImplicitField<
-				(typeof rowFieldsPropsPartKludge)[Property & string]
-			>;
-		};
+		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof rowFields>`,
+		// but that results in broken `.d.ts` output due to a TypeScript bug.
+		// Instead we extract and inline the typing of the "props" field here, which seems to sufficiently work around the issue.
+		// type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
+		type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFieldsBuiltInParts> &
+			(FieldHasDefault<TPropsSchema> extends true
+				? {
+						/**
+						 * The column's properties.
+						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
+						 */
+						props?: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+					}
+				: {
+						/**
+						 * The column's properties.
+						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
+						 */
+						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+					});
+
+		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
+		// typed correctly in terms of our insertable type.
+		type RowSchemaModifiedType = Omit<
+			{
+				[Property in keyof typeof Row]: (typeof Row)[Property];
+			},
+			"createFromInsertable"
+		> &
+			(new (
+				props: InternalTreeNode | RowInsertableType,
+			) => Row) & {
+				createFromInsertable(props: RowInsertableType): Row;
+			};
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
 		// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
 		// This is avoided by doing this type conversion.
-		// TODO: The conversion is done via assignment instead of `as` to get stronger type safety.
-		const RowSchemaType = Row as TreeNodeSchemaClass<
+		// The conversion is done via assignment instead of `as` to get stronger type safety.
+		const RowSchemaType: TreeNodeSchemaClass<
 			/* Name */ ScopedSchemaName<Scope, "Row">,
 			/* Kind */ NodeKind.Object,
 			/* TNode */ RowValueType,
 			/* TInsertable */ object & RowInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof rowFields
-		>;
+		> = Row as RowSchemaModifiedType;
 
 		return RowSchemaType;
 	}
