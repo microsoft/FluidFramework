@@ -4,13 +4,7 @@
  */
 
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-// The semver package documents and encourages these imports for users that only need some of the semver functionality.
-// eslint-disable-next-line import/no-internal-modules
-import semverGte from "semver/functions/gte.js";
-// eslint-disable-next-line import/no-internal-modules
-import semverLte from "semver/functions/lte.js";
-// eslint-disable-next-line import/no-internal-modules
-import semverValid from "semver/functions/valid.js";
+import { compare, gte, lte, valid } from "semver-ts";
 
 import {
 	disabledCompressionConfig,
@@ -181,12 +175,12 @@ export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknow
 	for (const key of Object.keys(configMap)) {
 		const config = configMap[key as keyof T];
 		// Sort the versions in ascending order so we can short circuit the loop.
-		const versions = Object.keys(config).sort((a, b) => (semverGte(b, a) ? -1 : 1));
+		const versions = Object.keys(config).sort(compare);
 		// For each config, we iterate over the keys and check if compatibilityVersion is greater than or equal to the version.
 		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
 		// value that is compatible with the version specified as the compatibilityVersion.
 		for (const version of versions) {
-			if (semverGte(compatibilityVersion, version)) {
+			if (gte(compatibilityVersion, version)) {
 				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];
 			} else {
 				// If the compatibility mode is less than the version, we break out of the loop since we don't need to check
@@ -205,7 +199,7 @@ export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknow
 export function isValidCompatVersion(compatibilityVersion: SemanticVersion): boolean {
 	return (
 		compatibilityVersion !== undefined &&
-		semverValid(compatibilityVersion) !== null &&
-		semverLte(compatibilityVersion, pkgVersion)
+		valid(compatibilityVersion) !== null &&
+		lte(compatibilityVersion, pkgVersion)
 	);
 }
