@@ -86,7 +86,13 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
  * @alpha
  */
 export interface AnnotatedAllowedTypes {
+	/**
+	 * Annotations that apply to a set of allowed types.
+	 */
 	readonly metadata: AllowedTypesMetadata;
+	/**
+	 * All the allowed types that the annotations apply to. The types themselves may also have individual annotations.
+	 */
 	readonly types: readonly AnnotatedAllowedType[];
 }
 
@@ -104,11 +110,14 @@ export function isAnnotatedAllowedTypes(
 /**
  * Annotations that apply to a set of allowed types.
  * @remarks
- * Additional optional may be added to this as non-breaking changes, so implementations of it should be simple object literals with no unlisted members.
+ * Additional optionals may be added to this as non-breaking changes, so implementations of it should be simple object literals with no unlisted members.
  * @alpha
  */
 export interface AllowedTypesMetadata {
-custom?: unknown;
+	/**
+	 * User defined metadata
+	 */
+	custom?: unknown;
 }
 
 /**
@@ -118,7 +127,13 @@ custom?: unknown;
 export interface AnnotatedAllowedType<
 	T extends LazyItem<TreeNodeSchema> = LazyItem<TreeNodeSchema>,
 > {
+	/**
+	 * Annotations for the allowed type.
+	 */
 	readonly metadata: AllowedTypeMetadata;
+	/**
+	 * The allowed type the annotations apply to in a particular schema.
+	 */
 	readonly type: T;
 }
 

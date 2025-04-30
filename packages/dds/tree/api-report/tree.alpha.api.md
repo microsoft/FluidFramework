@@ -24,6 +24,7 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 // @alpha
 export interface AllowedTypesMetadata {
+    custom?: unknown;
 }
 
 // @alpha
@@ -31,17 +32,13 @@ export function allowUnused<T>(t?: T): void;
 
 // @alpha
 export interface AnnotatedAllowedType<T extends LazyItem<TreeNodeSchema> = LazyItem<TreeNodeSchema>> {
-    // (undocumented)
     readonly metadata: AllowedTypeMetadata;
-    // (undocumented)
     readonly type: T;
 }
 
 // @alpha
 export interface AnnotatedAllowedTypes {
-    // (undocumented)
     readonly metadata: AllowedTypesMetadata;
-    // (undocumented)
     readonly types: readonly AnnotatedAllowedType[];
 }
 
