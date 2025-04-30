@@ -128,14 +128,12 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
-// eslint-disable-next-line import/no-deprecated
-import { IDetachedBlobStorage } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
 import { validateRuntimeCompatibility } from "./loaderLayerCompatState.js";
 import {
-	serializeMemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
+	type MemoryDetachedBlobStorage,
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -240,12 +238,6 @@ export interface IContainerCreateProps {
 	 * The logger downstream consumers should construct their loggers from
 	 */
 	readonly subLogger: ITelemetryLoggerExt;
-
-	/**
-	 * Blobs storage for detached containers.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly detachedBlobStorage?: IDetachedBlobStorage;
 
 	/**
 	 * Optional property for allowing the container to use a custom
@@ -492,8 +484,7 @@ export class Container
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
-	// eslint-disable-next-line import/no-deprecated
-	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
+	private readonly detachedBlobStorage: MemoryDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
 
@@ -807,7 +798,6 @@ export class Container
 			options,
 			scope,
 			subLogger,
-			detachedBlobStorage,
 			protocolHandlerBuilder,
 		} = createProps;
 
@@ -1006,10 +996,7 @@ export class Container
 		this.detachedBlobStorage =
 			this.attachState === AttachState.Attached
 				? undefined
-				: (detachedBlobStorage ??
-					(this.mc.config.getBoolean("Fluid.Container.MemoryBlobStorageEnabled") === false
-						? undefined
-						: createMemoryDetachedBlobStorage()));
+				: createMemoryDetachedBlobStorage();
 
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,
@@ -1284,7 +1271,7 @@ export class Container
 			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
-			attachmentBlobs: serializeMemoryDetachedBlobStorage(this.detachedBlobStorage),
+			attachmentBlobs: this.detachedBlobStorage?.serialize(),
 		};
 		return JSON.stringify(detachedContainerState);
 	}
@@ -1846,7 +1833,8 @@ export class Container
 	}: IPendingDetachedContainerState): Promise<void> {
 		if (hasAttachmentBlobs) {
 			if (attachmentBlobs !== undefined) {
-				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage!, attachmentBlobs);
 			}
 			assert(
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,

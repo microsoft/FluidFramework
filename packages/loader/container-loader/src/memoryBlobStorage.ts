@@ -4,57 +4,32 @@
  */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { assert, isObject } from "@fluidframework/core-utils/internal";
-import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	ICreateBlobResponse,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 
-// eslint-disable-next-line import/no-deprecated
-import type { IDetachedBlobStorage } from "./loader.js";
+export interface MemoryDetachedBlobStorage
+	extends Pick<IDocumentStorageService, "createBlob" | "readBlob"> {
+	size: number;
+	/**
+	 * Return an array of all blob IDs present in storage
+	 */
+	getBlobIds(): string[];
 
-const MemoryDetachedBlobStorageIdentifier = Symbol();
-
-// eslint-disable-next-line import/no-deprecated
-interface MemoryDetachedBlobStorage extends IDetachedBlobStorage {
-	[MemoryDetachedBlobStorageIdentifier]: typeof MemoryDetachedBlobStorageIdentifier;
+	/**
+	 * After the container is attached, the detached blob storage is no longer needed and will be disposed.
+	 */
+	dispose?(): void;
 	initialize(attachmentBlobs: string[]): void;
 	serialize(): string | undefined;
 }
 
-function isMemoryDetachedBlobStorage(
-	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage | undefined,
-): detachedStorage is MemoryDetachedBlobStorage {
-	return (
-		isObject(detachedStorage) &&
-		MemoryDetachedBlobStorageIdentifier in detachedStorage &&
-		detachedStorage[MemoryDetachedBlobStorageIdentifier] ===
-			MemoryDetachedBlobStorageIdentifier
-	);
-}
-
-export function serializeMemoryDetachedBlobStorage(
-	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage | undefined,
-): string | undefined {
-	if (
-		detachedStorage !== undefined &&
-		detachedStorage.size > 0 &&
-		isMemoryDetachedBlobStorage(detachedStorage)
-	) {
-		return detachedStorage.serialize();
-	}
-}
-
 export function tryInitializeMemoryDetachedBlobStorage(
-	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage | undefined,
+	detachedStorage: MemoryDetachedBlobStorage,
 	attachmentBlobs: string,
 ): void {
-	if (!isMemoryDetachedBlobStorage(detachedStorage)) {
-		throw new Error(
-			"DetachedBlobStorage was not provided to the loader during serialize so cannot be provided during rehydrate.",
-		);
-	}
-
 	assert(detachedStorage.size === 0, 0x99e /* Blob storage already initialized */);
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const maybeAttachmentBlobs = JSON.parse(attachmentBlobs);
@@ -65,10 +40,9 @@ export function tryInitializeMemoryDetachedBlobStorage(
 }
 
 // eslint-disable-next-line import/no-deprecated
-export function createMemoryDetachedBlobStorage(): IDetachedBlobStorage {
+export function createMemoryDetachedBlobStorage(): MemoryDetachedBlobStorage {
 	const blobs: ArrayBufferLike[] = [];
 	const storage: MemoryDetachedBlobStorage = {
-		[MemoryDetachedBlobStorageIdentifier]: MemoryDetachedBlobStorageIdentifier,
 		createBlob: async (file: ArrayBufferLike): Promise<ICreateBlobResponse> => ({
 			id: `${blobs.push(file) - 1}`,
 		}),

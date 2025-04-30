@@ -39,7 +39,6 @@ import { wrapObjectAndOverride } from "../mocking.js";
 import { TestPersistedCache } from "../testPersistedCache.js";
 
 import {
-	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 } from "./mockDetachedBlobStorage.js";
@@ -773,7 +772,6 @@ function serializationTests({
 			it("rehydrating without detached blob storage results in error", async function () {
 				const loader = provider.makeTestLoader({
 					...testContainerConfig,
-					loaderProps: { detachedBlobStorage: new MockDetachedBlobStorage() },
 				});
 				const serializeContainer = await loader.createDetachedContainer(
 					provider.defaultCodeDetails,
