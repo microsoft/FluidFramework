@@ -11961,9 +11961,9 @@ importers:
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
-      semver:
-        specifier: ^7.7.1
-        version: 7.7.1
+      semver-ts:
+        specifier: ^1.0.3
+        version: 1.0.3
       uuid:
         specifier: ^9.0.0
         version: 9.0.1
@@ -12019,9 +12019,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/semver':
-        specifier: ^7.7.0
-        version: 7.7.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -25652,6 +25649,10 @@ packages:
   semver-try-require@6.2.3:
     resolution: {integrity: sha512-6q1N/Vr/4/G0EcQ1k4svN5kwfh3MJs4Gfl+zBAVcKn+AeIjKLwTXQ143Y6YHu6xEeN5gSCbCD1/5+NwCipLY5A==}
     engines: {node: ^14||^16||>=18}
+
+  semver-ts@1.0.3:
+    resolution: {integrity: sha512-RMf2+Nbd0Hiq5u8LADzqnSRb09Vu1UKOLFw9P9nm8XY3JPeFjv3DLVYBZjPWFHUxBVz7ktIVGR3xFjYilHlXng==}
+    engines: {node: '>=0.10.0'}
 
   semver-utils@1.1.4:
     resolution: {integrity: sha512-EjnoLE5OGmDAVV/8YDoN5KiajNadjzIp9BAHOhYeQHt7j0UWxjmgsx4YD48wp4Ue1Qogq38F1GNUJNqF1kKKxA==}
@@ -41589,6 +41590,8 @@ snapshots:
   semver-try-require@6.2.3:
     dependencies:
       semver: 7.7.1
+
+  semver-ts@1.0.3: {}
 
   semver-utils@1.1.4: {}
 
