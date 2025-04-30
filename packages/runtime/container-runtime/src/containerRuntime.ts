@@ -1096,7 +1096,18 @@ export class ContainerRuntime
 	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
-	private readonly _getConnected: () => boolean;
+
+	/**
+	 * Gets whether the Container is truly connected to the service.
+	 *
+	 * @remarks
+	 * This returns the raw connected state from the Container's connection,
+	 * irrespective of the readonly state. This differs from the public `connected`
+	 * getter which returns false if the Container is readonly, even if actually connected.
+	 *
+	 * @returns true if connected to server, false otherwise
+	 */
+	private readonly _getTrueConnectedState: () => boolean;
 	public get clientId(): string | undefined {
 		return this._getClientId();
 	}
@@ -1440,7 +1451,7 @@ export class ContainerRuntime
 		} = context;
 
 		// eslint-disable-next-line unicorn/consistent-destructuring
-		this._getConnected = () => context.connected;
+		this._getTrueConnectedState = () => context.connected;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
@@ -2727,7 +2738,7 @@ export class ContainerRuntime
 		this.channelCollection.setConnectionState(canSendOps, clientId);
 		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
-		raiseConnectedEvent(this.mc.logger, this, this._getConnected(), clientId);
+		raiseConnectedEvent(this.mc.logger, this, this._getTrueConnectedState(), clientId);
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
