@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-private/test-version-utils";
-export const pkgVersion = "2.33.1";
+export const pkgVersion = "2.33.2";

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/synthesize",
-	"version": "2.33.1",
+	"version": "2.33.2",
 	"description": "A library for synthesizing scope objects.",
 	"homepage": "https://fluidframework.com",
 	"repository": {

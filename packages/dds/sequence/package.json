@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.33.1",
+	"version": "2.33.2",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {

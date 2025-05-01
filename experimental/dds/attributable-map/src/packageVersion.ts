@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/attributable-map";
-export const pkgVersion = "2.33.1";
+export const pkgVersion = "2.33.2";
