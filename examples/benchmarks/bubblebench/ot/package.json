@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bubblebench-ot",
-	"version": "2.33.1",
+	"version": "2.33.2",
 	"private": true,
 	"description": "Bubblemark inspired DDS benchmark",
 	"homepage": "https://fluidframework.com",
