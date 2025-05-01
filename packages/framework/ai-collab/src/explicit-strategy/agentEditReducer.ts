@@ -270,12 +270,9 @@ export function applyAgentEdit(
 						0xa76 /* the modification must be an array node */,
 					);
 					field.removeRange(0);
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					(node as any)[treeEdit.field] = constructedModification;
-				} else {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					(node as any)[treeEdit.field] = constructedModification;
 				}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				(node as any)[treeEdit.field] = constructedModification;
 			}
 			// If the fieldSchema is of type FieldSchema, we can check its allowed types and set the field.
 			else if (fieldSchema instanceof FieldSchema) {

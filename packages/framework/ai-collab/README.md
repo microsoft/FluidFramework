@@ -246,7 +246,7 @@ Debug Events in ai-collab have two different types of trace id's:
 
 ## Edit Differences
 
-ai-collab provides an array of `Diff` objects with its response. Each of these objects allows developers to identify tree nodes that have been modified as a result of AI collaboration and visualize them according to their needs.
+`ai-collab` provides an array of `Diff` objects with its response. Each of these objects allows developers to identify tree nodes that have been modified as a result of AI collaboration and visualize them according to their needs.
 
 Every `Diff` will include one or more `NodePaths` representing the nodes affected by a single edit created by the ai agent. A `NodePath` is an array whose items represent segment paths, beginning from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call (at the end of the array), along with an explanation directly from the AI agent as to why it performed an edit.
 
@@ -295,13 +295,13 @@ const response = aiCollab({
 const Diffs: diff[] = response.Diffs
 ```
 
-Each Diff includes one or more NodePath objects. A `NodePath` is an array of objects representing the path from the root node (provided to ai-collab) to the specific node being edited. The array starts with the target node and ends with the root node.
+Each `Diff` will contain one or more `NodePath`s. Each `NodePath` is an array of objects that detail the path from the root node passed to ai-collab, down to the node targeted for editing. The first index in the `NodePath` points to the target node and the last index is always the root node.
 
 Let's look at an example of the Insert Diff.
 
 ### Example Insert Diff
 
-The following `InsertDiff` is an example of a `Diff` that would result from an AI agent inserting an object into index 1 of `TestAppRootObject.rootVectors`
+The following `InsertDiff` is an example of a `Diff` that would result from an AI agent inserting an object into index 1 of `TestAppRootObject.rootVectors`.
 
 ```json
 type: "insert",
@@ -334,7 +334,7 @@ The simplest way is to use the `shortId`, where you can use the following code t
 
 > [!NOTE]
 > The `shortId` field will only exist for objects that have a field defined as the `SchemaFactory.identifier` field.
-Let's take a look at another UI example of using an array of Diffs to render changes.
+Let's take a look at another UI example of using an array of `Diff`s to render changes
 
 import { Tree } from "@fluidframework/tree"
 
