@@ -209,8 +209,7 @@ export interface TreeAlpha {
 
 /**
  * Extensions to {@link Tree} and {@link TreeBeta} which are not yet stable.
- * @remarks
- * See {@link (TreeAlpha:interface)}.
+ * @see {@link (TreeAlpha:interface)}.
  * @sealed @alpha
  */
 export const TreeAlpha: TreeAlpha = {
