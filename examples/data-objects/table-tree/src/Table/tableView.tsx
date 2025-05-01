@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import {
 	Table,
 	TableBody,
@@ -7,15 +12,19 @@ import {
 	TableRow,
 	Input,
 	Button,
+	Checkbox,
+	Dropdown,
+	Option,
 } from "@fluentui/react-components";
 import { Add24Regular, Delete24Regular, Checkmark24Regular } from "@fluentui/react-icons";
 import React, { useState, DragEvent } from "react";
 
 import { useTree } from "../Utils/index.js";
 
-import { Column, Row } from "./tableSchema.js";
+import { Column, Row, DateTime } from "./tableSchema.js";
 
 import { type TableDataObject } from "./index.js";
+
 // eslint-disable-next-line import/no-unassigned-import
 import "./tableView.css";
 
@@ -64,21 +73,58 @@ const TableRowView: React.FC<TableRowViewProps> = ({
 		</TableCell>
 		{columns.map((col) => {
 			const cell = row.getCell(col);
+			const hint = col.props.hint;
+
 			return (
 				<TableCell key={col.id} className="custom-cell">
-					<Input
-						type="text"
-						appearance="underline"
-						className="custom-input"
-						value={cell?.value ?? ""}
-						onChange={(e) => {
-							if (cell === undefined) {
-								row.setCell(col, { value: e.target.value });
-							} else {
-								cell.value = e.target.value;
+					{hint === "checkbox" ? (
+						<Checkbox
+							checked={cell?.value === "true"}
+							onChange={(_, data) => {
+								const newValue = data.checked?.toString() ?? "false";
+								if (cell === undefined) {
+									row.setCell(col, { value: newValue });
+								} else {
+									cell.value = newValue;
+								}
+							}}
+						/>
+					) : hint === "date" ? (
+						<Input
+							type="date"
+							className="custom-input"
+							value={
+								cell?.value instanceof DateTime
+									? cell.value.value.toISOString().split("T")[0]
+									: ""
 							}
-						}}
-					/>
+							onChange={(e) => {
+								const date = new Date(e.target.value);
+								if (cell === undefined) {
+									const dateObj = new DateTime({ raw: 0 });
+									dateObj.value = date;
+									row.setCell(col, { value: dateObj });
+								} else if (cell.value instanceof DateTime) {
+									cell.value.value = date;
+								}
+							}}
+						/>
+					) : (
+						<Input
+							type="text"
+							appearance="underline"
+							className="custom-input"
+							value={typeof cell?.value === "string" ? cell.value : ""}
+							onChange={(e) => {
+								const newVal = e.target.value;
+								if (cell === undefined) {
+									row.setCell(col, { value: newVal });
+								} else {
+									cell.value = newVal;
+								}
+							}}
+						/>
+					)}
 				</TableCell>
 			);
 		})}
@@ -95,6 +141,8 @@ interface TableHeaderViewProps {
 	setShowAddColumnInput: (value: boolean) => void;
 	newColumnId: string;
 	setNewColumnId: (id: string) => void;
+	newColumnHint: string;
+	setNewColumnHint: (hint: string) => void;
 	handleAddColumn: () => void;
 }
 
@@ -108,6 +156,8 @@ const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	setShowAddColumnInput,
 	newColumnId,
 	setNewColumnId,
+	newColumnHint,
+	setNewColumnHint,
 	handleAddColumn,
 }) => (
 	<TableHeader>
@@ -122,6 +172,16 @@ const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 							onChange={(e) => setNewColumnId(e.target.value)}
 							size="small"
 						/>
+						<Dropdown
+							placeholder="Select hint"
+							value={newColumnHint}
+							onOptionSelect={(_, data) => setNewColumnHint(data.optionValue ?? "")}
+							size="small"
+						>
+							<Option value="text">Text</Option>
+							<Option value="checkbox">Checkbox</Option>
+							<Option value="date">Date</Option>
+						</Dropdown>
 						<Button
 							icon={<Checkmark24Regular />}
 							appearance="subtle"
@@ -132,7 +192,6 @@ const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 				</TableHeaderCell>
 			</TableRow>
 		)}
-
 		<TableRow className="custom-header-row">
 			<TableHeaderCell className="custom-header-cell">
 				<Button
@@ -177,6 +236,7 @@ const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 	const [newRowId, setNewRowId] = useState("");
 	const [newColumnId, setNewColumnId] = useState("");
+	const [newColumnHint, setNewColumnHint] = useState("");
 	const [showAddRowInput, setShowAddRowInput] = useState(false);
 	const [showAddColumnInput, setShowAddColumnInput] = useState(false);
 	const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
@@ -214,9 +274,15 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 		if (newColumnId.trim() !== "") {
 			tableModel.treeView.root.insertColumn({
 				index: 0,
-				column: { props: { label: newColumnId } },
+				column: {
+					props: {
+						label: newColumnId,
+						hint: newColumnHint || undefined,
+					},
+				},
 			});
 			setNewColumnId("");
+			setNewColumnHint("");
 			setShowAddColumnInput(false);
 		}
 	};
@@ -274,6 +340,8 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 						setShowAddColumnInput={setShowAddColumnInput}
 						newColumnId={newColumnId}
 						setNewColumnId={setNewColumnId}
+						newColumnHint={newColumnHint}
+						setNewColumnHint={setNewColumnHint}
 						handleAddColumn={handleAddColumn}
 					/>
 					<TableBody>

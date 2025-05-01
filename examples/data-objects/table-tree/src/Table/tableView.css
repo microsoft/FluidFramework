@@ -64,3 +64,9 @@
 .add-row-input {
 	flex: 1;
 }
+
+.fui-Listbox {
+	background-color: white !important;
+	border-radius: 4px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
