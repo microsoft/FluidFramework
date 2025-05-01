@@ -137,14 +137,14 @@ export class AsyncLocalStorageTimeoutContext implements ITimeoutContext {
 		if (!timeoutInfo) {
 			return undefined;
 		}
-		const timeElapsed = Date.now() - timeoutInfo.startTime;
-		const timeRemaining = timeoutInfo.maxDurationMs - timeElapsed;
+		const timeElapsedMs = Date.now() - timeoutInfo.startTime;
+		const timeRemainingMs = timeoutInfo.maxDurationMs - timeElapsedMs;
 		Lumberjack.debug("[TimeoutContext]: Time remaining.", {
-			timeRemaining,
+			timeRemainingMs,
 			startTime: timeoutInfo.startTime,
 			maxDurationMs: timeoutInfo.maxDurationMs,
-			timeElapsed,
+			timeElapsedMs,
 		});
-		return timeRemaining;
+		return timeRemainingMs;
 	}
 }
