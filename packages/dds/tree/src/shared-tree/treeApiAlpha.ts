@@ -55,6 +55,8 @@ import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js"
 
 /**
  * Extensions to {@link Tree} and {@link TreeBeta} which are not yet stable.
+ * @remarks
+ * Use via the {@link (TreeAlpha:variable)} singleton.
  * @sealed @alpha
  */
 export interface TreeAlpha {
@@ -206,6 +208,9 @@ export interface TreeAlpha {
 }
 
 /**
+ * Extensions to {@link Tree} and {@link TreeBeta} which are not yet stable.
+ * @remarks
+ * See {@link (TreeAlpha:interface)}.
  * @sealed @alpha
  */
 export const TreeAlpha = {
