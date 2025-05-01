@@ -173,7 +173,7 @@ extends:
         arrow:
           # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
           serviceConnection: ff-internal-arrow-sc
-          # This will make sure that the artifacts are published to the internal Azure DevOps organization if they are release or pre-release
+          # This will make sure that the artifacts are published to the Azure DevOps organization if they are release or pre-release
           isShipped: ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}true${{ else }}false
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
