@@ -12,7 +12,6 @@ import {
 	type IFluidDataStoreContext,
 	type IFluidDataStoreFactory,
 	type IFluidDataStoreRegistry,
-	type IFluidParentContext,
 	type IGarbageCollectionData,
 	type ISummarizerNodeWithGC,
 	type SummarizeInternalFn,
@@ -23,6 +22,7 @@ import {
 	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import type { IFluidParentContextPrivate } from "../channelCollection.js";
 import {
 	LocalFluidDataStoreContext,
 	type ILocalFluidDataStoreContextProps,
@@ -34,9 +34,9 @@ import {
 
 export function createParentContext(
 	logger: ITelemetryBaseLogger = createChildLogger(),
-	clientDetails = {} as unknown as IFluidParentContext["clientDetails"],
+	clientDetails = {} as unknown as IFluidParentContextPrivate["clientDetails"],
 	compatDetails?: ILayerCompatDetails,
-): IFluidParentContext {
+): IFluidParentContextPrivate {
 	const factory: IFluidDataStoreFactory = {
 		type: "store-type",
 		get IFluidDataStoreFactory() {
@@ -62,7 +62,7 @@ export function createParentContext(
 		clientDetails,
 		submitMessage: () => {},
 		deltaManager: new MockDeltaManager(),
-	} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
+	} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 }
 
 export function createSummarizerNodeAndGetCreateFn(dataStoreId: string): {
