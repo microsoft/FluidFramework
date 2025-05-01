@@ -25,6 +25,7 @@ import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
+	type IFluidDataStorePolicies,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
@@ -156,18 +157,6 @@ export interface ITestDataObject extends IFluidLoadable {
 }
 
 function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntimeApi>) {
-	class TestDataObject extends api.DataObject implements ITestDataObject {
-		public get _context() {
-			return this.context;
-		}
-		public get _runtime() {
-			return this.runtime;
-		}
-		public get _root() {
-			return this.root;
-		}
-	}
-
 	const registryMapping = {};
 	for (const value of Object.values(api.dds)) {
 		registryMapping[value.getFactory().type] = value.getFactory();
@@ -191,6 +180,19 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 	}
 
 	return function (containerOptions?: ITestContainerConfig): IFluidDataStoreFactory {
+		class TestDataObject extends api.DataObject implements ITestDataObject {
+			static readonly policies?: Partial<IFluidDataStorePolicies> = containerOptions?.policies;
+			get _context() {
+				return this.context;
+			}
+			public get _runtime() {
+				return this.runtime;
+			}
+			public get _root() {
+				return this.root;
+			}
+		}
+
 		const registry = convertRegistry(containerOptions?.registry);
 		const fluidDataObjectType = containerOptions?.fluidDataObjectType;
 		switch (fluidDataObjectType) {

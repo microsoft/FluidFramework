@@ -30,6 +30,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { isOdspResolvedUrl } from "@fluidframework/odsp-driver/internal";
+import type { IFluidDataStorePolicies } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITelemetryGenericEventExt,
 	createChildLogger,
@@ -265,6 +266,11 @@ export interface ITestContainerConfig {
 
 	/** Loader options for the loader used to create containers */
 	loaderProps?: Partial<ILoaderProps>;
+
+	/**
+	 * Override the policies on the data store runtime
+	 */
+	policies?: Partial<IFluidDataStorePolicies>;
 }
 
 /**
