@@ -3,237 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHeader,
-	TableHeaderCell,
-	TableRow,
-	Input,
-	Button,
-	Checkbox,
-	Dropdown,
-	Option,
-} from "@fluentui/react-components";
-import { Add24Regular, Delete24Regular, Checkmark24Regular } from "@fluentui/react-icons";
+import { Table, TableBody, Input, Button } from "@fluentui/react-components";
+import { Add24Regular, Checkmark24Regular } from "@fluentui/react-icons";
 import React, { useState, DragEvent } from "react";
 
 import { useTree } from "../Utils/index.js";
 
-import { Column, Row, DateTime } from "./tableSchema.js";
+import { TableHeaderView } from "./tableHeaderView.js";
+import { TableRowView } from "./tableRowView.js";
 
-import { type TableDataObject } from "./index.js";
+import { TableDataObject } from "./index.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./tableView.css";
 
-export interface TableProps {
-	readonly tableModel: TableDataObject;
-}
-
-interface TableRowViewProps {
-	row: Row;
-	columns: Column[];
-	index: number;
-	onRowDragStart: (index: number) => void;
-	onRowDragOver: (event: DragEvent<HTMLTableRowElement>) => void;
-	onRowDrop: (index: number) => void;
-	onRemoveRow: (index: number) => void;
-}
-
-const TableRowView: React.FC<TableRowViewProps> = ({
-	row,
-	columns,
-	index,
-	onRowDragStart,
-	onRowDragOver,
-	onRowDrop,
-	onRemoveRow,
-}) => (
-	<TableRow
-		key={row.id}
-		draggable
-		onDragStart={() => onRowDragStart(index)}
-		onDragOver={onRowDragOver}
-		onDrop={() => onRowDrop(index)}
-		className={`custom-table-row ${index % 2 === 0 ? "even" : "odd"}`}
-	>
-		<TableCell className="custom-cell id-cell">
-			<span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-				<Button
-					appearance="subtle"
-					size="small"
-					onClick={() => onRemoveRow(index)}
-					icon={<Delete24Regular />}
-					style={{ padding: 0, minWidth: "auto" }}
-				/>
-				{row.id}
-			</span>
-		</TableCell>
-		{columns.map((col) => {
-			const cell = row.getCell(col);
-			const hint = col.props.hint;
-
-			return (
-				<TableCell key={col.id} className="custom-cell">
-					{hint === "checkbox" ? (
-						<Checkbox
-							checked={cell?.value === "true"}
-							onChange={(_, data) => {
-								const newValue = data.checked?.toString() ?? "false";
-								if (cell === undefined) {
-									row.setCell(col, { value: newValue });
-								} else {
-									cell.value = newValue;
-								}
-							}}
-						/>
-					) : hint === "date" ? (
-						<Input
-							type="date"
-							className="custom-input"
-							value={
-								cell?.value instanceof DateTime
-									? cell.value.value.toISOString().split("T")[0]
-									: ""
-							}
-							onChange={(e) => {
-								const date = new Date(e.target.value);
-								if (cell === undefined) {
-									const dateObj = new DateTime({ raw: 0 });
-									dateObj.value = date;
-									row.setCell(col, { value: dateObj });
-								} else if (cell.value instanceof DateTime) {
-									cell.value.value = date;
-								}
-							}}
-						/>
-					) : (
-						<Input
-							type="text"
-							appearance="underline"
-							className="custom-input"
-							value={typeof cell?.value === "string" ? cell.value : ""}
-							onChange={(e) => {
-								const newVal = e.target.value;
-								if (cell === undefined) {
-									row.setCell(col, { value: newVal });
-								} else {
-									cell.value = newVal;
-								}
-							}}
-						/>
-					)}
-				</TableCell>
-			);
-		})}
-	</TableRow>
-);
-
-interface TableHeaderViewProps {
-	columns: Column[];
-	onColumnDragStart: (index: number) => void;
-	onColumnDragOver: (event: DragEvent<HTMLTableHeaderCellElement>) => void;
-	onColumnDrop: (index: number) => void;
-	onRemoveColumn: (index: number) => void;
-	showAddColumnInput: boolean;
-	setShowAddColumnInput: (value: boolean) => void;
-	newColumnId: string;
-	setNewColumnId: (id: string) => void;
-	newColumnHint: string;
-	setNewColumnHint: (hint: string) => void;
-	handleAddColumn: () => void;
-}
-
-const TableHeaderView: React.FC<TableHeaderViewProps> = ({
-	columns,
-	onColumnDragStart,
-	onColumnDragOver,
-	onColumnDrop,
-	onRemoveColumn,
-	showAddColumnInput,
-	setShowAddColumnInput,
-	newColumnId,
-	setNewColumnId,
-	newColumnHint,
-	setNewColumnHint,
-	handleAddColumn,
-}) => (
-	<TableHeader>
-		{showAddColumnInput && (
-			<TableRow className="custom-header-row">
-				<TableHeaderCell colSpan={columns.length + 1}>
-					<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-						<Input
-							type="text"
-							placeholder="Column Label"
-							value={newColumnId}
-							onChange={(e) => setNewColumnId(e.target.value)}
-							size="small"
-						/>
-						<Dropdown
-							placeholder="Select hint"
-							value={newColumnHint}
-							onOptionSelect={(_, data) => setNewColumnHint(data.optionValue ?? "")}
-							size="small"
-						>
-							<Option value="text">Text</Option>
-							<Option value="checkbox">Checkbox</Option>
-							<Option value="date">Date</Option>
-						</Dropdown>
-						<Button
-							icon={<Checkmark24Regular />}
-							appearance="subtle"
-							size="small"
-							onClick={handleAddColumn}
-						/>
-					</div>
-				</TableHeaderCell>
-			</TableRow>
-		)}
-		<TableRow className="custom-header-row">
-			<TableHeaderCell className="custom-header-cell">
-				<Button
-					icon={<Add24Regular />}
-					appearance="subtle"
-					size="small"
-					onClick={() => setShowAddColumnInput(true)}
-				/>
-			</TableHeaderCell>
-			{columns.map((col, index) => (
-				<TableHeaderCell
-					key={col.id}
-					className="custom-header-cell"
-					draggable
-					onDragStart={() => onColumnDragStart(index)}
-					onDragOver={onColumnDragOver}
-					onDrop={() => onColumnDrop(index)}
-				>
-					<span
-						style={{
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "space-between",
-							gap: "4px",
-						}}
-					>
-						{col.props.label}
-						<Button
-							appearance="subtle"
-							size="small"
-							onClick={() => onRemoveColumn(index)}
-							icon={<Delete24Regular />}
-							style={{ padding: 0, minWidth: "auto" }}
-						/>
-					</span>
-				</TableHeaderCell>
-			))}
-		</TableRow>
-	</TableHeader>
-);
-
-export const TableView: React.FC<TableProps> = ({ tableModel }) => {
+export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableModel }) => {
 	const [newRowId, setNewRowId] = useState("");
 	const [newColumnId, setNewColumnId] = useState("");
 	const [newColumnHint, setNewColumnHint] = useState("");
@@ -251,13 +35,7 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 		if (newRowId.trim() !== "") {
 			tableModel.treeView.root.insertRows({
 				index: rows.length,
-				rows: [
-					{
-						id: newRowId.trim(),
-						cells: {},
-						props: {},
-					},
-				],
+				rows: [{ id: newRowId.trim(), cells: {}, props: {} }],
 			});
 			setNewRowId("");
 			setShowAddRowInput(false);
@@ -265,7 +43,7 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 	};
 
 	const handleRemoveRow = (index: number) => {
-		if (rows[index] !== undefined) {
+		if (index >= 0 && index < rows.length) {
 			tableModel.treeView.root.rows.removeAt(index);
 		}
 	};
@@ -288,7 +66,7 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 	};
 
 	const handleRemoveColumn = (index: number) => {
-		if (columns[index] !== undefined) {
+		if (index >= 0 && index < columns.length) {
 			tableModel.treeView.root.columns.removeAt(index);
 		}
 	};

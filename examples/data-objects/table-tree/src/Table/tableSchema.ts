@@ -64,12 +64,12 @@ export class Vote extends schemaFactory.object("Vote", {
 	}
 
 	get numberOfVotes(): number {
-		return this.votes.size as number;
+		return this.votes.size;
 	}
 
 	// TODO: not sure if userId is neccessary for this example app
 	hasVoted(userId: string): boolean {
-		return this.votes.has(userId) as boolean;
+		return this.votes.has(userId);
 	}
 }
 
