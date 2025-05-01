@@ -141,11 +141,9 @@ export type FactoryContentObject = {
 };
 
 // @public @system
-type FieldHasDefault<T extends ImplicitFieldSchema> = [
-T
-] extends [ImplicitAllowedTypes] ? false : [
-T
-] extends [FieldSchema<FieldKind.Identifier | FieldKind.Optional>] ? true : false;
+type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
+FieldSchema<FieldKind.Identifier | FieldKind.Optional>
+] ? true : false;
 
 // @public
 export enum FieldKind {

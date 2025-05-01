@@ -102,15 +102,11 @@ export type TreeObjectNode<
  *
  * @system @public
  */
-export type FieldHasDefault<T extends ImplicitFieldSchema> =
-	// If the value is a node, then it is implicitly required, and therefore does not have a default.
-	[T] extends [ImplicitAllowedTypes]
-		? false
-		: // If the value is a field, then it (for now) has a default if and only if it is an identifier
-			// or an optional field.
-			[T] extends [FieldSchema<FieldKind.Identifier | FieldKind.Optional>]
-			? true
-			: false;
+export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
+	FieldSchema<FieldKind.Identifier | FieldKind.Optional>,
+]
+	? true
+	: false;
 
 /**
  * Helper used to produce types for:
