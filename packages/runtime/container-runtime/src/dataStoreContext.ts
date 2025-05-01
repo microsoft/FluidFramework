@@ -62,6 +62,7 @@ import {
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
 	type IFluidDataStoreFactory,
+	type IFluidParentContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -238,7 +239,7 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContextInternal, IFluidParentContextPrivate, IDisposable
+	implements IFluidDataStoreContextInternal, IFluidParentContext, IDisposable
 {
 	public get packagePath(): readonly string[] {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
@@ -681,6 +682,12 @@ export abstract class FluidDataStoreContext
 		this._contextDeltaManagerProxy.emitReadonly();
 	}
 
+	/**
+	 * Updates the readonly state of the data store based on the staging mode.
+	 *
+	 * @param staging - A boolean indicating whether the container is in staging mode.
+	 * If true, the data store is set to readonly unless explicitly allowed by its policies.
+	 */
 	public notifyStagingMode(staging: boolean): void {
 		if (this.channel?.policies?.readonlyInStagingMode !== false) {
 			this.forceReadonly = staging;

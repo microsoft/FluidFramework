@@ -1154,6 +1154,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
+	/**
+	 * Notifies all data store contexts about the current staging mode state.
+	 *
+	 * @param staging - A boolean indicating whether the container is in staging mode.
+	 */
 	public notifyStagingMode(staging: boolean): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {

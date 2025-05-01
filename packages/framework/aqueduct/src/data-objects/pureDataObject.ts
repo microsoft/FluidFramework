@@ -27,6 +27,10 @@ import type { AsyncFluidObjectProvider } from "@fluidframework/synthesize/intern
 import type { DataObjectTypes, IDataObjectProps } from "./types.js";
 
 /**
+ * Constructor type for a DataObject.
+ *
+ * @typeParam TObj - The type of the DataObject being constructed.
+ * @typeParam I - The types used to strongly type the DataObject.
  * @legacy
  * @alpha
  */
@@ -34,7 +38,16 @@ export interface DataObjectConstructor<
 	TObj extends PureDataObject,
 	I extends DataObjectTypes,
 > {
+	/**
+	 * Optional policies that can be applied to the DataObject.
+	 */
 	readonly policies?: Partial<IFluidDataStorePolicies>;
+
+	/**
+	 * Constructor function for creating a new instance of the DataObject.
+	 *
+	 * @param props - The properties required to initialize the DataObject.
+	 */
 	new (props: IDataObjectProps<I>): TObj;
 }
 
@@ -54,6 +67,10 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
 {
+	/**
+	 * Optional policies that can be applied to the PureDataObject.
+	 * These policies define specific behaviors or constraints for the data object.
+	 */
 	public static readonly policies?: Partial<IFluidDataStorePolicies>;
 
 	/**

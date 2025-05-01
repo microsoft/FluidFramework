@@ -324,15 +324,19 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
 	readonly inStagingMode?: boolean;
 }
 /**
- * These polices can be set by the author of the data store via its data store runtime to influence behaviors.
+ * These policies can be set by the author of the data store via its data store runtime to influence behaviors.
  *
- * @legacy
- * @alpha
+ * @remarks
+ * Policies allow data store authors to define specific behaviors or constraints for their data stores.
+ * These settings can impact how the data store interacts with the runtime and other components.
  */
 export interface IFluidDataStorePolicies {
 	/**
-	 * When set to true, data stores will be set to readonly while in staging mode. This can be used by data stores
-	 * which do not support staging mode for reasons like consensus dds usage.
+	 * When set to true, data stores will be set to readonly while in staging mode.
+	 *
+	 * @remarks
+	 * This policy is useful for data stores that do not support staging mode, such as those using consensus DDS.
+	 * It ensures that the data store remains readonly during staging mode to prevent unsupported operations.
 	 */
 	readonly readonlyInStagingMode: boolean;
 }
@@ -346,6 +350,10 @@ export interface IFluidDataStorePolicies {
  * @alpha
  */
 export interface IFluidDataStoreChannel extends IDisposable {
+	/**
+	 * Optional policies that can be applied to the data store channel.
+	 * These policies influence the behavior of the data store, such as its readonly state in specific modes.
+	 */
 	readonly policies?: IFluidDataStorePolicies;
 
 	/**
