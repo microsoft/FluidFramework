@@ -7,6 +7,7 @@ import type * as v8 from "node:v8";
 
 import { assert } from "chai";
 import { Test } from "mocha";
+import chalk from "picocolors";
 
 import {
 	isInPerformanceTestingMode,
@@ -133,7 +134,9 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 
 	/**
 	 * The allowed deviation from the `baselineMemoryUsage`, measured in bytes.
-	 * Has no effect if `baselineMemoryUsage` is not specified.
+	 * @remarks
+	 * Has no effect if `baselineMemoryUsage` is not specified. If `ENABLE_MEM_REGRESSION=1` in the environment, a test whose memory usage falls outside `baselineMemoryUsage +/- allowedDeviationBytes` will be marked as failed.
+	 * Otherwise a warning is printed to the console.
 	 * */
 	readonly allowedDeviationBytes?: number;
 }
@@ -344,43 +347,6 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						heapUsedStats.marginOfErrorPercent > args.maxRelativeMarginOfError
 					);
 
-					if (baselineMemoryUsage >= 0 && allowedDeviationBytes >= 0) {
-						// Compare the average heap used to the baseline memory usage
-						const avgHeapUsed = heapUsedStats.arithmeticMean;
-						const lowerBound = baselineMemoryUsage - args.allowedDeviationBytes;
-						const upperBound = baselineMemoryUsage + args.allowedDeviationBytes;
-						// Throw errors on regressions/improvements if `ENABLE_MEM_REGRESSION` is set and a warning otherwise.
-						// This allows us to run the tests in CI without failing the build, but still get a warning.
-						if (avgHeapUsed > upperBound) {
-							const message = `Memory Regression detected for test '${
-								testObject.title
-							}': Used '${avgHeapUsed.toPrecision(6)}' bytes, with baseline'${
-								args.baselineMemoryUsage
-							}' and tolerance of '${allowedDeviationBytes} bytes.\n`;
-							if (ENABLE_MEM_REGRESSION) {
-								process.stderr.write(message);
-								// eslint-disable-next-line unicorn/no-process-exit
-								process.exit(1);
-							} else {
-								process.stdout.write(message);
-							}
-						}
-						if (avgHeapUsed < lowerBound) {
-							const message = `Possible memory improvement detected for test '${
-								testObject.title
-							}'. Used '${avgHeapUsed.toPrecision(6)}' bytes with baseline '${
-								args.baselineMemoryUsage
-							} and tolerance of '${allowedDeviationBytes} bytes. Consider updating the baseline.\n`;
-							if (ENABLE_MEM_REGRESSION) {
-								process.stderr.write(message);
-								// eslint-disable-next-line unicorn/no-process-exit
-								process.exit(1);
-							} else {
-								process.stdout.write(message);
-							}
-						}
-					}
-
 					benchmarkStats.customData["Heap Used Avg"] = {
 						rawValue: heapUsedStats.arithmeticMean,
 						formattedValue: prettyNumber(heapUsedStats.arithmeticMean, 2),
@@ -405,6 +371,41 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						rawValue: runs,
 						formattedValue: prettyNumber(runs, 0),
 					};
+
+					if (baselineMemoryUsage >= 0 && allowedDeviationBytes >= 0) {
+						// Compare the average heap used to the baseline memory usage
+						const avgHeapUsed = heapUsedStats.arithmeticMean;
+						const lowerBound = baselineMemoryUsage - args.allowedDeviationBytes;
+						const upperBound = baselineMemoryUsage + args.allowedDeviationBytes;
+						// Throw errors on regressions/improvements if `ENABLE_MEM_REGRESSION` is set and a warning otherwise.
+						// This allows us to run the tests in CI without failing the build, but still get a warning.
+						if (avgHeapUsed > upperBound) {
+							const message = `Memory Regression detected for test '${
+								testObject.title
+							}': Used '${avgHeapUsed.toPrecision(6)}' bytes, with baseline'${
+								args.baselineMemoryUsage
+							}' and tolerance of '${allowedDeviationBytes}' bytes.\n`;
+							if (ENABLE_MEM_REGRESSION) {
+								process.stderr.write(message);
+								throw new Error(message);
+							} else {
+								process.stdout.write(chalk.yellow(message));
+							}
+						}
+						if (avgHeapUsed < lowerBound) {
+							const message = `Possible memory improvement detected for test '${
+								testObject.title
+							}'. Used '${avgHeapUsed.toPrecision(6)}' bytes with baseline '${
+								args.baselineMemoryUsage
+							}' and tolerance of '${allowedDeviationBytes}' bytes. Consider updating the baseline.\n`;
+							if (ENABLE_MEM_REGRESSION) {
+								process.stderr.write(message);
+								throw new Error(message);
+							} else {
+								process.stdout.write(chalk.yellow(message));
+							}
+						}
+					}
 				} catch (error) {
 					// TODO: This results in the mocha test passing when it should fail. Fix this.
 					benchmarkStats = {
