@@ -5,8 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-// eslint-disable-next-line import/no-internal-modules
-import { JsonAsTree, SchemaFactoryAlpha, TableSchema } from "@fluidframework/tree/internal";
+import {
+	JsonAsTree,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	TableSchema,
+	TreeViewConfiguration,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/tree/internal";
 import type {
 	areSafelyAssignable,
 	requireTrue,
@@ -14,6 +20,7 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
+import { Empty001, Empty020, largeUnion } from "../largeExport.js";
 import { BadArraySelf, GoodArraySelf, RecursiveMap } from "../testExports.js";
 
 describe("import tests", () => {
@@ -132,5 +139,21 @@ describe("import tests", () => {
 		type _check1 = requireAssignableTo<undefined, Inner2>;
 		// @ts-expect-error This fails, like it should, due to working schema aware types
 		type _check2 = requireAssignableTo<number, Inner2>;
+	});
+
+	it("LargeImport", () => {
+		const schema = new SchemaFactory("com.example");
+
+		class LargeUnionObjectNode extends schema.object("ObjectNode", { x: largeUnion }) {}
+
+		const config = new TreeViewConfiguration({
+			schema: LargeUnionObjectNode,
+			enableSchemaValidation: true,
+		});
+
+		const node = new LargeUnionObjectNode({
+			// eslint-disable-next-line unicorn/no-null
+			x: new Empty020({ x: new Empty001({ x: null }) }),
+		});
 	});
 });
