@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-stress-tests",
-	"version": "2.33.2",
+	"version": "2.33.3",
 	"private": true,
 	"description": "Stress tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",

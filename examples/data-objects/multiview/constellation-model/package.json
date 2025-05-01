@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-constellation-model",
-	"version": "2.33.2",
+	"version": "2.33.3",
 	"private": true,
 	"description": "Constellation model for multiview sample",
 	"homepage": "https://fluidframework.com",

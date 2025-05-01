@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/tree-shim",
-	"version": "2.33.2",
+	"version": "2.33.3",
 	"private": true,
 	"description": "Migrating from legacy SharedTree to new SharedTree using a tree shim.",
 	"homepage": "https://fluidframework.com",

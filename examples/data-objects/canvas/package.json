@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/canvas",
-	"version": "2.33.2",
+	"version": "2.33.3",
 	"private": true,
 	"description": "Fluid ink canvas",
 	"homepage": "https://fluidframework.com",
