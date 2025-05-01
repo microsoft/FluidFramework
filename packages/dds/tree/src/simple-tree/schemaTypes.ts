@@ -620,8 +620,6 @@ export function normalizeAllowedTypes(
 
 /**
  * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
- *
- * @internal
  */
 export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchema>>(
 	type: T | AnnotatedAllowedType<T>,
@@ -637,8 +635,6 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
 /**
  * Converts an {@link ImplicitAnnotatedAllowedTypes} to an {@link ImplicitAllowedTypes}s, by removing
  * any annotations.
- *
- * @internal
  */
 export function unannotateImplicitAllowedTypes<Types extends ImplicitAnnotatedAllowedTypes>(
 	types: Types,
@@ -894,7 +890,7 @@ export type ImplicitAnnotatedAllowedTypes =
 
 /**
  * Returns an {@link ImplicitAllowedTypes} that is equivalent to the input without annotations.
- * @alpha
+ * @system @alpha
  */
 export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTypes> =
 	T extends AnnotatedAllowedTypes
@@ -909,7 +905,7 @@ export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTyp
 
 /**
  * Removes annotations from a list of allowed types that may contain annotations.
- * @alpha
+ * @system @alpha
  */
 export type UnannotateAllowedTypesList<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
@@ -919,7 +915,7 @@ export type UnannotateAllowedTypesList<
 
 /**
  * Removes annotations from an allowed type that may contain annotations.
- * @alpha
+ * @system @alpha
  */
 export type UnannotateAllowedTypeOrLazyItem<
 	T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
@@ -927,14 +923,14 @@ export type UnannotateAllowedTypeOrLazyItem<
 
 /**
  * Removes all annotations from a set of allowed types.
- * @alpha
+ * @system @alpha
  */
 export type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> =
 	UnannotateAllowedTypesList<T["types"]>;
 
 /**
  * Removes annotations from an allowed type.
- * @alpha
+ * @system @alpha
  */
 export type UnannotateAllowedType<T extends AnnotatedAllowedType> =
 	T extends AnnotatedAllowedType<infer X> ? [X] : T;
@@ -955,14 +951,14 @@ export type ImplicitAnnotatedFieldSchema = FieldSchema | ImplicitAnnotatedAllowe
 
 /**
  * Removes annotations from an annotated field schema.
- * @alpha
+ * @system @alpha
  */
 export type UnannotateImplicitFieldSchema<T extends ImplicitAnnotatedFieldSchema> =
 	T extends ImplicitAnnotatedAllowedTypes ? UnannotateImplicitAllowedTypes<T> : T;
 
 /**
  * Removes annotations from field schemas in a schema record.
- * @alpha
+ * @system @alpha
  */
 export type UnannotateSchemaRecord<
 	T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
