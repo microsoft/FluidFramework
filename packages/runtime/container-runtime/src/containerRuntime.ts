@@ -3229,7 +3229,7 @@ export class ContainerRuntime
 	 * op resubmission will not be squashed).
 	 * This can therefore be removed once staging mode is broadly supported across layers.
 	 */
-	private orderSequentiallyRunner = new RunCounter();
+	private readonly orderSequentiallyRunner = new RunCounter();
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
