@@ -20,8 +20,6 @@ export {
 	decodeFieldSchema,
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
-	type ErasedTreeNodeSchemaDataFormat,
-	toTreeNodeSchemaDataFormat,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
 } from "./schema.js";

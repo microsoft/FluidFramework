@@ -19,7 +19,6 @@ import {
 	encodeFieldSchema,
 	schemaFormatV1,
 	storedSchemaDecodeDispatcher,
-	toTreeNodeSchemaDataFormat,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 
@@ -73,7 +72,7 @@ function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: toTreeNodeSchemaDataFormat(schema.encode()),
+			value: schema.encode(),
 		});
 	}
 	return {
