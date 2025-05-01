@@ -20,6 +20,7 @@ import {
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import type {
+	FieldHasDefault,
 	InsertableObjectFromSchemaRecord,
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
@@ -36,6 +37,8 @@ import type {
 import { validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
 import type {
+	FieldKind,
+	FieldSchema,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
@@ -79,6 +82,41 @@ const schemaFactory = new SchemaFactory("Test");
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		type result = InsertableObjectFromSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
+	}
+}
+
+// FieldHasDefault
+{
+	class Note extends schemaFactory.object("Note", {}) {}
+
+	// Node schema via ImplicitAllowedTypes
+	{
+		// Implicitly required field does not have a default value.
+		type _check = requireFalse<FieldHasDefault<typeof Note>>;
+	}
+
+	// Required field
+	{
+		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
+
+		// Required field does not have a default value.
+		type _check = requireFalse<FieldHasDefault<RequiredNoteField>>;
+	}
+
+	// Optional field
+	{
+		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
+
+		// Optional field has default: undefined.
+		type _check = requireTrue<FieldHasDefault<OptionalNoteField>>;
+	}
+
+	// Identifier field
+	{
+		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+
+		// Identifier fields have default: undefined.
+		type _check = requireTrue<FieldHasDefault<IdentifierField>>;
 	}
 }
 
