@@ -34,6 +34,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
     readonly disposed: boolean;
     readonly initialObjects: InitialObjects<TContainerSchema>;
     readonly isDirty: boolean;
+    readonly readOnlyInfo: ReadOnlyInfo;
 }
 
 // @public @sealed

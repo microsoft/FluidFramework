@@ -142,6 +142,7 @@ export class OdspClient {
 		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
+	// TODO: yunho: add read only flag here?
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,

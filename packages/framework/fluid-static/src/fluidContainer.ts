@@ -9,7 +9,7 @@ import {
 	type ConnectionState,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainer, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
@@ -158,6 +158,16 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	readonly attachState: AttachState;
 
 	/**
+	 * The read-only information about the container.
+	 *
+	 * @remarks
+	 *
+	 * This is used to determine if the container is read-only or not.
+	 */
+	// TODO: yunho: should we mark it as optional?
+	readonly readOnlyInfo: ReadOnlyInfo;
+
+	/**
 	 * A newly created container starts detached from the collaborative service.
 	 * Calling `attach()` uploads the new container to the service and connects to the collaborative service.
 	 *
@@ -291,6 +301,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.emit("disposed", error);
 	private readonly savedHandler = (): boolean => this.emit("saved");
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
+	private readonly readonlyHandler = (): boolean => this.emit("readonly");
 
 	public constructor(
 		public readonly container: IContainer,
@@ -302,6 +313,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		container.on("disconnected", this.disconnectedHandler);
 		container.on("saved", this.savedHandler);
 		container.on("dirty", this.dirtyHandler);
+		container.on("readonly", this.readonlyHandler);
 	}
 
 	public get isDirty(): boolean {
@@ -322,6 +334,11 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 
 	public get initialObjects(): InitialObjects<TContainerSchema> {
 		return this.rootDataObject.initialObjects as InitialObjects<TContainerSchema>;
+	}
+
+	// TODO: should we use ReadOnlyInfo (tag: alpha legacy) or just boolean?
+	public get readOnlyInfo(): ReadOnlyInfo {
+		return this.container.readOnlyInfo;
 	}
 
 	/**
