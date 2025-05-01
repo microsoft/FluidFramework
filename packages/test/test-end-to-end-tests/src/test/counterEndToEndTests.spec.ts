@@ -224,7 +224,6 @@ describeCompat(
 				loaderProps: {
 					configProvider: configProvider({
 						"Fluid.ContainerRuntime.EnableRollback": true,
-						"Fluid.SharedObject.AllowStagingModeWithoutSquashing": true,
 					}),
 				},
 			};
@@ -240,8 +239,9 @@ describeCompat(
 			[
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "RollbackError: rollback not supported",
+					error: "RollbackError: Unsupported DDS feature",
 					errorType: ContainerErrorTypes.dataProcessingError,
+					featureName: "rollback",
 				},
 			],
 			async () => {
