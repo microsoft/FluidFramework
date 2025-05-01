@@ -1,11 +1,10 @@
 ---
-"fluid-framework": minor
 "@fluidframework/sequence": minor
-"__section": deprecation
+"__section": legacy
 ---
-Replace generic types for IntervalCollections with non-generic types
+Remove deprecated IntervalCollections types
 
-This change deprecates the following generic types and provides non-generic alternatives where necessary:
+This change removes the following deprecated generic types and provides non-generic alternatives where necessary:
 
 - `IIntervalCollection` is replaced by `ISequenceIntervalCollection`
 - `IIntervalCollectionEvent` is replaced by `ISequenceIntervalCollectionEvents`
@@ -13,4 +12,4 @@ This change deprecates the following generic types and provides non-generic alte
 - `IOverlappingIntervalsIndex` is replaced by `ISequenceOverlappingIntervalsIndex`
 - `ISharedIntervalCollection` is deprecated without replacement
 
-These types are no longer required to be generic, and replacing them with non-generic alternatives keeps our typing less complex.
+These types are no longer required to be generic, and replacing them with non-generic alternatives keeps the typing less complex.

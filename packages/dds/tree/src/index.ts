@@ -232,6 +232,8 @@ export {
 	type MapNodePojoEmulationSchema,
 	MapNodeSchema,
 	type ObjectFromSchemaRecord,
+	type ValidateRecursiveSchemaTemplate,
+	type FixRecursiveRecursionLimit,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
