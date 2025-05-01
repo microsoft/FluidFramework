@@ -63,6 +63,7 @@ import {
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
 	type IFluidDataStoreFactory,
+	type IFluidParentContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -243,7 +244,7 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContextInternal, IFluidParentContextPrivate, IDisposable
+	implements IFluidDataStoreContextInternal, IFluidParentContext, IDisposable
 {
 	public get packagePath(): readonly string[] {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);

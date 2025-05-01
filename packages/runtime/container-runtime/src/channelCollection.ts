@@ -1634,9 +1634,7 @@ export function detectOutboundReferences(
 /**
  * @internal
  */
-export class ChannelCollectionFactory<T extends ChannelCollection = ChannelCollection>
-	implements IFluidDataStoreFactory
-{
+export class ChannelCollectionFactory implements IFluidDataStoreFactory {
 	public readonly type = "ChannelCollectionChannel";
 
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry;
@@ -1651,7 +1649,7 @@ export class ChannelCollectionFactory<T extends ChannelCollection = ChannelColle
 		this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(registryEntries);
 	}
 
-	public get IFluidDataStoreFactory(): ChannelCollectionFactory<T> {
+	public get IFluidDataStoreFactory(): ChannelCollectionFactory {
 		return this;
 	}
 
