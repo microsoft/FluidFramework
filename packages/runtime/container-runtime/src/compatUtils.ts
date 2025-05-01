@@ -34,7 +34,10 @@ import { pkgVersion } from "./packageVersion.js";
 export const defaultMinVersionForCollab = "2.0.0-defaults" as const;
 
 /**
- * We don't want to allow anyone to use a version less than 1.0.0 for minVersionForCollab.
+ * We don't want allow a version before the major public release of the LTS version.
+ * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
+ * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
+ * with our policy and allow all 1.x versions to be compatible with 2.x.
  */
 const lowestMinVersionForCollab = "1.0.0" as const;
 
@@ -202,7 +205,7 @@ export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknow
 
 /**
  * Checks if the minVersionForCollab is valid.
- * A valid minVersionForCollab is a SemanticVersion that is at least "1.0.0" and less than or equal to the current package version.
+ * A valid minVersionForCollab is a SemanticVersion that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
  */
 export function isValidMinVersionForCollab(minVersionForCollab: SemanticVersion): boolean {
 	return (
