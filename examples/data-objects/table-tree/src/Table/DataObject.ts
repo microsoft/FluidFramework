@@ -14,7 +14,7 @@ import {
 	type TreeView,
 } from "@fluidframework/tree/legacy";
 
-import { Table } from "./tableSchema.js";
+import { Column, Table } from "./tableSchema.js";
 
 /**
  * A data object for managing a shared table using `SharedTree`.
@@ -46,25 +46,22 @@ export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 		this.treeView.initialize(
 			new Table({
 				columns: [
-					{
+					new Column({
 						id: "column-0",
-					},
-					{
-						id: "column-1",
-					},
+						props: {
+							label: "Column 0",
+						},
+					}),
+					new Column({ id: "column-1", props: { label: "Column 1" } }),
 				],
 				rows: [
-					{
-						id: "row-0",
-						cells: {},
-					},
+					{ id: "row-0", cells: {}, props: {} },
 					{
 						id: "row-1",
 						cells: {
-							"column-1": {
-								value: "Hello world!",
-							},
+							"column-1": { value: "Hello world!" },
 						},
+						props: {},
 					},
 				],
 			}),

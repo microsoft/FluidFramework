@@ -1,8 +1,3 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 import {
 	Table,
 	TableBody,
@@ -21,7 +16,6 @@ import { useTree } from "../Utils/index.js";
 import { Column, Row } from "./tableSchema.js";
 
 import { type TableDataObject } from "./index.js";
-
 // eslint-disable-next-line import/no-unassigned-import
 import "./tableView.css";
 
@@ -117,13 +111,13 @@ const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	handleAddColumn,
 }) => (
 	<TableHeader>
-		<TableRow className="custom-header-row">
-			<TableHeaderCell className="custom-header-cell">
-				{showAddColumnInput ? (
-					<div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+		{showAddColumnInput && (
+			<TableRow className="custom-header-row">
+				<TableHeaderCell colSpan={columns.length + 1}>
+					<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
 						<Input
 							type="text"
-							placeholder="Column ID"
+							placeholder="Column Label"
 							value={newColumnId}
 							onChange={(e) => setNewColumnId(e.target.value)}
 							size="small"
@@ -135,14 +129,18 @@ const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 							onClick={handleAddColumn}
 						/>
 					</div>
-				) : (
-					<Button
-						icon={<Add24Regular />}
-						appearance="subtle"
-						size="small"
-						onClick={() => setShowAddColumnInput(true)}
-					/>
-				)}
+				</TableHeaderCell>
+			</TableRow>
+		)}
+
+		<TableRow className="custom-header-row">
+			<TableHeaderCell className="custom-header-cell">
+				<Button
+					icon={<Add24Regular />}
+					appearance="subtle"
+					size="small"
+					onClick={() => setShowAddColumnInput(true)}
+				/>
 			</TableHeaderCell>
 			{columns.map((col, index) => (
 				<TableHeaderCell
@@ -161,7 +159,7 @@ const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 							gap: "4px",
 						}}
 					>
-						{col.id}
+						{col.props.label}
 						<Button
 							appearance="subtle"
 							size="small"
@@ -192,10 +190,12 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 	const handleAddRow = () => {
 		if (newRowId.trim() !== "") {
 			tableModel.treeView.root.insertRows({
+				index: rows.length,
 				rows: [
 					{
 						id: newRowId.trim(),
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -212,7 +212,10 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 
 	const handleAddColumn = () => {
 		if (newColumnId.trim() !== "") {
-			tableModel.treeView.root.insertColumn({ index: 0, column: { id: newColumnId } });
+			tableModel.treeView.root.insertColumn({
+				index: 0,
+				column: { props: { label: newColumnId } },
+			});
 			setNewColumnId("");
 			setShowAddColumnInput(false);
 		}
@@ -224,7 +227,6 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 		}
 	};
 
-	// Row drag handlers
 	const handleRowDragStart = (index: number) => {
 		setDraggedRowIndex(index);
 	};
@@ -241,7 +243,6 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 		setDraggedRowIndex(null);
 	};
 
-	// Column drag handlers
 	const handleColumnDragStart = (index: number) => {
 		setDraggedColumnIndex(index);
 	};
@@ -261,67 +262,64 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 	return (
 		<div className="table-container">
 			<h2 className="table-title">Shared Table</h2>
-
-			<Table aria-label="Fluid-based dynamic table" className="custom-table">
-				<TableHeaderView
-					columns={columns}
-					onColumnDragStart={handleColumnDragStart}
-					onColumnDragOver={handleColumnDragOver}
-					onColumnDrop={handleColumnDrop}
-					onRemoveColumn={handleRemoveColumn}
-					showAddColumnInput={showAddColumnInput}
-					setShowAddColumnInput={setShowAddColumnInput}
-					newColumnId={newColumnId}
-					setNewColumnId={setNewColumnId}
-					handleAddColumn={handleAddColumn}
-				/>
-				<TableBody>
-					{rows.map((row, index) => (
-						<TableRowView
-							key={row.id}
-							row={row}
-							columns={columns}
-							index={index}
-							onRowDragStart={handleRowDragStart}
-							onRowDragOver={handleRowDragOver}
-							onRowDrop={handleRowDrop}
-							onRemoveRow={handleRemoveRow}
-						/>
-					))}
-					{/* Add new row input */}
-					<TableRow>
-						<TableCell className="custom-cell id-cell">
-							{showAddRowInput ? (
-								<div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-									<Input
-										type="text"
-										placeholder="Row ID"
-										value={newRowId}
-										onChange={(e) => setNewRowId(e.target.value)}
-										size="small"
-									/>
-									<Button
-										icon={<Checkmark24Regular />}
-										appearance="subtle"
-										size="small"
-										onClick={handleAddRow}
-									/>
-								</div>
-							) : (
-								<Button
-									icon={<Add24Regular />}
-									appearance="subtle"
-									size="small"
-									onClick={() => setShowAddRowInput(true)}
-								/>
-							)}
-						</TableCell>
-						{columns.map((col) => (
-							<TableCell key={col.id} className="custom-cell" />
+			<div className="table-scroll">
+				<Table aria-label="Fluid-based dynamic table" className="custom-table">
+					<TableHeaderView
+						columns={columns}
+						onColumnDragStart={handleColumnDragStart}
+						onColumnDragOver={handleColumnDragOver}
+						onColumnDrop={handleColumnDrop}
+						onRemoveColumn={handleRemoveColumn}
+						showAddColumnInput={showAddColumnInput}
+						setShowAddColumnInput={setShowAddColumnInput}
+						newColumnId={newColumnId}
+						setNewColumnId={setNewColumnId}
+						handleAddColumn={handleAddColumn}
+					/>
+					<TableBody>
+						{rows.map((row, index) => (
+							<TableRowView
+								key={row.id}
+								row={row}
+								columns={columns}
+								index={index}
+								onRowDragStart={handleRowDragStart}
+								onRowDragOver={handleRowDragOver}
+								onRowDrop={handleRowDrop}
+								onRemoveRow={handleRemoveRow}
+							/>
 						))}
-					</TableRow>
-				</TableBody>
-			</Table>
+					</TableBody>
+				</Table>
+			</div>
+			{showAddRowInput ? (
+				<div className="add-row-container">
+					<Input
+						type="text"
+						placeholder="Row ID"
+						value={newRowId}
+						onChange={(e) => setNewRowId(e.target.value)}
+						size="small"
+						className="add-row-input"
+					/>
+					<Button
+						icon={<Checkmark24Regular />}
+						appearance="subtle"
+						size="small"
+						onClick={handleAddRow}
+					/>
+				</div>
+			) : (
+				<Button
+					icon={<Add24Regular />}
+					appearance="subtle"
+					size="small"
+					onClick={() => setShowAddRowInput(true)}
+					className="add-row-toggle"
+				>
+					Add Row
+				</Button>
+			)}
 		</div>
 	);
 };
