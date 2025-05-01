@@ -7,11 +7,7 @@ import { oob } from "@fluidframework/core-utils/internal";
 
 import { Tree } from "./shared-tree/index.js";
 import {
-	/* eslint-disable @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports */
 	type FieldHasDefault,
-	type FieldKind,
-	type FieldSchema,
-	type LeafSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableObjectFromSchemaRecord,
@@ -28,7 +24,6 @@ import {
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
 	type InternalTreeNode,
-	/* eslint-enable @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports */
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
@@ -123,18 +118,19 @@ export namespace TableSchema {
 
 		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof columnFields>`,
 		// but that results in broken `.d.ts` output due to a TypeScript bug.
+		// See: https://github.com/microsoft/TypeScript/issues/58688.
 		// Instead we extract and inline the typing of the "props" field here, which seems to sufficiently work around the issue.
 		// type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 		type ColumnInsertableType = InsertableObjectFromSchemaRecord<
 			typeof columnFieldsBuiltInParts
 		> &
 			(FieldHasDefault<TPropsSchema> extends true
-				// Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
-				// documentation appears in the data insertion scenario.
-				// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
-				// support `@inheritDoc`.
-				// See: https://github.com/microsoft/TypeScript/issues/31267
-				? {
+				? // Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
+					// documentation appears in the data insertion scenario.
+					// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
+					// support `@inheritDoc`.
+					// See: https://github.com/microsoft/TypeScript/issues/31267
+					{
 						/**
 						 * The column's properties.
 						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
@@ -348,17 +344,18 @@ export namespace TableSchema {
 
 		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof rowFields>`,
 		// but that results in broken `.d.ts` output due to a TypeScript bug.
+		// See: https://github.com/microsoft/TypeScript/issues/58688.
 		// Instead we extract and inline the typing of the "props" field here, which seems to sufficiently work around
 		// the issue.
 		// type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
 		type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFieldsBuiltInParts> &
 			(FieldHasDefault<TPropsSchema> extends true
-				// Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
-				// documentation appears in the data insertion scenario.
-				// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
-				// support `@inheritDoc`.
-				// See: https://github.com/microsoft/TypeScript/issues/31267
-				? {
+				? // Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
+					// documentation appears in the data insertion scenario.
+					// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
+					// support `@inheritDoc`.
+					// See: https://github.com/microsoft/TypeScript/issues/31267
+					{
 						/**
 						 * The row's properties.
 						 * @remarks This is a user-defined schema that can be used to store additional information
