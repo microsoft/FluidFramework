@@ -440,7 +440,7 @@ describe("Presence", () => {
 		});
 
 		describe("receiving AcknowledgementMessage", () => {
-			it("accpets passively without failing", () => {
+			it("accepts passively without failing", () => {
 				const presence = prepareConnectedPresence(
 					runtime,
 					"attendeeId-2",
@@ -448,13 +448,16 @@ describe("Presence", () => {
 					clock,
 					logger,
 				);
-
+				// This test ensures that PresenceManager can safely receive and process
+				// a signal of type 'Pres:Ack' without throwing or misbehaving,
+				// even if the acknowledgment does not correspond to any known pending message.
+				// We do not assert specific outcomes here — success is defined by the absence of error
 				presence.processSignal(
 					"",
 					{
 						type: "Pres:Ack",
 						content: {
-							messageId: "messageId",
+							messageId: "messageId", // Arbitrary ID that is not expected to match anything
 						},
 						clientId: "client1",
 					},
