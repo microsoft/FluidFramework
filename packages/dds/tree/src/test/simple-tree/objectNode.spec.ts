@@ -39,6 +39,7 @@ import { Tree } from "../../shared-tree/index.js";
 import type {
 	FieldKind,
 	FieldSchema,
+	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
@@ -88,6 +89,11 @@ const schemaFactory = new SchemaFactory("Test");
 // FieldHasDefault
 {
 	class Note extends schemaFactory.object("Note", {}) {}
+
+	{
+		type _check = requireFalse<FieldHasDefault<ImplicitAllowedTypes>>;
+		type _check2 = requireFalse<FieldHasDefault<ImplicitFieldSchema>>;
+	}
 
 	// Node schema via ImplicitAllowedTypes
 	{

@@ -81,9 +81,11 @@ export abstract class ErasedType<out Name = unknown> {
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public @system
-type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
-FieldSchema<FieldKind.Optional | FieldKind.Identifier>
-] ? true : false;
+type FieldHasDefault<T extends ImplicitFieldSchema> = [
+T
+] extends [ImplicitAllowedTypes] ? false : [
+T
+] extends [FieldSchema<FieldKind.Identifier | FieldKind.Optional>] ? true : false;
 
 // @public
 export enum FieldKind {
