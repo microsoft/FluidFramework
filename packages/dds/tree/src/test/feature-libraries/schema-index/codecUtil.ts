@@ -12,4 +12,4 @@ import { ajvValidator } from "../../codec/index.js";
  */
 export const supportedSchemaFormats = Array.from(
 	makeSchemaCodecs({ jsonValidator: ajvValidator }).getSupportedFormats(),
-);
+).filter((format) => format !== undefined) as number[];
