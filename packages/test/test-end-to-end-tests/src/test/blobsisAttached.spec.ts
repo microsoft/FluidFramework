@@ -31,7 +31,7 @@ import {
 	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
 
-import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
+import { driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
 const directoryId = "directoryKey";
@@ -183,7 +183,6 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		let provider: ITestObjectProvider;
 		let loader: IHostLoader;
 		let container: IContainer;
-		let detachedBlobStorage: MockDetachedBlobStorage;
 		let detachedDataStore: ITestFluidObject;
 		let map: ISharedMap;
 		let directory: ISharedDirectory;
@@ -195,10 +194,8 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
-			detachedBlobStorage = new MockDetachedBlobStorage();
 			loader = provider.makeTestLoader({
 				...testContainerConfig,
-				loaderProps: { detachedBlobStorage },
 			});
 			container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			provider.updateDocumentId(container.resolvedUrl);
@@ -270,7 +267,6 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			detachedDataStore.root.set("map", map.handle);
 			map.set("my blob", blobHandle);
 			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-			detachedBlobStorage.dispose();
 			checkForAttachedHandles(map);
 		});
 
@@ -278,7 +274,6 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			detachedDataStore.root.set(directoryId, directory.handle);
 			directory.set("my blob", blobHandle);
 			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-			detachedBlobStorage.dispose();
 			checkForAttachedHandles(directory);
 		});
 
@@ -295,7 +290,6 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 				false,
 				"blob should be detached in a detached dds and attached container",
 			);
-			detachedBlobStorage.dispose();
 			detachedDataStore.root.set(mapId, map.handle);
 			assert.strictEqual(
 				map.handle.isAttached,
@@ -322,7 +316,6 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 				false,
 				"blob should be detached in a detached dds and attached container",
 			);
-			detachedBlobStorage.dispose();
 			detachedDataStore.root.set(directoryId, directory.handle);
 			assert.strictEqual(
 				directory.handle.isAttached,
