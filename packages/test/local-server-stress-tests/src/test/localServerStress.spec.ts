@@ -32,6 +32,7 @@ describe("Local Server Stress", () => {
 			...[0, 13, 45, 56], // Number of keys not same
 			...[30], // Number of subDirectories not same,
 			...[99], // Rollback op does not match last pending
+			...[8, 67], // Client closes due to id compressor related asserts in a fatal codepath
 		],
 	});
 });
