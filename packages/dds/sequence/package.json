@@ -199,7 +199,28 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IIntervalCollection": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Interface_IIntervalCollectionEvent": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Interface_IntervalIndex": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Interface_IOverlappingIntervalsIndex": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Interface_ISharedIntervalCollection": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
