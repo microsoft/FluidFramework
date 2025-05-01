@@ -31,7 +31,7 @@ describe("TableFactory unit tests", () => {
 			 */
 			label: schemaFactory.optional(schemaFactory.string),
 		}) {}
-		class Column extends TableSchema.createColumn(schemaFactory, ColumnProps) {}
+		class Column extends TableSchema.createColumnInternal(schemaFactory, ColumnProps) {}
 
 		class RowProps extends schemaFactory.object("table-row-props", {
 			/**
@@ -73,6 +73,20 @@ describe("TableFactory unit tests", () => {
 		const actualVerbose = TreeAlpha.exportConcise(actual);
 		assert.deepEqual(actualVerbose, expected);
 	}
+
+	describe("Column Schema", () => {
+		it("Can create without props", () => {
+			class Column extends TableSchema.createColumn(schemaFactory) {}
+			const column = new Column({ id: "column-0" });
+			assert.equal(column.props, undefined);
+		});
+
+		it("Can create with props", () => {
+			class Column extends TableSchema.createColumn(schemaFactory, schemaFactory.string) {}
+			const column = new Column({ id: "column-0", props: "Column 0" });
+			assert.equal(column.props, "Column 0");
+		});
+	});
 
 	describe("Initialization", () => {
 		it("Empty", () => {
@@ -797,19 +811,6 @@ describe("TableFactory unit tests", () => {
 				validateUsageError(/Placeholder usage error./),
 			);
 		});
-	});
-
-	it("can read column props", () => {
-		const { treeView, Column } = createTableTree();
-
-		const column = new Column({ id: "column-0", props: { label: "Column 0" } });
-
-		treeView.initialize({
-			columns: [column],
-			rows: [],
-		});
-
-		assert.equal(column.props?.label, "Column 0");
 	});
 
 	it("can read row props", () => {
