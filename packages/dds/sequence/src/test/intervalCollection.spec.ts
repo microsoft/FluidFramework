@@ -25,12 +25,8 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { ISequenceIntervalCollection } from "../intervalCollection.js";
-import { IntervalIndex } from "../intervalIndex/index.js";
-import {
-	ISerializableInterval,
-	IntervalStickiness,
-	SequenceInterval,
-} from "../intervals/index.js";
+import type { SequenceIntervalIndex } from "../intervalIndex/index.js";
+import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { ISharedString, SharedStringClass } from "../sharedString.js";
 
@@ -42,19 +38,17 @@ import {
 } from "./intervalTestUtils.js";
 import { constructClients, loadClient } from "./multiClientTestUtils.js";
 
-class MockIntervalIndex<TInterval extends ISerializableInterval>
-	implements IntervalIndex<TInterval>
-{
-	private readonly intervals: TInterval[];
+class MockIntervalIndex implements SequenceIntervalIndex {
+	private readonly intervals: SequenceInterval[];
 	constructor() {
-		this.intervals = new Array<TInterval>();
+		this.intervals = new Array<SequenceInterval>();
 	}
 
-	public add(interval: TInterval) {
+	public add(interval: SequenceInterval) {
 		this.intervals.push(interval);
 	}
 
-	public remove(interval: TInterval): boolean {
+	public remove(interval: SequenceInterval): boolean {
 		const idx = this.intervals.indexOf(interval);
 		if (idx !== -1) {
 			this.intervals.splice(idx, 1);
@@ -63,7 +57,7 @@ class MockIntervalIndex<TInterval extends ISerializableInterval>
 		return false;
 	}
 
-	public get(idx: number): TInterval {
+	public get(idx: number): SequenceInterval {
 		return this.intervals[idx];
 	}
 
