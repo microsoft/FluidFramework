@@ -354,6 +354,9 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 	readonly description?: string | undefined;
 }
 
+/**
+ * Package internal construction API.
+ */
 export function createFieldSchema<
 	Kind extends FieldKind,
 	Types extends ImplicitAllowedTypes,
@@ -364,6 +367,9 @@ export function createFieldSchema<
 	props?: FieldProps<TCustomMetadata>,
 ): FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
 
+/**
+ * Package internal construction API that supports annotations for allowed types.
+ */
 export function createFieldSchema<
 	Kind extends FieldKind,
 	Types extends ImplicitAnnotatedAllowedTypes,
@@ -387,7 +393,7 @@ export function createFieldSchema<
 }
 
 /**
- * Package internal construction API.
+ * Implementation for {@link createFieldSchema}
  */
 let createFieldSchemaPrivate: <
 	Kind extends FieldKind,
