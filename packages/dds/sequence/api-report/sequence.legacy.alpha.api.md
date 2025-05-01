@@ -43,62 +43,7 @@ export interface IInterval {
     union(b: IInterval): IInterval;
 }
 
-// @alpha @deprecated @legacy
-export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
-    // (undocumented)
-    [Symbol.iterator](): Iterator<TInterval>;
-    add({ start, end, props, }: {
-        start: SequencePlace;
-        end: SequencePlace;
-        props?: PropertySet;
-    }): TInterval;
-    // (undocumented)
-    attachDeserializer(onDeserialize: DeserializeCallback): void;
-    // (undocumented)
-    readonly attached: boolean;
-    attachIndex(index: IntervalIndex<TInterval>): void;
-    change(id: string, { start, end, props }: {
-        start?: SequencePlace;
-        end?: SequencePlace;
-        props?: PropertySet;
-    }): TInterval | undefined;
-    // (undocumented)
-    CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-    detachIndex(index: IntervalIndex<TInterval>): boolean;
-    // @deprecated (undocumented)
-    findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
-    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
-    // (undocumented)
-    getIntervalById(id: string): TInterval | undefined;
-    map(fn: (interval: TInterval) => void): void;
-    // @deprecated (undocumented)
-    nextInterval(pos: number): TInterval | undefined;
-    // @deprecated (undocumented)
-    previousInterval(pos: number): TInterval | undefined;
-    removeIntervalById(id: string): TInterval | undefined;
-}
-
-// @alpha @deprecated @legacy
-export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "changed", listener: (interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval | undefined, local: boolean, slide: boolean) => void): void;
-}
-
 export { InteriorSequencePlace }
-
-// @alpha @deprecated @legacy
-export interface IntervalIndex<TInterval extends ISerializableInterval> {
-    add(interval: TInterval): void;
-    remove(interval: TInterval): void;
-}
 
 // @alpha @legacy
 export const IntervalOpType: {
@@ -162,13 +107,6 @@ export enum IntervalType {
     // (undocumented)
     Simple = 0,
     SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
-}
-
-// @alpha @deprecated @legacy
-export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
-    // (undocumented)
-    findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[];
-    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: SequencePlace, end?: SequencePlace): void;
 }
 
 export { ISegment }
@@ -257,12 +195,6 @@ export interface ISerializedInterval {
     // (undocumented)
     startSide?: Side;
     stickiness?: IntervalStickiness;
-}
-
-// @alpha @deprecated @legacy (undocumented)
-export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
-    // (undocumented)
-    getIntervalCollection(label: string): IIntervalCollection<TInterval>;
 }
 
 // @alpha @legacy (undocumented)
