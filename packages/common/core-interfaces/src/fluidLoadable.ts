@@ -17,11 +17,16 @@ export interface IProvideFluidLoadable {
 	readonly IFluidLoadable: IFluidLoadable;
 }
 /**
- * A shared FluidObject has a URL from which it can be referenced
+ * A shared {@link FluidObject} has a URL from which it can be referenced.
+ * @remarks
+ * In this context shared means that the object might be shared via a {@link https://fluidframework.com/docs/concepts/architecture#fluid-service|Fluid service} and
+ * thus could be viewed and edited by other clients.
  * @sealed @public
  */
 export interface IFluidLoadable extends IProvideFluidLoadable {
-	// Handle to the loadable FluidObject
+	/**
+	 * Handle to this loadable {@link FluidObject}.
+	 */
 	readonly handle: IFluidHandle;
 }
 
