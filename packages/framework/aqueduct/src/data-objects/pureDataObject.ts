@@ -18,7 +18,7 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type {
-	IFluidDataStoreEntryPointPolicies,
+	IFluidDataStorePolicies,
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
@@ -34,7 +34,7 @@ export interface DataObjectConstructor<
 	TObj extends PureDataObject,
 	I extends DataObjectTypes,
 > {
-	readonly policies?: Partial<IFluidDataStoreEntryPointPolicies>;
+	readonly policies?: Partial<IFluidDataStorePolicies>;
 	new (props: IDataObjectProps<I>): TObj;
 }
 
@@ -54,7 +54,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
 {
-	public static readonly policies?: Partial<IFluidDataStoreEntryPointPolicies>;
+	public static readonly policies?: Partial<IFluidDataStorePolicies>;
 
 	/**
 	 * This is your FluidDataStoreRuntime object

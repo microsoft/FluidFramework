@@ -870,8 +870,8 @@ export abstract class FluidDataStoreContext
 	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
-		// Summarizer clients should not submit messages.
-		this.identifyLocalChangeWhileReadonly("DataStoreMessageWhileReadonly", type);
+		// Readonly clients should not submit messages.
+		this.identifyLocalChangeIfReadonly("DataStoreMessageWhileReadonly", type);
 
 		this.parentContext.submitMessage(type, content, localOpMetadata);
 	}
@@ -1102,16 +1102,16 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Summarizer client should not have local changes. These changes can become part of the summary and can break
+	 * Readonly client, including summarizer, should not have local changes. These changes can become part of the summary and can break
 	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */
-	protected identifyLocalChangeWhileReadonly(eventName: string, type?: string): void {
+	protected identifyLocalChangeIfReadonly(eventName: string, type?: string): void {
 		if (!this.isReadOnly() || this.localChangesTelemetryCount <= 0) {
 			return;
 		}
 
-		// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+		// Log a telemetry if there are local changes in readonly. This will give us data on how often
 		// this is happening and which data stores do this. The eventual goal is to disallow local changes
 		// in the summarizer and the data will help us plan this.
 		this.mc.logger.sendTelemetryEvent({
@@ -1323,7 +1323,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		);
 
 		// Summarizer client should not create local data stores.
-		this.identifyLocalChangeWhileReadonly("DataStoreCreatedInSummarizer");
+		this.identifyLocalChangeIfReadonly("DataStoreCreatedInSummarizer");
 
 		this.snapshotTree = props.snapshotTree;
 	}

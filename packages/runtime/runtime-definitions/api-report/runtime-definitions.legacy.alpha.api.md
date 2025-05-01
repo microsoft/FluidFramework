@@ -139,7 +139,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     makeVisibleAndAttachGraph(): void;
     notifyReadOnlyState?(readonly: boolean): void;
     // (undocumented)
-    readonly policies?: IFluidDataStoreEntryPointPolicies;
+    readonly policies?: IFluidDataStorePolicies;
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
@@ -174,12 +174,6 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 }
 
 // @alpha @legacy (undocumented)
-export interface IFluidDataStoreEntryPointPolicies {
-    // (undocumented)
-    readonly readonlyInStagingMode: boolean;
-}
-
-// @alpha @legacy (undocumented)
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
 // @alpha @legacy
@@ -189,6 +183,11 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     };
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
+}
+
+// @alpha @legacy
+export interface IFluidDataStorePolicies {
+    readonly readonlyInStagingMode: boolean;
 }
 
 // @alpha @legacy (undocumented)

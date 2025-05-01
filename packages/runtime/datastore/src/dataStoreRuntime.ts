@@ -61,7 +61,7 @@ import {
 	type IContainerRuntimeBaseExperimental,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
-	type IFluidDataStoreEntryPointPolicies,
+	type IFluidDataStorePolicies,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -144,7 +144,7 @@ export interface ISharedObjectRegistry {
 	get(name: string): IChannelFactory | undefined;
 }
 
-const defaultPolicies: IFluidDataStoreEntryPointPolicies = {
+const defaultPolicies: IFluidDataStorePolicies = {
 	readonlyInStagingMode: true,
 };
 
@@ -166,7 +166,7 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.connected;
 	}
 
-	public readonly policies: IFluidDataStoreEntryPointPolicies;
+	public readonly policies: IFluidDataStorePolicies;
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isReadOnly}
@@ -287,7 +287,7 @@ export class FluidDataStoreRuntime
 		private readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
-		policies?: Partial<IFluidDataStoreEntryPointPolicies>,
+		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
 

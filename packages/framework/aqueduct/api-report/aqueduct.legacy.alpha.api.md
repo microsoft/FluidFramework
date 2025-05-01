@@ -61,7 +61,7 @@ export interface DataObjectConstructor<TObj extends PureDataObject, I extends Da
     // (undocumented)
     new (props: IDataObjectProps<I>): TObj;
     // (undocumented)
-    readonly policies?: Partial<IFluidDataStoreEntryPointPolicies>;
+    readonly policies?: Partial<IFluidDataStorePolicies>;
 }
 
 // @alpha @legacy
@@ -108,7 +108,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // (undocumented)
     protected initProps?: I["InitialState"];
     // (undocumented)
-    static readonly policies?: Partial<IFluidDataStoreEntryPointPolicies>;
+    static readonly policies?: Partial<IFluidDataStorePolicies>;
     protected preInitialize(): Promise<void>;
     protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
     request(req: IRequest): Promise<IResponse>;
