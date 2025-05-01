@@ -213,7 +213,7 @@ export interface TreeAlpha {
  * See {@link (TreeAlpha:interface)}.
  * @sealed @alpha
  */
-export const TreeAlpha = {
+export const TreeAlpha: TreeAlpha = {
 	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {

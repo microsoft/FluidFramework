@@ -978,22 +978,8 @@ export interface TreeAlpha {
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<TreeEncodingOptions>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 }
 
-// @alpha @sealed (undocumented)
-export const TreeAlpha: {
-    branch(node: TreeNode): TreeBranch | undefined;
-    create: typeof createFromInsertable;
-    importConcise<TSchema extends ImplicitFieldSchema | typeof UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
-    importVerbose<const TSchema_1 extends ImplicitFieldSchema>(schema: TSchema_1, data: VerboseTree | undefined, options?: TreeEncodingOptions): TreeFieldFromImplicitField<TSchema_1>;
-    exportConcise: typeof exportConcise;
-    exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
-    exportCompressed(node: TreeNode | TreeLeafValue, options: {
-        oldestCompatibleClient: FluidClientVersion;
-        idCompressor?: IIdCompressor;
-    }): JsonCompatible<IFluidHandle>;
-    importCompressed<const TSchema_2 extends ImplicitFieldSchema>(schema: TSchema_2, compressedData: JsonCompatible<IFluidHandle>, options: {
-        idCompressor?: IIdCompressor;
-    } & ICodecOptions): TreeFieldFromImplicitField<TSchema_2>;
-};
+// @alpha @sealed
+export const TreeAlpha: TreeAlpha;
 
 // @public @sealed @system
 interface TreeApi extends TreeNodeApi {
