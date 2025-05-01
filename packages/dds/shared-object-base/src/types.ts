@@ -60,7 +60,8 @@ export interface ISharedObjectEvents extends IErrorEvent {
  * @privateRemarks
  * Implemented by {@link SharedObjectCore}.
  *
- * TODO: the relationship between the "shared object" abstraction and "channel" abstraction should be clarified and/or unified.
+ * TODO:
+ * The relationship between the "shared object" abstraction and "channel" abstraction should be clarified and/or unified.
  * Either there should be a single named abstraction or the docs here need to make it clear why adding events and bindToContext to a channel makes it a "shared object".
  * Additionally the docs here need to define what a shared object is, not just claim this interface is for them.
  * If the intention is that the "shared object" concept `IFluidLoadable` mentions is only ever implemented by this interface then even more concept unification should be done.
