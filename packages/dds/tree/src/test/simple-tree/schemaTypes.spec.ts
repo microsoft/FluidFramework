@@ -276,47 +276,6 @@ describe("schemaTypes", () => {
 			type TC = NodeFromSchema<typeof CustomizedBoth>;
 			type _checkC = requireAssignableTo<TC, CustomizedBoth>;
 		}
-
-		// UnannotateImplicitAllowedTypes
-		{
-			{
-				type T = TreeNodeSchema;
-				type _check = requireAssignableTo<
-					T,
-					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
-				>;
-			}
-
-			{
-				type T = AllowedTypes;
-				type _check = requireAssignableTo<
-					T,
-					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
-				>;
-			}
-
-			{
-				type _check = requireAssignableTo<
-					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>,
-					ImplicitAllowedTypes
-				>;
-			}
-		}
-
-		// UnannotateImplicitFieldSchema
-		{
-			type T = ImplicitAnnotatedFieldSchema;
-			type _check = requireAssignableTo<UnannotateImplicitFieldSchema<T>, ImplicitFieldSchema>;
-		}
-
-		// UnannotateSchemaRecord
-		{
-			type T = RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>;
-			type _check = requireAssignableTo<
-				UnannotateSchemaRecord<T>,
-				RestrictiveStringRecord<ImplicitFieldSchema>
-			>;
-		}
 	}
 
 	describe("insertable", () => {
@@ -763,5 +722,50 @@ describe("schemaTypes", () => {
 			// At least this case allows undefined, like recursive object fields, but unlike non recursive object fields.
 			type _check7 = requireAssignableTo<undefined, ArgFieldOptional>;
 		});
+	});
+
+	describe("can unannotate allowed types", () => {
+		// UnannotateImplicitAllowedTypes
+		{
+			{
+				type T = TreeNodeSchema;
+				type _check = requireAssignableTo<
+					T,
+					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
+				>;
+			}
+
+			{
+				type T = AllowedTypes;
+				type _check = requireAssignableTo<
+					T,
+					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
+				>;
+			}
+
+			{
+				type _check = requireAssignableTo<
+					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>,
+					ImplicitAllowedTypes
+				>;
+			}
+		}
+
+		// UnannotateImplicitFieldSchema
+		{
+			type T = ImplicitAnnotatedFieldSchema;
+			type _check = requireAssignableTo<UnannotateImplicitFieldSchema<T>, ImplicitFieldSchema>;
+		}
+
+		// UnannotateSchemaRecord
+		{
+			type T = RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>;
+			type _check = requireAssignableTo<
+				UnannotateSchemaRecord<T>,
+				RestrictiveStringRecord<ImplicitFieldSchema>
+			>;
+		}
+
+		it("with top level metadata", () => {});
 	});
 });
