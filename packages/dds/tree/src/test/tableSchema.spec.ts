@@ -26,11 +26,18 @@ describe("TableFactory unit tests", () => {
 		}) {}
 
 		class ColumnProps extends schemaFactory.object("table-column-props", {
+			/**
+			 * Label text for the column.
+			 */
 			label: schemaFactory.optional(schemaFactory.string),
 		}) {}
 		class Column extends TableSchema.createColumn(schemaFactory, ColumnProps) {}
 
 		class RowProps extends schemaFactory.object("table-row-props", {
+			/**
+			 * Whether or not the row is selectable.
+			 * @defaultValue `true`
+			 */
 			selectable: schemaFactory.optional(schemaFactory.boolean),
 		}) {}
 		class Row extends TableSchema.createRow(
