@@ -68,6 +68,9 @@ export interface IOutboxParameters {
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
+	readonly generateIdAllocationOp: (
+		resubmitOutstandingRanges: boolean,
+	) => LocalBatchMessage | undefined;
 }
 
 /**
@@ -462,6 +465,14 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend() && !staged) {
+			//* TODO: Determine if resubmitOutstandingRanges should be true based on resubmittingBatchId
+			//* Currently ID Allocation ops are not resubmitted directly, so passing false.
+			const idAllocationOp = this.params.generateIdAllocationOp(
+				false /* resubmitOutstandingRanges */,
+			);
+			if (idAllocationOp !== undefined) {
+				rawBatch.messages.unshift(idAllocationOp);
+			}
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);

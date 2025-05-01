@@ -1834,6 +1834,7 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
+			generateIdAllocationOp: this.generateIdAllocationOpIfNeeded.bind(this),
 		});
 
 		this._quorum = quorum;
@@ -4352,6 +4353,17 @@ export class ContainerRuntime
 	}
 
 	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
+		const idAllocationBatchMessage = this.generateIdAllocationOpIfNeeded(
+			resubmitOutstandingRanges,
+		);
+		if (idAllocationBatchMessage !== undefined) {
+			this.outbox.submitIdAllocation(idAllocationBatchMessage);
+		}
+	}
+
+	private generateIdAllocationOpIfNeeded(
+		resubmitOutstandingRanges: boolean,
+	): LocalBatchMessage | undefined {
 		if (this._idCompressor) {
 			const idRange = resubmitOutstandingRanges
 				? this._idCompressor.takeUnfinalizedCreationRange()
@@ -4369,9 +4381,10 @@ export class ContainerRuntime
 					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
 					staged: false,
 				};
-				this.outbox.submitIdAllocation(idAllocationBatchMessage);
+				return idAllocationBatchMessage;
 			}
 		}
+		return undefined;
 	}
 
 	private submit(
@@ -4409,8 +4422,7 @@ export class ContainerRuntime
 		);
 
 		try {
-			this.submitIdAllocationOpIfNeeded(false);
-
+			//* Move this to flush as well?  Otherwise we need to implement rollback and stuff for this thing I think...
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
 			// on this callback to do actual sending.
