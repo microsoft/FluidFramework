@@ -461,6 +461,7 @@ export interface ITimeoutContext {
     bindTimeout(maxDurationMs: number, callback: () => void): void;
     bindTimeoutAsync<T>(maxDurationMs: number, callback: () => Promise<T>): Promise<T>;
     checkTimeout(): void;
+    getTimeRemainingMs(): number | undefined;
 }
 
 // @internal (undocumented)
