@@ -61,6 +61,9 @@ export namespace TableSchema {
 		/**
 		 * The column's properties.
 		 * @remarks This is a user-defined schema that can be used to store additional information about the column.
+		 * @privateRemarks
+		 * Note: these docs are duplicated on the inline type definitions in {@link createColumn}.
+		 * If you update the docs here, please also update the inline type definitions.
 		 */
 		get props(): TreeFieldFromImplicitField<TPropsSchema> | undefined;
 		set props(value: InsertableTreeFieldFromImplicitField<TPropsSchema>);
@@ -126,6 +129,11 @@ export namespace TableSchema {
 			typeof columnFieldsBuiltInParts
 		> &
 			(FieldHasDefault<TPropsSchema> extends true
+				// Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
+				// documentation appears in the data insertion scenario.
+				// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
+				// support `@inheritDoc`.
+				// See: https://github.com/microsoft/TypeScript/issues/31267
 				? {
 						/**
 						 * The column's properties.
@@ -242,6 +250,9 @@ export namespace TableSchema {
 		/**
 		 * The row's properties.
 		 * @remarks This is a user-defined schema that can be used to store additional information about the row.
+		 * @privateRemarks
+		 * Note: these docs are duplicated on the inline type definitions in {@link createColumn}.
+		 * If you update the docs here, please also update the inline type definitions.
 		 */
 		get props(): TreeFieldFromImplicitField<TPropsSchema>;
 		set props(value: InsertableTreeFieldFromImplicitField<TPropsSchema>);
@@ -337,21 +348,29 @@ export namespace TableSchema {
 
 		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof rowFields>`,
 		// but that results in broken `.d.ts` output due to a TypeScript bug.
-		// Instead we extract and inline the typing of the "props" field here, which seems to sufficiently work around the issue.
+		// Instead we extract and inline the typing of the "props" field here, which seems to sufficiently work around
+		// the issue.
 		// type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
 		type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFieldsBuiltInParts> &
 			(FieldHasDefault<TPropsSchema> extends true
+				// Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
+				// documentation appears in the data insertion scenario.
+				// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
+				// support `@inheritDoc`.
+				// See: https://github.com/microsoft/TypeScript/issues/31267
 				? {
 						/**
 						 * The row's properties.
-						 * @remarks This is a user-defined schema that can be used to store additional information about the row.
+						 * @remarks This is a user-defined schema that can be used to store additional information
+						 * about the row.
 						 */
 						props?: InsertableTreeFieldFromImplicitField<TPropsSchema>;
 					}
 				: {
 						/**
 						 * The row's properties.
-						 * @remarks This is a user-defined schema that can be used to store additional information about the row.
+						 * @remarks This is a user-defined schema that can be used to store additional information
+						 * about the row.
 						 */
 						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
 					});
