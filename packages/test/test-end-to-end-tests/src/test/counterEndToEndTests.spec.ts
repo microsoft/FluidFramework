@@ -224,6 +224,7 @@ describeCompat(
 				loaderProps: {
 					configProvider: configProvider({
 						"Fluid.ContainerRuntime.EnableRollback": true,
+						"Fluid.SharedObject.AllowStagingModeWithoutSquashing": true,
 					}),
 				},
 			};

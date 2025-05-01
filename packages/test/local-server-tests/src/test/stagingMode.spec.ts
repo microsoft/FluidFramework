@@ -15,7 +15,11 @@ import {
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { type FluidObject } from "@fluidframework/core-interfaces/internal";
+import {
+	type ConfigTypes,
+	type FluidObject,
+	type IConfigProviderBase,
+} from "@fluidframework/core-interfaces/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -152,12 +156,31 @@ const waitForSave = async (clients: Client[] | Record<string, Client>) =>
 	);
 
 const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
-	const { loaderProps, codeDetails, urlResolver } = createLoader({
+	const {
+		loaderProps: baseLoaderProps,
+		codeDetails,
+		urlResolver,
+	} = createLoader({
 		deltaConnectionServer,
 		runtimeFactory,
 	});
 
-	const createContainer = await createDetachedContainer({ ...loaderProps, codeDetails });
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		getRawConfig: (name: string): ConfigTypes =>
+			settings[name] ?? baseLoaderProps.configProvider?.getRawConfig(name),
+	});
+
+	const loaderProps = {
+		...baseLoaderProps,
+		configProvider: configProvider({
+			"Fluid.SharedObject.AllowStagingModeWithoutSquashing": true,
+		}),
+	};
+
+	const createContainer = await createDetachedContainer({
+		...loaderProps,
+		codeDetails,
+	});
 
 	const original = {
 		container: createContainer,

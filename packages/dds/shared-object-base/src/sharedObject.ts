@@ -506,10 +506,13 @@ export abstract class SharedObjectCore<
 	}
 
 	protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
-		if (
+		const allowStagedModeWithoutSquashing =
+			loggerToMonitoringContext(this.logger).config.getBoolean(
+				"Fluid.SharedObject.AllowStagingModeWithoutSquashing",
+			) ??
 			(this.runtime.options.allowStagingModeWithoutSquashing as boolean | undefined) ??
-			false
-		) {
+			false;
+		if (allowStagedModeWithoutSquashing) {
 			this.reSubmitCore(content, localOpMetadata);
 		} else {
 			this.throwUnsupported("reSubmitSquashed");
