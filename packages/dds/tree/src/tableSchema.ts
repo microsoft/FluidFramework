@@ -147,7 +147,10 @@ export namespace TableSchema {
 
 		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
 		// typed correctly in terms of our insertable type.
+		// This lets us be selective in our type-cast for the value returned from this function,
+		// preserving as much type-safety as we reasonably can.
 		type ColumnSchemaModifiedType = Omit<
+			// Use mapped type to omit the constructor
 			{
 				[Property in keyof typeof Column]: (typeof Column)[Property];
 			},
@@ -374,7 +377,10 @@ export namespace TableSchema {
 
 		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
 		// typed correctly in terms of our insertable type.
+		// This lets us be selective in our type-cast for the value returned from this function,
+		// preserving as much type-safety as we reasonably can.
 		type RowSchemaModifiedType = Omit<
+			// Use mapped type to omit the constructor
 			{
 				[Property in keyof typeof Row]: (typeof Row)[Property];
 			},
