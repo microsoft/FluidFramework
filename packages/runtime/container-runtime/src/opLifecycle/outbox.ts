@@ -470,6 +470,7 @@ export class Outbox {
 			const idAllocationOp = this.params.generateIdAllocationOp(
 				false /* resubmitOutstandingRanges */,
 			);
+			//* BUG: This doesn't get batch metadata right, since popBatch does that and it already happened
 			if (idAllocationOp !== undefined) {
 				rawBatch.messages.unshift(idAllocationOp);
 			}
