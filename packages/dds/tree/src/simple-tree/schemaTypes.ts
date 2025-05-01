@@ -17,6 +17,7 @@ import {
 	type requireTrue,
 	type areOnlyKeys,
 	getOrCreate,
+	type IsUnion,
 } from "../util/index.js";
 import type {
 	Unhydrated,
@@ -73,7 +74,13 @@ export function isTreeNodeSchemaClass<
  * Ideally this restriction would be modeled in the type itself, but it is not ergonomic to do so as there is no easy (when compared to arrays)
  * way to declare and manipulate unordered sets of types in TypeScript.
  *
- * Not intended for direct use outside of package.
+ * Duplicate entries in this array are not allowed and will produce runtime errors.
+ * Duplicate types are allowed,
+ * but this must only be reflected in the type and not the runtime values.
+ * This duplication can be used to encode the typing when the number of items in the array is not known at compile time
+ * but some of the items are known to be present unconditionally.
+ * For example, typing `[typeof A] | [typeof A, typeof B]` as `[typeof A, typeof B | typeof A]` is allowed,
+ * and can produce more useful {@link Input} types.
  * @privateRemarks
  * Code reading data from this should use `normalizeAllowedTypes` to ensure consistent handling, caching, nice errors etc.
  * @system @public
@@ -438,6 +445,7 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchemaAl
 		? (schema as FieldSchemaAlpha)
 		: createFieldSchema(FieldKind.Required, schema);
 }
+
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
  * lazy schema declarations.
@@ -884,16 +892,21 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitA
  * @see {@link Input}
  *
  * @typeparam TList - AllowedTypes to process
+ *
+ * @privateRemarks
+ * This loop is manually unrolled to allow larger unions before hitting the recursion limit in TypeScript.
  * @system @public
  */
-export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = [TList] extends [
-	readonly [
-		LazyItem<infer TSchema extends TreeNodeSchema>,
-		...infer Rest extends AllowedTypes,
-	],
-]
-	? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest>
-	: never;
+export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> =
+	IsUnion<TList> extends true
+		? never
+		: {
+				readonly [Property in keyof TList]: TList[Property] extends LazyItem<
+					infer TSchema extends TreeNodeSchema
+				>
+					? InsertableTypedNode<TSchema>
+					: never;
+			}[number];
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
