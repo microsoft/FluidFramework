@@ -39,6 +39,7 @@ import type { IChannelView } from "./utils.js";
  * SharedObjects expose APIs for two consumers:
  *
  * 1. The runtime, which uses the SharedObject to summarize, load and apply ops.
+ *
  * 2. The app, who uses the SharedObject to read and write data.
  *
  * There is some common functionality all shared objects use, provided by {@link SharedObject}.
@@ -97,7 +98,7 @@ export interface SharedKernel {
 /**
  * SharedObject implementation that delegates to a SharedKernel.
  * @typeParam TOut - The type of the object exposed to the app.
- * Once initialized instances of this class forward properties to the `TOut` val;ue provided by the factory.
+ * Once initialized, instances of this class forward properties to the `TOut` value provided by the factory.
  * See {@link mergeAPIs} for more limitations.
  *
  * @remarks
@@ -286,12 +287,12 @@ export interface KernelArgs {
 /**
  * Add getters to `base` which forward own properties from `extra`.
  * @remarks
- * This only handles use of "get" and "has":
- * therefor APIs involving setting properties should not be used as `Extra`.
+ * This only handles use of "get" and "has".
+ * Therefore, APIs involving setting properties should not be used as `Extra`.
  *
  * Functions from `extra` are bound to the `extra` object and support {@link thisWrap}.
  *
- * When asserts when properties collide.
+ * Asserts when properties collide.
  * @internal
  */
 export function mergeAPIs<const Base extends object, const Extra extends object>(
@@ -312,7 +313,7 @@ export function mergeAPIs<const Base extends object, const Extra extends object>
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const fromExtra: () => Extra | Base = descriptor.value;
 			getter = () => forwardMethod(fromExtra, extra, base);
-			// To catch (and error on) cases where the function is reassigned and this this eager binding approach is not appropriate, make it non-writable.
+			// To catch (and error on) cases where the function is reassigned and this eager binding approach is not appropriate, make it non-writable.
 			Object.defineProperty(extra, key, { ...descriptor, writable: false });
 		} else {
 			getter = () => extra[key];

@@ -205,7 +205,7 @@ export class SharedTreeKernel
 	}
 
 	/**
-	 * The app facing API for SharedTree implemented by this Kernel.
+	 * The app-facing API for SharedTree implemented by this Kernel.
 	 * @remarks
 	 * This is the API grafted onto the ISharedObject which apps can access.
 	 * It includes both the APIs used for internal testing, and public facing APIs (both stable and unstable).
