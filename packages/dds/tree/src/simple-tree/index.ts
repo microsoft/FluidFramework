@@ -120,6 +120,8 @@ export {
 	allowUnused,
 	type FieldSchemaAlphaUnsafe,
 	type TreeSchema,
+	type ValidateRecursiveSchemaTemplate,
+	type FixRecursiveRecursionLimit,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,

@@ -43,7 +43,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import {
-	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
@@ -446,10 +445,9 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		 * Creates a detached container and returns it along with the default data store.
 		 */
 		async function createDetachedContainerAndDataStore() {
-			const detachedBlobStorage = new MockDetachedBlobStorage();
 			const loader = provider.makeTestLoader({
 				...testContainerConfig,
-				loaderProps: { ...testContainerConfig.loaderProps, detachedBlobStorage },
+				loaderProps: { ...testContainerConfig.loaderProps },
 			});
 			const mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
