@@ -107,7 +107,7 @@ const schemaFactory = new SchemaFactory("Test");
 	{
 		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
 
-		// Optional field has default: undefined.
+		// Optional field has default.
 		type _check = requireTrue<FieldHasDefault<OptionalNoteField>>;
 	}
 
@@ -115,7 +115,7 @@ const schemaFactory = new SchemaFactory("Test");
 	{
 		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
 
-		// Identifier fields have default: undefined.
+		// Identifier fields have default.
 		type _check = requireTrue<FieldHasDefault<IdentifierField>>;
 	}
 
