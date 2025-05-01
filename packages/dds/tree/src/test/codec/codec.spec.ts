@@ -17,7 +17,7 @@ describe("Codec APIs", () => {
 			encode: (x) => x,
 			decode: (x) => x,
 		};
-	const codec = withSchemaValidation(Type.Number(), idCodec, typeboxValidator);
+		const codec = withSchemaValidation(Type.Number(), idCodec, typeboxValidator);
 		describe("rejects invalid data", () => {
 			it("on encode", () => {
 				assert.throws(
