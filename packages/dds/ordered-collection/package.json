@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/ordered-collection",
-	"version": "2.33.2",
+	"version": "2.33.3",
 	"description": "Consensus Collection",
 	"homepage": "https://fluidframework.com",
 	"repository": {

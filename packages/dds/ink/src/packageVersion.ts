@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/ink";
-export const pkgVersion = "2.33.2";
+export const pkgVersion = "2.33.3";

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/smde",
-	"version": "2.33.2",
+	"version": "2.33.3",
 	"private": true,
 	"description": "Simple markdown editor",
 	"homepage": "https://fluidframework.com",
