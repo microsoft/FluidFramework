@@ -20,6 +20,7 @@ import {
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import type {
+	FieldHasDefault,
 	InsertableObjectFromSchemaRecord,
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
@@ -36,6 +37,9 @@ import type {
 import { validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
 import type {
+	FieldKind,
+	FieldSchema,
+	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
@@ -79,6 +83,76 @@ const schemaFactory = new SchemaFactory("Test");
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		type result = InsertableObjectFromSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
+	}
+}
+
+// FieldHasDefault
+{
+	class Note extends schemaFactory.object("Note", {}) {}
+
+	{
+		type _check = requireFalse<FieldHasDefault<ImplicitAllowedTypes>>;
+		type _check2 = requireFalse<FieldHasDefault<ImplicitFieldSchema>>;
+	}
+
+	// Node schema via ImplicitAllowedTypes
+	{
+		// Implicitly required field does not have a default value.
+		type _check = requireFalse<FieldHasDefault<typeof Note>>;
+	}
+
+	// Required field
+	{
+		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
+
+		// Required field does not have a default value.
+		type _check = requireFalse<FieldHasDefault<RequiredNoteField>>;
+	}
+
+	// Optional field
+	{
+		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
+
+		// Optional field has default.
+		type _check = requireTrue<FieldHasDefault<OptionalNoteField>>;
+	}
+
+	// Identifier field
+	{
+		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+
+		// Identifier fields have default.
+		type _check = requireTrue<FieldHasDefault<IdentifierField>>;
+	}
+
+	// Union of required fields
+	{
+		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
+		type ImplicitlyRequiredStringField = typeof SchemaFactory.string;
+		type Union = RequiredNoteField | ImplicitlyRequiredStringField;
+
+		// Field definitively does not have a default value.
+		type _check = requireFalse<FieldHasDefault<Union>>;
+	}
+
+	// Union of optional fields
+	{
+		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
+		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+		type Union = OptionalNoteField | IdentifierField;
+
+		// Field definitively has a default value.
+		type _check = requireTrue<FieldHasDefault<Union>>;
+	}
+
+	// Union of required and optional fields
+	{
+		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
+		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+		type Union = RequiredNoteField | IdentifierField;
+
+		// Field may or may not have a default value.
+		type _check = requireFalse<FieldHasDefault<Union>>;
 	}
 }
 
