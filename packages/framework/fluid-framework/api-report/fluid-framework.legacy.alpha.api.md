@@ -84,7 +84,9 @@ export abstract class ErasedType<out Name = unknown> {
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public @system
-type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
+type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
+FieldSchema<FieldKind.Optional | FieldKind.Identifier>
+] ? true : false;
 
 // @public
 export enum FieldKind {
@@ -435,55 +437,6 @@ export interface IInterval {
     union(b: IInterval): IInterval;
 }
 
-// @alpha @deprecated @legacy
-export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
-    // (undocumented)
-    [Symbol.iterator](): Iterator<TInterval>;
-    add({ start, end, props, }: {
-        start: SequencePlace;
-        end: SequencePlace;
-        props?: PropertySet;
-    }): TInterval;
-    // (undocumented)
-    attachDeserializer(onDeserialize: DeserializeCallback): void;
-    // (undocumented)
-    readonly attached: boolean;
-    attachIndex(index: IntervalIndex<TInterval>): void;
-    change(id: string, { start, end, props }: {
-        start?: SequencePlace;
-        end?: SequencePlace;
-        props?: PropertySet;
-    }): TInterval | undefined;
-    // (undocumented)
-    CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-    detachIndex(index: IntervalIndex<TInterval>): boolean;
-    // @deprecated (undocumented)
-    findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
-    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
-    // (undocumented)
-    getIntervalById(id: string): TInterval | undefined;
-    map(fn: (interval: TInterval) => void): void;
-    // @deprecated (undocumented)
-    nextInterval(pos: number): TInterval | undefined;
-    // @deprecated (undocumented)
-    previousInterval(pos: number): TInterval | undefined;
-    removeIntervalById(id: string): TInterval | undefined;
-}
-
-// @alpha @deprecated @legacy
-export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "changed", listener: (interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval | undefined, local: boolean, slide: boolean) => void): void;
-}
-
 // @public
 export interface IMember {
     readonly connections: IConnection[];
@@ -520,12 +473,9 @@ type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<Implicit
 export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : never;
 
 // @public @system
-export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = [TList] extends [
-readonly [
-LazyItem<infer TSchema extends TreeNodeSchema>,
-...infer Rest extends AllowedTypes
-]
-] ? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest> : never;
+export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = IsUnion<TList> extends true ? never : {
+    readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchema> ? InsertableTypedNode<TSchema> : never;
+}[number];
 
 // @public
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> = [
@@ -560,12 +510,6 @@ declare namespace InternalTypes {
     }
 }
 export { InternalTypes }
-
-// @alpha @deprecated @legacy
-export interface IntervalIndex<TInterval extends ISerializableInterval> {
-    add(interval: TInterval): void;
-    remove(interval: TInterval): void;
-}
 
 // @alpha @legacy
 export const IntervalStickiness: {
@@ -726,12 +670,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @deprecated @legacy (undocumented)
-export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
-    // (undocumented)
-    getIntervalCollection(label: string): IIntervalCollection<TInterval>;
-}
-
 // @alpha @sealed @legacy
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
@@ -824,6 +762,9 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 
 // @public
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+
+// @public @system
+export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
 
 // @public
 export interface ITelemetryBaseProperties {
@@ -1194,14 +1135,9 @@ export namespace System_Unsafe {
     // @system
     export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchemaInput extends ImplicitFieldSchemaUnsafe, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchemaUnsafe<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : never;
     // @system
-    export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = [
-    TList
-    ] extends [
-    readonly [
-    LazyItem<infer TSchema extends TreeNodeSchemaUnsafe>,
-    ...infer Rest extends AllowedTypesUnsafe
-    ]
-    ] ? InsertableTypedNodeUnsafe<TSchema> | InsertableTreeNodeFromAllowedTypesUnsafe<Rest> : never;
+    export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = IsUnion<TList> extends true ? never : {
+        readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchemaUnsafe> ? InsertableTypedNodeUnsafe<TSchema> : never;
+    }[number];
     // @system
     export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends ImplicitAllowedTypesUnsafe> = [TSchema] extends [TreeNodeSchemaUnsafe] ? InsertableTypedNodeUnsafe<TSchema> : [TSchema] extends [AllowedTypesUnsafe] ? InsertableTreeNodeFromAllowedTypesUnsafe<TSchema> : never;
     // @system
@@ -1439,15 +1375,20 @@ export type Unhydrated<T> = T;
 export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
 // @public
-export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {
+export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
+
+// @public @system
+export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNodeSchema<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {
     [NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema> ? InsertableObjectFromSchemaRecord<T["info"]> : unknown;
     [NodeKind.Array]: T["info"] extends ImplicitAllowedTypes ? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>> : unknown;
     [NodeKind.Map]: T["info"] extends ImplicitAllowedTypes ? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]> : unknown;
+    [NodeKind.Leaf]: unknown;
 }[T["kind"]], false, {
     [NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
     [NodeKind.Array]: ImplicitAllowedTypes;
     [NodeKind.Map]: ImplicitAllowedTypes;
-}[T["kind"]]>> = true;
+    [NodeKind.Leaf]: unknown;
+}[T["kind"]]>;
 
 // @public @sealed @system
 export interface ViewableTree {
