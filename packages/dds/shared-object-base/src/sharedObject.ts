@@ -80,7 +80,7 @@ interface ProcessTelemetryProperties {
  * or if the intention is that no other implementations should exist and creating some might break things.
  *
  * TODO:
- * This class should eventually be make internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
+ * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
  * @legacy
  * @alpha
  */

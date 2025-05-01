@@ -23,7 +23,7 @@ import type { IChannelAttributes } from "./storage.js";
  * This summary support allows for loading a channel without having to reapply all ops that have been applied during its lifetime.
  * @privateRemarks
  * Since this is an interface between services (which we only expect to be implemented in this repository) and SharedObjects, which we also only expect to be implemented in this repository,
- * this should probable eventually become internal.
+ * this should probably eventually become internal.
  *
  * {@link IChannelView} subsets this interface removing APIs only needed by the service: if/when IChannel becomes internal, it may make sense to reverse the dependency between these two interfaces,
  * and promote {@link IChannelView} to expose its APIs more publicly.
