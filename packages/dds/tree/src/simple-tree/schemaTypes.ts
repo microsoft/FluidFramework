@@ -148,9 +148,16 @@ export function isAnnotatedAllowedType(
 
 /**
  * Annotations that apply to an individual allowed type.
+ * @remarks
+ * Additional optionals may be added to this as non-breaking changes, so implementations of it should be simple object literals with no unlisted members.
  * @alpha
  */
 export interface AllowedTypeMetadata {
+	/**
+	 * User defined metadata
+	 */
+	custom?: unknown;
+	
 	// TODO metadata for enablable types will be added here
 }
 
