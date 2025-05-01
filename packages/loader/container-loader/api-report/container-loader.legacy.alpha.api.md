@@ -57,13 +57,6 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
     readonly codeDetails: IFluidCodeDetails;
 }
 
-// @alpha @deprecated @legacy
-export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
-    size: number;
-    getBlobIds(): string[];
-    dispose?(): void;
-};
-
 // @alpha @deprecated @legacy (undocumented)
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
@@ -74,7 +67,6 @@ export interface IFluidModuleWithDetails {
 export interface ILoaderProps {
     readonly codeLoader: ICodeDetailsLoader;
     readonly configProvider?: IConfigProviderBase;
-    readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
@@ -86,8 +78,6 @@ export interface ILoaderProps {
 // @alpha @legacy
 export interface ILoaderServices {
     readonly codeLoader: ICodeDetailsLoader;
-    // @deprecated
-    readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
     readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
