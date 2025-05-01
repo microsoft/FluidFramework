@@ -136,7 +136,6 @@ export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "i
  * Creates a shallow wrapper of {@link IFluidParentContext}. The wrapper can then have its methods overwritten as needed
  */
 export function wrapContext(context: IFluidParentContextPrivate): IFluidParentContextPrivate {
-	const isReadOnly = context.isReadOnly;
 	return {
 		get IFluidDataStoreRegistry() {
 			return context.IFluidDataStoreRegistry;
@@ -162,7 +161,7 @@ export function wrapContext(context: IFluidParentContextPrivate): IFluidParentCo
 		get attachState() {
 			return context.attachState;
 		},
-		isReadOnly: () => isReadOnly(),
+		isReadOnly: () => context.isReadOnly(),
 		containerRuntime: context.containerRuntime,
 		scope: context.scope,
 		gcThrowOnTombstoneUsage: context.gcThrowOnTombstoneUsage,
