@@ -142,7 +142,7 @@ export type FactoryContentObject = {
 
 // @public @system
 type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
-FieldSchema<FieldKind.Identifier | FieldKind.Optional>
+FieldSchema<FieldKind.Optional | FieldKind.Identifier>
 ] ? true : false;
 
 // @public

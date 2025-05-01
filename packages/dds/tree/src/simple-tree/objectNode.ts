@@ -103,7 +103,7 @@ export type TreeObjectNode<
  * @system @public
  */
 export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
-	FieldSchema<FieldKind.Identifier | FieldKind.Optional>,
+	FieldSchema<FieldKind.Optional | FieldKind.Identifier>,
 ]
 	? true
 	: false;
