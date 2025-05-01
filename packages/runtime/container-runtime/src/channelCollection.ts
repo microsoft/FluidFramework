@@ -126,7 +126,7 @@ interface FluidDataStoreMessage {
  * cross package, it is likely it is also being used cross layer (ContainerRuntime * DataStoreRuntime).
  * If that is the case, the change likely needs to be staged directly on IFluidParentContext. Changes
  * being staged on IFluidParentContext can be added here as well, likely with optionality removed,
- * to ease interactions between layers within this package.
+ * to ease interactions within this package.
  */
 export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "isReadOnly"> {
 	readonly isReadOnly: () => boolean;
