@@ -152,7 +152,7 @@ export class PureDataObjectFactory<
 > implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly registry: IFluidDataStoreRegistry | undefined;
-	private readonly props: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
+	private readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
 
 	public constructor(
 		/**
@@ -169,7 +169,7 @@ export class PureDataObjectFactory<
 			throw new Error("undefined type member");
 		}
 
-		this.props = {
+		this.createProps = {
 			ctor,
 			optionalProviders,
 			sharedObjectRegistry: new Map(sharedObjects.map((ext) => [ext.type, ext])),
@@ -212,7 +212,7 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const { runtime } = await createDataObject({ ...this.props, context, existing });
+		const { runtime } = await createDataObject({ ...this.createProps, context, existing });
 
 		return runtime;
 	}
@@ -308,7 +308,7 @@ export class PureDataObjectFactory<
 			loadingGroupId,
 		);
 		const { instance, runtime } = await createDataObject({
-			...this.props,
+			...this.createProps,
 			context,
 			existing: false,
 			initialState,
@@ -338,7 +338,7 @@ export class PureDataObjectFactory<
 	): Promise<TObj> {
 		const context = runtime.createDetachedDataStore([this.type]);
 		const { instance, runtime: dataStoreRuntime } = await createDataObject({
-			...this.props,
+			...this.createProps,
 			context,
 			existing: false,
 			initialState,
@@ -368,7 +368,7 @@ export class PureDataObjectFactory<
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
 		const { instance, runtime } = await createDataObject({
-			...this.props,
+			...this.createProps,
 			context,
 			existing: false,
 			initialState,
