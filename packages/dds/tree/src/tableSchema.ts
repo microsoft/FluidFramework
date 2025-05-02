@@ -138,9 +138,9 @@ export namespace System_TableSchema {
 			"createFromInsertable"
 		> &
 			(new (
-				props: InternalTreeNode | ColumnInsertableType,
+				parameters: InternalTreeNode | ColumnInsertableType,
 			) => Column) & {
-				createFromInsertable(props: ColumnInsertableType): Column;
+				createFromInsertable(parameters: ColumnInsertableType): Column;
 			};
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
@@ -297,9 +297,9 @@ export namespace System_TableSchema {
 			"createFromInsertable"
 		> &
 			(new (
-				props: InternalTreeNode | RowInsertableType,
+				parameters: InternalTreeNode | RowInsertableType,
 			) => Row) & {
-				createFromInsertable(props: RowInsertableType): Row;
+				createFromInsertable(parameters: RowInsertableType): Row;
 			};
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
