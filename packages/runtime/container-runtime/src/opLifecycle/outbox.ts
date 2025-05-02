@@ -73,6 +73,16 @@ export interface IOutboxParameters {
 		resubmitOutstandingRanges: boolean,
 	) => LocalBatchMessage | undefined;
 }
+//* Comments
+//  * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
+//  * with the given Batch ID, which must be preserved
+//  * @param resubmittingStagedBatch - If defined, indicates this is a resubmission of a batch that is staged,
+//  * meaning it should not be sent to the ordering service yet.
+
+export interface BatchResubmitInfo {
+	batchId?: string;
+	staged: boolean;
+}
 
 /**
  * Temporarily increase the stack limit while executing the provided action.
@@ -351,44 +361,37 @@ export class Outbox {
 	 * This method is expected to be called at the end of a batch.
 	 *
 	 * @throws If called from a reentrant context, or if the batch being flushed is too large.
-	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
-	 * with the given Batch ID, which must be preserved
-	 * @param resubmittingStagedBatch - If defined, indicates this is a resubmission of a batch that is staged,
-	 * meaning it should not be sent to the ordering service yet.
+	 * @param resubmitInfo - Optional information when flushing a resubmitted batch. Undefined means this is not resubmit.
 	 */
-	public flush(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
+	public flush(resubmitInfo?: BatchResubmitInfo): void {
 		assert(
 			!this.isContextReentrant(),
 			0xb7b /* Flushing must not happen while incoming changes are being processed */,
 		);
-
-		this.flushAll(resubmittingBatchId, resubmittingStagedBatch);
+		this.flushAll(resubmitInfo);
 	}
 
-	private flushAll(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
+	private flushAll(resubmitInfo?: BatchResubmitInfo): void {
 		const allBatchesEmpty = this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (allBatchesEmpty) {
-			// If we're resubmitting and all batches are empty, we need to flush an empty batch.
-			// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
+			// If we're resubmitting with a batchId and all batches are empty, we need to flush an empty batch.
+			// Note that we currently resubmit one batch at a time, so on resubmit, 1 of the 2 batches will *always* be empty.
 			// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
 			// by the rest of the system, including remote clients.
 			// In some cases we *must* resubmit the empty batch (to match up with a non-empty version tracked locally by a container fork), so we do it always.
-			if (resubmittingBatchId) {
-				this.flushEmptyBatch(resubmittingBatchId, resubmittingStagedBatch === true);
+			if (resubmitInfo?.batchId !== undefined) {
+				this.flushEmptyBatch(resubmitInfo.batchId, resubmitInfo.staged);
 			}
 			return;
 		}
-
 		this.flushInternal({
 			batchManager: this.blobAttachBatch,
 			disableGroupedBatching: true,
-			resubmittingBatchId,
-			resubmittingStagedBatch,
+			resubmitInfo,
 		});
 		this.flushInternal({
 			batchManager: this.mainBatch,
-			resubmittingBatchId,
-			resubmittingStagedBatch,
+			resubmitInfo,
 		});
 	}
 
@@ -424,15 +427,9 @@ export class Outbox {
 	private flushInternal(params: {
 		batchManager: BatchManager;
 		disableGroupedBatching?: boolean;
-		resubmittingBatchId?: BatchId; // undefined if not resubmitting
-		resubmittingStagedBatch?: boolean; // undefined if not resubmitting
+		resubmitInfo?: BatchResubmitInfo; // undefined if not resubmitting
 	}): void {
-		const {
-			batchManager,
-			disableGroupedBatching = false,
-			resubmittingBatchId,
-			resubmittingStagedBatch,
-		} = params;
+		const { batchManager, disableGroupedBatching = false, resubmitInfo } = params;
 		if (batchManager.empty) {
 			return;
 		}
@@ -442,7 +439,7 @@ export class Outbox {
 		// When resubmitting, we respect the staged state of the original batch.
 		// In this case rawBatch.staged will match the state of inStagingMode when
 		// the resubmit occurred, which is not relevant.
-		const staged = resubmittingStagedBatch ?? rawBatch.staged === true;
+		const staged = resubmitInfo?.staged ?? rawBatch.staged === true;
 
 		const groupingEnabled =
 			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
@@ -470,14 +467,13 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend() && !staged) {
-			//* TODO: Set resubmitOutstandingRanges if resubmitting.
 			const idAllocationOp = this.params.generateIdAllocationOp(
-				false /* resubmitOutstandingRanges */,
+				resubmitInfo !== undefined /* resubmitOutstandingRanges */,
 			);
 			if (idAllocationOp !== undefined) {
 				rawBatch.messages.unshift(idAllocationOp);
 			}
-			addBatchMetadata(rawBatch, resubmittingBatchId);
+			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);
