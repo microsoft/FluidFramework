@@ -56,11 +56,9 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
     protected get root(): ISharedDirectory;
 }
 
-// @alpha @legacy (undocumented)
+// @alpha @legacy
 export interface DataObjectConstructor<TObj extends PureDataObject, I extends DataObjectTypes> {
-    // (undocumented)
     new (props: IDataObjectProps<I>): TObj;
-    // (undocumented)
     readonly policies?: Partial<IFluidDataStorePolicies>;
 }
 
@@ -107,7 +105,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected initializingFromExisting(): Promise<void>;
     // (undocumented)
     protected initProps?: I["InitialState"];
-    // (undocumented)
     static readonly policies?: Partial<IFluidDataStorePolicies>;
     protected preInitialize(): Promise<void>;
     protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;

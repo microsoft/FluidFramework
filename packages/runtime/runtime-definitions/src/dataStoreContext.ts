@@ -329,6 +329,9 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
  * @remarks
  * Policies allow data store authors to define specific behaviors or constraints for their data stores.
  * These settings can impact how the data store interacts with the runtime and other components.
+ *
+ * @legacy
+ * @alpha
  */
 export interface IFluidDataStorePolicies {
 	/**

@@ -138,7 +138,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
     notifyReadOnlyState?(readonly: boolean): void;
-    // (undocumented)
     readonly policies?: IFluidDataStorePolicies;
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
