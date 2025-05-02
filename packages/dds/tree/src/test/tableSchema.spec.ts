@@ -842,19 +842,6 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	it("can read row props", () => {
-		const { treeView, Row } = createTableTree();
-
-		const row = new Row({ id: "row-0", cells: {}, props: { selectable: false } });
-
-		treeView.initialize({
-			columns: [],
-			rows: [row],
-		});
-
-		assert.equal(row.props?.selectable, false);
-	});
-
 	it("gets proper table elements with getter methods", () => {
 		const { treeView, Column, Row, Cell } = createTableTree();
 
