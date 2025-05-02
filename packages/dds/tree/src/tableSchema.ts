@@ -30,7 +30,6 @@ import {
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
-// - Overloads to make Column/Row schema optional when constructing Tables
 // - Record-like type parameters / input parameters?
 // - Omit `props` properties from Row and Column schemas when not provided?
 
@@ -91,7 +90,10 @@ export namespace System_TableSchema {
 		 * A column in a table.
 		 */
 		class Column
-			extends schemaFactory.object("Column", columnFields)
+			extends schemaFactory.object("Column", columnFields, {
+				// Will make it easier to evolve this schema in the future.
+				allowUnknownOptionalFields: true,
+			})
 			implements TableSchema.IColumn<TPropsSchema> {}
 
 		type ColumnValueType = TreeNode &
@@ -139,9 +141,9 @@ export namespace System_TableSchema {
 			"createFromInsertable"
 		> &
 			(new (
-				props: InternalTreeNode | ColumnInsertableType,
+				parameters: InternalTreeNode | ColumnInsertableType,
 			) => Column) & {
-				createFromInsertable(props: ColumnInsertableType): Column;
+				createFromInsertable(parameters: ColumnInsertableType): Column;
 			};
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
@@ -227,7 +229,10 @@ export namespace System_TableSchema {
 		 * The Row schema - this is a map of Cells where the key is the column id
 		 */
 		class Row
-			extends schemaFactory.object("Row", rowFields)
+			extends schemaFactory.object("Row", rowFields, {
+				// Will make it easier to evolve this schema in the future.
+				allowUnknownOptionalFields: true,
+			})
 			implements TableSchema.IRow<TCellSchema, TPropsSchema>
 		{
 			public getCell(columnOrId: TableSchema.IColumn | string): CellValueType | undefined {
@@ -298,9 +303,9 @@ export namespace System_TableSchema {
 			"createFromInsertable"
 		> &
 			(new (
-				props: InternalTreeNode | RowInsertableType,
+				parameters: InternalTreeNode | RowInsertableType,
 			) => Row) & {
-				createFromInsertable(props: RowInsertableType): Row;
+				createFromInsertable(parameters: RowInsertableType): Row;
 			};
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
@@ -376,7 +381,10 @@ export namespace System_TableSchema {
 		 * The Table schema
 		 */
 		class Table
-			extends schemaFactory.object("Table", tableFields)
+			extends schemaFactory.object("Table", tableFields, {
+				// Will make it easier to evolve this schema in the future.
+				allowUnknownOptionalFields: true,
+			})
 			implements TableSchema.ITable<TCell, TColumn, TRow>
 		{
 			public getColumn(id: string): ColumnValueType | undefined {
@@ -724,7 +732,7 @@ export namespace TableSchema {
 
 	/**
 	 * A key to uniquely identify a cell in a table.
-	 * @sealed @internal
+	 * @internal
 	 */
 	export interface CellKey {
 		/**
@@ -740,7 +748,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.insertColumn} parameters.
-	 * @sealed @internal
+	 * @internal
 	 */
 	export interface InsertColumnParameters<TInsertableColumn> {
 		/**
@@ -757,7 +765,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.insertRows} parameters.
-	 * @sealed @internal
+	 * @internal
 	 */
 	export interface InsertRowsParameters<TInsertableRow> {
 		/**
@@ -774,7 +782,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.setCell} parameters.
-	 * @sealed @internal
+	 * @internal
 	 */
 	export interface SetCellParameters<TInsertableCell> {
 		/**
