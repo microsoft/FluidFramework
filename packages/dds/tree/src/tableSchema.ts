@@ -671,6 +671,9 @@ export namespace TableSchema {
 		schemaFactory,
 		props,
 	}: System_TableSchema.CreateColumnOptionsBase<TScope> & {
+		/**
+		 * Optional column properties.
+		 */
 		readonly props: TProps;
 	}): ReturnType<typeof System_TableSchema.createColumnInternal<TScope, TProps>>;
 	/**
@@ -778,6 +781,9 @@ export namespace TableSchema {
 		cell,
 		props,
 	}: System_TableSchema.CreateRowOptionsBase<TScope, TCell> & {
+		/**
+		 * Optional row properties.
+		 */
 		readonly props: TProps;
 	}): ReturnType<typeof System_TableSchema.createRowInternal<TScope, TCell, TProps>>;
 	/**
