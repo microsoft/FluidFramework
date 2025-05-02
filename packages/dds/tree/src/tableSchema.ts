@@ -723,7 +723,7 @@ export namespace TableSchema {
 
 	/**
 	 * A key to uniquely identify a cell in a table.
-	 * @sealed @internal
+	 * @internal
 	 */
 	export interface CellKey {
 		/**
@@ -739,7 +739,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.insertColumn} parameters.
-	 * @sealed @internal
+	 * @internal
 	 */
 	export interface InsertColumnParameters<TInsertableColumn> {
 		/**
@@ -756,7 +756,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.insertRows} parameters.
-	 * @sealed @internal
+	 * @internal
 	 */
 	export interface InsertRowsParameters<TInsertableRow> {
 		/**
@@ -773,7 +773,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.setCell} parameters.
-	 * @sealed @internal
+	 * @internal
 	 */
 	export interface SetCellParameters<TInsertableCell> {
 		/**
