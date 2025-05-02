@@ -47,7 +47,7 @@ export namespace TableSchema {
 
 	/**
 	 * A column in a table.
-	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createColumn:1)}.
+	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createColumn:2)}.
 	 * @sealed @internal
 	 */
 	export interface IColumn<TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
@@ -232,7 +232,7 @@ export namespace TableSchema {
 
 	/**
 	 * A row in a table.
-	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createRow:1)}.
+	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createRow:2)}.
 	 * @sealed @internal
 	 */
 	export interface IRow<
