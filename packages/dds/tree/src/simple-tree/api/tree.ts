@@ -53,7 +53,7 @@ import type {
  *
  * @privateRemarks
  * TODO:
- * Add stored key versions of {@link TreeAlpha.(exportVerbose:2)}, {@link TreeAlpha.(exportConcise:2)} and {@link TreeAlpha.exportCompressed} here so tree content can be accessed without a view schema.
+ * Add stored key versions of {@link (TreeAlpha:interface).(exportVerbose:2)}, {@link (TreeAlpha:interface).(exportConcise:2)} and {@link (TreeAlpha:interface).exportCompressed} here so tree content can be accessed without a view schema.
  * Add exportSimpleSchema and exportJsonSchema methods (which should exactly match the concise format, and match the free functions for exporting view schema).
  * Maybe rename "exportJsonSchema" to align on "concise" terminology.
  * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
@@ -99,7 +99,7 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
  */
 export interface ITreeAlpha extends ITree {
 	/**
-	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
+	 * Exports root in the same format as {@link (TreeAlpha:interface).(exportVerbose:1)} using stored keys.
 	 * @remarks
 	 * This is `undefined` if and only if the root field is empty (this can only happen if the root field is optional).
 	 */

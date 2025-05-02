@@ -130,14 +130,18 @@ export abstract class SharedObjectCore<
 		return this._connected;
 	}
 
-	/**
-	 * @param id - The id of the shared object
-	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
-	 * @param attributes - Attributes of the shared object
-	 */
 	constructor(
+		/**
+		 * The ID of the shared object.
+		 */
 		public id: string,
+		/**
+		 * The runtime instance that contains the Shared Object.
+		 */
 		protected runtime: IFluidDataStoreRuntime,
+		/**
+		 * The attributes of the Shared Object.
+		 */
 		public readonly attributes: IChannelAttributes,
 	) {
 		super((event: EventEmitterEventType, e: unknown) =>
@@ -797,15 +801,13 @@ export abstract class SharedObject<
 		return this._serializer;
 	}
 
-	/**
-	 * @param id - The id of the shared object
-	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
-	 * @param attributes - Attributes of the shared object
-	 */
 	constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
+		/**
+		 * The prefix to use for telemetry events emitted by this object.
+		 */
 		private readonly telemetryContextPrefix: string,
 	) {
 		super(id, runtime, attributes);
