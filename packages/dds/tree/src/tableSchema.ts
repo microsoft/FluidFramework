@@ -90,7 +90,9 @@ export namespace System_TableSchema {
 		 * A column in a table.
 		 */
 		class Column
-			extends schemaFactory.object("Column", columnFields)
+			extends schemaFactory.object("Column", columnFields, {
+				allowUnknownOptionalFields: true,
+			})
 			implements TableSchema.IColumn<TPropsSchema> {}
 
 		type ColumnValueType = TreeNode &
@@ -226,7 +228,7 @@ export namespace System_TableSchema {
 		 * The Row schema - this is a map of Cells where the key is the column id
 		 */
 		class Row
-			extends schemaFactory.object("Row", rowFields)
+			extends schemaFactory.object("Row", rowFields, { allowUnknownOptionalFields: true })
 			implements TableSchema.IRow<TCellSchema, TPropsSchema>
 		{
 			public getCell(columnOrId: TableSchema.IColumn | string): CellValueType | undefined {
@@ -375,7 +377,7 @@ export namespace System_TableSchema {
 		 * The Table schema
 		 */
 		class Table
-			extends schemaFactory.object("Table", tableFields)
+			extends schemaFactory.object("Table", tableFields, { allowUnknownOptionalFields: true })
 			implements TableSchema.ITable<TCell, TColumn, TRow>
 		{
 			public getColumn(id: string): ColumnValueType | undefined {
