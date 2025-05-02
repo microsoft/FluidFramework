@@ -163,7 +163,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 /**
  * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
  */
-export function getminVersionForCollabDefaults(
+export function getMinVersionForCollabDefaults(
 	minVersionForCollab: SemanticVersion,
 ): RuntimeOptionsAffectingDocSchema {
 	return getConfigsForCompatMode(

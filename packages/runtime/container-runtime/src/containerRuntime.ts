@@ -159,7 +159,7 @@ import {
 } from "./channelCollection.js";
 import {
 	defaultMinVersionForCollab,
-	getminVersionForCollabDefaults,
+	getMinVersionForCollabDefaults,
 	isValidMinVersionForCollab,
 	type RuntimeOptionsAffectingDocSchema,
 	type SemanticVersion,
@@ -829,10 +829,10 @@ export class ContainerRuntime
 				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 2.22.1).`,
 			);
 		}
-		const defaultVersionDependentConfigs = getminVersionForCollabDefaults(minVersionForCollab);
+		const defaultsAffectingDocSchema = getMinVersionForCollabDefaults(minVersionForCollab);
 
 		// The following are the default values for the options that do not affect the DocumentSchema.
-		const defaultConfigsNonVersionDependent: Required<
+		const defaultsNotAffectingDocSchema: Required<
 			Omit<IContainerRuntimeOptionsInternal, keyof RuntimeOptionsAffectingDocSchema>
 		> = {
 			summaryOptions: {},
@@ -842,8 +842,8 @@ export class ContainerRuntime
 		};
 
 		const defaultConfigs = {
-			...defaultVersionDependentConfigs,
-			...defaultConfigsNonVersionDependent,
+			...defaultsAffectingDocSchema,
+			...defaultsNotAffectingDocSchema,
 		};
 
 		// Here we set each option to its corresponding default config value if it's not provided in runtimeOptions.
