@@ -689,6 +689,8 @@ export abstract class FluidDataStoreContext
 	 * If true, the data store is set to readonly unless explicitly allowed by its policies.
 	 */
 	public notifyStagingMode(staging: boolean): void {
+		// If the `readonlyInStagingMode` policy is not explicitly set to `false`,
+		// the data store defaults to readonly in staging mode.
 		if (this.channel?.policies?.readonlyInStagingMode !== false) {
 			this.forceReadonly = staging;
 			this.notifyReadOnlyState(this.isReadOnly());
