@@ -30,7 +30,6 @@ import {
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
-// - Overloads to make Column/Row schema optional when constructing Tables
 // - Record-like type parameters / input parameters?
 // - Omit `props` properties from Row and Column schemas when not provided?
 
