@@ -153,4 +153,55 @@ describe("Container create scenarios", () => {
 			"Odsp Client can load a non-existent container",
 		);
 	});
+
+	/**
+	 * Scenario: test if readonly flag is false on a new attached container.
+	 *
+	 * Expected behavior: readonly flag should be false a new attached container.
+	 */
+	it("Readonly flag on new attached container)", async () => {
+		const { container } = await client.createContainer(schema);
+		const itemId = await container.attach();
+
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
+
+		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			container.attachState,
+			AttachState.Attached,
+			"Container is not attached after attach is called",
+		);
+
+		assert.strictEqual(
+			container.readOnlyInfo.readonly,
+			false,
+			"Readonly is not false on newly attached container",
+		);
+
+		let readonlyEventFired = false;
+		container.on("readonly", (readonly: boolean) => {
+			readonlyEventFired = true;
+			assert.strictEqual(
+				readonly,
+				true,
+				"Readonly should not be false after forceReadonly is called",
+			);
+		});
+		container.forceReadonly(true);
+		assert.strictEqual(
+			readonlyEventFired,
+			true,
+			"Readonly event was not fired after forceReadonly",
+		);
+		assert.strictEqual(
+			container.readOnlyInfo.readonly,
+			true,
+			"Readonly should not be false after forceReadonly is called",
+		);
+	});
 });

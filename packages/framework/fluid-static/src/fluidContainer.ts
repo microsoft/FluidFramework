@@ -93,6 +93,15 @@ export interface IFluidContainerEvents extends IEvent {
 	 * {@link IFluidContainer.dispose}), this will contain details about the error that caused it.
 	 */
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
+
+	/**
+	 * Emitted when the {@link IFluidContainer} readonly flag is changed.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `readonly`: If the container is read-only, this will be true. Otherwise, it will be false.
+	 */
+	(event: "readonly", listener: (readonly: boolean) => void): void;
 }
 
 /**
@@ -238,6 +247,12 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * Dispose of the container instance, permanently disabling it.
 	 */
 	dispose(): void;
+
+	/**
+	 * Allows the host to have the container force to be in read-only mode
+	 * @param readonly - Boolean that toggles if read-only policies will be enforced
+	 */
+	forceReadonly(readonly: boolean): void;
 }
 
 /**
@@ -301,7 +316,8 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.emit("disposed", error);
 	private readonly savedHandler = (): boolean => this.emit("saved");
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
-	private readonly readonlyHandler = (): boolean => this.emit("readonly");
+	private readonly readonlyHandler = (readonly: boolean): boolean =>
+		this.emit("readonly", readonly);
 
 	public constructor(
 		public readonly container: IContainer,
@@ -339,6 +355,14 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	// TODO: should we use ReadOnlyInfo (tag: alpha legacy) or just boolean?
 	public get readOnlyInfo(): ReadOnlyInfo {
 		return this.container.readOnlyInfo;
+	}
+
+	public forceReadonly(readonly: boolean): void {
+		if (this.container.forceReadonly === undefined) {
+			throw new Error("Cannot set forceReadonly. forceReadonly method not provided.");
+		}
+		this.container.forceReadonly(readonly);
+		return;
 	}
 
 	/**
