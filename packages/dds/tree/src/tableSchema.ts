@@ -498,7 +498,7 @@ export namespace TableSchema {
 	export type RowSchemaBase<
 		TScope extends string | undefined,
 		TCellSchema extends ImplicitAllowedTypes,
-		TPropsSchema extends ImplicitFieldSchema,
+		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> = ReturnType<typeof createRow<TScope, TCellSchema, TPropsSchema>>;
 
 	// #endregion
@@ -694,7 +694,7 @@ export namespace TableSchema {
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
 		const TColumn extends ColumnSchemaBase<TInputScope>,
-		const TRow extends RowSchemaBase<TInputScope, TCell, ImplicitFieldSchema>,
+		const TRow extends RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
@@ -706,7 +706,7 @@ export namespace TableSchema {
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
 		const TColumn extends ColumnSchemaBase<TInputScope>,
-		const TRow extends RowSchemaBase<TInputScope, TCell, ImplicitFieldSchema>,
+		const TRow extends RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
@@ -735,11 +735,7 @@ export namespace TableSchema {
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
 		const TColumn extends ColumnSchemaBase<TInputScope> = ColumnSchemaBase<TInputScope>,
-		const TRow extends RowSchemaBase<TInputScope, TCell, ImplicitFieldSchema> = RowSchemaBase<
-			TInputScope,
-			TCell,
-			ImplicitFieldSchema
-		>,
+		const TRow extends RowSchemaBase<TInputScope, TCell> = RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
