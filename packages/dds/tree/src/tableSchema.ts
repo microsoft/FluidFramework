@@ -92,17 +92,11 @@ export namespace TableSchema {
 		propsSchema: TPropsSchema,
 	): ReturnType<typeof createColumnInternal<TInputScope, TPropsSchema>>;
 	/** `createColumn` implementation */
-	export function createColumn<
-		const TInputScope extends string | undefined,
-		const TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
-	>(
-		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		propsSchema?: TPropsSchema,
+	export function createColumn(
+		inputSchemaFactory: SchemaFactoryAlpha,
+		propsSchema: ImplicitFieldSchema = inputSchemaFactory.optional(inputSchemaFactory.null),
 	): TreeNodeSchema {
-		// The cast is safe in this case because we know `propsSchema` will only ever be `undefined` when no type was provided for `TPropsSchema`.
-		const props =
-			propsSchema ?? (inputSchemaFactory.optional(inputSchemaFactory.null) as TPropsSchema);
-		return createColumnInternal<TInputScope, TPropsSchema>(inputSchemaFactory, props);
+		return createColumnInternal(inputSchemaFactory, propsSchema);
 	}
 
 	/**
@@ -222,7 +216,7 @@ export namespace TableSchema {
 	 * @sealed @system @internal
 	 */
 	export type ColumnSchemaBase<
-		TScope extends string | undefined,
+		TScope extends string | undefined = string | undefined,
 		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> = ReturnType<typeof createColumn<TScope, TPropsSchema>>;
 
@@ -326,23 +320,12 @@ export namespace TableSchema {
 		propsSchema: TPropsSchema,
 	): ReturnType<typeof createRowInternal<TInputScope, TCellSchema, TPropsSchema>>;
 	/** `createRow` implementation */
-	export function createRow<
-		const TInputScope extends string | undefined,
-		const TCellSchema extends ImplicitAllowedTypes,
-		const TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
-	>(
-		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		cellSchema: TCellSchema,
-		propsSchema?: TPropsSchema,
+	export function createRow(
+		inputSchemaFactory: SchemaFactoryAlpha,
+		cellSchema: ImplicitAllowedTypes,
+		propsSchema: ImplicitFieldSchema = inputSchemaFactory.optional(inputSchemaFactory.null),
 	): TreeNodeSchema {
-		// The cast is safe in this case because we know `propsSchema` will only ever be `undefined` when no type was provided for `TPropsSchema`.
-		const props =
-			propsSchema ?? (inputSchemaFactory.optional(inputSchemaFactory.null) as TPropsSchema);
-		return createRowInternal<TInputScope, TCellSchema, TPropsSchema>(
-			inputSchemaFactory,
-			cellSchema,
-			props,
-		);
+		return createRowInternal(inputSchemaFactory, cellSchema, propsSchema);
 	}
 
 	/**
@@ -496,8 +479,8 @@ export namespace TableSchema {
 	 * @sealed @system @internal
 	 */
 	export type RowSchemaBase<
-		TScope extends string | undefined,
-		TCellSchema extends ImplicitAllowedTypes,
+		TScope extends string | undefined = string | undefined,
+		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> = ReturnType<typeof createRow<TScope, TCellSchema, TPropsSchema>>;
 
@@ -702,28 +685,13 @@ export namespace TableSchema {
 		rowSchema: TRow,
 	): ReturnType<typeof createTableInternal<TInputScope, TCell, TColumn, TRow>>;
 	/** `createTable` implementation */
-	export function createTable<
-		const TInputScope extends string | undefined,
-		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends ColumnSchemaBase<TInputScope>,
-		const TRow extends RowSchemaBase<TInputScope, TCell>,
-	>(
-		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		_cellSchema: TCell,
-		columnSchema?: TColumn,
-		rowSchema?: TRow,
+	export function createTable(
+		inputSchemaFactory: SchemaFactoryAlpha,
+		_cellSchema: ImplicitAllowedTypes,
+		columnSchema: ColumnSchemaBase = createColumn(inputSchemaFactory),
+		rowSchema: RowSchemaBase = createRow(inputSchemaFactory, _cellSchema),
 	): TreeNodeSchema {
-		// These casts are safe in this case because we know `columnSchema` and `rowSchema` will only ever be
-		// `undefined` when no type was provided for their respective type arguments.
-		const column = columnSchema ?? (createColumn(inputSchemaFactory) as TColumn);
-		const row =
-			rowSchema ??
-			(createRow(
-				inputSchemaFactory,
-				_cellSchema,
-				inputSchemaFactory.optional(inputSchemaFactory.null),
-			) as TRow);
-		return createTableInternal(inputSchemaFactory, _cellSchema, column, row);
+		return createTableInternal(inputSchemaFactory, _cellSchema, columnSchema, rowSchema);
 	}
 
 	/**
