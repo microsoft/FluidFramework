@@ -172,7 +172,8 @@ The next line creates the function that will rerender the local view with the la
 -   When the container is created or loaded.
 -   When the dice value changes on any client.
 
-Note that the current value is retrieved from the `SharedTree` each time `updateDice` is called. It is _not_ read from the `textContent` of the local `dice` HTML element.
+Note that the current value is retrieved from the `SharedTree` each time `updateDice` is called.
+It is _not_ read from the `textContent` of the local `dice` HTML element.
 
 ```js
 const updateDice = () => {
