@@ -117,7 +117,8 @@ start().catch((error) => console.error(error));
 The Fluid Framework is agnostic about view frameworks and works well with React, Vue, Angular and web components.
 This example uses standard HTML/DOM methods to render a view.
 
-The `renderDiceRoller` function runs only when the container is created or loaded. It appends the `template` to the passed in HTML element, and creates a working dice roller with a random dice value each time the "Roll" button is clicked on a client.
+The `renderDiceRoller` function runs only when the container is created or loaded.
+It appends the `template` to the passed in HTML element, and creates a working dice roller with a random dice value each time the "Roll" button is clicked on a client.
 
 ```js
 const template = document.createElement("template");
