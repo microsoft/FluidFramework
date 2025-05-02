@@ -40,10 +40,11 @@ import { checkoutWithContent, validateViewConsistency } from "../utils.js";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import {
 	SchemaFactory,
-	ViewSchema,
+	SchemaCompatibilityTester,
 	type ImplicitFieldSchema,
 	type TreeView,
 	type TreeViewConfiguration,
+	normalizeFieldSchema,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
@@ -207,14 +208,22 @@ describe("schematizeTree", () => {
 			for (const [name, data, isEmpty] of testCases) {
 				it(name, () => {
 					const checkout = mockCheckout(data, isEmpty);
-					const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, data);
+					const viewSchema = new SchemaCompatibilityTester(
+						defaultSchemaPolicy,
+						{},
+						normalizeFieldSchema(data),
+					);
 					const result = evaluateUpdate(viewSchema, AllowedUpdateType.None, checkout);
 					assert.equal(result, UpdateType.None);
 				});
 
 				it(`${name} initialize`, () => {
 					const checkout = mockCheckout(emptySchema, isEmpty);
-					const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, data);
+					const viewSchema = new SchemaCompatibilityTester(
+						defaultSchemaPolicy,
+						{},
+						normalizeFieldSchema(data),
+					);
 					const result = evaluateUpdate(viewSchema, AllowedUpdateType.Initialize, checkout);
 					if (data === emptySchema) {
 						assert.equal(result, UpdateType.None);
@@ -227,7 +236,11 @@ describe("schematizeTree", () => {
 
 		it("AllowedUpdateType works", () => {
 			const checkout = mockCheckout(schema, false);
-			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schemaGeneralized);
+			const viewSchema = new SchemaCompatibilityTester(
+				defaultSchemaPolicy,
+				{},
+				schemaGeneralized,
+			);
 			{
 				const result = evaluateUpdate(
 					viewSchema,
@@ -262,7 +275,7 @@ describe("schematizeTree", () => {
 				schema: toStoredSchema(emptySchema),
 				initialTree: undefined,
 			});
-			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, emptySchema);
+			const viewSchema = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, emptySchema);
 			assert(ensureSchema(viewSchema, AllowedUpdateType.None, checkout, undefined));
 		});
 
@@ -282,7 +295,11 @@ describe("schematizeTree", () => {
 				schema: toStoredSchema(schemaGeneralized),
 				initialTree: undefined,
 			});
-			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schemaGeneralized);
+			const viewSchema = new SchemaCompatibilityTester(
+				defaultSchemaPolicy,
+				{},
+				schemaGeneralized,
+			);
 
 			// Non updating cases
 			{
@@ -360,7 +377,11 @@ describe("schematizeTree", () => {
 			};
 			const initializedCheckout = checkoutWithContent(content);
 
-			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schemaValueRoot);
+			const viewSchema = new SchemaCompatibilityTester(
+				defaultSchemaPolicy,
+				{},
+				normalizeFieldSchema(schemaValueRoot),
+			);
 
 			// Non updating cases
 			{
@@ -425,7 +446,11 @@ describe("schematizeTree", () => {
 				initialTree: initialContent.initialTree,
 			});
 
-			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schemaGeneralized);
+			const viewSchema = new SchemaCompatibilityTester(
+				defaultSchemaPolicy,
+				{},
+				schemaGeneralized,
+			);
 
 			// Non updating case
 			{

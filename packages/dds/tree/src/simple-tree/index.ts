@@ -81,7 +81,7 @@ export {
 	comparePersistedSchema,
 	type ConciseTree,
 	comparePersistedSchemaInternal,
-	ViewSchema,
+	SchemaCompatibilityTester,
 	type Unenforced,
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
