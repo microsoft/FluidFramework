@@ -512,7 +512,7 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 		});
 
-		it.only("Invalid cases", () => {
+		it("Invalid cases", () => {
 			// These are type tests and expected to fail during compilation
 			// eslint-disable-next-line no-constant-condition
 			if (false) {

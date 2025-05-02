@@ -93,7 +93,7 @@ export interface AnnotatedAllowedTypes {
 	/**
 	 * All the allowed types that the annotations apply to. The types themselves may also have individual annotations.
 	 */
-	readonly types: readonly AnnotatedAllowedType[];
+	readonly types: readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[];
 }
 
 /**
@@ -157,7 +157,7 @@ export interface AllowedTypeMetadata {
 	 * User defined metadata
 	 */
 	custom?: unknown;
-	
+
 	// TODO metadata for enablable types will be added here
 }
 
@@ -635,6 +635,8 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
 /**
  * Converts an {@link ImplicitAnnotatedAllowedTypes} to an {@link ImplicitAllowedTypes}s, by removing
  * any annotations.
+ * @remarks
+ * This does not evaluate any lazy schemas.
  */
 export function unannotateImplicitAllowedTypes<Types extends ImplicitAnnotatedAllowedTypes>(
 	types: Types,
@@ -649,7 +651,7 @@ export function unannotateImplicitAllowedTypes<Types extends ImplicitAnnotatedAl
 						isAnnotatedAllowedType(allowedType) ? allowedType.type : allowedType,
 					)
 				: isAnnotatedAllowedType(types)
-					? (evaluateLazySchema(types.type) as UnannotateImplicitAllowedTypes<Types>)
+					? (types.type as UnannotateImplicitAllowedTypes<Types>)
 					: types
 	) as UnannotateImplicitAllowedTypes<Types>;
 }
@@ -668,7 +670,7 @@ export function unannotateSchemaRecord<
 	) as UnannotateSchemaRecord<Schema>;
 }
 
-function extractAnnotationsFromAllowedTypes(
+export function extractAnnotationsFromAllowedTypes(
 	types: ImplicitAnnotatedAllowedTypes,
 ): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata> {
 	const typesWithoutAnnotation = isAnnotatedAllowedTypes(types) ? types.types : types;

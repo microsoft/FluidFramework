@@ -17,6 +17,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 
 // @alpha
 export interface AllowedTypeMetadata {
+    custom?: unknown;
 }
 
 // @public @system
@@ -39,7 +40,7 @@ export interface AnnotatedAllowedType<T extends LazyItem<TreeNodeSchema> = LazyI
 // @alpha
 export interface AnnotatedAllowedTypes {
     readonly metadata: AllowedTypesMetadata;
-    readonly types: readonly AnnotatedAllowedType[];
+    readonly types: readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[];
 }
 
 // @public @system
@@ -1268,27 +1269,27 @@ const typeNameSymbol: unique symbol;
 // @public @system
 export const typeSchemaSymbol: unique symbol;
 
-// @alpha
+// @alpha @system
 export type UnannotateAllowedType<T extends AnnotatedAllowedType> = T extends AnnotatedAllowedType<infer X> ? [X] : T;
 
-// @alpha
+// @alpha @system
 export type UnannotateAllowedTypeOrLazyItem<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> = T extends AnnotatedAllowedType<infer X> ? X : T;
 
-// @alpha
+// @alpha @system
 export type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> = UnannotateAllowedTypesList<T["types"]>;
 
-// @alpha
+// @alpha @system
 export type UnannotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
     [I in keyof T]: UnannotateAllowedTypeOrLazyItem<T[I]>;
 };
 
-// @alpha
+// @alpha @system
 export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTypes> = T extends AnnotatedAllowedTypes ? UnannotateAllowedTypes<T> : T extends AnnotatedAllowedType ? UnannotateAllowedType<T> : T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[] ? UnannotateAllowedTypesList<T> : T extends TreeNodeSchema ? T : never;
 
-// @alpha
+// @alpha @system
 export type UnannotateImplicitFieldSchema<T extends ImplicitAnnotatedFieldSchema> = T extends ImplicitAnnotatedAllowedTypes ? UnannotateImplicitAllowedTypes<T> : T;
 
-// @alpha
+// @alpha @system
 export type UnannotateSchemaRecord<T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>> = {
     readonly [P in Extract<keyof T, string>]: UnannotateImplicitFieldSchema<T[P]>;
 };
