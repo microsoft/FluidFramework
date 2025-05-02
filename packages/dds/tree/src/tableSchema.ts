@@ -26,6 +26,7 @@ import {
 	type InternalTreeNode,
 	type FieldSchema,
 	type FieldKind,
+	SchemaFactory,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
@@ -94,7 +95,7 @@ export namespace TableSchema {
 	/** `createColumn` implementation */
 	export function createColumn(
 		inputSchemaFactory: SchemaFactoryAlpha,
-		propsSchema: ImplicitFieldSchema = inputSchemaFactory.optional(inputSchemaFactory.null),
+		propsSchema: ImplicitFieldSchema = SchemaFactory.optional(SchemaFactory.null),
 	): TreeNodeSchema {
 		return createColumnInternal(inputSchemaFactory, propsSchema);
 	}
@@ -323,7 +324,7 @@ export namespace TableSchema {
 	export function createRow(
 		inputSchemaFactory: SchemaFactoryAlpha,
 		cellSchema: ImplicitAllowedTypes,
-		propsSchema: ImplicitFieldSchema = inputSchemaFactory.optional(inputSchemaFactory.null),
+		propsSchema: ImplicitFieldSchema = SchemaFactory.optional(SchemaFactory.null),
 	): TreeNodeSchema {
 		return createRowInternal(inputSchemaFactory, cellSchema, propsSchema);
 	}
