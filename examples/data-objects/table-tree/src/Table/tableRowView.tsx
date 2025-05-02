@@ -10,8 +10,8 @@ import React, { DragEvent } from "react";
 import { DateTime, type Column, type Row } from "./tableSchema.js";
 
 export interface TableRowViewProps {
-	row: Row;
-	columns: Column[];
+	readonly row: Row;
+	readonly columns: Column[];
 	index: number;
 	onRowDragStart: (index: number) => void;
 	onRowDragOver: (event: DragEvent<HTMLTableRowElement>) => void;
@@ -78,8 +78,7 @@ export const TableRowView: React.FC<TableRowViewProps> = ({
 							onChange={(e) => {
 								const date = new Date(e.target.value);
 								if (cell === undefined) {
-									const dateObj = new DateTime({ raw: 0 });
-									dateObj.value = date;
+									const dateObj = DateTime.fromDate(date);
 									row.setCell(col, { value: dateObj });
 								} else if (cell.value instanceof DateTime) {
 									cell.value.value = date;

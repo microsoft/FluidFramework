@@ -16,6 +16,17 @@ export class DateTime extends schemaFactory.object("DateTime", {
 	raw: schemaFactory.number,
 }) {
 	/**
+	 * Converts a JavaScript `Date` object to a `DateTime` instance.
+	 * @param date - A valid JavaScript Date.
+	 * @returns A new `DateTime` instance.
+	 */
+	static fromDate(date: Date): DateTime {
+		const dt = new DateTime({ raw: date.getTime() });
+		dt.value = date;
+		return dt;
+	}
+
+	/**
 	 * Get the date-time
 	 */
 	get value(): Date {

@@ -28,12 +28,6 @@ export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 		TreeDataObject<TreeView<typeof Table>>
 	>(`TreeDataObject`, TableDataObject, [SharedTree.getFactory()], {});
 
-	/**
-	 * Converts the underlying ITree into a typed TreeView using the provided schema configuration.
-	 *
-	 * @param tree - The ITree instance to view.
-	 * @returns A typed TreeView using the Table schema.
-	 */
 	public override generateView(tree: ITree): TreeView<typeof Table> {
 		return tree.viewWith(this.config) as unknown as TreeView<typeof Table>;
 	}
