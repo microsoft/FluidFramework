@@ -670,6 +670,9 @@ export function unannotateSchemaRecord<
 	) as UnannotateSchemaRecord<Schema>;
 }
 
+/**
+ * Converts annotated allowed types into a mapping between the type schema and their associated annotations.
+ */
 export function extractAnnotationsFromAllowedTypes(
 	types: ImplicitAnnotatedAllowedTypes,
 ): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata> {
