@@ -24,12 +24,17 @@ import {
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
 	type InternalTreeNode,
+	type FieldSchema,
+	type FieldKind,
+	SchemaFactory,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
 // - Overloads to make Column/Row schema optional when constructing Tables
 // - Record-like type parameters / input parameters?
 // - Move `@system` types into separate / sub scope?
+// - Only type-export internal function implementations.
+// - Omit `props` properties from Row and Column schemas when not provided?
 
 /**
  * Contains types and factories for creating schema to represent dynamic tabular data.
@@ -43,7 +48,7 @@ export namespace TableSchema {
 
 	/**
 	 * A column in a table.
-	 * @remarks Implemented by the schema class returned from {@link TableSchema.createColumn}.
+	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createColumn:2)}.
 	 * @sealed @internal
 	 */
 	export interface IColumn<TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
@@ -66,12 +71,41 @@ export namespace TableSchema {
 
 	/**
 	 * Factory for creating new table column schema.
-	 * @privateRemarks
-	 * TODO Add overloads to make propsSchema optional.
 	 * @internal
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
+	export function createColumn<const TInputScope extends string | undefined>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+	): ReturnType<
+		typeof createColumnInternal<
+			TInputScope,
+			FieldSchema<FieldKind.Optional, typeof SchemaFactoryAlpha.null>
+		>
+	>;
+	/**
+	 * Factory for creating new table column schema.
+	 * @internal
+	 */
 	export function createColumn<
+		const TInputScope extends string | undefined,
+		const TPropsSchema extends ImplicitFieldSchema,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		propsSchema: TPropsSchema,
+	): ReturnType<typeof createColumnInternal<TInputScope, TPropsSchema>>;
+	/** `createColumn` implementation */
+	export function createColumn(
+		inputSchemaFactory: SchemaFactoryAlpha,
+		propsSchema: ImplicitFieldSchema = SchemaFactory.optional(SchemaFactory.null),
+	): TreeNodeSchema {
+		return createColumnInternal(inputSchemaFactory, propsSchema);
+	}
+
+	/**
+	 * Factory for creating new table column schema.
+	 * @system @internal
+	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
+	export function createColumnInternal<
 		const TInputScope extends string | undefined,
 		const TPropsSchema extends ImplicitFieldSchema,
 	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, propsSchema: TPropsSchema) {
@@ -107,7 +141,9 @@ export namespace TableSchema {
 		/**
 		 * A column in a table.
 		 */
-		class Column extends schemaFactory.object("Column", columnFields) {}
+		class Column
+			extends schemaFactory.object("Column", columnFields)
+			implements IColumn<TPropsSchema> {}
 
 		type ColumnValueType = TreeNode &
 			IColumn<TPropsSchema> &
@@ -181,8 +217,8 @@ export namespace TableSchema {
 	 * @sealed @system @internal
 	 */
 	export type ColumnSchemaBase<
-		TScope extends string | undefined,
-		TPropsSchema extends ImplicitFieldSchema,
+		TScope extends string | undefined = string | undefined,
+		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> = ReturnType<typeof createColumn<TScope, TPropsSchema>>;
 
 	// #endregion
@@ -191,7 +227,7 @@ export namespace TableSchema {
 
 	/**
 	 * A row in a table.
-	 * @remarks Implemented by the schema class returned from {@link TableSchema.createRow}.
+	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createRow:2)}.
 	 * @sealed @internal
 	 */
 	export interface IRow<
@@ -255,15 +291,51 @@ export namespace TableSchema {
 	}
 
 	/**
+	 * Factory for creating new table column schema.
+	 * @internal
+	 */
+	export function createRow<
+		const TInputScope extends string | undefined,
+		const TCellSchema extends ImplicitAllowedTypes,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		cellSchema: TCellSchema,
+	): ReturnType<
+		typeof createRowInternal<
+			TInputScope,
+			TCellSchema,
+			FieldSchema<FieldKind.Optional, typeof SchemaFactoryAlpha.null>
+		>
+	>;
+	/**
+	 * Factory for creating new table column schema.
+	 * @internal
+	 */
+	export function createRow<
+		const TInputScope extends string | undefined,
+		const TCellSchema extends ImplicitAllowedTypes,
+		const TPropsSchema extends ImplicitFieldSchema,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		cellSchema: TCellSchema,
+		propsSchema: TPropsSchema,
+	): ReturnType<typeof createRowInternal<TInputScope, TCellSchema, TPropsSchema>>;
+	/** `createRow` implementation */
+	export function createRow(
+		inputSchemaFactory: SchemaFactoryAlpha,
+		cellSchema: ImplicitAllowedTypes,
+		propsSchema: ImplicitFieldSchema = SchemaFactory.optional(SchemaFactory.null),
+	): TreeNodeSchema {
+		return createRowInternal(inputSchemaFactory, cellSchema, propsSchema);
+	}
+
+	/**
 	 * Factory for creating new table row schema.
-	 *
-	 * @privateRemarks
-	 * TODO: Add overloads to make propsSchema optional.
 	 *
 	 * @sealed @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
-	export function createRow<
+	export function createRowInternal<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TPropsSchema extends ImplicitFieldSchema,
@@ -408,9 +480,9 @@ export namespace TableSchema {
 	 * @sealed @system @internal
 	 */
 	export type RowSchemaBase<
-		TScope extends string | undefined,
-		TCellSchema extends ImplicitAllowedTypes,
-		TPropsSchema extends ImplicitFieldSchema,
+		TScope extends string | undefined = string | undefined,
+		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> = ReturnType<typeof createRow<TScope, TCellSchema, TPropsSchema>>;
 
 	// #endregion
@@ -592,7 +664,7 @@ export namespace TableSchema {
 	export function createTable<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
+		const TColumn extends ColumnSchemaBase<TInputScope>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
@@ -605,8 +677,8 @@ export namespace TableSchema {
 	export function createTable<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
-		const TRow extends RowSchemaBase<TInputScope, TCell, ImplicitFieldSchema>,
+		const TColumn extends ColumnSchemaBase<TInputScope>,
+		const TRow extends RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
@@ -614,31 +686,13 @@ export namespace TableSchema {
 		rowSchema: TRow,
 	): ReturnType<typeof createTableInternal<TInputScope, TCell, TColumn, TRow>>;
 	/** `createTable` implementation */
-	export function createTable<
-		const TInputScope extends string | undefined,
-		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
-		const TRow extends RowSchemaBase<TInputScope, TCell, ImplicitFieldSchema>,
-	>(
-		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		_cellSchema: TCell,
-		columnSchema?: TColumn,
-		rowSchema?: TRow,
+	export function createTable(
+		inputSchemaFactory: SchemaFactoryAlpha,
+		_cellSchema: ImplicitAllowedTypes,
+		columnSchema: ColumnSchemaBase = createColumn(inputSchemaFactory),
+		rowSchema: RowSchemaBase = createRow(inputSchemaFactory, _cellSchema),
 	): TreeNodeSchema {
-		const column =
-			columnSchema ??
-			createColumn(inputSchemaFactory, inputSchemaFactory.optional(inputSchemaFactory.null));
-		return createTableInternal(
-			inputSchemaFactory,
-			_cellSchema,
-			column as TColumn,
-			rowSchema ??
-				(createRow(
-					inputSchemaFactory,
-					_cellSchema,
-					inputSchemaFactory.optional(inputSchemaFactory.null),
-				) as TRow),
-		);
+		return createTableInternal(inputSchemaFactory, _cellSchema, columnSchema, rowSchema);
 	}
 
 	/**
@@ -649,15 +703,8 @@ export namespace TableSchema {
 	export function createTableInternal<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends ColumnSchemaBase<
-			TInputScope,
-			ImplicitFieldSchema
-		> = ColumnSchemaBase<TInputScope, ImplicitFieldSchema>,
-		const TRow extends RowSchemaBase<TInputScope, TCell, ImplicitFieldSchema> = RowSchemaBase<
-			TInputScope,
-			TCell,
-			ImplicitFieldSchema
-		>,
+		const TColumn extends ColumnSchemaBase<TInputScope> = ColumnSchemaBase<TInputScope>,
+		const TRow extends RowSchemaBase<TInputScope, TCell> = RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCell,
@@ -849,10 +896,7 @@ export namespace TableSchema {
 	export type TableSchemaBase<
 		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
-		TColumn extends ColumnSchemaBase<TScope, ImplicitFieldSchema> = ColumnSchemaBase<
-			TScope,
-			ImplicitFieldSchema
-		>,
+		TColumn extends ColumnSchemaBase<TScope> = ColumnSchemaBase<TScope>,
 		TRow extends RowSchemaBase<TScope, TCell, ImplicitAllowedTypes> = RowSchemaBase<
 			TScope,
 			TCell,
