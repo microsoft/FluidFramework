@@ -151,7 +151,10 @@ Let's go through the rest of the `renderDiceRoller` function line-by-line.
 
 ### Create the Roll button handler
 
-The next line of the `renderDiceRoller` function assigns a handler to the click event of the "rollButton" button. Instead of updating the local state directly, the button updates the number stored in the `value` property of the `dice` object. Because `dice` is the root object of Fluid `SharedTree`, changes will be distributed to all clients. Any changes to `dice` will cause a `nodeChanged` event to be emitted, and an event handler, defined below, can trigger an update of the view.
+The next line of the `renderDiceRoller` function assigns a handler to the click event of the "rollButton" button.
+Instead of updating the local state directly, the button updates the number stored in the `value` property of the `dice` object.
+Because `dice` is the root object of Fluid `SharedTree`, changes will be distributed to all clients. 
+Any changes to `dice` will cause a `nodeChanged` event to be emitted, and an event handler, defined below, can trigger an update of the view.
 
 This pattern is common in Fluid because it enables the view to behave the same way for both local and remote changes.
 
