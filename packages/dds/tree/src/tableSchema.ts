@@ -74,7 +74,7 @@ export namespace System_TableSchema {
 		/**
 		 * Schema for the table's cells.
 		 */
-		readonly cellSchema: TCellSchema;
+		readonly cell: TCellSchema;
 	}
 
 	// #region Column
@@ -395,9 +395,9 @@ export namespace System_TableSchema {
 	 * @system @internal
 	 */
 	export type TableFactoryOptionsBase<
-		TInputScope extends string | undefined = string | undefined,
+		TScope extends string | undefined = string | undefined,
 		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> = OptionsWithSchemaFactory<TInputScope> & OptionsWithCellSchema<TCellSchema>;
+	> = OptionsWithSchemaFactory<TScope> & OptionsWithCellSchema<TCellSchema>;
 
 	/**
 	 * Factory for creating new table schema.
@@ -649,11 +649,11 @@ export namespace TableSchema {
 	 * Factory for creating new table column schema.
 	 * @internal
 	 */
-	export function createColumn<const TInputScope extends string | undefined>({
+	export function createColumn<const TScope extends string | undefined>({
 		schemaFactory,
-	}: System_TableSchema.CreateColumnOptionsBase<TInputScope>): ReturnType<
+	}: System_TableSchema.CreateColumnOptionsBase<TScope>): ReturnType<
 		typeof System_TableSchema.createColumnInternal<
-			TInputScope,
+			TScope,
 			FieldSchema<FieldKind.Optional, typeof SchemaFactoryAlpha.null>
 		>
 	>;
@@ -662,24 +662,24 @@ export namespace TableSchema {
 	 * @internal
 	 */
 	export function createColumn<
-		const TInputScope extends string | undefined,
+		const TScope extends string | undefined,
 		const TPropsSchema extends ImplicitFieldSchema,
 	>({
 		schemaFactory,
-		propsSchema,
-	}: System_TableSchema.CreateColumnOptionsBase<TInputScope> & {
-		readonly propsSchema: TPropsSchema;
-	}): ReturnType<typeof System_TableSchema.createColumnInternal<TInputScope, TPropsSchema>>;
+		props,
+	}: System_TableSchema.CreateColumnOptionsBase<TScope> & {
+		readonly props: TPropsSchema;
+	}): ReturnType<typeof System_TableSchema.createColumnInternal<TScope, TPropsSchema>>;
 	/**
 	 * Overload implementation
 	 */
 	export function createColumn({
 		schemaFactory,
-		propsSchema = SchemaFactory.optional(SchemaFactory.null),
+		props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateColumnOptionsBase & {
-		readonly propsSchema?: ImplicitFieldSchema;
+		readonly props?: ImplicitFieldSchema;
 	}): TreeNodeSchema {
-		return System_TableSchema.createColumnInternal(schemaFactory, propsSchema);
+		return System_TableSchema.createColumnInternal(schemaFactory, props);
 	}
 
 	// #endregion
@@ -756,14 +756,14 @@ export namespace TableSchema {
 	 * @internal
 	 */
 	export function createRow<
-		const TInputScope extends string | undefined,
+		const TScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
 	>({
 		schemaFactory,
-		cellSchema,
-	}: System_TableSchema.CreateRowOptionsBase<TInputScope, TCellSchema>): ReturnType<
+		cell,
+	}: System_TableSchema.CreateRowOptionsBase<TScope, TCellSchema>): ReturnType<
 		typeof System_TableSchema.createRowInternal<
-			TInputScope,
+			TScope,
 			TCellSchema,
 			FieldSchema<FieldKind.Optional, typeof SchemaFactoryAlpha.null>
 		>
@@ -773,29 +773,29 @@ export namespace TableSchema {
 	 * @internal
 	 */
 	export function createRow<
-		const TInputScope extends string | undefined,
+		const TScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TPropsSchema extends ImplicitFieldSchema,
 	>({
 		schemaFactory,
-		cellSchema,
-		propsSchema,
-	}: System_TableSchema.CreateRowOptionsBase<TInputScope, TCellSchema> & {
-		readonly propsSchema: TPropsSchema;
+		cell,
+		props,
+	}: System_TableSchema.CreateRowOptionsBase<TScope, TCellSchema> & {
+		readonly props: TPropsSchema;
 	}): ReturnType<
-		typeof System_TableSchema.createRowInternal<TInputScope, TCellSchema, TPropsSchema>
+		typeof System_TableSchema.createRowInternal<TScope, TCellSchema, TPropsSchema>
 	>;
 	/**
 	 * Overload implementation
 	 */
 	export function createRow({
 		schemaFactory,
-		cellSchema,
-		propsSchema = SchemaFactory.optional(SchemaFactory.null),
+		cell,
+		props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateRowOptionsBase & {
-		readonly propsSchema?: ImplicitFieldSchema;
+		readonly props?: ImplicitFieldSchema;
 	}): TreeNodeSchema {
-		return System_TableSchema.createRowInternal(schemaFactory, cellSchema, propsSchema);
+		return System_TableSchema.createRowInternal(schemaFactory, cell, props);
 	}
 
 	// #endregion
@@ -964,72 +964,65 @@ export namespace TableSchema {
 	 * @internal
 	 */
 	export function createTable<
-		const TInputScope extends string | undefined,
+		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
 	>({
 		schemaFactory,
-		cellSchema,
-	}: System_TableSchema.TableFactoryOptionsBase<TInputScope, TCell>): ReturnType<
-		typeof System_TableSchema.createTableInternal<TInputScope, TCell>
+		cell,
+	}: System_TableSchema.TableFactoryOptionsBase<TScope, TCell>): ReturnType<
+		typeof System_TableSchema.createTableInternal<TScope, TCell>
 	>;
 	/**
 	 * Factory for creating new table schema without specifying row schema.
 	 * @internal
 	 */
 	export function createTable<
-		const TInputScope extends string | undefined,
+		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends System_TableSchema.ColumnSchemaBase<TInputScope>,
+		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope>,
 	>({
 		schemaFactory,
-		cellSchema,
-		columnSchema,
-	}: System_TableSchema.TableFactoryOptionsBase<TInputScope, TCell> & {
-		readonly columnSchema: TColumn;
-	}): ReturnType<typeof System_TableSchema.createTableInternal<TInputScope, TCell, TColumn>>;
+		cell,
+		column,
+	}: System_TableSchema.TableFactoryOptionsBase<TScope, TCell> & {
+		readonly column: TColumn;
+	}): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, TColumn>>;
 	/**
 	 * Factory for creating new table schema.
 	 * @internal
 	 */
 	export function createTable<
-		const TInputScope extends string | undefined,
+		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends System_TableSchema.ColumnSchemaBase<TInputScope>,
-		const TRow extends System_TableSchema.RowSchemaBase<TInputScope, TCell>,
+		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope>,
+		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
 	>({
 		schemaFactory,
-		cellSchema,
-		columnSchema,
-		rowSchema,
-	}: System_TableSchema.TableFactoryOptionsBase<TInputScope, TCell> & {
-		readonly columnSchema: TColumn;
-		readonly rowSchema: TRow;
-	}): ReturnType<
-		typeof System_TableSchema.createTableInternal<TInputScope, TCell, TColumn, TRow>
-	>;
+		cell,
+		column,
+		row,
+	}: System_TableSchema.TableFactoryOptionsBase<TScope, TCell> & {
+		readonly column: TColumn;
+		readonly row: TRow;
+	}): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, TColumn, TRow>>;
 	/**
 	 * Overload implementation
 	 */
 	export function createTable({
 		schemaFactory,
-		cellSchema,
-		columnSchema = createColumn({
+		cell,
+		column = createColumn({
 			schemaFactory,
 		}),
-		rowSchema = createRow({
+		row = createRow({
 			schemaFactory,
-			cellSchema,
+			cell,
 		}),
 	}: System_TableSchema.TableFactoryOptionsBase & {
-		readonly columnSchema?: System_TableSchema.ColumnSchemaBase;
-		readonly rowSchema?: System_TableSchema.RowSchemaBase;
+		readonly column?: System_TableSchema.ColumnSchemaBase;
+		readonly row?: System_TableSchema.RowSchemaBase;
 	}): TreeNodeSchema {
-		return System_TableSchema.createTableInternal(
-			schemaFactory,
-			cellSchema,
-			columnSchema,
-			rowSchema,
-		);
+		return System_TableSchema.createTableInternal(schemaFactory, cell, column, row);
 	}
 
 	// #endregion

@@ -34,7 +34,7 @@ describe("TableFactory unit tests", () => {
 		}) {}
 		class Column extends TableSchema.createColumn({
 			schemaFactory,
-			propsSchema: ColumnProps,
+			props: ColumnProps,
 		}) {}
 
 		class RowProps extends schemaFactory.object("table-row-props", {
@@ -46,15 +46,15 @@ describe("TableFactory unit tests", () => {
 		}) {}
 		class Row extends TableSchema.createRow({
 			schemaFactory,
-			cellSchema: Cell,
-			propsSchema: schemaFactory.optional(RowProps),
+			cell: Cell,
+			props: schemaFactory.optional(RowProps),
 		}) {}
 
 		class Table extends TableSchema.createTable({
 			schemaFactory,
-			cellSchema: Cell,
-			columnSchema: Column,
-			rowSchema: Row,
+			cell: Cell,
+			column: Column,
+			row: Row,
 		}) {}
 
 		const treeView = independentView(
@@ -97,7 +97,7 @@ describe("TableFactory unit tests", () => {
 		it("Can create with props", () => {
 			class Column extends TableSchema.createColumn({
 				schemaFactory,
-				propsSchema: schemaFactory.string,
+				props: schemaFactory.string,
 			}) {}
 			const column = new Column({ id: "column-0", props: "Column 0" });
 			assert.equal(column.props, "Column 0");
@@ -109,7 +109,7 @@ describe("TableFactory unit tests", () => {
 			class Cell extends schemaFactory.object("table-cell", {
 				value: schemaFactory.string,
 			}) {}
-			class Row extends TableSchema.createRow({ schemaFactory, cellSchema: Cell }) {}
+			class Row extends TableSchema.createRow({ schemaFactory, cell: Cell }) {}
 			const row = new Row({ id: "row-0", cells: {} });
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
@@ -124,8 +124,8 @@ describe("TableFactory unit tests", () => {
 			}) {}
 			class Row extends TableSchema.createRow({
 				schemaFactory,
-				cellSchema: Cell,
-				propsSchema: schemaFactory.string,
+				cell: Cell,
+				props: schemaFactory.string,
 			}) {}
 			const column = new Row({ id: "row-0", cells: {}, props: "Row 0" });
 			assert.equal(column.props, "Row 0");
