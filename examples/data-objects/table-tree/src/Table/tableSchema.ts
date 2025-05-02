@@ -7,8 +7,10 @@
 import { SchemaFactoryAlpha, TableSchema } from "@fluidframework/tree/internal";
 
 const schemaFactory = new SchemaFactoryAlpha("tree-table");
+
 /**
- * A SharedTree object date-time
+ * A node representing date and time information.
+ * Uses javascript's {@link Date} type to represent the date.
  */
 export class DateTime extends schemaFactory.object("DateTime", {
 	raw: schemaFactory.number,
@@ -25,7 +27,7 @@ export class DateTime extends schemaFactory.object("DateTime", {
 	 */
 	set value(value: Date) {
 		// Test if the value is a valid date
-		if (isNaN(value.getTime())) {
+		if (Number.isNaN(value.getTime())) {
 			return;
 		}
 		this.raw = value.getTime();
@@ -36,7 +38,7 @@ export class DateTime extends schemaFactory.object("DateTime", {
  * A SharedTree object that allows users to vote
  */
 export class Vote extends schemaFactory.object("Vote", {
-	votes: schemaFactory.map(schemaFactory.string), // Map of votes
+	votes: schemaFactory.map("votes", schemaFactory.string), // Map of votes
 }) {
 	addVote(vote: string): void {
 		if (this.votes.has(vote) === true) {

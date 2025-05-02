@@ -1,13 +1,13 @@
 {
 	"name": "@fluid-example/table-tree",
-	"version": "2.32.0",
+	"version": "2.40.0",
 	"private": true,
 	"description": "Simple table example app.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/data-objects/todo"
+		"directory": "examples/data-objects/table-tree"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -45,13 +45,12 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/map": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
-		"uuid": "^11.1.0"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",

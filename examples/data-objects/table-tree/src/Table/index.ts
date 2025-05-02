@@ -4,4 +4,4 @@
  */
 
 export { TableView } from "./tableView.js";
-export { TableDataObject } from "./DataObject.js";
+export { TableDataObject } from "./dataObject.js";

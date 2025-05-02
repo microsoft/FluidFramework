@@ -7,7 +7,7 @@ import { Table, TableBody, Input, Button } from "@fluentui/react-components";
 import { Add24Regular, Checkmark24Regular } from "@fluentui/react-icons";
 import React, { useState, DragEvent } from "react";
 
-import { useTree } from "../Utils/index.js";
+import { useTree } from "../utils/index.js";
 
 import { TableHeaderView } from "./tableHeaderView.js";
 import { TableRowView } from "./tableRowView.js";
@@ -23,15 +23,15 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const [newColumnHint, setNewColumnHint] = useState("");
 	const [showAddRowInput, setShowAddRowInput] = useState(false);
 	const [showAddColumnInput, setShowAddColumnInput] = useState(false);
-	const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
-	const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | null>(null);
+	const [draggedRowIndex, setDraggedRowIndex] = useState<number | undefined>(undefined);
+	const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | undefined>(undefined);
 
 	useTree(tableModel.treeView.root);
 
-	const columns = Array.from(tableModel.treeView.root.columns);
-	const rows = Array.from(tableModel.treeView.root.rows);
+	const columns = [...tableModel.treeView.root.columns];
+	const rows = [...tableModel.treeView.root.rows];
 
-	const handleAddRow = () => {
+	const handleAddRow = (): void => {
 		if (newRowId.trim() !== "") {
 			tableModel.treeView.root.insertRows({
 				index: rows.length,
@@ -42,13 +42,13 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 		}
 	};
 
-	const handleRemoveRow = (index: number) => {
+	const handleRemoveRow = (index: number): void => {
 		if (index >= 0 && index < rows.length) {
 			tableModel.treeView.root.rows.removeAt(index);
 		}
 	};
 
-	const handleAddColumn = () => {
+	const handleAddColumn = (): void => {
 		if (newColumnId.trim() !== "") {
 			tableModel.treeView.root.insertColumn({
 				index: 0,
@@ -65,42 +65,42 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 		}
 	};
 
-	const handleRemoveColumn = (index: number) => {
+	const handleRemoveColumn = (index: number): void => {
 		if (index >= 0 && index < columns.length) {
 			tableModel.treeView.root.columns.removeAt(index);
 		}
 	};
 
-	const handleRowDragStart = (index: number) => {
+	const handleRowDragStart = (index: number): void => {
 		setDraggedRowIndex(index);
 	};
 
-	const handleRowDragOver = (event: DragEvent<HTMLTableRowElement>) => {
+	const handleRowDragOver = (event: DragEvent<HTMLTableRowElement>): void => {
 		event.preventDefault();
 	};
 
-	const handleRowDrop = (targetIndex: number) => {
-		if (draggedRowIndex !== null && draggedRowIndex !== targetIndex) {
+	const handleRowDrop = (targetIndex: number): void => {
+		if (draggedRowIndex !== undefined && draggedRowIndex !== targetIndex) {
 			const destinationGap = draggedRowIndex < targetIndex ? targetIndex + 1 : targetIndex;
 			tableModel.treeView.root.rows.moveToIndex(destinationGap, draggedRowIndex);
 		}
-		setDraggedRowIndex(null);
+		setDraggedRowIndex(undefined);
 	};
 
-	const handleColumnDragStart = (index: number) => {
+	const handleColumnDragStart = (index: number): void => {
 		setDraggedColumnIndex(index);
 	};
 
-	const handleColumnDragOver = (event: DragEvent<HTMLTableHeaderCellElement>) => {
+	const handleColumnDragOver = (event: DragEvent<HTMLTableHeaderCellElement>): void => {
 		event.preventDefault();
 	};
 
-	const handleColumnDrop = (targetIndex: number) => {
-		if (draggedColumnIndex !== null && draggedColumnIndex !== targetIndex) {
+	const handleColumnDrop = (targetIndex: number): void => {
+		if (draggedColumnIndex !== undefined && draggedColumnIndex !== targetIndex) {
 			const destinationGap = draggedColumnIndex < targetIndex ? targetIndex + 1 : targetIndex;
 			tableModel.treeView.root.columns.moveToIndex(destinationGap, draggedColumnIndex);
 		}
-		setDraggedColumnIndex(null);
+		setDraggedColumnIndex(undefined);
 	};
 
 	return (

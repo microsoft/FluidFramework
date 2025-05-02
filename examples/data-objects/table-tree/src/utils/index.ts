@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { useTree } from "./Utils.js";
+export { useTree } from "./utilities.js";

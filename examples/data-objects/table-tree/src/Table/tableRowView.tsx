@@ -5,10 +5,19 @@
 
 import { TableRow, TableCell, Input, Button, Checkbox } from "@fluentui/react-components";
 import { Delete24Regular } from "@fluentui/react-icons";
-import React from "react";
+import React, { DragEvent } from "react";
 
-import { TableRowViewProps } from "./tablePropTypes.js";
-import { DateTime } from "./tableSchema.js";
+import { DateTime, type Column, type Row } from "./tableSchema.js";
+
+export interface TableRowViewProps {
+	row: Row;
+	columns: Column[];
+	index: number;
+	onRowDragStart: (index: number) => void;
+	onRowDragOver: (event: DragEvent<HTMLTableRowElement>) => void;
+	onRowDrop: (index: number) => void;
+	onRemoveRow: (index: number) => void;
+}
 
 export const TableRowView: React.FC<TableRowViewProps> = ({
 	row,

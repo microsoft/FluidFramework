@@ -5,7 +5,7 @@
 
 module.exports = {
 	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		require.resolve("@fluidframework/eslint-config-fluid"),
 		"prettier",
 		"../../.eslintrc.cjs",
 	],

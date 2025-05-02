@@ -13,9 +13,24 @@ import {
 	Option,
 } from "@fluentui/react-components";
 import { Add24Regular, Checkmark24Regular, Delete24Regular } from "@fluentui/react-icons";
-import React from "react";
+import React, { DragEvent } from "react";
 
-import { TableHeaderViewProps } from "./tablePropTypes.js";
+import type { Column } from "./tableSchema.js";
+
+export interface TableHeaderViewProps {
+	columns: Column[];
+	onColumnDragStart: (index: number) => void;
+	onColumnDragOver: (event: DragEvent<HTMLTableHeaderCellElement>) => void;
+	onColumnDrop: (index: number) => void;
+	onRemoveColumn: (index: number) => void;
+	showAddColumnInput: boolean;
+	setShowAddColumnInput: (value: boolean) => void;
+	newColumnId: string;
+	setNewColumnId: (id: string) => void;
+	newColumnHint: string;
+	setNewColumnHint: (hint: string) => void;
+	handleAddColumn: () => void;
+}
 
 export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	columns,
