@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
+import type { IBatchMetadata } from "../metadata.js";
 import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
@@ -111,6 +112,36 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 		errorObj.stackTraceLimit = originalStackTraceLimit;
 	}
 }
+
+const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
+	const batchEnd = batch.messages.length - 1;
+
+	const firstMsg = batch.messages[0];
+	const lastMsg = batch.messages[batchEnd];
+	assert(
+		firstMsg !== undefined && lastMsg !== undefined,
+		0x9d1 /* expected non-empty batch */,
+	);
+
+	const firstMetadata: Partial<IBatchMetadata> = firstMsg.metadata ?? {};
+	const lastMetadata: Partial<IBatchMetadata> = lastMsg.metadata ?? {};
+
+	// Multi-message batches: mark the first and last messages with the "batch" flag indicating batch start/end
+	if (batch.messages.length > 1) {
+		firstMetadata.batch = true;
+		lastMetadata.batch = false;
+		firstMsg.metadata = firstMetadata;
+		lastMsg.metadata = lastMetadata;
+	}
+
+	// If batchId is provided (e.g. in case of resubmit): stamp it on the first message
+	if (batchId !== undefined) {
+		firstMetadata.batchId = batchId;
+		firstMsg.metadata = firstMetadata;
+	}
+
+	return batch;
+};
 
 /**
  * Convert from local batch to outbound batch, including computing contentSizeInBytes.
@@ -432,7 +463,7 @@ export class Outbox {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch(resubmittingBatchId);
+		const rawBatch = batchManager.popBatch();
 
 		// When resubmitting, we respect the staged state of the original batch.
 		// In this case rawBatch.staged will match the state of inStagingMode when
@@ -470,10 +501,10 @@ export class Outbox {
 			const idAllocationOp = this.params.generateIdAllocationOp(
 				false /* resubmitOutstandingRanges */,
 			);
-			//* BUG: This doesn't get batch metadata right, since popBatch does that and it already happened
 			if (idAllocationOp !== undefined) {
 				rawBatch.messages.unshift(idAllocationOp);
 			}
+			addBatchMetadata(rawBatch, resubmittingBatchId);
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);

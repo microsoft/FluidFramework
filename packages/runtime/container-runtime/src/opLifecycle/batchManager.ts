@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
-import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
+import { asBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
 import { LocalBatchMessage, IBatchCheckpoint, type LocalBatch } from "./definitions.js";
@@ -49,6 +49,7 @@ export function generateBatchId(originalClientId: string, batchStartCsn: number)
 	return `${originalClientId}_[${batchStartCsn}]`;
 }
 
+//* Probably move this stuff if BatchManager isn't doing batch metadata anymore
 /**
  * Get the effective batch ID for the input argument.
  * Supports either an IPendingMessage or BatchStartInfo.
@@ -127,7 +128,7 @@ export class BatchManager {
 	/**
 	 * Gets the pending batch and clears state for the next batch.
 	 */
-	public popBatch(batchId?: BatchId): LocalBatch {
+	public popBatch(): LocalBatch {
 		assert(this.pendingBatch[0] !== undefined, 0xb8a /* expected non-empty batch */);
 		const batch: LocalBatch = {
 			messages: this.pendingBatch,
@@ -140,7 +141,7 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		return addBatchMetadata(batch, batchId);
+		return batch;
 	}
 
 	/**
@@ -169,36 +170,6 @@ export class BatchManager {
 		};
 	}
 }
-
-const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
-	const batchEnd = batch.messages.length - 1;
-
-	const firstMsg = batch.messages[0];
-	const lastMsg = batch.messages[batchEnd];
-	assert(
-		firstMsg !== undefined && lastMsg !== undefined,
-		0x9d1 /* expected non-empty batch */,
-	);
-
-	const firstMetadata: Partial<IBatchMetadata> = firstMsg.metadata ?? {};
-	const lastMetadata: Partial<IBatchMetadata> = lastMsg.metadata ?? {};
-
-	// Multi-message batches: mark the first and last messages with the "batch" flag indicating batch start/end
-	if (batch.messages.length > 1) {
-		firstMetadata.batch = true;
-		lastMetadata.batch = false;
-		firstMsg.metadata = firstMetadata;
-		lastMsg.metadata = lastMetadata;
-	}
-
-	// If batchId is provided (e.g. in case of resubmit): stamp it on the first message
-	if (batchId !== undefined) {
-		firstMetadata.batchId = batchId;
-		firstMsg.metadata = firstMetadata;
-	}
-
-	return batch;
-};
 
 export const sequenceNumbersMatch = (
 	seqNums: BatchSequenceNumbers,
