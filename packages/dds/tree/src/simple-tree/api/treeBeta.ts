@@ -16,6 +16,9 @@ import { treeNodeApi } from "./treeNodeApi.js";
 import { createFromCursor } from "./create.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
 
+// Tests for this file are groups with those for treeNodeApi.ts as thats where this functionality will eventually land,
+// and where most of the actual implementation is for much of it.
+
 /**
  * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
  * @sealed @beta
@@ -89,10 +92,12 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 }
 
 /**
- * Extensions to {@link Tree} which are not yet stable.
- * @sealed @beta
+ * Extensions to {@link (Tree:interface)} which are not yet stable.
+ * @remarks
+ * Use via the {@link (TreeBeta:variable)} singleton.
+ * @system @sealed @beta
  */
-export const TreeBeta: {
+export interface TreeBeta {
 	/**
 	 * Register an event listener on the given node.
 	 * @param node - The node whose events should be subscribed to.
@@ -142,7 +147,14 @@ export const TreeBeta: {
 	// 		replaceIdentifiers?: true;
 	// 	},
 	// ): TreeFieldFromImplicitField<TSchema>;
-} = {
+}
+
+/**
+ * Extensions to {@link (Tree:variable)} which are not yet stable.
+ * @see {@link (TreeBeta:interface)}.
+ * @beta
+ */
+export const TreeBeta: TreeBeta = {
 	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
 		node: TNode,
 		eventName: K,
@@ -153,7 +165,7 @@ export const TreeBeta: {
 	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-		/** The only non-TreeNode cases are {@link TreeLeafValue} and `undefined` (for an empty optional field) which can be returned as is. */
+		// The only non-TreeNode cases are {@link TreeLeafValue} and `undefined` (for an empty optional field) which can be returned as is.
 		if (!isTreeNode(node)) {
 			return node;
 		}
