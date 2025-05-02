@@ -42,8 +42,7 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import type { ConfigTypes, FluidObject } from "@fluidframework/core-interfaces";
-import type { IErrorBase } from "@fluidframework/core-interfaces";
+import type { ConfigTypes, FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	createLocalResolverCreateNewRequest,
