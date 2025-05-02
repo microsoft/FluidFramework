@@ -141,7 +141,9 @@ export type FactoryContentObject = {
 };
 
 // @public @system
-type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
+type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
+FieldSchema<FieldKind.Optional | FieldKind.Identifier>
+] ? true : false;
 
 // @public
 export enum FieldKind {
@@ -300,12 +302,9 @@ type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<Implicit
 export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : never;
 
 // @public @system
-export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = [TList] extends [
-readonly [
-LazyItem<infer TSchema extends TreeNodeSchema>,
-...infer Rest extends AllowedTypes
-]
-] ? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest> : never;
+export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = IsUnion<TList> extends true ? never : {
+    readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchema> ? InsertableTypedNode<TSchema> : never;
+}[number];
 
 // @public
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> = [
@@ -342,7 +341,7 @@ export { InternalTypes }
 // @public @deprecated
 export type IsListener<T> = IsListener_2<T>;
 
-// @alpha @system
+// @public @system
 export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
 
 // @public @sealed
@@ -870,14 +869,9 @@ export namespace System_Unsafe {
     // @system
     export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchemaInput extends ImplicitFieldSchemaUnsafe, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchemaUnsafe<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : never;
     // @system
-    export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = [
-    TList
-    ] extends [
-    readonly [
-    LazyItem<infer TSchema extends TreeNodeSchemaUnsafe>,
-    ...infer Rest extends AllowedTypesUnsafe
-    ]
-    ] ? InsertableTypedNodeUnsafe<TSchema> | InsertableTreeNodeFromAllowedTypesUnsafe<Rest> : never;
+    export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = IsUnion<TList> extends true ? never : {
+        readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchemaUnsafe> ? InsertableTypedNodeUnsafe<TSchema> : never;
+    }[number];
     // @system
     export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends ImplicitAllowedTypesUnsafe> = [TSchema] extends [TreeNodeSchemaUnsafe] ? InsertableTypedNodeUnsafe<TSchema> : [TSchema] extends [AllowedTypesUnsafe] ? InsertableTreeNodeFromAllowedTypesUnsafe<TSchema> : never;
     // @system
@@ -969,22 +963,25 @@ export interface TransactionResultSuccess<TSuccessValue> {
 export const Tree: TreeApi;
 
 // @alpha @sealed
-export const TreeAlpha: {
+export interface TreeAlpha {
     branch(node: TreeNode): TreeBranch | undefined;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
-    importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
-    importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<TreeEncodingOptions>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-    exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
-    exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
-    exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
         oldestCompatibleClient: FluidClientVersion;
         idCompressor?: IIdCompressor;
     }): JsonCompatible<IFluidHandle>;
+    exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
+    exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
+    exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
     importCompressed<const TSchema extends ImplicitFieldSchema>(schema: TSchema, compressedData: JsonCompatible<IFluidHandle>, options: {
         idCompressor?: IIdCompressor;
     } & ICodecOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-};
+    importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
+    importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<TreeEncodingOptions>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+}
+
+// @alpha @sealed
+export const TreeAlpha: TreeAlpha;
 
 // @public @sealed @system
 interface TreeApi extends TreeNodeApi {
@@ -1247,15 +1244,20 @@ export const UnsafeUnknownSchema: unique symbol;
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 // @public
-export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {
+export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
+
+// @public @system
+export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNodeSchema<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {
     [NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema> ? InsertableObjectFromSchemaRecord<T["info"]> : unknown;
     [NodeKind.Array]: T["info"] extends ImplicitAllowedTypes ? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>> : unknown;
     [NodeKind.Map]: T["info"] extends ImplicitAllowedTypes ? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]> : unknown;
+    [NodeKind.Leaf]: unknown;
 }[T["kind"]], false, {
     [NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
     [NodeKind.Array]: ImplicitAllowedTypes;
     [NodeKind.Map]: ImplicitAllowedTypes;
-}[T["kind"]]>> = true;
+    [NodeKind.Leaf]: unknown;
+}[T["kind"]]>;
 
 // @alpha
 export enum ValueSchema {

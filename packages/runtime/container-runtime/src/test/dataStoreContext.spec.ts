@@ -30,7 +30,6 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	IFluidParentContext,
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
 	channelsTreeName,
@@ -52,7 +51,11 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ChannelCollection, getLocalDataStoreType } from "../channelCollection.js";
+import {
+	type ChannelCollection,
+	getLocalDataStoreType,
+	type IFluidParentContextPrivate,
+} from "../channelCollection.js";
 import { channelToDataStore } from "../dataStore.js";
 import {
 	LocalDetachedFluidDataStoreContext,
@@ -84,7 +87,7 @@ describe("Data Store Context Tests", () => {
 		const storage = {} as unknown as IDocumentStorageService;
 		const scope = {} as unknown as FluidObject;
 		const makeLocallyVisibleFn = () => {};
-		let parentContext: IFluidParentContext;
+		let parentContext: IFluidParentContextPrivate;
 		let summarizerNode: IRootSummarizerNodeWithGC;
 
 		beforeEach(async () => {
@@ -245,9 +248,9 @@ describe("Data Store Context Tests", () => {
 
 				parentContext = {
 					IFluidDataStoreRegistry: registryWithSubRegistries,
-					clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
+					clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 					deltaManager: new MockDeltaManager(),
-				} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
+				} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
@@ -521,7 +524,7 @@ describe("Data Store Context Tests", () => {
 		const storage: Partial<IDocumentStorageService> = {};
 		const scope = {} as unknown as FluidObject;
 		let summarizerNode: IRootSummarizerNodeWithGC;
-		let parentContext: IFluidParentContext;
+		let parentContext: IFluidParentContextPrivate;
 
 		beforeEach(async () => {
 			const factory: IFluidDataStoreFactory = {
@@ -541,10 +544,10 @@ describe("Data Store Context Tests", () => {
 
 			parentContext = {
 				IFluidDataStoreRegistry: registry,
-				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
+				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 				containerRuntime: parentContext as unknown as IContainerRuntimeBase,
 				deltaManager: new MockDeltaManager(),
-			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
+			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 		});
 
 		describe("Initialization - can correctly initialize and generate attributes", () => {
@@ -987,7 +990,7 @@ describe("Data Store Context Tests", () => {
 				{} as unknown as ChannelCollection,
 				createChildLogger({ logger: parentContext.baseLogger }),
 			);
-		let parentContext: IFluidParentContext;
+		let parentContext: IFluidParentContextPrivate;
 		let provideDsRuntimeWithFailingEntrypoint = false;
 
 		beforeEach(async () => {
@@ -1038,9 +1041,9 @@ describe("Data Store Context Tests", () => {
 			parentContext = {
 				IFluidDataStoreRegistry: registry,
 				baseLogger: createChildLogger(),
-				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
+				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 				deltaManager: new MockDeltaManager(),
-			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
+			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 		});
 
 		describe("Initialization", () => {
