@@ -15,7 +15,11 @@ import {
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
-import { CorrelationIdHeaderName, TelemetryContextHeaderName } from "./constants";
+import {
+	CallingServiceHeaderName,
+	CorrelationIdHeaderName,
+	TelemetryContextHeaderName,
+} from "./constants";
 import { getGlobalTimeoutContext } from "./timeoutContext";
 
 /**
@@ -208,6 +212,7 @@ export class BasicRestWrapper extends RestWrapper {
 			authorizationHeader: RawAxiosRequestHeaders,
 		) => Promise<RawAxiosRequestHeaders | undefined>,
 		private readonly logHttpMetrics?: (requestProps: IBasicRestWrapperMetricProps) => void,
+		private readonly getCallingServiceName?: () => string | undefined,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -219,10 +224,12 @@ export class BasicRestWrapper extends RestWrapper {
 	): Promise<T> {
 		const options = { ...requestConfig };
 		const correlationId = this.getCorrelationId?.() ?? uuid();
+		const callingServiceName = this.getCallingServiceName?.();
 		options.headers = this.generateHeaders(
 			options.headers,
 			correlationId,
 			this.getTelemetryContextProperties?.(),
+			callingServiceName,
 		);
 
 		// If the request has an Authorization header and a refresh token function is provided, try to refresh the token if needed
@@ -368,6 +375,7 @@ export class BasicRestWrapper extends RestWrapper {
 		headers?: RawAxiosRequestHeaders,
 		fallbackCorrelationId?: string,
 		telemetryContextProperties?: Record<string, string | number | boolean>,
+		callingServiceName?: string,
 	): RawAxiosRequestHeaders {
 		const result = {
 			...this.defaultHeaders,
@@ -379,6 +387,9 @@ export class BasicRestWrapper extends RestWrapper {
 		}
 		if (!result[TelemetryContextHeaderName] && telemetryContextProperties) {
 			result[TelemetryContextHeaderName] = JSON.stringify(telemetryContextProperties);
+		}
+		if (!result[CallingServiceHeaderName] && callingServiceName) {
+			result[CallingServiceHeaderName] = callingServiceName;
 		}
 
 		return result;
