@@ -3,14 +3,89 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	DataObject,
+	DataObjectFactory,
+	PureDataObjectFactory,
+	TreeDataObject,
+} from "@fluidframework/aqueduct/internal";
 import { SharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { SharedTree, type TreeView } from "@fluidframework/tree/internal";
+
+import { TodoList, TodoItem, type TodoItemProps } from "./Schema.js";
+
+/**
+ * Additional {@link TreeDataObject} added to the {@link AppData}.
+ */
+export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
+	public static readonly Name = "@devtools-example/test-app-tree-data-object";
+
+	public readonly config = new TreeViewConfiguration({ schema: TodoList });
+	public static readonly factory = new PureDataObjectFactory<
+		TreeDataObject<TreeView<typeof TodoList>>
+	>(AppDataTree.Name, AppDataTree, [SharedString.getFactory(), SharedTree.getFactory()], {});
+
+	public static getFactory(): PureDataObjectFactory<
+		TreeDataObject<TreeView<typeof TodoList>>
+	> {
+		return AppDataTree.factory;
+	}
+
+	/**
+	 * Converts the underlying ITree into a typed TreeView using the provided schema configuration.
+	 *
+	 * @param tree - The ITree instance to view.
+	 * @returns A typed TreeView using the TodoList schema.
+	 */
+	public override generateView(tree: ITree): TreeView<typeof TodoList> {
+		return tree.viewWith(this.config) as unknown as TreeView<typeof TodoList>;
+	}
+
+	/**
+	 * Initializes the tree with a default title and empty todo item list.
+	 * @remarks Called during the initial creation of the data object.
+	 */
+	public override async initializingFirstTime(): Promise<void> {
+		const title = SharedString.create(this.runtime);
+		title.insertText(0, "Title");
+		this.treeView.initialize(new TodoList({ title: title.handle, items: [] }));
+	}
+
+	/**
+	 * Adds a new todo item to the list.
+	 *
+	 * @param props
+	 * -`startingText`: The text to prefill into the item's title.
+	 *
+	 * @privateRemarks
+	 * This method was placed in the data object (instead of the TodoList schema class),
+	 * as we needed access to the runtime to create the `SharedString`.
+	 */
+	public async addTodoItem(props?: TodoItemProps): Promise<void> {
+		const title = SharedString.create(this.runtime);
+		const newItemText = props?.startingText ?? "New Item";
+		title.insertText(0, newItemText);
+		const description = SharedString.create(this.runtime);
+
+		const todoItem = new TodoItem({
+			title: title.handle,
+			description: description.handle,
+			completed: false,
+		});
+
+		// TODO: We should consider creating a separate field for date, so that we do not need to
+		// concatenate it to the id.
+		// Generate an ID that we can sort on later, and store the handle.
+		const id = `${Date.now()}-${Math.random()}`;
+
+		this.treeView.root.items.set(id, todoItem);
+	}
+}
 
 /**
  * Additional Data Object added to the {@link AppData}.
@@ -94,12 +169,18 @@ export class AppData extends DataObject {
 	 */
 	private readonly dataObjectKey = "shared-data-object";
 
+	/**
+	 * Key in the app's `rootMap` under which the {@link AppDataTree} object is stored.
+	 */
+	private readonly treeDataObjectKey = "tree-data-object";
+
 	// previous app's `rootMap`
 	private readonly _initialObjects: Record<string, IFluidLoadable> = {};
 	private _sharedTree: ITree | undefined;
 	private _text: SharedString | undefined;
 	private _counter: SharedCounter | undefined;
 	private _emojiMatrix: SharedMatrix | undefined;
+	private _treeDataObject: TreeDataObject<TreeView<typeof TodoList>> | undefined;
 
 	public get text(): SharedString {
 		if (this._text === undefined) {
@@ -129,6 +210,13 @@ export class AppData extends DataObject {
 		return this._sharedTree;
 	}
 
+	public get treeDataObject(): TreeDataObject<TreeView<typeof TodoList>> {
+		if (this._treeDataObject === undefined) {
+			throw new Error("The TreeDataObject was not initialized correctly");
+		}
+		return this._treeDataObject;
+	}
+
 	public getRootObject(): Record<string, IFluidLoadable> {
 		return this._initialObjects;
 	}
@@ -146,7 +234,7 @@ export class AppData extends DataObject {
 			SharedTree.getFactory(),
 		],
 		{},
-		new Map([AppDataTwo.getFactory().registryEntry]),
+		new Map([AppDataTwo.getFactory().registryEntry, AppDataTree.getFactory().registryEntry]),
 	);
 
 	public static getFactory(): DataObjectFactory<AppData> {
@@ -172,12 +260,14 @@ export class AppData extends DataObject {
 		this.populateSharedTree(sharedTree);
 
 		const appDataTwo = await AppDataTwo.getFactory().createChildInstance(this.context);
+		const appDataTree = await AppDataTree.getFactory().createChildInstance(this.context);
 
 		this.root.set(this.sharedTextKey, text.handle);
 		this.root.set(this.sharedCounterKey, counter.handle);
 		this.root.set(this.emojiMatrixKey, emojiMatrix.handle);
 		this.root.set(this.sharedTreeKey, sharedTree.handle);
 		this.root.set(this.dataObjectKey, appDataTwo.handle);
+		this.root.set(this.treeDataObjectKey, appDataTree.handle);
 
 		// Also set a couple of primitives for testing the debug view
 		this.root.set("numeric-value", 42);
@@ -203,6 +293,7 @@ export class AppData extends DataObject {
 		this._emojiMatrix = await this.root
 			.get<IFluidHandle<SharedMatrix>>(this.emojiMatrixKey)
 			?.get();
+		this._treeDataObject = await this.root.get(this.treeDataObjectKey);
 		const sharedTree = await this.root.get<IFluidHandle<ITree>>(this.sharedTreeKey)?.get();
 		if (sharedTree === undefined) {
 			throw new Error("SharedTree was not initialized");
