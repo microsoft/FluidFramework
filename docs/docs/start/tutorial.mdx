@@ -191,7 +191,9 @@ updateDice();
 
 ### Handling remote changes
 
-To keep the data up to date as it changes, an event handler must be set on the `dice` object to call `updateDice` each time that the `nodeChanged` event is sent. Use the built-in `Tree` object to subscribe to the event. Note that the `nodeChanged` event fires whenever the `dice` object changes on _any_ client; that is, when the "rollButton" button is clicked on any client.
+To keep the data up to date as it changes, an event handler must be set on the `dice` object to call `updateDice` each time that the `nodeChanged` event is sent.
+Use the built-in `Tree` object to subscribe to the event.
+Note that the `nodeChanged` event fires whenever the `dice` object changes on _any_ client; that is, when the "rollButton" button is clicked on any client.
 
 ```js
 Tree.on(dice, "nodeChanged", updateDice);
