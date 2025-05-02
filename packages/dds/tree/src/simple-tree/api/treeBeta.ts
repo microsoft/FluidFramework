@@ -16,7 +16,7 @@ import { treeNodeApi } from "./treeNodeApi.js";
 import { createFromCursor } from "./create.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
 
-// Tests for this file are groups with those for treeNodeApi.ts as thats where this functionality will eventually land,
+// Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
 // and where most of the actual implementation is for much of it.
 
 /**

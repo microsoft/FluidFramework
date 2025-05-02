@@ -43,7 +43,7 @@ export interface Tree extends TreeNodeApi {
 	 *
 	 * `node` is considered to contain itself, so the case where `node === other` returns true.
 	 *
-	 * This is handy when checking if moving `node` into `other` would create a cycle and thus is invalid.
+	 * This is handy when checking if moving `node` into `other` would create a cycle and would thus be invalid.
 	 *
 	 * This check walks the parents of `other` looking for `node`,
 	 * and thus runs in time proportional to the depth of child in the tree.
