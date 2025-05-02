@@ -152,6 +152,7 @@ export class DocumentManager implements IDocumentManager {
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			refreshTokenIfNeeded /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		return restWrapper;
 	}
