@@ -32,7 +32,7 @@ describe("TableFactory unit tests", () => {
 			 */
 			label: schemaFactory.optional(schemaFactory.string),
 		}) {}
-		class Column extends TableSchema.createColumnInternal(schemaFactory, ColumnProps) {}
+		class Column extends TableSchema.createColumn(schemaFactory, ColumnProps) {}
 
 		class RowProps extends schemaFactory.object("table-row-props", {
 			/**
