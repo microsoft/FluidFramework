@@ -351,7 +351,7 @@ export namespace System_TableSchema {
 		const TRow extends RowSchemaBase<TInputScope, TCell> = RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		_cellSchema: TCell,
+		cellSchema: TCell,
 		columnSchema: TColumn,
 		rowSchema: TRow,
 	) {
@@ -896,7 +896,7 @@ export namespace TableSchema {
 		const TCell extends ImplicitAllowedTypes,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		_cellSchema: TCell,
+		cellSchema: TCell,
 	): ReturnType<typeof System_TableSchema.createTableInternal<TInputScope, TCell>>;
 	/**
 	 * Factory for creating new table schema without specifying row schema
@@ -908,7 +908,7 @@ export namespace TableSchema {
 		const TColumn extends System_TableSchema.ColumnSchemaBase<TInputScope>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		_cellSchema: TCell,
+		cellSchema: TCell,
 		columnSchema: TColumn,
 	): ReturnType<typeof System_TableSchema.createTableInternal<TInputScope, TCell, TColumn>>;
 	/**
@@ -922,7 +922,7 @@ export namespace TableSchema {
 		const TRow extends System_TableSchema.RowSchemaBase<TInputScope, TCell>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		_cellSchema: TCell,
+		cellSchema: TCell,
 		columnSchema: TColumn,
 		rowSchema: TRow,
 	): ReturnType<
@@ -931,13 +931,13 @@ export namespace TableSchema {
 	/** `createTable` implementation */
 	export function createTable(
 		inputSchemaFactory: SchemaFactoryAlpha,
-		_cellSchema: ImplicitAllowedTypes,
+		cellSchema: ImplicitAllowedTypes,
 		columnSchema: System_TableSchema.ColumnSchemaBase = createColumn(inputSchemaFactory),
-		rowSchema: System_TableSchema.RowSchemaBase = createRow(inputSchemaFactory, _cellSchema),
+		rowSchema: System_TableSchema.RowSchemaBase = createRow(inputSchemaFactory, cellSchema),
 	): TreeNodeSchema {
 		return System_TableSchema.createTableInternal(
 			inputSchemaFactory,
-			_cellSchema,
+			cellSchema,
 			columnSchema,
 			rowSchema,
 		);
