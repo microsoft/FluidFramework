@@ -3,23 +3,27 @@
  * Licensed under the MIT License.
  */
 
+export type {
+	TreeSchema,
+	ITreeViewConfiguration,
+	ITreeConfigurationOptions,
+} from "./configuration.js";
 export {
-	type ITree,
-	type TreeView,
-	type ViewableTree,
-	type TreeViewEvents,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	type TreeSchema,
-	type ITreeViewConfiguration,
-	type SchemaCompatibilityStatus,
-	type ITreeConfigurationOptions,
-	type TreeViewAlpha,
-	type TreeBranch,
-	type TreeBranchEvents,
-	type ITreeAlpha,
-	asTreeViewAlpha,
+} from "./configuration.js";
+export type {
+	ITree,
+	TreeView,
+	ViewableTree,
+	TreeViewEvents,
+	SchemaCompatibilityStatus,
+	TreeViewAlpha,
+	TreeBranch,
+	TreeBranchEvents,
+	ITreeAlpha,
 } from "./tree.js";
+export { asTreeViewAlpha } from "./tree.js";
 export {
 	SchemaFactory,
 	type ScopedSchemaName,
