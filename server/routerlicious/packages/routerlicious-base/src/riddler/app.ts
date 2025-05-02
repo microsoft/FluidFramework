@@ -4,7 +4,10 @@
  */
 
 import { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
-import { BaseTelemetryProperties, CommonProperties } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	CommonProperties,
+} from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
 import {
@@ -45,7 +48,8 @@ export function create(
 			jsonMorganLoggerMiddleware("riddler", (tokens, req, res) => {
 				return {
 					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
-					[CommonProperties.callingServiceName]: req.headers[CallingServiceHeaderName] ?? "",
+					[CommonProperties.callingServiceName]:
+						req.headers[CallingServiceHeaderName] ?? "",
 				};
 			}),
 		);

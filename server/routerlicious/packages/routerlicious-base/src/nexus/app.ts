@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { BaseTelemetryProperties, CommonProperties } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	CommonProperties,
+} from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
 import {
@@ -35,7 +38,8 @@ export function create(
 			jsonMorganLoggerMiddleware("nexus", (tokens, req, res) => {
 				return {
 					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
-					[CommonProperties.callingServiceName]: req.headers[CallingServiceHeaderName] ?? "",
+					[CommonProperties.callingServiceName]:
+						req.headers[CallingServiceHeaderName] ?? "",
 				};
 			}),
 		);
