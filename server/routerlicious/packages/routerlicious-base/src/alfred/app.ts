@@ -26,7 +26,7 @@ import express from "express";
 import shajs from "sha.js";
 import { Provider } from "nconf";
 import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
+import { CallingServiceHeaderName, DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
 	bindTelemetryContext,
@@ -34,7 +34,7 @@ import {
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
-import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, CommonProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
@@ -87,7 +87,7 @@ export function create(
 	app.set("trust proxy", 1);
 
 	app.use(compression());
-	app.use(bindTelemetryContext());
+	app.use(bindTelemetryContext("alfred"));
 	if (httpServerConfig?.connectionTimeoutMs) {
 		// If connectionTimeoutMs configured and not 0, bind timeout context.
 		app.use(bindTimeoutContext(httpServerConfig.connectionTimeoutMs));
@@ -106,6 +106,7 @@ export function create(
 						),
 						[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
 						[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+						[CommonProperties.callingServiceName]: req.headers[CallingServiceHeaderName] ?? "",
 					};
 					if (enableClientIPLogging === true) {
 						const hashedClientIP = req.ip
