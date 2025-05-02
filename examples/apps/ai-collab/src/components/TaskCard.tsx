@@ -79,7 +79,7 @@ export function TaskCard(props: {
 		isNewCreation: boolean;
 		changes: Record<string, ModifyDiff>;
 		moved?: {
-			uiDiff: MoveDiff;
+			diff: MoveDiff;
 			originalIndex: number;
 		};
 	} = {
@@ -87,26 +87,26 @@ export function TaskCard(props: {
 		changes: {} satisfies Record<string, ModifyDiff>,
 	};
 
-	for (const uiDiff of diffs ?? []) {
-		if (uiDiff.type === "insert") {
+	for (const diff of diffs ?? []) {
+		if (diff.type === "insert") {
 			fieldDifferences.isNewCreation = true;
 		}
-		if (uiDiff.type === "modify") {
+		if (diff.type === "modify") {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			const targetField = uiDiff.nodePath[0]?.parentField as string;
+			const targetField = diff.nodePath[0]?.parentField as string;
 			if (targetField === undefined) {
 				console.error("Recieved modify ui diff but could not identify target field");
 				continue;
 			}
 
-			fieldDifferences.changes[targetField] = uiDiff;
+			fieldDifferences.changes[targetField] = diff;
 		}
 
-		if (uiDiff.type === "move" && uiDiff.moveType === "move-single") {
+		if (diff.type === "move" && diff.moveType === "move-single") {
 			fieldDifferences.moved = {
-				uiDiff,
+				diff,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				originalIndex: uiDiff.sourceNodePath[0]?.parentField as number,
+				originalIndex: diff.sourceNodePath[0]?.parentField as number,
 			};
 		}
 	}
