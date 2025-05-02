@@ -73,14 +73,21 @@ export interface IOutboxParameters {
 		resubmitOutstandingRanges: boolean,
 	) => LocalBatchMessage | undefined;
 }
-//* Comments
-//  * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
-//  * with the given Batch ID, which must be preserved
-//  * @param resubmittingStagedBatch - If defined, indicates this is a resubmission of a batch that is staged,
-//  * meaning it should not be sent to the ordering service yet.
 
+/**
+ * Info needed to correctly resubmit a batch
+ */
 export interface BatchResubmitInfo {
+	/**
+	 * If defined, indicates the Batch ID of the batch being resubmitted.
+	 * This must be preserved on the new batch about to be submitted so they can be correlated/deduped in case both are sent.
+	 */
 	batchId?: string;
+	/**
+	 * Indicates whether or not this batch is "staged", meaning it should not be sent to the ordering service yet
+	 * This is important on resubmit because we may be in Staging Mode for new changes,
+	 * but resubmitting a non-staged change from before entering Staging Mode
+	 */
 	staged: boolean;
 }
 
@@ -361,7 +368,7 @@ export class Outbox {
 	 * This method is expected to be called at the end of a batch.
 	 *
 	 * @throws If called from a reentrant context, or if the batch being flushed is too large.
-	 * @param resubmitInfo - Optional information when flushing a resubmitted batch. Undefined means this is not resubmit.
+	 * @param resubmitInfo - Key information when flushing a resubmitted batch. Undefined means this is not resubmit.
 	 */
 	public flush(resubmitInfo?: BatchResubmitInfo): void {
 		assert(
