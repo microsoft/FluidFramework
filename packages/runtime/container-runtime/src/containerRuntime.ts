@@ -2519,7 +2519,6 @@ export class ContainerRuntime
 		let newState: boolean;
 
 		try {
-			this.submitIdAllocationOpIfNeeded(true);
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
 		} finally {
@@ -3907,7 +3906,6 @@ export class ContainerRuntime
 					outboxLength: this.outbox.messageCount,
 					mainBatchLength: this.outbox.mainBatchMessageCount,
 					blobAttachBatchLength: this.outbox.blobAttachBatchMessageCount,
-					idAllocationBatchLength: this.outbox.idAllocationBatchMessageCount,
 				},
 			);
 		}
@@ -4350,15 +4348,6 @@ export class ContainerRuntime
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		this.verifyNotClosed();
 		return this.blobManager.createBlob(blob, signal);
-	}
-
-	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
-		const idAllocationBatchMessage = this.generateIdAllocationOpIfNeeded(
-			resubmitOutstandingRanges,
-		);
-		if (idAllocationBatchMessage !== undefined) {
-			this.outbox.submitIdAllocation(idAllocationBatchMessage);
-		}
 	}
 
 	private generateIdAllocationOpIfNeeded(
