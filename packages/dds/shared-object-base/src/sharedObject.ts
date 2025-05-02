@@ -505,6 +505,13 @@ export abstract class SharedObjectCore<
 		this.submitLocalMessage(content, localOpMetadata);
 	}
 
+	/**
+	 * Called when a message has to be resubmitted but its content should be "squashed" if any subsequent pending changes
+	 * override the content in the fashion described on {@link @fluidframework/datastore-definitions#IDeltaHandler.reSubmit}.
+	 *
+	 * @param content - The content of the original message.
+	 * @param localOpMetadata - The local metadata associated with the original message.
+	 */
 	protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
 		const allowStagingModeWithoutSquashing =
 			loggerToMonitoringContext(this.logger).config.getBoolean(

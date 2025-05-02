@@ -22,7 +22,7 @@ describe("Local Server Stress", () => {
 
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 100,
-		skipMinimization: true,
+		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// replay: 93,
 		// only: [28],
