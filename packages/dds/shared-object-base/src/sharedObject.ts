@@ -78,6 +78,7 @@ interface ProcessTelemetryProperties {
  * Currently some documentation (like the above) implies that this is supposed to be the only implementation of ISharedObject, which is both package-exported and not `@sealed`.
  * This situation should be clarified to indicate if other implementations of ISharedObject are allowed and just currently don't exist,
  * or if the intention is that no other implementations should exist and creating some might break things.
+ * As part of this, any existing implementations of ISharedObject (via SharedObjectCore or otherwise) in use by legacy API users will need to be considered.
  *
  * TODO:
  * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
