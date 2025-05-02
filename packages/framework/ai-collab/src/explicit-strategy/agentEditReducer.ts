@@ -613,10 +613,14 @@ const createNodePathRecursive = (
 };
 
 /**
- * Creates a diff for an Insert TreeEdit. This function is only invoked within the "insert" case block.
+* Creates a diff for an Insert TreeEdit.
+ *
+ * @remarks
+ * This function is only invoked within the "insert" case block.
+ *
+ * This must only be called AFTER an insertion is made.
  * It generates the insert diff after the node has been successfully inserted, as the node's index may
- * be required to support undoing the insert operation.
- * @remarks This should be executed AFTER an insertion is made.
+ * be required to support undoing the insert operation, and we don't know that index until the insert has been made.
  */
 function createInsertDiff(
 	newlyInsertedNode: TreeNode,
@@ -753,7 +757,7 @@ function createRemovediff(
 		};
 	} else {
 		throw new Error(
-			"Invalid source encountered when trying to create ui diff for remove edit",
+			"Invalid source encountered when trying to create diff for remove edit",
 		);
 	}
 }

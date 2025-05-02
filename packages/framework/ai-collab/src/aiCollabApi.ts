@@ -172,7 +172,6 @@ export interface AiCollabSuccessResponse {
 	readonly tokensUsed: TokenUsage;
 	/**
 	 * A list of diffs that represent the changes made by the AI collaboration.
-	 * @remarks This is intended to be used to update your applications UI view with the changes made by the AI collaboration.
 	 */
 	readonly diffs: readonly Diff[];
 }
@@ -209,7 +208,6 @@ export interface AiCollabErrorResponse {
 	readonly tokensUsed: TokenUsage;
 	/**
 	 * A list of diffs that represent the changes made by the AI collaboration.
-	 * @remarks This is intended to be used to update your applications UI view with the changes made by the AI collaboration.
 	 */
 	readonly diffs: readonly Diff[];
 }

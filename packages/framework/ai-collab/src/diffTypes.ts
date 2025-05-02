@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// The following interfaces are intended to be used to visualize the changes made to a SharedTree (as a result of using ai-collab) on a UI.
+// The following interfaces represent diffs resulting from edits made to the SharedTree by the AI agent.
 
 /**
  * A base interface to enforce consistency between all Diff objects.
@@ -55,7 +55,6 @@ export type NodePath = {
 
 /**
  * An object that describes the insertion of a new node into a tree.
- * @remarks This object is intended to be used to visualize the changes made to a tree on a UI.
  * @alpha
  */
 export interface InsertDiff extends DiffBase {
@@ -74,7 +73,6 @@ export interface InsertDiff extends DiffBase {
 
 /**
  * An object that describes the modification of an existing node on a tree.
- * @remarks This object is intended to be used to visualize the changes made to a tree on a UI.
  * @alpha
  */
 export interface ModifyDiff extends DiffBase {
