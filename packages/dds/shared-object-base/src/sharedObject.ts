@@ -75,7 +75,7 @@ interface ProcessTelemetryProperties {
  * This class implements common behaviors that implementations of {@link ISharedObject} may want to reuse.
  * Even more such behaviors are implemented in the {@link SharedObject} class.
  * @privateRemarks
- * Currently some documentation (like the above) implies that this is supposed to be the only implementation of ISharedObject, which both package exported and not `@sealed`.
+ * Currently some documentation (like the above) implies that this is supposed to be the only implementation of ISharedObject, which is both package-exported and not `@sealed`.
  * This situation should be clarified to indicate if other implementations of ISharedObject are allowed and just currently don't exist,
  * or if the intention is that no other implementations should exist and creating some might break things.
  *
@@ -743,7 +743,7 @@ export abstract class SharedObjectCore<
 }
 
 /**
- * Helper for implementing {@link ISharedObject} with simplified, synchronous summarization and GC.
+ * Helper for implementing {@link ISharedObject} with simplified, synchronous summarization and garbage collection.
  * @remarks
  * DDS implementations with async and incremental summarization should extend {@link SharedObjectCore} directly instead.
  * @privateRemarks

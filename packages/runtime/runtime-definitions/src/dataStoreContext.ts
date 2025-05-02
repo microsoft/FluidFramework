@@ -174,7 +174,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * - Can be assigned an alias
  *
  * @privateRemarks
- * These docs should define what a datastore is, and not do so by just referencing "data store".
+ * TODO: These docs should define what a datastore is, and not do so by just referencing "data store".
  *
  * @legacy
  * @alpha
@@ -198,7 +198,7 @@ export interface IDataStore {
 }
 
 /**
- * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need.
+ * A reduced set of functionality of {@link IContainerRuntime} that a data store context/data store runtime will need.
  * @privateRemarks
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy
