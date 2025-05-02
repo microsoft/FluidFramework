@@ -16,6 +16,7 @@ import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
 import { CorrelationIdHeaderName, TelemetryContextHeaderName } from "./constants";
+import { getGlobalTimeoutContext } from "./timeoutContext";
 
 /**
  * @internal
@@ -42,6 +43,19 @@ export abstract class RestWrapper {
 		protected readonly maxContentLength = 1000 * 1024 * 1024,
 	) {}
 
+	private getTimeoutMs(): number | undefined {
+		const timeout = getGlobalTimeoutContext().getTimeRemainingMs();
+		if (timeout && timeout > 0) {
+			return timeout;
+		}
+		// Fallback to the global timeout context if no timeout is set
+		return undefined;
+	}
+
+	private getTimeoutMessage(url: string): string {
+		return `Timeout occurred for request to ${url}`;
+	}
+
 	public async get<T>(
 		url: string,
 		queryString?: Record<string, string | number | boolean>,
@@ -61,6 +75,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "GET",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 200);
 	}
@@ -86,6 +102,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "POST",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 201);
 	}
@@ -109,6 +127,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "DELETE",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 204);
 	}
@@ -134,6 +154,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "PATCH",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 200);
 	}
