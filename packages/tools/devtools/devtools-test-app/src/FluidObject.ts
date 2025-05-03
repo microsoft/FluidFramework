@@ -51,6 +51,7 @@ export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 	 * @remarks Called during the initial creation of the data object.
 	 */
 	public override async initializingFirstTime(): Promise<void> {
+		console.log("Initializing first time TREE");
 		const title = SharedString.create(this.runtime);
 		title.insertText(0, "Title");
 		this.treeView.initialize(new TodoList({ title: title.handle, items: [] }));
@@ -119,6 +120,7 @@ export class AppDataTwo extends DataObject {
 	}
 
 	protected async initializingFirstTime(): Promise<void> {
+		console.log("Initializing first time DATAOBJECT");
 		// Create the shared objects and store their handles in the root SharedDirectory
 		const text = SharedString.create(this.runtime, this.sharedTextKey);
 
@@ -180,7 +182,7 @@ export class AppData extends DataObject {
 	private _text: SharedString | undefined;
 	private _counter: SharedCounter | undefined;
 	private _emojiMatrix: SharedMatrix | undefined;
-	private _treeDataObject: TreeDataObject<TreeView<typeof TodoList>> | undefined;
+	private _treeDataObject: AppDataTree | undefined;
 
 	public get text(): SharedString {
 		if (this._text === undefined) {
@@ -210,7 +212,7 @@ export class AppData extends DataObject {
 		return this._sharedTree;
 	}
 
-	public get treeDataObject(): TreeDataObject<TreeView<typeof TodoList>> {
+	public get treeDataObject(): AppDataTree {
 		if (this._treeDataObject === undefined) {
 			throw new Error("The TreeDataObject was not initialized correctly");
 		}
@@ -293,7 +295,9 @@ export class AppData extends DataObject {
 		this._emojiMatrix = await this.root
 			.get<IFluidHandle<SharedMatrix>>(this.emojiMatrixKey)
 			?.get();
-		this._treeDataObject = await this.root.get(this.treeDataObjectKey);
+		this._treeDataObject = await this.root
+			.get<IFluidHandle<AppDataTree>>(this.treeDataObjectKey)
+			?.get();
 		const sharedTree = await this.root.get<IFluidHandle<ITree>>(this.sharedTreeKey)?.get();
 		if (sharedTree === undefined) {
 			throw new Error("SharedTree was not initialized");

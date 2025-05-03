@@ -38,8 +38,8 @@ import {
 	loadExistingContainer,
 } from "./ClientUtilities.js";
 import type { IAppModel } from "./Container.js";
-import type { AppData } from "./FluidObject.js";
-import { CounterWidget, EmojiGrid } from "./widgets/index.js";
+import type { AppData, AppDataTree } from "./FluidObject.js";
+import { CounterWidget, EmojiGrid, TodoListView } from "./widgets/index.js";
 
 const sharedContainerKey: ContainerKey = "Shared Container";
 const privateContainerKey: ContainerKey = "Private Container";
@@ -271,6 +271,7 @@ function AppView(props: AppViewProps): React.ReactElement {
 			<EmojiMatrixView emojiMatrix={appData.emojiMatrix} />
 			<CounterView sharedCounter={appData.counter} />
 			<TextView sharedText={appData.text} />
+			<TodoListViewHelper todoModel={appData.treeDataObject} />
 		</div>
 	);
 }
@@ -309,4 +310,16 @@ function EmojiMatrixView(props: EmojiMatrixViewProps): React.ReactElement {
 	const { emojiMatrix } = props;
 
 	return emojiMatrix === undefined ? <Spinner /> : <EmojiGrid emojiMatrix={emojiMatrix} />;
+}
+
+interface TodoListViewProps {
+	todoModel: AppDataTree;
+}
+
+function TodoListViewHelper(props: TodoListViewProps): React.ReactElement {
+	const { todoModel } = props;
+
+	console.log("TodoListViewHelper", todoModel);
+
+	return todoModel === undefined ? <Spinner /> : <TodoListView todoModel={todoModel} />;
 }
