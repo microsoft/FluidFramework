@@ -11,16 +11,22 @@ import {
 	NodeKind,
 	Tree,
 	ValueSchema,
+	walkFieldSchema,
 } from "@fluidframework/tree/internal";
 import type {
+	ImplicitFieldSchema,
+	SchemaVisitor,
 	SimpleFieldSchema,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
 	TreeNode,
+	TreeNodeSchema,
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
 import { objectIdKey, objectIdType, typeField } from "./agentEditTypes.js";
+import type { NodeSchema } from "./methodBinding.js";
+import { getExposedMethods } from "./methodBinding.js";
 import { getFriendlySchemaName } from "./utils.js";
 import {
 	fail,
@@ -95,6 +101,7 @@ const insertionObjectCache = new WeakMap<SimpleNodeSchema, Zod.ZodTypeAny>();
  * TODO
  */
 export function generateEditTypesForPrompt(
+	rootSchema: ImplicitFieldSchema,
 	schema: SimpleTreeSchema,
 	includeObjectIdKey: boolean, // TODO: If this changes, we will get a false cache hit because it's not part of the cache key
 ): {
@@ -103,9 +110,17 @@ export function generateEditTypesForPrompt(
 	domainTypes: Record<string, Zod.ZodTypeAny>;
 	domainRoot: string;
 } {
-	return getOrCreate(promptSchemaCache, schema, () =>
-		generateEditTypes(schema, false, new Map(), includeObjectIdKey),
-	);
+	return getOrCreate(promptSchemaCache, schema, () => {
+		const treeNodeSchemas = new Set<TreeNodeSchema>();
+		walkFieldSchema(rootSchema, {} satisfies SchemaVisitor, treeNodeSchemas);
+		const nodeSchemas = [...treeNodeSchemas.values()].filter(
+			(treeNodeSchema) => treeNodeSchema.kind === NodeKind.Object,
+		) as NodeSchema[];
+		const treeNodeSchemaMap = new Map<string, NodeSchema>(
+			nodeSchemas.map((nodeSchema) => [nodeSchema.identifier, nodeSchema]),
+		);
+		return generateEditTypes(schema, false, new Map(), includeObjectIdKey, treeNodeSchemaMap);
+	});
 }
 
 /**
@@ -115,7 +130,7 @@ export function generateEditTypesForInsertion(
 	schema: SimpleTreeSchema,
 ): Zod.ZodArray<Zod.ZodTypeAny> {
 	const { editTypes, editRoot } = getOrCreate(insertionSchemaCache, schema, () =>
-		generateEditTypes(schema, true, insertionObjectCache, true),
+		generateEditTypes(schema, true, insertionObjectCache, true, undefined),
 	);
 	return editTypes[editRoot] as Zod.ZodArray<Zod.ZodTypeAny>;
 }
@@ -133,6 +148,7 @@ function generateEditTypes(
 	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 	includeObjectIdKey: boolean,
+	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): {
 	editTypes: Record<string, Zod.ZodTypeAny>;
 	editRoot: string;
@@ -154,6 +170,7 @@ function generateEditTypes(
 			transformForParsing,
 			objectCache,
 			includeObjectIdKey,
+			treeSchemaMap,
 		);
 	}
 
@@ -256,6 +273,7 @@ function generateEditTypes(
 			transformForParsing,
 			objectCache,
 			includeObjectIdKey,
+			treeSchemaMap,
 		);
 	});
 
@@ -288,6 +306,7 @@ export function getOrCreateTypeForInsertion(
 		true,
 		insertionObjectCache,
 		true,
+		undefined,
 	);
 }
 function getOrCreateType(
@@ -299,12 +318,13 @@ function getOrCreateType(
 	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 	includeObjectIdKey: boolean,
+	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): Zod.ZodTypeAny {
-	const nodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
-	return getOrCreate(objectCache, nodeSchema, () => {
-		switch (nodeSchema.kind) {
+	const simpleNodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
+	return getOrCreate(objectCache, simpleNodeSchema, () => {
+		switch (simpleNodeSchema.kind) {
 			case NodeKind.Object: {
-				for (const [key, field] of nodeSchema.fields) {
+				for (const [key, field] of simpleNodeSchema.fields) {
 					modifyFieldSet.add(key);
 					for (const type of field.allowedTypesIdentifiers) {
 						modifyTypeSet.add(type);
@@ -312,7 +332,7 @@ function getOrCreateType(
 				}
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const properties = Object.fromEntries(
-					[...nodeSchema.fields]
+					[...simpleNodeSchema.fields]
 						.map(([key, field]) => {
 							return [
 								key,
@@ -325,6 +345,7 @@ function getOrCreateType(
 									transformForParsing,
 									objectCache,
 									includeObjectIdKey,
+									treeSchemaMap,
 								),
 							];
 						})
@@ -338,7 +359,23 @@ function getOrCreateType(
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					properties[objectIdKey] = z.optional(objectId);
 				}
-				const obj = z.object(properties).describe(nodeSchema.metadata?.description ?? "");
+				if (treeSchemaMap) {
+					const nodeSchema = treeSchemaMap.get(definition) ?? fail("Unknown definition");
+					const methods = getExposedMethods(nodeSchema);
+					for (const [name, method] of Object.entries(methods)) {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+						if (properties[name] !== undefined) {
+							throw new UsageError(
+								`Method ${name} conflicts with field of the same name in schema ${definition}`,
+							);
+						}
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+						properties[name] = method;
+					}
+				}
+				const obj = z
+					.object(properties)
+					.describe(simpleNodeSchema.metadata?.description ?? "");
 				return transformForParsing
 					? obj.transform((value) => {
 							return {
@@ -350,7 +387,7 @@ function getOrCreateType(
 			}
 			case NodeKind.Array: {
 				for (const [name] of Array.from(
-					nodeSchema.allowedTypesIdentifiers,
+					simpleNodeSchema.allowedTypesIdentifiers,
 					(n): [string, SimpleNodeSchema] => [
 						n,
 						definitionMap.get(n) ?? fail("Unknown definition"),
@@ -367,10 +404,11 @@ function getOrCreateType(
 						insertSet,
 						modifyFieldSet,
 						modifyTypeSet,
-						nodeSchema.allowedTypesIdentifiers,
+						simpleNodeSchema.allowedTypesIdentifiers,
 						transformForParsing,
 						objectCache,
 						includeObjectIdKey,
+						treeSchemaMap,
 					),
 				);
 				return transformForParsing
@@ -378,7 +416,7 @@ function getOrCreateType(
 					: arr;
 			}
 			case NodeKind.Leaf: {
-				switch (nodeSchema.leafKind) {
+				switch (simpleNodeSchema.leafKind) {
 					case ValueSchema.Boolean: {
 						return z.boolean();
 					}
@@ -392,12 +430,12 @@ function getOrCreateType(
 						return z.null();
 					}
 					default: {
-						throw new Error(`Unsupported leaf kind ${NodeKind[nodeSchema.leafKind]}.`);
+						throw new Error(`Unsupported leaf kind ${NodeKind[simpleNodeSchema.leafKind]}.`);
 					}
 				}
 			}
 			default: {
-				throw new Error(`Unsupported node kind ${NodeKind[nodeSchema.kind]}.`);
+				throw new Error(`Unsupported node kind ${NodeKind[simpleNodeSchema.kind]}.`);
 			}
 		}
 	});
@@ -412,6 +450,7 @@ function getOrCreateTypeForField(
 	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 	includeObjectIdKey: boolean,
+	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): Zod.ZodTypeAny | undefined {
 	const getDefault: unknown = fieldSchema.metadata?.custom?.[llmDefault];
 	if (getDefault !== undefined) {
@@ -437,6 +476,7 @@ function getOrCreateTypeForField(
 		transformForParsing,
 		objectCache,
 		includeObjectIdKey,
+		treeSchemaMap,
 	).describe(
 		getDefault === undefined
 			? (fieldSchema.metadata?.description ?? "")
@@ -476,6 +516,7 @@ function getTypeForAllowedTypes(
 	transformForParsing: boolean,
 	cache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 	includeObjectIdKey: boolean,
+	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): Zod.ZodTypeAny {
 	const single = tryGetSingleton(allowedTypes);
 	if (single === undefined) {
@@ -490,6 +531,7 @@ function getTypeForAllowedTypes(
 					transformForParsing,
 					cache,
 					includeObjectIdKey,
+					treeSchemaMap,
 				);
 			}),
 		];
@@ -505,6 +547,7 @@ function getTypeForAllowedTypes(
 			transformForParsing,
 			cache,
 			includeObjectIdKey,
+			treeSchemaMap,
 		);
 	}
 }

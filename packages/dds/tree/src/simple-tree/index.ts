@@ -24,6 +24,9 @@ export {
 	SimpleContextSlot,
 	getOrCreateInnerNode,
 	getKernel,
+	type SchemaVisitor,
+	walkAllowedTypes,
+	walkNodeSchema,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -233,3 +236,4 @@ export {
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
 export type { LazyItem, FlexList, FlexListToUnion, ExtractItemType } from "./flexList.js";
+export { walkFieldSchema } from "./walkFieldSchema.js";

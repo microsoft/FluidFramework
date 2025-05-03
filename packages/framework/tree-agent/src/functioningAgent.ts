@@ -149,7 +149,7 @@ class SharedTreeFunctioningAgent<
 		);
 		const schema = getSimpleSchema(view.schema);
 
-		const { domainTypes, domainRoot } = generateEditTypesForPrompt(schema, false);
+		const { domainTypes, domainRoot } = generateEditTypesForPrompt(view.schema, schema, false);
 		for (const [key, value] of Object.entries(domainTypes)) {
 			const friendlyKey = getFriendlySchemaName(key);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete

@@ -148,6 +148,7 @@ class SharedTreeEditingAgent<
 		);
 		const schema = getSimpleSchema(view.schema);
 		const { editTypes, editRoot, domainTypes, domainRoot } = generateEditTypesForPrompt(
+			view.schema,
 			schema,
 			true,
 		);

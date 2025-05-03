@@ -32,7 +32,7 @@ export {
 	type TreeNodeSchemaCore,
 	type TreeNodeSchemaBoth,
 } from "./treeNodeSchema.js";
-export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
+export { walkAllowedTypes, type SchemaVisitor, walkNodeSchema } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
 export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
 export {

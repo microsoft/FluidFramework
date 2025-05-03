@@ -241,6 +241,10 @@ export {
 	type MapNodeCustomizableSchema,
 	type MapNodePojoEmulationSchema,
 	MapNodeSchema,
+	walkFieldSchema,
+	type SchemaVisitor,
+	walkAllowedTypes,
+	walkNodeSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

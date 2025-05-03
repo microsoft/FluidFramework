@@ -7,6 +7,7 @@ import type { TreeNodeSchema } from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
+ * @internal
  */
 export function walkNodeSchema(
 	schema: TreeNodeSchema,
@@ -29,6 +30,7 @@ export function walkNodeSchema(
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `allowedTypes`, applying the visitor pattern.
+ * @internal
  */
 export function walkAllowedTypes(
 	allowedTypes: Iterable<TreeNodeSchema>,
@@ -43,6 +45,7 @@ export function walkAllowedTypes(
 
 /**
  * Callbacks for use in {@link walkFieldSchema} / {@link walkAllowedTypes} / {@link walkNodeSchema}.
+ * @internal
  */
 export interface SchemaVisitor {
 	/**
