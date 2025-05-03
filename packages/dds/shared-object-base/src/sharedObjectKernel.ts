@@ -372,7 +372,7 @@ export interface SharedObjectOptions<T extends object> {
 	 * The factory used to create the kernel and its view.
 	 * @remarks
 	 * The view produced by this factory will be grafted onto the {@link SharedObject} using {@link mergeAPIs}.
-	 * See {@link mergeAPIs} for more the limitation this applies.
+	 * See {@link mergeAPIs} for more information on limitations that apply.
 	 */
 	readonly factory: SharedKernelFactory<Omit<T, keyof ISharedObject>>;
 
