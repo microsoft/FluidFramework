@@ -28,10 +28,6 @@ export function getExposedMethods(schemaClass: NodeSchema): Record<string, z.Zod
 	return ExposedMethodsI.getExposedMethods(schemaClass);
 }
 
-interface RestArg<T extends z.ZodTypeAny = z.ZodTypeAny> {
-	restType: T;
-}
-
 interface Arg<T extends z.ZodTypeAny = z.ZodTypeAny> {
 	name: string;
 	type: T;
@@ -43,7 +39,7 @@ interface FunctionDef<
 	Rest extends z.ZodTypeAny = z.ZodUnknown,
 > {
 	name: string;
-	description: string;
+	description?: string;
 	args: Args;
 	rest?: Rest;
 	returns: Return;
@@ -55,30 +51,36 @@ type ArgsTuple<T extends readonly Arg[]> = T extends [infer Single extends Arg]
 		? [Head["type"], ...ArgsTuple<Tail>]
 		: never;
 
-function buildFunc<Return extends z.ZodTypeAny, Args extends readonly Arg[]>(
-	name: string,
-	description: string,
-	returns: Return,
+function buildFunc<
+	Return extends z.ZodTypeAny,
+	Args extends readonly Arg[],
+	Rest extends z.ZodTypeAny = z.ZodUnknown,
+>(
+	def: { name: string; description?: string; returns: Return; rest?: Rest },
 	...args: Args
-): FunctionDef<Args, Return> {
+): FunctionDef<Args, Return, Rest> {
 	return {
-		name,
-		description,
+		name: def.name,
+		description: def.description,
+		returns: def.returns,
 		args,
-		returns,
+		rest: def.rest,
 	};
 }
 
-type Infer<T> = T extends FunctionDef<infer Args, infer R>
-	? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>>, R>>
+type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest>
+	? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>>
 	: never;
 
 const build = buildFunc(
-	"foo",
-	"A method named foo.",
-	z.number(),
+	{
+		name: "test",
+		description: "A test function.",
+		returns: z.boolean(),
+		rest: z.bigint(),
+	},
+	{ name: "arg0", type: z.number() },
 	{ name: "arg1", type: z.string() },
-	{ name: "arg2", type: z.boolean() },
 );
 
 type inferred = Infer<typeof build>;
