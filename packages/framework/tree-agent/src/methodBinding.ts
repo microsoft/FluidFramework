@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { NodeKind, TreeNodeSchema } from "@fluidframework/tree";
-import type { z } from "zod";
+import { z } from "zod";
 
 /**
  * A utility type that extracts the method keys from a given type.
@@ -27,6 +27,61 @@ export type NodeSchema = TreeNodeSchema<string, NodeKind.Object>;
 export function getExposedMethods(schemaClass: NodeSchema): Record<string, z.ZodTypeAny> {
 	return ExposedMethodsI.getExposedMethods(schemaClass);
 }
+
+interface RestArg<T extends z.ZodTypeAny = z.ZodTypeAny> {
+	restType: T;
+}
+
+interface Arg<T extends z.ZodTypeAny = z.ZodTypeAny> {
+	name: string;
+	type: T;
+}
+
+interface FunctionDef<
+	Args extends readonly Arg[],
+	Return extends z.ZodTypeAny,
+	Rest extends z.ZodTypeAny = z.ZodUnknown,
+> {
+	name: string;
+	description: string;
+	args: Args;
+	rest?: Rest;
+	returns: Return;
+}
+
+type ArgsTuple<T extends readonly Arg[]> = T extends [infer Single extends Arg]
+	? [Single["type"]]
+	: T extends [infer Head extends Arg, ...infer Tail extends Arg[]]
+		? [Head["type"], ...ArgsTuple<Tail>]
+		: never;
+
+function buildFunc<Return extends z.ZodTypeAny, Args extends readonly Arg[]>(
+	name: string,
+	description: string,
+	returns: Return,
+	...args: Args
+): FunctionDef<Args, Return> {
+	return {
+		name,
+		description,
+		args,
+		returns,
+	};
+}
+
+type Infer<T> = T extends FunctionDef<infer Args, infer R>
+	? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>>, R>>
+	: never;
+
+const build = buildFunc(
+	"foo",
+	"A method named foo.",
+	z.number(),
+	{ name: "arg1", type: z.string() },
+	{ name: "arg2", type: z.boolean() },
+);
+
+type inferred = Infer<typeof build>;
 
 /**
  * An interface for exposing methods of schema classes to an agent.

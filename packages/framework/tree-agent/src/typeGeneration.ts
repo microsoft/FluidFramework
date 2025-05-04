@@ -334,6 +334,9 @@ function getOrCreateType(
 				const properties = Object.fromEntries(
 					[...simpleNodeSchema.fields]
 						.map(([key, field]) => {
+							if (transformForParsing && field.kind === FieldKind.Identifier) {
+								return [key, undefined];
+							}
 							return [
 								key,
 								getOrCreateTypeForField(
@@ -451,7 +454,7 @@ function getOrCreateTypeForField(
 	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 	includeObjectIdKey: boolean,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
-): Zod.ZodTypeAny | undefined {
+): Zod.ZodTypeAny {
 	const getDefault: unknown = fieldSchema.metadata?.custom?.[llmDefault];
 	if (getDefault !== undefined) {
 		if (typeof getDefault !== "function") {
@@ -494,7 +497,7 @@ function getOrCreateTypeForField(
 		}
 		case FieldKind.Identifier: {
 			return transformForParsing
-				? undefined
+				? fail("Should not be called with transformForParsing")
 				: field
 						.optional()
 						.describe(
