@@ -18,9 +18,9 @@ import {
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
-import { exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
+import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
-import { getFriendlySchemaName } from "../utils.js";
+import { getFriendlySchemaName, getZodSchemaAsTypeScript } from "../utils.js";
 
 const factory = SharedTree.getFactory();
 const sf = new SchemaFactory("test");
@@ -34,11 +34,7 @@ class Todo extends sf.object("Todo", {
 	}
 
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-		methods.expose(
-			Todo,
-			"M2",
-			z.function().args(z.string()).returns(z.boolean()).describe("A method named M2."),
-		);
+		methods.expose(Todo, "M2", buildFunc({ returns: z.boolean() }, ["num", z.string()]));
 	}
 }
 
@@ -55,7 +51,7 @@ class TestTodoAppSchema extends sf.object("TestTodoAppSchema", {
 		methods.expose(
 			TestTodoAppSchema,
 			"M1",
-			z.function().args(z.number()).returns(z.boolean()).describe("A method named M1."),
+			buildFunc({ returns: z.boolean() }, ["num", z.number()]),
 		);
 	}
 }
@@ -86,7 +82,7 @@ describe("System prompt", () => {
 
 		const schema = getSimpleSchema(view.schema);
 
-		const { domainTypes, domainRoot } = generateEditTypesForPrompt(view.schema, schema, false);
+		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema, false);
 		for (const [key, value] of Object.entries(domainTypes)) {
 			const friendlyKey = getFriendlySchemaName(key);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -101,8 +97,7 @@ describe("System prompt", () => {
 			}
 		}
 
-		const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
-		const domainSchemaString = domainSchema.getSchemaText();
+		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
 		assert.notDeepEqual(domainSchemaString, "");
 	});
 });

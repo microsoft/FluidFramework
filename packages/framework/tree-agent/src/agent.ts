@@ -20,13 +20,11 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import type { ToolMessage, AIMessage } from "@langchain/core/messages";
 // eslint-disable-next-line import/no-internal-modules
 import { tool, type StructuredTool } from "@langchain/core/tools";
-// eslint-disable-next-line import/no-internal-modules
-import { createZodJsonValidator } from "typechat/zod";
 import { z } from "zod";
 
 import { objectIdKey } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
-import { fail, failUsage, type TreeView } from "./utils.js";
+import { fail, failUsage, getZodSchemaAsTypeScript, type TreeView } from "./utils.js";
 
 /**
  * @alpha
@@ -288,10 +286,10 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 
 	protected getSystemPromptPreamble(
 		domainTypes: Record<string, z.ZodTypeAny>,
-		domainRoot: string,
+		// TODO: use this domainRoot param?
+		_: string,
 	): string {
-		const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
-		const domainSchemaString = domainSchema.getSchemaText();
+		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
 
 		return `You are a collaborative agent who assists a user with editing and analyzing a JSON tree.
 The tree is a JSON object with the following Typescript schema:

@@ -117,7 +117,6 @@
 		"@fluidframework/tree": "workspace:~",
 		"@langchain/core": "^0.3.46",
 		"langchain": "^0.3.23",
-		"typechat": "^0.1.1",
 		"uuid": "^9.0.0",
 		"zod": "^3.23.8"
 	},

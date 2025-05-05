@@ -26,7 +26,7 @@ import { z } from "zod";
 
 import { objectIdKey, objectIdType, typeField } from "./agentEditTypes.js";
 import type { NodeSchema } from "./methodBinding.js";
-import { getExposedMethods } from "./methodBinding.js";
+import { FunctionWrapper, getExposedMethods } from "./methodBinding.js";
 import { getFriendlySchemaName } from "./utils.js";
 import {
 	fail,
@@ -331,7 +331,7 @@ function getOrCreateType(
 					}
 				}
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				const properties = Object.fromEntries(
+				const properties: Record<string, z.ZodTypeAny> = Object.fromEntries(
 					[...simpleNodeSchema.fields]
 						.map(([key, field]) => {
 							if (transformForParsing && field.kind === FieldKind.Identifier) {
@@ -355,25 +355,24 @@ function getOrCreateType(
 						.filter(([, value]) => value !== undefined),
 				);
 				if (transformForParsing) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					properties[typeField] = z.literal(getFriendlySchemaName(definition)).optional();
 				}
 				if (includeObjectIdKey) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					properties[objectIdKey] = z.optional(objectId);
 				}
 				if (treeSchemaMap) {
 					const nodeSchema = treeSchemaMap.get(definition) ?? fail("Unknown definition");
 					const methods = getExposedMethods(nodeSchema);
 					for (const [name, method] of Object.entries(methods)) {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						if (properties[name] !== undefined) {
 							throw new UsageError(
 								`Method ${name} conflicts with field of the same name in schema ${definition}`,
 							);
 						}
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						properties[name] = method;
+						const zodFunction = z.instanceof(FunctionWrapper);
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(zodFunction as any).method = method;
+						properties[name] = zodFunction;
 					}
 				}
 				const obj = z

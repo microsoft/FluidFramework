@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { NodeKind, TreeNodeSchema } from "@fluidframework/tree";
-import { z } from "zod";
+import type { z } from "zod";
 
 /**
  * A utility type that extracts the method keys from a given type.
@@ -24,43 +24,66 @@ export type NodeSchema = TreeNodeSchema<string, NodeKind.Object>;
  * @param schemaClass - The schema class to extract methods from.
  * @returns A record of method names and their corresponding Zod types.
  */
-export function getExposedMethods(schemaClass: NodeSchema): Record<string, z.ZodTypeAny> {
+export function getExposedMethods(schemaClass: NodeSchema): Record<string, FunctionWrapper> {
 	return ExposedMethodsI.getExposedMethods(schemaClass);
 }
 
-interface Arg<T extends z.ZodTypeAny = z.ZodTypeAny> {
-	name: string;
-	type: T;
-}
+/**
+ * A type that represents a function argument.
+ */
+export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = [name: string, type: T];
 
-interface FunctionDef<
+/**
+ * A function definition interface that describes the structure of a function.
+ */
+export interface FunctionDef<
 	Args extends readonly Arg[],
 	Return extends z.ZodTypeAny,
-	Rest extends z.ZodTypeAny = z.ZodUnknown,
+	Rest extends z.ZodTypeAny | null = null,
 > {
-	name: string;
 	description?: string;
 	args: Args;
 	rest?: Rest;
 	returns: Return;
 }
 
-type ArgsTuple<T extends readonly Arg[]> = T extends [infer Single extends Arg]
-	? [Single["type"]]
+/**
+ * A class that implements the FunctionDef interface.
+ */
+export class FunctionWrapper
+	implements FunctionDef<readonly Arg[], z.ZodTypeAny, z.ZodTypeAny | null>
+{
+	public constructor(
+		public readonly name: string,
+		public readonly description: string | undefined,
+		public readonly args: readonly Arg[],
+		// eslint-disable-next-line @rushstack/no-new-null
+		public readonly rest: z.ZodTypeAny | null,
+		public readonly returns: z.ZodTypeAny,
+	) {}
+}
+
+/**
+ * A utility type that extracts the argument types from a function definition.
+ */
+export type ArgsTuple<T extends readonly Arg[]> = T extends [infer Single extends Arg]
+	? [Single[1]]
 	: T extends [infer Head extends Arg, ...infer Tail extends Arg[]]
-		? [Head["type"], ...ArgsTuple<Tail>]
+		? [Head[1], ...ArgsTuple<Tail>]
 		: never;
 
-function buildFunc<
+/**
+ * A utility function to build a function definition.
+ */
+export function buildFunc<
 	Return extends z.ZodTypeAny,
 	Args extends readonly Arg[],
-	Rest extends z.ZodTypeAny = z.ZodUnknown,
+	Rest extends z.ZodTypeAny | null = null,
 >(
-	def: { name: string; description?: string; returns: Return; rest?: Rest },
+	def: { description?: string; returns: Return; rest?: Rest },
 	...args: Args
 ): FunctionDef<Args, Return, Rest> {
 	return {
-		name: def.name,
 		description: def.description,
 		returns: def.returns,
 		args,
@@ -68,31 +91,21 @@ function buildFunc<
 	};
 }
 
-type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest>
+/**
+ * A utility type that infers the return type of a function definition.
+ */
+export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest>
 	? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>>
 	: never;
-
-const build = buildFunc(
-	{
-		name: "test",
-		description: "A test function.",
-		returns: z.boolean(),
-		rest: z.bigint(),
-	},
-	{ name: "arg0", type: z.number() },
-	{ name: "arg1", type: z.string() },
-);
-
-type inferred = Infer<typeof build>;
 
 /**
  * An interface for exposing methods of schema classes to an agent.
  */
 export interface ExposedMethods {
 	expose<
-		K extends string & keyof MethodKeys<InstanceType<S>>,
-		S extends NodeSchema & Ctor<{ [P in K]: z.infer<Z> }> & IExposedMethods,
-		Z extends z.ZodFunction<any, any>,
+		const K extends string & keyof MethodKeys<InstanceType<S>>,
+		S extends NodeSchema & Ctor<{ [P in K]: Infer<Z> }> & IExposedMethods,
+		Z extends FunctionDef<any, any, any>,
 	>(schema: S, methodName: K, zodFunction: Z): void;
 }
 
@@ -109,22 +122,29 @@ export interface IExposedMethods {
 }
 
 class ExposedMethodsI implements ExposedMethods {
-	private readonly methods: Record<string, z.ZodTypeAny> = {};
+	private readonly methods: Record<string, FunctionWrapper> = {};
 
 	public constructor(private readonly schemaClass: NodeSchema) {}
 
 	public expose<
-		K extends string & keyof MethodKeys<InstanceType<S>>,
-		S extends NodeSchema & Ctor<{ [P in K]: z.infer<Z> }> & IExposedMethods,
-		Z extends z.ZodFunction<any, any>,
-	>(schema: S, methodName: K, zodFunction: Z): void {
+		const K extends string & keyof MethodKeys<InstanceType<S>>,
+		S extends NodeSchema & Ctor<{ [P in K]: Infer<Z> }> & IExposedMethods,
+		Z extends FunctionDef<readonly Arg[], z.ZodTypeAny, z.ZodTypeAny | null>,
+	>(schema: S, methodName: K, functionDef: Z): void {
 		if (schema !== this.schemaClass) {
 			throw new Error('Must expose methods on the "this" object');
 		}
-		this.methods[methodName] = zodFunction;
+		this.methods[methodName] = new FunctionWrapper(
+			methodName,
+			functionDef.description,
+			functionDef.args,
+			// eslint-disable-next-line unicorn/no-null
+			functionDef.rest ?? null,
+			functionDef.returns,
+		);
 	}
 
-	public static getExposedMethods(schemaClass: NodeSchema): Record<string, z.ZodTypeAny> {
+	public static getExposedMethods(schemaClass: NodeSchema): Record<string, FunctionWrapper> {
 		const exposedMethods = new ExposedMethodsI(schemaClass);
 		const extractable = schemaClass as unknown as IExposedMethods;
 		if (extractable[exposeMethodsSymbol] !== undefined) {

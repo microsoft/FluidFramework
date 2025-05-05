@@ -19,8 +19,6 @@ import {
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 // eslint-disable-next-line import/no-internal-modules
 import { tool } from "@langchain/core/tools";
-// eslint-disable-next-line import/no-internal-modules
-import { createZodJsonValidator } from "typechat/zod";
 import { z } from "zod";
 
 import {
@@ -45,7 +43,12 @@ import {
 	generateEditTypesForInsertion,
 	generateEditTypesForPrompt,
 } from "./typeGeneration.js";
-import { fail, getFriendlySchemaName, type TreeView } from "./utils.js";
+import {
+	fail,
+	getFriendlySchemaName,
+	getZodSchemaAsTypeScript,
+	type TreeView,
+} from "./utils.js";
 
 /**
  * TODO
@@ -147,7 +150,7 @@ class SharedTreeEditingAgent<
 			"",
 		);
 		const schema = getSimpleSchema(view.schema);
-		const { editTypes, editRoot, domainTypes, domainRoot } = generateEditTypesForPrompt(
+		const { editTypes, domainTypes, domainRoot } = generateEditTypesForPrompt(
 			view.schema,
 			schema,
 			true,
@@ -165,9 +168,8 @@ class SharedTreeEditingAgent<
 				domainTypes[friendlyKey] = value;
 			}
 		}
-		const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
-		const domainSchemaString = domainSchema.getSchemaText();
-		const treeSchemaString = createZodJsonValidator(editTypes, editRoot).getSchemaText();
+		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
+		const treeSchemaString = getZodSchemaAsTypeScript(editTypes);
 		const setFieldType = "SetField" satisfies Capitalize<SetField["type"]>;
 		const insertIntoArrayType = "InsertIntoArray" satisfies Capitalize<
 			InsertIntoArray["type"]
