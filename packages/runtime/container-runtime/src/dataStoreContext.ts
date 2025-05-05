@@ -1128,7 +1128,6 @@ export abstract class FluidDataStoreContext
 			type,
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(30),
-			clientType: this.clientDetails.type,
 			readonly: this.isReadOnly(),
 			forceReadonly: this.forceReadonly,
 		});

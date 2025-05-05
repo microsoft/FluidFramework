@@ -34,7 +34,7 @@ import {
 
 export function createParentContext(
 	logger: ITelemetryBaseLogger = createChildLogger(),
-	clientDetails = {} as unknown as IFluidParentContextPrivate["clientDetails"],
+	clientDetails = {} as unknown as IFluidParentContextPrivate["clientDetails"] | undefined,
 	compatDetails?: ILayerCompatDetails,
 ): IFluidParentContextPrivate {
 	const factory: IFluidDataStoreFactory = {
@@ -62,7 +62,7 @@ export function createParentContext(
 		clientDetails,
 		submitMessage: () => {},
 		deltaManager: new MockDeltaManager(),
-		isReadOnly: () => false,
+		isReadOnly: () => clientDetails?.capabilities.interactive === false,
 	} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 }
 
