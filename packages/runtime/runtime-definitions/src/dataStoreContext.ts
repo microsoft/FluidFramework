@@ -364,7 +364,7 @@ export interface IFluidDataStorePolicies {
  */
 export interface IFluidDataStoreChannel extends IDisposable {
 	/**
-	 * Optional policies that can be applied to the data store channel.
+	 * Optional policies that the data store channel may adhere to that the data store context should know about.
 	 * These policies influence the behavior of the data store, such as its readonly state in specific modes.
 	 */
 	readonly policies?: IFluidDataStorePolicies;
