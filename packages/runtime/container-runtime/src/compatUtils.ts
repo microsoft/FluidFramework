@@ -209,9 +209,7 @@ export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknow
  */
 export function isValidMinVersionForCollab(minVersionForCollab: SemanticVersion): boolean {
 	return (
-		minVersionForCollab !== undefined &&
 		valid(minVersionForCollab) !== null &&
-		// Note: We use semverGte/semverLte instead of a semver range because semver ranges don't include pre-releases.
 		gte(minVersionForCollab, lowestMinVersionForCollab) &&
 		lte(minVersionForCollab, pkgVersion)
 	);

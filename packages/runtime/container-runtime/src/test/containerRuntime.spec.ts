@@ -73,6 +73,7 @@ import {
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
+import type { SemanticVersion } from "../compatUtils.js";
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
@@ -3662,6 +3663,23 @@ describe("Runtime", () => {
 						options: JSON.stringify(expectedRuntimeOptions),
 					},
 				]);
+			});
+
+			it("throws when minVersionForCollab is not valid", async () => {
+				const logger = new MockLogger();
+				const invalidVersions: SemanticVersion[] = ["0.50.0", "100.0.0"];
+				for (const version of invalidVersions) {
+					await assert.rejects(async () => {
+						await ContainerRuntime.loadRuntime({
+							context: getMockContext({ logger }) as IContainerContext,
+							registryEntries: [],
+							existing: false,
+							runtimeOptions: {},
+							provideEntryPoint: mockProvideEntryPoint,
+							minVersionForCollab: version,
+						});
+					});
+				}
 			});
 
 			it("minVersionForCollab = 1.0.0", async () => {

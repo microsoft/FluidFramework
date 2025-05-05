@@ -832,8 +832,9 @@ export class ContainerRuntime
 		const defaultsAffectingDocSchema = getMinVersionForCollabDefaults(minVersionForCollab);
 
 		// The following are the default values for the options that do not affect the DocumentSchema.
-		const defaultsNotAffectingDocSchema: Required<
-			Omit<IContainerRuntimeOptionsInternal, keyof RuntimeOptionsAffectingDocSchema>
+		const defaultsNotAffectingDocSchema: Omit<
+			ContainerRuntimeOptionsInternal,
+			keyof RuntimeOptionsAffectingDocSchema
 		> = {
 			summaryOptions: {},
 			loadSequenceNumberVerification: "close",
