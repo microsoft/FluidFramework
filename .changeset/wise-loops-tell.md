@@ -12,7 +12,7 @@ schemaFactoryAlpha.arrayAlpha({
 	metadata: {
 		custom: "these allowed types are annotated",
 	},
-	types: [schemaFactory.string, schemaFactory.number],
+	types: [SchemaFactory.string, SchemaFactory.number],
 })
 ```
 
