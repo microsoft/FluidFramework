@@ -5,7 +5,10 @@
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type {
+	IClientDetails,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	CreateSummarizerNodeSource,
 	type CreateChildSummarizerNodeFn,
@@ -34,7 +37,7 @@ import {
 
 export function createParentContext(
 	logger: ITelemetryBaseLogger = createChildLogger(),
-	clientDetails = {} as unknown as IFluidParentContextPrivate["clientDetails"] | undefined,
+	clientDetailsOverrides?: Partial<IClientDetails> | undefined,
 	compatDetails?: ILayerCompatDetails,
 ): IFluidParentContextPrivate {
 	const factory: IFluidDataStoreFactory = {
@@ -56,13 +59,17 @@ export function createParentContext(
 		},
 		get: async (pkg) => (pkg === "BOGUS" ? undefined : factory),
 	};
+	const clientDetails: IClientDetails = {
+		capabilities: { interactive: true },
+		...clientDetailsOverrides,
+	};
 	return {
 		IFluidDataStoreRegistry: registry,
 		baseLogger: logger,
 		clientDetails,
 		submitMessage: () => {},
 		deltaManager: new MockDeltaManager(),
-		isReadOnly: () => clientDetails?.capabilities.interactive === false,
+		isReadOnly: () => !clientDetails.capabilities.interactive,
 	} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 }
 
