@@ -8,18 +8,24 @@ import {
 	storedEmptyFieldSchema,
 	type Adapters,
 	type TreeStoredSchema,
-} from "../../core/index.js";
-import { defaultSchemaPolicy, type FullSchemaPolicy } from "../../feature-libraries/index.js";
+} from "../../../core/index.js";
+import {
+	defaultSchemaPolicy,
+	type FullSchemaPolicy,
+} from "../../../feature-libraries/index.js";
 import {
 	toStoredSchema,
-	ViewSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
-} from "../../simple-tree/index.js";
+	normalizeFieldSchema,
+} from "../../../simple-tree/index.js";
 import {
 	createUnknownOptionalFieldPolicy,
 	SchemaFactoryAlpha,
-} from "../../simple-tree/index.js";
+} from "../../../simple-tree/index.js";
+
+// eslint-disable-next-line import/no-internal-modules
+import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
 
 const noAdapters: Adapters = {};
 const emptySchema: TreeStoredSchema = {
@@ -31,18 +37,22 @@ const factory = new SchemaFactoryAlpha("");
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
-	expected: ReturnType<ViewSchema["checkCompatibility"]>,
+	expected: ReturnType<SchemaCompatibilityTester["checkCompatibility"]>,
 	policy: FullSchemaPolicy = {
 		...defaultSchemaPolicy,
 		allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(view),
 	},
 ) {
-	const viewSchema = new ViewSchema(policy, noAdapters, view);
+	const viewSchema = new SchemaCompatibilityTester(
+		policy,
+		noAdapters,
+		normalizeFieldSchema(view),
+	);
 	const compatibility = viewSchema.checkCompatibility(stored);
 	assert.deepEqual(compatibility, expected);
 }
 
-describe("viewSchema", () => {
+describe("SchemaCompatibilityTester", () => {
 	describe(".checkCompatibility", () => {
 		it("works with never trees", () => {
 			class NeverObject extends factory.objectRecursive("NeverObject", {

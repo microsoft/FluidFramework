@@ -246,6 +246,8 @@ export {
 	type MapNodePojoEmulationSchema,
 	MapNodeSchema,
 	type ObjectFromSchemaRecord,
+	type ValidateRecursiveSchemaTemplate,
+	type FixRecursiveRecursionLimit,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -300,4 +302,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
-export { TableSchema } from "./tableSchema.js";
+export { TableSchema, type System_TableSchema } from "./tableSchema.js";

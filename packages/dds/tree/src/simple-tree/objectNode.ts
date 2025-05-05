@@ -62,7 +62,7 @@ import type { SimpleObjectFieldSchema } from "./simpleSchema.js";
  * @remarks
  * Due to {@link https://github.com/microsoft/TypeScript/issues/43826}, we can't enable implicit construction of {@link TreeNode|TreeNodes} for setters.
  * Therefore code assigning to these fields must explicitly construct nodes using the schema's constructor or create method,
- * or using some other method like {@link TreeAlpha.create}.
+ * or using some other method like {@link (TreeAlpha:interface).create}.
  * @system @public
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
@@ -95,7 +95,9 @@ export type TreeObjectNode<
 > = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
 /**
- * Type utility for determining whether or not an implicit field schema has a default value.
+ * Type utility for determining if an implicit field schema is known to have a default value.
+ *
+ * @remarks Yields `false` when unknown.
  *
  * @privateRemarks
  * TODO: Account for field schemas with default value providers.
@@ -103,9 +105,9 @@ export type TreeObjectNode<
  *
  * @system @public
  */
-export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
-	FieldKind.Optional | FieldKind.Identifier
->
+export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
+	FieldSchema<FieldKind.Optional | FieldKind.Identifier>,
+]
 	? true
 	: false;
 

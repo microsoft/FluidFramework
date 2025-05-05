@@ -129,4 +129,22 @@ export class AsyncLocalStorageTimeoutContext implements ITimeoutContext {
 			throw error;
 		}
 	}
+
+	public getTimeRemainingMs(): number | undefined {
+		// Check if there is any time still remaining. Throw an error if the timeout has been exceeded.
+		this.checkTimeout();
+		const timeoutInfo = this.contextProvider.getContext();
+		if (!timeoutInfo) {
+			return undefined;
+		}
+		const timeElapsedMs = Date.now() - timeoutInfo.startTime;
+		const timeRemainingMs = timeoutInfo.maxDurationMs - timeElapsedMs;
+		Lumberjack.debug("[TimeoutContext]: Time remaining.", {
+			timeRemainingMs,
+			startTime: timeoutInfo.startTime,
+			maxDurationMs: timeoutInfo.maxDurationMs,
+			timeElapsedMs,
+		});
+		return timeRemainingMs;
+	}
 }

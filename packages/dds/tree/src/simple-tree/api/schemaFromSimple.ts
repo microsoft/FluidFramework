@@ -18,7 +18,7 @@ import type {
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
 import { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
-import type { TreeSchema } from "./tree.js";
+import type { TreeSchema } from "./configuration.js";
 
 const factory = new SchemaFactoryAlpha(undefined);
 

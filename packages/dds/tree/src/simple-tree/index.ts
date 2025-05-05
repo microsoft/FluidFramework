@@ -81,7 +81,7 @@ export {
 	comparePersistedSchema,
 	type ConciseTree,
 	comparePersistedSchemaInternal,
-	ViewSchema,
+	SchemaCompatibilityTester,
 	type Unenforced,
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
@@ -120,6 +120,8 @@ export {
 	allowUnused,
 	type FieldSchemaAlphaUnsafe,
 	type TreeSchema,
+	type ValidateRecursiveSchemaTemplate,
+	type FixRecursiveRecursionLimit,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
