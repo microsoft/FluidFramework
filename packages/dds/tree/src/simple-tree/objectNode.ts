@@ -158,10 +158,11 @@ export type InsertableObjectFromSchemaRecord<
 		>;
 
 /**
- * Helper used to remove annotations from a schema record before calling InsertableObjectFromSchemaRecord.
+ * Helper used to remove annotations from a schema record and produce insertable objects,
  *
- * @remarks
- * TODO figure out why InsertableObjectFromSchemaRecord can't be linked here
+ * @privateremarks
+ * This calls {@link InsertableObjectFromSchemaRecord} in order to produce the insertable objects.
+ *
  * @system @alpha
  */
 export type InsertableObjectFromAnnotatedSchemaRecord<

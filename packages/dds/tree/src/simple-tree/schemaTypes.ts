@@ -117,16 +117,14 @@ export interface AllowedTypesMetadata {
 	/**
 	 * User defined metadata
 	 */
-	custom?: unknown;
+	readonly custom?: unknown;
 }
 
 /**
  * Stores annotations for an individual allowed type.
  * @alpha
  */
-export interface AnnotatedAllowedType<
-	T extends LazyItem<TreeNodeSchema> = LazyItem<TreeNodeSchema>,
-> {
+export interface AnnotatedAllowedType<T extends TreeNodeSchema = TreeNodeSchema> {
 	/**
 	 * Annotations for the allowed type.
 	 */
@@ -134,7 +132,7 @@ export interface AnnotatedAllowedType<
 	/**
 	 * The allowed type the annotations apply to in a particular schema.
 	 */
-	readonly type: T;
+	readonly type: LazyItem<T>;
 }
 
 /**
@@ -156,7 +154,7 @@ export interface AllowedTypeMetadata {
 	/**
 	 * User defined metadata
 	 */
-	custom?: unknown;
+	readonly custom?: unknown;
 
 	// TODO metadata for enablable types will be added here
 }
