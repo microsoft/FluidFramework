@@ -70,7 +70,18 @@ interface ProcessTelemetryProperties {
 }
 
 /**
- * Base class from which all shared objects derive.
+ * Base class from which all {@link ISharedObject|shared objects} derive.
+ * @remarks
+ * This class implements common behaviors that implementations of {@link ISharedObject} may want to reuse.
+ * Even more such behaviors are implemented in the {@link SharedObject} class.
+ * @privateRemarks
+ * Currently some documentation (like the above) implies that this is supposed to be the only implementation of ISharedObject, which is both package-exported and not `@sealed`.
+ * This situation should be clarified to indicate if other implementations of ISharedObject are allowed and just currently don't exist,
+ * or if the intention is that no other implementations should exist and creating some might break things.
+ * As part of this, any existing implementations of ISharedObject (via SharedObjectCore or otherwise) in use by legacy API users will need to be considered.
+ *
+ * TODO:
+ * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
  * @legacy
  * @alpha
  */
@@ -733,8 +744,14 @@ export abstract class SharedObjectCore<
 }
 
 /**
- * SharedObject with simplified, synchronous summarization and GC.
- * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
+ * Helper for implementing {@link ISharedObject} with simplified, synchronous summarization and garbage collection.
+ * @remarks
+ * DDS implementations with async and incremental summarization should extend {@link SharedObjectCore} directly instead.
+ * @privateRemarks
+ * TODO:
+ * This class is badly named.
+ * Once it becomes `@internal` "SharedObjectCore" should probably become "SharedObject"
+ * and this class should be renamed to something like "SharedObjectSynchronous".
  * @legacy
  * @alpha
  */
