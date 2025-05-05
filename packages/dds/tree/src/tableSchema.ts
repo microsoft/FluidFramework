@@ -693,7 +693,7 @@ export namespace TableSchema {
 	 * @sealed @internal
 	 */
 	export interface IRow<
-		TCell extends ImplicitAllowedTypes,
+		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> {
 		/**
@@ -818,7 +818,7 @@ export namespace TableSchema {
 	 * {@link TableSchema.ITable.insertColumn} parameters.
 	 * @internal
 	 */
-	export interface InsertColumnParameters<TColumn extends ImplicitAllowedTypes> {
+	export interface InsertColumnParameters<TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
 		/**
 		 * The index at which to insert the new column.
 		 * @remarks If not provided, the column will be appended to the end of the table.
@@ -835,7 +835,7 @@ export namespace TableSchema {
 	 * {@link TableSchema.ITable.insertRows} parameters.
 	 * @internal
 	 */
-	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
+	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
 		/**
 		 * The index at which to insert the new rows.
 		 * @remarks If not provided, the rows will be appended to the end of the table.
@@ -852,7 +852,7 @@ export namespace TableSchema {
 	 * {@link TableSchema.ITable.setCell} parameters.
 	 * @internal
 	 */
-	export interface SetCellParameters<TColumn extends ImplicitAllowedTypes> {
+	export interface SetCellParameters<TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
 		/**
 		 * The key to uniquely identify a cell in a table.
 		 */
@@ -869,9 +869,9 @@ export namespace TableSchema {
 	 * @sealed @internal
 	 */
 	export interface ITable<
-		TCell extends ImplicitAllowedTypes,
-		TColumn extends ImplicitAllowedTypes,
-		TRow extends ImplicitAllowedTypes,
+		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> {
 		/**
 		 * The table's columns.
