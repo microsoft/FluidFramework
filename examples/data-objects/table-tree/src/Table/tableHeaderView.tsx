@@ -17,21 +17,86 @@ import React, { DragEvent } from "react";
 
 import type { Column } from "./tableSchema.js";
 
+/**
+ * Props for the `TableHeaderView` component, which renders the header row of the table.
+ *
+ * This includes support for drag-and-drop column reordering, column removal, and an inline form
+ * to add new columns with optional metadata such as label and hint.
+ */
 export interface TableHeaderViewProps {
-	columns: Column[];
+	/**
+	 * The list of columns currently present in the table.
+	 */
+	readonly columns: Column[];
+
+	/**
+	 * Callback fired when a column drag operation starts. Receives the index of the dragged column.
+	 */
 	onColumnDragStart: (index: number) => void;
+
+	/**
+	 * Callback fired when a dragged column is hovered over a header cell.
+	 */
 	onColumnDragOver: (event: DragEvent<HTMLTableHeaderCellElement>) => void;
+
+	/**
+	 * Callback fired when a dragged column is dropped onto another column's position.
+	 * Receives the target index to reposition the dragged column.
+	 */
 	onColumnDrop: (index: number) => void;
+
+	/**
+	 * Callback to remove a column from the table. Receives the index of the column to remove.
+	 */
 	onRemoveColumn: (index: number) => void;
+
+	/**
+	 * Whether the "add column" input row is currently visible.
+	 */
 	showAddColumnInput: boolean;
+
+	/**
+	 * Function to toggle the visibility of the "add column" input row.
+	 */
 	setShowAddColumnInput: (value: boolean) => void;
+
+	/**
+	 * The user-entered label for the new column.
+	 */
 	newColumnId: string;
+
+	/**
+	 * Function to update the new column label state.
+	 */
 	setNewColumnId: (id: string) => void;
+
+	/**
+	 * The user-selected hint type for the new column (e.g., "text", "checkbox", "date").
+	 */
 	newColumnHint: string;
+
+	/**
+	 * Function to update the new column hint state.
+	 */
 	setNewColumnHint: (hint: string) => void;
+
+	/**
+	 * Handler invoked when the user confirms adding a new column.
+	 */
 	handleAddColumn: () => void;
 }
 
+/**
+ * `TableHeaderView` renders the header section of the table.
+ *
+ * It includes:
+ * - A row of column headers with labels and delete buttons
+ * - Support for drag-and-drop reordering of columns
+ * - An optional input row to add new columns, including label and hint type
+ *
+ * @param props - The props required to render and manage the table header view.
+ * @returns A React element representing the table header.
+ */
 export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	columns,
 	onColumnDragStart,
@@ -101,7 +166,7 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 					onDrop={() => onColumnDrop(index)}
 				>
 					<span style={{ display: "flex", justifyContent: "space-between", gap: "4px" }}>
-						{col.props.label}
+						{col.props?.label ?? col.id}
 						<Button
 							appearance="subtle"
 							size="small"

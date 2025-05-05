@@ -17,6 +17,24 @@ import { TableDataObject } from "./index.js";
 // eslint-disable-next-line import/no-unassigned-import
 import "./tableView.css";
 
+/**
+ * `TableView` is the main React component responsible for rendering a collaborative,
+ * dynamic table with {@link TableDataObject} sd the underlying data object.
+ *
+ * This component supports:
+ * - Realtime editing of table cells
+ * - Adding and removing rows and columns
+ * - Drag-and-drop reordering of rows and columns
+ * - Type-specific cell rendering (e.g., checkbox, date, text)
+ *
+ * UI is composed using Fluent UI components and synchronized via Fluid's SharedTree.
+ *
+ * @param tableModel - The table data object containing rows, columns, and cell content using {@link SharedTree}.
+ *
+ * @remarks
+ * - Column properties such as `label` and `hint` (e.g., `"checkbox"`, `"text"`, `"date"`) from the columns
+ * are used to determine how each cell is rendered.
+ */
 export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableModel }) => {
 	const [newRowId, setNewRowId] = useState("");
 	const [newColumnId, setNewColumnId] = useState("");

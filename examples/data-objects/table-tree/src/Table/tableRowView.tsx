@@ -9,13 +9,43 @@ import React, { DragEvent } from "react";
 
 import { DateTime, type Column, type Row } from "./tableSchema.js";
 
+/**
+ * Props for the `TableRowView` component, which renders a single row in the table.
+ */
 export interface TableRowViewProps {
+	/**
+	 * The row data object representing the current table row to render.
+	 */
 	readonly row: Row;
+
+	/**
+	 * The list of columns used to determine the structure and cell rendering for this row.
+	 */
 	readonly columns: Column[];
+
+	/**
+	 * The index of the row within the table, used for drag-and-drop operations and styling.
+	 */
 	index: number;
+
+	/**
+	 * Callback fired when a row drag operation starts. Receives the index of the dragged row.
+	 */
 	onRowDragStart: (index: number) => void;
+
+	/**
+	 * Callback fired when a dragged row is hovered over this row; used to allow dropping.
+	 */
 	onRowDragOver: (event: DragEvent<HTMLTableRowElement>) => void;
+
+	/**
+	 * Callback fired when a dragged row is dropped onto this row. Receives the target index.
+	 */
 	onRowDrop: (index: number) => void;
+
+	/**
+	 * Callback to remove this row from the table, typically triggered by a delete button.
+	 */
 	onRemoveRow: (index: number) => void;
 }
 
@@ -50,7 +80,7 @@ export const TableRowView: React.FC<TableRowViewProps> = ({
 		</TableCell>
 		{columns.map((col) => {
 			const cell = row.getCell(col);
-			const hint = col.props.hint;
+			const hint = col.props?.hint ?? "text";
 
 			return (
 				<TableCell key={col.id} className="custom-cell">

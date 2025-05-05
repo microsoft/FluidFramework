@@ -37,11 +37,12 @@ export class DateTime extends schemaFactory.object("DateTime", {
 	 * Set the raw date-time string
 	 */
 	set value(value: Date) {
+		const newRaw = value.getTime();
 		// Test if the value is a valid date
-		if (Number.isNaN(value.getTime())) {
-			return;
+		if (Number.isNaN(newRaw)) {
+			throw new TypeError("Date is an invalid type.");
 		}
-		this.raw = value.getTime();
+		this.raw = newRaw;
 	}
 }
 
@@ -94,11 +95,22 @@ export class ColumnProps extends schemaFactory.object("table-column-props", {
 	label: schemaFactory.optional(schemaFactory.string),
 	hint: schemaFactory.optional(schemaFactory.string),
 }) {}
-export class Column extends TableSchema.createColumn(schemaFactory, ColumnProps) {}
-
+export class Column extends TableSchema.createColumn({
+	schemaFactory,
+	props: ColumnProps,
+}) {}
 export class RowProps extends schemaFactory.object("table-row-props", {
 	label: schemaFactory.optional(schemaFactory.string),
 }) {}
-export class Row extends TableSchema.createRow(schemaFactory, Cell, RowProps) {}
+export class Row extends TableSchema.createRow({
+	schemaFactory,
+	cell: Cell,
+	props: RowProps,
+}) {}
 
-export class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
+export class Table extends TableSchema.createTable({
+	schemaFactory,
+	cell: Cell,
+	column: Column,
+	row: Row,
+}) {}

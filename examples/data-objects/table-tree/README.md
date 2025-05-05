@@ -1,6 +1,7 @@
 # @fluid-example/table-tree
 
-**Table** is a more advanced example that covers more complicated scenarios. The Table app uses React as its view rendering platform.
+**Table** example is a more advanced Fluid Framework app that demonstrates real-time collaboration on a structured table. It uses React for rendering and showcases dynamic row and column management, type-specific cell rendering (e.g., checkbox, date, text), and drag-and-drop reordering.
+
 
 <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=FALSE) -->
 
