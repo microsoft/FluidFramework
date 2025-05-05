@@ -43,7 +43,7 @@ import {
  * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
  */
 const compatibilityModeToMinVersionForCollab: Record<CompatibilityMode, SemanticVersion> = {
-	"1": "1.0.0", // TODO: Should this be the LTS version?
+	"1": "1.0.0",
 	"2": "2.0.0",
 };
 
