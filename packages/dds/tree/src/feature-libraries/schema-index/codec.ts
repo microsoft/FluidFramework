@@ -20,7 +20,7 @@ import {
 	schemaFormatV1,
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
-import { brand } from "../../util/index.js";
+import { brand, type JsonCompatible } from "../../util/index.js";
 
 import type { Format as FormatV1 } from "./formatV1.js";
 
@@ -53,7 +53,7 @@ export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStore
  * @param version - The schema write version.
  * @returns The encoded schema.
  */
-export function encodeRepo(repo: TreeStoredSchema, version: number): FormatV1 {
+export function encodeRepo(repo: TreeStoredSchema, version: number): JsonCompatible {
 	switch (version) {
 		case 1:
 			return encodeRepoV1(repo);

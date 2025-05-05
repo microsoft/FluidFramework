@@ -28,7 +28,7 @@ import type {
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
 import { encodeRepo } from "./codec.js";
-import type { Format } from "./formatV1.js";
+import type { JsonCompatible } from "../../util/index.js";
 
 const schemaStringKey = "SchemaString";
 /**
@@ -114,6 +114,9 @@ export class SchemaSummarizer implements Summarizable {
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
  */
-export function encodeTreeSchema(schema: TreeStoredSchema, writeVersion: number): Format {
+export function encodeTreeSchema(
+	schema: TreeStoredSchema,
+	writeVersion: number,
+): JsonCompatible {
 	return encodeRepo(schema, writeVersion);
 }
