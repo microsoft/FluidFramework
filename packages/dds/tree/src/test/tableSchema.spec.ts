@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
+import { independentView, TreeAlpha } from "../shared-tree/index.js";
 import {
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -14,7 +15,7 @@ import {
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
-import { independentView, TreeAlpha } from "../shared-tree/index.js";
+import type { requireAssignableTo } from "../util/index.js";
 import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
@@ -31,7 +32,10 @@ describe("TableFactory unit tests", () => {
 			 */
 			label: schemaFactory.optional(schemaFactory.string),
 		}) {}
-		class Column extends TableSchema.createColumn(schemaFactory, ColumnProps) {}
+		class Column extends TableSchema.createColumn({
+			schemaFactory,
+			props: ColumnProps,
+		}) {}
 
 		class RowProps extends schemaFactory.object("table-row-props", {
 			/**
@@ -40,13 +44,18 @@ describe("TableFactory unit tests", () => {
 			 */
 			selectable: schemaFactory.optional(schemaFactory.boolean),
 		}) {}
-		class Row extends TableSchema.createRow(
+		class Row extends TableSchema.createRow({
 			schemaFactory,
-			Cell,
-			schemaFactory.optional(RowProps),
-		) {}
+			cell: Cell,
+			props: schemaFactory.optional(RowProps),
+		}) {}
 
-		class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
+		class Table extends TableSchema.createTable({
+			schemaFactory,
+			cell: Cell,
+			column: Column,
+			row: Row,
+		}) {}
 
 		const treeView = independentView(
 			new TreeViewConfiguration({
@@ -73,6 +82,55 @@ describe("TableFactory unit tests", () => {
 		const actualVerbose = TreeAlpha.exportConcise(actual);
 		assert.deepEqual(actualVerbose, expected);
 	}
+
+	describe("Column Schema", () => {
+		it("Can create without props", () => {
+			class Column extends TableSchema.createColumn({ schemaFactory }) {}
+			const column = new Column({ id: "column-0" });
+
+			// TODO: ideally the "props" property would not exist at all on the derived class.
+			// For now, it is at least an optional property and cannot be set to anything meaningful.
+			type _test = requireAssignableTo<null | undefined, Column["props"]>;
+			assert.equal(column.props, undefined);
+		});
+
+		it("Can create with props", () => {
+			class Column extends TableSchema.createColumn({
+				schemaFactory,
+				props: schemaFactory.string,
+			}) {}
+			const column = new Column({ id: "column-0", props: "Column 0" });
+			assert.equal(column.props, "Column 0");
+		});
+	});
+
+	describe("Row Schema", () => {
+		it("Can create without props", () => {
+			class Cell extends schemaFactory.object("table-cell", {
+				value: schemaFactory.string,
+			}) {}
+			class Row extends TableSchema.createRow({ schemaFactory, cell: Cell }) {}
+			const row = new Row({ id: "row-0", cells: {} });
+
+			// TODO: ideally the "props" property would not exist at all on the derived class.
+			// For now, it is at least an optional property and cannot be set to anything meaningful.
+			type _test = requireAssignableTo<null | undefined, Row["props"]>;
+			assert.equal(row.props, undefined);
+		});
+
+		it("Can create with props", () => {
+			class Cell extends schemaFactory.object("table-cell", {
+				value: schemaFactory.string,
+			}) {}
+			class Row extends TableSchema.createRow({
+				schemaFactory,
+				cell: Cell,
+				props: schemaFactory.string,
+			}) {}
+			const column = new Row({ id: "row-0", cells: {}, props: "Row 0" });
+			assert.equal(column.props, "Row 0");
+		});
+	});
 
 	describe("Initialization", () => {
 		it("Empty", () => {
@@ -797,32 +855,6 @@ describe("TableFactory unit tests", () => {
 				validateUsageError(/Placeholder usage error./),
 			);
 		});
-	});
-
-	it("can read column props", () => {
-		const { treeView, Column } = createTableTree();
-
-		const column = new Column({ id: "column-0", props: { label: "Column 0" } });
-
-		treeView.initialize({
-			columns: [column],
-			rows: [],
-		});
-
-		assert.equal(column.props?.label, "Column 0");
-	});
-
-	it("can read row props", () => {
-		const { treeView, Row } = createTableTree();
-
-		const row = new Row({ id: "row-0", cells: {}, props: { selectable: false } });
-
-		treeView.initialize({
-			columns: [],
-			rows: [row],
-		});
-
-		assert.equal(row.props?.selectable, false);
 	});
 
 	it("gets proper table elements with getter methods", () => {
