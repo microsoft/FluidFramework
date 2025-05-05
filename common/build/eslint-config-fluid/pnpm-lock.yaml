@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  serialize-javascript: ^6.0.2
+  mocha>serialize-javascript@6.0.0: ^6.0.2
 
 importers:
 
