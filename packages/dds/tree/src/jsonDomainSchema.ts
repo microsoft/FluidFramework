@@ -36,7 +36,7 @@ const sf = new SchemaFactory("com.fluidframework.json");
  *
  * 2. The order of fields on an object is not preserved. The resulting order is arbitrary.
  *
- * JSON data can be imported from JSON into this format using `JSON.parse` then {@link TreeAlpha.importConcise} with the {@link JsonAsTree.(Tree:variable)} schema.
+ * JSON data can be imported from JSON into this format using `JSON.parse` then {@link (TreeAlpha:interface).importConcise} with the {@link JsonAsTree.(Tree:variable)} schema.
  *
  * @alpha
  */
@@ -125,7 +125,7 @@ export namespace JsonAsTree {
 	/**
 	 * Arbitrary JSON array as a {@link TreeNode}.
 	 * @remarks
-	 * This can be imported using {@link TreeAlpha.importConcise}.
+	 * This can be imported using {@link (TreeAlpha:interface).importConcise}.
 	 * @example
 	 * ```typescript
 	 * // Due to TypeScript restrictions on recursive types, the constructor can be somewhat limiting.

@@ -30,13 +30,12 @@ import {
 	getTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	ViewSchema,
+	SchemaCompatibilityTester,
 	type InsertableContent,
 	type TreeViewConfiguration,
 	mapTreeFromNodeData,
 	prepareContentForHydration,
 	comparePersistedSchemaInternal,
-	toStoredSchema,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
@@ -98,7 +97,7 @@ export class SchematizingSimpleTreeView<
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
-	private readonly viewSchema: ViewSchema;
+	private readonly viewSchema: SchemaCompatibilityTester;
 
 	private readonly unregisterCallbacks = new Set<() => void>();
 
@@ -133,7 +132,11 @@ export class SchematizingSimpleTreeView<
 			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(this.rootFieldSchema),
 		};
 
-		this.viewSchema = new ViewSchema(this.schemaPolicy, {}, this.rootFieldSchema);
+		this.viewSchema = new SchemaCompatibilityTester(
+			this.schemaPolicy,
+			{},
+			this.rootFieldSchema,
+		);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -182,7 +185,7 @@ export class SchematizingSimpleTreeView<
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: toStoredSchema(this.viewSchema.schema),
+				schema: this.viewSchema.viewSchemaAsStored,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -209,7 +212,7 @@ export class SchematizingSimpleTreeView<
 				AllowedUpdateType.SchemaCompatible,
 				this.checkout,
 				{
-					schema: toStoredSchema(this.viewSchema.schema),
+					schema: this.viewSchema.viewSchemaAsStored,
 					initialTree: undefined,
 				},
 			);
@@ -502,12 +505,12 @@ export function getCheckout(context: TreeBranch): TreeCheckout {
 }
 
 /**
- * Creates a view that self-disposes whenenever the stored schema changes.
+ * Creates a view that self-disposes whenever the stored schema changes.
  * This may only be called when the schema is already known to be compatible (typically via ensureSchema).
  */
 export function requireSchema(
 	checkout: ITreeCheckout,
-	viewSchema: ViewSchema,
+	viewSchema: SchemaCompatibilityTester,
 	onDispose: () => void,
 	nodeKeyManager: NodeIdentifierManager,
 	schemaPolicy: FullSchemaPolicy,
