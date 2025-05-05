@@ -2449,14 +2449,12 @@ class InvertNodeManagerI implements InvertNodeManager {
 		if (nodeChange !== undefined) {
 			assert(count === 1, "A node change should only affect one node");
 
-			// XXX: Merge this with rename check above.
 			const attachEntry = firstAttachIdFromDetachId(
 				this.table.change.rootNodes,
 				detachId,
 				count,
 			);
 
-			// TODO: Consider combining this query with the one for the rename.
 			const attachFieldEntry = this.table.change.crossFieldKeys.getFirst(
 				{ target: CrossFieldTarget.Destination, ...attachEntry.value },
 				count,
