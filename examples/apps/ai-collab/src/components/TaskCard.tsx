@@ -10,10 +10,9 @@ import {
 	type AiCollabErrorResponse,
 	type AiCollabSuccessResponse,
 	type ApplyEditSuccess,
-	type Difference,
-	type DifferenceChange,
-	type DifferenceMove,
-	SharedTreeBranchManager,
+	type ModifyDiff,
+	type MoveDiff,
+	type Diff,
 } from "@fluidframework/ai-collab/alpha";
 import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
@@ -52,7 +51,7 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 export function TaskCard(props: {
 	sharedTreeBranch: TreeView<typeof SharedTreeAppState>;
-	branchDifferences?: Difference[];
+	readonly diffs: readonly Diff[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 	sharedTreeTask: SharedTreeTask;
 }): JSX.Element {
@@ -69,7 +68,7 @@ export function TaskCard(props: {
 
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTask, logId: "TaskCard" });
 
-	const [branchDifferences, setBranchDifferences] = useState(props.branchDifferences);
+	const [diffs, setdiffs] = useState(props.diffs);
 
 	const deleteTask = (): void => {
 		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
@@ -78,26 +77,40 @@ export function TaskCard(props: {
 
 	const fieldDifferences: {
 		isNewCreation: boolean;
-		changes: Record<string, DifferenceChange>;
-		moved?: DifferenceMove;
+		changes: Record<string, ModifyDiff>;
+		moved?: {
+			diff: MoveDiff;
+			originalIndex: number;
+		};
 	} = {
 		isNewCreation: false,
-		changes: {} satisfies Record<string, DifferenceChange>,
+		changes: {} satisfies Record<string, ModifyDiff>,
 	};
 
-	for (const diff of branchDifferences ?? []) {
-		if (diff.type === "CHANGE") {
-			const path = diff.path[diff.path.length - 1];
-			if (path === undefined) {
-				throw new Error(`List of paths in CHANGE diff is empty`);
-			}
-			fieldDifferences.changes[path] = diff;
-		}
-		if (diff.type === "CREATE") {
+	for (const diff of diffs ?? []) {
+		if (diff.type === "insert") {
 			fieldDifferences.isNewCreation = true;
 		}
-		if (diff.type === "MOVE") {
-			fieldDifferences.moved = diff;
+		if (diff.type === "modify") {
+			if (typeof diff.nodePath[0]?.parentField !== "string") {
+				throw new TypeError("Invalid 'modify' diff. Expected 'parentField' to be a string.");
+			}
+			const targetField = diff.nodePath[0]?.parentField;
+			if (targetField === undefined) {
+				console.error("Recieved modify ui diff but could not identify target field");
+				continue;
+			}
+
+			fieldDifferences.changes[targetField] = diff;
+		}
+
+		if (typeof diff.sourceNodePath[0]?.parentField !== "number") {
+			throw new TypeError("Invalid 'move' diff. Expected 'parentField' to be a number.");
+		}
+			fieldDifferences.moved = {
+				diff,
+				originalIndex: diff.sourceNodePath[0]?.parentField,
+			};
 		}
 	}
 
@@ -206,22 +219,14 @@ export function TaskCard(props: {
 				throw new Error(response.errorMessage);
 			}
 
-			// 3. Handle the response from the ai collaboration
-			const taskDifferences = new SharedTreeBranchManager({
-				nodeIdAttributeName: "id",
-			}).compare(
-				props.sharedTreeTask as unknown as Record<string, unknown>,
-				newBranchTask as unknown as Record<string, unknown>,
-			);
-
 			enqueueSnackbar(`Copilot: I've completed your request - "${userRequest}"`, {
 				variant: "success",
 				autoHideDuration: 5000,
 			});
 			console.log("ai-collab Branch Task AFTER:", { ...newBranchTask });
-			console.log("ai-collab Branch Task differences:", taskDifferences);
+			console.log("ai-collab Branch Task differences:", response.diffs);
 
-			setBranchDifferences(taskDifferences);
+			setdiffs(response.diffs);
 			// Note that we don't ask for user approval before merging changes at a task level for simplicites sake.
 			currentBranch.merge(newBranchTree);
 		} catch (error) {
@@ -260,7 +265,7 @@ export function TaskCard(props: {
 			{fieldDifferences.moved !== undefined && (
 				<Box component="span" sx={{ position: "absolute", top: 5, left: 5 }}>
 					<Tooltip
-						title={`This was moved from index: ${fieldDifferences.moved.path[fieldDifferences.moved.path.length - 1]}`}
+						title={`This was moved from index: ${fieldDifferences.moved.originalIndex}`}
 					>
 						<Icon icon="material-symbols:move-down" width={30} height={30} color="blue" />
 					</Tooltip>
