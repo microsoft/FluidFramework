@@ -1730,7 +1730,7 @@ describe("Diff Creation", () => {
 			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
 			const expectedDiff: RemoveNodeDiff = {
 				type: "remove",
-				removalType: "remove-field",
+				removalType: "remove-node",
 				nodePath: [
 					{
 						shortId: optionaFieldObjectShortId,

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 /**
  * A base interface to enforce consistency between all Diff objects.
  * @remarks This object is not intended to be used directly.

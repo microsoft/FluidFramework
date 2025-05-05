@@ -527,7 +527,10 @@ export function TaskGroup(props: {
 					// One possible correct way to handle this case, is to take deleted node ui diffs, take the `RemoveDiff.nodeContent / RemoveDiff.nodeContents` and use that
 					// to render a special 'removed' task card that cannot be interacted with and is not a part of the tree.
 					const matchingRemoveDiffs = removeDiffs.filter((diff: RemoveDiff) => {
-						if (diff.removalType === "remove-array-single" || diff.removalType === "remove-node") {
+						if (
+							diff.removalType === "remove-array-single" ||
+							diff.removalType === "remove-node"
+						) {
 							return diff.nodePath[0]?.shortId === Tree.shortId(task);
 						} else if (diff.removalType === "remove-array-range") {
 							return diff.nodePaths.some(

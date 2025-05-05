@@ -91,22 +91,24 @@ export function TaskCard(props: {
 		if (diff.type === "insert") {
 			fieldDifferences.isNewCreation = true;
 		}
+
 		if (diff.type === "modify") {
 			if (typeof diff.nodePath[0]?.parentField !== "string") {
 				throw new TypeError("Invalid 'modify' diff. Expected 'parentField' to be a string.");
 			}
 			const targetField = diff.nodePath[0]?.parentField;
 			if (targetField === undefined) {
-				console.error("Recieved modify ui diff but could not identify target field");
+				console.error("Received modify ui diff but could not identify target field");
 				continue;
 			}
 
 			fieldDifferences.changes[targetField] = diff;
 		}
 
-		if (typeof diff.sourceNodePath[0]?.parentField !== "number") {
-			throw new TypeError("Invalid 'move' diff. Expected 'parentField' to be a number.");
-		}
+		if (diff.type === "move" && diff.moveType === "move-single") {
+			if (typeof diff.sourceNodePath[0]?.parentField !== "number") {
+				throw new TypeError("Invalid 'move' diff. Expected 'parentField' to be a number.");
+			}
 			fieldDifferences.moved = {
 				diff,
 				originalIndex: diff.sourceNodePath[0]?.parentField,

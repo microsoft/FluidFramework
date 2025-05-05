@@ -737,7 +737,7 @@ function createRemoveDiff(
 
 			return {
 				type: "remove",
-				removalType: "remove-field",
+				removalType: "remove-node",
 				nodePath: createNodePathRecursive(targetNodeAtField as TreeNode, idGenerator, []),
 				aiExplanation: treeEdit.explanation,
 				nodeContent: removeAgentObjectIdField(JSON.parse(JSON.stringify(targetNodeAtField))),
