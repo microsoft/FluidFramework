@@ -3,9 +3,9 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-Allows users of alpha schema APIs to add metadata to AllowedTypes
+Users of alpha schema APIs can now add metadata to AllowedTypes
 
-This change allows metadata to be added to AllowedTypes as well as individual types in a set of AllowedTypes.
+This change allows metadata to be added to [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) as well as individual types in a set of `AllowedTypes`.
 Users can define custom metadata by putting their AllowedTypes in an object with `metadata` and `types` properties:
 
 ```typescript
@@ -13,7 +13,7 @@ schemaFactoryAlpha.arrayAlpha({
 	metadata: {
 		custom: "these allowed types are annotated",
 	},
-	types: [schemaFactory.string, schemaFactory.number],
+	types: [SchemaFactory.string, SchemaFactory.number],
 })
 ```
 
