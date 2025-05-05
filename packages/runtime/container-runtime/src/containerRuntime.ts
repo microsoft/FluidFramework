@@ -3358,15 +3358,7 @@ export class ContainerRuntime
 				}
 			}),
 			commitChanges: exitStagingMode(() => {
-				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
-				if (this.connected) {
-					this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
-				} else {
-					// TODO:AB#37788: Refactor interplay with pending state manager and staging mode so that even in this case we end up
-					// squashing the ops submitted while in staging mode. This does not happen now due to the following clear without asking
-					// data stores to resubmit.
-					this.pendingStateManager.clearStagingFlags();
-				}
+				this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
 			}),
 		};
 

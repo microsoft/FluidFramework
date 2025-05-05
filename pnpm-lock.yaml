@@ -13547,6 +13547,9 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^5.0.0
         version: 5.0.0
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils

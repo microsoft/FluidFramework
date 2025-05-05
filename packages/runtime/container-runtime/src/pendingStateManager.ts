@@ -691,7 +691,7 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public replayPendingStates(onlyStagedBatches?: boolean): void {
 		assert(
-			this.stateHandler.connected(),
+			this.stateHandler.connected() || onlyStagedBatches === true,
 			0x172 /* "The connection state is not consistent with the runtime" */,
 		);
 
@@ -828,17 +828,6 @@ export class PendingStateManager implements IDisposable {
 				count: initialPendingMessagesCount,
 				clientId: this.stateHandler.clientId(),
 			});
-		}
-	}
-
-	/**
-	 * Clears the 'staged' flag off all pending messages.
-	 */
-	public clearStagingFlags(): void {
-		for (const message of this.pendingMessages.toArray()) {
-			if (message.batchInfo.staged) {
-				message.batchInfo.staged = false;
-			}
 		}
 	}
 
