@@ -280,7 +280,6 @@ export class ModularChangeFamily
 		const crossFieldTable = newComposeTable(
 			change1,
 			change2,
-			composedNodeToParent,
 			composedRoots,
 			composedCrossFieldKeys,
 			pendingCompositions,
@@ -307,6 +306,15 @@ export class ModularChangeFamily
 
 		for (const entry of crossFieldTable.renamesToDelete.entries()) {
 			deleteNodeRename(crossFieldTable.composedRootNodes, entry.start, entry.length);
+		}
+
+		for (const [nodeId, fieldId] of crossFieldTable.movedNodeToParent.entries()) {
+			// If composedNodeToParent does not have an entry for this node ID
+			// then it must be an ID from change2 which was subsumed by an ID in change1 for the same node.
+			// In that case the parentage will already be correct since change1 has the same input context as the composed changeset.
+			if (composedNodeToParent.has(nodeId)) {
+				composedNodeToParent.set(nodeId, fieldId);
+			}
 		}
 
 		return {
@@ -2347,7 +2355,6 @@ interface RebaseFieldContext {
 function newComposeTable(
 	baseChange: ModularChangeset,
 	newChange: ModularChangeset,
-	composedNodeToParent: ChangeAtomIdBTree<FieldId>,
 	composedRootNodes: RootNodeTable,
 	composedCrossFieldKeys: CrossFieldKeyTable,
 	pendingCompositions: PendingCompositions,
@@ -2360,7 +2367,7 @@ function newComposeTable(
 		newFieldToBaseField: new Map(),
 		newToBaseNodeId: newTupleBTree(),
 		composedNodes: new Set(),
-		composedNodeToParent,
+		movedNodeToParent: newTupleBTree(),
 		composedRootNodes,
 		composedCrossFieldKeys,
 		renamesToDelete: newChangeAtomIdRangeMap(),
@@ -2381,7 +2388,7 @@ interface ComposeTable {
 	readonly newFieldToBaseField: Map<FieldChange, FieldChange>;
 	readonly newToBaseNodeId: ChangeAtomIdBTree<NodeId>;
 	readonly composedNodes: Set<NodeChangeset>;
-	readonly composedNodeToParent: ChangeAtomIdBTree<FieldId>;
+	readonly movedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	readonly composedRootNodes: RootNodeTable;
 	readonly composedCrossFieldKeys: CrossFieldKeyTable;
 	readonly renamesToDelete: ChangeAtomIdRangeMap<boolean>;
@@ -2718,8 +2725,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		// TODO: Consider moving this to a separate method so that this method can be side-effect free.
 		if (result.value !== undefined) {
-			// XXX: This creates an unnecessary entry if there is already a base changeset for this node.
-			setInChangeAtomIdMap(this.table.composedNodeToParent, result.value, this.fieldId);
+			setInChangeAtomIdMap(this.table.movedNodeToParent, result.value, this.fieldId);
 		}
 		return result;
 	}

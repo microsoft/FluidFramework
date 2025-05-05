@@ -760,6 +760,51 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(composed, expected);
 		});
+
+		it("move and modify with modify", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				0,
+				1,
+				{ parent: undefined, field: fieldA },
+				0,
+			);
+
+			const nodePath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			editor.sequenceField({ parent: nodePath, field: fieldB }).remove(0, 1);
+			editor.sequenceField({ parent: nodePath, field: fieldB }).remove(0, 1);
+
+			const [move, modify1, modify2] = getChanges();
+			const moveAndModify = family.compose([makeAnonChange(move), makeAnonChange(modify1)]);
+
+			const composed = family.compose([
+				tagChangeInline(moveAndModify, tag1),
+				tagChangeInline(modify2, tag2),
+			]);
+
+			const expected = Change.build(
+				{ family, maxId: 5, revisions: [{ revision: tag1 }, { revision: tag2 }] },
+				Change.field(
+					fieldA,
+					sequence.identifier,
+					[
+						MarkMaker.insert(1, { revision: tag1, localId: brand(1) }, { id: brand(0) }),
+						MarkMaker.remove(1, { revision: tag1, localId: brand(0) }),
+					],
+					Change.nodeWithId(
+						0,
+						{ revision: tag1, localId: brand(3) },
+						Change.field(fieldB, sequence.identifier, [
+							MarkMaker.remove(1, { revision: tag1, localId: brand(2) }),
+							MarkMaker.remove(1, { revision: tag2, localId: brand(4) }),
+						]),
+					),
+				),
+			);
+			assertModularChangesetsEqual(composed, expected);
+		});
 	});
 
 	describe("invert", () => {
