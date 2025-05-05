@@ -62,6 +62,7 @@ export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompati
  * @param view - Schema which would be used to view persisted content.
  * @param options - {@link ICodecOptions} used when parsing the provided schema.
  * @param canInitialize - Passed through to the return value unchanged and otherwise unused.
+ * @param schemaWriteVersion - The schema write version.
  * @returns The {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema.
  *
  * @remarks

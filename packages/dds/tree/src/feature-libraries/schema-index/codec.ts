@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type ICodecFamily,
 	type ICodecOptions,
@@ -95,6 +95,9 @@ function decode(f: FormatV1): TreeStoredSchema {
 
 /**
  * Creates a codec which performs synchronous monolithic encoding of schema content.
+ * @param options - Specifies common codec options, including which `validator` to use.
+ * @param version - The schema write version.
+ * @returns The codec.
  */
 function makeV1CodecWithVersion(
 	options: ICodecOptions,
@@ -107,6 +110,6 @@ function makeV1CodecWithVersion(
 				decode: (data: FormatV1) => decode(data),
 			};
 		default:
-			unreachableCase(version as never);
+			assert(false, "Unsupported schema version");
 	}
 }
