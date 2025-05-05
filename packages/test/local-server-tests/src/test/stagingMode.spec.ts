@@ -11,6 +11,7 @@ import {
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
+	ConnectionState,
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
@@ -282,15 +283,23 @@ function hasEdit(client: Client, prefix: string): boolean {
 
 async function ensureDisconnected(client: Client): Promise<void> {
 	return new Promise<void>((resolve) => {
-		client.container.once("disconnected", () => resolve());
-		client.container.disconnect();
+		if (client.container.connectionState === ConnectionState.Disconnected) {
+			resolve();
+		} else {
+			client.container.once("disconnected", () => resolve());
+			client.container.disconnect();
+		}
 	});
 }
 
 async function ensureConnected(client: Client): Promise<void> {
 	return new Promise<void>((resolve) => {
-		client.container.once("connected", () => resolve());
-		client.container.connect();
+		if (client.container.connectionState === ConnectionState.Connected) {
+			resolve();
+		} else {
+			client.container.once("connected", () => resolve());
+			client.container.connect();
+		}
 	});
 }
 
@@ -476,32 +485,40 @@ describe("Staging Mode", () => {
 		);
 	});
 
-	it("squashes changes when exiting staging mode", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const clients = await createClients(deltaConnectionServer);
-		const reSubmitSquashedLog: unknown[][] = [];
+	for (const disconnectBeforeCommit of [false, true]) {
+		it(`squashes changes when exiting staging mode ${disconnectBeforeCommit ? "while disconnected" : ""}`, async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+			const reSubmitSquashedLog: unknown[][] = [];
 
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		const rootMap = clients.original.dataObject["root"] as unknown as SharedObject;
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		const originalReSubmitSquashed = rootMap["reSubmitSquashed"].bind(rootMap);
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		rootMap["reSubmitSquashed"] = (...args) => {
-			reSubmitSquashedLog.push([...args]);
-			return originalReSubmitSquashed(...args);
-		};
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			const rootMap = clients.original.dataObject["root"] as unknown as SharedObject;
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			const originalReSubmitSquashed = rootMap["reSubmitSquashed"].bind(rootMap);
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			rootMap["reSubmitSquashed"] = (...args) => {
+				reSubmitSquashedLog.push([...args]);
+				return originalReSubmitSquashed(...args);
+			};
 
-		const stagingControls = clients.original.dataObject.enterStagingMode();
-		clients.original.dataObject.makeEdit("branch-only");
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.makeEdit("branch-only");
 
-		stagingControls.commitChanges();
+			if (disconnectBeforeCommit) {
+				await ensureDisconnected(clients.original);
+			}
+			stagingControls.commitChanges();
+			if (disconnectBeforeCommit) {
+				await ensureConnected(clients.original);
+			}
 
-		await waitForSave(clients);
+			await waitForSave(clients);
 
-		assert.equal(reSubmitSquashedLog.length, 1, "Squashed resubmit should be called once.");
-		assert(
-			JSON.stringify(reSubmitSquashedLog[0][0]).includes("branch-only"),
-			"Squashed op should contain the edit prefix.",
-		);
-	});
+			assert.equal(reSubmitSquashedLog.length, 1, "Squashed resubmit should be called once.");
+			assert(
+				JSON.stringify(reSubmitSquashedLog[0][0]).includes("branch-only"),
+				"Squashed op should contain the edit prefix.",
+			);
+		});
+	}
 });
