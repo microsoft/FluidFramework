@@ -20,6 +20,7 @@ export {
 	DriverVersionHeaderName,
 	LatestSummaryId,
 	TelemetryContextHeaderName,
+	CallingServiceHeaderName,
 } from "./constants";
 export {
 	createFluidServiceNetworkError,

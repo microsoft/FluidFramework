@@ -54,10 +54,10 @@ import { independentInitializedView, type ViewContent } from "./independentView.
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 
 /**
- * Extensions to {@link Tree} and {@link TreeBeta} which are not yet stable.
+ * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
- * @sealed @alpha
+ * @system @sealed @alpha
  */
 export interface TreeAlpha {
 	/**
@@ -81,7 +81,7 @@ export interface TreeAlpha {
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
 	 *
 	 * Like with {@link TreeNodeSchemaClass}'s constructor, it's an error to provide an existing node to this API.
-	 * For that case, use {@link TreeBeta.clone}.
+	 * For that case, use {@link (TreeBeta:interface).clone}.
 	 * @privateRemarks
 	 * There should be a way to provide a source for defaulted identifiers, wither via this API or some way to add them to its output later.
 	 */
@@ -208,9 +208,9 @@ export interface TreeAlpha {
 }
 
 /**
- * Extensions to {@link Tree} and {@link TreeBeta} which are not yet stable.
+ * Extensions to {@link (Tree:variable)} and {@link (TreeBeta:variable)} which are not yet stable.
  * @see {@link (TreeAlpha:interface)}.
- * @sealed @alpha
+ * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
 	branch(node: TreeNode): TreeBranch | undefined {
