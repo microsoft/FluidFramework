@@ -72,6 +72,8 @@ export function ApiLink({
 }: ApiLinkProps): JSX.Element {
 	const root = useLinkPathBase();
 	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
+	// `api-documenter` generates all lowercase entries for API item names and types.
+	// Convert input names and types to lowercase to match.
 	const path = `${root}${packageName}/${apiName.toLocaleLowerCase()}-${apiType.toLocaleLowerCase()}${headingPostfix}`;
 	return <a href={path}>{children ?? apiName}</a>;
 }
