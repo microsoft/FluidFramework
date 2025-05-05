@@ -422,13 +422,8 @@ export namespace System_TableSchema {
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
-		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>;
-
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
-		type ColumnInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>;
-
 		type RowValueType = TreeNodeFromImplicitAllowedTypes<TRowSchema>;
-		type RowInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>;
 
 		/**
 		 * {@link Table} fields.
@@ -482,7 +477,7 @@ export namespace System_TableSchema {
 			public insertColumn({
 				column,
 				index,
-			}: TableSchema.InsertColumnParameters<ColumnInsertableType>): ColumnValueType {
+			}: TableSchema.InsertColumnParameters<TColumnSchema>): ColumnValueType {
 				if (index === undefined) {
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -502,7 +497,7 @@ export namespace System_TableSchema {
 			public insertRows({
 				index,
 				rows,
-			}: TableSchema.InsertRowsParameters<RowInsertableType>): RowValueType[] {
+			}: TableSchema.InsertRowsParameters<TRowSchema>): RowValueType[] {
 				if (index === undefined) {
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -519,7 +514,7 @@ export namespace System_TableSchema {
 				return rows as unknown as RowValueType[];
 			}
 
-			public setCell({ key, cell }: TableSchema.SetCellParameters<CellInsertableType>): void {
+			public setCell({ key, cell }: TableSchema.SetCellParameters<TCellSchema>): void {
 				const { columnId, rowId } = key;
 				const row = this.getRow(rowId);
 				if (row !== undefined) {
@@ -823,7 +818,7 @@ export namespace TableSchema {
 	 * {@link TableSchema.ITable.insertColumn} parameters.
 	 * @internal
 	 */
-	export interface InsertColumnParameters<TInsertableColumn> {
+	export interface InsertColumnParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
 		 * The index at which to insert the new column.
 		 * @remarks If not provided, the column will be appended to the end of the table.
@@ -833,14 +828,14 @@ export namespace TableSchema {
 		/**
 		 * The column to insert.
 		 */
-		readonly column: TInsertableColumn;
+		readonly column: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
 	}
 
 	/**
 	 * {@link TableSchema.ITable.insertRows} parameters.
 	 * @internal
 	 */
-	export interface InsertRowsParameters<TInsertableRow> {
+	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
 		/**
 		 * The index at which to insert the new rows.
 		 * @remarks If not provided, the rows will be appended to the end of the table.
@@ -850,14 +845,14 @@ export namespace TableSchema {
 		/**
 		 * The rows to insert.
 		 */
-		readonly rows: TInsertableRow[];
+		readonly rows: InsertableTreeNodeFromImplicitAllowedTypes<TRow>[];
 	}
 
 	/**
 	 * {@link TableSchema.ITable.setCell} parameters.
 	 * @internal
 	 */
-	export interface SetCellParameters<TInsertableCell> {
+	export interface SetCellParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
 		 * The key to uniquely identify a cell in a table.
 		 */
@@ -866,7 +861,7 @@ export namespace TableSchema {
 		/**
 		 * The cell to set.
 		 */
-		readonly cell: TInsertableCell;
+		readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
 	}
 
 	/**
@@ -910,7 +905,7 @@ export namespace TableSchema {
 		 * @throws Throws an error if the column is already in the tree, or if the specified index is out of range.
 		 */
 		insertColumn(
-			params: InsertColumnParameters<InsertableTreeNodeFromImplicitAllowedTypes<TColumn>>,
+			params: InsertColumnParameters<TColumn>,
 		): TreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		/**
@@ -918,7 +913,7 @@ export namespace TableSchema {
 		 * @throws Throws an error if any of the rows are already in the tree, or if the specified index is out of range.
 		 */
 		insertRows(
-			params: InsertRowsParameters<InsertableTreeNodeFromImplicitAllowedTypes<TRow>>,
+			params: InsertRowsParameters<TRow>,
 		): TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
@@ -927,7 +922,7 @@ export namespace TableSchema {
 		 * @privateRemarks TODO: add overload that takes column/row nodes?
 		 */
 		setCell(
-			params: SetCellParameters<InsertableTreeNodeFromImplicitAllowedTypes<TCell>>,
+			params: SetCellParameters<TCell>,
 		): void;
 
 		/**
