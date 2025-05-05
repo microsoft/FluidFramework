@@ -626,7 +626,7 @@ export function normalizeAllowedTypes(
 /**
  * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
  */
-export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchema>>(
+export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
 	type: T | AnnotatedAllowedType<T>,
 ): AnnotatedAllowedType<T> {
 	return isAnnotatedAllowedType(type)

@@ -17,7 +17,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 
 // @alpha
 export interface AllowedTypeMetadata {
-    custom?: unknown;
+    readonly custom?: unknown;
 }
 
 // @public @system
@@ -25,16 +25,16 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 // @alpha
 export interface AllowedTypesMetadata {
-    custom?: unknown;
+    readonly custom?: unknown;
 }
 
 // @alpha
 export function allowUnused<T>(t?: T): void;
 
 // @alpha
-export interface AnnotatedAllowedType<T extends LazyItem<TreeNodeSchema> = LazyItem<TreeNodeSchema>> {
+export interface AnnotatedAllowedType<T extends TreeNodeSchema = TreeNodeSchema> {
     readonly metadata: AllowedTypeMetadata;
-    readonly type: T;
+    readonly type: LazyItem<T>;
 }
 
 // @alpha

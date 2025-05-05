@@ -801,11 +801,9 @@ describe("schemaTypes", () => {
 
 			type _check1 = requireAssignableTo<A, UnannotateAllowedTypeOrLazyItem<A>>;
 
-			type _check2 = requireAssignableTo<A, UnannotateAllowedTypeOrLazyItem<B>>;
+			type _check2 = requireAssignableTo<UnannotateAllowedTypeOrLazyItem<A>, A>;
 
-			type _check3 = requireAssignableTo<UnannotateAllowedTypeOrLazyItem<A>, A>;
-
-			type _check4 = requireAssignableTo<UnannotateAllowedTypeOrLazyItem<B>, A>;
+			type _check3 = requireAssignableTo<UnannotateAllowedTypeOrLazyItem<B>, A>;
 		}
 
 		// UnannotateAllowedTypesList
@@ -814,30 +812,22 @@ describe("schemaTypes", () => {
 			type A2 = LazyItem<TreeNodeSchema>;
 			type Mixed = readonly [A1, A2];
 
-			type _check1 = requireAssignableTo<
-				readonly [() => TreeNodeSchema, () => TreeNodeSchema],
-				UnannotateAllowedTypesList<Mixed>
-			>;
-
 			type Empty = readonly [];
-			type _check2 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
+			type _check1 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
 
-			type _check3 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
+			type _check2 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
 		}
 
 		// UnannotateAllowedTypes
 		{
-			type AnnotatedList = readonly [
-				AnnotatedAllowedType<() => TreeNodeSchema>,
-				() => TreeNodeSchema,
-			];
+			type AnnotatedList = readonly [AnnotatedAllowedType, LazyItem<TreeNodeSchema>];
 
 			type _check = requireAssignableTo<
-				readonly [() => TreeNodeSchema, () => TreeNodeSchema],
 				UnannotateAllowedTypes<{
 					metadata: AllowedTypesMetadata;
 					types: AnnotatedList;
-				}>
+				}>,
+				readonly [LazyItem<TreeNodeSchema>, LazyItem<TreeNodeSchema>]
 			>;
 		}
 	}
