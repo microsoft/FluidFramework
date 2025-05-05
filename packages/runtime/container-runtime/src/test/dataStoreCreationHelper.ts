@@ -62,6 +62,7 @@ export function createParentContext(
 		clientDetails,
 		submitMessage: () => {},
 		deltaManager: new MockDeltaManager(),
+		isReadOnly: () => false,
 	} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 }
 

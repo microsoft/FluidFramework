@@ -250,6 +250,7 @@ describe("Data Store Context Tests", () => {
 					IFluidDataStoreRegistry: registryWithSubRegistries,
 					clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 					deltaManager: new MockDeltaManager(),
+					isReadOnly: () => false,
 				} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
@@ -547,6 +548,7 @@ describe("Data Store Context Tests", () => {
 				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 				containerRuntime: parentContext as unknown as IContainerRuntimeBase,
 				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
 			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 		});
 
@@ -1043,6 +1045,7 @@ describe("Data Store Context Tests", () => {
 				baseLogger: createChildLogger(),
 				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
 			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 		});
 
