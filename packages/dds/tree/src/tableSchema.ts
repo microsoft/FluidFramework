@@ -1020,8 +1020,8 @@ export namespace TableSchema {
 		 * @privateRemarks
 		 * TODO:
 		 * - Add overload that takes an ID.
-		 * - Return removed column (if any).
-		 * - Throw an error if the column belongs to a different table.
+		 * - Return removed column.
+		 * - Throw an error if the column isn't in the table.
 		 * - (future) Actually remove corresponding cells from table rows.
 		 */
 		removeColumn: (column: TreeNodeFromImplicitAllowedTypes<TColumn>) => void;
@@ -1031,8 +1031,8 @@ export namespace TableSchema {
 		 * @privateRemarks
 		 * TODO:
 		 * - Add overload that takes an ID.
-		 * - Return removed rows (if any).
-		 * - Throw an error if any row(s) belong to a different table.
+		 * - Return removed rows.
+		 * - Throw an error if any row(s) aren't in the table.
 		 */
 		removeRows(rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]): void;
 
