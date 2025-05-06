@@ -3,16 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ScopedSchemaName,
-	TreeObjectNodeUnsafe,
-	InsertableObjectFromSchemaRecordUnsafe,
-} from "../../internalTypes.js";
 import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
 	schemaStatics,
 	type SchemaFactoryObjectOptions,
+	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import {
 	normalizeToAnnotatedAllowedType,
@@ -27,10 +23,9 @@ import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchema, TreeNodeSchemaClass } from "../core/index.js";
 import type {
-	ImplicitAllowedTypesUnsafe,
-	ImplicitFieldSchemaUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
+	System_Unsafe,
 } from "./typesUnsafe.js";
 import { mapSchema } from "../mapNode.js";
 import { arraySchema } from "../arrayNode.js";
@@ -38,7 +33,6 @@ import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
 import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
-import type { LazyItem } from "../flexList.js";
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -65,7 +59,7 @@ export class SchemaFactoryAlpha<
 	 * @remarks
 	 * t is frozen and should not be modified after being passed in.
 	 */
-	public enablable<const T extends LazyItem<TreeNodeSchema>>(
+	public enablable<const T extends TreeNodeSchema>(
 		t: T | AnnotatedAllowedType<T>,
 	): AnnotatedAllowedType<T> {
 		Object.freeze(t);
@@ -86,7 +80,6 @@ export class SchemaFactoryAlpha<
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
 	 * @param options - Additional options for the schema.
 	 */
-	// TODO rename and consolidate with alpha, note that it's a breaking change in the changeset
 	public objectAlpha<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
@@ -123,7 +116,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public override objectRecursive<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
+		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -132,8 +125,8 @@ export class SchemaFactoryAlpha<
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
-		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
-		object & InsertableObjectFromSchemaRecordUnsafe<T>,
+		System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 		false,
 		T,
 		never,
@@ -159,8 +152,8 @@ export class SchemaFactoryAlpha<
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
-			TreeObjectNodeUnsafe<T, TScopedName>,
-			object & InsertableObjectFromSchemaRecordUnsafe<T>,
+			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
+			object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
 			T,
 			never,
@@ -231,7 +224,7 @@ export class SchemaFactoryAlpha<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override mapRecursive<
 		Name extends TName,
-		const T extends ImplicitAllowedTypesUnsafe,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		return this.mapAlpha(
@@ -275,7 +268,7 @@ export class SchemaFactoryAlpha<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override arrayRecursive<
 		const Name extends TName,
-		const T extends ImplicitAllowedTypesUnsafe,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		return this.arrayAlpha(

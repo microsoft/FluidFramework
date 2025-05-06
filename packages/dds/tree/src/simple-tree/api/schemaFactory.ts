@@ -58,25 +58,7 @@ import {
 	objectSchema,
 } from "../objectNode.js";
 import { type MapNodeInsertableData, type TreeMapNode, mapSchema } from "../mapNode.js";
-import type {
-	FieldSchemaUnsafe,
-	// Adding these unused imports makes the generated d.ts file produced by TypeScript stop breaking API-Extractor's rollup generation.
-	// Without this import, TypeScript generates inline `import("../..")` statements in the d.ts file,
-	// which API-Extractor leaves as is when generating the rollup, leaving them pointing at the wrong directory.
-	// API-Extractor issue: https://github.com/microsoft/rushstack/issues/4507
-	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-	FieldHasDefaultUnsafe,
-	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-	InsertableTreeFieldFromImplicitFieldUnsafe,
-	InsertableObjectFromSchemaRecordUnsafe,
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeArrayNodeUnsafe,
-	TreeMapNodeUnsafe,
-	TreeObjectNodeUnsafe,
-	ImplicitAllowedTypesUnsafe,
-	ImplicitFieldSchemaUnsafe,
-	FieldSchemaAlphaUnsafe,
-} from "./typesUnsafe.js";
+import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { isLazy } from "../flexList.js";
 
@@ -146,7 +128,7 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 * ```
 	 *
 	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
-	 * {@link TreeAlpha.importVerbose|import}/{@link TreeAlpha.exportVerbose|export} APIs with persistent keys.
+	 * {@link (TreeAlpha:interface).importVerbose|import}/{@link (TreeAlpha:interface).exportVerbose|export} APIs with persistent keys.
 	 *
 	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
 	 * this problem as SharedTree's implementation stores the entire node in its lower layers. It's only when application code
@@ -283,12 +265,12 @@ export interface SchemaStatics {
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
 	readonly optionalRecursive: <
-		const T extends ImplicitAllowedTypesUnsafe,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	) => FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
+	) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
 
 	/**
 	 * {@link SchemaStatics.required} except tweaked to work better for recursive types.
@@ -298,12 +280,12 @@ export interface SchemaStatics {
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
 	readonly requiredRecursive: <
-		const T extends ImplicitAllowedTypesUnsafe,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	) => FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
+	) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
 }
 
 const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
@@ -311,7 +293,7 @@ const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 });
 
 // The following overloads for optional and required are used to get around the fact that
-// the compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T
+// the compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T when T is known to extend ImplicitAllowedTypes
 
 function optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 	t: T,
@@ -381,7 +363,7 @@ export const schemaStaticsBase = {
 	required,
 
 	optionalRecursive: <
-		const T extends ImplicitAllowedTypesUnsafe,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
@@ -394,7 +376,7 @@ export const schemaStaticsBase = {
 	},
 
 	requiredRecursive: <
-		const T extends ImplicitAllowedTypesUnsafe,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
@@ -1118,15 +1100,15 @@ export class SchemaFactory<
 	 */
 	public objectRecursive<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
+		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
 	>(
 		name: Name,
 		t: T,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
-		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
-		object & InsertableObjectFromSchemaRecordUnsafe<T>,
+		System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 		false,
 		T
 	> {
@@ -1137,8 +1119,8 @@ export class SchemaFactory<
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
-			TreeObjectNodeUnsafe<T, TScopedName>,
-			object & InsertableObjectFromSchemaRecordUnsafe<T>,
+			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
+			object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
 			T
 		>;
@@ -1150,12 +1132,13 @@ export class SchemaFactory<
 	 * @remarks
 	 * This version of `SchemaFactory.array` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 * See also {@link FixRecursiveArraySchema} for additional information specific to recursive arrays schema exports.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public arrayRecursive<const Name extends TName, const T extends ImplicitAllowedTypesUnsafe>(
-		name: Name,
-		allowedTypes: T,
-	) {
+	public arrayRecursive<
+		const Name extends TName,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+	>(name: Name, allowedTypes: T) {
 		const RecursiveArray = this.namedArray(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -1166,7 +1149,8 @@ export class SchemaFactory<
 		return RecursiveArray as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
-			TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
+			System_Unsafe.TreeArrayNodeUnsafe<T> &
+				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
 			{
 				/**
 				 * Iterator for the iterable of content for this node.
@@ -1179,7 +1163,9 @@ export class SchemaFactory<
 				 * If this workaround is kept, ideally this comment would be deduplicated with the other instance of it.
 				 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
 				 */
-				[Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
+				[Symbol.iterator](): Iterator<
+					System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>
+				>;
 			},
 			false,
 			T,
@@ -1195,10 +1181,10 @@ export class SchemaFactory<
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public mapRecursive<Name extends TName, const T extends ImplicitAllowedTypesUnsafe>(
-		name: Name,
-		allowedTypes: T,
-	) {
+	public mapRecursive<
+		Name extends TName,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+	>(name: Name, allowedTypes: T) {
 		const MapSchema = this.namedMap(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -1211,7 +1197,8 @@ export class SchemaFactory<
 		return MapSchema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
-			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
+			System_Unsafe.TreeMapNodeUnsafe<T> &
+				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 			| {
 					/**
 					 * Iterator for the iterable of content for this node.
@@ -1225,7 +1212,7 @@ export class SchemaFactory<
 					 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
 					 */
 					[Symbol.iterator](): Iterator<
-						[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
+						[string, System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
 					>;
 			  }
 			// Ideally this would be
@@ -1233,7 +1220,7 @@ export class SchemaFactory<
 			// but doing so breaks recursive types.
 			// Instead we do a less nice version:
 			| {
-					readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+					readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
 			  },
 			false,
 			T,

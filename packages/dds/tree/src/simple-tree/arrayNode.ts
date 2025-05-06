@@ -48,7 +48,7 @@ import {
 } from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
-import type { ImplicitAllowedTypesUnsafe } from "./api/index.js";
+import type { System_Unsafe } from "./api/index.js";
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
@@ -78,7 +78,7 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
  * @sealed @public
  */
 export interface TreeArrayNode<
-	TAllowedTypes extends ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
+	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
 	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
 		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
 		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,

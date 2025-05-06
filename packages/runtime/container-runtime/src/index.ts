@@ -4,6 +4,8 @@
  */
 
 export {
+	ContainerRuntimeOptions,
+	ContainerRuntimeOptionsInternal,
 	ISummaryRuntimeOptions,
 	IContainerRuntimeOptions,
 	IContainerRuntimeOptionsInternal,
@@ -14,9 +16,9 @@ export {
 	DeletedResponseHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
-	ICompressionRuntimeOptions,
 	RuntimeHeaderData,
 } from "./containerRuntime.js";
+export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export {
 	ContainerMessageType,
@@ -107,16 +109,3 @@ export {
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
-export { ChannelCollection } from "./channelCollection.js";
-export {
-	IFluidDataStoreContextInternal,
-	ISnapshotDetails,
-	LocalFluidDataStoreContext,
-	LocalFluidDataStoreContextBase,
-	FluidDataStoreContext,
-	IFluidDataStoreContextProps,
-	ILocalFluidDataStoreContextProps,
-	ILocalDetachedFluidDataStoreContextProps,
-	IFluidDataStoreContextEvents,
-} from "./dataStoreContext.js";
-export { DataStoreContexts } from "./dataStoreContexts.js";

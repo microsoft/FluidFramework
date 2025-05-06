@@ -20,6 +20,7 @@ import {
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
 	type IDeltaHandler,
+	type IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IDocumentMessage,
@@ -57,7 +58,7 @@ import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
-import { makeHandlesSerializable, parseHandles } from "./utils.js";
+import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
  * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
@@ -69,7 +70,18 @@ interface ProcessTelemetryProperties {
 }
 
 /**
- * Base class from which all shared objects derive.
+ * Base class from which all {@link ISharedObject|shared objects} derive.
+ * @remarks
+ * This class implements common behaviors that implementations of {@link ISharedObject} may want to reuse.
+ * Even more such behaviors are implemented in the {@link SharedObject} class.
+ * @privateRemarks
+ * Currently some documentation (like the above) implies that this is supposed to be the only implementation of ISharedObject, which is both package-exported and not `@sealed`.
+ * This situation should be clarified to indicate if other implementations of ISharedObject are allowed and just currently don't exist,
+ * or if the intention is that no other implementations should exist and creating some might break things.
+ * As part of this, any existing implementations of ISharedObject (via SharedObjectCore or otherwise) in use by legacy API users will need to be considered.
+ *
+ * TODO:
+ * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
  * @legacy
  * @alpha
  */
@@ -128,14 +140,18 @@ export abstract class SharedObjectCore<
 		return this._connected;
 	}
 
-	/**
-	 * @param id - The id of the shared object
-	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
-	 * @param attributes - Attributes of the shared object
-	 */
 	constructor(
+		/**
+		 * The ID of the shared object.
+		 */
 		public id: string,
+		/**
+		 * The runtime instance that contains the Shared Object.
+		 */
 		protected runtime: IFluidDataStoreRuntime,
+		/**
+		 * The attributes of the Shared Object.
+		 */
 		public readonly attributes: IChannelAttributes,
 	) {
 		super((event: EventEmitterEventType, e: unknown) =>
@@ -144,7 +160,7 @@ export abstract class SharedObjectCore<
 
 		assert(!id.includes("/"), 0x304 /* Id cannot contain slashes */);
 
-		this.handle = new SharedObjectHandle(this, id, runtime.IFluidHandleContext);
+		this.handle = new SharedObjectHandle(this, id, runtime);
 
 		this.logger = createChildLogger({
 			logger: runtime.logger,
@@ -459,8 +475,13 @@ export abstract class SharedObjectCore<
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// NOTE: We may also be encoding in the ContainerRuntime layer.
-			// Once the layer-compat window passes we can stop encoding here and only bind
-			const contentToSubmit = makeHandlesSerializable(content, this.serializer, this.handle);
+			// Once the layer-compat window passes we can remove the encoding codepath here altogether
+			const onlyBind =
+				(this.runtime as IFluidDataStoreRuntimeInternalConfig)
+					.submitMessagesWithoutEncodingHandles === true;
+			const contentToSubmit = onlyBind
+				? bindHandles(content, this.serializer, this.handle)
+				: makeHandlesSerializable(content, this.serializer, this.handle);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
@@ -723,8 +744,14 @@ export abstract class SharedObjectCore<
 }
 
 /**
- * SharedObject with simplified, synchronous summarization and GC.
- * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
+ * Helper for implementing {@link ISharedObject} with simplified, synchronous summarization and garbage collection.
+ * @remarks
+ * DDS implementations with async and incremental summarization should extend {@link SharedObjectCore} directly instead.
+ * @privateRemarks
+ * TODO:
+ * This class is badly named.
+ * Once it becomes `@internal` "SharedObjectCore" should probably become "SharedObject"
+ * and this class should be renamed to something like "SharedObjectSynchronous".
  * @legacy
  * @alpha
  */
@@ -756,15 +783,13 @@ export abstract class SharedObject<
 		return this._serializer;
 	}
 
-	/**
-	 * @param id - The id of the shared object
-	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
-	 * @param attributes - Attributes of the shared object
-	 */
 	constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
+		/**
+		 * The prefix to use for telemetry events emitted by this object.
+		 */
 		private readonly telemetryContextPrefix: string,
 	) {
 		super(id, runtime, attributes);

@@ -4,10 +4,10 @@
 
 ```ts
 
-// @alpha
+// @alpha @legacy
 export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 
-// @alpha
+// @alpha @legacy
 export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
     protected constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, data: IOrderedCollection<T>);
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
@@ -34,18 +34,18 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
-// @alpha
+// @alpha @legacy
 export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection<any>> & SharedObjectKind<IConsensusOrderedCollection<any>>;
 
-// @alpha
+// @alpha @legacy
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
 
-// @alpha
+// @alpha @legacy
 export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export enum ConsensusResult {
     // (undocumented)
     Complete = 1,
@@ -53,14 +53,14 @@ export enum ConsensusResult {
     Release = 0
 }
 
-// @alpha
+// @alpha @legacy
 export interface IConsensusOrderedCollection<T = any> extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
     add(value: T): Promise<void>;
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents {
     (event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
     (event: "acquire", listener: (value: T, clientId?: string) => void): this;
@@ -68,14 +68,14 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
     (event: "localRelease", listener: (value: T, intentional: boolean) => void): this;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IOrderedCollection<T = any> extends ISnapshotable<T> {
     add(value: T): any;
     remove(): T;
     size(): number;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ISnapshotable<T> {
     // (undocumented)
     asArray(): T[];

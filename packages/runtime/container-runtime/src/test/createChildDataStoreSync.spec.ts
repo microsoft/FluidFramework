@@ -12,14 +12,17 @@ import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	IFluidParentContext,
 	type NamedFluidDataStoreRegistryEntries,
 	type IContainerRuntimeBase,
 	type ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockDeltaManager,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
 
+import type { IFluidParentContextPrivate } from "../channelCollection.js";
 import {
 	FluidDataStoreContext,
 	LocalDetachedFluidDataStoreContext,
@@ -89,7 +92,8 @@ describe("createChildDataStore", () => {
 					});
 				},
 			} satisfies Partial<IContainerRuntimeBase> as unknown as IContainerRuntimeBase,
-		} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
+			deltaManager: new MockDeltaManager(),
+		} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 
 		const context = new testContext(
 			{

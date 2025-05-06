@@ -10,6 +10,7 @@ import {
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
+	ContainerRuntime,
 	loadContainerRuntime,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
@@ -22,7 +23,16 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+// Valid export as per package.json export map
+// eslint-disable-next-line import/no-internal-modules
+import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import type {
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeBaseExperimental,
+	// eslint-disable-next-line import/no-deprecated
+	StageControlsExperimental,
+} from "@fluidframework/runtime-definitions/internal";
 import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
@@ -45,7 +55,20 @@ export interface CreateChannel {
 	tag: `channel-${number}`;
 }
 
-export type StressDataObjectOperations = UploadBlob | CreateDataStore | CreateChannel;
+export interface EnterStagingMode {
+	type: "enterStagingMode";
+}
+export interface ExitStagingMode {
+	type: "exitStagingMode";
+	commit: boolean;
+}
+
+export type StressDataObjectOperations =
+	| UploadBlob
+	| CreateDataStore
+	| CreateChannel
+	| EnterStagingMode
+	| ExitStagingMode;
 
 export class StressDataObject extends DataObject {
 	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory(
@@ -267,6 +290,37 @@ export class DefaultStressDataObject extends StressDataObject {
 		}
 		this._locallyCreatedObjects.push(obj);
 	}
+
+	// eslint-disable-next-line import/no-deprecated
+	private stageControls: StageControlsExperimental | undefined;
+	// eslint-disable-next-line import/no-deprecated
+	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
+		this.context.containerRuntime;
+	public enterStagingMode() {
+		assert(
+			this.containerRuntimeExp.enterStagingMode !== undefined,
+			"enterStagingMode must be defined",
+		);
+		this.stageControls = this.containerRuntimeExp.enterStagingMode();
+	}
+
+	public inStagingMode(): boolean {
+		assert(
+			this.containerRuntimeExp.inStagingMode !== undefined,
+			"inStagingMode must be defined",
+		);
+		return this.containerRuntimeExp.inStagingMode;
+	}
+
+	public exitStagingMode(commit: boolean) {
+		assert(this.stageControls !== undefined, "must have staging mode controls");
+		if (commit) {
+			this.stageControls.commitChanges();
+		} else {
+			this.stageControls.discardChanges();
+		}
+		this.stageControls = undefined;
+	}
 }
 
 export const createRuntimeFactory = (): IRuntimeFactory => {
@@ -285,6 +339,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 				initialSummarizerDelayMs: 0,
 			} as any,
 		},
+		enableRuntimeIdCompressor: "on",
 	};
 
 	return {
@@ -312,6 +367,17 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					return aliasedDefault.get();
 				},
 			});
+			// id compressor isn't made available via the interface right now.
+			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way
+			// that would avoid this instanceof check, but most customers shouldn't really have a need for it.
+			assert(runtime instanceof ContainerRuntime, "Expected to create a ContainerRuntime");
+			assert(
+				runtime.idCompressor !== undefined,
+				"IdCompressor should be enabled by stress test options.",
+			);
+			// Forcing the cluster size to a low value makes it more likely to generate staging mode scenarios with more
+			// interesting interleaving of id allocation ops and normal ops.
+			modifyClusterSize(runtime.idCompressor, 2);
 
 			if (!existing) {
 				const ds = await runtime.createDataStore(defaultStressDataObjectFactory.type);

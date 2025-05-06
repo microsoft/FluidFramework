@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
+import { independentView, TreeAlpha } from "../shared-tree/index.js";
 import {
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -14,7 +15,7 @@ import {
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
-import { independentView, TreeAlpha } from "../shared-tree/index.js";
+import type { requireAssignableTo } from "../util/index.js";
 import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
@@ -25,11 +26,36 @@ describe("TableFactory unit tests", () => {
 			value: schemaFactory.string,
 		}) {}
 
-		class Column extends TableSchema.createColumn(schemaFactory) {}
+		class ColumnProps extends schemaFactory.object("table-column-props", {
+			/**
+			 * Label text for the column.
+			 */
+			label: schemaFactory.optional(schemaFactory.string),
+		}) {}
+		class Column extends TableSchema.createColumn({
+			schemaFactory,
+			props: ColumnProps,
+		}) {}
 
-		class Row extends TableSchema.createRow(schemaFactory, Cell, Column) {}
+		class RowProps extends schemaFactory.object("table-row-props", {
+			/**
+			 * Whether or not the row is selectable.
+			 * @defaultValue `true`
+			 */
+			selectable: schemaFactory.optional(schemaFactory.boolean),
+		}) {}
+		class Row extends TableSchema.createRow({
+			schemaFactory,
+			cell: Cell,
+			props: schemaFactory.optional(RowProps),
+		}) {}
 
-		class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
+		class Table extends TableSchema.createTable({
+			schemaFactory,
+			cell: Cell,
+			column: Column,
+			row: Row,
+		}) {}
 
 		const treeView = independentView(
 			new TreeViewConfiguration({
@@ -57,6 +83,55 @@ describe("TableFactory unit tests", () => {
 		assert.deepEqual(actualVerbose, expected);
 	}
 
+	describe("Column Schema", () => {
+		it("Can create without props", () => {
+			class Column extends TableSchema.createColumn({ schemaFactory }) {}
+			const column = new Column({ id: "column-0" });
+
+			// TODO: ideally the "props" property would not exist at all on the derived class.
+			// For now, it is at least an optional property and cannot be set to anything meaningful.
+			type _test = requireAssignableTo<null | undefined, Column["props"]>;
+			assert.equal(column.props, undefined);
+		});
+
+		it("Can create with props", () => {
+			class Column extends TableSchema.createColumn({
+				schemaFactory,
+				props: schemaFactory.string,
+			}) {}
+			const column = new Column({ id: "column-0", props: "Column 0" });
+			assert.equal(column.props, "Column 0");
+		});
+	});
+
+	describe("Row Schema", () => {
+		it("Can create without props", () => {
+			class Cell extends schemaFactory.object("table-cell", {
+				value: schemaFactory.string,
+			}) {}
+			class Row extends TableSchema.createRow({ schemaFactory, cell: Cell }) {}
+			const row = new Row({ id: "row-0", cells: {} });
+
+			// TODO: ideally the "props" property would not exist at all on the derived class.
+			// For now, it is at least an optional property and cannot be set to anything meaningful.
+			type _test = requireAssignableTo<null | undefined, Row["props"]>;
+			assert.equal(row.props, undefined);
+		});
+
+		it("Can create with props", () => {
+			class Cell extends schemaFactory.object("table-cell", {
+				value: schemaFactory.string,
+			}) {}
+			class Row extends TableSchema.createRow({
+				schemaFactory,
+				cell: Cell,
+				props: schemaFactory.string,
+			}) {}
+			const column = new Row({ id: "row-0", cells: {}, props: "Row 0" });
+			assert.equal(column.props, "Row 0");
+		});
+	});
+
 	describe("Initialization", () => {
 		it("Empty", () => {
 			const { treeView } = createTableTree();
@@ -66,28 +141,40 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Non-empty", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Table, Column } = createTableTree();
 
-			treeView.initialize({
-				columns: [{ id: "column-0" }, { id: "column-1" }],
-				rows: [
-					{ id: "row-0", cells: {} },
-					{
-						id: "row-1",
-						cells: {
-							"column-1": { value: "Hello world!" },
+			treeView.initialize(
+				new Table({
+					columns: [
+						new Column({
+							id: "column-0",
+							props: {
+								label: "Column 0",
+							},
+						}),
+						new Column({ id: "column-1", props: { label: "Column 1" } }),
+					],
+					rows: [
+						{ id: "row-0", cells: {} },
+						{
+							id: "row-1",
+							cells: {
+								"column-1": { value: "Hello world!" },
+							},
 						},
-					},
-				],
-			});
+					],
+				}),
+			);
 
 			assertEqualTrees(treeView.root, {
 				columns: [
 					{
 						id: "column-0",
+						props: { label: "Column 0" },
 					},
 					{
 						id: "column-1",
+						props: { label: "Column 1" },
 					},
 				],
 				rows: [
@@ -113,12 +200,16 @@ describe("TableFactory unit tests", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({ rows: [], columns: [] });
 
-			treeView.root.insertColumn({ index: 0, column: { id: "column-0" } });
+			treeView.root.insertColumn({
+				index: 0,
+				column: { id: "column-0", props: {} },
+			});
 
 			assertEqualTrees(treeView.root, {
 				columns: [
 					{
 						id: "column-0",
+						props: {},
 					},
 				],
 				rows: [],
@@ -127,20 +218,32 @@ describe("TableFactory unit tests", () => {
 
 		it("Insert new column into non-empty list", () => {
 			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
+			treeView.initialize({
+				rows: [],
+				columns: [
+					{ id: "column-a", props: {} },
+					{ id: "column-b", props: {} },
+				],
+			});
 
-			treeView.root.insertColumn({ index: 1, column: { id: "column-c" } });
+			treeView.root.insertColumn({
+				index: 1,
+				column: { id: "column-c", props: {} },
+			});
 
 			assertEqualTrees(treeView.root, {
 				columns: [
 					{
 						id: "column-a",
+						props: {},
 					},
 					{
 						id: "column-c",
+						props: {},
 					},
 					{
 						id: "column-b",
+						props: {},
 					},
 				],
 				rows: [],
@@ -149,21 +252,32 @@ describe("TableFactory unit tests", () => {
 
 		it("Append new column", () => {
 			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
+			treeView.initialize({
+				rows: [],
+				columns: [
+					{ id: "column-a", props: {} },
+					{ id: "column-b", props: {} },
+				],
+			});
 
 			// By not specifying an index, the column should be appended to the end of the list.
-			treeView.root.insertColumn({ column: { id: "column-c" } });
+			treeView.root.insertColumn({
+				column: { id: "column-c", props: {} },
+			});
 
 			assertEqualTrees(treeView.root, {
 				columns: [
 					{
 						id: "column-a",
+						props: {},
 					},
 					{
 						id: "column-b",
+						props: {},
 					},
 					{
 						id: "column-c",
+						props: {},
 					},
 				],
 				rows: [],
@@ -174,10 +288,19 @@ describe("TableFactory unit tests", () => {
 		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
 		it.skip("Appending existing column errors", () => {
 			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
+			treeView.initialize({
+				rows: [],
+				columns: [
+					{ id: "column-a", props: {} },
+					{ id: "column-b", props: {} },
+				],
+			});
 
 			assert.throws(
-				() => treeView.root.insertColumn({ column: { id: "column-b" } }),
+				() =>
+					treeView.root.insertColumn({
+						column: { id: "column-b", props: {} },
+					}),
 				validateUsageError(/Placeholder usage error/),
 			);
 		});
@@ -206,6 +329,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -216,6 +340,7 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -228,10 +353,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-a",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-b",
 						cells: {},
+						props: {},
 					},
 				],
 				columns: [],
@@ -243,10 +370,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-c",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-d",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -257,18 +386,22 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-a",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-c",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-d",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-b",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -281,10 +414,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-a",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-b",
 						cells: {},
+						props: {},
 					},
 				],
 				columns: [],
@@ -295,10 +430,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-c",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-d",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -309,18 +446,22 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-a",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-b",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-c",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-d",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -335,10 +476,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-a",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-b",
 						cells: {},
+						props: {},
 					},
 				],
 				columns: [],
@@ -351,6 +494,7 @@ describe("TableFactory unit tests", () => {
 							{
 								id: "row-a",
 								cells: {},
+								props: {},
 							},
 						],
 					}),
@@ -366,12 +510,14 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						props: {},
 					},
 				],
 				rows: [
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -389,6 +535,7 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						props: {},
 					},
 				],
 				rows: [
@@ -399,25 +546,28 @@ describe("TableFactory unit tests", () => {
 								value: "Hello world!",
 							},
 						},
+						props: {},
 					},
 				],
 			});
 		});
 
 		// TODO: There is currently no policy from prohibiting insertion of an invalid cell.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be un-skipped.
 		it.skip("setting cell in an invalid location errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
 					{
 						id: "column-0",
+						props: {},
 					},
 				],
 				rows: [
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -443,12 +593,14 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						props: { label: "Column 0" },
 					},
 				],
 				rows: [
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -460,13 +612,14 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
 		});
 
-		// TODO: There is currently no policy from prohibiting removal of non-existant columns.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
+		// TODO: There is currently no policy from prohibiting removal of non-existent columns.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be un-skipped.
 		it.skip("removing column that does not exist on table errors", () => {
 			const { treeView, Column } = createTableTree();
 			treeView.initialize({
@@ -475,7 +628,7 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => treeView.root.removeColumn(new Column({ id: "unhydrated-column" })),
+				() => treeView.root.removeColumn(new Column({ id: "unhydrated-column", props: {} })),
 				validateUsageError(/Placeholder usage error/),
 			);
 		});
@@ -498,8 +651,8 @@ describe("TableFactory unit tests", () => {
 
 		it("remove single row", () => {
 			const { treeView, Row } = createTableTree();
-			const row0 = new Row({ id: "row-0", cells: {} });
-			const row1 = new Row({ id: "row-1", cells: {} });
+			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
+			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
 			treeView.initialize({
 				columns: [],
 				rows: [row0, row1],
@@ -509,7 +662,7 @@ describe("TableFactory unit tests", () => {
 			treeView.root.removeRows([row0]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
-				rows: [{ id: "row-1", cells: {} }],
+				rows: [{ id: "row-1", cells: {}, props: {} }],
 			});
 
 			// Remove row1
@@ -522,10 +675,10 @@ describe("TableFactory unit tests", () => {
 
 		it("remove multiple rows", () => {
 			const { treeView, Row } = createTableTree();
-			const row0 = new Row({ id: "row-0", cells: {} });
-			const row1 = new Row({ id: "row-1", cells: {} });
-			const row2 = new Row({ id: "row-2", cells: {} });
-			const row3 = new Row({ id: "row-3", cells: {} });
+			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
+			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
+			const row2 = new Row({ id: "row-2", cells: {}, props: {} });
+			const row3 = new Row({ id: "row-3", cells: {}, props: {} });
 			treeView.initialize({
 				columns: [],
 				rows: [row0, row1, row2, row3],
@@ -539,10 +692,12 @@ describe("TableFactory unit tests", () => {
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 					{
 						id: "row-2",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -563,7 +718,7 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => treeView.root.removeRows([new Row({ id: "row-0", cells: {} })]),
+				() => treeView.root.removeRows([new Row({ id: "row-0", cells: {}, props: {} })]),
 				validateUsageError(/Expected non-negative index, got -1./),
 			);
 		});
@@ -578,8 +733,8 @@ describe("TableFactory unit tests", () => {
 			assert.throws(
 				() =>
 					treeView.root.removeRows([
-						new Row({ id: "row-0", cells: {} }),
-						new Row({ id: "row-1", cells: {} }),
+						new Row({ id: "row-0", cells: {}, props: {} }),
+						new Row({ id: "row-1", cells: {}, props: {} }),
 					]),
 				// TODO: The usage error here comes from the arrayNode layer.
 				// Once removeRows gets updated to return a usage error that makes more sense, update usage error here.
@@ -595,12 +750,14 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						props: {},
 					},
 				],
 				rows: [
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -617,12 +774,14 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						props: {},
 					},
 				],
 				rows: [
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -634,12 +793,14 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						props: {},
 					},
 				],
 				rows: [
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -652,31 +813,35 @@ describe("TableFactory unit tests", () => {
 				columns: [
 					{
 						id: "column-0",
+						props: {},
 					},
 				],
 				rows: [
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
 		});
 
 		// TODO: There is currently no usage error for deleting invalid cells.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be un-skipped.
 		it.skip("removing cell from nonexistent row and column errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
 					{
 						id: "column-0",
+						props: {},
 					},
 				],
 				rows: [
 					{
 						id: "row-0",
 						cells: {},
+						props: {},
 					},
 				],
 			});
@@ -696,8 +861,8 @@ describe("TableFactory unit tests", () => {
 		const { treeView, Column, Row, Cell } = createTableTree();
 
 		const cell0 = new Cell({ value: "Hello World!" });
-		const column0 = new Column({ id: "column-0" });
-		const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 } });
+		const column0 = new Column({ id: "column-0", props: {} });
+		const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 }, props: {} });
 
 		treeView.initialize({
 			columns: [column0],
