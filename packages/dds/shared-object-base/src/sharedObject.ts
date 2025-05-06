@@ -533,7 +533,7 @@ export abstract class SharedObjectCore<
 				"Fluid.SharedObject.AllowStagingModeWithoutSquashing",
 			) ??
 			(this.runtime.options.allowStagingModeWithoutSquashing as boolean | undefined) ??
-			false;
+			true;
 		if (allowStagingModeWithoutSquashing) {
 			this.reSubmitCore(content, localOpMetadata);
 		} else {
