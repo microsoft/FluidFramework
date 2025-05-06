@@ -491,12 +491,18 @@ export namespace System_TableSchema {
 				column,
 				index,
 			}: TableSchema.InsertColumnParameters<TColumnSchema>): ColumnValueType {
+				// #region Input validation
+
 				// TypeScript is unable to narrow the type of the column node correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				const maybeId = (column as TableSchema.IColumn).id;
+
+				// Ensure that no column with the same ID already exists in the table.
 				if (maybeId !== undefined && this.containsColumnWithId(maybeId)) {
 					throw new UsageError(`A column with ID "${maybeId}" already exists in the table.`);
 				}
+
+				// #endregion
 
 				if (index === undefined) {
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
@@ -518,7 +524,9 @@ export namespace System_TableSchema {
 				index,
 				rows,
 			}: TableSchema.InsertRowsParameters<TRowSchema>): RowValueType[] {
-				// Check all of the rows being inserted an make sure the table does not already contain any with the same ID.
+				// #region Input validation
+
+				// Check all of the rows being inserted an ensure the table does not already contain any with the same ID.
 				for (const newRow of rows) {
 					// TypeScript is unable to narrow the type of the row node correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -529,6 +537,8 @@ export namespace System_TableSchema {
 						);
 					}
 				}
+
+				// #endregion
 
 				if (index === undefined) {
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
