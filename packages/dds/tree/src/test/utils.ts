@@ -112,9 +112,9 @@ import {
 	cursorForJsonableTreeField,
 	initializeForest,
 	chunkFieldSingle,
+	makeSchemaCodec,
+	SchemaCodecVersion,
 } from "../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 import {
 	type CheckoutEvents,
 	CheckoutFlexTreeView,
@@ -630,7 +630,10 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 	assert.deepEqual(actual, expected);
 }
 
-const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator }, 1);
+const schemaCodec = makeSchemaCodec(
+	{ jsonValidator: typeboxValidator },
+	SchemaCodecVersion.v1,
+);
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {

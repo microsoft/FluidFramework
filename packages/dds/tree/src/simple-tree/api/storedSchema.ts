@@ -9,6 +9,7 @@ import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
 	makeSchemaCodec,
+	SchemaCodecVersion,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../feature-libraries/schema-index/index.js";
@@ -90,7 +91,7 @@ export function comparePersistedSchema(
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
 	// Any version can be passed down to makeSchemaCodec. We only need decode to dispatch.
-	const schemaCodec = makeSchemaCodec(options, 1);
+	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);

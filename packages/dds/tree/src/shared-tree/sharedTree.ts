@@ -56,6 +56,7 @@ import {
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
+	type SchemaCodecVersion,
 } from "../feature-libraries/index.js";
 import {
 	type ClonableSchemaAndPolicy,
@@ -157,7 +158,7 @@ export interface ITreePrivate extends ITreeInternal {
  */
 interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 	forest: number;
-	schema: number;
+	schema: SchemaCodecVersion;
 	detachedFieldIndex: number;
 	fieldBatch: number;
 }

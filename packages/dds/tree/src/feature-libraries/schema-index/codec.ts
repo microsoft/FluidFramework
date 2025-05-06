@@ -25,7 +25,12 @@ import { brand, type JsonCompatible } from "../../util/index.js";
 
 import { Format as FormatV1 } from "./formatV1.js";
 
-// TODO:TB: Enum for codec versions
+/**
+ * Schema codec write version.
+ */
+export enum SchemaCodecVersion {
+	v1 = 1,
+}
 
 /**
  * Create a schema codec.
@@ -35,7 +40,7 @@ import { Format as FormatV1 } from "./formatV1.js";
  */
 export function makeSchemaCodec(
 	options: ICodecOptions,
-	writeVersion: number,
+	writeVersion: SchemaCodecVersion,
 ): IJsonCodec<TreeStoredSchema> {
 	const family = makeSchemaCodecs(options);
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
@@ -47,7 +52,7 @@ export function makeSchemaCodec(
  * @returns The composed codec family.
  */
 export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
-	return makeCodecFamily([[1, makeSchemaCodecV1(options)]]);
+	return makeCodecFamily([[SchemaCodecVersion.v1, makeSchemaCodecV1(options)]]);
 }
 
 /**
@@ -56,12 +61,15 @@ export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStore
  * @param version - The schema write version.
  * @returns The encoded schema.
  */
-export function encodeRepo(repo: TreeStoredSchema, version: number): JsonCompatible {
+export function encodeRepo(
+	repo: TreeStoredSchema,
+	version: SchemaCodecVersion,
+): JsonCompatible {
 	switch (version) {
-		case 1:
+		case SchemaCodecVersion.v1:
 			return encodeRepoV1(repo);
 		default:
-			unreachableCase(version as never);
+			unreachableCase(version);
 	}
 }
 

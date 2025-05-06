@@ -10,9 +10,12 @@ import { strict as assert } from "node:assert";
 import { makeCodecFamily } from "../../../codec/index.js";
 import type { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
-import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
-/* eslint-disable-next-line import/no-internal-modules */
-import { makeSchemaCodec } from "../../../feature-libraries/schema-index/codec.js";
+import {
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
+	makeSchemaCodec,
+	SchemaCodecVersion,
+} from "../../../feature-libraries/index.js";
 /* eslint-disable-next-line import/no-internal-modules */
 import { Format as FormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
@@ -22,7 +25,7 @@ import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
-const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, 1);
+const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaCodecVersion.v1);
 
 const schema2 = toStoredSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 
