@@ -62,7 +62,6 @@ export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompati
  * @param view - Schema which would be used to view persisted content.
  * @param options - {@link ICodecOptions} used when parsing the provided schema.
  * @param canInitialize - Passed through to the return value unchanged and otherwise unused.
- * @param schemaWriteVersion - The schema write version.
  * @returns The {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema.
  *
  * @remarks
@@ -89,9 +88,9 @@ export function comparePersistedSchema(
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
 	canInitialize: boolean,
-	schemaWriteVersion: number,
 ): SchemaCompatibilityStatus {
-	const schemaCodec = makeSchemaCodec(options, schemaWriteVersion);
+	// Any version can be passed down to makeSchemaCodec. We only need decode to dispatch.
+	const schemaCodec = makeSchemaCodec(options, 1);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);

@@ -37,7 +37,6 @@ describe("simple-tree storedSchema", () => {
 							jsonValidator: typeboxValidator,
 						},
 						false,
-						schemaFormat,
 					);
 					assert.deepEqual(status, {
 						isEquivalent: true,

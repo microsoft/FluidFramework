@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
 	makeVersionDispatchingCodec,
+	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import {
 	type TreeNodeSchemaIdentifier,
@@ -22,7 +23,9 @@ import {
 } from "../../core/index.js";
 import { brand, type JsonCompatible } from "../../util/index.js";
 
-import type { Format as FormatV1 } from "./formatV1.js";
+import { Format as FormatV1 } from "./formatV1.js";
+
+// TODO:TB: Enum for codec versions
 
 /**
  * Create a schema codec.
@@ -44,7 +47,7 @@ export function makeSchemaCodec(
  * @returns The composed codec family.
  */
 export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
-	return makeCodecFamily([[1, makeV1CodecWithVersion(options, 1)]]);
+	return makeCodecFamily([[1, makeSchemaCodecV1(options)]]);
 }
 
 /**
@@ -99,17 +102,11 @@ function decode(f: FormatV1): TreeStoredSchema {
  * @param version - The schema write version.
  * @returns The codec.
  */
-function makeV1CodecWithVersion(
+export function makeSchemaCodecV1(
 	options: ICodecOptions,
-	version: number,
-): IJsonCodec<TreeStoredSchema> {
-	switch (version) {
-		case 1:
-			return {
-				encode: (data: TreeStoredSchema) => encodeRepoV1(data),
-				decode: (data: FormatV1) => decode(data),
-			};
-		default:
-			assert(false, "Unsupported schema version");
-	}
+): IJsonCodec<TreeStoredSchema, FormatV1> {
+	return makeVersionedValidatedCodec(options, new Set([schemaFormatV1.version]), FormatV1, {
+		encode: (data: TreeStoredSchema) => encodeRepoV1(data),
+		decode: (data: FormatV1) => decode(data),
+	});
 }

@@ -4,11 +4,11 @@
  */
 
 import { type Static, Type } from "@sinclair/typebox";
-import { JsonCompatibleReadOnlySchema } from "../../util/index.js";
+import { Format as FormatV1 } from "../schema-index/index.js";
 
 export const EncodedSchemaChange = Type.Object({
-	new: JsonCompatibleReadOnlySchema,
-	old: JsonCompatibleReadOnlySchema,
+	new: FormatV1,
+	old: FormatV1,
 });
 
 export type EncodedSchemaChange = Static<typeof EncodedSchemaChange>;
