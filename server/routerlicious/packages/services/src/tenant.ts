@@ -123,6 +123,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
 			`/api/tenants/${encodeURIComponent(tenantId || "")}`,
@@ -242,6 +243,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			refreshTokenIfNeeded,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);
@@ -290,6 +292,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		try {
 			await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, {
@@ -335,6 +338,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.get<core.ITenantKeys>(
 			`/api/tenants/${encodeURIComponent(tenantId)}/keys`,
@@ -366,6 +370,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.post<core.IFluidAccessToken>(
 			`/api/tenants/${encodeURIComponent(tenantId)}/accesstoken`,
@@ -407,6 +412,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		return restWrapper.get<core.ITenantConfig>(`/api/tenants/${tenantId}`, {
 			includeDisabledTenant,

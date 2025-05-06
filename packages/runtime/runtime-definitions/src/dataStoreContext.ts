@@ -153,9 +153,11 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
  * Encapsulates the return codes of the aliasing API.
  *
  * 'Success' - the datastore has been successfully aliased. It can now be used.
+ *
  * 'Conflict' - there is already a datastore bound to the provided alias. To acquire it's entry point, use
  * the `IContainerRuntime.getAliasedDataStoreEntryPoint` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
+ *
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
  * @legacy
  * @alpha
@@ -164,9 +166,16 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
  * Exposes some functionality/features of a data store:
+ *
  * - Handle to the data store's entryPoint
+ *
  * - Fluid router for the data store
+ *
  * - Can be assigned an alias
+ *
+ * @privateRemarks
+ * TODO: These docs should define what a datastore is, and not do so by just referencing "data store".
+ *
  * @legacy
  * @alpha
  */
@@ -189,7 +198,8 @@ export interface IDataStore {
 }
 
 /**
- * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
+ * A reduced set of functionality of {@link IContainerRuntime} that a data store context/data store runtime will need.
+ * @privateRemarks
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy
  * @alpha

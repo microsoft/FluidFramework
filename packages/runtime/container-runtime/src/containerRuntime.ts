@@ -210,6 +210,7 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 	type OutboundBatch,
+	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -3190,23 +3191,20 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Flush the pending ops manually.
-	 * This method is expected to be called at the end of a batch.
+	 * Flush the current batch of ops to the ordering service for sequencing
+	 * This method is not expected to be called in the middle of a batch.
 	 * @remarks - If it throws (e.g. if the batch is too large to send), the container will be closed.
 	 *
-	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
-	 * with the given Batch ID, which must be preserved
-	 * @param resubmittingStagedBatch - If defined, indicates this is a resubmission of a batch that is staged,
-	 * meaning it should not be sent to the ordering service yet.
+	 * @param resubmitInfo - If defined, indicates this is a resubmission of a batch with the given Batch info needed for resubmit.
 	 */
-	private flush(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
+	private flush(resubmitInfo?: BatchResubmitInfo): void {
 		try {
 			assert(
 				!this.batchRunner.running,
 				0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
 			);
 
-			this.outbox.flush(resubmittingBatchId, resubmittingStagedBatch);
+			this.outbox.flush(resubmitInfo);
 			assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 		} catch (error) {
 			const error2 = normalizeError(error, {
@@ -3336,7 +3334,7 @@ export class ContainerRuntime
 		this.outbox.flush();
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			// Final flush of any last staged changes
-			this.outbox.flush(undefined, true /* staged */);
+			this.outbox.flush();
 
 			this.stageControls = undefined;
 
@@ -4578,7 +4576,7 @@ export class ContainerRuntime
 
 		// Only include Batch ID if "Offline Load" feature is enabled
 		// It's only needed to identify batches across container forks arising from misuse of offline load.
-		this.flush(this.offlineEnabled ? batchId : undefined, staged);
+		this.flush({ batchId: this.offlineEnabled ? batchId : undefined, staged });
 	}
 
 	private reSubmit(message: PendingMessageResubmitData, squash: boolean): void {
