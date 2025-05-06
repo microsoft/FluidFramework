@@ -3240,9 +3240,25 @@ export class ContainerRuntime
 	}
 
 	/**
+	 * @privateRemarks
+	 * orderSequentially predates staging mode, but its implementation has been updated to leverage it.
+	 * Public usage of staging mode has more guards around only being used with objects that fully support it (i.e. that support squashing
+	 * as well as generalized rollback which may occur after inbounding further remote ops).
+	 *
+	 * This member allows the container runtime to bypass those guards by opting for legacy behavior when exiting an orderSequentially block (e.g.
+	 * op resubmission will not be squashed).
+	 * This can therefore be removed once staging mode is broadly supported across layers.
+	 */
+	private readonly orderSequentiallyRunner = new RunCounter();
+
+	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
 	 */
 	public orderSequentially<T>(callback: () => T): T {
+		return this.orderSequentiallyRunner.run(() => this.orderSequentiallyCore(callback));
+	}
+
+	private orderSequentiallyCore<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		const checkpointDirtyState = this.dirtyContainer;
 		// eslint-disable-next-line import/no-deprecated
@@ -3363,10 +3379,12 @@ export class ContainerRuntime
 			}),
 			commitChanges: exitStagingMode(() => {
 				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
-				// FUTURE: Have this do squash-rebase instead of resubmitting all intermediate changes
 				if (this.connected) {
 					this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
 				} else {
+					// TODO:AB#37788: Refactor interplay with pending state manager and staging mode so that even in this case we end up
+					// squashing the ops submitted while in staging mode. This does not happen now due to the following clear without asking
+					// data stores to resubmit.
 					this.pendingStateManager.clearStagingFlags();
 				}
 			}),
@@ -4568,11 +4586,13 @@ export class ContainerRuntime
 	private reSubmitBatch(
 		batch: PendingMessageResubmitData[],
 		batchId: BatchId,
-		staged: boolean,
+		{ staged, squash }: { staged: boolean; squash: boolean },
 	): void {
 		this.batchRunner.run(() => {
 			for (const message of batch) {
-				this.reSubmit(message);
+				// Note: once squashing is widely supported, squashing even for orderSequentially should be fine.
+				// See remarks on orderSequentiallyRunner for more details.
+				this.reSubmit(message, this.orderSequentiallyRunner.running ? false : squash);
 			}
 		});
 
@@ -4581,8 +4601,8 @@ export class ContainerRuntime
 		this.flush({ batchId: this.offlineEnabled ? batchId : undefined, staged });
 	}
 
-	private reSubmit(message: PendingMessageResubmitData): void {
-		this.reSubmitCore(message.runtimeOp, message.localOpMetadata, message.opMetadata);
+	private reSubmit(message: PendingMessageResubmitData, squash: boolean): void {
+		this.reSubmitCore(message.runtimeOp, message.localOpMetadata, message.opMetadata, squash);
 	}
 
 	/**
@@ -4596,6 +4616,7 @@ export class ContainerRuntime
 		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
+		squash: boolean,
 	): void {
 		assert(
 			this._summarizer === undefined,
@@ -4607,7 +4628,12 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias: {
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
-				this.channelCollection.reSubmit(message.type, message.contents, localOpMetadata);
+				this.channelCollection.reSubmit(
+					message.type,
+					message.contents,
+					localOpMetadata,
+					squash,
+				);
 				break;
 			}
 			case ContainerMessageType.IdAllocation: {
