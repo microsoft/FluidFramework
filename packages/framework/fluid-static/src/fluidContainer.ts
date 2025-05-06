@@ -95,7 +95,7 @@ export interface IFluidContainerEvents extends IEvent {
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
 
 	/**
-	 * Emitted when the {@link IFluidContainer} readonly flag is changed.
+	 * Emitted when {@link IFluidContainer.readonly} is changed.
 	 *
 	 * @remarks Listener parameters:
 	 *
@@ -173,7 +173,6 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 *
 	 * This is used to determine if the container is read-only or not.
 	 */
-	// TODO: yunho: should we mark it as optional?
 	readonly readOnlyInfo: ReadOnlyInfo;
 
 	/**

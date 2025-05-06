@@ -533,6 +533,7 @@ export class ConnectionManager implements IConnectionManager {
 		connectionMode?: ConnectionMode,
 	): Promise<void> {
 		assert(!this._disposed, 0x26a /* "not closed" */);
+
 		let requestedMode = connectionMode ?? this.defaultReconnectionMode;
 
 		// if we have any non-acked ops from last connection, reconnect as "write".
