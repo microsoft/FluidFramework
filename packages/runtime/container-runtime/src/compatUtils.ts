@@ -60,6 +60,15 @@ export type SemanticVersion =
 	| `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 /**
+ * String in a valid semver format of a specific version at least specifying minor.
+ * Unlike {@link SemanticVersion}, this type allows any bigint for the major version.
+ * Currently only used in unit tests to allow versions that don't start with 1 or 2.
+ */
+export type MinimumVersionForCollab =
+	| `${bigint}.${bigint}.${bigint}`
+	| `${bigint}.${bigint}.${bigint}-${string}`;
+
+/**
  * Generic type for runtimeOptionsAffectingDocSchemaConfigMap
  */
 export type ConfigMap<T extends Record<string, unknown>> = {
@@ -177,8 +186,8 @@ export function getMinVersionForCollabDefaults(
 /**
  * Returns a default configuration given minVersionForCollab and configuration version map.
  */
-export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknown>>(
-	minVersionForCollab: SemanticVersion,
+export function getConfigsForCompatMode<T extends Record<MinimumVersionForCollab, unknown>>(
+	minVersionForCollab: MinimumVersionForCollab,
 	configMap: ConfigMap<T>,
 ): Partial<T> {
 	const defaultConfigs: Partial<T> = {};

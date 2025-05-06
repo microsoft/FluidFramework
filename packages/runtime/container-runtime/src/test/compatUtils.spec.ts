@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	getConfigsForCompatMode,
 	type ConfigMap,
-	type SemanticVersion,
+	type MinimumVersionForCollab,
 } from "../compatUtils.js";
 
 describe("compatUtils", () => {
@@ -64,7 +64,7 @@ describe("compatUtils", () => {
 		const testCases: {
 			// We use string instead of SemanticVersion for `minVersionForCollab`
 			// so we can test versions that don't start with 1 or 2.
-			minVersionForCollab: string;
+			minVersionForCollab: MinimumVersionForCollab;
 			expectedConfig: Partial<ITestConfigMap>;
 		}[] = [
 			{
@@ -214,10 +214,7 @@ describe("compatUtils", () => {
 
 		for (const testCase of testCases) {
 			it(`returns correct configs for minVersionForCollab = "${testCase.minVersionForCollab}"`, () => {
-				const config = getConfigsForCompatMode(
-					testCase.minVersionForCollab as SemanticVersion,
-					testConfigMap,
-				);
+				const config = getConfigsForCompatMode(testCase.minVersionForCollab, testConfigMap);
 				assert.deepEqual(
 					config,
 					testCase.expectedConfig,
