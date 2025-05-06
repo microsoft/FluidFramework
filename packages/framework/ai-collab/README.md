@@ -362,7 +362,6 @@ if (insertDiffs.length > 0) {
 } else {
 	renderTodo(todo)
 }
-
 ```
 
 You can also use the `type` and `schemaIdentifier` fields to group related `diff`s.
