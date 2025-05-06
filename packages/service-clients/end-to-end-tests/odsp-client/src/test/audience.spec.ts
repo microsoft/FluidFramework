@@ -78,7 +78,7 @@ describe("Fluid audience", () => {
 	 *
 	 * Note: This test is currently skipped because the web app examples indicate the audience is functioning properly. AB#6425
 	 */
-	it.skip("can find partner member", async () => {
+	it("can find partner member", async () => {
 		const { container, services } = await client.createContainer(schema);
 		const itemId = await container.attach();
 
@@ -170,5 +170,52 @@ describe("Fluid audience", () => {
 
 		members = servicesGet.audience.getMembers();
 		assert.strictEqual(members.size, 1, "We should have one member left at this point.");
+	});
+
+	/**
+	 * Scenario: Readonly flag on get contaienr
+	 *
+	 */
+	it("readonly flag in get container", async () => {
+		const { container } = await client.createContainer(schema);
+		const itemId = await container.attach();
+
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
+
+		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			container.attachState,
+			AttachState.Attached,
+			"Container is not attached after attach is called",
+		);
+
+		// pass client2 credentials
+		const client2 = createOdspClient(
+			client2Creds,
+			undefined,
+			configProvider({
+				"Fluid.Container.ForceWriteConnection": true,
+			}),
+		);
+		const { container: container2 } = await client2.getContainer(itemId, schema);
+
+		if (container2.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container2.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container2 connect() timeout",
+			});
+		}
+
+		const readonlyInfo = container2.readOnlyInfo;
+		assert.strictEqual(
+			readonlyInfo.readonly,
+			true,
+			"Readonly should not be true when force write is set",
+		);
 	});
 });
