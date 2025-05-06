@@ -38,6 +38,4 @@ export class Bubblebench extends DataObject {
 export const BubblebenchInstantiationFactory = new DataObjectFactory({
 	type: Bubblebench.Name,
 	ctor: Bubblebench,
-	sharedObjects: [],
-	optionalProviders: {},
 });

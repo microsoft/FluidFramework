@@ -26,8 +26,6 @@ export class Constellation extends DataObject implements IConstellation {
 	private static readonly factory = new DataObjectFactory({
 		type: constellationName,
 		ctor: Constellation,
-		sharedObjects: [],
-		optionalProviders: {},
 		registryEntries: new Map([Coordinate.getFactory().registryEntry]),
 	});
 

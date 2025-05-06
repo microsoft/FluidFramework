@@ -50,8 +50,6 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 		private static readonly factory = new DataObjectFactory({
 			type: TestDataObject.type,
 			ctor: TestDataObject,
-			sharedObjects: [],
-			optionalProviders: {},
 		});
 
 		private counter!: SharedCounter;
@@ -97,7 +95,6 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 		type: TestDataObject.type,
 		ctor: TestDataObject,
 		sharedObjects: [SharedCounter.getFactory()],
-		optionalProviders: {},
 	});
 
 	let provider: ITestObjectProvider;

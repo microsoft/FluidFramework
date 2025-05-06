@@ -45,8 +45,6 @@ describe("entryPoint compat", () => {
 		const dataObjectFactory = new DataObjectFactory({
 			type: "TestDataObject",
 			ctor: TestDataObject,
-			sharedObjects: [],
-			optionalProviders: [],
 		});
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,

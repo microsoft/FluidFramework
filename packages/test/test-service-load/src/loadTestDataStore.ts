@@ -922,7 +922,6 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory({
 	type: LoadTestDataStore.DataStoreName,
 	ctor: LoadTestDataStore,
 	sharedObjects: [SharedCounter.getFactory(), TaskManager.getFactory()],
-	optionalProviders: {},
 });
 
 export const createFluidExport = (runtimeOptions?: IContainerRuntimeOptions | undefined) =>

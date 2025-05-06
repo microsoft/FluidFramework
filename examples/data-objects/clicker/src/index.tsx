@@ -144,7 +144,6 @@ export const ClickerInstantiationFactory = new DataObjectFactory({
 	type: ClickerName,
 	ctor: Clicker,
 	sharedObjects: [SharedCounter.getFactory(), TaskManager.getFactory()],
-	optionalProviders: {},
 });
 
 const clickerViewCallback = (clicker: Clicker) => <ClickerReactView clicker={clicker} />;

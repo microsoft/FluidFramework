@@ -36,7 +36,6 @@ export class AppDataTwo extends DataObject {
 		type: AppDataTwo.Name,
 		ctor: AppDataTwo,
 		sharedObjects: [SharedString.getFactory()],
-		optionalProviders: {},
 	});
 
 	public static getFactory(): DataObjectFactory<AppDataTwo> {
@@ -145,7 +144,6 @@ export class AppData extends DataObject {
 			SharedCell.getFactory(),
 			SharedTree.getFactory(),
 		],
-		optionalProviders: {},
 	});
 
 	public static getFactory(): DataObjectFactory<AppData> {

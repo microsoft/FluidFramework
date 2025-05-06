@@ -65,7 +65,6 @@ export class TableDocument
 		type: TableDocumentType,
 		ctor: TableDocument,
 		sharedObjects: [SparseMatrix.getFactory(), SharedNumberSequence.getFactory()],
-		optionalProviders: {},
 		registryEntries: [TableSlice.getFactory().registryEntry],
 	});
 

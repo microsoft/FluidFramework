@@ -115,7 +115,6 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		type: "TestDataObject",
 		ctor: TestDataObject,
 		sharedObjects: [oldChannelFactory],
-		optionalProviders: {},
 	});
 
 	// The 1st runtime factory, V1 of the code
@@ -152,7 +151,6 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		type: "TestDataObject",
 		ctor: TestDataObject,
 		sharedObjects: [migrationShimFactory, sharedTreeShimFactory],
-		optionalProviders: {},
 	});
 
 	// The 2nd runtime factory, V2 of the code

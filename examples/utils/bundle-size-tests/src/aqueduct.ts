@@ -18,7 +18,6 @@ export function apisToBundle() {
 		type: "BundleTestDo",
 		ctor: BundleTestDo,
 		sharedObjects: [SharedString.getFactory(), new DirectoryFactory()],
-		optionalProviders: {},
 	});
 
 	new ContainerRuntimeFactoryWithDefaultDataStore({

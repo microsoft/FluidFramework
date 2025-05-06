@@ -164,8 +164,6 @@ class SignalerClass
 	public static readonly factory = new DataObjectFactory({
 		type: SignalerClass.Name,
 		ctor: SignalerClass,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 
 	protected async hasInitialized() {

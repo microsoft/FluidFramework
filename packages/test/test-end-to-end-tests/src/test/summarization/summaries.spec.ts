@@ -297,8 +297,6 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStoreFactory1 = new DataObjectFactory({
 			type: "@fluid-example/test-dataStore1",
 			ctor: TestDataObject1,
-			sharedObjects: [],
-			optionalProviders: [],
 		});
 		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],

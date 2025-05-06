@@ -23,7 +23,6 @@ export class LastEditedTrackerDataObject
 			type: "@fluid-experimental/last-edited",
 			ctor: LastEditedTrackerDataObject,
 			sharedObjects: [SharedSummaryBlock.getFactory()],
-			optionalProviders: {},
 		});
 
 	public static getFactory(): DataObjectFactory<LastEditedTrackerDataObject> {

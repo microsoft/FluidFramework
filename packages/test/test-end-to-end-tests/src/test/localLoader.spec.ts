@@ -46,8 +46,6 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 		private static readonly factory = new DataObjectFactory({
 			type: TestDataObject.type,
 			ctor: TestDataObject,
-			sharedObjects: [],
-			optionalProviders: {},
 		});
 
 		private counter!: SharedCounter;
@@ -93,7 +91,6 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 		type: TestDataObject.type,
 		ctor: TestDataObject,
 		sharedObjects: [SharedCounter.getFactory(), SharedString.getFactory()],
-		optionalProviders: {},
 	});
 
 	let provider: ITestObjectProvider;

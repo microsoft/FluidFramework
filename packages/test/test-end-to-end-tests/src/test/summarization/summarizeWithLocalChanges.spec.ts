@@ -169,29 +169,21 @@ describeCompat(
 		const rootDataObjectFactory = new DataObjectFactory({
 			type: "RootDataObject",
 			ctor: RootTestDataObject,
-			sharedObjects: [],
-			optionalProviders: [],
 		});
 
 		const dataStoreFactory1 = new DataObjectFactory({
 			type: "TestDataObject1",
 			ctor: TestDataObject1,
-			sharedObjects: [],
-			optionalProviders: [],
 		});
 
 		const dataStoreFactory2 = new DataObjectFactory({
 			type: "TestDataObject2",
 			ctor: TestDataObject2,
-			sharedObjects: [],
-			optionalProviders: [],
 		});
 
 		const dataStoreFactory3 = new DataObjectFactory({
 			type: "TestDataObject3",
 			ctor: class extends DataObject {},
-			sharedObjects: [],
-			optionalProviders: [],
 		});
 
 		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([

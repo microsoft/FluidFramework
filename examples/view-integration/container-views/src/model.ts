@@ -54,6 +54,4 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 export const DiceRollerInstantiationFactory = new DataObjectFactory({
 	type: DiceRoller.Name,
 	ctor: DiceRoller,
-	sharedObjects: [],
-	optionalProviders: {},
 });

@@ -22,8 +22,6 @@ class TestDataObjectClass extends DataObject {
 	public static readonly factory = new DataObjectFactory({
 		type: TestDataObjectClass.Name,
 		ctor: TestDataObjectClass,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 }
 

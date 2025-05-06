@@ -145,7 +145,6 @@ export class FlowDocument extends DataObject {
 		type: documentType,
 		ctor: FlowDocument,
 		sharedObjects: [SharedString.getFactory()],
-		optionalProviders: {},
 	});
 
 	public static getFactory() {

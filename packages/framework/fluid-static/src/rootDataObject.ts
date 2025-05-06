@@ -275,7 +275,6 @@ class RootDataObjectFactory extends DataObjectFactory<
 			type: "rootDO",
 			ctor: RootDataObject,
 			sharedObjects,
-			optionalProviders: {},
 			registryEntries: undefined,
 		});
 	}

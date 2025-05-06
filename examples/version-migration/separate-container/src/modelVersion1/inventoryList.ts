@@ -150,5 +150,4 @@ export const InventoryListInstantiationFactory = new DataObjectFactory({
 	type: "inventory-list",
 	ctor: InventoryList,
 	sharedObjects: [SharedCell.getFactory(), SharedString.getFactory()],
-	optionalProviders: {},
 });

@@ -93,13 +93,10 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 		type: "TestDataObject",
 		ctor: TestDataObject,
 		sharedObjects: [sharedTreeShimFactory],
-		optionalProviders: {},
 	});
 	const childObjectFactory = new DataObjectFactory({
 		type: "ChildDataObject",
 		ctor: ChildDataObject,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 
 	// The 2nd runtime factory, V2 of the code

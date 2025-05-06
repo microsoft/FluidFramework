@@ -57,7 +57,6 @@ export class HitCounter extends DataObject implements IHitCounter {
 		type: HitCounter.Name,
 		ctor: HitCounter,
 		sharedObjects: [AttributableMap.getFactory()],
-		optionalProviders: {},
 	});
 
 	public static getFactory(): DataObjectFactory<HitCounter> {

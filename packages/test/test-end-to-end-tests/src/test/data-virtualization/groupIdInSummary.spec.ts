@@ -87,8 +87,6 @@ describeCompat(
 		const dataObjectFactory = new DataObjectFactory({
 			type: testDataObjectType,
 			ctor: TestDataObject,
-			sharedObjects: [],
-			optionalProviders: {},
 		});
 
 		// The 1st runtime factory, V1 of the code

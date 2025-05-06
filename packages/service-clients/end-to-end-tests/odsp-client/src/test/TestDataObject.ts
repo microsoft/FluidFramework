@@ -18,8 +18,6 @@ class TestDataObjectClass extends DataObject {
 	public static readonly factory = new DataObjectFactory({
 		type: TestDataObjectClass.Name,
 		ctor: TestDataObjectClass,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 
 	constructor(props: IDataObjectProps) {
@@ -52,7 +50,6 @@ export class CounterTestDataObjectClass extends DataObject {
 		type: CounterTestDataObjectClass.Name,
 		ctor: CounterTestDataObjectClass,
 		sharedObjects: [SharedCounter.getFactory()],
-		optionalProviders: {},
 	});
 
 	public increment(): void {

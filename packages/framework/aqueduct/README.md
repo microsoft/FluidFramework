@@ -145,7 +145,6 @@ export const ClickerInstantiationFactory = new DataObjectFactory({
 	type: Clicker.Name,
 	ctor: Clicker,
 	sharedObjects: [SharedCounter.getFactory()],
-	optionalProviders: {},
 });
 ```
 
@@ -188,7 +187,7 @@ export class MyExample extends DataObject<IFluidUserInfo> {
 export const ClickerInstantiationFactory = new DataObjectFactory({
     type: Clicker.Name
     ctor: Clicker,
-    sharedObjects: [], // distributed data structures
+     // distributed data structures
     optionalProviders: { IFluidUserInfo }, // Provider Symbols see below
 });
 ```

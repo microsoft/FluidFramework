@@ -434,5 +434,4 @@ export const SameContainerMigrationToolInstantiationFactory = new DataObjectFact
 	type: "migration-tool",
 	ctor: SameContainerMigrationTool,
 	sharedObjects: [PactMap.getFactory()],
-	optionalProviders: {},
 });

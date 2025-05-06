@@ -57,8 +57,6 @@ protected async initializingFirstTime() {
 export const MyDataObjectFactory = new DataObjectFactory({
 	type: "my-data-object",
 	ctor: MyDataObject,
-	sharedObjects: [],
-	optionalProviders: {},
 	registryEntries: new Map([
 		AgentSchedulerFactory.registryEntry,
 	]),

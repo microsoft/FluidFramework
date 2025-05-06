@@ -83,5 +83,4 @@ export const DiceCounterInstantiationFactory = new DataObjectFactory({
 	type: "dice-counter",
 	ctor: DiceCounter,
 	sharedObjects: [SharedCounter.getFactory()],
-	optionalProviders: {},
 });

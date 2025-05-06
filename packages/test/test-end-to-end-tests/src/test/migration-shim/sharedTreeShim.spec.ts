@@ -68,7 +68,6 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider, apis) => {
 		type: "TestDataObject",
 		ctor: TestDataObject,
 		sharedObjects: [sharedTreeShimFactory],
-		optionalProviders: {},
 	});
 
 	// The 2nd runtime factory, V2 of the code

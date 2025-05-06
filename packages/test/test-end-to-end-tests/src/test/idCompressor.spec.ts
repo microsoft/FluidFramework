@@ -177,7 +177,6 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		type: "TestDataObject",
 		ctor: TestDataObject,
 		sharedObjects: [SharedMap.getFactory(), SharedCell.getFactory()],
-		optionalProviders: [],
 	});
 
 	const runtimeOptions: IContainerRuntimeOptions = {

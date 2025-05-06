@@ -70,8 +70,6 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 	public static readonly factory = new DataObjectFactory({
 		type: DiceRoller.Name,
 		ctor: DiceRoller,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 
 	/**

@@ -76,8 +76,6 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
 	private static readonly factory = new DataObjectFactory({
 		type: DataObjectGrid.ComponentName,
 		ctor: DataObjectGrid,
-		sharedObjects: [],
-		optionalProviders: {},
 		registryEntries: [...registryEntries],
 	});
 

@@ -170,7 +170,6 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			type: "TestDataObject",
 			ctor: TestDataObject,
 			sharedObjects: [SharedMap.getFactory(), SharedString.getFactory()],
-			optionalProviders: [],
 		});
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,

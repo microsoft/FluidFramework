@@ -89,5 +89,4 @@ export const BubblebenchInstantiationFactory = new DataObjectFactory({
 	type: Bubblebench.Name,
 	ctor: Bubblebench,
 	sharedObjects: [SharedTree.getFactory()],
-	optionalProviders: {},
 });

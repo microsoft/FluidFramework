@@ -36,8 +36,6 @@ export class TableSlice
 	private static readonly factory = new DataObjectFactory({
 		type: TableSliceType,
 		ctor: TableSlice,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 
 	public get name() {

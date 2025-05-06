@@ -28,7 +28,6 @@ export class CollaborativeText extends DataObject {
 		type: CollaborativeText.Name,
 		ctor: CollaborativeText,
 		sharedObjects: [SharedString.getFactory()],
-		optionalProviders: {},
 	});
 
 	public static getFactory(): DataObjectFactory<CollaborativeText> {

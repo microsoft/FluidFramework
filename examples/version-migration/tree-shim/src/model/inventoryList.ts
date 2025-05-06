@@ -222,5 +222,4 @@ export const InventoryListFactory = new DataObjectFactory({
 	type: "inventory-list",
 	ctor: InventoryList,
 	sharedObjects: [migrationShimFactory, newTreeShimFactory],
-	optionalProviders: {},
 });

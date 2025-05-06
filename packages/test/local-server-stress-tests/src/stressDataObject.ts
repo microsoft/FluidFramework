@@ -75,7 +75,6 @@ export class StressDataObject extends DataObject {
 		type: "StressDataObject",
 		ctor: StressDataObject,
 		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
-		optionalProviders: {},
 		registryEntries: [
 			["StressDataObject", new LazyPromise(async () => StressDataObject.factory)],
 		],
@@ -330,7 +329,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 		type: "DefaultStressDataObject",
 		ctor: DefaultStressDataObject,
 		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
-		optionalProviders: {},
+
 		registryEntries: [[StressDataObject.factory.type, StressDataObject.factory]],
 	});
 

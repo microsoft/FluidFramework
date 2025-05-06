@@ -39,8 +39,6 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 	const dataObjectFactory = new DataObjectFactory({
 		type: "TestDataObject",
 		ctor: TestDataObject,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 
 	const IdleDetectionTime = 100;

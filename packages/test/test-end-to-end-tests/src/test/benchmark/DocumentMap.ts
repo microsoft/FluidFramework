@@ -142,7 +142,6 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			type: "TestDataObject",
 			ctor: TestDataObject,
 			sharedObjects: [SharedMap.getFactory(), SharedMap.getFactory()],
-			optionalProviders: [],
 		});
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,

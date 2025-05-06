@@ -148,7 +148,6 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		type: "TestDataObject",
 		ctor: TestDataObject,
 		sharedObjects: [oldChannelFactory],
-		optionalProviders: {},
 	});
 
 	// The 1st runtime factory, V1 of the code
@@ -188,14 +187,11 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		type: "TestDataObject",
 		ctor: TestDataObject,
 		sharedObjects: [migrationShimFactory, sharedTreeShimFactory],
-		optionalProviders: {},
 	});
 
 	const childObjectFactory = new DataObjectFactory({
 		type: "ChildDataObject",
 		ctor: ChildDataObject,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 
 	// The 2nd runtime factory, V2 of the code

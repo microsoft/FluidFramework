@@ -119,5 +119,4 @@ export const TaskManagerDiceRollerInstantiationFactory = new DataObjectFactory({
 	type: "@fluid-example/task-manager-dice-roller",
 	ctor: TaskManagerDiceRoller,
 	sharedObjects: [TaskManager.getFactory()],
-	optionalProviders: {},
 });

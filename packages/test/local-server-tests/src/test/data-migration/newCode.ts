@@ -170,22 +170,16 @@ export class RootDO2 extends DataObject {
 export const DOWithSTFactory = new DataObjectFactory({
 	type: "DOWithST",
 	ctor: DOWithST,
-	sharedObjects: [],
-	optionalProviders: {},
 });
 
 export const DOWithST2Factory = new DataObjectFactory({
 	type: "DOWithST2",
 	ctor: DOWithST2,
-	sharedObjects: [],
-	optionalProviders: {},
 });
 
 export const RootDO2Factory = new DataObjectFactory({
 	type: "rootdo",
 	ctor: RootDO2,
-	sharedObjects: [],
-	optionalProviders: {},
 	registryEntries: [DOWithSTFactory.registryEntry, DOWithST2Factory.registryEntry],
 });
 

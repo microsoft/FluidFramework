@@ -114,7 +114,6 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider, apis) => {
 		type: "TestDataObject",
 		ctor: TestDataObject,
 		sharedObjects: [migrationShimFactory, sharedTreeShimFactory],
-		optionalProviders: {},
 	});
 
 	// The 2nd runtime factory, V2 of the code

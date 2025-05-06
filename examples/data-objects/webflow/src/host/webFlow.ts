@@ -14,8 +14,6 @@ export class WebFlow extends DataObject {
 	private static readonly factory = new DataObjectFactory({
 		type: hostType,
 		ctor: WebFlow,
-		sharedObjects: [],
-		optionalProviders: {},
 		registryEntries: new Map([FlowDocument.getFactory().registryEntry]),
 	});
 

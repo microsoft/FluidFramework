@@ -131,19 +131,15 @@ const DOWithSTFactory = new DataObjectFactory({
 	type: "a",
 	ctor: DOWithST,
 	sharedObjects: [SharedTree.getFactory(), LegacySharedTree.getFactory()],
-	optionalProviders: {},
 });
 const DOWithST2Factory = new DataObjectFactory({
 	type: "b",
 	ctor: DOWithST2,
-	sharedObjects: [],
-	optionalProviders: {},
 });
 const rootDOFactory = new DataObjectFactory({
 	type: "rootdo",
 	ctor: RootDO,
 	sharedObjects: [LegacySharedTree.getFactory()],
-	optionalProviders: {},
 	registryEntries: [DOWithSTFactory.registryEntry, DOWithST2Factory.registryEntry],
 });
 const exampleRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({

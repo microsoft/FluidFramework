@@ -22,8 +22,6 @@ class TestDataObjectClass extends DataObject {
 	public static readonly factory = new DataObjectFactory({
 		type: "TestDataObject",
 		ctor: TestDataObjectClass,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 
 	constructor(props: IDataObjectProps) {
@@ -87,8 +85,6 @@ export class SignalerTestDataObjectClass extends DataObject<{ Events: IErrorEven
 	public static readonly factory = new DataObjectFactory({
 		type: SignalerTestDataObjectClass.Name,
 		ctor: SignalerTestDataObjectClass,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 
 	protected async hasInitialized(): Promise<void> {

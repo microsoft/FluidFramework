@@ -17,7 +17,6 @@ const componentFactory = new DataObjectFactory({
 	type: monacoName,
 	ctor: MonacoRunner,
 	sharedObjects: [sequence.SharedString.getFactory()],
-	optionalProviders: {},
 });
 
 const monacoViewCallback = (model: MonacoRunner): React.ReactElement =>

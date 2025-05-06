@@ -26,7 +26,6 @@ export class VirtualDataObjectFactory extends DataObjectFactory<VirtualDataStore
 			type: "virtual-service-load",
 			ctor: VirtualDataStore,
 			sharedObjects: [SharedCounter.getFactory()],
-			optionalProviders: {},
 		});
 	}
 

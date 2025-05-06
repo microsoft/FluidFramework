@@ -44,8 +44,6 @@ describeCompat(
 		const innerDataObjectFactory = new DataObjectFactory({
 			type: "InnerDataObject",
 			ctor: InnerDataObject,
-			sharedObjects: [],
-			optionalProviders: [],
 		});
 
 		class OuterDataObject extends DataObject implements ITestDataObject {
@@ -85,8 +83,6 @@ describeCompat(
 		const outerDataObjectFactory = new DataObjectFactory({
 			type: "OuterDataObject",
 			ctor: OuterDataObject,
-			sharedObjects: [],
-			optionalProviders: [],
 		});
 
 		let provider: ITestObjectProvider;

@@ -24,8 +24,6 @@ export class Coordinate extends DataObject implements ICoordinate {
 	private static readonly factory = new DataObjectFactory({
 		type: Coordinate.ComponentName,
 		ctor: Coordinate,
-		sharedObjects: [],
-		optionalProviders: {},
 	});
 
 	protected async initializingFirstTime(): Promise<void> {

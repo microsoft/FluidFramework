@@ -106,6 +106,4 @@ export class ContactCollection extends DataObject implements IContactCollection 
 export const ContactCollectionInstantiationFactory = new DataObjectFactory({
 	type: "contact-collection",
 	ctor: ContactCollection,
-	sharedObjects: [],
-	optionalProviders: {},
 });

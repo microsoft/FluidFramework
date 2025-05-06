@@ -155,7 +155,6 @@ const parentDataObjectFactory = new DataObjectFactory({
 	type: "ParentDataObject",
 	ctor: ParentDataObject,
 	sharedObjects: undefined,
-	optionalProviders: {},
 	registryEntries: [[ChildDataStoreFactory.instance.type, ChildDataStoreFactory.instance]],
 });
 

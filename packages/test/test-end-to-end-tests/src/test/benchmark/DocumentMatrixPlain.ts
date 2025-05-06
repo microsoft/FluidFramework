@@ -166,7 +166,6 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 			type: "TestDataObject",
 			ctor: TestDataObject,
 			sharedObjects: [SharedMatrix.getFactory()],
-			optionalProviders: [],
 		});
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,

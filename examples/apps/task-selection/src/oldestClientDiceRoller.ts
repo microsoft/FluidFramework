@@ -109,6 +109,4 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 export const OldestClientDiceRollerInstantiationFactory = new DataObjectFactory({
 	type: "@fluid-example/oldest-client-dice-roller",
 	ctor: OldestClientDiceRoller,
-	sharedObjects: [],
-	optionalProviders: {},
 });
