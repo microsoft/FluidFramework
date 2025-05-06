@@ -154,7 +154,6 @@ class ParentDataObject extends DataObject {
 const parentDataObjectFactory = new DataObjectFactory({
 	type: "ParentDataObject",
 	ctor: ParentDataObject,
-	sharedObjects: undefined,
 	registryEntries: [[ChildDataStoreFactory.instance.type, ChildDataStoreFactory.instance]],
 });
 

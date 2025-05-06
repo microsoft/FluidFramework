@@ -35,7 +35,6 @@ describeCompat("Can attach Legacy Shared Tree", "NoCompat", (getTestObjectProvid
 		type: "test",
 		ctor: TestDataObject,
 		sharedObjects: [SharedTree.getFactory()],
-		optionalProviders: undefined,
 	});
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,

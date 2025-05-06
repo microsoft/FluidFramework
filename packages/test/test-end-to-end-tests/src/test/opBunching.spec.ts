@@ -38,7 +38,6 @@ describeCompat(
 			type: "testDataObject",
 			ctor: TestDataObject,
 			sharedObjects: [SharedMap.getFactory()],
-			optionalProviders: undefined,
 		});
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,

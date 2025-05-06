@@ -90,6 +90,7 @@ describeCompat(
 		const dataStoreFactory1 = new DataObjectFactory({
 			type: TestDataObjectType1,
 			ctor: TestDataObject1,
+			runtimeClass: createDataStoreRuntime(),
 		});
 		const dataStoreFactory2 = new DataObjectFactory({
 			type: TestDataObjectType2,
