@@ -61,6 +61,7 @@ export class DataObjectFactory<
 			typeof propsOrType === "string"
 				? {
 						type: propsOrType,
+						// both the arg and props base constructor require this param
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						ctor: maybeCtor!,
 						sharedObjects: maybeSharedObjects,
