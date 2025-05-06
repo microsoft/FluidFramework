@@ -139,6 +139,10 @@ async function createDataObject<
  * Represents the properties required to create a DataObjectFactory.
  * This includes the type identifier, constructor, shared objects, optional providers,
  * registry entries, and the runtime class to use for the data object.
+ * @typeParam TObj - DataObject (concrete type)
+ * @typeParam I - The input types for the DataObject
+ * @legacy
+ * @alpha
  */
 export interface DataObjectFactoryProps<
 	TObj extends PureDataObject<I>,

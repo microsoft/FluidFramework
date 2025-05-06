@@ -64,6 +64,16 @@ export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectT
 }
 
 // @alpha @legacy
+export interface DataObjectFactoryProps<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> {
+    ctor: new (props: IDataObjectProps<I>) => TObj;
+    optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+    registryEntries?: NamedFluidDataStoreRegistryEntries;
+    runtimeClass?: typeof FluidDataStoreRuntime;
+    sharedObjects?: readonly IChannelFactory[];
+    type: string;
+}
+
+// @alpha @legacy
 export interface DataObjectTypes {
     Events?: IEvent;
     InitialState?: any;
