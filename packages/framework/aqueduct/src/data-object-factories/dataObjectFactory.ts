@@ -36,7 +36,7 @@ export class DataObjectFactory<
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
 	/**
-	 * @Remarks Use the props object based constructor instead.
+	 * @remarks Use the props object based constructor instead.
 	 * No new features will be added to this constructor,
 	 * and it will eventually be deprecated and removed.
 	 */
@@ -57,7 +57,7 @@ export class DataObjectFactory<
 		maybeRegistryEntries?: NamedFluidDataStoreRegistryEntries,
 		maybeRuntimeFactory?: typeof FluidDataStoreRuntime,
 	) {
-		const props: DataObjectFactoryProps<TObj, I> =
+		const props =
 			typeof propsOrType === "string"
 				? {
 						type: propsOrType,
@@ -69,7 +69,7 @@ export class DataObjectFactory<
 						registryEntries: maybeRegistryEntries,
 						runtimeClass: maybeRuntimeFactory,
 					}
-				: propsOrType;
+				: { ...propsOrType };
 
 		const sharedObjects =
 			props.sharedObjects === undefined

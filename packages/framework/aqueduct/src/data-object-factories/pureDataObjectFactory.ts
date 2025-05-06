@@ -151,34 +151,34 @@ export interface DataObjectFactoryProps<
 	/**
 	 * The type identifier for the data object factory.
 	 */
-	type: string;
+	readonly type: string;
 
 	/**
 	 * The constructor for the data object.
 	 */
-	ctor: new (
+	readonly ctor: new (
 		props: IDataObjectProps<I>,
 	) => TObj;
 
 	/**
 	 * The shared objects (DDSes) to be registered with the data object.
 	 */
-	sharedObjects?: readonly IChannelFactory[];
+	readonly sharedObjects?: readonly IChannelFactory[];
 
 	/**
 	 * Optional providers for dependency injection.
 	 */
-	optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+	readonly optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
 
 	/**
 	 * Registry entries for named data stores.
 	 */
-	registryEntries?: NamedFluidDataStoreRegistryEntries;
+	readonly registryEntries?: NamedFluidDataStoreRegistryEntries;
 
 	/**
 	 * The runtime class to use for the data object.
 	 */
-	runtimeClass?: typeof FluidDataStoreRuntime;
+	readonly runtimeClass?: typeof FluidDataStoreRuntime;
 }
 
 /**
@@ -205,7 +205,7 @@ export class PureDataObjectFactory<
 	public readonly type: string;
 
 	/**
-	 * @Remarks Use the props object based constructor instead.
+	 * @remarks Use the props object based constructor instead.
 	 * No new features will be added to this constructor,
 	 * and it will eventually be deprecated and removed.
 	 */
@@ -226,7 +226,7 @@ export class PureDataObjectFactory<
 		maybeRegistryEntries?: NamedFluidDataStoreRegistryEntries,
 		maybeRuntimeFactory?: typeof FluidDataStoreRuntime,
 	) {
-		const props: DataObjectFactoryProps<TObj, I> =
+		const props =
 			typeof propsOrType === "string"
 				? {
 						type: propsOrType,
@@ -240,9 +240,9 @@ export class PureDataObjectFactory<
 					}
 				: propsOrType;
 
-		const sharedObjects = [...(props.sharedObjects ??= [])];
-		const runtimeClass = (props.runtimeClass ??= FluidDataStoreRuntime);
-		const optionalProviders = (props.optionalProviders ??= {});
+		const sharedObjects = [...(props.sharedObjects ?? [])];
+		const runtimeClass = props.runtimeClass ?? FluidDataStoreRuntime;
+		const optionalProviders = props.optionalProviders ?? {};
 		this.type = props.type;
 
 		if (this.type === "") {
