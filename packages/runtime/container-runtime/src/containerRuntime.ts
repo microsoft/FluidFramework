@@ -198,7 +198,6 @@ import {
 } from "./messageTypes.js";
 import { ISavedOpMetadata } from "./metadata.js";
 import {
-	BatchId,
 	LocalBatchMessage,
 	BatchStartInfo,
 	DuplicateBatchDetector,
@@ -218,6 +217,7 @@ import {
 	PendingMessageResubmitData,
 	IPendingLocalState,
 	PendingStateManager,
+	type PendingBatchResubmitMetadata,
 } from "./pendingStateManager.js";
 import { RunCounter } from "./runCounter.js";
 import {
@@ -505,6 +505,8 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	viaHandle: false,
 	allowTombstone: false,
 };
+
+const defaultStagingCommitOptions = { squash: false };
 
 /**
  * @deprecated
@@ -3240,25 +3242,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * @privateRemarks
-	 * orderSequentially predates staging mode, but its implementation has been updated to leverage it.
-	 * Public usage of staging mode has more guards around only being used with objects that fully support it (i.e. that support squashing
-	 * as well as generalized rollback which may occur after inbounding further remote ops).
-	 *
-	 * This member allows the container runtime to bypass those guards by opting for legacy behavior when exiting an orderSequentially block (e.g.
-	 * op resubmission will not be squashed).
-	 * This can therefore be removed once staging mode is broadly supported across layers.
-	 */
-	private readonly orderSequentiallyRunner = new RunCounter();
-
-	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
 	 */
 	public orderSequentially<T>(callback: () => T): T {
-		return this.orderSequentiallyRunner.run(() => this.orderSequentiallyCore(callback));
-	}
-
-	private orderSequentiallyCore<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		const checkpointDirtyState = this.dirtyContainer;
 		// eslint-disable-next-line import/no-deprecated
@@ -3318,6 +3304,7 @@ export class ContainerRuntime
 				throw error; // throw the original error for the consumer of the runtime
 			}
 		});
+
 		stageControls?.commitChanges();
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
@@ -3363,7 +3350,8 @@ export class ContainerRuntime
 			discardOrCommit();
 		};
 
-		const stageControls = {
+		// eslint-disable-next-line import/no-deprecated
+		const stageControls: StageControlsExperimental = {
 			discardChanges: exitStagingMode(() => {
 				// Pop all staged batches from the PSM and roll them back in LIFO order
 				this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
@@ -3377,9 +3365,13 @@ export class ContainerRuntime
 					this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
 				}
 			}),
-			commitChanges: exitStagingMode(() => {
-				this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
-			}),
+			commitChanges: (options = defaultStagingCommitOptions) =>
+				exitStagingMode(() => {
+					this.pendingStateManager.replayPendingStates({
+						onlyStagedBatches: true,
+						squash: options.squash ?? false,
+					});
+				})(),
 		};
 
 		return (this.stageControls = stageControls);
@@ -4577,14 +4569,11 @@ export class ContainerRuntime
 	 */
 	private reSubmitBatch(
 		batch: PendingMessageResubmitData[],
-		batchId: BatchId,
-		{ staged, squash }: { staged: boolean; squash: boolean },
+		{ batchId, staged, squash }: PendingBatchResubmitMetadata,
 	): void {
 		this.batchRunner.run(() => {
 			for (const message of batch) {
-				// Note: once squashing is widely supported, squashing even for orderSequentially should be fine.
-				// See remarks on orderSequentiallyRunner for more details.
-				this.reSubmit(message, this.orderSequentiallyRunner.running ? false : squash);
+				this.reSubmit(message, squash);
 			}
 		});
 

@@ -22,13 +22,13 @@ import {
 } from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import {
-	BatchId,
 	LocalBatchMessage,
 	getEffectiveBatchId,
 	BatchStartInfo,
 	InboundMessageResult,
 	serializeOp,
 	type LocalEmptyBatchPlaceholder,
+	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
 
 /**
@@ -114,14 +114,20 @@ export type PendingMessageResubmitData = Pick<
 	runtimeOp: LocalContainerRuntimeMessage;
 };
 
+export interface PendingBatchResubmitMetadata extends BatchResubmitInfo {
+	/**
+	 * Whether changes in this batch should be squashed when resubmitting.
+	 */
+	squash: boolean;
+}
+
 export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	applyStashedOp(serializedOp: string): Promise<unknown>;
 	reSubmitBatch(
 		batch: PendingMessageResubmitData[],
-		batchId: BatchId,
-		stagingInfo: { staged: boolean; squash: boolean },
+		metadata: PendingBatchResubmitMetadata,
 	): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
@@ -214,6 +220,11 @@ function toSerializableForm(
 		runtimeOp: undefined,
 	};
 }
+
+const defaultReplayPendingStatesOptions = {
+	onlyStagedBatches: false,
+	squash: false,
+};
 
 /**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
@@ -688,8 +699,17 @@ export class PendingStateManager implements IDisposable {
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
 	 * @param onlyStagedBatches - If true, only replay staged batches. This is used when we are exiting staging mode and want to rebase and submit the staged batches.
+	 * @param squash - If true, edits should be squashed when resubmitting.
+	 * @privateRemarks
+	 * parameter doc above is named. TSDoc doesn't support dot syntax, see https://github.com/microsoft/tsdoc/issues/19
 	 */
-	public replayPendingStates(onlyStagedBatches?: boolean): void {
+	public replayPendingStates(
+		options: {
+			onlyStagedBatches: boolean;
+			squash: boolean;
+		} = defaultReplayPendingStatesOptions,
+	): void {
+		const { onlyStagedBatches, squash } = options;
 		assert(
 			this.stateHandler.connected() || onlyStagedBatches === true,
 			0x172 /* "The connection state is not consistent with the runtime" */,
@@ -723,8 +743,6 @@ export class PendingStateManager implements IDisposable {
 			let pendingMessage = this.pendingMessages.shift()!;
 			remainingPendingMessagesCount--;
 
-			const wasStaged = pendingMessage.batchInfo.staged;
-
 			// Re-queue pre-staging messages if we are only processing staged batches
 			if (onlyStagedBatches) {
 				if (!pendingMessage.batchInfo.staged) {
@@ -747,7 +765,7 @@ export class PendingStateManager implements IDisposable {
 
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				// Resubmit no messages, with the batchId. Will result in another empty batch marker.
-				this.stateHandler.reSubmitBatch([], batchId, { staged, squash: wasStaged });
+				this.stateHandler.reSubmitBatch([], { batchId, staged, squash });
 				continue;
 			}
 
@@ -772,8 +790,7 @@ export class PendingStateManager implements IDisposable {
 							opMetadata: pendingMessage.opMetadata,
 						},
 					],
-					batchId,
-					{ staged, squash: wasStaged },
+					{ batchId, staged, squash },
 				);
 				continue;
 			}
@@ -813,7 +830,7 @@ export class PendingStateManager implements IDisposable {
 				);
 			}
 
-			this.stateHandler.reSubmitBatch(batch, batchId, { staged, squash: wasStaged });
+			this.stateHandler.reSubmitBatch(batch, { batchId, staged, squash });
 		}
 
 		// pending ops should no longer depend on previous sequenced local ops after resubmit

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	type IContainer,
@@ -20,6 +21,7 @@ import {
 	type ConfigTypes,
 	type FluidObject,
 	type IConfigProviderBase,
+	type IErrorBase,
 } from "@fluidframework/core-interfaces/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
@@ -33,6 +35,7 @@ import {
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import type { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
 
 import { createLoader } from "../utils.js";
 
@@ -145,14 +148,50 @@ interface Client {
 
 const waitForSave = async (clients: Client[] | Record<string, Client>) =>
 	Promise.all(
-		Array.isArray(clients)
-			? clients
-			: Object.values(clients).map(
-					async (c) =>
-						new Promise<void>((resolve) =>
-							c.container.isDirty ? c.container.once("saved", () => resolve()) : resolve(),
-						),
-				),
+		Object.entries(clients).map(
+			async ([key, { container }]) =>
+				new Promise<void>((resolve, reject) => {
+					if (container.closed || container.disposed) {
+						reject(
+							new Error(
+								`Container ${key} already closed or disposed when waitForSave was called`,
+							),
+						);
+						return;
+					}
+
+					if (!container.isDirty) {
+						resolve();
+						return;
+					}
+
+					const rejectHandler = (error?: IErrorBase | undefined) => {
+						reject(
+							wrapError(
+								error,
+								(message) =>
+									new LoggingError(`Container "${key}" closed or disposed: ${message}`),
+							),
+						);
+						off();
+					};
+
+					const resolveHandler = () => {
+						resolve();
+						off();
+					};
+
+					const off = () => {
+						container.off("closed", rejectHandler);
+						container.off("disposed", rejectHandler);
+						container.off("saved", resolveHandler);
+					};
+
+					container.on("saved", resolveHandler);
+					container.on("closed", rejectHandler);
+					container.on("disposed", rejectHandler);
+				}),
+		),
 	);
 
 const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
@@ -483,21 +522,30 @@ describe("Staging Mode", () => {
 		);
 	});
 
-	for (const disconnectBeforeCommit of [false, true]) {
-		it(`squashes changes when exiting staging mode ${disconnectBeforeCommit ? "while disconnected" : ""}`, async () => {
+	function spyOn(object: object, methodName: string) {
+		const originalMethod = object[methodName];
+		assert(typeof originalMethod === "function", `${methodName} is not a function`);
+		const calls: unknown[][] = [];
+		object[methodName] = (...args: unknown[]) => {
+			calls.push([...args]);
+			const result: unknown = originalMethod.apply(object, args);
+			return result;
+		};
+		return calls;
+	}
+
+	for (const { disconnectBeforeCommit, squash } of generatePairwiseOptions({
+		disconnectBeforeCommit: [false, true],
+		squash: [undefined, false, true],
+	})) {
+		it(`respects squash=${squash} when exiting staging mode ${disconnectBeforeCommit ? "while disconnected" : ""}`, async () => {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
 			const clients = await createClients(deltaConnectionServer);
-			const reSubmitSquashedLog: unknown[][] = [];
 
 			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const rootMap = clients.original.dataObject["root"] as unknown as SharedObject;
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			const originalReSubmitSquashed = rootMap["reSubmitSquashed"].bind(rootMap);
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			rootMap["reSubmitSquashed"] = (...args) => {
-				reSubmitSquashedLog.push([...args]);
-				return originalReSubmitSquashed(...args);
-			};
+			const reSubmitSquashedLog = spyOn(rootMap, "reSubmitSquashed");
+			const reSubmitLog = spyOn(rootMap, "reSubmitCore");
 
 			const stagingControls = clients.original.dataObject.enterStagingMode();
 			clients.original.dataObject.makeEdit("branch-only");
@@ -505,18 +553,34 @@ describe("Staging Mode", () => {
 			if (disconnectBeforeCommit) {
 				await ensureDisconnected(clients.original);
 			}
-			stagingControls.commitChanges();
+			stagingControls.commitChanges({ squash });
 			if (disconnectBeforeCommit) {
 				await ensureConnected(clients.original);
 			}
 
 			await waitForSave(clients);
 
-			assert.equal(reSubmitSquashedLog.length, 1, "Squashed resubmit should be called once.");
+			assertConsistent(clients, "States should match after save");
+			assert.equal(
+				reSubmitSquashedLog.length,
+				squash === true ? 1 : 0,
+				"Squashed resubmit should be called iff squash = true.",
+			);
 			assert(
-				JSON.stringify(reSubmitSquashedLog[0][0]).includes("branch-only"),
+				JSON.stringify((squash ? reSubmitSquashedLog : reSubmitLog)[0][0]).includes(
+					"branch-only",
+				),
 				"Squashed op should contain the edit prefix.",
 			);
+			if (squash !== true) {
+				assert.equal(
+					reSubmitLog.length,
+					// 2 resubmits when disconnected happens because there is one resubmit upon exiting staging mode (to clear staging flags),
+					// then another when we eventually reconnect.
+					disconnectBeforeCommit ? 2 : 1,
+					"Normal resubmit should be called when squash = false.",
+				);
+			}
 		});
 	}
 });
