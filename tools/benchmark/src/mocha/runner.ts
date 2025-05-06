@@ -114,6 +114,10 @@ export function supportParentProcess<
 				assert.fail(`Child process reported an error: ${result.error.message}`);
 			}
 
+			if (result.stderr !== "") {
+				assert.fail(`Child process logged errors: ${result.stderr}`);
+			}
+
 			// Find the json blob in the child's output.
 			const output =
 				result.stdout.split("\n").find((s) => s.startsWith("{")) ??
