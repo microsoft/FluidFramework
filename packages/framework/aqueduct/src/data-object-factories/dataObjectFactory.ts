@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	SharedMap,
@@ -16,7 +16,10 @@ import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/inter
 
 import type { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects/index.js";
 
-import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
+import {
+	PureDataObjectFactory,
+	type DataObjectFactoryProps,
+} from "./pureDataObjectFactory.js";
 
 /**
  * DataObjectFactory is the IFluidDataStoreFactory for use with DataObjects.
@@ -32,28 +35,55 @@ export class DataObjectFactory<
 	TObj extends DataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
+	/**
+	 * @deprecated Use the props based constructor instead
+	 */
 	public constructor(
 		type: string,
 		ctor: new (props: IDataObjectProps<I>) => TObj,
-		sharedObjects: readonly IChannelFactory[] = [],
-		optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
+		sharedObjects?: readonly IChannelFactory[],
+		optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
-		runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+		runtimeFactory?: typeof FluidDataStoreRuntime,
+	);
+	public constructor(props: DataObjectFactoryProps<TObj, I>);
+	public constructor(
+		propsOrType: DataObjectFactoryProps<TObj, I> | string,
+		maybeCtor?: new (doProps: IDataObjectProps<I>) => TObj,
+		maybeSharedObjects?: readonly IChannelFactory[],
+		maybeOptionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>,
+		maybeRegistryEntries?: NamedFluidDataStoreRegistryEntries,
+		maybeRuntimeFactory?: typeof FluidDataStoreRuntime,
 	) {
-		const mergedObjects = [...sharedObjects];
+		const props: DataObjectFactoryProps<TObj, I> =
+			typeof propsOrType === "string"
+				? {
+						type: propsOrType,
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						ctor: maybeCtor!,
+						sharedObjects: maybeSharedObjects,
+						optionalProviders: maybeOptionalProviders,
+						registryEntries: maybeRegistryEntries,
+						runtimeClass: maybeRuntimeFactory,
+					}
+				: propsOrType;
+
+		const sharedObjects =
+			props.sharedObjects === undefined
+				? []
+				: (props.sharedObjects = [...props.sharedObjects]);
 
 		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
 			// User did not register for directory
-			// eslint-disable-next-line import/no-deprecated
-			mergedObjects.push(SharedDirectory.getFactory());
+			sharedObjects.push(SharedDirectory.getFactory());
 		}
 
 		// TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
 		if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
 			// User did not register for map
-			mergedObjects.push(SharedMap.getFactory());
+			sharedObjects.push(SharedMap.getFactory());
 		}
 
-		super(type, ctor, mergedObjects, optionalProviders, registryEntries, runtimeFactory);
+		super(props);
 	}
 }
