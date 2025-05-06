@@ -58,6 +58,7 @@
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
+		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
