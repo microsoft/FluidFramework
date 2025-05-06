@@ -1057,7 +1057,7 @@ export namespace TableSchema {
 		 * In this case, no rows are removed.
 		 * @privateRemarks
 		 * TODO:
-		 * - Add overload that takes an ID.
+		 * - Add overload that takes IDs.
 		 * - Return removed rows.
 		 * - Throw an error if any row(s) aren't in the table.
 		 */
@@ -1073,9 +1073,7 @@ export namespace TableSchema {
 		 * Removes the cell at the specified location in the table.
 		 * @returns The cell if it exists, otherwise undefined.
 		 * @throws Throws an error if the location does not exist in the table.
-		 * @privateRemarks
-		 * TODO:
-		 * - Add overload that takes column/row nodes?
+		 * @privateRemarks TODO: Add overload that takes column/row nodes.
 		 */
 		removeCell(key: CellKey): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	}
