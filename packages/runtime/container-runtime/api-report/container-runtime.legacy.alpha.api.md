@@ -359,7 +359,7 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
 
 // @alpha @legacy
-export type SemanticVersion = `${bigint}.${bigint}.${bigint}` | `${bigint}.${bigint}.${bigint}-${string}`;
+export type SemanticVersion = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @alpha @legacy
 export interface SubmitSummaryFailureData {

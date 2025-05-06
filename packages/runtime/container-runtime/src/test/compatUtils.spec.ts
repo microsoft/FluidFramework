@@ -62,7 +62,9 @@ describe("compatUtils", () => {
 		};
 
 		const testCases: {
-			minVersionForCollab: SemanticVersion;
+			// We use string instead of SemanticVersion for `minVersionForCollab`
+			// so we can test versions that don't start with 1 or 2.
+			minVersionForCollab: string;
 			expectedConfig: Partial<ITestConfigMap>;
 		}[] = [
 			{
@@ -212,7 +214,10 @@ describe("compatUtils", () => {
 
 		for (const testCase of testCases) {
 			it(`returns correct configs for minVersionForCollab = "${testCase.minVersionForCollab}"`, () => {
-				const config = getConfigsForCompatMode(testCase.minVersionForCollab, testConfigMap);
+				const config = getConfigsForCompatMode(
+					testCase.minVersionForCollab as SemanticVersion,
+					testConfigMap,
+				);
 				assert.deepEqual(
 					config,
 					testCase.expectedConfig,

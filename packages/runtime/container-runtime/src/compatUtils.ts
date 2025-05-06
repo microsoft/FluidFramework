@@ -56,8 +56,8 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
  * @alpha
  */
 export type SemanticVersion =
-	| `${bigint}.${bigint}.${bigint}`
-	| `${bigint}.${bigint}.${bigint}-${string}`;
+	| `${1 | 2}.${bigint}.${bigint}`
+	| `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 /**
  * Generic type for runtimeOptionsAffectingDocSchemaConfigMap

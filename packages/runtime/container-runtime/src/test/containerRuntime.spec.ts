@@ -90,6 +90,7 @@ import {
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import type { InboundMessageResult, LocalBatchMessage } from "../opLifecycle/index.js";
+import { pkgVersion } from "../packageVersion.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -3664,26 +3665,6 @@ describe("Runtime", () => {
 				]);
 			});
 
-			// These are examples of minVersionForCollab inputs that are not valid.
-			// minVersionForCollab should be at least 1.0.0 and less than or equal to
-			// the current pkgVersion.
-			const invalidVersions = ["0.50.0", "100.0.0"] as const;
-			for (const version of invalidVersions) {
-				it(`throws when minVersionForCollab = ${version}`, async () => {
-					const logger = new MockLogger();
-					await assert.rejects(async () => {
-						await ContainerRuntime.loadRuntime({
-							context: getMockContext({ logger }) as IContainerContext,
-							registryEntries: [],
-							existing: false,
-							runtimeOptions: {},
-							provideEntryPoint: mockProvideEntryPoint,
-							minVersionForCollab: version,
-						});
-					});
-				});
-			}
-
 			it("minVersionForCollab = 1.0.0", async () => {
 				const minVersionForCollab = "1.0.0";
 				const logger = new MockLogger();
@@ -3934,9 +3915,10 @@ describe("Runtime", () => {
 					]);
 				});
 
-			// Skipped since 3.0.0 is not an existing FF version yet
-			it.skip("minVersionForCollab = 3.0.0", async () => {
-				const minVersionForCollab = "3.0.0";
+			// Note: We may need to update `expectedRuntimeOptions` for this test
+			// when we bump to certain versions.
+			it("minVersionForCollab = pkgVersion", async () => {
+				const minVersionForCollab = pkgVersion;
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3949,7 +3931,7 @@ describe("Runtime", () => {
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
 					summaryOptions: {},
-					gcOptions: { enableGCSweep: true },
+					gcOptions: {},
 					loadSequenceNumberVerification: "close",
 					flushMode: FlushMode.TurnBased,
 					compressionOptions: {
