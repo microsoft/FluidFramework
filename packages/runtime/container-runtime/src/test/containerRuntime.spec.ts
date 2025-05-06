@@ -3671,8 +3671,6 @@ describe("Runtime", () => {
 			for (const version of invalidVersions) {
 				it(`throws when minVersionForCollab = ${version}`, async () => {
 					const logger = new MockLogger();
-					// These are examples of minVersionForCollab versions that are not valid.
-					// Currently we only
 					await assert.rejects(async () => {
 						await ContainerRuntime.loadRuntime({
 							context: getMockContext({ logger }) as IContainerContext,
