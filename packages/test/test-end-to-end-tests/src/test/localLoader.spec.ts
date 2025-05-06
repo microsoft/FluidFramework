@@ -43,12 +43,12 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 			return TestDataObject.factory;
 		}
 
-		private static readonly factory = new DataObjectFactory(
-			TestDataObject.type,
-			TestDataObject,
-			[],
-			{},
-		);
+		private static readonly factory = new DataObjectFactory({
+			type: TestDataObject.type,
+			ctor: TestDataObject,
+			sharedObjects: [],
+			optionalProviders: {},
+		});
 
 		private counter!: SharedCounter;
 
@@ -89,12 +89,12 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	}
 
-	const testDataObjectFactory = new DataObjectFactory(
-		TestDataObject.type,
-		TestDataObject,
-		[SharedCounter.getFactory(), SharedString.getFactory()],
-		{},
-	);
+	const testDataObjectFactory = new DataObjectFactory({
+		type: TestDataObject.type,
+		ctor: TestDataObject,
+		sharedObjects: [SharedCounter.getFactory(), SharedString.getFactory()],
+		optionalProviders: {},
+	});
 
 	let provider: ITestObjectProvider;
 	before(() => {

@@ -83,10 +83,19 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 	}
 
 	// Registry -----------------------------------------
-	const childDataObjectFactory = new DataObjectFactory("Child", TestDataObject, [], {});
-	const dataObjectFactory = new DataObjectFactory("Test", TestDataObject, [], {}, [
-		childDataObjectFactory.registryEntry,
-	]);
+	const childDataObjectFactory = new DataObjectFactory({
+		type: "Child",
+		ctor: TestDataObject,
+		sharedObjects: [],
+		optionalProviders: {},
+	});
+	const dataObjectFactory = new DataObjectFactory({
+		type: "Test",
+		ctor: TestDataObject,
+		sharedObjects: [],
+		optionalProviders: {},
+		registryEntries: [childDataObjectFactory.registryEntry],
+	});
 	const runtimeFactory = new RuntimeFactoryWithProps(dataObjectFactory);
 
 	let provider: ITestObjectProvider;

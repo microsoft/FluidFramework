@@ -80,21 +80,18 @@ describeCompat(
 				await dataStore2Handle?.get();
 			}
 		}
-		const dataStoreFactory1 = new DataObjectFactory(
-			TestDataObjectType1,
-			TestDataObject1,
-			[],
-			[],
-			[],
-			createDataStoreRuntime(),
-		);
-		const dataStoreFactory2 = new DataObjectFactory(
-			TestDataObjectType2,
-			TestDataObject2,
-			[],
-			[],
-			[],
-		);
+		const dataStoreFactory1 = new DataObjectFactory({
+			type: TestDataObjectType1,
+			ctor: TestDataObject1,
+			sharedObjects: [],
+			optionalProviders: [],
+		});
+		const dataStoreFactory2 = new DataObjectFactory({
+			type: TestDataObjectType2,
+			ctor: TestDataObject2,
+			sharedObjects: [],
+			optionalProviders: [],
+		});
 
 		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],

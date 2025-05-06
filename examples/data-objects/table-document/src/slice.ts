@@ -33,7 +33,12 @@ export class TableSlice
 		return TableSlice.factory;
 	}
 
-	private static readonly factory = new DataObjectFactory(TableSliceType, TableSlice, [], {});
+	private static readonly factory = new DataObjectFactory({
+		type: TableSliceType,
+		ctor: TableSlice,
+		sharedObjects: [],
+		optionalProviders: {},
+	});
 
 	public get name() {
 		return this.root.get(ConfigKey.name);

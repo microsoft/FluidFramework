@@ -294,12 +294,12 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("full initialization of data object should not happen by default", async () => {
-		const dataStoreFactory1 = new DataObjectFactory(
-			"@fluid-example/test-dataStore1",
-			TestDataObject1,
-			[],
-			[],
-		);
+		const dataStoreFactory1 = new DataObjectFactory({
+			type: "@fluid-example/test-dataStore1",
+			ctor: TestDataObject1,
+			sharedObjects: [],
+			optionalProviders: [],
+		});
 		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 		]);

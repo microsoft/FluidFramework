@@ -430,10 +430,9 @@ export class SameContainerMigrationTool
  * scenario, the fourth argument is not used.
  * @internal
  */
-export const SameContainerMigrationToolInstantiationFactory =
-	new DataObjectFactory<SameContainerMigrationTool>(
-		"migration-tool",
-		SameContainerMigrationTool,
-		[PactMap.getFactory()],
-		{},
-	);
+export const SameContainerMigrationToolInstantiationFactory = new DataObjectFactory({
+	type: "migration-tool",
+	ctor: SameContainerMigrationTool,
+	sharedObjects: [PactMap.getFactory()],
+	optionalProviders: {},
+});

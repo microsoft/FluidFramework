@@ -103,9 +103,9 @@ export class ContactCollection extends DataObject implements IContactCollection 
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const ContactCollectionInstantiationFactory = new DataObjectFactory(
-	"contact-collection",
-	ContactCollection,
-	[],
-	{},
-);
+export const ContactCollectionInstantiationFactory = new DataObjectFactory({
+	type: "contact-collection",
+	ctor: ContactCollection,
+	sharedObjects: [],
+	optionalProviders: {},
+});

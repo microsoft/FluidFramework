@@ -144,12 +144,12 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 	// V1 of the registry -----------------------------------------
 	// V1 of the code: Registry setup to create the old document
 	const oldChannelFactory = LegacySharedTree.getFactory();
-	const dataObjectFactory1 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[oldChannelFactory],
-		{},
-	);
+	const dataObjectFactory1 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [oldChannelFactory],
+		optionalProviders: {},
+	});
 
 	// The 1st runtime factory, V1 of the code
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -184,14 +184,19 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
 
-	const dataObjectFactory2 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[migrationShimFactory, sharedTreeShimFactory], // Use the migrationShimFactory instead of the LegacySharedTreeFactory
-		{},
-	);
+	const dataObjectFactory2 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [migrationShimFactory, sharedTreeShimFactory],
+		optionalProviders: {},
+	});
 
-	const childObjectFactory = new DataObjectFactory("ChildDataObject", ChildDataObject, [], {});
+	const childObjectFactory = new DataObjectFactory({
+		type: "ChildDataObject",
+		ctor: ChildDataObject,
+		sharedObjects: [],
+		optionalProviders: {},
+	});
 
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({

@@ -111,12 +111,12 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 	// V1 of the registry -----------------------------------------
 	// V1 of the code: Registry setup to create the old document
 	const oldChannelFactory = LegacySharedTree.getFactory();
-	const dataObjectFactory1 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[oldChannelFactory],
-		{},
-	);
+	const dataObjectFactory1 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [oldChannelFactory],
+		optionalProviders: {},
+	});
 
 	// The 1st runtime factory, V1 of the code
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -148,12 +148,12 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newTreeFactory);
 
-	const dataObjectFactory2 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[migrationShimFactory, sharedTreeShimFactory], // Use the migrationShimFactory instead of the LegacyTreeFactory
-		{},
-	);
+	const dataObjectFactory2 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [migrationShimFactory, sharedTreeShimFactory],
+		optionalProviders: {},
+	});
 
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({

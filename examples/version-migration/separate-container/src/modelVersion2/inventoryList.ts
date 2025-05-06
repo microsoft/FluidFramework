@@ -143,9 +143,9 @@ export class InventoryList extends DataObject implements IInventoryList {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList>(
-	"inventory-list",
-	InventoryList,
-	[SharedMap.getFactory(), SharedString.getFactory()],
-	{},
-);
+export const InventoryListInstantiationFactory = new DataObjectFactory({
+	type: "inventory-list",
+	ctor: InventoryList,
+	sharedObjects: [SharedMap.getFactory(), SharedString.getFactory()],
+	optionalProviders: {},
+});

@@ -54,15 +54,15 @@ protected async initializingFirstTime() {
 }
 
 // When creating your DataObjectFactory
-export const MyDataObjectFactory = new DataObjectFactory(
-    "my-data-object",
-    MyDataObject,
-    [],
-    {},
-    new Map([
-      AgentSchedulerFactory.registryEntry,
-    ]),
-);
+export const MyDataObjectFactory = new DataObjectFactory({
+	type: "my-data-object",
+	ctor: MyDataObject,
+	sharedObjects: [],
+	optionalProviders: {},
+	registryEntries: new Map([
+		AgentSchedulerFactory.registryEntry,
+	]),
+});
 ```
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->

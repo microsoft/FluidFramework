@@ -218,9 +218,9 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const InventoryListFactory = new DataObjectFactory<InventoryList>(
-	"inventory-list",
-	InventoryList,
-	[migrationShimFactory, newTreeShimFactory],
-	{},
-);
+export const InventoryListFactory = new DataObjectFactory({
+	type: "inventory-list",
+	ctor: InventoryList,
+	sharedObjects: [migrationShimFactory, newTreeShimFactory],
+	optionalProviders: {},
+});

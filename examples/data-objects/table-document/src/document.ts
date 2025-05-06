@@ -61,13 +61,13 @@ export class TableDocument
 		return TableDocument.factory;
 	}
 
-	private static readonly factory = new DataObjectFactory(
-		TableDocumentType,
-		TableDocument,
-		[SparseMatrix.getFactory(), SharedNumberSequence.getFactory()],
-		{},
-		[TableSlice.getFactory().registryEntry],
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: TableDocumentType,
+		ctor: TableDocument,
+		sharedObjects: [SparseMatrix.getFactory(), SharedNumberSequence.getFactory()],
+		optionalProviders: {},
+		registryEntries: [TableSlice.getFactory().registryEntry],
+	});
 
 	public get numCols() {
 		return this.cols.getLength();

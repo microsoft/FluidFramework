@@ -36,7 +36,12 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 	}
 
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
+	const dataObjectFactory = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [],
+		optionalProviders: {},
+	});
 
 	const IdleDetectionTime = 100;
 	const summaryConfigOverrides: ISummaryConfiguration = {

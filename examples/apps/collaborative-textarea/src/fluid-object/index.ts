@@ -24,12 +24,12 @@ export class CollaborativeText extends DataObject {
 
 	public static readonly Name = "@fluid-example/collaborative-textarea";
 
-	private static readonly factory = new DataObjectFactory(
-		CollaborativeText.Name,
-		CollaborativeText,
-		[SharedString.getFactory()],
-		{},
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: CollaborativeText.Name,
+		ctor: CollaborativeText,
+		sharedObjects: [SharedString.getFactory()],
+		optionalProviders: {},
+	});
 
 	public static getFactory(): DataObjectFactory<CollaborativeText> {
 		return this.factory;

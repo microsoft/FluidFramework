@@ -79,9 +79,9 @@ export class DiceCounter extends DataObject implements IDiceCounter {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const DiceCounterInstantiationFactory = new DataObjectFactory(
-	"dice-counter",
-	DiceCounter,
-	[SharedCounter.getFactory()],
-	{},
-);
+export const DiceCounterInstantiationFactory = new DataObjectFactory({
+	type: "dice-counter",
+	ctor: DiceCounter,
+	sharedObjects: [SharedCounter.getFactory()],
+	optionalProviders: {},
+});

@@ -138,12 +138,12 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		// and info.documentType is either "DocumentMap" or "DocumentMultipleDataStores"
 		assert(isDocumentMapInfo(this.props.documentTypeInfo));
 
-		this._dataObjectFactory = new DataObjectFactory(
-			"TestDataObject",
-			TestDataObject,
-			[SharedMap.getFactory(), SharedMap.getFactory()],
-			[],
-		);
+		this._dataObjectFactory = new DataObjectFactory({
+			type: "TestDataObject",
+			ctor: TestDataObject,
+			sharedObjects: [SharedMap.getFactory(), SharedMap.getFactory()],
+			optionalProviders: [],
+		});
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,
 			registryEntries: [

@@ -14,12 +14,12 @@ import { SharedString } from "@fluidframework/sequence/internal";
 
 export function apisToBundle() {
 	class BundleTestDo extends DataObject {}
-	const defaultFactory = new DataObjectFactory(
-		"BundleTestDo",
-		BundleTestDo,
-		[SharedString.getFactory(), new DirectoryFactory()],
-		{},
-	);
+	const defaultFactory = new DataObjectFactory({
+		type: "BundleTestDo",
+		ctor: BundleTestDo,
+		sharedObjects: [SharedString.getFactory(), new DirectoryFactory()],
+		optionalProviders: {},
+	});
 
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory,

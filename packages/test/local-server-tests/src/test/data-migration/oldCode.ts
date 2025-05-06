@@ -204,22 +204,27 @@ export class RootDO extends DataObject {
 	}
 }
 
-export const DOWithLSTFactory = new DataObjectFactory(
-	"a",
-	DOWithLST,
-	[LegacySharedTree.getFactory()],
-	{},
-);
-export const DOWithLSTAndDirFactory = new DataObjectFactory(
-	"b",
-	DOWithLSTAndDir,
-	[LegacySharedTree.getFactory(), SharedDirectory.getFactory()],
-	{},
-);
-export const RootDOFactory = new DataObjectFactory("rootdo", RootDO, [], {}, [
-	DOWithLSTFactory.registryEntry,
-	DOWithLSTAndDirFactory.registryEntry,
-]);
+export const DOWithLSTFactory = new DataObjectFactory({
+	type: "DOWithLST",
+	ctor: DOWithLST,
+	sharedObjects: [],
+	optionalProviders: {},
+});
+
+export const DOWithLSTAndDirFactory = new DataObjectFactory({
+	type: "DOWithLSTAndDir",
+	ctor: DOWithLSTAndDir,
+	sharedObjects: [],
+	optionalProviders: {},
+});
+
+export const RootDOFactory = new DataObjectFactory({
+	type: "rootdo",
+	ctor: RootDO,
+	sharedObjects: [],
+	optionalProviders: {},
+	registryEntries: [DOWithLSTFactory.registryEntry, DOWithLSTAndDirFactory.registryEntry],
+});
 
 export const oldRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 	defaultFactory: RootDOFactory,

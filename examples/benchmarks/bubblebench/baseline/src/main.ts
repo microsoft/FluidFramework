@@ -35,9 +35,9 @@ export class Bubblebench extends DataObject {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  * @internal
  */
-export const BubblebenchInstantiationFactory = new DataObjectFactory(
-	Bubblebench.Name,
-	Bubblebench,
-	[],
-	{},
-);
+export const BubblebenchInstantiationFactory = new DataObjectFactory({
+	type: Bubblebench.Name,
+	ctor: Bubblebench,
+	sharedObjects: [],
+	optionalProviders: {},
+});

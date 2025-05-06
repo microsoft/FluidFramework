@@ -14,12 +14,12 @@ import { CanvasView } from "./view.js";
 /**
  * @internal
  */
-export const CanvasInstantiationFactory = new DataObjectFactory(
-	"Canvas",
-	Canvas,
-	[Ink.getFactory()],
-	{},
-);
+export const CanvasInstantiationFactory = new DataObjectFactory({
+	type: "Canvas",
+	ctor: Canvas,
+	sharedObjects: [Ink.getFactory()],
+	optionalProviders: {},
+});
 
 const canvasViewCallback = (canvas: Canvas): React.ReactElement =>
 	React.createElement(CanvasView, { canvas });

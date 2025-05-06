@@ -53,12 +53,12 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 	};
 
 	const testDataObjectType = "TestDataObject";
-	const dataObjectFactory = new DataObjectFactory(
-		testDataObjectType,
-		TestDataObject,
-		[SharedCounter.getFactory()],
-		{},
-	);
+	const dataObjectFactory = new DataObjectFactory({
+		type: testDataObjectType,
+		ctor: TestDataObject,
+		sharedObjects: [SharedCounter.getFactory()],
+		optionalProviders: {},
+	});
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,

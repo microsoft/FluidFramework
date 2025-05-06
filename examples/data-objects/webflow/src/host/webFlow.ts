@@ -11,13 +11,13 @@ import { FlowDocument } from "../document/index.js";
 import { hostType } from "../package.js";
 
 export class WebFlow extends DataObject {
-	private static readonly factory = new DataObjectFactory<WebFlow>(
-		hostType,
-		WebFlow,
-		[],
-		{},
-		new Map([FlowDocument.getFactory().registryEntry]),
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: hostType,
+		ctor: WebFlow,
+		sharedObjects: [],
+		optionalProviders: {},
+		registryEntries: new Map([FlowDocument.getFactory().registryEntry]),
+	});
 
 	public static getFactory(): IFluidDataStoreFactory {
 		return WebFlow.factory;

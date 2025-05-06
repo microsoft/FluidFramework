@@ -13,12 +13,12 @@ import { MonacoView } from "./view.js";
 
 const monacoName = "@fluid-example/monaco";
 
-const componentFactory = new DataObjectFactory(
-	monacoName,
-	MonacoRunner,
-	[sequence.SharedString.getFactory()],
-	{},
-);
+const componentFactory = new DataObjectFactory({
+	type: monacoName,
+	ctor: MonacoRunner,
+	sharedObjects: [sequence.SharedString.getFactory()],
+	optionalProviders: {},
+});
 
 const monacoViewCallback = (model: MonacoRunner): React.ReactElement =>
 	React.createElement(MonacoView, { sharedString: model.text });

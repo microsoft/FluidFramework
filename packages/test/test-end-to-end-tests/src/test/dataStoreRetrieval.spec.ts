@@ -41,12 +41,12 @@ describeCompat(
 				return this.runtime;
 			}
 		}
-		const innerDataObjectFactory = new DataObjectFactory(
-			"InnerDataObject",
-			InnerDataObject,
-			[],
-			[],
-		);
+		const innerDataObjectFactory = new DataObjectFactory({
+			type: "InnerDataObject",
+			ctor: InnerDataObject,
+			sharedObjects: [],
+			optionalProviders: [],
+		});
 
 		class OuterDataObject extends DataObject implements ITestDataObject {
 			public get _root() {
@@ -82,12 +82,12 @@ describeCompat(
 				await innerDataStoreHandle.get();
 			}
 		}
-		const outerDataObjectFactory = new DataObjectFactory(
-			"OuterDataObject",
-			OuterDataObject,
-			[],
-			[],
-		);
+		const outerDataObjectFactory = new DataObjectFactory({
+			type: "OuterDataObject",
+			ctor: OuterDataObject,
+			sharedObjects: [],
+			optionalProviders: [],
+		});
 
 		let provider: ITestObjectProvider;
 

@@ -89,13 +89,18 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 	};
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
-	const dataObjectFactory2 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[sharedTreeShimFactory], // Use the migrationShimFactory instead of the LegacySharedTreeFactory
-		{},
-	);
-	const childObjectFactory = new DataObjectFactory("ChildDataObject", ChildDataObject, [], {});
+	const dataObjectFactory2 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [sharedTreeShimFactory],
+		optionalProviders: {},
+	});
+	const childObjectFactory = new DataObjectFactory({
+		type: "ChildDataObject",
+		ctor: ChildDataObject,
+		sharedObjects: [],
+		optionalProviders: {},
+	});
 
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({

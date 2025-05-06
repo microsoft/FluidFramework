@@ -173,12 +173,12 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	}
 
 	let provider: ITestObjectProvider;
-	const defaultFactory = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[SharedMap.getFactory(), SharedCell.getFactory()],
-		[],
-	);
+	const defaultFactory = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [SharedMap.getFactory(), SharedCell.getFactory()],
+		optionalProviders: [],
+	});
 
 	const runtimeOptions: IContainerRuntimeOptions = {
 		enableRuntimeIdCompressor: "on",

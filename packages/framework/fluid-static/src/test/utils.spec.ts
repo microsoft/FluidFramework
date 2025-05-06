@@ -19,12 +19,12 @@ import { parseDataObjectsFromSharedObjects } from "../utils.js";
 class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		TestDataObjectClass.Name,
-		TestDataObjectClass,
-		[],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: TestDataObjectClass.Name,
+		ctor: TestDataObjectClass,
+		sharedObjects: [],
+		optionalProviders: {},
+	});
 }
 
 const TestDataObject = createDataObjectKind(TestDataObjectClass);
