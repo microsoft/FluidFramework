@@ -608,6 +608,8 @@ export namespace System_TableSchema {
 					for (const rowToRemove of rowsToRemove) {
 						const index = this.rows.indexOf(rowToRemove);
 						if (index === -1) {
+							// Note, throwing an error within a transaction will abort the entire transaction.
+							// So if we throw an error here for any row, no rows will be removed.
 							throw new UsageError(
 								`Specified row with ID "${rowToRemove.id}" does not exist in the table.`,
 							);
