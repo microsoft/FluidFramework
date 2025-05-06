@@ -4,6 +4,7 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree } from "./shared-tree/index.js";
 import {
@@ -489,6 +490,14 @@ export namespace System_TableSchema {
 				column,
 				index,
 			}: TableSchema.InsertColumnParameters<ColumnInsertableType>): ColumnValueType {
+				if (this.containsColumn(column)) {
+					// TypeScript is unable to narrow the types correctly here, hence the cast.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					throw new UsageError(
+						`Column "${(column as TableSchema.IColumn).id}" already exists in the table.`,
+					);
+				}
+
 				if (index === undefined) {
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -509,6 +518,16 @@ export namespace System_TableSchema {
 				index,
 				rows,
 			}: TableSchema.InsertRowsParameters<RowInsertableType>): RowValueType[] {
+				for (const newRow of rows) {
+					if (this.containsRow(newRow)) {
+						// TypeScript is unable to narrow the types correctly here, hence the cast.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						throw new UsageError(
+							`Row "${(newRow as TableSchema.IRow).id}" already exists in the table.`,
+						);
+					}
+				}
+
 				if (index === undefined) {
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -579,6 +598,29 @@ export namespace System_TableSchema {
 						row.removeCell(column.id);
 					}
 				}
+			}
+
+			private containsColumn(columnToCheck: ColumnInsertableType): boolean {
+				const maybeId: string | undefined = (columnToCheck as TableSchema.IColumn).id;
+
+				// TypeScript is unable to narrow the types correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return maybeId !== undefined &&
+					this.columns.find((column) => (column as TableSchema.IColumn).id === maybeId) !==
+						undefined
+					? true
+					: false;
+			}
+
+			private containsRow(rowToCheck: RowInsertableType): boolean {
+				const maybeId: string | undefined = (rowToCheck as TableSchema.IRow).id;
+
+				// TypeScript is unable to narrow the types correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return maybeId !== undefined &&
+					this.rows.find((row) => (row as TableSchema.IRow).id === maybeId) !== undefined
+					? true
+					: false;
 			}
 		}
 
@@ -708,7 +750,7 @@ export namespace TableSchema {
 	 * @sealed @internal
 	 */
 	export interface IRow<
-		TCell extends ImplicitAllowedTypes,
+		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> {
 		/**

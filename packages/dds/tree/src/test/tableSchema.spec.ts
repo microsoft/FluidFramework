@@ -20,7 +20,7 @@ import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
-describe("TableFactory unit tests", () => {
+describe.only("TableFactory unit tests", () => {
 	function createTableTree() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
@@ -284,9 +284,7 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		// TODO: There is currently no policy from prohibiting insertion of a column that already exists.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
-		it.skip("Appending existing column errors", () => {
+		it("Inserting existing column fails", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				rows: [],
@@ -301,7 +299,7 @@ describe("TableFactory unit tests", () => {
 					treeView.root.insertColumn({
 						column: { id: "column-b", props: {} },
 					}),
-				validateUsageError(/Placeholder usage error/),
+				validateUsageError(/Column "column-b" already exists in the table./),
 			);
 		});
 	});
@@ -467,9 +465,7 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		// TODO: There is currently no policy from prohibiting insertion of a row that already exists.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
-		it.skip("Inserting row that already exists fails", () => {
+		it("Inserting existing row fails", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				rows: [
@@ -498,7 +494,7 @@ describe("TableFactory unit tests", () => {
 							},
 						],
 					}),
-				validateUsageError(/Placeholder usage error/),
+				validateUsageError(/Row "row-a" already exists in the table./),
 			);
 		});
 	});
