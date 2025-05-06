@@ -187,7 +187,6 @@ export class MyExample extends DataObject<IFluidUserInfo> {
 export const ClickerInstantiationFactory = new DataObjectFactory({
     type: Clicker.Name
     ctor: Clicker,
-     // distributed data structures
     optionalProviders: { IFluidUserInfo }, // Provider Symbols see below
 });
 ```
