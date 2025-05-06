@@ -248,8 +248,14 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	dispose(): void;
 
 	/**
-	 * Allows the host to have the container force to be in read-only mode
+	 * Forces the container into read-only mode.
 	 * @param readonly - Boolean that toggles if read-only policies will be enforced
+	 *
+	 * @remarks
+	 *
+	 * Forces the container into read-only mode, despite user's permissions.
+	 * This is useful in scenarios where client is disconnected from server and
+	 * you don't want client to generate new local changes.
 	 */
 	forceReadonly(readonly: boolean): void;
 }
