@@ -592,7 +592,7 @@ export namespace System_TableSchema {
 					const rowToRemove = rowsToRemove[0] ?? oob();
 					const index = this.rows.indexOf(rowToRemove);
 
-					// If the row
+					// If the row does not exist in the table, throw an error.
 					if (index === -1) {
 						throw new UsageError(
 							`Specified row with ID "${rowToRemove.id}" does not exist in the table.`,
@@ -607,6 +607,8 @@ export namespace System_TableSchema {
 				Tree.runTransaction(this, () => {
 					for (const rowToRemove of rowsToRemove) {
 						const index = this.rows.indexOf(rowToRemove);
+
+						// If any of the rows do not exist in the table, throw an error.
 						if (index === -1) {
 							// Note, throwing an error within a transaction will abort the entire transaction.
 							// So if we throw an error here for any row, no rows will be removed.
