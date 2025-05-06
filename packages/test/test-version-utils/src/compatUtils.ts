@@ -25,7 +25,6 @@ import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-	type IFluidDataStorePolicies,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
@@ -181,7 +180,6 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 
 	return function (containerOptions?: ITestContainerConfig): IFluidDataStoreFactory {
 		class TestDataObject extends api.DataObject implements ITestDataObject {
-			static readonly policies?: Partial<IFluidDataStorePolicies> = containerOptions?.policies;
 			get _context() {
 				return this.context;
 			}

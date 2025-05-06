@@ -6,10 +6,13 @@
 import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type {
 	IContainerRuntimeBaseExperimental,
 	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { getContainerEntryPointBackCompat } from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
@@ -33,9 +36,30 @@ describeCompat(
 			}
 			const provider = getTestObjectProvider();
 
-			const container = await provider.makeTestContainer({
-				policies: { readonlyInStagingMode },
+			const defaultFactory = new DataObjectFactory({
+				type: "test",
+				ctor: class extends apis.dataRuntime.DataObject implements ITestDataObject {
+					get _context(): IFluidDataStoreContext {
+						return this.context;
+					}
+					get _runtime(): IFluidDataStoreRuntime {
+						return this.runtime;
+					}
+					get _root(): ISharedDirectory {
+						return this.root;
+					}
+				},
+				runtimeClass: apis.dataRuntime.FluidDataStoreRuntime,
+				policies: {
+					readonlyInStagingMode,
+				},
 			});
+			const container = await provider.createContainer(
+				new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
+					defaultFactory,
+					registryEntries: new Map([[defaultFactory.type, defaultFactory]]),
+				}),
+			);
 			const { _context, _runtime } =
 				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 

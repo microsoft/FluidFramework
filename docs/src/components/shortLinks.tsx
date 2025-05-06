@@ -4,6 +4,7 @@
  */
 
 import { useDoc } from "@docusaurus/plugin-content-docs/client";
+import type { ApiItemKind } from "@fluid-tools/api-markdown-documenter";
 import React from "react";
 
 // TODO: how will versioning interact with these?
@@ -41,9 +42,8 @@ export interface ApiLinkProps {
 	children?: React.ReactNode;
 	packageName: string;
 	apiName: string;
-	// TODO: import directly from `api-extractor-model`
 	// TODO: do we have enough context to determine this automatically when unambiguous?
-	apiType: "class" | "enum" | "function" | "interface" | "namespace" | "type" | "variable";
+	apiType: ApiItemKind;
 
 	/**
 	 * (Optional) heading ID on the target page to link to.
@@ -72,7 +72,9 @@ export function ApiLink({
 }: ApiLinkProps): JSX.Element {
 	const root = useLinkPathBase();
 	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
-	const path = `${root}${packageName}/${apiName.toLocaleLowerCase()}-${apiType}${headingPostfix}`;
+	// `api-documenter` generates all lowercase entries for API item names and types.
+	// Convert input names and types to lowercase to match.
+	const path = `${root}${packageName}/${apiName.toLocaleLowerCase()}-${apiType.toLocaleLowerCase()}${headingPostfix}`;
 	return <a href={path}>{children ?? apiName}</a>;
 }
 

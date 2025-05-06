@@ -30,7 +30,6 @@ import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type {
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeBaseExperimental,
-	IFluidDataStorePolicies,
 	// eslint-disable-next-line import/no-deprecated
 	StageControlsExperimental,
 } from "@fluidframework/runtime-definitions/internal";
@@ -72,17 +71,17 @@ export type StressDataObjectOperations =
 	| ExitStagingMode;
 
 export class StressDataObject extends DataObject {
-	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory(
-		"StressDataObject",
-		StressDataObject,
-		[...ddsModelMap.values()].map((v) => v.factory),
-		{},
-		[["StressDataObject", new LazyPromise(async () => StressDataObject.factory)]],
-	);
-
-	public static readonly policies: Partial<IFluidDataStorePolicies> = {
-		readonlyInStagingMode: false,
-	};
+	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
+		type: "StressDataObject",
+		ctor: StressDataObject,
+		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
+		registryEntries: [
+			["StressDataObject", new LazyPromise(async () => StressDataObject.factory)],
+		],
+		policies: {
+			readonlyInStagingMode: false,
+		},
+	});
 
 	get StressDataObject() {
 		return this;
@@ -329,13 +328,13 @@ export class DefaultStressDataObject extends StressDataObject {
 }
 
 export const createRuntimeFactory = (): IRuntimeFactory => {
-	const defaultStressDataObjectFactory = new DataObjectFactory(
-		"DefaultStressDataObject",
-		DefaultStressDataObject,
-		[...ddsModelMap.values()].map((v) => v.factory),
-		{},
-		[[StressDataObject.factory.type, StressDataObject.factory]],
-	);
+	const defaultStressDataObjectFactory = new DataObjectFactory({
+		type: "DefaultStressDataObject",
+		ctor: DefaultStressDataObject,
+		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
+
+		registryEntries: [[StressDataObject.factory.type, StressDataObject.factory]],
+	});
 
 	const runtimeOptions: IContainerRuntimeOptionsInternal = {
 		summaryOptions: {

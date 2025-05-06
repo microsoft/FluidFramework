@@ -27,6 +27,8 @@ import {
 	type FieldSchema,
 	type FieldKind,
 	SchemaFactory,
+	type ImplicitAnnotatedFieldSchema,
+	type UnannotateImplicitFieldSchema,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
@@ -95,7 +97,7 @@ export namespace System_TableSchema {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumnInternal<
 		const TInputScope extends string | undefined,
-		const TPropsSchema extends ImplicitFieldSchema,
+		const TPropsSchema extends ImplicitAnnotatedFieldSchema,
 	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, propsSchema: TPropsSchema) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
@@ -130,7 +132,7 @@ export namespace System_TableSchema {
 		 * A column in a table.
 		 */
 		class Column
-			extends schemaFactory.object("Column", columnFields, {
+			extends schemaFactory.objectAlpha("Column", columnFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
@@ -148,7 +150,7 @@ export namespace System_TableSchema {
 		type ColumnInsertableType = InsertableObjectFromSchemaRecord<
 			typeof columnFieldsBuiltInParts
 		> &
-			(FieldHasDefault<TPropsSchema> extends true
+			(FieldHasDefault<UnannotateImplicitFieldSchema<TPropsSchema>> extends true
 				? // Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
 					// documentation appears in the data insertion scenario.
 					// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
@@ -159,14 +161,18 @@ export namespace System_TableSchema {
 						 * The column's properties.
 						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
 						 */
-						props?: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props?: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					}
 				: {
 						/**
 						 * The column's properties.
 						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
 						 */
-						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					});
 
 		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
@@ -279,7 +285,7 @@ export namespace System_TableSchema {
 		 * The Row schema - this is a map of Cells where the key is the column id
 		 */
 		class Row
-			extends schemaFactory.object("Row", rowFields, {
+			extends schemaFactory.objectAlpha("Row", rowFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
@@ -422,13 +428,8 @@ export namespace System_TableSchema {
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
-		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>;
-
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
-		type ColumnInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>;
-
 		type RowValueType = TreeNodeFromImplicitAllowedTypes<TRowSchema>;
-		type RowInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>;
 
 		/**
 		 * {@link Table} fields.
@@ -444,7 +445,7 @@ export namespace System_TableSchema {
 		 * The Table schema
 		 */
 		class Table
-			extends schemaFactory.object("Table", tableFields, {
+			extends schemaFactory.objectAlpha("Table", tableFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
@@ -482,7 +483,7 @@ export namespace System_TableSchema {
 			public insertColumn({
 				column,
 				index,
-			}: TableSchema.InsertColumnParameters<ColumnInsertableType>): ColumnValueType {
+			}: TableSchema.InsertColumnParameters<TColumnSchema>): ColumnValueType {
 				if (index === undefined) {
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -502,7 +503,7 @@ export namespace System_TableSchema {
 			public insertRows({
 				index,
 				rows,
-			}: TableSchema.InsertRowsParameters<RowInsertableType>): RowValueType[] {
+			}: TableSchema.InsertRowsParameters<TRowSchema>): RowValueType[] {
 				if (index === undefined) {
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -519,7 +520,7 @@ export namespace System_TableSchema {
 				return rows as unknown as RowValueType[];
 			}
 
-			public setCell({ key, cell }: TableSchema.SetCellParameters<CellInsertableType>): void {
+			public setCell({ key, cell }: TableSchema.SetCellParameters<TCellSchema>): void {
 				const { columnId, rowId } = key;
 				const row = this.getRow(rowId);
 				if (row !== undefined) {
@@ -630,7 +631,9 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createColumn:2)}.
 	 * @sealed @internal
 	 */
-	export interface IColumn<TProps extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	export interface IColumn<
+		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
+	> {
 		/**
 		 * The unique identifier of the column.
 		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
@@ -644,8 +647,10 @@ export namespace TableSchema {
 		 * Note: these docs are duplicated on the inline type definitions in {@link createColumn}.
 		 * If you update the docs here, please also update the inline type definitions.
 		 */
-		get props(): TreeFieldFromImplicitField<TProps> | undefined;
-		set props(value: InsertableTreeFieldFromImplicitField<TProps>);
+		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>> | undefined;
+		set props(value: InsertableTreeFieldFromImplicitField<
+			UnannotateImplicitFieldSchema<TProps>
+		>);
 	}
 
 	/**
@@ -698,8 +703,8 @@ export namespace TableSchema {
 	 * @sealed @internal
 	 */
 	export interface IRow<
-		TCell extends ImplicitAllowedTypes,
-		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
+		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> {
 		/**
 		 * The unique identifier of the row.
@@ -747,8 +752,10 @@ export namespace TableSchema {
 		 * Note: these docs are duplicated on the inline type definitions in {@link createColumn}.
 		 * If you update the docs here, please also update the inline type definitions.
 		 */
-		get props(): TreeFieldFromImplicitField<TProps>;
-		set props(value: InsertableTreeFieldFromImplicitField<TProps>);
+		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>>;
+		set props(value: InsertableTreeFieldFromImplicitField<
+			UnannotateImplicitFieldSchema<TProps>
+		>);
 	}
 
 	/**
@@ -823,7 +830,9 @@ export namespace TableSchema {
 	 * {@link TableSchema.ITable.insertColumn} parameters.
 	 * @internal
 	 */
-	export interface InsertColumnParameters<TInsertableColumn> {
+	export interface InsertColumnParameters<
+		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	> {
 		/**
 		 * The index at which to insert the new column.
 		 * @remarks If not provided, the column will be appended to the end of the table.
@@ -833,14 +842,16 @@ export namespace TableSchema {
 		/**
 		 * The column to insert.
 		 */
-		readonly column: TInsertableColumn;
+		readonly column: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
 	}
 
 	/**
 	 * {@link TableSchema.ITable.insertRows} parameters.
 	 * @internal
 	 */
-	export interface InsertRowsParameters<TInsertableRow> {
+	export interface InsertRowsParameters<
+		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	> {
 		/**
 		 * The index at which to insert the new rows.
 		 * @remarks If not provided, the rows will be appended to the end of the table.
@@ -850,14 +861,16 @@ export namespace TableSchema {
 		/**
 		 * The rows to insert.
 		 */
-		readonly rows: TInsertableRow[];
+		readonly rows: InsertableTreeNodeFromImplicitAllowedTypes<TRow>[];
 	}
 
 	/**
 	 * {@link TableSchema.ITable.setCell} parameters.
 	 * @internal
 	 */
-	export interface SetCellParameters<TInsertableCell> {
+	export interface SetCellParameters<
+		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	> {
 		/**
 		 * The key to uniquely identify a cell in a table.
 		 */
@@ -866,7 +879,7 @@ export namespace TableSchema {
 		/**
 		 * The cell to set.
 		 */
-		readonly cell: TInsertableCell;
+		readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
 	}
 
 	/**
@@ -874,9 +887,9 @@ export namespace TableSchema {
 	 * @sealed @internal
 	 */
 	export interface ITable<
-		TCell extends ImplicitAllowedTypes,
-		TColumn extends ImplicitAllowedTypes,
-		TRow extends ImplicitAllowedTypes,
+		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> {
 		/**
 		 * The table's columns.
@@ -910,25 +923,21 @@ export namespace TableSchema {
 		 * @throws Throws an error if the column is already in the tree, or if the specified index is out of range.
 		 */
 		insertColumn(
-			params: InsertColumnParameters<InsertableTreeNodeFromImplicitAllowedTypes<TColumn>>,
+			params: InsertColumnParameters<TColumn>,
 		): TreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		/**
 		 * Inserts 0 or more rows into the table.
 		 * @throws Throws an error if any of the rows are already in the tree, or if the specified index is out of range.
 		 */
-		insertRows(
-			params: InsertRowsParameters<InsertableTreeNodeFromImplicitAllowedTypes<TRow>>,
-		): TreeNodeFromImplicitAllowedTypes<TRow>[];
+		insertRows(params: InsertRowsParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
 		 * Sets the cell at the specified location in the table.
 		 * @remarks To remove a cell, call {@link TableSchema.ITable.removeCell} instead.
 		 * @privateRemarks TODO: add overload that takes column/row nodes?
 		 */
-		setCell(
-			params: SetCellParameters<InsertableTreeNodeFromImplicitAllowedTypes<TCell>>,
-		): void;
+		setCell(params: SetCellParameters<TCell>): void;
 
 		/**
 		 * Removes the specified column from the table.
