@@ -70,7 +70,10 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 	configProvider.set("Fluid.Container.enableOfflineLoad", true);
 
 	const testDataObjectType = "TestDataObject";
-	const dataObjectFactory = new DataObjectFactory(testDataObjectType, TestDataObject, [], {});
+	const dataObjectFactory = new DataObjectFactory({
+		type: testDataObjectType,
+		ctor: TestDataObject,
+	});
 
 	// The 1st runtime factory, V1 of the code
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({

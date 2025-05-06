@@ -283,7 +283,11 @@ class RootDataObjectFactory extends DataObjectFactory<
 	) {
 		// Note: we're passing `undefined` registry entries to the base class so it won't create a registry itself,
 		// and instead we override the necessary methods in this class to use the registry received in the constructor.
-		super("rootDO", RootDataObject, sharedObjects, {}, undefined);
+		super({
+			type: "rootDO",
+			ctor: RootDataObject,
+			sharedObjects,
+		});
 	}
 
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
