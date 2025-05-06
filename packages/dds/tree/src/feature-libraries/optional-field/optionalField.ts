@@ -71,7 +71,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 
 			if (replace.src !== undefined) {
-				childChange = nodeManager.invertAttach(replace.src, 1, replace.dst).value;
+				childChange = nodeManager.invertAttach(replace.src, 1, invertedReplace.dst).value;
 			}
 
 			inverted.valueReplace = invertedReplace;
