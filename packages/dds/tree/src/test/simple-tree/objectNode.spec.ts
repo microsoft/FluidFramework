@@ -23,6 +23,7 @@ import {
 import type {
 	FieldHasDefault,
 	InsertableObjectFromSchemaRecord,
+	InsertableObjectFromAnnotatedSchemaRecord,
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/objectNode.js";
@@ -42,6 +43,7 @@ import type {
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
+	ImplicitAnnotatedFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
 	InsertableTypedNode,
@@ -83,6 +85,39 @@ const schemaFactory = new SchemaFactory("Test");
 	{
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		type result = InsertableObjectFromSchemaRecord<{}>;
+		type _check = requireAssignableTo<result, Record<string, never>>;
+	}
+}
+
+// InsertableObjectFromAnnotatedSchemaRecord
+{
+	const schemaFactoryAlpha = new SchemaFactoryAlpha("Test");
+	class Note extends schemaFactoryAlpha.objectAlpha("Note", {}) {}
+
+	// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+	type Info = {
+		readonly stuff: readonly [typeof Note];
+	};
+
+	type Desired = InsertableTypedNode<typeof Note>;
+
+	{
+		type result = InsertableObjectFromAnnotatedSchemaRecord<Info>["stuff"];
+		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	}
+
+	// Generic case
+	{
+		type result = InsertableObjectFromAnnotatedSchemaRecord<
+			RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>
+		>;
+		type _check = requireAssignableTo<result, never>;
+	}
+
+	// Empty case
+	{
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		type result = InsertableObjectFromAnnotatedSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
 	}
 }
@@ -507,8 +542,8 @@ describeHydration(
 
 		it("ObjectNodeSchema", () => {
 			const sf = new SchemaFactoryAlpha("Test");
-			class Note extends sf.object("Note", { f: SchemaFactory.null }) {}
-			class EmptyObject extends sf.object("Note", {}) {}
+			class Note extends sf.objectAlpha("Note", { f: SchemaFactory.null }) {}
+			class EmptyObject extends sf.objectAlpha("Note", {}) {}
 
 			const schema: ObjectNodeSchema = Note;
 			const schemaEmpty: ObjectNodeSchema = EmptyObject;
@@ -525,7 +560,7 @@ describeHydration(
 
 			// Explicit field
 			{
-				class ExplicitField extends sf.object("WithField", {
+				class ExplicitField extends sf.objectAlpha("WithField", {
 					f: sf.optional([() => SchemaFactory.null]),
 				}) {}
 
@@ -538,7 +573,7 @@ describeHydration(
 			{
 				type TestObject = ObjectNodeSchema<
 					"x",
-					RestrictiveStringRecord<ImplicitFieldSchema>,
+					RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 					false
 				>;
 				type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;
@@ -563,7 +598,7 @@ describeHydration(
 
 			// Empty POJO mode
 			{
-				const Empty = sf.object("Empty", {});
+				const Empty = sf.objectAlpha("Empty", {});
 
 				type Info = (typeof Empty)["info"];
 				const _check1: TreeNodeSchema = Empty;
@@ -572,7 +607,7 @@ describeHydration(
 
 			// POJO mode with field
 			{
-				const ExplicitField = sf.object("WithField", {
+				const ExplicitField = sf.objectAlpha("WithField", {
 					f: SchemaFactory.null,
 				});
 
