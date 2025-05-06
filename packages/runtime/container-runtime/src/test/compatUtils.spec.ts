@@ -62,8 +62,6 @@ describe("compatUtils", () => {
 		};
 
 		const testCases: {
-			// We use `SemanticVersion` instead of `MinimumVersionForCollab`
-			// so we can test versions that don't start with 1 or 2.
 			minVersionForCollab: SemanticVersion;
 			expectedConfig: Partial<ITestConfigMap>;
 		}[] = [

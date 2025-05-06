@@ -42,13 +42,10 @@ import {
 /**
  * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
  */
-const compatibilityModeToMinVersionForCollab: Record<
-	CompatibilityMode,
-	MinimumVersionForCollab
-> = {
+const compatibilityModeToMinVersionForCollab = {
 	"1": "1.0.0",
 	"2": "2.0.0",
-};
+} as const satisfies Record<CompatibilityMode, MinimumVersionForCollab>;
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.

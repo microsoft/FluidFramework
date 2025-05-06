@@ -31,7 +31,8 @@ import { pkgVersion } from "./packageVersion.js";
  * any 2.0.0+ version, we will use a special value of `2.0.0-defaults`, which
  * is semantically less than 2.0.0.
  */
-export const defaultMinVersionForCollab = "2.0.0-defaults" as const;
+export const defaultMinVersionForCollab =
+	"2.0.0-defaults" as const satisfies MinimumVersionForCollab;
 
 /**
  * We don't want allow a version before the major public release of the LTS version.
@@ -39,7 +40,7 @@ export const defaultMinVersionForCollab = "2.0.0-defaults" as const;
  * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
  * with our policy and allow all 1.x versions to be compatible with 2.x.
  */
-const lowestMinVersionForCollab = "1.0.0" as const;
+const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -62,7 +63,7 @@ export type MinimumVersionForCollab =
 /**
  * String in a valid semver format of a specific version at least specifying minor.
  * Unlike {@link MinimumVersionForCollab}, this type allows any bigint for the major version.
- * Currently only used in unit tests to allow versions that don't start with 1 or 2.
+ * Used as a more generic type that allows major versions other than 1 or 2.
  */
 export type SemanticVersion =
 	| `${bigint}.${bigint}.${bigint}`
