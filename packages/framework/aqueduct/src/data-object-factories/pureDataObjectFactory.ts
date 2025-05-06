@@ -240,20 +240,16 @@ export class PureDataObjectFactory<
 					}
 				: propsOrType;
 
-		const sharedObjects = [...(newProps.sharedObjects ?? [])];
-		const runtimeClass = newProps.runtimeClass ?? FluidDataStoreRuntime;
-		const optionalProviders = newProps.optionalProviders ?? {};
-		this.type = newProps.type;
-
-		if (this.type === "") {
+		if (newProps.type === "") {
 			throw new Error("undefined type member");
 		}
+		this.type = newProps.type;
 
 		this.createProps = {
 			ctor: newProps.ctor,
-			optionalProviders,
-			sharedObjectRegistry: new Map(sharedObjects.map((ext) => [ext.type, ext])),
-			runtimeClassArg: runtimeClass,
+			optionalProviders: newProps.optionalProviders ?? {},
+			sharedObjectRegistry: new Map(newProps.sharedObjects?.map((ext) => [ext.type, ext])),
+			runtimeClassArg: newProps.runtimeClass ?? FluidDataStoreRuntime,
 		};
 
 		if (newProps.registryEntries !== undefined) {
