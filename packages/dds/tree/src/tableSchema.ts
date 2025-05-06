@@ -27,6 +27,8 @@ import {
 	type FieldSchema,
 	type FieldKind,
 	SchemaFactory,
+	type ImplicitAnnotatedFieldSchema,
+	type UnannotateImplicitFieldSchema,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
@@ -95,7 +97,7 @@ export namespace System_TableSchema {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumnInternal<
 		const TInputScope extends string | undefined,
-		const TPropsSchema extends ImplicitFieldSchema,
+		const TPropsSchema extends ImplicitAnnotatedFieldSchema,
 	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, propsSchema: TPropsSchema) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
@@ -130,7 +132,7 @@ export namespace System_TableSchema {
 		 * A column in a table.
 		 */
 		class Column
-			extends schemaFactory.object("Column", columnFields, {
+			extends schemaFactory.objectAlpha("Column", columnFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
@@ -148,7 +150,7 @@ export namespace System_TableSchema {
 		type ColumnInsertableType = InsertableObjectFromSchemaRecord<
 			typeof columnFieldsBuiltInParts
 		> &
-			(FieldHasDefault<TPropsSchema> extends true
+			(FieldHasDefault<UnannotateImplicitFieldSchema<TPropsSchema>> extends true
 				? // Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
 					// documentation appears in the data insertion scenario.
 					// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
@@ -159,14 +161,18 @@ export namespace System_TableSchema {
 						 * The column's properties.
 						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
 						 */
-						props?: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props?: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					}
 				: {
 						/**
 						 * The column's properties.
 						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
 						 */
-						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					});
 
 		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
@@ -279,7 +285,7 @@ export namespace System_TableSchema {
 		 * The Row schema - this is a map of Cells where the key is the column id
 		 */
 		class Row
-			extends schemaFactory.object("Row", rowFields, {
+			extends schemaFactory.objectAlpha("Row", rowFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
@@ -444,7 +450,7 @@ export namespace System_TableSchema {
 		 * The Table schema
 		 */
 		class Table
-			extends schemaFactory.object("Table", tableFields, {
+			extends schemaFactory.objectAlpha("Table", tableFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
@@ -630,7 +636,9 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createColumn:2)}.
 	 * @sealed @internal
 	 */
-	export interface IColumn<TProps extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	export interface IColumn<
+		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
+	> {
 		/**
 		 * The unique identifier of the column.
 		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
@@ -644,8 +652,10 @@ export namespace TableSchema {
 		 * Note: these docs are duplicated on the inline type definitions in {@link createColumn}.
 		 * If you update the docs here, please also update the inline type definitions.
 		 */
-		get props(): TreeFieldFromImplicitField<TProps> | undefined;
-		set props(value: InsertableTreeFieldFromImplicitField<TProps>);
+		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>> | undefined;
+		set props(value: InsertableTreeFieldFromImplicitField<
+			UnannotateImplicitFieldSchema<TProps>
+		>);
 	}
 
 	/**
@@ -699,7 +709,7 @@ export namespace TableSchema {
 	 */
 	export interface IRow<
 		TCell extends ImplicitAllowedTypes,
-		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
+		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> {
 		/**
 		 * The unique identifier of the row.
@@ -747,8 +757,10 @@ export namespace TableSchema {
 		 * Note: these docs are duplicated on the inline type definitions in {@link createColumn}.
 		 * If you update the docs here, please also update the inline type definitions.
 		 */
-		get props(): TreeFieldFromImplicitField<TProps>;
-		set props(value: InsertableTreeFieldFromImplicitField<TProps>);
+		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>>;
+		set props(value: InsertableTreeFieldFromImplicitField<
+			UnannotateImplicitFieldSchema<TProps>
+		>);
 	}
 
 	/**
