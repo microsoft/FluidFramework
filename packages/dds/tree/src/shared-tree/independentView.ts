@@ -134,7 +134,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
  */
 export interface ViewContent {
 	/**
-	 * Compressed tree from {@link TreeAlpha.exportCompressed}.
+	 * Compressed tree from {@link (TreeAlpha:interface).exportCompressed}.
 	 * @remarks
 	 * This is an owning reference:
 	 * consumers of this content might modify this data in place (for example when applying edits) to avoid copying.

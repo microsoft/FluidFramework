@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { CheckoutFlexTreeView, Tree, TreeAlpha } from "../../shared-tree/index.js";
+import { CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -31,8 +31,12 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
 import type { requireAssignableTo } from "../../util/index.js";
+
 // eslint-disable-next-line import/no-internal-modules
-import { runTransaction } from "../../shared-tree/treeApi.js";
+import { runTransaction, Tree } from "../../shared-tree/tree.js";
+// Including tests for TreeAlpha here so they don't have to move if/when stabilized
+// eslint-disable-next-line import/no-internal-modules
+import { TreeAlpha } from "../../shared-tree/treeAlpha.js";
 
 describe("treeApi", () => {
 	describe("runTransaction", () => {

@@ -84,7 +84,9 @@ export abstract class ErasedType<out Name = unknown> {
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public @system
-type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
+type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
+FieldSchema<FieldKind.Optional | FieldKind.Identifier>
+] ? true : false;
 
 // @public
 export enum FieldKind {
@@ -418,7 +420,6 @@ export const IFluidLoadable: keyof IProvideFluidLoadable;
 
 // @public @sealed
 export interface IFluidLoadable extends IProvideFluidLoadable {
-    // (undocumented)
     readonly handle: IFluidHandle;
 }
 
@@ -433,55 +434,6 @@ export interface IInterval {
     // (undocumented)
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
-}
-
-// @alpha @deprecated @legacy
-export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
-    // (undocumented)
-    [Symbol.iterator](): Iterator<TInterval>;
-    add({ start, end, props, }: {
-        start: SequencePlace;
-        end: SequencePlace;
-        props?: PropertySet;
-    }): TInterval;
-    // (undocumented)
-    attachDeserializer(onDeserialize: DeserializeCallback): void;
-    // (undocumented)
-    readonly attached: boolean;
-    attachIndex(index: IntervalIndex<TInterval>): void;
-    change(id: string, { start, end, props }: {
-        start?: SequencePlace;
-        end?: SequencePlace;
-        props?: PropertySet;
-    }): TInterval | undefined;
-    // (undocumented)
-    CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-    detachIndex(index: IntervalIndex<TInterval>): boolean;
-    // @deprecated (undocumented)
-    findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
-    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
-    // (undocumented)
-    getIntervalById(id: string): TInterval | undefined;
-    map(fn: (interval: TInterval) => void): void;
-    // @deprecated (undocumented)
-    nextInterval(pos: number): TInterval | undefined;
-    // @deprecated (undocumented)
-    previousInterval(pos: number): TInterval | undefined;
-    removeIntervalById(id: string): TInterval | undefined;
-}
-
-// @alpha @deprecated @legacy
-export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "changed", listener: (interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval | undefined, local: boolean, slide: boolean) => void): void;
 }
 
 // @public
@@ -552,17 +504,10 @@ declare namespace InternalTypes {
         InsertableObjectFromSchemaRecord,
         FlexList,
         FlexListToUnion,
-        ExtractItemType,
-        TreeApi
+        ExtractItemType
     }
 }
 export { InternalTypes }
-
-// @alpha @deprecated @legacy
-export interface IntervalIndex<TInterval extends ISerializableInterval> {
-    add(interval: TInterval): void;
-    remove(interval: TInterval): void;
-}
 
 // @alpha @legacy
 export const IntervalStickiness: {
@@ -721,12 +666,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-}
-
-// @alpha @deprecated @legacy (undocumented)
-export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
-    // (undocumented)
-    getIntervalCollection(label: string): IIntervalCollection<TInterval>;
 }
 
 // @alpha @sealed @legacy
@@ -1269,14 +1208,14 @@ export type TransactionConstraint = NodeInDocumentConstraint;
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
-// @public
-export const Tree: TreeApi;
-
 // @public @sealed @system
-interface TreeApi extends TreeNodeApi {
+export interface Tree extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
     readonly runTransaction: RunTransaction;
 }
+
+// @public
+export const Tree: Tree;
 
 // @public @sealed
 export interface TreeArrayNode<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes, out T = [TAllowedTypes] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TAllowedTypes> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes> : InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, in TMoveFrom = ReadonlyArrayNode> extends ReadonlyArrayNode<T> {
@@ -1436,7 +1375,7 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
 // @public
 export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
 
-// @public @system (undocumented)
+// @public @system
 export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNodeSchema<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {
     [NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema> ? InsertableObjectFromSchemaRecord<T["info"]> : unknown;
     [NodeKind.Array]: T["info"] extends ImplicitAllowedTypes ? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>> : unknown;

@@ -23,7 +23,7 @@ import {
 import { isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
-import { toStoredSchema, type ViewSchema } from "../simple-tree/index.js";
+import type { SchemaCompatibilityTester } from "../simple-tree/index.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -113,7 +113,7 @@ export enum UpdateType {
 }
 
 export function evaluateUpdate(
-	viewSchema: ViewSchema,
+	viewSchema: SchemaCompatibilityTester,
 	allowedSchemaModifications: AllowedUpdateType,
 	checkout: ITreeCheckout,
 ): UpdateType {
@@ -209,7 +209,7 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredConte
 }
 
 /**
- * Ensure a {@link ITreeCheckout} can be used with a given {@link ViewSchema}.
+ * Ensure a {@link ITreeCheckout} can be used with a given {@link SchemaCompatibilityTester}.
  *
  * @remarks
  * It is up to the caller to ensure that compatibility is reevaluated if the checkout's stored schema is edited in the future.
@@ -221,7 +221,7 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredConte
  * @returns true iff checkout now is compatible with `viewSchema`.
  */
 export function ensureSchema(
-	viewSchema: ViewSchema,
+	viewSchema: SchemaCompatibilityTester,
 	allowedSchemaModifications: AllowedUpdateType,
 	checkout: ITreeCheckout,
 	treeContent: TreeStoredContent | undefined,
@@ -241,7 +241,7 @@ export function ensureSchema(
 			return false;
 		}
 		case UpdateType.SchemaCompatible: {
-			checkout.updateSchema(toStoredSchema(viewSchema.schema));
+			checkout.updateSchema(viewSchema.viewSchemaAsStored);
 			return true;
 		}
 		case UpdateType.Initialize: {
