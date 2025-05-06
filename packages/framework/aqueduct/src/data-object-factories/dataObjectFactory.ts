@@ -36,7 +36,9 @@ export class DataObjectFactory<
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
 	/**
-	 * @deprecated Use the props based constructor instead
+	 * @Remarks Use the props object based constructor instead.
+	 * No new features will be added to this constructor,
+	 * and it will eventually be deprecated and removed.
 	 */
 	public constructor(
 		type: string,
