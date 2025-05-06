@@ -808,7 +808,6 @@ export namespace TableSchema {
 		/**
 		 * Gets the cell in the specified column, denoted by column ID.
 		 * @returns The cell if it exists, otherwise undefined.
-		 * @privateRemarks TODO: throw if the column does not belong to the same table as the row.
 		 */
 		getCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 
@@ -821,7 +820,6 @@ export namespace TableSchema {
 		/**
 		 * Sets the cell in the specified column, denoted by column ID.
 		 * @remarks To remove a cell, call {@link TableSchema.IRow.(removeCell:2)} instead.
-		 * @privateRemarks TODO: Throw an error if the column does not exist in the table.
 		 */
 		setCell(columnId: string, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
 
