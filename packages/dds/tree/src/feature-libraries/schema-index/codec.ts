@@ -102,9 +102,7 @@ function decode(f: FormatV1): TreeStoredSchema {
  * @param version - The schema write version.
  * @returns The codec.
  */
-export function makeSchemaCodecV1(
-	options: ICodecOptions,
-): IJsonCodec<TreeStoredSchema, FormatV1> {
+function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV1> {
 	return makeVersionedValidatedCodec(options, new Set([schemaFormatV1.version]), FormatV1, {
 		encode: (data: TreeStoredSchema) => encodeRepoV1(data),
 		decode: (data: FormatV1) => decode(data),
