@@ -3679,7 +3679,7 @@ describe("Runtime", () => {
 							existing: false,
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
-							// @ts-expect-error - Invalid version strings are not castable to SemanticVersion
+							// @ts-expect-error - Invalid version strings are not castable to MinimumVersionForCollab
 							minVersionForCollab: version,
 						});
 					});

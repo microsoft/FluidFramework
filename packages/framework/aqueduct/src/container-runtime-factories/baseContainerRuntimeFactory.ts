@@ -11,7 +11,7 @@ import {
 	FluidDataStoreRegistry,
 	loadContainerRuntime,
 	type IContainerRuntimeOptions,
-	type SemanticVersion,
+	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
@@ -66,7 +66,7 @@ export interface BaseContainerRuntimeFactoryProps {
 	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
 	 */
-	minVersionForCollab?: SemanticVersion | undefined;
+	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }
 
 /**
@@ -94,7 +94,7 @@ export class BaseContainerRuntimeFactory
 	// eslint-disable-next-line import/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-	private readonly minVersionForCollab: SemanticVersion | undefined;
+	private readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();

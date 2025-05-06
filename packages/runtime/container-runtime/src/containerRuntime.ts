@@ -162,7 +162,7 @@ import {
 	getMinVersionForCollabDefaults,
 	isValidMinVersionForCollab,
 	type RuntimeOptionsAffectingDocSchema,
-	type SemanticVersion,
+	type MinimumVersionForCollab,
 } from "./compatUtils.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
@@ -723,7 +723,7 @@ export interface LoadContainerRuntimeParams {
 	 * enable `foo` by default. If a customer were to set minVersionForCollab to 1.0.0, then `bar` would be set to
 	 * disable `foo` by default.
 	 */
-	minVersionForCollab?: SemanticVersion;
+	minVersionForCollab?: MinimumVersionForCollab;
 }
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
@@ -787,7 +787,7 @@ export class ContainerRuntime
 		 */
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-		minVersionForCollab?: SemanticVersion;
+		minVersionForCollab?: MinimumVersionForCollab;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,

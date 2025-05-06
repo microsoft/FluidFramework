@@ -12,7 +12,7 @@ import {
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
-	type SemanticVersion,
+	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
@@ -42,7 +42,7 @@ import {
 /**
  * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
  */
-const compatibilityModeToMinVersionForCollab: Record<CompatibilityMode, SemanticVersion> = {
+const compatibilityModeToMinVersionForCollab: Record<CompatibilityMode, MinimumVersionForCollab> = {
 	"1": "1.0.0",
 	"2": "2.0.0",
 };

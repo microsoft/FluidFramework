@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	getConfigsForCompatMode,
 	type ConfigMap,
-	type MinimumVersionForCollab,
+	type SemanticVersion,
 } from "../compatUtils.js";
 
 describe("compatUtils", () => {
@@ -62,9 +62,9 @@ describe("compatUtils", () => {
 		};
 
 		const testCases: {
-			// We use string instead of SemanticVersion for `minVersionForCollab`
+			// We use `SemanticVersion` instead of `MinimumVersionForCollab`
 			// so we can test versions that don't start with 1 or 2.
-			minVersionForCollab: MinimumVersionForCollab;
+			minVersionForCollab: SemanticVersion;
 			expectedConfig: Partial<ITestConfigMap>;
 		}[] = [
 			{

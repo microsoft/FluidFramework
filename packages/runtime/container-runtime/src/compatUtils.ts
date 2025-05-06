@@ -55,16 +55,16 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
  * @legacy
  * @alpha
  */
-export type SemanticVersion =
+export type MinimumVersionForCollab =
 	| `${1 | 2}.${bigint}.${bigint}`
 	| `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
- * Unlike {@link SemanticVersion}, this type allows any bigint for the major version.
+ * Unlike {@link MinimumVersionForCollab}, this type allows any bigint for the major version.
  * Currently only used in unit tests to allow versions that don't start with 1 or 2.
  */
-export type MinimumVersionForCollab =
+export type SemanticVersion =
 	| `${bigint}.${bigint}.${bigint}`
 	| `${bigint}.${bigint}.${bigint}-${string}`;
 
@@ -104,9 +104,9 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 /**
  * Mapping of RuntimeOptionsAffectingDocSchema to their compatibility related configs.
  *
- * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an object that maps SemanticVersions
- * to the appropriate default value for that property to supporting that SemanticVersion. If clients running SemanticVersion X are able to understand
- * the format changes introduced by the property, then the default value for that SemanticVersion will enable the feature associated with the property.
+ * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an object that maps MinimumVersionForCollab
+ * to the appropriate default value for that property to supporting that MinimumVersionForCollab. If clients running MinimumVersionForCollab X are able to understand
+ * the format changes introduced by the property, then the default value for that MinimumVersionForCollab will enable the feature associated with the property.
  * Otherwise, the feature will be disabled.
  *
  * For example if the minVersionForCollab is a 1.x version (i.e. "1.5.0"), then the default value for `enableGroupedBatching` will be false since 1.x
@@ -173,7 +173,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
  * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
  */
 export function getMinVersionForCollabDefaults(
-	minVersionForCollab: SemanticVersion,
+	minVersionForCollab: MinimumVersionForCollab,
 ): RuntimeOptionsAffectingDocSchema {
 	return getConfigsForCompatMode(
 		minVersionForCollab,
@@ -186,8 +186,8 @@ export function getMinVersionForCollabDefaults(
 /**
  * Returns a default configuration given minVersionForCollab and configuration version map.
  */
-export function getConfigsForCompatMode<T extends Record<MinimumVersionForCollab, unknown>>(
-	minVersionForCollab: MinimumVersionForCollab,
+export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknown>>(
+	minVersionForCollab: SemanticVersion,
 	configMap: ConfigMap<T>,
 ): Partial<T> {
 	const defaultConfigs: Partial<T> = {};
@@ -214,9 +214,11 @@ export function getConfigsForCompatMode<T extends Record<MinimumVersionForCollab
 
 /**
  * Checks if the minVersionForCollab is valid.
- * A valid minVersionForCollab is a SemanticVersion that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
+ * A valid minVersionForCollab is a MinimumVersionForCollab that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
  */
-export function isValidMinVersionForCollab(minVersionForCollab: SemanticVersion): boolean {
+export function isValidMinVersionForCollab(
+	minVersionForCollab: MinimumVersionForCollab,
+): boolean {
 	return (
 		valid(minVersionForCollab) !== null &&
 		gte(minVersionForCollab, lowestMinVersionForCollab) &&
