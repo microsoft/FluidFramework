@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	type IContainer,
@@ -34,7 +33,6 @@ import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
-import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
 
 import { createLoader } from "../utils.js";
