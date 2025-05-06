@@ -267,8 +267,8 @@ export abstract class FluidDataStoreContext
 		return this._contextDeltaManagerProxy;
 	}
 
-	private forceReadonly: boolean = false;
-	public isReadOnly = (): boolean => this.forceReadonly || this.parentContext.isReadOnly();
+	private isStagingReadOnly: boolean = false;
+	public isReadOnly = (): boolean => this.isStagingReadOnly || this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
 		return this.parentContext.connected;
@@ -693,7 +693,7 @@ export abstract class FluidDataStoreContext
 		// If the `readonlyInStagingMode` policy is not explicitly set to `false`,
 		// the data store defaults to readonly in staging mode.
 		if (this.channel?.policies?.readonlyInStagingMode !== false) {
-			this.forceReadonly = staging;
+			this.isStagingReadOnly = staging;
 			this.notifyReadOnlyState();
 		}
 	}
@@ -1130,7 +1130,7 @@ export abstract class FluidDataStoreContext
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(30),
 			readonly: this.isReadOnly(),
-			forceReadonly: this.forceReadonly,
+			forceReadonly: this.isStagingReadOnly,
 		});
 		this.localChangesTelemetryCount--;
 	}
