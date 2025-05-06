@@ -243,7 +243,7 @@ describe("Outbox", () => {
 		opGroupingConfig?: OpGroupingManagerConfig;
 		immediateMode?: boolean;
 		flushPartialBatches?: boolean;
-		generateIdAllocationOp?: () => LocalBatchMessage | undefined;
+		generateIdAllocationOpIfNeeded?: () => LocalBatchMessage | undefined;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -276,7 +276,8 @@ describe("Outbox", () => {
 				state.opsResubmitted++;
 			},
 			opReentrancy: () => state.isReentrant,
-			generateIdAllocationOp: params.generateIdAllocationOp ?? (() => undefined),
+			generateIdAllocationOpIfNeeded:
+				params.generateIdAllocationOpIfNeeded ?? (() => undefined),
 		});
 	};
 
@@ -335,7 +336,7 @@ describe("Outbox", () => {
 		const generateIdAllocationOpStub = Sinon.stub();
 		const outbox = getOutbox({
 			context: getMockContext(),
-			generateIdAllocationOp: generateIdAllocationOpStub, // Pass the stub
+			generateIdAllocationOpIfNeeded: generateIdAllocationOpStub, // Pass the stub
 		});
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
@@ -442,7 +443,7 @@ describe("Outbox", () => {
 			opGroupingConfig: {
 				groupedBatchingEnabled: false,
 			},
-			generateIdAllocationOp: generateIdAllocationOpStub, // Pass the stub
+			generateIdAllocationOpIfNeeded: generateIdAllocationOpStub, // Pass the stub
 		});
 		const idAllocMessage = createMessage(ContainerMessageType.IdAllocation, "0");
 		// Flush 1 - resubmit multi-message batch including ID Allocation
@@ -552,7 +553,7 @@ describe("Outbox", () => {
 		const generateIdAllocationOpStub = Sinon.stub<[], LocalBatchMessage | undefined>();
 		const outbox = getOutbox({
 			context: getMockLegacyContext() as IContainerContext,
-			generateIdAllocationOp: generateIdAllocationOpStub, // Pass the stub
+			generateIdAllocationOpIfNeeded: generateIdAllocationOpStub, // Pass the stub
 		});
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
@@ -620,7 +621,7 @@ describe("Outbox", () => {
 			opGroupingConfig: {
 				groupedBatchingEnabled: true,
 			},
-			generateIdAllocationOp: generateIdAllocationOpStub, // Pass the stub
+			generateIdAllocationOpIfNeeded: generateIdAllocationOpStub, // Pass the stub
 		});
 
 		const messages = [
@@ -697,7 +698,7 @@ describe("Outbox", () => {
 				minimumBatchSizeInBytes: 512,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
 			},
-			generateIdAllocationOp: generateIdAllocationOpStub, // Pass the stub
+			generateIdAllocationOpIfNeeded: generateIdAllocationOpStub, // Pass the stub
 		});
 
 		const messages = [
@@ -810,7 +811,7 @@ describe("Outbox", () => {
 				groupedBatchingEnabled: true,
 			},
 			// Provide the mock generateIdAllocationOp
-			generateIdAllocationOp: () => {
+			generateIdAllocationOpIfNeeded: () => {
 				const op1 = idAllocOp;
 				idAllocOp = undefined; // Consume the op
 				return op1;
@@ -887,7 +888,7 @@ describe("Outbox", () => {
 				groupedBatchingEnabled: true,
 			},
 			// Provide the mock generateIdAllocationOp
-			generateIdAllocationOp: () => {
+			generateIdAllocationOpIfNeeded: () => {
 				const op1 = idAllocOp;
 				idAllocOp = undefined; // Consume the op
 				return op1;
@@ -1048,7 +1049,7 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				flushPartialBatches: true,
 				// Provide the mock generateIdAllocationOp
-				generateIdAllocationOp: () => {
+				generateIdAllocationOpIfNeeded: () => {
 					const op1 = idAllocOp;
 					idAllocOp = undefined; // Consume the op
 					return op1;

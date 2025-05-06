@@ -1835,7 +1835,7 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
-			generateIdAllocationOp: this.generateIdAllocationOpIfNeeded.bind(this),
+			generateIdAllocationOpIfNeeded: this.generateIdAllocationOpIfNeeded.bind(this),
 		});
 
 		this._quorum = quorum;
@@ -2519,7 +2519,18 @@ export class ContainerRuntime
 		this.emitDirtyDocumentEvent = false;
 		let newState: boolean;
 
+		assert(this.outbox.isEmpty, "Outbox should be empty before replaying pending states");
+
 		try {
+			// Before replaying pending states, we need to clean up any unfinalized ID allocations from the "first time around"
+			const idAllocationOp = this.generateIdAllocationOpIfNeeded(
+				true /* beforeReplayingPendingState */,
+			);
+			if (idAllocationOp !== undefined) {
+				this.outbox.submit(idAllocationOp);
+				this.outbox.flush();
+			}
+
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
 		} finally {
@@ -4348,11 +4359,20 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
+	/**
+	 * If there have been any ID allocations that have not been finalized (sequenced and roundtripped),
+	 * then generate an op to cover those ID allocations.
+	 * By default, this will use {@link IIdCompressorCore.takeNextCreationRange} to cover any allocations since the last call.
+	 * @param beforeReplayingPendingState - If true, use {@link IIdCompressorCore.takeUnfinalizedCreationRange} instead, to ensure
+	 * all IDs allocated for the pending state get finalized ahead of that pending state being replayed.
+	 * Note that some of these IDs may end up unused, depending on the various implementations of resubmit that are in play.
+	 * @returns an op to be submitted *before* any ops that might be using IDs in the unfinalized range
+	 */
 	private generateIdAllocationOpIfNeeded(
-		resubmitOutstandingRanges: boolean,
+		beforeReplayingPendingState: boolean = false,
 	): LocalBatchMessage | undefined {
 		if (this._idCompressor) {
-			const idRange = resubmitOutstandingRanges
+			const idRange = beforeReplayingPendingState
 				? this._idCompressor.takeUnfinalizedCreationRange()
 				: this._idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
@@ -4366,7 +4386,7 @@ export class ContainerRuntime
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 					// Note: For now, we will never stage ID Allocation messages.
 					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
-					staged: false,
+					staged: false, //* This is gonna be wrong, maybe it's irrelevant
 				};
 				return idAllocationBatchMessage;
 			}
