@@ -533,7 +533,7 @@ export abstract class SharedObjectCore<
 				"Fluid.SharedObject.AllowStagingModeWithoutSquashing",
 			) ??
 			(this.runtime.options.allowStagingModeWithoutSquashing as boolean | undefined) ??
-			false;
+			true;
 		if (allowStagingModeWithoutSquashing) {
 			this.reSubmitCore(content, localOpMetadata);
 		} else {
@@ -705,6 +705,8 @@ export abstract class SharedObjectCore<
 	 * reconnection.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - Optional. If `true`, the message will be resubmitted in a squashed form. If `undefined` or `false`,
+	 * the legacy behavior (no squashing) will be used. Defaults to `false` for backward compatibility.
 	 */
 	private reSubmit(content: unknown, localOpMetadata: unknown, squash?: boolean): void {
 		// Back-compat: squash argument may not be provided by container-runtime layer.
