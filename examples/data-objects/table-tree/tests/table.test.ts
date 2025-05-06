@@ -17,6 +17,7 @@ describe("table", () => {
 	});
 
 	it("The page loads and there's a textbox with placeholder Row ID", async () => {
+		// Verify that our "add row" UI exists on the page as a simple smoke test to verify that the page has been loaded correctly
 		await expect(page).toClick("button", { text: "Add Row" });
 	});
 });
