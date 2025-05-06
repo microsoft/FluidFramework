@@ -675,7 +675,7 @@ export abstract class FluidDataStoreContext
 		this.channel!.setConnectionState(connected, clientId);
 	}
 
-	public notifyReadOnlyState(readonly: boolean): void {
+	public notifyReadOnlyState(): void {
 		this.verifyNotClosed("notifyReadOnlyState", false /* checkTombstone */);
 
 		// These two calls achieve the same purpose, and are both needed for a time for back compat
@@ -694,7 +694,7 @@ export abstract class FluidDataStoreContext
 		// the data store defaults to readonly in staging mode.
 		if (this.channel?.policies?.readonlyInStagingMode !== false) {
 			this.forceReadonly = staging;
-			this.notifyReadOnlyState(this.isReadOnly());
+			this.notifyReadOnlyState();
 		}
 	}
 
