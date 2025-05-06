@@ -32,10 +32,15 @@ import {
 	type UnannotateImplicitFieldSchema,
 } from "./simple-tree/index.js";
 
-// Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
+// Future improvement TODOs:
+// - Omit `cells` property from Row insertion type.
+//     -
 // - Record-like type parameters / input parameters?
 // - Omit `props` properties from Row and Column schemas when not provided?
 
+/**
+ * The sub-scope applied to user-provided {@link SchemaFactory}s by table schema factories.
+ */
 const tableSchemaFactorySubScope = "table";
 
 /**
