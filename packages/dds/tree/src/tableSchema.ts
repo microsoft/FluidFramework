@@ -573,7 +573,6 @@ export namespace System_TableSchema {
 
 			public removeColumn(columnToRemove: ColumnValueType): void {
 				const index = this.columns.indexOf(columnToRemove);
-				// If the column is not in the table, do nothing
 				if (index === -1) {
 					throw new UsageError(
 						`Specified column with ID "${columnToRemove.id}" does not exist in the table.`,
