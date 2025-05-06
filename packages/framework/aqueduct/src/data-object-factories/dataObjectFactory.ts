@@ -57,7 +57,7 @@ export class DataObjectFactory<
 		maybeRegistryEntries?: NamedFluidDataStoreRegistryEntries,
 		maybeRuntimeFactory?: typeof FluidDataStoreRuntime,
 	) {
-		const props =
+		const newProps =
 			typeof propsOrType === "string"
 				? {
 						type: propsOrType,
@@ -71,10 +71,7 @@ export class DataObjectFactory<
 					}
 				: { ...propsOrType };
 
-		const sharedObjects =
-			props.sharedObjects === undefined
-				? []
-				: (props.sharedObjects = [...props.sharedObjects]);
+		const sharedObjects = (newProps.sharedObjects = [...(newProps.sharedObjects ?? [])]);
 
 		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
 			// User did not register for directory
@@ -87,6 +84,6 @@ export class DataObjectFactory<
 			sharedObjects.push(SharedMap.getFactory());
 		}
 
-		super(props);
+		super(newProps);
 	}
 }
