@@ -51,7 +51,7 @@ import { ViewSchema } from "./view.js";
  */
 export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible {
 	const stored = toStoredSchema(schema);
-	return encodeTreeSchema(stored, 1);
+	return encodeTreeSchema(stored, SchemaCodecVersion.v1);
 }
 
 /**
