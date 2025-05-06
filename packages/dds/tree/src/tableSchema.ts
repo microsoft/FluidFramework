@@ -305,12 +305,18 @@ export namespace System_TableSchema {
 				this.cells.set(columnId, value);
 			}
 
-			public removeCell(columnOrId: TableSchema.IColumn | string): void {
+			public removeCell(columnOrId: TableSchema.IColumn | string): CellValueType | undefined {
+				// TODO: throw if column does not exist in the owning table.
+
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-				if (!this.cells.has(columnId)) {
-					return;
+
+				const cell: CellValueType | undefined = this.cells.get(columnId);
+				if (cell === undefined) {
+					return undefined;
 				}
+
 				this.cells.delete(columnId);
+				return cell;
 			}
 		}
 
@@ -494,7 +500,7 @@ export namespace System_TableSchema {
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
 					throw new UsageError(
-						`Column "${(column as TableSchema.IColumn).id}" already exists in the table.`,
+						`Column with ID "${(column as TableSchema.IColumn).id}" already exists in the table.`,
 					);
 				}
 
@@ -523,7 +529,7 @@ export namespace System_TableSchema {
 						// TypeScript is unable to narrow the types correctly here, hence the cast.
 						// See: https://github.com/microsoft/TypeScript/issues/52144
 						throw new UsageError(
-							`Row "${(newRow as TableSchema.IRow).id}" already exists in the table.`,
+							`Row with ID "${(newRow as TableSchema.IRow).id}" already exists in the table.`,
 						);
 					}
 				}
@@ -593,15 +599,25 @@ export namespace System_TableSchema {
 				this.rows.removeRange();
 			}
 
-			public removeCell(key: TableSchema.CellKey): void {
+			public removeCell(key: TableSchema.CellKey): CellValueType | undefined {
 				const { columnId, rowId } = key;
 				const row = this.getRow(rowId);
-				if (row !== undefined) {
-					const column = this.getColumn(columnId);
-					if (column !== undefined) {
-						row.removeCell(column.id);
-					}
+				if (row === undefined) {
+					throw new UsageError(`Row with ID "${rowId}" does not exist in the table.`);
 				}
+
+				const column = this.getColumn(columnId);
+				if (column === undefined) {
+					throw new UsageError(`Column with ID "${columnId}" does not exist in the table.`);
+				}
+
+				const cell: CellValueType | undefined = row.getCell(column.id);
+				if (cell === undefined) {
+					return undefined;
+				}
+
+				row.removeCell(column.id);
+				return cell;
 			}
 
 			private containsColumn(columnToCheck: ColumnInsertableType): boolean {
@@ -791,17 +807,17 @@ export namespace TableSchema {
 
 		/**
 		 * Removes the cell in the specified column.
+		 * @returns The cell if it exists, otherwise undefined.
 		 * @privateRemarks
 		 * TODO:
-		 * - Return the removed cell (if any)
 		 * - Throw if the column does not belong to the same table as the row.
 		 */
-		removeCell(column: IColumn): void;
+		removeCell(column: IColumn): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 		/**
 		 * Removes the cell in the specified column, denoted by column ID.
-		 * @privateRemarks TODO: Return the removed cell (if any)
+		 * @returns The cell if it exists, otherwise undefined.
 		 */
-		removeCell(columnId: string): void;
+		removeCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 
 		/**
 		 * The row's properties.
@@ -1018,22 +1034,23 @@ export namespace TableSchema {
 		 * - Return removed rows (if any).
 		 * - Throw an error if any row(s) belong to a different table.
 		 */
-		removeRows: (rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]) => void;
+		removeRows(rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]): void;
 
 		/**
 		 * Removes all rows from the table.
 		 * @privateRemarks TODO: Return removed rows (if any).
 		 */
-		removeAllRows: () => void;
+		removeAllRows(): void;
 
 		/**
 		 * Removes the cell at the specified location in the table.
+		 * @returns The cell if it exists, otherwise undefined.
+		 * @throws Throws an error if the location does not exist in the table.
 		 * @privateRemarks
 		 * TODO:
 		 * - Add overload that takes column/row nodes?
-		 * - Return removed cell (if any)
 		 */
-		removeCell: (key: CellKey) => void;
+		removeCell(key: CellKey): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	}
 
 	/**

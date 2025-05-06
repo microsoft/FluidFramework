@@ -299,7 +299,7 @@ describe.only("TableFactory unit tests", () => {
 					treeView.root.insertColumn({
 						column: { id: "column-b", props: {} },
 					}),
-				validateUsageError(/Column "column-b" already exists in the table./),
+				validateUsageError(/Column with ID "column-b" already exists in the table./),
 			);
 		});
 	});
@@ -494,7 +494,7 @@ describe.only("TableFactory unit tests", () => {
 							},
 						],
 					}),
-				validateUsageError(/Row "row-a" already exists in the table./),
+				validateUsageError(/Row with ID "row-a" already exists in the table./),
 			);
 		});
 	});
@@ -834,9 +834,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
-		// TODO: There is currently no usage error for deleting invalid cells.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be un-skipped.
-		it.skip("removing cell from nonexistent row and column errors", () => {
+		it("removing cell from nonexistent row and column errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -853,14 +851,25 @@ describe.only("TableFactory unit tests", () => {
 					},
 				],
 			});
-			const invalidCellKey = {
-				rowId: "invalid-row",
-				columnId: "invalid-column",
-			};
 
+			// Invalid row
 			assert.throws(
-				() => treeView.root.removeCell(invalidCellKey),
-				validateUsageError(/Placeholder usage error./),
+				() =>
+					treeView.root.removeCell({
+						rowId: "row-1",
+						columnId: "column-0",
+					}),
+				validateUsageError(/Row with ID "row-1" does not exist in the table./),
+			);
+
+			// Invalid column
+			assert.throws(
+				() =>
+					treeView.root.removeCell({
+						rowId: "row-0",
+						columnId: "column-1",
+					}),
+				validateUsageError(/Column with ID "column-1" does not exist in the table./),
 			);
 		});
 	});
