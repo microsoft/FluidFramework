@@ -226,7 +226,7 @@ export class PureDataObjectFactory<
 		maybeRegistryEntries?: NamedFluidDataStoreRegistryEntries,
 		maybeRuntimeFactory?: typeof FluidDataStoreRuntime,
 	) {
-		const props =
+		const newProps =
 			typeof propsOrType === "string"
 				? {
 						type: propsOrType,
@@ -240,24 +240,24 @@ export class PureDataObjectFactory<
 					}
 				: propsOrType;
 
-		const sharedObjects = [...(props.sharedObjects ?? [])];
-		const runtimeClass = props.runtimeClass ?? FluidDataStoreRuntime;
-		const optionalProviders = props.optionalProviders ?? {};
-		this.type = props.type;
+		const sharedObjects = [...(newProps.sharedObjects ?? [])];
+		const runtimeClass = newProps.runtimeClass ?? FluidDataStoreRuntime;
+		const optionalProviders = newProps.optionalProviders ?? {};
+		this.type = newProps.type;
 
 		if (this.type === "") {
 			throw new Error("undefined type member");
 		}
 
 		this.createProps = {
-			ctor: props.ctor,
+			ctor: newProps.ctor,
 			optionalProviders,
 			sharedObjectRegistry: new Map(sharedObjects.map((ext) => [ext.type, ext])),
 			runtimeClassArg: runtimeClass,
 		};
 
-		if (props.registryEntries !== undefined) {
-			this.registry = new FluidDataStoreRegistry(props.registryEntries);
+		if (newProps.registryEntries !== undefined) {
+			this.registry = new FluidDataStoreRegistry(newProps.registryEntries);
 		}
 	}
 
