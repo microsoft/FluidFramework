@@ -394,7 +394,6 @@ const Diffs: diff[] = result.diffs;
 const insertDiffs = result.diffs.filter(diff => diff.type === 'insert');
 
 const insertedVectorsDiffs = insertDiffs.filter(diff => diff.path[0]?.schemaIdentifier === TestVector.identifier)
-
 ```
 
 Other `Diff` types follow the same basic structure.
