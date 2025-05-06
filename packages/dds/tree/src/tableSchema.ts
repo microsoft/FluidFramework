@@ -1035,10 +1035,7 @@ export namespace TableSchema {
 		/**
 		 * Sets the cell at the specified location in the table.
 		 * @remarks To remove a cell, call {@link TableSchema.ITable.removeCell} instead.
-		 * @privateRemarks
-		 * TODO:
-		 * - Add overload that takes column/row nodes.
-		 * - Throw an error if the location is invalid.
+		 * @privateRemarks TODO: Add overload that takes column/row nodes.
 		 */
 		setCell(params: SetCellParameters<TCell>): void;
 
@@ -1052,7 +1049,7 @@ export namespace TableSchema {
 		 * - Throw an error if the column isn't in the table.
 		 * - (future) Actually remove corresponding cells from table rows.
 		 */
-		removeColumn: (column: TreeNodeFromImplicitAllowedTypes<TColumn>) => void;
+		removeColumn(column: TreeNodeFromImplicitAllowedTypes<TColumn>): void;
 
 		/**
 		 * Removes 0 or more rows from the table.
