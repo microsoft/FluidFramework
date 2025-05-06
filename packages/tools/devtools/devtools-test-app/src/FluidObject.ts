@@ -144,6 +144,7 @@ export class AppData extends DataObject {
 			SharedCell.getFactory(),
 			SharedTree.getFactory(),
 		],
+		registryEntries: new Map([AppDataTwo.getFactory().registryEntry]),
 	});
 
 	public static getFactory(): DataObjectFactory<AppData> {
