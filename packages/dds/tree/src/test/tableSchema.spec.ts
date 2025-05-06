@@ -299,7 +299,7 @@ describe.only("TableFactory unit tests", () => {
 					treeView.root.insertColumn({
 						column: { id: "column-b", props: {} },
 					}),
-				validateUsageError(/Column with ID "column-b" already exists in the table./),
+				validateUsageError(/A column with ID "column-b" already exists in the table./),
 			);
 		});
 	});
@@ -494,13 +494,13 @@ describe.only("TableFactory unit tests", () => {
 							},
 						],
 					}),
-				validateUsageError(/Row with ID "row-a" already exists in the table./),
+				validateUsageError(/A row with ID "row-a" already exists in the table./),
 			);
 		});
 	});
 
 	describe("Set cell", () => {
-		it("set cell in a valid location", () => {
+		it("Set cell in a valid location", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -548,7 +548,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
-		it("setting cell in an invalid location errors", () => {
+		it("Setting cell in an invalid location errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -576,7 +576,7 @@ describe.only("TableFactory unit tests", () => {
 						},
 						cell: { value: "Hello world!" },
 					}),
-				validateUsageError(/Row with ID "row-1" does not exist in the table./),
+				validateUsageError(/No row with ID "row-1" exists in the table./),
 			);
 
 			// Invalid column
@@ -589,13 +589,13 @@ describe.only("TableFactory unit tests", () => {
 						},
 						cell: { value: "Hello world!" },
 					}),
-				validateUsageError(/Column with ID "column-1" does not exist in the table./),
+				validateUsageError(/No column with ID "column-1" exists in the table./),
 			);
 		});
 	});
 
 	describe("Remove column", () => {
-		it("remove existing column", () => {
+		it("Remove existing column", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -626,9 +626,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
-		// TODO: There is currently no policy from prohibiting removal of non-existent columns.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be un-skipped.
-		it.skip("removing column that does not exist on table errors", () => {
+		it("Removing column that does not exist on table errors", () => {
 			const { treeView, Column } = createTableTree();
 			treeView.initialize({
 				columns: [],
@@ -637,13 +635,15 @@ describe.only("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => treeView.root.removeColumn(new Column({ id: "unhydrated-column", props: {} })),
-				validateUsageError(/Placeholder usage error/),
+				validateUsageError(
+					/Specified column with ID "unhydrated-column" does not exist in the table./,
+				),
 			);
 		});
 	});
 
 	describe("Remove rows", () => {
-		it("remove empty list", () => {
+		it("Remove empty list", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [],
@@ -657,7 +657,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
-		it("remove single row", () => {
+		it("Remove single row", () => {
 			const { treeView, Row } = createTableTree();
 			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
 			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
@@ -681,7 +681,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
-		it("remove multiple rows", () => {
+		it("Remove multiple rows", () => {
 			const { treeView, Row } = createTableTree();
 			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
 			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
@@ -718,7 +718,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
-		it("removing single row that doesn't exist on table errors", () => {
+		it("Removing single row that doesn't exist on table errors", () => {
 			const { treeView, Row } = createTableTree();
 			treeView.initialize({
 				columns: [],
@@ -727,32 +727,30 @@ describe.only("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => treeView.root.removeRows([new Row({ id: "row-0", cells: {}, props: {} })]),
-				validateUsageError(/Expected non-negative index, got -1./),
+				validateUsageError(/Specified row with ID "row-0" does not exist in the table./),
 			);
 		});
 
-		it("removing multiple rows that doesn't exist on table errors", () => {
+		it("Removing multiple rows errors if at least one row doesn't exist", () => {
 			const { treeView, Row } = createTableTree();
+			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
 			treeView.initialize({
 				columns: [],
-				rows: [],
+				rows: [row0],
 			});
 
 			assert.throws(
-				() =>
-					treeView.root.removeRows([
-						new Row({ id: "row-0", cells: {}, props: {} }),
-						new Row({ id: "row-1", cells: {}, props: {} }),
-					]),
-				// TODO: The usage error here comes from the arrayNode layer.
-				// Once removeRows gets updated to return a usage error that makes more sense, update usage error here.
-				validateUsageError(/Expected non-negative index, got -1./),
+				() => treeView.root.removeRows([row0, new Row({ id: "row-1", cells: {}, props: {} })]),
+				validateUsageError(/Specified row with ID "row-1" does not exist in the table./),
 			);
+
+			// Additionally, `row-0` should not have been removed.
+			assert(treeView.root.rows.length === 1);
 		});
 	});
 
 	describe("Remove cell", () => {
-		it("remove cell in valid location with existing data", () => {
+		it("Remove cell in valid location with existing data", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -795,7 +793,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
-		it("remove cell in valid location with no data", () => {
+		it("Remove cell in valid location with no data", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -834,7 +832,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
-		it("removing cell from nonexistent row and column errors", () => {
+		it("Removing cell from nonexistent row and column errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -859,7 +857,7 @@ describe.only("TableFactory unit tests", () => {
 						rowId: "row-1",
 						columnId: "column-0",
 					}),
-				validateUsageError(/Row with ID "row-1" does not exist in the table./),
+				validateUsageError(/Specified row with ID "row-1" does not exist in the table./),
 			);
 
 			// Invalid column
@@ -869,12 +867,12 @@ describe.only("TableFactory unit tests", () => {
 						rowId: "row-0",
 						columnId: "column-1",
 					}),
-				validateUsageError(/Column with ID "column-1" does not exist in the table./),
+				validateUsageError(/Specified column with ID "column-1" does not exist in the table./),
 			);
 		});
 	});
 
-	it("gets proper table elements with getter methods", () => {
+	it("Gets proper table elements with getter methods", () => {
 		const { treeView, Column, Row, Cell } = createTableTree();
 
 		const cell0 = new Cell({ value: "Hello World!" });

@@ -496,12 +496,11 @@ export namespace System_TableSchema {
 				column,
 				index,
 			}: TableSchema.InsertColumnParameters<ColumnInsertableType>): ColumnValueType {
-				if (this.containsColumn(column)) {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					throw new UsageError(
-						`Column with ID "${(column as TableSchema.IColumn).id}" already exists in the table.`,
-					);
+				// TypeScript is unable to narrow the type of the column node correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				const maybeId = (column as TableSchema.IColumn).id;
+				if (maybeId !== undefined && this.containsColumnWithId(maybeId)) {
+					throw new UsageError(`A column with ID "${maybeId}" already exists in the table.`);
 				}
 
 				if (index === undefined) {
@@ -524,12 +523,14 @@ export namespace System_TableSchema {
 				index,
 				rows,
 			}: TableSchema.InsertRowsParameters<RowInsertableType>): RowValueType[] {
+				// Check all of the rows being inserted an make sure the table does not already contain any with the same ID.
 				for (const newRow of rows) {
-					if (this.containsRow(newRow)) {
-						// TypeScript is unable to narrow the types correctly here, hence the cast.
-						// See: https://github.com/microsoft/TypeScript/issues/52144
+					// TypeScript is unable to narrow the type of the row node correctly here, hence the cast.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					const maybeId = (newRow as TableSchema.IRow).id;
+					if (maybeId !== undefined && this.containsRowWithId(maybeId)) {
 						throw new UsageError(
-							`Row with ID "${(newRow as TableSchema.IRow).id}" already exists in the table.`,
+							`A row with ID "${(newRow as TableSchema.IRow).id}" already exists in the table.`,
 						);
 					}
 				}
@@ -554,42 +555,59 @@ export namespace System_TableSchema {
 				const { columnId, rowId } = key;
 				const row = this.getRow(rowId);
 				if (row === undefined) {
-					throw new UsageError(`Row with ID "${rowId}" does not exist in the table.`);
+					throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
 				}
 
 				const column = this.getColumn(columnId);
 				if (column === undefined) {
-					throw new UsageError(`Column with ID "${columnId}" does not exist in the table.`);
+					throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
 				}
 
 				row.setCell(column.id, cell);
 			}
 
-			public removeColumn(column: ColumnValueType): void {
-				const index = this.columns.indexOf(column);
+			public removeColumn(columnToRemove: ColumnValueType): void {
+				const index = this.columns.indexOf(columnToRemove);
 				// If the column is not in the table, do nothing
-				if (index === -1) return;
+				if (index === -1) {
+					throw new UsageError(
+						`Specified column with ID "${columnToRemove.id}" does not exist in the table.`,
+					);
+				}
 				this.columns.removeAt(index);
 			}
 
-			public removeRows(rows: readonly RowValueType[]): void {
+			public removeRows(rowsToRemove: readonly RowValueType[]): void {
 				// If there are no rows to remove, do nothing
-				if (rows.length === 0) {
+				if (rowsToRemove.length === 0) {
 					return;
 				}
 
-				// If there is only one row to remove, remove it
-				if (rows.length === 1) {
-					const index = this.rows.indexOf(rows[0] ?? oob());
+				// If there is only one row to remove, remove it (and don't incur cost of transaction)
+				if (rowsToRemove.length === 1) {
+					const rowToRemove = rowsToRemove[0] ?? oob();
+					const index = this.rows.indexOf(rowToRemove);
+
+					// If the row
+					if (index === -1) {
+						throw new UsageError(
+							`Specified row with ID "${rowToRemove.id}" does not exist in the table.`,
+						);
+					}
+
 					this.rows.removeAt(index);
 					return;
 				}
-				// If there are multiple rows to remove, remove them in a transaction
-				// This is to avoid the performance issues of deleting multiple rows at once
+
+				// If there are multiple rows to remove, remove them in a transaction.
 				Tree.runTransaction(this, () => {
-					// Iterate over the rows and remove them
-					for (const row of rows) {
-						const index = this.rows.indexOf(row);
+					for (const rowToRemove of rowsToRemove) {
+						const index = this.rows.indexOf(rowToRemove);
+						if (index === -1) {
+							throw new UsageError(
+								`Specified row with ID "${rowToRemove.id}" does not exist in the table.`,
+							);
+						}
 						this.rows.removeAt(index);
 					}
 				});
@@ -603,12 +621,16 @@ export namespace System_TableSchema {
 				const { columnId, rowId } = key;
 				const row = this.getRow(rowId);
 				if (row === undefined) {
-					throw new UsageError(`Row with ID "${rowId}" does not exist in the table.`);
+					throw new UsageError(
+						`Specified row with ID "${rowId}" does not exist in the table.`,
+					);
 				}
 
 				const column = this.getColumn(columnId);
 				if (column === undefined) {
-					throw new UsageError(`Column with ID "${columnId}" does not exist in the table.`);
+					throw new UsageError(
+						`Specified column with ID "${columnId}" does not exist in the table.`,
+					);
 				}
 
 				const cell: CellValueType | undefined = row.getCell(column.id);
@@ -620,27 +642,19 @@ export namespace System_TableSchema {
 				return cell;
 			}
 
-			private containsColumn(columnToCheck: ColumnInsertableType): boolean {
-				const maybeId: string | undefined = (columnToCheck as TableSchema.IColumn).id;
-
+			private containsColumnWithId(columnId: string): boolean {
 				// TypeScript is unable to narrow the types correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
-				return maybeId !== undefined &&
-					this.columns.find((column) => (column as TableSchema.IColumn).id === maybeId) !==
-						undefined
-					? true
-					: false;
+				return (
+					this.columns.find((column) => (column as TableSchema.IColumn).id === columnId) !==
+					undefined
+				);
 			}
 
-			private containsRow(rowToCheck: RowInsertableType): boolean {
-				const maybeId: string | undefined = (rowToCheck as TableSchema.IRow).id;
-
+			private containsRowWithId(rowId: string): boolean {
 				// TypeScript is unable to narrow the types correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
-				return maybeId !== undefined &&
-					this.rows.find((row) => (row as TableSchema.IRow).id === maybeId) !== undefined
-					? true
-					: false;
+				return this.rows.find((row) => (row as TableSchema.IRow).id === rowId) !== undefined;
 			}
 		}
 
@@ -988,7 +1002,10 @@ export namespace TableSchema {
 
 		/**
 		 * Inserts a column into the table.
-		 * @throws Throws an error if the column is already in the tree, or if the specified index is out of range.
+		 *
+		 * @throws
+		 * Throws an error if the column is already in the tree, or if the specified index is out of range.
+		 * No column is inserted in these cases.
 		 */
 		insertColumn(
 			params: InsertColumnParameters<InsertableTreeNodeFromImplicitAllowedTypes<TColumn>>,
@@ -996,7 +1013,10 @@ export namespace TableSchema {
 
 		/**
 		 * Inserts 0 or more rows into the table.
-		 * @throws Throws an error if any of the rows are already in the tree, or if the specified index is out of range.
+		 *
+		 * @throws
+		 * Throws an error if any of the rows are already in the tree, or if the specified index is out of range.
+		 * No rows are inserted in these cases.
 		 */
 		insertRows(
 			params: InsertRowsParameters<InsertableTreeNodeFromImplicitAllowedTypes<TRow>>,
@@ -1028,6 +1048,8 @@ export namespace TableSchema {
 
 		/**
 		 * Removes 0 or more rows from the table.
+		 * @throws Throws an error if any of the rows are not in the table.
+		 * In this case, no rows are removed.
 		 * @privateRemarks
 		 * TODO:
 		 * - Add overload that takes an ID.
