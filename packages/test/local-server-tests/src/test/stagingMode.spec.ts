@@ -101,12 +101,10 @@ class DataObjectWithStagingMode extends DataObject {
 	}
 }
 
-const dataObjectFactory = new DataObjectFactory(
-	"TheDataObject",
-	DataObjectWithStagingMode,
-	undefined,
-	{},
-);
+const dataObjectFactory = new DataObjectFactory({
+	type: "TheDataObject",
+	ctor: DataObjectWithStagingMode,
+});
 
 // a simple container runtime factory with a single datastore aliased as default.
 // the default datastore is also returned as the entrypoint

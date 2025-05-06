@@ -15,10 +15,13 @@ import {
 	createFieldSchema,
 	FieldKind,
 	normalizeAllowedTypes,
+	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
 	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	getKernel,
@@ -233,7 +236,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
 	TName extends string,
-	const T extends ImplicitAllowedTypes,
+	const T extends ImplicitAnnotatedAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -243,14 +246,19 @@ export function mapSchema<
 	useMapPrototype: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ) {
-	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+	const lazyChildTypes = new Lazy(() =>
+		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
+	);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
 	let unhydratedContext: Context;
 
-	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
+	class Schema
+		extends CustomMapNodeBase<UnannotateImplicitAllowedTypes<T>>
+		implements TreeMapNode<UnannotateImplicitAllowedTypes<T>>
+	{
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,

@@ -10,6 +10,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	TreeViewConfiguration,
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type LeafSchema,
@@ -22,6 +23,7 @@ import {
 import type {
 	FieldHasDefault,
 	InsertableObjectFromSchemaRecord,
+	InsertableObjectFromAnnotatedSchemaRecord,
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/objectNode.js";
@@ -34,13 +36,14 @@ import type {
 	requireTrue,
 	RestrictiveStringRecord,
 } from "../../util/index.js";
-import { validateUsageError } from "../utils.js";
+import { getView, validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
 import type {
 	FieldKind,
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
+	ImplicitAnnotatedFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
 	InsertableTypedNode,
@@ -82,6 +85,39 @@ const schemaFactory = new SchemaFactory("Test");
 	{
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		type result = InsertableObjectFromSchemaRecord<{}>;
+		type _check = requireAssignableTo<result, Record<string, never>>;
+	}
+}
+
+// InsertableObjectFromAnnotatedSchemaRecord
+{
+	const schemaFactoryAlpha = new SchemaFactoryAlpha("Test");
+	class Note extends schemaFactoryAlpha.objectAlpha("Note", {}) {}
+
+	// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+	type Info = {
+		readonly stuff: readonly [typeof Note];
+	};
+
+	type Desired = InsertableTypedNode<typeof Note>;
+
+	{
+		type result = InsertableObjectFromAnnotatedSchemaRecord<Info>["stuff"];
+		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	}
+
+	// Generic case
+	{
+		type result = InsertableObjectFromAnnotatedSchemaRecord<
+			RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>
+		>;
+		type _check = requireAssignableTo<result, never>;
+	}
+
+	// Empty case
+	{
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		type result = InsertableObjectFromAnnotatedSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
 	}
 }
@@ -506,8 +542,8 @@ describeHydration(
 
 		it("ObjectNodeSchema", () => {
 			const sf = new SchemaFactoryAlpha("Test");
-			class Note extends sf.object("Note", { f: SchemaFactory.null }) {}
-			class EmptyObject extends sf.object("Note", {}) {}
+			class Note extends sf.objectAlpha("Note", { f: SchemaFactory.null }) {}
+			class EmptyObject extends sf.objectAlpha("Note", {}) {}
 
 			const schema: ObjectNodeSchema = Note;
 			const schemaEmpty: ObjectNodeSchema = EmptyObject;
@@ -524,7 +560,7 @@ describeHydration(
 
 			// Explicit field
 			{
-				class ExplicitField extends sf.object("WithField", {
+				class ExplicitField extends sf.objectAlpha("WithField", {
 					f: sf.optional([() => SchemaFactory.null]),
 				}) {}
 
@@ -537,7 +573,7 @@ describeHydration(
 			{
 				type TestObject = ObjectNodeSchema<
 					"x",
-					RestrictiveStringRecord<ImplicitFieldSchema>,
+					RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 					false
 				>;
 				type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;
@@ -562,7 +598,7 @@ describeHydration(
 
 			// Empty POJO mode
 			{
-				const Empty = sf.object("Empty", {});
+				const Empty = sf.objectAlpha("Empty", {});
 
 				type Info = (typeof Empty)["info"];
 				const _check1: TreeNodeSchema = Empty;
@@ -571,7 +607,7 @@ describeHydration(
 
 			// POJO mode with field
 			{
-				const ExplicitField = sf.object("WithField", {
+				const ExplicitField = sf.objectAlpha("WithField", {
 					f: SchemaFactory.null,
 				});
 
@@ -702,6 +738,80 @@ describeHydration(
 				n.x = 3;
 				assert.equal(n.y, 3);
 				assert.deepEqual(thisList, [n, n]);
+			});
+
+			describe("hydrated field property access allocation tests", () => {
+				it("accessing leaf on object node does not allocate flex nodes", () => {
+					class TreeWithLeaves extends schemaFactory.object("TreeWithLeaves", {
+						leaf: SchemaFactory.number,
+					}) {}
+					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
+					const view = getView(config);
+					view.initialize({ leaf: 1 });
+					const context = view.getView().context;
+					// Note: access the root before trying to access just the leaf, to not count any object allocations that result from
+					// accessing the root as part of the allocations from the leaf access. Also, store it to avoid additional computation
+					// from any intermediate getters when accessing the leaf.
+					const root = view.root;
+					const countBefore = context.withAnchors.size;
+					const _accessLeaf = root.leaf;
+					const countAfter = context.withAnchors.size;
+
+					// As of 2024-07-01 we still allocate flex fields when accessing leaves, so the after-count is expected to be one higher
+					// than the before count.
+					// TODO: if/when we stop allocating flex fields when accessing leaves, this test will fail and should be updated so
+					// the two counts match, plus its title updated accordingly.
+					assert.equal(countAfter, countBefore + 1);
+				});
+
+				it("accessing leaf on map node does not allocate flex nodes", () => {
+					class TreeWithLeaves extends schemaFactory.map(
+						"MapOfLeaves",
+						SchemaFactory.number,
+					) {}
+					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
+					const view = getView(config);
+					view.initialize(new Map([["1", 1]]));
+					const context = view.getView().context;
+					// Note: access the map that contains leaves before trying to access just the leaf at one of the keys, to not
+					// count any object allocations that result from accessing the root/map as part of the allocations from the leaf
+					// access. Also, store it to avoid additional computation from any intermediate getters when accessing the leaf.
+					const root = view.root;
+					const countBefore = context.withAnchors.size;
+					const _accessLeaf = root.get("1");
+					const countAfter = context.withAnchors.size;
+
+					// As of 2024-07-01 we still allocate flex fields when accessing leaves, so the after-count is expected to be one higher
+					// than the before count.
+					// TODO: if/when we stop allocating flex fields when accessing leaves, this test will fail and should be updated so
+					// the two counts match, plus its title updated accordingly.
+					assert.equal(countAfter, countBefore + 1);
+				});
+
+				it("accessing leaf on array node does not allocate flex nodes", () => {
+					class TreeWithLeaves extends schemaFactory.array(
+						"ArrayOfLeaves",
+						SchemaFactory.number,
+					) {}
+					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
+					const view = getView(config);
+					view.initialize([1, 2]);
+					const context = view.getView().context;
+					// Note: prior to taking the "before count", access the array that contains leaves *and the first leaf in it*,
+					// to ensure that the sequence field for the array is allocated and accounted for. We expect the sequence field
+					// to be required anyway (vs the field for a leaf property on an object node, for example, where we might be able
+					// to optimize away its allocation) so might as well count it up front. The subsequent access to the second leaf
+					// should then not allocate anything new.
+					// Also, store the array/root to avoid additional computation from any intermediate getters when accessing leaves.
+					const root = view.root;
+					const _accessLeaf0 = root[0];
+					const countBefore = context.withAnchors.size;
+					const _accessLeaf1 = root[1];
+					const countAfter = context.withAnchors.size;
+
+					// The array test is deliberately distinct from the object and map ones, see the comment above for the rationale.
+					assert.equal(countAfter, countBefore);
+				});
 			});
 		});
 

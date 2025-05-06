@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
+// @alpha @legacy
 export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
