@@ -826,9 +826,7 @@ export namespace TableSchema {
 		/**
 		 * Removes the cell in the specified column.
 		 * @returns The cell if it exists, otherwise undefined.
-		 * @privateRemarks
-		 * TODO:
-		 * - Throw if the column does not belong to the same table as the row.
+		 * @privateRemarks TODO: Throw if the column does not belong to the same table as the row.
 		 */
 		removeCell(column: IColumn): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 		/**
