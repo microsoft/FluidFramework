@@ -547,12 +547,16 @@ export namespace System_TableSchema {
 			public setCell({ key, cell }: TableSchema.SetCellParameters<CellInsertableType>): void {
 				const { columnId, rowId } = key;
 				const row = this.getRow(rowId);
-				if (row !== undefined) {
-					const column = this.getColumn(columnId);
-					if (column !== undefined) {
-						row.setCell(column.id, cell);
-					}
+				if (row === undefined) {
+					throw new UsageError(`Row with ID "${rowId}" does not exist in the table.`);
 				}
+
+				const column = this.getColumn(columnId);
+				if (column === undefined) {
+					throw new UsageError(`Column with ID "${columnId}" does not exist in the table.`);
+				}
+
+				row.setCell(column.id, cell);
 			}
 
 			public removeColumn(column: ColumnValueType): void {
@@ -762,33 +766,40 @@ export namespace TableSchema {
 		/**
 		 * Gets the cell in the specified column.
 		 * @returns The cell if it exists, otherwise undefined.
+		 * @privateRemarks TODO: throw if the column does not belong to the same table as the row.
 		 */
 		getCell(column: IColumn): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 		/**
 		 * Gets the cell in the specified column, denoted by column ID.
 		 * @returns The cell if it exists, otherwise undefined.
+		 * @privateRemarks TODO: throw if the column does not belong to the same table as the row.
 		 */
 		getCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 
 		/**
 		 * Sets the cell in the specified column.
 		 * @remarks To remove a cell, call {@link TableSchema.IRow.(removeCell:1)} instead.
+		 * @privateRemarks TODO: Throw an error if the column does not exist in the table.
 		 */
 		setCell(column: IColumn, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
 		/**
 		 * Sets the cell in the specified column, denoted by column ID.
 		 * @remarks To remove a cell, call {@link TableSchema.IRow.(removeCell:2)} instead.
+		 * @privateRemarks TODO: Throw an error if the column does not exist in the table.
 		 */
 		setCell(columnId: string, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
 
 		/**
 		 * Removes the cell in the specified column.
-		 * @privateRemarks TODO: return removed cell
+		 * @privateRemarks
+		 * TODO:
+		 * - Return the removed cell (if any)
+		 * - Throw if the column does not belong to the same table as the row.
 		 */
 		removeCell(column: IColumn): void;
 		/**
 		 * Removes the cell in the specified column, denoted by column ID.
-		 * @privateRemarks TODO: return removed cell
+		 * @privateRemarks TODO: Return the removed cell (if any)
 		 */
 		removeCell(columnId: string): void;
 
@@ -943,7 +954,7 @@ export namespace TableSchema {
 		readonly rows: TreeArrayNode<TRow>;
 
 		/**
-		 * Gets a table column by its {@link TableSchema.IRow.id}.
+		 * Gets a table column by its {@link TableSchema.IColumn.id}.
 		 */
 		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
 
@@ -978,7 +989,10 @@ export namespace TableSchema {
 		/**
 		 * Sets the cell at the specified location in the table.
 		 * @remarks To remove a cell, call {@link TableSchema.ITable.removeCell} instead.
-		 * @privateRemarks TODO: add overload that takes column/row nodes?
+		 * @privateRemarks
+		 * TODO:
+		 * - Add overload that takes column/row nodes.
+		 * - Throw an error if the location is invalid.
 		 */
 		setCell(
 			params: SetCellParameters<InsertableTreeNodeFromImplicitAllowedTypes<TCell>>,
@@ -989,25 +1003,35 @@ export namespace TableSchema {
 		 * @remarks Note: this does not remove any cells from the table's rows.
 		 * @privateRemarks
 		 * TODO:
-		 * - Policy for when the column is not in the table.
-		 * - Actually remove corresponding cells from table rows.
+		 * - Add overload that takes an ID.
+		 * - Return removed column (if any).
+		 * - Throw an error if the column belongs to a different table.
+		 * - (future) Actually remove corresponding cells from table rows.
 		 */
 		removeColumn: (column: TreeNodeFromImplicitAllowedTypes<TColumn>) => void;
 
 		/**
 		 * Removes 0 or more rows from the table.
-		 * @privateRemarks TODO: policy for when 1 or more rows are not in the table.
+		 * @privateRemarks
+		 * TODO:
+		 * - Add overload that takes an ID.
+		 * - Return removed rows (if any).
+		 * - Throw an error if any row(s) belong to a different table.
 		 */
 		removeRows: (rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]) => void;
 
 		/**
 		 * Removes all rows from the table.
+		 * @privateRemarks TODO: Return removed rows (if any).
 		 */
 		removeAllRows: () => void;
 
 		/**
 		 * Removes the cell at the specified location in the table.
-		 * @privateRemarks TODO: add overload that takes column/row nodes?
+		 * @privateRemarks
+		 * TODO:
+		 * - Add overload that takes column/row nodes?
+		 * - Return removed cell (if any)
 		 */
 		removeCell: (key: CellKey) => void;
 	}

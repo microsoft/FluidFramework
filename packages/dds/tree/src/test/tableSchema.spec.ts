@@ -548,9 +548,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
-		// TODO: There is currently no policy from prohibiting insertion of an invalid cell.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be un-skipped.
-		it.skip("setting cell in an invalid location errors", () => {
+		it("setting cell in an invalid location errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -568,16 +566,30 @@ describe.only("TableFactory unit tests", () => {
 				],
 			});
 
+			// Invalid row
 			assert.throws(
 				() =>
 					treeView.root.setCell({
 						key: {
 							rowId: "row-1",
+							columnId: "column-0",
+						},
+						cell: { value: "Hello world!" },
+					}),
+				validateUsageError(/Row with ID "row-1" does not exist in the table./),
+			);
+
+			// Invalid column
+			assert.throws(
+				() =>
+					treeView.root.setCell({
+						key: {
+							rowId: "row-0",
 							columnId: "column-1",
 						},
 						cell: { value: "Hello world!" },
 					}),
-				validateUsageError(/Placeholder usage error/),
+				validateUsageError(/Column with ID "column-1" does not exist in the table./),
 			);
 		});
 	});
