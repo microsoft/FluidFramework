@@ -678,6 +678,7 @@ export abstract class FluidDataStoreContext
 	public notifyReadOnlyState(readonly: boolean): void {
 		this.verifyNotClosed("notifyReadOnlyState", false /* checkTombstone */);
 
+		// These two calls achieve the same purpose, and are both needed for a time for back compat
 		this.channel?.notifyReadOnlyState?.(this.isReadOnly());
 		this._contextDeltaManagerProxy.emitReadonly();
 	}
