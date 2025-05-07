@@ -9,15 +9,15 @@ import { IOdspTokenProvider, TokenResponse } from "@fluidframework/odsp-client/b
 // Helper function to authenticate the user
 export async function createMsalInstance(): Promise<PublicClientApplication> {
 	// Get the client id (app id) from the environment variables
-	const clientId = process.env.NEXT_PUBLIC_SPE_CLIENT_ID;
+	const clientId = process.env.SPE_CLIENT_ID;
 
 	if (clientId === undefined) {
-		throw new Error("NEXT_PUBLIC_SPE_CLIENT_ID is not defined");
+		throw new Error("SPE_CLIENT_ID is not defined");
 	}
 
-	const tenantId = process.env.NEXT_PUBLIC_SPE_ENTRA_TENANT_ID;
+	const tenantId = process.env.SPE_ENTRA_TENANT_ID;
 	if (tenantId === undefined) {
-		throw new Error("NEXT_PUBLIC_SPE_ENTRA_TENANT_ID is not defined");
+		throw new Error("SPE_ENTRA_TENANT_ID is not defined");
 	}
 
 	// Create the MSAL instance
