@@ -107,7 +107,6 @@ function decode(f: FormatV1): TreeStoredSchema {
 /**
  * Creates a codec which performs synchronous monolithic encoding of schema content.
  * @param options - Specifies common codec options, including which `validator` to use.
- * @param version - The schema write version.
  * @returns The codec.
  */
 function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV1> {
