@@ -1117,7 +1117,6 @@ export namespace TableSchema {
 		 * Removes the cell at the specified location in the table.
 		 * @returns The cell if it exists, otherwise undefined.
 		 * @throws Throws an error if the location does not exist in the table.
-		 * @privateRemarks TODO: Add overload that takes column/row nodes.
 		 */
 		removeCell(key: CellKey): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	}
