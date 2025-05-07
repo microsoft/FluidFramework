@@ -90,7 +90,7 @@ export function comparePersistedSchema(
 	options: ICodecOptions,
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
-	// Any version can be passed down to makeSchemaCodec. We only need decode to dispatch.
+	// Any version can be passed down to makeSchemaCodec here.
 	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);

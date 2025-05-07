@@ -12,18 +12,24 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { makeSchemaCodecs, type Format as FormatV1 } from "../schema-index/index.js";
+import {
+	makeSchemaCodecs,
+	SchemaCodecVersion,
+	type Format as FormatV1,
+} from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
 
 export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
-	return makeCodecFamily([[1, makeSchemaChangeCodec(options, 1)]]);
+	return makeCodecFamily([
+		[SchemaCodecVersion.v1, makeSchemaChangeCodec(options, SchemaCodecVersion.v1)],
+	]);
 }
 
 function makeSchemaChangeCodec(
 	{ jsonValidator: validator }: ICodecOptions,
-	formatVersion: number,
+	formatVersion: SchemaCodecVersion,
 ): IJsonCodec<SchemaChange, EncodedSchemaChange> {
 	const schemaCodecs = makeSchemaCodecs({ jsonValidator: validator });
 	const schemaCodec =
