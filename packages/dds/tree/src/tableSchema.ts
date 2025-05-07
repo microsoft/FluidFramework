@@ -499,15 +499,29 @@ export namespace System_TableSchema {
 				column,
 				index,
 			}: TableSchema.InsertColumnParameters<TColumnSchema>): ColumnValueType {
+				const inserted = this.insertColumns({
+					columns: [column],
+					index,
+				});
+				return inserted[0] ?? oob();
+			}
+
+			public insertColumns({
+				columns,
+				index,
+			}: TableSchema.InsertColumnsParameters<TColumnSchema>): ColumnValueType[] {
 				// #region Input validation
 
-				// TypeScript is unable to narrow the type of the column node correctly here, hence the cast.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				const maybeId = (column as TableSchema.IColumn).id;
-
-				// Ensure that no column with the same ID already exists in the table.
-				if (maybeId !== undefined && this.containsColumnWithId(maybeId)) {
-					throw new UsageError(`A column with ID "${maybeId}" already exists in the table.`);
+				// Check all of the columns being inserted an ensure the table does not already contain any with the same ID.
+				for (const column of columns) {
+					// TypeScript is unable to narrow the type of the column type correctly here, hence the casts below.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					const maybeId = (column as ColumnValueType).id;
+					if (maybeId !== undefined && this.containsColumnWithId(maybeId)) {
+						throw new UsageError(
+							`A column with ID "${(column as ColumnValueType).id}" already exists in the table.`,
+						);
+					}
 				}
 
 				// #endregion
@@ -516,14 +530,25 @@ export namespace System_TableSchema {
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				if (index === undefined) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.columns.insertAtEnd(column as any);
+					this.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
 				} else {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.columns.insertAt(index, column as any);
+					this.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
 				}
 
-				// Inserting the input node into the tree hydrates it, making it usable as a node.
-				return column as ColumnValueType;
+				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
+				return columns as unknown as ColumnValueType[];
+			}
+
+			public insertRow({
+				row,
+				index,
+			}: TableSchema.InsertRowParameters<TRowSchema>): RowValueType {
+				const inserted = this.insertRows({
+					rows: [row],
+					index,
+				});
+				return inserted[0] ?? oob();
 			}
 
 			public insertRows({
@@ -534,12 +559,12 @@ export namespace System_TableSchema {
 
 				// Check all of the rows being inserted an ensure the table does not already contain any with the same ID.
 				for (const newRow of rows) {
-					// TypeScript is unable to narrow the type of the row node correctly here, hence the cast.
+					// TypeScript is unable to narrow the type of the row type correctly here, hence the casts below.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
-					const maybeId = (newRow as TableSchema.IRow).id;
+					const maybeId = (newRow as RowValueType).id;
 					if (maybeId !== undefined && this.containsRowWithId(maybeId)) {
 						throw new UsageError(
-							`A row with ID "${(newRow as TableSchema.IRow).id}" already exists in the table.`,
+							`A row with ID "${(newRow as RowValueType).id}" already exists in the table.`,
 						);
 					}
 				}
@@ -1011,6 +1036,44 @@ export namespace TableSchema {
 	}
 
 	/**
+	 * {@link TableSchema.ITable.insertColumns} parameters.
+	 * @internal
+	 */
+	export interface InsertColumnsParameters<
+		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	> {
+		/**
+		 * The index at which to insert the new columns.
+		 * @remarks If not provided, the columns will be appended to the end of the table.
+		 */
+		readonly index?: number | undefined;
+
+		/**
+		 * The columns to insert.
+		 */
+		readonly columns: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[];
+	}
+
+	/**
+	 * {@link TableSchema.ITable.insertRow} parameters.
+	 * @internal
+	 */
+	export interface InsertRowParameters<
+		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	> {
+		/**
+		 * The index at which to insert the new row.
+		 * @remarks If not provided, the row will be appended to the end of the table.
+		 */
+		readonly index?: number | undefined;
+
+		/**
+		 * The row to insert.
+		 */
+		readonly row: InsertableTreeNodeFromImplicitAllowedTypes<TRow>;
+	}
+
+	/**
 	 * {@link TableSchema.ITable.insertRows} parameters.
 	 * @internal
 	 */
@@ -1094,6 +1157,26 @@ export namespace TableSchema {
 		insertColumn(
 			params: InsertColumnParameters<TColumn>,
 		): TreeNodeFromImplicitAllowedTypes<TColumn>;
+
+		/**
+		 * Inserts 0 or more columns into the table.
+		 *
+		 * @throws
+		 * Throws an error if any of the columns are already in the tree, or if the specified index is out of range.
+		 * No columns are inserted in these cases.
+		 */
+		insertColumns(
+			params: InsertColumnsParameters<TColumn>,
+		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+
+		/**
+		 * Inserts a column into the table.
+		 *
+		 * @throws
+		 * Throws an error if the column is already in the tree, or if the specified index is out of range.
+		 * No column is inserted in these cases.
+		 */
+		insertRow(params: InsertRowParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>;
 
 		/**
 		 * Inserts 0 or more rows into the table.
