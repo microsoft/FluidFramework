@@ -587,6 +587,33 @@ export namespace System_TableSchema {
 				row.setCell(column, cell);
 			}
 
+			public removeColumns(
+				columns: readonly string[] | readonly ColumnValueType[],
+			): ColumnValueType[] {
+				// If there are no columns to remove, do nothing
+				if (columns.length === 0) {
+					return [];
+				}
+
+				// If there is only one column to remove, remove it (and don't incur cost of transaction)
+				if (columns.length === 1) {
+					const removedColumn = this.removeColumn(columns[0] ?? oob());
+					return [removedColumn];
+				}
+
+				// If there are multiple columns to remove, remove them in a transaction.
+				const removedColumns: ColumnValueType[] = [];
+				Tree.runTransaction(this, () => {
+					// Note, throwing an error within a transaction will abort the entire transaction.
+					// So if we throw an error here for any row, no columns will be removed.
+					for (const columnToRemove of columns) {
+						const removedRow = this.removeColumn(columnToRemove);
+						removedColumns.push(removedRow);
+					}
+				});
+				return removedColumns;
+			}
+
 			public removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
 				const column = this._getColumn(columnOrId);
 				const index = column === undefined ? -1 : this.columns.indexOf(column);
@@ -1090,6 +1117,23 @@ export namespace TableSchema {
 		removeColumn(
 			column: string | TreeNodeFromImplicitAllowedTypes<TColumn>,
 		): TreeNodeFromImplicitAllowedTypes<TColumn>;
+
+		/**
+		 * Removes 0 or more columns from the table.
+		 * @param columns - The columns to remove.
+		 * @throws Throws an error if any of the columns are not in the table.
+		 * In this case, no columns are removed.
+		 */
+		removeColumns(
+			columns: readonly TreeNodeFromImplicitAllowedTypes<TColumn>[],
+		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+		/**
+		 * Removes 0 or more columns from the table.
+		 * @param columns - The columns to remove, specified by their {@link IColumn.id}.
+		 * @throws Throws an error if any of the columns are not in the table.
+		 * In this case, no columns are removed.
+		 */
+		removeColumns(columns: readonly string[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 
 		/**
 		 * Removes the specified row from the table.
