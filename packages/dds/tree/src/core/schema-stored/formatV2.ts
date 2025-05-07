@@ -47,7 +47,7 @@ export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>(
  */
 export const TreeNodeSchemaIdentifierSchema = brandedStringType<TreeNodeSchemaIdentifier>();
 
-export const PersistedMetadataFormat = Type.Union([Type.Undefined(), Type.String()]);
+export const PersistedMetadataFormat = Type.Optional(Type.String());
 
 const FieldSchemaFormatBase = Type.Object({
 	kind: FieldKindIdentifierSchema,

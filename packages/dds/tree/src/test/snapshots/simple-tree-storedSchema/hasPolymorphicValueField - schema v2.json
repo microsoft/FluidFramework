@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
+    },
+    "test.hasPolymorphicValueField": {
+      "object": {
+        "field": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number",
+            "test.minimal"
+          ]
+        }
+      }
+    },
+    "test.minimal": {
+      "object": {}
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.hasPolymorphicValueField"
+    ]
+  }
+}
