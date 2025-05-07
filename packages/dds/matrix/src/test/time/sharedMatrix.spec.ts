@@ -8,7 +8,7 @@ import { benchmark } from "@fluid-tools/benchmark";
 import { SharedMatrix } from "../../index.js";
 import { createLocalMatrix } from "../utils.js";
 
-describe("SharedMatrix memory usage", () => {
+describe("SharedMatrix execution time", () => {
 	const matrixValue = "cellValue";
 	// The test matrix's size will be 10*10, 100*100, 1000*1000.
 	const matrixSizes = [10, 100, 1000];
