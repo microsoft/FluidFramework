@@ -32,10 +32,14 @@ import {
 	type UnannotateImplicitFieldSchema,
 } from "./simple-tree/index.js";
 
-// Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
+// Future improvement TODOs:
+// - Omit `cells` property from Row insertion type.
 // - Record-like type parameters / input parameters?
 // - Omit `props` properties from Row and Column schemas when not provided?
 
+/**
+ * The sub-scope applied to user-provided {@link SchemaFactory}s by table schema factories.
+ */
 const tableSchemaFactorySubScope = "table";
 
 /**
@@ -474,50 +478,82 @@ export namespace System_TableSchema {
 					| undefined;
 			}
 
-			public getCell(key: TableSchema.CellKey): CellValueType | undefined {
-				const { columnId, rowId } = key;
-				const row = this.getRow(rowId);
-				if (row !== undefined) {
-					const column = this.getColumn(columnId);
-					if (column !== undefined) {
-						return row.getCell(column.id);
-					}
+			public getCell(
+				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
+			): CellValueType | undefined {
+				const { column: columnOrId, row: rowOrId } = key;
+				const row = this._getRow(rowOrId);
+				if (row === undefined) {
+					return undefined;
 				}
-				// If the cell does not exist return undefined
-				return undefined;
+
+				const column = this._getColumn(columnOrId);
+				if (column === undefined) {
+					return undefined;
+				}
+
+				return row.getCell(column);
 			}
 
 			public insertColumn({
 				column,
 				index,
 			}: TableSchema.InsertColumnParameters<TColumnSchema>): ColumnValueType {
+				const inserted = this.insertColumns({
+					columns: [column],
+					index,
+				});
+				return inserted[0] ?? oob();
+			}
+
+			public insertColumns({
+				columns,
+				index,
+			}: TableSchema.InsertColumnsParameters<TColumnSchema>): ColumnValueType[] {
 				// #region Input validation
 
-				// TypeScript is unable to narrow the type of the column node correctly here, hence the cast.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				const maybeId = (column as TableSchema.IColumn).id;
+				// Ensure index is valid
+				if (index !== undefined) {
+					Table.validateInsertionIndex(index, this.columns);
+				}
 
-				// Ensure that no column with the same ID already exists in the table.
-				if (maybeId !== undefined && this.containsColumnWithId(maybeId)) {
-					throw new UsageError(`A column with ID "${maybeId}" already exists in the table.`);
+				// Check all of the columns being inserted an ensure the table does not already contain any with the same ID.
+				for (const column of columns) {
+					// TypeScript is unable to narrow the type of the column type correctly here, hence the casts below.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					const maybeId = (column as ColumnValueType).id;
+					if (maybeId !== undefined && this.containsColumnWithId(maybeId)) {
+						throw new UsageError(
+							`A column with ID "${(column as ColumnValueType).id}" already exists in the table.`,
+						);
+					}
 				}
 
 				// #endregion
 
+				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
 				if (index === undefined) {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.columns.insertAtEnd(column as any);
+					this.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
 				} else {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.columns.insertAt(index, column as any);
+					this.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
 				}
 
-				// Inserting the input node into the tree hydrates it, making it usable as a node.
-				return column as ColumnValueType;
+				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
+				return columns as unknown as ColumnValueType[];
+			}
+
+			public insertRow({
+				row,
+				index,
+			}: TableSchema.InsertRowParameters<TRowSchema>): RowValueType {
+				const inserted = this.insertRows({
+					rows: [row],
+					index,
+				});
+				return inserted[0] ?? oob();
 			}
 
 			public insertRows({
@@ -526,28 +562,31 @@ export namespace System_TableSchema {
 			}: TableSchema.InsertRowsParameters<TRowSchema>): RowValueType[] {
 				// #region Input validation
 
+				// Ensure index is valid
+				if (index !== undefined) {
+					Table.validateInsertionIndex(index, this.rows);
+				}
+
 				// Check all of the rows being inserted an ensure the table does not already contain any with the same ID.
 				for (const newRow of rows) {
-					// TypeScript is unable to narrow the type of the row node correctly here, hence the cast.
+					// TypeScript is unable to narrow the type of the row type correctly here, hence the casts below.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
-					const maybeId = (newRow as TableSchema.IRow).id;
+					const maybeId = (newRow as RowValueType).id;
 					if (maybeId !== undefined && this.containsRowWithId(maybeId)) {
 						throw new UsageError(
-							`A row with ID "${(newRow as TableSchema.IRow).id}" already exists in the table.`,
+							`A row with ID "${(newRow as RowValueType).id}" already exists in the table.`,
 						);
 					}
 				}
 
 				// #endregion
 
+				// TypeScript is unable to narrow the row type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
 				if (index === undefined) {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
 				} else {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
 				}
@@ -557,85 +596,135 @@ export namespace System_TableSchema {
 			}
 
 			public setCell({ key, cell }: TableSchema.SetCellParameters<TCellSchema>): void {
-				const { columnId, rowId } = key;
-				const row = this.getRow(rowId);
+				const { column: columnOrId, row: rowOrId } = key;
+
+				// TypeScript is unable to narrow the row type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				const row = this._getRow(rowOrId as RowValueType | string);
 				if (row === undefined) {
+					const rowId = this._getRowId(rowOrId as RowValueType | string);
 					throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
 				}
 
-				const column = this.getColumn(columnId);
+				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				const column = this._getColumn(columnOrId as ColumnValueType | string);
 				if (column === undefined) {
+					const columnId = this._getColumnId(columnOrId as ColumnValueType | string);
 					throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
 				}
 
-				row.setCell(column.id, cell);
+				row.setCell(column, cell);
 			}
 
-			public removeColumn(columnToRemove: ColumnValueType): void {
-				const index = this.columns.indexOf(columnToRemove);
+			public removeColumns(
+				columns: readonly string[] | readonly ColumnValueType[],
+			): ColumnValueType[] {
+				// If there are no columns to remove, do nothing
+				if (columns.length === 0) {
+					return [];
+				}
+
+				// If there is only one column to remove, remove it (and don't incur cost of transaction)
+				if (columns.length === 1) {
+					const removedColumn = this.removeColumn(columns[0] ?? oob());
+					return [removedColumn];
+				}
+
+				// If there are multiple columns to remove, remove them in a transaction.
+				const removedColumns: ColumnValueType[] = [];
+				Tree.runTransaction(this, () => {
+					// Note, throwing an error within a transaction will abort the entire transaction.
+					// So if we throw an error here for any row, no columns will be removed.
+					for (const columnToRemove of columns) {
+						const removedRow = this.removeColumn(columnToRemove);
+						removedColumns.push(removedRow);
+					}
+				});
+				return removedColumns;
+			}
+
+			public removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
+				const column = this._getColumn(columnOrId);
+				const index = column === undefined ? -1 : this.columns.indexOf(column);
 				if (index === -1) {
+					const columnId = this._getColumnId(columnOrId);
 					throw new UsageError(
-						`Specified column with ID "${columnToRemove.id}" does not exist in the table.`,
+						`Specified column with ID "${columnId}" does not exist in the table.`,
 					);
 				}
 				this.columns.removeAt(index);
+				return column as ColumnValueType;
 			}
 
-			public removeRows(rowsToRemove: readonly RowValueType[]): void {
+			public removeAllColumns(): ColumnValueType[] {
+				// TypeScript is unable to narrow the row type correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return this.removeColumns(this.columns as unknown as ColumnValueType[]);
+			}
+
+			public removeRows(rows: readonly string[] | readonly RowValueType[]): RowValueType[] {
 				// If there are no rows to remove, do nothing
-				if (rowsToRemove.length === 0) {
-					return;
+				if (rows.length === 0) {
+					return [];
 				}
 
 				// If there is only one row to remove, remove it (and don't incur cost of transaction)
-				if (rowsToRemove.length === 1) {
-					const rowToRemove = rowsToRemove[0] ?? oob();
-					const index = this.rows.indexOf(rowToRemove);
-
-					// If the row does not exist in the table, throw an error.
-					if (index === -1) {
-						throw new UsageError(
-							`Specified row with ID "${rowToRemove.id}" does not exist in the table.`,
-						);
-					}
-
-					this.rows.removeAt(index);
-					return;
+				if (rows.length === 1) {
+					const removedRow = this.removeRow(rows[0] ?? oob());
+					return [removedRow];
 				}
 
 				// If there are multiple rows to remove, remove them in a transaction.
+				const removedRows: RowValueType[] = [];
 				Tree.runTransaction(this, () => {
-					for (const rowToRemove of rowsToRemove) {
-						const index = this.rows.indexOf(rowToRemove);
-
-						// If any of the rows do not exist in the table, throw an error.
-						if (index === -1) {
-							// Note, throwing an error within a transaction will abort the entire transaction.
-							// So if we throw an error here for any row, no rows will be removed.
-							throw new UsageError(
-								`Specified row with ID "${rowToRemove.id}" does not exist in the table.`,
-							);
-						}
-						this.rows.removeAt(index);
+					// Note, throwing an error within a transaction will abort the entire transaction.
+					// So if we throw an error here for any row, no rows will be removed.
+					for (const rowToRemove of rows) {
+						const removedRow = this.removeRow(rowToRemove);
+						removedRows.push(removedRow);
 					}
 				});
+				return removedRows;
 			}
 
-			public removeAllRows(): void {
-				this.rows.removeRange();
-			}
+			public removeRow(rowOrId: string | RowValueType): RowValueType {
+				const rowToRemove = this._getRow(rowOrId);
+				const index = rowToRemove === undefined ? -1 : this.rows.indexOf(rowToRemove);
 
-			public removeCell(key: TableSchema.CellKey): CellValueType | undefined {
-				const { columnId, rowId } = key;
-				const row = this.getRow(rowId);
-				if (row === undefined) {
+				// If the row does not exist in the table, throw an error.
+				if (index === -1) {
+					const rowId = this._getRowId(rowOrId);
 					throw new UsageError(
 						`Specified row with ID "${rowId}" does not exist in the table.`,
 					);
 				}
 
-				const column = this.getColumn(columnId);
+				this.rows.removeAt(index);
+				return rowToRemove as RowValueType;
+			}
+
+			public removeAllRows(): RowValueType[] {
+				// TypeScript is unable to narrow the row type correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return this.removeRows(this.rows as unknown as RowValueType[]);
+			}
+
+			public removeCell(
+				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
+			): CellValueType | undefined {
+				const { column: columnOrId, row: rowOrId } = key;
+				const row = this._getRow(rowOrId);
+				if (row === undefined) {
+					const rowId = this._getRowId(rowOrId);
+					throw new UsageError(
+						`Specified row with ID "${rowId}" does not exist in the table.`,
+					);
+				}
+
+				const column = this._getColumn(columnOrId);
 				if (column === undefined) {
+					const columnId = this._getColumnId(columnOrId);
 					throw new UsageError(
 						`Specified column with ID "${columnId}" does not exist in the table.`,
 					);
@@ -648,6 +737,22 @@ export namespace System_TableSchema {
 
 				row.removeCell(column.id);
 				return cell;
+			}
+
+			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType | undefined {
+				return typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+			}
+
+			private _getColumnId(columnOrId: string | ColumnValueType): string {
+				return typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+			}
+
+			private _getRow(rowOrId: string | RowValueType): RowValueType | undefined {
+				return typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+			}
+
+			private _getRowId(rowOrId: string | RowValueType): string {
+				return typeof rowOrId === "string" ? rowOrId : rowOrId.id;
 			}
 
 			private containsColumnWithId(columnId: string): boolean {
@@ -663,6 +768,27 @@ export namespace System_TableSchema {
 				// TypeScript is unable to narrow the types correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				return this.rows.find((row) => (row as TableSchema.IRow).id === rowId) !== undefined;
+			}
+
+			/**
+			 * Ensure that the specified index is a valid location for item insertion in the destination list.
+			 * @throws Throws a usage error if the destination is invalid.
+			 */
+			private static validateInsertionIndex(
+				index: number,
+				destinationList: readonly unknown[],
+			): void {
+				if (index < 0) {
+					throw new UsageError("The index must be greater than or equal to 0.");
+				}
+
+				if (index > destinationList.length) {
+					throw new UsageError("The index specified for insertion is out of bounds.");
+				}
+
+				if (!Number.isInteger(index)) {
+					throw new UsageError("The index must be an integer.");
+				}
 			}
 		}
 
@@ -903,19 +1029,22 @@ export namespace TableSchema {
 	// #region Table
 
 	/**
-	 * A key to uniquely identify a cell in a table.
+	 * A key to uniquely identify a cell within a table.
 	 * @internal
 	 */
-	export interface CellKey {
+	export interface CellKey<
+		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	> {
 		/**
-		 * {@link TableSchema.IColumn.id} of the containing {@link TableSchema.IColumn}.
+		 * {@link TableSchema.IColumn} or {@link TableSchema.IColumn.id} at which the cell is located.
 		 */
-		readonly columnId: string;
+		readonly column: string | TreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		/**
-		 * {@link TableSchema.IRow.id} of the containing {@link TableSchema.IRow}.
+		 * {@link TableSchema.IRow} or {@link TableSchema.IRow.id} at which the cell is located.
 		 */
-		readonly rowId: string;
+		readonly row: string | TreeNodeFromImplicitAllowedTypes<TRow>;
 	}
 
 	/**
@@ -935,6 +1064,44 @@ export namespace TableSchema {
 		 * The column to insert.
 		 */
 		readonly column: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
+	}
+
+	/**
+	 * {@link TableSchema.ITable.insertColumns} parameters.
+	 * @internal
+	 */
+	export interface InsertColumnsParameters<
+		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	> {
+		/**
+		 * The index at which to insert the new columns.
+		 * @remarks If not provided, the columns will be appended to the end of the table.
+		 */
+		readonly index?: number | undefined;
+
+		/**
+		 * The columns to insert.
+		 */
+		readonly columns: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[];
+	}
+
+	/**
+	 * {@link TableSchema.ITable.insertRow} parameters.
+	 * @internal
+	 */
+	export interface InsertRowParameters<
+		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	> {
+		/**
+		 * The index at which to insert the new row.
+		 * @remarks If not provided, the row will be appended to the end of the table.
+		 */
+		readonly index?: number | undefined;
+
+		/**
+		 * The row to insert.
+		 */
+		readonly row: InsertableTreeNodeFromImplicitAllowedTypes<TRow>;
 	}
 
 	/**
@@ -961,17 +1128,19 @@ export namespace TableSchema {
 	 * @internal
 	 */
 	export interface SetCellParameters<
+		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> {
 		/**
 		 * The key to uniquely identify a cell in a table.
 		 */
-		readonly key: CellKey;
+		readonly key: CellKey<TColumn, TRow>;
 
 		/**
 		 * The cell to set.
 		 */
-		readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
+		readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
 	}
 
 	/**
@@ -1006,9 +1175,8 @@ export namespace TableSchema {
 		/**
 		 * Gets a cell in the table by column and row IDs.
 		 * @param key - A key that uniquely distinguishes a cell in the table, represented as a combination of the column ID and row ID.
-		 * @privateRemarks TODO: add overload that takes row and column nodes.
 		 */
-		getCell(key: CellKey): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+		getCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 
 		/**
 		 * Inserts a column into the table.
@@ -1022,6 +1190,26 @@ export namespace TableSchema {
 		): TreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		/**
+		 * Inserts 0 or more columns into the table.
+		 *
+		 * @throws
+		 * Throws an error if any of the columns are already in the tree, or if the specified index is out of range.
+		 * No columns are inserted in these cases.
+		 */
+		insertColumns(
+			params: InsertColumnsParameters<TColumn>,
+		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+
+		/**
+		 * Inserts a column into the table.
+		 *
+		 * @throws
+		 * Throws an error if the column is already in the tree, or if the specified index is out of range.
+		 * No column is inserted in these cases.
+		 */
+		insertRow(params: InsertRowParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>;
+
+		/**
 		 * Inserts 0 or more rows into the table.
 		 *
 		 * @throws
@@ -1033,45 +1221,79 @@ export namespace TableSchema {
 		/**
 		 * Sets the cell at the specified location in the table.
 		 * @remarks To remove a cell, call {@link TableSchema.ITable.removeCell} instead.
-		 * @privateRemarks TODO: Add overload that takes column/row nodes.
 		 */
-		setCell(params: SetCellParameters<TCell>): void;
+		setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
 
 		/**
 		 * Removes the specified column from the table.
+		 * @param column - The {@link IColumn | column} or {@link IColumn.id | column ID} to remove.
 		 * @remarks Note: this does not remove any cells from the table's rows.
-		 * @privateRemarks
-		 * TODO:
-		 * - Add overload that takes an ID.
-		 * - Return removed column.
-		 * - Throw an error if the column isn't in the table.
-		 * - (future) Actually remove corresponding cells from table rows.
+		 * @throws Throws an error if the column is not in the table.
+		 * @privateRemarks TODO (future): Actually remove corresponding cells from table rows.
 		 */
-		removeColumn(column: TreeNodeFromImplicitAllowedTypes<TColumn>): void;
+		removeColumn(
+			column: string | TreeNodeFromImplicitAllowedTypes<TColumn>,
+		): TreeNodeFromImplicitAllowedTypes<TColumn>;
+
+		/**
+		 * Removes 0 or more columns from the table.
+		 * @param columns - The columns to remove.
+		 * @throws Throws an error if any of the columns are not in the table.
+		 * In this case, no columns are removed.
+		 */
+		removeColumns(
+			columns: readonly TreeNodeFromImplicitAllowedTypes<TColumn>[],
+		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+		/**
+		 * Removes 0 or more columns from the table.
+		 * @param columns - The columns to remove, specified by their {@link IColumn.id}.
+		 * @throws Throws an error if any of the columns are not in the table.
+		 * In this case, no columns are removed.
+		 */
+		removeColumns(columns: readonly string[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+
+		/**
+		 * Removes all columns from the table.
+		 * @returns The removed columns.
+		 */
+		removeAllColumns(): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+
+		/**
+		 * Removes the specified row from the table.
+		 * @param row - The {@link IRow | row} or {@link IRow.id | row ID} to remove.
+		 * @throws Throws an error if the row is not in the table.
+		 */
+		removeRow(
+			row: string | TreeNodeFromImplicitAllowedTypes<TRow>,
+		): TreeNodeFromImplicitAllowedTypes<TRow>;
 
 		/**
 		 * Removes 0 or more rows from the table.
+		 * @param rows - The rows to remove.
 		 * @throws Throws an error if any of the rows are not in the table.
 		 * In this case, no rows are removed.
-		 * @privateRemarks
-		 * TODO:
-		 * - Add overload that takes IDs.
-		 * - Return removed rows.
-		 * - Throw an error if any row(s) aren't in the table.
 		 */
-		removeRows(rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]): void;
+		removeRows(
+			rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[],
+		): TreeNodeFromImplicitAllowedTypes<TRow>[];
+		/**
+		 * Removes 0 or more rows from the table.
+		 * @param rows - The rows to remove, specified by their {@link IRow.id}.
+		 * @throws Throws an error if any of the rows are not in the table.
+		 * In this case, no rows are removed.
+		 */
+		removeRows(rows: readonly string[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
 		 * Removes all rows from the table.
-		 * @privateRemarks TODO: Return removed rows (if any).
+		 * @returns The removed rows.
 		 */
-		removeAllRows(): void;
+		removeAllRows(): TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
 		 * Removes the cell at the specified location in the table.
 		 * @returns The cell if it exists, otherwise undefined.
 		 * @throws Throws an error if the location does not exist in the table.
-		 * @privateRemarks TODO: Add overload that takes column/row nodes.
 		 */
 		removeCell(key: CellKey): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	}
