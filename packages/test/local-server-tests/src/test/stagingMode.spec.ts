@@ -11,6 +11,7 @@ import {
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
+	ConnectionState,
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
@@ -19,6 +20,7 @@ import {
 	type ConfigTypes,
 	type FluidObject,
 	type IConfigProviderBase,
+	type IErrorBase,
 } from "@fluidframework/core-interfaces/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
@@ -31,6 +33,7 @@ import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
 
 import { createLoader } from "../utils.js";
 
@@ -55,7 +58,7 @@ class DataObjectWithStagingMode extends DataObject {
 		this.root.set(`${prefix}-${this.instanceNumber}`, this.root.size);
 	}
 
-	public addDDS(prefix: string) {
+	public addDDS(prefix: string): void {
 		const newMap = SharedMap.create(this.runtime);
 		this.root.set(`${prefix}-${this.instanceNumber}`, newMap.handle);
 	}
@@ -74,7 +77,7 @@ class DataObjectWithStagingMode extends DataObject {
 	}
 
 	/**
-	 * Enumerate the data store's data, leaving handles in their encoded form.
+	 * Enumerate the data store's data, traversing handles to other DDSes and including their data as nested keys.
 	 */
 	public async enumerateDataWithHandlesResolved(): Promise<Record<string, unknown>> {
 		const state: Record<string, unknown> = {};
@@ -143,14 +146,50 @@ interface Client {
 
 const waitForSave = async (clients: Client[] | Record<string, Client>) =>
 	Promise.all(
-		Array.isArray(clients)
-			? clients
-			: Object.values(clients).map(
-					async (c) =>
-						new Promise<void>((resolve) =>
-							c.container.isDirty ? c.container.once("saved", () => resolve()) : resolve(),
-						),
-				),
+		Object.entries(clients).map(
+			async ([key, { container }]) =>
+				new Promise<void>((resolve, reject) => {
+					if (container.closed || container.disposed) {
+						reject(
+							new Error(
+								`Container ${key} already closed or disposed when waitForSave was called`,
+							),
+						);
+						return;
+					}
+
+					if (!container.isDirty) {
+						resolve();
+						return;
+					}
+
+					const rejectHandler = (error?: IErrorBase | undefined) => {
+						reject(
+							wrapError(
+								error,
+								(message) =>
+									new LoggingError(`Container "${key}" closed or disposed: ${message}`),
+							),
+						);
+						off();
+					};
+
+					const resolveHandler = () => {
+						resolve();
+						off();
+					};
+
+					const off = () => {
+						container.off("closed", rejectHandler);
+						container.off("disposed", rejectHandler);
+						container.off("saved", resolveHandler);
+					};
+
+					container.on("saved", resolveHandler);
+					container.on("closed", rejectHandler);
+					container.on("disposed", rejectHandler);
+				}),
+		),
 	);
 
 const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
@@ -220,86 +259,201 @@ const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer)
 	return clients;
 };
 
+type Await<T> = T extends PromiseLike<infer U> ? Await<U> : T;
+
+/**
+ * Verify clients are consistent via their data representation from `enumerateDataWithHandlesResolved`, which
+ * loads DDSes created by `addDDS`.
+ */
+async function assertDeepConsistent(
+	clients: Await<ReturnType<typeof createClients>>,
+	message: string,
+): Promise<void> {
+	const { original, loaded } = clients;
+	assert.deepStrictEqual(
+		await original.dataObject.enumerateDataWithHandlesResolved(),
+		await loaded.dataObject.enumerateDataWithHandlesResolved(),
+		message,
+	);
+}
+
+/**
+ * Verify clients are consistent via their data representation from `enumerateDataSynchronous`.
+ */
+function assertConsistent(
+	clients: Await<ReturnType<typeof createClients>>,
+	message: string,
+): void {
+	const { original, loaded } = clients;
+	assert.deepStrictEqual(
+		original.dataObject.enumerateDataSynchronous(),
+		loaded.dataObject.enumerateDataSynchronous(),
+		message,
+	);
+}
+
+/**
+ * Verify clients are not consistent via their data representation from `enumerateDataSynchronous`.
+ */
+function assertNotConsistent(
+	clients: Await<ReturnType<typeof createClients>>,
+	message: string,
+): void {
+	const { original, loaded } = clients;
+	assert.notDeepStrictEqual(
+		original.dataObject.enumerateDataSynchronous(),
+		loaded.dataObject.enumerateDataSynchronous(),
+		message,
+	);
+}
+
+/**
+ * @returns Whether the given client has received an edit from some client (including itself) with the given prefix.
+ */
+function hasEdit(client: Client, prefix: string): boolean {
+	return Object.keys(client.dataObject.enumerateDataSynchronous()).some((k) =>
+		k.startsWith(prefix),
+	);
+}
+
+async function ensureDisconnected(client: Client): Promise<void> {
+	return new Promise<void>((resolve) => {
+		if (client.container.connectionState === ConnectionState.Disconnected) {
+			resolve();
+		} else {
+			client.container.once("disconnected", () => resolve());
+			client.container.disconnect();
+		}
+	});
+}
+
+async function ensureConnected(client: Client): Promise<void> {
+	return new Promise<void>((resolve) => {
+		if (client.container.connectionState === ConnectionState.Connected) {
+			resolve();
+		} else {
+			client.container.once("connected", () => resolve());
+			client.container.connect();
+		}
+	});
+}
+
 describe("Staging Mode", () => {
-	it("enter staging mode and merge", async () => {
+	it("entering staging mode does not change the data model", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
+		clients.original.dataObject.enterStagingMode();
+		assertConsistent(clients, "states should match after branch");
+	});
 
-		const branchData = clients.original.dataObject.enterStagingMode();
-		assert.deepStrictEqual(
-			clients.original.dataObject.enumerateDataSynchronous(),
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"states should match after branch",
-		);
-
+	it("blocks outbound changes", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const clients = await createClients(deltaConnectionServer);
+		clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
-		clients.loaded.dataObject.makeEdit("after-branch");
 
-		assert.notDeepStrictEqual(
-			clients.original.dataObject.enumerateDataSynchronous(),
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"should not match before save",
-		);
+		assertNotConsistent(clients, "should not match before save");
 
 		await waitForSave([clients.loaded]);
-
 		// Wait for the mainline changes to propagate
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
-		assert.notDeepStrictEqual(
-			clients.original.dataObject.enumerateDataSynchronous(),
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"should not match after save",
+		assertNotConsistent(clients, "should not match after save");
+		assert.equal(
+			hasEdit(clients.original, "branch-only"),
+			true,
+			"Staging mode client should have its own change",
 		);
-
-		const branchState = clients.original.dataObject.enumerateDataSynchronous();
-		assert.notEqual(
-			Object.keys(branchState).find((k) => k.startsWith("after-branch")),
-			undefined,
-			"Expected mainline change to reach branch",
-		);
-
-		branchData.commitChanges();
-
-		await waitForSave(clients);
-
-		assert.deepStrictEqual(
-			clients.original.dataObject.enumerateDataSynchronous(),
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"states should match after save",
+		assert.equal(
+			hasEdit(clients.loaded, "branch-only"),
+			false,
+			"Loaded client should not have the change",
 		);
 	});
 
+	it("allows inbound changes to flow", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const clients = await createClients(deltaConnectionServer);
+		clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.makeEdit("branch-only");
+		clients.loaded.dataObject.makeEdit("after-branch");
+
+		await waitForSave([clients.loaded]);
+		// Wait for the mainline changes to propagate
+		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+
+		assert.equal(
+			hasEdit(clients.original, "after-branch"),
+			true,
+			"Staging mode client should have received remote change",
+		);
+	});
+
+	it("commitChanges sends changes applied to other clients", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const clients = await createClients(deltaConnectionServer);
+		const stagingControls = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.makeEdit("branch-only");
+		clients.loaded.dataObject.makeEdit("after-branch");
+
+		await waitForSave([clients.loaded]);
+		// Wait for the mainline changes to propagate
+		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+
+		stagingControls.commitChanges();
+
+		await waitForSave(clients);
+
+		assertConsistent(clients, "states should match after save");
+		assert.equal(
+			hasEdit(clients.original, "branch-only"),
+			true,
+			"Edit submitted while in staging mode should be committed.",
+		);
+	});
+
+	it("discardChanges rolls back all changes applied in staging mode", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const clients = await createClients(deltaConnectionServer);
+		const stagingControls = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.makeEdit("branch-only");
+		clients.loaded.dataObject.makeEdit("after-branch");
+
+		await waitForSave([clients.loaded]);
+		// Wait for the mainline changes to propagate
+		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+
+		stagingControls.discardChanges();
+
+		await waitForSave(clients);
+
+		assertConsistent(clients, "states should match after save");
+		assert.equal(
+			hasEdit(clients.original, "branch-only"),
+			false,
+			"Edit submitted while in staging mode should be rolled back.",
+		);
+	});
+
+	// Analogous to the basic behavioral tests for staging mode above, but is worth testing separately as it involves
+	// an attach op for the created DDS.
 	it("enter staging mode, create dds, and merge", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
 		const branchData = clients.original.dataObject.enterStagingMode();
-		assert.deepStrictEqual(
-			clients.original.dataObject.enumerateDataSynchronous(),
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"states should match after branch",
-		);
+		assertConsistent(clients, "states should match after branch");
 
 		clients.original.dataObject.addDDS("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
-		assert.notDeepStrictEqual(
-			clients.original.dataObject.enumerateDataSynchronous(),
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"should not match before save",
-		);
+		assertNotConsistent(clients, "should not match before save");
 
 		await waitForSave([clients.loaded]);
-
 		// Wait for the mainline changes to propagate
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
-		assert.notDeepStrictEqual(
-			clients.original.dataObject.enumerateDataSynchronous(),
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"should not match after save",
-		);
+		assertNotConsistent(clients, "should not match after save");
 
 		const branchState = clients.original.dataObject.enumerateDataSynchronous();
 		assert.notEqual(
@@ -312,66 +466,57 @@ describe("Staging Mode", () => {
 
 		await waitForSave(clients);
 
-		assert.deepStrictEqual(
-			await clients.original.dataObject.enumerateDataWithHandlesResolved(),
-			await clients.loaded.dataObject.enumerateDataWithHandlesResolved(),
-			"states should match after save",
-		);
+		await assertDeepConsistent(clients, "states should match after save");
 	});
 
-	it("enter staging mode and discard staged changes", async () => {
+	for (const commit of [false, true]) {
+		it(`${commit ? "commitChanges" : "discardChanges"} allows subsequent outbound changes to flow`, async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.makeEdit("branch-only");
+			if (commit) {
+				stagingControls.commitChanges();
+			} else {
+				stagingControls.discardChanges();
+			}
+
+			await waitForSave(clients);
+			assertConsistent(clients, "states should match after save");
+
+			clients.original.dataObject.makeEdit("after staging mode");
+			await waitForSave(clients);
+			assertConsistent(clients, "states should match after second save");
+			assert.equal(
+				hasEdit(clients.loaded, "after staging mode"),
+				true,
+				"Edit made after staging mode ends should be sent",
+			);
+		});
+	}
+
+	it("can be exited while disconnected and functionality is preserved", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
-
-		const branchData = clients.original.dataObject.enterStagingMode();
-		assert.deepStrictEqual(
-			clients.original.dataObject.enumerateDataSynchronous(),
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"states should match after branch",
-		);
-
+		const stagingControls = clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
-		const remoteState = { ...clients.loaded.dataObject.enumerateDataSynchronous() };
-
-		assert.notDeepStrictEqual(
-			clients.original.dataObject.enumerateDataSynchronous(),
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"should not match before save",
-		);
-		assert.deepStrictEqual(
-			remoteState,
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"states should match after save",
-		);
 
 		await waitForSave([clients.loaded]);
+		// Wait for the mainline changes to propagate
+		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
-		assert.notDeepStrictEqual(
-			clients.original.dataObject.enumerateDataSynchronous(),
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"should not match after save",
-		);
-		assert.deepStrictEqual(
-			remoteState,
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"states should match after save",
-		);
-
-		branchData.discardChanges();
+		await ensureDisconnected(clients.original);
+		stagingControls.commitChanges();
+		await ensureConnected(clients.original);
 
 		await waitForSave(clients);
 
-		assert.deepStrictEqual(
-			remoteState,
-			clients.original.dataObject.enumerateDataSynchronous(),
-			"states should match after save",
-		);
-
-		assert.deepStrictEqual(
-			remoteState,
-			clients.loaded.dataObject.enumerateDataSynchronous(),
-			"states should match after save",
+		assertConsistent(clients, "states should match after save");
+		assert.equal(
+			hasEdit(clients.original, "branch-only"),
+			true,
+			"Edit submitted while in staging mode should be committed.",
 		);
 	});
 });
