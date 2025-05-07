@@ -27,7 +27,7 @@ import type {
 } from "../../shared-tree-core/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
-import { encodeRepo } from "./codec.js";
+import { encodeRepo, type SchemaCodecVersion } from "./codec.js";
 import type { JsonCompatible } from "../../util/index.js";
 
 const schemaStringKey = "SchemaString";
@@ -116,7 +116,7 @@ export class SchemaSummarizer implements Summarizable {
  */
 export function encodeTreeSchema(
 	schema: TreeStoredSchema,
-	writeVersion: number,
+	writeVersion: SchemaCodecVersion,
 ): JsonCompatible {
 	return encodeRepo(schema, writeVersion);
 }
