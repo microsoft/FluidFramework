@@ -93,7 +93,7 @@ export class BlobHandle
 		}
 	}
 
-	public bind(handle: IFluidHandleInternal): void {
+	public bind(): void {
 		throw new Error("Cannot bind to blob handle");
 	}
 }
