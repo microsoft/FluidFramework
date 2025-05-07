@@ -73,9 +73,7 @@ export namespace System_TableSchema {
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
 	 * @system @internal
 	 */
-	export interface OptionsWithCellSchema<
-		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> {
+	export interface OptionsWithCellSchema<TCellSchema extends ImplicitAllowedTypes> {
 		/**
 		 * Schema for the table's cells.
 		 */
@@ -593,22 +591,21 @@ export namespace System_TableSchema {
 				return rows as unknown as RowValueType[];
 			}
 
-			public setCell({ key, cell }: TableSchema.SetCellParameters<TCellSchema>): void {
+			public setCell({
+				key,
+				cell,
+			}: TableSchema.SetCellParameters<TCellSchema, TColumnSchema, TRowSchema>): void {
 				const { column: columnOrId, row: rowOrId } = key;
 
-				// TypeScript is unable to narrow the row type correctly here, hence the casts below.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				const row = this._getRow(rowOrId as RowValueType | string);
+				const row = this._getRow(rowOrId);
 				if (row === undefined) {
-					const rowId = this._getRowId(rowOrId as RowValueType | string);
+					const rowId = this._getRowId(rowOrId);
 					throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
 				}
 
-				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				const column = this._getColumn(columnOrId as ColumnValueType | string);
+				const column = this._getColumn(columnOrId);
 				if (column === undefined) {
-					const columnId = this._getColumnId(columnOrId as ColumnValueType | string);
+					const columnId = this._getColumnId(columnOrId);
 					throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
 				}
 
@@ -1031,8 +1028,8 @@ export namespace TableSchema {
 	 * @internal
 	 */
 	export interface CellKey<
-		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TColumn extends ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes,
 	> {
 		/**
 		 * {@link TableSchema.IColumn} or {@link TableSchema.IColumn.id} at which the cell is located.
@@ -1049,9 +1046,7 @@ export namespace TableSchema {
 	 * {@link TableSchema.ITable.insertColumn} parameters.
 	 * @internal
 	 */
-	export interface InsertColumnParameters<
-		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> {
+	export interface InsertColumnParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
 		 * The index at which to insert the new column.
 		 * @remarks If not provided, the column will be appended to the end of the table.
@@ -1068,9 +1063,7 @@ export namespace TableSchema {
 	 * {@link TableSchema.ITable.insertColumns} parameters.
 	 * @internal
 	 */
-	export interface InsertColumnsParameters<
-		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> {
+	export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
 		 * The index at which to insert the new columns.
 		 * @remarks If not provided, the columns will be appended to the end of the table.
@@ -1087,9 +1080,7 @@ export namespace TableSchema {
 	 * {@link TableSchema.ITable.insertRow} parameters.
 	 * @internal
 	 */
-	export interface InsertRowParameters<
-		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> {
+	export interface InsertRowParameters<TRow extends ImplicitAllowedTypes> {
 		/**
 		 * The index at which to insert the new row.
 		 * @remarks If not provided, the row will be appended to the end of the table.
@@ -1106,9 +1097,7 @@ export namespace TableSchema {
 	 * {@link TableSchema.ITable.insertRows} parameters.
 	 * @internal
 	 */
-	export interface InsertRowsParameters<
-		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> {
+	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
 		/**
 		 * The index at which to insert the new rows.
 		 * @remarks If not provided, the rows will be appended to the end of the table.
@@ -1126,9 +1115,9 @@ export namespace TableSchema {
 	 * @internal
 	 */
 	export interface SetCellParameters<
-		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TCell extends ImplicitAllowedTypes,
+		TColumn extends ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes,
 	> {
 		/**
 		 * The key to uniquely identify a cell in a table.
@@ -1146,9 +1135,9 @@ export namespace TableSchema {
 	 * @sealed @internal
 	 */
 	export interface ITable<
-		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TCell extends ImplicitAllowedTypes,
+		TColumn extends ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes,
 	> {
 		/**
 		 * The table's columns.
@@ -1293,7 +1282,9 @@ export namespace TableSchema {
 		 * @returns The cell if it exists, otherwise undefined.
 		 * @throws Throws an error if the location does not exist in the table.
 		 */
-		removeCell(key: CellKey): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+		removeCell(
+			key: CellKey<TColumn, TRow>,
+		): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	}
 
 	/**
