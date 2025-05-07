@@ -10,17 +10,15 @@ import { OdspTestTokenProvider } from "./tokenProvider.js";
 export interface OdspTestCredentials {
 	siteUrl: string;
 	driveId: string;
-	clientId: string;
 }
 
 export const props: OdspTestCredentials = {
 	siteUrl: "<site__url>",
 	driveId: "<drive__id>",
-	clientId: "<client__id>",
 };
 
 const connectionConfig: OdspConnectionConfig = {
-	tokenProvider: new OdspTestTokenProvider(props.clientId),
+	tokenProvider: new OdspTestTokenProvider(),
 	siteUrl: props.siteUrl,
 	driveId: props.driveId,
 	filePath: "",
