@@ -195,7 +195,7 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("Insert column", () => {
+	describe("insertColumn", () => {
 		it("Insert new column into empty list", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({ rows: [], columns: [] });
@@ -304,7 +304,7 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("Insert rows", () => {
+	describe("insertRows", () => {
 		it("Insert empty rows list", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({ rows: [], columns: [] });
@@ -499,7 +499,7 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("Set cell", () => {
+	describe("setCell", () => {
 		it("Set cell in a valid location", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
@@ -594,7 +594,7 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("Remove column", () => {
+	describe("removeColumn", () => {
 		it("Remove column by ID", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
@@ -681,7 +681,7 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("Remove rows", () => {
+	describe("removeRows", () => {
 		it("Remove empty list", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
@@ -788,7 +788,7 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("Remove cell", () => {
+	describe("removeCell", () => {
 		it("Remove cell in valid location with existing data", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
