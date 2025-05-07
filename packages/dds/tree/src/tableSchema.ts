@@ -770,6 +770,10 @@ export namespace System_TableSchema {
 				return this.rows.find((row) => (row as TableSchema.IRow).id === rowId) !== undefined;
 			}
 
+			/**
+			 * Ensure that the specified index is a valid location for item insertion in the destination list.
+			 * @throws Throws a usage error if the destination is invalid.
+			 */
 			private static validateInsertionIndex(
 				index: number,
 				destinationList: readonly unknown[],
