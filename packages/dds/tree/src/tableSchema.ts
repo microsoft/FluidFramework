@@ -1084,11 +1084,21 @@ export namespace TableSchema {
 		 * Removes the specified column from the table.
 		 * @param column - The {@link IColumn | column} or {@link IColumn.id | column ID} to remove.
 		 * @remarks Note: this does not remove any cells from the table's rows.
+		 * @throws Throws an error if the column is not in the table.
 		 * @privateRemarks TODO (future): Actually remove corresponding cells from table rows.
 		 */
 		removeColumn(
 			column: string | TreeNodeFromImplicitAllowedTypes<TColumn>,
 		): TreeNodeFromImplicitAllowedTypes<TColumn>;
+
+		/**
+		 * Removes the specified row from the table.
+		 * @param row - The {@link IRow | row} or {@link IRow.id | row ID} to remove.
+		 * @throws Throws an error if the row is not in the table.
+		 */
+		removeRow(
+			row: string | TreeNodeFromImplicitAllowedTypes<TRow>,
+		): TreeNodeFromImplicitAllowedTypes<TRow>;
 
 		/**
 		 * Removes 0 or more rows from the table.
