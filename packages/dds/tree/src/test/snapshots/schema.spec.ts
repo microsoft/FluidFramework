@@ -16,7 +16,7 @@ describe("schema snapshots", () => {
 	for (const schemaFormat of supportedSchemaFormats) {
 		for (const { name, schemaData } of testTrees) {
 			it(`${name} - schema v${schemaFormat}`, () => {
-				const encoded = encodeTreeSchema(schemaData, 1);
+				const encoded = encodeTreeSchema(schemaData, schemaFormat);
 				takeJsonSnapshot(encoded);
 			});
 		}
