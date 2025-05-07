@@ -14,7 +14,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
-import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
+import type { IJsonCodec } from "../../codec/index.js";
 import {
 	type MutableTreeStoredSchema,
 	type TreeStoredSchema,
@@ -41,7 +41,6 @@ export class SchemaSummarizer implements Summarizable {
 
 	public constructor(
 		private readonly schema: MutableTreeStoredSchema,
-		options: ICodecOptions,
 		collabWindow: CollabWindow,
 		private readonly codec: IJsonCodec<TreeStoredSchema>,
 	) {

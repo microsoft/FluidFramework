@@ -224,7 +224,6 @@ export class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, Shar
 		const schemaCodec = makeSchemaCodec(options, codecVersions.schema);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
-			options,
 			{
 				getCurrentSeq: lastSequenceNumber,
 			},
