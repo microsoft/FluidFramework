@@ -3,30 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
-	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
-	makeAnonChange,
 	rootFieldKey,
 	tagChange,
 } from "../../../core/index.js";
-import {
-	type FieldKindConfiguration,
-	type ModularChangeset,
-	type NodeId,
-	type RebaseRevisionMetadata,
-	makeModularChangeCodecFamily,
-	rebaseRevisionMetadataFromInfo,
+import type {
+	ModularChangeset,
+	NodeId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	type OptionalChangeset,
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
@@ -41,40 +32,27 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 // This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
-import {
-	chunkFromJsonTrees,
-	defaultRevInfosFromChanges,
-	testRevisionTagCodec,
-} from "../../utils.js";
-import type { ChangesetWrapper } from "../../changesetWrapper.js";
-import {
-	intoDelta,
-	makeFieldBatchCodec,
-	type DefaultChangeset,
-} from "../../../feature-libraries/index.js";
-import {
-	ModularChangeFamily,
-	type FieldEditDescription,
-	type GlobalEditDescription,
+import { chunkFromJsonTrees } from "../../utils.js";
+import { intoDelta, type DefaultChangeset } from "../../../feature-libraries/index.js";
+import type {
+	FieldEditDescription,
+	GlobalEditDescription,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
-	fieldKindConfigurations,
-	fieldKinds,
 	optional,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { ajvValidator } from "../../codec/index.js";
-import type { ICodecOptions } from "../../../index.js";
 import {
 	assertEqual,
-	assertModularChangesetsEqual,
-	empty,
-	isModularEmpty,
 	normalizeDelta,
-	removeAliases,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../modular-schema/modularChangesetUtil.js";
+import {
+	defaultFamily,
+	defaultFieldRebaser,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../default-field-kinds/defaultChangesetUtil.js";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -112,12 +90,6 @@ const OptionalChange = {
 // 	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
 // ): DeltaFieldChanges {
 // 	return optionalFieldIntoDelta(change, deltaFromChild);
-// }
-
-// function toDeltaWrapped(change: TaggedChange<WrappedChangeset>) {
-// 	return ChangesetWrapper.toDelta(change.change, (c, deltaFromChild) =>
-// 		toDelta(c, deltaFromChild),
-// 	);
 // }
 
 // function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined {
@@ -164,14 +136,6 @@ const OptionalChange = {
 // 	return inverted;
 // }
 
-function invertModular(
-	change: TaggedChange<ModularChangeset>,
-	revision: RevisionTag,
-	isRollback: boolean,
-): ModularChangeset {
-	return family.invert(change, isRollback, revision);
-}
-
 // function rebase(
 // 	change: OptionalChangeset,
 // 	base: TaggedChange<OptionalChangeset>,
@@ -200,34 +164,6 @@ function invertModular(
 // 	return rebased;
 // }
 
-function rebaseModular(
-	change: TaggedChange<ModularChangeset>,
-	base: TaggedChange<ModularChangeset>,
-	metadataArg?: RebaseRevisionMetadata,
-): ModularChangeset {
-	const metadata =
-		metadataArg ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
-			base.revision,
-		]);
-	return family.rebase(change, base, metadata);
-}
-
-function rebaseComposedModular(
-	metadata: RebaseRevisionMetadata,
-	change: TaggedChange<ModularChangeset>,
-	...baseChanges: TaggedChange<ModularChangeset>[]
-): ModularChangeset {
-	const composed =
-		baseChanges.length === 0
-			? makeAnonChange(empty())
-			: baseChanges.reduce((change1, change2) =>
-					makeAnonChange(composeModular(change1, change2)),
-				);
-
-	return rebaseModular(change, composed, metadata);
-}
-
 // function compose(
 // 	change1: TaggedChange<OptionalChangeset>,
 // 	change2: TaggedChange<OptionalChangeset>,
@@ -245,19 +181,6 @@ function rebaseComposedModular(
 // 		moveEffects,
 // 		metadata ?? defaultRevisionMetadataFromChanges([change1, change2]),
 // 	);
-// }
-
-function composeModular(
-	change1: TaggedChange<ModularChangeset>,
-	change2: TaggedChange<ModularChangeset>,
-	metadata?: RevisionMetadataSource,
-): ModularChangeset {
-	return family.compose([change1, change2]);
-}
-
-// function isWrappedChangeEmpty(change: WrappedChangeset): boolean {
-// 	const delta = toDeltaWrapped(makeAnonChange(change));
-// 	return delta === undefined || !isDeltaVisible(delta);
 // }
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, DefaultChangeset>;
@@ -293,27 +216,7 @@ type OptionalFieldTestState = FieldStateTree<string | undefined, DefaultChangese
 // 	return intentions;
 // }
 
-type WrappedChangeset = ChangesetWrapper<OptionalChangeset>;
-
-const codecOptions: ICodecOptions = {
-	jsonValidator: ajvValidator,
-};
-
-const fieldKindConfiguration: FieldKindConfiguration =
-	fieldKindConfigurations.get(4) ?? assert.fail("Field kind configuration not found");
-assert(
-	fieldKindConfigurations.get(5) === undefined,
-	"There's a newer configuration. It probably should be used.",
-);
-
-const codec = makeModularChangeCodecFamily(
-	new Map([[1, fieldKindConfiguration]]),
-	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions, 1),
-	codecOptions,
-);
-const family = new ModularChangeFamily(fieldKinds, codec);
-const editor = family.buildEditor(() => undefined);
+const editor = defaultFamily.buildEditor(() => undefined);
 
 /**
  * See {@link ChildStateGenerator}
@@ -485,7 +388,11 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 		if (state.mostRecentEdit !== undefined) {
 			const undoIntention = mintIntention();
 			const undoRevision = tagFromIntention(undoIntention);
-			const modularEdit = family.invert(state.mostRecentEdit.changeset, false, undoRevision);
+			const modularEdit = defaultFamily.invert(
+				state.mostRecentEdit.changeset,
+				false,
+				undoRevision,
+			);
 
 			yield {
 				content: state.parent?.content,
@@ -615,17 +522,7 @@ export function testRebaserAxioms() {
 			runExhaustiveComposeRebaseSuite(
 				[{ content: undefined }, { content: "A" }],
 				generateChildStates,
-				{
-					rebase: rebaseModular,
-					rebaseComposed: rebaseComposedModular,
-					compose: composeModular,
-					invert: invertModular,
-					inlineRevision: inlineRevisionModular,
-					assertEqual: assertModularEqual,
-					createEmpty: empty,
-					isEmpty: isModularEmpty,
-					assertChangesetsEquivalent: assertModularChangesetsEquivalent,
-				},
+				defaultFieldRebaser,
 				{
 					numberOfEditsToRebase: 3,
 					numberOfEditsToRebaseOver: stressMode !== StressMode.Short ? 5 : 3,
@@ -645,38 +542,3 @@ export function assertModularChangesetsEquivalent(
 	const expectedDelta = normalizeDelta(intoDelta(change2));
 	assertEqual(actualDelta, expectedDelta);
 }
-
-function assertModularEqual(
-	a: TaggedChange<ModularChangeset> | undefined,
-	b: TaggedChange<ModularChangeset> | undefined,
-): void {
-	if (a === undefined || b === undefined) {
-		assert.equal(a, b);
-		return;
-	}
-
-	assert(a.revision === b.revision && a.rollbackOf === b.rollbackOf);
-	assertModularChangesetsEqual(a.change, b.change);
-}
-
-function inlineRevisionModular(
-	change: ModularChangeset,
-	revision: RevisionTag,
-): ModularChangeset {
-	return family.changeRevision(change, revision);
-}
-
-// function inlineRevision(change: OptionalChangeset, revision: RevisionTag): OptionalChangeset {
-// 	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
-// }
-
-// function tagWrappedChangeInline(
-// 	change: WrappedChangeset,
-// 	revision: RevisionTag,
-// 	rollbackOf?: RevisionTag,
-// ): TaggedChange<WrappedChangeset> {
-// 	const inlined = inlineRevisionModular(change, revision);
-// 	return rollbackOf !== undefined
-// 		? tagRollbackInverse(inlined, revision, rollbackOf)
-// 		: tagChange(inlined, revision);
-// }

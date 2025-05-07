@@ -39,6 +39,7 @@ import {
 	type IdAllocator,
 	type Mutable,
 	type RangeMap,
+	type RangeQueryEntry,
 	type RangeQueryResult,
 	brand,
 	idAllocatorFromMaxId,
@@ -57,7 +58,6 @@ import {
 import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import type { RangeQueryEntry } from "../../../util/rangeMap.js";
 
 export const Change = {
 	build,
