@@ -1096,14 +1096,16 @@ export namespace TableSchema {
 		 * @throws Throws an error if any of the rows are not in the table.
 		 * In this case, no rows are removed.
 		 */
-		removeRows(rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]): void;
+		removeRows(
+			rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[],
+		): TreeNodeFromImplicitAllowedTypes<TRow>[];
 		/**
 		 * Removes 0 or more rows from the table.
 		 * @param rows - The rows to remove, specified by their {@link IRow.id}.
 		 * @throws Throws an error if any of the rows are not in the table.
 		 * In this case, no rows are removed.
 		 */
-		removeRows(rows: readonly string[]): void;
+		removeRows(rows: readonly string[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
 		 * Removes all rows from the table.
