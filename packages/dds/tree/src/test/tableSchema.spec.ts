@@ -486,6 +486,122 @@ describe.only("TableFactory unit tests", () => {
 		});
 	});
 
+	describe("insertRow", () => {
+		it("Insert new row into empty list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({ rows: [], columns: [] });
+
+			treeView.root.insertRow({
+				index: 0,
+				row: { id: "row-0", cells: {}, props: {} },
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+						props: {},
+					},
+				],
+			});
+		});
+
+		it("Insert new row into non-empty list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [
+					{ id: "row-a", cells: {}, props: {} },
+					{ id: "row-b", cells: {}, props: {} },
+				],
+			});
+
+			treeView.root.insertRow({
+				index: 1,
+				row: { id: "row-c", cells: {}, props: {} },
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [
+					{
+						id: "row-a",
+						cells: {},
+						props: {},
+					},
+					{
+						id: "row-c",
+						cells: {},
+						props: {},
+					},
+					{
+						id: "row-b",
+						cells: {},
+						props: {},
+					},
+				],
+			});
+		});
+
+		it("Append new row", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [
+					{ id: "row-a", cells: {}, props: {} },
+					{ id: "row-b", cells: {}, props: {} },
+				],
+			});
+
+			// By not specifying an index, the column should be appended to the end of the list.
+			treeView.root.insertRow({
+				row: { id: "row-c", cells: {}, props: {} },
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [
+					{
+						id: "row-a",
+						cells: {},
+						props: {},
+					},
+					{
+						id: "row-b",
+						cells: {},
+						props: {},
+					},
+					{
+						id: "row-c",
+						cells: {},
+						props: {},
+					},
+				],
+			});
+		});
+
+		it("Inserting existing row fails", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [
+					{ id: "row-a", cells: {}, props: {} },
+					{ id: "row-b", cells: {}, props: {} },
+				],
+			});
+
+			assert.throws(
+				() =>
+					treeView.root.insertRow({
+						row: { id: "row-b", cells: {}, props: {} },
+					}),
+				validateUsageError(/A row with ID "row-b" already exists in the table./),
+			);
+		});
+	});
+
 	describe("insertRows", () => {
 		it("Insert empty rows list", () => {
 			const { treeView } = createTableTree();
