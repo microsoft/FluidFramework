@@ -90,9 +90,21 @@ interface ClientJoinMessage extends IInboundSignalMessage {
 	};
 }
 
+// Message type identifier for presence acknowledgment messages.
+const acknowledgementMessageType = "Pres:Ack";
+
+// Signal message format used to acknowledge receipt of presence-related messages.
+// These are lightweight and typically contain only the messageId being acknowledged.
+interface AcknowledgementMessage extends IInboundSignalMessage {
+	type: typeof acknowledgementMessageType;
+	// TODO: Define what ack content will be shaped like ({ messageId: string }),
+	// Keeping generic for now to allow evolution of this message type.
+	content: unknown;
+}
+
 function isPresenceMessage(
 	message: IInboundSignalMessage,
-): message is DatastoreUpdateMessage | ClientJoinMessage {
+): message is DatastoreUpdateMessage | ClientJoinMessage | AcknowledgementMessage {
 	return message.type.startsWith("Pres:");
 }
 /**
@@ -356,7 +368,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// IExtensionMessage is a subset of IInboundSignalMessage so this is safe.
 		// Change types of DatastoreUpdateMessage | ClientJoinMessage to
 		// IExtensionMessage<> derivatives to see the issues.
-		message: IInboundSignalMessage | DatastoreUpdateMessage | ClientJoinMessage,
+		message:
+			| IInboundSignalMessage
+			| DatastoreUpdateMessage
+			| ClientJoinMessage
+			| AcknowledgementMessage,
 		local: boolean,
 	): void {
 		const received = Date.now();
@@ -364,6 +380,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (!isPresenceMessage(message)) {
 			return;
 		}
+
+		// Here we accept acknowledgement messages passively.
+		// Once implemented, these will be used for tracking message delivery status.
+		// For now, we just skip processing these messages.
+		if (message.type === acknowledgementMessageType) {
+			return;
+		}
+
 		if (local) {
 			const deliveryDelta = received - message.content.sendTimestamp;
 			// Limit returnedMessages count to 256 such that newest message
