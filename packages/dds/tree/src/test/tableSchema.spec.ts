@@ -297,7 +297,7 @@ describe("TableFactory unit tests", () => {
 						index: 1,
 						column: { props: {} },
 					}),
-				validateUsageError(/The index specified for column insertion is out of bounds./),
+				validateUsageError(/The index specified for insertion is out of bounds./),
 			);
 		});
 
@@ -612,7 +612,7 @@ describe("TableFactory unit tests", () => {
 						index: 1,
 						row: { cells: {}, props: {} },
 					}),
-				validateUsageError(/The index specified for row insertion is out of bounds./),
+				validateUsageError(/The index specified for insertion is out of bounds./),
 			);
 		});
 

@@ -514,13 +514,7 @@ export namespace System_TableSchema {
 
 				// Ensure index is valid
 				if (index !== undefined) {
-					if (index < 0) {
-						throw new UsageError("The index must be greater than or equal to 0.");
-					} else if (!Number.isInteger(index)) {
-						throw new UsageError("The index must be an integer.");
-					} else if (index > this.columns.length) {
-						throw new UsageError("The index specified for column insertion is out of bounds.");
-					}
+					Table.validateInsertionIndex(index, this.rows);
 				}
 
 				// Check all of the columns being inserted an ensure the table does not already contain any with the same ID.
@@ -570,13 +564,7 @@ export namespace System_TableSchema {
 
 				// Ensure index is valid
 				if (index !== undefined) {
-					if (index < 0) {
-						throw new UsageError("The index must be greater than or equal to 0.");
-					} else if (!Number.isInteger(index)) {
-						throw new UsageError("The index must be an integer.");
-					} else if (index > this.rows.length) {
-						throw new UsageError("The index specified for row insertion is out of bounds.");
-					}
+					Table.validateInsertionIndex(index, this.rows);
 				}
 
 				// Check all of the rows being inserted an ensure the table does not already contain any with the same ID.
@@ -780,6 +768,19 @@ export namespace System_TableSchema {
 				// TypeScript is unable to narrow the types correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				return this.rows.find((row) => (row as TableSchema.IRow).id === rowId) !== undefined;
+			}
+
+			private static validateInsertionIndex(
+				index: number,
+				destinationList: readonly unknown[],
+			): void {
+				if (index < 0) {
+					throw new UsageError("The index must be greater than or equal to 0.");
+				} else if (!Number.isInteger(index)) {
+					throw new UsageError("The index must be an integer.");
+				} else if (index > destinationList.length) {
+					throw new UsageError("The index specified for insertion is out of bounds.");
+				}
 			}
 		}
 
