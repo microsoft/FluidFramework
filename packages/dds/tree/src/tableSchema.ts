@@ -780,10 +780,14 @@ export namespace System_TableSchema {
 			): void {
 				if (index < 0) {
 					throw new UsageError("The index must be greater than or equal to 0.");
-				} else if (!Number.isInteger(index)) {
-					throw new UsageError("The index must be an integer.");
-				} else if (index > destinationList.length) {
+				}
+
+				if (index > destinationList.length) {
 					throw new UsageError("The index specified for insertion is out of bounds.");
+				}
+
+				if (!Number.isInteger(index)) {
+					throw new UsageError("The index must be an integer.");
 				}
 			}
 		}
