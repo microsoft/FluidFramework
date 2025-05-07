@@ -221,7 +221,20 @@ function toSerializableForm(
 	};
 }
 
-const defaultReplayPendingStatesOptions = {
+interface ReplayPendingStateOptions {
+	/**
+	 * If true, only replay staged batches. This is used when we are exiting staging mode and want to rebase and submit the staged batches.
+	 * Default: false
+	 */
+	onlyStagedBatches: boolean;
+	/**
+	 * @param squash - If true, edits should be squashed when resubmitting.
+	 * Default: false
+	 */
+	squash: boolean;
+}
+
+const defaultReplayPendingStatesOptions: ReplayPendingStateOptions = {
 	onlyStagedBatches: false,
 	squash: false,
 };
@@ -698,17 +711,9 @@ export class PendingStateManager implements IDisposable {
 	 * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
-	 * @param onlyStagedBatches - If true, only replay staged batches. This is used when we are exiting staging mode and want to rebase and submit the staged batches.
-	 * @param squash - If true, edits should be squashed when resubmitting.
-	 * @privateRemarks
-	 * parameter doc above is named. TSDoc doesn't support dot syntax, see https://github.com/microsoft/tsdoc/issues/19
 	 */
-	public replayPendingStates(
-		options: {
-			onlyStagedBatches: boolean;
-			squash: boolean;
-		} = defaultReplayPendingStatesOptions,
-	): void {
+	public replayPendingStates(optionsParam?: ReplayPendingStateOptions): void {
+		const options = { ...defaultReplayPendingStatesOptions, ...optionsParam };
 		const { onlyStagedBatches, squash } = options;
 		assert(
 			this.stateHandler.connected() || onlyStagedBatches === true,

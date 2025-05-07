@@ -3242,25 +3242,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * @privateRemarks
-	 * orderSequentially predates staging mode, but its implementation has been updated to leverage it.
-	 * Public usage of staging mode has more guards around only being used with objects that fully support it (i.e. that support squashing
-	 * as well as generalized rollback which may occur after inbounding further remote ops).
-	 *
-	 * This member allows the container runtime to bypass those guards by opting for legacy behavior when exiting an orderSequentially block (e.g.
-	 * op resubmission will not be squashed).
-	 * This can therefore be removed once staging mode is broadly supported across layers.
-	 */
-	private readonly orderSequentiallyRunner = new RunCounter();
-
-	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
 	 */
 	public orderSequentially<T>(callback: () => T): T {
-		return this.orderSequentiallyRunner.run(() => this.orderSequentiallyCore(callback));
-	}
-
-	private orderSequentiallyCore<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		const checkpointDirtyState = this.dirtyContainer;
 		// eslint-disable-next-line import/no-deprecated
@@ -3381,13 +3365,15 @@ export class ContainerRuntime
 					this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
 				}
 			}),
-			commitChanges: (options = defaultStagingCommitOptions) =>
-				exitStagingMode(() => {
+			commitChanges: (optionsParam) => {
+				const options = { ...defaultStagingCommitOptions, ...optionsParam };
+				return exitStagingMode(() => {
 					this.pendingStateManager.replayPendingStates({
 						onlyStagedBatches: true,
 						squash: options.squash ?? false,
 					});
-				})(),
+				})();
+			},
 		};
 
 		return (this.stageControls = stageControls);
