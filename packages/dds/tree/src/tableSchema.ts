@@ -603,44 +603,45 @@ export namespace System_TableSchema {
 				return column as ColumnValueType;
 			}
 
-			public removeRows(rowsToRemove: readonly RowValueType[]): void {
+			public removeRows(rows: readonly string[] | readonly RowValueType[]): RowValueType[] {
 				// If there are no rows to remove, do nothing
-				if (rowsToRemove.length === 0) {
-					return;
+				if (rows.length === 0) {
+					return [];
 				}
 
 				// If there is only one row to remove, remove it (and don't incur cost of transaction)
-				if (rowsToRemove.length === 1) {
-					const rowToRemove = rowsToRemove[0] ?? oob();
-					const index = this.rows.indexOf(rowToRemove);
-
-					// If the row does not exist in the table, throw an error.
-					if (index === -1) {
-						throw new UsageError(
-							`Specified row with ID "${rowToRemove.id}" does not exist in the table.`,
-						);
-					}
-
-					this.rows.removeAt(index);
-					return;
+				if (rows.length === 1) {
+					const removedRow = this.removeRow(rows[0] ?? oob());
+					return [removedRow];
 				}
 
 				// If there are multiple rows to remove, remove them in a transaction.
+				const removedRows: RowValueType[] = [];
 				Tree.runTransaction(this, () => {
-					for (const rowToRemove of rowsToRemove) {
-						const index = this.rows.indexOf(rowToRemove);
-
-						// If any of the rows do not exist in the table, throw an error.
-						if (index === -1) {
-							// Note, throwing an error within a transaction will abort the entire transaction.
-							// So if we throw an error here for any row, no rows will be removed.
-							throw new UsageError(
-								`Specified row with ID "${rowToRemove.id}" does not exist in the table.`,
-							);
-						}
-						this.rows.removeAt(index);
+					// Note, throwing an error within a transaction will abort the entire transaction.
+					// So if we throw an error here for any row, no rows will be removed.
+					for (const rowToRemove of rows) {
+						const removedRow = this.removeRow(rowToRemove);
+						removedRows.push(removedRow);
 					}
 				});
+				return removedRows;
+			}
+
+			public removeRow(rowOrId: string | RowValueType): RowValueType {
+				const rowToRemove = this._getRow(rowOrId);
+				const index = rowToRemove === undefined ? -1 : this.rows.indexOf(rowToRemove);
+
+				// If the row does not exist in the table, throw an error.
+				if (index === -1) {
+					const rowId = this._getRowId(rowOrId);
+					throw new UsageError(
+						`Specified row with ID "${rowId}" does not exist in the table.`,
+					);
+				}
+
+				this.rows.removeAt(index);
+				return rowToRemove as RowValueType;
 			}
 
 			public removeAllRows(): void {
@@ -675,6 +676,14 @@ export namespace System_TableSchema {
 
 				row.removeCell(column.id);
 				return cell;
+			}
+
+			private _getRow(rowOrId: string | RowValueType): RowValueType | undefined {
+				return typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+			}
+
+			private _getRowId(rowOrId: string | RowValueType): string {
+				return typeof rowOrId === "string" ? rowOrId : rowOrId.id;
 			}
 
 			private containsColumnWithId(columnId: string): boolean {
@@ -1079,15 +1088,18 @@ export namespace TableSchema {
 
 		/**
 		 * Removes 0 or more rows from the table.
+		 * @param rows - The rows to remove.
 		 * @throws Throws an error if any of the rows are not in the table.
 		 * In this case, no rows are removed.
-		 * @privateRemarks
-		 * TODO:
-		 * - Add overload that takes IDs.
-		 * - Return removed rows.
-		 * - Throw an error if any row(s) aren't in the table.
 		 */
 		removeRows(rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]): void;
+		/**
+		 * Removes 0 or more rows from the table.
+		 * @param rows - The rows to remove, specified by their {@link IRow.id}.
+		 * @throws Throws an error if any of the rows are not in the table.
+		 * In this case, no rows are removed.
+		 */
+		removeRows(rows: readonly string[]): void;
 
 		/**
 		 * Removes all rows from the table.
