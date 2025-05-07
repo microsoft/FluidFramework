@@ -34,7 +34,6 @@ import {
 
 // Future improvement TODOs:
 // - Omit `cells` property from Row insertion type.
-//     -
 // - Record-like type parameters / input parameters?
 // - Omit `props` properties from Row and Column schemas when not provided?
 
