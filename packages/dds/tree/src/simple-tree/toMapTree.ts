@@ -35,6 +35,9 @@ import {
 	normalizeFieldSchema,
 	FieldKind,
 	type TreeLeafValue,
+	type AllowedTypeMetadata,
+	type FieldSchemaAlpha,
+	extractAnnotationsFromAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	getKernel,
@@ -63,6 +66,29 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
  */
 
 /**
+ * TODO
+ */
+interface MapTreeFromNodeDataOptions {
+	/**
+	 * An optional context which, if present, will allow defaults to be created by {@link ContextualFieldProvider}s.
+ 	 * If absent, only defaults from {@link ConstantFieldProvider}s will be created.
+	 */
+	context?: NodeIdentifierManager,
+	/**
+	 * The stored schema and policy to be used for validation, if the policy says schema
+	 * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
+	 * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
+	 *
+	 * TODO:BUG: AB#9131
+	 * This schema validation is done before defaults are provided.
+	 * This can not easily be fixed by reordering things within this implementation since even at the end of this function defaults requiring a context may not have been filled.
+	 * This means schema validation reject required fields getting their value from a default like identifier fields.
+	 */
+	schemaValidationPolicy?: SchemaAndPolicy,
+	enforceNonEnabled?: boolean,
+}
+
+/**
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}.
  * @param data - The input tree to be converted.
  * If the data is an unsupported value (e.g. NaN), a fallback value will be used when supported,
@@ -80,16 +106,6 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
  * If `context` is not provided, defaults which require a context will be left empty which can be out of schema.
  *
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
- * @param context - An optional context which, if present, will allow defaults to be created by {@link ContextualFieldProvider}s.
- * If absent, only defaults from {@link ConstantFieldProvider}s will be created.
- * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
- * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
- * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
- *
- * TODO:BUG: AB#9131
- * This schema validation is done before defaults are provided.
- * This can not easily be fixed by reordering things within this implementation since even at the end of this function defaults requiring a context may not have been filled.
- * This means schema validation reject required fields getting their value from a default like identifier fields.
  *
  * @remarks The resulting tree will be populated with any defaults from {@link FieldProvider}s in the schema.
  *
@@ -104,21 +120,19 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 export function mapTreeFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-	context?: NodeIdentifierManager,
-	schemaValidationPolicy?: SchemaAndPolicy,
+	options?: MapTreeFromNodeDataOptions,
 ): ExclusiveMapTree;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitFieldSchema,
-	context?: NodeIdentifierManager,
-	schemaValidationPolicy?: SchemaAndPolicy,
+	options?: MapTreeFromNodeDataOptions,
 ): ExclusiveMapTree | undefined;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitFieldSchema,
-	context?: NodeIdentifierManager,
-	schemaValidationPolicy?: SchemaAndPolicy,
+	options?: MapTreeFromNodeDataOptions,
 ): ExclusiveMapTree | undefined {
+	const { schemaValidationPolicy, context, enforceNonEnabled } = options ?? { };
 	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
 
 	if (data === undefined) {
@@ -129,7 +143,7 @@ export function mapTreeFromNodeData(
 		return undefined;
 	}
 
-	const mapTree = nodeDataToMapTree(data, normalizedFieldSchema.allowedTypeSet);
+	const mapTree = nodeDataToMapTree(data, normalizedFieldSchema.annotatedAllowedTypeSet);
 	// Add what defaults can be provided. If no `context` is providing, some defaults may still be missing.
 	addDefaultsToMapTree(mapTree, normalizedFieldSchema.allowedTypes, context);
 
@@ -155,14 +169,15 @@ export function mapTreeFromNodeData(
  */
 function nodeDataToMapTree(
 	data: InsertableContent,
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	annotatedAllowedTypes: ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>,
+	enforceNonEnabled = true,
 ): ExclusiveMapTree {
 	// A special cache path for processing unhydrated nodes.
 	// They already have the mapTree, so there is no need to recompute it.
 	const innerNode = tryGetInnerNode(data);
 	if (innerNode !== undefined) {
 		if (innerNode instanceof UnhydratedFlexTreeNode) {
-			if (!allowedTypes.has(getSimpleNodeSchemaFromInnerNode(innerNode))) {
+			if (!annotatedAllowedTypes.has(getSimpleNodeSchemaFromInnerNode(innerNode))) {
 				throw new UsageError("Invalid schema for this context.");
 			}
 			// TODO: mapTreeFromNodeData modifies the trees it gets to add defaults.
@@ -179,12 +194,12 @@ function nodeDataToMapTree(
 
 	assert(!isTreeNode(data), 0xa23 /* data without an inner node cannot be TreeNode */);
 
-	const schema = getType(data, allowedTypes);
+	const schema = getType(data, annotatedAllowedTypes);
 
 	let result: ExclusiveMapTree;
 	switch (schema.kind) {
 		case NodeKind.Leaf:
-			result = leafToMapTree(data, schema, allowedTypes);
+			result = leafToMapTree(data, schema, annotatedAllowedTypes);
 			break;
 		case NodeKind.Array:
 			result = arrayToMapTree(data, schema);
@@ -356,7 +371,7 @@ function mapToMapTree(data: FactoryContent, schema: TreeNodeSchema): ExclusiveMa
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
 
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const annotatedAllowedChildTypes = extractAnnotationsFromAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const fieldsIterator = (
 		Symbol.iterator in data
@@ -376,7 +391,7 @@ function mapToMapTree(data: FactoryContent, schema: TreeNodeSchema): ExclusiveMa
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const mappedField = nodeDataToMapTree(value, allowedChildTypes);
+			const mappedField = nodeDataToMapTree(value, annotatedAllowedChildTypes);
 			transformedFields.set(brand(key), [mappedField]);
 		}
 	}
@@ -410,7 +425,7 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): Exclusiv
 	for (const [key, fieldInfo] of schema.flexKeyMap) {
 		if (checkFieldProperty(data, key)) {
 			const value = (data as Record<string, InsertableContent>)[key as string];
-			setFieldValue(fields, value, fieldInfo.schema, fieldInfo.storedKey);
+			setFieldValue(fields, value, normalizeFieldSchema(fieldInfo.schema), fieldInfo.storedKey);
 		}
 	}
 
@@ -441,11 +456,11 @@ function checkFieldProperty(
 function setFieldValue(
 	fields: Map<FieldKey, readonly MapTree[]>,
 	fieldValue: InsertableContent | undefined,
-	fieldSchema: FieldSchema,
+	fieldSchema: FieldSchemaAlpha,
 	flexKey: FieldKey,
 ): void {
 	if (fieldValue !== undefined) {
-		const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
+		const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.annotatedAllowedTypeSet);
 
 		assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
 		fields.set(flexKey, [mappedChildTree]);
@@ -454,13 +469,13 @@ function setFieldValue(
 
 function getType(
 	data: FactoryContent,
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	allowedTypes: ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>,
 ): TreeNodeSchema {
 	const possibleTypes = getPossibleTypes(allowedTypes, data);
 	if (possibleTypes.length === 0) {
 		throw new UsageError(
 			`The provided data is incompatible with all of the types allowed by the schema. The set of allowed types is: ${JSON.stringify(
-				[...allowedTypes].map((schema) => schema.identifier),
+				[...allowedTypes].map(([schema]) => schema.identifier),
 			)}.`,
 		);
 	}
@@ -485,12 +500,12 @@ For class-based schema, this can be done by replacing an expression like "{foo: 
  * @returns all types for which the data is schema-compatible.
  */
 export function getPossibleTypes(
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	allowedTypes: ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>,
 	data: FactoryContent,
 ): TreeNodeSchema[] {
 	let best = CompatibilityLevel.None;
 	const possibleTypes: TreeNodeSchema[] = [];
-	for (const schema of allowedTypes) {
+	for (const schema of allowedTypes.keys()) {
 		const level = shallowCompatibilityTest(schema, data);
 		if (level > best) {
 			possibleTypes.length = 0;
