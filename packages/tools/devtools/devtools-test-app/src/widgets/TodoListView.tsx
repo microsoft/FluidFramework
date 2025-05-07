@@ -27,7 +27,6 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 	const [titleString, setTitleString] = React.useState<SharedString | undefined>();
 
 	const newItemTextInputRef = React.useRef<HTMLInputElement>(null);
-	console.log("todoModel", todoModel);
 
 	useTree(todoModel.treeView.root);
 
@@ -37,8 +36,6 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 				setTitleString(title as ISharedString);
 			})
 			.catch((error) => {
-				console.log("todomodel");
-				console.log(todoModel);
 				console.error(error);
 			});
 		return () => {};

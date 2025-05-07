@@ -319,7 +319,5 @@ interface TodoListViewProps {
 function TodoListViewHelper(props: TodoListViewProps): React.ReactElement {
 	const { todoModel } = props;
 
-	console.log("TodoListViewHelper", todoModel);
-
 	return todoModel === undefined ? <Spinner /> : <TodoListView todoModel={todoModel} />;
 }

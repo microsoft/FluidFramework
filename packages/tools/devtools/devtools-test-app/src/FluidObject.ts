@@ -51,7 +51,6 @@ export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 	 * @remarks Called during the initial creation of the data object.
 	 */
 	public override async initializingFirstTime(): Promise<void> {
-		console.log("Initializing first time TREE");
 		const title = SharedString.create(this.runtime);
 		title.insertText(0, "Title");
 		this.treeView.initialize(new TodoList({ title: title.handle, items: [] }));
