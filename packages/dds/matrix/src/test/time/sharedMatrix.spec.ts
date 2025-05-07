@@ -1,0 +1,205 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+
+import { SharedMatrix } from "../../index.js";
+import { createLocalMatrix } from "../utils.js";
+
+describe("SharedMatrix execution time", () => {
+	// The value to be set in the cells of the matrix.
+	const matrixValue = "cellValue";
+	// The test matrix's size will be 0*0, 10*10, 100*100, 1000*1000.
+	const matrixSizes = isInPerformanceTestingMode
+		? [10, 100, 1000]
+		: // When not measuring perf, use a single smaller data size so the tests run faster.
+			[0];
+
+	// The number of operations to perform on the matrix.
+	const operationCounts = isInPerformanceTestingMode
+		? [100, 1000]
+		: // When not measuring perf, use a single smaller data size so the tests run faster.
+			[10];
+
+	let localMatrix: SharedMatrix | undefined;
+
+	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
+	// because they won't be out of scope when we garbage-collect between runs of the same test,
+	// and that will skew measurements. Tests should allocate all the memory they need using local
+	// variables scoped to the test function itself, so several iterations of a given test can
+	// measure from the same baseline (as much as possible).
+
+	beforeEach(async () => {
+		// CAREFUL: usually beforeEach/afterEach hooks are used to initialize or interact with variables
+		// whose scope is the encompasing test suite, but that's a problem for memory-profiling tests.
+		// See the comment at the top of the test suite for more details.
+	});
+
+	afterEach(() => {
+		// CAREFUL: usually beforeEach/afterEach hooks are used to initialize or interact with variables
+		// whose scope is the encompasing test suite, but that's a problem for memory-profiling tests.
+		// See the comment at the top of the test suite for more details.
+	});
+
+	for (const matrixSize of matrixSizes) {
+		describe(`Size of ${matrixSize}*${matrixSize} SharedMatrix`, () => {
+			// Filter counts to ensure remove operation do not exceed matrixSize
+			const validRemoveCounts = operationCounts.filter((count) => count <= matrixSize);
+
+			for (const count of operationCounts) {
+				// Test the execute time of the SharedMatrix for inserting a column in the middle for a given number of times.
+				benchmark({
+					title: `Insert a column in the middle ${count} times`,
+					before: async () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
+					},
+					benchmarkFn: () => {
+						if (!localMatrix) {
+							throw new Error("localMatrix is not initialized");
+						}
+
+						for (let i = 0; i < count; i++) {
+							localMatrix.insertCols(Math.floor(localMatrix.colCount / 2), 1);
+						}
+					},
+				});
+
+				// Test the execute time of the SharedMatrix for inserting a row in the middle for a given number of times.
+				benchmark({
+					title: `Insert a row in the middle ${count} times`,
+					before: async () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
+					},
+					benchmarkFn: () => {
+						for (let i = 0; i < count; i++) {
+							if (!localMatrix) {
+								throw new Error("localMatrix is not initialized");
+							}
+
+							localMatrix.insertRows(Math.floor(localMatrix.rowCount / 2), 1);
+						}
+					},
+				});
+
+				// Test the execute time of the SharedMatrix for inserting a row and a column in the middle for a given number of times.
+				benchmark({
+					title: `Insert a row and a column ${count} times`,
+					before: async () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
+					},
+					benchmarkFn: () => {
+						if (!localMatrix) {
+							throw new Error("localMatrix is not initialized");
+						}
+
+						for (let i = 0; i < count; i++) {
+							localMatrix.insertCols(Math.floor(localMatrix.colCount / 2), 1);
+							localMatrix.insertRows(Math.floor(localMatrix.rowCount / 2), 1);
+						}
+					},
+				});
+			}
+
+			for (const count of validRemoveCounts) {
+				// Test the execute time of the SharedMatrix for removing a column in the middle for a given number of times.
+				benchmark({
+					title: `Remove the middle column ${count} times`,
+					before: async () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
+					},
+					benchmarkFn: () => {
+						if (!localMatrix) {
+							throw new Error("localMatrix is not initialized");
+						}
+
+						for (let i = 0; i < count; i++) {
+							localMatrix.removeCols(Math.floor(localMatrix.colCount / 2), 1);
+						}
+					},
+				});
+
+				// Test the execute time of the SharedMatrix for removing a row in the middle for a given number of times.
+				benchmark({
+					title: `Remove the middle row ${count} times`,
+					before: async () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
+					},
+					benchmarkFn: () => {
+						if (!localMatrix) {
+							throw new Error("localMatrix is not initialized");
+						}
+
+						for (let i = 0; i < count; i++) {
+							localMatrix.removeRows(Math.floor(localMatrix.rowCount / 2), 1);
+						}
+					},
+				});
+
+				// Test the execute time of the SharedMatrix for removing a row and a column in the middle for a given number of times.
+				benchmark({
+					title: `Remove the middle row and column ${count} times`,
+					before: async () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
+					},
+					benchmarkFn: () => {
+						if (!localMatrix) {
+							throw new Error("localMatrix is not initialized");
+						}
+
+						for (let i = 0; i < count; i++) {
+							localMatrix.removeCols(Math.floor(localMatrix.colCount / 2), 1);
+							localMatrix.removeRows(Math.floor(localMatrix.rowCount / 2), 1);
+						}
+					},
+				});
+
+				// Test the execute time of the SharedMatrix for setting a string in a cell for a given number of times.
+				benchmark({
+					title: `Set a 3-character string in ${count} cells`,
+					before: async () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
+					},
+					benchmarkFn: () => {
+						if (!localMatrix) {
+							throw new Error("localMatrix is not initialized");
+						}
+
+						for (let i = 0; i < count; i++) {
+							localMatrix.setCell(i, i, "abc");
+						}
+					},
+				});
+			}
+		});
+	}
+});
