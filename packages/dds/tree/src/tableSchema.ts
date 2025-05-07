@@ -512,14 +512,12 @@ export namespace System_TableSchema {
 
 				// #endregion
 
+				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
 				if (index === undefined) {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.columns.insertAtEnd(column as any);
 				} else {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.columns.insertAt(index, column as any);
 				}
@@ -548,14 +546,12 @@ export namespace System_TableSchema {
 
 				// #endregion
 
+				// TypeScript is unable to narrow the row type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
 				if (index === undefined) {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
 				} else {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
 				}
