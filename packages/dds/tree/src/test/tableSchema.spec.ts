@@ -595,7 +595,7 @@ describe.only("TableFactory unit tests", () => {
 	});
 
 	describe("Remove column", () => {
-		it("Remove existing column", () => {
+		it("Remove column by ID", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -613,7 +613,46 @@ describe.only("TableFactory unit tests", () => {
 				],
 			});
 
-			treeView.root.removeColumn(treeView.root.columns[0]);
+			const removed = treeView.root.removeColumn("column-0");
+			assertEqualTrees(removed, {
+				id: "column-0",
+				props: { label: "Column 0" },
+			});
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+						props: {},
+					},
+				],
+			});
+		});
+
+		it("Remove column by node", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-0",
+						props: { label: "Column 0" },
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+						props: {},
+					},
+				],
+			});
+
+			const removed = treeView.root.removeColumn(treeView.root.columns[0]);
+			assertEqualTrees(removed, {
+				id: "column-0",
+				props: { label: "Column 0" },
+			});
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [

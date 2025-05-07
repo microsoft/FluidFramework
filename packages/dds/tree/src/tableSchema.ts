@@ -589,14 +589,18 @@ export namespace System_TableSchema {
 				row.setCell(column, cell);
 			}
 
-			public removeColumn(columnToRemove: ColumnValueType): void {
-				const index = this.columns.indexOf(columnToRemove);
+			public removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
+				const column: ColumnValueType | undefined =
+					typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+				const index = column === undefined ? -1 : this.columns.indexOf(column);
 				if (index === -1) {
+					const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 					throw new UsageError(
-						`Specified column with ID "${columnToRemove.id}" does not exist in the table.`,
+						`Specified column with ID "${columnId}" does not exist in the table.`,
 					);
 				}
 				this.columns.removeAt(index);
+				return column as ColumnValueType;
 			}
 
 			public removeRows(rowsToRemove: readonly RowValueType[]): void {
@@ -1065,15 +1069,13 @@ export namespace TableSchema {
 
 		/**
 		 * Removes the specified column from the table.
+		 * @param column - The {@link IColumn | column} or {@link IColumn.id | column ID} to remove.
 		 * @remarks Note: this does not remove any cells from the table's rows.
-		 * @privateRemarks
-		 * TODO:
-		 * - Add overload that takes an ID.
-		 * - Return removed column.
-		 * - Throw an error if the column isn't in the table.
-		 * - (future) Actually remove corresponding cells from table rows.
+		 * @privateRemarks TODO (future): Actually remove corresponding cells from table rows.
 		 */
-		removeColumn(column: TreeNodeFromImplicitAllowedTypes<TColumn>): void;
+		removeColumn(
+			column: string | TreeNodeFromImplicitAllowedTypes<TColumn>,
+		): TreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		/**
 		 * Removes 0 or more rows from the table.
