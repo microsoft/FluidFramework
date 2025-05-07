@@ -401,6 +401,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 							if (ENABLE_MEM_REGRESSION) {
 								throw new Error(message);
 							} else {
+								// We use this over console.log so warnings are printed evn when test infra suppresses console output.
 								process.stdout.write(chalk.yellow(message));
 							}
 						}
