@@ -20,7 +20,7 @@ import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
-describe("TableFactory unit tests", () => {
+describe.only("TableFactory unit tests", () => {
 	function createTableTree() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
@@ -304,6 +304,188 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
+	describe("insertColumns", () => {
+		it("Insert empty columns list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({ rows: [], columns: [] });
+
+			treeView.root.insertColumns({ index: 0, columns: [] });
+
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [],
+			});
+		});
+
+		it("Insert single column into empty list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({ rows: [], columns: [] });
+
+			treeView.root.insertColumns({
+				index: 0,
+				columns: [
+					{
+						id: "column-0",
+						props: {},
+					},
+				],
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{
+						id: "column-0",
+						props: {},
+					},
+				],
+				rows: [],
+			});
+		});
+
+		it("Insert columns into non-empty list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-a",
+						props: {},
+					},
+					{
+						id: "column-b",
+						props: {},
+					},
+				],
+				rows: [],
+			});
+
+			treeView.root.insertColumns({
+				index: 1,
+				columns: [
+					{
+						id: "column-c",
+						props: {},
+					},
+					{
+						id: "column-d",
+						props: {},
+					},
+				],
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{
+						id: "column-a",
+						props: {},
+					},
+					{
+						id: "column-c",
+						props: {},
+					},
+					{
+						id: "column-d",
+						props: {},
+					},
+					{
+						id: "column-b",
+						props: {},
+					},
+				],
+				rows: [],
+			});
+		});
+
+		it("Append columns", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-a",
+						props: {},
+					},
+					{
+						id: "column-b",
+						props: {},
+					},
+				],
+				rows: [],
+			});
+
+			treeView.root.insertColumns({
+				columns: [
+					{
+						id: "column-c",
+						props: {},
+					},
+					{
+						id: "column-d",
+						props: {},
+					},
+				],
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{
+						id: "column-a",
+						props: {},
+					},
+					{
+						id: "column-b",
+						props: {},
+					},
+					{
+						id: "column-c",
+						props: {},
+					},
+					{
+						id: "column-d",
+						props: {},
+					},
+				],
+				rows: [],
+			});
+		});
+
+		it("Inserting existing column fails", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-a",
+						props: {},
+					},
+					{
+						id: "column-b",
+						props: {},
+					},
+				],
+				rows: [],
+			});
+
+			assert.throws(
+				() =>
+					treeView.root.insertColumns({
+						columns: [
+							{
+								id: "column-c",
+								props: {},
+							},
+							{
+								// A column with this ID already exists in the table
+								id: "column-a",
+								props: {},
+							},
+						],
+					}),
+				validateUsageError(/A column with ID "column-a" already exists in the table./),
+			);
+
+			// Ensure no columns were inserted
+			assert(treeView.root.columns.length === 2);
+		});
+	});
+
 	describe("insertRows", () => {
 		it("Insert empty rows list", () => {
 			const { treeView } = createTableTree();
@@ -488,6 +670,12 @@ describe("TableFactory unit tests", () => {
 					treeView.root.insertRows({
 						rows: [
 							{
+								id: "row-c",
+								cells: {},
+								props: {},
+							},
+							{
+								// A row with this ID already exists in the table
 								id: "row-a",
 								cells: {},
 								props: {},
@@ -496,6 +684,9 @@ describe("TableFactory unit tests", () => {
 					}),
 				validateUsageError(/A row with ID "row-a" already exists in the table./),
 			);
+
+			// Ensure no rows were inserted
+			assert(treeView.root.rows.length === 2);
 		});
 	});
 
