@@ -26,7 +26,7 @@ import { brand, type JsonCompatible } from "../../util/index.js";
 import { Format as FormatV1 } from "./formatV1.js";
 
 /**
- * Schema codec write version.
+ * Versions for the codec that encodes an in-memory representation of a stored schema into a persisted format (or decodes it in the opposite direction).
  */
 export enum SchemaCodecVersion {
 	v1 = 1,
