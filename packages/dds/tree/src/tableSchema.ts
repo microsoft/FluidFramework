@@ -627,6 +627,10 @@ export namespace System_TableSchema {
 				return column as ColumnValueType;
 			}
 
+			public removeAllColumns(): void {
+				this.columns.removeRange();
+			}
+
 			public removeRows(rows: readonly string[] | readonly RowValueType[]): RowValueType[] {
 				// If there are no rows to remove, do nothing
 				if (rows.length === 0) {
@@ -1134,6 +1138,12 @@ export namespace TableSchema {
 		 * In this case, no columns are removed.
 		 */
 		removeColumns(columns: readonly string[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+
+		/**
+		 * Removes all columns from the table.
+		 * @privateRemarks TODO: Return removed columns (if any).
+		 */
+		removeAllColumns(): void;
 
 		/**
 		 * Removes the specified row from the table.
