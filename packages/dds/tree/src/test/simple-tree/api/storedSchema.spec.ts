@@ -22,14 +22,14 @@ describe("simple-tree storedSchema", () => {
 		for (const schemaFormat of supportedSchemaFormats) {
 			for (const test of testSimpleTrees) {
 				it(`${test.name} - schema v${schemaFormat}`, () => {
-					const persisted = extractPersistedSchema(test.schema);
+					const persisted = extractPersistedSchema(test.schema, schemaFormat);
 					takeJsonSnapshot(persisted);
 				});
 
 				// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
 				// but might as will give it a simple smoke test for the various test schema.
 				it(`comparePersistedSchema to self ${test.name} - schema v${schemaFormat}`, () => {
-					const persistedA = extractPersistedSchema(test.schema);
+					const persistedA = extractPersistedSchema(test.schema, schemaFormat);
 					const status = comparePersistedSchema(
 						persistedA,
 						test.schema,

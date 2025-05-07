@@ -22,6 +22,9 @@ import { ViewSchema } from "./view.js";
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable, but unspecified format.
  *
+ * @param schema - The schema to dump.
+ * @param writeVersion - The schema version to use when encoding the schema.
+ *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
  *
@@ -49,9 +52,12 @@ import { ViewSchema } from "./view.js";
  * Public API surface uses "persisted" terminology while internally we use "stored".
  * @alpha
  */
-export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible {
+export function extractPersistedSchema(
+	schema: ImplicitFieldSchema,
+	writeVersion: number,
+): JsonCompatible {
 	const stored = toStoredSchema(schema);
-	return encodeTreeSchema(stored, SchemaCodecVersion.v1);
+	return encodeTreeSchema(stored, writeVersion);
 }
 
 /**
@@ -91,6 +97,7 @@ export function comparePersistedSchema(
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
 	// Any version can be passed down to makeSchemaCodec here.
+	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
 	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);

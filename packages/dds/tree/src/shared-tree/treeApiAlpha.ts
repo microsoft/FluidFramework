@@ -46,6 +46,7 @@ import {
 	isTreeValue,
 	makeFieldBatchCodec,
 	mapTreeFromCursor,
+	SchemaCodecVersion,
 	TreeCompressionStrategy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
@@ -303,7 +304,9 @@ export const TreeAlpha: {
 		} & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const content: ViewContent = {
-			schema: extractPersistedSchema(schema),
+			// TODO: Either the return type from this method cannot be persisted due to type constraints, or we need to
+			// dispatch the correct schema codec based on the format version specified by the caller.
+			schema: extractPersistedSchema(schema, SchemaCodecVersion.v1),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
