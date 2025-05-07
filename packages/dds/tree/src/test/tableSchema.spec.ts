@@ -284,6 +284,23 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
+		it("Inserting column at out-of-bounds index fails", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [],
+			});
+
+			assert.throws(
+				() =>
+					treeView.root.insertColumn({
+						index: 1,
+						column: { props: {} },
+					}),
+				validateUsageError(/The index specified for column insertion is out of bounds./),
+			);
+		});
+
 		it("Inserting existing column fails", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
@@ -580,6 +597,23 @@ describe.only("TableFactory unit tests", () => {
 					},
 				],
 			});
+		});
+
+		it("Inserting row at out-of-bounds index fails", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [],
+			});
+
+			assert.throws(
+				() =>
+					treeView.root.insertRow({
+						index: 1,
+						row: { cells: {}, props: {} },
+					}),
+				validateUsageError(/The index specified for row insertion is out of bounds./),
+			);
 		});
 
 		it("Inserting existing row fails", () => {

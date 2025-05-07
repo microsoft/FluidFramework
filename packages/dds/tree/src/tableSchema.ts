@@ -512,6 +512,17 @@ export namespace System_TableSchema {
 			}: TableSchema.InsertColumnsParameters<TColumnSchema>): ColumnValueType[] {
 				// #region Input validation
 
+				// Ensure index is valid
+				if (index !== undefined) {
+					if (index < 0) {
+						throw new UsageError("The index must be greater than or equal to 0.");
+					} else if (!Number.isInteger(index)) {
+						throw new UsageError("The index must be an integer.");
+					} else if (index > this.columns.length) {
+						throw new UsageError("The index specified for column insertion is out of bounds.");
+					}
+				}
+
 				// Check all of the columns being inserted an ensure the table does not already contain any with the same ID.
 				for (const column of columns) {
 					// TypeScript is unable to narrow the type of the column type correctly here, hence the casts below.
@@ -556,6 +567,17 @@ export namespace System_TableSchema {
 				rows,
 			}: TableSchema.InsertRowsParameters<TRowSchema>): RowValueType[] {
 				// #region Input validation
+
+				// Ensure index is valid
+				if (index !== undefined) {
+					if (index < 0) {
+						throw new UsageError("The index must be greater than or equal to 0.");
+					} else if (!Number.isInteger(index)) {
+						throw new UsageError("The index must be an integer.");
+					} else if (index > this.rows.length) {
+						throw new UsageError("The index specified for row insertion is out of bounds.");
+					}
+				}
 
 				// Check all of the rows being inserted an ensure the table does not already contain any with the same ID.
 				for (const newRow of rows) {
