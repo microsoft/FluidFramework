@@ -9,7 +9,7 @@ import {
 	type ConnectionState,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainer, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
@@ -93,6 +93,15 @@ export interface IFluidContainerEvents extends IEvent {
 	 * {@link IFluidContainer.dispose}), this will contain details about the error that caused it.
 	 */
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
+
+	/**
+	 * Emitted when {@link IFluidContainer.readonly} is changed.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `readonly`: If the container is read-only, this will be true. Otherwise, it will be false.
+	 */
+	(event: "readonly", listener: (readonly: boolean) => void): void;
 }
 
 /**
@@ -156,6 +165,15 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * When loading an existing container, it will already be attached.
 	 */
 	readonly attachState: AttachState;
+
+	/**
+	 * The read-only information about the container.
+	 *
+	 * @remarks
+	 *
+	 * This is used to determine if the container is read-only or not.
+	 */
+	readonly readOnlyInfo: ReadOnlyInfo;
 
 	/**
 	 * A newly created container starts detached from the collaborative service.
@@ -228,6 +246,12 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * Dispose of the container instance, permanently disabling it.
 	 */
 	dispose(): void;
+
+	/**
+	 * Allows the host to have the container force to be in read-only mode
+	 * @param readonly - Boolean that toggles if read-only policies will be enforced
+	 */
+	forceReadonly(readonly: boolean): void;
 }
 
 /**
@@ -291,6 +315,8 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.emit("disposed", error);
 	private readonly savedHandler = (): boolean => this.emit("saved");
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
+	private readonly readonlyHandler = (readonly: boolean): boolean =>
+		this.emit("readonly", readonly);
 
 	public constructor(
 		public readonly container: IContainer,
@@ -302,6 +328,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		container.on("disconnected", this.disconnectedHandler);
 		container.on("saved", this.savedHandler);
 		container.on("dirty", this.dirtyHandler);
+		container.on("readonly", this.readonlyHandler);
 	}
 
 	public get isDirty(): boolean {
@@ -322,6 +349,19 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 
 	public get initialObjects(): InitialObjects<TContainerSchema> {
 		return this.rootDataObject.initialObjects as InitialObjects<TContainerSchema>;
+	}
+
+	// TODO: should we use ReadOnlyInfo (tag: alpha legacy) or just boolean?
+	public get readOnlyInfo(): ReadOnlyInfo {
+		return this.container.readOnlyInfo;
+	}
+
+	public forceReadonly(readonly: boolean): void {
+		if (this.container.forceReadonly === undefined) {
+			throw new Error("Cannot set forceReadonly. forceReadonly method not provided.");
+		}
+		this.container.forceReadonly(readonly);
+		return;
 	}
 
 	/**
