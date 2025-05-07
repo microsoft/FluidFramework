@@ -483,13 +483,12 @@ export namespace System_TableSchema {
 				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
 			): CellValueType | undefined {
 				const { column: columnOrId, row: rowOrId } = key;
-				const row = typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+				const row = this._getRow(rowOrId);
 				if (row === undefined) {
 					return undefined;
 				}
 
-				const column =
-					typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+				const column = this._getColumn(columnOrId);
 				if (column === undefined) {
 					return undefined;
 				}
@@ -569,20 +568,19 @@ export namespace System_TableSchema {
 			public setCell({ key, cell }: TableSchema.SetCellParameters<TCellSchema>): void {
 				const { column: columnOrId, row: rowOrId } = key;
 
-				const row: RowValueType | undefined =
-					typeof rowOrId === "string" ? this.getRow(rowOrId) : (rowOrId as RowValueType);
-				const rowId = typeof rowOrId === "string" ? rowOrId : (rowOrId as RowValueType).id;
+				// TypeScript is unable to narrow the row type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				const row = this._getRow(rowOrId as RowValueType | string);
 				if (row === undefined) {
+					const rowId = this._getRowId(rowOrId as RowValueType | string);
 					throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
 				}
 
-				const column: ColumnValueType | undefined =
-					typeof columnOrId === "string"
-						? this.getColumn(columnOrId)
-						: (columnOrId as ColumnValueType);
-				const columnId =
-					typeof columnOrId === "string" ? columnOrId : (columnOrId as ColumnValueType).id;
+				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				const column = this._getColumn(columnOrId as ColumnValueType | string);
 				if (column === undefined) {
+					const columnId = this._getColumnId(columnOrId as ColumnValueType | string);
 					throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
 				}
 
@@ -590,11 +588,10 @@ export namespace System_TableSchema {
 			}
 
 			public removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
-				const column: ColumnValueType | undefined =
-					typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+				const column = this._getColumn(columnOrId);
 				const index = column === undefined ? -1 : this.columns.indexOf(column);
 				if (index === -1) {
-					const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+					const columnId = this._getColumnId(columnOrId);
 					throw new UsageError(
 						`Specified column with ID "${columnId}" does not exist in the table.`,
 					);
@@ -652,18 +649,17 @@ export namespace System_TableSchema {
 				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
 			): CellValueType | undefined {
 				const { column: columnOrId, row: rowOrId } = key;
-				const row = typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
-				const rowId = typeof rowOrId === "string" ? rowOrId : rowOrId.id;
+				const row = this._getRow(rowOrId);
 				if (row === undefined) {
+					const rowId = this._getRowId(rowOrId);
 					throw new UsageError(
 						`Specified row with ID "${rowId}" does not exist in the table.`,
 					);
 				}
 
-				const column =
-					typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
-				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+				const column = this._getColumn(columnOrId);
 				if (column === undefined) {
+					const columnId = this._getColumnId(columnOrId);
 					throw new UsageError(
 						`Specified column with ID "${columnId}" does not exist in the table.`,
 					);
@@ -676,6 +672,14 @@ export namespace System_TableSchema {
 
 				row.removeCell(column.id);
 				return cell;
+			}
+
+			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType | undefined {
+				return typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+			}
+
+			private _getColumnId(columnOrId: string | ColumnValueType): string {
+				return typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 			}
 
 			private _getRow(rowOrId: string | RowValueType): RowValueType | undefined {
