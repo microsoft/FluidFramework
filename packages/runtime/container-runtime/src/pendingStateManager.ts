@@ -690,16 +690,17 @@ export class PendingStateManager implements IDisposable {
 			this.stateHandler.connected(),
 			0x172 /* "The connection state is not consistent with the runtime" */,
 		);
+		const currentClientId = this.stateHandler.clientId();
 
 		// Staged batches have not yet been submitted so check doesn't apply
 		if (!onlyStagedBatches) {
 			// This assert suggests we are about to send same ops twice, which will result in data loss.
 			assert(
-				this.clientIdFromLastReplay !== this.stateHandler.clientId(),
+				this.clientIdFromLastReplay !== currentClientId,
 				0x173 /* "replayPendingStates called twice for same clientId!" */,
 			);
 		}
-		this.clientIdFromLastReplay = this.stateHandler.clientId();
+		this.clientIdFromLastReplay = currentClientId;
 
 		assert(
 			this.initialMessages.isEmpty(),
@@ -716,7 +717,16 @@ export class PendingStateManager implements IDisposable {
 		// which must not be replayed.
 		while (remainingPendingMessagesCount > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			let pendingMessage = this.pendingMessages.shift()!;
+			let pendingMessage = this.pendingMessages.peekFront()!;
+
+			// It's possible some ops were submitted as part of the reconnect flow, i.e. they've already been submitted on the new clientId
+			// As soon as we encounter a message like this, we can and should stop replaying through the queue.
+			// One example is an ID Allocation op to finalize the ranges used when submitting the pending messages the first time.
+			if (pendingMessage.batchInfo.clientId === currentClientId) {
+				break;
+			}
+
+			this.pendingMessages.shift();
 			remainingPendingMessagesCount--;
 
 			// Re-queue pre-staging messages if we are only processing staged batches

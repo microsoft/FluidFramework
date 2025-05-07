@@ -2522,13 +2522,15 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, "Outbox should be empty before replaying pending states");
 
 		try {
-			// Before replaying pending states, we need to clean up any unfinalized ID allocations from the "first time around"
-			const idAllocationOp = this.generateIdAllocationOpIfNeeded(
-				true /* beforeReplayingPendingState */,
-			);
-			if (idAllocationOp !== undefined) {
-				this.outbox.submit(idAllocationOp);
-				this.outbox.flush();
+			if (!this.inStagingMode) {
+				// Before replaying pending states, we need to clean up any unfinalized ID allocations from the "first time around"
+				const idAllocationOp = this.generateIdAllocationOpIfNeeded(
+					true /* beforeReplayingPendingState */,
+				);
+				if (idAllocationOp !== undefined) {
+					this.outbox.submit(idAllocationOp);
+					this.outbox.flush();
+				}
 			}
 
 			// replay the ops
