@@ -128,7 +128,9 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 	/**
 	 * The baseline memory usage to compare against for the test, which is used to determine if the test regressed.
 	 * If not specified, the test will not be compared against a baseline and will only be run to measure the memory usage.
-	 * @remarks Should be specified in bytes.
+	 * @remarks
+	 * Has no effect if `allowedDeviationBytes` is not specified. If `ENABLE_MEM_REGRESSION=1` in the environment, a test whose memory usage falls outside `baselineMemoryUsage +/- allowedDeviationBytes` will be marked as failed.
+	 * Otherwise a warning is printed to the conso
 	 */
 	readonly baselineMemoryUsage?: number;
 
