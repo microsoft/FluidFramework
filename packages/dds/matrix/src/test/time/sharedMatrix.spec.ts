@@ -44,7 +44,7 @@ describe("SharedMatrix execution time", () => {
 
 				// Test the execute time of the SharedMatrix for removing a column in the middle for a given number of times.
 				benchmark({
-					title: `Remove a column in the middle ${count} times`,
+					title: `Remove the first column ${count} times`,
 					before: async () => {
 						localMatrix = createLocalMatrix({
 							id: "testLocalMatrix",
@@ -78,7 +78,7 @@ describe("SharedMatrix execution time", () => {
 
 				// Test the execute time of the SharedMatrix for removing a row in the middle for a given number of times.
 				benchmark({
-					title: `Remove a row in the middle ${count} times`,
+					title: `Remove the first row ${count} times`,
 					before: async () => {
 						localMatrix = createLocalMatrix({
 							id: "testLocalMatrix",
@@ -113,7 +113,7 @@ describe("SharedMatrix execution time", () => {
 
 				// Test the execute time of the SharedMatrix for removing a row and a column in the middle for a given number of times.
 				benchmark({
-					title: `Remove a row and a column ${count} times`,
+					title: `Remove the first row and column ${count} times`,
 					before: async () => {
 						localMatrix = createLocalMatrix({
 							id: "testLocalMatrix",
