@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
 	IMatrixConsumer,
 	IMatrixProducer,
@@ -12,7 +14,7 @@ import {
 	IMatrixWriter,
 } from "@tiny-calc/nano";
 
-import { SharedMatrix } from "../index.js";
+import { SharedMatrix, type ISharedMatrix } from "../index.js";
 
 /**
  * Convenience export of SharedMatrix's factory for usage in tests.
@@ -220,5 +222,35 @@ export function insertFragmented(
 
 	expectSize(matrix, rowCount, colCount);
 
+	return matrix;
+}
+
+/**
+ * Creates a local matrix with the specified size and for dense test matrix given initial value.
+ * Otherwise, leaving the initial value as undefined will create a sparse matrix.
+ * @param id - The id of the matrix.
+ * @param size - The size of the matrix.
+ * @param initialValue - The initial value of each cell in the dense matrix.
+ */
+export function createLocalMatrix({
+	id,
+	size,
+	initialValue,
+}: {
+	id: string;
+	size: number;
+	initialValue?: string;
+}): ISharedMatrix & IChannel {
+	const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), id);
+	matrix.insertRows(0, size);
+	matrix.insertCols(0, size);
+
+	if (initialValue !== undefined) {
+		for (let row = 0; row < size; row++) {
+			for (let col = 0; col < size; col++) {
+				matrix.setCell(row, col, initialValue);
+			}
+		}
+	}
 	return matrix;
 }
