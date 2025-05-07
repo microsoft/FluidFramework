@@ -20,7 +20,7 @@ class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
 	public static readonly factory = new DataObjectFactory({
-		type: "TestDataObject",
+		type: TestDataObjectClass.Name,
 		ctor: TestDataObjectClass,
 	});
 
