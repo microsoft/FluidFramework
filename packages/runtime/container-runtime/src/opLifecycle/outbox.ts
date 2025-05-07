@@ -485,6 +485,8 @@ export class Outbox {
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
 				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
 			);
+		} else {
+			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 		}
 
 		this.params.pendingStateManager.onFlushBatch(
