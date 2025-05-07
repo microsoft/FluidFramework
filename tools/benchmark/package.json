@@ -41,8 +41,7 @@
 		"easy-table": "^1.2.0",
 		"mocha": "^10.0.0",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
-		"picocolors": "^1.1.1"
+		"moment": "^2.21.0"
 	},
 	"devDependencies": {
 		"@fluid-internal/mocha-test-setup": "^2.12.0",

@@ -29,9 +29,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.29.4
-      picocolors:
-        specifier: ^1.1.1
-        version: 1.1.1
     devDependencies:
       '@fluid-internal/mocha-test-setup':
         specifier: ^2.12.0
@@ -1449,9 +1446,6 @@ packages:
 
   pathval@1.1.1:
     resolution: {integrity: sha512-Dp6zGqpTdETdR63lehJYPeIOqpiNBNtc7BpWSLrOje7UaIsE5aY92r/AunQA7rsXvet3lrJ3JnZX29UPTKXyKQ==}
-
-  picocolors@1.1.1:
-    resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
@@ -3555,8 +3549,6 @@ snapshots:
   path-type@4.0.0: {}
 
   pathval@1.1.1: {}
-
-  picocolors@1.1.1: {}
 
   picomatch@2.3.1: {}
 

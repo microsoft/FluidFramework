@@ -6,8 +6,8 @@
 import type * as v8 from "node:v8";
 
 import { assert } from "chai";
+import chalk from "chalk";
 import { Test } from "mocha";
-import chalk from "picocolors";
 
 import {
 	isInPerformanceTestingMode,
@@ -386,9 +386,9 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 								args.baselineMemoryUsage
 							}' and tolerance of '${allowedDeviationBytes}' bytes.\n`;
 							if (ENABLE_MEM_REGRESSION) {
-								process.stderr.write(message);
 								throw new Error(message);
 							} else {
+								// We use this over console.log so warnings are printed evn when test infra suppresses console output.
 								process.stdout.write(chalk.yellow(message));
 							}
 						}
@@ -399,7 +399,6 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 								args.baselineMemoryUsage
 							}' and tolerance of '${allowedDeviationBytes}' bytes. Consider updating the baseline.\n`;
 							if (ENABLE_MEM_REGRESSION) {
-								process.stderr.write(message);
 								throw new Error(message);
 							} else {
 								process.stdout.write(chalk.yellow(message));
