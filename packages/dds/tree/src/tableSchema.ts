@@ -59,14 +59,12 @@ export namespace System_TableSchema {
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
 	 * @system @internal
 	 */
-	export interface OptionsWithSchemaFactory<
-		TScope extends string | undefined = string | undefined,
-	> {
+	export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryAlpha> {
 		/**
 		 * Schema factory with which the Column schema will be associated.
 		 * @remarks Can be used to associate the resulting schema with an existing {@link SchemaFactory.scope|scope}.
 		 */
-		readonly schemaFactory: SchemaFactoryAlpha<TScope>;
+		readonly schemaFactory: TSchemaFactory;
 	}
 
 	/**
@@ -92,8 +90,8 @@ export namespace System_TableSchema {
 	 * @system @internal
 	 */
 	export type CreateColumnOptionsBase<
-		TInputScope extends string | undefined = string | undefined,
-	> = OptionsWithSchemaFactory<TInputScope>;
+		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
+	> = OptionsWithSchemaFactory<TSchemaFactory>;
 
 	/**
 	 * Factory for creating new table column schema.
@@ -233,9 +231,9 @@ export namespace System_TableSchema {
 	 * @system @internal
 	 */
 	export type CreateRowOptionsBase<
-		TScope extends string | undefined = string | undefined,
+		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> = OptionsWithSchemaFactory<TScope> & OptionsWithCellSchema<TCell>;
+	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
 	/**
 	 * Factory for creating new table row schema.
@@ -412,9 +410,9 @@ export namespace System_TableSchema {
 	 * @system @internal
 	 */
 	export type TableFactoryOptionsBase<
-		TScope extends string | undefined = string | undefined,
+		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> = OptionsWithSchemaFactory<TScope> & OptionsWithCellSchema<TCell>;
+	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
 	/**
 	 * Factory for creating new table schema.
@@ -874,7 +872,7 @@ export namespace TableSchema {
 	 */
 	export function createColumn<const TScope extends string | undefined>({
 		schemaFactory,
-	}: System_TableSchema.CreateColumnOptionsBase<TScope>): ReturnType<
+	}: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryAlpha<TScope>>): ReturnType<
 		typeof System_TableSchema.createColumnInternal<
 			TScope,
 			FieldSchema<FieldKind.Optional, typeof SchemaFactoryAlpha.null>
@@ -890,7 +888,7 @@ export namespace TableSchema {
 	>({
 		schemaFactory,
 		props,
-	}: System_TableSchema.CreateColumnOptionsBase<TScope> & {
+	}: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryAlpha<TScope>> & {
 		/**
 		 * Optional column properties.
 		 */
@@ -986,7 +984,7 @@ export namespace TableSchema {
 	>({
 		schemaFactory,
 		cell,
-	}: System_TableSchema.CreateRowOptionsBase<TScope, TCell>): ReturnType<
+	}: System_TableSchema.CreateRowOptionsBase<SchemaFactoryAlpha<TScope>, TCell>): ReturnType<
 		typeof System_TableSchema.createRowInternal<
 			TScope,
 			TCell,
@@ -1005,7 +1003,7 @@ export namespace TableSchema {
 		schemaFactory,
 		cell,
 		props,
-	}: System_TableSchema.CreateRowOptionsBase<TScope, TCell> & {
+	}: System_TableSchema.CreateRowOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 		/**
 		 * Optional row properties.
 		 */
@@ -1308,9 +1306,10 @@ export namespace TableSchema {
 	>({
 		schemaFactory,
 		cell,
-	}: System_TableSchema.TableFactoryOptionsBase<TScope, TCell>): ReturnType<
-		typeof System_TableSchema.createTableInternal<TScope, TCell>
-	>;
+	}: System_TableSchema.TableFactoryOptionsBase<
+		SchemaFactoryAlpha<TScope>,
+		TCell
+	>): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell>>;
 	/**
 	 * Factory for creating new table schema without specifying row schema.
 	 * @internal
@@ -1323,7 +1322,7 @@ export namespace TableSchema {
 		schemaFactory,
 		cell,
 		column,
-	}: System_TableSchema.TableFactoryOptionsBase<TScope, TCell> & {
+	}: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 		readonly column: TColumn;
 	}): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, TColumn>>;
 	/**
@@ -1340,7 +1339,7 @@ export namespace TableSchema {
 		cell,
 		column,
 		row,
-	}: System_TableSchema.TableFactoryOptionsBase<TScope, TCell> & {
+	}: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 		readonly column: TColumn;
 		readonly row: TRow;
 	}): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, TColumn, TRow>>;
