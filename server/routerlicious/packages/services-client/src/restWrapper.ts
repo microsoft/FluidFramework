@@ -21,6 +21,7 @@ import {
 	TelemetryContextHeaderName,
 } from "./constants";
 import { getGlobalTimeoutContext } from "./timeoutContext";
+import { isAxiosCanceledError } from "./utils";
 
 /**
  * @internal
@@ -322,6 +323,13 @@ export class BasicRestWrapper extends RestWrapper {
 								);
 							}
 						} else if (error?.request) {
+							// The calling client aborted the request before a valid response was received
+							if (isAxiosCanceledError(error)) {
+								createFluidServiceNetworkError(499, {
+									message: error?.message ?? "Request Aborted by Client",
+									source: errorSourceMessage,
+								});
+							}
 							// The request was made but no response was received. That can happen if a service is
 							// temporarily down or inaccessible due to network failures. We leverage that in here
 							// to detect network failures and transform them into a NetworkError with code 502,

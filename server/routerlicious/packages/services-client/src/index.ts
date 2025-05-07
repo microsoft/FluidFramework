@@ -40,7 +40,7 @@ export {
 	ICredentials,
 	parseToken,
 } from "./historian";
-export { IAlfredTenant, ISession } from "./interfaces";
+export { IAlfredTenant, ISession, IAbortSignalManager } from "./interfaces";
 export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
 export { BasicRestWrapper, RestWrapper, IBasicRestWrapperMetricProps } from "./restWrapper";

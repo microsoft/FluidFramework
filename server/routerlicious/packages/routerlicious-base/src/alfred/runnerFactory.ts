@@ -58,6 +58,7 @@ export class AlfredResources implements core.IResources {
 		public fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 		public redisCacheForGetSession?: core.ICache,
 		public denyList?: core.IDenyList,
+		public abortSignalManager?: utils.AbortSignalManager,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -116,6 +117,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
 		// List of Redis client connection managers that need to be closed on dispose
 		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
+		const abortSignalManager = new utils.AbortSignalManager();
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -266,6 +268,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			authEndpoint,
 			internalHistorianUrl,
 			redisCacheForInvalidToken,
+			abortSignalManager,
 		);
 
 		// Redis connection for throttling.
@@ -487,6 +490,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			customizations?.fluidAccessTokenGenerator,
 			redisGetSessionCache,
 			denyList,
+			abortSignalManager,
 		);
 	}
 }
@@ -520,6 +524,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.fluidAccessTokenGenerator,
 			resources.redisCacheForGetSession,
 			resources.denyList,
+			resources.abortSignalManager,
 		);
 	}
 }

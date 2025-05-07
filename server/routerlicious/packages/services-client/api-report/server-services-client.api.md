@@ -183,7 +183,7 @@ export class Heap<T> {
 
 // @internal
 export class Historian implements IHistorian {
-    constructor(endpoint: string, historianApi: boolean, disableCache: boolean, restWrapper?: RestWrapper);
+    constructor(endpoint: string, historianApi: boolean, disableCache: boolean, restWrapper?: RestWrapper, abortSignalManager?: IAbortSignalManager | undefined);
     // (undocumented)
     createBlob(blob: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse>;
     // (undocumented)
@@ -226,6 +226,13 @@ export class Historian implements IHistorian {
     getTree(sha: string, recursive: boolean): Promise<resources.ITree>;
     // (undocumented)
     updateRef(ref: string, params: resources.IPatchRefParams): Promise<resources.IRef>;
+}
+
+// @internal
+export interface IAbortSignalManager {
+    addAbortSignal(abortSignal: AbortSignal, correlationId?: string): void;
+    getAbortSignal(correlationId?: string): AbortSignal | undefined;
+    removeAbortSignal(correlationId?: string): void;
 }
 
 // @internal (undocumented)

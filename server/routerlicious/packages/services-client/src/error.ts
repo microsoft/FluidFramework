@@ -249,6 +249,16 @@ export function createFluidServiceNetworkError(
 				source,
 				internalErrorCode,
 			);
+		case 499:
+			return new NetworkError(
+				statusCode,
+				message,
+				true /* canRetry */,
+				false /* isFatal */,
+				undefined /* retryAfterMs */,
+				source,
+				internalErrorCode,
+			);
 		case 500: {
 			return new NetworkError(
 				statusCode,
