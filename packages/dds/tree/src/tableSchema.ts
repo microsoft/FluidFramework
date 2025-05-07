@@ -1213,7 +1213,7 @@ export namespace TableSchema {
 
 		/**
 		 * Removes the specified column from the table.
-		 * @param column - The {@link IColumn | column} or {@link IColumn.id | column ID} to remove.
+		 * @param column - The {@link TableSchema.IColumn | column} or {@link TableSchema.IColumn.id | column ID} to remove.
 		 * @remarks Note: this does not remove any cells from the table's rows.
 		 * @throws Throws an error if the column is not in the table.
 		 * @privateRemarks TODO (future): Actually remove corresponding cells from table rows.
@@ -1233,7 +1233,7 @@ export namespace TableSchema {
 		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 		/**
 		 * Removes 0 or more columns from the table.
-		 * @param columns - The columns to remove, specified by their {@link IColumn.id}.
+		 * @param columns - The columns to remove, specified by their {@link TableSchema.IColumn.id}.
 		 * @throws Throws an error if any of the columns are not in the table.
 		 * In this case, no columns are removed.
 		 */
@@ -1247,7 +1247,7 @@ export namespace TableSchema {
 
 		/**
 		 * Removes the specified row from the table.
-		 * @param row - The {@link IRow | row} or {@link IRow.id | row ID} to remove.
+		 * @param row - The {@link TableSchema.IRow | row} or {@link TableSchema.IRow.id | row ID} to remove.
 		 * @throws Throws an error if the row is not in the table.
 		 */
 		removeRow(
@@ -1265,7 +1265,7 @@ export namespace TableSchema {
 		): TreeNodeFromImplicitAllowedTypes<TRow>[];
 		/**
 		 * Removes 0 or more rows from the table.
-		 * @param rows - The rows to remove, specified by their {@link IRow.id}.
+		 * @param rows - The rows to remove, specified by their {@link TableSchema.IRow.id}.
 		 * @throws Throws an error if any of the rows are not in the table.
 		 * In this case, no rows are removed.
 		 */
