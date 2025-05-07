@@ -3683,12 +3683,7 @@ export function renameNodes(
 		deleteNodeRenameEntry(table, newId, newEntry.value, countToRename);
 	}
 
-	// If `newId` had previously been renamed to `oldId` then we are renaming the node back to its original name
-	// and do not need to have a rename entry.
-	if (
-		!areEqualChangeAtomIds(adjustedOldId, newId) &&
-		!areEqualChangeAtomIdOpts(oldId, adjustedNewId)
-	) {
+	if (!areEqualChangeAtomIdOpts(adjustedOldId, adjustedNewId)) {
 		setNodeRenameEntry(table, adjustedOldId, adjustedNewId, countToRename);
 	}
 
