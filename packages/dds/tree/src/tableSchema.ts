@@ -479,17 +479,22 @@ export namespace System_TableSchema {
 					| undefined;
 			}
 
-			public getCell(key: TableSchema.CellKey): CellValueType | undefined {
-				const { columnId, rowId } = key;
-				const row = this.getRow(rowId);
-				if (row !== undefined) {
-					const column = this.getColumn(columnId);
-					if (column !== undefined) {
-						return row.getCell(column.id);
-					}
+			public getCell(
+				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
+			): CellValueType | undefined {
+				const { column: columnOrId, row: rowOrId } = key;
+				const row = typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+				if (row === undefined) {
+					return undefined;
 				}
-				// If the cell does not exist return undefined
-				return undefined;
+
+				const column =
+					typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+				if (column === undefined) {
+					return undefined;
+				}
+
+				return row.getCell(column);
 			}
 
 			public insertColumn({
@@ -562,18 +567,26 @@ export namespace System_TableSchema {
 			}
 
 			public setCell({ key, cell }: TableSchema.SetCellParameters<TCellSchema>): void {
-				const { columnId, rowId } = key;
-				const row = this.getRow(rowId);
+				const { column: columnOrId, row: rowOrId } = key;
+
+				const row: RowValueType | undefined =
+					typeof rowOrId === "string" ? this.getRow(rowOrId) : (rowOrId as RowValueType);
+				const rowId = typeof rowOrId === "string" ? rowOrId : (rowOrId as RowValueType).id;
 				if (row === undefined) {
 					throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
 				}
 
-				const column = this.getColumn(columnId);
+				const column: ColumnValueType | undefined =
+					typeof columnOrId === "string"
+						? this.getColumn(columnOrId)
+						: (columnOrId as ColumnValueType);
+				const columnId =
+					typeof columnOrId === "string" ? columnOrId : (columnOrId as ColumnValueType).id;
 				if (column === undefined) {
 					throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
 				}
 
-				row.setCell(column.id, cell);
+				row.setCell(column, cell);
 			}
 
 			public removeColumn(columnToRemove: ColumnValueType): void {
@@ -630,16 +643,21 @@ export namespace System_TableSchema {
 				this.rows.removeRange();
 			}
 
-			public removeCell(key: TableSchema.CellKey): CellValueType | undefined {
-				const { columnId, rowId } = key;
-				const row = this.getRow(rowId);
+			public removeCell(
+				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
+			): CellValueType | undefined {
+				const { column: columnOrId, row: rowOrId } = key;
+				const row = typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+				const rowId = typeof rowOrId === "string" ? rowOrId : rowOrId.id;
 				if (row === undefined) {
 					throw new UsageError(
 						`Specified row with ID "${rowId}" does not exist in the table.`,
 					);
 				}
 
-				const column = this.getColumn(columnId);
+				const column =
+					typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 				if (column === undefined) {
 					throw new UsageError(
 						`Specified column with ID "${columnId}" does not exist in the table.`,
@@ -908,19 +926,22 @@ export namespace TableSchema {
 	// #region Table
 
 	/**
-	 * A key to uniquely identify a cell in a table.
+	 * A key to uniquely identify a cell within a table.
 	 * @internal
 	 */
-	export interface CellKey {
+	export interface CellKey<
+		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	> {
 		/**
-		 * {@link TableSchema.IColumn.id} of the containing {@link TableSchema.IColumn}.
+		 * {@link TableSchema.IColumn} or {@link TableSchema.IColumn.id} at which the cell is located.
 		 */
-		readonly columnId: string;
+		readonly column: string | TreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		/**
-		 * {@link TableSchema.IRow.id} of the containing {@link TableSchema.IRow}.
+		 * {@link TableSchema.IRow} or {@link TableSchema.IRow.id} at which the cell is located.
 		 */
-		readonly rowId: string;
+		readonly row: string | TreeNodeFromImplicitAllowedTypes<TRow>;
 	}
 
 	/**
@@ -966,17 +987,19 @@ export namespace TableSchema {
 	 * @internal
 	 */
 	export interface SetCellParameters<
+		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> {
 		/**
 		 * The key to uniquely identify a cell in a table.
 		 */
-		readonly key: CellKey;
+		readonly key: CellKey<TColumn, TRow>;
 
 		/**
 		 * The cell to set.
 		 */
-		readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
+		readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
 	}
 
 	/**
@@ -1011,9 +1034,8 @@ export namespace TableSchema {
 		/**
 		 * Gets a cell in the table by column and row IDs.
 		 * @param key - A key that uniquely distinguishes a cell in the table, represented as a combination of the column ID and row ID.
-		 * @privateRemarks TODO: add overload that takes row and column nodes.
 		 */
-		getCell(key: CellKey): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+		getCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 
 		/**
 		 * Inserts a column into the table.
@@ -1038,9 +1060,8 @@ export namespace TableSchema {
 		/**
 		 * Sets the cell at the specified location in the table.
 		 * @remarks To remove a cell, call {@link TableSchema.ITable.removeCell} instead.
-		 * @privateRemarks TODO: Add overload that takes column/row nodes.
 		 */
-		setCell(params: SetCellParameters<TCell>): void;
+		setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
 
 		/**
 		 * Removes the specified column from the table.

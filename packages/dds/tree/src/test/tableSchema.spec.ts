@@ -20,7 +20,7 @@ import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
-describe("TableFactory unit tests", () => {
+describe.only("TableFactory unit tests", () => {
 	function createTableTree() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
@@ -521,8 +521,8 @@ describe("TableFactory unit tests", () => {
 			// By not specifying an index, the column should be appended to the end of the list.
 			treeView.root.setCell({
 				key: {
-					rowId: "row-0",
-					columnId: "column-0",
+					row: "row-0",
+					column: "column-0",
 				},
 				cell: { value: "Hello world!" },
 			});
@@ -571,8 +571,8 @@ describe("TableFactory unit tests", () => {
 				() =>
 					treeView.root.setCell({
 						key: {
-							rowId: "row-1",
-							columnId: "column-0",
+							row: "row-1",
+							column: "column-0",
 						},
 						cell: { value: "Hello world!" },
 					}),
@@ -584,8 +584,8 @@ describe("TableFactory unit tests", () => {
 				() =>
 					treeView.root.setCell({
 						key: {
-							rowId: "row-0",
-							columnId: "column-1",
+							row: "row-0",
+							column: "column-1",
 						},
 						cell: { value: "Hello world!" },
 					}),
@@ -768,8 +768,8 @@ describe("TableFactory unit tests", () => {
 				],
 			});
 			const cellKey = {
-				rowId: "row-0",
-				columnId: "column-0",
+				row: "row-0",
+				column: "column-0",
 			};
 			treeView.root.setCell({
 				key: cellKey,
@@ -811,8 +811,8 @@ describe("TableFactory unit tests", () => {
 				],
 			});
 			const cellKey = {
-				rowId: "row-0",
-				columnId: "column-0",
+				row: "row-0",
+				column: "column-0",
 			};
 			treeView.root.removeCell(cellKey);
 			assertEqualTrees(treeView.root, {
@@ -854,8 +854,8 @@ describe("TableFactory unit tests", () => {
 			assert.throws(
 				() =>
 					treeView.root.removeCell({
-						rowId: "row-1",
-						columnId: "column-0",
+						row: "row-1",
+						column: "column-0",
 					}),
 				validateUsageError(/Specified row with ID "row-1" does not exist in the table./),
 			);
@@ -864,8 +864,8 @@ describe("TableFactory unit tests", () => {
 			assert.throws(
 				() =>
 					treeView.root.removeCell({
-						rowId: "row-0",
-						columnId: "column-1",
+						row: "row-0",
+						column: "column-1",
 					}),
 				validateUsageError(/Specified column with ID "column-1" does not exist in the table./),
 			);
@@ -884,7 +884,7 @@ describe("TableFactory unit tests", () => {
 			rows: [row0],
 		});
 
-		const cell = treeView.root.getCell({ columnId: "column-0", rowId: "row-0" });
+		const cell = treeView.root.getCell({ column: "column-0", row: "row-0" });
 		const column = treeView.root.getColumn("column-0");
 		const row = treeView.root.getRow("row-0");
 
