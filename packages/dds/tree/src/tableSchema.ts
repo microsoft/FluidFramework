@@ -627,8 +627,10 @@ export namespace System_TableSchema {
 				return column as ColumnValueType;
 			}
 
-			public removeAllColumns(): void {
-				this.columns.removeRange();
+			public removeAllColumns(): ColumnValueType[] {
+				// TypeScript is unable to narrow the row type correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return this.removeColumns(this.columns as unknown as ColumnValueType[]);
 			}
 
 			public removeRows(rows: readonly string[] | readonly RowValueType[]): RowValueType[] {
@@ -672,8 +674,10 @@ export namespace System_TableSchema {
 				return rowToRemove as RowValueType;
 			}
 
-			public removeAllRows(): void {
-				this.rows.removeRange();
+			public removeAllRows(): RowValueType[] {
+				// TypeScript is unable to narrow the row type correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return this.removeRows(this.rows as unknown as RowValueType[]);
 			}
 
 			public removeCell(
@@ -1141,9 +1145,9 @@ export namespace TableSchema {
 
 		/**
 		 * Removes all columns from the table.
-		 * @privateRemarks TODO: Return removed columns (if any).
+		 * @returns The removed columns.
 		 */
-		removeAllColumns(): void;
+		removeAllColumns(): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 
 		/**
 		 * Removes the specified row from the table.
@@ -1173,9 +1177,9 @@ export namespace TableSchema {
 
 		/**
 		 * Removes all rows from the table.
-		 * @privateRemarks TODO: Return removed rows (if any).
+		 * @returns The removed rows.
 		 */
-		removeAllRows(): void;
+		removeAllRows(): TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
 		 * Removes the cell at the specified location in the table.
