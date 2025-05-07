@@ -514,7 +514,7 @@ export namespace System_TableSchema {
 
 				// Ensure index is valid
 				if (index !== undefined) {
-					Table.validateInsertionIndex(index, this.rows);
+					Table.validateInsertionIndex(index, this.columns);
 				}
 
 				// Check all of the columns being inserted an ensure the table does not already contain any with the same ID.
