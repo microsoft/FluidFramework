@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IFluidSerializer {
     decode(input: unknown): unknown;
     encode(value: unknown, bind: IFluidHandle): unknown;
@@ -12,12 +12,12 @@ export interface IFluidSerializer {
     stringify(value: unknown, bind: IFluidHandle): string;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
     (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -25,21 +25,22 @@ export interface ISharedObjectEvents extends IErrorEvent {
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ISharedObjectKind<TSharedObject> {
     create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
     getFactory(): IChannelFactory<TSharedObject>;
 }
 
-// @alpha
+// @alpha @legacy
 export function makeHandlesSerializable(value: unknown, serializer: IFluidSerializer, bind: IFluidHandle): unknown;
 
-// @alpha
+// @alpha @legacy
 export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown;
 
-// @alpha
+// @alpha @legacy
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes,
+    telemetryContextPrefix: string);
     getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     protected processGCDataCore(serializer: IFluidSerializer): void;
@@ -49,11 +50,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
 }
 
-// @alpha
+// @alpha @legacy
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    constructor(
+    id: string,
+    runtime: IFluidDataStoreRuntime,
+    attributes: IChannelAttributes);
     protected abstract applyStashedOp(content: unknown): void;
-    // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
     connect(services: IChannelServices): void;
@@ -65,7 +68,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly handle: IFluidHandleInternal;
-    // (undocumented)
     id: string;
     // (undocumented)
     get IFluidLoadable(): this;
@@ -82,8 +84,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
+    protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void;
     protected rollback(content: unknown, localOpMetadata: unknown): void;
-    // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
     protected abstract get serializer(): IFluidSerializer;
     protected submitLocalMessage(content: unknown, localOpMetadata?: unknown): void;

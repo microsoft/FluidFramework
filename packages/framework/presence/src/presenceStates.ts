@@ -12,10 +12,10 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord, PostUpdateAction } from "./internalTypes.js";
 import type { RecordEntryTypes } from "./internalUtils.js";
 import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
-import type { AttendeeId, Attendee } from "./presence.js";
+import type { AttendeeId, Attendee, Presence } from "./presence.js";
 import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
 import { handleFromDatastore } from "./stateDatastore.js";
-import type { StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
+import type { AnyWorkspace, StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
 import { unbrandIVM } from "./valueManager.js";
 
 /**
@@ -51,6 +51,7 @@ export interface RuntimeLocalUpdateOptions {
  * @internal
  */
 export interface PresenceRuntime {
+	readonly presence: Presence;
 	readonly attendeeId: AttendeeId;
 	lookupClient(clientId: ClientConnectionId): Attendee;
 	localUpdate(
@@ -127,7 +128,7 @@ export interface PresenceStatesInternal {
 	ensureContent<TSchemaAdditional extends StatesWorkspaceSchema>(
 		content: TSchemaAdditional,
 		controls: BroadcastControlSettings | undefined,
-	): StatesWorkspace<TSchemaAdditional>;
+	): AnyWorkspace<TSchemaAdditional>;
 	processUpdate(
 		received: number,
 		timeModifier: number,
@@ -244,14 +245,15 @@ type SchemaElementValueType<
 class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 	implements
 		PresenceStatesInternal,
-		StatesWorkspace<TSchema>,
+		AnyWorkspace<TSchema>,
 		StateDatastore<
 			keyof TSchema & string,
 			SchemaElementValueType<TSchema, keyof TSchema & string>
 		>
 {
 	private readonly nodes: MapEntries<TSchema>;
-	public readonly props: StatesWorkspace<TSchema>["props"];
+	public readonly states: StatesWorkspace<TSchema>["states"];
+	public readonly notifications: AnyWorkspace<TSchema>["notifications"];
 
 	public readonly controls: RequiredBroadcastControl;
 
@@ -292,10 +294,14 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 				}
 			}
 			this.nodes = nodes;
-			// props is the public view of nodes that limits the entries types to
-			// the public interface of the State object with an additional type
+			// states and notifications are the public view of nodes that limits the entries
+			// types to the public interface of State objects with an additional type
 			// filter that beguiles the type system. So just reinterpret cast.
-			this.props = this.nodes as unknown as StatesWorkspace<TSchema>["props"];
+			const properties = nodes as unknown as AnyWorkspace<TSchema>["states"];
+			// `AnyWorkspace` support comes from defining both `states` for
+			// `StatesWorkspace` and `notifications` for `NotificationsWorkspace`.
+			// `notifications` is always a subset of what `states` can be; so the same.
+			this.notifications = this.states = properties;
 
 			if (anyInitialValues) {
 				this.runtime.localUpdate(newValues, {
@@ -304,6 +310,10 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 				});
 			}
 		}
+	}
+
+	public get presence(): Presence {
+		return this.runtime.presence;
 	}
 
 	public knownValues<Key extends keyof TSchema & string>(
@@ -386,7 +396,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 	public ensureContent<TSchemaAdditional extends StatesWorkspaceSchema>(
 		content: TSchemaAdditional,
 		controls: BroadcastControlSettings | undefined,
-	): StatesWorkspace<TSchema & TSchemaAdditional> {
+	): AnyWorkspace<TSchema & TSchemaAdditional> {
 		if (controls?.allowableUpdateLatencyMs !== undefined) {
 			this.controls.allowableUpdateLatencyMs = controls.allowableUpdateLatencyMs;
 		}
@@ -401,7 +411,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 				}
 			}
 		}
-		return this as StatesWorkspace<TSchema & TSchemaAdditional>;
+		return this as AnyWorkspace<TSchema & TSchemaAdditional>;
 	}
 
 	public processUpdate(
@@ -428,7 +438,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 }
 
 /**
- * Create a new StatesWorkspace using the DataStoreRuntime provided.
+ * Create a new Workspace using the DataStoreRuntime provided.
  * @param initialContent - The initial State objects to register.
  */
 export function createPresenceStates<TSchema extends StatesWorkspaceSchema>(
@@ -436,7 +446,7 @@ export function createPresenceStates<TSchema extends StatesWorkspaceSchema>(
 	datastore: ValueElementMap<StatesWorkspaceSchema>,
 	initialContent: TSchema,
 	controls: BroadcastControlSettings | undefined,
-): { public: StatesWorkspace<TSchema>; internal: PresenceStatesInternal } {
+): { public: AnyWorkspace<TSchema>; internal: PresenceStatesInternal } {
 	const impl = new PresenceStatesImpl<TSchema>(runtime, datastore, initialContent, controls);
 
 	return {

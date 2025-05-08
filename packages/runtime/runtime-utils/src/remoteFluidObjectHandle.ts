@@ -31,10 +31,12 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 	 * Creates a new RemoteFluidObjectHandle when parsing an IFluidHandle.
 	 * @param absolutePath - The absolute path to the handle from the container runtime.
 	 * @param routeContext - The root IFluidHandleContext that has a route to this handle.
+	 * @param payloadPending - Whether the handle may have a pending payload that is not yet available.
 	 */
 	constructor(
 		public readonly absolutePath: string,
 		public readonly routeContext: IFluidHandleContext,
+		public readonly payloadPending: boolean,
 	) {
 		super();
 		assert(
@@ -48,7 +50,10 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 			// Add `viaHandle` header to distinguish from requests from non-handle paths.
 			const request: IRequest = {
 				url: this.absolutePath,
-				headers: { [RuntimeHeaders.viaHandle]: true },
+				headers: {
+					[RuntimeHeaders.viaHandle]: true,
+					[RuntimeHeaders.payloadPending]: this.payloadPending,
+				},
 			};
 			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {
 				if (response.mimeType === "fluid/object") {

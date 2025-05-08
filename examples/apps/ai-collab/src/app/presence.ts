@@ -18,7 +18,7 @@ export interface User {
 }
 
 const statesSchema = {
-	onlineUsers: StateFactory.latest({ photo: "" } satisfies User),
+	onlineUsers: StateFactory.latest({ local: { photo: "" } satisfies User }),
 } satisfies StatesWorkspaceSchema;
 
 export type UserPresence = StatesWorkspace<typeof statesSchema>;
@@ -48,7 +48,7 @@ export class PresenceManager {
 		);
 
 		// Listen for updates to the userInfo property in the presence state
-		this.usersState.props.onlineUsers.events.on("remoteUpdated", (update) => {
+		this.usersState.states.onlineUsers.events.on("remoteUpdated", (update) => {
 			// The remote client that updated the userInfo property
 			const remoteSessionClient = update.attendee;
 			// The new value of the userInfo property
@@ -74,12 +74,12 @@ export class PresenceManager {
 		// spe client
 		if (tenantId !== undefined && clientId !== undefined) {
 			const photoUrl = await getProfilePhoto();
-			this.usersState.props.onlineUsers.local = { photo: photoUrl };
+			this.usersState.states.onlineUsers.local = { photo: photoUrl };
 		}
 
 		this.userInfoMap.set(
 			this.presence.attendees.getMyself(),
-			this.usersState.props.onlineUsers.local,
+			this.usersState.states.onlineUsers.local,
 		);
 		this.userInfoCallback(this.userInfoMap);
 	}
@@ -101,7 +101,7 @@ export class PresenceManager {
 		for (const sessionClient of sessionList) {
 			// If local user or remote user is connected, then only add it to the list
 			try {
-				const userInfo = this.usersState.props.onlineUsers.getRemote(sessionClient).value;
+				const userInfo = this.usersState.states.onlineUsers.getRemote(sessionClient).value;
 				// If the user is local user, then add it to the beginning of the list
 				if (sessionClient.attendeeId === this.presence.attendees.getMyself().attendeeId) {
 					userInfoList.push(userInfo);

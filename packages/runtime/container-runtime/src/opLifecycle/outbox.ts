@@ -17,7 +17,7 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
@@ -66,8 +66,25 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (message: PendingMessageResubmitData) => void;
+	readonly reSubmit: (message: PendingMessageResubmitData, squash: boolean) => void;
 	readonly opReentrancy: () => boolean;
+}
+
+/**
+ * Info needed to correctly resubmit a batch
+ */
+export interface BatchResubmitInfo {
+	/**
+	 * If defined, indicates the Batch ID of the batch being resubmitted.
+	 * This must be preserved on the new batch about to be submitted so they can be correlated/deduped in case both are sent.
+	 */
+	batchId?: string;
+	/**
+	 * Indicates whether or not this batch is "staged", meaning it should not be sent to the ordering service yet
+	 * This is important on resubmit because we may be in Staging Mode for new changes,
+	 * but resubmitting a non-staged change from before entering Staging Mode
+	 */
+	staged: boolean;
 }
 
 /**
@@ -112,7 +129,13 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 /**
  * Convert from local batch to outbound batch, including computing contentSizeInBytes.
  */
-export function localBatchToOutboundBatch(localBatch: LocalBatch): OutboundBatch {
+export function localBatchToOutboundBatch({
+	staged: _staged, // Peel this off the incoming batch, it's irrelevant (see Note below)
+	...localBatch
+}: LocalBatch): OutboundBatch {
+	// Note: the staged property might be misleading here, in case a pre-staging batch is resubmitted during staging mode.
+	// It will be set to true, but the batch was not actually staged.
+
 	// Shallow copy each message as we switch types
 	const outboundMessages = localBatch.messages.map<OutboundBatchMessage>(
 		({ runtimeOp, ...message }) => ({
@@ -267,7 +290,7 @@ export class Outbox {
 							? "generic"
 							: "error",
 					eventName: "ReferenceSequenceNumberMismatch",
-					Data_details: {
+					details: {
 						expectedDueToReentrancy,
 						mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
 						mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
@@ -329,49 +352,53 @@ export class Outbox {
 	 * This method is expected to be called at the end of a batch.
 	 *
 	 * @throws If called from a reentrant context, or if the batch being flushed is too large.
-	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
-	 * with the given Batch ID, which must be preserved
+	 * @param resubmitInfo - Key information when flushing a resubmitted batch. Undefined means this is not resubmit.
 	 */
-	public flush(resubmittingBatchId?: BatchId): void {
+	public flush(resubmitInfo?: BatchResubmitInfo): void {
 		assert(
 			!this.isContextReentrant(),
 			0xb7b /* Flushing must not happen while incoming changes are being processed */,
 		);
-
-		this.flushAll(resubmittingBatchId);
+		this.flushAll(resubmitInfo);
 	}
 
-	private flushAll(resubmittingBatchId?: BatchId): void {
+	private flushAll(resubmitInfo?: BatchResubmitInfo): void {
 		const allBatchesEmpty =
 			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (allBatchesEmpty) {
-			// If we're resubmitting and all batches are empty, we need to flush an empty batch.
-			// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
+			// If we're resubmitting with a batchId and all batches are empty, we need to flush an empty batch.
+			// Note that we currently resubmit one batch at a time, so on resubmit, 1 of the 2 batches will *always* be empty.
 			// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
 			// by the rest of the system, including remote clients.
 			// In some cases we *must* resubmit the empty batch (to match up with a non-empty version tracked locally by a container fork), so we do it always.
-			if (resubmittingBatchId) {
-				this.flushEmptyBatch(resubmittingBatchId);
+			if (resubmitInfo?.batchId !== undefined) {
+				this.flushEmptyBatch(resubmitInfo.batchId, resubmitInfo.staged);
 			}
 			return;
 		}
 
 		// Don't use resubmittingBatchId for idAllocationBatch.
-		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
-		this.flushInternal(this.idAllocationBatch);
-		this.flushInternal(
-			this.blobAttachBatch,
-			true /* disableGroupedBatching */,
-			resubmittingBatchId,
-		);
-		this.flushInternal(
-			this.mainBatch,
-			false /* disableGroupedBatching */,
-			resubmittingBatchId,
-		);
+		// ID Allocation messages are not directly resubmitted so don't pass the resubmitInfo
+		this.flushInternal({
+			batchManager: this.idAllocationBatch,
+			// Note: For now, we will never stage ID Allocation messages.
+			// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
+		});
+		this.flushInternal({
+			batchManager: this.blobAttachBatch,
+			disableGroupedBatching: true,
+			resubmitInfo,
+		});
+		this.flushInternal({
+			batchManager: this.mainBatch,
+			resubmitInfo,
+		});
 	}
 
-	private flushEmptyBatch(resubmittingBatchId: BatchId): void {
+	private flushEmptyBatch(
+		resubmittingBatchId: BatchId,
+		resubmittingStagedBatch: boolean,
+	): void {
 		const referenceSequenceNumber =
 			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
 		assert(
@@ -384,7 +411,7 @@ export class Outbox {
 				referenceSequenceNumber,
 			);
 		let clientSequenceNumber: number | undefined;
-		if (this.params.shouldSend()) {
+		if (this.params.shouldSend() && !resubmittingStagedBatch) {
 			clientSequenceNumber = this.sendBatch(outboundBatch);
 		}
 
@@ -392,20 +419,28 @@ export class Outbox {
 		this.params.pendingStateManager.onFlushEmptyBatch(
 			placeholderMessage,
 			clientSequenceNumber,
+			resubmittingStagedBatch,
 		);
 		return;
 	}
 
-	private flushInternal(
-		batchManager: BatchManager,
-		disableGroupedBatching: boolean = false,
-		resubmittingBatchId?: BatchId,
-	): void {
+	private flushInternal(params: {
+		batchManager: BatchManager;
+		disableGroupedBatching?: boolean;
+		resubmitInfo?: BatchResubmitInfo; // undefined if not resubmitting
+	}): void {
+		const { batchManager, disableGroupedBatching = false, resubmitInfo } = params;
 		if (batchManager.empty) {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch(resubmittingBatchId);
+		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId);
+
+		// When resubmitting, we respect the staged state of the original batch.
+		// In this case rawBatch.staged will match the state of inStagingMode when
+		// the resubmit occurred, which is not relevant.
+		const staged = resubmitInfo?.staged ?? rawBatch.staged === true;
+
 		const groupingEnabled =
 			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
 		if (
@@ -420,6 +455,9 @@ export class Outbox {
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
+			// Note: Since this is happening in the same turn the ops were originally created with,
+			// and they haven't gone to PendingStateManager yet, we can just let them respect
+			// ContainerRuntime.inStagingMode
 			this.rebase(rawBatch, batchManager);
 			return;
 		}
@@ -428,7 +466,7 @@ export class Outbox {
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
-		if (this.params.shouldSend()) {
+		if (this.params.shouldSend() && !staged) {
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);
@@ -441,6 +479,7 @@ export class Outbox {
 		this.params.pendingStateManager.onFlushBatch(
 			rawBatch.messages,
 			clientSequenceNumber,
+			staged,
 			batchManager.options.ignoreBatchId,
 		);
 	}
@@ -456,12 +495,16 @@ export class Outbox {
 		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
+		const squash = false;
 		for (const message of rawBatch.messages) {
-			this.params.reSubmit({
-				runtimeOp: message.runtimeOp,
-				localOpMetadata: message.localOpMetadata,
-				opMetadata: message.metadata,
-			});
+			this.params.reSubmit(
+				{
+					runtimeOp: message.runtimeOp,
+					localOpMetadata: message.localOpMetadata,
+					opMetadata: message.metadata,
+				},
+				squash,
+			);
 		}
 
 		if (this.batchRebasesToReport > 0) {
@@ -476,7 +519,7 @@ export class Outbox {
 			this.batchRebasesToReport--;
 		}
 
-		this.flushInternal(batchManager);
+		this.flushInternal({ batchManager });
 		this.rebasing = false;
 	}
 
