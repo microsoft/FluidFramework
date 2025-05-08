@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import {
+	type IMemoryTestObject,
+	benchmarkMemory,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 
 import { SharedMatrix } from "../../index.js";
 import { createLocalMatrix } from "../utils.js";
@@ -11,18 +15,42 @@ import { createLocalMatrix } from "../utils.js";
 describe("SharedMatrix memory usage", () => {
 	// The value to be set in the cells of the matrix.
 	const matrixValue = "cellValue";
-	// The test matrix's size will be 10*10, 100*100, 1000*1000.
-	const matrixSizes = [10, 100, 1000];
+	// The test matrix's size will be 0*0, 10*10, 100*100, 1000*1000.
+	const matrixSizes = isInPerformanceTestingMode
+		? [10, 100, 1000]
+		: // When not measuring perf, use a single smaller data size so the tests run faster.
+			[0];
 
 	// The number of operations to perform on the matrix.
-	const operationCounts = [10, 100, 1000];
+	const operationCounts = isInPerformanceTestingMode
+		? [100, 1000]
+		: // When not measuring perf, use a single smaller data size so the tests run faster.
+			[10];
+
+	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
+	// because they won't be out of scope when we garbage-collect between runs of the same test,
+	// and that will skew measurements. Tests should allocate all the memory they need using local
+	// variables scoped to the test function itself, so several iterations of a given test can
+	// measure from the same baseline (as much as possible).
+
+	beforeEach(async () => {
+		// CAREFUL: usually beforeEach/afterEach hooks are used to initialize or interact with variables
+		// whose scope is the encompasing test suite, but that's a problem for memory-profiling tests.
+		// See the comment at the top of the test suite for more details.
+	});
+
+	afterEach(() => {
+		// CAREFUL: usually beforeEach/afterEach hooks are used to initialize or interact with variables
+		// whose scope is the encompasing test suite, but that's a problem for memory-profiling tests.
+		// See the comment at the top of the test suite for more details.
+	});
 
 	for (const matrixSize of matrixSizes) {
 		describe(`Size of ${matrixSize}*${matrixSize} SharedMatrix`, () => {
 			// Filter counts to ensure they do not exceed matrixSize
-			const validCounts = operationCounts.filter((count) => count <= matrixSize);
+			const validRemoveCounts = operationCounts.filter((count) => count <= matrixSize);
 
-			for (const count of validCounts) {
+			for (const count of operationCounts) {
 				// Test the memory usage of the SharedMatrix for inserting a column in the middle for a given number of times.
 				benchmarkMemory(
 					new (class implements IMemoryTestObject {
@@ -32,28 +60,6 @@ describe("SharedMatrix memory usage", () => {
 						async run(): Promise<void> {
 							for (let i = 0; i < count; i++) {
 								this.localMatrix?.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
-							}
-						}
-
-						beforeIteration(): void {
-							this.localMatrix = createLocalMatrix({
-								id: "testLocalMatrix",
-								size: matrixSize,
-								initialValue: matrixValue,
-							});
-						}
-					})(),
-				);
-
-				// Test the memory usage of the SharedMatrix for removing a column for a given number of times.
-				benchmarkMemory(
-					new (class implements IMemoryTestObject {
-						readonly title = `Remove the middle column ${count} times`;
-						private localMatrix: SharedMatrix | undefined;
-
-						async run(): Promise<void> {
-							for (let i = 0; i < count; i++) {
-								this.localMatrix?.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
 							}
 						}
 
@@ -89,15 +95,40 @@ describe("SharedMatrix memory usage", () => {
 					})(),
 				);
 
-				// Test the memory usage of the SharedMatrix for removing a row for a given number of times.
+				// Test the memory usage of the SharedMatrix for inserting a row and a column in the middle for a given number of times.
 				benchmarkMemory(
 					new (class implements IMemoryTestObject {
-						readonly title = `Remove the middle row ${count} times`;
+						readonly title = `Insert a row and a column ${count} times`;
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
-							for (let i = 0; i < Math.min(count, matrixSize); i++) {
-								this.localMatrix?.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+							for (let i = 0; i < count; i++) {
+								this.localMatrix?.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
+								this.localMatrix?.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+							}
+						}
+
+						beforeIteration(): void {
+							this.localMatrix = createLocalMatrix({
+								id: "testLocalMatrix",
+								size: matrixSize,
+								initialValue: matrixValue,
+							});
+						}
+					})(),
+				);
+			}
+
+			for (const count of validRemoveCounts) {
+				// Test the memory usage of the SharedMatrix for removing a column for a given number of times.
+				benchmarkMemory(
+					new (class implements IMemoryTestObject {
+						readonly title = `Remove the middle column ${count} times`;
+						private localMatrix: SharedMatrix | undefined;
+
+						async run(): Promise<void> {
+							for (let i = 0; i < count; i++) {
+								this.localMatrix?.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
 							}
 						}
 
@@ -111,16 +142,15 @@ describe("SharedMatrix memory usage", () => {
 					})(),
 				);
 
-				// Test the memory usage of the SharedMatrix for inserting a row and a column in the middle for a given number of times.
+				// Test the memory usage of the SharedMatrix for removing a row for a given number of times.
 				benchmarkMemory(
 					new (class implements IMemoryTestObject {
-						readonly title = `Insert a row and a column ${count} times`;
+						readonly title = `Remove the middle row ${count} times`;
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
-							for (let i = 0; i < count; i++) {
-								this.localMatrix?.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
-								this.localMatrix?.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+							for (let i = 0; i < Math.min(count, matrixSize); i++) {
+								this.localMatrix?.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
 							}
 						}
 
