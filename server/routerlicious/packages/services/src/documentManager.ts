@@ -4,7 +4,7 @@
  */
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { BasicRestWrapper, type IAbortSignalManager } from "@fluidframework/server-services-client";
+import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import {
 	IDocumentManager,
 	IDocument,
@@ -29,7 +29,6 @@ export class DocumentManager implements IDocumentManager {
 		private readonly internalAlfredUrl: string,
 		private readonly tenantManager: ITenantManager,
 		private readonly documentStaticDataCache?: ICache,
-		private readonly abortSignalManager?: IAbortSignalManager,
 	) {
 		if (!this.documentStaticDataCache) {
 			Lumberjack.info(
@@ -42,16 +41,8 @@ export class DocumentManager implements IDocumentManager {
 	public async readDocument(tenantId: string, documentId: string): Promise<IDocument | null> {
 		// Retrieve the document
 		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId);
-		const abortSignal = this.abortSignalManager?.getAbortSignal(
-			getGlobalTelemetryContext().getProperties().correlationId,
-		);
 		const document: IDocument = await restWrapper.get<IDocument>(
 			`/documents/${tenantId}/${documentId}`,
-			undefined /* queryString */,
-			undefined /* headers */,
-			{
-				signal: abortSignal,
-			},
 		);
 		if (!document) {
 			return null;

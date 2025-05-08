@@ -10,7 +10,6 @@ import { IHistorian } from "./storage";
 import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
 import { NetworkError } from "./error";
 import { debug } from "./debug";
-import type { IAbortSignalManager } from "./interfaces";
 
 function endsWith(value: string, endings: string[]): boolean {
 	for (const ending of endings) {
@@ -78,7 +77,6 @@ export class Historian implements IHistorian {
 		private readonly historianApi: boolean,
 		disableCache: boolean,
 		restWrapper?: RestWrapper,
-		private readonly abortSignalManager?: IAbortSignalManager,
 	) {
 		if (disableCache && this.historianApi) {
 			this.defaultQueryString.disableCache = disableCache;
@@ -90,36 +88,20 @@ export class Historian implements IHistorian {
 		this.restWrapper = restWrapper ?? new BasicRestWrapper(this.endpoint);
 	}
 
-	private getAbortSignalForRequest(): AbortSignal | undefined {
-		return this.abortSignalManager?.getAbortSignal();
-	}
-
 	public async getHeader(sha: string): Promise<any> {
 		return this.historianApi
-			? this.restWrapper.get(
-					`/headers/${encodeURIComponent(sha)}`,
-					this.getQueryString(),
-					undefined /* headers */,
-					{ signal: this.getAbortSignalForRequest() },
-			  )
+			? this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`, this.getQueryString())
 			: this.getHeaderDirect(sha);
 	}
 
 	public async getFullTree(sha: string): Promise<any> {
-		return this.restWrapper.get(
-			`/tree/${encodeURIComponent(sha)}`,
-			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
-		);
+		return this.restWrapper.get(`/tree/${encodeURIComponent(sha)}`, this.getQueryString());
 	}
 
 	public async getBlob(sha: string): Promise<git.IBlob> {
 		return this.restWrapper.get<git.IBlob>(
 			`/git/blobs/${encodeURIComponent(sha)}`,
 			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
 		);
 	}
 
@@ -128,28 +110,16 @@ export class Historian implements IHistorian {
 			`/git/blobs`,
 			blob,
 			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
 		);
 	}
 
 	public async getContent(path: string, ref: string): Promise<any> {
-		return this.restWrapper.get(
-			`/contents/${path}`,
-			this.getQueryString({ ref }),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
-		);
+		return this.restWrapper.get(`/contents/${path}`, this.getQueryString({ ref }));
 	}
 
 	public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
 		return this.restWrapper
-			.get<git.ICommitDetails[]>(
-				`/commits`,
-				this.getQueryString({ count, sha }),
-				undefined /* headers */,
-				{ signal: this.getAbortSignalForRequest() },
-			)
+			.get<git.ICommitDetails[]>(`/commits`, this.getQueryString({ count, sha }))
 			.catch(async (error) =>
 				error === 400 || error === 404
 					? ([] as git.ICommitDetails[])
@@ -161,100 +131,49 @@ export class Historian implements IHistorian {
 		return this.restWrapper.get<git.ICommit>(
 			`/git/commits/${encodeURIComponent(sha)}`,
 			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
 		);
 	}
 
 	public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-		return this.restWrapper.post<git.ICommit>(
-			`/git/commits`,
-			commit,
-			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
-		);
+		return this.restWrapper.post<git.ICommit>(`/git/commits`, commit, this.getQueryString());
 	}
 
 	public async getRefs(): Promise<git.IRef[]> {
-		return this.restWrapper.get(`/git/refs`, this.getQueryString(), undefined /* headers */, {
-			signal: this.getAbortSignalForRequest(),
-		});
+		return this.restWrapper.get(`/git/refs`, this.getQueryString());
 	}
 
 	public async getRef(ref: string): Promise<git.IRef> {
-		return this.restWrapper.get(
-			`/git/refs/${ref}`,
-			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
-		);
+		return this.restWrapper.get(`/git/refs/${ref}`, this.getQueryString());
 	}
 
 	public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-		return this.restWrapper.post(
-			`/git/refs`,
-			params,
-			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
-		);
+		return this.restWrapper.post(`/git/refs`, params, this.getQueryString());
 	}
 
 	public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-		return this.restWrapper.patch(
-			`/git/refs/${ref}`,
-			params,
-			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
-		);
+		return this.restWrapper.patch(`/git/refs/${ref}`, params, this.getQueryString());
 	}
 
 	public async deleteRef(ref: string): Promise<void> {
-		await this.restWrapper.delete(
-			`/git/refs/${ref}`,
-			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
-		);
+		await this.restWrapper.delete(`/git/refs/${ref}`, this.getQueryString());
 	}
 
 	public async createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
-		return this.restWrapper.post(
-			`/git/tags`,
-			tag,
-			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
-		);
+		return this.restWrapper.post(`/git/tags`, tag, this.getQueryString());
 	}
 
 	public async getTag(tag: string): Promise<git.ITag> {
-		return this.restWrapper.get(
-			`/git/tags/${tag}`,
-			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
-		);
+		return this.restWrapper.get(`/git/tags/${tag}`, this.getQueryString());
 	}
 
 	public async createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
-		return this.restWrapper.post<git.ITree>(
-			`/git/trees`,
-			tree,
-			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
-		);
+		return this.restWrapper.post<git.ITree>(`/git/trees`, tree, this.getQueryString());
 	}
 
 	public async getTree(sha: string, recursive: boolean): Promise<git.ITree> {
 		return this.restWrapper.get<git.ITree>(
 			`/git/trees/${encodeURIComponent(sha)}`,
 			this.getQueryString({ recursive: recursive ? 1 : 0 }),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
 		);
 	}
 	public async createSummary(
@@ -265,22 +184,16 @@ export class Historian implements IHistorian {
 			`/git/summaries`,
 			summary,
 			this.getQueryString(initial !== undefined ? { initial } : undefined),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
 		);
 	}
 	public async deleteSummary(softDelete: boolean): Promise<void> {
 		const headers = { "Soft-Delete": softDelete };
-		return this.restWrapper.delete(`/git/summaries`, this.getQueryString(), headers, {
-			signal: this.getAbortSignalForRequest(),
-		});
+		return this.restWrapper.delete(`/git/summaries`, this.getQueryString(), headers);
 	}
 	public async getSummary(sha: string): Promise<IWholeFlatSummary> {
 		return this.restWrapper.get<IWholeFlatSummary>(
 			`/git/summaries/${sha}`,
 			this.getQueryString(),
-			undefined /* headers */,
-			{ signal: this.getAbortSignalForRequest() },
 		);
 	}
 

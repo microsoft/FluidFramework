@@ -5,7 +5,7 @@
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
-import { BasicRestWrapper, type IAbortSignalManager } from "@fluidframework/server-services-client";
+import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import { IDeltaService, type ITenantManager } from "@fluidframework/server-services-core";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
 import { getRefreshTokenIfNeededCallback, TenantManager } from "./tenant";
@@ -20,14 +20,8 @@ export class DeltaManager implements IDeltaService {
 	constructor(
 		private readonly authEndpoint,
 		private readonly internalAlfredUrl: string,
-		private readonly abortSignalManager?: IAbortSignalManager,
 	) {
-		this.tenantManager = new TenantManager(
-			this.authEndpoint,
-			"",
-			undefined /* InvalidTokenCache */,
-			abortSignalManager,
-		);
+		this.tenantManager = new TenantManager(this.authEndpoint, "");
 	}
 
 	public async getDeltas(
@@ -40,16 +34,9 @@ export class DeltaManager implements IDeltaService {
 	): Promise<ISequencedDocumentMessage[]> {
 		const baseUrl = `${this.internalAlfredUrl}`;
 		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId, baseUrl);
-		const abortSignal = this.abortSignalManager?.getAbortSignal(
-			getGlobalTelemetryContext().getProperties().correlationId,
-		);
 		const resultP = restWrapper.get<ISequencedDocumentMessage[]>(
 			`/deltas/${tenantId}/${documentId}`,
 			{ from, to, caller: caller ?? "Unknown" },
-			undefined,
-			{
-				signal: abortSignal,
-			},
 		);
 		return resultP;
 	}

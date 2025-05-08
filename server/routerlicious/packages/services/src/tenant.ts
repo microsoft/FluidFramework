@@ -14,7 +14,6 @@ import {
 	parseToken,
 	isNetworkError,
 	NetworkError,
-	type IAbortSignalManager,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
@@ -108,7 +107,6 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		private readonly endpoint: string,
 		private readonly internalHistorianUrl: string,
 		private readonly invalidTokenCache?: core.ICache,
-		private readonly abortSignalManager?: IAbortSignalManager,
 	) {}
 
 	public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
@@ -127,17 +125,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			logHttpMetrics,
 			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
-		const abortSignal = this.abortSignalManager?.getAbortSignal(
-			getGlobalTelemetryContext().getProperties().correlationId,
-		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
 			`/api/tenants/${encodeURIComponent(tenantId || "")}`,
 			undefined /* requestBody */,
-			undefined /* queryString */,
-			undefined /* headers */,
-			{
-				signal: abortSignal,
-			},
 		);
 		return result;
 	}
@@ -213,8 +203,6 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 					const tenantManager = new TenantManager(
 						this.endpoint,
 						this.internalHistorianUrl,
-						undefined /* invalidTokenCache */,
-						this.abortSignalManager,
 					);
 					const newAccessToken = await getValidAccessToken(
 						currentAccessToken,
@@ -257,13 +245,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			logHttpMetrics,
 			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
-		const historian = new Historian(
-			baseUrl,
-			true,
-			false,
-			tenantRestWrapper,
-			this.abortSignalManager,
-		);
+		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);
 
 		return gitManager;
@@ -312,21 +294,10 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			logHttpMetrics,
 			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
-		const abortSignal = this.abortSignalManager?.getAbortSignal(
-			getGlobalTelemetryContext().getProperties().correlationId,
-		);
 		try {
-			await restWrapper.post(
-				`/api/tenants/${encodeURIComponent(tenantId)}/validate`,
-				{
-					token,
-				},
-				undefined /* queryString */,
-				undefined /* headers */,
-				{
-					signal: abortSignal,
-				},
-			);
+			await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, {
+				token,
+			});
 		} catch (error: unknown) {
 			if (isNetworkError(error)) {
 				// In case of a 401 or 403 error, we cache the token in the invalid token cache
@@ -369,16 +340,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			logHttpMetrics,
 			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
-		const abortSignal = this.abortSignalManager?.getAbortSignal(
-			getGlobalTelemetryContext().getProperties().correlationId,
-		);
 		const result = await restWrapper.get<core.ITenantKeys>(
 			`/api/tenants/${encodeURIComponent(tenantId)}/keys`,
 			{ includeDisabledTenant },
-			undefined /* headers */,
-			{
-				signal: abortSignal,
-			},
 		);
 		return result.key1;
 	}
@@ -408,9 +372,6 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			logHttpMetrics,
 			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
-		const abortSignal = this.abortSignalManager?.getAbortSignal(
-			getGlobalTelemetryContext().getProperties().correlationId,
-		);
 		const result = await restWrapper.post<core.IFluidAccessToken>(
 			`/api/tenants/${encodeURIComponent(tenantId)}/accesstoken`,
 			{
@@ -422,10 +383,6 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 				jti,
 			},
 			{ includeDisabledTenant: includeDisabledTenant ?? false },
-			undefined /* headers */,
-			{
-				signal: abortSignal,
-			},
 		);
 		return result.fluidAccessToken;
 	}
@@ -457,18 +414,8 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			logHttpMetrics,
 			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
-		const abortSignal = this.abortSignalManager?.getAbortSignal(
-			getGlobalTelemetryContext().getProperties().correlationId,
-		);
-		return restWrapper.get<core.ITenantConfig>(
-			`/api/tenants/${tenantId}`,
-			{
-				includeDisabledTenant,
-			},
-			undefined /* headers */,
-			{
-				signal: abortSignal,
-			},
-		);
+		return restWrapper.get<core.ITenantConfig>(`/api/tenants/${tenantId}`, {
+			includeDisabledTenant,
+		});
 	}
 }

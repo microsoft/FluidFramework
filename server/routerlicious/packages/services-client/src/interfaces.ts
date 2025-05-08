@@ -65,24 +65,24 @@ export interface ISession {
  * This is useful for tracking the status of requests and handling cancellations.
  * @internal
  */
-export interface IAbortSignalManager {
+export interface IAbortControllerManager {
 	/**
 	 * Adds an abort signal to the manager.
-	 * @param abortSignal - The abort signal to add.
+	 * @param abortController - The abort signal to add.
 	 * @param correlationId - The ID of the request.
 	 */
-	addAbortSignal(abortSignal: AbortSignal, correlationId?: string): void;
+	addAbortController(abortController: AbortController, correlationId?: string): void;
 
 	/**
 	 * Removes an abort signal from the manager.
 	 * @param correlationId - The ID of the request.
 	 */
-	removeAbortSignal(correlationId?: string): void;
+	removeAbortController(correlationId?: string): void;
 
 	/**
 	 * Gets the abort signal for a specific request ID.
 	 * @param correlationId - The ID of the request.
 	 * @returns The abort signal associated with the correlation ID, or undefined if not found.
 	 */
-	getAbortSignal(correlationId?: string): AbortSignal | undefined;
+	getAbortController(correlationId?: string): AbortController | undefined;
 }

@@ -30,7 +30,7 @@ import {
 	CallingServiceHeaderName,
 	DriverVersionHeaderName,
 	IAlfredTenant,
-	type IAbortSignalManager,
+	type IAbortControllerManager,
 } from "@fluidframework/server-services-client";
 import {
 	addAbortControllerForRequestMiddleware,
@@ -71,7 +71,7 @@ export function create(
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 	redisCacheForGetSession?: ICache,
 	denyList?: IDenyList,
-	abortSignalManager?: IAbortSignalManager,
+	abortControllerManager?: IAbortControllerManager,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -173,7 +173,7 @@ export function create(
 	app.use(cookieParser());
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
-	app.use(addAbortControllerForRequestMiddleware(abortSignalManager));
+	app.use(addAbortControllerForRequestMiddleware(abortControllerManager));
 
 	// Bind routes
 	const routes = alfredRoutes.create(

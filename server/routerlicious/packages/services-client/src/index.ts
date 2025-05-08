@@ -40,10 +40,15 @@ export {
 	ICredentials,
 	parseToken,
 } from "./historian";
-export { IAlfredTenant, ISession, IAbortSignalManager } from "./interfaces";
+export { IAlfredTenant, ISession, IAbortControllerManager } from "./interfaces";
 export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
-export { BasicRestWrapper, RestWrapper, IBasicRestWrapperMetricProps } from "./restWrapper";
+export {
+	BasicRestWrapper,
+	RestWrapper,
+	IBasicRestWrapperMetricProps,
+	setupAxiosInterceptorsForAbortSignals,
+} from "./restWrapper";
 export { defaultHash, getNextHash } from "./rollingHash";
 export {
 	canRead,

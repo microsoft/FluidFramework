@@ -22,6 +22,27 @@ import {
 } from "./constants";
 import { getGlobalTimeoutContext } from "./timeoutContext";
 import { isAxiosCanceledError } from "./utils";
+import type { IAbortControllerManager } from "./interfaces";
+
+/**
+ * @internal
+ */
+export function setupAxiosInterceptorsForAbortSignals(
+	abortControllerManager: IAbortControllerManager,
+	getCorrelationId: () => string | undefined,
+) {
+	// Set up an interceptor to add the abort signal to the request
+	Axios.interceptors.request.use((config) => {
+		const correlationId = getCorrelationId();
+		let abortController = abortControllerManager.getAbortController(correlationId);
+		if (!abortController) {
+			abortController = new AbortController();
+			abortControllerManager.addAbortController(abortController, correlationId);
+		}
+		config.signal = abortController.signal;
+		return config;
+	});
+}
 
 /**
  * @internal

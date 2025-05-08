@@ -183,7 +183,7 @@ export class Heap<T> {
 
 // @internal
 export class Historian implements IHistorian {
-    constructor(endpoint: string, historianApi: boolean, disableCache: boolean, restWrapper?: RestWrapper, abortSignalManager?: IAbortSignalManager | undefined);
+    constructor(endpoint: string, historianApi: boolean, disableCache: boolean, restWrapper?: RestWrapper);
     // (undocumented)
     createBlob(blob: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse>;
     // (undocumented)
@@ -229,10 +229,10 @@ export class Historian implements IHistorian {
 }
 
 // @internal
-export interface IAbortSignalManager {
-    addAbortSignal(abortSignal: AbortSignal, correlationId?: string): void;
-    getAbortSignal(correlationId?: string): AbortSignal | undefined;
-    removeAbortSignal(correlationId?: string): void;
+export interface IAbortControllerManager {
+    addAbortController(abortController: AbortController, correlationId?: string): void;
+    getAbortController(correlationId?: string): AbortController | undefined;
+    removeAbortController(correlationId?: string): void;
 }
 
 // @internal (undocumented)
@@ -680,6 +680,9 @@ export abstract class RestWrapper {
 
 // @internal
 export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
+
+// @internal (undocumented)
+export function setupAxiosInterceptorsForAbortSignals(abortControllerManager: IAbortControllerManager, getCorrelationId: () => string | undefined): void;
 
 // @internal
 export class SummaryTreeUploadManager implements ISummaryUploadManager {
