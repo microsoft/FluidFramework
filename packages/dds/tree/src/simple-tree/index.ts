@@ -119,6 +119,7 @@ export {
 	type HandleConverter,
 	allowUnused,
 	type FieldSchemaAlphaUnsafe,
+	getIdentifierFromNode,
 	type TreeSchema,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
