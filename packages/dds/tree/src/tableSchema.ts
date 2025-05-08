@@ -850,11 +850,6 @@ export namespace System_TableSchema {
 /**
  * Contains types and factories for creating schema to represent dynamic tabular data.
  *
- * @remarks
- * - Tables are sparse
- * - Column / Row schema are (optionally) extensible. + support props
- * - Tables are extensible
- *
  * @example Using default Column and Row schema
  *
  * ```typescript
