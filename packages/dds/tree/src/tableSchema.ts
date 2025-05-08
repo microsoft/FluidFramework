@@ -24,8 +24,6 @@ import {
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
 	type InternalTreeNode,
-	type FieldSchema,
-	type FieldKind,
 	SchemaFactory,
 	type ImplicitAnnotatedFieldSchema,
 	type UnannotateImplicitFieldSchema,
@@ -52,6 +50,14 @@ const tableSchemaFactorySubScope = "table";
  * @system @internal
  */
 export namespace System_TableSchema {
+	/**
+	 * Default type used for column and row "props" fields.
+	 * @system @internal
+	 */
+	export type DefaultPropsType = ReturnType<
+		typeof SchemaFactory.optional<typeof SchemaFactory.null>
+	>;
+
 	/**
 	 * A base interface for factory input options which include an schema factory.
 	 * @remarks This interface should not be referenced directly.
@@ -216,7 +222,7 @@ export namespace System_TableSchema {
 	export type ColumnSchemaBase<
 		TScope extends string | undefined = string | undefined,
 		TPropsSchema extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
-	> = ReturnType<typeof TableSchema.createColumn<TScope, TPropsSchema>>;
+	> = ReturnType<typeof createColumnInternal<TScope, TPropsSchema>>;
 
 	// #endregion
 
@@ -401,7 +407,7 @@ export namespace System_TableSchema {
 		TScope extends string | undefined = string | undefined,
 		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TPropsSchema extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
-	> = ReturnType<typeof TableSchema.createRow<TScope, TCellSchema, TPropsSchema>>;
+	> = ReturnType<typeof createRowInternal<TScope, TCellSchema, TPropsSchema>>;
 
 	// #endregion
 
@@ -836,7 +842,7 @@ export namespace System_TableSchema {
 		TCell extends ImplicitAllowedTypes,
 		TColumn extends ColumnSchemaBase<TScope>,
 		TRow extends RowSchemaBase<TScope, TCell>,
-	> = ReturnType<typeof TableSchema.createTable<TScope, TCell, TColumn, TRow>>;
+	> = ReturnType<typeof createTableInternal<TScope, TCell, TColumn, TRow>>;
 
 	// #endregion
 }
@@ -928,12 +934,9 @@ export namespace TableSchema {
 	 */
 	export function createColumn<const TScope extends string | undefined>({
 		schemaFactory,
-	}: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryAlpha<TScope>>): ReturnType<
-		typeof System_TableSchema.createColumnInternal<
-			TScope,
-			FieldSchema<FieldKind.Optional, typeof SchemaFactoryAlpha.null>
-		>
-	>;
+	}: System_TableSchema.CreateColumnOptionsBase<
+		SchemaFactoryAlpha<TScope>
+	>): System_TableSchema.ColumnSchemaBase<TScope, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table column schema.
 	 * @internal
@@ -949,7 +952,7 @@ export namespace TableSchema {
 		 * Optional column properties.
 		 */
 		readonly props: TProps;
-	}): ReturnType<typeof System_TableSchema.createColumnInternal<TScope, TProps>>;
+	}): System_TableSchema.ColumnSchemaBase<TScope, TProps>;
 	/**
 	 * Overload implementation
 	 */
@@ -1040,13 +1043,10 @@ export namespace TableSchema {
 	>({
 		schemaFactory,
 		cell,
-	}: System_TableSchema.CreateRowOptionsBase<SchemaFactoryAlpha<TScope>, TCell>): ReturnType<
-		typeof System_TableSchema.createRowInternal<
-			TScope,
-			TCell,
-			FieldSchema<FieldKind.Optional, typeof SchemaFactoryAlpha.null>
-		>
-	>;
+	}: System_TableSchema.CreateRowOptionsBase<
+		SchemaFactoryAlpha<TScope>,
+		TCell
+	>): System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table column schema.
 	 * @internal
@@ -1064,7 +1064,7 @@ export namespace TableSchema {
 		 * Optional row properties.
 		 */
 		readonly props: TProps;
-	}): ReturnType<typeof System_TableSchema.createRowInternal<TScope, TCell, TProps>>;
+	}): System_TableSchema.RowSchemaBase<TScope, TCell, TProps>;
 	/**
 	 * Overload implementation
 	 */
@@ -1383,7 +1383,12 @@ export namespace TableSchema {
 	}: System_TableSchema.TableFactoryOptionsBase<
 		SchemaFactoryAlpha<TScope>,
 		TCell
-	>): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, System_TableSchema.ColumnSchemaBase<TScope>, System_TableSchema.RowSchemaBase<TScope, TCell>>>;
+	>): System_TableSchema.TableSchemaBase<
+		TScope,
+		TCell,
+		System_TableSchema.ColumnSchemaBase<TScope>,
+		System_TableSchema.RowSchemaBase<TScope, TCell>
+	>;
 	/**
 	 * Factory for creating new table schema without specifying row schema.
 	 * @internal
@@ -1398,7 +1403,12 @@ export namespace TableSchema {
 		column,
 	}: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 		readonly column: TColumn;
-	}): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, TColumn, System_TableSchema.RowSchemaBase<TScope, TCell>>>;
+	}): System_TableSchema.TableSchemaBase<
+		TScope,
+		TCell,
+		TColumn,
+		System_TableSchema.RowSchemaBase<TScope, TCell>
+	>;
 	/**
 	 * Factory for creating new table schema.
 	 * @internal
@@ -1416,7 +1426,7 @@ export namespace TableSchema {
 	}: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 		readonly column: TColumn;
 		readonly row: TRow;
-	}): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, TColumn, TRow>>;
+	}): System_TableSchema.TableSchemaBase<TScope, TCell, TColumn, TRow>;
 	/**
 	 * Overload implementation
 	 */
