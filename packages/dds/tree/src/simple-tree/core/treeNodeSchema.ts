@@ -136,6 +136,7 @@ export type TreeNodeSchemaNonClass<
  * // If both get used, its an error!
  * class Invalid extends base {}
  * ```
+ *
  * - Do not modify the constructor input parameter types or values:
  * ```typescript
  * class Invalid extends schemaFactory.object("A", {
