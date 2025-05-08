@@ -1817,7 +1817,7 @@ export const shortCodeMap = {
 	"0xb7c": "must have previous for change",
 	"0xb7d": "must have previous for delete",
 	"0xb7e": "Local value expected on rollback",
-	"0xb7f": "Expected a recorded refSeq when rolling back an op ",
+	"0xb7f": "Expected a recorded refSeq when rolling back an op",
 	"0xb80": "Double disposed",
 	"0xb81": "disposed",
 	"0xb82": "Staged batches expected to have runtimeOp defined",

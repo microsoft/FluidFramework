@@ -212,12 +212,12 @@ describe("SchematizingSimpleTreeView", () => {
 		// up a document that has been created and/or edited by a "newer" version of an application (which has
 		// expanded the schema to include more information).
 		const factory = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factory.object("Person", {
+		class PersonGeneralized extends factory.objectAlpha("Person", {
 			name: factory.string,
 			age: factory.number,
 			address: factory.optional(factory.string),
 		}) {}
-		class PersonSpecific extends factory.object(
+		class PersonSpecific extends factory.objectAlpha(
 			"Person",
 			{
 				name: factory.string,
@@ -276,12 +276,12 @@ describe("SchematizingSimpleTreeView", () => {
 	it("Calling moveToEnd on a more specific schema preserves a node's optional fields that were unknown to that schema", () => {
 		const factorySpecific = new SchemaFactoryAlpha(undefined);
 		const factoryGeneral = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factorySpecific.object("Person", {
+		class PersonGeneralized extends factorySpecific.objectAlpha("Person", {
 			name: factoryGeneral.string,
 			age: factoryGeneral.number,
 			address: factoryGeneral.optional(factoryGeneral.string),
 		}) {}
-		class PersonSpecific extends factorySpecific.object(
+		class PersonSpecific extends factorySpecific.objectAlpha(
 			"Person",
 			{
 				name: factorySpecific.string,

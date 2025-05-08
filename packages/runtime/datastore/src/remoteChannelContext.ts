@@ -199,10 +199,10 @@ export class RemoteChannelContext implements IChannelContext {
 		}
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash: boolean) {
 		assert(this.isLoaded, 0x196 /* "Remote channel must be loaded when resubmitting op" */);
 
-		this.services.deltaConnection.reSubmit(content, localOpMetadata);
+		this.services.deltaConnection.reSubmit(content, localOpMetadata, squash);
 	}
 
 	public rollback(content: any, localOpMetadata: unknown) {

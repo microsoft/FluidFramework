@@ -31,6 +31,7 @@ export {
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
+export type { MinimumVersionForCollab } from "./compatUtils.js";
 export {
 	GCNodeType,
 	IGCMetadata,
@@ -109,16 +110,3 @@ export {
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
-export { ChannelCollection } from "./channelCollection.js";
-export {
-	IFluidDataStoreContextInternal,
-	ISnapshotDetails,
-	LocalFluidDataStoreContext,
-	LocalFluidDataStoreContextBase,
-	FluidDataStoreContext,
-	IFluidDataStoreContextProps,
-	ILocalFluidDataStoreContextProps,
-	ILocalDetachedFluidDataStoreContextProps,
-	IFluidDataStoreContextEvents,
-} from "./dataStoreContext.js";
-export { DataStoreContexts } from "./dataStoreContexts.js";

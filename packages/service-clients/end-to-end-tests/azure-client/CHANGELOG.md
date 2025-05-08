@@ -1,5 +1,9 @@
 # @fluidframework/azure-end-to-end-tests
 
+## 2.33.0
+
+Dependency updates only.
+
 ## 2.32.0
 
 Dependency updates only.

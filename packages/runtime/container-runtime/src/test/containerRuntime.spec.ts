@@ -73,7 +73,6 @@ import {
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { getCompatibilityVersionDefaults } from "../compatUtils.js";
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
@@ -81,6 +80,7 @@ import {
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
+	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
 } from "../containerRuntime.js";
 import {
@@ -90,6 +90,7 @@ import {
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import type { InboundMessageResult, LocalBatchMessage } from "../opLifecycle/index.js";
+import { pkgVersion } from "../packageVersion.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -159,7 +160,12 @@ function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime)
 	(containerRuntime as any).channelCollection = {
 		setConnectionState: (_connected: boolean, _clientId?: string) => {},
 		// Pass data store op right back to ContainerRuntime
-		reSubmit: (type: string, envelope: IEnvelope, localOpMetadata: unknown) => {
+		reSubmit: (
+			type: string,
+			envelope: IEnvelope,
+			localOpMetadata: unknown,
+			squash: boolean,
+		) => {
 			submitDataStoreOp(
 				containerRuntime,
 				envelope.address,
@@ -1565,7 +1571,7 @@ describe("Runtime", () => {
 				mockLogger = new MockLogger();
 			});
 
-			const runtimeOptions: IContainerRuntimeOptionsInternal = {
+			const runtimeOptions = {
 				compressionOptions: {
 					minimumBatchSizeInBytes: 1024 * 1024,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -1573,9 +1579,9 @@ describe("Runtime", () => {
 				chunkSizeInBytes: 800 * 1024,
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 				enableGroupedBatching: true,
-			};
+			} as const satisfies IContainerRuntimeOptionsInternal;
 
-			const defaultRuntimeOptions: IContainerRuntimeOptionsInternal = {
+			const defaultRuntimeOptions = {
 				summaryOptions: {},
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
@@ -1589,8 +1595,8 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
-				createBlobPayloadPending: false, // Redundant, but makes the JSON.stringify yield the same result as the logs
-			};
+				createBlobPayloadPending: undefined,
+			} as const satisfies ContainerRuntimeOptionsInternal;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
 			it("Container load stats", async () => {
@@ -3628,9 +3634,8 @@ describe("Runtime", () => {
 			});
 		});
 
-		// TODO: Update these tests when compatibilityVersion API is implemented - ADO:36088
 		describe("Default Configurations", () => {
-			it("compatibilityVersion not provided", async () => {
+			it("minVersionForCollab not provided", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3654,7 +3659,6 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
-					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3666,16 +3670,37 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityVersion = 1.0.0", async () => {
-				const compatibilityVersion = "1.0.0";
-				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+			// These are examples of minVersionForCollab inputs that are not valid.
+			// minVersionForCollab should be at least 1.0.0 and less than or equal to
+			// the current pkgVersion.
+			const invalidVersions = ["0.50.0", "100.0.0"] as const;
+			for (const version of invalidVersions) {
+				it(`throws when minVersionForCollab = ${version}`, async () => {
+					const logger = new MockLogger();
+					await assert.rejects(async () => {
+						await ContainerRuntime.loadRuntime({
+							context: getMockContext({ logger }) as IContainerContext,
+							registryEntries: [],
+							existing: false,
+							runtimeOptions: {},
+							provideEntryPoint: mockProvideEntryPoint,
+							// @ts-expect-error - Invalid version strings are not castable to MinimumVersionForCollab
+							minVersionForCollab: version,
+						});
+					});
+				});
+			}
+
+			it("minVersionForCollab = 1.0.0", async () => {
+				const minVersionForCollab = "1.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: defaultRuntimeOptions,
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -3692,7 +3717,6 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
-					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3704,16 +3728,16 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it('compatibilityVersion = 2.0.0-defaults ("default")', async () => {
-				const compatibilityVersion = "2.0.0-defaults";
-				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
+				const minVersionForCollab = "2.0.0-defaults";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: defaultRuntimeOptions,
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -3730,7 +3754,6 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
-					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3742,16 +3765,16 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityVersion = 2.0.0 (explicit)", async () => {
-				const compatibilityVersion = "2.0.0";
-				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+			it("minVersionForCollab = 2.0.0 (explicit)", async () => {
+				const minVersionForCollab = "2.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: defaultRuntimeOptions,
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -3768,7 +3791,6 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
-					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3780,16 +3802,15 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityVersion = 2.20.0", async () => {
-				const compatibilityVersion = "2.20.0";
-				const defaultRuntimeOptions = getCompatibilityVersionDefaults(compatibilityVersion);
+			it("minVersionForCollab = 2.20.0", async () => {
+				const minVersionForCollab = "2.20.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: defaultRuntimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -3806,7 +3827,6 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
-					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3818,7 +3838,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityVersion not provided, with manual configs for each property", async () => {
+			it("minVersionForCollab not provided, with manual configs for each property", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3834,7 +3854,6 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: "on",
 						enableGroupedBatching: false, // By turning off batching, we will also disable compression automatically
 						explicitSchemaControl: true,
-						createBlobPayloadPending: false,
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -3853,7 +3872,6 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
 					explicitSchemaControl: true,
-					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([
@@ -3912,7 +3930,6 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
 						enableGroupedBatching: true,
 						explicitSchemaControl: false,
-						createBlobPayloadPending: false,
 					};
 
 					logger.assertMatchAny([
@@ -3924,8 +3941,10 @@ describe("Runtime", () => {
 					]);
 				});
 
-			// Skipped since 3.0.0 is not an existing FF version yet
-			it.skip("compatibilityVersion = 3.0.0", async () => {
+			// Note: We may need to update `expectedRuntimeOptions` for this test
+			// when we bump to certain versions.
+			it("minVersionForCollab = pkgVersion", async () => {
+				const minVersionForCollab = pkgVersion;
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3933,11 +3952,12 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
 					summaryOptions: {},
-					gcOptions: { enableGCSweep: true },
+					gcOptions: {},
 					loadSequenceNumberVerification: "close",
 					flushMode: FlushMode.TurnBased,
 					compressionOptions: {
@@ -3949,7 +3969,6 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
-					createBlobPayloadPending: false,
 				};
 
 				logger.assertMatchAny([

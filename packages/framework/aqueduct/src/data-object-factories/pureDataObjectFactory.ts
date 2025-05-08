@@ -40,6 +40,15 @@ import type {
 	PureDataObject,
 } from "../data-objects/index.js";
 
+interface CreateDataObjectProps<TObj extends PureDataObject, I extends DataObjectTypes> {
+	ctor: new (props: IDataObjectProps<I>) => TObj;
+	context: IFluidDataStoreContext;
+	sharedObjectRegistry: ISharedObjectRegistry;
+	optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+	runtimeClassArg: typeof FluidDataStoreRuntime;
+	existing: boolean;
+	initialState?: I["InitialState"];
+}
 /**
  * Proxy over PureDataObject
  * Does delayed creation & initialization of PureDataObject
@@ -47,15 +56,15 @@ import type {
 async function createDataObject<
 	TObj extends PureDataObject,
 	I extends DataObjectTypes = DataObjectTypes,
->(
-	ctor: new (props: IDataObjectProps<I>) => TObj,
-	context: IFluidDataStoreContext,
-	sharedObjectRegistry: ISharedObjectRegistry,
-	optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
-	runtimeClassArg: typeof FluidDataStoreRuntime,
-	existing: boolean,
-	initProps?: I["InitialState"],
-): Promise<{
+>({
+	ctor,
+	context,
+	sharedObjectRegistry,
+	optionalProviders,
+	runtimeClassArg,
+	existing,
+	initialState: initProps,
+}: CreateDataObjectProps<TObj, I>): Promise<{
 	instance: TObj;
 	runtime: FluidDataStoreRuntime;
 }> {
@@ -127,6 +136,52 @@ async function createDataObject<
 }
 
 /**
+ * Represents the properties required to create a DataObjectFactory.
+ * This includes the type identifier, constructor, shared objects, optional providers,
+ * registry entries, and the runtime class to use for the data object.
+ * @typeParam TObj - DataObject (concrete type)
+ * @typeParam I - The input types for the DataObject
+ * @legacy
+ * @alpha
+ */
+export interface DataObjectFactoryProps<
+	TObj extends PureDataObject<I>,
+	I extends DataObjectTypes = DataObjectTypes,
+> {
+	/**
+	 * The type identifier for the data object factory.
+	 */
+	readonly type: string;
+
+	/**
+	 * The constructor for the data object.
+	 */
+	readonly ctor: new (
+		props: IDataObjectProps<I>,
+	) => TObj;
+
+	/**
+	 * The shared objects (DDSes) to be registered with the data object.
+	 */
+	readonly sharedObjects?: readonly IChannelFactory[];
+
+	/**
+	 * Optional providers for dependency injection.
+	 */
+	readonly optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+
+	/**
+	 * Registry entries for named data stores.
+	 */
+	readonly registryEntries?: NamedFluidDataStoreRegistryEntries;
+
+	/**
+	 * The runtime class to use for the data object.
+	 */
+	readonly runtimeClass?: typeof FluidDataStoreRuntime;
+}
+
+/**
  * PureDataObjectFactory is a bare-bones IFluidDataStoreFactory for use with PureDataObject.
  * Consumers should typically use DataObjectFactory instead unless creating
  * another base data store factory.
@@ -141,27 +196,65 @@ export class PureDataObjectFactory<
 	I extends DataObjectTypes = DataObjectTypes,
 > implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
-	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly registry: IFluidDataStoreRegistry | undefined;
+	private readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
+	 */
+	public readonly type: string;
+
+	/**
+	 * @remarks Use the props object based constructor instead.
+	 * No new features will be added to this constructor,
+	 * and it will eventually be deprecated and removed.
+	 */
 	public constructor(
-		/**
-		 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
-		 */
-		public readonly type: string,
-		private readonly ctor: new (props: IDataObjectProps<I>) => TObj,
-		sharedObjects: readonly IChannelFactory[],
-		private readonly optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
+		type: string,
+		ctor: new (props: IDataObjectProps<I>) => TObj,
+		sharedObjects?: readonly IChannelFactory[],
+		optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
-		private readonly runtimeClass: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+		runtimeClass?: typeof FluidDataStoreRuntime,
+	);
+	public constructor(props: DataObjectFactoryProps<TObj, I>);
+	public constructor(
+		propsOrType: DataObjectFactoryProps<TObj, I> | string,
+		maybeCtor?: new (doProps: IDataObjectProps<I>) => TObj,
+		maybeSharedObjects?: readonly IChannelFactory[],
+		maybeOptionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>,
+		maybeRegistryEntries?: NamedFluidDataStoreRegistryEntries,
+		maybeRuntimeFactory?: typeof FluidDataStoreRuntime,
 	) {
-		if (this.type === "") {
+		const newProps =
+			typeof propsOrType === "string"
+				? {
+						type: propsOrType,
+						// both the arg and props base constructor require this param
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						ctor: maybeCtor!,
+						sharedObjects: maybeSharedObjects,
+						optionalProviders: maybeOptionalProviders,
+						registryEntries: maybeRegistryEntries,
+						runtimeClass: maybeRuntimeFactory,
+					}
+				: propsOrType;
+
+		if (newProps.type === "") {
 			throw new Error("undefined type member");
 		}
-		if (registryEntries !== undefined) {
-			this.registry = new FluidDataStoreRegistry(registryEntries);
+		this.type = newProps.type;
+
+		this.createProps = {
+			ctor: newProps.ctor,
+			optionalProviders: newProps.optionalProviders ?? {},
+			sharedObjectRegistry: new Map(newProps.sharedObjects?.map((ext) => [ext.type, ext])),
+			runtimeClassArg: newProps.runtimeClass ?? FluidDataStoreRuntime,
+		};
+
+		if (newProps.registryEntries !== undefined) {
+			this.registry = new FluidDataStoreRegistry(newProps.registryEntries);
 		}
-		this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
 	}
 
 	/**
@@ -195,14 +288,7 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const { runtime } = await createDataObject(
-			this.ctor,
-			context,
-			this.sharedObjectRegistry,
-			this.optionalProviders,
-			this.runtimeClass,
-			existing,
-		);
+		const { runtime } = await createDataObject({ ...this.createProps, context, existing });
 
 		return runtime;
 	}
@@ -297,15 +383,12 @@ export class PureDataObjectFactory<
 			packagePath ?? [this.type],
 			loadingGroupId,
 		);
-		const { instance, runtime } = await createDataObject(
-			this.ctor,
+		const { instance, runtime } = await createDataObject({
+			...this.createProps,
 			context,
-			this.sharedObjectRegistry,
-			this.optionalProviders,
-			this.runtimeClass,
-			false, // existing
+			existing: false,
 			initialState,
-		);
+		});
 		const dataStore = await context.attachRuntime(this, runtime);
 
 		return [instance, dataStore];
@@ -330,15 +413,12 @@ export class PureDataObjectFactory<
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
 		const context = runtime.createDetachedDataStore([this.type]);
-		const { instance, runtime: dataStoreRuntime } = await createDataObject(
-			this.ctor,
+		const { instance, runtime: dataStoreRuntime } = await createDataObject({
+			...this.createProps,
 			context,
-			this.sharedObjectRegistry,
-			this.optionalProviders,
-			this.runtimeClass,
-			false, // existing
+			existing: false,
 			initialState,
-		);
+		});
 		const dataStore = await context.attachRuntime(this, dataStoreRuntime);
 		const result = await dataStore.trySetAlias(rootDataStoreId);
 		if (result !== "Success") {
@@ -363,15 +443,12 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContextDetached,
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
-		const { instance, runtime } = await createDataObject(
-			this.ctor,
+		const { instance, runtime } = await createDataObject({
+			...this.createProps,
 			context,
-			this.sharedObjectRegistry,
-			this.optionalProviders,
-			this.runtimeClass,
-			false, // existing
+			existing: false,
 			initialState,
-		);
+		});
 
 		await context.attachRuntime(this, runtime);
 

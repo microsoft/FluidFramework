@@ -1,5 +1,70 @@
 # fluid-framework
 
+## 2.33.0
+
+### Minor Changes
+
+- Remote edits to nodes which have never been accessed locally correctly trigger "treeChanged" events ([#24421](https://github.com/microsoft/FluidFramework/pull/24421)) [916ad0546f7](https://github.com/microsoft/FluidFramework/commit/916ad0546f772b744e1c150c6e833199c2f713ef)
+
+  There was a bug where "treeChanged" events would not always trigger if the node that was edited had never been accessed in the current view.
+  This has been fixed.
+
+- Typing derived from unions of AllowedTypes arrays is fixed ([#24441](https://github.com/microsoft/FluidFramework/pull/24441)) [a27ef0a0939](https://github.com/microsoft/FluidFramework/commit/a27ef0a0939a0983be85362d1aa34df7735977ed)
+
+  Unions of array types provided as an [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) used to result in incorrectly computed insertable content types.
+  This happened because [InsertableTreeNodeFromAllowedTypes](https://fluidframework.com/docs/api/fluid-framework/insertabletreenodefromallowedtypes-typealias) distributed over the union, violating the policy documented in [Input](https://fluidframework.com/docs/api/fluid-framework/input-typealias) for how schema-derived input types should be computed.
+  This has been fixed.
+  To get usable Input types, SharedTree schema's types should always capture the exact schema provided at runtime and not unions of possible different schema.
+  Any code impacted by this change should be updated to replace any such unions with more specific types.
+
+- "Unsafe" @system types moved to System_Unsafe namespace ([#24443](https://github.com/microsoft/FluidFramework/pull/24443)) [dd4abfc4570](https://github.com/microsoft/FluidFramework/commit/dd4abfc4570aff9ce37c3e6bcee23cf4c7eb6e7e)
+
+  Working code conforming to the [rules regarding API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags#api-support-levels) should be unaffected, but this resolves an issue which required violating these rules and directly referencing `@system` types.
+
+  Sometimes packages exporting SharedTree schema related types for recursive schema could yield errors like:
+
+  > error TS2742: The inferred type of 'YourSchema' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'.
+  > This is likely not portable.
+  > A type annotation is necessary.
+
+  Mitigating this error could require explicitly referencing these `@system` types from `internalTypes`.
+  Any such references to the moved types should be able to be deleted, as TypeScript will now be able to find them in the new namespace without assistance.
+
+  This does not migrate all types out of `internalTypes`, so some occurrences of this issue may remain.
+
+- allowUnused utility function ([#24076](https://github.com/microsoft/FluidFramework/pull/24076)) [13c62b613e8](https://github.com/microsoft/FluidFramework/commit/13c62b613e8a3f919c0e41d0ffc582c984504f0d)
+
+  A new `allowUnused` utility function has been added, which discards its type or runtime argument.
+  When TypeScript is configured to reject code with unused locals, this function can be used to suppress that error, enabling use of [ValidateRecursiveSchema](https://fluidframework.com/docs/api/fluid-framework/validaterecursiveschema-typealias) to compile.
+
+  ```typescript
+  class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+  allowUnused<ValidateRecursiveSchema<typeof Test>>(); // Reports compile error due to invalid schema above.
+  ```
+
+- Improve handling of deleted nodes ([#24345](https://github.com/microsoft/FluidFramework/pull/24345)) [0ab3e510db5](https://github.com/microsoft/FluidFramework/commit/0ab3e510db5371e40c7f6b0fec3eef40695bcc94)
+
+  [TreeNodes](https://fluidframework.com/docs/api/fluid-framework/treenode-class) which are [deleted](https://fluidframework.com/docs/api/fluid-framework/treestatus-enum#deleted-enummember) were not handled correctly.
+  This has been improved in two ways:
+
+  1. Accessing fields of deleted nodes now consistently throws a usage error indicating that doing so is invalid.
+     Previously, this would throw an assertion error, which was a bug.
+  2. When a `TreeNode` is deleted, but that node still exists within the [`ITree`](https://fluidframework.com/docs/api/driver-definitions/itree-interface), then becomes accessible again later, a new `TreeNode` is now allocated instead of trying to reuse the deleted one.
+     Note that this can only happen when the entire view of the `ITree` is disposed then recreated.
+     This happens when disposing and recreating a [TreeView](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) or when the contents of the view are disposed due to being out of schema (another client did a schema upgrade), then brought back into schema (the schema upgrade was undone).
+
+- Generic types for IntervalCollections have been replaced with non-generic types ([#24411](https://github.com/microsoft/FluidFramework/pull/24411)) [1c743e825ed](https://github.com/microsoft/FluidFramework/commit/1c743e825ed29a81b0e66775ce3553477361d335)
+
+  This change deprecates the following generic types and provides non-generic alternatives where necessary:
+
+  - `IIntervalCollection` is replaced by `ISequenceIntervalCollection`
+  - `IIntervalCollectionEvent` is replaced by `ISequenceIntervalCollectionEvents`
+  - `IntervalIndex` is replaced by `SequenceIntervalIndex`
+  - `IOverlappingIntervalsIndex` is replaced by `ISequenceOverlappingIntervalsIndex`
+  - `ISharedIntervalCollection` is deprecated without replacement
+
+  These types are no longer required to be generic, and replacing them with non-generic alternatives keeps our typing less complex.
+
 ## 2.32.0
 
 ### Minor Changes
