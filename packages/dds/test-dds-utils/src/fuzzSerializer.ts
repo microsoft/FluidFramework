@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import {
 	FluidSerializer,
-	type HandleBinder,
+	type ISharedObjectHandle,
 } from "@fluidframework/shared-object-base/internal";
 
 import { PoisonedDDSFuzzHandle } from "./ddsFuzzHandle.js";
@@ -73,7 +73,7 @@ export class DDSFuzzSerializer extends FluidSerializer {
 	 */
 	protected bindAndEncodeHandle(
 		handle: IFluidHandleInternal,
-		bind: HandleBinder,
+		bind: ISharedObjectHandle,
 	): ISerializedHandle & Partial<IPoisonedHandle> {
 		const baseEncoding = super.bindAndEncodeHandle(handle, bind);
 		if (isPoisonedHandle(handle)) {

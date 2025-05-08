@@ -6,7 +6,7 @@
 import { IFluidHandle, fluidHandleSymbol } from '@fluidframework/core-interfaces';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { assert } from '@fluidframework/core-utils/internal';
-import { FluidSerializer, type HandleBinder } from '@fluidframework/shared-object-base/internal';
+import { FluidSerializer, isISharedObjectHandle } from '@fluidframework/shared-object-base/internal';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
@@ -481,7 +481,8 @@ describe('EditUtilities', () => {
 		const serializer: FluidSerializer = new FluidSerializer(new MockFluidDataStoreRuntime().IFluidHandleContext);
 		const binder = {
 			bind: noop,
-		} satisfies HandleBinder as unknown as IFluidHandle;
+		} as unknown as IFluidHandle;
+		assert(isISharedObjectHandle(binder), 'PRECONDITION: Expected binder to be an ISharedObjectHandle');
 
 		enum Equality {
 			Equal,

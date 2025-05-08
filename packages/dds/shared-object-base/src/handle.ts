@@ -8,8 +8,32 @@ import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 // eslint-disable-next-line import/no-deprecated
 import type { IFluidDataStoreRuntimeExperimental } from "@fluidframework/datastore-definitions/internal";
 
-import type { HandleBinder } from "./serializer.js";
 import { ISharedObject } from "./types.js";
+
+/**
+ * @internal
+ */
+export interface ISharedObjectHandle extends IFluidHandleInternal {
+	/**
+	 * Binds the given handle to this DDS or attach the given handle if this DDS is attached.
+	 * A bound handle will also be attached once this DDS is attached.
+	 *
+	 * @param handle - The target handle to bind to this DDS
+	 */
+	bind(handle: IFluidHandleInternal): void;
+}
+
+/**
+ * Type guard for {@link ISharedObjectHandle}. Only actually checks for an object with a bind method.
+ * @internal
+ */
+export function isISharedObjectHandle(handle: unknown): handle is ISharedObjectHandle {
+	return (
+		typeof handle === "object" &&
+		handle !== null &&
+		typeof (handle as ISharedObjectHandle).bind === "function"
+	);
+}
 
 /**
  * Handle for a shared object.
@@ -24,7 +48,7 @@ import { ISharedObject } from "./types.js";
  */
 export class SharedObjectHandle
 	extends FluidObjectHandle<ISharedObject>
-	implements HandleBinder
+	implements ISharedObjectHandle
 {
 	/**
 	 * Whether services have been attached for the associated shared object.

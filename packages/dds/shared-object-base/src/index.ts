@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { FluidSerializer, HandleBinder, IFluidSerializer } from "./serializer.js";
+export { ISharedObjectHandle, isISharedObjectHandle } from "./handle.js";
+export { FluidSerializer, IFluidSerializer } from "./serializer.js";
 export {
 	SharedObject,
 	SharedObjectCore,
