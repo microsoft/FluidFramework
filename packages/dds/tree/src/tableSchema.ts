@@ -301,6 +301,8 @@ export namespace System_TableSchema {
 				columnOrId: TableSchema.IColumn | string,
 				value: CellInsertableType | undefined,
 			): void {
+				// TODO: throw if column does not exist in the owning table.
+
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 				this.cells.set(columnId, value);
 			}
