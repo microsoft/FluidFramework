@@ -122,8 +122,10 @@ export interface TreeChangeEvents {
  *
  * 1. From a {@link TreeView} loading nodes from an existing document, or creating local copies of nodes inserted by a remote collaborator.
  * This case provides an {@link InternalTreeNode} to the constructor: subclasses must not modify how the constructor handles this case.
+ *
  * 2. Explicit construction of {@link Unhydrated} nodes using either {@link TreeNodeSchemaClass} as a constructor or {@link TreeNodeSchemaNonClass|TreeNodeSchemaNonClass.create}.
  * Either way the {@link TreeNodeSchema} produced must be produced using a {@link SchemaFactory}.
+ *
  * 3. Implicit construction: Several APIs which logically require an unhydrated TreeNode also allow passing in a value which could be used to explicitly construct the node instead.
  * These APIs internally call the constructor with the provided value, so it's really just a special case of the above option.
  * Note that when constructing nodes, sometimes implicit construction is not allowed

@@ -429,9 +429,13 @@ const schemaStaticsPublic: SchemaStatics = schemaStatics;
  * It is legal to subclass the returned class, and even subclass that class,
  * but only a single class from that class hierarchy can ever be instantiated or passed to any API as a {@link TreeNodeSchema|schema}.
  * These base classes can be used with `instanceof`, but not with schema based APIs like `Tree.is`.
+ *
  * 2. If overriding the constructor, the constructor must accept the same argument as the base constructor `super` and forward it to `super` unchanged.
+ *
  * 3. Properties for fields defined in the schema should not be overridden.
+ *
  * 4. Additional static members added to schema should pick relatively unique keys to reduce the risk of colliding with implementation details what are not exposed in the API.
+ *
  * 5. If exporting the schema from a package which uses API-Extractor, export the base class and derived class separately to work around [a known limitation](https://github.com/microsoft/rushstack/issues/4429).
  *
  * Note:
