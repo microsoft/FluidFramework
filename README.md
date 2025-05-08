@@ -298,7 +298,6 @@ Then:
 ### Biome
 
 This repository uses [biome](https://biomejs.dev/formatter/) as its code formatter.
-# figure out what to do about shared config
 Right now, this is implemented on a per-package basis, with a [shared base configuration](./biome.jsonc).
 
 -   To run `biome` on your code, run `npm run format` from the appropriate package or release group, or run
