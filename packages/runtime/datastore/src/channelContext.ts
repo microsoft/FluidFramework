@@ -53,7 +53,7 @@ export interface IChannelContext {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult>;
 
-	reSubmit(content: any, localOpMetadata: unknown): void;
+	reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void;
 
 	applyStashedOp(content: any): unknown;
 

@@ -28,7 +28,7 @@ import {
 	getStoredSchema,
 	SchemaFactory,
 	toStoredSchema,
-	ViewSchema,
+	SchemaCompatibilityTester,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
@@ -118,7 +118,7 @@ describe("Schema Evolution Examples", () => {
 		// This is where legacy schema handling logic for schematize.
 		const adapters: Adapters = {};
 		// Compose all the view information together.
-		const view = new ViewSchema(defaultSchemaPolicy, adapters, root);
+		const view = new SchemaCompatibilityTester(defaultSchemaPolicy, adapters, root);
 
 		// Now lets imagine using this application on a new empty document.
 		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
@@ -150,7 +150,7 @@ describe("Schema Evolution Examples", () => {
 
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
-			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, tolerantRoot);
+			const view2 = new SchemaCompatibilityTester(defaultSchemaPolicy, adapters, tolerantRoot);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
 
@@ -208,7 +208,11 @@ describe("Schema Evolution Examples", () => {
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 			const canvas2 = builder.array("Canvas", positionedCanvasItem2);
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, builder.optional(canvas2));
+			const view3 = new SchemaCompatibilityTester(
+				defaultSchemaPolicy,
+				adapters,
+				builder.optional(canvas2),
+			);
 
 			// With this new schema, we can load the document just like before:
 			const compat2 = view3.checkCompatibility(stored);

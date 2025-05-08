@@ -106,6 +106,9 @@
 			},
 			"Interface_INetworkErrorDetails": {
 				"backCompat": false
+			},
+			"Interface_ITimeoutContext": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"
