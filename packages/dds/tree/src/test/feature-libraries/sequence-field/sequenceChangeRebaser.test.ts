@@ -692,7 +692,7 @@ const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = fu
 					field: { parent: undefined, field: rootFieldKey },
 					fieldKind: sequence.identifier,
 					change: brand(Change.move(iSrc, nodeCount, iDst, moveRevision)),
-					revision: removeRevision,
+					revision: moveRevision,
 				};
 				const modularMoveEdit = editor.buildChanges([fieldMoveEdit]);
 				yield {
@@ -775,7 +775,7 @@ export function testStateBasedRebaserAxioms() {
 			generateChildStates,
 			defaultFieldRebaser,
 			{
-				groupSubSuites: true,
+				groupSubSuites: false,
 				numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 4 : 3,
 				skipRebaseOverCompose: false,
 			},
