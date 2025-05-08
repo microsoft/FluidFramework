@@ -3305,7 +3305,7 @@ export class ContainerRuntime
 			}
 		});
 
-		stageControls?.commitChanges();
+		stageControls?.commitChanges({ squash: false });
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
 		if (this.flushMode !== FlushMode.TurnBased && !this.batchRunner.running) {
