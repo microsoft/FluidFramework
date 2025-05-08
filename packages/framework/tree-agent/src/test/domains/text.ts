@@ -57,7 +57,7 @@ export class Comment extends sf.object("Comment", {
 	text: sf.string,
 }) {}
 
-export class Page extends sf.object(
+export class Page extends sf.objectAlpha(
 	"Page",
 	{
 		paragraphs: sf.array(Paragraph),

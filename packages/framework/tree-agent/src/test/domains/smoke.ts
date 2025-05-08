@@ -15,7 +15,7 @@ import {
 
 const sf = new SchemaFactoryAlpha("com.microsoft.fluid.tree-agent.smoke");
 
-export class Smoke extends sf.object(
+export class Smoke extends sf.objectAlpha(
 	"Smoke",
 	{
 		color: sf.required(sf.string, {

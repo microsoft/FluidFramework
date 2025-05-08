@@ -589,6 +589,7 @@ export class ObjectFieldSchema<
 
 /**
  * Normalizes a {@link ImplicitFieldSchema} or {@link ImplicitAnnotatedFieldSchema} to a {@link FieldSchema}.
+ * @alpha
  */
 export function normalizeFieldSchema(
 	schema: ImplicitFieldSchema | ImplicitAnnotatedFieldSchema,

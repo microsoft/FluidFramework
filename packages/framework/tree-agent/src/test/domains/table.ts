@@ -13,7 +13,7 @@ import {
 
 const sf = new SchemaFactoryAlpha("com.microsoft.fluid.tree-agent.table");
 
-export class Cell extends sf.object(
+export class Cell extends sf.objectAlpha(
 	"Cell",
 	{
 		identifier: sf.identifier,
@@ -28,7 +28,7 @@ export class Cell extends sf.object(
 	},
 ) {}
 
-export class Row extends sf.object(
+export class Row extends sf.objectAlpha(
 	"Row",
 	{
 		identifier: sf.identifier,
@@ -44,7 +44,7 @@ export class Row extends sf.object(
 	},
 ) {}
 
-export class Table extends sf.object(
+export class Table extends sf.objectAlpha(
 	"Table",
 	{
 		identifier: sf.identifier,
