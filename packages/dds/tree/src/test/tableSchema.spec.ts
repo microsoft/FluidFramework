@@ -20,7 +20,7 @@ import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
-describe.only("TableFactory unit tests", () => {
+describe("TableFactory unit tests", () => {
 	function createTableTree() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
