@@ -13,8 +13,8 @@ export interface OdspTestCredentials {
 }
 
 export const props: OdspTestCredentials = {
-	siteUrl: process.env.SITE_URL,
-	driveId: process.env.DRIVE_ID,
+	siteUrl: process.env.SITE_URL as string,
+	driveId: process.env.DRIVE_ID as string,
 };
 
 const connectionConfig: OdspConnectionConfig = {
