@@ -42,11 +42,7 @@ describe("FluidSerializer", () => {
 	describe("vanilla JSON", () => {
 		const context = new MockHandleContext();
 		const serializer = new FluidSerializer(context);
-		const handle = new RemoteFluidObjectHandle(
-			"/root",
-			context,
-			false, // payloadPending
-		);
+		const bind = new FluidObjectHandle({}, "/", context);
 
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
 		// are of particular interest.
@@ -172,6 +168,7 @@ describe("FluidSerializer", () => {
 	describe("JSON w/embedded handles", () => {
 		const context = new MockHandleContext();
 		const serializer = new FluidSerializer(context);
+		const bind = new FluidObjectHandle({}, "/", context);
 		const handle = new RemoteFluidObjectHandle(
 			"/root",
 			context,
@@ -336,16 +333,13 @@ describe("FluidSerializer", () => {
 	});
 
 	describe("Utils", () => {
-		const serializer = new FluidSerializer(new MockHandleContext());
+		const context = new MockHandleContext();
+		const serializer = new FluidSerializer(context);
 		it("makeSerializable is idempotent", () => {
-			const bind = new RemoteFluidObjectHandle(
-				"/",
-				new MockHandleContext(),
-				false, // payloadPending
-			);
+			const bind = new FluidObjectHandle({}, "/", context);
 			const handle = new RemoteFluidObjectHandle(
 				"/okay",
-				new MockHandleContext(),
+				context,
 				false, // payloadPending
 			);
 			const input = { x: handle, y: 123 };
