@@ -21,6 +21,7 @@ export {
 	SchemaSummarizer,
 	encodeTreeSchema,
 	makeSchemaCodec,
+	makeSchemaCodecs,
 	SchemaCodecVersion,
 } from "./schema-index/index.js";
 export {

@@ -635,6 +635,12 @@ const schemaCodec = makeSchemaCodec(
 	SchemaCodecVersion.v1,
 );
 
+// We have to divide the length of the return value from `Object.keys` to get the number of enum entries.
+assert(
+	Object.keys(SchemaCodecVersion).length / 2 === 1,
+	"This code only handles a single schema codec version.",
+);
+
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {
 		const baseline = nestedMapFromFlatList(trees[0].getRemovedRoots());

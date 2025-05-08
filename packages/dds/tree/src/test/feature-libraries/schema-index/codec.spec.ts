@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 // Allow importing from this specific file which is being tested:
 
-import { makeCodecFamily } from "../../../codec/index.js";
 import type { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
@@ -24,7 +23,10 @@ import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
 
+const schemaCodecs = makeSchemaCodecs({ jsonValidator: typeboxValidator });
 const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaCodecVersion.v1);
 
 const schema2 = toStoredSchema(SchemaFactory.optional(JsonAsTree.Primitive));
@@ -79,7 +81,7 @@ describe("SchemaIndex", () => {
 	});
 
 	describe("codec", () => {
-		makeEncodingTestSuite(makeCodecFamily([[1, codecV1]]), testCases, (a, b) => {
+		makeEncodingTestSuite(schemaCodecs, testCases, (a, b) => {
 			assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
 			assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));
 		});

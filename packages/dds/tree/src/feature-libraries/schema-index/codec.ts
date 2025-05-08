@@ -37,6 +37,8 @@ export enum SchemaCodecVersion {
  * @param options - Specifies common codec options, including which `validator` to use.
  * @param writeVersion - The schema write version.
  * @returns The composed codec.
+ *
+ * @privateRemarks We should consider using the Shared Tree format version instead as it may be more valuable for application authors than the schema version.
  */
 export function makeSchemaCodec(
 	options: ICodecOptions,
