@@ -6,7 +6,7 @@
 import { IFluidHandle, fluidHandleSymbol } from '@fluidframework/core-interfaces';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { assert } from '@fluidframework/core-utils/internal';
-import { FluidSerializer } from '@fluidframework/shared-object-base/internal';
+import { FluidSerializer, type HandleBinder } from '@fluidframework/shared-object-base/internal';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
@@ -477,15 +477,11 @@ describe('EditUtilities', () => {
 		return typeof node === 'number';
 	}
 
-	//* Needs handleBinder interface
 	describe('comparePayloads', () => {
 		const serializer: FluidSerializer = new FluidSerializer(new MockFluidDataStoreRuntime().IFluidHandleContext);
-		const binder: IFluidHandle = {
+		const binder = {
 			bind: noop,
-			get [fluidHandleSymbol]() {
-				return binder;
-			},
-		} as unknown as IFluidHandle;
+		} satisfies HandleBinder as unknown as IFluidHandle;
 
 		enum Equality {
 			Equal,

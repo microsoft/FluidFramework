@@ -19,7 +19,21 @@ import {
 	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
 
-import { SharedObjectHandle } from "./handle.js";
+/**
+ * Functionality needed to bind a handle to itself such that the target handle is "as attached as" this source object
+ *
+ * @internal
+ */
+export interface HandleBinder {
+	bind(handle: IFluidHandleInternal): void;
+}
+
+/**
+ * Type guard for {@link HandleBinder}
+ */
+function supportsBind(handle: unknown): handle is HandleBinder {
+	return typeof (handle as HandleBinder).bind === "function";
+}
 
 /**
  * @legacy
@@ -86,7 +100,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
 	public encode(input: unknown, bind: IFluidHandleInternal): unknown {
-		assert(bind instanceof SharedObjectHandle, "bind must be a SharedObjectHandle");
+		assert(supportsBind(bind), "bind must have a bind() method");
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -119,7 +133,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 * being bound to the given bind context in the process.
 	 */
 	public stringify(input: unknown, bind: IFluidHandle): string {
-		assert(bind instanceof SharedObjectHandle, "bind must be a SharedObjectHandle");
+		assert(supportsBind(bind), "bind must have a bind() method");
 		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
 	}
 
@@ -134,7 +148,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 * If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	 * Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
 	 */
-	protected encodeValue(value: unknown, bind?: SharedObjectHandle): unknown {
+	protected encodeValue(value: unknown, bind?: HandleBinder): unknown {
 		// If 'value' is an IFluidHandle return its encoded form.
 		if (isFluidHandle(value)) {
 			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
@@ -224,7 +238,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 */
 	protected bindAndEncodeHandle(
 		handle: IFluidHandleInternal,
-		bind: SharedObjectHandle,
+		bind: HandleBinder,
 	): ISerializedHandle {
 		bind.bind(handle);
 		return encodeHandleForSerialization(handle);

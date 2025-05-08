@@ -8,6 +8,7 @@ import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 // eslint-disable-next-line import/no-deprecated
 import type { IFluidDataStoreRuntimeExperimental } from "@fluidframework/datastore-definitions/internal";
 
+import type { HandleBinder } from "./serializer.js";
 import { ISharedObject } from "./types.js";
 
 /**
@@ -20,11 +21,11 @@ import { ISharedObject } from "./types.js";
  * De-serialization process goes through {@link @fluidframework/datastore#FluidObjectHandle}, and request flow:
  * {@link @fluidframework/datastore#FluidDataStoreRuntime.request} recognizes requests in the form of
  * '/\<shared object id\>' and loads shared object.
- *
- * //* Revert after adding interface
- * @internal
  */
-export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
+export class SharedObjectHandle
+	extends FluidObjectHandle<ISharedObject>
+	implements HandleBinder
+{
 	/**
 	 * Whether services have been attached for the associated shared object.
 	 */

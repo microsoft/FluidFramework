@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-//* Revert after interface
-export { SharedObjectHandle } from "./handle.js";
-export { FluidSerializer, IFluidSerializer } from "./serializer.js";
+export { FluidSerializer, HandleBinder, IFluidSerializer } from "./serializer.js";
 export {
 	SharedObject,
 	SharedObjectCore,
