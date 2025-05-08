@@ -36,7 +36,7 @@ export function getExposedMethods(schemaClass: NodeSchema): Record<string, Funct
 /**
  * A type that represents a function argument.
  */
-export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = [name: string, type: T];
+export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string, type: T];
 
 /**
  * A function definition interface that describes the structure of a function.
@@ -71,9 +71,9 @@ export class FunctionWrapper
 /**
  * A utility type that extracts the argument types from a function definition.
  */
-export type ArgsTuple<T extends readonly Arg[]> = T extends [infer Single extends Arg]
+export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg]
 	? [Single[1]]
-	: T extends [infer Head extends Arg, ...infer Tail extends Arg[]]
+	: T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]]
 		? [Head[1], ...ArgsTuple<Tail>]
 		: never;
 
@@ -81,9 +81,9 @@ export type ArgsTuple<T extends readonly Arg[]> = T extends [infer Single extend
  * A utility function to build a function definition.
  */
 export function buildFunc<
-	Return extends z.ZodTypeAny,
-	Args extends readonly Arg[],
-	Rest extends z.ZodTypeAny | null = null,
+	const Return extends z.ZodTypeAny,
+	const Args extends readonly Arg[],
+	const Rest extends z.ZodTypeAny | null = null,
 >(
 	def: { description?: string; returns: Return; rest?: Rest },
 	...args: Args

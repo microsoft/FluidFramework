@@ -34,7 +34,7 @@ class Todo extends sf.object("Todo", {
 	}
 
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-		methods.expose(Todo, "M2", buildFunc({ returns: z.boolean() }, ["num", z.string()]));
+		methods.expose(Todo, "M2", buildFunc({ returns: z.boolean() }, ["n", z.string()]));
 	}
 }
 
