@@ -1033,6 +1033,28 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(undo, expected);
 		});
+
+		it("Undo insert and move", () => {
+			// This tests undoing a single insert mark representing a move of the first node and an insert of the second.
+			const change = Change.build(
+				{ family, maxId: 3 },
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.insert(2, brand(2), { id: brand(0) }),
+					MarkMaker.remove(1, brand(0)),
+				]),
+			);
+
+			const inverse = family.invert(tagChangeInline(change, tag1), false, tag2);
+			const expected = Change.build(
+				{ family, maxId: 3, revisions: [{ revision: tag2 }] },
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.remove(2, { revision: tag2, localId: brand(0) }),
+					MarkMaker.insert(1, { revision: tag1, localId: brand(0) }, { revision: tag2 }),
+				]),
+			);
+
+			assertEqual(inverse, expected);
+		});
 	});
 
 	describe("toDelta", () => {

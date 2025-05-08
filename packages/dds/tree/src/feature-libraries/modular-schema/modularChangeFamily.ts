@@ -2548,30 +2548,32 @@ class InvertNodeManagerI implements InvertNodeManager {
 		count: number,
 		newDetachId: ChangeAtomId,
 	): RangeQueryResult<ChangeAtomId, NodeId> {
+		let countToProcess = count;
+
 		const detachIdEntry = firstDetachIdFromAttachId(
 			this.table.change.rootNodes,
 			attachId,
-			count,
+			countToProcess,
 		);
 
-		assert(detachIdEntry.length === count, "XXX");
+		countToProcess = detachIdEntry.length;
 
 		if (!areEqualChangeAtomIdOpts(attachId, newDetachId)) {
 			const detachEntry = this.table.change.crossFieldKeys.getFirst(
 				{ target: CrossFieldTarget.Source, ...detachIdEntry.value },
-				count,
+				countToProcess,
 			);
 
-			assert(detachEntry.length === count, "XXX");
+			countToProcess = detachEntry.length;
 
 			if (detachEntry.value === undefined) {
 				// The original changeset does not reattach these nodes, and we can discard any existing renames.
-				deleteNodeRename(this.table.invertedRoots, attachId, count);
+				deleteNodeRename(this.table.invertedRoots, attachId, countToProcess);
 			} else {
 				// The original changeset moves these nodes.
 				// If the original changeset has a rename between the detach and the attach,
 				// we need to make sure that the inverted attach and detach are still linked by a rename.
-				this.table.detachToAttachId.set(newDetachId, count, attachId);
+				this.table.detachToAttachId.set(newDetachId, countToProcess, attachId);
 			}
 		}
 
@@ -2584,7 +2586,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 		const result: RangeQueryResult<ChangeAtomId, NodeId> =
 			nodeId !== undefined
 				? { start: attachId, value: nodeId, length: 1 }
-				: this.table.entries.getFirst(attachId, count);
+				: this.table.entries.getFirst(attachId, countToProcess);
 
 		if (result.value !== undefined) {
 			setInChangeAtomIdMap(this.table.invertedNodeToParent, result.value, this.fieldId);
