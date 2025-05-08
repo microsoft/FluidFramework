@@ -197,7 +197,9 @@ export interface TreeAlpha {
 	 * This API could be improved:
 	 *
 	 * 1. It could validate that the schema is compatible, and return or throw an error in the invalid case (maybe add a "try" version).
+	 *
 	 * 2. A "try" version of this could return an error if the data isn't in a supported format (as determined by version and/or JasonValidator).
+	 *
 	 * 3. Requiring the caller provide a JsonValidator isn't the most friendly API. It might be practical to provide a default.
 	 */
 	importCompressed<const TSchema extends ImplicitFieldSchema>(
