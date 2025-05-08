@@ -9,6 +9,7 @@ import { SharedMatrix } from "../../index.js";
 import { createLocalMatrix } from "../utils.js";
 
 describe("SharedMatrix memory usage", () => {
+	// The value to be set in the cells of the matrix.
 	const matrixValue = "cellValue";
 	// The test matrix's size will be 10*10, 100*100, 1000*1000.
 	const matrixSizes = [10, 100, 1000];
@@ -16,13 +17,12 @@ describe("SharedMatrix memory usage", () => {
 	// The number of operations to perform on the matrix.
 	const operationCounts = [10, 100, 1000];
 
-	beforeEach(async () => {});
-
-	afterEach(() => {});
-
 	for (const matrixSize of matrixSizes) {
 		describe(`Size of ${matrixSize}*${matrixSize} SharedMatrix`, () => {
-			for (const count of operationCounts) {
+			// Filter counts to ensure they do not exceed matrixSize
+			const validCounts = operationCounts.filter((count) => count <= matrixSize);
+
+			for (const count of validCounts) {
 				// Test the memory usage of the SharedMatrix for inserting a column in the middle for a given number of times.
 				benchmarkMemory(
 					new (class implements IMemoryTestObject {
@@ -31,7 +31,7 @@ describe("SharedMatrix memory usage", () => {
 
 						async run(): Promise<void> {
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.insertCols(Math.floor(matrixSize / 2), 1);
+								this.localMatrix?.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
 							}
 						}
 
@@ -48,12 +48,12 @@ describe("SharedMatrix memory usage", () => {
 				// Test the memory usage of the SharedMatrix for removing a column for a given number of times.
 				benchmarkMemory(
 					new (class implements IMemoryTestObject {
-						readonly title = `Remove the first column ${count} times`;
+						readonly title = `Remove the middle column ${count} times`;
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.removeCols(0, 1);
+								this.localMatrix?.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
 							}
 						}
 
@@ -75,7 +75,7 @@ describe("SharedMatrix memory usage", () => {
 
 						async run(): Promise<void> {
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.insertRows(Math.floor(matrixSize / 2), 1);
+								this.localMatrix?.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
 							}
 						}
 
@@ -92,12 +92,12 @@ describe("SharedMatrix memory usage", () => {
 				// Test the memory usage of the SharedMatrix for removing a row for a given number of times.
 				benchmarkMemory(
 					new (class implements IMemoryTestObject {
-						readonly title = `Remove the first row ${count} times`;
+						readonly title = `Remove the middle row ${count} times`;
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
-							for (let i = 0; i < count; i++) {
-								this.localMatrix?.removeRows(0, 1);
+							for (let i = 0; i < Math.min(count, matrixSize); i++) {
+								this.localMatrix?.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
 							}
 						}
 
@@ -119,8 +119,8 @@ describe("SharedMatrix memory usage", () => {
 
 						async run(): Promise<void> {
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.insertCols(Math.floor(matrixSize / 2), 1);
-								this.localMatrix?.insertRows(Math.floor(matrixSize / 2), 1);
+								this.localMatrix?.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
+								this.localMatrix?.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
 							}
 						}
 
@@ -142,8 +142,8 @@ describe("SharedMatrix memory usage", () => {
 
 						async run(): Promise<void> {
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.removeCols(0, 1);
-								this.localMatrix?.removeRows(0, 1);
+								this.localMatrix?.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
+								this.localMatrix?.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
 							}
 						}
 
