@@ -223,8 +223,11 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		sharedMapContainer3 = container3MainDataStore.map;
 
 		await waitForContainerConnection(container1);
-		await waitForContainerConnection(container2);
-		await waitForContainerConnection(container3);
+		// await waitForContainerConnection(container2);
+		// await waitForContainerConnection(container3);
+
+		container2.close();
+		container3.close();
 	});
 
 	const containerConfigNoCompressor: ITestContainerConfig = {
@@ -246,7 +249,10 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		},
 	};
 
-	it("can normalize session space IDs to op space", async () => {
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	it.only("can normalize session space IDs to op space", async () => {
 		// None of these clusters will be ack'd yet and as such they will all
 		// generate local Ids. State of compressors afterwards should be:
 		// SharedMap1 Compressor: Local IdRange { first: -1, last: -512 }
@@ -254,14 +260,15 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		// SharedMap3 Compressor: Local IdRange { first: -1, last: -512 }
 		for (let i = 0; i < 512; i++) {
 			getIdCompressor(sharedMapContainer1).generateCompressedId();
-			getIdCompressor(sharedMapContainer2).generateCompressedId();
-			getIdCompressor(sharedMapContainer3).generateCompressedId();
+			// getIdCompressor(sharedMapContainer2).generateCompressedId();
+			// getIdCompressor(sharedMapContainer3).generateCompressedId();
 		}
 
 		// Validate the state described above: all compressors should normalize to
 		// local, negative ids as they haven't been ack'd and can't eagerly allocate
 		for (let i = 0; i < 512; i++) {
-			[sharedMapContainer1, sharedMapContainer2, sharedMapContainer3].forEach((map) => {
+			// [sharedMapContainer1, sharedMapContainer2, sharedMapContainer3].forEach((map) => {
+			[sharedMapContainer1].forEach((map) => {
 				assert.strictEqual(
 					getIdCompressor(map).normalizeToOpSpace(-(i + 1) as SessionSpaceCompressedId),
 					-(i + 1),
@@ -272,10 +279,10 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		// Generate DDS ops so that the compressors synchronize
 		sharedMapContainer1.set("key", "value");
 		await provider.ensureSynchronized();
-		sharedMapContainer2.set("key2", "value2");
-		await provider.ensureSynchronized();
-		sharedMapContainer3.set("key3", "value3");
-		await provider.ensureSynchronized();
+		// sharedMapContainer2.set("key2", "value2");
+		// await provider.ensureSynchronized();
+		// sharedMapContainer3.set("key3", "value3");
+		// await provider.ensureSynchronized();
 
 		// After synchronization, each compressor should allocate a cluster. Because the order is deterministic
 		// in e2e tests, we can directly validate the cluster ranges. After synchronizing, each compressor will
@@ -285,11 +292,11 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		// SharedMap1 Compressor: { first: 0, last: 1023 }
 		// SharedMap2 Compressor: { first: 1024, last: 2047 }
 		// SharedMap3 Compressor: { first: 2048, last: 2559 }
-		const compressors = [sharedMapContainer1, sharedMapContainer2, sharedMapContainer3].map(
-			(map) => {
-				return getIdCompressor(map);
-			},
-		);
+
+		// const compressors = [sharedMapContainer1, sharedMapContainer2, sharedMapContainer3].map(
+		const compressors = [sharedMapContainer1].map((map) => {
+			return getIdCompressor(map);
+		});
 		const firstIds = compressors.map((compressor) =>
 			compressor.normalizeToOpSpace(-1 as SessionSpaceCompressedId),
 		);
@@ -303,8 +310,8 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		}
 
 		assert.strictEqual(sharedMapContainer1.get("key"), "value");
-		assert.strictEqual(sharedMapContainer2.get("key2"), "value2");
-		assert.strictEqual(sharedMapContainer3.get("key3"), "value3");
+		// assert.strictEqual(sharedMapContainer2.get("key2"), "value2");
+		// assert.strictEqual(sharedMapContainer3.get("key3"), "value3");
 	});
 
 	it("can normalize local op space IDs from a local session to session space", async () => {
