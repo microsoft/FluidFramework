@@ -1184,7 +1184,12 @@ export namespace TableSchema {
 		 * Inserts a column into the table.
 		 *
 		 * @throws
-		 * Throws an error if the column is already in the tree, or if the specified index is out of range.
+		 * Throws an error in the following cases:
+		 *
+		 * - The column, or a column with the same ID is already in the tree.
+		 *
+		 * - The specified index is out of range.
+		 *
 		 * No column is inserted in these cases.
 		 */
 		insertColumn(
@@ -1195,7 +1200,12 @@ export namespace TableSchema {
 		 * Inserts 0 or more columns into the table.
 		 *
 		 * @throws
-		 * Throws an error if any of the columns are already in the tree, or if the specified index is out of range.
+		 * Throws an error in the following cases:
+		 *
+		 * - At least one column, or a column with the same ID is already in the tree.
+		 *
+		 * - The specified index is out of range.
+		 *
 		 * No columns are inserted in these cases.
 		 */
 		insertColumns(
@@ -1203,11 +1213,18 @@ export namespace TableSchema {
 		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 
 		/**
-		 * Inserts a column into the table.
+		 * Inserts a row into the table.
 		 *
 		 * @throws
-		 * Throws an error if the column is already in the tree, or if the specified index is out of range.
-		 * No column is inserted in these cases.
+		 * Throws an error in the following cases:
+		 *
+		 * - The row, or a row with the same ID is already in the tree.
+		 *
+		 * - The row contains cells, but the table does not contain matching columns for one or more of those cells.
+		 *
+		 * - The specified index is out of range.
+		 *
+		 * No row is inserted in these cases.
 		 */
 		insertRow(params: InsertRowParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>;
 
@@ -1215,7 +1232,14 @@ export namespace TableSchema {
 		 * Inserts 0 or more rows into the table.
 		 *
 		 * @throws
-		 * Throws an error if any of the rows are already in the tree, or if the specified index is out of range.
+		 * Throws an error in the following cases:
+		 *
+		 * - At least one row, or a row with the same ID is already in the tree.
+		 *
+		 * - The row contains cells, but the table does not contain matching columns for one or more of those cells.
+		 *
+		 * - The specified index is out of range.
+		 *
 		 * No rows are inserted in these cases.
 		 */
 		insertRows(params: InsertRowsParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>[];
