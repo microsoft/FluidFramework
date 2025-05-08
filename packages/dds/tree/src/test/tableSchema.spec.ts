@@ -634,6 +634,33 @@ describe("TableFactory unit tests", () => {
 				validateUsageError(/A row with ID "row-b" already exists in the table./),
 			);
 		});
+
+		it("Inserting a row with cells that have no matching column fails", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				rows: [],
+				columns: [{ id: "column-a", props: {} }],
+			});
+
+			assert.throws(
+				() =>
+					treeView.root.insertRow({
+						row: {
+							id: "row-a",
+							cells: {
+								"column-a": { value: "Hello" },
+								"column-b": { value: "world!" },
+							},
+						},
+					}),
+				validateUsageError(
+					/Attempted to insert row a cell under column ID "column-b", but the table does not contain a column with that ID./,
+				),
+			);
+
+			// Ensure the row was not inserted
+			assert(treeView.root.rows.length === 0);
+		});
 	});
 
 	describe("insertRows", () => {

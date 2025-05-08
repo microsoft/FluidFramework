@@ -122,7 +122,9 @@ export interface TreeBeta {
 	 *
 	 * - Local state, such as properties added to customized schema classes, will not be cloned. However, they will be
 	 * initialized to their default state just as if the node had been created via its constructor.
+	 *
 	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
+	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(

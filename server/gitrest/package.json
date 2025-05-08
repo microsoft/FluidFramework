@@ -64,7 +64,7 @@
 		"c8": "^8.0.1",
 		"eslint": "~8.55.0",
 		"lorem-ipsum": "^1.0.6",
-		"mocha": "^10.1.0",
+		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
 		"rimraf": "^3.0.2",
 		"run-script-os": "^1.1.5",

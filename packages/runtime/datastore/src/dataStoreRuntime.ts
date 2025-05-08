@@ -1216,7 +1216,7 @@ export class FluidDataStoreRuntime
 		type: DataStoreMessageType,
 		content: any,
 		localOpMetadata: unknown,
-		squash: boolean,
+		squash?: boolean,
 	) {
 		this.verifyNotClosed();
 
