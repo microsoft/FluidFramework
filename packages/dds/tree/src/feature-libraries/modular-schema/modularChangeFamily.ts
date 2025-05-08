@@ -2607,13 +2607,14 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		baseAttachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+		let countToProcess = count;
 		const baseRenameEntry = firstDetachIdFromAttachId(
 			this.table.baseChange.rootNodes,
 			baseAttachId,
-			count,
+			countToProcess,
 		);
 
-		assert(baseRenameEntry.length === count, "XXX");
+		countToProcess = baseRenameEntry.length;
 
 		// XXX: This should do a range query on nodeChanges.
 		this.table.rebasedRootNodes.nodeChanges.delete([
@@ -2630,13 +2631,13 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		const detachEntry = firstDetachIdFromAttachId(
 			this.table.baseChange.rootNodes,
 			baseAttachId,
-			count,
+			countToProcess,
 		);
 
-		assert(detachEntry.length === count, "XXX");
+		countToProcess = detachEntry.length;
 		const newRenameEntry = this.table.newChange.rootNodes.oldToNewId.getFirst(
 			detachEntry.value,
-			count,
+			countToProcess,
 		);
 
 		let result: RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
@@ -2649,7 +2650,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		} else {
 			// This handles the case where the base changeset has moved these nodes,
 			// meaning they were attached in the input context of the base changeset.
-			result = this.table.entries.getFirst(baseAttachId, count);
+			result = this.table.entries.getFirst(baseAttachId, countToProcess);
 		}
 
 		// TODO: Consider moving these two checks into a separate method so that this function has no side effects.
