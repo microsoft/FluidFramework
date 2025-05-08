@@ -356,7 +356,7 @@ export namespace System_TableSchema {
 						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
 					});
 
-		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
+		// Modified version of `Row` that ensures the constructor (and `createFromInsertable`) are
 		// typed correctly in terms of our insertable type.
 		// This lets us be selective in our type-cast for the value returned from this function,
 		// preserving as much type-safety as we reasonably can.
@@ -847,7 +847,12 @@ export namespace System_TableSchema {
 
 /**
  * Contains types and factories for creating schema to represent dynamic tabular data.
- * @privateRemarks TODO: document in more detail and add `@example`s.
+ *
+ * @remarks
+ * - Tables are sparse
+ * - Column / Row schema are (optionally) extensible. + support props
+ * - Tables are extensible
+ *
  * @internal
  */
 export namespace TableSchema {
