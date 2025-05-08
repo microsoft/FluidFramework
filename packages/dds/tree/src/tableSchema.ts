@@ -563,15 +563,30 @@ export namespace System_TableSchema {
 					Table.validateInsertionIndex(index, this.rows);
 				}
 
-				// Check all of the rows being inserted an ensure the table does not already contain any with the same ID.
+				// Note: TypeScript is unable to narrow the type of the row type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
 				for (const newRow of rows) {
-					// TypeScript is unable to narrow the type of the row type correctly here, hence the casts below.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
+					// Check all of the rows being inserted an ensure the table does not already contain any with the same ID.
 					const maybeId = (newRow as RowValueType).id;
 					if (maybeId !== undefined && this.containsRowWithId(maybeId)) {
 						throw new UsageError(
 							`A row with ID "${(newRow as RowValueType).id}" already exists in the table.`,
 						);
+					}
+
+					// If the row contains cells, verify that the table contains the columns for those cells.
+					// Note: we intentionally hide `cells` on `IRow` to avoid leaking the internal data representation as much as possible, so we have to cast here.
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					if ((newRow as any).cells !== undefined) {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						const keys: string[] = Object.keys((newRow as any).cells);
+						for (const key of keys) {
+							if (!this.containsColumnWithId(key)) {
+								throw new UsageError(
+									`Attempted to insert row a cell under column ID "${key}", but the table does not contain a column with that ID.`,
+								);
+							}
+						}
 					}
 				}
 
