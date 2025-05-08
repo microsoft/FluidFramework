@@ -10,7 +10,6 @@ import { Tree } from "./shared-tree/index.js";
 import {
 	type FieldHasDefault,
 	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
@@ -152,7 +151,7 @@ export namespace System_TableSchema {
 			typeof columnFieldsBuiltInParts
 		> &
 			(FieldHasDefault<UnannotateImplicitFieldSchema<TPropsSchema>> extends true
-				? // Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
+				? // Note: The docs on the below properties are copied from `IColumn.props`' docs to ensure that the
 					// documentation appears in the data insertion scenario.
 					// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
 					// support `@inheritDoc`.
@@ -216,7 +215,7 @@ export namespace System_TableSchema {
 	 */
 	export type ColumnSchemaBase<
 		TScope extends string | undefined = string | undefined,
-		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+		TPropsSchema extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> = ReturnType<typeof TableSchema.createColumn<TScope, TPropsSchema>>;
 
 	// #endregion
@@ -242,7 +241,7 @@ export namespace System_TableSchema {
 	export function createRowInternal<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
-		const TPropsSchema extends ImplicitFieldSchema,
+		const TPropsSchema extends ImplicitAnnotatedFieldSchema,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		cellSchema: TCellSchema,
@@ -333,7 +332,7 @@ export namespace System_TableSchema {
 		// the issue.
 		// type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
 		type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFieldsBuiltInParts> &
-			(FieldHasDefault<TPropsSchema> extends true
+			(FieldHasDefault<UnannotateImplicitFieldSchema<TPropsSchema>> extends true
 				? // Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
 					// documentation appears in the data insertion scenario.
 					// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
@@ -345,7 +344,9 @@ export namespace System_TableSchema {
 						 * @remarks This is a user-defined schema that can be used to store additional information
 						 * about the row.
 						 */
-						props?: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props?: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					}
 				: {
 						/**
@@ -353,7 +354,9 @@ export namespace System_TableSchema {
 						 * @remarks This is a user-defined schema that can be used to store additional information
 						 * about the row.
 						 */
-						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					});
 
 		// Modified version of `Row` that ensures the constructor (and `createFromInsertable`) are
@@ -397,7 +400,7 @@ export namespace System_TableSchema {
 	export type RowSchemaBase<
 		TScope extends string | undefined = string | undefined,
 		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+		TPropsSchema extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> = ReturnType<typeof TableSchema.createRow<TScope, TCellSchema, TPropsSchema>>;
 
 	// #endregion
@@ -448,7 +451,7 @@ export namespace System_TableSchema {
 		const tableFields = {
 			rows: schemaFactory.array("Table.rows", rowSchema),
 			columns: schemaFactory.array("Table.columns", columnSchema),
-		} as const satisfies Record<string, ImplicitFieldSchema>;
+		} as const satisfies Record<string, ImplicitAnnotatedFieldSchema>;
 
 		/**
 		 * The Table schema
@@ -879,7 +882,7 @@ export namespace TableSchema {
 		 * Note: these docs are duplicated on the inline type definitions in {@link createColumn}.
 		 * If you update the docs here, please also update the inline type definitions.
 		 */
-		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>> | undefined;
+		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>>;
 		set props(value: InsertableTreeFieldFromImplicitField<
 			UnannotateImplicitFieldSchema<TProps>
 		>);
@@ -903,7 +906,7 @@ export namespace TableSchema {
 	 */
 	export function createColumn<
 		const TScope extends string | undefined,
-		const TProps extends ImplicitFieldSchema,
+		const TProps extends ImplicitAnnotatedFieldSchema,
 	>({
 		schemaFactory,
 		props,
@@ -920,7 +923,7 @@ export namespace TableSchema {
 		schemaFactory,
 		props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateColumnOptionsBase & {
-		readonly props?: ImplicitFieldSchema;
+		readonly props?: ImplicitAnnotatedFieldSchema;
 	}): TreeNodeSchema {
 		return System_TableSchema.createColumnInternal(schemaFactory, props);
 	}
@@ -1017,7 +1020,7 @@ export namespace TableSchema {
 	export function createRow<
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TProps extends ImplicitFieldSchema,
+		const TProps extends ImplicitAnnotatedFieldSchema,
 	>({
 		schemaFactory,
 		cell,
@@ -1036,7 +1039,7 @@ export namespace TableSchema {
 		cell,
 		props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateRowOptionsBase & {
-		readonly props?: ImplicitFieldSchema;
+		readonly props?: ImplicitAnnotatedFieldSchema;
 	}): TreeNodeSchema {
 		return System_TableSchema.createRowInternal(schemaFactory, cell, props);
 	}
