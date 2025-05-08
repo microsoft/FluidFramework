@@ -167,14 +167,14 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	readonly attachState: AttachState;
 
 	/**
-	 * The read-only information about the container.
+	 * Get the read-only information about the container.
 	 *
 	 * @remarks
 	 *
 	 * This is used to determine if the container is read-only or not.
 	 * undefined means that the read-only state is not known yet, like when container is not connected.
 	 */
-	readonly readOnly: boolean | undefined;
+	getReadOnlyState(): boolean | undefined;
 
 	/**
 	 * A newly created container starts detached from the collaborative service.
@@ -346,7 +346,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		return this.rootDataObject.initialObjects as InitialObjects<TContainerSchema>;
 	}
 
-	public get readOnly(): boolean | undefined {
+	public getReadOnlyState(): boolean | undefined {
 		return this.container.readOnlyInfo.readonly;
 	}
 

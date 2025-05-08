@@ -32,9 +32,9 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
     disconnect(): void;
     dispose(): void;
     readonly disposed: boolean;
+    getReadOnlyState(): boolean | undefined;
     readonly initialObjects: InitialObjects<TContainerSchema>;
     readonly isDirty: boolean;
-    readonly readOnly: boolean | undefined;
 }
 
 // @public @sealed

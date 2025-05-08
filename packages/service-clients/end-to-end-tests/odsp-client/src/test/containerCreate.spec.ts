@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import { OdspClient } from "@fluidframework/odsp-client/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
@@ -179,7 +179,7 @@ describe("Container create scenarios", () => {
 		);
 
 		assert.strictEqual(
-			container.readOnly,
+			container.getReadOnlyState(),
 			false,
 			"Readonly is not false on newly attached container",
 		);
@@ -209,7 +209,7 @@ describe("Container create scenarios", () => {
 		);
 
 		assert.strictEqual(
-			container.readOnly,
+			container.getReadOnlyState(),
 			false,
 			"Readonly is not false on newly attached container",
 		);
@@ -225,9 +225,11 @@ describe("Container create scenarios", () => {
 		});
 
 		// Trigger the forceReadonly function in IContainer to test readonly event.
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		const iContainer = container.container as IContainer;
+		// This interface is to expose the forceReadonly function at IFluidContainer level. It helps to silence the TS error when retrieving IContainer from IFluidContainer.
+		interface ITestFluidContainer extends IFluidContainer {
+			readonly container: IContainer;
+		}
+		const iContainer = (container as ITestFluidContainer).container;
 		assert(iContainer !== undefined, "iContainer is undefined");
 		assert(iContainer.forceReadonly !== undefined, "iContainer is undefined");
 		iContainer.forceReadonly(true);
@@ -237,7 +239,7 @@ describe("Container create scenarios", () => {
 			"Readonly event was not fired after forceReadonly",
 		);
 		assert.strictEqual(
-			container.readOnly,
+			container.getReadOnlyState(),
 			true,
 			"Readonly should be true after forceReadonly is called",
 		);
