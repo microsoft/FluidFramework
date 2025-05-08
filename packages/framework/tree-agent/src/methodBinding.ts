@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { NodeKind, TreeNodeSchema } from "@fluidframework/tree";
 import type { z } from "zod";

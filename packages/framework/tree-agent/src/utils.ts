@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
