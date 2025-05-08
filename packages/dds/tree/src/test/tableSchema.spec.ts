@@ -1301,9 +1301,28 @@ describe("TableFactory unit tests", () => {
 		assert.equal(column, column0);
 	});
 
-	// The following tests are included in TSDoc comments in the source code.
+	// The code within the following tests is included in TSDoc comments in the source code.
 	// If you need to update any of these, please update the corresponding TSDoc comments as well.
-	describe("TSDoc examples", () => {
+	describe("TSDoc comment examples", () => {
+		it("TableSchema: Default Column and Row schema", () => {
+			class Cell extends schemaFactory.object("TableCell", {
+				value: schemaFactory.string,
+			}) {}
+
+			class Table extends TableSchema.createTable({
+				schemaFactory,
+				cell: Cell,
+			}) {}
+
+			const table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+
+			// Don't include this line in the example docs.
+			allowUnused(table);
+		});
+
 		it("TableSchema: Customizing Column and Row schema", () => {
 			class Cell extends schemaFactory.object("TableCell", {
 				value: schemaFactory.string,

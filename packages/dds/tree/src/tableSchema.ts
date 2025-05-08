@@ -855,6 +855,24 @@ export namespace System_TableSchema {
  * - Column / Row schema are (optionally) extensible. + support props
  * - Tables are extensible
  *
+ * @example Using default Column and Row schema
+ *
+ * ```typescript
+ * class Cell extends schemaFactory.object("TableCell", {
+ * 	value: schemaFactory.string,
+ * }) {}
+ *
+ * class Table extends TableSchema.createTable({
+ * 	schemaFactory,
+ * 	cell: Cell,
+ * }) {}
+ *
+ * const table = new Table({
+ * 	columns: [{ id: "column-0" }],
+ * 	rows: [{ id: "row-0", cells: {} }],
+ * });
+ * ```
+ *
  * @example Customizing Column and Row schema
  *
  * ```typescript
