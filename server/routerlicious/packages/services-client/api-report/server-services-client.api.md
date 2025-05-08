@@ -246,6 +246,8 @@ export interface IAlfredTenant {
 // @internal (undocumented)
 export interface IBasicRestWrapperMetricProps {
     // (undocumented)
+    abortSignalUsed?: boolean;
+    // (undocumented)
     axiosError: AxiosError<any>;
     // (undocumented)
     baseUrl: string;

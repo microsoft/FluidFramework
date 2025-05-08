@@ -35,6 +35,7 @@ export interface IBasicRestWrapperMetricProps {
 	correlationId: string;
 	durationInMs: number;
 	timeoutInMs: number | string;
+	abortSignalUsed?: boolean;
 }
 
 /**
@@ -325,10 +326,12 @@ export class BasicRestWrapper extends RestWrapper {
 						} else if (error?.request) {
 							// The calling client aborted the request before a valid response was received
 							if (isAxiosCanceledError(error)) {
-								createFluidServiceNetworkError(499, {
-									message: error?.message ?? "Request Aborted by Client",
-									source: errorSourceMessage,
-								});
+								reject(
+									createFluidServiceNetworkError(499, {
+										message: error?.message ?? "Request Aborted by Client",
+										source: errorSourceMessage,
+									}),
+								);
 							}
 							// The request was made but no response was received. That can happen if a service is
 							// temporarily down or inaccessible due to network failures. We leverage that in here
@@ -372,6 +375,7 @@ export class BasicRestWrapper extends RestWrapper {
 								options.timeout ??
 								this.axios.defaults.timeout ??
 								"TIMEOUT_UNAVAILABLE",
+							abortSignalUsed: options.signal ? true : false,
 						};
 						this.logHttpMetrics(requestProps);
 					}

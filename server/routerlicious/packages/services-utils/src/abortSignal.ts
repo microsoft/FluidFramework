@@ -23,12 +23,16 @@ export function addAbortControllerForRequestMiddleware(
 		const signal = abortController.signal;
 		abortSignalManager.addAbortSignal(abortController.signal, correlationId);
 		// Set up listener for client disconnection
-		request.on("aborted", () => {
-			Lumberjack.info("Client closed connection", {
-				url: request.originalUrl,
-				method: request.method,
-			});
-			abortController.abort("Client closed connection");
+		request.socket.on("close", () => {
+			// Only if the response has not been sent yet, abort the signal
+			// and remove the abort signal from the manager
+			if (!response.headersSent) {
+				Lumberjack.info("Client aborted socket connection", {
+					url: request.originalUrl,
+					method: request.method,
+				});
+				abortController.abort("Client aborted socket connection");
+			}
 		});
 
 		response.on("finish", () => {
