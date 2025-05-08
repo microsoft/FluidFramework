@@ -231,7 +231,10 @@ describe("Container create scenarios", () => {
 		}
 		const iContainer = (container as ITestFluidContainer).container;
 		assert(iContainer !== undefined, "iContainer is undefined");
-		assert(iContainer.forceReadonly !== undefined, "iContainer is undefined");
+		assert(
+			iContainer.forceReadonly !== undefined,
+			"iContainer's forceReadonly function is undefined",
+		);
 		iContainer.forceReadonly(true);
 		assert.strictEqual(
 			readonlyEventFired,

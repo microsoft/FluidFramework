@@ -95,7 +95,7 @@ export interface IFluidContainerEvents extends IEvent {
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
 
 	/**
-	 * Emitted when {@link IFluidContainer.readOnly} is changed.
+	 * Emitted when {@link IFluidContainer}'s read only state is changed.
 	 *
 	 * @remarks Listener parameters:
 	 *
