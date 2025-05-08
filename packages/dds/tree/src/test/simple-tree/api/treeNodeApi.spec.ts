@@ -639,6 +639,23 @@ describe("treeNodeApi", () => {
 				assert.throws(() => TreeAlpha.identifier.lengthen(view, 98));
 			});
 		});
+
+		describe("getIdentifier", () => {
+			it("generates and returns a stable identifier.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+
+				const nodeKeyManager = view.nodeKeyManager;
+
+				const generatedIdentifier = TreeAlpha.identifier.generateIdentifier(view);
+				const shortIdentifier = TreeAlpha.identifier.shorten(view, generatedIdentifier);
+				assert(typeof shortIdentifier === "number");
+			});
+		});
 	});
 
 	describe("on", () => {

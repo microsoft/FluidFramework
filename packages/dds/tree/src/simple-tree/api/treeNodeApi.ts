@@ -267,9 +267,18 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
  * If isCompressed is set to `false`:
  * - If the node contains an identifier field, the uncompressed identifier is returned.
  */
-export function getIdentifierFromNode(node: TreeNode, preferCompressed: true): number | string | undefined;
-export function getIdentifierFromNode(node: TreeNode, preferCompressed: false): string | undefined;
-export function getIdentifierFromNode(node: TreeNode, preferCompressed: boolean): number | string | undefined {
+export function getIdentifierFromNode(
+	node: TreeNode,
+	preferCompressed: true,
+): number | string | undefined;
+export function getIdentifierFromNode(
+	node: TreeNode,
+	preferCompressed: false,
+): string | undefined;
+export function getIdentifierFromNode(
+	node: TreeNode,
+	preferCompressed: boolean,
+): number | string | undefined {
 	const schema = node[typeSchemaSymbol];
 	if (!isObjectNodeSchema(schema)) {
 		return undefined;
@@ -310,7 +319,6 @@ export function getIdentifierFromNode(node: TreeNode, preferCompressed: boolean)
 			);
 	}
 }
-
 
 /**
  * Gets the stored key with which the provided node is associated in the parent.

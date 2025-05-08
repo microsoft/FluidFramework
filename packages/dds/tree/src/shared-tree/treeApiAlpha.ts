@@ -83,6 +83,12 @@ identifier.getShort = (node: TreeNode): number | string | undefined => {
 	return treeApi.shortId(node);
 };
 
+identifier.generateIdentifier = (branch: TreeBranch): string => {
+	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
+		.nodeKeyManager;
+	return nodeKeyManager.stabilizeNodeIdentifier(nodeKeyManager.generateLocalNodeIdentifier());
+};
+
 Object.freeze(identifier);
 
 /**
@@ -91,7 +97,7 @@ Object.freeze(identifier);
  * This provides methods to:
  * - Retrieve uncompressed or compressed identifiers from nodes
  * - Convert between stable identifiers and local identifiers
- * 
+ *
  * @alpha @sealed
  */
 export interface TreeIdentifierUtils {
@@ -108,7 +114,7 @@ export interface TreeIdentifierUtils {
 	 * Returns the shortened identifier as a number given long identifier known by the id compressor on the branch if possible.
 	 * Otherwise, it will return the original string identifier provided.
 	 * If the id does not exist, or is unknown by the id compressor, it returns undefined.
-	 * 
+	 *
 	 * This method is the inverse of {@link TreeIdentifierUtils.lengthen}. If you shorten an identifier
 	 * and then immediately pass it to {@link TreeIdentifierUtils.lengthen}, you will get the original string back.
 	 *
@@ -123,7 +129,7 @@ export interface TreeIdentifierUtils {
 	 *
 	 * This method is the inverse of {@link TreeIdentifierUtils.shorten}. If you lengthen an identifier
 	 * and then immediately pass it to {@link TreeIdentifierUtils.shorten}, you will get the original short identifier back.
-	 * 
+	 *
 	 * @param branch - TreeBranch from where you want to get the id compressor to do the decompression.
 	 * @param nodeIdentifier - The local identifier that needs to be expanded.
 	 *
@@ -148,6 +154,15 @@ export interface TreeIdentifierUtils {
 	 * The same node's identifier may, for example, be different across multiple sessions for the same client and document, or different across two clients in the same session.
 	 */
 	getShort(node: TreeNode): number | string | undefined;
+
+	/**
+	 *
+	 * Generates and returns a long identifier.
+	 *
+	 * @param branch - TreeBranch from where you want to get the id compressor to generate the identifier from.
+	 *
+	 */
+	generateIdentifier(branch: TreeBranch): string;
 }
 
 /**

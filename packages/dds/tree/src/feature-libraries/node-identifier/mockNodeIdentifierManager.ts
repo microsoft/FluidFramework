@@ -52,7 +52,7 @@ export class MockNodeIdentifierManager implements NodeIdentifierManager {
 
 	public getId(offset: number): StableId {
 		assert(offset < 281_474_976_710_656, 0x6e8 /* UUID offset must be at most 16^12 */);
-		if (offset >= 0 && offset < this.count) {
+		if (offset > 0 && offset < this.count) {
 			throw new UsageError("Invalid local id.");
 		}
 		return assertIsStableId(
