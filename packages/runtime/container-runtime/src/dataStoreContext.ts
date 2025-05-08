@@ -1332,7 +1332,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		);
 
 		// Summarizer client should not create local data stores.
-		this.identifyLocalChangeIfReadonly("DataStoreCreatedInSummarizer");
+		this.identifyLocalChangeIfReadonly("DataStoreCreatedWhileReadonly");
 
 		this.snapshotTree = props.snapshotTree;
 	}
