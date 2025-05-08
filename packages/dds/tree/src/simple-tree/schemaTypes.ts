@@ -1334,4 +1334,7 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
 	 * used as the `description` property.
 	 */
 	readonly description?: string | undefined;
+
+	// TODO:TB: Replace with new schema API. This is a placeholder for now.
+	readonly persistedData?: string | undefined;
 }

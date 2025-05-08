@@ -5,7 +5,7 @@
 
 import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
-import { schemaFormat } from "../../core/index.js";
+import { schemaFormatV1 } from "../../core/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -21,9 +21,9 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
  */
 export const Format = Type.Object(
 	{
-		version: Type.Literal(schemaFormat.version),
-		nodes: Type.Record(Type.String(), schemaFormat.TreeNodeSchemaDataFormat),
-		root: schemaFormat.FieldSchemaFormat,
+		version: Type.Literal(schemaFormatV1.version),
+		nodes: Type.Record(Type.String(), schemaFormatV1.TreeNodeSchemaDataFormat),
+		root: schemaFormatV1.FieldSchemaFormat,
 	},
 	noAdditionalProps,
 );

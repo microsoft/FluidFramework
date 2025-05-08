@@ -9,6 +9,7 @@ import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
 	makeSchemaCodec,
+	SchemaCodecVersion,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../feature-libraries/schema-index/index.js";
@@ -50,7 +51,7 @@ import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
  */
 export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible {
 	const stored = toStoredSchema(schema);
-	return encodeTreeSchema(stored);
+	return encodeTreeSchema(stored, SchemaCodecVersion.v1);
 }
 
 /**
@@ -89,7 +90,8 @@ export function comparePersistedSchema(
 	options: ICodecOptions,
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
-	const schemaCodec = makeSchemaCodec(options);
+	// Any version can be passed down to makeSchemaCodec. We only need decode to dispatch.
+	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new SchemaCompatibilityTester(
 		defaultSchemaPolicy,

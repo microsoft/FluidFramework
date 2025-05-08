@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.string": {
+      "leaf": 1
+    }
+  },
+  "root": {
+    "kind": "Identifier",
+    "types": [
+      "com.fluidframework.leaf.string"
+    ]
+  }
+}

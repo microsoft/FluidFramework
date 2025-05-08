@@ -18,7 +18,8 @@ export {
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	decodeFieldSchema,
-	encodeFieldSchema,
+	encodeFieldSchemaV1,
+	encodeFieldSchemaV2,
 	storedSchemaDecodeDispatcher,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
@@ -32,7 +33,8 @@ export {
 } from "./storedSchemaRepository.js";
 export { Multiplicity } from "./multiplicity.js";
 
-export type { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./format.js";
+export type { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./formatV1.js";
 
-import * as schemaFormat from "./format.js";
-export { schemaFormat };
+import * as schemaFormatV1 from "./formatV1.js";
+import * as schemaFormatV2 from "./formatV2.js";
+export { schemaFormatV1, schemaFormatV2 };

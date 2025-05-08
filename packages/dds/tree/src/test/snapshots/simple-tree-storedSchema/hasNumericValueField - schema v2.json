@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
+    },
+    "test.hasNumericValueField": {
+      "object": {
+        "field": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.hasNumericValueField"
+    ]
+  }
+}

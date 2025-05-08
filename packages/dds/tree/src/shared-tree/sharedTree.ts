@@ -54,7 +54,9 @@ import {
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
+	makeSchemaCodec,
 	makeTreeChunker,
+	type SchemaCodecVersion,
 } from "../feature-libraries/index.js";
 import {
 	type ClonableSchemaAndPolicy,
@@ -156,7 +158,7 @@ export interface ITreePrivate extends ITreeInternal {
  */
 interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 	forest: number;
-	schema: number;
+	schema: SchemaCodecVersion;
 	detachedFieldIndex: number;
 	fieldBatch: number;
 }
@@ -219,9 +221,15 @@ export class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, Shar
 			idCompressor,
 			options,
 		);
-		const schemaSummarizer = new SchemaSummarizer(schema, options, {
-			getCurrentSeq: lastSequenceNumber,
-		});
+		const schemaCodec = makeSchemaCodec(options, codecVersions.schema);
+		const schemaSummarizer = new SchemaSummarizer(
+			schema,
+			options,
+			{
+				getCurrentSeq: lastSequenceNumber,
+			},
+			schemaCodec,
+		);
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
 		const encoderContext = {
