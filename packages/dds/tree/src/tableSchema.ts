@@ -859,39 +859,39 @@ export namespace System_TableSchema {
  * @example Customizing Column and Row schema
  *
  * ```typescript
- * class TableCell extends schemaFactory.object("TableCell", {
+ * class Cell extends schemaFactory.object("TableCell", {
  * 	value: schemaFactory.string,
  * }) {}
  *
- * class TableColumnProps extends schemaFactory.object("TableColumnProps", {
+ * class ColumnProps extends schemaFactory.object("TableColumnProps", {
  * 	// Column label to display.
  * 	label: schemaFactory.string,
  * 	// The type of data represented by the cells. Default: string.
  * 	dataType: schemaFactory.optional(schemaFactory.string),
  * }) {}
  *
- * class TableColumn extends TableSchema.createColumn({
+ * class Column extends TableSchema.createColumn({
  * 	schemaFactory,
- * 	props: TableColumnProps,
+ * 	props: ColumnProps,
  * }) {}
  *
- * class TableRow extends TableSchema.createRow({
+ * class Row extends TableSchema.createRow({
  * 	schemaFactory,
- * 	cell: TableCell,
+ * 	cell: Cell,
  * }) {}
  *
  * class Table extends TableSchema.createTable({
  * 	schemaFactory,
- * 	cell: TableCell,
- * 	column: TableColumn,
- * 	row: TableRow,
+ * 	cell: Cell,
+ * 	column: Column,
+ * 	row: Row,
  * }) {}
  *
  * const table = new Table({
  * 	columns: [
- * 		{ props: { label: "Entry", dataType: "string" } },
- * 		{ props: { label: "Date", dataType: "date" } },
- * 		{ props: { label: "Amount", dataType: "number" } },
+ * 		new Column({ props: { label: "Entry", dataType: "string" } }),
+ * 		new Column({ props: { label: "Date", dataType: "date" } }),
+ * 		new Column({ props: { label: "Amount", dataType: "number" } }),
  * 	],
  * 	rows: [],
  * });
