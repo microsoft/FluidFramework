@@ -58,8 +58,12 @@ describe("SharedMatrix memory usage", () => {
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
+							if (this.localMatrix === undefined) {
+								throw new Error("localMatrix is not initialized");
+							}
+
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
+								this.localMatrix.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
 							}
 						}
 
@@ -80,8 +84,12 @@ describe("SharedMatrix memory usage", () => {
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
+							if (this.localMatrix === undefined) {
+								throw new Error("localMatrix is not initialized");
+							}
+
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+								this.localMatrix.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
 							}
 						}
 
@@ -102,9 +110,13 @@ describe("SharedMatrix memory usage", () => {
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
+							if (this.localMatrix === undefined) {
+								throw new Error("localMatrix is not initialized");
+							}
+
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
-								this.localMatrix?.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+								this.localMatrix.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
+								this.localMatrix.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
 							}
 						}
 
@@ -127,8 +139,12 @@ describe("SharedMatrix memory usage", () => {
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
+							if (this.localMatrix === undefined) {
+								throw new Error("localMatrix is not initialized");
+							}
+
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
+								this.localMatrix.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
 							}
 						}
 
@@ -149,8 +165,12 @@ describe("SharedMatrix memory usage", () => {
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
+							if (this.localMatrix === undefined) {
+								throw new Error("localMatrix is not initialized");
+							}
+
 							for (let i = 0; i < Math.min(count, matrixSize); i++) {
-								this.localMatrix?.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+								this.localMatrix.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
 							}
 						}
 
@@ -171,9 +191,13 @@ describe("SharedMatrix memory usage", () => {
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
+							if (this.localMatrix === undefined) {
+								throw new Error("localMatrix is not initialized");
+							}
+
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
-								this.localMatrix?.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+								this.localMatrix.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
+								this.localMatrix.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
 							}
 						}
 
@@ -194,8 +218,12 @@ describe("SharedMatrix memory usage", () => {
 						private localMatrix: SharedMatrix | undefined;
 
 						async run(): Promise<void> {
+							if (this.localMatrix === undefined) {
+								throw new Error("localMatrix is not initialized");
+							}
+
 							for (let i = 0; i < count; i++) {
-								this.localMatrix?.setCell(i, i, "abc");
+								this.localMatrix.setCell(i, i, "abc");
 							}
 						}
 
