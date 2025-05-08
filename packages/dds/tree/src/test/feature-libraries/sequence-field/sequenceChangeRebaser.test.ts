@@ -14,18 +14,22 @@ import {
 	type TaggedChange,
 	emptyDelta,
 	makeAnonChange,
+	rootFieldKey,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-import type { SequenceField as SF } from "../../../feature-libraries/index.js";
-import type {
-	BoundFieldChangeRebaser,
-	ChildStateGenerator,
-	FieldStateTree,
-} from "../../exhaustiveRebaserUtils.js";
+import {
+	fieldKindConfigurations,
+	fieldKinds,
+	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
+	type DefaultChangeset,
+	type SequenceField as SF,
+} from "../../../feature-libraries/index.js";
+import type { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
-import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
+import { chunkFromJsonTrees, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
 import {
 	type IdAllocator,
 	brand,
@@ -33,12 +37,16 @@ import {
 	makeArray,
 } from "../../../util/index.js";
 import type {
+	FieldEditDescription,
+	FieldKindConfiguration,
 	NodeId,
-	RebaseRevisionMetadata,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	ModularChangeFamily,
+	rebaseRevisionMetadataFromInfo,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
 import {
 	areRebasable,
@@ -54,7 +62,6 @@ import {
 	withoutTombstonesDeep,
 	assertWrappedChangesetsEqual,
 	composeDeep,
-	pruneDeep,
 	type WrappedChange,
 	withoutTombstones,
 	tagChangeInline,
@@ -63,6 +70,12 @@ import {
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import type { ICodecOptions } from "../../../index.js";
+import { ajvValidator } from "../../codec/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { sequence } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
+// eslint-disable-next-line import/no-internal-modules
+import { defaultFieldRebaser } from "../default-field-kinds/defaultChangesetUtil.js";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag0: RevisionTag = mintRevisionTag();
@@ -533,15 +546,35 @@ interface TestConfig {
 	allocator: IdAllocator;
 }
 
-type SequenceFieldTestState = FieldStateTree<TestState, WrappedChange>;
+type SequenceFieldTestState = FieldStateTree<TestState, DefaultChangeset>;
+
+const codecOptions: ICodecOptions = {
+	jsonValidator: ajvValidator,
+};
+
+const fieldKindConfiguration: FieldKindConfiguration =
+	fieldKindConfigurations.get(4) ?? strict.fail("Field kind configuration not found");
+assert(
+	fieldKindConfigurations.get(5) === undefined,
+	"There's a newer configuration. It probably should be used.",
+);
+
+const codec = makeModularChangeCodecFamily(
+	new Map([[1, fieldKindConfiguration]]),
+	testRevisionTagCodec,
+	makeFieldBatchCodec(codecOptions, 1),
+	codecOptions,
+);
+const family = new ModularChangeFamily(fieldKinds, codec);
+const editor = family.buildEditor(() => undefined);
 
 /**
  * See {@link ChildStateGenerator}
  */
-const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = function* (
+const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = function* (
 	state: SequenceFieldTestState,
 	tagFromIntention: (intention: number) => RevisionTag,
-	mintIntention: () => number,
+	mintIntention: (count?: number) => number,
 ): Iterable<SequenceFieldTestState> {
 	const { currentState, config } = state.content;
 
@@ -551,11 +584,11 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 		assert(state.parent?.content !== undefined, "Must have parent state to undo");
 		const undoIntention = mintIntention();
 		const undoTag = tagFromIntention(undoIntention);
-		const invertedEdit = invertDeep(state.mostRecentEdit.changeset, undoTag);
+		const modularEdit = family.invert(state.mostRecentEdit.changeset, false, undoTag);
 		yield {
 			content: state.parent.content,
 			mostRecentEdit: {
-				changeset: tagWrappedChangeInline(invertedEdit, undoTag),
+				changeset: tagChange(modularEdit, undoTag),
 				intention: undoIntention,
 				description: `Undo(${state.mostRecentEdit.description})`,
 			},
@@ -576,16 +609,32 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 				const insertRevision = tagFromIntention(insertIntention);
 				const newState = [...currentState];
 				newState.splice(i, 0, ...inserted);
+
+				const localId: ChangesetLocalId = brand(mintIntention(nodeCount));
+				const build = editor.buildTrees(
+					localId,
+					chunkFromJsonTrees(inserted.map((n) => n.id)),
+					insertRevision,
+				);
+				const fieldChange = Change.insert(i, nodeCount, insertRevision, {
+					localId,
+					revision: insertRevision,
+				});
+				const fieldEdit: FieldEditDescription = {
+					type: "field",
+					field: { parent: undefined, field: rootFieldKey },
+					fieldKind: sequence.identifier,
+					change: brand(fieldChange),
+					revision: insertRevision,
+				};
+				const modularEdit = editor.buildChanges([build, fieldEdit]);
 				yield {
 					content: {
 						currentState: newState,
 						config,
 					},
 					mostRecentEdit: {
-						changeset: tagWrappedChangeInline(
-							ChangesetWrapper.create(Change.insert(i, nodeCount, insertRevision)),
-							insertRevision,
-						),
+						changeset: tagChange(modularEdit, insertRevision),
 						intention: insertIntention,
 						description: `Add(${insertedString}@${i})`,
 					},
@@ -603,16 +652,21 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 			const detachedString = detached.map((n) => n.id).join(",");
 			const removeIntention = mintIntention();
 			const removeRevision = tagFromIntention(removeIntention);
+			const fieldRemoveEdit: FieldEditDescription = {
+				type: "field",
+				field: { parent: undefined, field: rootFieldKey },
+				fieldKind: sequence.identifier,
+				change: brand(Change.remove(iSrc, nodeCount, removeRevision)),
+				revision: removeRevision,
+			};
+			const modularRemoveEdit = editor.buildChanges([fieldRemoveEdit]);
 			yield {
 				content: {
 					currentState: stateWithoutDetached,
 					config,
 				},
 				mostRecentEdit: {
-					changeset: tagWrappedChangeInline(
-						ChangesetWrapper.create(Change.remove(iSrc, nodeCount, removeRevision)),
-						removeRevision,
-					),
+					changeset: tagChange(modularRemoveEdit, removeRevision),
 					intention: removeIntention,
 					description: `Del(${detachedString})`,
 				},
@@ -633,16 +687,21 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 					}
 				}
 				newState.splice(adjustedDst, 0, ...detached);
+				const fieldMoveEdit: FieldEditDescription = {
+					type: "field",
+					field: { parent: undefined, field: rootFieldKey },
+					fieldKind: sequence.identifier,
+					change: brand(Change.move(iSrc, nodeCount, iDst, moveRevision)),
+					revision: removeRevision,
+				};
+				const modularMoveEdit = editor.buildChanges([fieldMoveEdit]);
 				yield {
 					content: {
 						currentState: newState,
 						config,
 					},
 					mostRecentEdit: {
-						changeset: tagWrappedChangeInline(
-							ChangesetWrapper.create(Change.move(iSrc, nodeCount, iDst, moveRevision)),
-							moveRevision,
-						),
+						changeset: tagChange(modularMoveEdit, moveRevision),
 						intention: moveInIntention,
 						description: `Mov(${detachedString})To${iDst}`,
 					},
@@ -655,74 +714,44 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 	// Make nested changes to a node
 	for (let i = 0; i < currentState.length; i += 1) {
 		const modifyIntention = mintIntention();
+		const modifyRevision = tagFromIntention(modifyIntention);
 		const nestedChange = config.allocator.allocate();
 		const newState = [...currentState];
 		const node = currentState[i];
 		newState.splice(i, 1, { ...node, nested: [...node.nested, nestedChange] });
-		const nodeId: NodeId = { localId: brand(0) };
+		const shallowFieldEdit: FieldEditDescription = {
+			type: "field",
+			field: { parent: undefined, field: rootFieldKey },
+			fieldKind: sequence.identifier,
+			// This no-op change is used to force ModularChangeFamily to generate a shallow sequence changeset with a child change.
+			// Otherwise, it would generate a generic changeset with a child change.
+			change: brand(sequence.changeHandler.createEmpty()),
+			revision: modifyRevision,
+		};
+		const nestedFieldEdit: FieldEditDescription = {
+			type: "field",
+			field: {
+				parent: { parent: undefined, parentField: rootFieldKey, parentIndex: i },
+				field: brand("foo"),
+			},
+			fieldKind: sequence.identifier,
+			change: brand(Change.remove(0, 1, modifyRevision, brand(mintIntention()))),
+			revision: modifyRevision,
+		};
+		const modularEdit = editor.buildChanges([shallowFieldEdit, nestedFieldEdit]);
 		yield {
 			content: {
 				currentState: newState,
 				config,
 			},
 			mostRecentEdit: {
-				changeset: tagWrappedChangeInline(
-					ChangesetWrapper.create(Change.modify(i, nodeId), [
-						nodeId,
-						TestChange.mint(node.nested, nestedChange),
-					]),
-					tagFromIntention(modifyIntention),
-				),
+				changeset: tagChange(modularEdit, modifyRevision),
 				intention: modifyIntention,
 				description: `Mod(${nestedChange}on${node.id})`,
 			},
 			parent: state,
 		};
 	}
-};
-
-const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
-	rebase: (
-		change: TaggedChange<WrappedChange>,
-		base: TaggedChange<WrappedChange>,
-		metadata?: RebaseRevisionMetadata,
-	): WrappedChange => rebaseDeepTagged(change, base, metadata).change,
-	invert: invertDeep,
-	compose: (change1, change2, metadata) => composeDeep([change1, change2], metadata),
-	rebaseComposed: (metadata, change, ...baseChanges) => {
-		const composedChanges = composeDeep(baseChanges, metadata);
-		return rebaseDeepTagged(change, makeAnonChange(composedChanges), metadata).change;
-	},
-	inlineRevision: inlineRevisionWrapped,
-	createEmpty: () => ChangesetWrapper.create([]),
-	assertEqual: (change1, change2) => {
-		if (change1 === undefined && change2 === undefined) {
-			return true;
-		}
-
-		if (change1 === undefined || change2 === undefined) {
-			return false;
-		}
-
-		const pruned1 = pruneDeep(change1.change);
-		const pruned2 = pruneDeep(change2.change);
-
-		return assertWrappedChangesetsEqual(pruned1, pruned2, true);
-	},
-	isEmpty: (change): boolean => {
-		return withoutTombstonesDeep(pruneDeep(change)).fieldChange.length === 0;
-	},
-	assertChangesetsEquivalent: (change1, change2) => {
-		const metadata = defaultRevisionMetadataFromChanges([change1, change2]);
-		// We are composing the single changesets to inline the revision tags, as some are undefined.
-		const pruned1 = pruneDeep(composeDeep([change1], metadata));
-		const pruned2 = pruneDeep(composeDeep([change2], metadata));
-		return assertWrappedChangesetsEqual(
-			withoutTombstonesDeep(pruned1),
-			withoutTombstonesDeep(pruned2),
-			true,
-		);
-	},
 };
 
 export function testStateBasedRebaserAxioms() {
@@ -744,7 +773,7 @@ export function testStateBasedRebaserAxioms() {
 				},
 			],
 			generateChildStates,
-			fieldRebaser,
+			defaultFieldRebaser,
 			{
 				groupSubSuites: true,
 				numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 4 : 3,
