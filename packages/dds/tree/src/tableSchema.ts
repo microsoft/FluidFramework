@@ -856,6 +856,47 @@ export namespace System_TableSchema {
  * - Column / Row schema are (optionally) extensible. + support props
  * - Tables are extensible
  *
+ * @example Customizing Column and Row schema
+ *
+ * ```typescript
+ * class TableCell extends schemaFactory.object("TableCell", {
+ * 	value: schemaFactory.string,
+ * }) {}
+ *
+ * class TableColumnProps extends schemaFactory.object("TableColumnProps", {
+ * 	// Column label to display.
+ * 	label: schemaFactory.string,
+ * 	// The type of data represented by the cells. Default: string.
+ * 	dataType: schemaFactory.optional(schemaFactory.string),
+ * }) {}
+ *
+ * class TableColumn extends TableSchema.createColumn({
+ * 	schemaFactory,
+ * 	props: TableColumnProps,
+ * }) {}
+ *
+ * class TableRow extends TableSchema.createRow({
+ * 	schemaFactory,
+ * 	cell: TableCell,
+ * }) {}
+ *
+ * class Table extends TableSchema.createTable({
+ * 	schemaFactory,
+ * 	cell: TableCell,
+ * 	column: TableColumn,
+ * 	row: TableRow,
+ * }) {}
+ *
+ * const table = new Table({
+ * 	columns: [
+ * 		{ props: { label: "Entry", dataType: "string" } },
+ * 		{ props: { label: "Date", dataType: "date" } },
+ * 		{ props: { label: "Amount", dataType: "number" } },
+ * 	],
+ * 	rows: [],
+ * });
+ * ```
+ *
  * @internal
  */
 export namespace TableSchema {

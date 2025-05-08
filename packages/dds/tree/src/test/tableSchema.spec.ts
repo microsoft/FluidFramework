@@ -9,6 +9,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import { independentView, TreeAlpha } from "../shared-tree/index.js";
 import {
+	allowUnused,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ConciseTree,
@@ -1298,5 +1299,51 @@ describe("TableFactory unit tests", () => {
 		assert.equal(cell, cell0);
 		assert.equal(row, row0);
 		assert.equal(column, column0);
+	});
+
+	// The following tests are included in TSDoc comments in the source code.
+	// If you need to update any of these, please update the corresponding TSDoc comments as well.
+	describe("TSDoc examples", () => {
+		it("Customizing Column and Row schema", () => {
+			class TableCell extends schemaFactory.object("TableCell", {
+				value: schemaFactory.string,
+			}) {}
+
+			class TableColumnProps extends schemaFactory.object("TableColumnProps", {
+				// Column label to display.
+				label: schemaFactory.string,
+				// The type of data represented by the cells. Default: string.
+				dataType: schemaFactory.optional(schemaFactory.string),
+			}) {}
+
+			class TableColumn extends TableSchema.createColumn({
+				schemaFactory,
+				props: TableColumnProps,
+			}) {}
+
+			class TableRow extends TableSchema.createRow({
+				schemaFactory,
+				cell: TableCell,
+			}) {}
+
+			class Table extends TableSchema.createTable({
+				schemaFactory,
+				cell: TableCell,
+				column: TableColumn,
+				row: TableRow,
+			}) {}
+
+			const table = new Table({
+				columns: [
+					{ props: { label: "Entry", dataType: "string" } },
+					{ props: { label: "Date", dataType: "date" } },
+					{ props: { label: "Amount", dataType: "number" } },
+				],
+				rows: [],
+			});
+
+			// Don't include this line in the example docs.
+			allowUnused(table);
+		});
 	});
 });
