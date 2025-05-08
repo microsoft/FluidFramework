@@ -8,6 +8,8 @@ import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces
 import type {
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,
+	IFluidHandlePayloadPending,
+	ILocalFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 
 /**
@@ -48,6 +50,29 @@ export const isFluidHandleInternalPayloadPending = (
 ): fluidHandleInternal is IFluidHandleInternalPayloadPending =>
 	"payloadPending" in fluidHandleInternal && fluidHandleInternal.payloadPending === true;
 
+/**
+ * Check if the handle is an IFluidHandlePayloadPending.
+ * @privateRemarks
+ * This should be true for locally-created BlobHandles currently. When IFluidHandlePayloadPending is merged
+ * to IFluidHandle, this type guard will no longer be necessary.
+ * @legacy
+ * @alpha
+ */
+export const isFluidHandlePayloadPending = <T>(
+	handle: IFluidHandle<T>,
+): handle is IFluidHandlePayloadPending<T> =>
+	"payloadState" in handle &&
+	(handle.payloadState === "shared" || handle.payloadState === "pending");
+
+/**
+ * Check if the handle is an ILocalFluidHandle.
+ * @legacy
+ * @alpha
+ */
+export const isLocalFluidHandle = <T>(
+	handle: IFluidHandle<T>,
+): handle is ILocalFluidHandle<T> =>
+	isFluidHandlePayloadPending(handle) && "payloadShareError" in handle;
 /**
  * Encodes the given IFluidHandle into a JSON-serializable form,
  * @param handle - The IFluidHandle to serialize.
