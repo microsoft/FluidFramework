@@ -54,7 +54,7 @@ import {
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { treeApi } from "./treeApi.js";
+import { Tree } from "./tree.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	const nodeIdentifier = getIdentifierFromNode(node, false);
@@ -80,7 +80,7 @@ identifier.lengthen = (branch: TreeBranch, nodeIdentifier: number): string => {
 };
 
 identifier.getShort = (node: TreeNode): number | string | undefined => {
-	return treeApi.shortId(node);
+	return Tree.shortId(node);
 };
 
 identifier.generateIdentifier = (branch: TreeBranch): string => {
