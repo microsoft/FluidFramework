@@ -351,7 +351,7 @@ describe("Data Store Context Tests", () => {
 
 				const expectedEvents = [
 					{
-						eventName: "FluidDataStoreContext:DataStoreCreatedInSummarizer",
+						eventName: "FluidDataStoreContext:DataStoreCreatedWhileReadonly",
 						fullPackageName: {
 							tag: TelemetryDataTag.CodeArtifact,
 							value: packageName.join("/"),
@@ -432,7 +432,7 @@ describe("Data Store Context Tests", () => {
 				for (const event of mockLogger.events) {
 					if (
 						event.eventName === "FluidDataStoreContext:DataStoreMessageWhileReadonly" ||
-						event.eventName === "FluidDataStoreContext:DataStoreCreatedInSummarizer"
+						event.eventName === "FluidDataStoreContext:DataStoreCreatedWhileReadonly"
 					) {
 						eventCount++;
 					}

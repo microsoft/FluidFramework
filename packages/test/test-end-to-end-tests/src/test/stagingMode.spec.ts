@@ -83,102 +83,101 @@ describeCompat(
 			};
 		};
 
-		for (const readonlyInStagingMode of ["yes"] as const) {
-			it(`should set runtime to readonly when readonlyInStagingMode: ${readonlyInStagingMode}`, async function () {
-				const { containerRuntime, dsRuntime } = await createContainer({
-					test: this,
-					readonlyInStagingMode,
-				});
-
-				assert.equal(
-					dsRuntime.isReadOnly(),
-					false,
-					"Runtime should not be readonly before entering staging mode.",
-				);
-
-				const controls = containerRuntime.enterStagingMode?.();
-
-				assert.equal(
-					dsRuntime.isReadOnly(),
-					true,
-					"Runtime should be readonly after entering staging mode.",
-				);
-
-				controls?.commitChanges();
-
-				assert.equal(
-					dsRuntime.isReadOnly(),
-					false,
-					"Runtime should not be readonly after committing changes.",
-				);
-			});
-
-			it(`should preserve readonly state when set before entering staging mode with readonlyInStagingMode: ${readonlyInStagingMode}`, async function () {
-				const { container, containerRuntime, dsRuntime } = await createContainer({
-					test: this,
-					readonlyInStagingMode,
-				});
-
-				container.forceReadonly?.(true);
-
-				assert.equal(
-					dsRuntime.isReadOnly(),
-					true,
-					"Runtime should preserve readonly state set before entering staging mode.",
-				);
-
-				const controls = containerRuntime.enterStagingMode?.();
-
-				assert.equal(
-					dsRuntime.isReadOnly(),
-					true,
-					"Runtime should be readonly after entering staging mode.",
-				);
-
-				controls?.commitChanges();
-
-				assert.equal(
-					dsRuntime.isReadOnly(),
-					true,
-					"Runtime should preserve readonly state set before entering staging mode.",
-				);
-			});
-
-			it(`should preserve readonly state when set during staging mode with readonlyInStagingMode: ${readonlyInStagingMode}`, async function () {
-				const { container, containerRuntime, dsRuntime } = await createContainer({
-					test: this,
-					readonlyInStagingMode,
-				});
-
-				assert.equal(
-					dsRuntime.isReadOnly(),
-					false,
-					"Runtime should not be readonly before entering staging mode.",
-				);
-
-				const controls = containerRuntime.enterStagingMode?.();
-
-				container.forceReadonly?.(true);
-
-				assert.equal(
-					dsRuntime.isReadOnly(),
-					true,
-					"Runtime should preserve readonly state set during staging mode.",
-				);
-
-				controls?.commitChanges();
-
-				assert.equal(
-					dsRuntime.isReadOnly(),
-					true,
-					"Runtime should preserve readonly state set during staging mode.",
-				);
-			});
-		}
-		it("should not set runtime to readonly when readonlyInStagingMode: no", async function () {
+		it(`should set runtime to readonly when readonlyInStagingMode: true`, async function () {
 			const { containerRuntime, dsRuntime } = await createContainer({
 				test: this,
-				readonlyInStagingMode: "no",
+				readonlyInStagingMode: true,
+			});
+
+			assert.equal(
+				dsRuntime.isReadOnly(),
+				false,
+				"Runtime should not be readonly before entering staging mode.",
+			);
+
+			const controls = containerRuntime.enterStagingMode?.();
+
+			assert.equal(
+				dsRuntime.isReadOnly(),
+				true,
+				"Runtime should be readonly after entering staging mode.",
+			);
+
+			controls?.commitChanges();
+
+			assert.equal(
+				dsRuntime.isReadOnly(),
+				false,
+				"Runtime should not be readonly after committing changes.",
+			);
+		});
+
+		it(`should preserve readonly state when set before entering staging mode with readonlyInStagingMode: true`, async function () {
+			const { container, containerRuntime, dsRuntime } = await createContainer({
+				test: this,
+				readonlyInStagingMode: true,
+			});
+
+			container.forceReadonly?.(true);
+
+			assert.equal(
+				dsRuntime.isReadOnly(),
+				true,
+				"Runtime should preserve readonly state set before entering staging mode.",
+			);
+
+			const controls = containerRuntime.enterStagingMode?.();
+
+			assert.equal(
+				dsRuntime.isReadOnly(),
+				true,
+				"Runtime should be readonly after entering staging mode.",
+			);
+
+			controls?.commitChanges();
+
+			assert.equal(
+				dsRuntime.isReadOnly(),
+				true,
+				"Runtime should preserve readonly state set before entering staging mode.",
+			);
+		});
+
+		it(`should preserve readonly state when set during staging mode with readonlyInStagingMode: true`, async function () {
+			const { container, containerRuntime, dsRuntime } = await createContainer({
+				test: this,
+				readonlyInStagingMode: true,
+			});
+
+			assert.equal(
+				dsRuntime.isReadOnly(),
+				false,
+				"Runtime should not be readonly before entering staging mode.",
+			);
+
+			const controls = containerRuntime.enterStagingMode?.();
+
+			container.forceReadonly?.(true);
+
+			assert.equal(
+				dsRuntime.isReadOnly(),
+				true,
+				"Runtime should preserve readonly state set during staging mode.",
+			);
+
+			controls?.commitChanges();
+
+			assert.equal(
+				dsRuntime.isReadOnly(),
+				true,
+				"Runtime should preserve readonly state set during staging mode.",
+			);
+		});
+
+		it("should not set runtime to readonly when readonlyInStagingMode: false", async function () {
+			const { containerRuntime, dsRuntime } = await createContainer({
+				test: this,
+				readonlyInStagingMode: false,
 			});
 
 			assert.equal(
@@ -204,10 +203,10 @@ describeCompat(
 			);
 		});
 
-		it("should allow changes readonlyInStagingMode: no", async function () {
+		it("should allow changes readonlyInStagingMode: false", async function () {
 			const { container, containerRuntime, shareDir } = await createContainer({
 				test: this,
-				readonlyInStagingMode: "no",
+				readonlyInStagingMode: false,
 			});
 
 			const controls = containerRuntime.enterStagingMode?.();
@@ -224,12 +223,17 @@ describeCompat(
 		});
 
 		itExpects(
-			"should log on changes when readonlyInStagingMode: yes",
-			[{ eventName: "DataStoreMessageWhileReadonly", category: "generic" }],
+			"should log on changes when readonlyInStagingMode: true",
+			[
+				{
+					eventName: "fluid:telemetry:FluidDataStoreContext:DataStoreMessageWhileReadonly",
+					category: "generic",
+				},
+			],
 			async function () {
 				const { container, containerRuntime, shareDir } = await createContainer({
 					test: this,
-					readonlyInStagingMode: "yes",
+					readonlyInStagingMode: true,
 				});
 
 				const controls = containerRuntime.enterStagingMode?.();
