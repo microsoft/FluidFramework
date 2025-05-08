@@ -425,11 +425,8 @@ export namespace System_TableSchema {
 	export function createTableInternal<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
-		const TColumnSchema extends ColumnSchemaBase<TInputScope> = ColumnSchemaBase<TInputScope>,
-		const TRowSchema extends RowSchemaBase<TInputScope, TCellSchema> = RowSchemaBase<
-			TInputScope,
-			TCellSchema
-		>,
+		const TColumnSchema extends ColumnSchemaBase<TInputScope>,
+		const TRowSchema extends RowSchemaBase<TInputScope, TCellSchema>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCellSchema,
@@ -837,12 +834,8 @@ export namespace System_TableSchema {
 	export type TableSchemaBase<
 		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
-		TColumn extends ColumnSchemaBase<TScope> = ColumnSchemaBase<TScope>,
-		TRow extends RowSchemaBase<TScope, TCell, ImplicitAllowedTypes> = RowSchemaBase<
-			TScope,
-			TCell,
-			ImplicitAllowedTypes
-		>,
+		TColumn extends ColumnSchemaBase<TScope>,
+		TRow extends RowSchemaBase<TScope, TCell>,
 	> = ReturnType<typeof TableSchema.createTable<TScope, TCell, TColumn, TRow>>;
 
 	// #endregion
@@ -1390,7 +1383,7 @@ export namespace TableSchema {
 	}: System_TableSchema.TableFactoryOptionsBase<
 		SchemaFactoryAlpha<TScope>,
 		TCell
-	>): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell>>;
+	>): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, System_TableSchema.ColumnSchemaBase<TScope>, System_TableSchema.RowSchemaBase<TScope, TCell>>>;
 	/**
 	 * Factory for creating new table schema without specifying row schema.
 	 * @internal
@@ -1405,7 +1398,7 @@ export namespace TableSchema {
 		column,
 	}: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 		readonly column: TColumn;
-	}): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, TColumn>>;
+	}): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, TColumn, System_TableSchema.RowSchemaBase<TScope, TCell>>>;
 	/**
 	 * Factory for creating new table schema.
 	 * @internal
