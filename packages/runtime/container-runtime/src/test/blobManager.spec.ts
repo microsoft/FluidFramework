@@ -25,6 +25,7 @@ import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definiti
 import {
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,
+	isFluidHandlePayloadPendingLocal,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
@@ -513,19 +514,42 @@ for (const createBlobPayloadPending of [false, true]) {
 			if (createBlobPayloadPending) {
 				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 				assert.strict(isFluidHandlePayloadPending(handle));
-				assert.strictEqual(handle.payloadState, "local", "Handle should be in local state");
+				assert.strict(isFluidHandlePayloadPendingLocal(handle));
+				assert.strictEqual(
+					handle.payloadState,
+					"pending",
+					"Handle should be in pending state",
+				);
+				assert.strictEqual(
+					handle.payloadShareError,
+					undefined,
+					"handle should not have an error yet",
+				);
 				let failed = false;
-				const onFailed = (error: unknown): void => {
+				const onPayloadShareFailed = (error: unknown): void => {
 					failed = true;
-					assert.strictEqual((error as Error).message, "fake driver error");
-					handle.events.off("failed", onFailed);
+					assert.strictEqual(
+						(error as Error).message,
+						"fake driver error",
+						"Did not receive the expected error",
+					);
+					handle.events.off("payloadShareFailed", onPayloadShareFailed);
 				};
-				handle.events.on("failed", onFailed);
+				handle.events.on("payloadShareFailed", onPayloadShareFailed);
 				await runtime.processHandles();
 				await runtime.processBlobs(false);
 				runtime.processOps();
 				assert.strict(failed, "should fail");
-				assert.strictEqual(handle.payloadState, "failed", "Handle should be in failed state");
+				assert.strictEqual(
+					handle.payloadState,
+					"pending",
+					"Handle should still be in pending state",
+				);
+				assert.strictEqual(
+					(handle.payloadShareError as unknown as Error).message,
+					"fake driver error",
+					"Handle did not have the expected error",
+				);
 			} else {
 				// If the blobs are created without pending payloads, we don't get to see the handle at
 				// all so we can't inspect its state.
@@ -552,13 +576,17 @@ for (const createBlobPayloadPending of [false, true]) {
 			if (createBlobPayloadPending) {
 				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 				assert.strict(isFluidHandlePayloadPending(handle));
-				assert.strictEqual(handle.payloadState, "local", "Handle should be in local state");
+				assert.strictEqual(
+					handle.payloadState,
+					"pending",
+					"Handle should be in pending state",
+				);
 				let shared = false;
-				const onShared = (): void => {
+				const onPayloadShared = (): void => {
 					shared = true;
-					handle.events.off("shared", onShared);
+					handle.events.off("payloadShared", onPayloadShared);
 				};
-				handle.events.on("shared", onShared);
+				handle.events.on("payloadShared", onPayloadShared);
 				await runtime.processHandles();
 				await runtime.processBlobs(true);
 				runtime.processOps();

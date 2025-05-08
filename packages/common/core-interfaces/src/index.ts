@@ -33,7 +33,9 @@ export type {
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,
 	IFluidHandlePayloadPending,
-	IFluidHandlePayloadPendingEvents,
+	IFluidHandlePayloadPendingLocal,
+	IFluidHandlePayloadStateEvents,
+	IFluidHandleLocalPayloadStateEvents,
 	IFluidHandleErased,
 	PayloadState,
 } from "./handles.js";

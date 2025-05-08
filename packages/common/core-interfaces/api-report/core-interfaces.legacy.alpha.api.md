@@ -274,15 +274,25 @@ export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, 
 }
 
 // @alpha @legacy
+export interface IFluidHandleLocalPayloadStateEvents extends IFluidHandlePayloadStateEvents {
+    payloadShareFailed: (error: unknown) => void;
+}
+
+// @alpha @legacy
 export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
-    readonly events: Listenable<IFluidHandlePayloadPendingEvents>;
+    readonly events: Listenable<IFluidHandlePayloadStateEvents>;
     readonly payloadState: PayloadState;
 }
 
 // @alpha @legacy
-export interface IFluidHandlePayloadPendingEvents {
-    failed: (error: unknown) => void;
-    shared: () => void;
+export interface IFluidHandlePayloadPendingLocal<T> extends IFluidHandlePayloadPending<T> {
+    readonly events: Listenable<IFluidHandlePayloadStateEvents & IFluidHandleLocalPayloadStateEvents>;
+    readonly payloadShareError: unknown;
+}
+
+// @alpha @legacy
+export interface IFluidHandlePayloadStateEvents {
+    payloadShared: () => void;
 }
 
 // @public (undocumented)
@@ -400,7 +410,7 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 export type Off = () => void;
 
 // @alpha @legacy
-export type PayloadState = "local" | "shared" | "pending" | "failed";
+export type PayloadState = "pending" | "shared";
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {

@@ -120,35 +120,26 @@ export interface IFluidHandleInternalPayloadPending<
 
 /**
  * The state of the handle's payload.
- * - "local" - The payload is only available to the local client, and not to remote collaborators
+ * - "pending" - The payload is not shared to all collaborators
  * - "shared" - The payload is available to both the local client and remote collaborators
- * - "pending" - The payload is not yet available to the local client
- * - "failed" - The payload is available to the local client but has failed in sharing to remote collaborators
  *
  * @remarks
- * The client generating the payload will observe the handle start with "local" state and see a transition
- * of "local" to "shared" in the case of successful sharing, or "local" to "failed" in the case of failed sharing.
- *
- * Receiving clients will see a transition of "pending" to "shared" when the payload has been shared.
+ * Clients will see a transition of "pending" to "shared" when the payload has been shared to all collaborators.
  * @legacy
  * @alpha
  */
-export type PayloadState = "local" | "shared" | "pending" | "failed";
+export type PayloadState = "pending" | "shared";
 
 /**
- * Events which fire as the handle's payload state transitions.
+ * Events which fire as a handle's payload state transitions.
  * @legacy
  * @alpha
  */
-export interface IFluidHandlePayloadPendingEvents {
+export interface IFluidHandlePayloadStateEvents {
 	/**
-	 * Emitted when the payload becomes available to all clients.
+	 * Emitted when the payload becomes available to remote collaborators.
 	 */
-	shared: () => void;
-	/**
-	 * Emitted for locally created handles when the payload fails sharing to remote collaborators.
-	 */
-	failed: (error: unknown) => void;
+	payloadShared: () => void;
 }
 
 /**
@@ -167,7 +158,37 @@ export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
 	/**
 	 * Event emitter, with events that emit as the payload state transitions.
 	 */
-	readonly events: Listenable<IFluidHandlePayloadPendingEvents>;
+	readonly events: Listenable<IFluidHandlePayloadStateEvents>;
+}
+
+/**
+ * Additional events which fire as a local handle's payload state transitions.
+ * @legacy
+ * @alpha
+ */
+export interface IFluidHandleLocalPayloadStateEvents extends IFluidHandlePayloadStateEvents {
+	/**
+	 * Emitted for locally created handles when the payload fails sharing to remote collaborators.
+	 */
+	payloadShareFailed: (error: unknown) => void;
+}
+
+/**
+ * Additional observable state on a local handle regarding its payload sharing state.
+ * @legacy
+ * @alpha
+ */
+export interface IFluidHandlePayloadPendingLocal<T> extends IFluidHandlePayloadPending<T> {
+	/**
+	 * The error encountered by the handle while sharing the payload, if one has occurred.  Undefined if no error has occurred.
+	 */
+	readonly payloadShareError: unknown;
+	/**
+	 * Event emitter, with events that emit as the payload state transitions.
+	 */
+	readonly events: Listenable<
+		IFluidHandlePayloadStateEvents & IFluidHandleLocalPayloadStateEvents
+	>;
 }
 
 /**

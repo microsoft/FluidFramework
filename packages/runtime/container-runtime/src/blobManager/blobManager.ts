@@ -15,8 +15,8 @@ import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,
-	IFluidHandlePayloadPending,
-	IFluidHandlePayloadPendingEvents,
+	IFluidHandleLocalPayloadStateEvents,
+	IFluidHandlePayloadPendingLocal,
 	Listenable,
 	PayloadState,
 } from "@fluidframework/core-interfaces/internal";
@@ -66,7 +66,7 @@ import {
 export class BlobHandle
 	extends FluidHandleBase<ArrayBufferLike>
 	implements
-		IFluidHandlePayloadPending<ArrayBufferLike>,
+		IFluidHandlePayloadPendingLocal<ArrayBufferLike>,
 		IFluidHandleInternalPayloadPending<ArrayBufferLike>
 {
 	private attached: boolean = false;
@@ -76,16 +76,25 @@ export class BlobHandle
 	}
 
 	private _events:
-		| (Listenable<IFluidHandlePayloadPendingEvents> &
-				IEmitter<IFluidHandlePayloadPendingEvents>)
+		| (Listenable<IFluidHandleLocalPayloadStateEvents> &
+				IEmitter<IFluidHandleLocalPayloadStateEvents>)
 		| undefined;
-	public get events(): Listenable<IFluidHandlePayloadPendingEvents> {
-		return (this._events ??= createEmitter<IFluidHandlePayloadPendingEvents>());
+	public get events(): Listenable<IFluidHandleLocalPayloadStateEvents> {
+		return (this._events ??= createEmitter<IFluidHandleLocalPayloadStateEvents>());
 	}
 
-	private _state: PayloadState = "local";
+	private _state: PayloadState = "pending";
 	public get payloadState(): PayloadState {
 		return this._state;
+	}
+
+	/**
+	 * The error property starts undefined, signalling that there has been no error yet.
+	 * If an error occurs, the property will contain the error.
+	 */
+	private _payloadShareError: unknown;
+	public get payloadShareError(): unknown {
+		return this._payloadShareError;
 	}
 
 	public readonly absolutePath: string;
@@ -103,12 +112,12 @@ export class BlobHandle
 
 	public readonly notifyShared = (): void => {
 		this._state = "shared";
-		this._events?.emit("shared");
+		this._events?.emit("payloadShared");
 	};
 
 	public readonly notifyFailed = (error: unknown): void => {
-		this._state = "failed";
-		this._events?.emit("failed", error);
+		this._payloadShareError = error;
+		this._events?.emit("payloadShareFailed", error);
 	};
 
 	public attachGraph(): void {

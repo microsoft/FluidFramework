@@ -17,6 +17,7 @@ export {
 	isFluidHandle,
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,
+	isFluidHandlePayloadPendingLocal,
 	toFluidHandleErased,
 	toFluidHandleInternal,
 	FluidHandleBase,
