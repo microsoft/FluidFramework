@@ -1130,7 +1130,7 @@ export abstract class FluidDataStoreContext
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(30),
 			readonly: this.isReadOnly(),
-			forceReadonly: this.isStagingReadOnly,
+			isStagingReadOnly: this.isStagingReadOnly,
 		});
 		this.localChangesTelemetryCount--;
 	}
