@@ -3354,7 +3354,6 @@ export class ContainerRuntime
 		// Make sure all BatchManagers are empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.outbox.flush();
-		this.channelCollection.notifyStagingMode(true);
 
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			// Final flush of any last staged changes
@@ -3392,6 +3391,8 @@ export class ContainerRuntime
 				}
 			}),
 		};
+
+		this.channelCollection.notifyStagingMode(true);
 
 		return (this.stageControls = stageControls);
 	};

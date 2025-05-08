@@ -223,8 +223,8 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 	}
 
 	/**
-	 * Called by the owning datastore context to configure the readonly
-	 * state of the delta manger that is project down to the datastore
+	 * Called by the owning datastore context to emit the readonly
+	 * event on the delta manger that is projected down to the datastore
 	 * runtime. This state may not align with that of the true delta
 	 * manager if the context wishes to control the read only state
 	 * differently than the delta manager itself.
@@ -691,7 +691,7 @@ export abstract class FluidDataStoreContext
 	 */
 	public notifyStagingMode(staging: boolean): void {
 		// If the `readonlyInStagingMode` policy is not explicitly set to `false`,
-		// the data store defaults to readonly in staging mode.
+		// the data store is treated as readonly in staging mode.
 		if (this.channel?.policies?.readonlyInStagingMode !== false) {
 			this.isStagingReadOnly = staging;
 			this.notifyReadOnlyState();
