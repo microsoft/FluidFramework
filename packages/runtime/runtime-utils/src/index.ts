@@ -26,7 +26,7 @@ export {
 	getNormalizedObjectStoragePathParts,
 	listBlobsAtTreePath,
 } from "./objectstorageutils.js";
-export { RemoteFluidObjectHandle } from "./remoteFluidObjectHandle.js";
+export { RemoteFluidObjectHandle, decodeHandles } from "./remoteFluidObjectHandle.js";
 export { RequestParser } from "./requestParser.js";
 export { RuntimeFactoryHelper } from "./runtimeFactoryHelper.js";
 export {

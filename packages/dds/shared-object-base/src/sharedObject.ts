@@ -59,7 +59,8 @@ import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
-import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
+// eslint-disable-next-line import/no-deprecated
+import { bindHandles, makeHandlesSerializable, parseHandlesInternal } from "./utils.js";
 
 /**
  * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
@@ -482,7 +483,8 @@ export abstract class SharedObjectCore<
 					.submitMessagesWithoutEncodingHandles === true;
 			const contentToSubmit = onlyBind
 				? bindHandles(content, this.serializer, this.handle)
-				: makeHandlesSerializable(content, this.serializer, this.handle);
+				: // eslint-disable-next-line import/no-deprecated
+					makeHandlesSerializable(content, this.serializer, this.handle);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
@@ -591,7 +593,13 @@ export abstract class SharedObjectCore<
 				this.reSubmit(content, localOpMetadata, squash);
 			},
 			applyStashedOp: (content: unknown): void => {
-				this.applyStashedOp(parseHandles(content, this.serializer));
+				this.applyStashedOp(
+					parseHandlesInternal(
+						content,
+						this.runtime.rootRoutingContext,
+						this.runtime.channelsRoutingContext,
+					),
+				);
 			},
 			rollback: (content: unknown, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);
@@ -686,7 +694,11 @@ export abstract class SharedObjectCore<
 			clientSequenceNumber,
 		} of messagesCollection.messagesContent) {
 			const decodedMessageContent: IRuntimeMessagesContent = {
-				contents: parseHandles(contents, this.serializer),
+				contents: parseHandlesInternal(
+					contents,
+					this.runtime.rootRoutingContext,
+					this.runtime.channelsRoutingContext,
+				),
 				localOpMetadata,
 				clientSequenceNumber,
 			};
@@ -803,7 +815,7 @@ export abstract class SharedObject<
 	/**
 	 * The serializer to use to serialize / parse handles, if any.
 	 */
-	private readonly _serializer: IFluidSerializer;
+	private readonly _serializer: FluidSerializer;
 
 	protected get serializer(): IFluidSerializer {
 		/**

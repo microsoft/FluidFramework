@@ -6,12 +6,13 @@
 import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
 	IFluidHandleContext,
+	type IFluidHandle,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import { responseToException } from "./dataStoreHelpers.js";
-import { FluidHandleBase } from "./handles.js";
+import { FluidHandleBase, isSerializedHandle } from "./handles.js";
 import { RuntimeHeaders } from "./utils.js";
 
 /**
@@ -76,4 +77,30 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 	public bind(handle: IFluidHandleInternal): void {
 		fail("RemoteFluidObjectHandle not supported as a bind source");
 	}
+}
+
+/**
+ * If value is a serializable-form handle, decode it into a proper {@link IFluidHandle}.
+ * Otherwise, return the original value.
+ * @remarks Idempotent when called multiple times.
+ * @param maybeEncodedHandle - Maybe a serializable-form handle
+ * @param context - The context in which the handle is being decoded.
+ * @param urlReplacer - An optional function for replacing/modifying the URLs from the serialized handle.
+ * @returns The decoded handle or the original value.
+ *
+ * @internal
+ */
+export function decodeHandles(
+	maybeEncodedHandle: unknown,
+	context: IFluidHandleContext,
+	urlReplacer: (url: string) => string = (url) => url,
+): unknown | IFluidHandle {
+	// RemoteFluidObjectHandle is the IFluidHandle implementation for deserialized handles
+	return isSerializedHandle(maybeEncodedHandle)
+		? new RemoteFluidObjectHandle(
+				urlReplacer(maybeEncodedHandle.url),
+				context,
+				maybeEncodedHandle.payloadPending === true,
+			)
+		: maybeEncodedHandle;
 }
