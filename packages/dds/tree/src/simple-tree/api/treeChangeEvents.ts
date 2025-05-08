@@ -24,7 +24,6 @@
  *
  * @sealed @public
  */
-
 export interface TreeChangeEvents {
 	/**
 	 * Emitted by a node after a batch of changes has been applied to the tree, if any of the changes affected the node.
