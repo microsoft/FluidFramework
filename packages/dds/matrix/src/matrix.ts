@@ -69,6 +69,7 @@ interface ISetOpMetadata {
 	rowsRef: LocalReferencePosition;
 	colsRef: LocalReferencePosition;
 	referenceSeqNumber: number;
+	previous: MatrixItem<unknown>;
 }
 
 /**
@@ -410,21 +411,21 @@ export class SharedMatrix<T = any>
 		value: MatrixItem<T>,
 		rowHandle = this.rows.getAllocatedHandle(row),
 		colHandle = this.cols.getAllocatedHandle(col),
+		rollback?: boolean,
 	): void {
 		this.protectAgainstReentrancy(() => {
+			let oldValue = this.cells.getCell(rowHandle, colHandle);
+			if (oldValue === null) {
+				oldValue = undefined;
+			}
 			if (this.undo !== undefined) {
-				let oldValue = this.cells.getCell(rowHandle, colHandle);
-				if (oldValue === null) {
-					oldValue = undefined;
-				}
-
 				this.undo.cellSet(rowHandle, colHandle, oldValue);
 			}
 
 			this.cells.setCell(rowHandle, colHandle, value);
 
-			if (this.isAttached()) {
-				this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+			if (this.isAttached() && rollback !== true) {
+				this.sendSetCellOp(row, col, value, rowHandle, colHandle, oldValue);
 			}
 
 			// Avoid reentrancy by raising change notifications after the op is queued.
@@ -458,6 +459,7 @@ export class SharedMatrix<T = any>
 		value: MatrixItem<T>,
 		rowHandle: Handle,
 		colHandle: Handle,
+		previous: MatrixItem<T>,
 		localSeq = this.nextLocalSeq(),
 	): void {
 		assert(
@@ -483,6 +485,7 @@ export class SharedMatrix<T = any>
 			rowsRef,
 			colsRef,
 			referenceSeqNumber: this.deltaManager.lastSequenceNumber,
+			previous,
 		};
 
 		this.submitLocalMessage(op, metadata);
@@ -623,7 +626,7 @@ export class SharedMatrix<T = any>
 				const colHandle = this.colHandles.getHandle(col);
 				const value = this.cells.getCell(rowHandle, colHandle);
 				if (this.isAttached() && value !== undefined && value !== null) {
-					this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+					this.sendSetCellOp(row, col, value, rowHandle, colHandle, undefined);
 				}
 			}
 		}
@@ -647,7 +650,7 @@ export class SharedMatrix<T = any>
 				const rowHandle = this.rowHandles.getHandle(row);
 				const value = this.cells.getCell(rowHandle, colHandle);
 				if (this.isAttached() && value !== undefined && value !== null) {
-					this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+					this.sendSetCellOp(row, col, value, rowHandle, colHandle, undefined);
 				}
 			}
 		}
@@ -776,8 +779,15 @@ export class SharedMatrix<T = any>
 
 		if (content.type === MatrixOp.set && content.target === undefined) {
 			const setOp = content;
-			const { rowHandle, colHandle, localSeq, rowsRef, colsRef, referenceSeqNumber } =
-				localOpMetadata as ISetOpMetadata;
+			const {
+				rowHandle,
+				colHandle,
+				localSeq,
+				rowsRef,
+				colsRef,
+				referenceSeqNumber,
+				previous,
+			} = localOpMetadata as ISetOpMetadata;
 
 			// If after rebasing the op, we get a valid row/col number, that means the row/col
 			// handles have not been recycled and we can safely use them.
@@ -800,7 +810,15 @@ export class SharedMatrix<T = any>
 					lastCellModificationDetails === undefined ||
 					referenceSeqNumber >= lastCellModificationDetails.seqNum
 				) {
-					this.sendSetCellOp(row, col, setOp.value, rowHandle, colHandle, localSeq);
+					this.sendSetCellOp(
+						row,
+						col,
+						setOp.value,
+						rowHandle,
+						colHandle,
+						previous as MatrixItem<T>,
+						localSeq,
+					);
 				} else if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
 					// Clear the pending changes if any as we are not sending the op.
 					this.pending.setCell(rowHandle, colHandle, undefined);
@@ -1022,6 +1040,35 @@ export class SharedMatrix<T = any>
 			default: {
 				unreachableCase(target, "unknown target");
 			}
+		}
+	}
+
+	protected rollback(content: unknown, localOpMetadata: unknown): void {
+		const contents = content as MatrixSetOrVectorOp<T>;
+		const target = contents.target;
+
+		switch (target) {
+			case SnapshotPath.cols: {
+				this.cols.rollback(content, localOpMetadata);
+				break;
+			}
+			case SnapshotPath.rows: {
+				this.rows.rollback(content, localOpMetadata);
+				break;
+			}
+			case undefined: {
+				assert(contents.type === MatrixOp.set, "only sets supported");
+				const setMetadata = localOpMetadata as ISetOpMetadata;
+				this.setCellCore(
+					contents.row,
+					contents.col,
+					setMetadata.previous as MatrixItem<T>,
+					undefined,
+					undefined,
+					true,
+				);
+			}
+			default:
 		}
 	}
 
