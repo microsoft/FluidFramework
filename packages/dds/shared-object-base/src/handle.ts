@@ -20,6 +20,9 @@ import { ISharedObject } from "./types.js";
  * De-serialization process goes through {@link @fluidframework/datastore#FluidObjectHandle}, and request flow:
  * {@link @fluidframework/datastore#FluidDataStoreRuntime.request} recognizes requests in the form of
  * '/\<shared object id\>' and loads shared object.
+ *
+ * //* Revert after adding interface
+ * @internal
  */
 export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
 	/**

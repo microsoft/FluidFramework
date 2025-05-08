@@ -99,7 +99,7 @@ export class FluidObjectHandle<
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.bind}
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
 	 */
 	public bind(handle: IFluidHandleInternal) {
 		// If this handle is visible, attach the graph of the incoming handle as well.

@@ -93,6 +93,10 @@ export class BlobHandle
 		}
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
+	/**
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 */
 	public bind(handle: IFluidHandleInternal): void {
 		throw new Error("Cannot bind to blob handle");
 	}

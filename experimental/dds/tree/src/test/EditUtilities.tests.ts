@@ -477,6 +477,7 @@ describe('EditUtilities', () => {
 		return typeof node === 'number';
 	}
 
+	//* Needs handleBinder interface
 	describe('comparePayloads', () => {
 		const serializer: FluidSerializer = new FluidSerializer(new MockFluidDataStoreRuntime().IFluidHandleContext);
 		const binder: IFluidHandle = {
