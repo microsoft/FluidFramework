@@ -15,7 +15,12 @@ import {
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
-import { CorrelationIdHeaderName, TelemetryContextHeaderName } from "./constants";
+import {
+	CallingServiceHeaderName,
+	CorrelationIdHeaderName,
+	TelemetryContextHeaderName,
+} from "./constants";
+import { getGlobalTimeoutContext } from "./timeoutContext";
 
 /**
  * @internal
@@ -42,6 +47,19 @@ export abstract class RestWrapper {
 		protected readonly maxContentLength = 1000 * 1024 * 1024,
 	) {}
 
+	private getTimeoutMs(): number | undefined {
+		const timeout = getGlobalTimeoutContext().getTimeRemainingMs();
+		if (timeout && timeout > 0) {
+			return timeout;
+		}
+		// Fallback to the global timeout context if no timeout is set
+		return undefined;
+	}
+
+	private getTimeoutMessage(url: string): string {
+		return `Timeout occurred for request to ${url}`;
+	}
+
 	public async get<T>(
 		url: string,
 		queryString?: Record<string, string | number | boolean>,
@@ -61,6 +79,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "GET",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 200);
 	}
@@ -86,6 +106,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "POST",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 201);
 	}
@@ -109,6 +131,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "DELETE",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 204);
 	}
@@ -134,6 +158,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "PATCH",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 200);
 	}
@@ -186,6 +212,7 @@ export class BasicRestWrapper extends RestWrapper {
 			authorizationHeader: RawAxiosRequestHeaders,
 		) => Promise<RawAxiosRequestHeaders | undefined>,
 		private readonly logHttpMetrics?: (requestProps: IBasicRestWrapperMetricProps) => void,
+		private readonly getCallingServiceName?: () => string | undefined,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -197,10 +224,12 @@ export class BasicRestWrapper extends RestWrapper {
 	): Promise<T> {
 		const options = { ...requestConfig };
 		const correlationId = this.getCorrelationId?.() ?? uuid();
+		const callingServiceName = this.getCallingServiceName?.();
 		options.headers = this.generateHeaders(
 			options.headers,
 			correlationId,
 			this.getTelemetryContextProperties?.(),
+			callingServiceName,
 		);
 
 		// If the request has an Authorization header and a refresh token function is provided, try to refresh the token if needed
@@ -346,6 +375,7 @@ export class BasicRestWrapper extends RestWrapper {
 		headers?: RawAxiosRequestHeaders,
 		fallbackCorrelationId?: string,
 		telemetryContextProperties?: Record<string, string | number | boolean>,
+		callingServiceName?: string,
 	): RawAxiosRequestHeaders {
 		const result = {
 			...this.defaultHeaders,
@@ -357,6 +387,9 @@ export class BasicRestWrapper extends RestWrapper {
 		}
 		if (!result[TelemetryContextHeaderName] && telemetryContextProperties) {
 			result[TelemetryContextHeaderName] = JSON.stringify(telemetryContextProperties);
+		}
+		if (!result[CallingServiceHeaderName] && callingServiceName) {
+			result[CallingServiceHeaderName] = callingServiceName;
 		}
 
 		return result;

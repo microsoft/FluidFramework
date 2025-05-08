@@ -81,7 +81,9 @@ export abstract class ErasedType<out Name = unknown> {
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public @system
-type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
+type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
+FieldSchema<FieldKind.Optional | FieldKind.Identifier>
+] ? true : false;
 
 // @public
 export enum FieldKind {
@@ -382,7 +384,6 @@ export const IFluidLoadable: keyof IProvideFluidLoadable;
 
 // @public @sealed
 export interface IFluidLoadable extends IProvideFluidLoadable {
-    // (undocumented)
     readonly handle: IFluidHandle;
 }
 
@@ -422,12 +423,9 @@ type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<Implicit
 export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : never;
 
 // @public @system
-export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = [TList] extends [
-readonly [
-LazyItem<infer TSchema extends TreeNodeSchema>,
-...infer Rest extends AllowedTypes
-]
-] ? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest> : never;
+export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = IsUnion<TList> extends true ? never : {
+    readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchema> ? InsertableTypedNode<TSchema> : never;
+}[number];
 
 // @public
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> = [
@@ -455,8 +453,7 @@ declare namespace InternalTypes {
         InsertableObjectFromSchemaRecord,
         FlexList,
         FlexListToUnion,
-        ExtractItemType,
-        TreeApi
+        ExtractItemType
     }
 }
 export { InternalTypes }
@@ -488,6 +485,9 @@ export function isFluidHandle(value: unknown): value is IFluidHandle;
 
 // @public
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+
+// @public @system
+export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
 
 // @public
 export interface ITelemetryBaseProperties {
@@ -761,14 +761,9 @@ export namespace System_Unsafe {
     // @system
     export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchemaInput extends ImplicitFieldSchemaUnsafe, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchemaUnsafe<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : never;
     // @system
-    export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = [
-    TList
-    ] extends [
-    readonly [
-    LazyItem<infer TSchema extends TreeNodeSchemaUnsafe>,
-    ...infer Rest extends AllowedTypesUnsafe
-    ]
-    ] ? InsertableTypedNodeUnsafe<TSchema> | InsertableTreeNodeFromAllowedTypesUnsafe<Rest> : never;
+    export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = IsUnion<TList> extends true ? never : {
+        readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchemaUnsafe> ? InsertableTypedNodeUnsafe<TSchema> : never;
+    }[number];
     // @system
     export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends ImplicitAllowedTypesUnsafe> = [TSchema] extends [TreeNodeSchemaUnsafe] ? InsertableTypedNodeUnsafe<TSchema> : [TSchema] extends [AllowedTypesUnsafe] ? InsertableTreeNodeFromAllowedTypesUnsafe<TSchema> : never;
     // @system
@@ -841,14 +836,14 @@ export type TransactionConstraint = NodeInDocumentConstraint;
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
-// @public
-export const Tree: TreeApi;
-
 // @public @sealed @system
-interface TreeApi extends TreeNodeApi {
+export interface Tree extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
     readonly runTransaction: RunTransaction;
 }
+
+// @public
+export const Tree: Tree;
 
 // @public @sealed
 export interface TreeArrayNode<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes, out T = [TAllowedTypes] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TAllowedTypes> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes> : InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, in TMoveFrom = ReadonlyArrayNode> extends ReadonlyArrayNode<T> {
@@ -1006,15 +1001,20 @@ export type Unhydrated<T> = T;
 export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
 // @public
-export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {
+export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
+
+// @public @system
+export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNodeSchema<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {
     [NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema> ? InsertableObjectFromSchemaRecord<T["info"]> : unknown;
     [NodeKind.Array]: T["info"] extends ImplicitAllowedTypes ? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>> : unknown;
     [NodeKind.Map]: T["info"] extends ImplicitAllowedTypes ? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]> : unknown;
+    [NodeKind.Leaf]: unknown;
 }[T["kind"]], false, {
     [NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
     [NodeKind.Array]: ImplicitAllowedTypes;
     [NodeKind.Map]: ImplicitAllowedTypes;
-}[T["kind"]]>> = true;
+    [NodeKind.Leaf]: unknown;
+}[T["kind"]]>;
 
 // @public @sealed @system
 export interface ViewableTree {

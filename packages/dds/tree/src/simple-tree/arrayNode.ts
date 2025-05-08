@@ -16,11 +16,14 @@ import {
 import { prepareContentForHydration } from "./proxies.js";
 import {
 	normalizeAllowedTypes,
+	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	type WithType,
@@ -1064,7 +1067,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
 	TName extends string,
-	const T extends ImplicitAllowedTypes,
+	const T extends ImplicitAnnotatedAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -1082,7 +1085,9 @@ export function arraySchema<
 	> &
 		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>;
 
-	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+	const unannotatedTypes = unannotateImplicitAllowedTypes(info);
+
+	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(unannotatedTypes));
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
@@ -1091,7 +1096,7 @@ export function arraySchema<
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
-	class Schema extends CustomArrayNodeBase<T> {
+	class Schema extends CustomArrayNodeBase<UnannotateImplicitAllowedTypes<T>> {
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
@@ -1178,8 +1183,8 @@ export function arraySchema<
 			return Schema.constructorCached?.constructor as unknown as Output;
 		}
 
-		protected get simpleSchema(): T {
-			return info;
+		protected get simpleSchema(): UnannotateImplicitAllowedTypes<T> {
+			return unannotatedTypes;
 		}
 		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
