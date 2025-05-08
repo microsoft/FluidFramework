@@ -436,13 +436,22 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	notifyReadOnlyState?(readonly: boolean): void;
 
 	/**
-	 * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
+	 * Ask the DDS to resubmit a message. This can happen for several reasons, such as:
+	 *
+	 * - We reconnected and discovered the original message was never acked.
+	 * - The original message was submitted from a reentrant state that is impossible for other clients to interpret correctly
+	 * - The original message was never sent on the wire and subsequent ops have been inbounded
 	 * @param type - The type of the original message.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created by this message.
+	 * This includes any content which this message created but has since been changed or removed by subsequent messages.
+	 * For example, if this message (call it A) inserts content into a DDS that a subsequent op (call it B) removes,
+	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
+	 * account for the fact that A' never inserted content.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown);
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;

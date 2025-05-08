@@ -1222,7 +1222,12 @@ export class FluidDataStoreRuntime
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	public reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+	public reSubmit(
+		type: DataStoreMessageType,
+		content: any,
+		localOpMetadata: unknown,
+		squash: boolean,
+	) {
 		this.verifyNotClosed();
 
 		switch (type) {
@@ -1231,7 +1236,7 @@ export class FluidDataStoreRuntime
 				const envelope = content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
-				channelContext.reSubmit(envelope.contents, localOpMetadata);
+				channelContext.reSubmit(envelope.contents, localOpMetadata, squash);
 				break;
 			}
 			case DataStoreMessageType.Attach:

@@ -351,6 +351,8 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			return this;
 		},
 		instantiateRuntime: async (context, existing) => {
+			// This can be removed or scoped to options passed to specific data stores once we support squashing more widely.
+			context.options.allowStagingModeWithoutSquashing = true;
 			const runtime = await loadContainerRuntime({
 				context,
 				existing,

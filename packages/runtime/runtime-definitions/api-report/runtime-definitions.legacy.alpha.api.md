@@ -143,7 +143,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
-    reSubmit(type: string, content: any, localOpMetadata: unknown): any;
+    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): any;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;

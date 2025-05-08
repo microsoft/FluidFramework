@@ -1039,9 +1039,14 @@ export abstract class FluidDataStoreContext
 		return {};
 	}
 
-	public reSubmit(type: string, contents: unknown, localOpMetadata: unknown): void {
+	public reSubmit(
+		type: string,
+		contents: unknown,
+		localOpMetadata: unknown,
+		squash: boolean,
+	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
-		this.channel.reSubmit(type, contents, localOpMetadata);
+		this.channel.reSubmit(type, contents, localOpMetadata, squash);
 	}
 
 	public rollback(type: string, contents: unknown, localOpMetadata: unknown): void {
