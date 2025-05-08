@@ -52,7 +52,6 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
-	IFluidParentContext,
 	IGarbageCollectionDetailsBase,
 	IProvideFluidDataStoreFactory,
 	ISummarizeInternalResult,
@@ -64,6 +63,7 @@ import {
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
 	type IFluidDataStoreFactory,
+	type IFluidParentContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -81,6 +81,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
+import type { IFluidParentContextPrivate } from "./channelCollection.js";
 import { BaseDeltaManagerProxy } from "./deltaManagerProxies.js";
 import {
 	runtimeCompatDetailsForDataStore,
@@ -117,9 +118,6 @@ export function createAttributesBlob(
 	return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
 
-/**
- * @internal
- */
 export interface ISnapshotDetails {
 	pkg: readonly string[];
 	isRootDataStore: boolean;
@@ -131,7 +129,6 @@ export interface ISnapshotDetails {
  * This is interface that every context should implement.
  * This interface is used for context's parent - ChannelCollection.
  * It should not be exposed to any other users of context.
- * @internal
  */
 export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
 	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
@@ -147,11 +144,10 @@ export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
 
 /**
  * Properties necessary for creating a FluidDataStoreContext
- * @internal
  */
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
-	readonly parentContext: IFluidParentContext;
+	readonly parentContext: IFluidParentContextPrivate;
 	readonly storage: IDocumentStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
@@ -161,7 +157,6 @@ export interface IFluidDataStoreContextProps {
 
 /**
  * Properties necessary for creating a local FluidDataStoreContext
- * @internal
  */
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly pkg: Readonly<string[]> | undefined;
@@ -171,7 +166,6 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 
 /**
  * Properties necessary for creating a local FluidDataStoreContext
- * @internal
  */
 export interface ILocalDetachedFluidDataStoreContextProps
 	extends ILocalFluidDataStoreContextProps {
@@ -180,7 +174,6 @@ export interface ILocalDetachedFluidDataStoreContextProps
 
 /**
  * Properties necessary for creating a remote FluidDataStoreContext
- * @internal
  */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly snapshot: ISnapshotTree | ISnapshot | undefined;
@@ -189,7 +182,6 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 // back-compat: To be removed in the future.
 // Added in "2.0.0-rc.2.0.0" timeframe (to support older builds).
 /**
- * @internal
  */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
@@ -249,7 +241,6 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 
 /**
  * Represents the context for the store. This context is passed to the store runtime.
- * @internal
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
@@ -281,7 +272,7 @@ export abstract class FluidDataStoreContext
 		return this._contextDeltaManagerProxy;
 	}
 
-	public isReadOnly = (): boolean => this.parentContext.isReadOnly?.() ?? false;
+	public isReadOnly = (): boolean => this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
 		return this.parentContext.connected;
@@ -424,7 +415,7 @@ export abstract class FluidDataStoreContext
 
 	public readonly id: string;
 	private readonly _containerRuntime: IContainerRuntimeBase;
-	private readonly parentContext: IFluidParentContext;
+	private readonly parentContext: IFluidParentContextPrivate;
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
 	// Represents the group to which the data store belongs too.
@@ -483,7 +474,10 @@ export abstract class FluidDataStoreContext
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
-		assert(isIDeltaManagerFull(this.parentContext.deltaManager), "Invalid delta manager");
+		assert(
+			isIDeltaManagerFull(this.parentContext.deltaManager),
+			0xb83 /* Invalid delta manager */,
+		);
 
 		this._contextDeltaManagerProxy = new ContextDeltaManagerProxy(
 			this.parentContext.deltaManager,
@@ -1033,9 +1027,14 @@ export abstract class FluidDataStoreContext
 		return {};
 	}
 
-	public reSubmit(type: string, contents: unknown, localOpMetadata: unknown): void {
+	public reSubmit(
+		type: string,
+		contents: unknown,
+		localOpMetadata: unknown,
+		squash: boolean,
+	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
-		this.channel.reSubmit(type, contents, localOpMetadata);
+		this.channel.reSubmit(type, contents, localOpMetadata, squash);
 	}
 
 	public rollback(type: string, contents: unknown, localOpMetadata: unknown): void {

@@ -101,6 +101,14 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "dispose", listener: () => void): any;
 }
 
+// @alpha @sealed @deprecated @legacy (undocumented)
+export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+    // (undocumented)
+    enterStagingMode?(): StageControlsExperimental;
+    // (undocumented)
+    readonly inStagingMode?: boolean;
+}
+
 // @alpha @legacy
 export interface IDataStore {
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
@@ -134,7 +142,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
-    reSubmit(type: string, content: any, localOpMetadata: unknown): any;
+    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): any;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
@@ -392,6 +400,14 @@ Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
 export interface OpAttributionKey {
     seq: number;
     type: "op";
+}
+
+// @alpha @sealed @deprecated @legacy (undocumented)
+export interface StageControlsExperimental {
+    // (undocumented)
+    readonly commitChanges: () => void;
+    // (undocumented)
+    readonly discardChanges: () => void;
 }
 
 // @alpha @legacy (undocumented)

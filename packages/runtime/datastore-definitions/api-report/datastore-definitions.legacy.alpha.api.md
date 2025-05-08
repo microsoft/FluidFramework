@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
+// @alpha @legacy
 export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -59,7 +59,7 @@ export interface IDeltaConnection {
 export interface IDeltaHandler {
     applyStashedOp(message: any): void;
     processMessages: (messageCollection: IRuntimeMessageCollection) => void;
-    reSubmit(message: any, localOpMetadata: unknown): void;
+    reSubmit(message: any, localOpMetadata: unknown, squash?: boolean): void;
     rollback?(message: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean): void;
 }
@@ -123,6 +123,12 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): any;
     // (undocumented)
     (event: "readonly", listener: (isReadOnly: boolean) => void): any;
+}
+
+// @alpha @sealed @deprecated @legacy (undocumented)
+export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
+    // (undocumented)
+    readonly inStagingMode?: boolean;
 }
 
 // @alpha @legacy (undocumented)

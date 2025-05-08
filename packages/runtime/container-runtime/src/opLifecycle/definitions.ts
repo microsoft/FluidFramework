@@ -28,6 +28,10 @@ export interface LocalBatchMessage {
 	 * Reference sequence number this op is based on
 	 */
 	referenceSequenceNumber: number;
+	/**
+	 * If true, this op is not to be submitted to the ordering service yet, since it was submitted during Staging Mode
+	 */
+	staged?: boolean;
 
 	/**
 	 * @deprecated Use serializedOp
@@ -61,7 +65,12 @@ export type OutboundBatchMessage = IBatchMessage & {
 /**
  * A batch of messages we have accumulated locally, but haven't sent to the ordering service yet.
  */
-export type LocalBatch = IBatch<LocalBatchMessage[]>;
+export interface LocalBatch extends IBatch<LocalBatchMessage[]> {
+	/**
+	 * If true, this batch is not to be submitted to the ordering service yet, since it was submitted during Staging Mode
+	 */
+	staged?: boolean;
+}
 
 /**
  * A batch of messages that has been virtualized as needed (grouped, compressed, chunked)

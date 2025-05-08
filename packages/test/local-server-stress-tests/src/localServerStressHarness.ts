@@ -42,8 +42,7 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import type { ConfigTypes, FluidObject } from "@fluidframework/core-interfaces";
-import type { IErrorBase } from "@fluidframework/core-interfaces";
+import type { ConfigTypes, FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	createLocalResolverCreateNewRequest,
@@ -585,7 +584,10 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 				if (client.container.closed || client.container.disposed === true) {
 					throw new Error(`Client ${client.tag} is closed`);
 				}
-				return client.container.connectionState !== ConnectionState.Disconnected;
+				return (
+					client.container.connectionState !== ConnectionState.Disconnected &&
+					!client.entryPoint.inStagingMode()
+				);
 			});
 
 			if (connectedClients.length > 0) {
@@ -918,6 +920,9 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		if (operation.type === finalSynchronization.type) {
 			const { clients, validationClient } = state;
 			for (const client of clients) {
+				if (client.entryPoint.inStagingMode()) {
+					client.entryPoint.exitStagingMode(true);
+				}
 				if (client.container.connectionState === ConnectionState.Disconnected) {
 					client.container.connect();
 				}

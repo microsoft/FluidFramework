@@ -96,27 +96,16 @@ export function combineVisitors(visitors: readonly CombinableVisitor[]): Combine
 				}),
 			);
 		},
-		detach: (source: Range, destination: FieldKey, id: DetachedNodeId) => {
-			announcedVisitors.forEach((v) => v.beforeDetach(source, destination));
-			allVisitors.forEach((v) => v.detach(source, destination, id));
-			announcedVisitors.forEach((v) =>
-				v.afterDetach(source.start, source.end - source.start, destination),
-			);
-		},
-		replace: (
-			newContent: FieldKey,
-			oldContent: Range,
-			oldContentDestination: FieldKey,
-			oldContentId: DetachedNodeId,
+		detach: (
+			source: Range,
+			destination: FieldKey,
+			id: DetachedNodeId,
+			isReplaced: boolean,
 		) => {
+			announcedVisitors.forEach((v) => v.beforeDetach(source, destination, isReplaced));
+			allVisitors.forEach((v) => v.detach(source, destination, id, isReplaced));
 			announcedVisitors.forEach((v) =>
-				v.beforeReplace(newContent, oldContent, oldContentDestination),
-			);
-			allVisitors.forEach((v) =>
-				v.replace(newContent, oldContent, oldContentDestination, oldContentId),
-			);
-			announcedVisitors.forEach((v) =>
-				v.afterReplace(newContent, oldContent, oldContentDestination),
+				v.afterDetach(source.start, source.end - source.start, destination, isReplaced),
 			);
 		},
 		enterNode: (...args) => allVisitors.forEach((v) => v.enterNode(...args)),
@@ -139,14 +128,13 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	beforeDestroy(field: FieldKey, count: number): void;
 	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
 	afterAttach(source: FieldKey, destination: Range): void;
-	beforeDetach(source: Range, destination: FieldKey): void;
-	afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
-	beforeReplace(
-		newContent: FieldKey,
-		oldContent: Range,
-		oldContentDestination: FieldKey,
+	beforeDetach(source: Range, destination: FieldKey, isReplaced: boolean): void;
+	afterDetach(
+		source: PlaceIndex,
+		count: number,
+		destination: FieldKey,
+		isReplaced: boolean,
 	): void;
-	afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void;
 }
 
 /**
@@ -170,9 +158,6 @@ export function createAnnouncedVisitor(
 		beforeDetach: visitorFunctions.beforeDetach ?? noOp,
 		detach: visitorFunctions.detach ?? noOp,
 		afterDetach: visitorFunctions.afterDetach ?? noOp,
-		beforeReplace: visitorFunctions.beforeReplace ?? noOp,
-		replace: visitorFunctions.replace ?? noOp,
-		afterReplace: visitorFunctions.afterReplace ?? noOp,
 		enterNode: visitorFunctions.enterNode ?? noOp,
 		exitNode: visitorFunctions.exitNode ?? noOp,
 		enterField: visitorFunctions.enterField ?? noOp,

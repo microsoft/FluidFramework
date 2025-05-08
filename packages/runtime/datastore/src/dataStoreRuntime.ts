@@ -57,6 +57,8 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	// eslint-disable-next-line import/no-deprecated
+	type IContainerRuntimeBaseExperimental,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 } from "@fluidframework/runtime-definitions/internal";
@@ -403,6 +405,18 @@ export class FluidDataStoreRuntime
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+
+		// eslint-disable-next-line import/no-deprecated
+		const base: IContainerRuntimeBaseExperimental | undefined =
+			// eslint-disable-next-line import/no-deprecated
+			this.dataStoreContext.containerRuntime satisfies IContainerRuntimeBaseExperimental;
+		if (base !== undefined && "inStagingMode" in base) {
+			Object.defineProperty(this, "inStagingMode", {
+				get: () => {
+					return base.inStagingMode;
+				},
+			});
+		}
 	}
 
 	get deltaManager(): IDeltaManagerErased {
@@ -1198,7 +1212,12 @@ export class FluidDataStoreRuntime
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	public reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+	public reSubmit(
+		type: DataStoreMessageType,
+		content: any,
+		localOpMetadata: unknown,
+		squash: boolean,
+	) {
 		this.verifyNotClosed();
 
 		switch (type) {
@@ -1207,7 +1226,7 @@ export class FluidDataStoreRuntime
 				const envelope = content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
-				channelContext.reSubmit(envelope.contents, localOpMetadata);
+				channelContext.reSubmit(envelope.contents, localOpMetadata, squash);
 				break;
 			}
 			case DataStoreMessageType.Attach:

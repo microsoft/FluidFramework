@@ -109,7 +109,7 @@ const config: Config = {
 						if (docPath.startsWith("api/")) {
 							return undefined;
 						}
-						return `${githubDocsUrl}/${versionDocsDirPath}${docPath}`;
+						return `${githubDocsUrl}/${versionDocsDirPath}/${docPath}`;
 					},
 				},
 				// We can add support for blog posts in the future.
@@ -190,6 +190,12 @@ const config: Config = {
 	customFields: {
 		INSTRUMENTATION_KEY: process.env.INSTRUMENTATION_KEY,
 	},
+	scripts: [
+		{
+			src: "/trusted-types-policy.js",
+			async: false,
+		},
+	],
 };
 
 export default config;

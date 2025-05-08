@@ -153,9 +153,11 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
  * Encapsulates the return codes of the aliasing API.
  *
  * 'Success' - the datastore has been successfully aliased. It can now be used.
+ *
  * 'Conflict' - there is already a datastore bound to the provided alias. To acquire it's entry point, use
  * the `IContainerRuntime.getAliasedDataStoreEntryPoint` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
+ *
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
  * @legacy
  * @alpha
@@ -164,9 +166,16 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
  * Exposes some functionality/features of a data store:
+ *
  * - Handle to the data store's entryPoint
+ *
  * - Fluid router for the data store
+ *
  * - Can be assigned an alias
+ *
+ * @privateRemarks
+ * TODO: These docs should define what a datastore is, and not do so by just referencing "data store".
+ *
  * @legacy
  * @alpha
  */
@@ -189,7 +198,8 @@ export interface IDataStore {
 }
 
 /**
- * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
+ * A reduced set of functionality of {@link IContainerRuntime} that a data store context/data store runtime will need.
+ * @privateRemarks
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy
  * @alpha
@@ -301,6 +311,30 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 }
 
 /**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface StageControlsExperimental {
+	readonly commitChanges: () => void;
+	readonly discardChanges: () => void;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+	enterStagingMode?(): StageControlsExperimental;
+	readonly inStagingMode?: boolean;
+}
+
+/**
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
@@ -376,13 +410,22 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	notifyReadOnlyState?(readonly: boolean): void;
 
 	/**
-	 * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
+	 * Ask the DDS to resubmit a message. This can happen for several reasons, such as:
+	 *
+	 * - We reconnected and discovered the original message was never acked.
+	 * - The original message was submitted from a reentrant state that is impossible for other clients to interpret correctly
+	 * - The original message was never sent on the wire and subsequent ops have been inbounded
 	 * @param type - The type of the original message.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created by this message.
+	 * This includes any content which this message created but has since been changed or removed by subsequent messages.
+	 * For example, if this message (call it A) inserts content into a DDS that a subsequent op (call it B) removes,
+	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
+	 * account for the fact that A' never inserted content.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown);
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;

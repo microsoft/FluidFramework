@@ -1697,7 +1697,7 @@ describe("treeNodeApi", () => {
 					// (because stored keys are not being used, see analogous test in roundtrip-stored)
 					const sf1 = new SchemaFactoryAlpha("com.example");
 					const sf2 = new SchemaFactoryAlpha("com.example");
-					class Point2D extends sf1.object(
+					class Point2D extends sf1.objectAlpha(
 						"Point",
 						{
 							x: sf1.number,
@@ -1705,7 +1705,7 @@ describe("treeNodeApi", () => {
 						},
 						{ allowUnknownOptionalFields: true },
 					) {}
-					class Point3D extends sf2.object("Point", {
+					class Point3D extends sf2.objectAlpha("Point", {
 						x: sf2.number,
 						y: sf2.number,
 						z: sf2.optional(sf2.number),
@@ -1743,7 +1743,7 @@ describe("treeNodeApi", () => {
 
 			describe("with misaligned view and stored schema", () => {
 				const sf1 = new SchemaFactoryAlpha("com.example");
-				class Point3D extends sf1.object("Point", {
+				class Point3D extends sf1.objectAlpha("Point", {
 					x: sf1.number,
 					y: sf1.number,
 					z: sf1.optional(sf1.number),
@@ -1752,7 +1752,7 @@ describe("treeNodeApi", () => {
 				it("preserves additional allowed optional fields", () => {
 					const sf2 = new SchemaFactoryAlpha("com.example");
 
-					class Point2D extends sf2.object(
+					class Point2D extends sf2.objectAlpha(
 						"Point",
 						{
 							x: sf2.number,
@@ -1776,7 +1776,7 @@ describe("treeNodeApi", () => {
 				it("errors on additional disallowed optional fields", () => {
 					const sf2 = new SchemaFactoryAlpha("com.example");
 
-					class Point2D extends sf2.object(
+					class Point2D extends sf2.objectAlpha(
 						"Point",
 						{
 							x: sf2.number,

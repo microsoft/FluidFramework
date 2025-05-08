@@ -166,10 +166,12 @@ export interface TreeIdentifierUtils {
 }
 
 /**
- * Extensions to {@link Tree} and {@link TreeBeta} which are not yet stable.
- * @sealed @alpha
+ * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
+ * @remarks
+ * Use via the {@link (TreeAlpha:variable)} singleton.
+ * @system @sealed @alpha
  */
-export const TreeAlpha: {
+export interface TreeAlpha {
 	/**
 	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
 	 * @param node - The node to query
@@ -191,7 +193,7 @@ export const TreeAlpha: {
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
 	 *
 	 * Like with {@link TreeNodeSchemaClass}'s constructor, it's an error to provide an existing node to this API.
-	 * For that case, use {@link TreeBeta.clone}.
+	 * For that case, use {@link (TreeBeta:interface).clone}.
 	 * @privateRemarks
 	 * There should be a way to provide a source for defaulted identifiers, wither via this API or some way to add them to its output later.
 	 */
@@ -207,7 +209,7 @@ export const TreeAlpha: {
 	>;
 
 	/**
-	 * Less type safe version of {@link TreeAlpha.create}, suitable for importing data.
+	 * Less type safe version of {@link (TreeAlpha:interface).create}, suitable for importing data.
 	 * @remarks
 	 * Due to {@link ConciseTree} relying on type inference from the data, its use is somewhat limited.
 	 * This does not support {@link ConciseTree|ConciseTrees} with customized handle encodings or using persisted keys.
@@ -215,8 +217,8 @@ export const TreeAlpha: {
 	 *
 	 * When using this function,
 	 * it is recommend to ensure your schema is unambiguous with {@link ITreeConfigurationOptions.preventAmbiguity}.
-	 * If the schema is ambiguous, consider using {@link TreeAlpha.create} and {@link Unhydrated} nodes where needed,
-	 * or using {@link TreeAlpha.(importVerbose:1)} and specify all types.
+	 * If the schema is ambiguous, consider using {@link (TreeAlpha:interface).create} and {@link Unhydrated} nodes where needed,
+	 * or using {@link (TreeAlpha:interface).(importVerbose:1)} and specify all types.
 	 *
 	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
 	 * but for now most invalid inputs will throw a recoverable error.
@@ -235,7 +237,7 @@ export const TreeAlpha: {
 	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
-	 * @param data - The data used to construct the field content. See {@link TreeAlpha.(exportVerbose:1)}.
+	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
@@ -261,7 +263,7 @@ export const TreeAlpha: {
 	 * Uses the {@link VerboseTree} format, with an explicit type on every node.
 	 *
 	 * @remarks
-	 * There are several cases this may be preferred to {@link TreeAlpha.(exportConcise:1)}:
+	 * There are several cases this may be preferred to {@link (TreeAlpha:interface).(exportConcise:1)}:
 	 *
 	 * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), `exportConcise` can produce ambiguous data (the type may be unclear on some nodes).
 	 * `exportVerbose` will always be unambiguous and thus lossless.
@@ -294,11 +296,11 @@ export const TreeAlpha: {
 	): JsonCompatible<IFluidHandle>;
 
 	/**
-	 * Import data encoded by {@link TreeAlpha.exportCompressed}.
+	 * Import data encoded by {@link (TreeAlpha:interface).exportCompressed}.
 	 *
 	 * @param schema - Schema with which the data must be compatible. This compatibility is not verified and must be ensured by the caller.
-	 * @param compressedData - Data compressed by {@link TreeAlpha.exportCompressed}.
-	 * @param options - If {@link TreeAlpha.exportCompressed} was given an `idCompressor`, it must be provided here.
+	 * @param compressedData - Data compressed by {@link (TreeAlpha:interface).exportCompressed}.
+	 * @param options - If {@link (TreeAlpha:interface).exportCompressed} was given an `idCompressor`, it must be provided here.
 	 *
 	 * @remarks
 	 * If the data could have been encoded with a different schema, consider encoding the schema along side it using {@link extractPersistedSchema} and loading the data using {@link independentView}.
@@ -317,7 +319,14 @@ export const TreeAlpha: {
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	identifier: TreeIdentifierUtils;
-} = {
+}
+
+/**
+ * Extensions to {@link (Tree:variable)} and {@link (TreeBeta:variable)} which are not yet stable.
+ * @see {@link (TreeAlpha:interface)}.
+ * @alpha
+ */
+export const TreeAlpha: TreeAlpha = {
 	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
