@@ -1026,10 +1026,18 @@ export class ModularChangeFamily
 		);
 
 		const rebased = makeModularChangeset({
-			fieldChanges: this.pruneFieldMap(rebasedFields, rebasedNodes),
+			fieldChanges: this.pruneFieldMap(
+				rebasedFields,
+				rebasedNodes,
+				crossFieldTable.rebasedNodeToParent,
+			),
 			nodeChanges: rebasedNodes,
 			nodeToParent: crossFieldTable.rebasedNodeToParent,
-			rootNodes: crossFieldTable.rebasedRootNodes,
+			rootNodes: this.pruneRoots(
+				crossFieldTable.rebasedRootNodes,
+				rebasedNodes,
+				crossFieldTable.rebasedNodeToParent,
+			),
 			nodeAliases: change.nodeAliases,
 			crossFieldKeys: crossFieldTable.rebasedCrossFieldKeys,
 			maxId: idState.maxId,
@@ -1623,6 +1631,7 @@ export class ModularChangeFamily
 	private pruneFieldMap(
 		changeset: FieldChangeMap | undefined,
 		nodeMap: ChangeAtomIdBTree<NodeChangeset>,
+		nodeToParent: ChangeAtomIdBTree<FieldId>,
 	): FieldChangeMap | undefined {
 		if (changeset === undefined) {
 			return undefined;
@@ -1633,7 +1642,7 @@ export class ModularChangeFamily
 			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
 
 			const prunedFieldChangeset = handler.rebaser.prune(fieldChange.change, (nodeId) =>
-				this.pruneNodeChange(nodeId, nodeMap),
+				this.pruneNodeChange(nodeId, nodeMap, nodeToParent),
 			);
 
 			if (!handler.isEmpty(prunedFieldChangeset)) {
@@ -1644,14 +1653,31 @@ export class ModularChangeFamily
 		return prunedChangeset.size > 0 ? prunedChangeset : undefined;
 	}
 
+	private pruneRoots(
+		roots: RootNodeTable,
+		nodeMap: ChangeAtomIdBTree<NodeChangeset>,
+		nodeToParent: ChangeAtomIdBTree<FieldId>,
+	): RootNodeTable {
+		const pruned: RootNodeTable = { ...roots, nodeChanges: newTupleBTree() };
+		for (const [rootId, nodeId] of roots.nodeChanges.entries()) {
+			const prunedId = this.pruneNodeChange(nodeId, nodeMap, nodeToParent);
+			if (prunedId !== undefined) {
+				pruned.nodeChanges.set(rootId, prunedId);
+			}
+		}
+
+		return pruned;
+	}
+
 	private pruneNodeChange(
 		nodeId: NodeId,
-		nodeMap: ChangeAtomIdBTree<NodeChangeset>,
+		nodes: ChangeAtomIdBTree<NodeChangeset>,
+		nodeToParent: ChangeAtomIdBTree<FieldId>,
 	): NodeId | undefined {
-		const changeset = nodeChangeFromId(nodeMap, nodeId);
+		const changeset = nodeChangeFromId(nodes, nodeId);
 		const prunedFields =
 			changeset.fieldChanges !== undefined
-				? this.pruneFieldMap(changeset.fieldChanges, nodeMap)
+				? this.pruneFieldMap(changeset.fieldChanges, nodes, nodeToParent)
 				: undefined;
 
 		const prunedChange = { ...changeset, fieldChanges: prunedFields };
@@ -1660,10 +1686,17 @@ export class ModularChangeFamily
 		}
 
 		if (isEmptyNodeChangeset(prunedChange)) {
-			nodeMap.delete([nodeId.revision, nodeId.localId]);
+			const nodeIdKey: [RevisionTag | undefined, ChangesetLocalId] = [
+				nodeId.revision,
+				nodeId.localId,
+			];
+
+			// TODO: Shouldn't we also delete all aliases associated with this node?
+			nodes.delete(nodeIdKey);
+			nodeToParent.delete(nodeIdKey);
 			return undefined;
 		} else {
-			setInChangeAtomIdMap(nodeMap, nodeId, prunedChange);
+			setInChangeAtomIdMap(nodes, nodeId, prunedChange);
 			return nodeId;
 		}
 	}
