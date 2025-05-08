@@ -1386,8 +1386,8 @@ export namespace TableSchema {
 	>): System_TableSchema.TableSchemaBase<
 		TScope,
 		TCell,
-		System_TableSchema.ColumnSchemaBase<TScope>,
-		System_TableSchema.RowSchemaBase<TScope, TCell>
+		System_TableSchema.ColumnSchemaBase<TScope, System_TableSchema.DefaultPropsType>,
+		System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>
 	>;
 	/**
 	 * Factory for creating new table schema without specifying row schema.
@@ -1407,7 +1407,7 @@ export namespace TableSchema {
 		TScope,
 		TCell,
 		TColumn,
-		System_TableSchema.RowSchemaBase<TScope, TCell>
+		System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>
 	>;
 	/**
 	 * Factory for creating new table schema.
