@@ -53,7 +53,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		let childChange = change.childChange;
 
 		const replace = change.valueReplace;
-		if (isReplaceEffectful(replace, roots)) {
+		if (isReplaceEffectful(replace, roots) || isPin(replace, roots)) {
 			const invertedReplace: Mutable<Replace> =
 				replace.src === undefined
 					? {
@@ -75,10 +75,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 
 			inverted.valueReplace = invertedReplace;
-		} else {
-			if (isPin(replace, roots) && !areEqualChangeAtomIds(replace.src, replace.dst)) {
-				nodeManager.invertDetach(replace.dst, 1, change.childChange, replace.src);
-			}
 		}
 
 		if (childChange !== undefined) {
