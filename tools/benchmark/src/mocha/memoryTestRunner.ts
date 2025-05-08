@@ -206,6 +206,21 @@ function validateMemoryBaselineValues(
 		throw new Error("allowedDeviationBytes must be a positive number.");
 	}
 }
+
+/**
+ * Reports a memory issue. Throws an error if `ENABLE_MEM_REGRESSION` is set to 1, otherwise
+ * prints a warning to the console.
+ * @param message - The message to report.
+ */
+function reportMemoryIssue(message: string): void {
+	if (ENABLE_MEM_REGRESSION) {
+		throw new Error(message);
+	} else {
+		// We use this over console.log so warnings are printed evn when test infra suppresses console output.
+		process.stdout.write(chalk.yellow(message));
+	}
+}
+
 /**
  * This is wrapper for Mocha's 'it()' function, that runs a memory benchmark.
  *
@@ -387,12 +402,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 							}': Used '${avgHeapUsed.toPrecision(6)}' bytes, with baseline'${
 								args.baselineMemoryUsage
 							}' and tolerance of '${allowedDeviationBytes}' bytes.\n`;
-							if (ENABLE_MEM_REGRESSION) {
-								throw new Error(message);
-							} else {
-								// We use this over console.log so warnings are printed evn when test infra suppresses console output.
-								process.stdout.write(chalk.yellow(message));
-							}
+							reportMemoryIssue(message);
 						}
 						if (avgHeapUsed < lowerBound) {
 							const message = `Possible memory improvement detected for test '${
@@ -400,12 +410,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 							}'. Used '${avgHeapUsed.toPrecision(6)}' bytes with baseline '${
 								args.baselineMemoryUsage
 							}' and tolerance of '${allowedDeviationBytes}' bytes. Consider updating the baseline.\n`;
-							if (ENABLE_MEM_REGRESSION) {
-								throw new Error(message);
-							} else {
-								// We use this over console.log so warnings are printed evn when test infra suppresses console output.
-								process.stdout.write(chalk.yellow(message));
-							}
+							reportMemoryIssue(message);
 						}
 					}
 				} catch (error) {

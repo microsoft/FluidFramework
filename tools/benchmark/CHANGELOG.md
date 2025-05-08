@@ -4,8 +4,8 @@
 
 -   `BenchmarkTimer` (provided to `CustomBenchmark.benchmarkFnCustom`) now has a `timeBatch` utility to simplify its use in the common cases.
 -   `CustomBenchmark.benchmarkFnCustom` how has documentation.
-- `benchmarkMemory` now supports memory regression tests via `baselineMemoryUsage` and `allowedDeviationBytes`.
-- Tests fail on memory regression when `ENABLE_MEM_REGRESSION` is `true`l otherwise
+-   `benchmarkMemory` now supports memory regression tests via `baselineMemoryUsage` and `allowedDeviationBytes`.
+-   Tests fail on memory regression when `ENABLE_MEM_REGRESSION` is `true`l otherwise
 
 ## 0.50.0
 
