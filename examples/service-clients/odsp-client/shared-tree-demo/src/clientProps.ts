@@ -8,19 +8,22 @@ import { OdspClientProps, OdspConnectionConfig } from "@fluidframework/odsp-clie
 import { OdspTestTokenProvider } from "./tokenProvider.js";
 
 export interface OdspTestCredentials {
-	siteUrl: string;
-	driveId: string;
+	SITE_URL: string;
+	SPE_DRIVE_ID: string;
+	SPE_CLIENT_ID: string;
+	SPE_ENTRA_TENANT_ID: string;
 }
 
-export const props: OdspTestCredentials = {
-	siteUrl: process.env.SITE_URL as string,
-	driveId: process.env.DRIVE_ID as string,
-};
+declare global {
+	const process: {
+		env: OdspTestCredentials;
+	};
+}
 
 const connectionConfig: OdspConnectionConfig = {
 	tokenProvider: new OdspTestTokenProvider(),
-	siteUrl: props.siteUrl,
-	driveId: props.driveId,
+	siteUrl: process.env.SITE_URL,
+	driveId: process.env.SPE_DRIVE_ID,
 	filePath: "",
 };
 
