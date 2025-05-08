@@ -267,10 +267,21 @@ export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandl
 }
 
 // @alpha @legacy
+export interface IFluidHandleEvents {
+    payloadShared: () => void;
+}
+
+// @alpha @legacy
 export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
     readonly absolutePath: string;
     attachGraph(): void;
     bind(handle: IFluidHandleInternal): void;
+}
+
+// @alpha @legacy
+export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
+    readonly events: Listenable<IFluidHandleEvents>;
+    readonly payloadState: PayloadState;
 }
 
 // @public (undocumented)
@@ -279,6 +290,17 @@ export const IFluidLoadable: keyof IProvideFluidLoadable;
 // @public @sealed
 export interface IFluidLoadable extends IProvideFluidLoadable {
     readonly handle: IFluidHandle;
+}
+
+// @alpha @legacy
+export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
+    readonly events: Listenable<IFluidHandleEvents & ILocalFluidHandleEvents>;
+    readonly payloadShareError: unknown;
+}
+
+// @alpha @legacy
+export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
+    payloadShareFailed: (error: unknown) => void;
 }
 
 // @alpha @legacy
@@ -386,6 +408,9 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
 export type Off = () => void;
+
+// @alpha @legacy
+export type PayloadState = "pending" | "shared";
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
