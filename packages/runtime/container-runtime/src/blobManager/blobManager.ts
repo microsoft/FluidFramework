@@ -15,8 +15,8 @@ import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,
-	IFluidHandleLocalPayloadStateEvents,
-	IFluidHandlePayloadPendingLocal,
+	ILocalFluidHandle,
+	ILocalFluidHandleEvents,
 	Listenable,
 	PayloadState,
 } from "@fluidframework/core-interfaces/internal";
@@ -66,7 +66,7 @@ import {
 export class BlobHandle
 	extends FluidHandleBase<ArrayBufferLike>
 	implements
-		IFluidHandlePayloadPendingLocal<ArrayBufferLike>,
+		ILocalFluidHandle<ArrayBufferLike>,
 		IFluidHandleInternalPayloadPending<ArrayBufferLike>
 {
 	private attached: boolean = false;
@@ -76,11 +76,10 @@ export class BlobHandle
 	}
 
 	private _events:
-		| (Listenable<IFluidHandleLocalPayloadStateEvents> &
-				IEmitter<IFluidHandleLocalPayloadStateEvents>)
+		| (Listenable<ILocalFluidHandleEvents> & IEmitter<ILocalFluidHandleEvents>)
 		| undefined;
-	public get events(): Listenable<IFluidHandleLocalPayloadStateEvents> {
-		return (this._events ??= createEmitter<IFluidHandleLocalPayloadStateEvents>());
+	public get events(): Listenable<ILocalFluidHandleEvents> {
+		return (this._events ??= createEmitter<ILocalFluidHandleEvents>());
 	}
 
 	private _state: PayloadState = "pending";

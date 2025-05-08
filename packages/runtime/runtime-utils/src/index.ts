@@ -11,17 +11,17 @@ export {
 	responseToException,
 } from "./dataStoreHelpers.js";
 export {
+	compareFluidHandles,
 	encodeHandleForSerialization,
+	FluidHandleBase,
 	ISerializedHandle,
-	isSerializedHandle,
 	isFluidHandle,
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,
-	isFluidHandlePayloadPendingLocal,
+	isLocalFluidHandle,
+	isSerializedHandle,
 	toFluidHandleErased,
 	toFluidHandleInternal,
-	FluidHandleBase,
-	compareFluidHandles,
 } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export {

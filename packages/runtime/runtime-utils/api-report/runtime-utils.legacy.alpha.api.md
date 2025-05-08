@@ -37,7 +37,7 @@ export function isFluidHandle(value: unknown): value is IFluidHandle;
 export const isFluidHandlePayloadPending: <T>(handle: IFluidHandle<T>) => handle is IFluidHandlePayloadPending<T>;
 
 // @alpha @legacy
-export const isFluidHandlePayloadPendingLocal: <T>(handle: IFluidHandle<T>) => handle is IFluidHandlePayloadPendingLocal<T>;
+export const isLocalFluidHandle: <T>(handle: IFluidHandle<T>) => handle is ILocalFluidHandle<T>;
 
 // @alpha @legacy
 export class RequestParser implements IRequest {

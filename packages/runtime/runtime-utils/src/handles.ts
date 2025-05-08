@@ -9,7 +9,7 @@ import type {
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,
 	IFluidHandlePayloadPending,
-	IFluidHandlePayloadPendingLocal,
+	ILocalFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 
 /**
@@ -65,13 +65,13 @@ export const isFluidHandlePayloadPending = <T>(
 	(handle.payloadState === "shared" || handle.payloadState === "pending");
 
 /**
- * Check if the handle is an IFluidHandlePayloadPendingLocal.
+ * Check if the handle is an ILocalFluidHandle.
  * @legacy
  * @alpha
  */
-export const isFluidHandlePayloadPendingLocal = <T>(
+export const isLocalFluidHandle = <T>(
 	handle: IFluidHandle<T>,
-): handle is IFluidHandlePayloadPendingLocal<T> =>
+): handle is ILocalFluidHandle<T> =>
 	isFluidHandlePayloadPending(handle) && "payloadShareError" in handle;
 /**
  * Encodes the given IFluidHandle into a JSON-serializable form,

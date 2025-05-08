@@ -25,7 +25,7 @@ import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definiti
 import {
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,
-	isFluidHandlePayloadPendingLocal,
+	isLocalFluidHandle,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
@@ -514,7 +514,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			if (createBlobPayloadPending) {
 				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 				assert.strict(isFluidHandlePayloadPending(handle));
-				assert.strict(isFluidHandlePayloadPendingLocal(handle));
+				assert.strict(isLocalFluidHandle(handle));
 				assert.strictEqual(
 					handle.payloadState,
 					"pending",

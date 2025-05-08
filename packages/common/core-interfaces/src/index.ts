@@ -28,15 +28,15 @@ export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable.js";
 export type { IRequest, IRequestHeader, IResponse } from "./fluidRouter.js";
 
 export type {
-	IProvideFluidHandleContext,
-	IProvideFluidHandle,
+	IFluidHandleErased,
+	IFluidHandleEvents,
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,
 	IFluidHandlePayloadPending,
-	IFluidHandlePayloadPendingLocal,
-	IFluidHandlePayloadStateEvents,
-	IFluidHandleLocalPayloadStateEvents,
-	IFluidHandleErased,
+	ILocalFluidHandle,
+	ILocalFluidHandleEvents,
+	IProvideFluidHandle,
+	IProvideFluidHandleContext,
 	PayloadState,
 } from "./handles.js";
 export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";

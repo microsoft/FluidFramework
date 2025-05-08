@@ -267,6 +267,11 @@ export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandl
 }
 
 // @alpha @legacy
+export interface IFluidHandleEvents {
+    payloadShared: () => void;
+}
+
+// @alpha @legacy
 export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
     readonly absolutePath: string;
     attachGraph(): void;
@@ -274,25 +279,9 @@ export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, 
 }
 
 // @alpha @legacy
-export interface IFluidHandleLocalPayloadStateEvents extends IFluidHandlePayloadStateEvents {
-    payloadShareFailed: (error: unknown) => void;
-}
-
-// @alpha @legacy
 export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
-    readonly events: Listenable<IFluidHandlePayloadStateEvents>;
+    readonly events: Listenable<IFluidHandleEvents>;
     readonly payloadState: PayloadState;
-}
-
-// @alpha @legacy
-export interface IFluidHandlePayloadPendingLocal<T> extends IFluidHandlePayloadPending<T> {
-    readonly events: Listenable<IFluidHandlePayloadStateEvents & IFluidHandleLocalPayloadStateEvents>;
-    readonly payloadShareError: unknown;
-}
-
-// @alpha @legacy
-export interface IFluidHandlePayloadStateEvents {
-    payloadShared: () => void;
 }
 
 // @public (undocumented)
@@ -301,6 +290,17 @@ export const IFluidLoadable: keyof IProvideFluidLoadable;
 // @public @sealed
 export interface IFluidLoadable extends IProvideFluidLoadable {
     readonly handle: IFluidHandle;
+}
+
+// @alpha @legacy
+export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
+    readonly events: Listenable<IFluidHandleEvents & ILocalFluidHandleEvents>;
+    readonly payloadShareError: unknown;
+}
+
+// @alpha @legacy
+export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
+    payloadShareFailed: (error: unknown) => void;
 }
 
 // @alpha @legacy
