@@ -22,37 +22,30 @@ import {
 	fieldRealizer,
 	comparePosetElements,
 } from "../../feature-libraries/index.js";
-import {
-	normalizeFieldSchema,
-	type FieldSchema,
-	type ImplicitFieldSchema,
-} from "../schemaTypes.js";
+import type { FieldSchema } from "../schemaTypes.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
  * A collection of View information for schema, including policy.
+ * @remarks
+ * This contains everything needed to determine compatibility with a given stored schema.
  */
-export class ViewSchema {
+export class SchemaCompatibilityTester {
 	/**
 	 * Cached conversion of the view schema in the stored schema format.
 	 */
-	private readonly viewSchemaAsStored: TreeStoredSchema;
-	/**
-	 * Normalized view schema (implicitly allowed view schema types are converted to their canonical form).
-	 */
-	public readonly schema: FieldSchema;
+	public readonly viewSchemaAsStored: TreeStoredSchema;
 
 	/**
-	 * @param viewSchema - Schema for the root field of this view.
+	 * @param viewSchemaRoot - Schema for the root field.
 	 */
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		public readonly adapters: Adapters,
-		viewSchema: ImplicitFieldSchema,
+		viewSchemaRoot: FieldSchema,
 	) {
-		this.schema = normalizeFieldSchema(viewSchema);
-		this.viewSchemaAsStored = toStoredSchema(this.schema);
+		this.viewSchemaAsStored = toStoredSchema(viewSchemaRoot);
 	}
 
 	/**

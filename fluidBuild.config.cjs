@@ -368,6 +368,8 @@ module.exports = {
 				"docs/build-redirects.js",
 				"docs/download-apis.js",
 				"docs/local-api-rollup.js",
+				// Avoids MIME-type issues in the browser.
+				"docs/static/trusted-types-policy.js",
 				"docs/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
@@ -622,6 +624,9 @@ module.exports = {
 
 	releaseNotes: {
 		sections: {
+			// Note: Breaking changes should be reserved for major releases, which practically speaking means server.
+			// Client releases with breaking _legacy_ changes should be in the "legacy" section instead.
+			breaking: { heading: "🚨 Breaking Changes" },
 			feature: { heading: "✨ New Features" },
 			tree: { heading: "🌳 SharedTree DDS Changes" },
 			fix: { heading: "🐛 Bug Fixes" },

@@ -65,6 +65,7 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
+	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -481,6 +482,9 @@ describe("SharedTree", () => {
 				const node = sf.objectRecursive("test node", {
 					child: sf.optionalRecursive([() => node, sf.number]),
 				});
+				{
+					type _check = ValidateRecursiveSchema<typeof node>;
+				}
 
 				const view = tree1.viewWith(
 					new TreeViewConfiguration({

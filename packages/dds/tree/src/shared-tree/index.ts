@@ -45,13 +45,10 @@ export type {
 	SharedTreeEditBuilder,
 } from "./sharedTreeEditBuilder.js";
 
-export {
-	treeApi as Tree,
-	type TreeApi,
-	type RunTransaction,
-} from "./treeApi.js";
+export { Tree } from "./tree.js";
+export type { RunTransaction } from "./tree.js";
 
-export { TreeAlpha } from "./treeApiAlpha.js";
+export { TreeAlpha } from "./treeAlpha.js";
 
 export {
 	independentInitializedView,

@@ -183,7 +183,7 @@ async function start(): Promise<void> {
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	const lastRoll: { die1?: DieValue; die2?: DieValue } = {};
 	const presence = getPresenceViaDataObject(container.initialObjects.presence);
-	const states = buildDicePresence(presence).props;
+	const states = buildDicePresence(presence).states;
 
 	// Initialize Devtools
 	initializeDevtools({
