@@ -850,10 +850,6 @@ export namespace System_TableSchema {
 /**
  * Contains types and factories for creating schema to represent dynamic tabular data.
  *
- * @privateRemarks
- * The below examples are backed by tests in `tableSchema.spec.ts`.
- * Those tests and these examples should be kept in-sync to ensure that the examples are correct.
- *
  * @example Using default Column and Row schema
  *
  * ```typescript
@@ -912,6 +908,10 @@ export namespace System_TableSchema {
  * 	rows: [],
  * });
  * ```
+ *
+ * @privateRemarks
+ * The above examples are backed by tests in `tableSchema.spec.ts`.
+ * Those tests and these examples should be kept in-sync to ensure that the examples are correct.
  *
  * @internal
  */
