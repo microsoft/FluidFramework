@@ -2,7 +2,7 @@
 "@fluidframework/tree": minor
 "__section": fix
 ---
-Fix issue where local changes were not sent correctly
+Issue where local changes were not sent correctly has been fixed
 
 Fix a bug where local changes were not correctly sent to peers.
 This could lead to a permanent loss of consistency and document corruption.

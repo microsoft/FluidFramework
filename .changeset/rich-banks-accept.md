@@ -4,7 +4,7 @@
 "fluid-framework": minor
 "__section": breaking
 ---
-IContainer.getContainerPackageInfo removed
+IContainer.getContainerPackageInfo has been removed
 
 `IContainer.getContainerPackageInfo()` was set to be removed in release 2.40.0. To access the package name `getContainerPackageInfo()` provided, use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()`.
 

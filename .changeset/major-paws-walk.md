@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-AllowedTypes array handling updated
+AllowedTypes array handling has been updated
 
 As an optimization, how [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) arrays are processed has changed.
 Now much larger arrays can be provided without hitting:
