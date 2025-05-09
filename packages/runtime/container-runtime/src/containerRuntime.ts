@@ -3392,9 +3392,10 @@ export class ContainerRuntime
 			}),
 		};
 
+		this.stageControls = stageControls;
 		this.channelCollection.notifyStagingMode(true);
 
-		return (this.stageControls = stageControls);
+		return this.stageControls;
 	};
 
 	/**
