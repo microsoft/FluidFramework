@@ -16,6 +16,11 @@ export interface AttributionInfo {
 // @alpha @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
+// @alpha @sealed @deprecated @legacy (undocumented)
+export interface CommitStagedChangesOptionsExperimental {
+    squash?: boolean;
+}
+
 // @alpha @legacy (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
@@ -404,9 +409,7 @@ export interface OpAttributionKey {
 
 // @alpha @sealed @deprecated @legacy (undocumented)
 export interface StageControlsExperimental {
-    // (undocumented)
-    readonly commitChanges: () => void;
-    // (undocumented)
+    readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
     readonly discardChanges: () => void;
 }
 
