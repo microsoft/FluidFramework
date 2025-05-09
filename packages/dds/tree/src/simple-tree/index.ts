@@ -122,6 +122,7 @@ export {
 	type TreeSchema,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
+	schemaStatics,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
