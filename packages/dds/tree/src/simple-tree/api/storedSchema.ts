@@ -14,10 +14,10 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
-import type { ImplicitFieldSchema } from "../schemaTypes.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
-import { ViewSchema } from "./view.js";
+import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable, but unspecified format.
@@ -100,7 +100,11 @@ export function comparePersistedSchema(
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
 	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
-	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);
+	const viewSchema = new SchemaCompatibilityTester(
+		defaultSchemaPolicy,
+		{},
+		normalizeFieldSchema(view),
+	);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);
 }
 
@@ -110,7 +114,7 @@ export function comparePersistedSchema(
  */
 export function comparePersistedSchemaInternal(
 	stored: TreeStoredSchema,
-	viewSchema: ViewSchema,
+	viewSchema: SchemaCompatibilityTester,
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
 	return {
