@@ -52,11 +52,13 @@ const tableSchemaFactorySubScope = "table";
 export namespace System_TableSchema {
 	/**
 	 * Default type used for column and row "props" fields.
+	 * @privateRemarks
+	 * Longer term, it would be better to simply omit "props" altogether by default.
+	 * For now, this ensures that the user doesn't have to specify a "props" entry when initializing column/row nodes
+	 * and ensures that they cannot set anything that might conflict with future evolutions of the schema.
 	 * @system @internal
 	 */
-	export type DefaultPropsType = ReturnType<
-		typeof SchemaFactory.optional<typeof SchemaFactory.null>
-	>;
+	export type DefaultPropsType = ReturnType<typeof SchemaFactory.optional<[]>>;
 
 	/**
 	 * A base interface for factory input options which include an schema factory.
