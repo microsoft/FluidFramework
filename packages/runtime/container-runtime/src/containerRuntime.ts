@@ -2618,12 +2618,7 @@ export class ContainerRuntime
 			this._idCompressor === undefined &&
 			this.sessionSchema.idCompressorMode !== undefined
 		) {
-			try {
-				this._idCompressor = this.createIdCompressorFn();
-			} catch (error) {
-				this.mc.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
-				throw error;
-			}
+			this._idCompressor = this.createIdCompressorFn();
 			// Finalize any ranges we received while the compressor was turned off.
 			const ops = this.pendingIdCompressorOps;
 			this.pendingIdCompressorOps = [];
