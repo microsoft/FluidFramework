@@ -23,7 +23,6 @@ import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable, but unspecified format.
  *
  * @param schema - The schema to dump.
- * @param writeVersion - The schema version to use when encoding the schema.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
