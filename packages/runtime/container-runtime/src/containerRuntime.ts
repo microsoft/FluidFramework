@@ -1076,7 +1076,7 @@ export class ContainerRuntime
 			logger.sendTelemetryEvent({
 				eventName: "ContainerRuntime:MinVersionForCollabWarning",
 				category: "generic",
-				msg: warnMsg,
+				message: warnMsg,
 			});
 		}
 
