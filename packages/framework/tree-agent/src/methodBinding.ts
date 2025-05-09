@@ -9,6 +9,7 @@ import type { z } from "zod";
 
 /**
  * A utility type that extracts the method keys from a given type.
+ * @alpha
  */
 export type MethodKeys<T> = {
 	[K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
@@ -16,11 +17,13 @@ export type MethodKeys<T> = {
 
 /**
  * A type that represents a constructor function.
+ * @alpha
  */
 export type Ctor<T = any> = new (...args: any[]) => T;
 
 /**
  * A type that represents an object schema class.
+ * @alpha
  */
 export type NodeSchema = TreeNodeSchema<string, NodeKind.Object>;
 
@@ -35,11 +38,13 @@ export function getExposedMethods(schemaClass: NodeSchema): Record<string, Funct
 
 /**
  * A type that represents a function argument.
+ * @alpha
  */
 export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string, type: T];
 
 /**
  * A function definition interface that describes the structure of a function.
+ * @alpha
  */
 export interface FunctionDef<
 	Args extends readonly Arg[],
@@ -70,6 +75,7 @@ export class FunctionWrapper
 
 /**
  * A utility type that extracts the argument types from a function definition.
+ * @alpha
  */
 export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg]
 	? [Single[1]]
@@ -79,6 +85,7 @@ export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Sing
 
 /**
  * A utility function to build a function definition.
+ * @alpha
  */
 export function buildFunc<
 	const Return extends z.ZodTypeAny,
@@ -98,6 +105,7 @@ export function buildFunc<
 
 /**
  * A utility type that infers the return type of a function definition.
+ * @alpha
  */
 export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest>
 	? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>>
@@ -105,6 +113,7 @@ export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Res
 
 /**
  * An interface for exposing methods of schema classes to an agent.
+ * @alpha
  */
 export interface ExposedMethods {
 	expose<
@@ -116,11 +125,13 @@ export interface ExposedMethods {
 
 /**
  * A symbol used to expose methods to the LLM.
+ * @alpha
  */
 export const exposeMethodsSymbol: unique symbol = Symbol("run");
 
 /**
  * An interface for exposing schema class methods to the LLM.
+ * @alpha
  */
 export interface IExposedMethods {
 	[exposeMethodsSymbol](methods: ExposedMethods): void;
