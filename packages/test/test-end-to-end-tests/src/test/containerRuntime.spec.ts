@@ -285,7 +285,88 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 	}
 });
 
-describeCompat("minVersionForCollab", "FullCompat", (getTestObjectProvider, apis) => {
+describeCompat(
+	"minVersionForCollab (FullCompat)",
+	"FullCompat",
+	(getTestObjectProvider, apis) => {
+		let provider: ITestObjectProvider;
+		let logger: MockLogger;
+
+		beforeEach("getTestObjectProvider", async () => {
+			provider = getTestObjectProvider();
+			logger = new MockLogger();
+		});
+
+		/**
+		 * This test is to validate that we properly send a telemetry event when
+		 * we detect that a client tries to connect to a document that has a
+		 * minVersionForCollab that is greater than that clients's runtime version.
+		 *
+		 *
+		 * TODO: This test should be unskipped after the next release. We need to wait
+		 * because we need two different runtime versions that both have the
+		 * minVersionForCollab warning logic.
+		 */
+		it.skip("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
+			const releaseMinVersionForCollabWarningAdded = "2.40.0";
+			if (
+				apis.containerRuntimeForLoading === undefined ||
+				semverGte(
+					releaseMinVersionForCollabWarningAdded,
+					apis.containerRuntimeForLoading.version,
+				) ||
+				apis.containerRuntime.version !== pkgVersion
+			) {
+				// We are testing a very specific combination - Creating a document with a `minVersionForCollab`
+				// that's greater than the loading client's runtime version. Additionally, since clients need to
+				// self-report that their runtime version is too low, only clients that have the warning logic
+				// can do this. Therefore, we need to also check that the loading client's runtime version is
+				// greater than or equal to `releaseMinVersionForCollabWarningAdded`. If these conditions are not
+				// met, we skip the test.
+				this.skip();
+			}
+
+			const options: ITestContainerConfig = {
+				loaderProps: {
+					logger,
+				},
+			};
+			const optionsWithMinVersionForCollab: ITestContainerConfig = {
+				...options,
+				minVersionForCollab: pkgVersion,
+			};
+
+			await provider.makeTestContainer(optionsWithMinVersionForCollab);
+			await provider.loadTestContainer(options);
+
+			logger.assertMatchAny(
+				[
+					{
+						eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						minVersionForCollab: pkgVersion,
+					},
+				],
+				"ContainerLoadStats should have minVersionForCollab",
+				false,
+				false, // Don't clear the logger yet
+			);
+
+			logger.assertMatchAny(
+				[
+					{
+						eventName: "fluid:telemetry:ContainerRuntime:MinVersionForCollabWarning",
+						category: "generic",
+						msg: `ContainerRuntime: minVersionForCollab (${pkgVersion}) is greater than the existing document's runtime version (${apis.containerRuntimeForLoading?.version}).`,
+					},
+				],
+				"MinVersionForCollabWarning should be logged",
+			);
+		});
+	},
+);
+
+describeCompat("minVersionForCollab (NoCompat)", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let logger: MockLogger;
 
@@ -295,64 +376,69 @@ describeCompat("minVersionForCollab", "FullCompat", (getTestObjectProvider, apis
 	});
 
 	/**
-	 * This test is to validate that we properly send a telemetry event when
-	 * we detect that a client tries to connect to a document that has a
-	 * minVersionForCollab that is greater than that clients's runtime version.
+	 * This tests that minVersionForCollab is updated properly when a client with a higher
+	 * minVersionForCollab loads the document. If it's lower than the current minVersionForCollab,
+	 * then we will continue to use the existing minVersionForCollab.
 	 */
-	it("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
-		const releaseMinVersionForCollabWarningAdded = "2.40.0";
-		if (
-			apis.containerRuntimeForLoading === undefined ||
-			semverGte(
-				releaseMinVersionForCollabWarningAdded,
-				apis.containerRuntimeForLoading.version,
-			) ||
-			apis.containerRuntime.version !== pkgVersion
-		) {
-			// We are testing a very specific combination - Creating a document with a `minVersionForCollab`
-			// that's greater than the loading client's runtime version. Additionally, since clients need to
-			// self-report that their runtime version is too low, only clients that have the warning logic
-			// can do this. Therefore, we need to also check that the loading client's runtime version is
-			// greater than or equal to `releaseMinVersionForCollabWarningAdded`. If these conditions are not
-			// met, we skip the test.
-			this.skip();
-		}
-
-		const options: ITestContainerConfig = {
+	it("minVersionForCollab is updated properly", async function () {
+		const options1: ITestContainerConfig = {
 			loaderProps: {
 				logger,
 			},
+			minVersionForCollab: "2.0.0",
 		};
-		const optionsWithMinVersionForCollab: ITestContainerConfig = {
-			...options,
-			minVersionForCollab: pkgVersion,
+		await provider.makeTestContainer(options1);
+		logger.assertMatchAny([
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+				category: "generic",
+				minVersionForCollab: "2.0.0",
+			},
+		]);
+
+		const options2: ITestContainerConfig = {
+			loaderProps: {
+				logger,
+			},
+			minVersionForCollab: "1.0.0",
 		};
+		await provider.loadTestContainer(options2);
+		logger.assertMatchAny([
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+				category: "generic",
+				minVersionForCollab: "2.0.0",
+			},
+		]);
 
-		await provider.makeTestContainer(optionsWithMinVersionForCollab);
-		await provider.loadTestContainer(options);
+		const options3: ITestContainerConfig = {
+			loaderProps: {
+				logger,
+			},
+			minVersionForCollab: "2.40.0",
+		};
+		await provider.loadTestContainer(options3);
+		logger.assertMatchAny([
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+				category: "generic",
+				minVersionForCollab: "2.40.0",
+			},
+		]);
 
-		logger.assertMatchAny(
-			[
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
-					category: "generic",
-					minVersionForCollab: pkgVersion,
-				},
-			],
-			"ContainerLoadStats should have minVersionForCollab",
-			false,
-			false, // Don't clear the logger yet
-		);
-
-		logger.assertMatchAny(
-			[
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:MinVersionForCollabWarning",
-					category: "generic",
-					msg: `ContainerRuntime: minVersionForCollab (${pkgVersion}) is greater than the existing document's runtime version (${apis.containerRuntimeForLoading?.version}).`,
-				},
-			],
-			"MinVersionForCollabWarning should be logged",
-		);
+		const options4: ITestContainerConfig = {
+			loaderProps: {
+				logger,
+			},
+			minVersionForCollab: "2.30.0",
+		};
+		await provider.loadTestContainer(options3);
+		logger.assertMatchAny([
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+				category: "generic",
+				minVersionForCollab: "2.40.0",
+			},
+		]);
 	});
 });
