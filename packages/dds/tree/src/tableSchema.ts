@@ -34,6 +34,9 @@ import {
 // - Record-like type parameters / input parameters?
 // - Omit `props` properties from Row and Column schemas when not provided?
 
+// Longer-term work:
+// - Add constraint APIs to make it possible to avoid situations that could yield "orphaned" cells.
+
 /**
  * The sub-scope applied to user-provided {@link SchemaFactory}s by table schema factories.
  */
