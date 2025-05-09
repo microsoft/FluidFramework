@@ -635,7 +635,9 @@ const schemaCodec = makeSchemaCodec(
 	SchemaCodecVersion.v1,
 );
 
-// We have to divide the length of the return value from `Object.keys` to get the number of enum entries.
+// If you are adding a new schema format, consider changing the encoding format used in the above codec, given
+// that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
+// Note we have to divide the length of the return value from `Object.keys` to get the number of enum entries.
 assert(
 	Object.keys(SchemaCodecVersion).length / 2 === 1,
 	"This code only handles a single schema codec version.",
