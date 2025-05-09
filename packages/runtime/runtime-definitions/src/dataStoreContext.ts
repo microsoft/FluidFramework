@@ -345,11 +345,11 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
  */
 export interface IFluidDataStorePolicies {
 	/**
-	 * When set to true, data stores will be set to readonly while in staging mode.
+	 * When set to true, data stores will appear to be readonly while in staging mode.
 	 *
 	 * @remarks
 	 * This policy is useful for data stores that do not support staging mode, such as those using consensus DDS.
-	 * It ensures that the data store remains readonly during staging mode to prevent unsupported operations.
+	 * It ensures that the data store appears readonly during staging mode to discourage unsupported operations.
 	 */
 	readonly readonlyInStagingMode: boolean;
 }
