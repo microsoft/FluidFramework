@@ -302,13 +302,14 @@ function trackCollaborationSession(
 	tenantId: string,
 	documentId: string,
 	connectedClients: ISignalClient[],
+	connectedTimestamp: number,
 	{ collaborationSessionTracker }: INexusLambdaDependencies,
 ): void {
 	// Track the collaboration session for this connection
 	if (collaborationSessionTracker) {
 		const sessionClient: ICollaborationSessionClient = {
 			clientId,
-			joinedTime: clientDetails.timestamp ?? Date.now(),
+			joinedTime: connectedTimestamp,
 			isWriteClient,
 			isSummarizerClient: isSummarizer(clientDetails.details),
 		};
@@ -738,6 +739,7 @@ export async function connectDocument(
 			tenantId,
 			documentId,
 			clients,
+			connectedTimestamp,
 			lambdaDependencies,
 		);
 

@@ -80,7 +80,8 @@
 	"typeValidation": {
 		"broken": {
 			"Class_Lumber": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"Enum_BaseTelemetryProperties": {
 				"backCompat": false
