@@ -856,7 +856,7 @@ export namespace System_TableSchema {
  *
  * Tables created using these APIs are...
  *
- * - sparse, meaning that they only store the cells that are actually present in the table.
+ * - sparse, meaning that cells may be omitted, and new rows are empty by default.
  *
  * - dynamic, meaning that their structure can be modified at runtime.
  * Columns and rows can be inserted, removed, modified, and reordered.
