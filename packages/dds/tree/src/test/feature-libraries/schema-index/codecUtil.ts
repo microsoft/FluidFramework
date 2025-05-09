@@ -4,7 +4,7 @@
  */
 
 // eslint-disable-next-line import/no-internal-modules
-import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
+import { makeSchemaCodecs, type SchemaCodecVersion } from "../../../feature-libraries/schema-index/index.js";
 import { ajvValidator } from "../../codec/index.js";
 
 /*
@@ -12,4 +12,4 @@ import { ajvValidator } from "../../codec/index.js";
  */
 export const supportedSchemaFormats = Array.from(
 	makeSchemaCodecs({ jsonValidator: ajvValidator }).getSupportedFormats(),
-).filter((format) => format !== undefined) as number[];
+).filter((format) => format !== undefined) as SchemaCodecVersion[];
