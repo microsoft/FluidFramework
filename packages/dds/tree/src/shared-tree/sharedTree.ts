@@ -46,6 +46,7 @@ import {
 	DetachedFieldIndexSummarizer,
 	FieldKinds,
 	ForestSummarizer,
+	SchemaCodecVersion,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
 	buildChunkedForest,
@@ -164,7 +165,7 @@ export interface ITreePrivate extends ITreeInternal {
  */
 interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 	forest: number;
-	schema: number;
+	schema: SchemaCodecVersion;
 	detachedFieldIndex: number;
 	fieldBatch: number;
 }
@@ -227,9 +228,14 @@ export class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, Shar
 			idCompressor,
 			options,
 		);
-		const schemaSummarizer = new SchemaSummarizer(schema, options, {
-			getCurrentSeq: lastSequenceNumber,
-		});
+		const schemaCodec = makeSchemaCodec(options, codecVersions.schema);
+		const schemaSummarizer = new SchemaSummarizer(
+			schema,
+			{
+				getCurrentSeq: lastSequenceNumber,
+			},
+			schemaCodec,
+		);
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
 		const encoderContext = {
@@ -474,7 +480,7 @@ export function persistedToSimpleSchema(
 	persisted: JsonCompatible,
 	options: ICodecOptions,
 ): SimpleTreeSchema {
-	const schemaCodec = makeSchemaCodec(options);
+	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
 	return exportSimpleSchema(stored);
 }
