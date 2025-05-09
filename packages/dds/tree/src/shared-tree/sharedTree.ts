@@ -195,6 +195,9 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	return versions;
 }
 
+/**
+ * The type SharedTree's kernel's view must implement so what when its merged with the underling SharedObject's API it fully implements the required tree API surface ({@link ITreePrivate }).
+ */
 export type SharedTreeKernelView = Omit<ITreePrivate, keyof (IChannelView & IFluidLoadable)>;
 
 /**

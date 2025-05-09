@@ -121,11 +121,6 @@ class SharedObjectFromKernel<
 
 	readonly #kernelArgs: KernelArgs;
 
-	/**
-	 * @param id - String identifier.
-	 * @param runtime - Data store runtime.
-	 * @param attributes - The attributes for the map.
-	 */
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
