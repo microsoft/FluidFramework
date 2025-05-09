@@ -122,51 +122,55 @@ export async function performFuzzActionsAsync<
 	forceGlobalSeed?: boolean,
 ): Promise<TState> {
 	const operations: TOperation[] = [];
+	let state: TState = initialState;
+
 	const reducer =
 		typeof reducerOrMap === "function"
 			? reducerOrMap
 			: combineReducersAsync<TOperation, TState>(reducerOrMap);
-	const applyOperation = async (reduceState: TState, op: RealOperation<TOperation>) =>
-		reducer(reduceState, op);
+	const applyOperation = async (op: RealOperation<TOperation>) =>
+		(await reducer(state, op)) ?? state;
 
-	const generateSeed =
-		forceGlobalSeed === true
-			? () => undefined
-			: () => initialState.random.integer(0, Number.MAX_SAFE_INTEGER);
+	const runGenerator = async (): Promise<RealOperation<TOperation> | typeof done> => {
+		const seed =
+			forceGlobalSeed === true
+				? undefined
+				: initialState.random.integer(0, Number.MAX_SAFE_INTEGER);
 
-	const runGenerator = async (
-		genState: TState,
-	): Promise<RealOperation<TOperation> | typeof done> => {
-		const seed = generateSeed();
-		const seededState: TState =
-			seed === undefined
-				? genState
-				: {
-						...genState,
-						random: makeRandom(seed),
-					};
-		const op = await generator(seededState);
+		if (seed !== undefined) {
+			state = {
+				...state,
+				random: makeRandom(seed),
+			};
+		}
+		const op: RealOperation<TOperation> | typeof done = await generator(state);
 		if (op === done) {
 			return op;
 		}
+		// this is for the replay case where the generator returns a pre-generated op
+		// so it could already be seeded, and we want the state to reflect that.
+		if (op.seed !== undefined) {
+			state = {
+				...state,
+				random: makeRandom(op.seed),
+			};
+			return op;
+		}
+
 		return { seed, ...op };
 	};
 
-	let state = initialState;
 	try {
 		for (
-			let operation = await runGenerator(state);
+			let operation = await runGenerator();
 			operation !== done;
-			operation = await runGenerator(state)
+			operation = await runGenerator()
 		) {
 			operations.push(operation);
 			if (operation.debug === true) {
 				debugger;
 			}
-			if (operation.seed !== undefined) {
-				state = { ...state, random: makeRandom(operation.seed) };
-			}
-			state = (await applyOperation(state, operation)) ?? state;
+			state = (await applyOperation(operation)) ?? state;
 		}
 	} catch (err) {
 		if (saveInfo.saveOnFailure !== false) {
