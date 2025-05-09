@@ -95,7 +95,12 @@ import type {
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
+import {
+	assertEqual,
+	Change,
+	normalizeChangeset,
+	removeAliases,
+} from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
@@ -1492,104 +1497,6 @@ describe("ModularChangeFamily", () => {
 
 function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
 	return chunkTree(cursor, { policy: defaultChunkPolicy, idCompressor: testIdCompressor });
-}
-
-function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
-	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
-	const cursor = cursorForJsonableTreeField(jsonable);
-	const clone = chunkFieldSingle(cursor, {
-		policy: defaultChunkPolicy,
-		idCompressor: testIdCompressor,
-	});
-	return clone;
-}
-
-function normalizeChangeset(change: ModularChangeset): ModularChangeset {
-	const idAllocator = idAllocatorFromMaxId();
-
-	const idRemappings: ChangeAtomIdMap<NodeId> = new Map();
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
-	const crossFieldKeyTable: CrossFieldKeyTable = newCrossFieldRangeTable();
-
-	const remapNodeId = (nodeId: NodeId): NodeId => {
-		const newId = tryGetFromNestedMap(idRemappings, nodeId.revision, nodeId.localId);
-		assert(newId !== undefined, "Unknown node ID");
-		return newId;
-	};
-
-	const remapFieldId = (fieldId: FieldId): FieldId => {
-		return fieldId.nodeId === undefined
-			? fieldId
-			: { ...fieldId, nodeId: remapNodeId(fieldId.nodeId) };
-	};
-
-	const normalizeNodeChanges = (nodeId: NodeId): NodeId => {
-		const nodeChangeset = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
-		assert(nodeChangeset !== undefined, "Unknown node ID");
-
-		const normalizedNodeChangeset: NodeChangeset = { ...nodeChangeset };
-		if (normalizedNodeChangeset.fieldChanges !== undefined) {
-			normalizedNodeChangeset.fieldChanges = normalizeFieldChanges(
-				normalizedNodeChangeset.fieldChanges,
-			);
-		}
-
-		const newId: NodeId = { localId: brand(idAllocator.allocate()) };
-		setInNestedMap(idRemappings, nodeId.revision, nodeId.localId, newId);
-		nodeChanges.set([newId.revision, newId.localId], normalizedNodeChangeset);
-
-		const parent = change.nodeToParent.get([nodeId.revision, nodeId.localId]);
-		assert(parent !== undefined, "Every node should have a parent");
-		const newParent = remapFieldId(parent);
-		nodeToParent.set([newId.revision, newId.localId], newParent);
-
-		return newId;
-	};
-
-	function normalizeFieldChanges(fields: FieldChangeMap): FieldChangeMap {
-		const normalizedFieldChanges: FieldChangeMap = new Map();
-
-		for (const [field, fieldChange] of fields) {
-			const changeHandler = getFieldKind(fieldKinds, fieldChange.fieldKind).changeHandler;
-
-			// TODO: This relies on field kinds calling prune child on all changes,
-			// while pruning is supposed to be an optimization which could be skipped.
-			normalizedFieldChanges.set(
-				field,
-				changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges),
-			);
-
-			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
-			for (const { key, count } of crossFieldKeys) {
-				const prevId = change.crossFieldKeys.getFirst(key, count)?.value;
-				assert(prevId !== undefined, "Should be an entry for each cross-field key");
-				crossFieldKeyTable.set(key, count, remapFieldId(prevId));
-			}
-		}
-
-		return normalizedFieldChanges;
-	}
-
-	const fieldChanges = normalizeFieldChanges(change.fieldChanges);
-	assert(nodeChanges.size === change.nodeChanges.size);
-
-	const normal: Mutable<ModularChangeset> = {
-		...change,
-		nodeChanges,
-		fieldChanges,
-		nodeToParent,
-		crossFieldKeys: crossFieldKeyTable,
-	};
-
-	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
-	if (change.builds !== undefined) {
-		normal.builds = brand(change.builds.mapValues(deepCloneChunkedTree));
-	}
-	if (change.refreshers !== undefined) {
-		normal.refreshers = brand(change.refreshers.mapValues(deepCloneChunkedTree));
-	}
-	return normal;
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {

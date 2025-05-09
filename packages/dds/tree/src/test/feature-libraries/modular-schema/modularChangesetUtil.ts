@@ -7,6 +7,7 @@ import {
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
 	type ChangeAtomId,
+	type ChangeAtomIdMap,
 	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
@@ -17,13 +18,19 @@ import {
 	type RevisionInfo,
 	type RevisionMetadataSource,
 } from "../../../core/index.js";
-import type {
-	ComposeNodeManager,
-	FieldChangeHandler,
-	FieldChangeMap,
-	ModularChangeFamily,
-	ModularChangeset,
-	NodeId,
+import {
+	chunkFieldSingle,
+	cursorForJsonableTreeField,
+	defaultChunkPolicy,
+	fieldKinds,
+	jsonableTreeFromFieldCursor,
+	type ComposeNodeManager,
+	type FieldChangeHandler,
+	type FieldChangeMap,
+	type ModularChangeFamily,
+	type ModularChangeset,
+	type NodeId,
+	type TreeChunk,
 } from "../../../feature-libraries/index.js";
 import {
 	newCrossFieldRangeTable,
@@ -44,10 +51,13 @@ import {
 	brand,
 	idAllocatorFromMaxId,
 	newTupleBTree,
+	setInNestedMap,
+	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import {
 	contextualizeFieldChangeset,
 	getChangeHandler,
+	getFieldKind,
 	getParentFieldId,
 	newRootTable,
 	normalizeFieldId,
@@ -58,6 +68,7 @@ import {
 import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+import { testIdCompressor } from "../../utils.js";
 
 export const Change = {
 	build,
@@ -98,18 +109,134 @@ export function assertModularChangesetsEqual(a: ModularChangeset, b: ModularChan
 
 	// Removing aliases ensures that we don't consider the changesets different if they only differ in their aliases.
 	// It also means that we risk treating some changesets that are the same (once you consider aliases) as different.
-	const aNormalized = { ...removeAliases(normalizeCrossFieldKeys(a)), maxId };
-	const bNormalized = { ...removeAliases(normalizeCrossFieldKeys(b)), maxId };
+	const aNormalized = { ...normalizeChangeset(a), maxId };
+	const bNormalized = { ...normalizeChangeset(b), maxId };
 
 	assertEqual(aNormalized, bNormalized);
 }
 
-function normalizeCrossFieldKeys(change: ModularChangeset): ModularChangeset {
+export function normalizeChangeset(change: ModularChangeset): ModularChangeset {
+	return normalizeRangeMaps(normalizeNodeIds(removeAliases(change)));
+}
+
+function normalizeNodeIds(change: ModularChangeset): ModularChangeset {
+	const idAllocator = idAllocatorFromMaxId();
+
+	const idRemappings: ChangeAtomIdMap<NodeId> = new Map();
+	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
+	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
+	const crossFieldKeyTable: CrossFieldKeyTable = newCrossFieldRangeTable();
+
+	const remapNodeId = (nodeId: NodeId): NodeId => {
+		const newId = tryGetFromNestedMap(idRemappings, nodeId.revision, nodeId.localId);
+		assert(newId !== undefined, "Unknown node ID");
+		return newId;
+	};
+
+	const remapFieldId = (fieldId: FieldId): FieldId => {
+		return fieldId.nodeId === undefined
+			? fieldId
+			: { ...fieldId, nodeId: remapNodeId(fieldId.nodeId) };
+	};
+
+	const normalizeNodeChanges = (nodeId: NodeId): NodeId => {
+		const nodeChangeset = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
+		assert(nodeChangeset !== undefined, "Unknown node ID");
+
+		const newId: NodeId = { localId: brand(idAllocator.allocate()) };
+		setInNestedMap(idRemappings, nodeId.revision, nodeId.localId, newId);
+
+		const parent = change.nodeToParent.get([nodeId.revision, nodeId.localId]);
+		assert(parent !== undefined, "Every node should have a parent");
+		const newParent = remapFieldId(parent);
+		nodeToParent.set([newId.revision, newId.localId], newParent);
+
+		const normalizedNodeChangeset: NodeChangeset = { ...nodeChangeset };
+		if (normalizedNodeChangeset.fieldChanges !== undefined) {
+			normalizedNodeChangeset.fieldChanges = normalizeNodeIdsInFields(
+				normalizedNodeChangeset.fieldChanges,
+			);
+		}
+
+		nodeChanges.set([newId.revision, newId.localId], normalizedNodeChangeset);
+
+		return newId;
+	};
+
+	function normalizeNodeIdsInFields(fields: FieldChangeMap): FieldChangeMap {
+		const normalizedFieldChanges: FieldChangeMap = new Map();
+
+		for (const [field, fieldChange] of fields) {
+			const changeHandler = getFieldKind(fieldKinds, fieldChange.fieldKind).changeHandler;
+
+			// TODO: This relies on field kinds calling prune child on all changes,
+			// while pruning is supposed to be an optimization which could be skipped.
+			normalizedFieldChanges.set(
+				field,
+				changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges),
+			);
+
+			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
+			for (const { key, count } of crossFieldKeys) {
+				const prevId = change.crossFieldKeys.getFirst(key, count)?.value;
+				assert(prevId !== undefined, "Should be an entry for each cross-field key");
+				crossFieldKeyTable.set(key, count, remapFieldId(prevId));
+			}
+		}
+
+		return normalizedFieldChanges;
+	}
+
+	// TODO: Normalize IDs for detached roots
+	const fieldChanges = normalizeNodeIdsInFields(change.fieldChanges);
+	assert(nodeChanges.size + change.rootNodes.nodeChanges.size === change.nodeChanges.size);
+
+	const normal: Mutable<ModularChangeset> = {
+		...change,
+		nodeChanges,
+		fieldChanges,
+		nodeToParent,
+		crossFieldKeys: crossFieldKeyTable,
+	};
+
+	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
+	if (change.builds !== undefined) {
+		normal.builds = brand(change.builds.mapValues(deepCloneChunkedTree));
+	}
+	if (change.refreshers !== undefined) {
+		normal.refreshers = brand(change.refreshers.mapValues(deepCloneChunkedTree));
+	}
+	return normal;
+}
+
+function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
+	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
+	const cursor = cursorForJsonableTreeField(jsonable);
+	const clone = chunkFieldSingle(cursor, {
+		policy: defaultChunkPolicy,
+		idCompressor: testIdCompressor,
+	});
+	return clone;
+}
+
+function normalizeRangeMaps(change: ModularChangeset): ModularChangeset {
 	const normalized = { ...change };
 	normalized.crossFieldKeys = normalizeRangeMap(
-		normalized.crossFieldKeys,
+		change.crossFieldKeys,
 		areEqualCrossFieldKeys,
 		areEqualFieldIds,
+	);
+
+	normalized.rootNodes.oldToNewId = normalizeRangeMap(
+		change.rootNodes.oldToNewId,
+		areEqualChangeAtomIds,
+		areEqualChangeAtomIds,
+	);
+
+	normalized.rootNodes.newToOldId = normalizeRangeMap(
+		change.rootNodes.newToOldId,
+		areEqualChangeAtomIds,
+		areEqualChangeAtomIds,
 	);
 
 	return normalized;

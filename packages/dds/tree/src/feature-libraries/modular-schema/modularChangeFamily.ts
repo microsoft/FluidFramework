@@ -2622,11 +2622,14 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			baseRenameEntry.value.localId,
 		]);
 
-		// XXX: This should do a range query.
-		const newNodeId = getFromChangeAtomIdMap(
+		const nodeEntry = rangeQueryChangeAtomIdMap(
 			this.table.newChange.rootNodes.nodeChanges,
 			baseRenameEntry.value,
+			countToProcess,
 		);
+
+		countToProcess = nodeEntry.length;
+		const newNodeId = nodeEntry.value;
 
 		const detachEntry = firstDetachIdFromAttachId(
 			this.table.baseChange.rootNodes,
@@ -3514,6 +3517,25 @@ function getFromChangeAtomIdMap<T>(
 	id: ChangeAtomId,
 ): T | undefined {
 	return map.get([id.revision, id.localId]);
+}
+
+function rangeQueryChangeAtomIdMap<T>(
+	map: ChangeAtomIdBTree<T>,
+	id: ChangeAtomId,
+	count: number,
+): RangeQueryResult<ChangeAtomId, T> {
+	const pair = map.getPairOrNextHigher([id.revision, id.localId]);
+	if (pair === undefined) {
+		return { start: id, value: undefined, length: count };
+	}
+
+	const [[revision, localId], value] = pair;
+	const lengthBefore = subtractChangeAtomIds({ revision, localId }, id);
+	if (lengthBefore === 0) {
+		return { start: id, value, length: 1 };
+	}
+
+	return { start: id, value: undefined, length: Math.min(lengthBefore, count) };
 }
 
 function setInChangeAtomIdMap<T>(map: ChangeAtomIdBTree<T>, id: ChangeAtomId, value: T): void {

@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type { ChangeAtomId, RevisionTag } from "../../core/index.js";
+import { offsetChangeAtomId, type ChangeAtomId, type RevisionTag } from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
 import type {
 	ContextualizedFieldChange,
@@ -182,7 +182,15 @@ function applyMovedChanges(
 				? withNodeChange<CellMark<Detach>, Detach>(mark1, entry.value)
 				: mark1;
 
-		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager, newDetachId)];
+		return [
+			mark1WithChanges,
+			...applyMovedChanges(
+				mark2,
+				revision,
+				manager,
+				offsetChangeAtomId(newDetachId, mark.count - entry.length),
+			),
+		];
 	}
 
 	if (entry.value !== undefined) {
