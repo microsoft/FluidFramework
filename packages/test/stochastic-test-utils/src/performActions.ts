@@ -122,16 +122,12 @@ export async function performFuzzActionsAsync<
 	forceGlobalSeed?: boolean,
 ): Promise<TState> {
 	const operations: TOperation[] = [];
-	let state: TState = initialState;
 	const reducer =
 		typeof reducerOrMap === "function"
 			? reducerOrMap
 			: combineReducersAsync<TOperation, TState>(reducerOrMap);
-	const applyOperation = async (reduceState: TState, op: RealOperation<TOperation>) => {
-		const seededState: TState =
-			op.seed !== undefined ? { ...reduceState, random: makeRandom(op.seed) } : reduceState;
-		return (await reducer(seededState, op)) ?? seededState;
-	};
+	const applyOperation = async (reduceState: TState, op: RealOperation<TOperation>) =>
+		reducer(reduceState, op);
 
 	const generateSeed =
 		forceGlobalSeed === true
@@ -156,6 +152,7 @@ export async function performFuzzActionsAsync<
 		return { seed, ...op };
 	};
 
+	let state = initialState;
 	try {
 		for (
 			let operation = await runGenerator(state);
@@ -166,7 +163,10 @@ export async function performFuzzActionsAsync<
 			if (operation.debug === true) {
 				debugger;
 			}
-			state = await applyOperation(state, operation);
+			if (operation.seed !== undefined) {
+				state = { ...state, random: makeRandom(operation.seed) };
+			}
+			state = (await applyOperation(state, operation)) ?? state;
 		}
 	} catch (err) {
 		if (saveInfo.saveOnFailure !== false) {

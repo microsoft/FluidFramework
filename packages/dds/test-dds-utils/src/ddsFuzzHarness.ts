@@ -535,7 +535,7 @@ export interface DDSFuzzSuiteOptions {
 	 *
 	 * @deprecated This is option is for back-compat only. Once all usages are removed, it should also be removed.
 	 */
-	forceGlobalSeed?: boolean;
+	forceGlobalSeed?: true;
 }
 
 /**
@@ -1638,7 +1638,7 @@ export function createSuite<
 	if (options.forceGlobalSeed !== undefined && options.skip.size === 0) {
 		// if this error is getting in your way while debugging just comment it out, but re-add before you checkin
 		throw new Error(
-			"Yay. You fixed all the skipped tests. Remove forceGlobalSeed from the options as it is no longer needed, and removing it wil lead to more consistent results going forward." +
+			"Yay. You fixed all the skipped tests. Remove forceGlobalSeed from the options as it is no longer needed, and removing it will lead to more consistent results going forward." +
 				"Please also do a search on the repo for forceGlobalSeed, and if they have all been removed, please remove the option, and its related code!",
 		);
 	}
