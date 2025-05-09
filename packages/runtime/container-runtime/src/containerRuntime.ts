@@ -1063,8 +1063,8 @@ export class ContainerRuntime
 		// We check the document's metadata to see if there is a minVersionForCollab. If it's not an existing document or
 		// if the document is older, then it won't have one. If it does have a minVersionForCollab, we check if it's greater
 		// than this client's runtime version. If so, we log a telemetry event to warn the customer that the client is outdated.
-		// Note: We only send a warning because we already ensured that this client **can** understand the existing document's
-		// schema (part of the `DocumentsSchemaController` constructor flow above). However, we still want to issue a warning to
+		// Note: We only send a warning because we already found that this client **can** understand the existing document's
+		// schema (the `DocumentsSchemaController` constructor throws otherwise). However, we still want to issue a warning to
 		// the customer since it may be a sign that the customer is not properly waiting for saturation before updating their
 		// `minVersionForCollab` value, which could cause disruptions to users in the future.
 		const existingMinVersionForCollab = metadata?.documentSchema?.minVersionForCollab;
