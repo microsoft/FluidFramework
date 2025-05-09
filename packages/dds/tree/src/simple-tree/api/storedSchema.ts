@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ICodecOptions } from "../../codec/index.js";
+import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
 import type { TreeStoredSchema } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
@@ -11,24 +11,26 @@ import {
 	makeSchemaCodec,
 	SchemaCodecVersion,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../../feature-libraries/schema-index/index.js";
+import {
+	clientVersionToSchemaVersion,
+	type Format,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
-import { toStoredSchema } from "../toStoredSchema.js";
+import { simpleToStoredSchema } from "../toStoredSchema.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+import type { SimpleTreeSchema } from "../simpleSchema.js";
 
 /**
- * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable, but unspecified format.
+ * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.
  *
  * @param schema - The schema to dump.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
- *
- * This format may change across major versions of this package: such changes are considered breaking.
- * Beyond that, no compatibility guarantee is provided for this format: it should never be relied upon to load data, it should only be used for comparing outputs from this function.
+ * This format is also compatible with {@link ViewContent.schema}, {@link comparePersistedSchema} and {@link persistedToSimpleSchema}.
  *
  * This only includes the "persisted" subset of schema information, which means the portion which gets included in documents.
  * It thus uses "persisted" keys, see {@link FieldProps.key}.
@@ -41,7 +43,7 @@ import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
  * An application could use this API to generate a `schema.json` file when it first releases,
  * then test that the schema is sill compatible with documents from that version with a test like :
  * ```typescript
- * assert.deepEqual(extractPersistedSchema(MySchema), require("./schema.json"));
+ * assert.deepEqual(extractPersistedSchema(MySchema, FluidClientVersion.v2_0), require("./schema.json"));
  * ```
  *
  * @privateRemarks
@@ -51,9 +53,13 @@ import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
  * Public API surface uses "persisted" terminology while internally we use "stored".
  * @alpha
  */
-export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible {
-	const stored = toStoredSchema(schema);
-	return encodeTreeSchema(stored, SchemaCodecVersion.v1);
+export function extractPersistedSchema(
+	schema: SimpleTreeSchema,
+	oldestCompatibleClient: FluidClientVersion,
+): JsonCompatible {
+	const stored = simpleToStoredSchema(schema);
+	const writeVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
+	return encodeTreeSchema(stored, writeVersion);
 }
 
 /**

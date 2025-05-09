@@ -157,8 +157,8 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 					oldestCompatibleClient: FluidClientVersion.v2_3,
 					idCompressor,
 				}),
-				// TODO: Allow for a specific schema version to be passed in.
-				schema: extractPersistedSchema(List),
+
+				schema: extractPersistedSchema(config, FluidClientVersion.v2_3),
 				idCompressor: idCompressor.serialize(true),
 			};
 			return file as JsonCompatible;

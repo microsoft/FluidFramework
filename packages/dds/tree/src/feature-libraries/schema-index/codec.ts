@@ -5,6 +5,7 @@
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
+	type FluidClientVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -30,6 +31,18 @@ import { Format as FormatV1 } from "./formatV1.js";
  */
 export enum SchemaCodecVersion {
 	v1 = 1,
+}
+
+/**
+ * Convert a FluidClientVersion to a SchemaCodecVersion.
+ * @param clientVersion - The FluidClientVersion to convert.
+ * @returns The SchemaCodecVersion that corresponds to the provided FluidClientVersion.
+ */
+export function clientVersionToSchemaVersion(
+	clientVersion: FluidClientVersion,
+): SchemaCodecVersion {
+	// Only one version of the schema codec is currently supported.
+	return SchemaCodecVersion.v1;
 }
 
 /**

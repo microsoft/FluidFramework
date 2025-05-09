@@ -34,8 +34,8 @@ import {
 	type VerboseTree,
 	toStoredSchema,
 	extractPersistedSchema,
-	TreeViewConfiguration,
 	type TreeBranch,
+	TreeViewConfigurationAlpha,
 } from "../simple-tree/index.js";
 import type { JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
@@ -52,6 +52,7 @@ import {
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { currentVersion } from "../codec/index.js";
 
 /**
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
@@ -313,14 +314,12 @@ export const TreeAlpha: TreeAlpha = {
 			idCompressor?: IIdCompressor;
 		} & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
-			// TODO: Either the return type from this method cannot be persisted due to type constraints, or we need to
-			// dispatch the correct schema codec based on the format version specified by the caller.
-			schema: extractPersistedSchema(schema),
+			schema: extractPersistedSchema(config, currentVersion),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
-		const config = new TreeViewConfiguration({ schema });
 		const view = independentInitializedView(config, options, content);
 		return TreeBeta.clone<TSchema>(view.root);
 	},

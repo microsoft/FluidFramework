@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import { makeSchemaCodecs, type SchemaCodecVersion } from "../../../feature-libraries/schema-index/index.js";
+import {
+	makeSchemaCodecs,
+	type SchemaCodecVersion,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/schema-index/index.js";
 import { ajvValidator } from "../../codec/index.js";
 
 /*
