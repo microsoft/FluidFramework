@@ -16,7 +16,7 @@ import {
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
-import type { requireAssignableTo } from "../util/index.js";
+import type { areSafelyAssignable, requireTrue } from "../util/index.js";
 import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
@@ -91,7 +91,7 @@ describe("TableFactory unit tests", () => {
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
 			// For now, it is at least an optional property and cannot be set to anything meaningful.
-			type _test = requireAssignableTo<null | undefined, Column["props"]>;
+			type _test = requireTrue<areSafelyAssignable<undefined, Column["props"]>>;
 			assert.equal(column.props, undefined);
 		});
 
@@ -115,7 +115,7 @@ describe("TableFactory unit tests", () => {
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
 			// For now, it is at least an optional property and cannot be set to anything meaningful.
-			type _test = requireAssignableTo<null | undefined, Row["props"]>;
+			type _test = requireTrue<areSafelyAssignable<undefined, Row["props"]>>;
 			assert.equal(row.props, undefined);
 		});
 
