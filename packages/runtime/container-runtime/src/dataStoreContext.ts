@@ -267,8 +267,8 @@ export abstract class FluidDataStoreContext
 		return this._contextDeltaManagerProxy;
 	}
 
-	private isStagingReadOnly: boolean = false;
-	public isReadOnly = (): boolean => this.isStagingReadOnly || this.parentContext.isReadOnly();
+	private isStagingMode: boolean = false;
+	public isReadOnly = (): boolean => (this.isStagingMode && this.channel?.policies?.readonlyInStagingMode !== false) || this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
 		return this.parentContext.connected;
