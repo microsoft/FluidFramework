@@ -32,6 +32,10 @@ import {
 } from "@fluidframework/tree/alpha";
 import { type Static, Type } from "@sinclair/typebox";
 
+// TODO: This dependency will go away once `extractPersistedSchema` takes the Shared Tree format version as an argument.
+// eslint-disable-next-line import/no-internal-modules
+import { SchemaCodecVersion } from "../../../../packages/dds/tree/lib/feature-libraries/index.js";
+
 import type { Item } from "./schema.js";
 import { config, List } from "./schema.js";
 
@@ -157,7 +161,8 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 					oldestCompatibleClient: FluidClientVersion.v2_3,
 					idCompressor,
 				}),
-				schema: extractPersistedSchema(List),
+				// TODO: Allow for a specific schema version to be passed in.
+				schema: extractPersistedSchema(List, SchemaCodecVersion.v1),
 				idCompressor: idCompressor.serialize(true),
 			};
 			return file as JsonCompatible;
