@@ -19,6 +19,8 @@ import {
 	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
 
+import { isISharedObjectHandle, type ISharedObjectHandle } from "./handle.js";
+
 /**
  * @legacy
  * @alpha
@@ -84,6 +86,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
 	public encode(input: unknown, bind: IFluidHandleInternal): unknown {
+		assert(isISharedObjectHandle(bind), "bind must be an ISharedObjectHandle");
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -116,8 +119,8 @@ export class FluidSerializer implements IFluidSerializer {
 	 * being bound to the given bind context in the process.
 	 */
 	public stringify(input: unknown, bind: IFluidHandle): string {
-		const bindInternal = toFluidHandleInternal(bind);
-		return JSON.stringify(input, (key, value) => this.encodeValue(value, bindInternal));
+		assert(isISharedObjectHandle(bind), "bind must be an ISharedObjectHandle");
+		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
 	}
 
 	/**
@@ -131,7 +134,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 * If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	 * Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
 	 */
-	protected encodeValue(value: unknown, bind?: IFluidHandleInternal): unknown {
+	protected encodeValue(value: unknown, bind?: ISharedObjectHandle): unknown {
 		// If 'value' is an IFluidHandle return its encoded form.
 		if (isFluidHandle(value)) {
 			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
@@ -221,7 +224,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 */
 	protected bindAndEncodeHandle(
 		handle: IFluidHandleInternal,
-		bind: IFluidHandleInternal,
+		bind: ISharedObjectHandle,
 	): ISerializedHandle {
 		bind.bind(handle);
 		return encodeHandleForSerialization(handle);

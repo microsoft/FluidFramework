@@ -20,10 +20,7 @@ export class GCHandleVisitor extends FluidSerializer {
 		return [...this.visitedHandlePaths];
 	}
 
-	protected bindAndEncodeHandle(
-		handle: IFluidHandleInternal,
-		bind: IFluidHandleInternal,
-	): ISerializedHandle {
+	protected bindAndEncodeHandle(handle: IFluidHandleInternal): ISerializedHandle {
 		this.visitedHandlePaths.add(handle.absolutePath);
 
 		// Just return a dummy value. The serialization itself is not used.

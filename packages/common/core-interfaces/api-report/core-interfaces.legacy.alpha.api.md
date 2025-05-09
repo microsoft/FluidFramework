@@ -275,6 +275,7 @@ export interface IFluidHandleEvents {
 export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
     readonly absolutePath: string;
     attachGraph(): void;
+    // @deprecated
     bind(handle: IFluidHandleInternal): void;
 }
 
