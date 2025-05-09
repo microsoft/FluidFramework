@@ -54,9 +54,7 @@ export namespace System_TableSchema {
 	 * Default type used for column and row "props" fields.
 	 * @system @internal
 	 */
-	export type DefaultPropsType = ReturnType<
-		typeof SchemaFactory.optional<[]>
-	>;
+	export type DefaultPropsType = ReturnType<typeof SchemaFactory.optional<[]>>;
 
 	/**
 	 * A base interface for factory input options which include an schema factory.
