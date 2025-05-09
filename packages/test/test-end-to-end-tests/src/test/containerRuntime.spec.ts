@@ -303,7 +303,10 @@ describeCompat("minVersionForCollab", "FullCompat", (getTestObjectProvider, apis
 		const releaseMinVersionForCollabWarningAdded = "2.40.0";
 		if (
 			apis.containerRuntimeForLoading === undefined ||
-			semverGte(releaseMinVersionForCollabWarningAdded, apis.containerRuntimeForLoading.version) ||
+			semverGte(
+				releaseMinVersionForCollabWarningAdded,
+				apis.containerRuntimeForLoading.version,
+			) ||
 			apis.containerRuntime.version !== pkgVersion
 		) {
 			// We are testing a very specific combination - Creating a document with a `minVersionForCollab`
