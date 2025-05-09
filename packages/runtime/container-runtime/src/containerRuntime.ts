@@ -774,7 +774,7 @@ export class ContainerRuntime
 	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
 	 * This allows mixin classes to leverage this method to define their own async initializer.
 	 * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
-	 * - minVersionForCollab - Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * - minVersionForCollab - Minimum version of the FF runtime that this runtime supports collaboration with.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
 	public static async loadRuntime(params: {
