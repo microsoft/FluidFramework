@@ -1,5 +1,7 @@
 # @fluid-tools/benchmark
 
+## 0.52.0
+
 ## 0.51.0
 
 -   `BenchmarkTimer` (provided to `CustomBenchmark.benchmarkFnCustom`) now has a `timeBatch` utility to simplify its use in the common cases.
