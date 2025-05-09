@@ -82,7 +82,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
-    reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown, squash?: boolean): void;
     rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): this;
@@ -110,6 +110,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> extends Flui
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     readonly absolutePath: string;
     attachGraph(): void;
+    // @deprecated (undocumented)
     bind(handle: IFluidHandleInternal): void;
     get(): Promise<any>;
     get isAttached(): boolean;
