@@ -868,7 +868,7 @@ export namespace System_TableSchema {
  * This allows association of additional properties with column and row nodes.
  *
  * Note: for now it is possible for tables created with these APIs to "leak" cells.
- * That is, it is possible to enter a state where one or more rows contains cells with no corresponding column.
+ * That is, it is possible to enter a state where one or more rows contain cells with no corresponding column.
  * To help avoid this situation, you may manually remove corresponding cells when removing columns.
  * Either way, it is possible to enter this state through concurrent collaborative operations
  *
