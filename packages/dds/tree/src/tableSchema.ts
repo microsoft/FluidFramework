@@ -862,8 +862,15 @@ export namespace System_TableSchema {
  * Columns and rows can be inserted, removed, modified, and reordered.
  * Cells can be inserted, removed, and modified.
  *
+ * - row-major, meaning that operating on rows (including inserts, removal, moves, and traversal) is more efficient than operating on columns.
+ *
  * Column and Row schema created using these APIs are extensible via the `props` field.
  * This allows association of additional properties with column and row nodes.
+ *
+ * Note: for now it is possible for tables created with these APIs to "leak" cells.
+ * That is, it is possible to enter a state where one or more rows contains cells with no corresponding column.
+ * To help avoid this situation, you may manually remove corresponding cells when removing columns.
+ * Either way, it is possible to enter this state through concurrent collaborative operations
  *
  * @example Using default Column and Row schema
  *
@@ -1328,8 +1335,12 @@ export namespace TableSchema {
 
 		/**
 		 * Removes the specified column from the table.
+		 *
+		 * @remarks
+		 * Note: this does not remove any cells from the table's rows.
+		 * To remove the corresponding cells, use {@link TableSchema.removeCell}.
+		 *
 		 * @param column - The {@link TableSchema.IColumn | column} or {@link TableSchema.IColumn.id | column ID} to remove.
-		 * @remarks Note: this does not remove any cells from the table's rows.
 		 * @throws Throws an error if the column is not in the table.
 		 * @privateRemarks TODO (future): Actually remove corresponding cells from table rows.
 		 */
@@ -1339,6 +1350,11 @@ export namespace TableSchema {
 
 		/**
 		 * Removes 0 or more columns from the table.
+		 *
+		 * @remarks
+		 * Note: this does not remove any cells from the table's rows.
+		 * To remove the corresponding cells, use {@link TableSchema.removeCell}.
+		 *
 		 * @param columns - The columns to remove.
 		 * @throws Throws an error if any of the columns are not in the table.
 		 * In this case, no columns are removed.
@@ -1348,6 +1364,11 @@ export namespace TableSchema {
 		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 		/**
 		 * Removes 0 or more columns from the table.
+		 *
+		 * @remarks
+		 * Note: this does not remove any cells from the table's rows.
+		 * To remove the corresponding cells, use {@link TableSchema.removeCell}.
+		 *
 		 * @param columns - The columns to remove, specified by their {@link TableSchema.IColumn.id}.
 		 * @throws Throws an error if any of the columns are not in the table.
 		 * In this case, no columns are removed.
