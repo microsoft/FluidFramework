@@ -55,7 +55,7 @@ export namespace System_TableSchema {
 	 * @system @internal
 	 */
 	export type DefaultPropsType = ReturnType<
-		typeof SchemaFactory.optional<typeof SchemaFactory.null>
+		typeof SchemaFactory.optional<[]>
 	>;
 
 	/**

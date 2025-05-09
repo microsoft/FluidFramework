@@ -91,7 +91,7 @@ describe("TableFactory unit tests", () => {
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
 			// For now, it is at least an optional property and cannot be set to anything meaningful.
-			type _test = requireAssignableTo<null | undefined, Column["props"]>;
+			type _test = requireAssignableTo<undefined, Column["props"]>;
 			assert.equal(column.props, undefined);
 		});
 
@@ -115,7 +115,7 @@ describe("TableFactory unit tests", () => {
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
 			// For now, it is at least an optional property and cannot be set to anything meaningful.
-			type _test = requireAssignableTo<null | undefined, Row["props"]>;
+			type _test = requireAssignableTo<undefined, Row["props"]>;
 			assert.equal(row.props, undefined);
 		});
 
