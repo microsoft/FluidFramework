@@ -50,6 +50,7 @@ describe("isISharedObjectHandle", () => {
 	});
 
 	it("should return false for null", () => {
+		// eslint-disable-next-line unicorn/no-null
 		assert.strictEqual(isISharedObjectHandle(null), false, "Null should return false.");
 	});
 

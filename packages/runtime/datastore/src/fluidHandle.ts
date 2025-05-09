@@ -100,6 +100,7 @@ export class FluidObjectHandle<
 
 	/**
 	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 * @privateRemarks This implementation will be moved to SharedObjectHandle once this is removed.
 	 */
 	public bind(handle: IFluidHandleInternal) {
 		// If this handle is visible, attach the graph of the incoming handle as well.
