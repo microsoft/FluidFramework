@@ -1470,7 +1470,7 @@ export async function runTestForSeed<
 		summarizerClient,
 		containerRuntimeFactory,
 		random: {
-			...makeRandom(seed),
+			...random,
 			// This is injected by client selection logic, which allows binding the handle
 			// to an appropriate client context.
 			handle: makeUnreachableCodePathProxy("random.handle"),

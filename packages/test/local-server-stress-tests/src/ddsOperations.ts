@@ -49,29 +49,6 @@ export const covertLocalServerStateToDdsState = async (
 			(v) => v.handle !== undefined,
 		),
 	];
-	const makeHandle = (random) => () => {
-		/**
-		 * here we do some funky stuff with handles so we can serialize them like json for output, but not bind them,
-		 * as they may not be attached. look at the reduce code to see how we deserialized these fake handles into real
-		 * handles.
-		 */
-		const { tag, handle } = random.pick(allHandles);
-		const realHandle = toFluidHandleInternal(handle);
-		return {
-			tag,
-			absolutePath: realHandle.absolutePath,
-			get [fluidHandleSymbol]() {
-				return realHandle[fluidHandleSymbol];
-			},
-			async get() {
-				return realHandle.get();
-			},
-			get isAttached() {
-				return realHandle.isAttached;
-			},
-		};
-	};
-
 	return {
 		clients: makeUnreachableCodePathProxy("clients"),
 		client: createDDSClient(state.channel),
@@ -80,7 +57,28 @@ export const covertLocalServerStateToDdsState = async (
 		summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
 		random: {
 			...state.random,
-			handle: makeHandle(state.random),
+			handle: () => {
+				/**
+				 * here we do some funky stuff with handles so we can serialize them like json for output, but not bind them,
+				 * as they may not be attached. look at the reduce code to see how we deserialized these fake handles into real
+				 * handles.
+				 */
+				const { tag, handle } = state.random.pick(allHandles);
+				const realHandle = toFluidHandleInternal(handle);
+				return {
+					tag,
+					absolutePath: realHandle.absolutePath,
+					get [fluidHandleSymbol]() {
+						return realHandle[fluidHandleSymbol];
+					},
+					async get() {
+						return realHandle.get();
+					},
+					get isAttached() {
+						return realHandle.isAttached;
+					},
+				};
+			},
 		},
 	};
 };
