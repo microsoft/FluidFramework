@@ -850,6 +850,19 @@ export namespace System_TableSchema {
 /**
  * Contains types and factories for creating schema to represent dynamic tabular data.
  *
+ * @remarks
+ *
+ * Tables created using these APIs are...
+ *
+ * - sparse, meaning that they only store the cells that are actually present in the table.
+ *
+ * - dynamic, meaning that their structure can be modified at runtime.
+ * Columns and rows can be inserted, removed, modified, and reordered.
+ * Cells can be inserted, removed, and modified.
+ *
+ * Column and Row schema created using these APIs are extensible via the `props` field.
+ * This allows association of additional properties with column and row nodes.
+ *
  * @example Using default Column and Row schema
  *
  * ```typescript
