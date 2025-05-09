@@ -3329,6 +3329,7 @@ export class ContainerRuntime
 		// Make sure all BatchManagers are empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.outbox.flush();
+
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			// Final flush of any last staged changes
 			this.outbox.flush();
@@ -3336,6 +3337,7 @@ export class ContainerRuntime
 			this.stageControls = undefined;
 
 			discardOrCommit();
+			this.channelCollection.notifyStagingMode(false);
 		};
 
 		// eslint-disable-next-line import/no-deprecated
@@ -3364,7 +3366,10 @@ export class ContainerRuntime
 			},
 		};
 
-		return (this.stageControls = stageControls);
+		this.stageControls = stageControls;
+		this.channelCollection.notifyStagingMode(true);
+
+		return this.stageControls;
 	};
 
 	/**

@@ -78,6 +78,9 @@ export class StressDataObject extends DataObject {
 		registryEntries: [
 			["StressDataObject", new LazyPromise(async () => StressDataObject.factory)],
 		],
+		policies: {
+			readonlyInStagingMode: false,
+		},
 	});
 
 	get StressDataObject() {
