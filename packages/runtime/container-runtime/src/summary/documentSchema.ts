@@ -471,6 +471,7 @@ export class DocumentsSchemaController {
 	 * @param documentMetadataSchema - current document's schema, if present.
 	 * @param features - features of the document schema that current session wants to see enabled.
 	 * @param onSchemaChange - callback that is called whenever schema is changed (not called on creation / load, only when processing document schema change ops)
+	 * @param minVersionForCollab - minimum version of the runtime that is supported for collaboration with this document.
 	 */
 	constructor(
 		existing: boolean,

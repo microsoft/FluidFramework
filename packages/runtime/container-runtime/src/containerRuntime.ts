@@ -1488,8 +1488,6 @@ export class ContainerRuntime
 			snapshotWithContents,
 		} = context;
 
-		this.minVersionForCollab = minVersionForCollab;
-
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
 
