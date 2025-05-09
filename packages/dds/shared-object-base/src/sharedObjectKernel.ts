@@ -34,15 +34,15 @@ import { ISharedObjectEvents, type ISharedObject } from "./types.js";
 import type { IChannelView } from "./utils.js";
 
 /**
- * Functionality specific to a particular kind of shared object.
+ * Functionality specific to a particular kind of {@link ISharedObject}.
  * @remarks
- * SharedObjects expose APIs for two consumers:
+ * Shared objects expose APIs for two consumers:
  *
- * 1. The runtime, which uses the SharedObject to summarize, load and apply ops.
+ * 1. The runtime, which uses {@link @fluidframework/datastore-definitions#IChannel} to summarize and apply ops and {@link @fluidframework/datastore-definitions#IChannelFactory} to create the load summaries.
  *
- * 2. The app, who uses the SharedObject to read and write data.
+ * 2. The app, which uses shared object kind specific APIs to read and write data.
  *
- * There is some common functionality all shared objects use, provided by {@link SharedObject}.
+ * There is some common functionality all shared objects use, provided by {@link SharedObject} and {@link SharedObjectCore}.
  * SharedKernel describes the portion of the behavior required by the runtime which
  * differs between different kinds of shared objects.
  *
@@ -383,9 +383,9 @@ export interface SharedObjectOptions<T extends object> {
 }
 
 /**
- * Utility to create a IChannelFactory classes.
+ * Utility to create a {@link @fluidframework/datastore-definitions#IChannelFactory} classes.
  * @remarks
- * Prefer using {@link makeSharedObjectKind} instead of exposing the factory is not needed for legacy API compatibility.
+ * Use {@link makeSharedObjectKind} instead unless exposing the factory is required for legacy API compatibility.
  * @internal
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
