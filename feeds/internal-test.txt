@@ -60,6 +60,7 @@ fluid-framework
 @fluidframework/tree
 @fluid-private/test-dds-utils
 @fluidframework/task-manager
+@fluidframework/signal
 @fluidframework/shared-summary-block
 @fluidframework/shared-object-base
 @fluidframework/sequence
