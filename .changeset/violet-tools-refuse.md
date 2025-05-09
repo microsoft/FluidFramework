@@ -10,7 +10,7 @@
 "@fluid-experimental/tree": minor
 "__section": deprecation
 ---
-Deprecate IFluidHandleInternal.bind function
+IFluidHandleInternal.bind deprecated
 
 Handle binding is an internal concept used to make sure objects attach to the Container graph when their handle is stored in a DDS which is itself attached.
 The source of the "bind" operation has been assumed to be any handle, but only one implementation is actually supported (`SharedObjectHandle`, not exported itself).
