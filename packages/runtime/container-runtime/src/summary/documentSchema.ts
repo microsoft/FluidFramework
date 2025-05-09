@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+import { gt } from "semver-ts";
 
 import { type MinimumVersionForCollab } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
@@ -487,11 +488,17 @@ export class DocumentsSchemaController {
 			0x949 /* not supported */,
 		);
 
+		const existingMinVersionForCollab = documentMetadataSchema?.minVersionForCollab;
 		// Desired schema by this session - almost all props are coming from arguments
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
 			refSeq: documentMetadataSchema?.refSeq ?? 0,
-			minVersionForCollab: documentMetadataSchema?.minVersionForCollab ?? minVersionForCollab,
+			// We use the greater of existingMinVersionForCollab and minVersionForCollab
+			minVersionForCollab:
+				existingMinVersionForCollab === undefined ||
+				gt(minVersionForCollab, existingMinVersionForCollab)
+					? minVersionForCollab
+					: existingMinVersionForCollab,
 			runtime: {
 				explicitSchemaControl: boolToProp(features.explicitSchemaControl),
 				compressionLz4: boolToProp(features.compressionLz4),
