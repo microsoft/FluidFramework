@@ -9,9 +9,13 @@ import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
 	makeSchemaCodec,
+	SchemaCodecVersion,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../../feature-libraries/schema-index/index.js";
+import {
+	clientVersionToSchemaVersion,
+	type Format,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
 import { simpleToStoredSchema } from "../toStoredSchema.js";
@@ -21,6 +25,8 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
 
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.
+ *
+ * @param schema - The schema to dump.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
@@ -52,8 +58,8 @@ export function extractPersistedSchema(
 	oldestCompatibleClient: FluidClientVersion,
 ): JsonCompatible {
 	const stored = simpleToStoredSchema(schema);
-	// TODO: use `oldestCompatibleClient` here to encode once multiple formats are supported.
-	return encodeTreeSchema(stored);
+	const writeVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
+	return encodeTreeSchema(stored, writeVersion);
 }
 
 /**
@@ -92,7 +98,9 @@ export function comparePersistedSchema(
 	options: ICodecOptions,
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
-	const schemaCodec = makeSchemaCodec(options);
+	// Any version can be passed down to makeSchemaCodec here.
+	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
+	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new SchemaCompatibilityTester(
 		defaultSchemaPolicy,
