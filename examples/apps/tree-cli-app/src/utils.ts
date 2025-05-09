@@ -157,7 +157,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 					oldestCompatibleClient: FluidClientVersion.v2_3,
 					idCompressor,
 				}),
-				schema: extractPersistedSchema(List),
+				schema: extractPersistedSchema(config, FluidClientVersion.v2_3),
 				idCompressor: idCompressor.serialize(true),
 			};
 			return file as JsonCompatible;

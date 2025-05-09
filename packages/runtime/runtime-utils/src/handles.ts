@@ -180,6 +180,9 @@ export function toFluidHandleErased<T>(
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 	public abstract absolutePath: string;
 	public abstract attachGraph(): void;
+	/**
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 */
 	public abstract bind(handle: IFluidHandleInternal): void;
 	public abstract readonly isAttached: boolean;
 	public abstract get(): Promise<T>;
