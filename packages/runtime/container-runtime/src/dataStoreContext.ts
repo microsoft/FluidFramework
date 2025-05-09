@@ -268,7 +268,9 @@ export abstract class FluidDataStoreContext
 	}
 
 	private isStagingMode: boolean = false;
-	public isReadOnly = (): boolean => (this.isStagingMode && this.channel?.policies?.readonlyInStagingMode !== false) || this.parentContext.isReadOnly();
+	public isReadOnly = (): boolean =>
+		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode !== false) ||
+		this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
 		return this.parentContext.connected;
@@ -1136,7 +1138,7 @@ export abstract class FluidDataStoreContext
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(30),
 			readonly: this.isReadOnly(),
-			isStagingReadOnly: this.isStagingReadOnly,
+			isStagingMode: this.isStagingMode,
 		});
 		this.localChangesTelemetryCount--;
 	}
