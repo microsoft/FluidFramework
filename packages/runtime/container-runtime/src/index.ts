@@ -31,6 +31,7 @@ export {
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
+export type { MinimumVersionForCollab } from "./compatUtils.js";
 export {
 	GCNodeType,
 	IGCMetadata,

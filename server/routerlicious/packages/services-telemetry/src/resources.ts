@@ -125,6 +125,7 @@ export enum CommonProperties {
 	errorLabel = "errorLabel",
 	isGlobalDb = "isGlobalDb",
 	internalErrorCode = "internalErrorCode",
+	callingServiceName = "callingServiceName",
 }
 
 /**

@@ -34,12 +34,11 @@ describeCompat(
 			}
 		}
 
-		const dataObjectFactory = new DataObjectFactory(
-			"testDataObject",
-			TestDataObject,
-			[SharedMap.getFactory()],
-			undefined,
-		);
+		const dataObjectFactory = new DataObjectFactory({
+			type: "testDataObject",
+			ctor: TestDataObject,
+			sharedObjects: [SharedMap.getFactory()],
+		});
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
 			registryEntries: [["testDataObject", Promise.resolve(dataObjectFactory)]],

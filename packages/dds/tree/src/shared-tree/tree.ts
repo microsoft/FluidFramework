@@ -23,6 +23,56 @@ import type { ITreeCheckout } from "./treeCheckout.js";
 import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
+ * Provides various functions for interacting with {@link TreeNode}s.
+ * @remarks
+ * This type should only be used via the {@link (Tree:variable)} export.
+ * @system @sealed @public
+ */
+export interface Tree extends TreeNodeApi {
+	/**
+	 * Run a {@link RunTransaction | transaction}.
+	 */
+	readonly runTransaction: RunTransaction;
+	/**
+	 * Check if the subtree defined by `node` contains `other`.
+	 *
+	 * @returns true if `other` is an inclusive descendant of `node`, and false otherwise.
+	 * @remarks
+	 * This includes direct and indirect children:
+	 * as long as `node` is an ancestor of `other` (occurs in its parentage chain), this returns true, regardless of the number of levels of the tree between.
+	 *
+	 * `node` is considered to contain itself, so the case where `node === other` returns true.
+	 *
+	 * This is handy when checking if moving `node` into `other` would create a cycle and would thus be invalid.
+	 *
+	 * This check walks the parents of `other` looking for `node`,
+	 * and thus runs in time proportional to the depth of child in the tree.
+	 */
+	contains(node: TreeNode, other: TreeNode): boolean;
+}
+
+/**
+ * The {@link (Tree:interface)} singleton which holds various functions for interacting with {@link TreeNode}s.
+ * @public
+ */
+export const Tree: Tree = {
+	...treeNodeApi,
+
+	runTransaction: createRunTransaction(),
+
+	contains(parent: TreeNode, child: TreeNode): boolean {
+		let toCheck: TreeNode | undefined = child;
+		while (toCheck !== undefined) {
+			if (toCheck === parent) {
+				return true;
+			}
+			toCheck = Tree.parent(toCheck);
+		}
+		return false;
+	},
+};
+
+/**
  * A function which runs a transaction in a SharedTree.
  * @privateRemarks
  * This interface exists so that the (generously) overloaded `Tree.runTransaction` function can have the "rollback" property hanging off of it.
@@ -46,7 +96,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -67,7 +119,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -93,7 +147,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -115,7 +171,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -138,7 +196,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -155,7 +215,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -179,7 +241,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -204,7 +268,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -233,7 +299,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -259,7 +327,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -286,7 +356,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -310,7 +382,9 @@ export interface RunTransaction {
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -325,56 +399,6 @@ export interface RunTransaction {
 		preconditions?: readonly TransactionConstraint[],
 	): void;
 }
-
-/**
- * Provides various functions for interacting with {@link TreeNode}s.
- * @remarks
- * This type should only be used via the public `Tree` export.
- * @system @sealed @public
- */
-export interface TreeApi extends TreeNodeApi {
-	/**
-	 * Run a {@link RunTransaction | transaction}.
-	 */
-	readonly runTransaction: RunTransaction;
-	/**
-	 * Check if the subtree defined by `node` contains `other`.
-	 *
-	 * @returns true if `other` is an inclusive descendant of `node`, and false otherwise.
-	 * @remarks
-	 * This includes direct and indirect children:
-	 * as long as `node` is an ancestor of `other` (occurs in its parentage chain), this returns true, regardless of the number of levels of the tree between.
-	 *
-	 * `node` is considered to contain itself, so the case where `node === other` returns true.
-	 *
-	 * This is handy when checking if moving `node` into `other` would create a cycle and thus is invalid.
-	 *
-	 * This check walks the parents of `other` looking for `node`,
-	 * and thus runs in time proportional to the depth of child in the tree.
-	 */
-	contains(node: TreeNode, other: TreeNode): boolean;
-}
-
-/**
- * The `Tree` object holds various functions for interacting with {@link TreeNode}s.
- * @public
- */
-export const treeApi: TreeApi = {
-	...treeNodeApi,
-
-	runTransaction: createRunTransaction(),
-
-	contains(parent: TreeNode, child: TreeNode): boolean {
-		let toCheck: TreeNode | undefined = child;
-		while (toCheck !== undefined) {
-			if (toCheck === parent) {
-				return true;
-			}
-			toCheck = treeApi.parent(toCheck);
-		}
-		return false;
-	},
-};
 
 // TODO: Add more constraint types here
 
@@ -443,7 +467,7 @@ function runTransactionInCheckout<TResult>(
 		switch (constraint.type) {
 			case "nodeInDocument": {
 				const node = getOrCreateInnerNode(constraint.node);
-				const nodeStatus = treeApi.status(constraint.node);
+				const nodeStatus = Tree.status(constraint.node);
 				if (nodeStatus !== TreeStatus.InDocument) {
 					throw new UsageError(
 						`Attempted to add a "nodeInDocument" constraint, but the node is not currently in the document. Node status: ${nodeStatus}`,
