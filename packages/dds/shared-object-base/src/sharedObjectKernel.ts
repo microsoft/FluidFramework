@@ -206,6 +206,8 @@ class SharedObjectFromKernel<
 /**
  * When present on a method, it indicates the methods return value should be replaced with `this` (the wrapper)
  * when wrapping the object with the method.
+ * @remarks
+ * This is useful when using {@link mergeAPIs} with methods where the return type is `this`, like `Map.set`.
  * @internal
  */
 export const thisWrap: unique symbol = Symbol("selfWrap");
