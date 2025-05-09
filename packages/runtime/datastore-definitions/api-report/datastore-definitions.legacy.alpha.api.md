@@ -87,7 +87,6 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
-    // (undocumented)
     readonly idCompressor: IIdCompressor | undefined;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
