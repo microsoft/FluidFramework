@@ -363,7 +363,7 @@ describe("Runtime", () => {
 			schema, // old schema,
 			features,
 			() => {}, // onSchemaChange
-			defaultMinVersionForCollab, // minVersionForCollab
+			schema.minVersionForCollab,
 		);
 
 		controller.onDisconnect();
@@ -376,6 +376,59 @@ describe("Runtime", () => {
 			...validConfig,
 			runtime: { ...validConfig.runtime, explicitSchemaControl: true },
 		});
+		testExistingDocNoChangesInSchema({
+			...validConfig,
+			// Should not change schema since it is lower than the existing minVersionForCollab
+			minVersionForCollab: "1.0.0",
+		});
+	});
+
+	it("Existing document with existing schema, change to minVersionForCollab", () => {
+		const controller = new DocumentsSchemaController(
+			true, // existing,
+			0, // snapshotSequenceNumber
+			validConfig, // old schema,
+			features, // features
+			() => {}, // onSchemaChange
+			"2.20.0", // minVersionForCollab
+		);
+
+		const message = controller.maybeSendSchemaMessage();
+		assert(message !== undefined);
+		assert.strictEqual(message.minVersionForCollab, "2.20.0");
+
+		const schema = controller.summarizeDocumentSchema(300);
+		assert(schema !== undefined);
+
+		const controller2 = new DocumentsSchemaController(
+			true, // existing,
+			300, // snapshotSequenceNumber
+			schema, // old schema,
+			features, // features
+			() => {}, // onSchemaChange
+			"2.30.0", // minVersionForCollab
+		);
+
+		const message2 = controller2.maybeSendSchemaMessage();
+		assert(message2 !== undefined);
+		assert.strictEqual(controller2.sessionSchema.minVersionForCollab, "2.30.0");
+
+		const schema2 = controller2.summarizeDocumentSchema(600);
+		assert(schema2 !== undefined);
+
+		const controller3 = new DocumentsSchemaController(
+			true, // existing,
+			600, // snapshotSequenceNumber
+			schema2, // old schema,
+			features, // features
+			() => {}, // onSchemaChange
+			"2.0.0", // minVersionForCollab
+		);
+		assert.strictEqual(controller3.sessionSchema.minVersionForCollab, "2.30.0");
+		const message3 = controller3.maybeSendSchemaMessage();
+		// Should be undefined since there is no update to the schema
+		assert(message3 === undefined);
+		assert.strictEqual(controller2.sessionSchema.minVersionForCollab, "2.30.0");
 	});
 
 	it("Existing document, changes required; race conditions", () => {

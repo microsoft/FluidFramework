@@ -415,14 +415,14 @@ describeCompat("minVersionForCollab (NoCompat)", "NoCompat", (getTestObjectProvi
 			loaderProps: {
 				logger,
 			},
-			minVersionForCollab: "2.40.0",
+			minVersionForCollab: "2.35.0",
 		};
 		await provider.loadTestContainer(options3);
 		logger.assertMatchAny([
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
 				category: "generic",
-				minVersionForCollab: "2.40.0",
+				minVersionForCollab: "2.35.0",
 			},
 		]);
 
@@ -437,7 +437,7 @@ describeCompat("minVersionForCollab (NoCompat)", "NoCompat", (getTestObjectProvi
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
 				category: "generic",
-				minVersionForCollab: "2.40.0",
+				minVersionForCollab: "2.35.0",
 			},
 		]);
 	});

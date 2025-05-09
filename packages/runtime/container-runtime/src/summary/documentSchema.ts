@@ -322,9 +322,19 @@ function and(
 			desiredDocSchema.runtime[key],
 		);
 	}
+
+	// Always take the larger minVersionForCollab
+	const minVersionForCollab = gt(
+		currentDocSchema.minVersionForCollab,
+		desiredDocSchema.minVersionForCollab,
+	)
+		? currentDocSchema.minVersionForCollab
+		: desiredDocSchema.minVersionForCollab;
+
 	return {
 		version: currentDocumentVersionSchema,
 		refSeq: currentDocSchema.refSeq,
+		minVersionForCollab,
 		runtime,
 	} as unknown as IDocumentSchemaCurrent;
 }
@@ -343,9 +353,18 @@ function or(
 			desiredDocSchema.runtime[key],
 		);
 	}
+	// Always take the larger minVersionForCollab
+	const minVersionForCollab = gt(
+		currentDocSchema.minVersionForCollab,
+		desiredDocSchema.minVersionForCollab,
+	)
+		? currentDocSchema.minVersionForCollab
+		: desiredDocSchema.minVersionForCollab;
+
 	return {
 		version: currentDocumentVersionSchema,
 		refSeq: currentDocSchema.refSeq,
+		minVersionForCollab,
 		runtime,
 	} as unknown as IDocumentSchemaCurrent;
 }
@@ -354,6 +373,11 @@ function same(
 	currentDocSchema: IDocumentSchemaCurrent,
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): boolean {
+	if (gt(desiredDocSchema.minVersionForCollab, currentDocSchema.minVersionForCollab)) {
+		// We don't consider minVersionForCollab to be a schema change unless the desired version
+		// is greater than the current version.
+		return false;
+	}
 	for (const key of new Set([
 		...Object.keys(currentDocSchema.runtime),
 		...Object.keys(desiredDocSchema.runtime),
@@ -488,17 +512,19 @@ export class DocumentsSchemaController {
 			0x949 /* not supported */,
 		);
 
+		// We use the greater of existingMinVersionForCollab and minVersionForCollab
 		const existingMinVersionForCollab = documentMetadataSchema?.minVersionForCollab;
+		const desiredMinVersionForCollab =
+			existingMinVersionForCollab === undefined ||
+			gt(minVersionForCollab, existingMinVersionForCollab)
+				? minVersionForCollab
+				: existingMinVersionForCollab;
+
 		// Desired schema by this session - almost all props are coming from arguments
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
 			refSeq: documentMetadataSchema?.refSeq ?? 0,
-			// We use the greater of existingMinVersionForCollab and minVersionForCollab
-			minVersionForCollab:
-				existingMinVersionForCollab === undefined ||
-				gt(minVersionForCollab, existingMinVersionForCollab)
-					? minVersionForCollab
-					: existingMinVersionForCollab,
+			minVersionForCollab: desiredMinVersionForCollab,
 			runtime: {
 				explicitSchemaControl: boolToProp(features.explicitSchemaControl),
 				compressionLz4: boolToProp(features.compressionLz4),
@@ -570,6 +596,14 @@ export class DocumentsSchemaController {
 		// out of legacy mode, as clients transitioning out of it would be able to use all the
 		// features that are mentioned in schema right away, without a need to go through schema transition (and thus for a session or
 		// two losing ability to use all the features)
+
+		// TODO: Hack to make sure we use the preferred minVersionForCollab - should fix this properly
+		this.documentSchema.minVersionForCollab = gt(
+			this.desiredSchema.minVersionForCollab,
+			this.documentSchema.minVersionForCollab,
+		)
+			? this.desiredSchema.minVersionForCollab
+			: this.desiredSchema.minVersionForCollab;
 
 		const schema = this.explicitSchemaControl ? this.documentSchema : this.desiredSchema;
 
