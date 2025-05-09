@@ -140,6 +140,7 @@ import {
 	tagCodeArtifacts,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
+import { gt } from "semver-ts";
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
@@ -1056,7 +1057,25 @@ export class ContainerRuntime
 			(schema) => {
 				runtime.onSchemaChange(schema);
 			},
+			minVersionForCollab,
 		);
+
+		// We check the document's metadata to see if there is a minVersionForCollab. If it's not an existing document or
+		// if the document is older, then it won't have one. If it does have a minVersionForCollab, we check if it's greater
+		// than this client's runtime version. If so, we log a telemetry event to warn the customer that the client is outdated.
+		// Note: We only send a warning because we already ensured that this client **can** understand the existing document's
+		// schema (part of the `DocumentsSchemaController` constructor flow above). However, we still want to issue a warning to
+		// the customer since it may be a sign that the customer is not properly waiting for saturation before updating their
+		// `minVersionForCollab` value, which could cause disruptions to users in the future.
+		const existingMinVersionForCollab = metadata?.documentSchema?.minVersionForCollab;
+		if (existingMinVersionForCollab !== undefined && gt(minVersionForCollab, pkgVersion)) {
+			const warnMsg = `Warning: minVersionForCollab (${minVersionForCollab}) is greater than the existing document's runtime version (${pkgVersion}). Upgrade to ensure compatibility going forward.`;
+			logger.sendTelemetryEvent({
+				eventName: "ContainerRuntime:MinVersionForCollabWarning",
+				category: "generic",
+				msg: warnMsg,
+			});
+		}
 
 		if (compressionLz4 && !enableGroupedBatching) {
 			throw new UsageError("If compression is enabled, op grouping must be enabled too");
@@ -1465,6 +1484,8 @@ export class ContainerRuntime
 			supportedFeatures,
 			snapshotWithContents,
 		} = context;
+
+		this.minVersionForCollab = minVersionForCollab;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
