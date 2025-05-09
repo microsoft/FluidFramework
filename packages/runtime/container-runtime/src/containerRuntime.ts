@@ -774,6 +774,7 @@ export class ContainerRuntime
 	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
 	 * This allows mixin classes to leverage this method to define their own async initializer.
 	 * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * - minVersionForCollab - Minimum version of the FF runtime that is required to collaborate on new documents.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
 	public static async loadRuntime(params: {
@@ -799,6 +800,7 @@ export class ContainerRuntime
 			runtimeOptions = {} satisfies IContainerRuntimeOptionsInternal,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
+			minVersionForCollab = defaultMinVersionForCollab,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -824,7 +826,6 @@ export class ContainerRuntime
 		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
 		// 1.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
-		const minVersionForCollab = params.minVersionForCollab ?? defaultMinVersionForCollab;
 		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(
 				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 2.22.1).`,
