@@ -1063,10 +1063,11 @@ export class SharedMatrix<T = any>
 					contents.row,
 					contents.col,
 					setMetadata.previous as MatrixItem<T>,
-					undefined,
-					undefined,
+					setMetadata.rowHandle,
+					setMetadata.colHandle,
 					true,
 				);
+				this.pending.setCell(setMetadata.rowHandle, setMetadata.colHandle, undefined);
 			}
 			default:
 		}

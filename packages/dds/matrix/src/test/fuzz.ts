@@ -14,9 +14,8 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState, type DDSFuzzModel } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { isObject } from "@fluidframework/core-utils/internal";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory, SharedMatrix } from "../runtime.js";
@@ -73,27 +72,15 @@ async function assertMatricesAreEquivalent<T>(
 		for (let col = 0; col < a.colCount; col++) {
 			const aVal = a.getCell(row, col);
 			const bVal = b.getCell(row, col);
-			if (isObject(aVal) === true) {
-				assert(
-					isObject(bVal),
-					`${a.id} and ${b.id} differ at (${row}, ${col}): a is an object, b is not`,
-				);
-				const aHandle = isFluidHandle(aVal) ? await aVal.get() : aVal;
-				const bHandle = isFluidHandle(bVal) ? await bVal.get() : bVal;
-				assert.deepEqual(
+			const aHandle = isFluidHandle(aVal) ? toFluidHandleInternal(aVal).absolutePath : aVal;
+			const bHandle = isFluidHandle(bVal) ? toFluidHandleInternal(bVal).absolutePath : bVal;
+			assert.deepEqual(
+				aHandle,
+				bHandle,
+				`${a.id} and ${b.id} differ at (${row}, ${col}): ${JSON.stringify(
 					aHandle,
-					bHandle,
-					`${a.id} and ${b.id} differ at (${row}, ${col}): ${JSON.stringify(
-						aHandle,
-					)} vs ${JSON.stringify(bHandle)}`,
-				);
-			} else {
-				assert.equal(
-					aVal,
-					bVal,
-					`${a.id} and ${b.id} differ at (${row}, ${col}): ${aVal} vs ${bVal}`,
-				);
-			}
+				)} vs ${JSON.stringify(bHandle)}`,
+			);
 		}
 	}
 }
