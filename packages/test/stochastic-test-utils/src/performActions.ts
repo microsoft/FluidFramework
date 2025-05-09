@@ -22,7 +22,19 @@ import {
 	done,
 } from "./types.js";
 
-type RealOperation<T extends BaseOperation> = T & { debug?: boolean; seed: number };
+type RealOperation<T extends BaseOperation> = T & {
+	/**
+	 * An optional flag that can be manually added to an operation during replay to trigger
+	 * the debugger.
+	 */
+	debug?: boolean;
+	/**
+	 * The seed used for this operation to isolate it random usage from other operations
+	 *
+	 * @remarks when forceGlobalSeed is gone. this can become required
+	 */
+	seed?: number;
+};
 
 /**
  * Performs random actions on a set of clients.
@@ -50,6 +62,7 @@ export async function performFuzzActionsAsync<
 	reducer: AsyncReducer<TOperation, TState>,
 	initialState: TState,
 	saveInfo?: SaveInfo,
+	forceGlobalSeed?: boolean,
 ): Promise<TState>;
 /**
  * Performs random actions on a set of clients.
@@ -91,6 +104,7 @@ export async function performFuzzActionsAsync<
 	},
 	initialState: TState,
 	saveInfo?: SaveInfo,
+	forceGlobalSeed?: boolean,
 ): Promise<TState>;
 /**
  * @internal
@@ -105,6 +119,7 @@ export async function performFuzzActionsAsync<
 		| { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
 	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false },
+	forceGlobalSeed?: boolean,
 ): Promise<TState> {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;
@@ -113,18 +128,27 @@ export async function performFuzzActionsAsync<
 			? reducerOrMap
 			: combineReducersAsync<TOperation, TState>(reducerOrMap);
 	const applyOperation = async (reduceState: TState, op: RealOperation<TOperation>) => {
-		const seededState: TState = { ...reduceState, random: makeRandom(op.seed) };
+		const seededState: TState =
+			op.seed !== undefined ? { ...reduceState, random: makeRandom(op.seed) } : reduceState;
 		return (await reducer(seededState, op)) ?? seededState;
 	};
+
+	const generateSeed =
+		forceGlobalSeed === true
+			? () => undefined
+			: () => initialState.random.integer(0, Number.MAX_SAFE_INTEGER);
 
 	const runGenerator = async (
 		genState: TState,
 	): Promise<RealOperation<TOperation> | typeof done> => {
-		const seed = initialState.random.integer(0, Number.MAX_SAFE_INTEGER);
-		const seededState: TState = {
-			...genState,
-			random: makeRandom(seed),
-		};
+		const seed = generateSeed();
+		const seededState: TState =
+			seed === undefined
+				? genState
+				: {
+						...genState,
+						random: makeRandom(seed),
+					};
 		const op = await generator(seededState);
 		if (op === done) {
 			return op;
