@@ -299,19 +299,19 @@ describeCompat("minVersionForCollab", "FullCompat", (getTestObjectProvider, apis
 	 * we detect that a client tries to connect to a document that has a
 	 * minVersionForCollab that is greater than that clients's runtime version.
 	 */
-	it("test warning message", async function () {
-		const releaseMinVersionForCollabAdded = "2.40.0";
+	it("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
+		const releaseMinVersionForCollabWarningAdded = "2.40.0";
 		if (
 			apis.containerRuntimeForLoading === undefined ||
-			semverGte(releaseMinVersionForCollabAdded, apis.containerRuntimeForLoading.version) ||
+			semverGte(releaseMinVersionForCollabWarningAdded, apis.containerRuntimeForLoading.version) ||
 			apis.containerRuntime.version !== pkgVersion
 		) {
 			// We are testing a very specific combination - Creating a document with a `minVersionForCollab`
 			// that's greater than the loading client's runtime version. Additionally, since clients need to
 			// self-report that their runtime version is too low, only clients that have the warning logic
 			// can do this. Therefore, we need to also check that the loading client's runtime version is
-			// greater than or equal to `releaseMinVersionForCollabAdded`. If these conditions are not met,
-			// we skip the test.
+			// greater than or equal to `releaseMinVersionForCollabWarningAdded`. If these conditions are not
+			// met, we skip the test.
 			this.skip();
 		}
 
