@@ -459,10 +459,10 @@ export function exportSimpleSchema(storedSchema: TreeStoredSchema): SimpleTreeSc
 }
 
 /**
- * A way to schema in the persisted format from {@link extractPersistedSchema}.
+ * A way to parse schema in the persisted format from {@link extractPersistedSchema}.
  * @remarks
  * The output from this is the same as the output from {@link ITreeAlpha.exportSimpleSchema},
- * but gets the schema from the caller instead of from an existing tree.
+ * but it gets the schema from the caller instead of from an existing tree.
  * @alpha
  */
 export function persistedToSimpleSchema(
