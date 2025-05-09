@@ -62,7 +62,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.0,
 		},
-	};
+	} as const;
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
