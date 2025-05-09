@@ -1072,7 +1072,7 @@ export class ContainerRuntime
 			existingMinVersionForCollab !== undefined &&
 			gt(existingMinVersionForCollab, pkgVersion)
 		) {
-			const warnMsg = `Warning: minVersionForCollab (${existingMinVersionForCollab}) is greater than the existing document's runtime version (${pkgVersion}). Upgrade to ensure compatibility going forward.`;
+			const warnMsg = `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${existingMinVersionForCollab} or later to ensure compatibility.`;
 			logger.sendTelemetryEvent({
 				eventName: "ContainerRuntime:MinVersionForCollabWarning",
 				category: "generic",
