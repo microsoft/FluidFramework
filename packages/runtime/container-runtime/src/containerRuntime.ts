@@ -1095,6 +1095,7 @@ export class ContainerRuntime
 			documentSchemaController,
 			featureGatesForTelemetry,
 			provideEntryPoint,
+			minVersionForCollab,
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
@@ -1429,6 +1430,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
+		private readonly minVersionForCollab: MinimumVersionForCollab,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -1937,6 +1939,7 @@ export class ContainerRuntime
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+			minVersionForCollab: this.minVersionForCollab,
 		});
 
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
