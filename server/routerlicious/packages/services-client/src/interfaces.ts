@@ -59,30 +59,3 @@ export interface ISession {
 	 */
 	ignoreSessionStickiness?: boolean;
 }
-
-/**
- * Interface for managing abort signals. It is used to map abort signals to HTTP requests.
- * This is useful for tracking the status of requests and handling cancellations.
- * @internal
- */
-export interface IAbortControllerManager {
-	/**
-	 * Adds an abort signal to the manager.
-	 * @param abortController - The abort signal to add.
-	 * @param correlationId - The ID of the request.
-	 */
-	addAbortController(abortController: AbortController, correlationId?: string): void;
-
-	/**
-	 * Removes an abort signal from the manager.
-	 * @param correlationId - The ID of the request.
-	 */
-	removeAbortController(correlationId?: string): void;
-
-	/**
-	 * Gets the abort signal for a specific request ID.
-	 * @param correlationId - The ID of the request.
-	 * @returns The abort signal associated with the correlation ID, or undefined if not found.
-	 */
-	getAbortController(correlationId?: string): AbortController | undefined;
-}

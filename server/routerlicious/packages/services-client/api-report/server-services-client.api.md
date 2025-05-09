@@ -104,6 +104,9 @@ export function generateUser(): IUser;
 export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) => string;
 
 // @internal
+export const getGlobalAbortControllerContext: () => IAbortControllerContext;
+
+// @internal
 export const getGlobalTimeoutContext: () => ITimeoutContext;
 
 // @internal (undocumented)
@@ -229,10 +232,10 @@ export class Historian implements IHistorian {
 }
 
 // @internal
-export interface IAbortControllerManager {
-    addAbortController(abortController: AbortController, correlationId?: string): void;
-    getAbortController(correlationId?: string): AbortController | undefined;
-    removeAbortController(correlationId?: string): void;
+export interface IAbortControllerContext {
+    bindAbortController(abortController: AbortController, callback: () => void): void;
+    bindAbortControllerAsync<T>(abortController: AbortController, callback: () => Promise<T>): Promise<T>;
+    getAbortController(): AbortController | undefined;
 }
 
 // @internal (undocumented)
@@ -679,10 +682,13 @@ export abstract class RestWrapper {
 }
 
 // @internal
+export const setGlobalAbortControllerContext: (abortControllerContext: IAbortControllerContext) => void;
+
+// @internal
 export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
 
 // @internal (undocumented)
-export function setupAxiosInterceptorsForAbortSignals(abortControllerManager: IAbortControllerManager, getCorrelationId: () => string | undefined): void;
+export function setupAxiosInterceptorsForAbortSignals(getAbortController: () => AbortController | undefined): void;
 
 // @internal
 export class SummaryTreeUploadManager implements ISummaryUploadManager {

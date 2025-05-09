@@ -26,10 +26,7 @@ import {
 import { Provider } from "nconf";
 import * as winston from "winston";
 import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import {
-	IAlfredTenant,
-	type IAbortControllerManager,
-} from "@fluidframework/server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
@@ -68,7 +65,6 @@ export class AlfredRunner implements IRunner {
 		private readonly fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 		private readonly redisCacheForGetSession?: ICache,
 		private readonly denyList?: IDenyList,
-		private readonly abortControllerManager?: IAbortControllerManager,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -103,7 +99,6 @@ export class AlfredRunner implements IRunner {
 				this.fluidAccessTokenGenerator,
 				this.redisCacheForGetSession,
 				this.denyList,
-				this.abortControllerManager,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);

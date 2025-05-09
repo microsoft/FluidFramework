@@ -40,7 +40,7 @@ export {
 	ICredentials,
 	parseToken,
 } from "./historian";
-export { IAlfredTenant, ISession, IAbortControllerManager } from "./interfaces";
+export { IAlfredTenant, ISession } from "./interfaces";
 export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
 export {
@@ -111,3 +111,8 @@ export {
 } from "./timeoutContext";
 export { getOrCreateRepository, getRandomInt } from "./utils";
 export { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
+export {
+	IAbortControllerContext,
+	setGlobalAbortControllerContext,
+	getGlobalAbortControllerContext,
+} from "./abortControllerContext";
