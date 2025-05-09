@@ -1004,7 +1004,7 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
-		const createIdCompressorFn = async (): Promise<IIdCompressor & IIdCompressorCore> => {
+		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
 			 * approximately 5% of all clients. Only the given percentage of sessions will emit telemetry.
@@ -1215,12 +1215,6 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * True if we have ID compressor loading in-flight (async operation). Useful only for
-	 * this.sessionSchema.idCompressorMode === "delayed" mode
-	 */
-	protected _loadIdCompressor: Promise<void> | undefined;
-
-	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.generateDocumentUniqueId}
 	 */
 	public generateDocumentUniqueId(): string | number {
@@ -1425,7 +1419,7 @@ export class ContainerRuntime
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
-		private readonly createIdCompressorFn: () => Promise<IIdCompressor & IIdCompressorCore>,
+		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
@@ -1970,7 +1964,6 @@ export class ContainerRuntime
 		// As it's implemented right now (with async initialization), this will only work for "off" -> "delayed" transitions.
 		// Anything else is too risky, and requires ability to initialize ID compressor synchronously!
 		if (schema.runtime.idCompressorMode !== undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
 		}
 	}
@@ -2018,7 +2011,7 @@ export class ContainerRuntime
 			this.sessionSchema.idCompressorMode === "on" ||
 			(this.sessionSchema.idCompressorMode === "delayed" && this.connected)
 		) {
-			this._idCompressor = await this.createIdCompressorFn();
+			this._idCompressor = this.createIdCompressorFn();
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
@@ -2616,29 +2609,25 @@ export class ContainerRuntime
 		}
 	}
 
-	private async loadIdCompressor(): Promise<void | undefined> {
+	private loadIdCompressor(): void {
 		if (
 			this._idCompressor === undefined &&
-			this.sessionSchema.idCompressorMode !== undefined &&
-			this._loadIdCompressor === undefined
+			this.sessionSchema.idCompressorMode !== undefined
 		) {
-			this._loadIdCompressor = this.createIdCompressorFn()
-				.then((compressor) => {
-					// Finalize any ranges we received while the compressor was turned off.
-					const ops = this.pendingIdCompressorOps;
-					this.pendingIdCompressorOps = [];
-					for (const range of ops) {
-						compressor.finalizeCreationRange(range);
-					}
-					assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
-					this._idCompressor = compressor;
-				})
-				.catch((error) => {
-					this.mc.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
-					throw error;
-				});
+			try {
+				this._idCompressor = this.createIdCompressorFn();
+			} catch (error) {
+				this.mc.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
+				throw error;
+			}
+			// Finalize any ranges we received while the compressor was turned off.
+			const ops = this.pendingIdCompressorOps;
+			this.pendingIdCompressorOps = [];
+			for (const range of ops) {
+				this._idCompressor.finalizeCreationRange(range);
+			}
+			assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
 		}
-		return this._loadIdCompressor;
 	}
 
 	private readonly notifyReadOnlyState = (readonly: boolean): void =>
@@ -2654,7 +2643,6 @@ export class ContainerRuntime
 		);
 
 		if (connected && this.sessionSchema.idCompressorMode === "delayed") {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
 		}
 		if (connected === false && this.delayConnectClientId !== undefined) {
@@ -3626,8 +3614,7 @@ export class ContainerRuntime
 		wrapSummaryInChannelsTree(summarizeResult);
 		const pathPartsForChildren = [channelsTreeName];
 
-		// Ensure that ID compressor had a chance to load, if we are using delayed mode.
-		await this.loadIdCompressor();
+		this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
 		return {
