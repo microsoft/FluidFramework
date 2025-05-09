@@ -85,7 +85,7 @@ describe("Local Server Stress with rollback", () => {
 
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 100,
-		skipMinimization: true,
+		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// only: [91],
 		saveFailures,
