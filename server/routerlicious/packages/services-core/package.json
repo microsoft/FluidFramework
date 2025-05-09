@@ -108,6 +108,12 @@
 			},
 			"Interface_ITenantManager": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IWebSocket": {
+				"forwardCompat": false
+			},
+			"Interface_IWebSocket": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"
