@@ -52,12 +52,9 @@ import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
  * Public API surface uses "persisted" terminology while internally we use "stored".
  * @alpha
  */
-export function extractPersistedSchema(
-	schema: ImplicitFieldSchema,
-	writeVersion: number,
-): JsonCompatible {
+export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible {
 	const stored = toStoredSchema(schema);
-	return encodeTreeSchema(stored, writeVersion);
+	return encodeTreeSchema(stored, SchemaCodecVersion.v1);
 }
 
 /**

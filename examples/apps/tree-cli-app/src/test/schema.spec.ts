@@ -15,8 +15,6 @@ import {
 	type JsonCompatible,
 } from "@fluidframework/tree/alpha";
 
-// eslint-disable-next-line import/no-internal-modules
-import { SchemaCodecVersion } from "../../../../../packages/dds/tree/lib/feature-libraries/index.js";
 import { List } from "../schema.js";
 
 import { v1 } from "./legacy/index.js";
@@ -113,7 +111,7 @@ const historicalSchema: {
 
 describe("schema", () => {
 	it("current schema matches latest historical schema", () => {
-		const current = extractPersistedSchema(List, SchemaCodecVersion.v1);
+		const current = extractPersistedSchema(List);
 
 		// For compatibility with deep equality and simple objects, round trip via JSON to erase prototypes.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
