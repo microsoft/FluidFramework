@@ -9,6 +9,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import { independentView, TreeAlpha } from "../shared-tree/index.js";
 import {
+	allowUnused,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ConciseTree,
@@ -1298,5 +1299,70 @@ describe("TableFactory unit tests", () => {
 		assert.equal(cell, cell0);
 		assert.equal(row, row0);
 		assert.equal(column, column0);
+	});
+
+	// The code within the following tests is included in TSDoc comments in the source code.
+	// If you need to update any of these, please update the corresponding TSDoc comments as well.
+	describe("TSDoc comment examples", () => {
+		it("TableSchema: Default Column and Row schema", () => {
+			class Cell extends schemaFactory.object("TableCell", {
+				value: schemaFactory.string,
+			}) {}
+
+			class Table extends TableSchema.createTable({
+				schemaFactory,
+				cell: Cell,
+			}) {}
+
+			const table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+
+			// Don't include this line in the example docs.
+			allowUnused(table);
+		});
+
+		it("TableSchema: Customizing Column and Row schema", () => {
+			class Cell extends schemaFactory.object("TableCell", {
+				value: schemaFactory.string,
+			}) {}
+
+			class ColumnProps extends schemaFactory.object("TableColumnProps", {
+				// Column label to display.
+				label: schemaFactory.string,
+				// The type of data represented by the cells. Default: string.
+				dataType: schemaFactory.optional(schemaFactory.string),
+			}) {}
+
+			class Column extends TableSchema.createColumn({
+				schemaFactory,
+				props: ColumnProps,
+			}) {}
+
+			class Row extends TableSchema.createRow({
+				schemaFactory,
+				cell: Cell,
+			}) {}
+
+			class Table extends TableSchema.createTable({
+				schemaFactory,
+				cell: Cell,
+				column: Column,
+				row: Row,
+			}) {}
+
+			const table = new Table({
+				columns: [
+					new Column({ props: { label: "Entry", dataType: "string" } }),
+					new Column({ props: { label: "Date", dataType: "date" } }),
+					new Column({ props: { label: "Amount", dataType: "number" } }),
+				],
+				rows: [],
+			});
+
+			// Don't include this line in the example docs.
+			allowUnused(table);
+		});
 	});
 });

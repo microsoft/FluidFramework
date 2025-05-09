@@ -10,7 +10,7 @@ import {
 	proxySlot,
 	createTreeNodeFromInner,
 } from "./treeNodeKernel.js";
-import type { TreeNode } from "./types.js";
+import type { TreeNode } from "./treeNode.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
 /**
