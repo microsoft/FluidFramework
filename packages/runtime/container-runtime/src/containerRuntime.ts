@@ -1068,8 +1068,11 @@ export class ContainerRuntime
 		// the customer since it may be a sign that the customer is not properly waiting for saturation before updating their
 		// `minVersionForCollab` value, which could cause disruptions to users in the future.
 		const existingMinVersionForCollab = metadata?.documentSchema?.minVersionForCollab;
-		if (existingMinVersionForCollab !== undefined && gt(minVersionForCollab, pkgVersion)) {
-			const warnMsg = `Warning: minVersionForCollab (${minVersionForCollab}) is greater than the existing document's runtime version (${pkgVersion}). Upgrade to ensure compatibility going forward.`;
+		if (
+			existingMinVersionForCollab !== undefined &&
+			gt(existingMinVersionForCollab, pkgVersion)
+		) {
+			const warnMsg = `Warning: minVersionForCollab (${existingMinVersionForCollab}) is greater than the existing document's runtime version (${pkgVersion}). Upgrade to ensure compatibility going forward.`;
 			logger.sendTelemetryEvent({
 				eventName: "ContainerRuntime:MinVersionForCollabWarning",
 				category: "generic",
