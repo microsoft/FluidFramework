@@ -4493,6 +4493,7 @@ export class ContainerRuntime
 					newRuntimeSchema: JSON.stringify(schemaChangeMessage.runtime),
 					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
+					minVersionForCollab: schemaChangeMessage.minVersionForCollab,
 				});
 				const msg: ContainerRuntimeDocumentSchemaMessage = {
 					type: ContainerMessageType.DocumentSchemaChange,
