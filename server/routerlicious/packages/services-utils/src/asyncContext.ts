@@ -168,7 +168,6 @@ export class AsyncLocalStorageAbortControllerContext implements IAbortController
 		const abortControllerProperties: IAbortControllerProperties = {
 			abortController,
 		};
-		console.log("[DHRUV DEBUG] bindAbortController", abortControllerProperties);
 		this.contextProvider.bindContext(abortControllerProperties, () => callback());
 	}
 
@@ -188,7 +187,6 @@ export class AsyncLocalStorageAbortControllerContext implements IAbortController
 
 	public getAbortController(): AbortController | undefined {
 		const abortControllerProperties = this.contextProvider.getContext();
-		console.log("[DHRUV DEBUG] getAbortController", abortControllerProperties);
 		if (!abortControllerProperties) {
 			return undefined;
 		}

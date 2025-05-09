@@ -51,7 +51,6 @@ export interface IBasicRestWrapperMetricProps {
 	correlationId: string;
 	durationInMs: number;
 	timeoutInMs: number | string;
-	abortSignalUsed?: boolean;
 }
 
 /**
@@ -391,7 +390,6 @@ export class BasicRestWrapper extends RestWrapper {
 								options.timeout ??
 								this.axios.defaults.timeout ??
 								"TIMEOUT_UNAVAILABLE",
-							abortSignalUsed: options.signal ? true : false,
 						};
 						this.logHttpMetrics(requestProps);
 					}
