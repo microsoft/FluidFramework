@@ -93,7 +93,7 @@ import {
 	objectWithArrayOfFunctionsWithProperties,
 	objectWithArrayOfObjectAndFunctions,
 	objectWithArrayOfBigintOrObjects,
-	objectWithArrayOfSymbolsOrObjects,
+	objectWithArrayOfSymbolOrObjects,
 	objectWithReadonlyArrayOfNumbers,
 	objectWithOptionalNumberNotPresent,
 	objectWithOptionalNumberUndefined,
@@ -116,6 +116,7 @@ import {
 	stringRecordOfUndefined,
 	stringRecordOfUnknown,
 	stringOrNumberRecordOfStrings,
+	stringOrNumberRecordOfObjects,
 	partialStringRecordOfNumbers,
 	partialStringRecordOfUnknown,
 	templatedRecordOfNumbers,
@@ -144,7 +145,9 @@ import {
 	selfRecursiveObjectAndFunction,
 	objectInheritingOptionalRecursionAndWithNestedSymbol,
 	simpleJson,
+	simpleImmutableJson,
 	jsonObject,
+	immutableJsonObject,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
 	classInstanceWithPrivateGetter,
@@ -512,6 +515,10 @@ describe("JsonSerializable", () => {
 				const { filteredIn } = passThru(stringOrNumberRecordOfStrings);
 				assertIdenticalTypes(filteredIn, stringOrNumberRecordOfStrings);
 			});
+			it("`string`|`number` indexed record of objects", () => {
+				const { filteredIn } = passThru(stringOrNumberRecordOfObjects);
+				assertIdenticalTypes(filteredIn, stringOrNumberRecordOfObjects);
+			});
 			it("templated record of `numbers`", () => {
 				const { filteredIn } = passThru(templatedRecordOfNumbers);
 				assertIdenticalTypes(templatedRecordOfNumbers, filteredIn);
@@ -546,6 +553,10 @@ describe("JsonSerializable", () => {
 			it("simple non-null object json (NonNullJsonObjectWith<never>)", () => {
 				const { filteredIn } = passThru(jsonObject);
 				assertIdenticalTypes(filteredIn, jsonObject);
+			});
+			it("simple read-only non-null object json (ReadonlyNonNullJsonObjectWith<never>)", () => {
+				const { filteredIn } = passThru(immutableJsonObject);
+				assertIdenticalTypes(filteredIn, immutableJsonObject);
 			});
 
 			it("non-const enums", () => {
@@ -661,6 +672,10 @@ describe("JsonSerializable", () => {
 			it("simple json (JsonTypeWith<never>)", () => {
 				const { filteredIn } = passThru(simpleJson);
 				assertIdenticalTypes(filteredIn, simpleJson);
+			});
+			it("simple read-only json (ReadonlyJsonTypeWith<never>)", () => {
+				const { filteredIn } = passThru(simpleImmutableJson);
+				assertIdenticalTypes(filteredIn, simpleImmutableJson);
 			});
 		});
 
@@ -1259,7 +1274,7 @@ describe("JsonSerializable", () => {
 				it("object with array of `symbol` or basic object", () => {
 					const { filteredIn } = passThru(
 						// @ts-expect-error 'symbol' is not supported (becomes 'never')
-						objectWithArrayOfSymbolsOrObjects,
+						objectWithArrayOfSymbolOrObjects,
 						{ arrayOfSymbolOrObjects: [null] },
 					);
 					assertIdenticalTypes(

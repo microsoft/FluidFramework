@@ -358,5 +358,56 @@ for (const compatibilityMode of ["1", "2"] as const) {
 				assert.equal(view.root.itWorks, "yes");
 			});
 		});
+
+		describe("compatibilityModeRuntimeOptions", () => {
+			it("should set correct runtime options for compatibilityMode", async () => {
+				const { container: container_defaultConfig } = await client.createContainer(
+					schema,
+					compatibilityMode,
+				);
+
+				const expectedRuntimeOptions1 = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: 0,
+					compressionOptions: {
+						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+						compressionAlgorithm: "lz4",
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: false,
+					explicitSchemaControl: false,
+					createBlobPayloadPending: undefined,
+				};
+				const expectedRuntimeOptions2 = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: 1,
+					compressionOptions: { minimumBatchSizeInBytes: 614400, compressionAlgorithm: "lz4" },
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: "on",
+					enableGroupedBatching: true,
+					explicitSchemaControl: true,
+					createBlobPayloadPending: undefined,
+				};
+
+				const expectedRuntimeOptions =
+					compatibilityMode === "1" ? expectedRuntimeOptions1 : expectedRuntimeOptions2;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+				const actualRuntimeOptions = (container_defaultConfig as any).container._runtime
+					.runtimeOptions;
+
+				assert.deepStrictEqual(
+					actualRuntimeOptions,
+					expectedRuntimeOptions,
+					"Runtime options set properly based on compatibilityMode",
+				);
+			});
+		});
 	});
 }

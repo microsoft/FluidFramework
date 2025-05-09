@@ -7,13 +7,13 @@
 // @public
 export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
 
-// @alpha
+// @alpha @legacy
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export const create404Response: (request: IRequest) => IResponse;
 
-// @alpha
+// @alpha @legacy
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     // (undocumented)
     get [fluidHandleSymbol](): IFluidHandleErased<T>;
@@ -33,7 +33,13 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
-// @alpha
+// @alpha @legacy
+export const isFluidHandlePayloadPending: <T>(handle: IFluidHandle<T>) => handle is IFluidHandlePayloadPending<T>;
+
+// @alpha @legacy
+export const isLocalFluidHandle: <T>(handle: IFluidHandle<T>) => handle is ILocalFluidHandle<T>;
+
+// @alpha @legacy
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
     // (undocumented)
@@ -50,7 +56,7 @@ export class RequestParser implements IRequest {
     get url(): string;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
     hasInitialized(_runtime: T): Promise<void>;
     instantiateFirstTime(_runtime: T): Promise<void>;
@@ -62,7 +68,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
 }
 
-// @alpha
+// @alpha @legacy
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor(params?: {
         groupId?: string;
@@ -78,13 +84,13 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     get summary(): ISummaryTree;
 }
 
-// @alpha
+// @alpha @legacy
 export function toDeltaManagerInternal(deltaManager: IDeltaManagerErased): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
-// @alpha
+// @alpha @legacy
 export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T>;
 
-// @alpha
+// @alpha @legacy
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T>;
 
 // (No @packageDocumentation comment for this package)

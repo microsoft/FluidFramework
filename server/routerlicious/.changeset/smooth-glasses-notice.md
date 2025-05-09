@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-routerlicious-base": major
+"__section": breaking
 ---
 
 Deprecated bindCorrelationId middleware removed from Alfred and Riddler Express apps

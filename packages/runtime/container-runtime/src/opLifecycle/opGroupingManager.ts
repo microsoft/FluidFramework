@@ -12,8 +12,8 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	type LocalEmptyBatchPlaceholder,
 	type OutboundBatch,
-	type OutboundBatchMessage,
 	type OutboundSingletonBatch,
 } from "./definitions.js";
 
@@ -67,7 +67,10 @@ export class OpGroupingManager {
 	public createEmptyGroupedBatch(
 		resubmittingBatchId: string,
 		referenceSequenceNumber: number,
-	): { outboundBatch: OutboundSingletonBatch; placeholderMessage: OutboundBatchMessage } {
+	): {
+		outboundBatch: OutboundSingletonBatch;
+		placeholderMessage: LocalEmptyBatchPlaceholder;
+	} {
 		assert(
 			this.config.groupedBatchingEnabled,
 			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
@@ -77,15 +80,14 @@ export class OpGroupingManager {
 			contents: [],
 		});
 
-		const placeholderMessage: OutboundBatchMessage = {
+		const placeholderMessage: LocalEmptyBatchPlaceholder = {
 			metadata: { batchId: resubmittingBatchId },
 			localOpMetadata: { emptyBatch: true },
 			referenceSequenceNumber,
-			contents: serializedOp,
 		};
 		const outboundBatch: OutboundSingletonBatch = {
 			contentSizeInBytes: 0,
-			messages: [placeholderMessage],
+			messages: [{ ...placeholderMessage, contents: serializedOp }],
 			referenceSequenceNumber,
 		};
 		return { outboundBatch, placeholderMessage };
@@ -101,8 +103,8 @@ export class OpGroupingManager {
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
 	public groupBatch(batch: OutboundBatch): OutboundSingletonBatch {
-		assert(this.groupedBatchingEnabled(), "grouping disabled!");
-		assert(batch.messages.length > 0, "Unexpected attempt to group an empty batch");
+		assert(this.groupedBatchingEnabled(), 0xb79 /* grouping disabled! */);
+		assert(batch.messages.length > 0, 0xb7a /* Unexpected attempt to group an empty batch */);
 
 		if (batch.messages.length === 1) {
 			return batch as OutboundSingletonBatch;

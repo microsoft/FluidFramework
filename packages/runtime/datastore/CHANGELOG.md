@@ -1,5 +1,17 @@
 # @fluidframework/datastore
 
+## 2.33.0
+
+Dependency updates only.
+
+## 2.32.0
+
+### Minor Changes
+
+- Shorter IDs for DataStores and DDSes ([#24350](https://github.com/microsoft/FluidFramework/pull/24350)) [fe924a173b](https://github.com/microsoft/FluidFramework/commit/fe924a173b71abd96ba76da787eec3b4c077d32b)
+
+  Fluid Framework will now use shorter IDs for Datastores and DDSes when `enableRuntimeIdCompressor:"on"` is set in `IContainerRuntimeOptions`. This change should help reduce summary and snapshot sizes as well as improve runtime performance because of a smaller memory footprint.
+
 ## 2.31.0
 
 ### Minor Changes

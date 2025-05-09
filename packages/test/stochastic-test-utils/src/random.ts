@@ -66,7 +66,6 @@ export function makeRandom(
 	/* eslint-enable @typescript-eslint/unbound-method */
 
 	return {
-		clone: (newSeed: number) => makeRandom(newSeed),
 		bool: (probability = 0.5) => engine.float64() < probability,
 		integer,
 		normal,

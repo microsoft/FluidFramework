@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/register-collection",
-	"version": "2.32.0",
+	"version": "2.40.0",
 	"description": "Consensus Register",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -133,9 +133,9 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/register-collection-previous": "npm:@fluidframework/register-collection@2.31.0",
+		"@fluidframework/register-collection-previous": "npm:@fluidframework/register-collection@2.33.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.5",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
@@ -145,8 +145,6 @@
 		"eslint": "~8.55.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
-		"replace-in-file": "^6.3.5",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},

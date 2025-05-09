@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64, TypedEventEmitter } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import {
-	IBroadcastSignalEventPayload,
-	ICollaborationSessionEvents,
 	IRoom,
 	IRuntimeSignalEnvelope,
+	createRuntimeMessage,
 } from "@fluidframework/server-lambdas";
-import { BasicRestWrapper } from "@fluidframework/server-services-client";
+import { BasicRestWrapper, NetworkError } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import {
 	throttle,
@@ -30,11 +29,12 @@ import {
 	getLumberBaseProperties,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { Request, Router } from "express";
+import { Request, Router, Response } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
 import winston from "winston";
 import { v4 as uuid } from "uuid";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import { Constants } from "../../../utils";
 import {
 	craftClientJoinMessage,
@@ -53,7 +53,7 @@ export function create(
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: RedisEmitter,
 	fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 	denyList?: core.IDenyList,
 ): Router {
@@ -181,33 +181,30 @@ export function create(
 		denyListMiddleware(denyList),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			const tenantId = request.params.tenantId;
-			const documentId = request.params.id;
-			const signalContent = request?.body?.signalContent;
-			if (!isValidSignalEnvelope(signalContent)) {
-				response
-					.status(400)
-					.send(
-						`signalContent should contain 'contents.content' and 'contents.type' keys.`,
-					);
-				return;
-			}
-			if (!collaborationSessionEventEmitter) {
-				response
-					.status(500)
-					.send(`No emitter configured for the broadcast-signal endpoint.`);
-				return;
-			}
-			try {
-				const signalRoom: IRoom = { tenantId, documentId };
-				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
-				response.status(200).send("OK");
-				return;
-			} catch (error) {
-				response.status(500).send(error);
-				return;
-			}
+			const handleBroadcastSignalP = handleBroadcastSignal(
+				request,
+				response,
+				config,
+				storage,
+				collaborationSessionEventEmitter,
+			);
+			handleResponse(
+				handleBroadcastSignalP,
+				response,
+				undefined,
+				500,
+				200,
+				undefined,
+				(error: any) =>
+					Lumberjack.error(
+						"Error handling broadcast-signal",
+						{
+							tenantId: request.params.tenantId,
+							documentId: request.params.documentId,
+						},
+						error,
+					),
+			);
 		},
 	);
 
@@ -394,8 +391,65 @@ const uploadBlob = async (
 		() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 		undefined /* refreshTokenIfNeeded */,
 		logHttpMetrics /* logHttpMetrics */,
+		() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 	);
 	return restWrapper.post(uri, blobData, undefined, {
 		"Content-Type": "application/json",
 	});
 };
+
+async function handleBroadcastSignal(
+	request: Request,
+	response: Response,
+	config: Provider,
+	storage: core.IDocumentStorage,
+	collaborationSessionEventEmitter?: RedisEmitter,
+): Promise<void> {
+	const tenantId = request.params.tenantId;
+	const documentId = request.params.id;
+	const signalContent = request?.body?.signalContent;
+	if (!isValidSignalEnvelope(signalContent)) {
+		Lumberjack.error(
+			"signalContent should contain 'contents.content' and 'contents.type' key",
+			{ tenantId, documentId },
+		);
+		throw new NetworkError(
+			400,
+			"signalContent should contain 'contents.content' and 'contents.type' keys",
+		);
+	}
+	if (!collaborationSessionEventEmitter) {
+		Lumberjack.error("No emitter configured for the broadcast-signal endpoint", {
+			tenantId,
+			documentId,
+		});
+		throw new NetworkError(500, "No emitter configured for the broadcast-signal endpoint");
+	}
+
+	const serverUrl: string = config.get("worker:serverUrl");
+	const document = await storage?.getDocument(tenantId, documentId);
+	if (!document?.session?.isSessionAlive) {
+		Lumberjack.error("Document not found", { tenantId, documentId });
+		throw new NetworkError(404, "Document not found");
+	}
+	if (!document.session.isSessionActive) {
+		Lumberjack.warning("Document session not active", { tenantId, documentId });
+		throw new NetworkError(410, "Document session not active");
+	}
+	if (document.session.ordererUrl !== serverUrl) {
+		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
+			documentUrl: document.session.ordererUrl,
+			currentUrl: serverUrl,
+			targetUrlAndPath: `${document.session.ordererUrl}${request.originalUrl}`,
+		});
+		response.redirect(`${document.session.ordererUrl}${request.originalUrl}`);
+		return;
+	}
+
+	const signalMessage = createRuntimeMessage(signalContent);
+	const signalRoom: IRoom = { tenantId, documentId };
+	Lumberjack.info("Broadcasting signal to room", { tenantId, documentId });
+	collaborationSessionEventEmitter.to(getRoomId(signalRoom)).emit("signal", signalMessage);
+}
+
+const getRoomId = (room: IRoom): string => `${room.tenantId}/${room.documentId}`;

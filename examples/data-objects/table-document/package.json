@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/table-document",
-	"version": "2.32.0",
+	"version": "2.40.0",
 	"description": "Chaincode component containing a table's data",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -97,7 +97,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.5",
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
@@ -108,7 +108,6 @@
 		"eslint": "~8.55.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},

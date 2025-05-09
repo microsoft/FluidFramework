@@ -1,5 +1,18 @@
 # @fluidframework/container-loader
 
+## 2.33.0
+
+Dependency updates only.
+
+## 2.32.0
+
+### Minor Changes
+
+- Blobs in Detached Container Supported by Default ([#24350](https://github.com/microsoft/FluidFramework/pull/24350)) [fe924a173b](https://github.com/microsoft/FluidFramework/commit/fe924a173b71abd96ba76da787eec3b4c077d32b)
+
+  It is no longer necessary or supported to provide `detachedBlobStorage` to the Loader. This functionality is now provided by default, and the deprecated `IDetachedBlobStorage` will be removed in the 2.40.0 release.
+  The new behavior can be disabled by setting `Fluid.Container.MemoryBlobStorageEnabled` to `false`. This flag will also be removed in the 2.40.0 release if no issues are reported.
+
 ## 2.31.0
 
 Dependency updates only.

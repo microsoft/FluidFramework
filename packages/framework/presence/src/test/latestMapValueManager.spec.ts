@@ -12,30 +12,30 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
-	IPresence,
-	LatestMapItemValueClientData,
-	LatestMapValueManager,
+	LatestMapRaw,
+	LatestMapItemUpdatedClientData,
+	Presence,
 } from "@fluidframework/presence/alpha";
-import { LatestMap } from "@fluidframework/presence/alpha";
+import { StateFactory } from "@fluidframework/presence/alpha";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestMapManager(
-	presence: IPresence,
+	presence: Presence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const states = presence.getStates(testWorkspaceName, {
-		fixedMap: LatestMap(
-			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
-			valueControlSettings,
-		),
+	const workspace = presence.states.getWorkspace(testWorkspaceName, {
+		fixedMap: StateFactory.latestMap({
+			local: { key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
+			settings: valueControlSettings,
+		}),
 	});
-	return states.props.fixedMap;
+	return workspace.states.fixedMap;
 }
 
 describe("Presence", () => {
-	describe("LatestMapValueManager", () => {
+	describe("LatestMap", () => {
 		/**
 		 * See {@link checkCompiles} below
 		 */
@@ -43,7 +43,7 @@ describe("Presence", () => {
 
 		addControlsTests(createLatestMapManager);
 
-		function setupMapValueManager(): LatestMapValueManager<
+		function setupMapValueManager(): LatestMapRaw<
 			{
 				x: number;
 				y: number;
@@ -51,10 +51,10 @@ describe("Presence", () => {
 			string
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.getStates(testWorkspaceName, {
-				fixedMap: LatestMap({ key1: { x: 0, y: 0 } }),
+			const workspace = presence.states.getWorkspace(testWorkspaceName, {
+				fixedMap: StateFactory.latestMap({ local: { key1: { x: 0, y: 0 } } }),
 			});
-			return states.props.fixedMap;
+			return workspace.states.fixedMap;
 		}
 
 		it("localItemUpdated event is fired with new value when local value is updated", () => {
@@ -87,6 +87,15 @@ describe("Presence", () => {
 			mapVM.local.delete("key1");
 			assert.strictEqual(localRemovalCount, 1);
 		});
+
+		it(".presence provides Presence it was created under", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const workspace = presence.states.getWorkspace(testWorkspaceName, {
+				fixedMap: StateFactory.latestMap({ local: { key1: { x: 0, y: 0 } } }),
+			});
+
+			assert.strictEqual(workspace.states.fixedMap.presence, presence);
+		});
 	});
 });
 
@@ -97,13 +106,21 @@ describe("Presence", () => {
  */
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	const presence = {} as IPresence;
-	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatestMap", {
-		fixedMap: LatestMap({ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } }),
-	});
+	const presence = {} as Presence;
+	const statesWorkspace = presence.states.getWorkspace(
+		"name:testStatesWorkspaceWithLatestMap",
+		{
+			fixedMap: StateFactory.latestMap({
+				local: {
+					key1: { x: 0, y: 0 },
+					key2: { ref: "default", someId: 0 },
+				},
+			}),
+		},
+	);
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
-	const props = workspace.props;
+	const props = workspace.states;
 
 	props.fixedMap.local.get("key1");
 	// @ts-expect-error with inferred keys only those named it init are accessible
@@ -123,6 +140,9 @@ export function checkCompiles(): void {
 		console.log(key, value);
 	}
 
+	// ----------------------------------
+	// pointers data
+
 	interface PointerData {
 		x: number;
 		y: number;
@@ -130,43 +150,73 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	workspace.add("pointers", LatestMap<PointerData>({}));
+	workspace.add("pointers", StateFactory.latestMap<PointerData>({ local: {} }));
 
-	const pointers = workspace.props.pointers;
+	const pointers = workspace.states.pointers;
 	const localPointers = pointers.local;
 
 	function logClientValue<T>({
-		client,
+		attendee,
 		key,
 		value,
 	}: Pick<
-		LatestMapItemValueClientData<T, string | number>,
-		"client" | "key" | "value"
+		LatestMapItemUpdatedClientData<T, string | number>,
+		"attendee" | "key" | "value"
 	>): void {
-		console.log(client.sessionId, key, value);
+		console.log(attendee.attendeeId, key, value);
 	}
 
 	localPointers.set("pen", { x: 1, y: 2 });
 
-	const pointerItemUpdatedOff = pointers.events.on("itemUpdated", logClientValue);
+	const pointerItemUpdatedOff = pointers.events.on("remoteItemUpdated", logClientValue);
 	pointerItemUpdatedOff();
 
-	for (const client of pointers.clients()) {
-		const items = pointers.clientValue(client);
+	for (const attendee of pointers.getStateAttendees()) {
+		const items = pointers.getRemote(attendee);
 		for (const [key, { value }] of items.entries()) {
-			logClientValue({ client, key, value });
+			logClientValue({ attendee, key, value });
 		}
 	}
 
-	for (const { client, items } of pointers.clientValues()) {
-		for (const [key, { value }] of items.entries()) logClientValue({ client, key, value });
+	for (const { attendee, items } of pointers.getRemotes()) {
+		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	}
 
-	pointers.events.on("itemRemoved", ({ client, key }) =>
-		logClientValue<string>({ client, key, value: "<removed>" }),
+	pointers.events.on("remoteItemRemoved", ({ attendee, key }) =>
+		logClientValue<string>({ attendee, key, value: "<removed>" }),
 	);
 
-	pointers.events.on("updated", ({ client, items }) => {
-		for (const [key, { value }] of items.entries()) logClientValue({ client, key, value });
+	pointers.events.on("remoteUpdated", ({ attendee, items }) => {
+		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	});
+
+	// ----------------------------------
+	// primitive and null value support
+
+	workspace.add(
+		"primitiveMap",
+		StateFactory.latestMap({
+			local: {
+				// eslint-disable-next-line unicorn/no-null
+				null: null,
+				string: "string",
+				number: 0,
+				boolean: true,
+			},
+		}),
+	);
+
+	const localPrimitiveMap = workspace.states.primitiveMap.local;
+
+	// map value types are not matched to specific key
+	localPrimitiveMap.set("string", 1);
+	localPrimitiveMap.set("number", false);
+	// eslint-disable-next-line unicorn/no-null
+	localPrimitiveMap.set("boolean", null);
+	localPrimitiveMap.set("null", "null");
+
+	// @ts-expect-error with inferred keys only those named in init are accessible
+	localPrimitiveMap.set("key3", "value");
+	// @ts-expect-error value of type value is not assignable
+	localPrimitiveMap.set("null", { value: "value" });
 }

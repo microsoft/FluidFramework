@@ -13,10 +13,6 @@ import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/
 import { makeSerializable } from "./IntervalCollectionValues.js";
 import {
 	IntervalCollection,
-	opsMap,
-	reservedIntervalIdKey,
-	toOptionalSequencePlace,
-	toSequencePlace,
 	type ISerializedIntervalCollectionV1,
 	type ISerializedIntervalCollectionV2,
 } from "./intervalCollection.js";
@@ -190,63 +186,46 @@ export class IntervalCollectionMap {
 
 	/**
 	 * Submit the given op if a handler is registered.
-	 * @param op - The operation to attempt to submit
+	 * @param content - The operation to attempt to submit
 	 * @param localOpMetadata - The local metadata associated with the op. This is kept locally by the runtime
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public tryResubmitMessage(op: unknown, localOpMetadata: IMapMessageLocalMetadata): boolean {
-		if (isMapOperation(op)) {
-			const localValue = this.data.get(op.key);
-
+	public tryResubmitMessage(
+		content: unknown,
+		localOpMetadata: IMapMessageLocalMetadata,
+	): boolean {
+		if (isMapOperation(content)) {
+			const { value, key } = content;
+			const localValue = this.data.get(key);
 			assert(localValue !== undefined, 0x3f8 /* Local value expected on resubmission */);
-
-			const handler = opsMap[op.value.opName];
-			const rebased = handler.rebase(localValue, op.value, localOpMetadata);
-			if (rebased !== undefined) {
-				const { rebasedOp, rebasedLocalOpMetadata } = rebased;
-				this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
-			}
+			localValue.resubmitMessage(value, localOpMetadata);
 			return true;
 		}
 		return false;
 	}
 
-	public tryApplyStashedOp(op: unknown): boolean {
-		if (isMapOperation(op)) {
-			const { value, key } = op;
+	public tryRollback(content: any, localOpMetadata: unknown) {
+		if (isMapOperation(content)) {
+			const localValue = this.data.get(content.key);
+
+			assert(localValue !== undefined, 0xb7e /* Local value expected on rollback */);
+
+			localValue.rollback(content.value, localOpMetadata as IMapMessageLocalMetadata);
+
+			return true;
+		}
+		return false;
+	}
+
+	public tryApplyStashedOp(content: unknown): boolean {
+		if (isMapOperation(content)) {
+			const { value, key } = content;
 			const map = this.get(key);
 
-			switch (value.opName) {
-				case "add": {
-					map.add({
-						// Todo: we should improve typing so we know add ops always have start and end
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						start: toSequencePlace(value.value.start!, value.value.startSide),
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						end: toSequencePlace(value.value.end!, value.value.endSide),
-						props: value.value.properties,
-					});
-					return true;
-				}
-				case "change": {
-					const { [reservedIntervalIdKey]: id, ...props } = value.value.properties ?? {};
-					map.change(id, {
-						start: toOptionalSequencePlace(value.value.start, value.value.startSide),
-						end: toOptionalSequencePlace(value.value.end, value.value.endSide),
-						props,
-					});
-					return true;
-				}
-				case "delete": {
-					const { [reservedIntervalIdKey]: id } = value.value.properties ?? {};
-					map.removeIntervalById(id);
-					return true;
-				}
-				default:
-					throw new Error("unknown ops should not be stashed");
-			}
+			map.applyStashedOp(value);
+			return true;
 		}
 		return false;
 	}
@@ -267,23 +246,15 @@ export class IntervalCollectionMap {
 	 * (since its data no longer matches what other clients think the data should be) and will avoid overriding document content or misleading the users into thinking their current state is accurate.
 	 */
 	public tryProcessMessage(
-		op: unknown,
+		content: unknown,
 		local: boolean,
 		message: ISequencedDocumentMessage,
 		localOpMetadata: unknown,
 	): boolean {
-		if (isMapOperation(op)) {
-			const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
-			const handler = opsMap[op.value.opName];
-			const previousValue = localValue;
-			const translatedValue = op.value.value as any;
-			handler.process(
-				previousValue,
-				translatedValue,
-				local,
-				message,
-				localOpMetadata as IMapMessageLocalMetadata,
-			);
+		if (isMapOperation(content)) {
+			const { value, key } = content;
+			const localValue = this.data.get(key) ?? this.createCore(key, local);
+			localValue.process(value, local, message, localOpMetadata as IMapMessageLocalMetadata);
 			return true;
 		}
 		return false;

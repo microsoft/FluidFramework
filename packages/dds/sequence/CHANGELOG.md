@@ -1,5 +1,25 @@
 # @fluidframework/sequence
 
+## 2.33.0
+
+### Minor Changes
+
+- Generic types for IntervalCollections have been replaced with non-generic types ([#24411](https://github.com/microsoft/FluidFramework/pull/24411)) [1c743e825ed](https://github.com/microsoft/FluidFramework/commit/1c743e825ed29a81b0e66775ce3553477361d335)
+
+  This change deprecates the following generic types and provides non-generic alternatives where necessary:
+
+  - `IIntervalCollection` is replaced by `ISequenceIntervalCollection`
+  - `IIntervalCollectionEvent` is replaced by `ISequenceIntervalCollectionEvents`
+  - `IntervalIndex` is replaced by `SequenceIntervalIndex`
+  - `IOverlappingIntervalsIndex` is replaced by `ISequenceOverlappingIntervalsIndex`
+  - `ISharedIntervalCollection` is deprecated without replacement
+
+  These types are no longer required to be generic, and replacing them with non-generic alternatives keeps our typing less complex.
+
+## 2.32.0
+
+Dependency updates only.
+
 ## 2.31.0
 
 Dependency updates only.

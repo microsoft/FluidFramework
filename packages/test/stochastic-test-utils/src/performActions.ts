@@ -11,6 +11,7 @@ import {
 	combineReducersAsync,
 	type BaseOperation,
 } from "./combineReducers.js";
+import { makeRandom } from "./random.js";
 import {
 	AsyncGenerator,
 	AsyncReducer,
@@ -112,7 +113,7 @@ export async function performFuzzActionsAsync<
 			? reducerOrMap
 			: combineReducersAsync<TOperation, TState>(reducerOrMap);
 	const applyOperation = async (reduceState: TState, op: RealOperation<TOperation>) => {
-		const seededState: TState = { ...reduceState, random: initialState.random.clone(op.seed) };
+		const seededState: TState = { ...reduceState, random: makeRandom(op.seed) };
 		return (await reducer(seededState, op)) ?? seededState;
 	};
 
@@ -122,7 +123,7 @@ export async function performFuzzActionsAsync<
 		const seed = initialState.random.integer(0, Number.MAX_SAFE_INTEGER);
 		const seededState: TState = {
 			...genState,
-			random: initialState.random.clone(seed),
+			random: makeRandom(seed),
 		};
 		const op = await generator(seededState);
 		if (op === done) {

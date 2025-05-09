@@ -109,7 +109,6 @@ export interface SaveInfo {
  * @internal
  */
 export interface IRandom {
-	clone(newSeed: number): IRandom;
 	/**
 	 * Return a pseudorandomly chosen boolean value that is true with the given probability.
 	 * (A probability of 0 is always false, a probability of 1 is always true)

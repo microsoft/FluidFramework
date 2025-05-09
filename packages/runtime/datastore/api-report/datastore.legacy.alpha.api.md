@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export enum DataStoreMessageType {
     // (undocumented)
     Attach = "attach",
@@ -12,7 +12,7 @@ export enum DataStoreMessageType {
     ChannelOp = "op"
 }
 
-// @alpha
+// @alpha @legacy
 export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
@@ -64,9 +64,11 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     readonly ILayerCompatDetails?: unknown;
     // (undocumented)
     get isAttached(): boolean;
+    readonly isReadOnly: () => boolean;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
+    notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): this;
     // (undocumented)
@@ -78,7 +80,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
-    reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown, squash?: boolean): void;
     rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): this;
@@ -101,7 +103,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     waitAttached(): Promise<void>;
 }
 
-// @alpha
+// @alpha @legacy
 export class FluidObjectHandle<T extends FluidObject = FluidObject> extends FluidHandleBase<T> {
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     readonly absolutePath: string;
@@ -117,16 +119,16 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> extends Flui
     protected readonly value: T | Promise<T>;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface ISharedObjectRegistry {
     // (undocumented)
     get(name: string): IChannelFactory | undefined;
 }
 
-// @alpha
+// @alpha @legacy
 export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
-// @alpha
+// @alpha @legacy
 export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime) => Promise<{
     path: string[];
     content: string;

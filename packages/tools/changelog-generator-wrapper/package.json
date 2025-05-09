@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/changelog-generator-wrapper",
-	"version": "2.32.0",
+	"version": "2.40.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {

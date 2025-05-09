@@ -18,11 +18,9 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	CompressionAlgorithms,
-	ICompressionRuntimeOptions,
-	makeLegacySendBatchFn,
-} from "../../containerRuntime.js";
+import type { ICompressionRuntimeOptions } from "../../compressionDefinitions.js";
+import { CompressionAlgorithms } from "../../compressionDefinitions.js";
+import { makeLegacySendBatchFn } from "../../containerRuntime.js";
 import {
 	ContainerMessageType,
 	type LocalContainerRuntimeMessage,
@@ -39,6 +37,9 @@ import {
 	Outbox,
 	type LocalBatchMessage,
 	type OutboundBatch,
+	localBatchToOutboundBatch,
+	serializeOp,
+	type LocalEmptyBatchPlaceholder,
 } from "../../opLifecycle/index.js";
 import {
 	PendingMessageResubmitData,
@@ -46,9 +47,18 @@ import {
 	type IPendingMessage,
 } from "../../pendingStateManager.js";
 
-function typeFromBatchedOp(op: LocalBatchMessage): string {
-	assert(op.serializedOp !== undefined, "PRECONDITION: serializedOp is undefined");
-	return (JSON.parse(op.serializedOp) as LocalContainerRuntimeMessage).type;
+function typeFromBatchedOp(message: LocalBatchMessage): string {
+	assert(message.runtimeOp !== undefined, "PRECONDITION: runtimeOp is undefined");
+	return message.runtimeOp.type;
+}
+
+// Make a mock op with distinguishable contents
+function op(data: string): LocalContainerRuntimeMessage {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	return {
+		type: ContainerMessageType.FluidDataStoreOp,
+		contents: data as unknown,
+	} as LocalContainerRuntimeMessage;
 }
 
 describe("Outbox", () => {
@@ -138,23 +148,41 @@ describe("Outbox", () => {
 			clientSequenceNumber: number | undefined,
 		): void => {
 			for (const {
-				serializedOp: content,
+				runtimeOp,
 				referenceSequenceNumber,
 				metadata: opMetadata,
 				localOpMetadata,
 			} of batch)
 				state.pendingOpContents.push({
-					content,
+					runtimeOp,
 					referenceSequenceNumber,
 					opMetadata,
 					localOpMetadata,
 					batchStartCsn: clientSequenceNumber ?? -1,
 				});
 		},
+		onFlushEmptyBatch: (
+			{
+				metadata: opMetadata,
+				localOpMetadata,
+				referenceSequenceNumber,
+			}: LocalEmptyBatchPlaceholder,
+			clientSequenceNumber: number | undefined,
+		) =>
+			state.pendingOpContents.push({
+				referenceSequenceNumber,
+				opMetadata,
+				localOpMetadata,
+				batchStartCsn: clientSequenceNumber,
+			}),
 	});
 
-	const createMessage = (type: ContainerMessageType, contents: string): LocalBatchMessage => ({
-		serializedOp: JSON.stringify({ type, contents }),
+	const createMessage = (
+		type: ContainerMessageType,
+		fakeContents: string,
+	): LocalBatchMessage => ({
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		runtimeOp: { type, contents: fakeContents as unknown } as LocalContainerRuntimeMessage,
 		metadata: undefined,
 		localOpMetadata: {},
 		referenceSequenceNumber: Number.POSITIVE_INFINITY,
@@ -164,7 +192,7 @@ describe("Outbox", () => {
 		message: LocalBatchMessage | OutboundBatchMessage,
 		batchMarker: boolean | undefined = undefined,
 	): IBatchMessage => ({
-		contents: "serializedOp" in message ? message.serializedOp : message.contents,
+		contents: "runtimeOp" in message ? serializeOp(message.runtimeOp) : message.contents,
 		metadata:
 			batchMarker === undefined
 				? message.metadata
@@ -174,7 +202,7 @@ describe("Outbox", () => {
 	});
 
 	// Also converts to an OutboundBatchMessage
-	const addBatchMetadata = (messages: LocalBatchMessage[]): OutboundBatchMessage[] => {
+	const addBatchMetadata = (messages: OutboundBatchMessage[]): void => {
 		if (messages.length > 1) {
 			messages[0].metadata = {
 				...messages[0].metadata,
@@ -185,21 +213,18 @@ describe("Outbox", () => {
 				batch: false,
 			};
 		}
-
-		return messages.map<OutboundBatchMessage>(({ serializedOp, ...message }) => ({
-			contents: serializedOp,
-			...message,
-		}));
 	};
-	const toOutboundBatch = (messages: LocalBatchMessage[]): OutboundBatch => ({
-		messages: addBatchMetadata(messages),
-		contentSizeInBytes: messages
-			.map((message) => message.serializedOp?.length ?? 0)
-			.reduce((a, b) => a + b, 0),
-		referenceSequenceNumber:
-			messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
-		hasReentrantOps: false,
-	});
+	const toOutboundBatch = (messages: LocalBatchMessage[]): OutboundBatch => {
+		const outbound = localBatchToOutboundBatch({
+			messages,
+			referenceSequenceNumber:
+				messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
+			hasReentrantOps: false,
+		});
+
+		addBatchMetadata(outbound.messages);
+		return outbound;
+	};
 
 	const DefaultCompressionOptions = {
 		minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
@@ -274,6 +299,34 @@ describe("Outbox", () => {
 		mockLogger.clear();
 	});
 
+	it("localBatchToOutboundBatch", () => {
+		const localMessages: LocalBatchMessage[] = [
+			{ runtimeOp: op("hello"), referenceSequenceNumber: 4 },
+			{ runtimeOp: op("world"), referenceSequenceNumber: 4 },
+			{ runtimeOp: op("!"), referenceSequenceNumber: 4 },
+		];
+		const localBatch = {
+			messages: localMessages,
+			referenceSequenceNumber: localMessages[0].referenceSequenceNumber,
+			hasReentrantOps: false,
+		};
+		const outboundBatch = localBatchToOutboundBatch(localBatch);
+
+		// Check that contentSizeInBytes and messages' contents are set propertly
+		assert.equal(
+			outboundBatch.contentSizeInBytes,
+			JSON.stringify(op("")).length * 3 + "helloworld!".length,
+			"contentSizeInBytes is incorrect",
+		);
+		assert.equal(outboundBatch.messages.length, 3);
+		assert.deepEqual(
+			localMessages.map((m) => m.runtimeOp),
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
+			outboundBatch.messages.map((m) => JSON.parse(m.contents!)),
+			"Serialized contents do not match",
+		);
+	});
+
 	it("Sending batches", () => {
 		const outbox = getOutbox({ context: getMockContext() });
 		const messages = [
@@ -326,7 +379,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				runtimeOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -352,7 +405,7 @@ describe("Outbox", () => {
 		assert.equal(state.pendingOpContents.length, 0);
 		const batchId = "batchId";
 		// ...But if batchId is provided, it's resubmit, and we need to send an empty batch with the batchId
-		outbox.flush(batchId);
+		outbox.flush({ batchId, staged: false });
 		assert.equal(state.opsSubmitted, 1);
 		assert.equal(state.batchesSubmitted.length, 1);
 		assert.equal(
@@ -377,17 +430,17 @@ describe("Outbox", () => {
 		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0")); // Separate batch, batch ID not used
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "2"));
-		outbox.flush("batchId-A");
+		outbox.flush({ batchId: "batchId-A", staged: false });
 
 		// Flush 2 - resubmit single-message batch
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "3"));
-		outbox.flush("batchId-B");
+		outbox.flush({ batchId: "batchId-B", staged: false });
 
 		// Flush 3 - resubmit blob attach batch
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "4"));
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "5"));
 		currentSeqNumbers.referenceSequenceNumber = 0;
-		outbox.flush("batchId-C");
+		outbox.flush({ batchId: "batchId-C", staged: false });
 
 		// Flush 4 - no batch ID given
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "6"));
@@ -450,7 +503,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			messages.map<Partial<IPendingMessage>>((message, i) => ({
-				content: message.serializedOp,
+				runtimeOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -499,7 +552,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				runtimeOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -543,13 +596,15 @@ describe("Outbox", () => {
 		assert.equal(state.batchesSubmitted.length, 2);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
-		assert.deepEqual(state.batchesCompressed, [
-			toOutboundBatch([messages[2]]),
-			groupedMessages,
-		]);
+		assert.deepEqual(
+			state.batchesCompressed,
+			[toOutboundBatch([messages[2]]), groupedMessages],
+			"Compressed batches don't match expected",
+		);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
 			[[toSubmittedMessage(messages[2])], [toSubmittedMessage(groupedMessages.messages[0])]],
+			"Submitted batches don't match expected",
 		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
@@ -564,21 +619,25 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				runtimeOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
+			"Pending messages don't match expected order/properties",
 		);
 	});
 
-	it("Compress only if the batch is larger than the configured limit", () => {
+	it("Does not compress if the batch is smaller than the configured limit", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			maxBatchSize: 1,
+			maxBatchSize: 1024,
+			opGroupingConfig: {
+				groupedBatchingEnabled: true, // Required for compression
+			},
 			compressionOptions: {
-				minimumBatchSizeInBytes: 1024,
+				minimumBatchSizeInBytes: 512,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
 			},
 		});
@@ -597,22 +656,15 @@ describe("Outbox", () => {
 
 		outbox.flush();
 
-		assert.equal(state.opsSubmitted, messages.length);
+		assert.equal(
+			state.opsSubmitted,
+			2,
+			"Expected 2 ops to be submitted, on ID Allocation and one for the grouped batch",
+		);
 		assert.equal(state.batchesSubmitted.length, 2);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
 		assert.deepEqual(state.batchesCompressed, []);
-		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.messages),
-			[
-				[toSubmittedMessage(messages[2])],
-				[
-					toSubmittedMessage(messages[0], true),
-					toSubmittedMessage(messages[1]),
-					toSubmittedMessage(messages[3], false),
-				],
-			],
-		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
 		const expectedMessageOrderWithCsn = [
@@ -626,7 +678,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				runtimeOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -658,7 +710,13 @@ describe("Outbox", () => {
 		outbox.submit(messages[1]);
 		outbox.submit(messages[2]);
 
-		assert.throws(() => outbox.flush());
+		assert.throws(
+			() => outbox.flush(),
+			(e: Error) =>
+				"dataProcessingCodepath" in e &&
+				e.dataProcessingCodepath === "CompressionInsufficient",
+			"Expected 'CompressionInsufficient' error",
+		);
 		// The batch is compressed
 		assert.deepEqual(state.batchesCompressed, [
 			opGroupingManager.groupBatch(toOutboundBatch(messages)),
@@ -670,7 +728,7 @@ describe("Outbox", () => {
 	it("Chunks when compression is enabled, compressed batch is larger than the threshold and chunking is enabled", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			maxBatchSize: 1,
+			maxBatchSize: 1024,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -722,7 +780,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				runtimeOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -734,7 +792,7 @@ describe("Outbox", () => {
 	it("Does not chunk when compression and grouping are enabled, compressed batch is smaller than the threshold and chunking is enabled", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			maxBatchSize: 1,
+			maxBatchSize: 1024,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -836,7 +894,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message, i) => ({
-				content: message.serializedOp,
+				runtimeOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -851,7 +909,7 @@ describe("Outbox", () => {
 		]);
 	});
 
-	for (const ops of [
+	for (const messages of [
 		[
 			{
 				...createMessage(ContainerMessageType.IdAllocation, "0"),
@@ -886,21 +944,21 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				flushPartialBatches: true,
 			});
-			for (const op of ops) {
-				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
-				if (typeFromBatchedOp(op) === ContainerMessageType.IdAllocation) {
-					outbox.submitIdAllocation(op);
+			for (const message of messages) {
+				currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
+				if (typeFromBatchedOp(message) === ContainerMessageType.IdAllocation) {
+					outbox.submitIdAllocation(message);
 				} else {
-					outbox.submit(op);
+					outbox.submit(message);
 				}
 			}
 
-			assert.equal(state.opsSubmitted, ops.length - 1);
+			assert.equal(state.opsSubmitted, messages.length - 1);
 			assert.equal(state.individualOpsSubmitted.length, 0);
 			assert.equal(state.batchesSubmitted.length, 1);
 			assert.deepEqual(
 				state.batchesSubmitted.map((x) => x.messages),
-				[[toSubmittedMessage(ops[0]), toSubmittedMessage(ops[1])]],
+				[[toSubmittedMessage(messages[0]), toSubmittedMessage(messages[1])]],
 			);
 
 			mockLogger.assertMatch([
@@ -1009,7 +1067,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				runtimeOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,

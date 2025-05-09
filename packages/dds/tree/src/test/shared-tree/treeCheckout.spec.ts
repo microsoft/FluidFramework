@@ -19,8 +19,13 @@ import {
 	EmptyKey,
 	type RevertibleFactory,
 	type NormalizedFieldUpPath,
+	TreeStoredSchemaRepository,
 } from "../../core/index.js";
-import { FieldKinds } from "../../feature-libraries/index.js";
+import {
+	buildForest,
+	FieldKinds,
+	MockNodeIdentifierManager,
+} from "../../feature-libraries/index.js";
 import {
 	getBranch,
 	Tree,
@@ -28,6 +33,7 @@ import {
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
 	type BranchableTree,
+	createTreeCheckout,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -35,6 +41,9 @@ import {
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
+	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
 	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
@@ -96,11 +105,13 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree",
+				"change",
 				"subtree",
 				"change",
 				"after",
 				"editStart",
 				"subtree",
+				"change",
 				"subtree",
 				"change",
 				"after",
@@ -138,11 +149,13 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree-rootFieldKey-0",
+				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
 				"editStart",
 				"subtree-rootFieldKey-0",
+				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
@@ -1450,7 +1463,23 @@ function itView<
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
-		const view = getView(config, undefined, logger);
+
+		const checkout = createTreeCheckout(
+			testIdCompressor,
+			mintRevisionTag,
+			testRevisionTagCodec,
+			{
+				forest: buildForest(),
+				schema: new TreeStoredSchemaRepository(),
+				logger,
+			},
+		);
+		const view = new SchematizingSimpleTreeView<TRootSchema>(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+
 		if (fork) {
 			const treeBranch = getBranch(view).branch();
 			const viewBranch = treeBranch.viewWith(view.config);

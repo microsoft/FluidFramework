@@ -72,9 +72,9 @@
 		"winston-transport": "^4.5.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.52.0-315632",
+		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.52.0-315632",
+		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-utils-previous": "npm:@fluidframework/server-services-utils@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
@@ -106,7 +106,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_AsyncLocalStorageTimeoutContext": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }
