@@ -481,8 +481,11 @@ describe('EditUtilities', () => {
 		const serializer: FluidSerializer = new FluidSerializer(new MockFluidDataStoreRuntime().IFluidHandleContext);
 		const binder = {
 			bind: noop,
+			get [fluidHandleSymbol]() {
+				return binder;
+			},
 		} as unknown as IFluidHandle;
-		assert(isISharedObjectHandle(binder), 'PRECONDITION: Expected binder to be an ISharedObjectHandle');
+		assert(isISharedObjectHandle(binder), 'PRECONDITION: Expected binder to look like an ISharedObjectHandle');
 
 		enum Equality {
 			Equal,

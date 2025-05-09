@@ -38,14 +38,14 @@ describe("isISharedObjectHandle", () => {
 		);
 	});
 
-	it("should return false for an object with a bind property that is not a function", () => {
+	it("should return false for a non-handle object with a bind function", () => {
 		const invalidHandle = {
-			bind: "not a function",
+			bind: () => {},
 		};
 		assert.strictEqual(
 			isISharedObjectHandle(invalidHandle),
 			false,
-			"Handle with non-function bind property should return false.",
+			"Object with bind method but not a handle should return false.",
 		);
 	});
 
