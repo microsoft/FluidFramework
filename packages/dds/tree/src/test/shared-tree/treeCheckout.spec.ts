@@ -87,9 +87,6 @@ describe("sharedTreeView", () => {
 			const anchorNode = getOrCreateInnerNode(root).anchorNode;
 			const log: string[] = [];
 			const unsubscribe = anchorNode.events.on("childrenChanging", () => log.push("change"));
-			const unsubscribeSubtree = anchorNode.events.on("subtreeChanging", () => {
-				log.push("subtree");
-			});
 			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root.x = 5;
@@ -97,22 +94,15 @@ describe("sharedTreeView", () => {
 			root.x = 6;
 			log.push("unsubscribe");
 			unsubscribe();
-			unsubscribeSubtree();
 			unsubscribeAfter();
 			log.push("editStart");
 			root.x = 7;
 
 			assert.deepEqual(log, [
 				"editStart",
-				"subtree",
-				"change",
-				"subtree",
 				"change",
 				"after",
 				"editStart",
-				"subtree",
-				"change",
-				"subtree",
 				"change",
 				"after",
 				"unsubscribe",
@@ -131,9 +121,6 @@ describe("sharedTreeView", () => {
 			const unsubscribe = anchorNode.events.on("childrenChanging", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
 			);
-			const unsubscribeSubtree = anchorNode.events.on("subtreeChanging", (upPath) => {
-				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
-			});
 			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root.x = 5;
@@ -141,22 +128,15 @@ describe("sharedTreeView", () => {
 			root.x = 6;
 			log.push("unsubscribe");
 			unsubscribe();
-			unsubscribeSubtree();
 			unsubscribeAfter();
 			log.push("editStart");
 			root.x = 7;
 
 			assert.deepEqual(log, [
 				"editStart",
-				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
-				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
 				"editStart",
-				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
-				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
 				"unsubscribe",
