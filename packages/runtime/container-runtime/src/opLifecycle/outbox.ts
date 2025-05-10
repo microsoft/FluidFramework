@@ -45,12 +45,6 @@ export interface IOutboxConfig {
 	 * The maximum size of a batch that we can send over the wire.
 	 */
 	readonly maxBatchSizeInBytes: number;
-	/**
-	 * If true, maybeFlushPartialBatch will flush the batch if the reference sequence number changed
-	 * since the batch started. Otherwise, it will throw in this case (apart from reentrancy which is handled elsewhere).
-	 * Once the new throw-based flow is proved in a production environment, this option will be removed.
-	 */
-	readonly flushPartialBatches: boolean;
 }
 
 export interface IOutboxParameters {
@@ -236,6 +230,7 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
+	//* Rename and update comment
 	/**
 	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that (if allowed) and create a new batch with the new
@@ -247,7 +242,7 @@ export class Outbox {
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
-	private maybeFlushPartialBatch(): void {
+	private validateSequenceNumberCoherency(): void {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
@@ -257,6 +252,7 @@ export class Outbox {
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
+		//* Can we prove we don't need to track CSN here anymore? (aka sequence within batch)
 		const currentSequenceNumbers = this.params.getCurrentSequenceNumbers();
 
 		if (
@@ -285,10 +281,7 @@ export class Outbox {
 			this.logger.sendTelemetryEvent(
 				{
 					// Only log error if this is truly unexpected
-					category:
-						expectedDueToReentrancy || this.params.config.flushPartialBatches
-							? "generic"
-							: "error",
+					category: expectedDueToReentrancy ? "generic" : "error",
 					eventName: "ReferenceSequenceNumberMismatch",
 					details: {
 						expectedDueToReentrancy,
@@ -304,12 +297,6 @@ export class Outbox {
 			);
 		}
 
-		// If we're configured to flush partial batches, do that now and return (don't throw)
-		if (this.params.config.flushPartialBatches) {
-			this.flushAll();
-			return;
-		}
-
 		// If we are in a reentrant context, we know this can happen without causing any harm.
 		if (expectedDueToReentrancy) {
 			return;
@@ -319,19 +306,19 @@ export class Outbox {
 	}
 
 	public submit(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.validateSequenceNumberCoherency();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitBlobAttach(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.validateSequenceNumberCoherency();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
 	public submitIdAllocation(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.validateSequenceNumberCoherency();
 
 		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
