@@ -23,6 +23,7 @@ import {
 	shorthands,
 	tokens,
 } from "@fluentui/react-components";
+import { ArrowDownload16Regular } from "@fluentui/react-icons";
 import {
 	DevtoolsDisposed,
 	GetTelemetryHistory,
@@ -172,6 +173,28 @@ export function TelemetryView(): React.ReactElement {
 		usageLogger?.sendTelemetryEvent({ eventName: "RefreshTelemetryButtonClicked" });
 	};
 
+	const downloadTelemetryLog = (): void => {
+		if (!telemetryEvents) return;
+
+		const content = JSON.stringify(telemetryEvents, undefined, 2);
+
+		const blob = new Blob([content], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = `telemetry-log-${new Date().toISOString()}.json`;
+
+		document.body.append(link);
+		link.click();
+
+		link.remove();
+		URL.revokeObjectURL(url);
+
+		usageLogger?.sendTelemetryEvent({
+			eventName: "TelemetryLogsDownloaded",
+		});
+	};
+
 	return (
 		<div className={styles.root}>
 			<ListLengthSelection
@@ -196,6 +219,16 @@ export function TelemetryView(): React.ReactElement {
 						Refresh
 					</Button>
 				</div>
+				<div>
+				<div>
+					Save Log{" "}
+					<Button
+						icon={<ArrowDownload16Regular />}
+						aria-label="Download the telemetry log"
+						onClick={downloadTelemetryLog}
+					/>
+				</div>
+			</div>
 			</div>
 			{telemetryEvents === undefined ? (
 				<Waiting label={"Waiting for Telemetry events"} />
