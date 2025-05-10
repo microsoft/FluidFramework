@@ -45,12 +45,6 @@ export interface IOutboxConfig {
 	 * The maximum size of a batch that we can send over the wire.
 	 */
 	readonly maxBatchSizeInBytes: number;
-	/**
-	 * If true, maybeFlushPartialBatch will flush the batch if the reference sequence number changed
-	 * since the batch started. Otherwise, it will throw in this case (apart from reentrancy which is handled elsewhere).
-	 * Once the new throw-based flow is proved in a production environment, this option will be removed.
-	 */
-	readonly flushPartialBatches: boolean;
 }
 
 export interface IOutboxParameters {
@@ -236,6 +230,7 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
+	//* Rename and update comment
 	/**
 	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that (if allowed) and create a new batch with the new
@@ -285,10 +280,7 @@ export class Outbox {
 			this.logger.sendTelemetryEvent(
 				{
 					// Only log error if this is truly unexpected
-					category:
-						expectedDueToReentrancy || this.params.config.flushPartialBatches
-							? "generic"
-							: "error",
+					category: expectedDueToReentrancy ? "generic" : "error",
 					eventName: "ReferenceSequenceNumberMismatch",
 					details: {
 						expectedDueToReentrancy,
@@ -302,12 +294,6 @@ export class Outbox {
 				},
 				errorWrapper.value,
 			);
-		}
-
-		// If we're configured to flush partial batches, do that now and return (don't throw)
-		if (this.params.config.flushPartialBatches) {
-			this.flushAll();
-			return;
 		}
 
 		// If we are in a reentrant context, we know this can happen without causing any harm.
