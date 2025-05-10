@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import * as sinon from "sinon";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
@@ -522,18 +523,6 @@ describe("Staging Mode", () => {
 		);
 	});
 
-	function spyOn(object: object, methodName: string) {
-		const originalMethod = object[methodName];
-		assert(typeof originalMethod === "function", `${methodName} is not a function`);
-		const calls: unknown[][] = [];
-		object[methodName] = (...args: unknown[]) => {
-			calls.push([...args]);
-			const result: unknown = originalMethod.apply(object, args);
-			return result;
-		};
-		return calls;
-	}
-
 	for (const { disconnectBeforeCommit, squash } of generatePairwiseOptions({
 		disconnectBeforeCommit: [false, true],
 		squash: [undefined, false, true],
@@ -542,10 +531,11 @@ describe("Staging Mode", () => {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
 			const clients = await createClients(deltaConnectionServer);
 
+			// Use Sinon to spy on the methods
 			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const rootMap = clients.original.dataObject["root"] as unknown as SharedObject;
-			const reSubmitSquashedLog = spyOn(rootMap, "reSubmitSquashed");
-			const reSubmitLog = spyOn(rootMap, "reSubmitCore");
+			const reSubmitSquashedSpy = sinon.spy(rootMap, "reSubmitSquashed" as keyof SharedObject);
+			const reSubmitCoreSpy = sinon.spy(rootMap, "reSubmitCore" as keyof SharedObject);
 
 			const stagingControls = clients.original.dataObject.enterStagingMode();
 			clients.original.dataObject.makeEdit("branch-only");
@@ -562,25 +552,30 @@ describe("Staging Mode", () => {
 
 			assertConsistent(clients, "States should match after save");
 			assert.equal(
-				reSubmitSquashedLog.length,
+				reSubmitSquashedSpy.callCount,
 				squash === true ? 1 : 0,
 				"Squashed resubmit should be called iff squash = true.",
 			);
-			assert(
-				JSON.stringify((squash ? reSubmitSquashedLog : reSubmitLog)[0][0]).includes(
-					"branch-only",
-				),
-				"Squashed op should contain the edit prefix.",
-			);
-			if (squash !== true) {
+			if (squash === true) {
+				assert(
+					JSON.stringify(reSubmitSquashedSpy.args[0][0]).includes("branch-only"),
+					"Squashed op should contain the edit prefix.",
+				);
+			} else {
 				assert.equal(
-					reSubmitLog.length,
-					// 2 resubmits when disconnected happens because there is one resubmit upon exiting staging mode (to clear staging flags),
-					// then another when we eventually reconnect.
+					reSubmitCoreSpy.callCount,
 					disconnectBeforeCommit ? 2 : 1,
 					"Normal resubmit should be called when squash = false.",
 				);
+				assert(
+					JSON.stringify(reSubmitCoreSpy.args[0][0]).includes("branch-only"),
+					"Normal resubmit op should contain the edit prefix.",
+				);
 			}
+
+			// Restore the spied methods
+			reSubmitSquashedSpy.restore();
+			reSubmitCoreSpy.restore();
 		});
 	}
 });
