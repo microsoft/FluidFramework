@@ -61,6 +61,7 @@ import {
 	type IContainerRuntimeBaseExperimental,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
+	type IFluidDataStorePolicies,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -143,6 +144,10 @@ export interface ISharedObjectRegistry {
 	get(name: string): IChannelFactory | undefined;
 }
 
+const defaultPolicies: IFluidDataStorePolicies = {
+	readonlyInStagingMode: true,
+};
+
 /**
  * Base data store class
  * @legacy
@@ -160,6 +165,8 @@ export class FluidDataStoreRuntime
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
 	}
+
+	public readonly policies: IFluidDataStorePolicies;
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isReadOnly}
@@ -280,6 +287,7 @@ export class FluidDataStoreRuntime
 		private readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
 
@@ -287,6 +295,8 @@ export class FluidDataStoreRuntime
 			!dataStoreContext.id.includes("/"),
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
+
+		this.policies = { ...defaultPolicies, ...policies };
 
 		// Validate that the Runtime is compatible with this DataStore.
 		const { ILayerCompatDetails: runtimeCompatDetails } =
@@ -1212,7 +1222,12 @@ export class FluidDataStoreRuntime
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	public reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+	public reSubmit(
+		type: DataStoreMessageType,
+		content: any,
+		localOpMetadata: unknown,
+		squash?: boolean,
+	) {
 		this.verifyNotClosed();
 
 		switch (type) {
@@ -1221,7 +1236,7 @@ export class FluidDataStoreRuntime
 				const envelope = content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
-				channelContext.reSubmit(envelope.contents, localOpMetadata);
+				channelContext.reSubmit(envelope.contents, localOpMetadata, squash);
 				break;
 			}
 			case DataStoreMessageType.Attach:

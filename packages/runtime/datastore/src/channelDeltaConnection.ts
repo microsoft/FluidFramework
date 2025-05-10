@@ -117,11 +117,9 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		}
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
-		processWithStashedOpMetadataHandling(
-			content,
-			localOpMetadata,
-			this.handler.reSubmit.bind(this.handler),
+	public reSubmit(content: any, localOpMetadata: unknown, squash: boolean) {
+		processWithStashedOpMetadataHandling(content, localOpMetadata, (contents, metadata) =>
+			this.handler.reSubmit(contents, metadata, squash),
 		);
 	}
 
