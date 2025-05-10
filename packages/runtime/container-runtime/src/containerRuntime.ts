@@ -2541,7 +2541,14 @@ export class ContainerRuntime
 		let newState: boolean;
 
 		try {
-			this.submitIdAllocationOpIfNeeded(true);
+			//* assert(this.outstandingUnfinalizedIdCreationRangeAllocationOp === undefined, "Maybe?");
+			// We need to get the ID Compressor's slate clean before replaying the ops.
+			// We don't submit this op yet - we'll include it before submitting any "next creation range" ops.
+			// We can come back here as many times as we need, as long as we include this before any other ID allocation ops
+			// when the time comes to submit
+			this.outstandingUnfinalizedIdCreationRangeAllocationOp =
+				this.generateIdAllocationOpIfNeeded(true);
+
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
 		} finally {
@@ -4371,9 +4378,14 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
+	private outstandingUnfinalizedIdCreationRangeAllocationOp: LocalBatchMessage | undefined =
+		undefined;
+
+	private generateIdAllocationOpIfNeeded(
+		beforeReplayingPendingState: boolean = false,
+	): LocalBatchMessage | undefined {
 		if (this._idCompressor) {
-			const idRange = resubmitOutstandingRanges
+			const idRange = beforeReplayingPendingState
 				? this._idCompressor.takeUnfinalizedCreationRange()
 				: this._idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
@@ -4387,11 +4399,12 @@ export class ContainerRuntime
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 					// Note: For now, we will never stage ID Allocation messages.
 					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
-					staged: false,
+					staged: false, //* This is gonna be wrong, maybe it's irrelevant
 				};
-				this.outbox.submitIdAllocation(idAllocationBatchMessage);
+				return idAllocationBatchMessage;
 			}
 		}
+		return undefined;
 	}
 
 	private submit(
@@ -4429,7 +4442,15 @@ export class ContainerRuntime
 		);
 
 		try {
-			this.submitIdAllocationOpIfNeeded(false);
+			//* Move this to where it's set to make sure there's not something silly going on
+			if (this.outstandingUnfinalizedIdCreationRangeAllocationOp) {
+				this.outbox.submitIdAllocation(this.outstandingUnfinalizedIdCreationRangeAllocationOp);
+				this.outstandingUnfinalizedIdCreationRangeAllocationOp = undefined;
+			}
+			const idAllocationOp = this.generateIdAllocationOpIfNeeded();
+			if (idAllocationOp) {
+				this.outbox.submitIdAllocation(idAllocationOp);
+			}
 
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely

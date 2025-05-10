@@ -249,10 +249,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		},
 	};
 
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	it.only("can normalize session space IDs to op space", async () => {
+	it("can normalize session space IDs to op space", async () => {
 		// None of these clusters will be ack'd yet and as such they will all
 		// generate local Ids. State of compressors afterwards should be:
 		// SharedMap1 Compressor: Local IdRange { first: -1, last: -512 }
@@ -471,7 +468,10 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		);
 	});
 
-	it("produces Id spaces correctly", async () => {
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	it.only("produces Id spaces correctly", async () => {
 		const maps = [sharedMapContainer1, sharedMapContainer2, sharedMapContainer3];
 		const compressors = maps.map((map) => getIdCompressor(map));
 		const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
