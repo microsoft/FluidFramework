@@ -12,16 +12,7 @@ import type {
 } from "../../core/index.js";
 import type { EncodedChangeAtomId } from "../modular-schema/index.js";
 
-import type {
-	AttachAndDetach,
-	CellId,
-	CellMark,
-	Detach,
-	HasMarkFields,
-	Mark,
-	MoveIn,
-	MoveOut,
-} from "./types.js";
+import type { Attach, CellId, CellMark, Detach, HasMarkFields, Mark } from "./types.js";
 
 export type EmptyInputCellMark = Mark & DetachedCellMark;
 
@@ -29,11 +20,11 @@ export interface DetachedCellMark extends HasMarkFields {
 	cellId: CellId;
 }
 
-export type EmptyOutputCellMark = CellMark<Detach | AttachAndDetach>;
+export type EmptyOutputCellMark = CellMark<Detach>;
 
-export type MoveMarkEffect = MoveOut | MoveIn;
+export type MoveMarkEffect = Attach | Detach;
 export type DetachOfRemovedNodes = Detach & { cellId: CellId };
-export type CellRename = AttachAndDetach | DetachOfRemovedNodes;
+export type CellRename = DetachOfRemovedNodes;
 
 export interface SequenceCodecHelpers<TDecodedMarkEffect, TEncodedMarkEffect extends object> {
 	readonly changeAtomIdCodec: IJsonCodec<

@@ -12,8 +12,6 @@ export type {
 	Insert,
 	Mark,
 	MarkList,
-	MoveIn,
-	MoveOut,
 	CellCount as NodeCount,
 	MoveId,
 	Attach,
@@ -21,7 +19,6 @@ export type {
 	CellId,
 	HasMarkFields,
 	CellMark,
-	AttachAndDetach,
 	Rename,
 } from "./types.js";
 export { DetachIdOverrideType } from "./formatV1.js";
@@ -49,8 +46,4 @@ export {
 export {
 	isMoveMark,
 	type MoveMark,
-	type MoveEffectTable,
-	type MoveEffect,
 } from "./moveEffectTable.js";
-
-export { relevantRemovedRoots } from "./relevantRemovedRoots.js";

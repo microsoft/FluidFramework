@@ -201,6 +201,7 @@ export {
 	isAncestor,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
+	newChangeAtomIdTransform,
 	compareRevisions,
 } from "./rebase/index.js";
 

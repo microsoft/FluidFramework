@@ -129,7 +129,7 @@ export interface FieldStateTree<TContent, TChangeset> {
 export type ChildStateGenerator<TContent, TChangeset> = (
 	state: FieldStateTree<TContent, TChangeset>,
 	tagFromIntention: (intention: number) => RevisionTag,
-	mintIntention: () => number,
+	mintIntention: (count?: number) => number,
 ) => Iterable<FieldStateTree<TContent, TChangeset>>;
 
 function* depthFirstWalk<TContent, TChangeset>(
@@ -157,9 +157,13 @@ function* depthFirstWalk<TContent, TChangeset>(
 	}
 }
 
-export function makeIntentionMinter(): () => number {
+export function makeIntentionMinter(): (count?: number) => number {
 	let intent = 0;
-	return () => intent++;
+	return (count: number = 1) => {
+		const result = intent;
+		intent += count;
+		return result;
+	};
 }
 
 /**
@@ -171,7 +175,7 @@ export function* generatePossibleSequenceOfEdits<TContent, TChangeset>(
 	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
 	numberOfEdits: number,
 	tagPrefix: string,
-	intentionMinter?: () => number,
+	intentionMinter?: (count?: number) => number,
 ): Iterable<NamedChangeset<TChangeset>[]> {
 	for (const state of depthFirstWalk(
 		initialState,

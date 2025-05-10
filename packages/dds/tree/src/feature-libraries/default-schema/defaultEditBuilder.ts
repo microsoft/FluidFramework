@@ -335,19 +335,20 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					}
 				}
 			}
-			const moveOut = sequence.changeHandler.editor.moveOut(
+			const moveOut = sequence.changeHandler.editor.remove(
 				sourceIndex,
 				count,
 				detachCellId,
 				revision,
 			);
-			const moveIn = sequence.changeHandler.editor.moveIn(
+			const moveIn = sequence.changeHandler.editor.insert(
 				destIndex,
 				count,
-				detachCellId,
 				attachCellId,
 				revision,
+				detachCellId,
 			);
+
 			this.modularBuilder.submitChanges(
 				[
 					{
@@ -382,7 +383,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const firstId: CellId = { localId: this.modularBuilder.generateId(length), revision };
 				const build = this.modularBuilder.buildTrees(firstId.localId, content, revision);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(index, length, firstId, revision),
+					sequence.changeHandler.editor.insert(
+						index,
+						length,
+						firstId,
+						revision,
+						firstId.localId,
+					),
 				);
 				const attach: FieldEditDescription = {
 					type: "field",
@@ -404,7 +411,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.remove(index, count, id, revision),
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, change, revision);
+
+				const fieldEdit: FieldEditDescription = {
+					type: "field",
+					field,
+					fieldKind: sequence.identifier,
+					change,
+					revision,
+				};
+				this.modularBuilder.submitChanges([fieldEdit], revision);
 			},
 		};
 	}

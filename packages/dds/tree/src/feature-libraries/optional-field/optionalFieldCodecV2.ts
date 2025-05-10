@@ -21,7 +21,9 @@ import {
 } from "../modular-schema/index.js";
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV2.js";
-import type { OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
+import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
+
+type RegisterId = ChangeAtomId | "self";
 
 function makeRegisterIdCodec(
 	changeAtomIdCodec: IJsonCodec<
@@ -67,14 +69,6 @@ export function makeOptionalFieldCodec(
 	return {
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
-
-			if (change.moves.length > 0) {
-				encoded.m = change.moves.map(([src, dst]) => [
-					changeAtomIdCodec.encode(src, context.baseContext),
-					changeAtomIdCodec.encode(dst, context.baseContext),
-				]);
-			}
-
 			if (change.valueReplace !== undefined) {
 				encoded.r = {
 					e: change.valueReplace.isEmpty,
@@ -85,16 +79,7 @@ export function makeOptionalFieldCodec(
 				}
 			}
 
-			if (change.childChanges.length > 0) {
-				encoded.c = [];
-				for (const [id, childChange] of change.childChanges) {
-					encoded.c.push([
-						registerIdCodec.encode(id, context.baseContext),
-						context.encodeNode(childChange),
-					]);
-				}
-			}
-
+			// XXX
 			return encoded;
 		},
 
@@ -103,16 +88,7 @@ export function makeOptionalFieldCodec(
 			context: FieldChangeEncodingContext,
 		) => {
 			const decoded: Mutable<OptionalChangeset> = {
-				moves:
-					encoded.m?.map(([encodedSrc, encodedDst]) => [
-						changeAtomIdCodec.decode(encodedSrc, context.baseContext),
-						changeAtomIdCodec.decode(encodedDst, context.baseContext),
-					]) ?? [],
-				childChanges:
-					encoded.c?.map(([id, encodedChange]) => [
-						registerIdCodec.decode(id, context.baseContext),
-						context.decodeNode(encodedChange),
-					]) ?? [],
+				// XXX
 			};
 
 			if (encoded.r !== undefined) {
@@ -121,7 +97,8 @@ export function makeOptionalFieldCodec(
 					dst: changeAtomIdCodec.decode(encoded.r.d, context.baseContext),
 				};
 				if (encoded.r.s !== undefined) {
-					replace.src = registerIdCodec.decode(encoded.r.s, context.baseContext);
+					const register = registerIdCodec.decode(encoded.r.s, context.baseContext);
+					replace.src = register === "self" ? replace.dst : register;
 				}
 				decoded.valueReplace = replace;
 			}

@@ -95,10 +95,8 @@ describe("Editing", () => {
 		});
 
 		it("can rebase remove over move", () => {
-			const tree1 = makeTreeFromJsonSequence([]);
+			const tree1 = makeTreeFromJsonSequence(["a", "b"]);
 			const tree2 = tree1.branch();
-			insert(tree1, 0, "a", "b");
-			tree2.rebaseOnto(tree1);
 
 			// Move b before a
 			tree1.editor.move(rootField, 1, 1, rootField, 0);
@@ -111,6 +109,48 @@ describe("Editing", () => {
 
 			const expected = ["a"];
 			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can rebase move over remove", () => {
+			const tree1 = makeTreeFromJsonSequence(["a", "b"]);
+			const tree2 = tree1.branch();
+
+			// Remove b
+			remove(tree1, 1, 1);
+
+			// Move b before a
+			tree2.editor.move(rootField, 1, 1, rootField, 0);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			const expected = ["b", "a"];
+			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can apply a composition of [move + undo]", () => {
+			const tree1 = makeTreeFromJsonSequence(["a"]);
+			const tree2 = tree1.branch();
+
+			const { undoStack } = createTestUndoRedoStacks(tree2.events);
+
+			tree2.editor.move(
+				rootField,
+				0,
+				1,
+				{
+					parent: undefined,
+					field: brand("foo"),
+				},
+				0,
+			);
+			undoStack.pop()?.revert();
+
+			expectJsonTree(tree2, ["a"]);
+
+			tree1.merge(tree2);
+
+			expectJsonTree(tree1, ["a"]);
 		});
 
 		it("can rebase intra-field move over inter-field move of same node and its parent", () => {
@@ -257,6 +297,20 @@ describe("Editing", () => {
 			expectJsonTree([tree, delAB, delCD, addX, addY], ["x", "y"]);
 		});
 
+		it("can edit node created in same transaction", () => {
+			const tree1 = makeTreeFromJsonSequence([]);
+			const tree2 = tree1.branch();
+			tree2.transaction.start();
+			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees([{}]));
+			const aEditor = tree2.editor.sequenceField({ parent: rootNode, field: brand("foo") });
+			aEditor.insert(0, chunkFromJsonTrees(["a"]));
+
+			tree2.transaction.commit();
+
+			tree1.merge(tree2);
+			expectJsonTree([tree1, tree2], [{ foo: "a" }]);
+		});
+
 		it("can rebase a change under a node whose insertion is also rebased", () => {
 			const tree1 = makeTreeFromJsonSequence(["B"]);
 			const tree2 = tree1.branch();
@@ -372,6 +426,7 @@ describe("Editing", () => {
 				field: brand(""),
 			};
 			const listEditor = tree2.editor.sequenceField(fooListPath);
+
 			moveWithin(tree2.editor, fooListPath, 2, 1, 1);
 			listEditor.insert(3, chunkFromJsonTrees(["D"]));
 			listEditor.remove(0, 1);
@@ -1069,6 +1124,7 @@ describe("Editing", () => {
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			// Move to bar: [{}, { bar: ["a"] }}]
+			// TODO: Is this edit supposed to be to tree2?
 			tree.editor.move(
 				{ parent: rootNode, field: brand("foo") },
 				0,

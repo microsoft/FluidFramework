@@ -123,6 +123,7 @@ export {
 export {
 	RangeMap,
 	type RangeQueryResult,
+	type RangeQueryEntry,
 	newIntegerRangeMap,
 } from "./rangeMap.js";
 

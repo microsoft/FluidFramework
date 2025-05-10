@@ -4,6 +4,7 @@
  */
 
 import {
+	type ChangeAtomId,
 	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
@@ -58,7 +59,13 @@ import type {
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
-import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
+import {
+	assertEqual,
+	assertModularChangesetsEqual,
+	Change,
+	normalizeDelta,
+	removeAliases,
+} from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 
@@ -76,6 +83,7 @@ const fieldC: FieldKey = brand("FieldC");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
+const tag4: RevisionTag = mintRevisionTag();
 
 // Tests the integration of ModularChangeFamily with the default field kinds.
 describe("ModularChangeFamily integration", () => {
@@ -720,25 +728,82 @@ describe("ModularChangeFamily integration", () => {
 				{ parent: undefined, field: fieldC },
 				0,
 			);
+
+			const [move1, move2] = getChanges();
+			const composed = family.compose([
+				tagChangeInline(move1, tag1),
+				tagChangeInline(move2, tag2),
+			]);
+
+			const id1: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const id2: ChangeAtomId = { revision: tag2, localId: brand(2) };
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 3,
+					revisions: [{ revision: tag1 }, { revision: tag2 }],
+					renames: [{ oldId: id1, newId: id2, count: 1 }],
+				},
+				Change.field(fieldA, sequence.identifier, [MarkMaker.remove(1, id1)]),
+				Change.field(fieldB, sequence.identifier, [
+					MarkMaker.rename(
+						1,
+						{ revision: tag1, localId: brand(1) },
+						{ revision: tag2, localId: brand(2) },
+					),
+				]),
+				Change.field(fieldC, sequence.identifier, [
+					MarkMaker.insert(1, { revision: tag2, localId: brand(3) }, { id: id2.localId }),
+				]),
+			);
+
+			assertEqual(composed, expected);
+		});
+
+		it("move and modify with modify", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				0,
 				1,
-				{ parent: undefined, field: fieldC },
+				{ parent: undefined, field: fieldA },
 				0,
 			);
 
-			const [move1, move2, expected] = getChanges();
-			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
-			const tagForCompare = mintRevisionTag();
-			family.validateChangeset(composed);
-			const actualDelta = normalizeDelta(
-				intoDelta(tagChangeInline(composed, tagForCompare), family.fieldKinds),
+			const nodePath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			editor.sequenceField({ parent: nodePath, field: fieldB }).remove(0, 1);
+			editor.sequenceField({ parent: nodePath, field: fieldB }).remove(0, 1);
+
+			const [move, modify1, modify2] = getChanges();
+			const moveAndModify = family.compose([makeAnonChange(move), makeAnonChange(modify1)]);
+
+			const composed = family.compose([
+				tagChangeInline(moveAndModify, tag1),
+				tagChangeInline(modify2, tag2),
+			]);
+
+			const expected = Change.build(
+				{ family, maxId: 5, revisions: [{ revision: tag1 }, { revision: tag2 }] },
+				Change.field(
+					fieldA,
+					sequence.identifier,
+					[
+						MarkMaker.insert(1, { revision: tag1, localId: brand(1) }, { id: brand(0) }),
+						MarkMaker.remove(1, { revision: tag1, localId: brand(0) }),
+					],
+					Change.nodeWithId(
+						0,
+						{ revision: tag1, localId: brand(3) },
+						Change.field(fieldB, sequence.identifier, [
+							MarkMaker.remove(1, { revision: tag1, localId: brand(2) }),
+							MarkMaker.remove(1, { revision: tag2, localId: brand(4) }),
+						]),
+					),
+				),
 			);
-			const expectedDelta = normalizeDelta(
-				intoDelta(tagChangeInline(expected, tagForCompare), family.fieldKinds),
-			);
-			assertEqual(actualDelta, expectedDelta);
+			assertModularChangesetsEqual(composed, expected);
 		});
 	});
 
@@ -782,7 +847,17 @@ describe("ModularChangeFamily integration", () => {
 
 			const expected = tagChangeInline(
 				Change.build(
-					{ family, maxId: 3 },
+					{
+						family,
+						maxId: 3,
+						renames: [
+							{
+								oldId: { revision: tag1, localId: brand(0) },
+								newId: { revision: tag2, localId: brand(0) },
+								count: 1,
+							},
+						],
+					},
 					Change.field(fieldA, sequence.identifier, fieldAExpected),
 					Change.field(
 						fieldB,
@@ -873,7 +948,17 @@ describe("ModularChangeFamily integration", () => {
 
 			const expected: ModularChangeset = tagChangeInline(
 				Change.build(
-					{ family, maxId: 7 },
+					{
+						family,
+						maxId: 7,
+						renames: [
+							{
+								oldId: { revision: tag1, localId: brand(5) },
+								newId: { revision: tag2, localId: brand(5) },
+								count: 1,
+							},
+						],
+					},
 					Change.field(
 						fieldA,
 						sequence.identifier,
@@ -896,6 +981,77 @@ describe("ModularChangeFamily integration", () => {
 				),
 				tag2,
 			).change;
+
+			assertEqual(inverse, expected);
+		});
+
+		it("Undo move with rename", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+
+			// Make a transaction which moves the same node twice.
+			editor.enterTransaction();
+			moveWithin(editor, fieldAPath, 0, 1, 1);
+			moveWithin(editor, fieldAPath, 0, 1, 1);
+			editor.exitTransaction();
+
+			const [move1, move2] = getChanges();
+			const move = tagChangeInline(
+				family.compose([tagChangeInline(move1, tag1), tagChangeInline(move2, tag2)]),
+				tag3,
+			);
+
+			const undo = family.invert(move, false, tag4);
+
+			const id1Original: ChangeAtomId = { revision: tag3, localId: brand(0) };
+			const id1Undo: ChangeAtomId = { revision: tag4, localId: brand(0) };
+
+			const id2Original: ChangeAtomId = { revision: tag3, localId: brand(2) };
+			const id2Undo: ChangeAtomId = { revision: tag4, localId: brand(2) };
+
+			const expected = Change.build(
+				{
+					family,
+					revisions: [{ revision: tag4 }],
+					maxId: 3,
+					renames: [
+						{
+							oldId: id2Undo,
+							newId: id1Undo,
+							count: 1,
+						},
+					],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.insert(1, id1Original, { revision: tag4 }),
+					MarkMaker.rename(1, id2Original, { revision: tag4, localId: brand(1) }),
+					MarkMaker.remove(1, id2Undo),
+				]),
+			);
+
+			assertEqual(undo, expected);
+		});
+
+		it("Undo insert and move", () => {
+			// This tests undoing a single insert mark representing a move of the first node and an insert of the second.
+			const change = Change.build(
+				{ family, maxId: 3 },
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.insert(2, brand(2), { id: brand(0) }),
+					MarkMaker.remove(1, brand(0)),
+				]),
+			);
+
+			const inverse = family.invert(tagChangeInline(change, tag1), false, tag2);
+			const expected = Change.build(
+				{ family, maxId: 3, revisions: [{ revision: tag2 }] },
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.remove(2, { revision: tag2, localId: brand(0) }),
+					MarkMaker.insert(1, { revision: tag1, localId: brand(0) }, { revision: tag2 }),
+				]),
+			);
 
 			assertEqual(inverse, expected);
 		});
@@ -959,93 +1115,6 @@ describe("ModularChangeFamily integration", () => {
 		});
 	});
 });
-
-function normalizeDelta(
-	delta: DeltaRoot,
-	idAllocator?: IdAllocator,
-	idMap?: Map<number, number>,
-): DeltaRoot {
-	const genId = idAllocator ?? idAllocatorFromMaxId();
-	const map = idMap ?? new Map();
-
-	const normalized: Mutable<DeltaRoot> = {};
-	if (delta.fields !== undefined) {
-		normalized.fields = normalizeDeltaFieldMap(delta.fields, genId, map);
-	}
-	if (delta.build !== undefined && delta.build.length > 0) {
-		normalized.build = delta.build.map(({ id, trees }) => ({
-			id: normalizeDeltaDetachedNodeId(id, genId, map),
-			trees,
-		}));
-	}
-	if (delta.global !== undefined && delta.global.length > 0) {
-		normalized.global = delta.global.map(({ id, fields }) => ({
-			id: normalizeDeltaDetachedNodeId(id, genId, map),
-			fields: normalizeDeltaFieldMap(fields, genId, map),
-		}));
-	}
-	if (delta.rename !== undefined && delta.rename.length > 0) {
-		normalized.rename = delta.rename.map(({ oldId, count, newId }) => ({
-			oldId: normalizeDeltaDetachedNodeId(oldId, genId, map),
-			count,
-			newId: normalizeDeltaDetachedNodeId(newId, genId, map),
-		}));
-	}
-
-	return normalized;
-}
-
-function normalizeDeltaFieldMap(
-	delta: DeltaFieldMap,
-	genId: IdAllocator,
-	idMap: Map<number, number>,
-): DeltaFieldMap {
-	const normalized = new Map();
-	for (const [field, fieldChanges] of delta) {
-		normalized.set(field, normalizeDeltaFieldChanges(fieldChanges, genId, idMap));
-	}
-	return normalized;
-}
-
-function normalizeDeltaFieldChanges(
-	delta: DeltaFieldChanges,
-	genId: IdAllocator,
-	idMap: Map<number, number>,
-): DeltaFieldChanges {
-	if (delta.length > 0) {
-		return delta.map((mark) => normalizeDeltaMark(mark, genId, idMap));
-	}
-
-	return delta;
-}
-
-function normalizeDeltaMark(
-	delta: DeltaMark,
-	genId: IdAllocator,
-	idMap: Map<number, number>,
-): DeltaMark {
-	const normalized: Mutable<DeltaMark> = { ...delta };
-	if (normalized.attach !== undefined) {
-		normalized.attach = normalizeDeltaDetachedNodeId(normalized.attach, genId, idMap);
-	}
-	if (normalized.detach !== undefined) {
-		normalized.detach = normalizeDeltaDetachedNodeId(normalized.detach, genId, idMap);
-	}
-	if (normalized.fields !== undefined) {
-		normalized.fields = normalizeDeltaFieldMap(normalized.fields, genId, idMap);
-	}
-	return normalized;
-}
-
-function normalizeDeltaDetachedNodeId(
-	delta: DeltaDetachedNodeId,
-	genId: IdAllocator,
-	idMap: Map<number, number>,
-): DeltaDetachedNodeId {
-	const minor = idMap.get(delta.minor) ?? genId.allocate();
-	idMap.set(delta.minor, minor);
-	return { minor, major: delta.major };
-}
 
 function tagChangeInline(
 	change: ModularChangeset,

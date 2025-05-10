@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import type { GenericChangeset, CrossFieldManager } from "../../../feature-libraries/index.js";
+import type { GenericChangeset } from "../../../feature-libraries/index.js";
 import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	type EncodingTestData,
@@ -17,7 +17,6 @@ import {
 	testRevisionTagCodec,
 } from "../../utils.js";
 import {
-	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type NodeId,
 	type RebaseRevisionMetadata,
@@ -29,13 +28,15 @@ import { TestChange } from "../../testChange.js";
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
+import { failComposeManager, failInvertManager, failRebaseManager } from "./nodeQueryUtils.js";
+import type { DeltaFieldChanges } from "../../../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { contextualizeFieldChangeset } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 const nodeId3: NodeId = { localId: brand(3) };
 const nodeId4: NodeId = { localId: brand(4) };
-
-const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const revisionMetadata: RebaseRevisionMetadata = {
 	getRevisionToRebase: () => assert.fail("Unexpected revision info query"),
@@ -43,13 +44,6 @@ const revisionMetadata: RebaseRevisionMetadata = {
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
 	hasRollback: () => assert.fail("Unexpected revision info query"),
-};
-
-const crossFieldManager: CrossFieldManager = {
-	get: unexpectedDelegate,
-	set: unexpectedDelegate,
-	onMoveIn: unexpectedDelegate,
-	moveKey: unexpectedDelegate,
 };
 
 describe("GenericField", () => {
@@ -71,11 +65,11 @@ describe("GenericField", () => {
 				[2, TestNodeId.create(nodeId2, TestChange.mint([], 2))],
 			]);
 			const actual = genericChangeHandler.rebaser.compose(
-				changeA,
-				changeB,
+				contextualizeFieldChangeset(changeA),
+				contextualizeFieldChangeset(changeB),
 				TestNodeId.composeChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failComposeManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -96,11 +90,11 @@ describe("GenericField", () => {
 				[2, TestNodeId.create(nodeId4, TestChange.mint([], 4))],
 			]);
 			const actual = genericChangeHandler.rebaser.compose(
-				changeA,
-				changeB,
+				contextualizeFieldChangeset(changeA),
+				contextualizeFieldChangeset(changeB),
 				TestNodeId.composeChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failComposeManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -122,11 +116,11 @@ describe("GenericField", () => {
 				[2, TestNodeId.create(nodeId2, TestChange.mint([], 2))],
 			]);
 			const actual = genericChangeHandler.rebaser.rebase(
-				changeA,
-				changeB,
+				contextualizeFieldChangeset(changeA),
+				contextualizeFieldChangeset(changeB),
 				TestNodeId.rebaseChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failRebaseManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -146,11 +140,11 @@ describe("GenericField", () => {
 				[1, TestNodeId.create(nodeId2, TestChange.mint([], 2))],
 			]);
 			const actual = genericChangeHandler.rebaser.rebase(
-				changeA,
-				changeB,
+				contextualizeFieldChangeset(changeA),
+				contextualizeFieldChangeset(changeB),
 				TestNodeId.rebaseChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failRebaseManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -167,11 +161,11 @@ describe("GenericField", () => {
 			[1, nodeId2],
 		]);
 		const actual = genericChangeHandler.rebaser.invert(
-			forward,
+			contextualizeFieldChangeset(forward, undefined),
 			true,
 			idAllocatorFromMaxId(),
 			mintRevisionTag(),
-			crossFieldManager,
+			failInvertManager,
 			defaultRevisionMetadataFromChanges([]),
 		);
 		assert.deepEqual(actual, expected);
@@ -185,13 +179,11 @@ describe("GenericField", () => {
 			[2, nodeChange2],
 		]);
 
-		const expected: FieldChangeDelta = {
-			local: [
-				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
-				{ count: 1 },
-				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
-			],
-		};
+		const expected: DeltaFieldChanges = [
+			{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
+			{ count: 1 },
+			{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
+		];
 
 		const actual = genericChangeHandler.intoDelta(input, TestNodeId.deltaFromChild);
 		assert.deepEqual(actual, expected);
@@ -250,21 +242,5 @@ describe("GenericField", () => {
 				[2, nodeId3],
 			]),
 		);
-	});
-
-	it("relevantRemovedRoots", () => {
-		const actual = genericChangeHandler.relevantRemovedRoots(
-			newGenericChangeset([
-				[0, nodeId1],
-				[2, nodeId2],
-			]),
-			(child) =>
-				child === nodeId1
-					? [{ minor: 42 }]
-					: child === nodeId2
-						? [{ minor: 43 }]
-						: assert.fail("Unexpected child"),
-		);
-		assert.deepEqual(Array.from(actual), [{ minor: 42 }, { minor: 43 }]);
 	});
 });
