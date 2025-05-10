@@ -32,10 +32,12 @@ import {
 	IAlfredTenant,
 } from "@fluidframework/server-services-client";
 import {
+	addAbortControllerForRequestMiddleware,
 	alternativeMorganLoggerMiddleware,
 	bindTelemetryContext,
 	bindTimeoutContext,
 	jsonMorganLoggerMiddleware,
+	bindAbortControllerContext,
 } from "@fluidframework/server-services-utils";
 import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
 import {
@@ -100,6 +102,7 @@ export function create(
 		// If connectionTimeoutMs configured and not 0, bind timeout context.
 		app.use(bindTimeoutContext(httpServerConfig.connectionTimeoutMs));
 	}
+	app.use(bindAbortControllerContext());
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
@@ -170,6 +173,7 @@ export function create(
 	app.use(cookieParser());
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
+	app.use(addAbortControllerForRequestMiddleware());
 
 	// Bind routes
 	const routes = alfredRoutes.create(
