@@ -4601,7 +4601,7 @@ export class ContainerRuntime
 	 */
 	private reSubmitBatch(
 		batch: PendingMessageResubmitData[],
-		batchId: BatchId,
+		batchId: BatchId | undefined,
 		staged: boolean,
 	): void {
 		this.batchRunner.run(() => {

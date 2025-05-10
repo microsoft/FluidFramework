@@ -118,7 +118,11 @@ export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	applyStashedOp(serializedOp: string): Promise<unknown>;
-	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId, staged: boolean): void;
+	reSubmitBatch(
+		batch: PendingMessageResubmitData[],
+		batchId: BatchId | undefined,
+		staged: boolean,
+	): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -735,7 +739,9 @@ export class PendingStateManager implements IDisposable {
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			const batchId = getEffectiveBatchId(pendingMessage);
+			const batchId = pendingMessage.batchInfo.ignoreBatchId
+				? undefined
+				: getEffectiveBatchId(pendingMessage);
 
 			const staged = pendingMessage.batchInfo.staged;
 
