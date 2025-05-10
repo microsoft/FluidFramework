@@ -3384,6 +3384,13 @@ export class ContainerRuntime
 			commitChanges: (optionsParam) => {
 				const options = { ...defaultStagingCommitOptions, ...optionsParam };
 				return exitStagingMode(() => {
+					//* Ruh roh. There could be pending pre-staging ID Allocation ops that would
+					//* probably conflict with this when they're finalized. This is only a problem if connected at this point.
+					//* Big hammer would be to force disconnect and reconnect here...
+					this.outstandingUnfinalizedIdCreationRangeAllocationOp =
+						this.generateIdAllocationOpIfNeeded(true /* toResubmitOutstandingRanges */);
+
+					//* Maybe actually just call this.replayPendingStates? (to avoid code duplication)
 					this.pendingStateManager.replayPendingStates({
 						onlyStagedBatches: true,
 						squash: options.squash ?? false,
@@ -4420,9 +4427,7 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: LocalBatchMessage = {
 					runtimeOp: idAllocationMessage,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					// Note: For now, we will never stage ID Allocation messages.
-					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
-					staged: false, //* This is gonna be wrong, maybe it's irrelevant
+					// Don't set staged, it's irrelevant since these ops won't be added to the batch unless we're about to send
 				};
 				return idAllocationBatchMessage;
 			}
