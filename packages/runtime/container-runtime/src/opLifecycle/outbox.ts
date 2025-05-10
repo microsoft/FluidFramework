@@ -69,7 +69,7 @@ export interface IOutboxParameters {
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
-	readonly generateIdAllocationOpIfNeeded: () => LocalBatchMessage | undefined;
+	readonly generatePrerequisiteIdAllocationOps: () => LocalBatchMessage[];
 }
 
 /**
@@ -473,10 +473,8 @@ export class Outbox {
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend() && !staged) {
 			// Make sure any ID allocations are sequenced before any ops that might use those IDs
-			const idAllocationOp = this.params.generateIdAllocationOpIfNeeded();
-			if (idAllocationOp !== undefined) {
-				rawBatch.messages.unshift(idAllocationOp);
-			}
+			const idAllocationOps = this.params.generatePrerequisiteIdAllocationOps();
+			rawBatch.messages.unshift(...idAllocationOps);
 			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 

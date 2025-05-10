@@ -719,6 +719,7 @@ export class PendingStateManager implements IDisposable {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let pendingMessage = this.pendingMessages.peekFront()!;
 
+			//* Should be able to revert this
 			// It's possible some ops were submitted as part of the reconnect flow, i.e. they've already been submitted on the new clientId
 			// As soon as we encounter a message like this, we can and should stop replaying through the queue.
 			// One example is an ID Allocation op to finalize the ranges used when submitting the pending messages the first time.

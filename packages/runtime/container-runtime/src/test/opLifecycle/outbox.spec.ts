@@ -243,7 +243,7 @@ describe("Outbox", () => {
 		opGroupingConfig?: OpGroupingManagerConfig;
 		immediateMode?: boolean;
 		flushPartialBatches?: boolean;
-		generateIdAllocationOpIfNeeded?: () => LocalBatchMessage | undefined;
+		generatePrerequisiteIdAllocationOps?: () => LocalBatchMessage[];
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -276,8 +276,8 @@ describe("Outbox", () => {
 				state.opsResubmitted++;
 			},
 			opReentrancy: () => state.isReentrant,
-			generateIdAllocationOpIfNeeded:
-				params.generateIdAllocationOpIfNeeded ?? (() => undefined),
+			generatePrerequisiteIdAllocationOps:
+				params.generatePrerequisiteIdAllocationOps ?? (() => []),
 		});
 	};
 
@@ -333,10 +333,11 @@ describe("Outbox", () => {
 
 	it("Sending batches", () => {
 		// Create a Sinon stub for generateIdAllocationOp
-		const generateIdAllocationOpStub = Sinon.stub();
+		const generateIdAllocationOpStub = Sinon.stub<[], LocalBatchMessage[]>();
+		generateIdAllocationOpStub.returns([]);
 		const outbox = getOutbox({
 			context: getMockContext(),
-			generateIdAllocationOpIfNeeded: generateIdAllocationOpStub, // Pass the stub
+			generatePrerequisiteIdAllocationOps: generateIdAllocationOpStub, // Pass the stub
 		});
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
@@ -351,14 +352,12 @@ describe("Outbox", () => {
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
 		// Configure the stub to return the ID alloc op on the first call during flush
-		generateIdAllocationOpStub.onCall(0).returns(messages[2]);
+		generateIdAllocationOpStub.onCall(0).returns([messages[2]]);
 		outbox.flush(); // Stub is called here
 
 		// Flush 2
 		outbox.submit(messages[4]);
-		// Configure the stub to return undefined for the second call (no ID alloc)
-		generateIdAllocationOpStub.onCall(1).returns(undefined); //* Is this necessary?
-		outbox.flush(); // Stub is called here again
+		outbox.flush(); // Stub is called here again, returns []
 
 		// Not Flushed
 		outbox.submit(messages[5]);
@@ -437,26 +436,26 @@ describe("Outbox", () => {
 
 	it("Batch ID added when applicable (ungrouped batch)", () => {
 		// Create a Sinon stub for generateIdAllocationOp
-		const generateIdAllocationOpStub = Sinon.stub<[], LocalBatchMessage | undefined>();
+		const generateIdAllocationOpStub = Sinon.stub<[], LocalBatchMessage[]>();
 		const outbox = getOutbox({
 			context: getMockContext(),
 			opGroupingConfig: {
 				groupedBatchingEnabled: false,
 			},
-			generateIdAllocationOpIfNeeded: generateIdAllocationOpStub, // Pass the stub
+			generatePrerequisiteIdAllocationOps: generateIdAllocationOpStub, // Pass the stub
 		});
 		const idAllocMessage = createMessage(ContainerMessageType.IdAllocation, "0");
 		// Flush 1 - resubmit multi-message batch including ID Allocation
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "2"));
 		// Configure stub for first flush
-		generateIdAllocationOpStub.onCall(0).returns(idAllocMessage);
+		generateIdAllocationOpStub.onCall(0).returns([idAllocMessage]);
 		outbox.flush({ batchId: "batchId-A", staged: false });
 
 		// Flush 2 - resubmit single-message batch
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "3"));
 		// Configure stub for second flush (no ID alloc)
-		generateIdAllocationOpStub.onCall(1).returns(undefined);
+		generateIdAllocationOpStub.onCall(1).returns([]);
 		outbox.flush({ batchId: "batchId-B", staged: false });
 
 		// Flush 3 - resubmit blob attach batch
@@ -464,13 +463,13 @@ describe("Outbox", () => {
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "5"));
 		currentSeqNumbers.referenceSequenceNumber = 0;
 		// Configure stub for third flush (no ID alloc)
-		generateIdAllocationOpStub.onCall(2).returns(undefined);
+		generateIdAllocationOpStub.onCall(2).returns([]);
 		outbox.flush({ batchId: "batchId-C", staged: false });
 
 		// Flush 4 - no batch ID given
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "6"));
 		// Configure stub for fourth flush (no ID alloc)
-		generateIdAllocationOpStub.onCall(3).returns(undefined);
+		generateIdAllocationOpStub.onCall(3).returns([]);
 		outbox.flush(); // Ignored - No batchID given (not resubmit)
 
 		// Not Flushed (will not appear in batchesSubmitted or pendingOpContents)
@@ -550,10 +549,10 @@ describe("Outbox", () => {
 
 	it("Uses legacy path for legacy contexts", () => {
 		// Create a Sinon stub for generateIdAllocationOp
-		const generateIdAllocationOpStub = Sinon.stub<[], LocalBatchMessage | undefined>();
+		const generateIdAllocationOpStub = Sinon.stub<[], LocalBatchMessage[]>();
 		const outbox = getOutbox({
 			context: getMockLegacyContext() as IContainerContext,
-			generateIdAllocationOpIfNeeded: generateIdAllocationOpStub, // Pass the stub
+			generatePrerequisiteIdAllocationOps: generateIdAllocationOpStub, // Pass the stub
 		});
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
@@ -568,13 +567,13 @@ describe("Outbox", () => {
 		outbox.submit(messages[1]);
 		outbox.submit(messages[3]);
 		// Configure stub for first flush
-		generateIdAllocationOpStub.onCall(0).returns(messages[2]);
+		generateIdAllocationOpStub.onCall(0).returns([messages[2]]);
 		outbox.flush();
 
 		// Flush 2
 		outbox.submit(messages[4]);
 		// Configure stub for second flush (no ID alloc)
-		generateIdAllocationOpStub.onCall(1).returns(undefined);
+		generateIdAllocationOpStub.onCall(1).returns([]);
 		outbox.flush();
 
 		// Legacy path submits individually.
@@ -611,7 +610,7 @@ describe("Outbox", () => {
 
 	it("Compress if compression and grouping are enabled", () => {
 		// Create a Sinon stub for generateIdAllocationOp
-		const generateIdAllocationOpStub = Sinon.stub<[], LocalBatchMessage | undefined>();
+		const generateIdAllocationOpStub = Sinon.stub<[], LocalBatchMessage[]>();
 		const outbox = getOutbox({
 			context: getMockContext(),
 			compressionOptions: {
@@ -621,7 +620,7 @@ describe("Outbox", () => {
 			opGroupingConfig: {
 				groupedBatchingEnabled: true,
 			},
-			generateIdAllocationOpIfNeeded: generateIdAllocationOpStub, // Pass the stub
+			generatePrerequisiteIdAllocationOps: generateIdAllocationOpStub, // Pass the stub
 		});
 
 		const messages = [
@@ -635,7 +634,7 @@ describe("Outbox", () => {
 		outbox.submit(messages[1]);
 		outbox.submit(messages[3]);
 		// Configure stub for the flush
-		generateIdAllocationOpStub.onCall(0).returns(messages[2]);
+		generateIdAllocationOpStub.onCall(0).returns([messages[2]]);
 		outbox.flush();
 
 		// ID Alloc op [2] is generated and prepended to the main batch [0, 1, 3]
@@ -687,7 +686,7 @@ describe("Outbox", () => {
 
 	it("Does not compress if the batch is smaller than the configured limit", () => {
 		// Create a Sinon stub for generateIdAllocationOp
-		const generateIdAllocationOpStub = Sinon.stub<[], LocalBatchMessage | undefined>();
+		const generateIdAllocationOpStub = Sinon.stub<[], LocalBatchMessage[]>();
 		const outbox = getOutbox({
 			context: getMockContext(),
 			maxBatchSize: 1024,
@@ -698,7 +697,7 @@ describe("Outbox", () => {
 				minimumBatchSizeInBytes: 512,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
 			},
-			generateIdAllocationOpIfNeeded: generateIdAllocationOpStub, // Pass the stub
+			generatePrerequisiteIdAllocationOps: generateIdAllocationOpStub, // Pass the stub
 		});
 
 		const messages = [
@@ -712,7 +711,7 @@ describe("Outbox", () => {
 		outbox.submit(messages[1]);
 		outbox.submit(messages[3]);
 		// Configure stub for the flush
-		generateIdAllocationOpStub.onCall(0).returns(messages[2]);
+		generateIdAllocationOpStub.onCall(0).returns([messages[2]]);
 		outbox.flush();
 
 		// ID Alloc op [2] is generated and prepended to the main batch [0, 1, 3]
@@ -810,11 +809,12 @@ describe("Outbox", () => {
 			opGroupingConfig: {
 				groupedBatchingEnabled: true,
 			},
+			//* TODO: UPdate to Sinon
 			// Provide the mock generateIdAllocationOp
-			generateIdAllocationOpIfNeeded: () => {
+			generatePrerequisiteIdAllocationOps: () => {
 				const op1 = idAllocOp;
 				idAllocOp = undefined; // Consume the op
-				return op1;
+				return op1 === undefined ? [] : [op1];
 			},
 		});
 
@@ -888,10 +888,10 @@ describe("Outbox", () => {
 				groupedBatchingEnabled: true,
 			},
 			// Provide the mock generateIdAllocationOp
-			generateIdAllocationOpIfNeeded: () => {
+			generatePrerequisiteIdAllocationOps: () => {
 				const op1 = idAllocOp;
 				idAllocOp = undefined; // Consume the op
-				return op1;
+				return op1 === undefined ? [] : [op1];
 			},
 		});
 
@@ -1049,10 +1049,10 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				flushPartialBatches: true,
 				// Provide the mock generateIdAllocationOp
-				generateIdAllocationOpIfNeeded: () => {
+				generatePrerequisiteIdAllocationOps: () => {
 					const op1 = idAllocOp;
 					idAllocOp = undefined; // Consume the op
-					return op1;
+					return op1 === undefined ? [] : [op1];
 				},
 			});
 
