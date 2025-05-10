@@ -564,6 +564,8 @@ describe("Staging Mode", () => {
 			} else {
 				assert.equal(
 					reSubmitCoreSpy.callCount,
+					// 2 resubmits when disconnected happens because there is one resubmit upon exiting staging mode (to clear staging flags),
+					// then another when we eventually reconnect.
 					disconnectBeforeCommit ? 2 : 1,
 					"Normal resubmit should be called when squash = false.",
 				);
