@@ -5,7 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+import { gt } from "semver-ts";
 
+import { type MinimumVersionForCollab } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 
 /**
@@ -68,6 +70,15 @@ export interface IDocumentSchema {
 	refSeq: number;
 
 	runtime: Record<string, DocumentSchemaValueType>;
+
+	/**
+	 * minVersionForCollab that was used when this document was created.
+	 * We use this to issue telemetry warning events if a client tries to open a document
+	 * with a runtime version lower than this.
+	 *
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for additional details on `minVersionForCollab`.
+	 */
+	minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**
@@ -128,7 +139,7 @@ export const currentDocumentVersionSchema = 1;
 export type IDocumentSchemaCurrent = {
 	version: 1;
 	refSeq: number;
-
+	minVersionForCollab: MinimumVersionForCollab;
 	runtime: {
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
@@ -311,9 +322,19 @@ function and(
 			desiredDocSchema.runtime[key],
 		);
 	}
+
+	// Always take the larger minVersionForCollab
+	const minVersionForCollab = gt(
+		currentDocSchema.minVersionForCollab,
+		desiredDocSchema.minVersionForCollab,
+	)
+		? currentDocSchema.minVersionForCollab
+		: desiredDocSchema.minVersionForCollab;
+
 	return {
 		version: currentDocumentVersionSchema,
 		refSeq: currentDocSchema.refSeq,
+		minVersionForCollab,
 		runtime,
 	} as unknown as IDocumentSchemaCurrent;
 }
@@ -332,9 +353,18 @@ function or(
 			desiredDocSchema.runtime[key],
 		);
 	}
+	// Always take the larger minVersionForCollab
+	const minVersionForCollab = gt(
+		currentDocSchema.minVersionForCollab,
+		desiredDocSchema.minVersionForCollab,
+	)
+		? currentDocSchema.minVersionForCollab
+		: desiredDocSchema.minVersionForCollab;
+
 	return {
 		version: currentDocumentVersionSchema,
 		refSeq: currentDocSchema.refSeq,
+		minVersionForCollab,
 		runtime,
 	} as unknown as IDocumentSchemaCurrent;
 }
@@ -343,6 +373,11 @@ function same(
 	currentDocSchema: IDocumentSchemaCurrent,
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): boolean {
+	if (gt(desiredDocSchema.minVersionForCollab, currentDocSchema.minVersionForCollab)) {
+		// We don't consider minVersionForCollab to be a schema change unless the desired version
+		// is greater than the current version.
+		return false;
+	}
 	for (const key of new Set([
 		...Object.keys(currentDocSchema.runtime),
 		...Object.keys(desiredDocSchema.runtime),
@@ -461,6 +496,7 @@ export class DocumentsSchemaController {
 	 * @param documentMetadataSchema - current document's schema, if present.
 	 * @param features - features of the document schema that current session wants to see enabled.
 	 * @param onSchemaChange - callback that is called whenever schema is changed (not called on creation / load, only when processing document schema change ops)
+	 * @param minVersionForCollab - minimum version of the runtime that is supported for collaboration with this document.
 	 */
 	constructor(
 		existing: boolean,
@@ -468,6 +504,7 @@ export class DocumentsSchemaController {
 		documentMetadataSchema: IDocumentSchema | undefined,
 		features: IDocumentSchemaFeatures,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
+		minVersionForCollab: MinimumVersionForCollab,
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
 		assert(
@@ -475,10 +512,19 @@ export class DocumentsSchemaController {
 			0x949 /* not supported */,
 		);
 
+		// We use the greater of existingMinVersionForCollab and minVersionForCollab
+		const existingMinVersionForCollab = documentMetadataSchema?.minVersionForCollab;
+		const desiredMinVersionForCollab =
+			existingMinVersionForCollab === undefined ||
+			gt(minVersionForCollab, existingMinVersionForCollab)
+				? minVersionForCollab
+				: existingMinVersionForCollab;
+
 		// Desired schema by this session - almost all props are coming from arguments
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
 			refSeq: documentMetadataSchema?.refSeq ?? 0,
+			minVersionForCollab: desiredMinVersionForCollab,
 			runtime: {
 				explicitSchemaControl: boolToProp(features.explicitSchemaControl),
 				compressionLz4: boolToProp(features.compressionLz4),
@@ -498,6 +544,7 @@ export class DocumentsSchemaController {
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
 					refSeq: 0,
+					minVersionForCollab,
 					// If it's existing document and it has no schema, then it was written by legacy client.
 					// If it's a new document, then we define it's legacy-related behaviors.
 					runtime: {
@@ -549,6 +596,14 @@ export class DocumentsSchemaController {
 		// out of legacy mode, as clients transitioning out of it would be able to use all the
 		// features that are mentioned in schema right away, without a need to go through schema transition (and thus for a session or
 		// two losing ability to use all the features)
+
+		// TODO: Hack to make sure we use the preferred minVersionForCollab - should fix this properly
+		this.documentSchema.minVersionForCollab = gt(
+			this.desiredSchema.minVersionForCollab,
+			this.documentSchema.minVersionForCollab,
+		)
+			? this.desiredSchema.minVersionForCollab
+			: this.desiredSchema.minVersionForCollab;
 
 		const schema = this.explicitSchemaControl ? this.documentSchema : this.desiredSchema;
 

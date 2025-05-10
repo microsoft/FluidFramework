@@ -8,6 +8,8 @@ import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type IContainerRuntimeOptionsInternal,
+	type LoadContainerRuntimeParams,
+	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import {
 	IContainerRuntime,
@@ -82,6 +84,7 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
+			public minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
 			// eslint-disable-next-line import/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
@@ -170,12 +173,11 @@ export const createTestContainerRuntimeFactory = (
 				// eslint-disable-next-line import/no-deprecated
 				requestHandler: buildRuntimeRequestHandler(getDefaultObject, ...this.requestHandlers),
 				provideEntryPoint,
-				// ! This prop is needed for back-compat. Can be removed in 2.0.0-internal.8.0.0
-				initializeEntryPoint: provideEntryPoint,
 				runtimeOptions: this.runtimeOptions,
 				containerScope: context.scope,
 				existing,
-			} as any);
+				minVersionForCollab: this.minVersionForCollab,
+			} satisfies LoadContainerRuntimeParams);
 		}
 	};
 };

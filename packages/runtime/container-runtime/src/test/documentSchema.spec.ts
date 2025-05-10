@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { defaultMinVersionForCollab } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
 	DocumentsSchemaController,
@@ -24,6 +25,7 @@ describe("Runtime", () => {
 	const validConfig: IDocumentSchemaCurrent = {
 		version: 1,
 		refSeq: 0,
+		minVersionForCollab: defaultMinVersionForCollab,
 		runtime: {
 			// explicitSchemaControl: undefined,
 			compressionLz4: true,
@@ -49,6 +51,7 @@ describe("Runtime", () => {
 			config as IDocumentSchemaCurrent, // old schema,
 			features,
 			() => {}, // onSchemaChange
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 	}
 
@@ -114,6 +117,7 @@ describe("Runtime", () => {
 			validConfig, // old schema,
 			{ ...features, disallowedVersions: [] },
 			() => {}, // onSchemaChange
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 
 		assert(controller.sessionSchema.runtime.disallowedVersions === undefined);
@@ -149,6 +153,7 @@ describe("Runtime", () => {
 			},
 			// onSchemaChange
 			() => {},
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 		assert.deepEqual(controller.sessionSchema.runtime.disallowedVersions, ["aaa", "bbb"]);
 		let message = controller.maybeSendSchemaMessage();
@@ -173,6 +178,7 @@ describe("Runtime", () => {
 			},
 			// onSchemaChange
 			() => {},
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 		assert.deepEqual(controller2.sessionSchema.runtime.disallowedVersions, [
 			"aaa",
@@ -201,6 +207,7 @@ describe("Runtime", () => {
 			features,
 			// onSchemaChange
 			() => {},
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 		controller3.processDocumentSchemaMessages(
 			[message],
@@ -241,6 +248,7 @@ describe("Runtime", () => {
 			undefined, // old schema,
 			featuresModified,
 			() => assert(false, "no schema changes!"), // onSchemaChange
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 
 		assert(controller.sessionSchema.refSeq === 0, "refSeq");
@@ -284,6 +292,7 @@ describe("Runtime", () => {
 			const expected = {
 				version: 1,
 				refSeq: 0,
+				minVersionForCollab: defaultMinVersionForCollab,
 				runtime: {
 					// Existing files without any schema are considered to be in legacy mode.
 					explicitSchemaControl: undefined,
@@ -298,6 +307,7 @@ describe("Runtime", () => {
 			const expected = {
 				version: 1,
 				refSeq: 0,
+				minVersionForCollab: defaultMinVersionForCollab,
 				runtime: {
 					explicitSchemaControl: boolToProp(featuresModified.explicitSchemaControl),
 					compressionLz4: boolToProp(featuresModified.compressionLz4),
@@ -353,6 +363,7 @@ describe("Runtime", () => {
 			schema, // old schema,
 			features,
 			() => {}, // onSchemaChange
+			schema.minVersionForCollab,
 		);
 
 		controller.onDisconnect();
@@ -365,6 +376,59 @@ describe("Runtime", () => {
 			...validConfig,
 			runtime: { ...validConfig.runtime, explicitSchemaControl: true },
 		});
+		testExistingDocNoChangesInSchema({
+			...validConfig,
+			// Should not change schema since it is lower than the existing minVersionForCollab
+			minVersionForCollab: "1.0.0",
+		});
+	});
+
+	it("Existing document with existing schema, change to minVersionForCollab", () => {
+		const controller = new DocumentsSchemaController(
+			true, // existing,
+			0, // snapshotSequenceNumber
+			validConfig, // old schema,
+			features, // features
+			() => {}, // onSchemaChange
+			"2.20.0", // minVersionForCollab
+		);
+
+		const message = controller.maybeSendSchemaMessage();
+		assert(message !== undefined);
+		assert.strictEqual(message.minVersionForCollab, "2.20.0");
+
+		const schema = controller.summarizeDocumentSchema(300);
+		assert(schema !== undefined);
+
+		const controller2 = new DocumentsSchemaController(
+			true, // existing,
+			300, // snapshotSequenceNumber
+			schema, // old schema,
+			features, // features
+			() => {}, // onSchemaChange
+			"2.30.0", // minVersionForCollab
+		);
+
+		const message2 = controller2.maybeSendSchemaMessage();
+		assert(message2 !== undefined);
+		assert.strictEqual(controller2.sessionSchema.minVersionForCollab, "2.30.0");
+
+		const schema2 = controller2.summarizeDocumentSchema(600);
+		assert(schema2 !== undefined);
+
+		const controller3 = new DocumentsSchemaController(
+			true, // existing,
+			600, // snapshotSequenceNumber
+			schema2, // old schema,
+			features, // features
+			() => {}, // onSchemaChange
+			"2.0.0", // minVersionForCollab
+		);
+		assert.strictEqual(controller3.sessionSchema.minVersionForCollab, "2.30.0");
+		const message3 = controller3.maybeSendSchemaMessage();
+		// Should be undefined since there is no update to the schema
+		assert(message3 === undefined);
+		assert.strictEqual(controller2.sessionSchema.minVersionForCollab, "2.30.0");
 	});
 
 	it("Existing document, changes required; race conditions", () => {
@@ -374,6 +438,7 @@ describe("Runtime", () => {
 			validConfig, // old schema,
 			{ ...features, opGroupingEnabled: true },
 			() => {}, // onSchemaChange
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 
 		const message = controller.maybeSendSchemaMessage();
@@ -407,6 +472,7 @@ describe("Runtime", () => {
 			schema, // old schema,
 			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {}, // onSchemaChange
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
@@ -464,6 +530,7 @@ describe("Runtime", () => {
 			() => {
 				assert(false, "no changes!");
 			}, // onSchemaChange
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 
 		assert(controller.maybeSendSchemaMessage() === undefined);
@@ -480,6 +547,7 @@ describe("Runtime", () => {
 			() => {
 				assert(false, "no changes!");
 			}, // onSchemaChange
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 
 		assert(controller2.maybeSendSchemaMessage() === undefined);
@@ -502,6 +570,7 @@ describe("Runtime", () => {
 			() => {
 				schemaChanged = true;
 			}, // onSchemaChange
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 
 		// setting is not on yet
@@ -539,6 +608,7 @@ describe("Runtime", () => {
 				opGroupingEnabled: true,
 			},
 			() => (schemaChanged = true), // onSchemaChange
+			defaultMinVersionForCollab, // minVersionForCollab
 		);
 		controller4.processDocumentSchemaMessages(
 			[message],
