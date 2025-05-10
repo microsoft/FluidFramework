@@ -53,6 +53,7 @@ fluid-framework
 @fluidframework/debugger
 @fluidframework/tree
 @fluidframework/task-manager
+@fluidframework/signal
 @fluidframework/shared-summary-block
 @fluidframework/shared-object-base
 @fluidframework/sequence
