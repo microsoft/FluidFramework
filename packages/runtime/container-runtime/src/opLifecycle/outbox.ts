@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
+import type { IBatchMetadata } from "../metadata.js";
 import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
@@ -68,6 +69,7 @@ export interface IOutboxParameters {
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: PendingMessageResubmitData, squash: boolean) => void;
 	readonly opReentrancy: () => boolean;
+	readonly generatePrerequisiteIdAllocationOps: () => LocalBatchMessage[];
 }
 
 /**
@@ -125,6 +127,36 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 		errorObj.stackTraceLimit = originalStackTraceLimit;
 	}
 }
+
+const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
+	const batchEnd = batch.messages.length - 1;
+
+	const firstMsg = batch.messages[0];
+	const lastMsg = batch.messages[batchEnd];
+	assert(
+		firstMsg !== undefined && lastMsg !== undefined,
+		0x9d1 /* expected non-empty batch */,
+	);
+
+	const firstMetadata: Partial<IBatchMetadata> = firstMsg.metadata ?? {};
+	const lastMetadata: Partial<IBatchMetadata> = lastMsg.metadata ?? {};
+
+	// Multi-message batches: mark the first and last messages with the "batch" flag indicating batch start/end
+	if (batch.messages.length > 1) {
+		firstMetadata.batch = true;
+		lastMetadata.batch = false;
+		firstMsg.metadata = firstMetadata;
+		lastMsg.metadata = lastMetadata;
+	}
+
+	// If batchId is provided (e.g. in case of resubmit): stamp it on the first message
+	if (batchId !== undefined) {
+		firstMetadata.batchId = batchId;
+		firstMsg.metadata = firstMetadata;
+	}
+
+	return batch;
+};
 
 /**
  * Convert from local batch to outbound batch, including computing contentSizeInBytes.
@@ -192,7 +224,6 @@ export class Outbox {
 	private readonly logger: ITelemetryLoggerExt;
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
-	private readonly idAllocationBatch: BatchManager;
 	private batchRebasesToReport = 5;
 	private rebasing = false;
 
@@ -210,14 +241,10 @@ export class Outbox {
 
 		this.mainBatch = new BatchManager({ canRebase: true });
 		this.blobAttachBatch = new BatchManager({ canRebase: true });
-		this.idAllocationBatch = new BatchManager({
-			canRebase: false,
-			ignoreBatchId: true,
-		});
 	}
 
 	public get messageCount(): number {
-		return this.mainBatch.length + this.blobAttachBatch.length + this.idAllocationBatch.length;
+		return this.mainBatch.length + this.blobAttachBatch.length;
 	}
 
 	public get mainBatchMessageCount(): number {
@@ -226,10 +253,6 @@ export class Outbox {
 
 	public get blobAttachBatchMessageCount(): number {
 		return this.blobAttachBatch.length;
-	}
-
-	public get idAllocationBatchMessageCount(): number {
-		return this.idAllocationBatch.length;
 	}
 
 	public get isEmpty(): boolean {
@@ -250,10 +273,8 @@ export class Outbox {
 	private maybeFlushPartialBatch(): void {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
-		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
 		assert(
-			sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
-				sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums),
+			sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -261,8 +282,7 @@ export class Outbox {
 
 		if (
 			sequenceNumbersMatch(mainBatchSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(idAllocSeqNums, currentSequenceNumbers)
+			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers)
 		) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
@@ -330,12 +350,6 @@ export class Outbox {
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
-	public submitIdAllocation(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
-
-		this.addMessageToBatchManager(this.idAllocationBatch, message);
-	}
-
 	private addMessageToBatchManager(
 		batchManager: BatchManager,
 		message: LocalBatchMessage,
@@ -363,8 +377,7 @@ export class Outbox {
 	}
 
 	private flushAll(resubmitInfo?: BatchResubmitInfo): void {
-		const allBatchesEmpty =
-			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
+		const allBatchesEmpty = this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (allBatchesEmpty) {
 			// If we're resubmitting with a batchId and all batches are empty, we need to flush an empty batch.
 			// Note that we currently resubmit one batch at a time, so on resubmit, 1 of the 2 batches will *always* be empty.
@@ -376,14 +389,6 @@ export class Outbox {
 			}
 			return;
 		}
-
-		// Don't use resubmittingBatchId for idAllocationBatch.
-		// ID Allocation messages are not directly resubmitted so don't pass the resubmitInfo
-		this.flushInternal({
-			batchManager: this.idAllocationBatch,
-			// Note: For now, we will never stage ID Allocation messages.
-			// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
-		});
 		this.flushInternal({
 			batchManager: this.blobAttachBatch,
 			disableGroupedBatching: true,
@@ -434,7 +439,7 @@ export class Outbox {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId);
+		const rawBatch = batchManager.popBatch();
 
 		// When resubmitting, we respect the staged state of the original batch.
 		// In this case rawBatch.staged will match the state of inStagingMode when
@@ -467,6 +472,10 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend() && !staged) {
+			// Make sure any ID allocations are sequenced before any ops that might use those IDs
+			const idAllocationOps = this.params.generatePrerequisiteIdAllocationOps();
+			rawBatch.messages.unshift(...idAllocationOps);
+			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);
@@ -474,6 +483,8 @@ export class Outbox {
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
 				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
 			);
+		} else {
+			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 		}
 
 		this.params.pendingStateManager.onFlushBatch(
@@ -660,15 +671,10 @@ export class Outbox {
 	 */
 	public getBatchCheckpoints(): {
 		mainBatch: IBatchCheckpoint;
-		idAllocationBatch: IBatchCheckpoint;
 		blobAttachBatch: IBatchCheckpoint;
 	} {
-		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
-		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
-		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
-			mainBatch,
-			idAllocationBatch: this.idAllocationBatch.checkpoint(),
+			mainBatch: this.mainBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
 	}
