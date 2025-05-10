@@ -242,7 +242,7 @@ export class Outbox {
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
-	private maybeFlushPartialBatch(): void {
+	private validateSequenceNumberCoherency(): void {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
@@ -252,6 +252,7 @@ export class Outbox {
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
+		//* Can we prove we don't need to track CSN here anymore? (aka sequence within batch)
 		const currentSequenceNumbers = this.params.getCurrentSequenceNumbers();
 
 		if (
@@ -305,19 +306,19 @@ export class Outbox {
 	}
 
 	public submit(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.validateSequenceNumberCoherency();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitBlobAttach(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.validateSequenceNumberCoherency();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
 	public submitIdAllocation(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.validateSequenceNumberCoherency();
 
 		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
