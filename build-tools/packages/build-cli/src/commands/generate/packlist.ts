@@ -96,7 +96,7 @@ export default class GeneratePackListCommand extends PackageCommand<
 			return 0;
 		});
 
-		const output = files.join("\n").replace(/\r\n/g, "\n");
+		const output = files.join("\n");
 		await writeFileWithLineFeeds(outFile, output);
 	}
 }
