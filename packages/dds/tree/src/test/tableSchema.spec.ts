@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import { independentView, TreeAlpha } from "../shared-tree/index.js";
+import { independentView, Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
 	allowUnused,
 	SchemaFactoryAlpha,
@@ -21,7 +21,7 @@ import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
-describe("TableFactory unit tests", () => {
+describe.only("TableFactory unit tests", () => {
 	function createTableTree() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
@@ -1280,6 +1280,98 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
+	describe("Responding to changes", () => {
+		it("Responding to any changes in the table", () => {
+			const { treeView, Row } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [],
+			});
+
+			let eventCount = 0;
+
+			// Bind listener to the table.
+			// The "treeChanged" event will fire when the associated node or any of its descendants change.
+			Tree.on(treeView.root, "treeChanged", () => {
+				eventCount++;
+			});
+
+			// Add a row
+			treeView.root.insertRow({
+				row: new Row({ id: "row-0", cells: {}, props: {} }),
+			});
+			assert.equal(eventCount, 1);
+
+			// Add a column
+			treeView.root.insertColumn({
+				column: { id: "column-0", props: {} },
+			});
+			assert.equal(eventCount, 2);
+
+			// Set a cell
+			treeView.root.setCell({
+				key: {
+					row: "row-0",
+					column: "column-0",
+				},
+				cell: { value: "Hello world!" },
+			});
+			assert.equal(eventCount, 3);
+
+			// Update cell value
+			const cell =
+				treeView.root.getCell({
+					row: "row-0",
+					column: "column-0",
+				}) ?? fail("Cell not found");
+			cell.value = "Updated value!";
+			assert.equal(eventCount, 4);
+		});
+
+		it("Responding to column list changes", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [],
+			});
+
+			const table = treeView.root;
+
+			let eventCount = 0;
+
+			// Bind listener to the columns list, so we know when a column is added or removed.
+			// The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).
+			Tree.on(table.columns, "nodeChanged", () => {
+				eventCount++;
+			});
+
+			// Add columns
+			table.insertColumns({
+				columns: [
+					{ id: "column-0", props: {} },
+					{ id: "column-0", props: {} },
+				],
+			});
+			assert.equal(eventCount, 1);
+
+			// Update column props
+			table.columns[0].props = { label: "Column 0" };
+			assert.equal(eventCount, 1); // Event should not have fired for column node changes
+
+			// Insert a row
+			table.insertRow({ row: { id: "row-0", cells: {}, props: {} } });
+			assert.equal(eventCount, 1); // Event should not have fired for row insertion
+
+			// Re-order columns
+			table.columns.moveToEnd(0);
+			assert.equal(eventCount, 2);
+
+			// Remove column
+			table.removeColumn("column-0");
+			assert.equal(eventCount, 3);
+		});
+	});
+
 	it("Gets proper table elements with getter methods", () => {
 		const { treeView, Column, Row, Cell } = createTableTree();
 
@@ -1359,6 +1451,30 @@ describe("TableFactory unit tests", () => {
 					new Column({ props: { label: "Amount", dataType: "number" } }),
 				],
 				rows: [],
+			});
+
+			// Don't include this line in the example docs.
+			allowUnused(table);
+		});
+
+		it("TableSchema: Responding to changes", () => {
+			class Cell extends schemaFactory.object("TableCell", {
+				value: schemaFactory.string,
+			}) {}
+
+			class Table extends TableSchema.createTable({
+				schemaFactory,
+				cell: Cell,
+			}) {}
+
+			const table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+
+			// Listen for any changes to the table and its children.
+			Tree.on(table, "treeChanged", () => {
+				// Respond to the change.
 			});
 
 			// Don't include this line in the example docs.
