@@ -217,9 +217,9 @@ describe("TableFactory unit tests", () => {
 
 	describe("Initialization", () => {
 		it("Empty", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Table } = createTableTree();
 
-			treeView.initialize({ rows: [], columns: [] });
+			treeView.initialize(Table.empty());
 			assertEqualTrees(treeView.root, { columns: [], rows: [] });
 		});
 
