@@ -100,12 +100,12 @@ describe("Node Identifier", () => {
 	});
 
 	it("throws if provided an unknown local id", () => {
-		const manager = new MockNodeIdentifierManager()
-		const manager2 = new MockNodeIdentifierManager()
+		const manager = new MockNodeIdentifierManager();
+		const manager2 = new MockNodeIdentifierManager();
 		const id = manager2.generateLocalNodeIdentifier();
 
 		assert.throws(
-			() => (manager.stabilizeNodeIdentifier(id)),
+			() => manager.stabilizeNodeIdentifier(id),
 			validateUsageError(/Local ID offset out of bounds/),
 		);
 	});

@@ -54,8 +54,8 @@ export class MockNodeIdentifierManager implements NodeIdentifierManager {
 		assert(offset < 281_474_976_710_656, 0x6e8 /* UUID offset must be at most 16^12 */);
 		if (offset >= 0 && offset < this.count) {
 			return assertIsStableId(
-			`a110ca7e-add1-4000-8000-${Math.round(offset).toString(16).padStart(12, "0")}`,
-		); 
+				`a110ca7e-add1-4000-8000-${Math.round(offset).toString(16).padStart(12, "0")}`,
+			);
 		} else {
 			throw new UsageError("Local ID offset out of bounds");
 		}
