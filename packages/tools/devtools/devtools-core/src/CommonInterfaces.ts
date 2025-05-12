@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidObjectNode } from "./index.js";
+
 /**
  * A key used to identify and differentiate Containers registered with the {@link @fluidframework/devtools-core#IFluidDevtools}.
  *
@@ -46,6 +48,16 @@ export interface HasFluidObjectId {
 	 * The ID of the Fluid object (DDS) associated with data or a request.
 	 */
 	readonly fluidObjectId: FluidObjectId;
+}
+
+/**
+ * TODO
+ */
+export interface HasVisualTree {
+	/**
+	 * TODO
+	 */
+	readonly visualTree?: FluidObjectNode | undefined;
 }
 
 /**

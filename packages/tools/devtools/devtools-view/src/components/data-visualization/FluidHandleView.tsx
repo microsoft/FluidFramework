@@ -50,6 +50,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 					message.data.containerKey === containerKey &&
 					message.data.fluidObjectId === fluidObjectId
 				) {
+					console.log("DATA_VISUALIZATION");
 					setVisualTree(message.data.visualization);
 					return true;
 				} else {
@@ -81,7 +82,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerKey, setVisualTree, fluidObjectId, messageRelay]);
+	}, [containerKey, visualTree, setVisualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
 		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;

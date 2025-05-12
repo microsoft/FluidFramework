@@ -28,6 +28,7 @@ export type {
 	FluidObjectId,
 	HasContainerKey,
 	HasFluidObjectId,
+	HasVisualTree,
 } from "./CommonInterfaces.js";
 export { EditType } from "./CommonInterfaces.js";
 export { ContainerStateChangeKind } from "./Container.js";

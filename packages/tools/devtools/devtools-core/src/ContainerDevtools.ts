@@ -416,6 +416,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		fluidObjectId: FluidObjectId,
 		visualization: FluidObjectNode | undefined,
 	): void => {
+		console.log("postDataVisualization visualization", visualization);
 		postMessagesToWindow(
 			this.messageLoggingOptions,
 			DataVisualization.createMessage({

@@ -51,12 +51,15 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 	protected abstract generateView(tree: ITree): TTreeView;
 
 	/**
-	 * TODO
+	 * Implemenation of SharedTree which is used to generated the view.
+	 * @remarks Created once during initialization.
 	 */
 	#sharedTree: ITree | undefined;
 
 	/**
-	 * TODO
+	 * Gets the underlying tree.
+	 *
+	 * @remarks Used to give access to the underlying tree and its schema.
 	 */
 	public get sharedTree(): ITree {
 		if (this.#sharedTree === undefined) {
