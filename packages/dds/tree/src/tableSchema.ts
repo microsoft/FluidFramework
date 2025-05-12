@@ -857,6 +857,11 @@ export namespace System_TableSchema {
  *
  * @remarks
  *
+ * WARNING: These APIs are in preview and are subject to change.
+ * Until these APIs have stabilized, we do not recommend using them in production code.
+ * We reserve the right to make breaking changes to these APIs, including their persisted data format.
+ * Using these APIs in production code may result in data loss or corruption.
+ *
  * Tables created using these APIs are...
  *
  * - sparse, meaning that cells may be omitted, and new rows are empty by default.
