@@ -19,13 +19,13 @@ describe("SharedMatrix memory usage", () => {
 	const matrixSizes = isInPerformanceTestingMode
 		? [10, 100, 1000]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[0];
+			[10];
 
 	// The number of operations to perform on the matrix.
 	const operationCounts = isInPerformanceTestingMode
-		? [100, 1000]
+		? [10, 100, 1000]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[10];
+			[5];
 
 	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
 	// because they won't be out of scope when we garbage-collect between runs of the same test,
