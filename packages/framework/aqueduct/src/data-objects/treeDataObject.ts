@@ -51,6 +51,23 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 	protected abstract generateView(tree: ITree): TTreeView;
 
 	/**
+	 * Implemenation of SharedTree which is used to generated the view.
+	 * @remarks Created once during initialization.
+	 */
+	#sharedTree: ITree | undefined;
+
+	/**
+	 * Gets the underlying tree.
+	 * @remarks Used to give access to the underlying tree and its schema.
+	 */
+	public get sharedTree(): ITree {
+		if (this.#sharedTree === undefined) {
+			throw new UsageError(uninitializedErrorString);
+		}
+		return this.#sharedTree;
+	}
+
+	/**
 	 * View derived from the underlying tree.
 	 * @remarks Populated via {@link TreeDataObject.generateView}.
 	 */
@@ -82,11 +99,14 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 				);
 			}
 			const sharedTree: ITree = channel;
+
+			this.#sharedTree = sharedTree;
 			this.#view = this.generateView(sharedTree);
 		} else {
 			const sharedTree = SharedTree.create(this.runtime, treeChannelId);
 			(sharedTree as unknown as ISharedObject).bindToContext();
 
+			this.#sharedTree = sharedTree;
 			this.#view = this.generateView(sharedTree);
 
 			// Note, the implementer is responsible for initializing the tree with initial data.
