@@ -935,6 +935,57 @@ export namespace System_TableSchema {
  * });
  * ```
  *
+ * @example Listening for changes in the table
+ *
+ * ```typescript
+ * 	class Cell extends schemaFactory.object("TableCell", {
+ * 		value: schemaFactory.string,
+ * 	}) {}
+ *
+ * 	class Table extends TableSchema.createTable({
+ * 		schemaFactory,
+ * 		cell: Cell,
+ * 	}) {}
+ *
+ * 	const table = new Table({
+ * 		columns: [{ id: "column-0" }],
+ * 		rows: [{ id: "row-0", cells: {} }],
+ * 	});
+ *
+ * 	// Listen for any changes to the table and its children.
+ * 	// The "treeChanged" event will fire when the associated node or any of its descendants change.
+ * 	Tree.on(table, "treeChanged", () => {
+ * 		// Respond to the change.
+ * 	});
+ * });
+ * ```
+ *
+ * @example Listening fo changes to the rows list only
+ *
+ * ```typescript
+ * class Cell extends schemaFactory.object("TableCell", {
+ * 	value: schemaFactory.string,
+ * }) {}
+ *
+ * class Table extends TableSchema.createTable({
+ * 	schemaFactory,
+ * 	cell: Cell,
+ * }) {}
+ *
+ * const table = new Table({
+ * 	columns: [{ id: "column-0" }],
+ * 	rows: [{ id: "row-0", cells: {} }],
+ * });
+ *
+ * // Listen for any changes to the list of rows.
+ * // The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).
+ * // In this case, the event will fire when a row is added or removed, or the order of the list is changed.
+ * // But it won't fire when a row's properties change, or when the row's cells change, etc.
+ * Tree.on(table.rows, "nodeChanged", () => {
+ * 	// Respond to the change.
+ * });
+ * ```
+ *
  * @privateRemarks
  * The above examples are backed by tests in `tableSchema.spec.ts`.
  * Those tests and these examples should be kept in-sync to ensure that the examples are correct.

@@ -1457,7 +1457,7 @@ describe.only("TableFactory unit tests", () => {
 			allowUnused(table);
 		});
 
-		it("TableSchema: Responding to changes", () => {
+		it("TableSchema: Listening for changes in the table", () => {
 			class Cell extends schemaFactory.object("TableCell", {
 				value: schemaFactory.string,
 			}) {}
@@ -1473,12 +1473,34 @@ describe.only("TableFactory unit tests", () => {
 			});
 
 			// Listen for any changes to the table and its children.
+			// The "treeChanged" event will fire when the associated node or any of its descendants change.
 			Tree.on(table, "treeChanged", () => {
 				// Respond to the change.
 			});
+		});
 
-			// Don't include this line in the example docs.
-			allowUnused(table);
+		it("TableSchema: Listening fo changes to the rows list only", () => {
+			class Cell extends schemaFactory.object("TableCell", {
+				value: schemaFactory.string,
+			}) {}
+
+			class Table extends TableSchema.createTable({
+				schemaFactory,
+				cell: Cell,
+			}) {}
+
+			const table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+
+			// Listen for any changes to the list of rows.
+			// The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).
+			// In this case, the event will fire when a row is added or removed, or the order of the list is changed.
+			// But it won't fire when a row's properties change, or when the row's cells change, etc.
+			Tree.on(table.rows, "nodeChanged", () => {
+				// Respond to the change.
+			});
 		});
 	});
 });
