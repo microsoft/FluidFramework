@@ -594,7 +594,7 @@ describe("treeNodeApi", () => {
 				const id = nodeKeyManager.stabilizeNodeIdentifier(
 					nodeKeyManager.generateLocalNodeIdentifier(),
 				);
-
+				const test = TreeAlpha.identifier.shorten(view, id)
 				assert.equal(TreeAlpha.identifier.shorten(view, id), undefined);
 			});
 
@@ -609,6 +609,27 @@ describe("treeNodeApi", () => {
 				view.initialize({ identifier: invalidId });
 
 				assert.equal(TreeAlpha.identifier.shorten(view, invalidId), undefined);
+			});
+
+			it("returns the original stable id when shortened and then lengthened.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
+				const id = nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
+				view.initialize({ identifier: id });
+
+				const localId = TreeAlpha.identifier.shorten(view, id)
+				assert(typeof localId === "number")
+				assert.equal(
+					TreeAlpha.identifier.lengthen(view, localId),
+					id,
+				);
 			});
 		});
 
@@ -637,6 +658,26 @@ describe("treeNodeApi", () => {
 				const view = getView(config);
 				view.initialize({ identifier: "testID" });
 				assert.throws(() => TreeAlpha.identifier.lengthen(view, 98));
+			});
+
+			it("returns the original local id when lengthened and then shortened.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
+				const id = nodeKeyManager.generateLocalNodeIdentifier();
+				assert(typeof id === "number")
+				const stableId = TreeAlpha.identifier.lengthen(view, id)
+
+				view.initialize({ identifier: stableId });
+
+				assert.equal(
+					TreeAlpha.identifier.shorten(view, stableId),
+					id,
+				);
 			});
 		});
 
