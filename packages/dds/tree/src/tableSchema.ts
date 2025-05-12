@@ -1342,7 +1342,7 @@ export namespace TableSchema {
 		 *
 		 * @remarks
 		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.removeCell}.
+		 * To remove the corresponding cells, use {@link TableSchema.ITable.removeCell}.
 		 *
 		 * @param column - The {@link TableSchema.IColumn | column} or {@link TableSchema.IColumn.id | column ID} to remove.
 		 * @throws Throws an error if the column is not in the table.
@@ -1357,7 +1357,7 @@ export namespace TableSchema {
 		 *
 		 * @remarks
 		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.removeCell}.
+		 * To remove the corresponding cells, use {@link TableSchema.ITable.removeCell}.
 		 *
 		 * @param columns - The columns to remove.
 		 * @throws Throws an error if any of the columns are not in the table.
@@ -1371,7 +1371,7 @@ export namespace TableSchema {
 		 *
 		 * @remarks
 		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.removeCell}.
+		 * To remove the corresponding cells, use {@link TableSchema.ITable.removeCell}.
 		 *
 		 * @param columns - The columns to remove, specified by their {@link TableSchema.IColumn.id}.
 		 * @throws Throws an error if any of the columns are not in the table.
