@@ -147,10 +147,10 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.IColumn<TPropsSchema> {}
+			implements TableSchema.Column<TPropsSchema> {}
 
 		type ColumnValueType = TreeNode &
-			TableSchema.IColumn<TPropsSchema> &
+			TableSchema.Column<TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Column">>;
 
 		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof columnFields>`,
@@ -300,15 +300,15 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.IRow<TCellSchema, TPropsSchema>
+			implements TableSchema.Row<TCellSchema, TPropsSchema>
 		{
-			public getCell(columnOrId: TableSchema.IColumn | string): CellValueType | undefined {
+			public getCell(columnOrId: TableSchema.Column | string): CellValueType | undefined {
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 				return this.cells.get(columnId) as CellValueType | undefined;
 			}
 
 			public setCell(
-				columnOrId: TableSchema.IColumn | string,
+				columnOrId: TableSchema.Column | string,
 				value: CellInsertableType | undefined,
 			): void {
 				// TODO: throw if column does not exist in the owning table.
@@ -317,7 +317,7 @@ export namespace System_TableSchema {
 				this.cells.set(columnId, value);
 			}
 
-			public removeCell(columnOrId: TableSchema.IColumn | string): CellValueType | undefined {
+			public removeCell(columnOrId: TableSchema.Column | string): CellValueType | undefined {
 				// TODO: throw if column does not exist in the owning table.
 
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
@@ -333,7 +333,7 @@ export namespace System_TableSchema {
 		}
 
 		type RowValueType = TreeNode &
-			TableSchema.IRow<TCellSchema, TPropsSchema> &
+			TableSchema.Row<TCellSchema, TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Row">>;
 
 		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof rowFields>`,
@@ -469,7 +469,7 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.ITable<TCellSchema, TColumnSchema, TRowSchema>
+			implements TableSchema.Table<TCellSchema, TColumnSchema, TRowSchema>
 		{
 			public getColumn(id: string): ColumnValueType | undefined {
 				// TypeScript is unable to narrow the types correctly here, hence the casts.
@@ -782,7 +782,7 @@ export namespace System_TableSchema {
 				// TypeScript is unable to narrow the types correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				return (
-					this.columns.find((column) => (column as TableSchema.IColumn).id === columnId) !==
+					this.columns.find((column) => (column as TableSchema.Column).id === columnId) !==
 					undefined
 				);
 			}
@@ -790,7 +790,7 @@ export namespace System_TableSchema {
 			private containsRowWithId(rowId: string): boolean {
 				// TypeScript is unable to narrow the types correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
-				return this.rows.find((row) => (row as TableSchema.IRow).id === rowId) !== undefined;
+				return this.rows.find((row) => (row as TableSchema.Row).id === rowId) !== undefined;
 			}
 
 			/**
@@ -816,7 +816,7 @@ export namespace System_TableSchema {
 		}
 
 		type TableValueType = TreeNode &
-			TableSchema.ITable<TCellSchema, TColumnSchema, TRowSchema> &
+			TableSchema.Table<TCellSchema, TColumnSchema, TRowSchema> &
 			WithType<ScopedSchemaName<Scope, "Table">>;
 		type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
 
@@ -949,7 +949,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createColumn:2)}.
 	 * @sealed @internal
 	 */
-	export interface IColumn<
+	export interface Column<
 		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> {
 		/**
@@ -1017,7 +1017,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createRow:2)}.
 	 * @sealed @internal
 	 */
-	export interface IRow<
+	export interface Row<
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> {
@@ -1032,7 +1032,7 @@ export namespace TableSchema {
 		 * @returns The cell if it exists, otherwise undefined.
 		 * @privateRemarks TODO: throw if the column does not belong to the same table as the row.
 		 */
-		getCell(column: IColumn): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+		getCell(column: Column): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 		/**
 		 * Gets the cell in the specified column, denoted by column ID.
 		 * @returns The cell if it exists, otherwise undefined.
@@ -1041,13 +1041,13 @@ export namespace TableSchema {
 
 		/**
 		 * Sets the cell in the specified column.
-		 * @remarks To remove a cell, call {@link TableSchema.IRow.(removeCell:1)} instead.
+		 * @remarks To remove a cell, call {@link TableSchema.Row.(removeCell:1)} instead.
 		 * @privateRemarks TODO: Throw an error if the column does not exist in the table.
 		 */
-		setCell(column: IColumn, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
+		setCell(column: Column, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
 		/**
 		 * Sets the cell in the specified column, denoted by column ID.
-		 * @remarks To remove a cell, call {@link TableSchema.IRow.(removeCell:2)} instead.
+		 * @remarks To remove a cell, call {@link TableSchema.Row.(removeCell:2)} instead.
 		 */
 		setCell(columnId: string, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
 
@@ -1056,7 +1056,7 @@ export namespace TableSchema {
 		 * @returns The cell if it exists, otherwise undefined.
 		 * @privateRemarks TODO: Throw if the column does not belong to the same table as the row.
 		 */
-		removeCell(column: IColumn): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+		removeCell(column: Column): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 		/**
 		 * Removes the cell in the specified column, denoted by column ID.
 		 * @returns The cell if it exists, otherwise undefined.
@@ -1134,18 +1134,18 @@ export namespace TableSchema {
 		TRow extends ImplicitAllowedTypes,
 	> {
 		/**
-		 * {@link TableSchema.IColumn} or {@link TableSchema.IColumn.id} at which the cell is located.
+		 * {@link TableSchema.Column} or {@link TableSchema.Column.id} at which the cell is located.
 		 */
 		readonly column: string | TreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		/**
-		 * {@link TableSchema.IRow} or {@link TableSchema.IRow.id} at which the cell is located.
+		 * {@link TableSchema.Row} or {@link TableSchema.Row.id} at which the cell is located.
 		 */
 		readonly row: string | TreeNodeFromImplicitAllowedTypes<TRow>;
 	}
 
 	/**
-	 * {@link TableSchema.ITable.insertColumn} parameters.
+	 * {@link TableSchema.Table.insertColumn} parameters.
 	 * @internal
 	 */
 	export interface InsertColumnParameters<TColumn extends ImplicitAllowedTypes> {
@@ -1162,7 +1162,7 @@ export namespace TableSchema {
 	}
 
 	/**
-	 * {@link TableSchema.ITable.insertColumns} parameters.
+	 * {@link TableSchema.Table.insertColumns} parameters.
 	 * @internal
 	 */
 	export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
@@ -1179,7 +1179,7 @@ export namespace TableSchema {
 	}
 
 	/**
-	 * {@link TableSchema.ITable.insertRow} parameters.
+	 * {@link TableSchema.Table.insertRow} parameters.
 	 * @internal
 	 */
 	export interface InsertRowParameters<TRow extends ImplicitAllowedTypes> {
@@ -1196,7 +1196,7 @@ export namespace TableSchema {
 	}
 
 	/**
-	 * {@link TableSchema.ITable.insertRows} parameters.
+	 * {@link TableSchema.Table.insertRows} parameters.
 	 * @internal
 	 */
 	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
@@ -1213,7 +1213,7 @@ export namespace TableSchema {
 	}
 
 	/**
-	 * {@link TableSchema.ITable.setCell} parameters.
+	 * {@link TableSchema.Table.setCell} parameters.
 	 * @internal
 	 */
 	export interface SetCellParameters<
@@ -1236,7 +1236,7 @@ export namespace TableSchema {
 	 * A table.
 	 * @sealed @internal
 	 */
-	export interface ITable<
+	export interface Table<
 		TCell extends ImplicitAllowedTypes,
 		TColumn extends ImplicitAllowedTypes,
 		TRow extends ImplicitAllowedTypes,
@@ -1252,12 +1252,12 @@ export namespace TableSchema {
 		readonly rows: TreeArrayNode<TRow>;
 
 		/**
-		 * Gets a table column by its {@link TableSchema.IColumn.id}.
+		 * Gets a table column by its {@link TableSchema.Column.id}.
 		 */
 		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
 
 		/**
-		 * Gets a table row by its {@link TableSchema.IRow.id}.
+		 * Gets a table row by its {@link TableSchema.Row.id}.
 		 */
 		getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
 
@@ -1333,7 +1333,7 @@ export namespace TableSchema {
 
 		/**
 		 * Sets the cell at the specified location in the table.
-		 * @remarks To remove a cell, call {@link TableSchema.ITable.removeCell} instead.
+		 * @remarks To remove a cell, call {@link TableSchema.Table.removeCell} instead.
 		 */
 		setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
 
@@ -1342,9 +1342,9 @@ export namespace TableSchema {
 		 *
 		 * @remarks
 		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.ITable.removeCell}.
+		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
 		 *
-		 * @param column - The {@link TableSchema.IColumn | column} or {@link TableSchema.IColumn.id | column ID} to remove.
+		 * @param column - The {@link TableSchema.Column | column} or {@link TableSchema.Column.id | column ID} to remove.
 		 * @throws Throws an error if the column is not in the table.
 		 * @privateRemarks TODO (future): Actually remove corresponding cells from table rows.
 		 */
@@ -1357,7 +1357,7 @@ export namespace TableSchema {
 		 *
 		 * @remarks
 		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.ITable.removeCell}.
+		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
 		 *
 		 * @param columns - The columns to remove.
 		 * @throws Throws an error if any of the columns are not in the table.
@@ -1371,9 +1371,9 @@ export namespace TableSchema {
 		 *
 		 * @remarks
 		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.ITable.removeCell}.
+		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
 		 *
-		 * @param columns - The columns to remove, specified by their {@link TableSchema.IColumn.id}.
+		 * @param columns - The columns to remove, specified by their {@link TableSchema.Column.id}.
 		 * @throws Throws an error if any of the columns are not in the table.
 		 * In this case, no columns are removed.
 		 */
@@ -1387,7 +1387,7 @@ export namespace TableSchema {
 
 		/**
 		 * Removes the specified row from the table.
-		 * @param row - The {@link TableSchema.IRow | row} or {@link TableSchema.IRow.id | row ID} to remove.
+		 * @param row - The {@link TableSchema.Row | row} or {@link TableSchema.Row.id | row ID} to remove.
 		 * @throws Throws an error if the row is not in the table.
 		 */
 		removeRow(
@@ -1405,7 +1405,7 @@ export namespace TableSchema {
 		): TreeNodeFromImplicitAllowedTypes<TRow>[];
 		/**
 		 * Removes 0 or more rows from the table.
-		 * @param rows - The rows to remove, specified by their {@link TableSchema.IRow.id}.
+		 * @param rows - The rows to remove, specified by their {@link TableSchema.Row.id}.
 		 * @throws Throws an error if any of the rows are not in the table.
 		 * In this case, no rows are removed.
 		 */

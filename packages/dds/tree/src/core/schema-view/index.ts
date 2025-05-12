@@ -7,5 +7,4 @@ export {
 	type Adapters,
 	type TreeAdapter,
 	AdaptedViewSchema,
-	AllowedUpdateType,
 } from "./view.js";

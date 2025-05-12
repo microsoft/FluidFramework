@@ -26,17 +26,17 @@ import {
 } from "./treeCursorUtils.js";
 
 /**
- * @returns An {@link ITreeCursorSynchronous} in nodes mode for a single {@link MapTree}.
+ * Returns an {@link ITreeCursorSynchronous} in nodes mode for a single {@link MapTree}.
  */
 export function cursorForMapTreeNode(root: MapTree): CursorWithNode<MapTree> {
 	return stackTreeNodeCursor(adapter, root);
 }
 
 /**
- * @returns an {@link ITreeCursorSynchronous} in fields mode for a MapTree field.
+ * Returns an {@link ITreeCursorSynchronous} in fields mode for a MapTree field.
  */
 export function cursorForMapTreeField(
-	root: MapTree[],
+	root: readonly MapTree[],
 	detachedField: DetachedField = rootField,
 ): CursorWithNode<MapTree> {
 	const key = detachedFieldAsKey(detachedField);
