@@ -536,8 +536,12 @@ export class DocumentsSchemaController {
 		// Schema coming from document metadata (snapshot we loaded from), or if no document exists
 		// (this is a new document) then this is the same as desiredSchema (same as session schema in such case).
 		// Latter is importnat sure that's what will go into summary.
+		// We also create a shallow copy of the documentMetadataSchema to avoid mutating the original object. This
+		// may not be not be necessary for production scenarios, but was causing issues in tests.
+		const documentMetadataSchemaShallowCopy: IDocumentSchema | undefined =
+			documentMetadataSchema === undefined ? undefined : { ...documentMetadataSchema };
 		this.documentSchema = existing
-			? ((documentMetadataSchema as IDocumentSchemaCurrent) ??
+			? ((documentMetadataSchemaShallowCopy as IDocumentSchemaCurrent) ??
 				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
