@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import * as sinon from "sinon";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
@@ -37,6 +36,7 @@ import {
 } from "@fluidframework/server-local-server";
 import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
+import sinon from "sinon";
 
 import { createLoader } from "../utils.js";
 
