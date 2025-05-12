@@ -4,7 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	DataProcessingError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { gt } from "semver-ts";
 
 import { type MinimumVersionForCollab } from "../compatUtils.js";
@@ -504,6 +507,7 @@ export class DocumentsSchemaController {
 		features: IDocumentSchemaFeatures,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 		minVersionForCollab: MinimumVersionForCollab,
+		logger: ITelemetryLoggerExt,
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
 		assert(
@@ -511,13 +515,31 @@ export class DocumentsSchemaController {
 			0x949 /* not supported */,
 		);
 
-		// The desired minVersionForCollab is the greater of the existing minVersionForCollab and the one passed in.
+		// We check the document's metadata to see if there is a minVersionForCollab. If it's not an existing document or
+		// if the document is older, then it won't have one. If it does have a minVersionForCollab, we check if it's greater
+		// than this client's runtime version. If so, we log a telemetry event to warn the customer that the client is outdated.
+		// Note: We only send a warning because we already found that this client **can** understand the existing document's
+		// schema (the `DocumentsSchemaController` constructor throws otherwise). However, we still want to issue a warning to
+		// the customer since it may be a sign that the customer is not properly waiting for saturation before updating their
+		// `minVersionForCollab` value, which could cause disruptions to users in the future.
 		const existingMinVersionForCollab = documentMetadataSchema?.minVersionForCollab;
+		if (
+			existingMinVersionForCollab !== undefined &&
+			gt(existingMinVersionForCollab, pkgVersion)
+		) {
+			const warnMsg = `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${existingMinVersionForCollab} or later to ensure compatibility.`;
+			logger.sendTelemetryEvent({
+				eventName: "ContainerRuntime:MinVersionForCollabWarning",
+				category: "generic",
+				message: warnMsg,
+			});
+		}
+
+		// The desired minVersionForCollab is the greater of the existing minVersionForCollab and the one passed in.
 		const desiredMinVersionForCollab = getGreaterMinVersionForCollab(
 			existingMinVersionForCollab,
 			minVersionForCollab,
 		);
-
 		// Desired schema by this session - almost all props are coming from arguments
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,

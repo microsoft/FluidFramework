@@ -1058,28 +1058,11 @@ export class ContainerRuntime
 				runtime.onSchemaChange(schema);
 			},
 			minVersionForCollab,
+			logger,
 		);
 
-		// We check the document's metadata to see if there is a minVersionForCollab. If it's not an existing document or
-		// if the document is older, then it won't have one. If it does have a minVersionForCollab, we check if it's greater
-		// than this client's runtime version. If so, we log a telemetry event to warn the customer that the client is outdated.
-		// Note: We only send a warning because we already found that this client **can** understand the existing document's
-		// schema (the `DocumentsSchemaController` constructor throws otherwise). However, we still want to issue a warning to
-		// the customer since it may be a sign that the customer is not properly waiting for saturation before updating their
-		// `minVersionForCollab` value, which could cause disruptions to users in the future.
-		const existingMinVersionForCollab = metadata?.documentSchema?.minVersionForCollab;
-		if (
-			existingMinVersionForCollab !== undefined &&
-			gt(existingMinVersionForCollab, pkgVersion)
-		) {
-			const warnMsg = `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${existingMinVersionForCollab} or later to ensure compatibility.`;
-			logger.sendTelemetryEvent({
-				eventName: "ContainerRuntime:MinVersionForCollabWarning",
-				category: "generic",
-				message: warnMsg,
-			});
-		}
 		// If the minVersionForCollab for this client is greater than the existing one, we should use that one going forward.
+		const existingMinVersionForCollab = metadata?.documentSchema?.minVersionForCollab;
 		const updatedMinVersionForCollab =
 			existingMinVersionForCollab === undefined ||
 			gt(minVersionForCollab, existingMinVersionForCollab)
