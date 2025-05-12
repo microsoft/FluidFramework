@@ -10,6 +10,12 @@ New APIs have been added under a `TableSchema` namespace for creating column, ro
 
 Note: these APIs require the use of [SchemaFactoryAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
 
+> [!WARNING]
+> These APIs are in preview and are subject to change.
+> Until these APIs have stabilized, we do not recommend using them in production code.
+> We reserve the right to make breaking changes to these APIs, including their persisted data format.
+> Using these APIs in production code may result in data loss or corruption.
+
 #### Creating a table with default column and row schema
 
 You can craft a table with defaults via `TableSchema.createTable`, without specifying custom column or row schema.
