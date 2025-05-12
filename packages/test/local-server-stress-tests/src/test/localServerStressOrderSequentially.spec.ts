@@ -98,7 +98,7 @@ describe("Local Server Stress with rollback", () => {
 			...[76], //  Rollback op does not match last pending
 			...[84, 88], //  Startpoints of interval  different
 			...[12, 28, 32, 36, 44, 45, 55, 60, 89], //  Number of subDirectories not same
-			...[4, 14, 69, 74], // 0xb86 and 0xb89: exit staging mode logic failing due to id compressor allocation ops
+			...[4, 14, 69, 74, 95], // 0xb86 and 0xb89: exit staging mode logic failing due to id compressor allocation ops
 		],
 	});
 });

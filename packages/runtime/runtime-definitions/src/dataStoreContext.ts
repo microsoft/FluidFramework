@@ -317,8 +317,42 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
  * @alpha
  * @sealed
  */
+export interface CommitStagedChangesOptionsExperimental {
+	/**
+	 * If true, intermediate states created by changes made while in staging mode will be "squashed" out of the
+	 * ops which were created during staging mode.
+	 * Defaults to false.
+	 * @remarks
+	 * The squash parameter is analogous to `git squash` but differs in a notable way: ops created by a client exiting staging mode
+	 * are not necessarily coalesced into a single op or something like it.
+	 * It still does have the desirable property that "unnecessary changes" (such as inserting some content then removing it) will
+	 * be removed from the set of submitted ops, which means it helps reduce network traffic and the chance of unwanted data being
+	 * persisted--even if only temporarily--in the document.
+	 *
+	 * By not attempting to reduce the set of changes to a single op a la `git squash`, we can better preserve the ordering of
+	 * changes that remote clients see such that they better align with the client which submitted the changes.
+	 */
+	squash?: boolean;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
 export interface StageControlsExperimental {
-	readonly commitChanges: () => void;
+	/**
+	 * Exit staging mode and commit to any changes made while in staging mode.
+	 * This will cause them to be sent to the ordering service, and subsequent changes
+	 * made by this container will additionally flow freely to the ordering service.
+	 * @param options - Options when committing changes.
+	 */
+	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
+	/**
+	 * Exit staging mode and discard any changes made while in staging mode.
+	 */
 	readonly discardChanges: () => void;
 }
 
@@ -333,6 +367,26 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
 	enterStagingMode?(): StageControlsExperimental;
 	readonly inStagingMode?: boolean;
 }
+/**
+ * These policies can be set by the author of the data store via its data store runtime to influence behaviors.
+ *
+ * @remarks
+ * Policies allow data store authors to define specific behaviors or constraints for their data stores.
+ * These settings can impact how the data store interacts with the runtime and other components.
+ *
+ * @legacy
+ * @alpha
+ */
+export interface IFluidDataStorePolicies {
+	/**
+	 * When set to true, data stores will appear to be readonly while in staging mode.
+	 *
+	 * @remarks
+	 * This policy is useful for data stores that do not support staging mode, such as those using consensus DDS.
+	 * It ensures that the data store appears readonly during staging mode to discourage unsupported operations.
+	 */
+	readonly readonlyInStagingMode: boolean;
+}
 
 /**
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
@@ -343,6 +397,12 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
  * @alpha
  */
 export interface IFluidDataStoreChannel extends IDisposable {
+	/**
+	 * Optional policies that the data store channel may adhere to that the data store context should know about.
+	 * These policies influence the behavior of the data store, such as its readonly state in specific modes.
+	 */
+	readonly policies?: IFluidDataStorePolicies;
+
 	/**
 	 * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
 	 * bound handles that represent its dependencies in the container's graph.
@@ -423,6 +483,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * For example, if this message (call it A) inserts content into a DDS that a subsequent op (call it B) removes,
 	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
 	 * account for the fact that A' never inserted content.
+	 *
+	 * @privateRemarks
+	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean);
