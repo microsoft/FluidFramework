@@ -314,7 +314,11 @@ export class ModularChangeFamily
 			// then it must be an ID from change2 which was subsumed by an ID in change1 for the same node.
 			// In that case the parentage will already be correct since change1 has the same input context as the composed changeset.
 			if (composedNodeToParent.has(nodeId)) {
-				composedNodeToParent.set(nodeId, fieldId);
+				if (fieldId !== undefined) {
+					composedNodeToParent.set(nodeId, fieldId);
+				} else {
+					composedNodeToParent.delete(nodeId);
+				}
 			}
 		}
 
@@ -2452,7 +2456,7 @@ interface ComposeTable {
 	readonly newFieldToBaseField: Map<FieldChange, FieldChange>;
 	readonly newToBaseNodeId: ChangeAtomIdBTree<NodeId>;
 	readonly composedNodes: Set<NodeChangeset>;
-	readonly movedNodeToParent: ChangeAtomIdBTree<FieldId>;
+	readonly movedNodeToParent: ChangeAtomIdBTree<FieldId | undefined>;
 	readonly composedRootNodes: RootNodeTable;
 	readonly composedCrossFieldKeys: CrossFieldKeyTable;
 	readonly renamesToDelete: ChangeAtomIdRangeMap<boolean>;
@@ -2807,16 +2811,18 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		countToProcess = baseRenameEntry.length;
 
-		// XXX: This needs to look at all IDs in the range, not just the first.
 		// XXX: Do we need to dealias whenever pulling node IDs out of the root node table?
-		const detachedNodeId = getFromChangeAtomIdMap(
+		const detachedNodeEntry = rangeQueryChangeAtomIdMap(
 			this.table.newChange.rootNodes.nodeChanges,
 			baseRenameEntry.value,
+			countToProcess,
 		);
 
+		countToProcess = detachedNodeEntry.length;
+
 		let result: RangeQueryResult<ChangeAtomId, NodeId>;
-		if (detachedNodeId !== undefined) {
-			result = { start: baseDetachId, value: detachedNodeId, length: 1 };
+		if (detachedNodeEntry.value !== undefined) {
+			result = detachedNodeEntry;
 		} else {
 			// The base detach might be part of a move.
 			// We check if we've previously seen a node change at the move destination.
@@ -2911,6 +2917,8 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 						baseDetachId,
 						newChanges,
 					);
+
+					setInChangeAtomIdMap(this.table.movedNodeToParent, newChanges, undefined);
 				}
 			}
 		}
