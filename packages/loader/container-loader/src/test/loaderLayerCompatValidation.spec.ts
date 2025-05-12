@@ -239,6 +239,8 @@ describe("Runtime Layer compatibility", () => {
 												pending: [],
 											}),
 											ILayerCompatDetails: compatibilityDetails,
+											disposed: false,
+											setConnectionState: () => {},
 										});
 									},
 								},
