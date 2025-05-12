@@ -10,7 +10,7 @@ New APIs have been added under a `TableSchema` namespace for creating column, ro
 
 Note: these APIs require the use of [SchemaFactoryAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
 
-#### Creating a Table with Default Column and Row Schema
+#### Creating a table with default column and row schema
 
 You can craft a table with defaults via `TableSchema.createTable`, without specifying custom column or row schema.
 Note that you will still be required to provide a schema for the cells that will appear in the table.
@@ -31,7 +31,7 @@ const table = new Table({
 });
 ```
 
-#### Creating a Table with Custom Column and Row Schema
+#### Creating a table with custom column and row schema
 
 If you need to associate additional data with your rows and columns, you can customize your schema via `TableSchema.createColumn` and `TableSchema.createRow`.
 These schema can then be provided to `TableSchema.createTable`.
