@@ -357,7 +357,7 @@ describeCompat(
 					{
 						eventName: "fluid:telemetry:ContainerRuntime:MinVersionForCollabWarning",
 						category: "generic",
-						msg: `ContainerRuntime: minVersionForCollab (${pkgVersion}) is greater than the existing document's runtime version (${apis.containerRuntimeForLoading?.version}).`,
+						msg: `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${apis.containerRuntimeForLoading?.version} or later to ensure compatibility.`,
 					},
 				],
 				"MinVersionForCollabWarning should be logged",
