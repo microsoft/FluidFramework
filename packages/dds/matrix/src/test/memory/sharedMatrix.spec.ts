@@ -50,6 +50,7 @@ describe("SharedMatrix memory usage", () => {
 			// Filter counts to ensure they do not exceed matrixSize
 			const validRemoveCounts = operationCounts.filter((count) => count <= matrixSize);
 
+			// Insert related tests that are not limited by matrixSize
 			for (const count of operationCounts) {
 				// Test the memory usage of the SharedMatrix for inserting a column in the middle for a given number of times.
 				benchmarkMemory(
@@ -129,8 +130,43 @@ describe("SharedMatrix memory usage", () => {
 						}
 					})(),
 				);
+
+				/**
+				 * Test the memory usage of the SharedMatrix for inserting a column and a row
+				 *and then removing them right away to see if the memory is released.
+				 * Memory usage should be very low for these test cases.
+				 */
+				benchmarkMemory(
+					new (class implements IMemoryTestObject {
+						readonly title =
+							`Insert a row and a column and remove them right away ${count} times`;
+						private localMatrix: SharedMatrix | undefined;
+
+						async run(): Promise<void> {
+							if (this.localMatrix === undefined) {
+								throw new Error("localMatrix is not initialized");
+							}
+
+							for (let i = 0; i < count; i++) {
+								this.localMatrix.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
+								this.localMatrix.removeCols(Math.floor(this.localMatrix.rowCount / 2), 1);
+								this.localMatrix.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+								this.localMatrix.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+							}
+						}
+
+						beforeIteration(): void {
+							this.localMatrix = createLocalMatrix({
+								id: "testLocalMatrix",
+								size: matrixSize,
+								initialValue: matrixValue,
+							});
+						}
+					})(),
+				);
 			}
 
+			// Remove related tests that operation counts are up to matrixSize
 			for (const count of validRemoveCounts) {
 				// Test the memory usage of the SharedMatrix for removing a column for a given number of times.
 				benchmarkMemory(
