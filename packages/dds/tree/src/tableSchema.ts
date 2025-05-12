@@ -59,7 +59,7 @@ export namespace System_TableSchema {
 	 * Longer term, it would be better to simply omit "props" altogether by default.
 	 * For now, this ensures that the user doesn't have to specify a "props" entry when initializing column/row nodes
 	 * and ensures that they cannot set anything that might conflict with future evolutions of the schema.
-	 * @system
+	 * @system @alpha
 	 */
 	export type DefaultPropsType = ReturnType<typeof SchemaFactory.optional<[]>>;
 
@@ -67,7 +67,7 @@ export namespace System_TableSchema {
 	 * A base interface for factory input options which include an schema factory.
 	 * @remarks This interface should not be referenced directly.
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
-	 * @system
+	 * @system @alpha
 	 */
 	export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryAlpha> {
 		/**
@@ -81,7 +81,7 @@ export namespace System_TableSchema {
 	 * A base interface for factory input options which include the table cell schema.
 	 * @remarks This interface should not be referenced directly.
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
-	 * @system
+	 * @system @alpha
 	 */
 	export interface OptionsWithCellSchema<TCellSchema extends ImplicitAllowedTypes> {
 		/**
@@ -95,7 +95,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table cow schema.
 	 * @remarks Includes parameters common to all column factory overloads.
-	 * @system
+	 * @system @alpha
 	 */
 	export type CreateColumnOptionsBase<
 		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
@@ -103,7 +103,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating new table column schema.
-	 * @system
+	 * @system @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumnInternal<
@@ -222,7 +222,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base column schema type.
-	 * @sealed @system
+	 * @sealed @system @alpha
 	 */
 	export type ColumnSchemaBase<
 		TScope extends string | undefined = string | undefined,
@@ -236,7 +236,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table row schema.
 	 * @remarks Includes parameters common to all row factory overloads.
-	 * @system
+	 * @system @alpha
 	 */
 	export type CreateRowOptionsBase<
 		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
@@ -246,7 +246,7 @@ export namespace System_TableSchema {
 	/**
 	 * Factory for creating new table row schema.
 	 *
-	 * @sealed
+	 * @sealed @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createRowInternal<
@@ -406,7 +406,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @system
+	 * @sealed @system @alpha
 	 */
 	export type RowSchemaBase<
 		TScope extends string | undefined = string | undefined,
@@ -421,7 +421,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table schema.
 	 * @remarks Includes parameters common to all table factory overloads.
-	 * @system
+	 * @system @alpha
 	 */
 	export type TableFactoryOptionsBase<
 		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
@@ -430,7 +430,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating new table schema.
-	 * @system
+	 * @system @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createTableInternal<
@@ -840,7 +840,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @system
+	 * @sealed @system @alpha
 	 */
 	export type TableSchemaBase<
 		TScope extends string | undefined,
@@ -998,7 +998,7 @@ export namespace TableSchema {
 	/**
 	 * A column in a table.
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createColumn:2)}.
-	 * @sealed
+	 * @sealed @alpha
 	 */
 	export interface IColumn<
 		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
@@ -1024,6 +1024,7 @@ export namespace TableSchema {
 
 	/**
 	 * Factory for creating new table column schema.
+	 * @alpha
 	 */
 	export function createColumn<const TScope extends string | undefined>({
 		schemaFactory,
@@ -1032,6 +1033,7 @@ export namespace TableSchema {
 	>): System_TableSchema.ColumnSchemaBase<TScope, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table column schema.
+	 * @alpha
 	 */
 	export function createColumn<
 		const TScope extends string | undefined,
@@ -1064,7 +1066,7 @@ export namespace TableSchema {
 	/**
 	 * A row in a table.
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createRow:2)}.
-	 * @sealed
+	 * @sealed @alpha
 	 */
 	export interface IRow<
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
@@ -1127,6 +1129,7 @@ export namespace TableSchema {
 
 	/**
 	 * Factory for creating new table column schema.
+	 * @alpha
 	 */
 	export function createRow<
 		const TScope extends string | undefined,
@@ -1140,6 +1143,7 @@ export namespace TableSchema {
 	>): System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table column schema.
+	 * @alpha
 	 */
 	export function createRow<
 		const TScope extends string | undefined,
@@ -1174,6 +1178,7 @@ export namespace TableSchema {
 
 	/**
 	 * A key to uniquely identify a cell within a table.
+	 * @alpha
 	 */
 	export interface CellKey<
 		TColumn extends ImplicitAllowedTypes,
@@ -1192,6 +1197,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.insertColumn} parameters.
+	 * @alpha
 	 */
 	export interface InsertColumnParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
@@ -1208,6 +1214,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.insertColumns} parameters.
+	 * @alpha
 	 */
 	export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
@@ -1224,6 +1231,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.insertRow} parameters.
+	 * @alpha
 	 */
 	export interface InsertRowParameters<TRow extends ImplicitAllowedTypes> {
 		/**
@@ -1240,6 +1248,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.insertRows} parameters.
+	 * @alpha
 	 */
 	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
 		/**
@@ -1256,6 +1265,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.ITable.setCell} parameters.
+	 * @alpha
 	 */
 	export interface SetCellParameters<
 		TCell extends ImplicitAllowedTypes,
@@ -1275,7 +1285,7 @@ export namespace TableSchema {
 
 	/**
 	 * A table.
-	 * @sealed
+	 * @sealed @alpha
 	 */
 	export interface ITable<
 		TCell extends ImplicitAllowedTypes,
@@ -1470,6 +1480,7 @@ export namespace TableSchema {
 
 	/**
 	 * Factory for creating new table schema without specifying row or column schema.
+	 * @alpha
 	 */
 	export function createTable<
 		const TScope extends string | undefined,
@@ -1488,6 +1499,7 @@ export namespace TableSchema {
 	>;
 	/**
 	 * Factory for creating new table schema without specifying row schema.
+	 * @alpha
 	 */
 	export function createTable<
 		const TScope extends string | undefined,
@@ -1507,6 +1519,7 @@ export namespace TableSchema {
 	>;
 	/**
 	 * Factory for creating new table schema.
+	 * @alpha
 	 */
 	export function createTable<
 		const TScope extends string | undefined,
