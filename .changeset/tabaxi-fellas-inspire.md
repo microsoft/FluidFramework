@@ -39,8 +39,8 @@ const table = new Table({
 
 #### Creating a table with custom column and row schema
 
-If you need to associate additional data with your rows and columns, you can customize your schema via `TableSchema.createColumn` and `TableSchema.createRow`.
-These schema can then be provided to `TableSchema.createTable`.
+If you need to associate additional data with your rows or columns, you can customize your row and column schema via `TableSchema.createColumn` and `TableSchema.createRow`.
+These schema can then be provided to `TableSchema.createTable`:
 
 ```typescript
 class Cell extends schemaFactory.object("TableCell", {
