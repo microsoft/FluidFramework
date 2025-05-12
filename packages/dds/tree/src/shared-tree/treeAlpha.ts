@@ -380,4 +380,5 @@ const versionToFormat = {
 	v2_1: 1,
 	v2_2: 1,
 	v2_3: 1,
+	v2_4: 1,
 };

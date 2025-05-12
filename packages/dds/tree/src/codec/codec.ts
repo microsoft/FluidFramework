@@ -352,6 +352,8 @@ export enum FluidClientVersion {
 	v2_2 = "v2_2",
 	/** Fluid Framework Client 2.3 and newer. */
 	v2_3 = "v2_3",
+	/** Fluid Framework Client 2.4 and newer. */
+	v2_4 = "v2_4",
 }
 
 /**

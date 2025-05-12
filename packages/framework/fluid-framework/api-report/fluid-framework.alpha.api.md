@@ -281,7 +281,8 @@ export enum FluidClientVersion {
     v2_0 = "v2_0",
     v2_1 = "v2_1",
     v2_2 = "v2_2",
-    v2_3 = "v2_3"
+    v2_3 = "v2_3",
+    v2_4 = "v2_4"
 }
 
 // @public

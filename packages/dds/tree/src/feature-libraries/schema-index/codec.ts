@@ -5,7 +5,7 @@
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	type FluidClientVersion,
+	FluidClientVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -18,19 +18,24 @@ import {
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	decodeFieldSchema,
-	encodeFieldSchema,
+	encodeFieldSchemaV1,
+	encodeFieldSchemaV2,
 	schemaFormatV1,
+	schemaFormatV2,
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
 import { brand, type JsonCompatible } from "../../util/index.js";
 
 import { Format as FormatV1 } from "./formatV1.js";
+import { Format as FormatV2 } from "./formatV2.js";
 
 /**
  * Versions for the codec that encodes an in-memory representation of a stored schema {@link TreeStoredSchema} into a persisted format (or decodes it in the opposite direction).
  */
 export enum SchemaCodecVersion {
 	v1 = 1,
+	// Adds persisted metadata to the schema.
+	v2 = 2,
 }
 
 /**
@@ -41,8 +46,17 @@ export enum SchemaCodecVersion {
 export function clientVersionToSchemaVersion(
 	clientVersion: FluidClientVersion,
 ): SchemaCodecVersion {
-	// Only one version of the schema codec is currently supported.
-	return SchemaCodecVersion.v1;
+	switch (clientVersion) {
+		case FluidClientVersion.v2_0:
+		case FluidClientVersion.v2_1:
+		case FluidClientVersion.v2_2:
+		case FluidClientVersion.v2_3:
+			return SchemaCodecVersion.v1;
+		case FluidClientVersion.v2_4:
+			return SchemaCodecVersion.v2;
+		default:
+			unreachableCase(clientVersion);
+	}
 }
 
 /**
@@ -67,7 +81,10 @@ export function makeSchemaCodec(
  * @returns The composed codec family.
  */
 export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
-	return makeCodecFamily([[SchemaCodecVersion.v1, makeSchemaCodecV1(options)]]);
+	return makeCodecFamily([
+		[SchemaCodecVersion.v1, makeSchemaCodecV1(options)],
+		[SchemaCodecVersion.v2, makeSchemaCodecV2(options)],
+	]);
 }
 
 /**
@@ -82,7 +99,9 @@ export function encodeRepo(
 ): JsonCompatible {
 	switch (version) {
 		case SchemaCodecVersion.v1:
-			return encodeRepoV1(repo);
+			return encodeRepoV1(repo) as JsonCompatible;
+		case SchemaCodecVersion.v2:
+			return encodeRepoV2(repo) as JsonCompatible;
 		default:
 			unreachableCase(version);
 	}
@@ -91,7 +110,7 @@ export function encodeRepo(
 function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 	const nodeSchema: Record<string, schemaFormatV1.TreeNodeSchemaDataFormat> =
 		Object.create(null);
-	const rootFieldSchema = encodeFieldSchema(repo.rootFieldSchema);
+	const rootFieldSchema = encodeFieldSchemaV1(repo.rootFieldSchema);
 	for (const name of [...repo.nodeSchema.keys()].sort()) {
 		const schema = repo.nodeSchema.get(name) ?? fail(0xb28 /* missing schema */);
 		Object.defineProperty(nodeSchema, name, {
@@ -108,7 +127,27 @@ function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 	};
 }
 
-function decode(f: FormatV1): TreeStoredSchema {
+function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
+	const nodeSchema: Record<string, schemaFormatV2.TreeNodeSchemaDataFormat> =
+		Object.create(null);
+	const rootFieldSchema = encodeFieldSchemaV2(repo.rootFieldSchema);
+	for (const name of [...repo.nodeSchema.keys()].sort()) {
+		const schema = repo.nodeSchema.get(name) ?? fail(0xb28 /* missing schema */);
+		Object.defineProperty(nodeSchema, name, {
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: schema.encode(),
+		});
+	}
+	return {
+		version: schemaFormatV2.version,
+		nodes: nodeSchema,
+		root: rootFieldSchema,
+	};
+}
+
+function decode(f: FormatV1 | FormatV2): TreeStoredSchema {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const [key, schema] of Object.entries(f.nodes)) {
 		nodeSchema.set(brand(key), storedSchemaDecodeDispatcher.dispatch(schema));
@@ -128,5 +167,17 @@ function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema,
 	return makeVersionedValidatedCodec(options, new Set([schemaFormatV1.version]), FormatV1, {
 		encode: (data: TreeStoredSchema) => encodeRepoV1(data),
 		decode: (data: FormatV1) => decode(data),
+	});
+}
+
+/**
+ * Creates a codec which performs synchronous monolithic encoding of schema content.
+ * @param options - Specifies common codec options, including which `validator` to use.
+ * @returns The codec.
+ */
+function makeSchemaCodecV2(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV2> {
+	return makeVersionedValidatedCodec(options, new Set([schemaFormatV2.version]), FormatV2, {
+		encode: (data: TreeStoredSchema) => encodeRepoV2(data),
+		decode: (data: FormatV2) => decode(data),
 	});
 }
