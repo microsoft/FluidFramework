@@ -141,6 +141,22 @@ export default class ModifyFluidDepsCommand extends BaseCommandWithBuildProject<
 		const newRange =
 			`${flags.prerelease ? "" : flags.dependencyRange}${newVersion}` as RangeOperatorWithVersion;
 		await setDependencyRange(packagesToUpdate, dependencyReleaseGroup.packages, newRange);
+
+		const workspaces = new Set(releaseGroups.map((rg) => rg.workspace));
+		for (const ws of workspaces) {
+			try {
+				// eslint-disable-next-line no-await-in-loop
+				await ws.install(/* updateLockfile */ true);
+				this.info(`Installed dependencies for workspace '${ws.name}'`);
+			} catch (error) {
+				this.warning(
+					`Error installing dependencies for workspace '${ws.name}' - you should install dependencies manually.`,
+				);
+				// eslint-disable-next-line prefer-template
+				this.verbose((error as Error).message + "\n\n" + (error as Error).stack);
+				continue;
+			}
+		}
 	}
 }
 
