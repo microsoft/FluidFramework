@@ -7,7 +7,11 @@ import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import type {
+	IMember,
+	IServiceAudience,
+	ContainerAttachProps,
+} from "@fluidframework/fluid-static";
 
 import type { IOdspTokenProvider } from "./token.js";
 
@@ -87,6 +91,11 @@ export interface OdspContainerServices {
 	 * Provides an object that facilitates obtaining information about users present in the Fluid session, as well as listeners for roster changes triggered by users joining or leaving the session.
 	 */
 	audience: IOdspAudience;
+
+	/**
+	 * Attach function that is used to attach the container to the ODSP service. This function is specific to the ODSP service and accepts some ODSP specific properties.
+	 */
+	attach(odspProps?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
 }
 
 /**

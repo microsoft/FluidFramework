@@ -137,7 +137,7 @@ export class OdspClient {
 
 		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
 
-		const services = await this.getContainerServices(container);
+		const services = await this.getContainerServices(container, fluidContainer);
 
 		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
@@ -162,7 +162,7 @@ export class OdspClient {
 			container,
 			rootDataObject: await this.getContainerEntryPoint(container),
 		});
-		const services = await this.getContainerServices(container);
+		const services = await this.getContainerServices(container, fluidContainer);
 		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
@@ -242,12 +242,18 @@ export class OdspClient {
 		return fluidContainer;
 	}
 
-	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
+	private async getContainerServices(
+		container: IContainer,
+		fluidContaienr: IFluidContainer,
+	): Promise<OdspContainerServices> {
 		return {
 			audience: createServiceAudience({
 				container,
 				createServiceMember: createOdspAudienceMember,
 			}),
+			attach: async (odspProps?: ContainerAttachProps<OdspContainerAttachProps>) => {
+				return fluidContaienr.attach(odspProps);
+			},
 		};
 	}
 

@@ -80,13 +80,38 @@ describe("Container create scenarios", () => {
 	});
 
 	/**
+	 * Scenario: Test attaching a container using ODSP service.
+	 *
+	 * Expected behavior: an error should not be thrown nor should a rejected promise
+	 * be returned.
+	 */
+	it("can attach a container using OdspContainerServices", async () => {
+		const { container, services } = await client.createContainer(schema);
+		const itemId = await services.attach();
+
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
+
+		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			container.attachState,
+			AttachState.Attached,
+			"Container is not attached after attach is called",
+		);
+	});
+
+	/**
 	 * Scenario: Test if attaching a container twice fails.
 	 *
 	 * Expected behavior: an error should not be thrown nor should a rejected promise
 	 * be returned.
 	 */
 	it("cannot attach a container twice", async () => {
-		const { container } = await client.createContainer(schema);
+		const { container, services } = await client.createContainer(schema);
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -103,6 +128,11 @@ describe("Container create scenarios", () => {
 			"Container is attached after attach is called",
 		);
 		await assert.rejects(container.attach(), () => true, "Container should not attach twice");
+		await assert.rejects(
+			services.attach(),
+			() => true,
+			"Container should not attach twice via ODSP services",
+		);
 	});
 
 	/**
