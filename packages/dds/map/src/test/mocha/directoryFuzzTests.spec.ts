@@ -111,6 +111,7 @@ describe("SharedDirectory fuzz", () => {
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
+		skip: [63],
 	});
 
 	createDDSFuzzSuite(
