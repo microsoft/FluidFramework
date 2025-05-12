@@ -1477,8 +1477,6 @@ describe("TableFactory unit tests", () => {
 
 	// The code within the following tests is included in TSDoc comments in the source code.
 	// If you need to update any of these, please update the corresponding TSDoc comments as well.
-	// Note that TSDoc-style comments within these examples will have to be converted to simple inline comments for
-	// the TSDoc sample code.
 	describe("TSDoc comment examples", () => {
 		it("TableSchema: Defining a Table schema", () => {
 			class Table extends TableSchema.table({
@@ -1499,7 +1497,6 @@ describe("TableFactory unit tests", () => {
 			const Cell = schemaFactory.string;
 
 			class ColumnProps extends schemaFactory.object("TableColumnProps", {
-				/** The column label to display. */
 				label: schemaFactory.string,
 			}) {}
 

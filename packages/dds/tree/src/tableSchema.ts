@@ -900,7 +900,6 @@ export namespace System_TableSchema {
  * const Cell = schemaFactory.string;
  *
  * class ColumnProps extends schemaFactory.object("TableColumnProps", {
- * 	// Column label to display.
  * 	label: schemaFactory.string,
  * }) {}
  *
