@@ -485,7 +485,10 @@ describe('EditUtilities', () => {
 				return binder;
 			},
 		} as unknown as IFluidHandle;
-		assert(isISharedObjectHandle(binder), 'PRECONDITION: Expected binder to look like an ISharedObjectHandle');
+		assert(
+			isISharedObjectHandle(binder),
+			0xb8b /* PRECONDITION: Expected binder to look like an ISharedObjectHandle */
+		);
 
 		enum Equality {
 			Equal,
