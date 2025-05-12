@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/pact-map";
-export const pkgVersion = "2.33.2";
+export const pkgVersion = "2.33.3";

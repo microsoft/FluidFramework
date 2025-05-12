@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/migration-tools",
-	"version": "2.33.2",
+	"version": "2.33.3",
 	"private": true,
 	"description": "Tools for migrating data",
 	"homepage": "https://fluidframework.com",

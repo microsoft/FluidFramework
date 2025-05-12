@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/inventory-app",
-	"version": "2.33.2",
+	"version": "2.33.3",
 	"private": true,
 	"description": "Minimal sample of SharedTree/React integration.",
 	"homepage": "https://fluidframework.com",

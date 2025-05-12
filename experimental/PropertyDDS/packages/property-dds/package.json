@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-dds",
-	"version": "2.33.2",
+	"version": "2.33.3",
 	"description": "definition of the property distributed data store",
 	"homepage": "https://fluidframework.com",
 	"repository": {
