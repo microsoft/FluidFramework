@@ -448,7 +448,7 @@ export interface DDSFuzzSuiteOptions {
 	 * TODO: Improving workflows around fuzz test minimization, regression test generation for a particular seed,
 	 * or more flexibility around replay of test files would be a nice value add to this harness.
 	 */
-	replay?: Iterable<number> | number;
+	replay?: number | Iterable<number>;
 
 	/**
 	 * Runs only the provided seeds.
@@ -1589,7 +1589,7 @@ type InternalOptions = InternalOnlyAndSkip & Omit<DDSFuzzSuiteOptions, "only" | 
  */
 export class ReducerPreconditionError extends Error {}
 
-const normalizeSeedOption = (
+export const normalizeSeedOption = (
 	seeds: number | Iterable<number> | undefined,
 ): Iterable<number> => (typeof seeds === "number" ? [seeds] : (seeds ?? []));
 
