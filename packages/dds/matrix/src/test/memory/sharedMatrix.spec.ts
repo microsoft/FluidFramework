@@ -50,7 +50,7 @@ describe("SharedMatrix memory usage", () => {
 			// Filter counts to ensure they do not exceed matrixSize
 			const validRemoveCounts = operationCounts.filter((count) => count <= matrixSize);
 
-			// Insert related tests that are not limited by matrixSize
+			// Insert-related tests that are not limited by matrixSize
 			for (const count of operationCounts) {
 				// Test the memory usage of the SharedMatrix for inserting a column in the middle for a given number of times.
 				benchmarkMemory(
@@ -133,7 +133,7 @@ describe("SharedMatrix memory usage", () => {
 
 				/**
 				 * Test the memory usage of the SharedMatrix for inserting a column and a row
-				 *and then removing them right away to see if the memory is released.
+				 * and then removing them right away to see if the memory is released.
 				 * Memory usage should be very low for these test cases.
 				 */
 				benchmarkMemory(
@@ -169,7 +169,7 @@ describe("SharedMatrix memory usage", () => {
 				);
 			}
 
-			// Remove related tests that operation counts are up to matrixSize
+			// Remove-related tests that operation counts are up to matrixSize
 			for (const count of validRemoveCounts) {
 				// Test the memory usage of the SharedMatrix for removing a column for a given number of times.
 				benchmarkMemory(
