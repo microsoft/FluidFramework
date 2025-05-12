@@ -15,7 +15,7 @@ import { createLocalMatrix } from "../utils.js";
 describe("SharedMatrix memory usage", () => {
 	// The value to be set in the cells of the matrix.
 	const matrixValue = "cellValue";
-	// The test matrix's size will be 0*0, 10*10, 100*100, 1000*1000.
+	// The test matrix's size will be 10*10, 100*100, 1000*1000.
 	const matrixSizes = isInPerformanceTestingMode
 		? [10, 100, 1000]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
