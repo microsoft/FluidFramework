@@ -103,7 +103,7 @@ Tree.on(table, "treeChanged", () => {
 });
 ```
 
-But if you need more granular eventing, that is possible as well.
+If you need more granular eventing, that is possible as well.
 For example, if you wish to know when the table's list of rows changes, you could do the following:
 
 ```typescript
