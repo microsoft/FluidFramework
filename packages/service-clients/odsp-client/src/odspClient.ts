@@ -244,7 +244,7 @@ export class OdspClient {
 
 	private async getContainerServices(
 		container: IContainer,
-		fluidContaienr: IFluidContainer,
+		fluidContainer: IFluidContainer,
 	): Promise<OdspContainerServices> {
 		return {
 			audience: createServiceAudience({
@@ -252,7 +252,7 @@ export class OdspClient {
 				createServiceMember: createOdspAudienceMember,
 			}),
 			attach: async (odspProps?: ContainerAttachProps<OdspContainerAttachProps>) => {
-				return fluidContaienr.attach(odspProps);
+				return fluidContainer.attach(odspProps);
 			},
 		};
 	}
