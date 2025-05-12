@@ -84,6 +84,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
+    protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void;
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     protected runtime: IFluidDataStoreRuntime;
     protected abstract get serializer(): IFluidSerializer;

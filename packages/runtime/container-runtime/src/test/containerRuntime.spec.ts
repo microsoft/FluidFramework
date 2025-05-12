@@ -73,6 +73,7 @@ import {
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
+import { defaultMinVersionForCollab } from "../compatUtils.js";
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
@@ -160,7 +161,12 @@ function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime)
 	(containerRuntime as any).channelCollection = {
 		setConnectionState: (_connected: boolean, _clientId?: string) => {},
 		// Pass data store op right back to ContainerRuntime
-		reSubmit: (type: string, envelope: IEnvelope, localOpMetadata: unknown) => {
+		reSubmit: (
+			type: string,
+			envelope: IEnvelope,
+			localOpMetadata: unknown,
+			squash: boolean,
+		) => {
 			submitDataStoreOp(
 				containerRuntime,
 				envelope.address,
@@ -3661,6 +3667,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab: defaultMinVersionForCollab,
 					},
 				]);
 			});
@@ -3719,6 +3726,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab,
 					},
 				]);
 			});
@@ -3756,6 +3764,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab: defaultMinVersionForCollab,
 					},
 				]);
 			});
@@ -3793,6 +3802,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab,
 					},
 				]);
 			});
@@ -3829,6 +3839,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab,
 					},
 				]);
 			});
@@ -3874,6 +3885,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab: defaultMinVersionForCollab,
 					},
 				]);
 			});
@@ -3932,6 +3944,7 @@ describe("Runtime", () => {
 							eventName: "ContainerRuntime:ContainerLoadStats",
 							category: "generic",
 							options: JSON.stringify(expectedRuntimeOptions),
+							minVersionForCollab: defaultMinVersionForCollab,
 						},
 					]);
 				});
@@ -3971,6 +3984,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab,
 					},
 				]);
 			});

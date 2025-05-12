@@ -34,8 +34,8 @@ import {
 	type VerboseTree,
 	toStoredSchema,
 	extractPersistedSchema,
-	TreeViewConfiguration,
 	type TreeBranch,
+	TreeViewConfigurationAlpha,
 } from "../simple-tree/index.js";
 import type { JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
@@ -52,6 +52,7 @@ import {
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { currentVersion } from "../codec/index.js";
 
 /**
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
@@ -197,7 +198,9 @@ export interface TreeAlpha {
 	 * This API could be improved:
 	 *
 	 * 1. It could validate that the schema is compatible, and return or throw an error in the invalid case (maybe add a "try" version).
+	 *
 	 * 2. A "try" version of this could return an error if the data isn't in a supported format (as determined by version and/or JasonValidator).
+	 *
 	 * 3. Requiring the caller provide a JsonValidator isn't the most friendly API. It might be practical to provide a default.
 	 */
 	importCompressed<const TSchema extends ImplicitFieldSchema>(
@@ -311,12 +314,12 @@ export const TreeAlpha: TreeAlpha = {
 			idCompressor?: IIdCompressor;
 		} & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
-			schema: extractPersistedSchema(schema),
+			schema: extractPersistedSchema(config, currentVersion),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
-		const config = new TreeViewConfiguration({ schema });
 		const view = independentInitializedView(config, options, content);
 		return TreeBeta.clone<TSchema>(view.root);
 	},
