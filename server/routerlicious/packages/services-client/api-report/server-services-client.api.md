@@ -104,6 +104,9 @@ export function generateUser(): IUser;
 export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) => string;
 
 // @internal
+export const getGlobalAbortControllerContext: () => IAbortControllerContext;
+
+// @internal
 export const getGlobalTimeoutContext: () => ITimeoutContext;
 
 // @internal (undocumented)
@@ -226,6 +229,13 @@ export class Historian implements IHistorian {
     getTree(sha: string, recursive: boolean): Promise<resources.ITree>;
     // (undocumented)
     updateRef(ref: string, params: resources.IPatchRefParams): Promise<resources.IRef>;
+}
+
+// @internal
+export interface IAbortControllerContext {
+    bindAbortController(abortController: AbortController, callback: () => void): void;
+    bindAbortControllerAsync<T>(abortController: AbortController, callback: () => Promise<T>): Promise<T>;
+    getAbortController(): AbortController | undefined;
 }
 
 // @internal (undocumented)
@@ -670,7 +680,13 @@ export abstract class RestWrapper {
 }
 
 // @internal
+export const setGlobalAbortControllerContext: (abortControllerContext: IAbortControllerContext) => void;
+
+// @internal
 export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
+
+// @internal (undocumented)
+export function setupAxiosInterceptorsForAbortSignals(getAbortController: () => AbortController | undefined): void;
 
 // @internal
 export class SummaryTreeUploadManager implements ISummaryUploadManager {
