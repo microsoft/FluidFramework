@@ -1395,15 +1395,13 @@ describe("TableFactory unit tests", () => {
 
 	// The code within the following tests is included in TSDoc comments in the source code.
 	// If you need to update any of these, please update the corresponding TSDoc comments as well.
+	// Note that TSDoc-style comments within these examples will have to be converted to simple inline comments for
+	// the TSDoc sample code.
 	describe("TSDoc comment examples", () => {
-		it("TableSchema: Default Column and Row schema", () => {
-			class Cell extends schemaFactory.object("TableCell", {
-				value: schemaFactory.string,
-			}) {}
-
+		it("TableSchema: Defining a Table schema", () => {
 			class Table extends TableSchema.createTable({
 				schemaFactory,
-				cell: Cell,
+				cell: schemaFactory.string,
 			}) {}
 
 			const table = new Table({
@@ -1416,15 +1414,11 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("TableSchema: Customizing Column and Row schema", () => {
-			class Cell extends schemaFactory.object("TableCell", {
-				value: schemaFactory.string,
-			}) {}
+			const Cell = schemaFactory.string;
 
 			class ColumnProps extends schemaFactory.object("TableColumnProps", {
-				// Column label to display.
+				/** The column label to display. */
 				label: schemaFactory.string,
-				// The type of data represented by the cells. Default: string.
-				dataType: schemaFactory.optional(schemaFactory.string),
 			}) {}
 
 			class Column extends TableSchema.createColumn({
@@ -1446,9 +1440,9 @@ describe("TableFactory unit tests", () => {
 
 			const table = new Table({
 				columns: [
-					new Column({ props: { label: "Entry", dataType: "string" } }),
-					new Column({ props: { label: "Date", dataType: "date" } }),
-					new Column({ props: { label: "Amount", dataType: "number" } }),
+					new Column({ props: { label: "Entry" } }),
+					new Column({ props: { label: "Date" } }),
+					new Column({ props: { label: "Amount" } }),
 				],
 				rows: [],
 			});
@@ -1458,19 +1452,19 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("TableSchema: Listening for changes in the table", () => {
-			class Cell extends schemaFactory.object("TableCell", {
-				value: schemaFactory.string,
-			}) {}
+			// #region Don't include this in the example docs.
 
 			class Table extends TableSchema.createTable({
 				schemaFactory,
-				cell: Cell,
+				cell: schemaFactory.string,
 			}) {}
 
 			const table = new Table({
 				columns: [{ id: "column-0" }],
 				rows: [{ id: "row-0", cells: {} }],
 			});
+
+			// #endregion
 
 			// Listen for any changes to the table and its children.
 			// The "treeChanged" event will fire when the associated node or any of its descendants change.
@@ -1480,19 +1474,19 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("TableSchema: Listening for changes to the rows list only", () => {
-			class Cell extends schemaFactory.object("TableCell", {
-				value: schemaFactory.string,
-			}) {}
+			// #region Don't include this in the example docs.
 
 			class Table extends TableSchema.createTable({
 				schemaFactory,
-				cell: Cell,
+				cell: schemaFactory.string,
 			}) {}
 
 			const table = new Table({
 				columns: [{ id: "column-0" }],
 				rows: [{ id: "row-0", cells: {} }],
 			});
+
+			// #endregion
 
 			// Listen for any changes to the list of rows.
 			// The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).

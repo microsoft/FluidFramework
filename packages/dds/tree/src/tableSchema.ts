@@ -881,16 +881,12 @@ export namespace System_TableSchema {
  * Either way, it is possible to enter such a state via the merging of edits.
  * For example: one client might add a row while another concurrently removes a column, orphaning the cell where the column and row intersected.
  *
- * @example Using default Column and Row schema
+ * @example Defining a Table schema
  *
  * ```typescript
- * class Cell extends schemaFactory.object("TableCell", {
- * 	value: schemaFactory.string,
- * }) {}
- *
  * class Table extends TableSchema.createTable({
  * 	schemaFactory,
- * 	cell: Cell,
+ * 	cell: schemaFactory.string,
  * }) {}
  *
  * const table = new Table({
@@ -902,15 +898,11 @@ export namespace System_TableSchema {
  * @example Customizing Column and Row schema
  *
  * ```typescript
- * class Cell extends schemaFactory.object("TableCell", {
- * 	value: schemaFactory.string,
- * }) {}
+ * const Cell = schemaFactory.string;
  *
  * class ColumnProps extends schemaFactory.object("TableColumnProps", {
  * 	// Column label to display.
  * 	label: schemaFactory.string,
- * 	// The type of data represented by the cells. Default: string.
- * 	dataType: schemaFactory.optional(schemaFactory.string),
  * }) {}
  *
  * class Column extends TableSchema.createColumn({
@@ -932,9 +924,9 @@ export namespace System_TableSchema {
  *
  * const table = new Table({
  * 	columns: [
- * 		new Column({ props: { label: "Entry", dataType: "string" } }),
- * 		new Column({ props: { label: "Date", dataType: "date" } }),
- * 		new Column({ props: { label: "Amount", dataType: "number" } }),
+ * 		new Column({ props: { label: "Entry" } }),
+ * 		new Column({ props: { label: "Date" } }),
+ * 		new Column({ props: { label: "Amount" } }),
  * 	],
  * 	rows: [],
  * });
@@ -943,45 +935,16 @@ export namespace System_TableSchema {
  * @example Listening for changes in the table
  *
  * ```typescript
- * 	class Cell extends schemaFactory.object("TableCell", {
- * 		value: schemaFactory.string,
- * 	}) {}
- *
- * 	class Table extends TableSchema.createTable({
- * 		schemaFactory,
- * 		cell: Cell,
- * 	}) {}
- *
- * 	const table = new Table({
- * 		columns: [{ id: "column-0" }],
- * 		rows: [{ id: "row-0", cells: {} }],
- * 	});
- *
- * 	// Listen for any changes to the table and its children.
- * 	// The "treeChanged" event will fire when the associated node or any of its descendants change.
- * 	Tree.on(table, "treeChanged", () => {
- * 		// Respond to the change.
- * 	});
+ * // Listen for any changes to the table and its children.
+ * // The "treeChanged" event will fire when the associated node or any of its descendants change.
+ * Tree.on(table, "treeChanged", () => {
+ * 	// Respond to the change.
  * });
  * ```
  *
  * @example Listening fo changes to the rows list only
  *
  * ```typescript
- * class Cell extends schemaFactory.object("TableCell", {
- * 	value: schemaFactory.string,
- * }) {}
- *
- * class Table extends TableSchema.createTable({
- * 	schemaFactory,
- * 	cell: Cell,
- * }) {}
- *
- * const table = new Table({
- * 	columns: [{ id: "column-0" }],
- * 	rows: [{ id: "row-0", cells: {} }],
- * });
- *
  * // Listen for any changes to the list of rows.
  * // The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).
  * // In this case, the event will fire when a row is added or removed, or the order of the list is changed.

@@ -16,19 +16,15 @@ Note: these APIs require the use of [SchemaFactoryAlpha](https://fluidframework.
 > We reserve the right to make breaking changes to these APIs, including their persisted data format.
 > Using these APIs in production code may result in data loss or corruption.
 
-#### Creating a table with default column and row schema
+#### Creating a table
 
 You can craft a table with defaults via `TableSchema.createTable`, without specifying custom column or row schema.
 Note that you will still be required to provide a schema for the cells that will appear in the table.
 
 ```typescript
-class Cell extends schemaFactory.object("TableCell", {
-	value: schemaFactory.string,
-}) {}
-
 class Table extends TableSchema.createTable({
 	schemaFactory,
-	cell: Cell,
+	cell: schemaFactory.string,
 }) {}
 
 const table = new Table({
@@ -43,15 +39,11 @@ If you need to associate additional data with your rows or columns, you can cust
 These schema can then be provided to `TableSchema.createTable`:
 
 ```typescript
-class Cell extends schemaFactory.object("TableCell", {
-	value: schemaFactory.string,
-}) {}
+const Cell = schemaFactory.string;
 
 class ColumnProps extends schemaFactory.object("TableColumnProps", {
-	// Column label to display.
+	/** The column label to display. */
 	label: schemaFactory.string,
-	// The type of data represented by the cells. Default: string.
-	dataType: schemaFactory.optional(schemaFactory.string),
 }) {}
 
 class Column extends TableSchema.createColumn({
@@ -73,9 +65,9 @@ class Table extends TableSchema.createTable({
 
 const table = new Table({
 	columns: [
-		new Column({ props: { label: "Entry", dataType: "string" } }),
-		new Column({ props: { label: "Date", dataType: "date" } }),
-		new Column({ props: { label: "Amount", dataType: "number" } }),
+		new Column({ props: { label: "Entry" } }),
+		new Column({ props: { label: "Date" } }),
+		new Column({ props: { label: "Amount" } }),
 	],
 	rows: [],
 });
