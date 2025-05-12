@@ -31,7 +31,7 @@ describe("Local Server Stress", () => {
 		skip: [
 			...[15], // 0x54e
 			...[39], // 0xa6f
-			...[22, 36, 5], // Number of keys not same
+			...[5, 22, 36], // Number of keys not same
 			...[6], // channel maps should be the same size
 			...[7], // Number of subDirectories not same,
 			...[12], // Rollback op does not match last pending

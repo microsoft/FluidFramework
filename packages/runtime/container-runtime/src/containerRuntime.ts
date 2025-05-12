@@ -74,6 +74,11 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	createSessionId,
+	deserializeIdCompressor,
+} from "@fluidframework/id-compressor/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -198,7 +203,6 @@ import {
 } from "./messageTypes.js";
 import { ISavedOpMetadata } from "./metadata.js";
 import {
-	BatchId,
 	LocalBatchMessage,
 	BatchStartInfo,
 	DuplicateBatchDetector,
@@ -218,6 +222,7 @@ import {
 	PendingMessageResubmitData,
 	IPendingLocalState,
 	PendingStateManager,
+	type PendingBatchResubmitMetadata,
 } from "./pendingStateManager.js";
 import { RunCounter } from "./runCounter.js";
 import {
@@ -505,6 +510,8 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	viaHandle: false,
 	allowTombstone: false,
 };
+
+const defaultStagingCommitOptions = { squash: false };
 
 /**
  * @deprecated
@@ -1000,11 +1007,7 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
-		const createIdCompressorFn = async (): Promise<IIdCompressor & IIdCompressorCore> => {
-			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
-				"@fluidframework/id-compressor/internal"
-			);
-
+		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
 			 * approximately 5% of all clients. Only the given percentage of sessions will emit telemetry.
@@ -1216,12 +1219,6 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * True if we have ID compressor loading in-flight (async operation). Useful only for
-	 * this.sessionSchema.idCompressorMode === "delayed" mode
-	 */
-	protected _loadIdCompressor: Promise<void> | undefined;
-
-	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.generateDocumentUniqueId}
 	 */
 	public generateDocumentUniqueId(): string | number {
@@ -1426,7 +1423,7 @@ export class ContainerRuntime
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
-		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
+		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
@@ -1973,7 +1970,6 @@ export class ContainerRuntime
 		// As it's implemented right now (with async initialization), this will only work for "off" -> "delayed" transitions.
 		// Anything else is too risky, and requires ability to initialize ID compressor synchronously!
 		if (schema.runtime.idCompressorMode !== undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
 		}
 	}
@@ -2021,7 +2017,7 @@ export class ContainerRuntime
 			this.sessionSchema.idCompressorMode === "on" ||
 			(this.sessionSchema.idCompressorMode === "delayed" && this.connected)
 		) {
-			this._idCompressor = await this.createIdCompressor();
+			this._idCompressor = this.createIdCompressorFn();
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
@@ -2619,29 +2615,20 @@ export class ContainerRuntime
 		}
 	}
 
-	private async loadIdCompressor(): Promise<void | undefined> {
+	private loadIdCompressor(): void {
 		if (
 			this._idCompressor === undefined &&
-			this.sessionSchema.idCompressorMode !== undefined &&
-			this._loadIdCompressor === undefined
+			this.sessionSchema.idCompressorMode !== undefined
 		) {
-			this._loadIdCompressor = this.createIdCompressor()
-				.then((compressor) => {
-					// Finalize any ranges we received while the compressor was turned off.
-					const ops = this.pendingIdCompressorOps;
-					this.pendingIdCompressorOps = [];
-					for (const range of ops) {
-						compressor.finalizeCreationRange(range);
-					}
-					assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
-					this._idCompressor = compressor;
-				})
-				.catch((error) => {
-					this.mc.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
-					throw error;
-				});
+			this._idCompressor = this.createIdCompressorFn();
+			// Finalize any ranges we received while the compressor was turned off.
+			const ops = this.pendingIdCompressorOps;
+			this.pendingIdCompressorOps = [];
+			for (const range of ops) {
+				this._idCompressor.finalizeCreationRange(range);
+			}
+			assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
 		}
-		return this._loadIdCompressor;
 	}
 
 	private readonly notifyReadOnlyState = (readonly: boolean): void =>
@@ -2657,7 +2644,6 @@ export class ContainerRuntime
 		);
 
 		if (connected && this.sessionSchema.idCompressorMode === "delayed") {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
 		}
 		if (connected === false && this.delayConnectClientId !== undefined) {
@@ -3244,25 +3230,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * @privateRemarks
-	 * orderSequentially predates staging mode, but its implementation has been updated to leverage it.
-	 * Public usage of staging mode has more guards around only being used with objects that fully support it (i.e. that support squashing
-	 * as well as generalized rollback which may occur after inbounding further remote ops).
-	 *
-	 * This member allows the container runtime to bypass those guards by opting for legacy behavior when exiting an orderSequentially block (e.g.
-	 * op resubmission will not be squashed).
-	 * This can therefore be removed once staging mode is broadly supported across layers.
-	 */
-	private readonly orderSequentiallyRunner = new RunCounter();
-
-	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
 	 */
 	public orderSequentially<T>(callback: () => T): T {
-		return this.orderSequentiallyRunner.run(() => this.orderSequentiallyCore(callback));
-	}
-
-	private orderSequentiallyCore<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		const checkpointDirtyState = this.dirtyContainer;
 		// eslint-disable-next-line import/no-deprecated
@@ -3322,7 +3292,8 @@ export class ContainerRuntime
 				throw error; // throw the original error for the consumer of the runtime
 			}
 		});
-		stageControls?.commitChanges();
+
+		stageControls?.commitChanges({ squash: false });
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
 		if (this.flushMode !== FlushMode.TurnBased && !this.batchRunner.running) {
@@ -3358,6 +3329,7 @@ export class ContainerRuntime
 		// Make sure all BatchManagers are empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.outbox.flush();
+
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			// Final flush of any last staged changes
 			this.outbox.flush();
@@ -3365,9 +3337,11 @@ export class ContainerRuntime
 			this.stageControls = undefined;
 
 			discardOrCommit();
+			this.channelCollection.notifyStagingMode(false);
 		};
 
-		const stageControls = {
+		// eslint-disable-next-line import/no-deprecated
+		const stageControls: StageControlsExperimental = {
 			discardChanges: exitStagingMode(() => {
 				// Pop all staged batches from the PSM and roll them back in LIFO order
 				this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
@@ -3381,20 +3355,21 @@ export class ContainerRuntime
 					this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
 				}
 			}),
-			commitChanges: exitStagingMode(() => {
-				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
-				if (this.connected) {
-					this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
-				} else {
-					// TODO:AB#37788: Refactor interplay with pending state manager and staging mode so that even in this case we end up
-					// squashing the ops submitted while in staging mode. This does not happen now due to the following clear without asking
-					// data stores to resubmit.
-					this.pendingStateManager.clearStagingFlags();
-				}
-			}),
+			commitChanges: (optionsParam) => {
+				const options = { ...defaultStagingCommitOptions, ...optionsParam };
+				return exitStagingMode(() => {
+					this.pendingStateManager.replayPendingStates({
+						onlyStagedBatches: true,
+						squash: options.squash ?? false,
+					});
+				})();
+			},
 		};
 
-		return (this.stageControls = stageControls);
+		this.stageControls = stageControls;
+		this.channelCollection.notifyStagingMode(true);
+
+		return this.stageControls;
 	};
 
 	/**
@@ -3629,8 +3604,7 @@ export class ContainerRuntime
 		wrapSummaryInChannelsTree(summarizeResult);
 		const pathPartsForChildren = [channelsTreeName];
 
-		// Ensure that ID compressor had a chance to load, if we are using delayed mode.
-		await this.loadIdCompressor();
+		this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
 		return {
@@ -4589,14 +4563,11 @@ export class ContainerRuntime
 	 */
 	private reSubmitBatch(
 		batch: PendingMessageResubmitData[],
-		batchId: BatchId,
-		{ staged, squash }: { staged: boolean; squash: boolean },
+		{ batchId, staged, squash }: PendingBatchResubmitMetadata,
 	): void {
 		this.batchRunner.run(() => {
 			for (const message of batch) {
-				// Note: once squashing is widely supported, squashing even for orderSequentially should be fine.
-				// See remarks on orderSequentiallyRunner for more details.
-				this.reSubmit(message, this.orderSequentiallyRunner.running ? false : squash);
+				this.reSubmit(message, squash);
 			}
 		});
 

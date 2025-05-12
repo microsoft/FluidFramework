@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	type IContainer,
@@ -33,6 +34,7 @@ import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
 
 import { createLoader } from "../utils.js";
@@ -105,6 +107,9 @@ class DataObjectWithStagingMode extends DataObject {
 const dataObjectFactory = new DataObjectFactory({
 	type: "TheDataObject",
 	ctor: DataObjectWithStagingMode,
+	policies: {
+		readonlyInStagingMode: false,
+	},
 });
 
 // a simple container runtime factory with a single datastore aliased as default.
@@ -519,4 +524,66 @@ describe("Staging Mode", () => {
 			"Edit submitted while in staging mode should be committed.",
 		);
 	});
+
+	function spyOn(object: object, methodName: string) {
+		const originalMethod = object[methodName];
+		assert(typeof originalMethod === "function", `${methodName} is not a function`);
+		const calls: unknown[][] = [];
+		object[methodName] = (...args: unknown[]) => {
+			calls.push([...args]);
+			const result: unknown = originalMethod.apply(object, args);
+			return result;
+		};
+		return calls;
+	}
+
+	for (const { disconnectBeforeCommit, squash } of generatePairwiseOptions({
+		disconnectBeforeCommit: [false, true],
+		squash: [undefined, false, true],
+	})) {
+		it(`respects squash=${squash} when exiting staging mode ${disconnectBeforeCommit ? "while disconnected" : ""}`, async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			const rootMap = clients.original.dataObject["root"] as unknown as SharedObject;
+			const reSubmitSquashedLog = spyOn(rootMap, "reSubmitSquashed");
+			const reSubmitLog = spyOn(rootMap, "reSubmitCore");
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.makeEdit("branch-only");
+
+			if (disconnectBeforeCommit) {
+				await ensureDisconnected(clients.original);
+			}
+			stagingControls.commitChanges({ squash });
+			if (disconnectBeforeCommit) {
+				await ensureConnected(clients.original);
+			}
+
+			await waitForSave(clients);
+
+			assertConsistent(clients, "States should match after save");
+			assert.equal(
+				reSubmitSquashedLog.length,
+				squash === true ? 1 : 0,
+				"Squashed resubmit should be called iff squash = true.",
+			);
+			assert(
+				JSON.stringify((squash ? reSubmitSquashedLog : reSubmitLog)[0][0]).includes(
+					"branch-only",
+				),
+				"Squashed op should contain the edit prefix.",
+			);
+			if (squash !== true) {
+				assert.equal(
+					reSubmitLog.length,
+					// 2 resubmits when disconnected happens because there is one resubmit upon exiting staging mode (to clear staging flags),
+					// then another when we eventually reconnect.
+					disconnectBeforeCommit ? 2 : 1,
+					"Normal resubmit should be called when squash = false.",
+				);
+			}
+		});
+	}
 });

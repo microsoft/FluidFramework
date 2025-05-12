@@ -71,7 +71,7 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 	}
 
 	/**
-	 * @deprecated - This method is not supported for RemoteFluidObjectHandle.
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
 	 */
 	public bind(handle: IFluidHandleInternal): void {
 		fail("RemoteFluidObjectHandle not supported as a bind source");

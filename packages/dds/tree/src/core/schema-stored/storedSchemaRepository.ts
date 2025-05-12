@@ -9,7 +9,7 @@ import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import { compareStrings } from "../../util/index.js";
 
-import type { TreeNodeSchemaIdentifier } from "./format.js";
+import type { TreeNodeSchemaIdentifier } from "./formatV1.js";
 import {
 	type StoredSchemaCollection,
 	type TreeFieldStoredSchema,
