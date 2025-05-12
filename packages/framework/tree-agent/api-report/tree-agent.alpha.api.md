@@ -68,6 +68,9 @@ export interface IExposedMethods {
 export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest> ? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>> : never;
 
 // @alpha
+export function instanceOf<T extends TreeNodeSchemaClass>(schema: T): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>>;
+
+// @alpha
 export const llmDefault: unique symbol;
 
 // @alpha (undocumented)

@@ -7,13 +7,17 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { ImplicitFieldSchema } from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type {
 	InsertableContent,
 	InternalTreeNode,
 	TreeNode,
 	TreeNodeSchema,
 	TreeViewAlpha,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/tree/alpha";
+import {
+	ObjectNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/alpha";
 import { z } from "zod";
@@ -298,11 +302,28 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 			case z.ZodFirstPartyTypeKind.ZodReadonly: {
 				return appendReadonlyType(type);
 			}
+			case z.ZodFirstPartyTypeKind.ZodEffects: {
+				// Currently, this only handles schema class instances, but there are other cases in which a ZodEffects could theoretically be used.
+				if (instanceOfs.has(type)) {
+					const objectNodeSchema = instanceOfs.get(type);
+					if (objectNodeSchema === undefined) {
+						throw new UsageError(
+							`Unsupported zod effects type when transforming class method: ${getTypeKind(type)}`,
+						);
+					}
+					const name =
+						getFriendlySchemaName(objectNodeSchema.identifier) ??
+						fail("Expected object node schema to have a friendly name");
+
+					return append(name);
+				}
+			}
 			default: {
-				append("any");
+				throw new UsageError(
+					`Unsupported type when transforming class method: ${getTypeKind(type)}`,
+				);
 			}
 		}
-		append("any");
 	}
 
 	function appendArrayType(arrayType: z.ZodType) {
@@ -463,3 +484,26 @@ function getTypePrecendece(type: z.ZodType): TypePrecedence {
 		}
 	}
 }
+
+/**
+ * Create a Zod schema for a SharedTree schema class.
+ * @alpha
+ */
+export function instanceOf<T extends TreeNodeSchemaClass>(
+	schema: T,
+): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>> {
+	const existing = instanceZods.get(schema.identifier);
+	if (existing !== undefined) {
+		return existing as z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>>;
+	}
+	if (!(schema instanceof ObjectNodeSchema)) {
+		throw new UsageError(`${schema.identifier} must be an instance of ObjectNodeSchema.`);
+	}
+	const effect = z.instanceof(schema);
+	instanceZods.set(schema.identifier, effect);
+	instanceOfs.set(effect, schema);
+	return effect;
+}
+
+const instanceOfs = new WeakMap<z.ZodTypeAny, ObjectNodeSchema>();
+const instanceZods = new Map<string, z.ZodTypeAny>();

@@ -20,7 +20,7 @@ import { z } from "zod";
 
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
-import { getFriendlySchemaName, getZodSchemaAsTypeScript } from "../utils.js";
+import { getFriendlySchemaName, getZodSchemaAsTypeScript, instanceOf } from "../utils.js";
 
 const factory = SharedTree.getFactory();
 const sf = new SchemaFactory("test");
@@ -53,6 +53,17 @@ class TestTodoAppSchema extends sf.object("TestTodoAppSchema", {
 			"M1",
 			buildFunc({ returns: z.boolean() }, ["num", z.number()]),
 		);
+
+		methods.expose(
+			TestTodoAppSchema,
+			"addTodo",
+			buildFunc({ returns: instanceOf(Todo) }, ["todo", instanceOf(Todo)]),
+		);
+	}
+
+	public addTodo(todo: Todo): Todo {
+		this.todos.insertAtEnd(todo);
+		return todo;
 	}
 }
 
