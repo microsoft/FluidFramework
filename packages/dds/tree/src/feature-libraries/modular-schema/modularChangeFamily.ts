@@ -2796,14 +2796,16 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseDetachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, NodeId> {
+		let countToProcess = count;
 		const baseRenameEntry = firstAttachIdFromDetachId(
 			this.table.baseChange.rootNodes,
 			baseDetachId,
 			count,
 		);
 
+		countToProcess = baseRenameEntry.length;
+
 		// XXX: This needs to look at all IDs in the range, not just the first.
-		// XXX: Also consider split renames.
 		// XXX: Do we need to dealias whenever pulling node IDs out of the root node table?
 		const detachedNodeId = getFromChangeAtomIdMap(
 			this.table.newChange.rootNodes.nodeChanges,
@@ -2816,7 +2818,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		} else {
 			// The base detach might be part of a move.
 			// We check if we've previously seen a node change at the move destination.
-			const entry = this.table.entries.getFirst(baseDetachId, count);
+			const entry = this.table.entries.getFirst(baseDetachId, countToProcess);
 			result = { ...entry, value: entry.value };
 		}
 
