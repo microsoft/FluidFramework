@@ -141,7 +141,7 @@ describe("TableFactory unit tests", () => {
 			}) {}
 
 			const _table = new Table({
-				columns: [{ id: "column-0"}],
+				columns: [{ id: "column-0" }],
 				rows: [{ id: "row-0", cells: {} }],
 			});
 		});
@@ -213,7 +213,7 @@ describe("TableFactory unit tests", () => {
 				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
 			});
 		});
-	})
+	});
 
 	describe("Initialization", () => {
 		it("Empty", () => {
