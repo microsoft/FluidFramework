@@ -29,7 +29,7 @@ type RealOperation<T extends BaseOperation> = T & {
 	 */
 	debug?: boolean;
 	/**
-	 * The seed used for this operation to isolate it random usage from other operations
+	 * The seed used for this operation to isolate its random usage from other operations
 	 *
 	 * @remarks when forceGlobalSeed is gone. this can become required
 	 */
