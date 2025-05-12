@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 
 import { SharedMatrix } from "../../index.js";
@@ -11,7 +12,7 @@ import { createLocalMatrix } from "../utils.js";
 describe("SharedMatrix execution time", () => {
 	// The value to be set in the cells of the matrix.
 	const matrixValue = "cellValue";
-	// The test matrix's size will be 0*0, 10*10, 100*100, 1000*1000.
+	// The test matrix's size will be 10*10, 100*100, 1000*1000.
 	const matrixSizes = isInPerformanceTestingMode
 		? [10, 100, 1000]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
@@ -62,7 +63,6 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.insertCols(Math.floor(localMatrix!.colCount / 2), 1);
 						}
 					},
@@ -80,7 +80,6 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.insertRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
@@ -98,9 +97,7 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.insertCols(Math.floor(localMatrix!.colCount / 2), 1);
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.insertRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
@@ -120,7 +117,6 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.removeCols(Math.floor(localMatrix!.colCount / 2), 1);
 						}
 					},
@@ -138,7 +134,6 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.removeRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
@@ -156,9 +151,7 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.removeCols(Math.floor(localMatrix!.colCount / 2), 1);
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.removeRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
@@ -176,7 +169,6 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.setCell(i, i, "abc");
 						}
 					},
