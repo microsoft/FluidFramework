@@ -676,6 +676,7 @@ describe("Runtime", () => {
 	});
 
 	it("does not send telemetry warning if minVersionForCollab is less than or equal to pkgVersion", () => {
+		// Document's minVersionForCollab is less than pkgVersion
 		const documentMinVersionForCollab = "2.0.0";
 		new DocumentsSchemaController(
 			true, // existing,
@@ -691,13 +692,14 @@ describe("Runtime", () => {
 			.find((e) => e.eventName === "ContainerRuntime:MinVersionForCollabWarning");
 		assert.strictEqual(event, undefined, "telemetry warning event should not be logged");
 
+		// Document's minVersionForCollab is equal to pkgVersion
 		new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
-			{ ...validConfig, minVersionForCollab: documentMinVersionForCollab }, // old schema,
+			{ ...validConfig, minVersionForCollab: pkgVersion }, // old schema,
 			features, // features
 			() => {}, // onSchemaChange
-			pkgVersion, // minVersionForCollab
+			defaultMinVersionForCollab, // minVersionForCollab
 			logger,
 		);
 		const event2 = logger
