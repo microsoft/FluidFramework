@@ -133,6 +133,88 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
+	describe("Table Schema", () => {
+		it("Can create without custom column/row schema", () => {
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0"}],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+		});
+
+		it("Can create with custom column schema", () => {
+			class Column extends TableSchema.column({
+				schemaFactory,
+				props: schemaFactory.object("column-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+				column: Column,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0", props: { label: "Column 0" } }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+		});
+
+		it("Can create with custom row schema", () => {
+			const Cell = schemaFactory.string;
+			class Row extends TableSchema.row({
+				schemaFactory,
+				cell: Cell,
+				props: schemaFactory.object("row-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+				row: Row,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+			});
+		});
+
+		it("Can create with custom column and row schema", () => {
+			const Cell = schemaFactory.string;
+			class Column extends TableSchema.column({
+				schemaFactory,
+				props: schemaFactory.object("column-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Row extends TableSchema.row({
+				schemaFactory,
+				cell: Cell,
+				props: schemaFactory.object("row-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+				column: Column,
+				row: Row,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0", props: { label: "Column 0" } }],
+				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+			});
+		});
+	})
+
 	describe("Initialization", () => {
 		it("Empty", () => {
 			const { treeView } = createTableTree();

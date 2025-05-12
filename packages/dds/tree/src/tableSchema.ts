@@ -1451,6 +1451,24 @@ export namespace TableSchema {
 		System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>
 	>;
 	/**
+	 * Factory for creating new table schema without specifying column schema.
+	 * @internal
+	 */
+	export function table<
+		const TScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
+	>(
+		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
+			readonly row: TRow;
+		},
+	): System_TableSchema.TableSchemaBase<
+		TScope,
+		TCell,
+		System_TableSchema.ColumnSchemaBase<TScope, System_TableSchema.DefaultPropsType>,
+		TRow
+	>;
+	/**
 	 * Factory for creating new table schema.
 	 * @internal
 	 */
