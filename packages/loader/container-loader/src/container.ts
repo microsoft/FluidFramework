@@ -128,7 +128,10 @@ import {
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 import { RelativeLoader } from "./loader.js";
-import { validateRuntimeCompatibility } from "./loaderLayerCompatState.js";
+import {
+	validateDriverCompatibility,
+	validateRuntimeCompatibility,
+} from "./loaderLayerCompatState.js";
 import {
 	createMemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
@@ -577,7 +580,21 @@ export class Container
 	private readonly storageAdapter: ContainerStorageAdapter;
 
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
-	private service: IDocumentService | undefined;
+	private _service: IDocumentService | undefined;
+	private get service(): IDocumentService | undefined {
+		return this._service;
+	}
+	private set service(service: IDocumentService) {
+		if (this._service !== undefined) {
+			throw new UsageError("Document service already present");
+		}
+		// Validate that the Driver is compatible with this Loader.
+		const maybeDriverCompatDetails = service as FluidObject<ILayerCompatDetails>;
+		validateDriverCompatibility(maybeDriverCompatDetails.ILayerCompatDetails, (error) =>
+			this.dispose(error),
+		);
+		this._service = service;
+	}
 
 	private _runtime: IRuntime | undefined;
 	private get runtime(): IRuntime {
