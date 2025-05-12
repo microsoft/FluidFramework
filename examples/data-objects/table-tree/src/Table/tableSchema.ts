@@ -95,20 +95,20 @@ export class ColumnProps extends schemaFactory.object("table-column-props", {
 	label: schemaFactory.optional(schemaFactory.string),
 	hint: schemaFactory.optional(schemaFactory.string),
 }) {}
-export class Column extends TableSchema.createColumn({
+export class Column extends TableSchema.column({
 	schemaFactory,
 	props: ColumnProps,
 }) {}
 export class RowProps extends schemaFactory.object("table-row-props", {
 	label: schemaFactory.optional(schemaFactory.string),
 }) {}
-export class Row extends TableSchema.createRow({
+export class Row extends TableSchema.row({
 	schemaFactory,
 	cell: Cell,
 	props: RowProps,
 }) {}
 
-export class Table extends TableSchema.createTable({
+export class Table extends TableSchema.table({
 	schemaFactory,
 	cell: Cell,
 	column: Column,

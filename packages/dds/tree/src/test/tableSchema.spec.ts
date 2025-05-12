@@ -33,7 +33,7 @@ describe("TableFactory unit tests", () => {
 			 */
 			label: schemaFactory.optional(schemaFactory.string),
 		}) {}
-		class Column extends TableSchema.createColumn({
+		class Column extends TableSchema.column({
 			schemaFactory,
 			props: ColumnProps,
 		}) {}
@@ -45,13 +45,13 @@ describe("TableFactory unit tests", () => {
 			 */
 			selectable: schemaFactory.optional(schemaFactory.boolean),
 		}) {}
-		class Row extends TableSchema.createRow({
+		class Row extends TableSchema.row({
 			schemaFactory,
 			cell: Cell,
 			props: schemaFactory.optional(RowProps),
 		}) {}
 
-		class Table extends TableSchema.createTable({
+		class Table extends TableSchema.table({
 			schemaFactory,
 			cell: Cell,
 			column: Column,
@@ -86,7 +86,7 @@ describe("TableFactory unit tests", () => {
 
 	describe("Column Schema", () => {
 		it("Can create without props", () => {
-			class Column extends TableSchema.createColumn({ schemaFactory }) {}
+			class Column extends TableSchema.column({ schemaFactory }) {}
 			const column = new Column({ id: "column-0" });
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
@@ -96,7 +96,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Can create with props", () => {
-			class Column extends TableSchema.createColumn({
+			class Column extends TableSchema.column({
 				schemaFactory,
 				props: schemaFactory.string,
 			}) {}
@@ -110,7 +110,7 @@ describe("TableFactory unit tests", () => {
 			class Cell extends schemaFactory.object("table-cell", {
 				value: schemaFactory.string,
 			}) {}
-			class Row extends TableSchema.createRow({ schemaFactory, cell: Cell }) {}
+			class Row extends TableSchema.row({ schemaFactory, cell: Cell }) {}
 			const row = new Row({ id: "row-0", cells: {} });
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
@@ -123,13 +123,95 @@ describe("TableFactory unit tests", () => {
 			class Cell extends schemaFactory.object("table-cell", {
 				value: schemaFactory.string,
 			}) {}
-			class Row extends TableSchema.createRow({
+			class Row extends TableSchema.row({
 				schemaFactory,
 				cell: Cell,
 				props: schemaFactory.string,
 			}) {}
 			const column = new Row({ id: "row-0", cells: {}, props: "Row 0" });
 			assert.equal(column.props, "Row 0");
+		});
+	});
+
+	describe("Table Schema", () => {
+		it("Can create without custom column/row schema", () => {
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+		});
+
+		it("Can create with custom column schema", () => {
+			class Column extends TableSchema.column({
+				schemaFactory,
+				props: schemaFactory.object("column-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+				column: Column,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0", props: { label: "Column 0" } }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+		});
+
+		it("Can create with custom row schema", () => {
+			const Cell = schemaFactory.string;
+			class Row extends TableSchema.row({
+				schemaFactory,
+				cell: Cell,
+				props: schemaFactory.object("row-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+				row: Row,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+			});
+		});
+
+		it("Can create with custom column and row schema", () => {
+			const Cell = schemaFactory.string;
+			class Column extends TableSchema.column({
+				schemaFactory,
+				props: schemaFactory.object("column-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Row extends TableSchema.row({
+				schemaFactory,
+				cell: Cell,
+				props: schemaFactory.object("row-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+				column: Column,
+				row: Row,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0", props: { label: "Column 0" } }],
+				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+			});
 		});
 	});
 
@@ -1399,7 +1481,7 @@ describe("TableFactory unit tests", () => {
 	// the TSDoc sample code.
 	describe("TSDoc comment examples", () => {
 		it("TableSchema: Defining a Table schema", () => {
-			class Table extends TableSchema.createTable({
+			class Table extends TableSchema.table({
 				schemaFactory,
 				cell: schemaFactory.string,
 			}) {}
@@ -1421,17 +1503,17 @@ describe("TableFactory unit tests", () => {
 				label: schemaFactory.string,
 			}) {}
 
-			class Column extends TableSchema.createColumn({
+			class Column extends TableSchema.column({
 				schemaFactory,
 				props: ColumnProps,
 			}) {}
 
-			class Row extends TableSchema.createRow({
+			class Row extends TableSchema.row({
 				schemaFactory,
 				cell: Cell,
 			}) {}
 
-			class Table extends TableSchema.createTable({
+			class Table extends TableSchema.table({
 				schemaFactory,
 				cell: Cell,
 				column: Column,
@@ -1454,7 +1536,7 @@ describe("TableFactory unit tests", () => {
 		it("TableSchema: Listening for changes in the table", () => {
 			// #region Don't include this in the example docs.
 
-			class Table extends TableSchema.createTable({
+			class Table extends TableSchema.table({
 				schemaFactory,
 				cell: schemaFactory.string,
 			}) {}
@@ -1476,7 +1558,7 @@ describe("TableFactory unit tests", () => {
 		it("TableSchema: Listening for changes to the rows list only", () => {
 			// #region Don't include this in the example docs.
 
-			class Table extends TableSchema.createTable({
+			class Table extends TableSchema.table({
 				schemaFactory,
 				cell: schemaFactory.string,
 			}) {}
