@@ -5,8 +5,8 @@
 ---
 TableSchema (alpha) APIs have been added
 
-Users may now represent dynamic, tabular data using Shared Tree.
-New APIs have been added under a `TableSchema` namespace for creating column, row, and table node schema.
+A `TableSchema` utility has been added to Shared Tree for managing dynamic, tabular data.
+This new `TableSchema` namespace contains APIs for creating column, row, and table [node schema](https://fluidframework.com/docs/api/fluid-framework/treenodeschema-typealias).
 
 Note: these APIs require the use of [SchemaFactoryAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
 
