@@ -10,4 +10,4 @@ export type {
 	ISignalOperation,
 } from "./interfaces.js";
 export { SharedSignal } from "./sharedSignal.js";
-export { pkgName, SharedSignalFactory } from "./sharedSignalFactory.js";
+export { SharedSignalFactory } from "./sharedSignalFactory.js";

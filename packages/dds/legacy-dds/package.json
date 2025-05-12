@@ -1,12 +1,13 @@
 {
-	"name": "@fluidframework/signal",
+	"name": "@fluid-private/legacy-dds",
 	"version": "2.40.0",
-	"description": "Signal DDS",
+	"private": true,
+	"description": "Legacy DDSs for the Fluid Framework. These are not intended for use in new code.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/dds/signal"
+		"directory": "packages/dds/legacy-dds"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",

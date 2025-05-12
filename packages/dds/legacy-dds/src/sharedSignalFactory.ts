@@ -11,13 +11,8 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 
 import type { ISharedSignal } from "./interfaces.js";
+import { pkgVersion } from "./packageVersion.js";
 import { SharedSignal } from "./sharedSignal.js";
-
-/**
- * @internal
- */
-export const pkgName = "@fluidframework/signal";
-const pkgVersion = "0.25.0";
 
 /**
  * @internal
