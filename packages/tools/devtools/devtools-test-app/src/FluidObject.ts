@@ -53,6 +53,7 @@ export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 	public override async initializingFirstTime(): Promise<void> {
 		const title = SharedString.create(this.runtime);
 		title.insertText(0, "Title");
+
 		this.treeView.initialize(new TodoList({ title: title.handle, items: [] }));
 	}
 
@@ -67,6 +68,7 @@ export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 	 * as we needed access to the runtime to create the `SharedString`.
 	 */
 	public async addTodoItem(props?: TodoItemProps): Promise<void> {
+		console.log("Adding a new todo item");
 		const title = SharedString.create(this.runtime);
 		const newItemText = props?.startingText ?? "New Item";
 		title.insertText(0, newItemText);

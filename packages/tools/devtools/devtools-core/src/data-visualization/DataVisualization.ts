@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { DataObject } from "@fluidframework/aqueduct/internal";
+import { DataObject, TreeDataObject } from "@fluidframework/aqueduct/internal";
 import type {
 	IDisposable,
 	IEvent,
@@ -21,7 +21,11 @@ import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
 
-import { visualizeDataObject, visualizeUnknownSharedObject } from "./DefaultVisualizers.js";
+import {
+	visualizeDataObject,
+	visualizeTreeDataObject,
+	visualizeUnknownSharedObject,
+} from "./DefaultVisualizers.js";
 import {
 	type FluidObjectNode,
 	type Primitive,
@@ -100,7 +104,7 @@ export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 /**
  * Utility type for a union of things that can be visualized.
  */
-export type VisualizableFluidObject = ISharedObject | DataObject;
+export type VisualizableFluidObject = ISharedObject | DataObject | TreeDataObject<unknown>;
 
 /**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
@@ -253,14 +257,18 @@ export class DataVisualizerGraph
 			// Create visualizer node for the shared object
 			const visualizationFunction = isDataObject(visualizableObject)
 				? visualizeDataObject
-				: (this.visualizers[visualizableObject.attributes.type] ??
-					visualizeUnknownSharedObject);
+				: isTreeDataObject(visualizableObject)
+					? visualizeTreeDataObject
+					: (this.visualizers[visualizableObject.attributes.type] ??
+						visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
 				// Double-casting `sharedObject` is necessary for `DataObject` visualization, because the `root` property is inaccessible in `DataObject` (private).
 				isDataObject(visualizableObject)
 					? (visualizableObject as unknown as { readonly root: ISharedDirectory }).root
-					: visualizableObject,
+					: isTreeDataObject(visualizableObject)
+						? (visualizableObject.sharedTree as unknown as ISharedObject)
+						: visualizableObject,
 				visualizationFunction,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
@@ -291,6 +299,10 @@ export class DataVisualizerGraph
 		const resolvedObject = await handle.get();
 
 		if (isDataObject(resolvedObject)) {
+			return this.registerVisualizerForVisualizableObject(resolvedObject);
+		}
+
+		if (isTreeDataObject(resolvedObject)) {
 			return this.registerVisualizerForVisualizableObject(resolvedObject);
 		}
 
@@ -547,5 +559,15 @@ function isDataObject(value: unknown): value is DataObject {
 		return true;
 	}
 
+	return false;
+}
+
+/**
+ * TODO
+ */
+function isTreeDataObject(value: unknown): value is TreeDataObject<unknown> {
+	if (value instanceof TreeDataObject) {
+		return true;
+	}
 	return false;
 }

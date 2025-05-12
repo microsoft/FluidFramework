@@ -126,6 +126,27 @@ export const visualizeDataObject: VisualizeSharedObject = async (
 };
 
 /**
+ * TODO
+ */
+export const visualizeTreeDataObject: VisualizeSharedObject = async (
+	treeDataObjectRoot: ISharedObject,
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
+	const renderedChildData = (await visualizeSharedTree(
+		treeDataObjectRoot,
+		visualizeChildData,
+	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
+
+	return {
+		fluidObjectId: treeDataObjectRoot.id,
+		children: renderedChildData.children,
+		metadata: renderedChildData.metadata,
+		typeMetadata: "TreeDataObject",
+		nodeKind: VisualNodeKind.FluidTreeNode,
+	};
+};
+
+/**
  * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
  */
 export const visualizeSharedCounter: VisualizeSharedObject = async (
