@@ -15,13 +15,13 @@ describe("SharedMatrix execution time", () => {
 	const matrixSizes = isInPerformanceTestingMode
 		? [10, 100, 1000]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[0];
+			[10];
 
 	// The number of operations to perform on the matrix.
 	const operationCounts = isInPerformanceTestingMode
-		? [100, 1000]
+		? [10, 100, 1000]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[10];
+			[5];
 
 	let localMatrix: SharedMatrix | undefined;
 
@@ -48,6 +48,7 @@ describe("SharedMatrix execution time", () => {
 			// Filter counts to ensure remove operation do not exceed matrixSize
 			const validRemoveCounts = operationCounts.filter((count) => count <= matrixSize);
 
+			// Insert related tests that are not limited by matrixSize
 			for (const count of operationCounts) {
 				// Test the execute time of the SharedMatrix for inserting a column in the middle for a given number of times.
 				benchmark({
@@ -60,12 +61,8 @@ describe("SharedMatrix execution time", () => {
 						});
 					},
 					benchmarkFn: () => {
-						if (!localMatrix) {
-							throw new Error("localMatrix is not initialized");
-						}
-
 						for (let i = 0; i < count; i++) {
-							localMatrix.insertCols(Math.floor(localMatrix.colCount / 2), 1);
+							localMatrix!.insertCols(Math.floor(localMatrix!.colCount / 2), 1);
 						}
 					},
 				});
@@ -82,11 +79,7 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
-							if (!localMatrix) {
-								throw new Error("localMatrix is not initialized");
-							}
-
-							localMatrix.insertRows(Math.floor(localMatrix.rowCount / 2), 1);
+							localMatrix!.insertRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
 				});
@@ -102,13 +95,9 @@ describe("SharedMatrix execution time", () => {
 						});
 					},
 					benchmarkFn: () => {
-						if (!localMatrix) {
-							throw new Error("localMatrix is not initialized");
-						}
-
 						for (let i = 0; i < count; i++) {
-							localMatrix.insertCols(Math.floor(localMatrix.colCount / 2), 1);
-							localMatrix.insertRows(Math.floor(localMatrix.rowCount / 2), 1);
+							localMatrix!.insertCols(Math.floor(localMatrix!.colCount / 2), 1);
+							localMatrix!.insertRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
 				});
@@ -147,12 +136,8 @@ describe("SharedMatrix execution time", () => {
 						});
 					},
 					benchmarkFn: () => {
-						if (!localMatrix) {
-							throw new Error("localMatrix is not initialized");
-						}
-
 						for (let i = 0; i < count; i++) {
-							localMatrix.removeRows(Math.floor(localMatrix.rowCount / 2), 1);
+							localMatrix!.removeRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
 				});
@@ -168,13 +153,9 @@ describe("SharedMatrix execution time", () => {
 						});
 					},
 					benchmarkFn: () => {
-						if (!localMatrix) {
-							throw new Error("localMatrix is not initialized");
-						}
-
 						for (let i = 0; i < count; i++) {
-							localMatrix.removeCols(Math.floor(localMatrix.colCount / 2), 1);
-							localMatrix.removeRows(Math.floor(localMatrix.rowCount / 2), 1);
+							localMatrix!.removeCols(Math.floor(localMatrix!.colCount / 2), 1);
+							localMatrix!.removeRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
 				});
@@ -190,12 +171,8 @@ describe("SharedMatrix execution time", () => {
 						});
 					},
 					benchmarkFn: () => {
-						if (!localMatrix) {
-							throw new Error("localMatrix is not initialized");
-						}
-
 						for (let i = 0; i < count; i++) {
-							localMatrix.setCell(i, i, "abc");
+							localMatrix!.setCell(i, i, "abc");
 						}
 					},
 				});
