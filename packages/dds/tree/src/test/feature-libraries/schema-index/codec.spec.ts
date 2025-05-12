@@ -7,26 +7,31 @@ import { strict as assert } from "node:assert";
 
 // Allow importing from this specific file which is being tested:
 
-import { makeCodecFamily } from "../../../codec/index.js";
 import type { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
-import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
+	makeSchemaCodec,
+	SchemaCodecVersion,
+} from "../../../feature-libraries/index.js";
 /* eslint-disable-next-line import/no-internal-modules */
-import { makeSchemaCodec } from "../../../feature-libraries/schema-index/codec.js";
-/* eslint-disable-next-line import/no-internal-modules */
-import { Format } from "../../../feature-libraries/schema-index/format.js";
+import { Format as FormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
 
-const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
+const schemaCodecs = makeSchemaCodecs({ jsonValidator: typeboxValidator });
+const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaCodecVersion.v1);
 
 const schema2 = toStoredSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 
-const testCases: EncodingTestData<TreeStoredSchema, Format> = {
+const testCases: EncodingTestData<TreeStoredSchema, FormatV1> = {
 	successes: [
 		["json", toStoredSchema(JsonAsTree.Tree)],
 		["testSchemas", schema2],
@@ -36,26 +41,26 @@ const testCases: EncodingTestData<TreeStoredSchema, Format> = {
 describe("SchemaIndex", () => {
 	useSnapshotDirectory();
 
-	it("SchemaIndexFormat", () => {
+	it("SchemaIndexFormat - schema v1", () => {
 		// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
-		takeJsonSnapshot(Format);
+		takeJsonSnapshot(FormatV1);
 	});
 
-	it("accepts valid data", () => {
+	it("accepts valid data - schema v1", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
 				version: 1 as const,
 				nodes: {},
 				root: { kind: "x" as FieldKindIdentifier, types: [] },
-			} satisfies Format,
+			} satisfies FormatV1,
 		];
 		for (const data of cases) {
-			codec.decode(data);
+			codecV1.decode(data);
 		}
 	});
 
-	it("rejects malformed data", () => {
+	it("rejects malformed data - schema v1", () => {
 		// TODO: should test way more cases
 		// TODO: maybe well formed but semantically invalid data should be rejected (ex: with duplicates keys)?
 		const badCases = [
@@ -71,12 +76,12 @@ describe("SchemaIndex", () => {
 			{ version: 1, nodeSchema: [], extraField: 0 },
 		];
 		for (const data of badCases) {
-			assert.throws(() => codec.decode(data as unknown as Format));
+			assert.throws(() => codecV1.decode(data as unknown as FormatV1));
 		}
 	});
 
 	describe("codec", () => {
-		makeEncodingTestSuite(makeCodecFamily([[1, codec]]), testCases, (a, b) => {
+		makeEncodingTestSuite(schemaCodecs, testCases, (a, b) => {
 			assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
 			assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));
 		});

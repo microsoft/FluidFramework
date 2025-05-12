@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-definitions",
-	"version": "2.33.0",
+	"version": "2.41.0",
 	"description": "Fluid driver definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -95,7 +95,7 @@
 		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
-		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.32.0",
+		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.33.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.52.5",
 		"concurrently": "^8.2.1",

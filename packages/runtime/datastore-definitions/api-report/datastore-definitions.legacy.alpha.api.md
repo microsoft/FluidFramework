@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
+// @alpha @legacy
 export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -59,7 +59,7 @@ export interface IDeltaConnection {
 export interface IDeltaHandler {
     applyStashedOp(message: any): void;
     processMessages: (messageCollection: IRuntimeMessageCollection) => void;
-    reSubmit(message: any, localOpMetadata: unknown): void;
+    reSubmit(message: any, localOpMetadata: unknown, squash?: boolean): void;
     rollback?(message: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean): void;
 }
@@ -87,7 +87,6 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
-    // (undocumented)
     readonly idCompressor: IIdCompressor | undefined;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
