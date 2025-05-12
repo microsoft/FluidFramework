@@ -8083,8 +8083,8 @@ packages:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
     engines: {node: '>=6'}
 
-  tar-fs@1.16.3:
-    resolution: {integrity: sha512-NvCeXpYx7OsmOh8zIOP/ebG55zZmxLE0etfWRbWok+q2Qo8x/vOR/IJT1taADXPe+jsiu9axDb3X4B+iIgNlKw==}
+  tar-fs@1.16.4:
+    resolution: {integrity: sha512-u3XczWoYAIVXe5GOKK6+VeWaHjtc47W7hyuTo3+4cNakcCcuDmlkYiiHEsECwTkcI3h1VUgtwBQ54+RvY6cM4w==}
 
   tar-stream@1.6.2:
     resolution: {integrity: sha512-rzS0heiNf8Xn7/mpdSVVSMAWAoy9bfb1WOTYC78Z0UQKeKa/CWS8FOq0lKGNa8DWKAn9gxjCvMLYc5PGXYlK2A==}
@@ -16467,7 +16467,7 @@ snapshots:
       pump: 2.0.1
       rc: 1.2.8
       simple-get: 2.8.2
-      tar-fs: 1.16.3
+      tar-fs: 1.16.4
       tunnel-agent: 0.6.0
       which-pm-runs: 1.1.0
     optional: true
@@ -17506,7 +17506,7 @@ snapshots:
 
   tapable@2.2.1: {}
 
-  tar-fs@1.16.3:
+  tar-fs@1.16.4:
     dependencies:
       chownr: 1.1.4
       mkdirp: 0.5.6

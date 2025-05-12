@@ -4,6 +4,7 @@
  */
 
 import type { AxiosError } from "axios";
+import { isAxiosCanceledError } from "./utils";
 
 /**
  * Represents the internal error code in NetworkError
@@ -249,6 +250,16 @@ export function createFluidServiceNetworkError(
 				source,
 				internalErrorCode,
 			);
+		case 499:
+			return new NetworkError(
+				statusCode,
+				message,
+				true /* canRetry */,
+				false /* isFatal */,
+				undefined /* retryAfterMs */,
+				source,
+				internalErrorCode,
+			);
 		case 500: {
 			return new NetworkError(
 				statusCode,
@@ -310,6 +321,10 @@ export function convertAxiosErrorToNetorkError(error: AxiosError) {
 	const { response, request } = error ?? {};
 	if (response === undefined) {
 		if (request !== undefined) {
+			if (isAxiosCanceledError(error)) {
+				// Request was canceled.
+				return new NetworkError(499, "Client aborted the request.");
+			}
 			// Request was made but no response was received.
 			return new NetworkError(
 				502,

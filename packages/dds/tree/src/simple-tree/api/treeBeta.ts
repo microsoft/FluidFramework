@@ -7,7 +7,6 @@ import {
 	getKernel,
 	isTreeNode,
 	type NodeKind,
-	type TreeChangeEvents,
 	type TreeNode,
 	type Unhydrated,
 	type WithType,
@@ -15,6 +14,10 @@ import {
 import { treeNodeApi } from "./treeNodeApi.js";
 import { createFromCursor } from "./create.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
+import type { TreeChangeEvents } from "./treeChangeEvents.js";
+
+// Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
+// and where most of the actual implementation is for much of it.
 
 /**
  * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
@@ -89,10 +92,12 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 }
 
 /**
- * Extensions to {@link Tree} which are not yet stable.
- * @sealed @beta
+ * Extensions to {@link (Tree:interface)} which are not yet stable.
+ * @remarks
+ * Use via the {@link (TreeBeta:variable)} singleton.
+ * @system @sealed @beta
  */
-export const TreeBeta: {
+export interface TreeBeta {
 	/**
 	 * Register an event listener on the given node.
 	 * @param node - The node whose events should be subscribed to.
@@ -117,7 +122,9 @@ export const TreeBeta: {
 	 *
 	 * - Local state, such as properties added to customized schema classes, will not be cloned. However, they will be
 	 * initialized to their default state just as if the node had been created via its constructor.
+	 *
 	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
+	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(
@@ -142,7 +149,14 @@ export const TreeBeta: {
 	// 		replaceIdentifiers?: true;
 	// 	},
 	// ): TreeFieldFromImplicitField<TSchema>;
-} = {
+}
+
+/**
+ * Extensions to {@link (Tree:variable)} which are not yet stable.
+ * @see {@link (TreeBeta:interface)}.
+ * @beta
+ */
+export const TreeBeta: TreeBeta = {
 	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
 		node: TNode,
 		eventName: K,
@@ -153,7 +167,7 @@ export const TreeBeta: {
 	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-		/** The only non-TreeNode cases are {@link TreeLeafValue} and `undefined` (for an empty optional field) which can be returned as is. */
+		// The only non-TreeNode cases are {@link TreeLeafValue} and `undefined` (for an empty optional field) which can be returned as is.
 		if (!isTreeNode(node)) {
 			return node;
 		}

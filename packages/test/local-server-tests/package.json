@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-tests",
-	"version": "2.40.0",
+	"version": "2.41.0",
 	"private": true,
 	"description": "Tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -58,6 +58,7 @@
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
+		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
@@ -78,6 +79,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^5.0.0",
+		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
