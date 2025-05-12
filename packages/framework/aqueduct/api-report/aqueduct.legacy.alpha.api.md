@@ -67,6 +67,7 @@ export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectT
 export interface DataObjectFactoryProps<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> {
     readonly ctor: new (props: IDataObjectProps<I>) => TObj;
     readonly optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+    readonly policies?: Partial<IFluidDataStorePolicies>;
     readonly registryEntries?: NamedFluidDataStoreRegistryEntries;
     readonly runtimeClass?: typeof FluidDataStoreRuntime;
     readonly sharedObjects?: readonly IChannelFactory[];

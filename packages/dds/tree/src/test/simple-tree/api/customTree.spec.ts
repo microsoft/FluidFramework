@@ -8,7 +8,8 @@ import { strict as assert, fail } from "node:assert";
 import {
 	cursorFromInsertable,
 	getStoredSchema,
-	SchemaFactory,
+	SchemaFactoryAlpha,
+	schemaStatics,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
 
@@ -25,7 +26,7 @@ import { singleJsonCursor } from "../../json/index.js";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
-const schemaFactory = new SchemaFactory("Test");
+const schemaFactory = new SchemaFactoryAlpha("Test");
 
 describe("simple-tree customTree", () => {
 	const handle = new MockHandle(1);
@@ -77,19 +78,21 @@ describe("simple-tree customTree", () => {
 	});
 
 	it("tryStoredSchemaAsArray", () => {
-		const arraySchema = schemaFactory.array(schemaFactory.number);
+		const arraySchema = schemaFactory.arrayAlpha("A", schemaFactory.number);
 		const arrayCase = tryStoredSchemaAsArray(getStoredSchema(arraySchema));
 		assert.deepEqual(arrayCase, new Set([schemaFactory.number.identifier]));
 
-		const objectSchema = schemaFactory.object("x", {});
+		const objectSchema = schemaFactory.objectAlpha("x", {});
 		const objectCase = tryStoredSchemaAsArray(getStoredSchema(objectSchema));
 		assert.deepEqual(objectCase, undefined);
 
-		const objectSchemaEmptyKey = schemaFactory.object("x", { [""]: schemaFactory.number });
+		const objectSchemaEmptyKey = schemaFactory.objectAlpha("x", {
+			[""]: schemaFactory.number,
+		});
 		const objectEmptyKeyCase = tryStoredSchemaAsArray(getStoredSchema(objectSchemaEmptyKey));
 		assert.deepEqual(objectEmptyKeyCase, undefined);
 
-		const nonObjectCase = tryStoredSchemaAsArray(getStoredSchema(schemaFactory.number));
+		const nonObjectCase = tryStoredSchemaAsArray(getStoredSchema(schemaStatics.number));
 		assert.deepEqual(nonObjectCase, undefined);
 	});
 

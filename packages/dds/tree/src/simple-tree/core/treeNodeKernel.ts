@@ -7,7 +7,7 @@ import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/inte
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
-import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
+import type { InternalTreeNode, Unhydrated } from "./types.js";
 import {
 	anchorSlot,
 	type AnchorEvents,
@@ -31,6 +31,7 @@ import type { TreeNodeSchema } from "./treeNodeSchema.js";
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
 import { SimpleContextSlot, type Context, type HydratedContext } from "./context.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
+import type { TreeNode } from "./treeNode.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 

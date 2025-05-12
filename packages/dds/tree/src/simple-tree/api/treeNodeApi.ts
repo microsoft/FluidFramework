@@ -32,7 +32,6 @@ import {
 	type TreeNodeSchema,
 	NodeKind,
 	type TreeNode,
-	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
 	getOrCreateNodeFromInnerNode,
 	UnhydratedFlexTreeNode,
@@ -40,6 +39,7 @@ import {
 	getOrCreateInnerNode,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
+import type { TreeChangeEvents } from "./treeChangeEvents.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.

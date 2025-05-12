@@ -47,7 +47,6 @@ export class BranchCommitEnricher<TChange> {
 	/**
 	 * Process the given change, preparing new commits for {@link BranchCommitEnricher.enrich | enrichment}.
 	 * @param change - The change to process.
-	 * @param isAttached - Whether or not the SharedTree is attached to the service.
 	 */
 	public processChange(change: SharedTreeBranchChange<TChange>): void {
 		if (change.type === "append") {

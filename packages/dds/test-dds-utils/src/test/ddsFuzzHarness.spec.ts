@@ -549,11 +549,11 @@ describe("DDS Fuzz Harness", () => {
 
 			// original client
 			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
-			assert.strictEqual(clientCreates[1].channel.noopCalls, 5);
+			assert.strictEqual(clientCreates[1].channel.noopCalls, 2);
 			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 0);
 
 			// client loaded from stash
-			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 5);
+			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 2);
 			assert.strictEqual(clientCreates[2].channel.noopCalls, 5);
 			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 0);
 		});
@@ -600,8 +600,8 @@ describe("DDS Fuzz Harness", () => {
 
 			// original client
 			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
-			assert.strictEqual(clientCreates[1].channel.noopCalls, 5);
-			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 3);
+			assert.strictEqual(clientCreates[1].channel.noopCalls, 2);
+			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 0);
 
 			// client loaded from stash
 			assert.strictEqual(
@@ -609,7 +609,7 @@ describe("DDS Fuzz Harness", () => {
 				2,
 				"3 should be saved, and 2 should be stashed",
 			);
-			assert.strictEqual(clientCreates[2].channel.noopCalls, 7);
+			assert.strictEqual(clientCreates[2].channel.noopCalls, 10);
 			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 9);
 		});
 	});
@@ -667,8 +667,8 @@ describe("DDS Fuzz Harness", () => {
 					["A", "B", "C"],
 				);
 				assert.equal(finalState.summarizerClient.channel.id, "summarizer");
-				assert.deepEqual(generatedOperations[5], { type: "rehydrate" });
-				assert.deepEqual(generatedOperations[11], { type: "attach" });
+				assert.deepEqual(generatedOperations[6], { type: "rehydrate" });
+				assert.deepEqual(generatedOperations[12], { type: "attach" });
 				verifyClientsSendOpsToEachOther(finalState);
 			});
 		});
@@ -1042,7 +1042,9 @@ describe("DDS Fuzz Harness", () => {
 					const contents: unknown = JSON.parse(
 						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
 					);
-					assert.deepEqual(contents, [{ clientId: "A", type: "noop" }]);
+					assert.deepEqual(contents, [
+						{ clientId: "A", seed: 1325690281034360, type: "noop" },
+					]);
 				});
 			}
 		});

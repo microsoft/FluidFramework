@@ -26,12 +26,14 @@ import {
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	getStoredSchema,
-	SchemaFactory,
 	toStoredSchema,
 	SchemaCompatibilityTester,
 	type TreeNodeSchema,
+	type SimpleNodeSchema,
+	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
+import { schemaStatics } from "../../../simple-tree/index.js";
 
 class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public constructor(
@@ -57,7 +59,7 @@ class TestSchemaRepository extends TreeStoredSchemaRepository {
 	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
 	 * @returns true iff update was performed.
 	 */
-	public tryUpdateTreeSchema(schema: TreeNodeSchema): boolean {
+	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
 		const storedSchema = getStoredSchema(schema);
 		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
 		const original = this.nodeSchema.get(name);
@@ -81,26 +83,26 @@ function assertEnumEqual<TEnum extends { [key: number]: string }>(
 }
 
 describe("Schema Evolution Examples", () => {
-	const builder = new SchemaFactory("test");
+	const builder = new SchemaFactoryAlpha("test");
 
-	const codePoint = builder.object("Primitive.CodePoint", {
+	const codePoint = builder.objectAlpha("Primitive.CodePoint", {
 		[EmptyKey]: builder.number,
 	});
 
 	// String made of unicode code points, allowing for sequence editing of a string.
-	const text = builder.array("Text", codePoint);
+	const text = builder.arrayAlpha("Text", codePoint);
 
-	const point = builder.object("Point", {
+	const point = builder.objectAlpha("Point", {
 		x: builder.number,
 		y: builder.number,
 	});
 
 	// A type that can be used to position items without an inherent position within the canvas.
-	const positionedCanvasItem = builder.object("PositionedCanvasItem", {
+	const positionedCanvasItem = builder.objectAlpha("PositionedCanvasItem", {
 		position: point,
 		content: text,
 	});
-	const canvas = builder.array("Canvas", positionedCanvasItem);
+	const canvas = builder.arrayAlpha("Canvas", positionedCanvasItem);
 
 	const root = builder.required(canvas);
 
@@ -178,7 +180,7 @@ describe("Schema Evolution Examples", () => {
 			// (either eagerly or lazily when first needing to do so when writing into the document).
 			// Once again the order does not matter:
 			assert(stored.tryUpdateTreeSchema(canvas));
-			assert(stored.tryUpdateTreeSchema(builder.number));
+			assert(stored.tryUpdateTreeSchema(schemaStatics.number));
 			assert(stored.tryUpdateTreeSchema(point));
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem));
 			assert(stored.tryUpdateTreeSchema(text));
@@ -197,11 +199,11 @@ describe("Schema Evolution Examples", () => {
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
 
-			const counter = builder.object("Counter", {
+			const counter = builder.objectAlpha("Counter", {
 				count: builder.number,
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
-			const positionedCanvasItem2 = builder.object("PositionedCanvasItem", {
+			const positionedCanvasItem2 = builder.objectAlpha("PositionedCanvasItem", {
 				position: point,
 				content: [text, counter],
 			});

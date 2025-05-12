@@ -22,6 +22,7 @@ import {
 } from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
+	bindAbortControllerContext,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
@@ -52,6 +53,7 @@ export function create(
 ) {
 	// Express app configuration
 	const app: express.Express = express();
+	const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
 
 	const requestSize = config.get("requestSizeLimit");
 	// initialize RestLess server translation
@@ -67,6 +69,9 @@ export function create(
 	app.use(restLessMiddleware());
 
 	app.use(bindTelemetryContext("historian"));
+	if (axiosAbortSignalEnabled) {
+		app.use(bindAbortControllerContext());
+	}
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		const enableResponseCloseLatencyMetric =

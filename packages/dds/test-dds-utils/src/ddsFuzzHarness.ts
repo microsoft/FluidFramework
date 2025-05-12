@@ -524,6 +524,18 @@ export interface DDSFuzzSuiteOptions {
 	idCompressorFactory?: (
 		summary?: FuzzSerializedIdCompressor,
 	) => IIdCompressor & IIdCompressorCore;
+
+	/**
+	 * This preserves the old seed behavior where the whole fuzz tests gets a single seed.
+	 * This creates issues as small changes, like adding a new random usage,
+	 * can result in a cascade of changes to the test, which can invalidate current skips.
+	 *
+	 * The new behavior generates a seed per operation, which leads to more stable results, as
+	 * random calls within a generator or reducer do not cascade to other generators or reducers.
+	 *
+	 * @deprecated This is option is for back-compat only. Once all usages are removed, it should also be removed.
+	 */
+	forceGlobalSeed?: true;
 }
 
 /**
@@ -1494,6 +1506,7 @@ export async function runTestForSeed<
 		},
 		initialState,
 		saveInfo,
+		options.forceGlobalSeed,
 	);
 
 	// Sanity-check that the generator produced at least one operation. If it failed to do so,
@@ -1621,6 +1634,15 @@ export function createSuite<
 	TOperation extends BaseOperation,
 >(model: DDSFuzzHarnessModel<TChannelFactory, TOperation>, options: InternalOptions): void {
 	const describeFuzz = createFuzzDescribe({ defaultTestCount: options.defaultTestCount });
+
+	if (options.forceGlobalSeed !== undefined && options.skip.size === 0) {
+		// if this error is getting in your way while debugging just comment it out, but re-add before you checkin
+		throw new Error(
+			"Yay. You fixed all the skipped tests. Remove forceGlobalSeed from the options as it is no longer needed, and removing it will lead to more consistent results going forward." +
+				"Please also do a search on the repo for forceGlobalSeed, and if they have all been removed, please remove the option, and its related code!",
+		);
+	}
+
 	describeFuzz(model.workloadName, ({ testCount, stressMode }) => {
 		before(() => {
 			if (options.saveFailures !== false) {

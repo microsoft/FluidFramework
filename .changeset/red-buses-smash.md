@@ -2,7 +2,7 @@
 "@fluidframework/sequence": minor
 "__section": legacy
 ---
-Remove deprecated IntervalCollections types
+IntervalCollections types (deprecated) have been removed
 
 This change removes the following deprecated generic types and provides non-generic alternatives where necessary:
 

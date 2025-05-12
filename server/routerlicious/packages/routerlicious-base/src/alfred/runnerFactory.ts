@@ -10,7 +10,11 @@ import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+import {
+	getGlobalAbortControllerContext,
+	IAlfredTenant,
+	setupAxiosInterceptorsForAbortSignals,
+} from "@fluidframework/server-services-client";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
@@ -458,6 +462,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		redisClientConnectionManagers.push(redisClientConnectionManagerForPub);
 
 		const redisEmitter = new RedisEmitter(redisClientConnectionManagerForPub.getRedisClient());
+		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
+		if (axiosAbortSignalEnabled) {
+			setupAxiosInterceptorsForAbortSignals(() =>
+				getGlobalAbortControllerContext().getAbortController(),
+			);
+		}
 
 		return new AlfredResources(
 			config,

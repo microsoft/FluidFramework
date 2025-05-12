@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	comparePersistedSchema,
 	extractPersistedSchema,
+	FluidClientVersion,
 	typeboxValidator,
 	type ForestOptions,
 	type ICodecOptions,
@@ -15,7 +16,7 @@ import {
 	type JsonCompatible,
 } from "@fluidframework/tree/alpha";
 
-import { List } from "../schema.js";
+import { config, List } from "../schema.js";
 
 import { v1 } from "./legacy/index.js";
 
@@ -111,7 +112,7 @@ const historicalSchema: {
 
 describe("schema", () => {
 	it("current schema matches latest historical schema", () => {
-		const current = extractPersistedSchema(List);
+		const current = extractPersistedSchema(config, FluidClientVersion.v2_3);
 
 		// For compatibility with deep equality and simple objects, round trip via JSON to erase prototypes.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

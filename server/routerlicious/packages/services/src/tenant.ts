@@ -127,7 +127,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
 			`/api/tenants/${encodeURIComponent(tenantId || "")}`,
-			undefined,
+			undefined /* requestBody */,
 		);
 		return result;
 	}

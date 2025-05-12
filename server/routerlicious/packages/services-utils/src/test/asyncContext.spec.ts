@@ -7,6 +7,7 @@ import { ITelemetryContextProperties } from "@fluidframework/server-services-tel
 import { v4 as uuid } from "uuid";
 import assert from "assert";
 import {
+	AsyncLocalStorageAbortControllerContext,
 	AsyncLocalStorageContextProvider,
 	AsyncLocalStorageTelemetryContext,
 } from "../asyncContext";
@@ -256,6 +257,92 @@ describe("AsyncContext", function () {
 			assert.deepStrictEqual(logger.events[0], props1);
 			assert.deepStrictEqual(logger.events[1], { ...props1, ...props2 });
 			assert.deepStrictEqual(logger.events[2], props1);
+		});
+	});
+
+	describe("AsyncLocalStorageAbortControllerContext", function () {
+		class MockAbortControllerContextLogger {
+			private _events: Partial<AbortController>[] = [];
+
+			public get events() {
+				return this._events;
+			}
+
+			constructor(
+				private readonly abortControllerContext: AsyncLocalStorageAbortControllerContext,
+			) {}
+
+			public log() {
+				const abortController = this.abortControllerContext.getAbortController();
+				if (abortController !== undefined) {
+					this._events.push(abortController);
+				}
+			}
+
+			public clear() {
+				this._events = [];
+			}
+		}
+		it("returns undefined context when unbound", () => {
+			const abortControllerContext = new AsyncLocalStorageAbortControllerContext();
+			const logger = new MockAbortControllerContextLogger(abortControllerContext);
+			const helper = () => {
+				logger.log();
+			};
+			helper(); // 0
+			assert.strictEqual(logger.events.length, 0);
+			assert.deepStrictEqual(logger.events[0], undefined);
+		});
+		it("binds properties to sync function context", () => {
+			const abortControllerContext = new AsyncLocalStorageAbortControllerContext();
+			const logger = new MockAbortControllerContextLogger(abortControllerContext);
+			const helper = () => {
+				logger.log();
+			};
+			const main = (abortController: AbortController) => {
+				abortControllerContext.bindAbortController(abortController, () => helper());
+			};
+			const abortController1 = new AbortController();
+			const abortController2 = new AbortController();
+			main(abortController1); // 0
+			main(abortController2); // 1
+			main(abortController1); // 2
+			helper(); // 3
+			assert.strictEqual(logger.events.length, 3);
+			assert.deepStrictEqual(logger.events[0], abortController1);
+			assert.deepStrictEqual(logger.events[1], abortController2);
+			assert.deepStrictEqual(logger.events[2], abortController1);
+			assert.deepStrictEqual(logger.events[3], undefined);
+		});
+		it("binds properties to async function context", async () => {
+			const abortControllerContext = new AsyncLocalStorageAbortControllerContext();
+			const logger = new MockAbortControllerContextLogger(abortControllerContext);
+			const helper = async () => {
+				logger.log();
+			};
+			const main = async (abortController: AbortController) => {
+				return new Promise<void>((resolve) => {
+					abortControllerContext.bindAbortController(abortController, () =>
+						helper().then(resolve),
+					);
+				});
+			};
+			const abortController1 = new AbortController();
+			const abortController2 = new AbortController();
+			main(abortController1); // 0
+			main(abortController2); // 1
+			main(abortController1); // 2
+			helper(); // 3
+			assert.strictEqual(logger.events.length, 3);
+			assert.deepStrictEqual(logger.events[0], abortController1);
+			assert.deepStrictEqual(logger.events[1], abortController2);
+			assert.deepStrictEqual(logger.events[2], abortController1);
+			assert.deepStrictEqual(logger.events[3], undefined);
+			logger.clear();
+			await Promise.all([main(abortController1), helper(), main(abortController2)]);
+			const abortControllers = logger.events;
+			assert(abortControllers.includes(abortController1));
+			assert(abortControllers.includes(abortController2));
 		});
 	});
 });

@@ -55,7 +55,7 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 			sendBlobAttachOp: () => {},
 			blobRequested: () => {},
 			isBlobDeleted: () => false,
-			createBlobPlaceholders: false,
+			createBlobPayloadPending: false,
 
 			// overrides
 			...overrides,

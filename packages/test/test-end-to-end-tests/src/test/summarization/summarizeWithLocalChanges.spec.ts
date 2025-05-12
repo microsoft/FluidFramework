@@ -467,7 +467,7 @@ describeCompat(
 						summaryAttempts: 1,
 					},
 					{
-						eventName: "fluid:telemetry:FluidDataStoreContext:DataStoreCreatedInSummarizer",
+						eventName: "fluid:telemetry:FluidDataStoreContext:DataStoreCreatedWhileReadonly",
 						clientType,
 					},
 					{

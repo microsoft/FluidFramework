@@ -694,7 +694,7 @@ describe("Pending State Manager", () => {
 
 	describe("replayPendingStates", () => {
 		let pendingStateManager: PendingStateManager;
-		const resubmittedBatchIds: string[] = [];
+		const resubmittedBatchIds: (string | undefined)[] = [];
 		const clientId = "clientId";
 
 		beforeEach(async () => {
@@ -704,7 +704,7 @@ describe("Pending State Manager", () => {
 					applyStashedOp: async () => undefined,
 					clientId: () => clientId,
 					connected: () => true,
-					reSubmitBatch: (batch, batchId) => {
+					reSubmitBatch: (batch, { batchId }) => {
 						resubmittedBatchIds.push(batchId);
 					},
 					isActiveConnection: () => false,

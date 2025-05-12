@@ -1823,7 +1823,7 @@ export class Container
 			if (attachmentBlobs !== undefined) {
 				assert(
 					this.detachedBlobStorage !== undefined,
-					"detached blob storage should always exist when detached",
+					0xb8e /* detached blob storage should always exist when detached */,
 				);
 				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
 			}

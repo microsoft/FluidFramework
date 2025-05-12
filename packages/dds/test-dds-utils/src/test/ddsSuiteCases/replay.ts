@@ -15,8 +15,8 @@ import { _dirname } from "./dirname.cjs";
 
 let currentIndex = 0;
 const expectedOps = [
-	{ type: "noop", clientId: "B" },
-	{ type: "noop", clientId: "C" },
+	{ type: "noop", seed: 7214070977886474, clientId: "B" },
+	{ type: "noop", seed: 7214070977886475, clientId: "C" },
 ];
 
 const generatorUnreachable: () => Promise<never> = async () => {
