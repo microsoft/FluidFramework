@@ -62,6 +62,7 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.insertCols(Math.floor(localMatrix!.colCount / 2), 1);
 						}
 					},
@@ -79,6 +80,7 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.insertRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
@@ -96,7 +98,9 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.insertCols(Math.floor(localMatrix!.colCount / 2), 1);
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.insertRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
@@ -115,12 +119,9 @@ describe("SharedMatrix execution time", () => {
 						});
 					},
 					benchmarkFn: () => {
-						if (!localMatrix) {
-							throw new Error("localMatrix is not initialized");
-						}
-
 						for (let i = 0; i < count; i++) {
-							localMatrix.removeCols(Math.floor(localMatrix.colCount / 2), 1);
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							localMatrix!.removeCols(Math.floor(localMatrix!.colCount / 2), 1);
 						}
 					},
 				});
@@ -137,6 +138,7 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.removeRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
@@ -154,7 +156,9 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.removeCols(Math.floor(localMatrix!.colCount / 2), 1);
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.removeRows(Math.floor(localMatrix!.rowCount / 2), 1);
 						}
 					},
@@ -172,6 +176,7 @@ describe("SharedMatrix execution time", () => {
 					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							localMatrix!.setCell(i, i, "abc");
 						}
 					},
