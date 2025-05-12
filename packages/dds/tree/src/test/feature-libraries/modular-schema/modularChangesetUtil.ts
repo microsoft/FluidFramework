@@ -260,7 +260,7 @@ function normalizeRangeMap<K, V>(
 			) {
 				prevEntry = { ...prevEntry, length: prevEntry.length + entry.length };
 			} else {
-				map.set(prevEntry.start, prevEntry.length, prevEntry.value);
+				normalized.set(prevEntry.start, prevEntry.length, prevEntry.value);
 				prevEntry = entry;
 			}
 		} else {
@@ -269,7 +269,7 @@ function normalizeRangeMap<K, V>(
 	}
 
 	if (prevEntry !== undefined) {
-		map.set(prevEntry.start, prevEntry.length, prevEntry.value);
+		normalized.set(prevEntry.start, prevEntry.length, prevEntry.value);
 	}
 
 	return normalized;
