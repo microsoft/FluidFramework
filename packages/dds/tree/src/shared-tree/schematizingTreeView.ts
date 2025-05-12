@@ -173,19 +173,20 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
+			const schema = this.viewSchema.viewSchemaAsStored;
 			const mapTree = mapTreeFromNodeData(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
 				this.nodeKeyManager,
 				{
-					schema: this.checkout.storedSchema,
+					schema,
 					policy: this.schemaPolicy,
 				},
 			);
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.viewSchema.viewSchemaAsStored,
+				schema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});

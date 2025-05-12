@@ -159,7 +159,7 @@ function normalizeNewFieldContent(
  * This function should only be called when the tree is uninitialized (no schema or content).
  * @remarks
  *
- * If the proposed schema (from `treeContent`) is not compatible with the emptry tree, this function handles using an intermediate schema
+ * If the proposed schema (from `treeContent`) is not compatible with the empty tree, this function handles using an intermediate schema
  * which supports the empty tree as well as the final tree content.
  */
 export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredContent): void {

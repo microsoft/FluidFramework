@@ -322,7 +322,7 @@ const unparentedLocation: LocationInField = {
 	index: -1,
 };
 
-class UnhydratedFlexTreeField implements FlexTreeField {
+abstract class UnhydratedFlexTreeField implements FlexTreeField {
 	public [flexTreeMarker] = FlexTreeEntityKind.Field as const;
 
 	public get context(): FlexTreeContext {
@@ -597,7 +597,7 @@ function getOrCreateField(
 		return new UnhydratedTreeSequenceField(parent.simpleContext, schema, key, parent, onEdit);
 	}
 
-	return new UnhydratedFlexTreeField(parent.simpleContext, schema, key, parent, onEdit);
+	return fail("unsupported field kind");
 }
 
 // #endregion Caching and unboxing utilities
