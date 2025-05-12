@@ -1083,7 +1083,7 @@ export namespace TableSchema {
 		params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryAlpha<TScope>, TCell>,
 	): System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
-	 * Factory for creating new table column schema.
+	 * Factory for creating new table row schema.
 	 * @internal
 	 */
 	export function row<
