@@ -13617,6 +13617,9 @@ importers:
       '@fluid-private/test-drivers':
         specifier: workspace:~
         version: link:../test-drivers
+      '@fluid-private/test-pairwise-generator':
+        specifier: workspace:~
+        version: link:../test-pairwise-generator
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../framework/aqueduct
@@ -13677,6 +13680,9 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^5.0.0
         version: 5.0.0
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
