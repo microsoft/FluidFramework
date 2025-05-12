@@ -86,7 +86,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
 	public encode(input: unknown, bind: IFluidHandleInternal): unknown {
-		assert(isISharedObjectHandle(bind), "bind must be an ISharedObjectHandle");
+		assert(isISharedObjectHandle(bind), 0xb8c /* bind must be an ISharedObjectHandle */);
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -119,7 +119,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 * being bound to the given bind context in the process.
 	 */
 	public stringify(input: unknown, bind: IFluidHandle): string {
-		assert(isISharedObjectHandle(bind), "bind must be an ISharedObjectHandle");
+		assert(isISharedObjectHandle(bind), 0xb8d /* bind must be an ISharedObjectHandle */);
 		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
 	}
 
