@@ -323,13 +323,10 @@ function and(
 		);
 	}
 
-	// Always take the larger minVersionForCollab
-	const minVersionForCollab = gt(
+	const minVersionForCollab = getGreaterMinVersionForCollab(
 		currentDocSchema.minVersionForCollab,
 		desiredDocSchema.minVersionForCollab,
-	)
-		? currentDocSchema.minVersionForCollab
-		: desiredDocSchema.minVersionForCollab;
+	);
 
 	return {
 		version: currentDocumentVersionSchema,
@@ -353,13 +350,11 @@ function or(
 			desiredDocSchema.runtime[key],
 		);
 	}
-	// Always take the larger minVersionForCollab
-	const minVersionForCollab = gt(
+
+	const minVersionForCollab = getGreaterMinVersionForCollab(
 		currentDocSchema.minVersionForCollab,
 		desiredDocSchema.minVersionForCollab,
-	)
-		? currentDocSchema.minVersionForCollab
-		: desiredDocSchema.minVersionForCollab;
+	);
 
 	return {
 		version: currentDocumentVersionSchema,
@@ -373,9 +368,13 @@ function same(
 	currentDocSchema: IDocumentSchemaCurrent,
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): boolean {
-	if (gt(desiredDocSchema.minVersionForCollab, currentDocSchema.minVersionForCollab)) {
-		// We don't consider minVersionForCollab to be a schema change unless the desired version
-		// is greater than the current version.
+	if (
+		getGreaterMinVersionForCollab(
+			currentDocSchema.minVersionForCollab,
+			desiredDocSchema.minVersionForCollab,
+		) !== currentDocSchema.minVersionForCollab
+	) {
+		// If the the greater minVersionForCollab is not the same as the current one, then they are not the same
 		return false;
 	}
 	for (const key of new Set([
@@ -512,13 +511,12 @@ export class DocumentsSchemaController {
 			0x949 /* not supported */,
 		);
 
-		// We use the greater of existingMinVersionForCollab and minVersionForCollab
+		// The desired minVersionForCollab is the greater of the existing minVersionForCollab and the one passed in.
 		const existingMinVersionForCollab = documentMetadataSchema?.minVersionForCollab;
-		const desiredMinVersionForCollab =
-			existingMinVersionForCollab === undefined ||
-			gt(minVersionForCollab, existingMinVersionForCollab)
-				? minVersionForCollab
-				: existingMinVersionForCollab;
+		const desiredMinVersionForCollab = getGreaterMinVersionForCollab(
+			existingMinVersionForCollab,
+			minVersionForCollab,
+		);
 
 		// Desired schema by this session - almost all props are coming from arguments
 		this.desiredSchema = {
@@ -597,13 +595,12 @@ export class DocumentsSchemaController {
 		// features that are mentioned in schema right away, without a need to go through schema transition (and thus for a session or
 		// two losing ability to use all the features)
 
-		// TODO: Hack to make sure we use the preferred minVersionForCollab - should fix this properly
-		this.documentSchema.minVersionForCollab = gt(
-			this.desiredSchema.minVersionForCollab,
+		// TODO: This is a hacky way to ensure we always use greater of the two minVersionForCollab. It would be better to avoid
+		// custom logic here.
+		this.documentSchema.minVersionForCollab = getGreaterMinVersionForCollab(
 			this.documentSchema.minVersionForCollab,
-		)
-			? this.desiredSchema.minVersionForCollab
-			: this.desiredSchema.minVersionForCollab;
+			this.desiredSchema.minVersionForCollab,
+		);
 
 		const schema = this.explicitSchemaControl ? this.documentSchema : this.desiredSchema;
 
@@ -721,6 +718,28 @@ export class DocumentsSchemaController {
 	public onDisconnect(): void {
 		this.sendOp = true;
 	}
+}
+
+/**
+ * Returns the greater of the current and desired minVersionForCollab.
+ * If the current is undefined, it always returns the desired.
+ * Note: It should not be possible for the desired minVersionForCollab to be undefined
+ */
+function getGreaterMinVersionForCollab(
+	currentMinVersionForCollab: MinimumVersionForCollab | undefined,
+	desiredMinVersionForCollab: MinimumVersionForCollab,
+): MinimumVersionForCollab {
+	assert(
+		desiredMinVersionForCollab !== undefined,
+		"desiredMinVersionForCollab should be defined",
+	);
+	return currentMinVersionForCollab === undefined
+		? // If the current is undefined, return the desired
+			desiredMinVersionForCollab
+		: // If current is defined, return the greater of the current/desired
+			gt(currentMinVersionForCollab, desiredMinVersionForCollab)
+			? currentMinVersionForCollab
+			: desiredMinVersionForCollab;
 }
 
 /* eslint-enable jsdoc/check-indentation */
