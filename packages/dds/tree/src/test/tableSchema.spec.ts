@@ -1479,7 +1479,7 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		it("TableSchema: Listening fo changes to the rows list only", () => {
+		it("TableSchema: Listening for changes to the rows list only", () => {
 			class Cell extends schemaFactory.object("TableCell", {
 				value: schemaFactory.string,
 			}) {}
