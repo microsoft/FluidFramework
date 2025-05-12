@@ -226,45 +226,38 @@ export function compareCellPositionsUsingTombstones(
 
 		// Note that these indices are for ordering the revisions in which the cells were named, not the revisions
 		// of the changesets in which the marks targeting these cells appear.
-		const oldCellRevisionIndex = metadata.getIndex(oldMarkCell.revision);
-		const newCellRevisionIndex = metadata.getIndex(newMarkCell.revision);
+		const revisionComparison = metadata.compareRevisions(
+			oldMarkCell.revision,
+			newMarkCell.revision,
+		);
 
 		// If the metadata defines an ordering for the revisions then the cell from the newer revision comes first.
-		if (newCellRevisionIndex !== undefined && oldCellRevisionIndex !== undefined) {
-			return newCellRevisionIndex > oldCellRevisionIndex
-				? CellOrder.NewThenOld
-				: CellOrder.OldThenNew;
+		if (revisionComparison !== 0) {
+			return revisionComparison > 0 ? CellOrder.NewThenOld : CellOrder.OldThenNew;
 		}
 
-		if (newCellRevisionIndex === undefined && oldCellRevisionIndex === undefined) {
-			// While it is possible for both marks to refer to cells that were named in revisions that are outside
-			// the scope of the metadata, such a scenario should be handled above due to the fact that one of the two
-			// changesets should have tombstones or marks for both cells.
-			//
-			// To see this in the context of rebase, we must consider the lowest common ancestor (LCA) of each change's
-			// original (i.e., unrebased) edit with the head of the branch they will both reside on after the rebase.
-			// ...─(Ti)─...─(Tj)─...─(old')─(new') <- branch both change will reside on after rebase
-			//        |        └─...─(new)
-			//        └─...─(old)
-			// In the diagram above we can see that by the time `new` is being rebased over `old`, both changesets have
-			// been rebased over, and therefore have cell information for, changes `Tj` onwards. This means that one of
-			// The two changesets (the `old` one in the diagram above) will have tombstones or marks for any cells that
-			// `new` refers to so long as those cells were not created on `new`'s branch.
-			// Note that the change that contains the superset of cells (again, ignoring cells created on the other
-			// change's branch) is not always the older change. Consider the following scenario:
-			// ...─(Ti)─...─(Tj)─...─(old')─(new')
-			//        |        └─...─(old)
-			//        └─...─(new)
-			//
-			// The same scenario can arise in the context of compose (just consider composing `old'` and `new'` from
-			// the examples above) with the same resolution.
-			assert(false, 0x8a2 /* Invalid cell ordering scenario */);
-		}
-
-		// The absence of metadata for a cell with a defined revision means that the cell is from a revision that
-		// predates the edits that are within the scope of the metadata. Such a cell is therefore older than the one
-		// for which we do have metadata.
-		return oldCellRevisionIndex === undefined ? CellOrder.NewThenOld : CellOrder.OldThenNew;
+		// While it is possible for both marks to refer to cells that were named in revisions that are outside
+		// the scope of the metadata, such a scenario should be handled above due to the fact that one of the two
+		// changesets should have tombstones or marks for both cells.
+		//
+		// To see this in the context of rebase, we must consider the lowest common ancestor (LCA) of each change's
+		// original (i.e., unrebased) edit with the head of the branch they will both reside on after the rebase.
+		// ...─(Ti)─...─(Tj)─...─(old')─(new') <- branch both change will reside on after rebase
+		//        |        └─...─(new)
+		//        └─...─(old)
+		// In the diagram above we can see that by the time `new` is being rebased over `old`, both changesets have
+		// been rebased over, and therefore have cell information for, changes `Tj` onwards. This means that one of
+		// The two changesets (the `old` one in the diagram above) will have tombstones or marks for any cells that
+		// `new` refers to so long as those cells were not created on `new`'s branch.
+		// Note that the change that contains the superset of cells (again, ignoring cells created on the other
+		// change's branch) is not always the older change. Consider the following scenario:
+		// ...─(Ti)─...─(Tj)─...─(old')─(new')
+		//        |        └─...─(old)
+		//        └─...─(new)
+		//
+		// The same scenario can arise in the context of compose (just consider composing `old'` and `new'` from
+		// the examples above) with the same resolution.
+		assert(false, 0x8a2 /* Invalid cell ordering scenario */);
 	}
 }
 

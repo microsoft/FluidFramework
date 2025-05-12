@@ -838,7 +838,7 @@ function rollback<TChangeset>(
 ): TaggedChange<TChangeset> {
 	const revision = `rollback-${change.revision}` as unknown as RevisionTag;
 	return tagRollbackInverse(
-		fieldRebaser.inlineRevision(fieldRebaser.invert(change, revision, true), revision),
+		fieldRebaser.invert(change, revision, true),
 		revision,
 		change.revision,
 	);

@@ -41,7 +41,7 @@ const nodeId4: NodeId = { localId: brand(4) };
 const revisionMetadata: RebaseRevisionMetadata = {
 	getRevisionToRebase: () => assert.fail("Unexpected revision info query"),
 	getBaseRevisions: () => assert.fail("Unexpected revision info query"),
-	getIndex: () => assert.fail("Unexpected revision index query"),
+	compareRevisions: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
 	hasRollback: () => assert.fail("Unexpected revision info query"),
 };

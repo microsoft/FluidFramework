@@ -593,7 +593,7 @@ const dummyComposeManager: ComposeNodeManager = {
 };
 
 const dummyRevisionMetadata: RevisionMetadataSource = {
-	getIndex: unsupportedFunc,
+	compareRevisions: unsupportedFunc,
 	tryGetInfo: unsupportedFunc,
 	hasRollback: unsupportedFunc,
 };

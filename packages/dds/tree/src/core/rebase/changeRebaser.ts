@@ -130,7 +130,12 @@ export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
 /**
  */
 export interface RevisionMetadataSource {
-	readonly getIndex: RevisionIndexer;
+	/**
+	 * @returns a positive number if tag2 is a later revision than tag1 or a negative number if tag2 is an earlier revision.
+	 * Returns zero is the order cannot be determined, which happens if both revisions are older
+	 * than the set of revisions handled by this metadata source.
+	 */
+	readonly compareRevisions: (tag1: RevisionTag, tag2: RevisionTag) => number;
 	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 	readonly hasRollback: (tag: RevisionTag) => boolean;
 }

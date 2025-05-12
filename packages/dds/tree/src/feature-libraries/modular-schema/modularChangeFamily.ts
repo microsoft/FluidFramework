@@ -3348,22 +3348,6 @@ function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]):
 		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
 	}
 
-	const revisions = new Set<RevisionTag>();
-	const rolledBackRevisions: RevisionTag[] = [];
-	for (const info of revInfos) {
-		revisions.add(info.revision);
-		if (info.rollbackOf !== undefined) {
-			rolledBackRevisions.push(info.rollbackOf);
-		}
-	}
-
-	rolledBackRevisions.reverse();
-	for (const revision of rolledBackRevisions) {
-		if (!revisions.has(revision)) {
-			revInfos.push({ revision });
-		}
-	}
-
 	return { maxId: brand(maxId), revInfos };
 }
 

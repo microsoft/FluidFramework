@@ -329,7 +329,7 @@ export function rebaseBranch<TChange>(
 		"sourceChange",
 		() => {
 			return changeRebaser.compose(editsToCompose);
-		}
+		},
 	);
 }
 
@@ -379,23 +379,45 @@ export function rebaseChange<TChange>(
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],
 ): RevisionMetadataSource {
-	const getIndex = (revision: RevisionTag): number | undefined => {
-		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		return index >= 0 ? index : undefined;
+	const compareRevisions = (revision1: RevisionTag, revision2: RevisionTag): number => {
+		const index1 = getIndex(revision1);
+		const index2 = getIndex(revision2);
+
+		if (index1 !== undefined) {
+			return index2 !== undefined ? index2 - index1 : -1;
+		}
+
+		return index2 !== undefined ? 1 : 0;
 	};
+
 	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
 		if (revision === undefined) {
 			return undefined;
 		}
-		const index = getIndex(revision);
-		return index === undefined ? undefined : revInfos[index];
+		return revInfos.find((info) => info.revision === revision);
 	};
 
 	const hasRollback = (revision: RevisionTag): boolean => {
 		return revInfos.find((info) => info.rollbackOf === revision) !== undefined;
 	};
 
-	return { getIndex, tryGetInfo, hasRollback };
+	const getIndex = (revision: RevisionTag): number | undefined => {
+		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
+		if (index >= 0) {
+			return index;
+		}
+
+		const rollbackIndex = revInfos.findIndex((revInfo) => revInfo.rollbackOf === revision);
+		if (rollbackIndex >= 0) {
+			// This change is the forward revision of a rollback included in revInfos, so it comes after
+			// all revisions in revInfos. Earlier rollbacks have later forward revisions.
+			return 2 * revInfos.length - rollbackIndex;
+		}
+
+		return undefined;
+	};
+
+	return { compareRevisions, tryGetInfo, hasRollback };
 }
 
 export function rebaseChangeOverChanges<TChange>(
