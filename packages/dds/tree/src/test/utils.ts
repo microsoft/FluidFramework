@@ -630,17 +630,13 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 	assert.deepEqual(actual, expected);
 }
 
+// We use the latest version of the schema format for comparison. If we encode a v1 schema as v2, the fields
+// that only exist in the new format will be left undefined and the comparison will still be valid.
+// If you are adding a new schema format, consider changing the encoding format used in this codec, given
+// that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
 const schemaCodec = makeSchemaCodec(
 	{ jsonValidator: typeboxValidator },
-	SchemaCodecVersion.v1,
-);
-
-// If you are adding a new schema format, consider changing the encoding format used in the above codec, given
-// that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
-// Note we have to divide the length of the return value from `Object.keys` to get the number of enum entries.
-assert(
-	Object.keys(SchemaCodecVersion).length / 2 === 1,
-	"This code only handles a single schema codec version.",
+	SchemaCodecVersion.v2,
 );
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {

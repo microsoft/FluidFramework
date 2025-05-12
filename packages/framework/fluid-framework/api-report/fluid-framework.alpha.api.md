@@ -281,7 +281,8 @@ export enum FluidClientVersion {
     v2_0 = "v2_0",
     v2_1 = "v2_1",
     v2_2 = "v2_2",
-    v2_3 = "v2_3"
+    v2_3 = "v2_3",
+    v2_4 = "v2_4"
 }
 
 // @public
@@ -938,6 +939,8 @@ export enum NodeKind {
 export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly custom?: TCustomMetadata | undefined;
     readonly description?: string | undefined;
+    // (undocumented)
+    readonly persistedData?: string | undefined;
 }
 
 // @public @sealed

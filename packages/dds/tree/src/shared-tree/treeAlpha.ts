@@ -38,7 +38,12 @@ import {
 	TreeViewConfigurationAlpha,
 } from "../simple-tree/index.js";
 import type { JsonCompatible } from "../util/index.js";
-import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
+import {
+	currentVersion,
+	noopValidator,
+	type FluidClientVersion,
+	type ICodecOptions,
+} from "../codec/index.js";
 import type { ITreeCursorSynchronous } from "../core/index.js";
 import {
 	cursorForMapTreeField,
@@ -52,7 +57,6 @@ import {
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { currentVersion } from "../codec/index.js";
 
 /**
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
@@ -316,6 +320,8 @@ export const TreeAlpha: TreeAlpha = {
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
+			// TODO: Either the return type from this method cannot be persisted due to type constraints, or we need to
+			// dispatch the correct schema codec based on the format version specified by the caller.
 			schema: extractPersistedSchema(config, currentVersion),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
@@ -380,4 +386,5 @@ const versionToFormat = {
 	v2_1: 1,
 	v2_2: 1,
 	v2_3: 1,
+	v2_4: 2,
 };

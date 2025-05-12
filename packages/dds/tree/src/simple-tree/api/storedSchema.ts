@@ -28,6 +28,9 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
  *
  * @param schema - The schema to dump.
  *
+ * @param schema - The schema to dump.
+ * @param writeVersion - The schema version to use when encoding the schema.
+ *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
  * This format is also compatible with {@link ViewContent.schema}, {@link comparePersistedSchema} and {@link persistedToSimpleSchema}.
