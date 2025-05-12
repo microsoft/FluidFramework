@@ -322,7 +322,7 @@ const unparentedLocation: LocationInField = {
 	index: -1,
 };
 
-abstract class UnhydratedFlexTreeField implements FlexTreeField {
+class UnhydratedFlexTreeField implements FlexTreeField {
 	public [flexTreeMarker] = FlexTreeEntityKind.Field as const;
 
 	public get context(): FlexTreeContext {
@@ -595,6 +595,11 @@ function getOrCreateField(
 
 	if (schema === FieldKinds.sequence.identifier) {
 		return new UnhydratedTreeSequenceField(parent.simpleContext, schema, key, parent, onEdit);
+	}
+
+	// TODO: this seems to used by unknown optional fields. They should probably use "optional" not "Forbidden" schema.
+	if (schema === FieldKinds.forbidden.identifier) {
+		return new UnhydratedFlexTreeField(parent.simpleContext, schema, key, parent, onEdit);
 	}
 
 	return fail("unsupported field kind");
