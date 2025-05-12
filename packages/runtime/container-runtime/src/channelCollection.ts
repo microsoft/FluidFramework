@@ -1703,7 +1703,7 @@ export class ChannelCollectionFactory implements IFluidDataStoreFactory {
 		// from the same package.
 		assert(
 			context instanceof FluidDataStoreContext,
-			"we don't support the layer boundary here today",
+			0xb8f /* we don't support the layer boundary here today */,
 		);
 
 		const runtime = new ChannelCollection(
