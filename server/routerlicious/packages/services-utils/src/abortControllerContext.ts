@@ -4,6 +4,7 @@
  */
 
 import { getGlobalAbortControllerContext } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { RequestHandler } from "express";
 
 /**
@@ -13,9 +14,34 @@ import type { RequestHandler } from "express";
  * @internal
  */
 export const bindAbortControllerContext = (): RequestHandler => {
-	return (req, res, next) => {
+	return (request, response, next) => {
 		const abortControllerContext = getGlobalAbortControllerContext();
-		const abortControllerForRequest = new AbortController();
-		abortControllerContext.bindAbortController(abortControllerForRequest, () => next());
+		const abortController = new AbortController();
+		abortControllerContext.bindAbortController(abortController, () => next());
+		// Set up listener for client disconnection
+		request.socket.on("close", () => {
+			// Only if the response has not been sent yet, abort the signal
+			// and remove the abort signal from the manager
+			if (!response.headersSent) {
+				Lumberjack.info("Client aborted socket connection", {
+					url: request.originalUrl,
+					method: request.method,
+				});
+
+				abortController?.abort("Client aborted socket connection");
+			}
+		});
+
+		response.on("finish", () => {
+			const signal = abortController?.signal;
+			if (signal?.aborted) {
+				Lumberjack.info("Request completed after abort", {
+					reason: signal?.reason,
+					url: request.originalUrl,
+					method: request.method,
+				});
+			}
+		});
+		next();
 	};
 };

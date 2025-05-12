@@ -10,11 +10,7 @@ import { default as Axios, RawAxiosRequestHeaders, type AxiosError } from "axios
  * @internal
  */
 export function isAxiosCanceledError(error: AxiosError): boolean {
-	return (
-		error.name === "CanceledError" &&
-		error.code !== undefined &&
-		error.code === Axios.AxiosError.ERR_CANCELED
-	);
+	return error.name === "CanceledError" && error.code === Axios.AxiosError.ERR_CANCELED;
 }
 
 /**

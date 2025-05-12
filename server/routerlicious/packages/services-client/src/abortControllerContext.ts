@@ -31,7 +31,7 @@ export interface IAbortControllerContext {
 }
 
 /**
- * Empty ITimeoutContext that binds nothing never throws.
+ * Empty IAbortControllerContext that binds nothing never throws.
  * Callbacks are still executed and returned.
  */
 class NullAbortControllerContext implements IAbortControllerContext {

@@ -32,7 +32,6 @@ import {
 	IAlfredTenant,
 } from "@fluidframework/server-services-client";
 import {
-	addAbortControllerForRequestMiddleware,
 	alternativeMorganLoggerMiddleware,
 	bindTelemetryContext,
 	bindTimeoutContext,
@@ -173,7 +172,6 @@ export function create(
 	app.use(cookieParser());
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
-	app.use(addAbortControllerForRequestMiddleware());
 
 	// Bind routes
 	const routes = alfredRoutes.create(
