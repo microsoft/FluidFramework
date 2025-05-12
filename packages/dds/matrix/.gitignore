@@ -53,6 +53,7 @@ temp_modules/
 
 # Output folder for memory profiling tests
 .memoryTestsOutput
+.timeTestsOutput
 
 bench/dist/
 bench/profile.txt

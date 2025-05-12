@@ -86,6 +86,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"pack:tests": "tar -cf ./matrix.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
+		"test:execution-time-profiling:report": "mocha --config src/test/time/.mocharc.cjs",
 		"test:coverage": "c8 npm test",
 		"test:memory": "mocha --config src/test/memory/.mocharc.cjs",
 		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.cjs",
