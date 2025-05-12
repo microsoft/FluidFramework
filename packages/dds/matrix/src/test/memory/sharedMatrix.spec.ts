@@ -148,10 +148,13 @@ describe("SharedMatrix memory usage", () => {
 							}
 
 							for (let i = 0; i < count; i++) {
-								this.localMatrix.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
-								this.localMatrix.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
-								this.localMatrix.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
-								this.localMatrix.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+								const middleCol = Math.floor(this.localMatrix.colCount / 2);
+								const middleRow = Math.floor(this.localMatrix.rowCount / 2);
+
+								this.localMatrix.insertCols(middleCol, 1);
+								this.localMatrix.removeCols(middleCol, 1);
+								this.localMatrix.insertRows(middleRow, 1);
+								this.localMatrix.removeRows(middleRow, 1);
 							}
 						}
 
