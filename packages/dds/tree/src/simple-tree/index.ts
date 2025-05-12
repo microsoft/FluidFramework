@@ -12,7 +12,6 @@ export {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
-	type TreeChangeEvents,
 	// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
 	// See docs on TreeNode for more details.
 	type TreeNode,
@@ -123,6 +122,8 @@ export {
 	type TreeSchema,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
+	schemaStatics,
+	type TreeChangeEvents,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
