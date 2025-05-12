@@ -890,7 +890,7 @@ export namespace System_TableSchema {
  *
  * const table = new Table({
  * 	columns: [{ id: "column-0" }],
- * 	rows: [{ id: "row-0", cells: {} }],
+ * 	rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
  * });
  * ```
  *
@@ -940,7 +940,7 @@ export namespace System_TableSchema {
  * });
  * ```
  *
- * @example Listening fo changes to the rows list only
+ * @example Listening for changes to the rows list only
  *
  * ```typescript
  * // Listen for any changes to the list of rows.
@@ -949,6 +949,29 @@ export namespace System_TableSchema {
  * // But it won't fire when a row's properties change, or when the row's cells change, etc.
  * Tree.on(table.rows, "nodeChanged", () => {
  * 	// Respond to the change.
+ * });
+ * ```
+ *
+ * @example Removing column and cells in a transaction
+ *
+ * When removing a column, if you wish to ensure that all of its corresponding cells are also removed (and not
+ * orphaned), you can remove the column and all of the relevant cells in a transaction.
+ * Note that there are performance implications to this.
+ *
+ * ```typescript
+ * // Remove column1 and all of its cells.
+ * // The "transaction" method will ensure that all changes are applied atomically.
+ * Tree.runTransaction(table, () => {
+ * 	// Remove column1.
+ * 	table.removeColumn(column1);
+ *
+ * 	// Remove the cell at column1 for each row.
+ * 	for (const row of table.rows) {
+ * 		table.removeCell({
+ * 			column: column1,
+ * 			row,
+ * 		});
+ * 	}
  * });
  * ```
  *

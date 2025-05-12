@@ -29,7 +29,7 @@ class Table extends TableSchema.createTable({
 
 const table = new Table({
 	columns: [{ id: "column-0" }],
-	rows: [{ id: "row-0", cells: {} }],
+	rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
 });
 ```
 
@@ -72,6 +72,68 @@ const table = new Table({
 	rows: [],
 });
 ```
+
+#### Interacting with the table
+
+Table trees created using `TableSchema` offer various APIs to make working with tabular data easy.
+These include:
+
+- Insertion and removal of columns, rows, and cells.
+- Cell access by column/row.
+
+```typescript
+const table = new Table({
+	columns: [],
+	rows: [],
+})
+
+const column0 = new Column({
+	props: { label: "Column 0" },
+});
+
+// Append a column to the end of the table.
+table.insertColumn({
+	column: column0,
+});
+
+const rows = [
+	new Row({ cells: { } }),
+	new Row({ cells: { } }),
+];
+
+// Insert rows at the beginning of the table.
+table.insertRows({
+	index: 0,
+	rows,
+});
+
+// Set cell at row 0, column 0.
+table.setCell({
+	key: {
+		column: column0,
+		row: rows[0],
+	},
+	cell: "Hello",
+});
+
+// Set cell at row 1, column 0.
+table.setCell({
+	key: {
+		column: column0,
+		row: rows[1],
+	},
+	cell: "World",
+});
+
+// Remove the first row.
+// Note: this will also remove the row's cell.
+table.removeRow(rows[0]);
+
+// Remove the column.
+// Note: this will *not* remove the remaining cell under this column.
+table.removeColumn(column0);
+```
+
 
 #### Listening for changes
 
@@ -135,5 +197,26 @@ Tree.on(table.rows, "nodeChanged", () => {
 Note: for now it is possible for table cells to become "orphaned".
 That is, it is possible to enter a state where one or more rows contain cells with no corresponding column.
 To help avoid this situation, you can manually remove corresponding cells when removing columns.
-Either way, it is possible to enter such a state via the merging of edits.
-For example: one client might add a row while another concurrently removes a column, orphaning the cell where the column and row intersected.
+
+For example:
+
+```typescript
+// Remove column1 and all of its cells.
+// The "transaction" method will ensure that all changes are applied atomically.
+Tree.runTransaction(table, () => {
+	// Remove column1
+	table.removeColumn(column1);
+
+	// Remove the cell at column1 for each row.
+	for (const row of table.rows) {
+		table.removeCell({
+			column: column1,
+			row,
+		});
+	}
+});
+```
+
+> [!WARNING]
+> Note that even with the above precaution, it is possible to enter such an orphaned cell state via the merging of edits.
+> For example: one client might add a row while another concurrently removes a column, orphaning the cell where the column and row intersected.

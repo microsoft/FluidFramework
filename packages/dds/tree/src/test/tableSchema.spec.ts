@@ -1486,7 +1486,7 @@ describe("TableFactory unit tests", () => {
 
 			const table = new Table({
 				columns: [{ id: "column-0" }],
-				rows: [{ id: "row-0", cells: {} }],
+				rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
 			});
 
 			// Don't include this line in the example docs.
@@ -1573,6 +1573,86 @@ describe("TableFactory unit tests", () => {
 			// But it won't fire when a row's properties change, or when the row's cells change, etc.
 			Tree.on(table.rows, "nodeChanged", () => {
 				// Respond to the change.
+			});
+		});
+
+		it("TableSchema: Remove column and corresponding cells in a transaction", () => {
+			// #region Don't include this in the example docs.
+
+			const Cell = schemaFactory.string;
+
+			class ColumnProps extends schemaFactory.object("TableColumnProps", {
+				label: schemaFactory.string,
+			}) {}
+
+			class Column extends TableSchema.column({
+				schemaFactory,
+				props: ColumnProps,
+			}) {}
+
+			class Row extends TableSchema.row({
+				schemaFactory,
+				cell: Cell,
+			}) {}
+
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: Cell,
+				column: Column,
+				row: Row,
+			}) {}
+
+			const table = new Table({
+				columns: [
+					{ id: "column-0", props: { label: "Column 0" } },
+					{ id: "column-1", props: { label: "Column 1" } },
+					{ id: "column-2", props: { label: "Column 2" } },
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {
+							"column-0": "00",
+							"column-1": "01",
+							"column-2": "02",
+						},
+					},
+					{
+						id: "row-1",
+						cells: {
+							"column-0": "10",
+							"column-1": "11",
+							"column-2": "12",
+						},
+					},
+					{
+						id: "row-2",
+						cells: {
+							"column-0": "20",
+							"column-1": "21",
+							"column-2": "22",
+						},
+					},
+				],
+			});
+
+			const column1 = table.getColumn("column-1") ?? fail("Column not found");
+
+			// #endregion
+
+			// Remove column1 and all of its cells.
+			// The "transaction" method will ensure that all changes are applied atomically.
+			Tree.runTransaction(table, () => {
+				// Remove column1
+				table.removeColumn(column1);
+
+				// Remove the cell at column1 for each row.
+				for (const row of table.rows) {
+					table.removeCell({
+						column: column1,
+						row,
+					});
+				}
 			});
 		});
 	});
