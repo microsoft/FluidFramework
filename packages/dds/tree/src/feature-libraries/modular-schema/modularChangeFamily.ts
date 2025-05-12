@@ -2643,6 +2643,8 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			countToProcess,
 		);
 
+		countToProcess = newRenameEntry.length;
+
 		let result: RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
 		// eslint-disable-next-line unicorn/prefer-ternary
 		if (newNodeId !== undefined || newRenameEntry.value !== undefined) {
