@@ -462,9 +462,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		redisClientConnectionManagers.push(redisClientConnectionManagerForPub);
 
 		const redisEmitter = new RedisEmitter(redisClientConnectionManagerForPub.getRedisClient());
-		setupAxiosInterceptorsForAbortSignals(() =>
-			getGlobalAbortControllerContext().getAbortController(),
-		);
+		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
+		if (axiosAbortSignalEnabled) {
+			setupAxiosInterceptorsForAbortSignals(() =>
+				getGlobalAbortControllerContext().getAbortController(),
+			);
+		}
 
 		return new AlfredResources(
 			config,

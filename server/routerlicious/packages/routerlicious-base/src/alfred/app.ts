@@ -76,6 +76,7 @@ export function create(
 	const enableLatencyMetric = config.get("alfred:enableLatencyMetric") ?? false;
 	const enableEventLoopLagMetric = config.get("alfred:enableEventLoopLagMetric") ?? false;
 	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
+	const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
 
 	// Express app configuration
 	const app: express.Express = express();
@@ -101,7 +102,9 @@ export function create(
 		// If connectionTimeoutMs configured and not 0, bind timeout context.
 		app.use(bindTimeoutContext(httpServerConfig.connectionTimeoutMs));
 	}
-	app.use(bindAbortControllerContext());
+	if (axiosAbortSignalEnabled) {
+		app.use(bindAbortControllerContext());
+	}
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
