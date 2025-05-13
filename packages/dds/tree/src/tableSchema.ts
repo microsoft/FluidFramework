@@ -470,7 +470,9 @@ export namespace System_TableSchema {
 			})
 			implements TableSchema.Table<TCellSchema, TColumnSchema, TRowSchema>
 		{
-			public static empty<TThis extends typeof Table>(this: TThis): InstanceType<TThis> {
+			public static empty<TThis extends TableConstructableType>(
+				this: TThis,
+			): InstanceType<TThis> {
 				return new this({ columns: [], rows: [] }) as InstanceType<TThis>;
 			}
 
@@ -822,6 +824,7 @@ export namespace System_TableSchema {
 			TableSchema.Table<TCellSchema, TColumnSchema, TRowSchema> &
 			WithType<ScopedSchemaName<Scope, "Table">>;
 		type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
+		type TableConstructableType = new (data: TableInsertableType) => TableValueType;
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
@@ -839,7 +842,7 @@ export namespace System_TableSchema {
 			/**
 			 * Create an empty table.
 			 */
-			empty(): TableValueType;
+			empty<TThis extends TableConstructableType>(this: TThis): InstanceType<TThis>;
 		} = Table;
 
 		// Return the table schema

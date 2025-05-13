@@ -220,10 +220,15 @@ describe("TableFactory unit tests", () => {
 			class Table extends TableSchema.table({
 				schemaFactory,
 				cell: schemaFactory.string,
-			}) {}
+			}) {
+				// Custom property on derived class included to verify that the
+				// return type of `Table.empty()` is correct.
+				public customProp: string = "Hello world!";
+			}
 
 			const table: Table = Table.empty();
 			assertEqualTrees(table, { columns: [], rows: [] });
+			assert(table.customProp === "Hello world!");
 		});
 
 		it("Non-empty", () => {
