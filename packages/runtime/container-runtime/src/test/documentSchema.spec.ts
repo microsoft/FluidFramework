@@ -413,6 +413,13 @@ describe("Runtime", () => {
 		const message = controller.maybeSendSchemaMessage();
 		assert(message !== undefined);
 		assert.strictEqual(message.minVersionForCollab, "2.20.0");
+		assert(
+			controller.processDocumentSchemaMessages(
+				[message],
+				true, // local
+				200,
+			) === true,
+		);
 		const schema = controller.summarizeDocumentSchema(300);
 		assert(schema !== undefined);
 		assert.strictEqual(schema.minVersionForCollab, "2.20.0");
@@ -431,7 +438,13 @@ describe("Runtime", () => {
 		);
 		const message1 = controller1.maybeSendSchemaMessage();
 		assert(message1 !== undefined);
-		assert.strictEqual(message1.minVersionForCollab, "2.20.0");
+		assert(
+			controller1.processDocumentSchemaMessages(
+				[message1],
+				true, // local
+				200,
+			) === true,
+		);
 		const schema1 = controller1.summarizeDocumentSchema(300);
 		assert(schema1 !== undefined);
 		assert.strictEqual(schema1.minVersionForCollab, "2.20.0");
@@ -446,11 +459,9 @@ describe("Runtime", () => {
 			"2.0.0", // minVersionForCollab
 			logger,
 		);
-		assert.strictEqual(controller2.sessionSchema.minVersionForCollab, "2.20.0");
 		const message2 = controller2.maybeSendSchemaMessage();
 		// Should be undefined since there is no update to the schema
 		assert(message2 === undefined);
-		assert.strictEqual(controller2.sessionSchema.minVersionForCollab, "2.20.0");
 		const schema2 = controller2.summarizeDocumentSchema(600);
 		assert(schema2 !== undefined);
 		assert.strictEqual(schema2.minVersionForCollab, "2.20.0");
@@ -467,7 +478,13 @@ describe("Runtime", () => {
 		);
 		const message3 = controller3.maybeSendSchemaMessage();
 		assert(message3 !== undefined);
-		assert.strictEqual(message3.minVersionForCollab, "2.30.0");
+		assert(
+			controller3.processDocumentSchemaMessages(
+				[message3],
+				true, // local
+				800,
+			) === true,
+		);
 		const schema3 = controller3.summarizeDocumentSchema(300);
 		assert(schema3 !== undefined);
 		assert.strictEqual(schema3.minVersionForCollab, "2.30.0");
@@ -687,9 +704,7 @@ describe("Runtime", () => {
 			defaultMinVersionForCollab, // minVersionForCollab
 			logger,
 		);
-		const event = logger
-			.events()
-			.find((e) => e.eventName === "ContainerRuntime:MinVersionForCollabWarning");
+		const event = logger.events().find((e) => e.eventName === "MinVersionForCollabWarning");
 		assert.strictEqual(event, undefined, "telemetry warning event should not be logged");
 
 		// Document's minVersionForCollab is equal to pkgVersion
@@ -702,9 +717,7 @@ describe("Runtime", () => {
 			defaultMinVersionForCollab, // minVersionForCollab
 			logger,
 		);
-		const event2 = logger
-			.events()
-			.find((e) => e.eventName === "ContainerRuntime:MinVersionForCollabWarning");
+		const event2 = logger.events().find((e) => e.eventName === "MinVersionForCollabWarning");
 		assert.strictEqual(event2, undefined, "telemetry warning event should not be logged");
 	});
 
@@ -722,12 +735,10 @@ describe("Runtime", () => {
 		);
 		const expectedEvent = {
 			category: "generic",
-			eventName: "ContainerRuntime:MinVersionForCollabWarning",
+			eventName: "MinVersionForCollabWarning",
 			message: `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${documentMinVersionForCollab} or later to ensure compatibility.`,
 		};
-		const event = logger
-			.events()
-			.find((e) => e.eventName === "ContainerRuntime:MinVersionForCollabWarning");
+		const event = logger.events().find((e) => e.eventName === "MinVersionForCollabWarning");
 		assert.deepStrictEqual(event, expectedEvent, "telemetry warning event should be logged");
 	});
 });
