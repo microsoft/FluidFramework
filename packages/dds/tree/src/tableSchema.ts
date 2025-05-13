@@ -888,7 +888,7 @@ export namespace System_TableSchema {
  *
  * Cells in the table may become "orphaned."
  * That is, it is possible to enter a state where one or more rows contain cells with no corresponding column.
- * To help avoid this situation, you can manually remove corresponding cells when removing columns.
+ * To reduce the likelihood of this, you can manually remove corresponding cells when removing columns.
  * Either way, it is possible to enter such a state via the merging of edits.
  * For example: one client might add a row while another concurrently removes a column, orphaning the cell where the column and row intersected.
  *

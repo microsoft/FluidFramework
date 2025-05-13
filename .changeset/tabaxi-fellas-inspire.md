@@ -194,7 +194,7 @@ Tree.on(table.rows, "nodeChanged", () => {
 
 Cells in the table may become "orphaned."
 That is, it is possible to enter a state where one or more rows contain cells with no corresponding column.
-To help avoid this situation, you can manually remove corresponding cells when removing columns.
+To reduce the likelihood of this, you can manually remove corresponding cells when removing columns.
 
 For example:
 
