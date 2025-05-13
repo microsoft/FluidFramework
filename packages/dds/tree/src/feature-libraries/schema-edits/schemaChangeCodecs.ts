@@ -13,11 +13,7 @@ import {
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import {
-	makeSchemaCodec,
-	SchemaCodecVersion,
-	type Format as FormatV1,
-} from "../schema-index/index.js";
+import { makeSchemaCodec, SchemaCodecVersion, type FormatV1 } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";

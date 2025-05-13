@@ -117,7 +117,7 @@ function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: schema.encode(),
+			value: schema.encode(SchemaCodecVersion.v1),
 		});
 	}
 	return {
@@ -137,7 +137,7 @@ function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: schema.encode(),
+			value: schema.encode(SchemaCodecVersion.v2),
 		});
 	}
 	return {

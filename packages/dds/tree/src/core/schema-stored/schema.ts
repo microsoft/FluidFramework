@@ -17,8 +17,16 @@ import {
 import type {
 	FieldSchemaFormat as FieldSchemaFormatV2,
 	PersistedMetadataFormat,
+	TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV2,
 } from "./formatV2.js";
 import type { Multiplicity } from "./multiplicity.js";
+
+// TODO: Remove local copy.
+export enum SchemaCodecVersion {
+	v1 = 1,
+	// Adds persisted metadata to the schema.
+	v2 = 2,
+}
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
@@ -174,7 +182,9 @@ export abstract class TreeNodeStoredSchema {
 	 * This is uses an opaque type to avoid leaking these types out of the package,
 	 * and is runtime validated by the codec.
 	 */
-	public abstract encode(): TreeNodeSchemaDataFormatV1;
+	public abstract encode(
+		schemaWriteVersion: SchemaCodecVersion,
+	): TreeNodeSchemaDataFormatV1 | TreeNodeSchemaDataFormatV2;
 
 	/**
 	 * Returns the schema for the provided field.
@@ -199,18 +209,35 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): TreeNodeSchemaDataFormatV1 {
+	public override encode(
+		schemaWriteVersion: SchemaCodecVersion,
+	): TreeNodeSchemaDataFormatV1 | TreeNodeSchemaDataFormatV2 {
 		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {
+			let value: FieldSchemaFormatV1 | FieldSchemaFormatV2 | undefined;
+
+			switch (schemaWriteVersion) {
+				case SchemaCodecVersion.v1:
+					value = encodeFieldSchemaV1(
+						this.objectNodeFields.get(key) ?? fail(0xae6 /* missing field */),
+					);
+					break;
+				case SchemaCodecVersion.v2:
+					value = encodeFieldSchemaV2(
+						this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
+					);
+					break;
+				default:
+					fail(`Cannot decode schema version ${schemaWriteVersion}`);
+			}
+
 			Object.defineProperty(fieldsObject, key, {
 				enumerable: true,
 				configurable: true,
 				writable: true,
-				value: encodeFieldSchemaV1(
-					this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
-				),
+				value,
 			});
 		}
 		return {
@@ -238,10 +265,23 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): TreeNodeSchemaDataFormatV1 {
-		return {
-			map: encodeFieldSchemaV1(this.mapFields),
-		};
+	public override encode(
+		schemaWriteVersion: SchemaCodecVersion,
+	): TreeNodeSchemaDataFormatV1 | TreeNodeSchemaDataFormatV2 {
+		switch (schemaWriteVersion) {
+			case SchemaCodecVersion.v1: {
+				return {
+					map: encodeFieldSchemaV1(this.mapFields),
+				};
+			}
+			case SchemaCodecVersion.v2: {
+				return {
+					map: encodeFieldSchemaV2(this.mapFields),
+				};
+			}
+			default:
+				fail(`Cannot decode schema version ${schemaWriteVersion}`);
+		}
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
@@ -268,7 +308,9 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): TreeNodeSchemaDataFormatV1 {
+	public override encode(
+		schemaWriteVersion: SchemaCodecVersion,
+	): TreeNodeSchemaDataFormatV1 | TreeNodeSchemaDataFormatV2 {
 		return {
 			leaf: encodeValueSchema(this.leafValue),
 		};
