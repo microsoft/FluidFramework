@@ -82,10 +82,8 @@ These include:
 - Cell access by column/row.
 
 ```typescript
-const table = new Table({
-	columns: [],
-	rows: [],
-})
+// Create an empty table
+const table = Table.empty();
 
 const column0 = new Column({
 	props: { label: "Column 0" },
