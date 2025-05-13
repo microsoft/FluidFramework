@@ -18,11 +18,11 @@ Note: these APIs require the use of [SchemaFactoryAlpha](https://fluidframework.
 
 #### Creating a table
 
-You can craft a table with defaults via `TableSchema.createTable`, without specifying custom column or row schema.
+You can craft a table schema with `TableSchema.table`.
 Note that you will still be required to provide a schema for the cells that will appear in the table.
 
 ```typescript
-class Table extends TableSchema.createTable({
+class Table extends TableSchema.table({
 	schemaFactory,
 	cell: schemaFactory.string,
 }) {}
@@ -35,8 +35,8 @@ const table = new Table({
 
 #### Creating a table with custom column and row schema
 
-If you need to associate additional data with your rows or columns, you can customize your row and column schema via `TableSchema.createColumn` and `TableSchema.createRow`.
-These schema can then be provided to `TableSchema.createTable`:
+If you need to associate additional data with your rows or columns, you can customize your row and column schema via `TableSchema.column` and `TableSchema.row`.
+These schema can then be provided to `TableSchema.table`:
 
 ```typescript
 const Cell = schemaFactory.string;
@@ -46,17 +46,17 @@ class ColumnProps extends schemaFactory.object("TableColumnProps", {
 	label: schemaFactory.string,
 }) {}
 
-class Column extends TableSchema.createColumn({
+class Column extends TableSchema.column({
 	schemaFactory,
 	props: ColumnProps,
 }) {}
 
-class Row extends TableSchema.createRow({
+class Row extends TableSchema.row({
 	schemaFactory,
 	cell: Cell,
 }) {}
 
-class Table extends TableSchema.createTable({
+class Table extends TableSchema.table({
 	schemaFactory,
 	cell: Cell,
 	column: Column,
@@ -147,7 +147,7 @@ class Cell extends schemaFactory.object("TableCell", {
 	value: schemaFactory.string,
 }) {}
 
-class Table extends TableSchema.createTable({
+class Table extends TableSchema.table({
 	schemaFactory,
 	cell: Cell,
 }) {}
@@ -172,7 +172,7 @@ class Cell extends schemaFactory.object("TableCell", {
 	value: schemaFactory.string,
 }) {}
 
-class Table extends TableSchema.createTable({
+class Table extends TableSchema.table({
 	schemaFactory,
 	cell: Cell,
 }) {}
