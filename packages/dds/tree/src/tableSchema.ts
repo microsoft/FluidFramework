@@ -886,7 +886,7 @@ export namespace System_TableSchema {
  * Column and Row schema created using these APIs are extensible via the `props` field.
  * This allows association of additional properties with column and row nodes.
  *
- * Note: for now it is possible for table cells to become "orphaned".
+ * Cells in the table may become "orphaned."
  * That is, it is possible to enter a state where one or more rows contain cells with no corresponding column.
  * To help avoid this situation, you can manually remove corresponding cells when removing columns.
  * Either way, it is possible to enter such a state via the merging of edits.
