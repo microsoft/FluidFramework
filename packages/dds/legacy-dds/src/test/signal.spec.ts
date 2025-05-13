@@ -16,7 +16,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedSignal } from "../sharedSignal.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedSignal } from "../signal/sharedSignal.js";
 
 describe("SharedSignal", () => {
 	let factory: IChannelFactory;

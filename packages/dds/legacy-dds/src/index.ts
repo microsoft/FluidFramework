@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-internal-modules */
 export type {
 	SerializableTypeForSharedSignal,
 	ISharedSignal,
 	ISharedSignalEvents,
 	ISignalOperation,
-} from "./interfaces.js";
-export { SharedSignal } from "./sharedSignal.js";
-export { SharedSignalFactory } from "./sharedSignalFactory.js";
+} from "./signal/interfaces.js";
+export { SharedSignal } from "./signal/sharedSignal.js";
+export { SharedSignalFactory } from "./signal/sharedSignalFactory.js";
