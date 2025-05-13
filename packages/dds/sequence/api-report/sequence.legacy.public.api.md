@@ -4,34 +4,4 @@
 
 ```ts
 
-export { BaseSegment }
-
-export { InteriorSequencePlace }
-
-export { ISegment }
-
-export { LocalReferencePosition }
-
-export { MapLike }
-
-export { Marker }
-
-export { MergeTreeDeltaType }
-
-export { PropertySet }
-
-export { ReferencePosition }
-
-export { ReferenceType }
-
-export { reservedMarkerIdKey }
-
-export { SequencePlace }
-
-export { Side }
-
-export { TextSegment }
-
-export { TrackingGroup }
-
 ```
