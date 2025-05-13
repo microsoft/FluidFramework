@@ -14,7 +14,7 @@ import {
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 } from "../../core/index.js";
-import { type Mutable, brand } from "../../util/index.js";
+import { type Mutable, areAdjacentIntegerRanges, brand } from "../../util/index.js";
 import {
 	CrossFieldTarget,
 	type NodeId,
@@ -478,7 +478,7 @@ export function isRemoveMark(mark: Mark | undefined): mark is CellMark<Remove> {
 	return mark?.type === "Remove";
 }
 
-function areMergeableChangeAtoms(
+export function areMergeableChangeAtoms(
 	lhs: ChangeAtomId | undefined,
 	lhsCount: number,
 	rhs: ChangeAtomId | undefined,
@@ -488,16 +488,9 @@ function areMergeableChangeAtoms(
 	}
 
 	return (
-		lhs.revision === rhs.revision && areAdjacentIdRanges(lhs.localId, lhsCount, rhs.localId)
+		lhs.revision === rhs.revision &&
+		areAdjacentIntegerRanges(lhs.localId, lhsCount, rhs.localId)
 	);
-}
-
-function areAdjacentIdRanges(
-	firstStart: ChangesetLocalId,
-	firstLength: number,
-	secondStart: ChangesetLocalId,
-): boolean {
-	return (firstStart as number) + firstLength === secondStart;
 }
 
 function haveMergeableIdOverrides(

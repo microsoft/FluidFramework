@@ -48,6 +48,7 @@ import {
 	type RangeMap,
 	type RangeQueryEntry,
 	type RangeQueryResult,
+	areAdjacentIntegerRanges,
 	brand,
 	idAllocatorFromMaxId,
 	newTupleBTree,
@@ -379,11 +380,40 @@ function normalizeDeltaFieldChanges(
 	genId: IdAllocator,
 	idMap: Map<number, number>,
 ): DeltaFieldChanges {
-	if (delta.length > 0) {
-		return delta.map((mark) => normalizeDeltaMark(mark, genId, idMap));
+	const normalizedMarks = [];
+	let lastMark: Mutable<DeltaMark> | undefined;
+	for (const mark of delta) {
+		const normalizedMark = normalizeDeltaMark(mark, genId, idMap);
+		if (lastMark !== undefined && canMergeDeltaMarks(lastMark, normalizedMark)) {
+			lastMark.count += normalizedMark.count;
+		} else {
+			normalizedMarks.push(normalizedMark);
+			lastMark = normalizedMark;
+		}
 	}
 
-	return delta;
+	return normalizedMarks;
+}
+
+function canMergeDeltaMarks(mark1: DeltaMark, mark2: DeltaMark): boolean {
+	return (
+		mark1.fields === undefined &&
+		mark2.fields === undefined &&
+		areAdjacentDeltaIdRanges(mark1.attach, mark1.count, mark2.attach) &&
+		areAdjacentDeltaIdRanges(mark1.detach, mark1.count, mark2.detach)
+	);
+}
+
+function areAdjacentDeltaIdRanges(
+	id1: DeltaDetachedNodeId | undefined,
+	count1: number,
+	id2: DeltaDetachedNodeId | undefined,
+): boolean {
+	if (id1 === undefined || id2 === undefined) {
+		return id1 === id2;
+	}
+
+	return id1.major === id2.major && areAdjacentIntegerRanges(id1.minor, count1, id2.minor);
 }
 
 function normalizeDeltaMark(

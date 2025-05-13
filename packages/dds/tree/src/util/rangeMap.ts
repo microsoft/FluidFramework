@@ -371,3 +371,11 @@ function subtractIntegers(a: number, b: number): number {
 function defaultValueOffsetFn<T>(value: T, offset: number): T {
 	return value;
 }
+
+export function areAdjacentIntegerRanges(
+	firstStart: number,
+	firstLength: number,
+	secondStart: number,
+): boolean {
+	return firstStart + firstLength === secondStart;
+}
