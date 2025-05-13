@@ -90,6 +90,14 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	private readonly eventUnregister: (() => void)[];
 	private disposed = false;
 
+	/**
+	 * Stores the last accessed version of the root.
+	 * @remarks
+	 * Anything which can delete this field must clear it.
+	 * Currently "clear" is the only case.
+	 */
+	private lazyRootCache: FlexTreeField | undefined;
+
 	public constructor(
 		public readonly schemaPolicy: SchemaPolicy,
 		public readonly checkout: ITreeCheckout,
@@ -159,16 +167,22 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		for (const target of this.withAnchors) {
 			target[disposeSymbol]();
 		}
+		this.lazyRootCache = undefined;
 		assert(this.withCursors.size === 0, 0x774 /* free should remove all cursors */);
 		assert(this.withAnchors.size === 0, 0x775 /* free should remove all anchors */);
 	}
 
 	public get root(): FlexTreeField {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
+		if (this.lazyRootCache !== undefined) {
+			return this.lazyRootCache;
+		}
+
 		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor);
 		const field = makeField(this, this.schema.rootFieldSchema.kind, cursor);
 		cursor.free();
+		this.lazyRootCache = field;
 		return field;
 	}
 
