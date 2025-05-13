@@ -3,23 +3,27 @@
  * Licensed under the MIT License.
  */
 
+export type {
+	TreeSchema,
+	ITreeViewConfiguration,
+	ITreeConfigurationOptions,
+} from "./configuration.js";
 export {
-	type ITree,
-	type TreeView,
-	type ViewableTree,
-	type TreeViewEvents,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	type TreeSchema,
-	type ITreeViewConfiguration,
-	type SchemaCompatibilityStatus,
-	type ITreeConfigurationOptions,
-	type TreeViewAlpha,
-	type TreeBranch,
-	type TreeBranchEvents,
-	type ITreeAlpha,
-	asTreeViewAlpha,
+} from "./configuration.js";
+export type {
+	ITree,
+	TreeView,
+	ViewableTree,
+	TreeViewEvents,
+	SchemaCompatibilityStatus,
+	TreeViewAlpha,
+	TreeBranch,
+	TreeBranchEvents,
+	ITreeAlpha,
 } from "./tree.js";
+export { asTreeViewAlpha } from "./tree.js";
 export {
 	SchemaFactory,
 	type ScopedSchemaName,
@@ -59,7 +63,7 @@ export {
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
-export { ViewSchema } from "./view.js";
+export { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 export type {
 	Unenforced,
 	FieldSchemaAlphaUnsafe,
@@ -93,7 +97,7 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
+export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeBeta.js";
 export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
