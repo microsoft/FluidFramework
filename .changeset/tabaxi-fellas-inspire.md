@@ -134,7 +134,6 @@ table.removeRow(rows[0]);
 table.removeColumn(column0);
 ```
 
-
 #### Listening for changes
 
 Listening for changes to table trees behaves just like it would for any other nodes in a Shared Tree (see [here](https://fluidframework.com/docs/data-structures/tree/events) for more details).
