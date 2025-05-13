@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools-core",
-	"version": "2.40.0",
+	"version": "2.41.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -139,7 +139,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.52.5",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/chai": "^4.0.0",
 		"@types/mocha": "^10.0.10",
 		"c8": "^8.0.1",

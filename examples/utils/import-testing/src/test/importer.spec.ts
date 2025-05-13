@@ -39,14 +39,12 @@ describe("import tests", () => {
 	it("TableSchema", () => {
 		const schemaFactory = new SchemaFactoryAlpha("com.example");
 
-		class Cell extends schemaFactory.object("table-cell", {
-			value: schemaFactory.string,
-		}) {}
+		const Cell = schemaFactory.string;
 
 		class ColumnProps extends schemaFactory.object("table-column-props", {
 			label: schemaFactory.optional(schemaFactory.string),
 		}) {}
-		class Column extends TableSchema.createColumn({
+		class Column extends TableSchema.column({
 			schemaFactory,
 			props: schemaFactory.optional(ColumnProps),
 		}) {}
@@ -54,13 +52,13 @@ describe("import tests", () => {
 		class RowProps extends schemaFactory.object("table-row-props", {
 			label: schemaFactory.optional(schemaFactory.string),
 		}) {}
-		class Row extends TableSchema.createRow({
+		class Row extends TableSchema.row({
 			schemaFactory,
 			cell: Cell,
 			props: RowProps,
 		}) {}
 
-		class Table extends TableSchema.createTable({
+		class Table extends TableSchema.table({
 			schemaFactory,
 			cell: Cell,
 			column: Column,
