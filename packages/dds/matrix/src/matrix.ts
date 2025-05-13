@@ -802,10 +802,10 @@ export class SharedMatrix<T = any>
 					colHandle,
 				);
 				const pending = this.pending.getCell(rowHandle, colHandle);
-				pending?.splice(
-					pending?.findIndex((v) => v === localSeq),
-					1,
-				);
+				assert(pending !== undefined, "local operation must have a pending array");
+				const localSeqIndex = pending.indexOf(localSeq);
+				assert(localSeqIndex >= 0, "local operation must have a pending entry");
+				pending.splice(1);
 				// If the mode is LWW, then send the op.
 				// Otherwise if the current mode is FWW and if we generated this op, after seeing the
 				// last set op, or it is the first set op for the cell, then regenerate the op,
@@ -960,7 +960,17 @@ export class SharedMatrix<T = any>
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq, rowsRef, colsRef } =
 						localOpMetadata as ISetOpMetadata;
-					const isLatestPendingOp = this.isLatestPendingWrite(rowHandle, colHandle, localSeq);
+
+					const pending = this.pending.getCell(rowHandle, colHandle);
+					assert(
+						pending?.[0] === localSeq,
+						"the local seq of the metadata and the oldest pending entry should always match",
+					);
+					pending.shift();
+
+					// if there are no more pending entries, the current must be the latest
+					//
+					const isLatestPendingOp = pending.length === 0;
 					this.rows.removeLocalReferencePosition(rowsRef);
 					this.cols.removeLocalReferencePosition(colsRef);
 					// If policy is switched and cell should be modified too based on policy, then update the tracker.
@@ -975,10 +985,6 @@ export class SharedMatrix<T = any>
 							clientId: msg.clientId,
 						});
 					}
-
-					const pending = this.pending.getCell(rowHandle, colHandle);
-					assert(pending?.[0] === localSeq, "must the expect op");
-					pending.shift();
 				} else {
 					const adjustedRow = this.rows.adjustPosition(row, msg);
 					if (adjustedRow !== undefined) {
@@ -1070,7 +1076,13 @@ export class SharedMatrix<T = any>
 					setMetadata.colHandle,
 					true,
 				);
-				this.pending.getCell(setMetadata.rowHandle, setMetadata.colHandle)?.pop();
+				const localSeq = this.pending
+					.getCell(setMetadata.rowHandle, setMetadata.colHandle)
+					?.pop();
+				assert(
+					localSeq === setMetadata.localSeq,
+					"we should only rollback the last local operation",
+				);
 			}
 			default:
 		}
@@ -1122,36 +1134,6 @@ export class SharedMatrix<T = any>
 				this.setCellLwwToFwwPolicySwitchOpSeqNumber = 0;
 			}
 		}
-	}
-
-	/**
-	 * Returns true if the latest pending write to the cell indicated by the given row/col handles
-	 * matches the given 'localSeq'.
-	 *
-	 * A return value of `true` indicates that there are no later local operations queued that will
-	 * clobber the write op at the given 'localSeq'.  This includes later ops that overwrite the cell
-	 * with a different value as well as row/col removals that might recycled the given row/col handles.
-	 */
-	private isLatestPendingWrite(
-		rowHandle: Handle,
-		colHandle: Handle,
-		localSeq: number,
-	): boolean {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const pending = this.pending.getCell(rowHandle, colHandle)!;
-		const pendingLocalSeq = pending[pending.length - 1];
-
-		// Note while we're awaiting the ACK for a local set, it's possible for the row/col to be
-		// locally removed and the row/col handles recycled.  If this happens, the pendingLocalSeq will
-		// be 'undefined' or > 'localSeq'.
-		assert(
-			!(pendingLocalSeq < localSeq),
-			0x023 /* "The 'localSeq' of pending write (if any) must be <= the localSeq of the currently processed op." */,
-		);
-
-		// If this is the most recent write to the cell by the local client, the stored localSeq
-		// will be an exact match for the given 'localSeq'.
-		return pendingLocalSeq === localSeq;
 	}
 
 	public toString(): string {
