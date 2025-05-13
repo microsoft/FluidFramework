@@ -308,7 +308,7 @@ describeCompat(
 		 * minVersionForCollab warning logic.
 		 */
 		it.skip("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
-			const releaseMinVersionForCollabWarningAdded = "2.40.0";
+			const releaseMinVersionForCollabWarningAdded = "2.41.0";
 			if (
 				apis.containerRuntimeForLoading === undefined ||
 				semverGte(
