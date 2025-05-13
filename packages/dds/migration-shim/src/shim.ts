@@ -17,7 +17,7 @@ import type {
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
 	makeSharedObjectKind,
-	mergeAPIs,
+	thisWrap,
 	type FactoryOut,
 	type IFluidSerializer,
 	type ISharedObjectKind,
@@ -581,7 +581,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 			upgrade: () => this.upgrade(true),
 		};
 		// Proxy which forwards to the current adapter's APIs.
-		this.view = mergeAPIs<IMigrationShim, TOut>(
+		this.view = mergeAPIsProxy<IMigrationShim, TOut>(
 			Object.freeze({ [shimInfo]: shim }),
 			() => this.data.adapter,
 		);
@@ -999,4 +999,41 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 	public didAttach(): void {
 		this.data.kernel.didAttach?.();
 	}
+}
+
+function mergeAPIsProxy<Base extends object, Extra extends object>(
+	base: Base,
+	extraGetter: () => Extra,
+): Base & Extra {
+	// Proxy which grafts the adapter's APIs onto this object.
+	return new Proxy(base, {
+		get: (target, prop, receiver) => {
+			// Prefer `this` over adapter when there is a conflict.
+			if (Reflect.has(target, prop)) {
+				return Reflect.get(target, prop, target);
+			}
+			const extra = extraGetter();
+			const fromExtra = Reflect.get(extra, prop, extra) as unknown;
+			if (fromExtra instanceof Function) {
+				// eslint-disable-next-line unicorn/prefer-ternary
+				if (thisWrap in fromExtra) {
+					return (...args: unknown[]) => {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/ban-types
+						const result = (fromExtra as unknown as Function).call(extra, ...args);
+						assert(result === extra, "methods returning thisWrap should return this");
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+						return receiver;
+					};
+				} else {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+					return fromExtra.bind(extra);
+				}
+			}
+
+			return fromExtra;
+		},
+		has(target: Base, prop: string | symbol): boolean {
+			return Reflect.has(target, prop) || Reflect.has(extraGetter(), prop);
+		},
+	}) as Base & Extra;
 }

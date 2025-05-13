@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import {
@@ -18,6 +19,7 @@ import {
 import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
 import type {
 	FactoryOut,
+	IChannelView,
 	ISharedObjectKind,
 	SharedKernelFactory,
 	SharedObjectKind,
@@ -103,7 +105,10 @@ function dataFromTree(tree: ITree): TreeData | ErrorData {
 	}
 }
 
-const treeFactory: SharedKernelFactory<ITree> = treeKernelFactory({
+// TODO: using this in more places that it should be.
+type ITreeSubset = Omit<ITree, keyof (IChannelView & IFluidLoadable)>;
+
+const treeFactory: SharedKernelFactory<ITreeSubset> = treeKernelFactory({
 	jsonValidator: typeboxValidator,
 });
 
@@ -186,7 +191,7 @@ class TreeMapAdapter implements ISharedMapCore {
 	}
 }
 
-const mapToTreeOptions: MigrationOptions<ISharedMapCore, ITree, ISharedMapCore> = {
+const mapToTreeOptions: MigrationOptions<ISharedMapCore, ITreeSubset, ISharedMapCore> = {
 	migrationIdentifier: "defaultMapToTree",
 	to: treeFactory,
 	beforeAdapter(from: ISharedMapCore): ISharedMapCore {
@@ -275,7 +280,7 @@ function convert(from: ISharedMapCore): MapAdapterRoot {
 	return root;
 }
 
-const mapToTreeOptionsPhase2: MigrationOptions<ISharedMapCore, ITree, ITree> = {
+const mapToTreeOptionsPhase2: MigrationOptions<ISharedMapCore, ITreeSubset, ITreeSubset> = {
 	migrationIdentifier: "defaultMapToTree",
 	to: treeFactory,
 	beforeAdapter: unsupportedAdapter,
@@ -309,7 +314,7 @@ const mapToTreeOptionsPhase2: MigrationOptions<ISharedMapCore, ITree, ITree> = {
 	},
 };
 
-const mapToTreePhase2: MigrationSet<ISharedMapCore, ITree, ITree> = {
+const mapToTreePhase2: MigrationSet<ISharedMapCore, ITreeSubset, ITreeSubset> = {
 	fromKernel: mapKernelFactory,
 	fromSharedObject: SharedMap,
 	selector(id: string) {
@@ -329,11 +334,13 @@ const mapToTreePhase2: MigrationSet<ISharedMapCore, ITree, ITree> = {
  * 2. Without ISharedKind which will get promoted to beta then public once stable.
  * @alpha
  */
-export const TreeFromMap = makeSharedObjectAdapter<ISharedMapCore, ITree>(mapToTreePhase2);
+export const TreeFromMap = makeSharedObjectAdapter<ISharedMapCore, ITreeSubset>(
+	mapToTreePhase2,
+);
 
 function mapToTreePhase2Partial(
 	filter: (id: string) => boolean,
-): MigrationSet<ISharedMapCore, ITree | ISharedMapCore, ITree | ISharedMapCore> {
+): MigrationSet<ISharedMapCore, ITreeSubset | ISharedMapCore, ITreeSubset | ISharedMapCore> {
 	return {
 		...mapToTreePhase2,
 		selector(id: string) {
@@ -356,9 +363,9 @@ function mapToTreePhase2Partial(
  */
 export function treeFromMapPartial(
 	filter: (id: string) => boolean,
-): ISharedObjectKind<(ITree | ISharedMapCore) & IMigrationShim> &
-	SharedObjectKind<(ITree | ISharedMapCore) & IMigrationShim> {
-	return makeSharedObjectAdapter<ISharedMapCore, ITree | ISharedMapCore>(
+): ISharedObjectKind<(ITreeSubset | ISharedMapCore) & IMigrationShim> &
+	SharedObjectKind<(ITreeSubset | ISharedMapCore) & IMigrationShim> {
+	return makeSharedObjectAdapter<ISharedMapCore, ITreeSubset | ISharedMapCore>(
 		mapToTreePhase2Partial(filter),
 	);
 }
