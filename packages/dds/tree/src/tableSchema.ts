@@ -1010,7 +1010,7 @@ export namespace TableSchema {
 
 	/**
 	 * A row in a table.
-	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createRow:2)}.
+	 * @remarks Implemented by the schema class returned from {@link TableSchema.(row:2)}.
 	 * @sealed @internal
 	 */
 	export interface Row<

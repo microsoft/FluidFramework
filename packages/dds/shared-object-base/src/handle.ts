@@ -12,7 +12,7 @@ import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { ISharedObject } from "./types.js";
 
 /**
- * Handle for a shared object. See also {@link SharedObjectHandle}.
+ * Handle for a shared object. See also `SharedObjectHandle`.
  * Supports binding other handles to the underlying Shared Object (see {@link ISharedObjectHandle.bind}).
  *
  * @internal
