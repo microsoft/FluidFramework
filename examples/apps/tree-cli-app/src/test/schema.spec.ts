@@ -140,7 +140,6 @@ describe("schema", () => {
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						historicalSchema[viewIndex]!.viewSchema,
 						options,
-						false,
 					);
 
 					// We do not expect duplicates in historicalSchema.
