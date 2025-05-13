@@ -7,13 +7,16 @@ import { strict as assert } from "node:assert";
 
 // Allow importing from this specific file which is being tested:
 
-import type { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
+import {
+	SchemaCodecVersion,
+	type FieldKindIdentifier,
+	type TreeStoredSchema,
+} from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
 	makeSchemaCodec,
-	SchemaCodecVersion,
 } from "../../../feature-libraries/index.js";
 /* eslint-disable-next-line import/no-internal-modules */
 import { Format as FormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";

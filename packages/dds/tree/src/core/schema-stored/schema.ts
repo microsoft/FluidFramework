@@ -21,7 +21,6 @@ import type {
 } from "./formatV2.js";
 import type { Multiplicity } from "./multiplicity.js";
 
-// TODO: Remove local copy.
 export enum SchemaCodecVersion {
 	v1 = 1,
 	// Adds persisted metadata to the schema.

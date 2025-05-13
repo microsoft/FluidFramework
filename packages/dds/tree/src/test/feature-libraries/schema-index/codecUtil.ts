@@ -4,9 +4,9 @@
  */
 
 import { FluidClientVersion } from "../../../codec/index.js";
+import { SchemaCodecVersion } from "../../../core/index.js";
 import {
 	makeSchemaCodecs,
-	SchemaCodecVersion,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-index/index.js";
 import { ajvValidator } from "../../codec/index.js";

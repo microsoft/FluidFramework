@@ -149,6 +149,7 @@ export {
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
+	SchemaCodecVersion,
 } from "./schema-stored/index.js";
 
 export {

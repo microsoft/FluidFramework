@@ -4,12 +4,11 @@
  */
 
 import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
-import type { TreeStoredSchema } from "../../core/index.js";
+import { SchemaCodecVersion, type TreeStoredSchema } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
 	makeSchemaCodec,
-	SchemaCodecVersion,
 } from "../../feature-libraries/index.js";
 import {
 	clientVersionToSchemaVersion,

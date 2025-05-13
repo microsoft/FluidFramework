@@ -13,6 +13,7 @@ import type { ICodecOptions } from "../codec/index.js";
 import {
 	type RevisionTag,
 	RevisionTagCodec,
+	SchemaCodecVersion,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -23,7 +24,6 @@ import {
 	defaultSchemaPolicy,
 	TreeCompressionStrategy,
 	initializeForest,
-	SchemaCodecVersion,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";

@@ -28,15 +28,7 @@ import { brand, type JsonCompatible } from "../../util/index.js";
 
 import { Format as FormatV1 } from "./formatV1.js";
 import { Format as FormatV2 } from "./formatV2.js";
-
-/**
- * Versions for the codec that encodes an in-memory representation of a stored schema {@link TreeStoredSchema} into a persisted format (or decodes it in the opposite direction).
- */
-export enum SchemaCodecVersion {
-	v1 = 1,
-	// Adds persisted metadata to the schema.
-	v2 = 2,
-}
+import { SchemaCodecVersion } from "../../core/index.js";
 
 /**
  * Convert a FluidClientVersion to a SchemaCodecVersion.

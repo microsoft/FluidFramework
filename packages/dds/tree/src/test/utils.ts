@@ -93,6 +93,7 @@ import {
 	type DeltaDetachedNodeRename,
 	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
+	SchemaCodecVersion,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -113,7 +114,6 @@ import {
 	initializeForest,
 	chunkFieldSingle,
 	makeSchemaCodec,
-	SchemaCodecVersion,
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
