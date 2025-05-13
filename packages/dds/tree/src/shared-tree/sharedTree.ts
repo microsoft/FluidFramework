@@ -32,6 +32,7 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	RevisionTagCodec,
+	SchemaCodecVersion,
 	type TaggedChange,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
@@ -47,7 +48,6 @@ import {
 	DetachedFieldIndexSummarizer,
 	FieldKinds,
 	ForestSummarizer,
-	SchemaCodecVersion,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
 	buildChunkedForest,
@@ -100,7 +100,7 @@ import {
 	throwIfBroken,
 } from "../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../feature-libraries/schema-index/index.js";
+import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -507,7 +507,7 @@ export function persistedToSimpleSchema(
 	options: ICodecOptions,
 ): SimpleTreeSchema {
 	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
-	const stored = schemaCodec.decode(persisted as Format);
+	const stored = schemaCodec.decode(persisted as FormatV1);
 	return exportSimpleSchema(stored);
 }
 

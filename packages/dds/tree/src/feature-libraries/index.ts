@@ -22,7 +22,6 @@ export {
 	encodeTreeSchema,
 	makeSchemaCodec,
 	makeSchemaCodecs,
-	SchemaCodecVersion,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
