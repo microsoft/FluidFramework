@@ -3844,6 +3844,9 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
+      scheduler:
+        specifier: ^0.20.0
+        version: 0.20.2
       uuid:
         specifier: ^9.0.0
         version: 9.0.1
