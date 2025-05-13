@@ -14,7 +14,6 @@ import {
 import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { getParam } from "../../utils";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
 
@@ -36,8 +35,8 @@ export function create(
 	 * Passes on content to all clients in a collaboration session happening on the document via means of signal.
 	 */
 	router.post("/:tenantId/:id/broadcast-signal", (request, response) => {
-		const tenantId = getParam(request.params, "tenantId");
-		const documentId = getParam(request.params, "id");
+		const tenantId = request.params.tenantId;
+		const documentId = request.params.id;
 		const signalContent = request?.body?.signalContent;
 		if (!isValidSignalEnvelope(signalContent)) {
 			response

@@ -10,6 +10,8 @@ import type {
 	IEventProvider,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+
+import type { IAnyDriverError } from "./driverError.js";
 import type {
 	ConnectionMode,
 	IClient,
@@ -25,9 +27,7 @@ import type {
 	ISummaryTree,
 	ITokenClaims,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
-
-import type { IAnyDriverError } from "./driverError.js";
+} from "./protocol/index.js";
 import type { IResolvedUrl } from "./urlResolver.js";
 
 /**
@@ -73,12 +73,14 @@ export interface IDeltaStorageService {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type IStreamResult<T> = { done: true } | { done: false; value: T };
 
 /**
  * Read interface for the Queue
+ * @legacy
  * @alpha
  */
 export interface IStream<T> {
@@ -87,6 +89,7 @@ export interface IStream<T> {
 
 /**
  * Interface to provide access to stored deltas for a shared object
+ * @legacy
  * @alpha
  */
 export interface IDocumentDeltaStorageService {
@@ -114,6 +117,7 @@ export interface IDocumentDeltaStorageService {
 // internal assumptions of the Runtime's GC feature will be violated
 // DO NOT INCREASE THIS TYPE'S VALUE
 /**
+ * @legacy
  * @alpha
  */
 export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
@@ -121,6 +125,7 @@ export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
 /**
  * Policies describing attributes or characteristics of the driver's storage service,
  * to direct how other components interact with the driver
+ * @legacy
  * @alpha
  */
 export interface IDocumentStorageServicePolicies {
@@ -142,13 +147,14 @@ export interface IDocumentStorageServicePolicies {
 
 /**
  * Interface to provide access to snapshots saved for a shared object
+ * @legacy
  * @alpha
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
 	/**
 	 * Policies implemented/instructed by driver.
 	 */
-	readonly policies?: IDocumentStorageServicePolicies;
+	readonly policies?: IDocumentStorageServicePolicies | undefined;
 
 	/**
 	 * Returns the snapshot tree.
@@ -215,6 +221,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 
 /**
  * Events emitted by {@link IDocumentService}.
+ * @legacy
  * @alpha
  */
 export interface IDocumentServiceEvents extends IEvent {
@@ -226,6 +233,7 @@ export interface IDocumentServiceEvents extends IEvent {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
@@ -240,6 +248,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IDocumentDeltaConnection
@@ -322,6 +331,7 @@ export interface IDocumentDeltaConnection
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export enum LoaderCachingPolicy {
@@ -337,6 +347,7 @@ export enum LoaderCachingPolicy {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IDocumentServicePolicies {
@@ -359,6 +370,7 @@ export interface IDocumentServicePolicies {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
@@ -400,6 +412,7 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IDocumentServiceFactory {
@@ -442,6 +455,7 @@ export interface IDocumentServiceFactory {
 /**
  * Context for uploading a summary to storage.
  * Indicates the previously acked summary.
+ * @legacy
  * @alpha
  */
 export interface ISummaryContext {
@@ -459,6 +473,7 @@ export interface ISummaryContext {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export enum FetchSource {
@@ -469,6 +484,7 @@ export enum FetchSource {
 /**
  * A "Full" container Snapshot, including ISnapshotTree, blobs and outstanding ops (and other metadata)
  *
+ * @legacy
  * @alpha
  */
 export interface ISnapshot {
@@ -492,6 +508,7 @@ export interface ISnapshot {
 /**
  * Snapshot fetch options which are used to communicate different things to the driver
  * when fetching the snapshot.
+ * @legacy
  * @alpha
  */
 export interface ISnapshotFetchOptions {

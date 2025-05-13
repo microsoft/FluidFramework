@@ -8,13 +8,13 @@ import {
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
-import { IChannel } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Events emitted by {@link ISharedObject}.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface ISharedObjectEvents extends IErrorEvent {
 	/**
@@ -53,8 +53,21 @@ export interface ISharedObjectEvents extends IErrorEvent {
 }
 
 /**
- * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
- * @public
+ * Base interface for shared objects from which other interfaces extend.
+ * @remarks
+ * This interface is not intended to be implemented outside this repository:
+ * implementers should migrate to using an existing implementation instead.
+ * @privateRemarks
+ * Implemented by {@link SharedObjectCore}.
+ *
+ * TODO:
+ * The relationship between the "shared object" abstraction and "channel" abstraction should be clarified and/or unified.
+ * Either there should be a single named abstraction or the docs here need to make it clear why adding events and bindToContext to a channel makes it a "shared object".
+ * Additionally the docs here need to define what a shared object is, not just claim this interface is for them.
+ * If the intention is that the "shared object" concept `IFluidLoadable` mentions is only ever implemented by this interface then even more concept unification should be done.
+ * If not then more clarity is needed on what this interface specifically is, what the other "shared object" concept means and how they relate.
+ * @legacy
+ * @alpha
  */
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
 	extends IChannel,
@@ -64,11 +77,4 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
 	 * the runtime attaches.
 	 */
 	bindToContext(): void;
-
-	/**
-	 * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
-	 * other GC nodes.
-	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
-	 */
-	getGCData(fullGC?: boolean): IGarbageCollectionData;
 }

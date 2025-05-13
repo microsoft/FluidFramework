@@ -4,9 +4,9 @@
  */
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { DataObject } from "@fluidframework/aqueduct/internal";
+import { DataObject } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedString } from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/legacy";
 
 /**
  * Component for using the Monaco text editor.

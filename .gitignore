@@ -7,7 +7,17 @@ nyc
 *.log
 .DS_Store
 
+.vale/*
+!.vale/config/
+
+.vale/config/*
+!.vale/config/vocabularies/
+
+.vale/config/vocabularies/*
+!.vale/config/vocabularies/fluid/
+
 # Generated Node10 module resolution compatibility files
+alpha.d.ts
 beta.d.ts
 internal.d.ts
 legacy.d.ts
@@ -37,3 +47,8 @@ tsdoc-metadata.json
 
 # TODO: This can be removed once the `flub add changeset` command no longer creates the UPCOMING file.
 UPCOMING.md
+
+# Ignore the build output archive folder
+# This is created to later publish its content on the pipeline and do not need to be included on git as
+# artifacts or bundleAnalysis folders. See scripts/pack-build-output.sh for more details.
+build_output_archive

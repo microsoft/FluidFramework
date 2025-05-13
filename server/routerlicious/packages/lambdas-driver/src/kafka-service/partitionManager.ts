@@ -122,6 +122,24 @@ export class PartitionManager extends EventEmitter {
 		this.removeAllListeners();
 	}
 
+	public pause(partitionId: number, offset: number): void {
+		const partition = this.partitions.get(partitionId);
+		if (partition) {
+			partition.pause(offset);
+		} else {
+			throw new Error(`PartitionId ${partitionId} not found for pause`);
+		}
+	}
+
+	public resume(partitionId: number): void {
+		const partition = this.partitions.get(partitionId);
+		if (partition) {
+			partition.resume();
+		} else {
+			throw new Error(`PartitionId ${partitionId} not found for resume`);
+		}
+	}
+
 	private process(message: IQueuedMessage) {
 		if (this.stopped) {
 			return;
@@ -230,6 +248,14 @@ export class PartitionManager extends EventEmitter {
 				}
 				Lumberjack.verbose("Emitting error from partitionManager, partition error event");
 				this.emit("error", error, errorData);
+			});
+
+			newPartition.on("pause", (partitionId: number, offset: number, reason?: any) => {
+				this.emit("pause", partitionId, offset, reason);
+			});
+
+			newPartition.on("resume", (partitionId: number) => {
+				this.emit("resume", partitionId);
 			});
 
 			this.partitions.set(partition.partition, newPartition);

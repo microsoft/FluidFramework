@@ -1,0 +1,7 @@
+{
+	"require": ["ts-node/register"],
+	"watch-extensions": ["ts", "cts", "mts"],
+	"recursive": true,
+	"reporter": "mocha-multi-reporters",
+	"reporter-options": "configFile=mocha-multi-reporter-config.json"
+}

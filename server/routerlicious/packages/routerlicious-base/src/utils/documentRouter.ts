@@ -6,6 +6,7 @@
 import { DocumentLambdaFactory } from "@fluidframework/server-lambdas-driver";
 import {
 	DefaultServiceConfiguration,
+	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
 } from "@fluidframework/server-services-core";
 import nconf from "nconf";
@@ -22,16 +23,16 @@ export interface IPlugin {
 	create(
 		config: nconf.Provider,
 		customizations?: Record<string, any>,
-	): Promise<IPartitionLambdaFactory>;
+	): Promise<IPartitionLambdaFactory<IPartitionLambdaConfig>>;
 }
 
 /**
  * @internal
  */
-export async function createDocumentRouter(
+export async function createDocumentRouter<TConfig>(
 	config: nconf.Provider,
 	customizations?: Record<string, any>,
-): Promise<IPartitionLambdaFactory> {
+): Promise<IPartitionLambdaFactory<TConfig>> {
 	const pluginConfig = config.get("documentLambda") as string | object;
 	const plugin = // eslint-disable-next-line @typescript-eslint/no-require-imports
 		(typeof pluginConfig === "object" ? pluginConfig : require(pluginConfig)) as IPlugin;
@@ -39,5 +40,5 @@ export async function createDocumentRouter(
 	// Factory used to create document lambda processors
 	const factory = await plugin.create(config, customizations);
 
-	return new DocumentLambdaFactory(factory, DefaultServiceConfiguration.documentLambda);
+	return new DocumentLambdaFactory<TConfig>(factory, DefaultServiceConfiguration.documentLambda);
 }

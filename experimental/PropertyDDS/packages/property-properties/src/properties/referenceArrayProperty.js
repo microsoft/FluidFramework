@@ -223,13 +223,13 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 		return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN
 			? this.get(in_segment, {
 					referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER,
-			  })
+				})
 			: // Everything else is handled by the implementation in the base property
-			  AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(
+				AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(
 					this,
 					in_segment,
 					in_segmentType,
-			  );
+				);
 	}
 
 	/**

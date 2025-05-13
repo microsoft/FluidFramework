@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../attributionPolicy.js";
+import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 
 import {
 	IConfigRange,
@@ -24,44 +25,56 @@ import {
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
 
-export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId });
+export const annotateRange: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+) => client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId });
 
-const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig =
-	{
-		initLen: { min: 2, max: 4 },
-		modLen: { min: 1, max: 8 },
-		opsPerRoundRange: { min: 10, max: 40 },
-		rounds: 10,
-		operations: [removeRange, annotateRange, insert],
-		growthFunc: (input: number) => input * 2,
-	};
+const defaultOptions: Record<"initLen" | "modLen", IConfigRange> &
+	IMergeTreeOperationRunnerConfig = {
+	initLen: { min: 2, max: 4 },
+	modLen: { min: 1, max: 8 },
+	opsPerRoundRange: { min: 10, max: 40 },
+	rounds: 10,
+	operations: [removeRange, annotateRange, insert],
+	growthFunc: (input: number) => input * 2,
+};
 
 describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 	// Generate a list of single character client names, support up to 69 clients
 	const clientNames = generateClientNames();
 	const rangeOptions = resolveRanges(defaultOptions, defaultOptions.growthFunc);
 	for (let extraSeed = 0; extraSeed < testCount; extraSeed++) {
-		generatePairwiseOptions(rangeOptions).forEach(({ initLen, modLen, opsPerRoundRange }) => {
+		for (const { initLen, modLen, opsPerRoundRange } of generatePairwiseOptions(
+			rangeOptions,
+		)) {
 			it(`AttributionFarm_${initLen}_${modLen}_${opsPerRoundRange}`, async () => {
 				const random = makeRandom(0xdeadbeef, initLen, modLen, extraSeed ?? 0);
 
-				const clients: TestClient[] = new Array(3).fill(0).map(
-					() =>
-						new TestClient({
-							attribution: {
-								track: true,
-								policyFactory:
-									createPropertyTrackingAndInsertionAttributionPolicyFactory(
-										"trackedProp",
-									),
-							},
-						}),
-				);
-				clients.forEach((c, i) => c.startOrUpdateCollaboration(clientNames[i]));
+				const clients: TestClient[] = Array.from({ length: 3 })
+					.fill(0)
+					.map(
+						() =>
+							new TestClient({
+								attribution: {
+									track: true,
+									policyFactory:
+										createPropertyTrackingAndInsertionAttributionPolicyFactory("trackedProp"),
+								},
+							}),
+					);
+				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
-				const getAttributionAtPosition = (client: TestClient, pos: number) => {
-					const { segment, offset } = client.getContainingSegment(pos);
+				const getAttributionAtPosition = (
+					client: TestClient,
+					pos: number,
+				):
+					| {
+							[name: string]: AttributionKey | undefined;
+					  }
+					| undefined => {
+					const { segment, offset } = client.getContainingSegment<ISegmentPrivate>(pos);
 					if (segment?.attribution === undefined || offset === undefined) {
 						return undefined;
 					}
@@ -80,11 +93,11 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 					return channels;
 				};
 
-				const validateAnnotation = (reason: string, workload: () => void) => {
+				const validateAnnotation = (reason: string, workload: () => void): void => {
 					const preWorkload = TestClientLogger.toString(clients);
 					workload();
-					const attributions = Array.from({ length: clients[0].getLength() }).map(
-						(_, i) => getAttributionAtPosition(clients[0], i),
+					const attributions = Array.from({ length: clients[0].getLength() }).map((_, i) =>
+						getAttributionAtPosition(clients[0], i),
 					);
 					for (let c = 1; c < clients.length; c++) {
 						for (let i = 0; i < clients[c].getLength(); i++) {
@@ -107,19 +120,13 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 				let seq = 0;
 
 				validateAnnotation("Initialize", () => {
-					seq = runMergeTreeOperationRunner(
-						random,
-						seq,
-						clients,
-						initLen,
-						defaultOptions,
-					);
+					seq = runMergeTreeOperationRunner(random, seq, clients, initLen, defaultOptions);
 				});
 
 				validateAnnotation("After Init Zamboni", () => {
 					// trigger zamboni multiple times as it is incremental
 					for (let i = clients[0].getCollabWindow().minSeq; i <= seq; i++) {
-						clients.forEach((c) => c.updateMinSeq(i));
+						for (const c of clients) c.updateMinSeq(i);
 					}
 				});
 
@@ -130,10 +137,10 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 				validateAnnotation("After Final Zamboni", () => {
 					// trigger zamboni multiple times as it is incremental
 					for (let i = clients[0].getCollabWindow().minSeq; i <= seq; i++) {
-						clients.forEach((c) => c.updateMinSeq(i));
+						for (const c of clients) c.updateMinSeq(i);
 					}
 				});
 			});
-		});
+		}
 	}
 });

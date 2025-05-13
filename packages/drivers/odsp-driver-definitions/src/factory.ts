@@ -4,6 +4,7 @@
  */
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISnapshotOptions {
@@ -29,6 +30,7 @@ export interface ISnapshotOptions {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOpsCachingPolicy {
@@ -60,16 +62,17 @@ export interface IOpsCachingPolicy {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ICollabSessionOptions {
 	/**
 	 * Value indicating the display name for session that admits unauthenticated user.
 	 * This name will be used in attribution associated with edits made by such user.
+	 * @deprecated starting in 2.0-RC3. No longer needed.
 	 */
 	unauthenticatedUserDisplayName?: string;
 	/**
-	 * @deprecated Due to security reasons we will be passing the token via Authorization header only.
 	 * Value indicating session preference to always pass access token via Authorization header.
 	 * Default behavior is to pass access token via query parameter unless overall href string
 	 * length exceeds 2048 characters. Using query param is performance optimization which results
@@ -77,11 +80,20 @@ export interface ICollabSessionOptions {
 	 * validate CORS. However, not all ODSP implementations understand this optimization.
 	 * For instance, auth layer on Converged stack will fail request with access token passed via
 	 * query param.
+	 * @deprecated Due to security reasons we will be passing the token via Authorization header only.
 	 */
 	forceAccessTokenViaAuthorizationHeader?: boolean;
+	/**
+	 * Value indicating the client display name for current session.
+	 * This name will be used in attribution associated with edits made during session.
+	 * This is optional and used only when collab session is being joined by client acting in app-only mode (i.e. without user context).
+	 * If not specified client display name is extracted from the access token that is used to join session.
+	 */
+	displayName?: string;
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface HostStoragePolicy {

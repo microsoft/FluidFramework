@@ -21,15 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           fetch-depth: "0" # all history
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha }} # Check out the head commit, not the merge commit
 
       # install and configure node, pnpm and the changeset tools
-      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
-      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
+      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
@@ -71,7 +71,8 @@ jobs:
           echo $(jq -c '. += {required: false}' changeset-metadata.json) > changeset-metadata.json
 
       - name: Upload changeset metadata
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
         with:
           name: changeset-metadata
           path: ./changeset-metadata.json
@@ -96,7 +97,8 @@ jobs:
           echo $(jq -c '. += { pr: "${{ github.event.number }}" }' changeset-metadata.json) > changeset-metadata.json
 
       - name: Upload changeset metadata
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
         with:
           name: changeset-metadata
           path: ./changeset-metadata.json

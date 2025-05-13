@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	Brand,
 	BrandedType,
 	areSafelyAssignable,
@@ -13,8 +13,8 @@ import {
 	requireTrue,
 } from "../../util/index.js";
 import {
-	ExtractFromOpaque,
-	Opaque,
+	type ExtractFromOpaque,
+	type Opaque,
 	brandOpaque,
 	extractFromOpaque,
 	// Allow importing from this specific file which is being tested:
@@ -41,5 +41,6 @@ const _opaque: O1 = brandOpaque<O1>(0);
 const untypedOpaque = brandOpaque(0);
 
 // If somehow an untyped opaque handle is produced, make sure any does not leak out:
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const extracted = extractFromOpaque(0 as any as BrandedType<any, string>);
 type _check2 = requireFalse<isAny<typeof extracted>>;

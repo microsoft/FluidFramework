@@ -14,6 +14,7 @@ import {
 	ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 /**
@@ -56,12 +57,20 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly pendingCommits: Map<number, Deferred<void>> = new Map();
 	private readonly pendingMessages: Map<number, kafkaTypes.Message[]> = new Map();
 	private readonly latestOffsets: Map<number, number> = new Map();
+	private readonly paused: Map<number, boolean> = new Map();
+	private readonly pausedOffsets: Map<number, number> = new Map();
+	private readonly apiCounter = new InMemoryApiCounters();
+	private readonly failedApiCounterSuffix = ".Failed";
+	private consecutiveFailedCount = 0;
+	private apiCounterInterval: NodeJS.Timeout | undefined;
 
 	constructor(
 		endpoints: IKafkaEndpoints,
 		clientId: string,
 		topic: string,
 		public readonly groupId: string,
+		private readonly apiCounterConfig: Record<string, any>,
+		private readonly ignoreAndSkipCheckpointOnKafkaErrorCodes: number[],
 		options?: Partial<IKafkaConsumerOptions>,
 	) {
 		super(endpoints, clientId, topic, options);
@@ -85,6 +94,77 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			automaticConsume: options?.automaticConsume ?? true,
 			maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
 		};
+		if (this.apiCounterConfig.apiCounterEnabled) {
+			this.apiCounterInterval = setInterval(() => {
+				if (!this.apiCounter.countersAreActive) {
+					return;
+				}
+				const counters = this.apiCounter.getCounters();
+				this.apiCounter.resetAllCounters();
+				Lumberjack.info(
+					`KafkaConsumer counter for topic ${topic}`, // can be multiple partitions..?
+					counters,
+				);
+				this.terminateBasedOnCounterThreshold(counters);
+			}, this.apiCounterConfig.apiCounterIntervalMS);
+		}
+	}
+
+	private terminateBasedOnCounterThreshold(counters: Record<string, number>): void {
+		if (this.apiCounterConfig.apiFailureRateTerminationThreshold > 1) {
+			return; // If threshold set more than 1, meaning we should never terminate and skip followings.
+		}
+		let totalCount = 0;
+		let totalFailedCount = 0;
+
+		// currently we maintain counters for only `kafkaOffsetCommit` apiName
+		for (const [apiName, apiCounter] of Object.entries(counters)) {
+			totalCount += apiCounter;
+			if (apiName.endsWith(this.failedApiCounterSuffix)) {
+				totalFailedCount += apiCounter;
+			}
+		}
+
+		const failureRate = totalFailedCount / totalCount;
+
+		if (failureRate <= this.apiCounterConfig.apiFailureRateTerminationThreshold) {
+			this.consecutiveFailedCount = 0;
+			return;
+		}
+
+		this.consecutiveFailedCount++;
+		const logProperties = {
+			failureRate,
+			totalCount,
+			totalFailedCount,
+			apiFailureRateTerminationThreshold:
+				this.apiCounterConfig.apiFailureRateTerminationThreshold,
+			apiMinimumCountToEnableTermination:
+				this.apiCounterConfig.apiMinimumCountToEnableTermination,
+			consecutiveFailedCount: this.consecutiveFailedCount,
+			consecutiveFailedThresholdForLowerTotalRequests:
+				this.apiCounterConfig.consecutiveFailedThresholdForLowerTotalRequests,
+		};
+		if (
+			totalCount < this.apiCounterConfig.apiMinimumCountToEnableTermination &&
+			this.consecutiveFailedCount <
+				this.apiCounterConfig.consecutiveFailedThresholdForLowerTotalRequests
+		) {
+			Lumberjack.warning("Total count didn't meet min threshold", logProperties);
+			return;
+		}
+
+		Lumberjack.warning("Failure rate more than threshold, terminating", logProperties);
+		this.error(new Error(`Failure rate more than threshold, terminating`), {
+			restart: true,
+			errorLabel: "rdkafkaConsumer:terminateBasedOnCounterThreshold",
+		});
+	}
+
+	public getIgnoreAndSkipCheckpointOnKafkaErrorCodes(): number[] {
+		return this.apiCounterConfig.apiCounterEnabled
+			? this.ignoreAndSkipCheckpointOnKafkaErrorCodes
+			: [];
 	}
 
 	/**
@@ -186,11 +266,26 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						err.code === this.kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
 
 				if (!shouldRetryCommit) {
-					this.error(err, {
-						restart: false,
-						errorLabel: "rdkafkaConsumer:offset.commit",
-					});
+					if (
+						this.apiCounterConfig.apiCounterEnabled &&
+						this.ignoreAndSkipCheckpointOnKafkaErrorCodes.includes(err.code)
+					) {
+						Lumberjack.info("Skipping checkpoint and incrementing api failed counter", {
+							error: err,
+							apiName: "kafkaOffsetCommit",
+						});
+						this.apiCounter.incrementCounter(
+							`kafkaOffsetCommit${this.failedApiCounterSuffix}`,
+						);
+					} else {
+						this.error(err, {
+							restart: false,
+							errorLabel: "rdkafkaConsumer:offset.commit",
+						});
+					}
 				}
+			} else if (this.apiCounterConfig.apiCounterEnabled) {
+				this.apiCounter.incrementCounter("kafkaOffsetCommit");
 			}
 
 			for (const offset of offsets) {
@@ -271,6 +366,14 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 							// clear latest offset
 							this.latestOffsets.delete(partition);
 
+							// clear paused offset if it exists
+							if (this.pausedOffsets.has(partition)) {
+								this.pausedOffsets.delete(partition);
+							}
+							if (this.paused.has(partition)) {
+								this.paused.delete(partition);
+							}
+
 							// reject pending commit
 							const deferredCommit = this.pendingCommits.get(partition);
 							if (deferredCommit) {
@@ -330,6 +433,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		if (!reconnecting) {
 			// when closed outside of this class, disable reconnecting
 			this.closed = true;
+			// stop the api counter interval
+			if (this.apiCounterInterval !== undefined) {
+				clearInterval(this.apiCounterInterval);
+				this.apiCounterInterval = undefined;
+			}
 		}
 
 		// set consumer to undefined before disconnecting in order to
@@ -354,6 +462,8 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		this.assignedPartitions.clear();
 		this.pendingCommits.clear();
 		this.latestOffsets.clear();
+		this.paused.clear();
+		this.pausedOffsets.clear();
 
 		if (this.closed) {
 			this.emit("closed");
@@ -445,6 +555,73 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	}
 
 	/**
+	 * Pauses retrieval of new messages without a rebalance
+	 * @param partitionId - The partition to pause fetching
+	 * @param seekTimeout - The timeout value for consumer.seek in ms
+	 * @param offset - The offset to seek to after pausing
+	 */
+	public async pauseFetching(
+		partitionId: number,
+		seekTimeout: number,
+		offset?: number,
+	): Promise<void> {
+		if (!this.assignedPartitions.has(partitionId)) {
+			return Promise.reject(
+				new Error(`Consumer pause called for unassigned partitionId ${partitionId}`),
+			);
+		}
+		if (this.paused.get(partitionId) === true) {
+			Lumberjack.info(`Consumer partition already paused, returning early.`, { partitionId });
+			return Promise.resolve();
+		}
+		this.consumer?.pause([{ topic: this.topic, partition: partitionId }]);
+		Lumberjack.info(`Consumer paused`, { partitionId, offset });
+		if (offset !== undefined) {
+			this.consumer?.seek(
+				{ topic: this.topic, partition: partitionId, offset },
+				seekTimeout,
+				(err) => {
+					if (err) {
+						this.error(err, {
+							restart: true,
+							errorLabel: "rdkafkaConsumer:pauseFetching.seek",
+						});
+					}
+				},
+			);
+			Lumberjack.info(`Consumer seeked to paused offset`, { partitionId, offset });
+			this.pausedOffsets.set(partitionId, offset);
+		}
+		this.paused.set(partitionId, true);
+		this.emit("pauseFetching");
+		return Promise.resolve();
+	}
+
+	/**
+	 * Resumes retrieval of messages without a rebalance
+	 * @param partition - The partition to resume fetching
+	 */
+	public async resumeFetching(partitionId: number): Promise<void> {
+		if (!this.assignedPartitions.has(partitionId)) {
+			return Promise.reject(
+				new Error(`Consumer resume called for unassigned partition ${partitionId}`),
+			);
+		}
+		if (this.paused.get(partitionId) !== true) {
+			Lumberjack.info(`Consumer partition already resumed, returning early.`, {
+				partitionId,
+			});
+			return;
+		}
+		this.consumer?.resume([{ topic: this.topic, partition: partitionId }]);
+		Lumberjack.info(`Consumer resumed`, { partitionId });
+		this.pausedOffsets.delete(partitionId);
+		this.paused.set(partitionId, false);
+		this.emit("resumeFetching");
+		return Promise.resolve();
+	}
+
+	/**
 	 * Saves the latest offset for the partition and emits the data event with the message.
 	 * If we are in the middle of rebalancing and the message was sent for a partition we will own,
 	 * the message will be saved and processed after rebalancing is completed.
@@ -525,6 +702,20 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						// ensure we continue reading from our current offset
 						// + 1 so we do not read the latest message again
 						(assignment as kafkaTypes.TopicPartitionOffset).offset = offset + 1;
+					}
+					if (this.paused.get(assignment.partition) && this.topic === assignment.topic) {
+						// if the partition was paused, we need to pause it again
+						consumer.pause([
+							{ topic: assignment.topic, partition: assignment.partition },
+						]);
+						// ensure that we continue reading from the paused offset
+						if (
+							this.pausedOffsets.has(assignment.partition) &&
+							this.pausedOffsets.get(assignment.partition) !== undefined
+						) {
+							(assignment as kafkaTypes.TopicPartitionOffset).offset =
+								this.pausedOffsets.get(assignment.partition) ?? 0;
+						}
 					}
 				}
 

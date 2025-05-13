@@ -5,5 +5,8 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
+		// TODO: AB#34166 Enable noUncheckedIndexedAccess for packages/loader/container-loader
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 }

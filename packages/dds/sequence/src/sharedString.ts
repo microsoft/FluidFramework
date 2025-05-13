@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeTextHelper,
@@ -17,14 +20,16 @@ import {
 	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
 
-import { SharedSegmentSequence } from "./sequence.js";
+// eslint-disable-next-line import/no-deprecated
+import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
 /**
  * Fluid object interface describing access methods on a SharedString
+ * @legacy
  * @alpha
  */
-export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+export interface ISharedString extends ISharedSegmentSequence<SharedStringSegment> {
 	/**
 	 * Inserts the text at the position.
 	 * @param pos - The position to insert the text at
@@ -93,7 +98,11 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 	 * @param markerLabel - Label of the marker to search for
 	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`. Default true.
 	 */
-	searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
+	searchForMarker(
+		startPos: number,
+		markerLabel: string,
+		forwards?: boolean,
+	): Marker | undefined;
 
 	/**
 	 * Retrieve text from the SharedString in string format.
@@ -118,6 +127,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type SharedStringSegment = TextSegment | Marker;
@@ -130,9 +140,10 @@ export type SharedStringSegment = TextSegment | Marker;
  * In addition to text, a Shared String can also contain markers. Markers can be
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
- * @alpha
+ * @internal
  */
 export class SharedStringClass
+	// eslint-disable-next-line import/no-deprecated
 	extends SharedSegmentSequence<SharedStringSegment>
 	implements ISharedString
 {
@@ -160,25 +171,19 @@ export class SharedStringClass
 		refType: ReferenceType,
 		props?: PropertySet,
 	): void {
-		const segment = new Marker(refType);
-		if (props) {
-			segment.addProperties(props);
-		}
-
 		const pos = this.posFromRelativePos(relativePos1);
-		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(pos, Marker.make(refType, props)),
+		);
 	}
 
 	/**
 	 * {@inheritDoc ISharedString.insertMarker}
 	 */
 	public insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void {
-		const segment = new Marker(refType);
-		if (props) {
-			segment.addProperties(props);
-		}
-
-		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(pos, Marker.make(refType, props)),
+		);
 	}
 
 	/**
@@ -189,25 +194,19 @@ export class SharedStringClass
 		text: string,
 		props?: PropertySet,
 	): void {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.addProperties(props);
-		}
-
 		const pos = this.posFromRelativePos(relativePos1);
-		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(pos, TextSegment.make(text, props)),
+		);
 	}
 
 	/**
 	 * {@inheritDoc ISharedString.insertText}
 	 */
 	public insertText(pos: number, text: string, props?: PropertySet): void {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.addProperties(props);
-		}
-
-		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(pos, TextSegment.make(text, props)),
+		);
 	}
 
 	/**
@@ -246,42 +245,24 @@ export class SharedStringClass
 	 * {@inheritDoc ISharedString.getText}
 	 */
 	public getText(start?: number, end?: number) {
-		const segmentWindow = this.client.getCollabWindow();
-		return this.mergeTreeTextHelper.getText(
-			segmentWindow.currentSeq,
-			segmentWindow.clientId,
-			"",
-			start,
-			end,
-		);
+		const collabWindow = this.client.getCollabWindow();
+		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, "", start, end);
 	}
 
 	/**
 	 * {@inheritDoc ISharedString.getTextWithPlaceholders}
 	 */
 	public getTextWithPlaceholders(start?: number, end?: number) {
-		const segmentWindow = this.client.getCollabWindow();
-		return this.mergeTreeTextHelper.getText(
-			segmentWindow.currentSeq,
-			segmentWindow.clientId,
-			" ",
-			start,
-			end,
-		);
+		const collabWindow = this.client.getCollabWindow();
+		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, " ", start, end);
 	}
 
 	/**
 	 * {@inheritDoc ISharedString.getTextRangeWithMarkers}
 	 */
 	public getTextRangeWithMarkers(start: number, end: number) {
-		const segmentWindow = this.client.getCollabWindow();
-		return this.mergeTreeTextHelper.getText(
-			segmentWindow.currentSeq,
-			segmentWindow.clientId,
-			"*",
-			start,
-			end,
-		);
+		const collabWindow = this.client.getCollabWindow();
+		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, "*", start, end);
 	}
 
 	/**
@@ -289,17 +270,6 @@ export class SharedStringClass
 	 */
 	public getMarkerFromId(id: string): ISegment | undefined {
 		return this.client.getMarkerFromId(id);
-	}
-
-	/**
-	 * Revert an op
-	 */
-	protected rollback(content: any, localOpMetadata: unknown): void {
-		if (this.client.rollback !== undefined) {
-			this.client.rollback(content, localOpMetadata);
-		} else {
-			super.rollback(content, localOpMetadata);
-		}
 	}
 }
 

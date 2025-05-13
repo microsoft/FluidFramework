@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
 import {
-	IMergeTreeRemoveMsg,
 	createDetachedLocalReferencePosition,
 	createRemoveRangeOp,
-	refGetTileLabels,
+	// eslint-disable-next-line import/no-internal-modules -- #26905: `merge-tree` internals used in examples
 } from "@fluidframework/merge-tree/internal";
+import { IMergeTreeRemoveMsg, refGetTileLabels } from "@fluidframework/merge-tree/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { reservedTileLabelsKey } from "@fluidframework/sequence/internal";
 import {
 	ISegment,
 	LocalReferencePosition,
@@ -25,8 +27,7 @@ import {
 	SharedString,
 	SharedStringSegment,
 	TextSegment,
-	reservedTileLabelsKey,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 
 import { documentType } from "../package.js";
 import { IHTMLAttributes } from "../util/attr.js";
@@ -124,7 +125,10 @@ const endOfTextReference = createDetachedLocalReferencePosition(undefined);
 const endOfTextSegment = endOfTextReference.getSegment() as SharedStringSegment;
 
 export interface IFlowDocumentEvents extends IEvent {
-	(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString) => void);
+	(
+		event: "sequenceDelta",
+		listener: (event: SequenceDeltaEvent, target: SharedString) => void,
+	);
 	(
 		event: "maintenance",
 		listener: (event: SequenceMaintenanceEvent, target: SharedString) => void,
@@ -137,12 +141,11 @@ const textId = "text";
  * @internal
  */
 export class FlowDocument extends DataObject {
-	private static readonly factory = new DataObjectFactory<FlowDocument>(
-		documentType,
-		FlowDocument,
-		[SharedString.getFactory()],
-		{},
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: documentType,
+		ctor: FlowDocument,
+		sharedObjects: [SharedString.getFactory()],
+	});
 
 	public static getFactory() {
 		return FlowDocument.factory;
@@ -273,9 +276,7 @@ export class FlowDocument extends DataObject {
 
 						if (!(endPos < end)) {
 							// If not, add the end tag removal to the group op.
-							debug(
-								`  also remove end tag '</${endTag.properties.tag}>' at ${endPos}.`,
-							);
+							debug(`  also remove end tag '</${endTag.properties.tag}>' at ${endPos}.`);
 							ops.push(createRemoveRangeOp(endPos, endPos + 1));
 						}
 						break;
@@ -292,9 +293,7 @@ export class FlowDocument extends DataObject {
 						if (!(_start <= startPos)) {
 							// If not, remove any positions up to, but excluding the current segment
 							// and adjust the pending removal range to just after this marker.
-							debug(
-								`  exclude end tag '</${segment.properties.tag}>' at ${position}.`,
-							);
+							debug(`  exclude end tag '</${segment.properties.tag}>' at ${position}.`);
 
 							// If the preserved end tag is at the beginning of the removal range, no remove op
 							// is necessary.  Just skip over it.
@@ -383,9 +382,7 @@ export class FlowDocument extends DataObject {
 	public addCssClass(start: number, end: number, ...classNames: string[]) {
 		if (classNames.length > 0) {
 			const newClasses = classNames.join(" ");
-			this.updateCssClassList(start, end, (classList) =>
-				TokenList.set(classList, newClasses),
-			);
+			this.updateCssClassList(start, end, (classList) => TokenList.set(classList, newClasses));
 		}
 	}
 

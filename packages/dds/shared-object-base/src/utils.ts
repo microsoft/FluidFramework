@@ -4,7 +4,8 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import { IFluidSerializer } from "./serializer.js";
@@ -20,12 +21,11 @@ import { IFluidSerializer } from "./serializer.js";
  * @internal
  */
 export function serializeHandles(
-	value: any,
+	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): string | undefined {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return value !== undefined ? serializer.stringify(value, bind) : value;
+	return value === undefined ? value : serializer.stringify(value, bind);
 }
 
 /**
@@ -39,29 +39,30 @@ export function serializeHandles(
  * @param context - The handle context for the container
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
+ * @legacy
  * @alpha
  */
 export function makeHandlesSerializable(
-	value: any,
+	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+): unknown {
 	return serializer.encode(value, bind);
 }
 
 /**
  * Given a fully-plain object that may have serializable-form handles within, will return the mostly-plain object
  * with handle objects created instead.
+ * @remarks Idempotent when called multiple times.
  * @param value - The fully-plain object
  * @param serializer - The serializer that knows how to convert serializable-form handles into handle objects
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
+ * @legacy
  * @alpha
  */
-export function parseHandles(value: any, serializer: IFluidSerializer) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return value !== undefined ? serializer.parse(JSON.stringify(value)) : value;
+export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown {
+	return serializer.decode(value);
 }
 
 /**
@@ -85,10 +86,25 @@ export function createSingleBlobSummary(
  *
  * @internal
  */
-export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): void {
+export function bindHandles<T = unknown>(
+	value: T,
+	serializer: IFluidSerializer,
+	bind: IFluidHandle,
+): T {
 	// N.B. AB#7316 this could be made more efficient by writing an ad hoc
 	// implementation that doesn't clone at all. Today the distinction between
 	// this function and `encode` is purely semantic -- encoding both serializes
 	// handles and binds them, but sometimes we only wish to do the latter
 	serializer.encode(value, bind);
+
+	// Return the input value so this function can be swapped in for makeHandlesSerializable
+	return value;
 }
+
+/**
+ * Information about a Fluid channel.
+ * @privateRemarks
+ * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
+ * @internal
+ */
+export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;

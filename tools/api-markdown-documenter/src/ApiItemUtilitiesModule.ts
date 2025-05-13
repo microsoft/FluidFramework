@@ -8,23 +8,28 @@
  */
 
 export {
-	doesItemRequireOwnDocument,
+	createQualifiedDocumentNameForApiItem,
 	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	shouldItemBeIncluded,
 } from "./api-item-transforms/index.js";
 export {
+	ancestryHasModifierTag,
+	getCustomBlockComments,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
+	getEffectiveReleaseLevel,
 	getExampleBlocks,
+	getFileSafeNameForApiItem,
 	getModifiers,
-	getQualifiedApiItemName,
-	getReleaseTag,
+	getModifierTags,
 	getReturnsBlock,
 	getSeeBlocks,
+	getSingleLineExcerptText,
 	getThrowsBlocks,
 	getUnscopedPackageName,
+	hasModifierTag,
 	isDeprecated,
 	isOptional,
 	isReadonly,

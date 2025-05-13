@@ -42,10 +42,10 @@ export {
 	AttributionPolicy,
 	IMergeTreeAttributionOptions,
 	IMergeTreeOptions,
+	IMergeTreeOptionsInternal,
 	getSlideToSegoff,
 } from "./mergeTree.js";
 export {
-	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
@@ -57,19 +57,14 @@ export {
 export {
 	BaseSegment,
 	CollaborationWindow,
-	debugMarkerToString,
 	IJSONMarkerSegment,
-	IMergeNodeCommon,
-	IMoveInfo,
-	IRemovalInfo,
+	segmentIsRemoved,
 	ISegment,
 	ISegmentAction,
 	Marker,
-	MergeNode,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	SegmentGroup,
-	toRemovalInfo,
+	ISegmentInternal,
 } from "./mergeTreeNodes.js";
 export {
 	Trackable,
@@ -86,6 +81,7 @@ export {
 	createObliterateRangeOp,
 } from "./opBuilder.js";
 export {
+	AdjustParams,
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeAnnotateMsg,
@@ -95,12 +91,20 @@ export {
 	IMergeTreeInsertMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
+	IMergeTreeAnnotateAdjustMsg,
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
 	IMergeTreeObliterateMsg,
+	IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-export { addProperties, createMap, MapLike, matchProperties, PropertySet } from "./properties.js";
+export {
+	addProperties,
+	createMap,
+	MapLike,
+	matchProperties,
+	PropertySet,
+} from "./properties.js";
 export {
 	compareReferencePositions,
 	DetachedReferencePosition,
@@ -114,11 +118,20 @@ export {
 	reservedRangeLabelsKey,
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
-export { SegmentGroupCollection } from "./segmentGroupCollection.js";
-export { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+export {
+	PropsOrAdjust,
+	copyPropertiesAndManager,
+	PropertiesManager,
+} from "./segmentPropertiesManager.js";
+export {
+	InteriorSequencePlace,
+	Side,
+	SequencePlace,
+	endpointPosAndSide,
+} from "./sequencePlace.js";
 export { SortedSet } from "./sortedSet.js";
 export { SortedSegmentSet, SortedSegmentSetItem } from "./sortedSegmentSet.js";
-export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
+export { IJSONTextSegment, TextSegment } from "./textSegment.js";
 export {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
@@ -127,3 +140,6 @@ export {
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
+export type { OperationStamp } from "./stamps.js";
+export { createLocalReconnectingPerspective, type Perspective } from "./perspective.js";
+export type { IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";

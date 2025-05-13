@@ -357,15 +357,24 @@ export const StablePlace = {
 	/**
 	 * @returns The location directly after `node`.
 	 */
-	after: (node: NodeData<NodeId> | NodeId): StablePlace => ({ side: Side.After, referenceSibling: getNodeId(node) }),
+	after: (node: NodeData<NodeId> | NodeId): StablePlace => ({
+		side: Side.After,
+		referenceSibling: getNodeId(node),
+	}),
 	/**
 	 * @returns The location at the start of `trait`.
 	 */
-	atStartOf: (trait: TraitLocation): StablePlace => ({ side: Side.After, referenceTrait: trait }),
+	atStartOf: (trait: TraitLocation): StablePlace => ({
+		side: Side.After,
+		referenceTrait: trait,
+	}),
 	/**
 	 * @returns The location at the end of `trait`.
 	 */
-	atEndOf: (trait: TraitLocation): StablePlace => ({ side: Side.Before, referenceTrait: trait }),
+	atEndOf: (trait: TraitLocation): StablePlace => ({
+		side: Side.Before,
+		referenceTrait: trait,
+	}),
 };
 
 // Note: Documentation of this constant is merged with documentation of the `StableRange` interface.

@@ -138,10 +138,7 @@ describe('IdCompressor Perf', () => {
 					if (actualOverrideCount > 0) {
 						overrides = [] as unknown as Mutable<IdCreationRange.Overrides>;
 						for (let i = 0; i < actualOverrideCount; i++) {
-							overrides.push([
-								(first - i) as LocalCompressedId & OpSpaceCompressedId,
-								`override${overrideIndex++}`,
-							]);
+							overrides.push([(first - i) as LocalCompressedId & OpSpaceCompressedId, `override${overrideIndex++}`]);
 						}
 					}
 

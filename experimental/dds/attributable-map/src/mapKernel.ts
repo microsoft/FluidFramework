@@ -6,10 +6,9 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ValueType, bindHandles } from "@fluidframework/shared-object-base/internal";
+import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces.js";
@@ -81,8 +80,6 @@ export interface IMapDataObjectSerialized {
 type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
 type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
-
 function isMapKeyLocalOpMetadata(metadata: any): metadata is MapKeyLocalOpMetadata {
 	return (
 		metadata !== undefined &&
@@ -107,8 +104,6 @@ function isMapLocalOpMetadata(metadata: any): metadata is MapLocalOpMetadata {
 	);
 }
 
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
-
 function createClearLocalOpMetadata(
 	op: IMapClearOperation,
 	pendingClearMessageId: number,
@@ -117,8 +112,10 @@ function createClearLocalOpMetadata(
 	const localMetadata: IMapClearLocalOpMetadata = {
 		type: "clear",
 		pendingMessageId: pendingClearMessageId,
-		previousMap,
 	};
+	if (previousMap !== undefined) {
+		localMetadata.previousMap = previousMap;
+	}
 	return localMetadata;
 }
 
@@ -213,7 +210,6 @@ export class AttributableMapKernel {
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public entries(): IterableIterator<[string, any]> {
 		const localEntriesIterator = this.data.entries();
 		const iterator = {
@@ -222,7 +218,7 @@ export class AttributableMapKernel {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-					  { value: [nextVal.value[0], nextVal.value[1].value], done: false };
+						{ value: [nextVal.value[0], nextVal.value[1].value], done: false };
 			},
 			[Symbol.iterator](): IterableIterator<[string, unknown]> {
 				return this;
@@ -236,7 +232,6 @@ export class AttributableMapKernel {
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public values(): IterableIterator<any> {
 		const localValuesIterator = this.data.values();
 		const iterator = {
@@ -245,7 +240,7 @@ export class AttributableMapKernel {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-					  { value: nextVal.value.value as unknown, done: false };
+						{ value: nextVal.value.value as unknown, done: false };
 			},
 			[Symbol.iterator](): IterableIterator<unknown> {
 				return this;
@@ -259,7 +254,6 @@ export class AttributableMapKernel {
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public [Symbol.iterator](): IterableIterator<[string, any]> {
 		return this.entries();
 	}
@@ -271,7 +265,6 @@ export class AttributableMapKernel {
 	public forEach(
 		callbackFn: (value: unknown, key: string, map: Map<string, unknown>) => void,
 	): void {
-		// eslint-disable-next-line unicorn/no-array-for-each
 		this.data.forEach((localValue, key, m) => {
 			callbackFn(localValue.value, key, m);
 		});
@@ -281,7 +274,6 @@ export class AttributableMapKernel {
 	 * {@inheritDoc ISharedMap.get}
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public get<T = any>(key: string): T | undefined {
 		const localValue = this.data.get(key);
 		return localValue === undefined ? undefined : (localValue.value as T);
@@ -314,10 +306,6 @@ export class AttributableMapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			// this is necessary to bind the potential handles in the value
-			// to this DDS, as we do not walk the object normally unless we
-			// are attached
-			bindHandles(localValue.value, this.serializer, this.handle);
 			return;
 		}
 
@@ -430,11 +418,7 @@ export class AttributableMapKernel {
 			serializableMapData[key] = localValue.makeSerialized(
 				serializer,
 				this.handle,
-				attribution
-					? attribution.type === "op"
-						? attribution.seq
-						: attribution
-					: undefined,
+				attribution ? (attribution.type === "op" ? attribution.seq : attribution) : undefined,
 			);
 		}
 		return serializableMapData;
@@ -511,8 +495,7 @@ export class AttributableMapKernel {
 			case "set": {
 				this.set(
 					op.key,
-					this.localValueMaker.fromSerializable(op.value, this.serializer, this.handle)
-						.value,
+					this.localValueMaker.fromSerializable(op.value, this.serializer, this.handle).value,
 				);
 				break;
 			}
@@ -527,7 +510,14 @@ export class AttributableMapKernel {
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @returns True if the operation was processed, false otherwise.
+	 * @returns True if the operation was recognized and thus processed, false otherwise.
+	 *
+	 * @remarks
+	 * When this returns false and the caller doesn't handle the op itself, then the op could be from a different version of this code.
+	 * In such a case, not applying the op would result in this client becoming out of sync with clients that do handle the op
+	 * and could result in data corruption or data loss as well.
+	 * Therefore, in such cases the caller should typically throw an error, ensuring that this client treats the situation as data corruption
+	 * (since its data no longer matches what other clients think the data should be) and will avoid overriding document content or misleading the users into thinking their current state is accurate.
 	 */
 	public tryProcessMessage(
 		message: ISequencedDocumentMessage,
@@ -543,14 +533,11 @@ export class AttributableMapKernel {
 		return true;
 	}
 
-	/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 	/**
 	 * Rollback a local op
 	 * @param op - The operation to rollback
 	 * @param localOpMetadata - The local metadata associated with the op.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public rollback(op: any, localOpMetadata: unknown): void {
 		if (!isMapLocalOpMetadata(localOpMetadata)) {
 			throw new Error("Invalid localOpMetadata");
@@ -596,8 +583,6 @@ export class AttributableMapKernel {
 		}
 	}
 
-	/* eslint-enable @typescript-eslint/no-unsafe-member-access */
-
 	/**
 	 * Set implementation used for both locally sourced sets as well as incoming remote sets.
 	 * @param key - The key being set
@@ -633,12 +618,7 @@ export class AttributableMapKernel {
 		const previousValue: unknown = previousLocalValue?.value;
 		const successfullyRemoved = this.data.delete(key);
 		if (successfullyRemoved) {
-			this.eventEmitter.emit(
-				"valueChanged",
-				{ key, previousValue },
-				local,
-				this.eventEmitter,
-			);
+			this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
 		}
 		return previousLocalValue;
 	}
@@ -676,11 +656,7 @@ export class AttributableMapKernel {
 			serializable.type === ValueType[ValueType.Plain] ||
 			serializable.type === ValueType[ValueType.Shared]
 		) {
-			return this.localValueMaker.fromSerializable(
-				serializable,
-				this.serializer,
-				this.handle,
-			);
+			return this.localValueMaker.fromSerializable(serializable, this.serializer, this.handle);
 		} else {
 			throw new Error("Unknown local value type");
 		}
@@ -701,12 +677,13 @@ export class AttributableMapKernel {
 		localOpMetadata: MapLocalOpMetadata,
 	): boolean {
 		const op = message.contents as IMapKeyOperation;
-		if (this.pendingClearMessageIds.length > 0) {
+		const firstPendingClearMessageId = this.pendingClearMessageIds[0];
+		if (firstPendingClearMessageId !== undefined) {
 			if (local) {
 				assert(
 					localOpMetadata !== undefined &&
 						isMapKeyLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
+						localOpMetadata.pendingMessageId < firstPendingClearMessageId,
 					0x5ed /* Received out of order op when there is an unackd clear message */,
 				);
 			}
@@ -870,7 +847,10 @@ export class AttributableMapKernel {
 	 * @param op - The map key message
 	 * @param localOpMetadata - Metadata from the previous submit
 	 */
-	private resubmitMapKeyMessage(op: IMapKeyOperation, localOpMetadata: MapLocalOpMetadata): void {
+	private resubmitMapKeyMessage(
+		op: IMapKeyOperation,
+		localOpMetadata: MapLocalOpMetadata,
+	): void {
 		assert(
 			isMapKeyLocalOpMetadata(localOpMetadata),
 			0x5f4 /* Invalid localOpMetadata in submit */,

@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import {
+	IChannelServices,
+	type IChannel,
+} from "@fluidframework/datastore-definitions/internal";
+import type { ISegmentInternal } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -19,7 +23,12 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISharedMatrix, MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+import {
+	type ISharedMatrix,
+	MatrixItem,
+	SharedMatrix,
+	SharedMatrixFactory,
+} from "../index.js";
 import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
 import type { PermutationVector } from "../permutationvector.js";
 
@@ -30,7 +39,7 @@ function createConnectedMatrix(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 	isSetCellPolicyFWW: boolean,
-) {
+): ISharedMatrix & IChannel {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const matrix = matrixFactory.create(dataStoreRuntime, id);
 	if (isSetCellPolicyFWW) {
@@ -45,7 +54,7 @@ function createConnectedMatrix(
 	return matrix;
 }
 
-function createLocalMatrix(id: string) {
+function createLocalMatrix(id: string): SharedMatrixClass {
 	const factory = new SharedMatrixFactory();
 	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMatrixClass;
 }
@@ -54,7 +63,10 @@ function createMatrixForReconnection(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactoryForReconnection,
 	isSetCellPolicyFWW: boolean,
-) {
+): {
+	matrix: ISharedMatrix & IChannel;
+	containerRuntime: MockContainerRuntimeForReconnection;
+} {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
@@ -71,7 +83,7 @@ function createMatrixForReconnection(
 }
 
 describe("Matrix1", () => {
-	[false, true].forEach((isSetCellPolicyFWW: boolean) => {
+	for (const isSetCellPolicyFWW of [false, true]) {
 		describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {
 			describe("local client", () => {
 				let matrix: SharedMatrix<number>;
@@ -81,7 +93,9 @@ describe("Matrix1", () => {
 
 				// Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
 				// equivalent, and then returns the 2nd matrix.
-				async function summarize<T>(matrix: SharedMatrix<T>) {
+				async function summarize<T>(
+					matrix: SharedMatrix<T>,
+				): Promise<ISharedMatrix & IChannel> {
 					// Create a summary
 					const objectStorage = MockStorage.createFromSummary(
 						matrix.getAttachSummary().summary,
@@ -111,7 +125,9 @@ describe("Matrix1", () => {
 					return matrix2;
 				}
 
-				async function expect<T>(expected: readonly (readonly MatrixItem<T>[])[]) {
+				async function expect<T>(
+					expected: readonly (readonly MatrixItem<T>[])[],
+				): Promise<ISharedMatrix & IChannel> {
 					const actual = extract(matrix);
 					assert.deepEqual(actual, expected, "Matrix must match expected.");
 					assert.deepEqual(
@@ -276,13 +292,7 @@ describe("Matrix1", () => {
 					it("read/write 256x256", () => {
 						matrix.insertRows(0, 256);
 						matrix.insertCols(0, 256);
-						fill(
-							matrix,
-							/* row: */ 0,
-							/* col: */ 0,
-							/* rowCount: */ 256,
-							/* colCount: */ 256,
-						);
+						fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
 						check(
 							matrix,
 							/* row: */ 0,
@@ -296,13 +306,7 @@ describe("Matrix1", () => {
 				describe("fragmented", () => {
 					it("read/write 256x256", () => {
 						insertFragmented(matrix, 256, 256);
-						fill(
-							matrix,
-							/* row: */ 0,
-							/* col: */ 0,
-							/* rowCount: */ 256,
-							/* colCount: */ 256,
-						);
+						fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
 						check(
 							matrix,
 							/* row: */ 0,
@@ -356,7 +360,9 @@ describe("Matrix1", () => {
 				let consumer2: TestConsumer; // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 				let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-				const expect = async (expected?: readonly (readonly any[])[]) => {
+				const expect = async (
+					expected?: readonly (readonly MatrixItem<unknown>[])[],
+				): Promise<void> => {
 					containerRuntimeFactory.processAllMessages();
 
 					const actual1 = extract(matrix1);
@@ -620,7 +626,9 @@ describe("Matrix1", () => {
 						matrix1.insertRows(0, 4);
 						matrix1.insertCols(0, 4);
 
-						const v = new Array(16).fill(0).map((_, index) => index);
+						const v = Array.from({ length: 16 })
+							.fill(0)
+							.map((_, index) => index);
 
 						matrix1.setCells(0, 0, 4, v);
 						await expect();
@@ -650,11 +658,7 @@ describe("Matrix1", () => {
 						await expect();
 
 						matrix1.removeRows(1, 1);
-						matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
-							"A",
-							"B",
-							"C",
-						]);
+						matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A", "B", "C"]);
 						await expect();
 					});
 
@@ -663,12 +667,7 @@ describe("Matrix1", () => {
 					it("overlapping insert/set vs. remove/insert/set", async () => {
 						matrix1.insertRows(0, 1); // rowCount: 0, colCount: 0
 						matrix1.insertCols(0, 4); // rowCount: 1, colCount: 0
-						matrix1.setCells(
-							/* row: */ 0,
-							/* col: */ 0,
-							/* colCount: */ 4,
-							[0, 1, 2, 3],
-						);
+						matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [0, 1, 2, 3]);
 						await expect([[0, 1, 2, 3]]);
 
 						matrix2.insertCols(1, 1); // rowCount: 1, colCount: 5
@@ -691,7 +690,9 @@ describe("Matrix1", () => {
 				let containerRuntime2: MockContainerRuntimeForReconnection;
 				let mockHandle: MockHandle<unknown>;
 
-				const expect = async (expected?: readonly (readonly any[])[]) => {
+				const expect = async (
+					expected?: readonly (readonly MatrixItem<unknown>[])[],
+				): Promise<void> => {
 					containerRuntimeFactory.processAllMessages();
 
 					const actual1 = extract(matrix1);
@@ -915,12 +916,7 @@ describe("Matrix1", () => {
 					);
 
 					matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
-					matrix1.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 4,
-						[61, 57, 7, 62],
-					);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [61, 57, 7, 62]);
 
 					containerRuntime1.connected = false;
 					containerRuntime1.connected = true;
@@ -972,8 +968,8 @@ describe("Matrix1", () => {
 
 				function findVectorReferenceCount(vector: PermutationVector): number {
 					let count = 0;
-					vector.walkSegments((segment) => {
-						count += Array.from(segment.localRefs ?? []).length;
+					vector.walkSegments((segment: ISegmentInternal) => {
+						count += [...(segment.localRefs ?? [])].length;
 						return true;
 					});
 					return count;
@@ -1028,8 +1024,7 @@ describe("Matrix1", () => {
 				});
 
 				it("after resubmitted ack", () => {
-					const containerRuntimeFactory =
-						new MockContainerRuntimeFactoryForReconnection();
+					const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 					const dataStoreRuntime = new MockFluidDataStoreRuntime();
 					const matrix = matrixFactory.create(dataStoreRuntime, "A");
 					if (isSetCellPolicyFWW) {
@@ -1089,16 +1084,16 @@ describe("Matrix1", () => {
 						this.matrix1.insertRows(0, 1);
 					}
 
-					public get sharedObject() {
+					public get sharedObject(): SharedMatrixClass {
 						// Return the remote SharedMatrix because we want to verify its summary data.
 						return this.matrix2;
 					}
 
-					public get expectedOutboundRoutes() {
+					public get expectedOutboundRoutes(): string[] {
 						return this._expectedRoutes;
 					}
 
-					public async addOutboundRoutes() {
+					public async addOutboundRoutes(): Promise<void> {
 						const newSubMatrixId = `subMatrix-${++this.subMatrixCount}`;
 						const subMatrix = createLocalMatrix(newSubMatrixId);
 
@@ -1109,7 +1104,7 @@ describe("Matrix1", () => {
 						this.containerRuntimeFactory.processAllMessages();
 					}
 
-					public async deleteOutboundRoutes() {
+					public async deleteOutboundRoutes(): Promise<void> {
 						// Delete the last handle that was added.
 						const lastAddedCol = this.colCount - 1;
 						const deletedHandle = this.matrix1.getCell(
@@ -1126,7 +1121,7 @@ describe("Matrix1", () => {
 						this.containerRuntimeFactory.processAllMessages();
 					}
 
-					public async addNestedHandles() {
+					public async addNestedHandles(): Promise<void> {
 						const subMatrix = createLocalMatrix(`subMatrix-${++this.subMatrixCount}`);
 						const subMatrix2 = createLocalMatrix(`subMatrix-${++this.subMatrixCount}`);
 						const containingObject = {
@@ -1181,7 +1176,7 @@ describe("Matrix1", () => {
 				});
 			});
 		});
-	});
+	}
 
 	describe("Switch Policy Tests from LWW -> FWW", () => {
 		describe("Reconnection", () => {
@@ -1194,9 +1189,9 @@ describe("Matrix1", () => {
 			let containerRuntime2: MockContainerRuntimeForReconnection;
 
 			const expect = async (
-				expected?: readonly (readonly any[])[],
+				expected?: readonly (readonly MatrixItem<unknown>[])[],
 				extraClient?: { matrix: SharedMatrix; consumer: TestConsumer }[],
-			) => {
+			): Promise<void> => {
 				containerRuntimeFactory.processAllMessages();
 
 				const actual1 = extract(matrix1);
@@ -1229,9 +1224,7 @@ describe("Matrix1", () => {
 				consumer: TestConsumer;
 			}> {
 				// Create a summary
-				const objectStorage = MockStorage.createFromSummary(
-					matrix.getAttachSummary().summary,
-				);
+				const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
 				const dataStoreRuntime = new MockFluidDataStoreRuntime();
 				const containerRuntime =
@@ -1284,7 +1277,7 @@ describe("Matrix1", () => {
 				matrix2.closeMatrix(consumer2);
 			});
 
-			const switchPolicy = (matrix: SharedMatrix) => {
+			const switchPolicy = (matrix: SharedMatrix): void => {
 				matrix.switchSetCellPolicy();
 			};
 

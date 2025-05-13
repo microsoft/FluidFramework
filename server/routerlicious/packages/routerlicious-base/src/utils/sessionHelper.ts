@@ -3,16 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ISession, NetworkError } from "@fluidframework/server-services-client";
+import { ISession, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
 	IDocument,
 	runWithRetry,
 	IDocumentRepository,
 	IClusterDrainingChecker,
+	type ICache,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { StageTrace } from "./trace";
+import { delay } from "@fluidframework/common-utils";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
+const defaultGetSessionCacheTtlInSeconds = 5 * 60; // 5 mins
 
 /**
  * Create a new session for a document that does not have a session defined,
@@ -206,7 +210,7 @@ async function updateExistingSession(
 				`The document with isSessionAlive as false does not exist`,
 				lumberjackProperties,
 			);
-			const doc: IDocument = await runWithRetry(
+			const doc = await runWithRetry(
 				async () =>
 					documentRepository.readOne({
 						tenantId,
@@ -220,7 +224,7 @@ async function updateExistingSession(
 				undefined /* shouldIgnoreError */,
 				(error) => true /* shouldRetry */,
 			);
-			if (!doc && !doc.session) {
+			if (!doc?.session) {
 				Lumberjack.error(
 					`Error running getSession from document: ${JSON.stringify(doc)}`,
 					lumberjackProperties,
@@ -267,6 +271,73 @@ function convertSessionToFreshSession(session: ISession, lumberjackProperties): 
 	return discoveredNewSession;
 }
 
+export function generateCacheKey(tenantId: string, documentId: string): string {
+	return `session:${tenantId}:${documentId}`;
+}
+
+/**
+ * Get the session from cache if it exists. If it doesn't exist, return undefined.
+ * If the document is deleted, we store a session object with empty URLs and isSessionAlive=false.
+ * @internal
+ */
+async function getSessionFromCache(
+	tenantId: string,
+	documentId: string,
+	redisCacheForGetSession: ICache,
+): Promise<ISession | undefined> {
+	const session = await redisCacheForGetSession
+		.get(generateCacheKey(tenantId, documentId))
+		.catch((error) => {
+			Lumberjack.error("Error getting session from cache", { tenantId, documentId }, error);
+		});
+	try {
+		if (session) {
+			const sessionObject = JSON.parse(session);
+			return sessionObject as ISession;
+		}
+	} catch (error) {
+		Lumberjack.error("Error parsing session from cache", { tenantId, documentId }, error);
+	}
+	return undefined;
+}
+
+function isSessionDeleted(session: ISession): boolean {
+	return (
+		session.ordererUrl === "" &&
+		session.historianUrl === "" &&
+		session.deltaStreamUrl === "" &&
+		session.isSessionAlive === false &&
+		session.isSessionActive === false
+	);
+}
+
+function getEphemeralContainerTtlInSeconds(documentExpirationTime: number): number {
+	// Calculate the TTL based on the document expiration time
+	const currentTime = Date.now();
+	const ttlInSeconds = Math.floor((documentExpirationTime - currentTime) / 1000);
+	return Math.max(ttlInSeconds, 0); // Ensure TTL is not negative
+}
+
+/**
+ * Set the session to cache.
+ * @internal
+ */
+export async function setGetSessionResultInCache(
+	tenantId: string,
+	documentId: string,
+	session: ISession,
+	redisCacheForGetSession: ICache,
+	cacheTTLInSeconds: number = defaultGetSessionCacheTtlInSeconds,
+): Promise<void> {
+	const cacheKey = generateCacheKey(tenantId, documentId);
+	try {
+		// If the document is deleted, we set the session with empty URLs and isSessionAlive=false.
+		await redisCacheForGetSession.set(cacheKey, JSON.stringify(session), cacheTTLInSeconds);
+	} catch (error) {
+		Lumberjack.error("Error setting session to cache", { tenantId, documentId }, error);
+	}
+}
+
 /**
  * Return to the caller with the status of the session.
  * @internal
@@ -281,13 +352,136 @@ export async function getSession(
 	sessionStickinessDurationMs: number = defaultSessionStickinessDurationMs,
 	messageBrokerId?: string,
 	clusterDrainingChecker?: IClusterDrainingChecker,
+	ephemeralDocumentTTLSec?: number,
+	connectionTrace?: StageTrace<string>,
+	readDocumentRetryDelay: number = 150,
+	readDocumentMaxRetries: number = 2,
+	redisCacheForGetSession?: ICache,
+	sessionCacheTTLSec: number = defaultGetSessionCacheTtlInSeconds,
+	sessionCacheTTLForDeletedDocumentsSec: number = 20 * 60, // 20 minutes
 ): Promise<ISession> {
-	const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+	Lumberjack.info("Cache TTL for getSession", {
+		sessionCacheTTLSec,
+		sessionCacheTTLForDeletedDocumentsSec,
+	});
+	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
-	if (!document || document.scheduledDeletionTime !== undefined) {
-		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+	let document: IDocument | null;
+	const docDeletedError = new NetworkError(404, "Document is deleted and cannot be accessed.");
+	// For documents that are deleted, we cache a session object with empty URLs and isSessionAlive=false.
+	const deletedSessionForCache: ISession = {
+		ordererUrl: "",
+		historianUrl: "",
+		deltaStreamUrl: "",
+		isSessionAlive: false,
+		isSessionActive: false,
+	};
+
+	if (redisCacheForGetSession) {
+		const cachedSession = await getSessionFromCache(
+			tenantId,
+			documentId,
+			redisCacheForGetSession,
+		);
+		if (cachedSession && typeof cachedSession === "object") {
+			if (isSessionDeleted(cachedSession)) {
+				connectionTrace?.stampStage("DocumentDeletedFoundInCache");
+				throw docDeletedError;
+			}
+			connectionTrace?.stampStage("SessionFromCache");
+			return cachedSession;
+		}
+		connectionTrace?.stampStage("SessionNotFoundCache");
 	}
+	try {
+		const docParams = { tenantId, documentId };
+		document = await documentRepository.readOne(docParams);
+		if (document === null) {
+			connectionTrace?.stampStage("FirstAttempNullDocument");
+			await delay(readDocumentRetryDelay);
+			connectionTrace?.stampStage("RetryingNullDocument");
+			document = await documentRepository.readOne(docParams);
+			connectionTrace?.stampStage("SecondAttemptFinished");
+		}
+		if (document === null) {
+			if (redisCacheForGetSession) {
+				await setGetSessionResultInCache(
+					tenantId,
+					documentId,
+					deletedSessionForCache,
+					redisCacheForGetSession,
+					sessionCacheTTLForDeletedDocumentsSec,
+				);
+			}
+			// Retry once in case of DB replication lag should be enough
+			throw docDeletedError;
+		}
+	} catch (error: unknown) {
+		connectionTrace?.stampStage(
+			isNetworkError(error) && error.code === 404 ? "DocumentNotFound" : "DocumentDBError",
+		);
+		throw error;
+	}
+
+	// Check whether document was soft deleted
+	if (document.scheduledDeletionTime !== undefined) {
+		connectionTrace?.stampStage("DocumentSoftDeleted");
+		if (redisCacheForGetSession) {
+			await setGetSessionResultInCache(
+				tenantId,
+				documentId,
+				deletedSessionForCache,
+				redisCacheForGetSession,
+				sessionCacheTTLForDeletedDocumentsSec,
+			);
+		}
+		throw docDeletedError;
+	}
+	connectionTrace?.stampStage("DocumentExistenceChecked");
+
+	const lumberjackProperties = {
+		...baseLumberjackProperties,
+		isEphemeralContainer: document.isEphemeralContainer,
+	};
+	let currentTime: number | undefined;
+	let documentExpirationTime: number | undefined;
+	if (document.isEphemeralContainer && ephemeralDocumentTTLSec !== undefined) {
+		// Check if the document is ephemeral and has expired.
+		currentTime = Date.now();
+		documentExpirationTime = document.createTime + ephemeralDocumentTTLSec * 1000;
+		if (currentTime > documentExpirationTime) {
+			// If the document is ephemeral and older than the max ephemeral document TTL, throw an error indicating that it can't be accessed.
+			const documentExpiredByMs = currentTime - documentExpirationTime;
+			// TODO: switch back to "Ephemeral Container Expired" once clients update to use errorType, not error message. AB#12867
+			Lumberjack.warning(
+				"Document is older than the max ephemeral document TTL.",
+				{
+					...lumberjackProperties,
+					documentCreateTime: document.createTime,
+					documentExpirationTime,
+					documentExpiredByMs,
+				},
+				docDeletedError,
+			);
+			connectionTrace?.stampStage("EphemeralDocumentExpired");
+			if (redisCacheForGetSession) {
+				await setGetSessionResultInCache(
+					tenantId,
+					documentId,
+					deletedSessionForCache,
+					redisCacheForGetSession,
+					sessionCacheTTLForDeletedDocumentsSec,
+				);
+			}
+			throw docDeletedError;
+		}
+	}
+	// Handle the case where the document is ephemeral. Set the TTL to the time remaining before expiration.
+	const computedSessionCacheTTLSec: number = documentExpirationTime
+		? Math.floor(0.95 * getEphemeralContainerTtlInSeconds(documentExpirationTime))
+		: sessionCacheTTLSec;
+	connectionTrace?.stampStage("EphemeralExipiryChecked");
+
 	// Session can be undefined for documents that existed before the concept of service sessions.
 	const existingSession: ISession | undefined = document.session;
 	Lumberjack.info(
@@ -307,45 +501,76 @@ export async function getSession(
 			lumberjackProperties,
 			messageBrokerId,
 		);
-		return convertSessionToFreshSession(newSession, lumberjackProperties);
+
+		const freshSession: ISession = convertSessionToFreshSession(
+			newSession,
+			lumberjackProperties,
+		);
+		connectionTrace?.stampStage("NewSessionCreated");
+		if (redisCacheForGetSession) {
+			await setGetSessionResultInCache(
+				tenantId,
+				documentId,
+				freshSession,
+				redisCacheForGetSession,
+				computedSessionCacheTTLSec,
+			);
+		}
+		return freshSession;
 	}
+	connectionTrace?.stampStage("SessionExistenceChecked");
 
 	if (existingSession.isSessionAlive || existingSession.isSessionActive) {
 		// Existing session is considered alive/discovered or active, so return to consumer as-is.
+		connectionTrace?.stampStage("SessionIsAlive");
+		if (redisCacheForGetSession) {
+			await setGetSessionResultInCache(
+				tenantId,
+				documentId,
+				existingSession,
+				redisCacheForGetSession,
+				computedSessionCacheTTLSec,
+			);
+		}
 		return existingSession;
 	}
-
-	// Reject get session request on existing, inactive sessions if cluster is in draining process.
-	if (clusterDrainingChecker) {
-		try {
-			const isClusterDraining = await clusterDrainingChecker.isClusterDraining();
-			if (isClusterDraining) {
-				Lumberjack.info("Cluster is in draining process. Reject get session request.");
-				throw new NetworkError(
-					503,
-					"Server is unavailable. Please retry session discovery later.",
-				);
-			}
-		} catch (error) {
-			Lumberjack.error("Failed to get cluster draining status", lumberjackProperties, error);
-		}
-	}
+	connectionTrace?.stampStage("SessionLivenessChecked");
 
 	// Session is not alive/discovered, so update and persist changes to DB.
 	const ignoreSessionStickiness = existingSession.ignoreSessionStickiness ?? false;
-	const updatedSession: ISession = await updateExistingSession(
-		ordererUrl,
-		historianUrl,
-		deltaStreamUrl,
-		document,
-		existingSession,
-		documentId,
-		tenantId,
-		documentRepository,
-		sessionStickinessDurationMs,
-		lumberjackProperties,
-		messageBrokerId,
-		ignoreSessionStickiness,
-	);
-	return convertSessionToFreshSession(updatedSession, lumberjackProperties);
+
+	try {
+		const updatedSession: ISession = await updateExistingSession(
+			ordererUrl,
+			historianUrl,
+			deltaStreamUrl,
+			document,
+			existingSession,
+			documentId,
+			tenantId,
+			documentRepository,
+			sessionStickinessDurationMs,
+			lumberjackProperties,
+			messageBrokerId,
+			ignoreSessionStickiness,
+		);
+		const freshSession: ISession = convertSessionToFreshSession(
+			updatedSession,
+			lumberjackProperties,
+		);
+		if (redisCacheForGetSession) {
+			await setGetSessionResultInCache(
+				tenantId,
+				documentId,
+				freshSession,
+				redisCacheForGetSession,
+				computedSessionCacheTTLSec,
+			);
+		}
+		connectionTrace?.stampStage("UpdatedExistingSession");
+		return freshSession;
+	} catch (error) {
+		connectionTrace?.stampStage("FailedToUpdateExistingSession");
+		throw error;
+	}
 }

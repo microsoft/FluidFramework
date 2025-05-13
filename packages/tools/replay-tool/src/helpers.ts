@@ -6,8 +6,8 @@
 import { strict } from "assert";
 import fs from "fs";
 
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ILoaderOptions, Loader } from "@fluidframework/container-loader/internal";
+import { IContainer, ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
@@ -19,7 +19,10 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import { IFileSnapshot } from "@fluidframework/replay-driver/internal";
 import {
 	ISnapshotNormalizerConfig,
@@ -71,7 +74,10 @@ export function compareWithReferenceSnapshot(
 	errorHandler: (description: string, error?: any) => void,
 ) {
 	// Read the reference snapshot and covert it to normalized IFileSnapshot.
-	const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
+	const referenceSnapshotString = fs.readFileSync(
+		`${referenceSnapshotFilename}.json`,
+		"utf-8",
+	);
 	const referenceSnapshot = JSON.parse(referenceSnapshotString);
 
 	/**
@@ -183,20 +189,22 @@ export async function loadContainer(
 	);
 
 	// Add a config provider to the Loader to enable / disable features.
-	const settings: Record<string, ConfigTypes> = {};
+	const settings: Record<string, ConfigTypes> = {
+		// This is to enable single-commit-summaries in loader layer
+		"Fluid.Container.summarizeProtocolTree2": true,
+		// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
+		"Fluid.GarbageCollection.GCVersionUpgradeToV4": false,
+	};
 	const configProvider: IConfigProviderBase = {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	};
-	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
-	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
+
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
-		options: loaderOptions
-			? { ...loaderOptions, summarizeProtocolTree: true }
-			: { summarizeProtocolTree: true },
+		options: loaderOptions ? { ...loaderOptions } : {},
 		logger,
 		configProvider,
 	});
@@ -208,12 +216,12 @@ export async function loadContainer(
  * @internal
  */
 export async function uploadSummary(container: IContainer) {
-	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.getEntryPoint();
+	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> =
+		await container.getEntryPoint();
 	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
 	assert(runtime !== undefined, 0x5a7 /* ContainerRuntime entryPoint was not initialized */);
 	const summaryResult = await runtime.summarize({
 		fullTree: true,
-		trackState: false,
 		fullGC: true,
 	});
 	return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {

@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
@@ -30,7 +30,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
-import { SharedIntervalCollection, SharedString } from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block/internal";
 
 import { ReplayToolContainerEntryPoint } from "./helpers.js";
@@ -93,7 +93,6 @@ const allDdsFactories: IChannelFactory[] = [
 	ConsensusRegisterCollection.getFactory(),
 	SparseMatrix.getFactory(),
 	SharedDirectory.getFactory(),
-	SharedIntervalCollection.getFactory(),
 ];
 
 /**

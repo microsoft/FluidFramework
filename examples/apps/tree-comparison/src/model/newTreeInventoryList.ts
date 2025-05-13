@@ -3,20 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type ITree,
 	NodeFromSchema,
 	SchemaFactory,
-	SharedTree,
 	Tree,
-	TreeConfiguration,
+	TreeViewConfiguration,
 } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/legacy";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces.js";
+import type {
+	IInventoryItem,
+	IInventoryItemEvents,
+	IInventoryList,
+} from "../modelInterfaces.js";
 
 // To define the tree schema, we'll make a series of calls to a SchemaBuilder to produce schema objects.
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
@@ -37,24 +41,7 @@ export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList: InventoryItemList,
 }) {}
 
-export const treeConfiguration = new TreeConfiguration(
-	InventorySchema,
-	() =>
-		new InventorySchema({
-			inventoryItemList: [
-				{
-					id: uuid(),
-					name: "nut",
-					quantity: 0,
-				},
-				{
-					id: uuid(),
-					name: "bolt",
-					quantity: 0,
-				},
-			],
-		}),
-);
+export const treeConfiguration = new TreeViewConfiguration({ schema: InventorySchema });
 
 const sharedTreeKey = "sharedTree";
 
@@ -62,7 +49,10 @@ const sharedTreeKey = "sharedTree";
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
  * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
  */
-class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements IInventoryItem {
+class NewTreeInventoryItem
+	extends TypedEmitter<IInventoryItemEvents>
+	implements IInventoryItem
+{
 	private readonly _unregisterChangingEvent: () => void;
 	public get id() {
 		return this._inventoryItemNode.id;
@@ -131,32 +121,32 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 
 	protected async initializingFirstTime(): Promise<void> {
 		this._sharedTree = SharedTree.create(this.runtime);
+		const view = this._sharedTree.viewWith(treeConfiguration);
+		view.initialize(
+			new InventorySchema({
+				inventoryItemList: [
+					{
+						id: uuid(),
+						name: "nut",
+						quantity: 0,
+					},
+					{
+						id: uuid(),
+						name: "bolt",
+						quantity: 0,
+					},
+				],
+			}),
+		);
+		view.dispose();
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
-		// Convenient repro for bug AB#5975
-		// const retrievedSharedTree = await this._sharedTree.handle.get();
-		// if (this._sharedTree !== retrievedSharedTree) {
-		// 	console.log(this._sharedTree, retrievedSharedTree);
-		// 	throw new Error("handle doesn't roundtrip on initial creation");
-		// }
-	}
-
-	// This would usually live in hasInitialized - I'm using initializingFromExisting here due to bug AB#5975.
-	protected async initializingFromExisting(): Promise<void> {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._sharedTree = await this.root.get<IFluidHandle<ITree>>(sharedTreeKey)!.get();
 	}
 
 	protected async hasInitialized(): Promise<void> {
-		// Note that although we always pass initialTree, it's only actually used on the first load and
-		// is ignored on subsequent loads.  AB#5974
-		// The schematizeView() call does a few things:
-		// 1. On first load, stamps the schema we defined above on the tree (permanently).
-		// 2. On first load, inserts the initial data we define in the initialTree.
-		// 3. On all loads, gets an (untyped) view of the data (the contents can't be accessed directly from the sharedTree).
-		// Then the root2() call applies a typing to the untyped view based on our schema.  After that we can actually
-		// reach in and grab the inventoryItems list.
-		this._inventoryItemList =
-			this.sharedTree.schematize(treeConfiguration).root.inventoryItemList;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this._sharedTree = await this.root.get<IFluidHandle<ITree>>(sharedTreeKey)!.get();
+		const view = this.sharedTree.viewWith(treeConfiguration);
+		this._inventoryItemList = view.root.inventoryItemList;
 		// "treeChanged" will fire for any change of any type anywhere in the subtree. In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
 		// Since "treeChanged" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems

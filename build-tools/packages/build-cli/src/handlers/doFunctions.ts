@@ -4,24 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import chalk from "chalk";
 import { Machine } from "jssm";
+import chalk from "picocolors";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
+import { getDefaultInterdependencyRange } from "../config.js";
 import {
 	difference,
 	getPreReleaseDependencies,
 	npmCheckUpdates,
 	setVersion,
-} from "../library";
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
-import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
+} from "../library/index.js";
+import { CommandLogger } from "../logging.js";
+import { MachineState } from "../machines/index.js";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Bumps any pre-release dependencies that have been released.
@@ -177,7 +178,7 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 		context,
 		rgRepo,
 		newVersion,
-		rgRepo instanceof MonoRepo ? rgRepo.interdependencyRange : undefined,
+		rgRepo instanceof MonoRepo ? getDefaultInterdependencyRange(rgRepo, context) : undefined,
 		log,
 	);
 

@@ -17,34 +17,44 @@ import {
 	ContainerRuntime,
 	IGCRuntimeOptions,
 	IOnDemandSummarizeOptions,
-	ISummarizeEventProps,
 	ISummarizer,
 	DeletedResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import/no-internal-modules
-import { ISweepMessage } from "@fluidframework/container-runtime/internal/test/gc";
+import {
+	computeTombstoneTimeout,
+	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
+	ISweepMessage,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/internal/test/gc";
 import {
 	RetriableSummaryError,
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
-import { IErrorBase } from "@fluidframework/core-interfaces/internal";
-import { delay } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
+import { IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import {
+	MockLogger,
+	tagCodeArtifacts,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
+	toIDeltaManagerFull,
 	createSummarizer,
-	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
 
-import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
@@ -117,16 +127,17 @@ function validateDataStoreStateInSummary(
 	);
 }
 
-const tombstoneTimeoutMs = 200;
-const sweepGracePeriodMs = 0; // Skip Tombstone, these tests focus on Sweep
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const tombstoneTimeoutMs = computeTombstoneTimeout(defaultSessionExpiryDurationMs)!;
+const sweepGracePeriodMs = defaultSweepGracePeriodMs;
 const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
+
 const newGCOptions: () => IGCRuntimeOptions = () => ({
 	inactiveTimeoutMs: 0,
 	enableGCSweep: true,
 	sweepGracePeriodMs,
 });
 const mockLogger = new MockLogger();
-const configProvider = createTestConfigProvider();
 const newTestContainerConfig: () => ITestContainerConfig = () => ({
 	runtimeOptions: {
 		summaryOptions: {
@@ -136,7 +147,7 @@ const newTestContainerConfig: () => ITestContainerConfig = () => ({
 		},
 		gcOptions: newGCOptions(),
 	},
-	loaderProps: { configProvider, logger: mockLogger },
+	loaderProps: { logger: mockLogger },
 });
 
 const testContainerConfig: ITestContainerConfig = newTestContainerConfig();
@@ -152,16 +163,20 @@ async function loadContainer(
 	});
 }
 
-const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
+const loadSummarizer = async (
+	container: IContainer,
+	summaryVersion?: string,
+	logger?: MockLogger,
+) => {
 	return createSummarizer(
 		provider,
 		container,
 		{
 			runtimeOptions: { gcOptions: newGCOptions() },
-			loaderProps: { configProvider },
 			forceUseCreateVersion: true, // To simulate the summarizer running on the created container
 		},
 		summaryVersion,
+		logger,
 	);
 };
 const ensureSynchronizedAndSummarize = async (
@@ -172,9 +187,12 @@ const ensureSynchronizedAndSummarize = async (
 	return summarizeNow(summarizer, options);
 };
 
-// This function creates an unreferenced datastore and returns the datastore's id and the summary version that
-// datastore was unreferenced in.
-const summarizationWithUnreferencedDataStoreAfterTime = async () => {
+/**
+ * Summarizes a container with a data store that is ready to be swept. It creates a container with a data store,
+ * unreferences it, waits for sweep timeout, summarizes so it is sweep ready.
+ * It returns the unreferenced data store id, the summarizer, the summarizing container, the summarizer's data store.
+ */
+async function summarizeWithSweepReadyDS(clock: SinonFakeTimers) {
 	const container = await provider.makeTestContainer(testContainerConfig);
 	const defaultDataObject = await getContainerEntryPointBackCompat<ITestDataObject>(container);
 	await waitForContainerConnection(container);
@@ -199,8 +217,12 @@ const summarizationWithUnreferencedDataStoreAfterTime = async () => {
 		await loadSummarizer(container);
 	const summaryVersion = (await ensureSynchronizedAndSummarize(summarizer1)).summaryVersion;
 
+	// Close the container as it would be closed by session expiry before sweep ready ever occurs.
+	container.close();
 	// Close the summarizer so that it doesn't interfere with the new one.
 	summarizingContainer1.close();
+
+	clock.tick(sweepTimeoutMs + 10);
 
 	// Load a new container and summarizer from the latest summary
 	const { container: summarizingContainer2, summarizer: summarizer2 } = await loadSummarizer(
@@ -213,14 +235,10 @@ const summarizationWithUnreferencedDataStoreAfterTime = async () => {
 		url: toFluidHandleInternal(testDataObject.handle).absolutePath,
 	});
 	const summarizerDataObject = response.value as ITestDataObject;
-	await delay(sweepTimeoutMs + 10);
 
 	// Send an op to update the timestamp that the summarizer client uses for GC to a current one.
 	defaultDataObject._root.set("update", "timestamp");
 	await provider.ensureSynchronized();
-
-	// Close the container as it would be closed by session expiry before sweep ready ever occurs.
-	container.close();
 
 	return {
 		unreferencedId,
@@ -228,85 +246,58 @@ const summarizationWithUnreferencedDataStoreAfterTime = async () => {
 		summarizingContainer: summarizingContainer2,
 		summarizerDataObject,
 		summaryVersion,
-		container,
 	};
-};
-
-describeCompat("V1/V2 compat", "FullCompat", (getTestObjectProvider) => {
-	beforeEach("setup", async function () {
-		provider = getTestObjectProvider({ syncSummarizer: true });
-		if (provider.driver.type !== "local") {
-			this.skip();
-		}
-
-		const configs = {
-			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs": tombstoneTimeoutMs,
-			// NOTE: These are the configs used for Declarative Model (Azure/Odsp Client) to support v1/v2 collaboartion compatibility
-			"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
-			"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
-			"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
-		};
-		Object.entries(configs).forEach(([key, value]) => {
-			configProvider.set(key, value);
-		});
-	});
-
-	afterEach(() => {
-		mockLogger.clear();
-		configProvider.clear();
-	});
-
-	itExpects(
-		"Sending the GC op can be disabled to support V1/V2 runtime compatibility",
-		[
-			// This event is an error in 1.x but not 2.x
-			{ eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
-		],
-		async () => {
-			const { container, summarizer } =
-				await summarizationWithUnreferencedDataStoreAfterTime();
-
-			// Load a container on the opposite version to test compatibility
-			const other = await provider.loadTestContainer(testContainerConfig);
-
-			// The GC op would be sent now, but isn't due to config (otherwise v1 would crash)
-			await ensureSynchronizedAndSummarize(summarizer);
-		},
-	);
-});
+}
 
 /**
  * These tests validate that SweepReady data stores are correctly swept. Swept datastores should be
  * removed from the summary, added to the GC deleted blob, and prevented from changing (sending / receiving ops,
  * loading, etc.).
- *
- * NOTE: These tests speak of "Sweep" but simply use "tombstoneTimeoutMs" throughout, since sweepGracePeriod is set to 0.
  */
-describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectProvider) {
+	/**
+	 * These tests use sinon fake timers to test sweep with default GC timeouts which are much larger than the
+	 * default test timeout. The maximum fake time these test advances is sweepTimeoutMs. So, add sweepTimeoutMs
+	 * to the test timeout to avoid test timeout errors.
+	 * Specifically, these tests use `timeoutAwait` and `timeoutPromise` which fail if the fake time advances by
+	 * more than the test timeout.
+	 */
+	const testTimeoutOverrideMs = this.timeout() + sweepTimeoutMs;
+	this.timeout(testTimeoutOverrideMs);
+
+	let clock: SinonFakeTimers;
+	before(() => {
+		clock = useFakeTimers({ shouldAdvanceTime: true });
+	});
+
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
+		/**
+		 * Note that these tests use fake timers and will fail when run with real services. The reason is because GC uses
+		 * op timestamps to keep track of how much time has passed. With real services, the op timestamps are real and
+		 * they will not move with the fake timers.
+		 */
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		configProvider.set(
-			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
-			tombstoneTimeoutMs,
-		);
 	});
 
 	afterEach(() => {
+		clock.reset();
 		mockLogger.clear();
-		configProvider.clear();
+	});
+
+	after(() => {
+		clock.restore();
 	});
 
 	describe("Using swept data stores not allowed", () => {
-		// If this test starts failing due to runtime is closed errors try first adjusting `tombstoneTimeoutMs` above
 		itExpects(
 			"Send ops fails for swept datastores in summarizing container loaded before tombstone timeout",
 			[
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
-					clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
+					clientType: "noninteractive/summarizer", // summarizeWithSweepReadyDS has a summarizer spanning before/after the delete
 				},
 				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
@@ -315,8 +306,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				},
 			],
 			async () => {
-				const { summarizerDataObject, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime();
+				const { summarizerDataObject, summarizer } = await summarizeWithSweepReadyDS(clock);
 
 				// The datastore should be swept now
 				await ensureSynchronizedAndSummarize(summarizer);
@@ -325,7 +315,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				assert.throws(
 					() => summarizerDataObject._root.set("send", "op"),
 					(error: IErrorBase) => {
-						const correctErrorType = error.errorType === "dataCorruptionError";
+						const correctErrorType = error.errorType === FluidErrorTypes.dataProcessingError;
 						const correctErrorMessage =
 							error.message?.startsWith(`Context is deleted`) === true;
 						return correctErrorType && correctErrorMessage;
@@ -340,7 +330,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			[
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
-					clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
+					clientType: "noninteractive/summarizer", // summarizeWithSweepReadyDS has a summarizer spanning before/after the delete
 				},
 				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
@@ -349,8 +339,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				},
 			],
 			async () => {
-				const { summarizerDataObject, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime();
+				const { summarizerDataObject, summarizer } = await summarizeWithSweepReadyDS(clock);
 
 				// The datastore should be swept now
 				await ensureSynchronizedAndSummarize(summarizer);
@@ -359,7 +348,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				assert.throws(
 					() => summarizerDataObject._runtime.submitSignal("send", "signal"),
 					(error: IErrorBase) => {
-						const correctErrorType = error.errorType === "dataCorruptionError";
+						const correctErrorType = error.errorType === FluidErrorTypes.dataProcessingError;
 						const correctErrorMessage =
 							error.message?.startsWith(`Context is deleted`) === true;
 						return correctErrorType && correctErrorMessage;
@@ -376,7 +365,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			[
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
-					clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
+					clientType: "noninteractive/summarizer", // summarizeWithSweepReadyDS has a summarizer spanning before/after the delete
 				},
 				// DataStore
 				{
@@ -398,8 +387,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				},
 			],
 			async () => {
-				const { unreferencedId, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime();
+				const { unreferencedId, summarizer } = await summarizeWithSweepReadyDS(clock);
 
 				// The datastore should be swept now
 				const { summaryVersion } = await ensureSynchronizedAndSummarize(summarizer);
@@ -432,11 +420,10 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				);
 
 				// Flush microtask queue to get PathInfo event logged
-				await delay(0);
+				await clock.tickAsync(0);
 				mockLogger.assertMatch([
 					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+						eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 						...tagCodeArtifacts({ id: `/${unreferencedId}` }),
 					},
 					{
@@ -472,11 +459,10 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				);
 
 				// Flush microtask queue to get PathInfo event logged
-				await delay(0);
+				await clock.tickAsync(0);
 				mockLogger.assertMatch([
 					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+						eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 						...tagCodeArtifacts({ id: `/${unreferencedId}/some-child-id` }),
 					},
 					{
@@ -515,7 +501,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			[
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
-					clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
+					clientType: "noninteractive/summarizer", // summarizeWithSweepReadyDS has a summarizer spanning before/after the delete
 				},
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
@@ -543,7 +529,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					summarizingContainer,
 					summarizer,
 					summaryVersion: unreferencedSummaryVersion,
-				} = await summarizationWithUnreferencedDataStoreAfterTime();
+				} = await summarizeWithSweepReadyDS(clock);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
 				const containerRuntime = entryPoint._context.containerRuntime as ContainerRuntime;
@@ -590,7 +576,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			[
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
-					clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
+					clientType: "noninteractive/summarizer", // summarizeWithSweepReadyDS has a summarizer spanning before/after the delete
 				},
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Changed",
@@ -618,10 +604,9 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					summarizingContainer,
 					summarizer,
 					summaryVersion: unreferencedSummaryVersion,
-				} = await summarizationWithUnreferencedDataStoreAfterTime();
+				} = await summarizeWithSweepReadyDS(clock);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
-				const sendingDataObject =
-					(await sendingContainer.getEntryPoint()) as ITestDataObject;
+				const sendingDataObject = (await sendingContainer.getEntryPoint()) as ITestDataObject;
 				const containerRuntime = sendingDataObject._context
 					.containerRuntime as ContainerRuntime;
 				const response = await containerRuntime.resolveHandle({
@@ -664,6 +649,66 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				);
 			},
 		);
+
+		it("trailing ops cause sweep ready data store to be realized by summarizer", async () => {
+			const container = await provider.makeTestContainer(testContainerConfig);
+			const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
+			await waitForContainerConnection(container);
+
+			// Create a data store and make it unreferenced.
+			const ds2key = "ds2";
+			const dataStore =
+				await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
+			const testDataObject =
+				await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
+			assert(
+				testDataObject !== undefined,
+				"Should have been able to retrieve testDataObject from entryPoint",
+			);
+			const unreferencedId = testDataObject._context.id;
+			defaultDataObject._root.set(ds2key, testDataObject.handle);
+			defaultDataObject._root.delete(ds2key);
+
+			// Summarize so that the above data store is unreferenced.
+			const { summarizer: summarizer1 } = await loadSummarizer(container);
+			const { summaryVersion } = await ensureSynchronizedAndSummarize(summarizer1);
+			summarizer1.close();
+
+			// To simulate this scenario, the container that deleted the data store should send an op before its
+			// session expires. At the same time, there should be a second container that receives the op whose
+			// session doesn't expire by sweep timeout (this is needed for ensureSynchronized to work since it needs
+			// at least one container that isn't closed).
+			// So, advance the clock partially, send the op and load another container.
+			const partialTimeoutMs = defaultSessionExpiryDurationMs / 2;
+			clock.tick(partialTimeoutMs);
+			testDataObject._root.set("key", "value");
+
+			const container2 = await provider.loadTestContainer(testContainerConfig);
+			await provider.ensureSynchronized();
+
+			// Close the first container before its session expires so we don't get unnecessary errors.
+			container.close();
+			clock.tick(sweepTimeoutMs - partialTimeoutMs + 10);
+
+			const logger = new MockLogger();
+			// Summarize. The sweep ready data store should get realized because it has a
+			// trailing op.
+			const { summarizer: summarizer2 } = await loadSummarizer(
+				container2,
+				summaryVersion,
+				logger,
+			);
+			await assert.doesNotReject(
+				ensureSynchronizedAndSummarize(summarizer2),
+				"summarize failed",
+			);
+			logger.assertMatch([
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Realized",
+					id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
+				},
+			]);
+		});
 	});
 
 	describe("Deleted data stores in summary", () => {
@@ -672,12 +717,11 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			[
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
-					clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
+					clientType: "noninteractive/summarizer", // summarizeWithSweepReadyDS has a summarizer spanning before/after the delete
 				},
 			],
 			async () => {
-				const { unreferencedId, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime();
+				const { unreferencedId, summarizer } = await summarizeWithSweepReadyDS(clock);
 				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
 
 				// Summarize. In this summary, the gc op will be sent with the deleted data store id. The data store
@@ -696,35 +740,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				);
 			},
 		);
-
-		it("disableDatastoreSweep true - Tombstones the SweepReady data store state in the summary", async () => {
-			configProvider.set("Fluid.GarbageCollection.DisableDataStoreSweep", true);
-
-			const { unreferencedId, summarizer, summarizingContainer } =
-				await summarizationWithUnreferencedDataStoreAfterTime();
-			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-
-			// Summarize. If sweep was enabled, the gc op will be sent with the deleted data store id. The data store
-			// will be removed in the subsequent summary.
-			await ensureSynchronizedAndSummarize(summarizer);
-
-			// The datastore should NOT be swept here. If sweep was enabled, it would be deleted in this summary.
-			// We need to do fullTree because the GC data won't change (since it's not swept).
-			// But the validation depends on the GC subtree being present (not a handle).
-			const summary3 = await ensureSynchronizedAndSummarize(summarizer, {
-				reason: "end-to-end test",
-				fullTree: true,
-			});
-
-			// Validate that the data store's state is correct in the summary - it should have been tombstoned not deleted.
-			validateDataStoreStateInSummary(
-				summary3.summaryTree,
-				sweepReadyDataStoreNodePath,
-				false /* expectDelete */,
-				false /* expectGCStateHandle */,
-				true /* expectTombstoned */,
-			);
-		});
 	});
 
 	itExpects(
@@ -732,11 +747,11 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		[
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
-				clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
+				clientType: "noninteractive/summarizer", // summarizeWithSweepReadyDS has a summarizer spanning before/after the delete
 			},
 		],
 		async () => {
-			const { summarizer } = await summarizationWithUnreferencedDataStoreAfterTime();
+			const { summarizer } = await summarizeWithSweepReadyDS(clock);
 
 			// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that
 			// the GC op does not fail summary due to local changes.
@@ -795,7 +810,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			// Pause the inbound queue so that GC ops are not processed in between failures. This will be resumed
 			// before the final attempt.
 			if (blockInboundGCOp) {
-				await containerRuntime.deltaManager.inbound.pause();
+				await toIDeltaManagerFull(containerRuntime.deltaManager).inbound.pause();
 			}
 
 			let summarizeFunc = containerRuntime.summarize;
@@ -811,7 +826,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				}
 				// If this is the last attempt, resume the inbound queue to let the GC ops (if any) through.
 				if (blockInboundGCOp) {
-					containerRuntime.deltaManager.inbound.resume();
+					toIDeltaManagerFull(containerRuntime.deltaManager).inbound.resume();
 				}
 				return results;
 			};
@@ -859,14 +874,13 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 						error: summarizeErrorMessage,
 					},
 					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+						eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 						clientType: "interactive",
 					},
 				],
 				async () => {
 					const { unreferencedId, summarizer, summarizerDataObject } =
-						await summarizationWithUnreferencedDataStoreAfterTime();
+						await summarizeWithSweepReadyDS(clock);
 					const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
 
 					const containerRuntime = summarizerDataObject._context
@@ -905,11 +919,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 					// Validate that the summary succeeded on final attempt.
 					const props = await summarizePromiseP;
-					assert.equal(
-						props.result,
-						"success",
-						"The summary should have been successful",
-					);
+					assert.equal(props.result, "success", "The summary should have been successful");
 					assert.equal(
 						props.currentAttempt,
 						defaultMaxAttemptsForSubmitFailures,
@@ -917,11 +927,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					);
 
 					if (gcOps === "multiple") {
-						assert.equal(
-							gcSweepOpCount,
-							props.currentAttempt,
-							"Incorrect number of GC ops",
-						);
+						assert.equal(gcSweepOpCount, props.currentAttempt, "Incorrect number of GC ops");
 					} else {
 						assert(gcSweepOpCount >= 1, "Incorrect number of GC ops");
 					}

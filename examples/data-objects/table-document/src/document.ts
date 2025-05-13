@@ -9,16 +9,17 @@ import {
 	positionToRowCol,
 	rowColToPosition,
 } from "@fluid-experimental/sequence-deprecated";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { createEndpointIndex } from "@fluidframework/sequence/internal";
 import {
 	PropertySet,
 	ReferencePosition,
 	SequenceDeltaEvent,
 	SharedString,
-	createEndpointIndex,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 
 import { CellRange } from "./cellrange.js";
 import { TableDocumentType } from "./componentTypes.js";
@@ -52,18 +53,20 @@ export interface ITableDocumentEvents extends IEvent {
  * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
  * @alpha
  */
-export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> implements ITable {
+export class TableDocument
+	extends DataObject<{ Events: ITableDocumentEvents }>
+	implements ITable
+{
 	public static getFactory() {
 		return TableDocument.factory;
 	}
 
-	private static readonly factory = new DataObjectFactory(
-		TableDocumentType,
-		TableDocument,
-		[SparseMatrix.getFactory(), SharedNumberSequence.getFactory()],
-		{},
-		[TableSlice.getFactory().registryEntry],
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: TableDocumentType,
+		ctor: TableDocument,
+		sharedObjects: [SparseMatrix.getFactory(), SharedNumberSequence.getFactory()],
+		registryEntries: [TableSlice.getFactory().registryEntry],
+	});
 
 	public get numCols() {
 		return this.cols.getLength();

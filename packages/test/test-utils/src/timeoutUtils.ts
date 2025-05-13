@@ -6,12 +6,6 @@
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type * as Mocha from "mocha";
 
-// @deprecated this value is no longer used
-/**
- * @internal
- */
-export const defaultTimeoutDurationMs = 250;
-
 const timeBuffer = 15; // leave 15 ms leeway for finish processing
 
 // TestTimeout class that manages tracking of test timeout. It creates a timer when timeout is in effect,
@@ -22,8 +16,7 @@ const timeBuffer = 15; // leave 15 ms leeway for finish processing
 class TestTimeout {
 	private timeout: number = 0;
 	private timer: NodeJS.Timeout | undefined;
-	private readonly deferred: Deferred<void>;
-	private rejected = false;
+	private deferred: Deferred<void> = new Deferred<void>();
 
 	private static instance: TestTimeout = new TestTimeout();
 	public static reset(runnable: Mocha.Runnable) {
@@ -32,7 +25,7 @@ class TestTimeout {
 	}
 
 	public static clear() {
-		if (TestTimeout.instance.rejected) {
+		if (TestTimeout.instance.deferred.isCompleted) {
 			TestTimeout.instance = new TestTimeout();
 		} else {
 			TestTimeout.instance.clearTimer();
@@ -51,43 +44,41 @@ class TestTimeout {
 		return this.timeout;
 	}
 
-	private constructor() {
-		this.deferred = new Deferred();
-		// Ignore rejection for timeout promise if no one is waiting for it.
-		this.deferred.promise.catch(() => {});
-	}
+	private constructor() {}
 
 	private resetTimer(runnable: Mocha.Runnable) {
 		assert(!this.timer, "clearTimer should have been called before reset");
 		assert(!this.deferred.isCompleted, "can't reset a completed TestTimeout");
 
 		// Check the test timeout setting
-		const timeout = runnable.timeout();
-		if (!(Number.isFinite(timeout) && timeout > 0)) {
+		const timeoutFromMochaTest = runnable.timeout();
+		if (!(Number.isFinite(timeoutFromMochaTest) && timeoutFromMochaTest > 0)) {
 			return;
 		}
 
 		// subtract a buffer
-		this.timeout = Math.max(timeout - timeBuffer, 1);
+		this.timeout = Math.max(timeoutFromMochaTest - timeBuffer, 1);
 
 		// Set up timer to reject near the test timeout.
 		this.timer = setTimeout(() => {
 			this.deferred.reject(this);
-			this.rejected = true;
 		}, this.timeout);
 	}
 	private clearTimer() {
 		if (this.timer) {
+			this.deferred = new Deferred();
 			clearTimeout(this.timer);
 			this.timer = undefined;
 		}
 	}
 }
 
-// only register if we are running with mocha-test-setup loaded
+// Only register if we are running with mocha-test-setup loaded (that package is what sets globalThis.getMochaModule).
 if (globalThis.getMochaModule !== undefined) {
-	// patching resetTimeout and clearTimeout on the runnable object
-	// so we can track when test timeout are enforced
+	// Patch the private methods resetTimeout and clearTimeout on Mocha's runnable objects so we can do the appropriate
+	// calls in TestTimeout above when the Mocha methods are called.
+	// These are not part of the public API so if Mocha changes how it works, this could break.
+	// See https://github.com/mochajs/mocha/blob/8d0ca3ed77ba8a704b2aa8b58267a084a475a51b/lib/runnable.js#L234.
 	const mochaModule = globalThis.getMochaModule() as typeof Mocha;
 	const runnablePrototype = mochaModule.Runnable.prototype;
 	// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -107,26 +98,30 @@ if (globalThis.getMochaModule !== undefined) {
 /**
  * @internal
  */
-export interface TimeoutWithError {
+export interface TimeoutDurationOption {
 	/**
 	 * Timeout duration in milliseconds, if it is great than 0 and not Infinity
 	 * If it is undefined, then it will use test timeout if we are in side the test function
 	 * Otherwise, there is no timeout
 	 */
 	durationMs?: number;
-	reject?: true;
-	errorMsg?: string;
 }
+
 /**
  * @internal
  */
-export interface TimeoutWithValue<T = void> {
-	/**
-	 * Timeout duration in milliseconds, if it is great than 0 and not Infinity
-	 * If it is undefined, then it will use test timeout if we are in side the test function
-	 * Otherwise, there is no timeout
-	 */
-	durationMs?: number;
+export interface TimeoutWithError extends TimeoutDurationOption {
+	reject?: true;
+	errorMsg?: string;
+	// Since there are no required properties, this type explicitly
+	// rejects `value` to avoid confusion with TimeoutWithValue.
+	value?: never;
+}
+
+/**
+ * @internal
+ */
+export interface TimeoutWithValue<T = void> extends TimeoutDurationOption {
 	reject: false;
 	value: T;
 }
@@ -137,14 +132,17 @@ export type PromiseExecutor<T = void> = (
 ) => void;
 
 /**
- * Wraps the given promise around with promise that will complete after a specific timeout if the original promise does
- * not resolve by then. By default, it uses the mocha test timeout and complete the promise just before that so that
- * tests don't time out because of unpredictable awaits.
- * The timeout can be overridden via timeoutOptions but it's recommended to use the default value.
- * @param promise - The promise to be awaited.
- * @param timeoutOptions - Options that can be used to override the timeout and / or define the behavior
- * when the promise is not fulfilled. For example, instead of rejecting the promise, resolve with a
- * specific value.
+ * Wraps the given promise with another one that will complete after a specific timeout if the original promise does
+ * not resolve by then.
+ *
+ * @remarks
+ * If used inside a mocha test, it uses the test timeout by default and completes the returned promise just before
+ * the test timeout hits, so that tests don't time out because of unpredictable awaits.
+ * In that scenario the timeout can still be overridden via `timeoutOptions` but it's recommended to use the default value.
+ *
+ * @param promise - The promise to be wrapped.
+ * @param timeoutOptions - Options that can be used to override the timeout and / or define the behavior when
+ * the promise is not fulfilled. For example, instead of rejecting the promise, resolve with a specific value.
  * @returns A new promise that will complete when the given promise resolves or the timeout expires.
  * @internal
  */
@@ -156,9 +154,13 @@ export async function timeoutAwait<T = void>(
 }
 
 /**
- * Creates a promise from the given executor that will complete after a specific timeout. By default, it uses the mocha
- * test timeout and complete the promise just before that so that tests don't time out because of unpredictable awaits.
- * The timeout can be overridden via timeoutOptions but it's recommended to use the default value.
+ * Creates a promise from the given executor that will complete after a specific timeout.
+ *
+ * @remarks
+ * If used inside a mocha test, it uses the test timeout by default and completes the returned promise just before
+ * the test timeout hits, so that tests don't time out because of unpredictable awaits.
+ * In that scenario the timeout can still be overridden via `timeoutOptions` but it's recommended to use the default value.
+ *
  * @param executor - The executor for the promise.
  * @param timeoutOptions - Options that can be used to override the timeout and / or define the behavior when
  * the promise is not fulfilled. For example, instead of rejecting the promise, resolve with a specific value.
@@ -192,7 +194,7 @@ export async function timeoutPromise<T = void>(
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const errorObject = err!;
 				errorObject.message = `${
-					timeoutOptions.errorMsg ?? "Test timed out"
+					timeoutOptions.errorMsg ?? "Forcing timeout before test does"
 				} (${currentTestTimeout.getTimeout()}ms)`;
 				throw errorObject;
 			}
@@ -225,9 +227,7 @@ async function getTimeoutPromise<T = void>(
 		};
 		const timer = setTimeout(
 			() =>
-				timeoutOptions.reject === false
-					? resolve(timeoutOptions.value)
-					: timeoutRejections(),
+				timeoutOptions.reject === false ? resolve(timeoutOptions.value) : timeoutRejections(),
 			timeout,
 		);
 

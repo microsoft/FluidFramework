@@ -23,6 +23,7 @@ import * as app from "../app";
 import { ExternalStorageManager } from "../externalStorageManager";
 import { Constants, IsomorphicGitManagerFactory, NodeFsManagerFactory } from "../utils";
 import * as testUtils from "./utils";
+import { StartupCheck } from "@fluidframework/server-services-shared";
 
 // TODO: (issue logged): replace email & name
 const commitEmail = "kurtb@microsoft.com";
@@ -203,10 +204,12 @@ testModes.forEach((mode) => {
 			beforeEach(() => {
 				const repoManagerFactory = getRepoManagerFactory(mode);
 				testUtils.defaultProvider.set("git:repoPerDocEnabled", mode.repoPerDocEnabled);
+				const startupCheck = new StartupCheck();
 				const testApp = app.create(
 					testUtils.defaultProvider,
 					{ defaultFileSystemManagerFactory: fileSystemManagerFactory },
 					repoManagerFactory,
+					startupCheck,
 				);
 				supertest = request(testApp);
 			});

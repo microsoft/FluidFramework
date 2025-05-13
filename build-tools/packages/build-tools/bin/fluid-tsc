@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require("../dist/fluidTsc/fluidTsc.js");
+require("../dist/fluidBuild/fluidTsc/fluidTsc.js");

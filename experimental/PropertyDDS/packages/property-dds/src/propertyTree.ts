@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import lodash from "lodash";
-
-// eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
-const { isEmpty, findIndex, find, isEqual, range } = lodash;
-
 import {
 	ChangeSet,
 	Utils as ChangeSetUtils,
@@ -23,18 +18,23 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
-import { copy as cloneDeep } from "fastest-json-copy";
+import lodash from "lodash";
 import { Packr } from "msgpackr";
 import { v4 as uuidv4 } from "uuid";
+
+// eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
+const { isEmpty, findIndex, find, isEqual, range, cloneDeep } = lodash;
 
 import { PropertyTreeFactory } from "./propertyTreeFactory.js";
 
@@ -217,8 +217,8 @@ export class SharedPropertyTree extends SharedObject {
 		// Backdoor to emit "partial_checkout" events on the socket. The delta manager at container runtime layer is
 		// a proxy and the delta manager at the container context layer is yet another proxy, so account for that.
 		if (!this.options.disablePartialCheckout) {
-			let dm = (this.deltaManager as any).deltaManager;
-			if (dm.deltaManager !== undefined) {
+			let dm = this.deltaManager as any;
+			while ("deltaManager" in dm && !("connectionManager" in dm)) {
 				dm = dm.deltaManager;
 			}
 			const socket = dm.connectionManager.connection.socket;
@@ -376,7 +376,9 @@ export class SharedPropertyTree extends SharedObject {
 			message.type === MessageType.Operation &&
 			message.sequenceNumber > this.skipSequenceNumber
 		) {
-			const change: IPropertyTreeMessage = this.decodeMessage(cloneDeep(message.contents));
+			const change: IPropertyTreeMessage = this.decodeMessage(
+				cloneDeep(message.contents as IPropertyTreeMessage),
+			);
 			const content: IRemotePropertyTreeMessage = {
 				...change,
 				sequenceNumber: message.sequenceNumber,
@@ -613,7 +615,7 @@ export class SharedPropertyTree extends SharedObject {
 		const handleTableChunk = await storage.readBlob("properties");
 		const utf8 = bufferToString(handleTableChunk, "utf8");
 
-		const snapshot: ISnapshot = this.serializer.parse(utf8);
+		const snapshot: ISnapshot = this.serializer.parse(utf8) as ISnapshot;
 		this.useMH = snapshot.useMH;
 
 		try {
@@ -646,25 +648,21 @@ export class SharedPropertyTree extends SharedObject {
 					snapshotSummary.remoteHeadGuid =
 						snapshotSummary.remoteChanges.length > 0
 							? // If there are remote changes in the
-							  // summary we can deduce the head GUID from these changes.
-							  snapshotSummary.remoteChanges[
-									snapshotSummary.remoteChanges.length - 1
-							  ].guid
+								// summary we can deduce the head GUID from these changes.
+								snapshotSummary.remoteChanges[snapshotSummary.remoteChanges.length - 1].guid
 							: // If no remote head GUID is available, we will fall back to the old behaviour,
-							  // where the head GUID was set to an empty string. However, this could lead to
-							  // divergence between the clients, if there is still a client in the session
-							  // that is using a version of this library without this patch and which
-							  // has started the session at a different summary.
-							  "";
+								// where the head GUID was set to an empty string. However, this could lead to
+								// divergence between the clients, if there is still a client in the session
+								// that is using a version of this library without this patch and which
+								// has started the session at a different summary.
+								"";
 				}
 
 				this.remoteTipView = snapshotSummary.remoteTipView;
 				this.remoteChanges = snapshotSummary.remoteChanges;
 				this.unrebasedRemoteChanges = snapshotSummary.unrebasedRemoteChanges;
 				this.headCommitGuid = snapshotSummary.remoteHeadGuid;
-				const isPartialCheckoutActive = !!(
-					this.options.clientFiltering && this.options.paths
-				);
+				const isPartialCheckoutActive = !!(this.options.clientFiltering && this.options.paths);
 				if (isPartialCheckoutActive && this.options.paths) {
 					this.remoteTipView = ChangeSetUtils.getFilteredChangeSetByPaths(
 						this.remoteTipView,
@@ -676,9 +674,7 @@ export class SharedPropertyTree extends SharedObject {
 				this.skipSequenceNumber = 0;
 			} else {
 				const { branchGuid, summaryMinimumSequenceNumber } = snapshot;
-				const branchResponse = await axios.get(
-					`http://localhost:3000/branch/${branchGuid}`,
-				);
+				const branchResponse = await axios.get(`http://localhost:3000/branch/${branchGuid}`);
 				this.headCommitGuid = branchResponse.data.headCommitGuid;
 				const {
 					commit: { meta: commitMetadata },

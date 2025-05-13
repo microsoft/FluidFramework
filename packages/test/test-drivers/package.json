@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-drivers",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.41.0",
 	"description": "A driver abstraction and implementations for testing against server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -34,18 +34,20 @@
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"check:are-the-types-wrong": "attw --pack .",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"check:biome": "biome check .",
+		"check:exports": "concurrently \"npm:check:exports:*\"",
+		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
+		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
+		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
@@ -60,35 +62,35 @@
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/odsp-urlresolver": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/server-local-server": "^4.0.0",
+		"@fluidframework/server-local-server": "^5.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
 		"agentkeepalive": "^4.5.0",
-		"axios": "^1.6.2",
-		"semver": "^7.5.3",
+		"axios": "^1.8.4",
+		"semver": "^7.7.1",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@arethetypeswrong/cli": "^0.17.1",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@fluidframework/build-tools": "^0.55.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
+		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
-import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
+import type { SessionId } from "@fluidframework/id-compressor";
+import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
 
 import {
-	EncodedRevisionTag,
-	RevisionTag,
+	type EncodedRevisionTag,
+	type RevisionTag,
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
-import { Brand, brandedNumberType } from "../util/index.js";
+import { type Brand, brandedNumberType } from "../util/index.js";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.
@@ -98,13 +98,18 @@ const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchem
 export interface EncodedEditManager<TChangeset> {
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
 	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
-	readonly version: 1 | 2;
+	readonly version: 1 | 2 | 3 | 4;
 }
 
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
-			version: Type.Union([Type.Literal(1), Type.Literal(2)]),
+			version: Type.Union([
+				Type.Literal(1),
+				Type.Literal(2),
+				Type.Literal(3),
+				Type.Literal(4),
+			]),
 			trunk: Type.Array(SequencedCommit(tChange)),
 			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
 		},

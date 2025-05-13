@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { TUnsafe, Type } from "@sinclair/typebox";
+import { strict as assert } from "node:assert";
+import { type TUnsafe, Type } from "@sinclair/typebox";
 
 import { makeCodecFamily } from "../../../codec/index.js";
-import { DeltaFieldChanges, makeDetachedNodeId, Multiplicity } from "../../../core/index.js";
+import { makeDetachedNodeId, Multiplicity } from "../../../core/index.js";
 import {
-	FieldChangeEncodingContext,
-	FieldChangeHandler,
-	FieldChangeRebaser,
+	type FieldChangeDelta,
+	type FieldChangeEncodingContext,
+	type FieldChangeHandler,
+	type FieldChangeRebaser,
 	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { Mutable, fail } from "../../../util/index.js";
+import type { Mutable } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -79,10 +81,10 @@ export const valueHandler = {
 		makeCodecFamily([
 			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
 		]),
-	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
+	editor: { buildChildChanges: () => assert.fail("Child changes not supported") },
 
-	intoDelta: (change): DeltaFieldChanges => {
-		const delta: Mutable<DeltaFieldChanges> = {};
+	intoDelta: (change): FieldChangeDelta => {
+		const delta: Mutable<FieldChangeDelta> = {};
 		if (change !== 0) {
 			// We use the new and old numbers as the node ids.
 			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
@@ -95,7 +97,9 @@ export const valueHandler = {
 
 	relevantRemovedRoots: (change) => [],
 	isEmpty: (change) => change === 0,
+	getNestedChanges: (change) => [],
 	createEmpty: () => 0,
+	getCrossFieldKeys: (_change) => [],
 } satisfies FieldChangeHandler<ValueChangeset>;
 
 export const valueField = new FieldKindWithEditor(

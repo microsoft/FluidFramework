@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type ICriticalContainerError } from "@fluidframework/container-definitions";
-import { type IFluidTelemetry } from "../common/index.js";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+
+import type { IFluidTelemetry } from "../common/index.js";
 
 /**
  * This file contains the types for container telemetry that can be produced.

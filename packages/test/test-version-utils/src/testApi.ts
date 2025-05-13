@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/order */
 // Driver API
 import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
@@ -43,6 +44,13 @@ import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 // ContainerRuntime and Data Runtime API
 import * as semver from "semver";
 
+// TypeScript generates incorrect imports in the d.ts file if this is not included.
+import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+// Since this project has a TypeScript configuration which errors on unused imports and types, to avoid the above import causing a compile error, a dummy usage is included.
+// For this to avoid a compile error, it also has to be used somehow: exporting it is the simplest way to "use" it.
+export type _fakeUsage = ISharedObjectKind<unknown>;
+
 import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
@@ -51,6 +59,8 @@ import {
 	loadPackage,
 	versionHasMovedSparsedMatrix,
 } from "./versionUtils.js";
+
+/* eslint-enable import/order */
 
 // List of package that needs to be install for legacy versions
 const packageList = [
@@ -227,7 +237,10 @@ async function loadContainerRuntime(
 	}
 }
 
-async function loadDataRuntime(baseVersion: string, requested?: number | string): Promise<void> {
+async function loadDataRuntime(
+	baseVersion: string,
+	requested?: number | string,
+): Promise<void> {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;

@@ -6,14 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { type ContainerSchema } from "@fluidframework/fluid-static";
+import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
-// import { ConnectionState } from "@fluidframework/container-loader";
-// import { timeoutPromise } from "@fluidframework/test-utils";
-import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
-import { OdspConnectionConfig } from "../interfaces.js";
+import type { OdspConnectionConfig } from "../interfaces.js";
 import { OdspClient } from "../odspClient.js";
 
 import { OdspTestTokenProvider } from "./odspTestTokenProvider.js";
@@ -46,7 +43,7 @@ function createOdspClient(props: { configProvider?: IConfigProviderBase } = {}):
 	const connectionProperties: OdspConnectionConfig = {
 		tokenProvider: new OdspTestTokenProvider(clientCreds), // Token provider using the provided test credentials.
 		siteUrl: "<site_url>",
-		driveId: "<raas_drive_id>",
+		driveId: "<sharepoint_embedded_container_id>",
 		filePath: "<file_path>",
 	};
 
@@ -99,29 +96,22 @@ describe("OdspClient", () => {
 		);
 	});
 
-	it("GC is disabled by default, but can be enabled", async () => {
+	it("GC is disabled by default", async () => {
 		const { container: container_defaultConfig } = await client.createContainer(schema);
-		assert.strictEqual(
-			(
-				container_defaultConfig as unknown as { container: { mc: MonitoringContext } }
-			).container.mc.config.getBoolean("Fluid.GarbageCollection.RunSweep"),
-			false,
-			"Expected GC to be disabled per configs set in constructor",
-		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const { sweepEnabled, throwOnTombstoneLoad } =
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			(container_defaultConfig as any).container._runtime.garbageCollector.configs;
 
-		const client_gcEnabled = createOdspClient({
-			configProvider: {
-				getRawConfig: (name: string) =>
-					({ "Fluid.GarbageCollection.RunSweep": true })[name],
-			},
-		});
-		const { container: container_gcEnabled } = await client_gcEnabled.createContainer(schema);
-		assert.strictEqual(
-			(
-				container_gcEnabled as unknown as { container: { mc: MonitoringContext } }
-			).container.mc.config.getBoolean("Fluid.GarbageCollection.RunSweep"),
-			true,
-			"Expected GC to be able to enable GC via config provider",
+		const expectedConfigs = {
+			sweepEnabled: false,
+			throwOnTombstoneLoad: false,
+		};
+		assert.deepStrictEqual(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			{ sweepEnabled, throwOnTombstoneLoad },
+			expectedConfigs,
+			"Expected GC to be disabled per compatibilityModeRuntimeOptions",
 		);
 	});
 });

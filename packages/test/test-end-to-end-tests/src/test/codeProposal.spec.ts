@@ -179,11 +179,7 @@ describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis
 		assert.strictEqual(res[0], true, "Code proposal should be accepted");
 
 		for (let i = 0; i < containers.length; i++) {
-			assert.strictEqual(
-				containers[i].closed,
-				false,
-				`containers[${i}] should not be closed`,
-			);
+			assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
 			assert.deepStrictEqual(
 				containers[i].getLoadedCodeDetails?.(),
 				{ package: packageV1 },
@@ -196,8 +192,7 @@ describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis
 		const maps: ISharedMap[] = [];
 		for (const container of containers) {
 			if (!container.closed) {
-				const dataObject =
-					await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+				const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 				const map = await dataObject.getSharedObject<ISharedMap>("map");
 				const key = createDocumentId();
 				map.set(key, key);

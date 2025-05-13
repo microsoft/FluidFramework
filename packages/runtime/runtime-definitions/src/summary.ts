@@ -4,13 +4,14 @@
  */
 
 import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-	ISummaryTree,
 	ITree,
 	SummaryTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	IGarbageCollectionData,
@@ -19,7 +20,8 @@ import type {
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface ISummaryStats {
 	treeNodeCount: number;
@@ -35,7 +37,8 @@ export interface ISummaryStats {
  * each of its DDS.
  * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
  * will be taking part of the summarization process.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface ISummaryTreeWithStats {
 	/**
@@ -51,6 +54,7 @@ export interface ISummaryTreeWithStats {
 
 /**
  * Represents a summary at a current sequence number.
+ * @legacy
  * @alpha
  */
 export interface ISummarizeResult {
@@ -72,6 +76,7 @@ export interface ISummarizeResult {
  *   ...
  *     "path1":
  * ```
+ * @legacy
  * @alpha
  */
 export interface ISummarizeInternalResult extends ISummarizeResult {
@@ -85,17 +90,18 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 /**
  * @experimental - Can be deleted/changed at any time
  * Contains the necessary information to allow DDSes to do incremental summaries
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IExperimentalIncrementalSummaryContext {
 	/**
 	 * The sequence number of the summary generated that will be sent to the server.
 	 */
-	summarySequenceNumber: number;
+	readonly summarySequenceNumber: number;
 	/**
 	 * The sequence number of the most recent summary that was acknowledged by the server.
 	 */
-	latestSummarySequenceNumber: number;
+	readonly latestSummarySequenceNumber: number;
 	/**
 	 * The path to the runtime/datastore/dds that is used to generate summary handles
 	 * Note: Summary handles are nodes of the summary tree that point to previous parts of the last successful summary
@@ -107,10 +113,11 @@ export interface IExperimentalIncrementalSummaryContext {
 	 * more dependencies.
 	 */
 	// TODO: remove summaryPath
-	summaryPath: string;
+	readonly summaryPath: string;
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type SummarizeInternalFn = (
@@ -121,6 +128,7 @@ export type SummarizeInternalFn = (
 ) => Promise<ISummarizeInternalResult>;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummarizerNodeConfig {
@@ -132,6 +140,7 @@ export interface ISummarizerNodeConfig {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
@@ -143,6 +152,7 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export enum CreateSummarizerNodeSource {
@@ -151,6 +161,7 @@ export enum CreateSummarizerNodeSource {
 	Local,
 }
 /**
+ * @legacy
  * @alpha
  */
 export type CreateChildSummarizerNodeParam =
@@ -167,6 +178,7 @@ export type CreateChildSummarizerNodeParam =
 	  };
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummarizerNode {
@@ -197,6 +209,9 @@ export interface ISummarizerNode {
 	 * that it might have. For example: if datastore "a" contains dds "b", but the
 	 * path is "/a/.channels/b", then the additional path part is ".channels".
 	 * @param snapshot - the base summary to parse
+	 *
+	 * @deprecated The code now always assumes that all summary nodes have .channels
+	 * in their handle so there is no need to maintain any additional path information.
 	 */
 	updateBaseSummaryState(snapshot: ISnapshotTree): void;
 	/**
@@ -256,6 +271,7 @@ export interface ISummarizerNode {
  * `isReferenced`: This tells whether this node is referenced in the document or not.
  *
  * `updateUsedRoutes`: Used to notify this node of routes that are currently in use in it.
+ * @legacy
  * @alpha
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
@@ -322,8 +338,36 @@ export const channelsTreeName = ".channels";
 
 /**
  * Contains telemetry data relevant to summarization workflows.
+ * This object, in contrast to ITelemetryContext, is expected to be modified directly by various summarize methods.
+ * @internal
+ */
+export interface ITelemetryContextExt {
+	/**
+	 * Sets value for telemetry data being tracked.
+	 * @param prefix - unique prefix to tag this data with (ex: "fluid:map:")
+	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
+	 * @param value - value to attribute to this summary telemetry data
+	 */
+	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
+
+	/**
+	 * Sets multiple values for telemetry data being tracked.
+	 * @param prefix - unique prefix to tag this data with (ex: "fluid:summarize:")
+	 * @param property - property name of the telemetry data being tracked (ex: "Options")
+	 * @param values - A set of values to attribute to this summary telemetry data.
+	 */
+	setMultiple(
+		prefix: string,
+		property: string,
+		values: Record<string, TelemetryEventPropertyTypeExt>,
+	): void;
+}
+
+/**
+ * Contains telemetry data relevant to summarization workflows.
  * This object is expected to be modified directly by various summarize methods.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface ITelemetryContext {
 	/**
@@ -345,26 +389,6 @@ export interface ITelemetryContext {
 		property: string,
 		values: Record<string, TelemetryBaseEventPropertyType>,
 	): void;
-
-	/**
-	 * Get the telemetry data being tracked
-	 *
-	 * @deprecated This interface should only be used for instrumenting, not for attempting to read already-set telemetry data.
-	 *
-	 * @param prefix - unique prefix for this data (ex: "fluid:map:")
-	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
-	 * @returns undefined if item not found
-	 */
-	get(prefix: string, property: string): TelemetryBaseEventPropertyType;
-
-	/**
-	 * Returns a serialized version of all the telemetry data.
-	 * Should be used when logging in telemetry events.
-	 *
-	 * @deprecated This interface should only be used for instrumenting. A concrete implementation will likely have a serialize function
-	 * but this functionality should not be used by other code being given an ITelemetryContext.
-	 */
-	serialize(): string;
 }
 
 /**

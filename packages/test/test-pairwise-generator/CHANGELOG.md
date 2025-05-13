@@ -1,5 +1,85 @@
 # @fluid-private/test-pairwise-generator
 
+## 2.40.0
+
+Dependency updates only.
+
+## 2.33.0
+
+Dependency updates only.
+
+## 2.32.0
+
+Dependency updates only.
+
+## 2.31.0
+
+Dependency updates only.
+
+## 2.30.0
+
+Dependency updates only.
+
+## 2.23.0
+
+Dependency updates only.
+
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+Dependency updates only.
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
+## 2.11.0
+
+Dependency updates only.
+
+## 2.10.0
+
+Dependency updates only.
+
+## 2.5.0
+
+Dependency updates only.
+
+## 2.4.0
+
+Dependency updates only.
+
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+Dependency updates only.
+
+## 2.1.0
+
+Dependency updates only.
+
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+  Update package implementations to use TypeScript 5.4.5.
+
 ## 2.0.0-rc.4.0.0
 
 Dependency updates only.
@@ -28,10 +108,10 @@ Dependency updates only.
 
 ### Minor Changes
 
--   @fluid-internal/test-pairwise-generator renamed to @fluid-private/test-pairwise-generator ([#17697](https://github.com/microsoft/FluidFramework/issues/17697)) [92941a780f](https://github.com/microsoft/FluidFramework/commits/92941a780f7c60be4087b3280a6c4da36359ae5b)
+- @fluid-internal/test-pairwise-generator renamed to @fluid-private/test-pairwise-generator ([#17697](https://github.com/microsoft/FluidFramework/issues/17697)) [92941a780f](https://github.com/microsoft/FluidFramework/commits/92941a780f7c60be4087b3280a6c4da36359ae5b)
 
-    The @fluid-internal/test-pairwise-generator has been renamed to @fluid-private/test-pairwise-generator. This package is
-    intended for use within the Fluid Framework repo and is not published externally.
+  The @fluid-internal/test-pairwise-generator has been renamed to @fluid-private/test-pairwise-generator. This package is
+  intended for use within the Fluid Framework repo and is not published externally.
 
 ## 2.0.0-internal.7.2.0
 

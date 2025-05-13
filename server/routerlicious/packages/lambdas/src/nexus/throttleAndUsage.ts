@@ -18,12 +18,13 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import safeStringify from "json-stringify-safe";
 
-export const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
+export const getSocketConnectThrottleId = (tenantId: string): string =>
+	`${tenantId}_OpenSocketConn`;
 
-export const getSubmitOpThrottleId = (clientId: string, tenantId: string) =>
+export const getSubmitOpThrottleId = (clientId: string, tenantId: string): string =>
 	`${clientId}_${tenantId}_SubmitOp`;
 
-export const getSubmitSignalThrottleId = (clientId: string, tenantId: string) =>
+export const getSubmitSignalThrottleId = (clientId: string, tenantId: string): string =>
 	`${clientId}_${tenantId}_SubmitSignal`;
 
 /**
@@ -35,7 +36,7 @@ export async function storeClientConnectivityTime(
 	tenantId: string,
 	connectionTimestamp: number,
 	throttleAndUsageStorageManager: IThrottleAndUsageStorageManager,
-) {
+): Promise<void> {
 	try {
 		const now = Date.now();
 		const connectionTimeInMinutes = (now - connectionTimestamp) / 60000;
@@ -62,6 +63,8 @@ export async function storeClientConnectivityTime(
 	}
 }
 
+// TODO: semantic documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @returns ThrottlingError if throttled; undefined if not throttled or no throttler provided.
  */

@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
+	ISummarizerEvents,
+	SummarizerStopReason,
+} from "@fluidframework/container-runtime-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedClient } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -15,12 +20,10 @@ import {
 	IConnectedState,
 	ISerializedElection,
 	ISummarizer,
-	ISummarizerEvents,
 	ISummaryCollectionOpEvents,
 	OrderedClientCollection,
 	OrderedClientElection,
 	SummarizerClientElection,
-	SummarizerStopReason,
 	SummaryManager,
 	summarizerClientType,
 } from "../../summary/index.js";
@@ -69,7 +72,7 @@ describe("Summarizer Client Election", () => {
 
 	class TestSummarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 		private notImplemented(): never {
-			throw Error("not implemented");
+			throw new Error("not implemented");
 		}
 		public onBehalfOf: string | undefined;
 		public state: "notStarted" | "running" | "stopped" = "notStarted";
@@ -232,7 +235,7 @@ describe("Summarizer Client Election", () => {
 	}
 
 	afterEach(() => {
-		mockLogger.events = [];
+		mockLogger.clear();
 		testQuorum.reset();
 		summaryCollectionEmitter.removeAllListeners();
 		summarizer.removeAllListeners();
@@ -353,12 +356,7 @@ describe("Summarizer Client Election", () => {
 			// Add more clients, no effect
 			addClient("s2", 19, false);
 			addClient("b", 41, true);
-			assertState(
-				"a-summarizer",
-				"a",
-				17,
-				"additional younger clients should have no effect",
-			);
+			assertState("a-summarizer", "a", 17, "additional younger clients should have no effect");
 
 			// Remove elected client, should reelect
 			removeClient("a", 400);

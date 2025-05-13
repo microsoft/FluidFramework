@@ -52,7 +52,10 @@ export type DriverErrorTelemetryProps = ITelemetryBaseProperties & {
  * Generic network error class.
  * @internal
  */
-export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+export class GenericNetworkError
+	extends LoggingError
+	implements IDriverErrorBase, IFluidErrorBase
+{
 	/**
 	 * {@inheritDoc @fluidframework/telemetry-utils#IFluidErrorBase.errorType}
 	 */
@@ -109,14 +112,31 @@ export class AuthorizationError
 	implements IAuthorizationError, IFluidErrorBase
 {
 	readonly errorType = DriverErrorTypes.authorizationError;
+
+	// These properties are not assigned in this class, but instead assigned in the super constructor.
+	// When targeting ES 2022 or later, TypeScript would generate ES6 class fields for these properties if they did not use "declare".
+	// That would override the own properties dynamically created in the super constructor
+	// resulting in these properties always holding `undefined` instead of their desired values.
+	// To prevent this undesired overriding,
+	// these are declared using `declare` to indicate this definition is only for the TypeScript typing,
+	// and the actual fields come from elsewhere.
+	declare readonly claims?: string;
+	declare readonly tenantId?: string;
+
 	readonly canRetry = false;
 
 	constructor(
 		message: string,
-		readonly claims: string | undefined,
-		readonly tenantId: string | undefined,
+		claims: string | undefined,
+		tenantId: string | undefined,
 		props: DriverErrorTelemetryProps,
 	) {
+		if (claims !== undefined) {
+			props.claims = claims;
+		}
+		if (tenantId !== undefined) {
+			props.tenantId = tenantId;
+		}
 		// don't log claims or tenantId
 		super(message, props, new Set(["claims", "tenantId"]));
 	}
@@ -145,7 +165,10 @@ export class LocationRedirectionError
 /**
  * @internal
  */
-export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
+export class NetworkErrorBasic<T extends string>
+	extends LoggingError
+	implements IFluidErrorBase
+{
 	constructor(
 		message: string,
 		readonly errorType: T,
@@ -186,7 +209,10 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
  * Throttling error class - used to communicate all throttling errors
  * @internal
  */
-export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+export class ThrottlingError
+	extends LoggingError
+	implements IThrottlingWarning, IFluidErrorBase
+{
 	readonly errorType = DriverErrorTypes.throttlingError;
 	readonly canRetry = true;
 

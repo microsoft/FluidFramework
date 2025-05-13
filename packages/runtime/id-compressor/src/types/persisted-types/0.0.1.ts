@@ -7,6 +7,7 @@ import type { SessionId } from "../identifiers.js";
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
+ * @legacy
  * @alpha
  */
 export type SerializedIdCompressor = string & {
@@ -15,6 +16,7 @@ export type SerializedIdCompressor = string & {
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
+ * @legacy
  * @alpha
  */
 export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
@@ -23,6 +25,7 @@ export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
+ * @legacy
  * @alpha
  */
 export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
@@ -33,6 +36,7 @@ export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & 
  * Data describing a range of session-local IDs (from a remote or local session).
  *
  * A range is composed of local IDs that were generated.
+ * @legacy
  * @alpha
  */
 export interface IdCreationRange {

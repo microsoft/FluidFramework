@@ -6,22 +6,35 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainer, type IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	type IFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import {
-	ContainerRuntime,
 	IContainerRuntimeOptions,
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import type { IChannel } from "@fluidframework/datastore-definitions";
-import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
-import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { delay } from "@fluidframework/core-utils/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	IIdCompressor,
+	SessionSpaceCompressedId,
+	StableId,
+} from "@fluidframework/id-compressor";
+import { ISharedMap } from "@fluidframework/map/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -33,8 +46,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { delay } from "@fluidframework/core-utils/internal";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -96,8 +107,7 @@ describeCompat(
 				const enabledContainer = await provider.loadTestContainer(
 					containerConfigWithCompressor,
 				);
-				const enabledDataObject =
-					(await enabledContainer.getEntryPoint()) as ITestFluidObject;
+				const enabledDataObject = (await enabledContainer.getEntryPoint()) as ITestFluidObject;
 				const enabledMap = await enabledDataObject.getSharedObject<ISharedMap>("mapId");
 				assert(getIdCompressor(enabledMap) === undefined);
 			});
@@ -163,12 +173,11 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	}
 
 	let provider: ITestObjectProvider;
-	const defaultFactory = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[SharedMap.getFactory(), SharedCell.getFactory()],
-		[],
-	);
+	const defaultFactory = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [SharedMap.getFactory(), SharedCell.getFactory()],
+	});
 
 	const runtimeOptions: IContainerRuntimeOptions = {
 		enableRuntimeIdCompressor: "on",
@@ -183,7 +192,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		},
 	);
 
-	let containerRuntime: ContainerRuntime;
+	let containerRuntime: IContainerRuntime;
 	let container1: IContainer;
 	let container2: IContainer;
 	let mainDataStore: TestDataObject;
@@ -201,7 +210,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		provider = getTestObjectProvider();
 		container1 = await createContainer();
 		mainDataStore = (await container1.getEntryPoint()) as TestDataObject;
-		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
+		containerRuntime = mainDataStore._context.containerRuntime as IContainerRuntime;
 		sharedMapContainer1 = mainDataStore.map;
 		sharedCellContainer1 = mainDataStore.sharedCell;
 
@@ -498,8 +507,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 				);
 				assert(
 					sessionSpaceId >= 0 ||
-						(compressor === compressorOrigin &&
-							sessionSpaceId === sessionSpaceIdOrigin),
+						(compressor === compressorOrigin && sessionSpaceId === sessionSpaceIdOrigin),
 				);
 				assert(compressor.normalizeToOpSpace(sessionSpaceId) === opSpaceId);
 				const decompressed = compressor.decompress(sessionSpaceId);
@@ -522,7 +530,8 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		const sharedMapCompressedId2 = getIdCompressor(sharedMapContainer1).generateCompressedId();
 		const sharedMapDecompressedId2 =
 			getIdCompressor(sharedMapContainer1).decompress(sharedMapCompressedId2);
-		const sharedCellCompressedId = getIdCompressor(sharedCellContainer1).generateCompressedId();
+		const sharedCellCompressedId =
+			getIdCompressor(sharedCellContainer1).generateCompressedId();
 		const sharedCellDecompressedId =
 			getIdCompressor(sharedMapContainer1).decompress(sharedCellCompressedId);
 
@@ -633,7 +642,9 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		sharedMapContainer2.set("key", "first");
 
 		let invokedCount = 0;
-		const superProcessCore = (sharedMapContainer1 as any).processCore.bind(sharedMapContainer1);
+		const superProcessCore = (sharedMapContainer1 as any).processCore.bind(
+			sharedMapContainer1,
+		);
 		(sharedMapContainer1 as any).processCore = (
 			message: ISequencedDocumentMessage,
 			local: boolean,
@@ -718,63 +729,73 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 
 // No-compat: 2.0.0-internal.8.x and earlier versions of container-runtime don't finalize ids prior to attaching.
 // Even older versions of the runtime also don't have an id compression feature enabled.
-describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat(
+	"IdCompressor in detached container",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		let provider: ITestObjectProvider;
+		let request: IRequest;
+
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
+			request = provider.driver.createCreateNewRequest(provider.documentId);
+		});
+
+		it("Compressors sync after detached container attaches and sends an op", async () => {
+			const testConfig: ITestContainerConfig = {
+				fluidDataObjectType: DataObjectFactoryType.Test,
+				registry: [["sharedCell", apis.dds.SharedCell.getFactory()]],
+				runtimeOptions: {
+					enableRuntimeIdCompressor: "on",
+				},
+			};
+			const loader = provider.makeTestLoader(testConfig);
+			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+			// Get the root dataStore from the detached container.
+			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const testChannel1 = await dataStore.getSharedObject<ISharedCell>("sharedCell");
+
+			// Generate an Id before attaching the container
+			(testChannel1 as any).runtime.idCompressor.generateCompressedId();
+			// Attach the container. The generated Id won't be synced until another op
+			// is sent after attaching becuase most DDSs don't send ops until they are attached.
+			await container.attach(request);
+
+			// Create another container to test sync
+			const url: any = await container.getAbsoluteUrl("");
+			const loader2 = provider.makeTestLoader(testConfig) as Loader;
+			const container2 = await loader2.resolve({ url });
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const testChannel2 = await dataStore2.getSharedObject<ISharedCell>("sharedCell");
+			// Generate an Id in the second attached container and send an op to send the Ids
+			(testChannel2 as any).runtime.idCompressor.generateCompressedId();
+			testChannel2.set("value");
+
+			await provider.ensureSynchronized();
+
+			// Send an op in the first container to get its Ids sent
+			testChannel1.set("value2");
+
+			await provider.ensureSynchronized();
+
+			// Compressor from first container will get the first 512 Ids (0-511) as its id should be finalized
+			// on attach
+			assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
+			// Compressor from second container gets second cluster starting at 512 after sending an op
+			assert.strictEqual(
+				(testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1),
+				513,
+			);
+		});
+	},
+);
+
+describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, compatAPIs) => {
 	let provider: ITestObjectProvider;
-	let request: IRequest;
-
-	beforeEach("getTestObjectProvider", () => {
-		provider = getTestObjectProvider();
-		request = provider.driver.createCreateNewRequest(provider.documentId);
-	});
-
-	it("Compressors sync after detached container attaches and sends an op", async () => {
-		const testConfig: ITestContainerConfig = {
-			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [["sharedCell", apis.dds.SharedCell.getFactory()]],
-			runtimeOptions: {
-				enableRuntimeIdCompressor: "on",
-			},
-		};
-		const loader = provider.makeTestLoader(testConfig);
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-		// Get the root dataStore from the detached container.
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const testChannel1 = await dataStore.getSharedObject<ISharedCell>("sharedCell");
-
-		// Generate an Id before attaching the container
-		(testChannel1 as any).runtime.idCompressor.generateCompressedId();
-		// Attach the container. The generated Id won't be synced until another op
-		// is sent after attaching becuase most DDSs don't send ops until they are attached.
-		await container.attach(request);
-
-		// Create another container to test sync
-		const url: any = await container.getAbsoluteUrl("");
-		const loader2 = provider.makeTestLoader(testConfig) as Loader;
-		const container2 = await loader2.resolve({ url });
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const testChannel2 = await dataStore2.getSharedObject<ISharedCell>("sharedCell");
-		// Generate an Id in the second attached container and send an op to send the Ids
-		(testChannel2 as any).runtime.idCompressor.generateCompressedId();
-		testChannel2.set("value");
-
-		await provider.ensureSynchronized();
-
-		// Send an op in the first container to get its Ids sent
-		testChannel1.set("value2");
-
-		await provider.ensureSynchronized();
-
-		// Compressor from first container will get the first 512 Ids (0-511) as its id should be finalized
-		// on attach
-		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
-		// Compressor from second container gets second cluster starting at 512 after sending an op
-		assert.strictEqual((testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1), 513);
-	});
-});
-
-describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
+	const {
+		dds: { SharedDirectory },
+	} = compatAPIs;
 	const disableConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: undefined },
 	};
@@ -866,12 +887,20 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 		const { summaryTree } = await summarizeNow(summarizer);
 		const summaryStats = getCompressorSummaryStats(summaryTree);
-		assert(summaryStats.sessionCount === 1, "Should have a local session as all ids are ack'd");
-		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
+		assert.equal(
+			summaryStats.sessionCount,
+			1,
+			"Should have a local session as all ids are ack'd",
+		);
+		assert.equal(
+			summaryStats.clusterCount,
+			1,
+			"Should have a local cluster as all ids are ack'd",
+		);
 	});
 
 	it("Newly connected container synchronizes from summary", async function () {
-		// TODO: This test is consistently failing when ran against FRS. See ADO:7931
+		// TODO: This test is consistently failing when ran against AFR. See ADO:7931
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -892,8 +921,16 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 		const { summaryTree } = await summarizeNow(summarizer1);
 		const summaryStats = getCompressorSummaryStats(summaryTree);
-		assert(summaryStats.sessionCount === 1, "Should have a local session as all ids are ack'd");
-		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
+		assert.equal(
+			summaryStats.sessionCount,
+			1,
+			"Should have a local session as all ids are ack'd",
+		);
+		assert.equal(
+			summaryStats.clusterCount,
+			1,
+			"Should have a local cluster as all ids are ack'd",
+		);
 
 		const container2 = await provider.loadTestContainer(enabledConfig);
 		const container2DataStore = (await container2.getEntryPoint()) as ITestDataObject;
@@ -951,8 +988,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		// Check directly that ID compressor is issuing short IDs!
 		// If it does not, the rest of the tests would fail - this helps isolate where the bug is.
 		const idTest = defaultDataStore._context.containerRuntime.generateDocumentUniqueId();
-		assert(typeof idTest === "number", "short IDs should be issued");
-		assert(idTest >= 0, "finalId");
+		assert(typeof idTest === "number" && idTest >= 0, "short IDs should be issued");
 
 		// create another datastore
 		const ds2 = await defaultDataStore._context.containerRuntime.createDataStore(pkg);
@@ -965,7 +1001,11 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		);
 
 		// Test assumption
-		assert(entryPoint2._runtime.attachState === AttachState.Detached, "data store is detached");
+		assert.equal(
+			entryPoint2._runtime.attachState,
+			AttachState.Detached,
+			"data store is detached",
+		);
 
 		// Create some channel. Assume that data store has directory factory (ITestDataObject exposes _root that is directory,
 		// so it has such entry). This could backfire if non-default type is used for directory - a test would need to be changed
@@ -979,12 +1019,9 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		// attached data store.
 		await ds2.trySetAlias("foo");
 
-		assert(
-			// For some reason TSC gets it wrong - it assumes that attachState is constant and that assert above
-			// established it's AttachState.Detached, so this comparison is useless.
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			entryPoint2._runtime.attachState === AttachState.Attached,
+		assert.equal(
+			entryPoint2._runtime.attachState,
+			AttachState.Attached,
 			"data store is detached",
 		);
 
@@ -1001,5 +1038,36 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 	it("Container uses short DataStore & DDS IDs in On mode", async () => {
 		await TestCompactIds("on");
+	});
+
+	it("always uses short data store IDs in detached container", async () => {
+		const loader = provider.makeTestLoader();
+		const defaultCodeDetails: IFluidCodeDetails = {
+			package: "defaultTestPackage",
+			config: {},
+		};
+		const container = await loader.createDetachedContainer(defaultCodeDetails);
+		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		assert(
+			defaultDataStore.context.id.length <= 2,
+			"Default data store's ID should be short.",
+		);
+		const dataStore1 =
+			await defaultDataStore.context.containerRuntime.createDataStore(TestDataObjectType);
+		const ds1 = (await dataStore1.entryPoint.get()) as ITestFluidObject;
+		assert(
+			ds1.context.id.length <= 2,
+			"Data store's ID in detached container should not be short",
+		);
+
+		await container.attach(provider.driver.createCreateNewRequest());
+
+		const dataStore2 =
+			await defaultDataStore.context.containerRuntime.createDataStore(TestDataObjectType);
+		const ds2 = (await dataStore2.entryPoint.get()) as ITestFluidObject;
+		assert(
+			ds2.context.id.length > 8,
+			"Data store's ID in attached container should not be short",
+		);
 	});
 });

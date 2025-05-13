@@ -7,7 +7,14 @@
  * Types supported by {@link IConfigProviderBase}.
  * @public
  */
-export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
+export type ConfigTypes =
+	| string
+	| number
+	| boolean
+	| number[]
+	| string[]
+	| boolean[]
+	| undefined;
 
 /**
  * Base interface for providing configurations to enable/disable/control features.

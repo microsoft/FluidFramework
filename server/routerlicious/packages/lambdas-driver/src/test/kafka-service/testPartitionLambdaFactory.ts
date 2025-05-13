@@ -22,7 +22,10 @@ export class TestLambda implements IPartitionLambda {
 		private readonly context: IContext,
 	) {}
 
-	public handler(message: IQueuedMessage) {
+	/**
+	 * {@inheritDoc IPartitionLambda.handler}
+	 */
+	public handler(message: IQueuedMessage): undefined {
 		if (this.throwHandler) {
 			throw new Error("Requested failure");
 		}

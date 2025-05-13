@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
 
-import { RevisionTag, RevisionTagCodec } from "../../core/index.js";
+import { type RevisionTag, RevisionTagCodec } from "../../core/index.js";
+import { testIdCompressor } from "../utils.js";
 
 describe("RevisionTagCodec", () => {
 	it("handles the root constant revision tag", () => {
@@ -20,12 +21,14 @@ describe("RevisionTagCodec", () => {
 		const decoded = codec.decode(encoded, {
 			originatorId: localCompressor.localSessionId,
 			revision: undefined,
+			idCompressor: testIdCompressor,
 		});
 		assert.deepEqual(decoded, rootRevisionTag);
 		const remoteEncoded = new RevisionTagCodec(remoteCompressor).encode(rootRevisionTag);
 		const decodedFromRemote = codec.decode(remoteEncoded, {
 			originatorId: remoteCompressor.localSessionId,
 			revision: undefined,
+			idCompressor: testIdCompressor,
 		});
 		assert.deepEqual(decodedFromRemote, rootRevisionTag);
 	});
@@ -46,12 +49,20 @@ describe("RevisionTagCodec", () => {
 		assert.deepEqual(localId, localEncoded);
 		assert.deepEqual(
 			localId,
-			localCodec.decode(localEncoded, { originatorId: localSession, revision: undefined }),
+			localCodec.decode(localEncoded, {
+				originatorId: localSession,
+				revision: undefined,
+				idCompressor: testIdCompressor,
+			}),
 		);
 		// A remote client should not be able to decode the local ID, as it has not received
 		// the creation range for it
 		assert.throws(() =>
-			remoteCodec.decode(localEncoded, { originatorId: localSession, revision: undefined }),
+			remoteCodec.decode(localEncoded, {
+				originatorId: localSession,
+				revision: undefined,
+				idCompressor: testIdCompressor,
+			}),
 		);
 
 		// Simulate the remote client receiving the creation range for the local ID
@@ -63,6 +74,7 @@ describe("RevisionTagCodec", () => {
 		const remoteDecoded = remoteCodec.decode(localEncoded, {
 			originatorId: localSession,
 			revision: undefined,
+			idCompressor: testIdCompressor,
 		});
 		const remoteEncoded = remoteCodec.encode(remoteDecoded);
 
@@ -71,12 +83,20 @@ describe("RevisionTagCodec", () => {
 		assert.deepEqual(remoteEncoded, remoteDecoded);
 		assert.deepEqual(
 			localEncoded,
-			remoteCodec.decode(localEncoded, { originatorId: localSession, revision: undefined }),
+			remoteCodec.decode(localEncoded, {
+				originatorId: localSession,
+				revision: undefined,
+				idCompressor: testIdCompressor,
+			}),
 		);
 		// Simulate the remote client referencing the local client's ID
 		assert.deepEqual(
 			localId,
-			localCodec.decode(remoteEncoded, { originatorId: remoteSession, revision: undefined }),
+			localCodec.decode(remoteEncoded, {
+				originatorId: remoteSession,
+				revision: undefined,
+				idCompressor: testIdCompressor,
+			}),
 		);
 	});
 });

@@ -6,11 +6,14 @@
 import { IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { decompress } from "lz4js";
 
-import { CompressionAlgorithms } from "../containerRuntime.js";
+import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import { IBatchMetadata } from "../metadata.js";
 
 /**
@@ -27,12 +30,17 @@ interface IPackedContentsContents {
  * 2. Messages in the middle of a compressed batch will have neither batch metadata nor the compression property set
  * 3. The final message of a batch will have batch metadata set to false
  * 4. An individually compressed op will have undefined batch metadata and compression set to true
+ *
+ * Compressed batches from current code are always a single message but this class needs to handle a legacy compressed batch with multiple messages
+ * because we need that functionality for back compat.
  */
 export class OpDecompressor {
 	private activeBatch = false;
+	// TODO: better typing
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private rootMessageContents: any | undefined;
 	private processedCount = 0;
-	private readonly logger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(logger: ITelemetryBaseLogger) {
 		this.logger = createChildLogger({ logger, namespace: "OpDecompressor" });
@@ -65,8 +73,7 @@ export class OpDecompressor {
 				IsoBuffer.from(
 					(message.contents as IPackedContentsContents).packedContents,
 					"base64",
-				).toString("base64") ===
-					(message.contents as IPackedContentsContents).packedContents
+				).toString("base64") === (message.contents as IPackedContentsContents).packedContents
 			) {
 				this.logger.sendTelemetryEvent({
 					eventName: "LegacyCompression",
@@ -75,18 +82,20 @@ export class OpDecompressor {
 				});
 				return true;
 			}
-		} catch (err) {
+		} catch {
 			return false;
 		}
 
 		return false;
 	}
 
-	public get currentlyUnrolling() {
+	public get currentlyUnrolling(): boolean {
 		return this.activeBatch;
 	}
 
-	/** Is the decompressed and stored batch only comprised of a single message */
+	/**
+	 * Is the decompressed and stored batch only comprised of a single message
+	 */
 	private isSingleMessageBatch = false;
 
 	/**
@@ -119,8 +128,8 @@ export class OpDecompressor {
 		);
 		const decompressedMessage = decompress(contents);
 		const intoString = Uint8ArrayToString(decompressedMessage);
-		const asObj = JSON.parse(intoString);
-		this.rootMessageContents = asObj;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		this.rootMessageContents = JSON.parse(intoString);
 	}
 
 	/**
@@ -131,6 +140,7 @@ export class OpDecompressor {
 		assert(this.currentlyUnrolling, 0x942 /* not currently unrolling */);
 		assert(this.rootMessageContents !== undefined, 0x943 /* missing rootMessageContents */);
 		assert(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			this.rootMessageContents.length > this.processedCount,
 			0x944 /* no more content to unroll */,
 		);
@@ -139,10 +149,8 @@ export class OpDecompressor {
 
 		if (batchMetadata === false || this.isSingleMessageBatch) {
 			// End of compressed batch
-			const returnMessage = newMessage(
-				message,
-				this.rootMessageContents[this.processedCount],
-			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			const returnMessage = newMessage(message, this.rootMessageContents[this.processedCount]);
 
 			this.activeBatch = false;
 			this.isSingleMessageBatch = false;
@@ -152,6 +160,7 @@ export class OpDecompressor {
 			return returnMessage;
 		} else if (batchMetadata === true) {
 			// Start of compressed batch
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			return newMessage(message, this.rootMessageContents[this.processedCount++]);
 		}
 
@@ -159,6 +168,7 @@ export class OpDecompressor {
 		assert(message.contents === undefined, 0x512 /* Expecting empty message */);
 
 		// Continuation of compressed batch
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		return newMessage(message, this.rootMessageContents[this.processedCount++]);
 	}
 }
@@ -166,15 +176,13 @@ export class OpDecompressor {
 // We should not be mutating the input message nor its metadata
 const newMessage = (
 	originalMessage: ISequencedDocumentMessage,
-	contents: any,
+	contents: unknown,
 ): ISequencedDocumentMessage => ({
 	...originalMessage,
 	contents,
 	compression: undefined,
 	// TODO: It should already be the case that we're not modifying any metadata, not clear if/why this shallow clone should be required.
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 	metadata:
-		originalMessage.metadata === undefined
-			? undefined
-			: { ...(originalMessage.metadata as any) },
+		originalMessage.metadata === undefined ? undefined : { ...originalMessage.metadata },
 });

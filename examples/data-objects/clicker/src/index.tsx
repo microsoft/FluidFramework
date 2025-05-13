@@ -4,10 +4,10 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter/internal";
-import { TaskManager } from "@fluidframework/task-manager/internal";
+import { SharedCounter } from "@fluidframework/counter/legacy";
+import { TaskManager } from "@fluidframework/task-manager/legacy";
 import React from "react";
 
 import { ClickerAgent } from "./agent.js";
@@ -140,12 +140,11 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 
 // ----- FACTORY SETUP -----
 
-export const ClickerInstantiationFactory = new DataObjectFactory(
-	ClickerName,
-	Clicker,
-	[SharedCounter.getFactory(), TaskManager.getFactory()],
-	{},
-);
+export const ClickerInstantiationFactory = new DataObjectFactory({
+	type: ClickerName,
+	ctor: Clicker,
+	sharedObjects: [SharedCounter.getFactory(), TaskManager.getFactory()],
+});
 
 const clickerViewCallback = (clicker: Clicker) => <ClickerReactView clicker={clicker} />;
 

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { PropertySet } from "@fluidframework/sequence/internal";
+import { PropertySet } from "@fluidframework/sequence/legacy";
 
 import { CellRange } from "./cellrange.js";
 import { TableSliceType } from "./componentTypes.js";
@@ -25,12 +25,18 @@ export interface ITableSliceConfig {
 /**
  * @internal
  */
-export class TableSlice extends DataObject<{ InitialState: ITableSliceConfig }> implements ITable {
+export class TableSlice
+	extends DataObject<{ InitialState: ITableSliceConfig }>
+	implements ITable
+{
 	public static getFactory() {
 		return TableSlice.factory;
 	}
 
-	private static readonly factory = new DataObjectFactory(TableSliceType, TableSlice, [], {});
+	private static readonly factory = new DataObjectFactory({
+		type: TableSliceType,
+		ctor: TableSlice,
+	});
 
 	public get name() {
 		return this.root.get(ConfigKey.name);

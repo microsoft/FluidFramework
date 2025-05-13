@@ -8,7 +8,10 @@ import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/exam
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DataObjectGridContainerRuntimeFactory, IDataObjectGridAppModel } from "../src/container";
+import {
+	DataObjectGridContainerRuntimeFactory,
+	IDataObjectGridAppModel,
+} from "../src/container";
 import { DataObjectGridAppView } from "../src/dataObjectGridView";
 
 /**

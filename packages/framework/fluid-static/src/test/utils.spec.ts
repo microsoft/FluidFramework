@@ -5,23 +5,27 @@
 
 import { strict as assert } from "node:assert";
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	DataObject,
+	DataObjectFactory,
+	createDataObjectKind,
+} from "@fluidframework/aqueduct/internal";
 import { MapFactory, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 
-import { type ContainerSchema } from "../types.js";
+import type { ContainerSchema } from "../types.js";
 import { parseDataObjectsFromSharedObjects } from "../utils.js";
 
-class TestDataObject extends DataObject {
+class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		TestDataObject.Name,
-		TestDataObject,
-		[],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: TestDataObjectClass.Name,
+		ctor: TestDataObjectClass,
+	});
 }
+
+const TestDataObject = createDataObjectKind(TestDataObjectClass);
 
 describe("parseDataObjectsFromSharedObjects", () => {
 	it("should be able to handle basic DDS types", () => {

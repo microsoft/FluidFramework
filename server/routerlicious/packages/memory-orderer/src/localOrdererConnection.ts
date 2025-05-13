@@ -112,6 +112,10 @@ export class LocalOrdererConnection implements IOrdererConnection {
 		this.producer.once(event, listener);
 	}
 
+	public off(event: "error", listener: (...args: any[]) => void) {
+		this.producer.off(event, listener);
+	}
+
 	private submitRawOperation(messages: IRawOperationMessage[]) {
 		if (this.serviceConfiguration.enableTraces) {
 			// Add trace
@@ -125,7 +129,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
 			});
 		}
 
-		const boxcar: IBoxcarMessage = {
+		const boxcar: Required<IBoxcarMessage> = {
 			contents: messages,
 			documentId: this.documentId,
 			tenantId: this.tenantId,

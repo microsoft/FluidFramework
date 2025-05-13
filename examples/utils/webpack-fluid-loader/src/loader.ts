@@ -3,46 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidMountableView } from "@fluid-example/example-utils";
+import { IFluidMountableView, StaticCodeLoader } from "@fluid-example/example-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
 	IFluidCodeDetails,
-	IFluidCodeResolver,
 	IFluidModule,
-	IFluidModuleWithDetails,
-	IFluidPackage,
-	IResolvedFluidCodeDetails,
 	LoaderHeader,
-	isFluidBrowserPackage,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	rehydrateDetachedContainer,
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { IUser } from "@fluidframework/driver-definitions";
+import {
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
 import {
 	HostStoragePolicy,
 	IPersistedCache,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { IUser } from "@fluidframework/protocol-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import { Port } from "webpack-dev-server";
 
-import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory.js";
+import {
+	deltaConnectionServer,
+	getDocumentServiceFactory,
+} from "./getDocumentServiceFactory.js";
 import { getUrlResolver } from "./getUrlResolver.js";
 import { OdspPersistentCache } from "./odspPersistantCache.js";
 import { OdspUrlResolver } from "./odspUrlResolver.js";
-import {
-	WebCodeLoader,
-	extractPackageIdentifierDetails,
-	resolveFluidPackageEnvironment,
-} from "./webCodeLoader/index.js";
 
 export interface IDevServerUser extends IUser {
 	name: string;
@@ -98,23 +102,6 @@ export type RouteOptions =
 	| ITinyliciousRouteOptions
 	| IOdspRouteOptions;
 
-const isModuleWithDetails = (
-	fluidModule: IFluidModule | IFluidModuleWithDetails,
-): fluidModule is IFluidModuleWithDetails => (fluidModule as any).details !== undefined;
-
-const addFakeDetailsIfNeeded = (
-	packageJson: IFluidPackage,
-	fluidModule: IFluidModule | IFluidModuleWithDetails,
-): IFluidModuleWithDetails => {
-	if (isModuleWithDetails(fluidModule)) {
-		return fluidModule;
-	}
-	return {
-		module: fluidModule,
-		details: { package: packageJson.name, config: {} },
-	};
-};
-
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
 function makeSideBySideDiv(divId: string) {
 	const div = document.createElement("div");
@@ -127,46 +114,17 @@ function makeSideBySideDiv(divId: string) {
 	return div;
 }
 
-class WebpackCodeResolver implements IFluidCodeResolver {
-	constructor(private readonly options: IBaseRouteOptions) {}
-	async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
-		const baseUrl = details.config?.cdn ?? `http://localhost:${this.options.port}`;
-		let pkg = details.package;
-		if (typeof pkg === "string") {
-			const resp = await fetch(`${baseUrl}/package.json`);
-			pkg = (await resp.json()) as IFluidPackage;
-		}
-		if (!isFluidBrowserPackage(pkg)) {
-			throw new Error("Not a Fluid package");
-		}
-		const browser = resolveFluidPackageEnvironment(pkg.fluid.browser, baseUrl);
-		const parse = extractPackageIdentifierDetails(pkg);
-		return {
-			...details,
-			resolvedPackage: {
-				...pkg,
-				fluid: {
-					...pkg.fluid,
-					browser,
-				},
-			},
-			resolvedPackageCacheId: parse.fullId,
-		};
-	}
-}
-
 /**
  * Create a loader with WebCodeLoader and return it.
  */
-async function createWebLoader(
+async function createLoaderProps(
 	documentId: string,
 	fluidModule: IFluidModule,
 	options: RouteOptions,
 	urlResolver: InsecureUrlResolver | OdspUrlResolver | LocalResolver,
-	codeDetails: IFluidCodeDetails,
 	testOrderer: boolean = false,
 	odspPersistantCache?: IPersistedCache,
-): Promise<Loader> {
+): Promise<ILoaderProps> {
 	const odspHostStoragePolicy: HostStoragePolicy = {};
 	if (window.location.hash === "#binarySnapshot") {
 		assert(
@@ -200,33 +158,20 @@ async function createWebLoader(
 		);
 	}
 
-	const codeLoader = new WebCodeLoader(new WebpackCodeResolver(options));
+	const runtimeFactory = fluidModule.fluidExport.IRuntimeFactory;
+	if (runtimeFactory === undefined) {
+		throw new Error("Couldn't find the factory");
+	}
 
-	await codeLoader.seedModule(
-		codeDetails,
-		addFakeDetailsIfNeeded(codeDetails.package as IFluidPackage, fluidModule),
-	);
-
-	return new Loader({
+	return {
 		urlResolver: testOrderer ? new LocalResolver() : urlResolver,
 		documentServiceFactory,
-		codeLoader,
-	});
-}
-
-const containers: IContainer[] = [];
-// A function for testing to make sure the containers are not dirty and in sync (at the same seq num)
-export function isSynchronized() {
-	if (containers.length === 0) {
-		return true;
-	}
-	const seqNum = containers[0].deltaManager.lastSequenceNumber;
-	return containers.every((c) => !c.isDirty && c.deltaManager.lastSequenceNumber === seqNum);
+		codeLoader: new StaticCodeLoader(runtimeFactory),
+	};
 }
 
 export async function start(
 	id: string,
-	packageJson: IFluidPackage,
 	fluidModule: IFluidModule,
 	options: RouteOptions,
 	div: HTMLDivElement,
@@ -248,7 +193,7 @@ export async function start(
 	}
 
 	const codeDetails: IFluidCodeDetails = {
-		package: packageJson,
+		package: "no-dynamic-package",
 		config: {},
 	};
 
@@ -256,12 +201,11 @@ export async function start(
 	const odspPersistantCache = new OdspPersistentCache();
 
 	// Create the loader that is used to load the Container.
-	const loader1 = await createWebLoader(
+	const loaderProps1 = await createLoaderProps(
 		documentId,
 		fluidModule,
 		options,
 		urlResolver,
-		codeDetails,
 		testOrderer,
 		odspPersistantCache,
 	);
@@ -269,8 +213,7 @@ export async function start(
 	let container1: IContainer;
 	if (autoAttach || manualAttach) {
 		// For new documents, create a detached container which will be attached later.
-		container1 = await loader1.createDetachedContainer(codeDetails);
-		containers.push(container1);
+		container1 = await createDetachedContainer({ ...loaderProps1, codeDetails });
 	} else {
 		// For existing documents, we try to load the container with the given documentId.
 		const documentUrl = `${window.location.origin}/${documentId}`;
@@ -298,12 +241,14 @@ export async function start(
 		}
 		// This is just to replicate what apps do while loading which is to load the container in paused state and not load
 		// delta stream within the critical load flow.
-		container1 = await loader1.resolve({
-			url: documentUrl,
-			headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+		container1 = await loadExistingContainer({
+			...loaderProps1,
+			request: {
+				url: documentUrl,
+				headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+			},
 		});
 		container1.connect();
-		containers.push(container1);
 	}
 
 	let leftDiv: HTMLDivElement = div;
@@ -326,7 +271,7 @@ export async function start(
 	// We have rendered the Fluid object. If the container is detached, attach it now.
 	if (container1.attachState === AttachState.Detached) {
 		container1 = await attachContainer(
-			loader1,
+			loaderProps1,
 			container1,
 			fluidObjectUrl,
 			urlResolver,
@@ -344,12 +289,11 @@ export async function start(
 	// For side by side mode, we need to create a second container and Fluid object.
 	if (rightDiv !== undefined) {
 		// Create a new loader that is used to load the second container.
-		const loader2 = await createWebLoader(
+		const loaderProps2 = await createLoaderProps(
 			documentId,
 			fluidModule,
 			options,
 			urlResolver,
-			codeDetails,
 			testOrderer,
 		);
 
@@ -359,8 +303,10 @@ export async function start(
 			0x31b /* container1.resolvedUrl is undefined */,
 		);
 		const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
-		const container2 = await loader2.resolve({ url: requestUrl2 });
-		containers.push(container2);
+		const container2 = await loadExistingContainer({
+			...loaderProps2,
+			request: { url: requestUrl2 },
+		});
 
 		await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
 	}
@@ -374,7 +320,11 @@ interface IFluidMountableViewEntryPoint {
 	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
 }
 
-async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
+async function getFluidObjectAndRender(
+	container: IContainer,
+	url: string,
+	div: HTMLDivElement,
+) {
 	const entryPoint = await container.getEntryPoint();
 
 	let fluidObject: FluidObject<IFluidMountableView>;
@@ -410,7 +360,7 @@ async function getFluidObjectAndRender(container: IContainer, url: string, div: 
  * is clicked. Otherwise, it attaches the container right away.
  */
 async function attachContainer(
-	loader: Loader,
+	loaderProps: ILoaderProps,
 	container: IContainer,
 	fluidObjectUrl: string,
 	urlResolver: InsecureUrlResolver | OdspUrlResolver | LocalResolver,
@@ -480,11 +430,12 @@ async function attachContainer(
 			summaryList.appendChild(listItem);
 			rehydrateButton.onclick = async () => {
 				const snapshot = summaryList.value;
-				currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+				currentContainer = await rehydrateDetachedContainer({
+					...loaderProps,
+					serializedState: snapshot,
+				});
 				const newLeftDiv =
-					rightDiv !== undefined
-						? makeSideBySideDiv(uuid())
-						: document.createElement("div");
+					rightDiv !== undefined ? makeSideBySideDiv(uuid()) : document.createElement("div");
 				currentLeftDiv.replaceWith(newLeftDiv);
 				currentLeftDiv = newLeftDiv;
 				// Load and render the component.

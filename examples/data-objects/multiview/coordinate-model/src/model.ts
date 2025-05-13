@@ -4,8 +4,8 @@
  */
 
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { IValueChanged } from "@fluidframework/map/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { IValueChanged } from "@fluidframework/map/legacy";
 
 const xKey = "x";
 const yKey = "y";
@@ -21,12 +21,10 @@ export class Coordinate extends DataObject implements ICoordinate {
 		return Coordinate.factory;
 	}
 
-	private static readonly factory = new DataObjectFactory(
-		Coordinate.ComponentName,
-		Coordinate,
-		[],
-		{},
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: Coordinate.ComponentName,
+		ctor: Coordinate,
+	});
 
 	protected async initializingFirstTime(): Promise<void> {
 		this.root.set(xKey, 0);

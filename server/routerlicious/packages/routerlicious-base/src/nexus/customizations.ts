@@ -11,7 +11,9 @@ import {
 	IRevokedTokenChecker,
 	IWebSocketTracker,
 	IServiceMessageResourceManager,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
+import type { SocketIoAdapterCreator } from "@fluidframework/server-services-shared";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
 /**
@@ -31,4 +33,7 @@ export interface INexusResourcesCustomizations {
 	redisClientConnectionManagerForLogging?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForSub?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForPub?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
+	customCreateSocketIoAdapter?: SocketIoAdapterCreator;
+	readinessCheck?: IReadinessCheck;
 }

@@ -11,13 +11,13 @@ import {
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType } from "@fluidframework/datastore/internal";
 import {
-	ISequencedDocumentMessage,
 	ISummaryAck,
 	ISummaryNack,
 	ISummaryProposal,
 	MessageType,
 	TreeEntry,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 
 const noClientName = "No Client";
@@ -77,7 +77,6 @@ class ActiveSession {
 
 // Format a number separating 3 digits by comma
 export const formatNumber = (num: number): string =>
-	// eslint-disable-next-line unicorn/no-unsafe-regex
 	num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 function dumpStats(
@@ -244,7 +243,6 @@ class DataStructureAnalyzer implements IMessageAnalyzer {
 	private readonly dataType = new Map<string, string>();
 	private readonly dataTypeStats = new Map<string, [number, number]>();
 	private readonly objectStats = new Map<string, [number, number]>();
-	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
 	private readonly chunkMap = new Map<string, { chunks: string[]; totalSize: number }>();
 
 	public processOp(
@@ -341,9 +339,9 @@ class MessageDensityAnalyzer implements IMessageAnalyzer {
 		if (message.sequenceNumber >= this.opLimit) {
 			if (message.sequenceNumber !== 1) {
 				const timeDiff = durationFromTime(message.timestamp - this.timeStart);
-				const opsString = `ops = [${this.opLimit - this.opChunk}, ${
-					this.opLimit - 1
-				}]`.padEnd(26);
+				const opsString = `ops = [${this.opLimit - this.opChunk}, ${this.opLimit - 1}]`.padEnd(
+					26,
+				);
 				const timeString = `time = [${durationFromTime(
 					this.timeStart - this.doctimerStart,
 				)}, ${durationFromTime(message.timestamp - this.doctimerStart)}]`;
@@ -504,8 +502,7 @@ export async function printMessageStats(
 			const msgSize = JSON.stringify(message).length;
 			lastMessage = message;
 
-			const skipMessage =
-				messageTypeFilter.size !== 0 && !messageTypeFilter.has(message.type);
+			const skipMessage = messageTypeFilter.size !== 0 && !messageTypeFilter.has(message.type);
 
 			for (const analyzer of analyzers) {
 				analyzer.processOp(message, msgSize, skipMessage);
@@ -561,15 +558,14 @@ function processOp(
 			case ContainerMessageType.ChunkedOp: {
 				const chunk = runtimeMessage.contents as IChunkedOp;
 				// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 				if (!chunkMap.has(runtimeMessage.clientId as string)) {
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 					chunkMap.set(runtimeMessage.clientId as string, {
 						chunks: new Array<string>(chunk.totalChunks),
 						totalSize: 0,
 					});
 				}
-				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 				const value = chunkMap.get(runtimeMessage.clientId as string);
 				assert(value !== undefined, 0x2b8 /* "Chunk should be set in map" */);
 				const chunks = value.chunks;
@@ -590,7 +586,6 @@ function processOp(
 				} else {
 					return;
 				}
-				// eslint-disable-next-line no-fallthrough
 			}
 			case ContainerMessageType.IdAllocation:
 			case ContainerMessageType.FluidDataStoreOp:
@@ -793,7 +788,7 @@ function processQuorumMessages(
 	} else {
 		// message.clientId can be null
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 		session = sessionsInProgress.get(message.clientId as string);
 		if (session === undefined) {
 			session = sessionsInProgress.get(noClientName);

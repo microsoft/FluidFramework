@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
-import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
-import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
-import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
-	IClient,
+	IAnyDriverError,
 	IConnect,
 	IDocumentMessage,
 	INack,
 	ISentSignalMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	IFluidErrorBase,
 	ITelemetryLoggerExt,
@@ -36,7 +36,6 @@ import { SocketIOClientStatic } from "./socketModule.js";
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
 const feature_flush_ops = "api_flush_ops";
-const feature_submit_signals_v2 = "submit_signals_v2";
 
 export interface FlushResult {
 	lastPersistedSequenceNumber?: number;
@@ -106,10 +105,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		if (this.references === 0 && this.delayDeleteTimeout === undefined) {
 			this.delayDeleteTimeout = setTimeout(() => {
 				// We should not get here with active users.
-				assert(
-					this.references === 0,
-					0x0a0 /* "Unexpected socketIO references on timeout" */,
-				);
+				assert(this.references === 0, 0x0a0 /* "Unexpected socketIO references on timeout" */);
 				this.closeSocket();
 			}, socketReferenceBufferTime);
 		}
@@ -299,9 +295,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
 		};
 
-		connectMessage.supportedFeatures = {
-			[feature_submit_signals_v2]: true,
-		};
+		connectMessage.supportedFeatures = {};
 
 		// Reference to this client supporting get_ops flow.
 		if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") !== false) {
@@ -357,6 +351,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
 	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
+	// Due to socket reuse(multiplexing), we can get "disconnect" event from other clients in the socket reference.
+	// So, a race condition could happen, where this client is establishing connection and listening for "connect_document_success"
+	// on the socket among other events, but we get "disconnect" event on the socket reference from other clients, in which case,
+	// we dispose connection object and stop listening to further events on the socket. Due to this we get stuck as the connection
+	// is not yet established and so we don't return any connection object to the client(connection manager). So, we remain stuck.
+	// In order to handle this, we use this deferred promise to keep track of connection initialization and reject this promise with
+	// error in the disconnectCore so that the caller can know and handle the error.
+	private connectionInitializeDeferredP: Deferred<void> | undefined;
 
 	/**
 	 * Error raising for socket.io issues
@@ -448,7 +450,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		this.pushCallCounter++;
 		const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
-		const start = performance.now();
+		const start = performanceNow();
 
 		// We may keep keep accumulating memory for nothing, if we are not getting responses.
 		// Note that we should not have overlapping requests, as DeltaManager allows only one
@@ -473,7 +475,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				from: payloadToDelete.from,
 				to: payloadToDelete.to,
 				length: payloadToDelete.to - payloadToDelete.from,
-				duration: performance.now() - payloadToDelete.start,
+				duration: performanceNow() - payloadToDelete.start,
 			});
 			this.getOpsMap.delete(key!);
 		}
@@ -524,7 +526,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		return this.flushDeferred.promise;
 	}
 
-	protected disconnectHandler = (error: IFluidErrorBase & OdspError, clientId?: string): void => {
+	protected disconnectHandler = (
+		error: IFluidErrorBase & OdspError,
+		clientId?: string,
+	): void => {
 		if (clientId === undefined || clientId === this.clientId) {
 			this.logger.sendTelemetryEvent(
 				{
@@ -586,7 +591,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 					code: result.code,
 					from: data?.from,
 					to: data?.to,
-					duration: data === undefined ? undefined : performance.now() - data.start,
+					duration: data === undefined ? undefined : performanceNow() - data.start,
 				};
 				if (messages !== undefined && messages.length > 0) {
 					this.logger.sendPerformanceEvent({
@@ -637,7 +642,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		await super.initialize(connectMessage, timeout).finally(() => {
+		this.connectionInitializeDeferredP = new Deferred<void>();
+
+		super
+			.initialize(connectMessage, timeout)
+			.then(() => this.connectionInitializeDeferredP?.resolve())
+			.catch((error) => this.connectionInitializeDeferredP?.reject(error));
+
+		await this.connectionInitializeDeferredP.promise.finally(() => {
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptInfo",
 				...this.getConnectionDetailsProps(),
@@ -645,7 +657,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		});
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	protected addTrackedListener(event: string, listener: (...args: any[]) => void): void {
 		// override some event listeners in order to support multiple documents/clients over the same websocket
 		switch (event) {
@@ -667,12 +678,32 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				super.addTrackedListener(
 					event,
 					(msg: ISignalMessage | ISignalMessage[], documentId?: string) => {
-						if (
-							!this.enableMultiplexing ||
-							!documentId ||
-							documentId === this.documentId
-						) {
+						if (!this.enableMultiplexing) {
 							listener(msg, documentId);
+							return;
+						}
+
+						assert(
+							documentId !== undefined,
+							0xa65 /* documentId is required when multiplexing is enabled. */,
+						);
+
+						if (documentId !== this.documentId) {
+							return;
+						}
+
+						const msgs = Array.isArray(msg) ? msg : [msg];
+
+						const filteredMsgs = msgs.filter(
+							(m) => !m.targetClientId || m.targetClientId === this.clientId,
+						);
+
+						if (filteredMsgs.length > 0) {
+							// This ternary is needed for signal-based layer compat tests to pass,
+							// specifically the layer version combination where you have an old loader and the most recent driver layer.
+							// Old loader doesn't send or receive batched signals (ISignalMessage[]),
+							// so only individual ISignalMessage's should be passed when there's one element for backcompat.
+							listener(filteredMsgs.length === 1 ? filteredMsgs[0] : filteredMsgs, documentId);
 						}
 					},
 				);
@@ -687,8 +718,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						clientIdOrDocumentId === this.documentId ||
 						clientIdOrDocumentId === this.clientId;
 					const { code, type, message, retryAfter } = nacks[0]?.content ?? {};
-					const { clientSequenceNumber, referenceSequenceNumber } =
-						nacks[0]?.operation ?? {};
+					const { clientSequenceNumber, referenceSequenceNumber } = nacks[0]?.operation ?? {};
 					this.logger.sendTelemetryEvent({
 						eventName: "ServerNack",
 						code,
@@ -797,7 +827,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Disconnect from the websocket
 	 */
-	protected disconnectCore(): void {
+	protected disconnectCore(err: IAnyDriverError): void {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 		this.socketReference = undefined;
@@ -809,5 +839,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		}
 
 		socket.removeSocketIoReference();
+		if (
+			this.connectionInitializeDeferredP !== undefined &&
+			!this.connectionInitializeDeferredP.isCompleted
+		) {
+			this.connectionInitializeDeferredP.reject(err);
+		}
 	}
 }

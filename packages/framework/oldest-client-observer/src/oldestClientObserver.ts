@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IQuorumClients } from "@fluidframework/protocol-definitions";
+import { IQuorumClients } from "@fluidframework/driver-definitions";
 
 import {
 	IOldestClientObservable,
@@ -68,6 +68,7 @@ import {
  *     console.log("I'm not the oldest anymore");
  * });
  * ```
+ * @legacy
  * @alpha
  */
 export class OldestClientObserver
@@ -116,7 +117,7 @@ export class OldestClientObserver
 		// TODO: Clean up error code linter violations repo-wide.
 		assert(
 			this.observable.clientId !== undefined,
-			// eslint-disable-next-line unicorn/numeric-separators-style
+
 			0x1da /* "Client id should be set if connected" */,
 		);
 

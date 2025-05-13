@@ -29,7 +29,10 @@ export class TestLambda implements IPartitionLambda {
 		assert(this.documentId);
 	}
 
-	public handler(message: IQueuedMessage) {
+	/**
+	 * {@inheritDoc IPartitionLambda.handler}
+	 */
+	public handler(message: IQueuedMessage): undefined {
 		this.handleCalls++;
 		const sequencedMessage = message.value as ISequencedOperationMessage;
 		assert.equal(this.documentId, sequencedMessage.documentId);

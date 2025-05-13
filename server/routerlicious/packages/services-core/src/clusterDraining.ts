@@ -10,7 +10,13 @@
 export interface IClusterDrainingChecker {
 	/**
 	 * Check if cluster is draining
-	 * @param cluster - Optional. Use current cluster name if not provided.
+	 * @param options - Optional.
 	 */
-	isClusterDraining(cluster?: string): Promise<boolean>;
+	isClusterDraining(options?: any): Promise<boolean>;
 }
+
+/**
+ * Retry after time when cluster is under draining
+ * @internal
+ */
+export const clusterDrainingRetryTimeInMs = (10 + 2) * 60 * 1000; // 12 minutes

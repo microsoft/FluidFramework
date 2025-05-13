@@ -28,6 +28,10 @@ module.exports = (env) => {
 						test: /\.tsx?$/,
 						loader: "ts-loader",
 					},
+					{
+						test: /\.m?js$/,
+						use: ["source-map-loader"],
+					},
 				],
 			},
 			output: {
@@ -44,7 +48,7 @@ module.exports = (env) => {
 					template: "./src/index.html",
 				}),
 				new webpack.ProvidePlugin({
-					process: "process/browser",
+					process: "process/browser.js",
 				}),
 			],
 		},

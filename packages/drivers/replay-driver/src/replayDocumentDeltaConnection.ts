@@ -6,24 +6,22 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
+import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	ConnectionMode,
 	IClientConfiguration,
 	IConnected,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
 	ITokenClaims,
 	IVersion,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 import { ReplayController } from "./replayController.js";
 
@@ -102,13 +100,12 @@ export class ReplayControllerStatic extends ReplayController {
 			return 0;
 		}
 		if (this.unitIsTime === true) {
-			for (let i = 0; i < fetchedOps.length; i += 1) {
-				const timeStamp = fetchedOps[i].timestamp;
-				if (timeStamp !== undefined) {
+			for (const [i, { timestamp }] of fetchedOps.entries()) {
+				if (timestamp !== undefined) {
 					if (this.firstTimeStamp === undefined) {
-						this.firstTimeStamp = timeStamp;
+						this.firstTimeStamp = timestamp;
 					}
-					if (timeStamp - this.firstTimeStamp >= this.replayFrom) {
+					if (timestamp - this.firstTimeStamp >= this.replayFrom) {
 						return i;
 					}
 				}

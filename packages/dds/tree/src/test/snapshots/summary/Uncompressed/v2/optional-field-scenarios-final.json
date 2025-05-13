@@ -1,0 +1,573 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 2,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "root 1 child",
+                                          "fieldKind": "Optional",
+                                          "change": {
+                                            "r": {
+                                              "e": true,
+                                              "d": 0,
+                                              "s": 1
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      "com.fluidframework.leaf.number",
+                                      true,
+                                      40,
+                                      []
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 515,
+                      "sequenceNumber": 6,
+                      "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 4,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "r": {
+                                    "e": false,
+                                    "d": 3,
+                                    "s": 4
+                                  }
+                                }
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      4,
+                                      0
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      "optional-field-scenarios.Map",
+                                      false,
+                                      [
+                                        "root 2 child",
+                                        [
+                                          "com.fluidframework.leaf.number",
+                                          true,
+                                          41,
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 516,
+                      "sequenceNumber": 8,
+                      "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 7,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "r": {
+                                    "e": false,
+                                    "d": 3,
+                                    "s": 4
+                                  },
+                                  "c": [
+                                    [
+                                      [
+                                        3,
+                                        516
+                                      ],
+                                      {
+                                        "fieldChanges": [
+                                          {
+                                            "fieldKey": "root 1 child",
+                                            "fieldKind": "Optional",
+                                            "change": {
+                                              "r": {
+                                                "e": false,
+                                                "d": 0,
+                                                "s": 1
+                                              }
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ],
+                                    [
+                                      4,
+                                      {
+                                        "fieldChanges": [
+                                          {
+                                            "fieldKey": "root 3 child",
+                                            "fieldKind": "Optional",
+                                            "change": {
+                                              "r": {
+                                                "e": true,
+                                                "d": 5,
+                                                "s": 6
+                                              }
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  ]
+                                }
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ],
+                                    [
+                                      4,
+                                      1
+                                    ],
+                                    [
+                                      6,
+                                      2
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      "com.fluidframework.leaf.number",
+                                      true,
+                                      42,
+                                      []
+                                    ]
+                                  ],
+                                  [
+                                    1,
+                                    [
+                                      "optional-field-scenarios.Map",
+                                      false,
+                                      []
+                                    ]
+                                  ],
+                                  [
+                                    1,
+                                    [
+                                      "com.fluidframework.leaf.number",
+                                      true,
+                                      43,
+                                      []
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 7,
+                      "sequenceNumber": 10,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 7,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "c": [
+                                    [
+                                      null,
+                                      {
+                                        "fieldChanges": [
+                                          {
+                                            "fieldKey": "root 3 child",
+                                            "fieldKind": "Optional",
+                                            "change": {
+                                              "r": {
+                                                "e": false,
+                                                "d": 2,
+                                                "s": 3
+                                              }
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  ]
+                                }
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      3,
+                                      0
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      "com.fluidframework.leaf.number",
+                                      true,
+                                      44,
+                                      []
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 8,
+                      "sequenceNumber": 12,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    }
+                  ],
+                  "branches": [
+                    [
+                      "a0693eac-892a-4396-86f7-ad20dc1cade2",
+                      {
+                        "base": 516,
+                        "commits": []
+                      }
+                    ]
+                  ],
+                  "version": 2
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.leaf.number": {
+                      "leaf": 0
+                    },
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
+                    },
+                    "optional-field-scenarios.Map": {
+                      "map": {
+                        "kind": "Optional",
+                        "types": [
+                          "com.fluidframework.leaf.number",
+                          "com.fluidframework.leaf.string"
+                        ]
+                      }
+                    }
+                  },
+                  "root": {
+                    "kind": "Optional",
+                    "types": [
+                      "optional-field-scenarios.Map"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": {
+                  "keys": [
+                    "rootFieldKey",
+                    "repair-6",
+                    "repair-8",
+                    "repair-10",
+                    "repair-11"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
+                      {
+                        "c": {
+                          "extraFields": 1
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          "optional-field-scenarios.Map",
+                          false,
+                          [
+                            "root 3 child",
+                            [
+                              "com.fluidframework.leaf.number",
+                              true,
+                              44,
+                              []
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          43,
+                          []
+                        ]
+                      ],
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          40,
+                          []
+                        ]
+                      ],
+                      [
+                        1,
+                        [
+                          "optional-field-scenarios.Map",
+                          false,
+                          [
+                            "root 1 child",
+                            [
+                              "com.fluidframework.leaf.number",
+                              true,
+                              42,
+                              []
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        1,
+                        [
+                          "optional-field-scenarios.Map",
+                          false,
+                          [
+                            "root 2 child",
+                            [
+                              "com.fluidframework.leaf.number",
+                              true,
+                              41,
+                              []
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  },
+                  "version": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "data": [
+                    [
+                      7,
+                      [
+                        [
+                          0,
+                          8
+                        ],
+                        [
+                          3,
+                          11
+                        ]
+                      ]
+                    ],
+                    [
+                      8,
+                      2,
+                      6
+                    ],
+                    [
+                      516,
+                      3,
+                      10
+                    ]
+                  ],
+                  "maxId": 11
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -4,7 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import type { IFluidSerializer } from '@fluidframework/shared-object-base';
+import type { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 
 import { fail } from './Common.js';
 import { getNumberOfHandlesFromEditLogSummary } from './EditLog.js';
@@ -28,7 +28,7 @@ import {
 export function deserialize(jsonSummary: string, serializer: IFluidSerializer): SharedTreeSummaryBase {
 	let summary: Partial<SharedTreeSummaryBase>;
 	try {
-		summary = serializer.parse(jsonSummary);
+		summary = serializer.parse(jsonSummary) as Partial<SharedTreeSummaryBase>;
 	} catch {
 		fail('Json syntax error in Summary');
 	}

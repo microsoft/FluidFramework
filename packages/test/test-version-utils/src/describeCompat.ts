@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
@@ -16,6 +18,7 @@ import {
 	configList,
 	isCompatVersionBelowMinVersion,
 	mochaGlobalSetup,
+	isOdspCompatCompliant,
 } from "./compatConfig.js";
 import {
 	CompatKind,
@@ -28,7 +31,6 @@ import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
-import { pkgVersion } from "./packageVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -63,6 +65,9 @@ function createCompatSuite(
 				// skip current config if compat version is below min version supported for test suite
 				continue;
 			}
+			if (driver === "odsp" && !isOdspCompatCompliant(config)) {
+				continue;
+			}
 			describe(config.name, function () {
 				let provider: ITestObjectProvider;
 				let resetAfterEach: boolean;
@@ -78,14 +83,14 @@ function createCompatSuite(
 											r11s: { r11sEndpointName },
 											odsp: { tenantIndex, odspEndpointName },
 										},
-								  })
+									})
 								: await getVersionedTestObjectProviderFromApis(apis, {
 										type: driver,
 										config: {
 											r11s: { r11sEndpointName },
 											odsp: { tenantIndex, odspEndpointName },
 										},
-								  });
+									});
 					} catch (error) {
 						const logger = createChildLogger({
 							logger: getTestLogger?.(),
@@ -108,6 +113,9 @@ function createCompatSuite(
 					resetAfterEach = options?.resetAfterEach ?? true;
 					if (options?.syncSummarizer === true) {
 						provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
+					}
+					if (options?.persistedCache !== undefined && provider.driver.type === "odsp") {
+						(provider.driver as OdspTestDriver).setPersistedCache(options.persistedCache);
 					}
 					return provider;
 				}, apis);
@@ -184,6 +192,8 @@ export interface ITestObjectProviderOptions {
 	resetAfterEach?: boolean;
 	/** If true, synchronizes summarizer client as well when ensureSynchronized() is called. */
 	syncSummarizer?: boolean;
+	/** Persisted Cache provided by ODSP */
+	persistedCache?: IPersistedCache;
 }
 
 /**
@@ -251,7 +261,7 @@ function createCompatDescribe(): DescribeCompat {
 		describe.only(name, createCompatSuiteWithDefault(tests, compatVersion));
 
 	d.noCompat = (name, _, tests) =>
-		describe(name, createCompatSuite(tests, undefined, pkgVersion));
+		describe(name, createCompatSuiteWithDefault(tests, "NoCompat"));
 
 	return d;
 }

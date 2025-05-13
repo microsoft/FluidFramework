@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.41.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -18,12 +18,13 @@
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
@@ -37,7 +38,7 @@
 		"test:realsvc": "npm run test:realsvc:local && npm run test:realsvc:tinylicious",
 		"test:realsvc:frs": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=frs --timeout=20s",
 		"test:realsvc:frs:report": "npm run test:realsvc:frs --",
-		"test:realsvc:local": "npm run test:realsvc:run -- --driver=local",
+		"test:realsvc:local": "npm run test:realsvc:run -- --driver=local --timeout=2s",
 		"test:realsvc:local:report": "npm run test:realsvc:local --",
 		"test:realsvc:local:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:local --",
 		"test:realsvc:odsp": "npm run test:realsvc:run -- --driver=odsp --timeout=20s",
@@ -85,7 +86,7 @@
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-private/test-version-utils": "workspace:~",
-		"@fluid-tools/benchmark": "^0.48.0",
+		"@fluid-tools/benchmark": "^0.51.0",
 		"@fluidframework/agent-scheduler": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
@@ -107,7 +108,6 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -121,43 +121,43 @@
 		"@fluidframework/undo-redo": "workspace:~",
 		"@types/sinon": "^17.0.3",
 		"cross-env": "^7.0.3",
-		"mocha": "^10.2.0",
-		"semver": "^7.5.3",
-		"sinon": "^17.0.1",
+		"mocha": "^10.8.2",
+		"semver": "^7.7.1",
+		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^4.0.0",
+		"tinylicious": "^5.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@types/mocha": "^9.1.1",
+		"@fluidframework/build-tools": "^0.55.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/protocol-definitions": "^3.2.0",
+		"@types/mocha": "^10.0.10",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"eslint": "~8.55.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
 		"nock": "^13.3.3",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {
 			"build:test:esm": [
 				"^build:esnext",
-				"build:genver"
+				"build:genver",
+				"^tsc"
 			]
 		}
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

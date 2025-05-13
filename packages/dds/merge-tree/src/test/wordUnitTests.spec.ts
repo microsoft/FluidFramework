@@ -6,11 +6,12 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import path from "path";
+import path from "node:path";
 
 import { Trace } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
+import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { MapLike, createMap, extend } from "../properties.js";
 import { ReferencePosition } from "../referencePositions.js";
@@ -19,13 +20,13 @@ import { _dirname } from "./dirname.cjs";
 import { TestClient } from "./testClient.js";
 import { loadTextFromFileWithMarkers } from "./testUtils.js";
 
-const clock = () => Trace.start();
+const clock = (): Trace => Trace.start();
 
-function elapsedMicroseconds(trace: Trace) {
+function elapsedMicroseconds(trace: Trace): number {
 	return trace.trace().duration * 1000;
 }
 
-export function propertyCopy() {
+export function propertyCopy(): void {
 	const propCount = 2000;
 	const iterCount = 1000;
 	const map = new Map<string, number>();
@@ -53,9 +54,11 @@ export function propertyCopy() {
 	clockStart = clock();
 	for (let j = 0; j < iterCount; j++) {
 		const bObj = createMap<number>();
-		// eslint-disable-next-line guard-for-in, no-restricted-syntax
+		// eslint-disable-next-line no-restricted-syntax
 		for (const key in obj) {
-			bObj[key] = obj[key];
+			if (key in obj) {
+				bObj[key] = obj[key];
+			}
 		}
 	}
 	et = elapsedMicroseconds(clockStart);
@@ -80,9 +83,9 @@ export function propertyCopy() {
 	clockStart = clock();
 	for (let j = 0; j < iterCount; j++) {
 		const bObj = createMap<number>();
-		map.forEach((value, key) => {
+		for (const [key, value] of map.entries()) {
 			bObj[key] = value;
-		});
+		}
 	}
 	et = elapsedMicroseconds(clockStart);
 	perIter = (et / iterCount).toFixed(3);
@@ -93,9 +96,9 @@ export function propertyCopy() {
 	clockStart = clock();
 	for (let j = 0; j < iterCount; j++) {
 		const bmap = new Map<string, number>();
-		map.forEach((value, key) => {
+		for (const [key, value] of map.entries()) {
 			bmap.set(key, value);
-		});
+		}
 	}
 	et = elapsedMicroseconds(clockStart);
 	perIter = (et / iterCount).toFixed(3);
@@ -104,34 +107,36 @@ export function propertyCopy() {
 		`map to map foreach prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`,
 	);
 	const diffMap = new Map<string, number>();
-	map.forEach((value, key) => {
+	for (const [key, value] of map.entries()) {
 		if (Math.random() < 0.5) {
 			diffMap.set(key, value);
 		} else {
 			diffMap.set(key, value * 3);
 		}
-	});
+	}
 	clockStart = clock();
 	const grayMap = new Map<string, number>();
 	for (let j = 0; j < iterCount; j++) {
-		map.forEach((value, key) => {
+		for (const [key, value] of map.entries()) {
 			if (diffMap.get(key) !== value) {
 				grayMap.set(key, 1);
 			}
-		});
+		}
 	}
 	perIter = (et / iterCount).toFixed(3);
 	perProp = (et / (iterCount * propCount)).toFixed(2);
-	console.log(`diff time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
+	console.log(
+		`diff time ${perIter} us per ${propCount} properties; ${perProp} us per property`,
+	);
 }
 
-function makeBookmarks(client: TestClient, bookmarkCount: number) {
+function makeBookmarks(client: TestClient, bookmarkCount: number): ReferencePosition[] {
 	const random = makeRandom(0xdeadbeef, 0xfeedbed);
 	const bookmarks: ReferencePosition[] = [];
 	const len = client.getLength();
 	for (let i = 0; i < bookmarkCount; i++) {
 		const pos = random.integer(0, len - 1);
-		const segoff = client.getContainingSegment(pos);
+		const segoff = client.getContainingSegment<ISegmentPrivate>(pos);
 		let refType = ReferenceType.Simple;
 		if (i & 1) {
 			refType = ReferenceType.SlideOnRemove;
@@ -147,7 +152,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
 	return bookmarks;
 }
 
-function measureFetch(startFile: string, withBookmarks = false) {
+function measureFetch(startFile: string, withBookmarks = false): void {
 	const bookmarkCount = 20000;
 	const client = new TestClient();
 	loadTextFromFileWithMarkers(startFile, client.mergeTree);
@@ -163,7 +168,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
 			// curPG.pos is ca end
 			const curPG = client.searchForMarker(pos, "pg", true)!;
 			const properties = curPG.properties!;
-			const curSegOff = client.getContainingSegment(pos)!;
+			const curSegOff = client.getContainingSegment<ISegmentPrivate>(pos)!;
 			const curSeg = curSegOff.segment!;
 			// Combine paragraph and direct properties
 			extend(properties, curSeg.properties);
@@ -173,9 +178,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
 	}
 	const et = elapsedMicroseconds(clockStart);
 	console.log(
-		`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(
-			et / count
-		).toFixed(1)} microseconds per run`,
+		`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(et / count).toFixed(1)} microseconds per run`,
 	);
 }
 

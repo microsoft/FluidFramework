@@ -3,23 +3,37 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	AttributionKey,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
-import { AttributableMapKernel, IMapDataObjectSerializable, IMapOperation } from "./mapKernel.js";
+import {
+	AttributableMapKernel,
+	IMapDataObjectSerializable,
+	IMapOperation,
+} from "./mapKernel.js";
 import { pkgVersion } from "./packageVersion.js";
 
 interface IMapSerializationFormat {
@@ -98,7 +112,10 @@ export const AttributableMap = createSharedObjectKind(MapFactory);
 /**
  * {@inheritDoc ISharedMap}
  */
-export class AttributableMapClass extends SharedObject<ISharedMapEvents> implements ISharedMap {
+export class AttributableMapClass
+	extends SharedObject<ISharedMapEvents>
+	implements ISharedMap
+{
 	/**
 	 * String representation for the class.
 	 */
@@ -144,7 +161,7 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public entries(): IterableIterator<[string, any]> {
 		return this.kernel.entries();
 	}
@@ -154,7 +171,7 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public values(): IterableIterator<any> {
 		return this.kernel.values();
 	}
@@ -164,7 +181,7 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public [Symbol.iterator](): IterableIterator<[string, any]> {
 		return this.kernel.entries();
 	}
@@ -181,9 +198,8 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 	 * @param callbackFn - Callback function
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
-		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
 		this.kernel.forEach(callbackFn);
 	}
 
@@ -191,7 +207,7 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 	 * {@inheritDoc ISharedMap.get}
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public get<T = any>(key: string): T | undefined {
 		return this.kernel.get<T>(key);
 	}
@@ -288,8 +304,7 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 		//    and result in non-incremental snapshot.
 		//    This can be improved in the future, without being format breaking change, as loading sequence
 		//    loads all blobs at once and partitioning schema has no impact on that process.
-		for (const key of Object.keys(data)) {
-			const value = data[key];
+		for (const [key, value] of Object.entries(data)) {
 			if (
 				value.value &&
 				value.value.length + (value.attribution?.length ?? 0) >=
@@ -303,9 +318,7 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 						type: value.type,
 						value: JSON.parse(value.value) as unknown,
 						attribution:
-							value.attribution === undefined
-								? undefined
-								: JSON.parse(value.attribution),
+							value.attribution === undefined ? undefined : JSON.parse(value.attribution),
 					},
 				};
 				builder.addBlob(blobName, JSON.stringify(content));
@@ -328,10 +341,7 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 				}
 				headerBlob[key] = {
 					type: value.type,
-					value:
-						value.value === undefined
-							? undefined
-							: (JSON.parse(value.value) as unknown),
+					value: value.value === undefined ? undefined : (JSON.parse(value.value) as unknown),
 					attribution:
 						value.attribution === undefined ? undefined : JSON.parse(value.attribution),
 				};
@@ -394,7 +404,10 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 		localOpMetadata: unknown,
 	): void {
 		if (message.type === MessageType.Operation) {
-			this.kernel.tryProcessMessage(message, local, localOpMetadata);
+			assert(
+				this.kernel.tryProcessMessage(message, local, localOpMetadata),
+				0xab0 /* AttributableMap received an unrecognized op, possibly from a newer version */,
+			);
 		}
 	}
 

@@ -48,38 +48,16 @@ export async function create(
 		(config.get("scriptorium:logSavedOpsTimeIntervalMs") as number) ?? 60000;
 	const opsCountTelemetryEnabled =
 		(config.get("scriptorium:opsCountTelemetryEnabled") as boolean) ?? false;
+	const circuitBreakerEnabled =
+		(config.get("scriptorium:circuitBreakerEnabled") as boolean) ?? false;
+	const circuitBreakerOptions =
+		(config.get("scriptorium:circuitBreakerOptions") as Record<string, any>) ?? {};
 
-	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
-
-	let globalDb;
-	if (globalDbEnabled) {
-		const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
-		const globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
-		globalDb = await globalDbMongoManager.getDatabase();
-	}
 
 	const operationsDbManager = new MongoManager(factory, false);
 	const operationsDb = await operationsDbManager.getDatabase();
 
-	const documentsCollectionDb = globalDbEnabled ? globalDb : operationsDb;
-
-	const documentRepository =
-		customizations?.documentRepository ??
-		new MongoDocumentRepository(documentsCollectionDb.collection(documentsCollectionName));
-
-	// Required for checkpoint service
-	const checkpointRepository = new MongoCheckpointRepository(
-		operationsDb.collection(checkpointsCollectionName),
-		undefined /* checkpoint type */,
-	);
-	const isLocalCheckpointEnabled = config.get("checkpoints: localCheckpointEnabled");
-
-	const checkpointService = new CheckpointService(
-		checkpointRepository,
-		documentRepository,
-		isLocalCheckpointEnabled,
-	);
 	const opCollection = operationsDb.collection(deltasCollectionName);
 
 	if (createCosmosDBIndexes) {
@@ -99,29 +77,62 @@ export async function create(
 		);
 	}
 
-	if (mongoExpireAfterSeconds > 0) {
+	if (mongoExpireAfterSeconds > 0 && opCollection.createTTLIndex !== undefined) {
 		await (createCosmosDBIndexes
 			? opCollection.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds)
 			: opCollection.createTTLIndex({ mongoTimestamp: 1 }, mongoExpireAfterSeconds));
 	}
 
-	executeOnInterval(
-		async () =>
-			deleteSummarizedOps(
-				opCollection,
-				softDeletionRetentionPeriodMs,
-				offlineWindowMs,
-				softDeletionEnabled,
-				permanentDeletionEnabled,
-				checkpointService,
-			),
-		deletionIntervalMs,
-		"deleteSummarizedOps",
-		undefined,
-		(error) => {
-			return error.code === FluidServiceErrorCode.FeatureDisabled;
-		},
-	);
+	if (softDeletionEnabled) {
+		let globalDb;
+		// Database connection for global db if enabled
+		if (globalDbEnabled) {
+			const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
+			const globalDbMongoManager = new MongoManager(
+				factory,
+				globalDbReconnect,
+				undefined /* reconnectDelayMs */,
+				true /* global */,
+			);
+			globalDb = await globalDbMongoManager.getDatabase();
+		}
+		const documentsCollectionDb = globalDbEnabled ? globalDb : operationsDb;
+
+		const documentRepository =
+			customizations?.documentRepository ??
+			new MongoDocumentRepository(documentsCollectionDb.collection(documentsCollectionName));
+
+		// Required for checkpoint service
+		const checkpointRepository = new MongoCheckpointRepository(
+			operationsDb.collection(checkpointsCollectionName),
+			"scriptorium" /* checkpoint type */,
+		);
+		const isLocalCheckpointEnabled = config.get("checkpoints: localCheckpointEnabled");
+
+		const checkpointService = new CheckpointService(
+			checkpointRepository,
+			documentRepository,
+			isLocalCheckpointEnabled,
+		);
+
+		executeOnInterval(
+			async () =>
+				deleteSummarizedOps(
+					opCollection,
+					softDeletionRetentionPeriodMs,
+					offlineWindowMs,
+					softDeletionEnabled,
+					permanentDeletionEnabled,
+					checkpointService,
+				),
+			deletionIntervalMs,
+			"deleteSummarizedOps",
+			undefined,
+			(error) => {
+				return error.code === FluidServiceErrorCode.FeatureDisabled;
+			},
+		);
+	}
 
 	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, {
 		enableTelemetry,
@@ -130,5 +141,7 @@ export async function create(
 		shouldLogInitialSuccessVerbose,
 		logSavedOpsTimeIntervalMs,
 		opsCountTelemetryEnabled,
+		circuitBreakerEnabled,
+		circuitBreakerOptions,
 	});
 }

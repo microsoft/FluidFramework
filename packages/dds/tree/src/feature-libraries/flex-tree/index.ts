@@ -4,36 +4,18 @@
  */
 
 export {
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeEntity,
-	FlexTreeTypedField,
-	FlexTreeFieldNode,
-	FlexibleFieldContent,
-	FlexibleNodeContent,
-	FlexTreeLeafNode,
-	FlexTreeMapNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeObjectNode,
-	FlexTreeObjectNodeTyped,
-	AssignableFieldKinds,
-	FlexTreeTypedNode,
-	FlexTreeTypedNodeUnion,
-	CheckTypesOverlap,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeEntity,
+	type FlexTreeTypedField,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
 	TreeStatus,
-	FlexTreeUnknownUnboxed,
-	FlexTreeUnboxField,
+	type FlexTreeUnknownUnboxed,
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	isFlexTreeNode,
-	PropertyNameFromFieldKey,
-	ReservedObjectNodeFieldPropertyNames,
-	ReservedObjectNodeFieldPropertyNamePrefixes,
-	reservedObjectNodeFieldPropertyNames,
-	reservedObjectNodeFieldPropertyNamePrefixes,
-	FlexTreeObjectNodeFieldsInner,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 
@@ -45,22 +27,20 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation.js";
 
-export { getTreeContext, FlexTreeContext, Context, ContextSlot } from "./context.js";
-
-export { FlexTreeNodeEvents } from "./treeEvents.js";
-
-// Below here are things that are used by the above, but not part of the desired API surface.
 export {
-	FlexTreeTypedFieldInner,
-	FlexTreeUnboxFieldInner,
-	FlexTreeObjectNodeFields,
-	FlexTreeUnboxNode,
-	FlexTreeUnboxNodeUnion,
-	FlexTreeNodeKeyField,
-	IsArrayOfOne,
-	FlexibleNodeSubSequence,
-} from "./flexTreeTypes.js";
+	type FlexTreeContext,
+	type FlexTreeHydratedContext,
+	Context,
+	ContextSlot,
+} from "./context.js";
 
-export { assertFlexTreeEntityNotFreed } from "./lazyEntity.js";
+export { type FlexTreeNodeEvents } from "./treeEvents.js";
 
-export { getSchemaAndPolicy } from "./utilities.js";
+export {
+	assertFlexTreeEntityNotFreed,
+	LazyEntity,
+} from "./lazyEntity.js";
+
+export { getSchemaAndPolicy, indexForAt } from "./utilities.js";
+
+export { treeStatusFromAnchorCache } from "./utilities.js";

@@ -5,21 +5,19 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
+import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IAnyDriverError,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	ConnectionMode,
 	IClientConfiguration,
 	IDocumentMessage,
 	INack,
-	ISequencedDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
 	ITokenClaims,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {
@@ -43,8 +41,8 @@ export class MockDocumentDeltaConnection
 		user: {
 			id: "mockid",
 		},
-		iat: Math.round(new Date().getTime() / 1000),
-		exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+		iat: Math.round(Date.now() / 1000),
+		exp: Math.round(Date.now() / 1000) + 60 * 60, // 1 hour expiration
 		ver: "1.0",
 	};
 
@@ -60,7 +58,7 @@ export class MockDocumentDeltaConnection
 	constructor(
 		public readonly clientId: string,
 		private readonly submitHandler?: (messages: IDocumentMessage[]) => void,
-		private readonly submitSignalHandler?: (message: any) => void,
+		private readonly submitSignalHandler?: (message: unknown) => void,
 	) {
 		super();
 	}
@@ -71,37 +69,37 @@ export class MockDocumentDeltaConnection
 		}
 	}
 
-	public submitSignal(message: any): void {
+	public submitSignal(message: unknown): void {
 		if (this.submitSignalHandler !== undefined) {
 			this.submitSignalHandler(message);
 		}
 	}
 	private _disposed = false;
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
-	public dispose(error?: Error) {
+	public dispose(error?: Error): void {
 		this._disposed = true;
 		this.emit("disconnect", error?.message ?? "mock close() called");
 	}
 
 	// Mock methods for raising events
-	public emitOp(documentId: string, messages: Partial<ISequencedDocumentMessage>[]) {
+	public emitOp(documentId: string, messages: Partial<ISequencedDocumentMessage>[]): void {
 		this.emit("op", documentId, messages);
 	}
-	public emitSignal(signal: Partial<ISignalMessage>) {
+	public emitSignal(signal: Partial<ISignalMessage>): void {
 		this.emit("signal", signal);
 	}
-	public emitNack(documentId: string, message: Partial<INack>[]) {
+	public emitNack(documentId: string, message: Partial<INack>[]): void {
 		this.emit("nack", documentId, message);
 	}
-	public emitPong(latency: number) {
+	public emitPong(latency: number): void {
 		this.emit("pong", latency);
 	}
-	public emitDisconnect(disconnectReason: IAnyDriverError) {
+	public emitDisconnect(disconnectReason: IAnyDriverError): void {
 		this.emit("error", disconnectReason);
 	}
-	public emitError(error: IAnyDriverError) {
+	public emitError(error: IAnyDriverError): void {
 		this.emit("error", error);
 	}
 }

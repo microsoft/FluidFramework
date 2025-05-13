@@ -6,10 +6,9 @@
 import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMap } from "./interfaces.js";
@@ -18,8 +17,10 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
- *
+ * @privateRemarks
+ * TODO: AB#35245: Deprecate and stop exporting this class.
  * @sealed
+ * @legacy
  * @alpha
  */
 export class MapFactory implements IChannelFactory<ISharedMap> {
@@ -79,12 +80,14 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 
 /**
  * Entrypoint for {@link ISharedMap} creation.
+ * @legacy
  * @alpha
  */
-export const SharedMap: ISharedObjectKind<ISharedMap> = createSharedObjectKind(MapFactory);
+export const SharedMap = createSharedObjectKind<ISharedMap>(MapFactory);
 
 /**
  * Entrypoint for {@link ISharedMap} creation.
+ * @legacy
  * @alpha
  * @privateRemarks
  * This alias is for legacy compat from when the SharedMap class was exported as public.

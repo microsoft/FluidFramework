@@ -6,22 +6,26 @@
 import { strict as assert } from "node:assert";
 
 import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-client";
-import { type AzureUser, ScopeType } from "@fluidframework/azure-client/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-
 import type { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
 	createContainerFromPayload,
 	getContainerIdFromPayloadResponse,
+	ScopeType,
 } from "./AzureClientFactory.js";
-import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { SignalerTestDataObject } from "./TestDataObject.js";
+import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { configProvider, getTestMatrix } from "./utils.js";
+
+interface UserIdAndName {
+	readonly id: string;
+	readonly name: string;
+}
 
 async function createSignalListenerPromise<T>(
 	signaler: SignalerTestDataObject,
@@ -55,18 +59,18 @@ for (const testOpts of testMatrix) {
 		const connectedContainers: IFluidContainer[] = [];
 		const connectTimeoutMs = 10_000;
 		const isEphemeral: boolean = testOpts.options.isEphemeral;
-		const user1: AzureUser = {
+		const user1 = {
 			id: "test-user-id-1",
 			name: "test-user-name-2",
-		};
-		const user2: AzureUser = {
+		} as const satisfies UserIdAndName;
+		const user2 = {
 			id: "test-user-id-1",
 			name: "test-user-name-2",
-		};
-		const user3: AzureUser = {
+		} as const satisfies UserIdAndName;
+		const user3 = {
 			id: "test-user-id-1",
 			name: "test-user-name-2",
-		};
+		} as const satisfies UserIdAndName;
 
 		afterEach(async () => {
 			for (const container of connectedContainers) {
@@ -78,7 +82,7 @@ for (const testOpts of testMatrix) {
 
 		const getOrCreateSignalerContainer = async (
 			id: string | undefined,
-			user: AzureUser,
+			user: UserIdAndName,
 			config?: ReturnType<typeof configProvider>,
 			scopes?: ScopeType[],
 		): Promise<{
@@ -106,14 +110,14 @@ for (const testOpts of testMatrix) {
 							"test-user-name-1",
 						);
 					containerId = getContainerIdFromPayloadResponse(containerResponse);
-					({ container, services } = await client.getContainer(containerId, schema));
+					({ container, services } = await client.getContainer(containerId, schema, "2"));
 				} else {
-					({ container, services } = await client.createContainer(schema));
+					({ container, services } = await client.createContainer(schema, "2"));
 					containerId = await container.attach();
 				}
 			} else {
 				containerId = id;
-				({ container, services } = await client.getContainer(containerId, schema));
+				({ container, services } = await client.getContainer(containerId, schema, "2"));
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
@@ -190,12 +194,6 @@ for (const testOpts of testMatrix) {
 		 * a signal sent by any 1 client should be recieved by all 3 clients, regardless of read/write permissions.
 		 */
 		it("can send and receive read-only client signals", async function () {
-			// TODO: Fix tests when ran against local service - ADO:7876
-			const useAzure = process.env.FLUID_CLIENT === "azure";
-			if (!useAzure) {
-				this.skip();
-			}
-
 			const { signaler: writeSignaler, containerId } = await getOrCreateSignalerContainer(
 				undefined,
 				user1,

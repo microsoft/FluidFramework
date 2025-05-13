@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	MonitoringContext,
@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
-import { BlobManager } from "../../blobManager.js";
+import { blobManagerBasePath } from "../../blobManager/index.js";
 import {
 	GCNodeType,
 	GCTelemetryTracker,
@@ -60,7 +60,7 @@ describe("GC Telemetry Tracker", () => {
 		// Path with two parts such as "/id1/id2" - sub data stores.
 		// Everything else - other.
 		const getNodeType = (nodePath: string) => {
-			if (nodePath.split("/")[1] === BlobManager.basePath) {
+			if (nodePath.split("/")[1] === blobManagerBasePath) {
 				return GCNodeType.Blob;
 			}
 			if (nodePath.split("/").length === 2) {
@@ -72,20 +72,16 @@ describe("GC Telemetry Tracker", () => {
 			return GCNodeType.Other;
 		};
 		const configs: IGarbageCollectorConfigs = {
-			gcEnabled: true,
+			gcAllowed: true,
+			sweepAllowed: false,
 			sweepEnabled: false,
-			shouldRunGC: true,
-			shouldRunSweep: "NO",
 			runFullGC: false,
 			testMode: false,
-			tombstoneMode: false,
 			inactiveTimeoutMs,
 			sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 			tombstoneTimeoutMs: enableSweep ? tombstoneTimeoutMs : undefined,
 			sweepGracePeriodMs,
 			throwOnTombstoneLoad: false,
-			throwOnTombstoneUsage: false,
-			throwOnInactiveLoad: false,
 			persistedGcFeatureMatrix: undefined,
 			gcVersionInBaseSnapshot: stableGCVersion,
 			gcVersionInEffect: stableGCVersion,
@@ -107,7 +103,7 @@ describe("GC Telemetry Tracker", () => {
 	 * just unreferenced.
 	 */
 	function markNodesUnreferenced(nodeIds: string[]) {
-		nodeIds.forEach((nodeId) => {
+		for (const nodeId of nodeIds) {
 			unreferencedNodesState.set(
 				nodeId,
 				new UnreferencedStateTracker(
@@ -118,12 +114,12 @@ describe("GC Telemetry Tracker", () => {
 					sweepGracePeriodMs,
 				),
 			);
-		});
+		}
 	}
 
 	// Mock node loaded and changed activity for the given nodes.
 	function mockNodeChanges(nodeIds: string[]) {
-		nodeIds.forEach((id) => {
+		for (const id of nodeIds) {
 			telemetryTracker.nodeUsed(id, {
 				id,
 				usageType: "Loaded",
@@ -140,7 +136,7 @@ describe("GC Telemetry Tracker", () => {
 				completedGCRuns: 0,
 				isTombstoned: false,
 			});
-		});
+		}
 	}
 
 	// Mock node revived activity for the given nodes.
@@ -213,11 +209,12 @@ describe("GC Telemetry Tracker", () => {
 				}
 			}
 
-			// Note that mock logger clears all events after one of the `match` functions is called. Since we call match
-			// functions twice, cache the events and repopulate the mock logger with if after the first match call.
-			const cachedEvents = Array.from(mockLogger.events);
-			mockLogger.assertMatch(expectedEvents, message, true /* inlineDetailsProp */);
-			mockLogger.events = cachedEvents;
+			mockLogger.assertMatch(
+				expectedEvents,
+				message,
+				true /* inlineDetailsProp */,
+				false /* clearEventsAfterCheck */, // Don't clear events so we can run another check.
+			);
 			mockLogger.assertMatchNone(unexpectedEvents, message, true /* inlineDetailsProp */);
 		}
 
@@ -337,7 +334,9 @@ describe("GC Telemetry Tracker", () => {
 			);
 		});
 
-		/** Tests that validate either the relevant events are logged as expected. */
+		/**
+		 * Tests that validate either the relevant events are logged as expected.
+		 */
 		const unreferencedPhasesEventTests = (
 			timeout: number,
 			mode: "inactive" | "tombstone" | "sweep",

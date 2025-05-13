@@ -33,11 +33,13 @@ class HeadNode<T> {
 	public get prev(): DataNode<T> | undefined {
 		return this._prev === this.headNode ? undefined : (this._prev as DataNode<T>);
 	}
-	public get list() {
+	public get list(): DoublyLinkedList<T> | undefined {
 		return this.headNode._list;
 	}
 }
 
+// The any is needed for use in the remove function, where the nodes are defined with a generic type.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const DeadHead = new HeadNode<any>(undefined);
 
 class DataNode<T> extends HeadNode<T> implements ListNode<T> {
@@ -54,7 +56,7 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRa
 	let previousNode = node;
 	const oldNext = previousNode._next;
 	let newRange: ListNodeRange<T> | undefined;
-	items.forEach((n) => {
+	for (const n of items) {
 		const newNode = new DataNode<T>(node.headNode, n);
 		if (newRange === undefined) {
 			newRange = { first: newNode, last: newNode };
@@ -64,7 +66,7 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRa
 		newNode._prev = previousNode;
 		previousNode._next = newNode;
 		previousNode = newNode;
-	});
+	}
 	oldNext._prev = previousNode;
 	previousNode._next = oldNext;
 	// explicitly prevent newRange from being undefined without casting,
@@ -85,6 +87,12 @@ export class DoublyLinkedList<T>
 		// try to match array signature and semantics where possible
 		Pick<ListNode<T>[], "pop" | "shift" | "length" | "includes">
 {
+	constructor(values?: Iterable<T>) {
+		if (values !== undefined) {
+			this.push(...values);
+		}
+	}
+
 	find(
 		predicate: (value: ListNode<T>, obj: DoublyLinkedList<T>) => unknown,
 	): ListNode<T> | undefined {
@@ -191,6 +199,7 @@ export class DoublyLinkedList<T>
 		if (this._includes(node)) {
 			node._prev._next = node._next;
 			node._next._prev = node._prev;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			node.headNode = node._next = node._prev = DeadHead;
 			this._len--;
 			return node;
@@ -222,10 +231,10 @@ export class DoublyLinkedList<T>
 
 	private _len: number = 0;
 	private readonly headNode: HeadNode<T> | DataNode<T> = new HeadNode(this);
-	public get length() {
+	public get length(): number {
 		return this._len;
 	}
-	public get empty() {
+	public get empty(): boolean {
 		return this._len === 0;
 	}
 	public get first(): ListNode<T> | undefined {
@@ -242,7 +251,7 @@ export function walkList<T>(
 	visitor: (node: ListNode<T>) => boolean | void,
 	start?: ListNode<T>,
 	forward: boolean = true,
-) {
+): boolean {
 	let current: ListNode<T> | undefined;
 	if (start) {
 		if (!list.includes(start)) {
@@ -263,4 +272,33 @@ export function walkList<T>(
 		next = forward ? next?.next : next?.prev;
 	}
 	return true;
+}
+
+/**
+ * Creates a lazily evaluated iterable which returns values while the predicate returns true,
+ * and stops iterating at the first value where the predicate is false.
+ * @param start - the node to start the iteration from
+ * @param includePredicate - determine if the current value be included in the iteration or stop if iteration
+ */
+export function iterateListValuesWhile<T>(
+	start: ListNode<T> | undefined,
+	includePredicate: (n: ListNode<T>) => boolean,
+): Iterable<T> {
+	let next: ListNode<T> | undefined = start;
+	const iterator: IterableIterator<T> = {
+		next: (): IteratorResult<T> => {
+			if (next !== undefined) {
+				const current = next;
+				next = current.next;
+				if (includePredicate(current) === true) {
+					return { value: current.data, done: false };
+				}
+			}
+			return { done: true, value: undefined };
+		},
+		[Symbol.iterator]() {
+			return this;
+		},
+	};
+	return iterator;
 }

@@ -3,22 +3,47 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
-import {
+import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import type {
 	ChangeEncodingContext,
+	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
+	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
 	DeltaFieldMap,
 	EncodedRevisionTag,
 	RevisionMetadataSource,
 	RevisionTag,
 } from "../../core/index.js";
-import { IdAllocator, Invariant } from "../../util/index.js";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
+import type { IdAllocator, Invariant } from "../../util/index.js";
 
-import { CrossFieldManager } from "./crossFieldQueries.js";
-import { NodeId } from "./modularChangeTypes.js";
-import { EncodedNodeChangeset } from "./modularChangeFormat.js";
+import type { CrossFieldManager } from "./crossFieldQueries.js";
+import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
+import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
+
+export type NestedChangesIndices = [
+	NodeId,
+	number | undefined /* inputIndex */,
+	number | undefined /* outputIndex */,
+][];
+
+/**
+ * The return value of calling {@link FieldChangeHandler.intoDelta}.
+ */
+export interface FieldChangeDelta {
+	/**
+	 * {@inheritdoc DeltaFieldChanges}
+	 */
+	readonly local?: DeltaFieldChanges;
+	/**
+	 * {@inheritdoc DeltaRoot.global}
+	 */
+	readonly global?: readonly DeltaDetachedNodeChanges[];
+	/**
+	 * {@inheritdoc DeltaRoot.rename}
+	 */
+	readonly rename?: readonly DeltaDetachedNodeRename[];
+}
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -39,11 +64,7 @@ export interface FieldChangeHandler<
 		>,
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
 	readonly editor: TEditor;
-	intoDelta(
-		change: TChangeset,
-		deltaFromChild: ToDelta,
-		idAllocator: MemoizedIdRangeAllocator,
-	): DeltaFieldChanges;
+	intoDelta(change: TChangeset, deltaFromChild: ToDelta): FieldChangeDelta;
 	/**
 	 * Returns the set of removed roots that should be in memory for the given change to be applied.
 	 * A removed root is relevant if any of the following is true:
@@ -71,13 +92,36 @@ export interface FieldChangeHandler<
 	 */
 	isEmpty(change: TChangeset): boolean;
 
+	/**
+	 * @param change - The field change to get the child changes from.
+	 *
+	 * @returns The set of `NodeId`s that correspond to nested changes in the given `change`.
+	 * Each `NodeId` is associated with the following:
+	 * - index of the node in the field in the input context of the changeset (or `undefined` if the node is not
+	 * attached in the input context).
+	 * - index of the node in the field in the output context of the changeset (or `undefined` if the node is not
+	 * attached in the output context).
+	 * For all returned entries where the index is defined,
+	 * the indices are are ordered from smallest to largest (with no duplicates).
+	 * The returned array is owned by the caller.
+	 */
+	getNestedChanges(change: TChangeset): NestedChangesIndices;
+
+	/**
+	 * @returns A list of all cross-field keys contained in the change.
+	 * This should not include cross-field keys in descendant fields.
+	 */
+	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
+
 	createEmpty(): TChangeset;
 }
 
 export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * Compose a collection of changesets into a single one.
-	 * Every child included in the composed change must be the result of a call to `composeChild`.
+	 * For each node which has a change in both changesets, `composeChild` must be called
+	 * and the result used as the composite node change.
+	 * Calling `composeChild` when one of the changesets has no node change is unnecessary but tolerated.
 	 * See `ChangeRebaser` for more details.
 	 */
 	compose(
@@ -97,6 +141,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		change: TChangeset,
 		isRollback: boolean,
 		genId: IdAllocator,
+		revision: RevisionTag | undefined,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
@@ -112,7 +157,6 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RebaseRevisionMetadata,
-		existenceState?: NodeExistenceState,
 	): TChangeset;
 
 	/**
@@ -157,46 +201,45 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 
 export interface FieldEditor<TChangeset> {
 	/**
-	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
+	 * Creates a changeset which represents the given changes to the children of this editor's field.
+	 * For each element in the given iterable
+	 * - The number represents the index of the child node in the field.
+	 * - The `NodeId` represents the nested changes for that child node.
+	 * Note: The indices in the iterable must be ordered from smallest to largest (with no duplicates).
 	 */
-	buildChildChange(childIndex: number, change: NodeId): TChangeset;
+	buildChildChanges(changes: Iterable<[index: number, change: NodeId]>): TChangeset;
 }
 
 /**
  * The `index` represents the index of the child node in the input context.
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
- * @internal
  */
 export type ToDelta = (child: NodeId) => DeltaFieldMap;
 
 /**
- * @internal
  */
 export type NodeChangeInverter = (change: NodeId) => NodeId;
 
 /**
- * @internal
  */
-export enum NodeExistenceState {
-	Alive,
-	Dead,
+export enum NodeAttachState {
+	Attached,
+	Detached,
 }
 
 /**
- * @internal
  */
 export type NodeChangeRebaser = (
 	change: NodeId | undefined,
 	baseChange: NodeId | undefined,
 	/**
-	 * Whether or not the node is alive or dead in the input context of change.
-	 * Defaults to Alive if undefined.
+	 * Whether the node is attached to this field in the output context of the base change.
+	 * Defaults to attached if undefined.
 	 */
-	state?: NodeExistenceState,
+	state?: NodeAttachState,
 ) => NodeId | undefined;
 
 /**
- * @internal
  */
 export type NodeChangeComposer = (
 	change1: NodeId | undefined,
@@ -204,14 +247,11 @@ export type NodeChangeComposer = (
 ) => NodeId;
 
 /**
- * @internal
  */
 export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
 
 /**
  * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
- *
- * @internal
  */
 export type RelevantRemovedRootsFromChild = (child: NodeId) => Iterable<DeltaDetachedNodeId>;
 
@@ -224,14 +264,4 @@ export interface FieldChangeEncodingContext {
 	readonly baseContext: ChangeEncodingContext;
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
-}
-
-/**
- * @internal
- */
-export function getIntention(
-	rev: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): RevisionTag | undefined {
-	return revisionMetadata.tryGetInfo(rev)?.rollbackOf ?? rev;
 }

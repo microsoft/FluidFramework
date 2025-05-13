@@ -3,23 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	FieldKey,
-	FieldUpPath,
-	PathRootPrefix,
-	TreeNodeSchemaIdentifier,
-	TreeType,
-	TreeValue,
-	UpPath,
-	Value,
+	type FieldKey,
+	type FieldUpPath,
+	type PathRootPrefix,
+	type TreeNodeSchemaIdentifier,
+	type TreeType,
+	type TreeValue,
+	type UpPath,
+	type Value,
+	type ChunkedCursor,
+	type TreeChunk,
+	cursorChunk,
+	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, fail } from "../../util/index.js";
+import { ReferenceCountedBase } from "../../util/index.js";
 import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
-
-import { ChunkedCursor, TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * General purpose one node chunk.
@@ -30,14 +32,22 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 	/**
 	 * Create a tree chunk with ref count 1.
 	 *
-	 * @param fields - provides exclusive deep ownership of this map to this object (which might mutate it in the future).
-	 * The caller must have already accounted for this reference to the children in this map (via `referenceAdded`),
-	 * and any edits to this must update child reference counts.
-	 * @param value - the value on this node, if any.
+	 * Caller must have already accounted for references via `fields` to the children in the fields map (via `referenceAdded`).
 	 */
 	public constructor(
 		public type: TreeNodeSchemaIdentifier,
+		/**
+		 * Fields of this node.
+		 * @remarks
+		 * This object has exclusive deep ownership of this map (which might mutate it in the future).
+		 * Any code editing this map must update child reference counts.
+		 *
+		 * Like with {@link MapTree}, fields with no nodes must be removed from the map.
+		 */
 		public fields: Map<FieldKey, TreeChunk[]>,
+		/**
+		 * The value on this node, if any.
+		 */
 		public value?: TreeValue,
 	) {
 		super();
@@ -74,7 +84,7 @@ export type SiblingsOrKey = readonly TreeChunk[] | readonly FieldKey[];
  * Cursor over basic chunks.
  *
  * @remarks This implementation is similar to StackCursor, however it is distinct because:
- * 1. The children are chunks, which might have a top level length that greater than 1.
+ * 1. The children are chunks, which might have a top level length that's greater than 1.
  * 2. It needs to be able to delegate to cursors of other chunk formats it does not natively understand (See TODO below).
  *
  * TODO:
@@ -183,13 +193,14 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 	private getStackedFieldKey(height: number): FieldKey {
 		assert(height % 2 === 0, 0x51f /* must field height */);
-		return this.siblingStack[height][this.indexStack[height]] as FieldKey;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.siblingStack[height]![this.indexStack[height]!] as FieldKey;
 	}
 
 	private getStackedNodeIndex(height: number): number {
 		assert(height % 2 === 1, 0x520 /* must be node height */);
 		assert(height >= 0, 0x521 /* must not be above root */);
-		return this.indexStack[height];
+		return this.indexStack[height] ?? oob();
 	}
 
 	private getStackedNode(height: number): BasicChunk {
@@ -223,7 +234,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		if (this.nestedCursor !== undefined) {
 			return (
 				this.nestedCursor.getPath(this.nestedPathPrefix(prefix)) ??
-				fail("nested cursors should not be root")
+				fail(0xaee /* nested cursors should not be root */)
 			);
 		}
 		assert(this.mode === CursorLocationType.Nodes, 0x524 /* must be in nodes mode */);
@@ -236,7 +247,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		// This uses index offset for actual node, when it should use offset for start of chunk.
 		// To compensate, subtract this.indexWithinChunk below.
 		const rootPath: UpPath =
-			this.getOffsetPath(0, prefix) ?? fail("nested cursors should not be root");
+			this.getOffsetPath(0, prefix) ?? fail(0xaef /* nested cursors should not be root */);
 		return {
 			indexOffset: rootPath.parentIndex - this.indexWithinChunk,
 			rootFieldOverride: rootPath.parentField,
@@ -252,13 +263,16 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		return {
 			field:
 				this.indexStack.length === 1
-					? prefix?.rootFieldOverride ?? this.getFieldKey()
+					? (prefix?.rootFieldOverride ?? this.getFieldKey())
 					: this.getFieldKey(),
 			parent: this.getOffsetPath(1, prefix),
 		};
 	}
 
-	private getOffsetPath(offset: number, prefix: PathRootPrefix | undefined): UpPath | undefined {
+	private getOffsetPath(
+		offset: number,
+		prefix: PathRootPrefix | undefined,
+	): UpPath | undefined {
 		// It is more efficient to handle prefix directly in here rather than delegating to PrefixedPath.
 
 		const length = this.indexStack.length - offset;
@@ -365,9 +379,11 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 		this.indexWithinChunk += offset;
 		if (offset >= 0) {
-			const chunks = this.siblings as TreeChunk[];
-			while (this.indexWithinChunk >= chunks[this.indexOfChunk].topLevelLength) {
-				this.indexWithinChunk -= chunks[this.indexOfChunk].topLevelLength;
+			const chunks = (this.siblings as TreeChunk[]) ?? oob();
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			while (this.indexWithinChunk >= chunks[this.indexOfChunk]!.topLevelLength) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.indexWithinChunk -= chunks[this.indexOfChunk]!.topLevelLength;
 				this.indexOfChunk++;
 				if (this.indexOfChunk === chunks.length) {
 					this.exitNode();
@@ -386,7 +402,8 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 					return false;
 				}
 				this.indexOfChunk--;
-				this.indexWithinChunk += chunks[this.indexOfChunk].topLevelLength;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.indexWithinChunk += chunks[this.indexOfChunk]!.topLevelLength;
 			}
 		}
 
@@ -426,11 +443,15 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 				this.nestedCursor = undefined;
 			}
 		}
-		assert(this.mode === CursorLocationType.Nodes, 0x52c /* can only nextNode when in Nodes */);
+		assert(
+			this.mode === CursorLocationType.Nodes,
+			0x52c /* can only nextNode when in Nodes */,
+		);
 		this.indexWithinChunk++;
 		if (
 			this.indexWithinChunk ===
-			(this.siblings as TreeChunk[])[this.indexOfChunk].topLevelLength
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			(this.siblings as TreeChunk[])[this.indexOfChunk]!.topLevelLength
 		) {
 			this.indexOfChunk++;
 			if (this.indexOfChunk === (this.siblings as TreeChunk[]).length) {
@@ -449,7 +470,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Nodes,
 			0x55d /* can only initNestedCursor when in Nodes */,
 		);
-		const chunk = (this.siblings as TreeChunk[])[this.indexOfChunk];
+		const chunk = (this.siblings as TreeChunk[])[this.indexOfChunk] ?? oob();
 		this.nestedCursor = !(chunk instanceof BasicChunk) ? chunk.cursor() : undefined;
 		this.nestedCursor?.enterNode(this.indexWithinChunk);
 	}
@@ -462,8 +483,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Fields,
 			0x52d /* can only navigate up from field when in field */,
 		);
-		this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-		this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
+		this.siblings =
+			this.siblingStack.pop() ?? fail(0xaf0 /* Unexpected siblingStack.length */);
+		this.index = this.indexStack.pop() ?? fail(0xaf1 /* Unexpected indexStack.length */);
 	}
 
 	public exitNode(): void {
@@ -477,12 +499,14 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Nodes,
 			0x52e /* can only navigate up from node when in node */,
 		);
-		this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-		this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
+		this.siblings =
+			this.siblingStack.pop() ?? fail(0xaf2 /* Unexpected siblingStack.length */);
+		this.index = this.indexStack.pop() ?? fail(0xaf3 /* Unexpected indexStack.length */);
 		this.indexOfChunk =
-			this.indexOfChunkStack.pop() ?? fail("Unexpected indexOfChunkStack.length");
+			this.indexOfChunkStack.pop() ?? fail(0xaf4 /* Unexpected indexOfChunkStack.length */);
 		this.indexWithinChunk =
-			this.indexWithinChunkStack.pop() ?? fail("Unexpected indexWithinChunkStack.length");
+			this.indexWithinChunkStack.pop() ??
+			fail(0xaf5 /* Unexpected indexWithinChunkStack.length */);
 	}
 
 	private getNode(): BasicChunk {

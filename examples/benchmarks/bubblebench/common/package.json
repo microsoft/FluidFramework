@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bubblebench-common",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.41.0",
 	"private": true,
 	"description": "Bubblemark inspired DDS benchmark",
 	"homepage": "https://fluidframework.com",
@@ -26,12 +26,13 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
@@ -43,23 +44,21 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"best-random": "^1.0.0",
-		"react": "^17.0.1",
-		"react-dom": "^17.0.1",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
 		"use-resize-observer": "^7.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@types/react": "^17.0.44",
-		"@types/react-dom": "^17.0.18",
+		"@fluidframework/build-tools": "^0.55.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@types/react": "^18.3.11",
+		"@types/react-dom": "^18.3.0",
 		"eslint": "~8.55.0",
-		"moment": "^2.21.0",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"fluid": {
 		"browser": {
@@ -73,6 +72,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

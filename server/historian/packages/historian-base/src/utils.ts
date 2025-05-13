@@ -39,9 +39,11 @@ export const Constants = Object.freeze({
 	generalRestCallThrottleIdPrefix: "generalRestCall",
 	IsEphemeralContainer: "Is-Ephemeral-Container",
 	isInitialSummary: "isInitialSummary",
+	SimplifiedCustomData: "Simplified-Custom-Data",
+	invalidTokenCachePrefix: "invalidTokenCache",
 });
 
-export function getTokenLifetimeInSec(token: string): number {
+export function getTokenLifetimeInSec(token: string): number | undefined {
 	const claims = decode(token) as ITokenClaims;
 	if (claims?.exp) {
 		return claims.exp - Math.round(new Date().getTime() / 1000);
@@ -62,7 +64,10 @@ export function getTenantIdFromRequest(params: Params) {
 	return "-";
 }
 
-export function getDocumentIdFromRequest(tenantId: string, authorization: string) {
+export function getDocumentIdFromRequest(tenantId: string, authorization: string | undefined) {
+	if (!authorization) {
+		return "-";
+	}
 	try {
 		const token = parseToken(tenantId, authorization);
 		const decoded = decode(token) as ITokenClaims;
@@ -72,8 +77,11 @@ export function getDocumentIdFromRequest(tenantId: string, authorization: string
 	}
 }
 
-export function parseToken(tenantId: string, authorization: string): string {
-	let token: string;
+export function parseToken(
+	tenantId: string,
+	authorization: string | undefined,
+): string | undefined {
+	let token: string | undefined;
 	if (authorization) {
 		const base64TokenMatch = authorization.match(/Basic (.+)/);
 		if (!base64TokenMatch) {

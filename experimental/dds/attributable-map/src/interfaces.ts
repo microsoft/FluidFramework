@@ -5,7 +5,10 @@
 
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import {
+	ISharedObject,
+	ISharedObjectEvents,
+} from "@fluidframework/shared-object-base/internal";
 /**
  * Type of "valueChanged" event parameter.
  * @internal
@@ -20,7 +23,7 @@ export interface IValueChanged {
 	 * The value that was stored at the key prior to the change.
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	previousValue: any;
 }
 
@@ -68,7 +71,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * @internal
  */
 // TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
@@ -76,7 +79,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 	 * @returns The stored value, or undefined if the key is not set
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	get<T = any>(key: string): T | undefined;
 
 	/**
@@ -134,7 +137,7 @@ export interface ISerializableValue {
 	/**
 	 * The JSONable representation of the value.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	value: any;
 
 	/**

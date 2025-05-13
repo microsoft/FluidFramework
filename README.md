@@ -18,16 +18,18 @@ Core Examples repo can be found at <https://github.com/microsoft/FluidExamples>.
 
 Have questions? Engage with other Fluid Framework users and developers in the [Discussions](https://github.com/microsoft/FluidFramework/discussions) section of our GitHub repo.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (DEPENDENCY_GUIDELINES:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
 
-When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
+
+If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
 
 <!-- prettier-ignore-end -->
 
@@ -50,13 +52,13 @@ Here's the list of release group workspaces:
     -   [./experimental](./experimental) (Published in the `@fluid-experimental/` namespace)
     -   [./examples](./examples) (Not published, live in the `@fluid-example/` namespace)
     -   [./azure](./azure). (Published in the `@fluidframework/` namespace)
--   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/lerna.json](server/routerlicious/lerna.json))
+-   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/pnpm-workspace.yaml](server/routerlicious/pnpm-workspace.yaml))
     -   [Packages](./server/routerlicious/packages) (Published in the `@fluidframework/` namespace)
--   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/lerna.json](./server/gitrest/lerna.json))
+-   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/pnpm-workspace.yaml](./server/gitrest/pnpm-workspace.yaml))
     -   [Packages](./server/gitrest/packages) (Published in the `@fluidframework/` namespace)
--   historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/lerna.json](./server/historian/lerna.json))
+-   historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/pnpm-workspace.yaml](./server/historian/pnpm-workspace.yaml))
     -   [Packages](./server/historian/packages) (Published in the `@fluidframework/` namespace)
--   build-tools (Rooted in [./build-tools](./build-tools). Configured by [./build-tools/lerna.json](./build-tools/lerna.json))
+-   build-tools (Rooted in [./build-tools](./build-tools). Configured by [./build-tools/pnpm-workspace.yaml](./build-tools/pnpm-workspace.yaml))
     -   [Packages](./build-tools/packages) (Published in a mix of `@fluidframework/` and `@fluid-tools/` namespaces)
 
 Here's a list of other sets of other packages (each package within these groups is versioned independently,
@@ -145,7 +147,7 @@ If you've _upgraded_ your Mac to Catalina or higher, you may need to follow [the
 
 -   Building [server/Routerlicious](./server/routerlicious/README.md)
     -   Refer to that package's README for additional requirements.
-    -   Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server` (e.g. `fluid-build --symlink:full`).
+    -   Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server`.
 
 #### On Windows
 
@@ -167,6 +169,36 @@ There are a few different areas in which we generate documentation content as a 
     - We leverage [API-Extractor](https://api-extractor.com/) to generate summaries of our package APIs.
       This is done as a part of a full build, but it can also be executed in isolation by running `npm run build:api` from the repo root.
 
+## Common Workflows and Patterns
+
+This section contains common workflows and patterns to increase inner dev loop efficiency.
+
+### Build
+
+-   `pnpm install` from the root of the repository to install dependencies. This is necessary for new clones or after pulling changes from the main branch.
+-   `pnpm run build:fast` from the root of the repository to perform an incremental build that matches the CI build process. Incremental builds tend to leave extra files laying around, so running a clean is sometimes needed to cleanup ghost tests
+-   `pnpm run build:fast -- <path>` to build only a specific part of the repository.
+-   `pnpm run build` within a package directory to build that package.
+-   `pnpm run build:compile` for cross-package compilation.
+-   `pnpm run format` to format the code.
+
+-   `fluid-build --vscode` to output error message to work with default problem matcher in vscode. If `fluid-build` is not installed, please install it with `npm i -g @fluidframework/build-tools`.
+
+#### Multi package setup
+
+-   `fluid-build -t build <NAME_OF_PACKAGES>` to build a multiple space-separated packages along with all their dependencies. If `fluid-build` is not installed, please install it with `npm i -g @fluidframework/build-tools`.
+
+### Debug
+
+-   You can also use the VSCode JS debug terminal, then run the test as normal.
+
+-   Sometimes, uncommitted changes can cause build failures. Committing changes might be necessary to resolve such issues.
+
+### Troubleshooting
+
+-   `pnpm clean` if random build failures, especially with no changes
+-   `git clean -xdf` to remove extraneous files if debugging becomes slow or hangs.
+
 ## Testing
 
 You can run all of our tests from the root of the repo, or you can run a scoped set of tests by running the `test`
@@ -187,9 +219,23 @@ git submodule update
 
 ### Run the tests
 
+Before running the tests, the project has to be built. Depending on what tests you want to run, execute the following command in the package directory or at the root:
+
 ```shell
 npm run test
 ```
+
+-   To run a single test within a module, add `.only` to `it` or `describe`. To exclude a test, use `.skip`.
+-   You can use `ts-mocha` to quickly run specific test files without needing to make the whole project compile. For more details on test filtering using CLI arguments, refer to the [Mocha documentation](https://mochajs.org/#command-line-usage).
+
+-   Our test setup generally requires building before running the tests.
+-   Incremental builds may leave extra files, which can result in ghost tests. To avoid this, consider running a clean build with the following command:
+
+```shell
+pnpm clean <package>
+```
+
+This removes any leftover files from previous builds, providing a clean testing environment.
 
 ### Include code coverage
 
@@ -249,22 +295,21 @@ Then:
 
 ## Tools
 
-### Prettier
+### Biome
 
-This repository uses [prettier](https://prettier.io/) as its code formatter.
-Right now, this is implemented on a per-package basis, with a [shared base configuration](./common/build/build-common/prettier.config.cjs).
+This repository uses [biome](https://biomejs.dev/formatter/) as its code formatter.
+Right now, this is implemented on a per-package basis, with a [shared base configuration](./biome.jsonc).
 
--   To run `prettier` on your code, run `npm run format` from the appropriate package or release group, or run
+-   To run `biome` on your code, run `npm run format` from the appropriate package or release group, or run
     `npm run format:changed` from the root of the repo to format only files changed since the main branch.
-    If your change is for the next branch instead, you can run `npm run format:changed:next`.
--   To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the
+-   To run `biome` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the
     script argument: `fluid-build -t format` or `npm run build:fast -- -t format`
 
 To ensure our formatting remains consistent, we run a formatting check as a part of each package's `lint` script.
 
 #### VSCode Options
 
-Our [workspace configuration](./.vscode/settings.json) specifies `prettier` as the default formatter.
+Our [workspace configuration](./.vscode/settings.json) specifies `biome` as the default formatter.
 Please do not change this.
 
 It is not configured to do any formatting automatically, however.
@@ -294,7 +339,7 @@ to prevent phantom dependencies from being introduced but they're not foolproof.
 
 ## Contributing
 
-<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (CONTRIBUTION_GUIDELINES:includeHeading=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

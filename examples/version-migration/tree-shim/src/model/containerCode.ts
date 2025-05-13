@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import {
+	ModelContainerRuntimeFactory,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
@@ -37,7 +40,10 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const inventoryList = await getDataStoreEntryPoint<InventoryList>(runtime, inventoryListId);
+		const inventoryList = await getDataStoreEntryPoint<InventoryList>(
+			runtime,
+			inventoryListId,
+		);
 		return new InventoryListAppModel(inventoryList);
 	}
 }

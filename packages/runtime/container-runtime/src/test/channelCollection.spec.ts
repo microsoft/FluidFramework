@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 
 import { detectOutboundReferences, getSummaryForDatastores } from "../channelCollection.js";
@@ -57,11 +57,17 @@ describe("Runtime", () => {
 				assert(snapshot === undefined);
 				snapshot = getSummaryForDatastores(undefined, disabledMetadata);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as any, undefined);
+				snapshot = getSummaryForDatastores(undefined, undefined);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as any, enabledMetadata);
+				snapshot = getSummaryForDatastores(
+					undefined as unknown as ISnapshotTree,
+					enabledMetadata,
+				);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as any, disabledMetadata);
+				snapshot = getSummaryForDatastores(
+					undefined as unknown as ISnapshotTree,
+					disabledMetadata,
+				);
 				assert(snapshot === undefined);
 			});
 
@@ -69,11 +75,7 @@ describe("Runtime", () => {
 				const snapshot = getSummaryForDatastores(testSnapshot, undefined);
 				assert(snapshot, "Snapshot should be defined");
 				assert.strictEqual(snapshot.id, "root-id", "Should be top-level");
-				assert.strictEqual(
-					Object.keys(snapshot.trees).length,
-					3,
-					"Should have 3 datastores",
-				);
+				assert.strictEqual(Object.keys(snapshot.trees).length, 3, "Should have 3 datastores");
 				assert.strictEqual(
 					snapshot.trees[channelsTreeName]?.id,
 					"channels-id",
@@ -95,11 +97,7 @@ describe("Runtime", () => {
 				const snapshot = getSummaryForDatastores(testSnapshot, disabledMetadata);
 				assert(snapshot, "Snapshot should be defined");
 				assert.strictEqual(snapshot.id, "root-id", "Should be top-level");
-				assert.strictEqual(
-					Object.keys(snapshot.trees).length,
-					3,
-					"Should have 3 datastores",
-				);
+				assert.strictEqual(Object.keys(snapshot.trees).length, 3, "Should have 3 datastores");
 				assert.strictEqual(
 					snapshot.trees[channelsTreeName]?.id,
 					"channels-id",
@@ -121,11 +119,7 @@ describe("Runtime", () => {
 				const snapshot = getSummaryForDatastores(testSnapshot, enabledMetadata);
 				assert(snapshot, "Snapshot should be defined");
 				assert.strictEqual(snapshot.id, "channels-id", "Should be lower-level");
-				assert.strictEqual(
-					Object.keys(snapshot.trees).length,
-					4,
-					"Should have 4 datastores",
-				);
+				assert.strictEqual(Object.keys(snapshot.trees).length, 4, "Should have 4 datastores");
 				// Put in variable to avoid type-narrowing bug
 				const nonDataStore1 = snapshot.trees[nonDataStorePaths[0]];
 				assert.strictEqual(
@@ -178,6 +172,7 @@ describe("Runtime", () => {
 								url: "routeD",
 							},
 						],
+						// eslint-disable-next-line unicorn/no-null
 						deadEnd: null,
 						number: 1,
 						nothing: undefined,
@@ -198,6 +193,7 @@ describe("Runtime", () => {
 				);
 			});
 			it("null contents", () => {
+				// eslint-disable-next-line unicorn/no-null
 				detectOutboundReferences("foo", null, () => {
 					assert.fail("Should not be called");
 				});

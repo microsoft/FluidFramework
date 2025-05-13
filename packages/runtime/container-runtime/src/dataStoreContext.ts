@@ -3,21 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaManager,
+	isIDeltaManagerFull,
+	type IDeltaManagerFull,
+	type ReadOnlyInfo,
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
-	IRequest,
-	IResponse,
 	ITelemetryBaseProperties,
+	type IEvent,
 } from "@fluidframework/core-interfaces";
-import { type IEvent, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import {
+	type IFluidHandleContext,
+	type IFluidHandleInternal,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
+import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ITreeEntry,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	BlobTreeEntry,
@@ -26,20 +39,9 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	IClientDetails,
-	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
-import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
@@ -49,7 +51,6 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
-	IFluidParentContext,
 	IGarbageCollectionDetailsBase,
 	IProvideFluidDataStoreFactory,
 	ISummarizeInternalResult,
@@ -57,26 +58,34 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	channelsTreeName,
-	gcDataBlobKey,
+	IInboundSignalMessage,
+	type IPendingMessagesState,
+	type IRuntimeMessageCollection,
+	type IFluidDataStoreFactory,
+	type IFluidParentContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
-	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	DataCorruptionError,
 	DataProcessingError,
 	LoggingError,
 	MonitoringContext,
 	ThresholdCounter,
+	UsageError,
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	generateStack,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
+import type { IFluidParentContextPrivate } from "./channelCollection.js";
+import { BaseDeltaManagerProxy } from "./deltaManagerProxies.js";
+import {
+	runtimeCompatDetailsForDataStore,
+	validateDatastoreCompatibility,
+} from "./runtimeLayerCompatState.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
@@ -85,7 +94,6 @@ import {
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	hasIsolatedChannels,
-	summarizerClientType,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 
@@ -100,12 +108,14 @@ function createAttributes(
 		isRootDataStore,
 	};
 }
-export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
+export function createAttributesBlob(
+	pkg: readonly string[],
+	isRootDataStore: boolean,
+): ITreeEntry {
 	const attributes = createAttributes(pkg, isRootDataStore);
 	return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
 
-/** @internal */
 export interface ISnapshotDetails {
 	pkg: readonly string[];
 	isRootDataStore: boolean;
@@ -117,16 +127,11 @@ export interface ISnapshotDetails {
  * This is interface that every context should implement.
  * This interface is used for context's parent - ChannelCollection.
  * It should not be exposed to any other users of context.
- * @internal
  */
 export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
-	getAttachData(
-		includeGCData: boolean,
-		telemetryContext?: ITelemetryContext,
-	): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	};
+	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+
+	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -137,11 +142,10 @@ export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
 
 /**
  * Properties necessary for creating a FluidDataStoreContext
- * @internal
  */
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
-	readonly parentContext: IFluidParentContext;
+	readonly parentContext: IFluidParentContextPrivate;
 	readonly storage: IDocumentStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
@@ -151,29 +155,23 @@ export interface IFluidDataStoreContextProps {
 
 /**
  * Properties necessary for creating a local FluidDataStoreContext
- * @internal
  */
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly pkg: Readonly<string[]> | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
 	readonly makeLocallyVisibleFn: () => void;
-	/**
-	 * @deprecated 0.16 Issue #1635, #3631
-	 */
-	readonly createProps?: any;
 }
 
 /**
  * Properties necessary for creating a local FluidDataStoreContext
- * @internal
  */
-export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDataStoreContextProps {
+export interface ILocalDetachedFluidDataStoreContextProps
+	extends ILocalFluidDataStoreContextProps {
 	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 }
 
 /**
  * Properties necessary for creating a remote FluidDataStoreContext
- * @internal
  */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly snapshot: ISnapshotTree | ISnapshot | undefined;
@@ -181,14 +179,63 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 
 // back-compat: To be removed in the future.
 // Added in "2.0.0-rc.2.0.0" timeframe (to support older builds).
-/** @internal */
+/**
+ */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
 
 /**
+ * Eventually we should remove the delta manger from being exposed to Datastore runtimes via the context. However to remove that exposure we need to add new
+ * features, and those features themselves need forward and back compat. This proxy is here to enable that back compat. Each feature this proxy is used to
+ * support should be listed below, and as layer compat support goes away for those feature, we should also remove them from this proxy, with the eventual goal
+ * of completely removing this proxy.
+ *
+ * - Everything regarding readonly is to support older datastore runtimes which do not have the setReadonly function, so they must get their readonly state via the delta manager.
+ *
+ */
+class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
+	constructor(
+		base: IDeltaManagerFull,
+		private readonly isReadOnly: () => boolean,
+	) {
+		super(base, {
+			onReadonly: (): void => {
+				/* readonly is controlled from the context which calls setReadonly */
+			},
+		});
+	}
+
+	public get readOnlyInfo(): ReadOnlyInfo {
+		const readonly = this.isReadOnly();
+		if (readonly === this.deltaManager.readOnlyInfo.readonly) {
+			return this.deltaManager.readOnlyInfo;
+		} else {
+			return readonly === true
+				? {
+						readonly,
+						forced: false,
+						permissions: undefined,
+						storageOnly: false,
+					}
+				: { readonly };
+		}
+	}
+
+	/**
+	 * Called by the owning datastore context to emit the readonly
+	 * event on the delta manger that is projected down to the datastore
+	 * runtime. This state may not align with that of the true delta
+	 * manager if the context wishes to control the read only state
+	 * differently than the delta manager itself.
+	 */
+	public emitReadonly(): void {
+		this.emit("readonly", this.isReadOnly());
+	}
+}
+
+/**
  * Represents the context for the store. This context is passed to the store runtime.
- * @internal
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
@@ -199,7 +246,7 @@ export abstract class FluidDataStoreContext
 		return this.pkg;
 	}
 
-	public get options(): Record<string | number, any> {
+	public get options(): Record<string | number, unknown> {
 		return this.parentContext.options;
 	}
 
@@ -211,31 +258,31 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.clientDetails;
 	}
 
-	public get baseLogger() {
+	public get baseLogger(): ITelemetryBaseLogger {
 		return this.parentContext.baseLogger;
 	}
 
+	private readonly _contextDeltaManagerProxy: ContextDeltaManagerProxy;
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this.parentContext.deltaManager;
+		return this._contextDeltaManagerProxy;
 	}
+
+	private isStagingMode: boolean = false;
+	public isReadOnly = (): boolean =>
+		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode !== false) ||
+		this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
 		return this.parentContext.connected;
 	}
 
-	public get IFluidHandleContext() {
+	public get IFluidHandleContext(): IFluidHandleContext {
 		return this.parentContext.IFluidHandleContext;
 	}
 
 	public get containerRuntime(): IContainerRuntimeBase {
 		return this._containerRuntime;
 	}
-
-	// back-compat, to be removed in 2.0
-	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return this.parentContext.ensureNoDataModelChanges(callback);
-	}
-
 	public get isLoaded(): boolean {
 		return this.loaded;
 	}
@@ -249,7 +296,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	private _disposed = false;
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 
@@ -258,14 +305,22 @@ export abstract class FluidDataStoreContext
 	 * Tombstoned objects are eventually deleted by GC.
 	 */
 	private _tombstoned = false;
-	public get tombstoned() {
+	public get tombstoned(): boolean {
 		return this._tombstoned;
 	}
-	/** If true, throw an error when a tombstone data store is used. */
-	public readonly gcThrowOnTombstoneUsage: boolean;
-	public readonly gcTombstoneEnforcementAllowed: boolean;
+	/**
+	 * If true, throw an error when a tombstone data store is used.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	public readonly gcThrowOnTombstoneUsage: boolean = false;
+	/**
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	public readonly gcTombstoneEnforcementAllowed: boolean = false;
 
-	/** If true, this means that this data store context and its children have been removed from the runtime */
+	/**
+	 * If true, this means that this data store context and its children have been removed from the runtime
+	 */
 	protected deleted: boolean = false;
 
 	public get attachState(): AttachState {
@@ -274,6 +329,14 @@ export abstract class FluidDataStoreContext
 
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
 		return this.registry;
+	}
+
+	/**
+	 * The compatibility details of the Runtime layer that is exposed to the DataStore layer
+	 * for validating DataStore-Runtime compatibility.
+	 */
+	public get ILayerCompatDetails(): ILayerCompatDetails {
+		return runtimeCompatDetailsForDataStore;
 	}
 
 	private baseSnapshotSequenceNumber: number | undefined;
@@ -293,11 +356,13 @@ export abstract class FluidDataStoreContext
 		// We know that if the base snapshot is omitted, then the isRootDataStore flag is not set.
 		// That means we can skip the expensive call to getInitialSnapshotDetails for virtualized datastores,
 		// and get the information from the alias map directly.
-		if (aliasedDataStores !== undefined && this.baseSnapshot?.omitted === true) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+		if (aliasedDataStores !== undefined && (this.baseSnapshot as any)?.omitted === true) {
 			return aliasedDataStores.has(this.id);
 		}
 
-		return (await this.getInitialSnapshotDetails()).isRootDataStore;
+		const snapshotDetails = await this.getInitialSnapshotDetails();
+		return snapshotDetails.isRootDataStore;
 	}
 
 	/**
@@ -311,12 +376,25 @@ export abstract class FluidDataStoreContext
 		return this._isInMemoryRoot;
 	}
 
+	/**
+	 * Returns the count of pending messages that are stored until the data store is realized.
+	 */
+	public get pendingCount(): number {
+		return this.pendingMessagesState?.pendingCount ?? 0;
+	}
+
 	protected registry: IFluidDataStoreRegistry | undefined;
 
 	protected detachedRuntimeCreation = false;
 	protected channel: IFluidDataStoreChannel | undefined;
 	private loaded = false;
-	protected pending: ISequencedDocumentMessage[] | undefined = [];
+	/**
+	 * Tracks the messages for this data store that are sent while it's not loaded
+	 */
+	private pendingMessagesState: IPendingMessagesState | undefined = {
+		messageCollections: [],
+		pendingCount: 0,
+	};
 	protected channelP: Promise<IFluidDataStoreChannel> | undefined;
 	protected _baseSnapshot: ISnapshotTree | undefined;
 	protected _attachState: AttachState;
@@ -333,13 +411,9 @@ export abstract class FluidDataStoreContext
 	 */
 	private localChangesTelemetryCount: number;
 
-	// The used routes of this node as per the last GC run. This is used to update the used routes of the channel
-	// if it realizes after GC is run.
-	private lastUsedRoutes: string[] | undefined;
-
 	public readonly id: string;
 	private readonly _containerRuntime: IContainerRuntimeBase;
-	private readonly parentContext: IFluidParentContext;
+	private readonly parentContext: IFluidParentContextPrivate;
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
 	// Represents the group to which the data store belongs too.
@@ -371,14 +445,9 @@ export abstract class FluidDataStoreContext
 				? this.parentContext.attachState
 				: AttachState.Detached;
 
-		const thisSummarizeInternal = async (
-			fullTree: boolean,
-			trackState: boolean,
-			telemetryContext?: ITelemetryContext,
-		) => this.summarizeInternal(fullTree, trackState, telemetryContext);
-
 		this.summarizerNode = props.createSummarizerNodeFn(
-			thisSummarizeInternal,
+			async (fullTree, trackState, telemetryContext) =>
+				this.summarizeInternal(fullTree, trackState, telemetryContext),
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
@@ -399,12 +468,19 @@ export abstract class FluidDataStoreContext
 			this.mc.logger,
 		);
 
-		this.gcThrowOnTombstoneUsage = this.parentContext.gcThrowOnTombstoneUsage;
-		this.gcTombstoneEnforcementAllowed = this.parentContext.gcTombstoneEnforcementAllowed;
-
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+
+		assert(
+			isIDeltaManagerFull(this.parentContext.deltaManager),
+			0xb83 /* Invalid delta manager */,
+		);
+
+		this._contextDeltaManagerProxy = new ContextDeltaManagerProxy(
+			this.parentContext.deltaManager,
+			() => this.isReadOnly(),
+		);
 	}
 
 	public dispose(): void {
@@ -422,6 +498,7 @@ export abstract class FluidDataStoreContext
 				})
 				.catch((error) => {});
 		}
+		this._contextDeltaManagerProxy.dispose();
 	}
 
 	/**
@@ -429,11 +506,11 @@ export abstract class FluidDataStoreContext
 	 * This function is called to prevent ops from being generated from this data store once it has been deleted. Furthermore, this data store
 	 * should not receive any ops/signals.
 	 */
-	public delete() {
+	public delete(): void {
 		this.deleted = true;
 	}
 
-	public setTombstone(tombstone: boolean) {
+	public setTombstone(tombstone: boolean): void {
 		if (this.tombstoned === tombstone) {
 			return;
 		}
@@ -441,7 +518,9 @@ export abstract class FluidDataStoreContext
 		this._tombstoned = tombstone;
 	}
 
-	public abstract setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+	public abstract setAttachState(
+		attachState: AttachState.Attaching | AttachState.Attached,
+	): void;
 
 	private rejectDeferredRealize(
 		reason: string,
@@ -458,7 +537,10 @@ export abstract class FluidDataStoreContext
 	}
 
 	public async realize(): Promise<IFluidDataStoreChannel> {
-		assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
+		assert(
+			!this.detachedRuntimeCreation,
+			0x13d /* "Detached runtime creation on realize()" */,
+		);
 		if (!this.channelP) {
 			this.channelP = this.realizeCore(this.existing).catch((error) => {
 				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
@@ -478,7 +560,7 @@ export abstract class FluidDataStoreContext
 		return this.channelP;
 	}
 
-	protected async factoryFromPackagePath() {
+	protected async factoryFromPackagePath(): Promise<IFluidDataStoreFactory> {
 		const packages = this.pkg;
 		if (packages === undefined) {
 			this.rejectDeferredRealize("packages is undefined");
@@ -493,7 +575,7 @@ export abstract class FluidDataStoreContext
 				this.rejectDeferredRealize("No registry for package", lastPkg, packages);
 			}
 			lastPkg = pkg;
-			entry = await registry.get(pkg);
+			entry = registry.getSync?.(pkg) ?? (await registry.get(pkg));
 			if (!entry) {
 				this.rejectDeferredRealize(
 					"Registry does not contain entry for the package",
@@ -514,7 +596,43 @@ export abstract class FluidDataStoreContext
 		return factory;
 	}
 
-	private async realizeCore(existing: boolean) {
+	createChildDataStore<T extends IFluidDataStoreFactory>(
+		childFactory: T,
+	): ReturnType<Exclude<T["createDataStore"], undefined>> {
+		const maybe = this.registry?.getSync?.(childFactory.type);
+
+		const isUndefined = maybe === undefined;
+		const diffInstance = maybe?.IFluidDataStoreFactory !== childFactory;
+
+		if (isUndefined || diffInstance) {
+			throw new UsageError(
+				"The provided factory instance must be synchronously available as a child of this datastore",
+				{ isUndefined, diffInstance },
+			);
+		}
+		if (childFactory?.createDataStore === undefined) {
+			throw new UsageError("createDataStore must exist on the provided factory", {
+				noCreateDataStore: true,
+			});
+		}
+
+		const context = this._containerRuntime.createDetachedDataStore([
+			...this.packagePath,
+			childFactory.type,
+		]);
+		assert(
+			context instanceof LocalDetachedFluidDataStoreContext,
+			0xa89 /* must be a LocalDetachedFluidDataStoreContext */,
+		);
+
+		const created = childFactory.createDataStore(context) as ReturnType<
+			Exclude<T["createDataStore"], undefined>
+		>;
+		context.unsafe_AttachRuntimeSync(created.runtime);
+		return created;
+	}
+
+	private async realizeCore(existing: boolean): Promise<IFluidDataStoreChannel> {
 		const details = await this.getInitialSnapshotDetails();
 		// Base snapshot is the baseline where pending ops are applied to.
 		// It is important that this be in sync with the pending ops, and also
@@ -527,6 +645,7 @@ export abstract class FluidDataStoreContext
 
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
+
 		await this.bindRuntime(channel, existing);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.
@@ -543,7 +662,7 @@ export abstract class FluidDataStoreContext
 	 * @param clientId - ID of the client. Its old ID when in disconnected state and
 	 * its new client ID when we are connecting or connected.
 	 */
-	public setConnectionState(connected: boolean, clientId?: string) {
+	public setConnectionState(connected: boolean, clientId?: string): void {
 		// ConnectionState should not fail in tombstone mode as this is internally run
 		this.verifyNotClosed("setConnectionState", false /* checkTombstone */);
 
@@ -558,31 +677,61 @@ export abstract class FluidDataStoreContext
 		this.channel!.setConnectionState(connected, clientId);
 	}
 
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		const safeTelemetryProps = extractSafePropertiesFromMessage(message);
-		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
-		// "verifyNotClosed" which logs tombstone errors. Throw error if tombstoned and throwing on load is configured.
-		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
-		if (this.tombstoned && this.gcThrowOnTombstoneUsage) {
-			throw new DataCorruptionError(
-				"Context is tombstoned! Call site [process]",
-				safeTelemetryProps,
-			);
-		}
+	public notifyReadOnlyState(): void {
+		this.verifyNotClosed("notifyReadOnlyState", false /* checkTombstone */);
 
-		this.summarizerNode.recordChange(message);
+		// These two calls achieve the same purpose, and are both needed for a time for back compat
+		this.channel?.notifyReadOnlyState?.(this.isReadOnly());
+		this._contextDeltaManagerProxy.emitReadonly();
+	}
+
+	/**
+	 * Updates the readonly state of the data store based on the staging mode.
+	 *
+	 * @param staging - A boolean indicating whether the container is in staging mode.
+	 * If true, the data store is set to readonly unless explicitly allowed by its policies.
+	 */
+	public notifyStagingMode(staging: boolean): void {
+		// If the `readonlyInStagingMode` policy is not explicitly set to `false`,
+		// the data store is treated as readonly in staging mode.
+		const oldReadOnlyState = this.isReadOnly();
+		this.isStagingMode = staging;
+		if (this.isReadOnly() !== oldReadOnlyState) {
+			this.notifyReadOnlyState();
+		}
+	}
+
+	/**
+	 * Process messages for this data store. The messages here are contiguous messages for this data store in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent, local } = messageCollection;
+		const safeTelemetryProps = extractSafePropertiesFromMessage(envelope);
+		// Tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
+		// "verifyNotClosed" which logs tombstone errors.
+		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
+
+		this.summarizerNode.recordChange(envelope as ISequencedDocumentMessage);
 
 		if (this.loaded) {
-			return this.channel?.process(message, local, localOpMetadata);
+			assert(this.channel !== undefined, 0xa68 /* Channel is not loaded */);
+			this.channel.processMessages(messageCollection);
 		} else {
 			assert(!local, 0x142 /* "local store channel is not loaded" */);
-			assert(this.pending !== undefined, 0x23d /* "pending is undefined" */);
-			this.pending.push(message);
-			this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
+			assert(
+				this.pendingMessagesState !== undefined,
+				0xa69 /* pending messages queue is undefined */,
+			);
+			this.pendingMessagesState.messageCollections.push({
+				...messageCollection,
+				messagesContent: [...messagesContent],
+			});
+			this.pendingMessagesState.pendingCount += messagesContent.length;
+			this.thresholdOpsCounter.sendIfMultiple(
+				"StorePendingOps",
+				this.pendingMessagesState.pendingCount,
+			);
 		}
 	}
 
@@ -691,117 +840,51 @@ export abstract class FluidDataStoreContext
 
 	/**
 	 * After GC has run, called to notify the data store of routes used in it. These are used for the following:
-	 *
 	 * 1. To identify if this data store is being referenced in the document or not.
-	 *
 	 * 2. To determine if it needs to re-summarize in case used routes changed since last summary.
-	 *
-	 * 3. These are added to the summary generated by the data store.
-	 *
-	 * 4. To notify child contexts of their used routes. This is done immediately if the data store is loaded.
-	 * Else, it is done when realizing the data store.
-	 *
-	 * 5. To update the timestamp when this data store or any children are marked as unreferenced.
+	 * 3. To notify child contexts of their used routes. This is done immediately if the data store is loaded.
+	 * Else, it is done by the data stores's summarizer node when child summarizer nodes are created.
 	 *
 	 * @param usedRoutes - The routes that are used in this data store.
 	 */
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: string[]): void {
 		// Update the used routes in this data store's summarizer node.
 		this.summarizerNode.updateUsedRoutes(usedRoutes);
 
-		/**
-		 * Store the used routes to update the channel if the data store is not loaded yet. If the used routes changed
-		 * since the previous run, the data store will be loaded during summarize since the used state changed. So, it's
-		 * safe to only store the last used routes.
-		 */
-		this.lastUsedRoutes = usedRoutes;
-
-		// If we are loaded, call the channel so it can update the used routes of the child contexts.
-		// If we are not loaded, we will update this when we are realized.
-		if (this.loaded) {
-			this.updateChannelUsedRoutes();
-		}
-	}
-
-	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	public addedGCOutboundReference(
-		srcHandle: IFluidHandleInternal,
-		outboundHandle: IFluidHandleInternal,
-	): void {
-		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
-		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
-			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
-			this.parentContext.addedGCOutboundReference?.(
-				toFluidHandleInternal(srcHandle),
-				toFluidHandleInternal(outboundHandle),
-			);
-		}
-	}
-
-	/**
-	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 *
-	 * @param fromPath - The absolute path of the node that added the reference.
-	 * @param toPath - The absolute path of the outbound node that is referenced.
-	 */
-	public addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this.parentContext.addedGCOutboundReference?.(
-			{ absolutePath: fromPath },
-			{ absolutePath: toPath },
-		);
-	}
-
-	/**
-	 * Updates the used routes of the channel and its child contexts. The channel must be loaded before calling this.
-	 * It is called in these two scenarios:
-	 * 1. When the used routes of the data store is updated and the data store is loaded.
-	 * 2. When the data store is realized. This updates the channel's used routes as per last GC run.
-	 */
-	private updateChannelUsedRoutes() {
-		assert(this.loaded, 0x144 /* "Channel should be loaded when updating used routes" */);
-		assert(
-			this.channel !== undefined,
-			0x145 /* "Channel should be present when data store is loaded" */,
-		);
-
-		// If there is no lastUsedRoutes, GC has not run up until this point.
-		if (this.lastUsedRoutes === undefined) {
+		// If the channel doesn't exist yet (data store is not realized), the summarizer node will update it
+		// when it creates child nodes.
+		if (!this.channel) {
 			return;
 		}
 
 		// Remove the route to this data store, if it exists.
-		const usedChannelRoutes = this.lastUsedRoutes.filter((id: string) => {
+		const usedChannelRoutes = usedRoutes.filter((id: string) => {
 			return id !== "/" && id !== "";
 		});
 		this.channel.updateUsedRoutes(usedChannelRoutes);
 	}
 
 	/**
-	 * @deprecated 0.18.Should call request on the runtime directly
+	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * all references added in the system.
+	 *
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 * @param messageTimestampMs - The timestamp of the message that added the reference.
 	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		const runtime = await this.realize();
-		return runtime.request(request);
+	public addedGCOutboundRoute(
+		fromPath: string,
+		toPath: string,
+		messageTimestampMs?: number,
+	): void {
+		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
 	}
 
-	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
+	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
-		// Summarizer clients should not submit messages.
-		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
+		// Readonly clients should not submit messages.
+		this.identifyLocalChangeIfReadonly("DataStoreMessageWhileReadonly", type);
 
 		this.parentContext.submitMessage(type, content, localOpMetadata);
 	}
@@ -830,13 +913,7 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
-	/**
-	 * Submits the signal to be sent to other clients.
-	 * @param type - Type of the signal.
-	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
-	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
-	 */
-	public submitSignal(type: string, content: unknown, targetClientId?: string) {
+	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
@@ -847,29 +924,37 @@ export abstract class FluidDataStoreContext
 	 * This is called by the data store channel when it becomes locally visible indicating that it is ready to become
 	 * globally visible now.
 	 */
-	public makeLocallyVisible() {
+	public makeLocallyVisible(): void {
 		assert(this.channel !== undefined, 0x2cf /* "undefined channel on datastore context" */);
 		this.makeLocallyVisibleFn();
 	}
 
-	protected processPendingOps(channel: IFluidDataStoreChannel) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const pending = this.pending!;
+	protected processPendingOps(channel: IFluidDataStoreChannel): void {
+		const baseSequenceNumber = this.baseSnapshotSequenceNumber ?? -1;
 
-		// Apply all pending ops
-		for (const op of pending) {
+		assert(
+			this.pendingMessagesState !== undefined,
+			0xa6a /* pending messages queue is undefined */,
+		);
+		for (const messageCollection of this.pendingMessagesState.messageCollections) {
 			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
-			const seqNumber = this.baseSnapshotSequenceNumber ?? -1;
-			if (op.sequenceNumber > seqNumber) {
-				channel.process(op, false, undefined /* localOpMetadata */);
+			if (messageCollection.envelope.sequenceNumber > baseSequenceNumber) {
+				channel.processMessages(messageCollection);
 			}
 		}
-		this.pending = undefined;
 
-		this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
+		this.thresholdOpsCounter.send("ProcessPendingOps", this.pendingMessagesState.pendingCount);
+		this.pendingMessagesState = undefined;
 	}
 
-	protected completeBindingRuntime(channel: IFluidDataStoreChannel) {
+	protected completeBindingRuntime(channel: IFluidDataStoreChannel): void {
+		// Validate that the DataStore is compatible with this Runtime.
+		const maybeDataStoreCompatDetails = channel as FluidObject<ILayerCompatDetails>;
+		validateDatastoreCompatibility(
+			maybeDataStoreCompatDetails.ILayerCompatDetails,
+			this.dispose.bind(this),
+		);
+
 		// And now mark the runtime active
 		this.loaded = true;
 		this.channel = channel;
@@ -883,18 +968,12 @@ export abstract class FluidDataStoreContext
 		// Freeze the package path to ensure that someone doesn't modify it when it is
 		// returned in packagePath().
 		Object.freeze(this.pkg);
-
-		/**
-		 * Update the used routes of the channel. If GC has run before this data store was realized, we will have
-		 * the used routes saved. So, this will ensure that all the child contexts have up-to-date used routes as
-		 * per the last time GC was run.
-		 * Also, this data store may have been realized during summarize. In that case, the child contexts need to
-		 * have their used routes updated to determine if its needs to summarize again and to add it to the summary.
-		 */
-		this.updateChannelUsedRoutes();
 	}
 
-	protected async bindRuntime(channel: IFluidDataStoreChannel, existing: boolean) {
+	protected async bindRuntime(
+		channel: IFluidDataStoreChannel,
+		existing: boolean,
+	): Promise<void> {
 		if (this.channel) {
 			throw new Error("Runtime already bound");
 		}
@@ -928,21 +1007,24 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Get the data required when attaching this context's DataStore.
+	 * Get the summary required when attaching this context's DataStore.
 	 * Used for both Container Attach and DataStore Attach.
-	 *
-	 * @returns the summary, type, and GC Data for this context's DataStore.
 	 */
-	public abstract getAttachData(
-		includeGCData: boolean,
+	public abstract getAttachSummary(
 		telemetryContext?: ITelemetryContext,
-	): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	};
+	): ISummaryTreeWithStats;
+
+	/**
+	 * Get the GC Data for the initial state being attached so remote clients can learn of this DataStore's
+	 * outbound routes.
+	 */
+	public abstract getAttachGCData(
+		telemetryContext?: ITelemetryContext,
+	): IGarbageCollectionData;
 
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated Sets the datastore as root, for aliasing purposes: #7948
 	 * This method should not be used outside of the aliasing context.
@@ -952,6 +1034,7 @@ export abstract class FluidDataStoreContext
 		this._isInMemoryRoot = true;
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 */
@@ -959,12 +1042,17 @@ export abstract class FluidDataStoreContext
 		return {};
 	}
 
-	public reSubmit(type: string, contents: any, localOpMetadata: unknown) {
+	public reSubmit(
+		type: string,
+		contents: unknown,
+		localOpMetadata: unknown,
+		squash: boolean,
+	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
-		this.channel.reSubmit(type, contents, localOpMetadata);
+		this.channel.reSubmit(type, contents, localOpMetadata, squash);
 	}
 
-	public rollback(type: string, contents: any, localOpMetadata: unknown) {
+	public rollback(type: string, contents: unknown, localOpMetadata: unknown): void {
 		if (!this.channel) {
 			throw new Error("Channel must exist when rolling back ops");
 		}
@@ -974,7 +1062,7 @@ export abstract class FluidDataStoreContext
 		this.channel.rollback(type, contents, localOpMetadata);
 	}
 
-	public async applyStashedOp(contents: any): Promise<unknown> {
+	public async applyStashedOp(contents: unknown): Promise<unknown> {
 		if (!this.channel) {
 			await this.realize();
 		}
@@ -986,10 +1074,15 @@ export abstract class FluidDataStoreContext
 		callSite: string,
 		checkTombstone = true,
 		safeTelemetryProps: ITelemetryBaseProperties = {},
-	) {
+	): void {
 		if (this.deleted) {
 			const messageString = `Context is deleted! Call site [${callSite}]`;
-			const error = new DataCorruptionError(messageString, safeTelemetryProps);
+			const error = DataProcessingError.create(
+				messageString,
+				callSite,
+				undefined /* sequencedMessage */,
+				safeTelemetryProps,
+			);
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "GC_Deleted_DataStore_Changed",
@@ -1007,55 +1100,57 @@ export abstract class FluidDataStoreContext
 
 		if (checkTombstone && this.tombstoned) {
 			const messageString = `Context is tombstoned! Call site [${callSite}]`;
-			const error = new DataCorruptionError(messageString, safeTelemetryProps);
+			const error = DataProcessingError.create(
+				messageString,
+				callSite,
+				undefined /* sequencedMessage */,
+				safeTelemetryProps,
+				30 /* stackTraceLimit */,
+			);
 
-			sendGCUnexpectedUsageEvent(
-				this.mc,
+			this.mc.logger.sendTelemetryEvent(
 				{
 					eventName: "GC_Tombstone_DataStore_Changed",
-					category: this.gcThrowOnTombstoneUsage ? "error" : "generic",
-					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
+					category: "generic",
 					callSite,
 				},
-				this.pkg,
 				error,
 			);
-			if (this.gcThrowOnTombstoneUsage) {
-				throw error;
-			}
 		}
 	}
 
 	/**
-	 * Summarizer client should not have local changes. These changes can become part of the summary and can break
+	 * Readonly client, including summarizer, should not have local changes. These changes can become part of the summary and can break
 	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */
-	protected identifyLocalChangeInSummarizer(eventName: string, type?: string) {
-		if (
-			this.clientDetails.type !== summarizerClientType ||
-			this.localChangesTelemetryCount <= 0
-		) {
+	protected identifyLocalChangeIfReadonly(eventName: string, type?: string): void {
+		if (!this.isReadOnly() || this.localChangesTelemetryCount <= 0) {
 			return;
 		}
 
-		// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+		// Log a telemetry if there are local changes in readonly. This will give us data on how often
 		// this is happening and which data stores do this. The eventual goal is to disallow local changes
 		// in the summarizer and the data will help us plan this.
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
 			type,
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
-			stack: generateStack(),
+			stack: generateStack(30),
+			readonly: this.isReadOnly(),
+			isStagingMode: this.isStagingMode,
 		});
 		this.localChangesTelemetryCount--;
 	}
 
-	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+	public getCreateChildSummarizerNodeFn(
+		id: string,
+		createParam: CreateChildSummarizerNodeParam,
+	) {
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-		) =>
+		): ISummarizerNodeWithGC =>
 			this.summarizerNode.createChild(
 				summarizeInternal,
 				id,
@@ -1065,7 +1160,7 @@ export abstract class FluidDataStoreContext
 			);
 	}
 
-	public deleteChildSummarizerNode(id: string) {
+	public deleteChildSummarizerNode(id: string): void {
 		this.summarizerNode.deleteChild(id);
 	}
 
@@ -1077,12 +1172,15 @@ export abstract class FluidDataStoreContext
 	}
 }
 
-/** @internal */
+/**
+ * @internal
+ */
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
+	private readonly isSnapshotInISnapshotFormat: boolean | undefined;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1093,31 +1191,41 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		if (isInstanceOfISnapshot(props.snapshot)) {
 			this.blobContents = props.snapshot.blobContents;
 			this._baseSnapshot = props.snapshot.snapshotTree;
+			this.isSnapshotInISnapshotFormat = true;
 		} else {
 			this._baseSnapshot = props.snapshot;
-		}
-		if (this._baseSnapshot !== undefined) {
-			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
+			this.isSnapshotInISnapshotFormat = false;
 		}
 	}
 
-	/*
-	This API should not be called for RemoteFluidDataStoreContext. But here is one scenario where it's not the case:
-	The scenario (hit by stashedOps.spec.ts, "resends attach op" UT is the following (as far as I understand):
-	1. data store is being attached in attached container
-	2. container state is serialized (stashed ops feature)
-	3. new container instance is rehydrated (from stashed ops)
-	    - As result, we create RemoteFluidDataStoreContext for this data store that is actually in "attaching" state (as of # 2).
-		  But its state is set to attached when loading container from stashed ops
-	4. attach op for this data store is processed - setAttachState() is called.
-	*/
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached) {}
+	/**
+	 * This API should not be called for RemoteFluidDataStoreContext. But here is one scenario where it's not the case:
+	 * The scenario (hit by stashedOps.spec.ts, "resends attach op" UT is the following (as far as I understand):
+	 *
+	 * 1. data store is being attached in attached container
+	 *
+	 * 2. container state is serialized (stashed ops feature)
+	 *
+	 * 3. new container instance is rehydrated (from stashed ops) -
+	 * As result, we create RemoteFluidDataStoreContext for this data store that is actually in "attaching" state  * (as of # 2).
+	 * But its state is set to attached when loading container from stashed ops.
+	 *
+	 * 4. attach op for this data store is processed - setAttachState() is called.
+	 */
+	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {}
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
-		// Check whether we need to fetch the snapshot first to load.
-		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
+		// Check whether we need to fetch the snapshot first to load. The snapshot should be in new format to see
+		// whether we want to evaluate to fetch snapshot or not for loadingGroupId. Otherwise, the snapshot
+		// will contain all the blobs.
+		if (
+			this.snapshotFetchRequired === undefined &&
+			this._baseSnapshot?.groupId !== undefined &&
+			this.isSnapshotInISnapshotFormat
+		) {
 			assert(
 				this.blobContents !== undefined,
 				0x97a /* Blob contents should be present to evaluate */,
@@ -1185,7 +1293,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			}
 		}
 
-		assert(this.pkg !== undefined, 0x8f6 /* The datastore context package should be defined */);
+		assert(
+			this.pkg !== undefined,
+			0x8f6 /* The datastore context package should be defined */,
+		);
 		return {
 			pkg: this.pkg,
 			isRootDataStore,
@@ -1199,12 +1310,16 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachData
+	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
 	 */
-	public getAttachData(includeGCData: boolean): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	} {
+	public getAttachSummary(): ISummaryTreeWithStats {
+		throw new Error("Cannot attach remote store");
+	}
+
+	/**
+	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		throw new Error("Cannot attach remote store");
 	}
 }
@@ -1215,10 +1330,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
  */
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	private readonly snapshotTree: ISnapshotTree | undefined;
-	/**
-	 * @deprecated 0.16 Issue #1635, #3631
-	 */
-	public readonly createProps?: any;
 
 	constructor(props: ILocalFluidDataStoreContextProps) {
 		super(
@@ -1229,15 +1340,14 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		);
 
 		// Summarizer client should not create local data stores.
-		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
+		this.identifyLocalChangeIfReadonly("DataStoreCreatedWhileReadonly");
 
 		this.snapshotTree = props.snapshotTree;
-		this.createProps = props.createProps;
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		switch (attachState) {
-			case AttachState.Attaching:
+			case AttachState.Attaching: {
 				assert(
 					this.attachState === AttachState.Detached,
 					0x14d /* "Should move from detached to attaching" */,
@@ -1251,7 +1361,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					this.emit("attaching");
 				}
 				break;
-			case AttachState.Attached:
+			}
+			case AttachState.Attached: {
 				// We can get called into here twice, as result of both container and data store being attached, if
 				// those processes overlapped, for example, in a flow like that one:
 				// 1. Container attach started
@@ -1274,21 +1385,17 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					}
 				}
 				break;
-			default:
+			}
+			default: {
 				unreachableCase(attachState, "unreached");
+			}
 		}
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachData
+	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
 	 */
-	public getAttachData(
-		includeGCData: boolean,
-		telemetryContext?: ITelemetryContext,
-	): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	} {
+	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		assert(
 			this.channel !== undefined,
 			0x14f /* "There should be a channel when generating attach message" */,
@@ -1306,24 +1413,27 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		// Add data store's attributes to the summary.
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
 		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
-		if (includeGCData) {
-			const gcData = this.channel.getAttachGCData?.(telemetryContext);
-			if (gcData !== undefined) {
-				addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
-			}
-		}
 
 		// Add loadingGroupId to the summary
 		if (this.loadingGroupId !== undefined) {
 			attachSummary.summary.groupId = this.loadingGroupId;
 		}
 
-		return {
-			attachSummary,
-			type: this.pkg[this.pkg.length - 1],
-		};
+		return attachSummary;
 	}
 
+	/**
+	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		assert(
+			this.channel !== undefined,
+			0x9a6 /* There should be a channel when generating attach GC data */,
+		);
+		return this.channel.getAttachGCData(telemetryContext);
+	}
+
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
 		// eslint-disable-next-line import/no-deprecated
@@ -1371,18 +1481,12 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	 * it was unreferenced. Thus the sweeping container should have loaded from a snapshot and thus creating a remote
 	 * context.
 	 */
-	public delete() {
+	public delete(): void {
 		// TODO: GC:Validation - potentially prevent this from happening or asserting. Maybe throw here.
-		sendGCUnexpectedUsageEvent(
-			this.mc,
-			{
-				eventName: "GC_Deleted_DataStore_Unexpected_Delete",
-				message: "Unexpected deletion of a local data store context",
-				category: "error",
-				gcTombstoneEnforcementAllowed: undefined,
-			},
-			this.pkg,
-		);
+		this.mc.logger.sendErrorEvent({
+			eventName: "GC_Deleted_DataStore_Unexpected_Delete",
+			message: "Unexpected deletion of a local data store context",
+		});
 		super.delete();
 	}
 }
@@ -1451,6 +1555,24 @@ export class LocalDetachedFluidDataStoreContext
 			});
 
 		return this.channelToDataStoreFn(await this.channelP);
+	}
+
+	/**
+	 * This method provides a synchronous path for binding a runtime to the context.
+	 *
+	 * Due to its synchronous nature, it is unable to validate that the runtime
+	 * represents a datastore which is instantiable by remote clients. This could
+	 * happen if the runtime's package path does not return a factory when looked up
+	 * in the container runtime's registry, or if the runtime's entrypoint is not
+	 * properly initialized. As both of these validation's are asynchronous to preform.
+	 *
+	 * If used incorrectly, this function can result in permanent data corruption.
+	 */
+	public unsafe_AttachRuntimeSync(channel: IFluidDataStoreChannel): IDataStore {
+		this.channelP = Promise.resolve(channel);
+		this.processPendingOps(channel);
+		this.completeBindingRuntime(channel);
+		return this.channelToDataStoreFn(channel);
 	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {

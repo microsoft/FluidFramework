@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
-import { ICodecOptions, noopValidator } from "../../codec/index.js";
+import { type ICodecOptions, noopValidator } from "../../codec/index.js";
 import { TreeStoredSchemaRepository } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import/no-internal-modules
 import { uncompressedEncode } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
+import type { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
 import {
 	fieldKindConfigurations,
 	sequence,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
-	FieldBatch,
-	FieldBatchEncodingContext,
-	ModularChangeset,
-	SequenceField,
+	type FieldBatch,
+	type FieldBatchEncodingContext,
+	type ModularChangeset,
+	type SequenceField,
 	defaultSchemaPolicy,
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
@@ -33,7 +33,10 @@ import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeCha
 // eslint-disable-next-line import/no-internal-modules
 import { brand } from "../../util/brand.js";
 import { ajvValidator } from "../codec/index.js";
-import { testRevisionTagCodec } from "../utils.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { newTupleBTree } from "../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
 
@@ -45,8 +48,11 @@ describe("sharedTreeChangeCodec", () => {
 				assert.equal(context.schema?.schema, dummyTestSchema);
 				return uncompressedEncode(data);
 			},
-			decode: (data: EncodedFieldBatch): FieldBatch => {
-				return decode(data).map((chunk) => chunk.cursor());
+			decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
+				return decode(data, {
+					idCompressor: context.idCompressor,
+					originatorId: context.originatorId,
+				}).map((chunk) => chunk.cursor());
 			},
 		};
 		const modularChangeCodecs = makeModularChangeCodecFamily(
@@ -64,13 +70,17 @@ describe("sharedTreeChangeCodec", () => {
 			originatorId: "dummySessionID" as SessionId,
 			schema: { policy: defaultSchemaPolicy, schema: dummyTestSchema },
 			revision: undefined,
+			idCompressor: testIdCompressor,
 		};
 		const changeA: SequenceField.Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {
-			nodeChanges: new Map(),
+			nodeChanges: newTupleBTree(),
 			fieldChanges: new Map([
 				[brand("fA"), { fieldKind: sequence.identifier, change: brand(changeA) }],
 			]),
+			nodeToParent: newTupleBTree(),
+			nodeAliases: newTupleBTree(),
+			crossFieldKeys: newCrossFieldKeyTable(),
 		};
 		sharedTreeChangeCodec.encode(
 			{ changes: [{ type: "data", innerChange: dummyModularChangeSet }] },

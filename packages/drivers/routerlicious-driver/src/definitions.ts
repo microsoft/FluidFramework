@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 export interface ISnapshotTreeVersion {
 	id: string;

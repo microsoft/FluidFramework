@@ -7,9 +7,9 @@
  * @fileoverview Definition of the valuemap property class
  */
 
-const _ = require("lodash");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { Int64, Uint64 } = require("@fluid-experimental/property-common");
+const _ = require("lodash");
 
 const { validationsEnabled } = require("../enableValidations");
 const { Int64Property, Uint64Property } = require("../properties/intProperties");
@@ -174,9 +174,7 @@ export class ValueMapProperty extends MapProperty {
 
 		// Modify entries
 		if (in_pendingChangeSet.modify) {
-			var modifiedPendingEntries = in_pendingChangeSet
-				? in_pendingChangeSet.modify || {}
-				: {};
+			var modifiedPendingEntries = in_pendingChangeSet ? in_pendingChangeSet.modify || {} : {};
 			var modifiedDirtyEntries = in_dirtyChangeSet ? in_dirtyChangeSet.modify || {} : {};
 			keys = Object.keys(modifiedPendingEntries).concat(Object.keys(modifiedDirtyEntries));
 			for (i = 0; i < keys.length; i++) {

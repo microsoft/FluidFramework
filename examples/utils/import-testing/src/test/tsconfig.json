@@ -1,0 +1,27 @@
+{
+	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"types": ["mocha", "node"],
+		// Allows writing type checking expression without having to use the results.
+		"noUnusedLocals": false,
+		// Allow testing that declarations work properly
+		"declaration": true,
+		// Needed to ensure testExport's produce a valid d.ts
+		"skipLibCheck": false,
+		// Due to several of our own packages' exports failing to build with "exactOptionalPropertyTypes",
+		// disable it to prevent that from erroring when combined with "skipLibCheck".
+		// TODO: these errors should be fixed!
+		"exactOptionalPropertyTypes": false,
+		// FixRecursiveArraySchema depends on compilation order dependent behavior in the packages that import the generated d.ts file with libCheck enabled.
+		// Since this package imports such an export, disable incrementality to avoid issues with the build that require clean building in come cases.
+		"incremental": false,
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
+}

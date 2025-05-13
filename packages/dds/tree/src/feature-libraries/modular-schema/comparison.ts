@@ -3,24 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
-	TreeTypeSet,
-	ValueSchema,
+	type TreeFieldStoredSchema,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
+	type TreeTypeSet,
+	type ValueSchema,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
-import { compareSets, fail } from "../../util/index.js";
+import { compareSets } from "../../util/index.js";
 
-import { FullSchemaPolicy } from "./fieldKind.js";
+import type { FullSchemaPolicy } from "./fieldKind.js";
 import { withEditor } from "./fieldKindWithEditor.js";
 import { isNeverTree } from "./isNeverTree.js";
+
+// TODO:
+// The comparisons in this file seem redundant with those in discrepancies.ts.
+// Rather than both existing, one of which just returns boolean and the other which returns additional details, a simple comparison which returns everything needed should be used.
 
 /**
  * @returns true iff `superset` is a superset of `original`.
@@ -47,6 +51,10 @@ export function allowsTreeSuperset(
 		if (superset instanceof LeafNodeStoredSchema) {
 			return allowsValueSuperset(original.leafValue, superset.leafValue);
 		}
+		return false;
+	}
+
+	if (superset instanceof LeafNodeStoredSchema) {
 		return false;
 	}
 
@@ -96,7 +104,8 @@ export function allowsTreeSuperset(
 			allowsFieldSuperset(
 				policy,
 				originalData,
-				original.objectNodeFields.get(originalField) ?? fail("missing expected field"),
+				original.objectNodeFields.get(originalField) ??
+					fail(0xb17 /* missing expected field */),
 				normalizeField(undefined),
 			),
 		bExtra: (supersetField) =>
@@ -104,14 +113,15 @@ export function allowsTreeSuperset(
 				policy,
 				originalData,
 				normalizeField(undefined),
-				superset.objectNodeFields.get(supersetField) ?? fail("missing expected field"),
+				superset.objectNodeFields.get(supersetField) ??
+					fail(0xb18 /* missing expected field */),
 			),
 		same: (sameField) =>
 			allowsFieldSuperset(
 				policy,
 				originalData,
-				original.objectNodeFields.get(sameField) ?? fail("missing expected field"),
-				superset.objectNodeFields.get(sameField) ?? fail("missing expected field"),
+				original.objectNodeFields.get(sameField) ?? fail(0xb19 /* missing expected field */),
+				superset.objectNodeFields.get(sameField) ?? fail(0xb1a /* missing expected field */),
 			),
 	});
 }
@@ -140,7 +150,7 @@ export function allowsFieldSuperset(
 	superset: TreeFieldStoredSchema,
 ): boolean {
 	return withEditor(
-		policy.fieldKinds.get(original.kind) ?? fail("missing kind"),
+		policy.fieldKinds.get(original.kind) ?? fail(0xb1b /* missing kind */),
 	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 
@@ -153,12 +163,6 @@ export function allowsTreeSchemaIdentifierSuperset(
 	original: TreeTypeSet,
 	superset: TreeTypeSet,
 ): boolean {
-	if (superset === undefined) {
-		return true;
-	}
-	if (original === undefined) {
-		return false;
-	}
 	for (const originalType of original) {
 		if (!superset.has(originalType)) {
 			return false;
@@ -203,6 +207,8 @@ export function allowsRepoSuperset(
 	return true;
 }
 
-export function normalizeField(schema: TreeFieldStoredSchema | undefined): TreeFieldStoredSchema {
+export function normalizeField(
+	schema: TreeFieldStoredSchema | undefined,
+): TreeFieldStoredSchema {
 	return schema ?? storedEmptyFieldSchema;
 }

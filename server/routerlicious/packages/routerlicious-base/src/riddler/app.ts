@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ISecretManager, ICache } from "@fluidframework/server-services-core";
-import { BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
+import { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
+import {
+	BaseTelemetryProperties,
+	CommonProperties,
+} from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
 import {
 	alternativeMorganLoggerMiddleware,
-	bindCorrelationId,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 	ITenantKeyGenerator,
@@ -17,6 +19,8 @@ import {
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as api from "./api";
 import { ITenantRepository } from "./mongoTenantRepository";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
 
 export function create(
 	tenantRepository: ITenantRepository,
@@ -28,7 +32,9 @@ export function create(
 	fetchTenantKeyMetricInterval: number,
 	riddlerStorageRequestMetricInterval: number,
 	tenantKeyGenerator: ITenantKeyGenerator,
+	startupCheck: IReadinessCheck,
 	cache?: ICache,
+	readinessCheck?: IReadinessCheck,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -36,12 +42,14 @@ export function create(
 	// Running behind iisnode
 	app.set("trust proxy", 1);
 
-	app.use(bindTelemetryContext());
+	app.use(bindTelemetryContext("riddler"));
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("riddler", (tokens, req, res) => {
 				return {
 					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+					[CommonProperties.callingServiceName]:
+						req.headers[CallingServiceHeaderName] ?? "",
 				};
 			}),
 		);
@@ -50,8 +58,6 @@ export function create(
 	}
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: false }));
-
-	app.use(bindCorrelationId());
 
 	app.use(
 		"/api",
@@ -68,6 +74,9 @@ export function create(
 		),
 	);
 
+	const healthEndpoints = createHealthCheckEndpoints("riddler", startupCheck, readinessCheck);
+
+	app.use("/healthz", healthEndpoints);
 	// Catch 404 and forward to error handler
 	app.use(catch404());
 

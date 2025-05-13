@@ -17,12 +17,17 @@ export interface IProvideFluidLoadable {
 	readonly IFluidLoadable: IFluidLoadable;
 }
 /**
- * A shared FluidObject has a URL from which it can be referenced
- * @public
+ * A shared {@link FluidObject} with a handle that can be used to retrieve it.
+ * @remarks
+ * In this context, "shared" means that the object might be shared via a {@link https://fluidframework.com/docs/concepts/architecture#fluid-service|Fluid service} and
+ * thus could be viewed and edited by other clients.
+ * @sealed @public
  */
 export interface IFluidLoadable extends IProvideFluidLoadable {
-	// Handle to the loadable FluidObject
-	handle: IFluidHandle;
+	/**
+	 * Handle to this loadable {@link FluidObject}.
+	 */
+	readonly handle: IFluidHandle;
 }
 
 /**
@@ -41,7 +46,7 @@ export interface IProvideFluidRunnable {
  */
 export interface IFluidRunnable {
 	// TODO: Use `unknown` instead (API-Breaking)
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	run(...args: any[]): Promise<void>;
 	stop(reason?: string): void;
 }

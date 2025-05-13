@@ -4,24 +4,32 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	Serializable,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
-	type IChannelAttributes,
-	type IChannelStorageService,
-	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { type Serializable } from "@fluidframework/datastore-definitions/internal";
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { type AttributionKey } from "@fluidframework/runtime-definitions/internal";
-import { type IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
-
+import type {
+	ISummaryTreeWithStats,
+	AttributionKey,
+} from "@fluidframework/runtime-definitions/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ICellLocalOpMetadata,
-	type ICellOptions,
-	type ISharedCell,
-	type ISharedCellEvents,
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
+
+import type {
+	ICellLocalOpMetadata,
+	ICellOptions,
+	ISharedCell,
+	ISharedCellEvents,
 } from "./interfaces.js";
 
 /**
@@ -170,8 +178,8 @@ export class SharedCell<T = any>
 			this.attribution = message
 				? { type: "op", seq: message.sequenceNumber }
 				: this.isAttached()
-				? { type: "local" }
-				: { type: "detached", id: 0 };
+					? { type: "local" }
+					: { type: "detached", id: 0 };
 		}
 	}
 
@@ -197,8 +205,7 @@ export class SharedCell<T = any>
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		this.data = this.serializer.decode(content.value);
+		this.data = this.serializer.decode(content.value) as Serializable<T>;
 		this.attribution = content.attribution;
 	}
 

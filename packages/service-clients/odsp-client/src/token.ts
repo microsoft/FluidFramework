@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
+import type { TokenResponse } from "./interfaces.js";
 
 /**
  * Abstracts the token fetching mechanism for a hosting application.

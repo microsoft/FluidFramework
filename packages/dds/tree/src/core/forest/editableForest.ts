@@ -3,26 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import type { FieldKey } from "../schema-stored/index.js";
+import type { Anchor, DeltaVisitor, DetachedField } from "../tree/index.js";
 
-import { RevisionTagCodec } from "../rebase/index.js";
-import { FieldKey } from "../schema-stored/index.js";
-import {
-	Anchor,
-	DeltaRoot,
-	DeltaVisitor,
-	DetachedField,
-	ITreeCursorSynchronous,
-	applyDelta,
-	deltaForRootInitialization,
-	makeDetachedFieldIndex,
-} from "../tree/index.js";
-
-import { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
+import type { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
 
 /**
  * Editing APIs.
- * @internal
  */
 export interface IEditableForest extends IForestSubscription {
 	/**
@@ -38,33 +25,14 @@ export interface IEditableForest extends IForestSubscription {
 	acquireVisitor(): DeltaVisitor;
 }
 
-/**
- * Sets the contents of the forest via delta.
- * Requires the fores starts empty.
- *
- * @remarks
- * This does not perform an edit: it updates the forest content as if there was an edit that did that.
- */
-export function initializeForest(
-	forest: IEditableForest,
-	content: readonly ITreeCursorSynchronous[],
-	revisionTagCodec: RevisionTagCodec,
-): void {
-	assert(forest.isEmpty, 0x747 /* forest must be empty */);
-	const delta: DeltaRoot = deltaForRootInitialization(content);
-	applyDelta(delta, forest, makeDetachedFieldIndex("init", revisionTagCodec));
-}
-
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.
 
 /**
  * Ways to refer to a node in an IEditableForest.
- * @internal
  */
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 /**
- * @internal
  */
 export interface TreeLocation {
 	readonly range: FieldLocation | DetachedField;
@@ -77,7 +45,6 @@ export function isFieldLocation(range: FieldLocation | DetachedField): range is 
 
 /**
  * Location of a field within a tree that is not a detached/root field.
- * @internal
  */
 export interface FieldLocation {
 	readonly key: FieldKey;

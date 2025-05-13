@@ -1,0 +1,132 @@
+.ffcom-service-content-container {
+	width: 100%;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	flex-wrap: wrap;
+
+	padding-bottom: 2%;
+	gap: 15px;
+}
+
+.ffcom-services {
+	width: 100%;
+
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+	flex-wrap: wrap;
+
+	margin: 0px;
+	gap: 20px;
+	padding-top: 3%;
+}
+
+.ffcom-service {
+	max-width: 500px;
+
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+
+	padding: 15px;
+
+	background: #fefefe;
+	box-shadow:
+		0px 0px 2px rgba(0, 0, 0, 0.12),
+		0px 2px 4px rgba(0, 0, 0, 0.14);
+	border-radius: 24px;
+
+	/* TODO: is this needed? */
+	isolation: isolate;
+}
+@media (max-width: 1024px) {
+	.service {
+		padding: 2%;
+	}
+}
+
+.ffcom-service-content {
+	width: 100%;
+
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: space-between;
+
+	padding: 0px;
+	gap: 16px;
+}
+
+.ffcom-service-title {
+	height: 28px;
+
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 600;
+	font-size: 20px;
+	line-height: 28px;
+	letter-spacing: -0.03em;
+
+	color: #0e1726;
+}
+
+.ffcom-service-description {
+	width: 100%;
+
+	/* VP4/body/m */
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 400;
+	font-size: 16px;
+	line-height: 24px;
+	letter-spacing: -0.03em;
+
+	color: #17253d;
+}
+
+.ffcom-service-card-logo {
+	box-sizing: border-box;
+
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	padding: 0px;
+
+	width: 48px;
+	height: 48px;
+
+	/* day/border/card(card)/fade */
+	border: 1px solid #e6f2fb;
+	border-radius: 8px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+}
+
+.ffcom-learn-more-link {
+	cursor: pointer;
+
+	width: 73px;
+	height: 20px;
+
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 600;
+	font-size: 14px;
+	line-height: 20px;
+
+	color: #2a446f;
+	border-bottom: 1px solid #2a446f;
+}
+
+.ffcom-learn-more-link:hover {
+	text-decoration: none;
+	color: inherit;
+}

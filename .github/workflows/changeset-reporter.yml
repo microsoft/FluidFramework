@@ -7,7 +7,7 @@ name: changeset-reporter
 
 on:
   workflow_run:
-    workflows: [ "pr-check-changeset" ]
+    workflows: ["pr-check-changeset"]
     types:
       - completed
 
@@ -18,7 +18,7 @@ jobs:
       actions: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           persist-credentials: false
 
@@ -35,7 +35,8 @@ jobs:
 
       - name: Required but missing
         if: fromJson(steps.changeset.outputs.CHANGESET).required == true && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == false
-        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
         with:
           header: changeset
           number: ${{ fromJson(steps.changeset.outputs.CHANGESET).pr }}
@@ -43,7 +44,8 @@ jobs:
 
       - name: Required and present
         if: fromJson(steps.changeset.outputs.CHANGESET).required == true && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == true
-        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
         with:
           header: changeset
           number: ${{ fromJson(steps.changeset.outputs.CHANGESET).pr }}
@@ -53,7 +55,8 @@ jobs:
 
       - name: Changeset not required
         if: fromJson(steps.changeset.outputs.CHANGESET).required == false && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == true
-        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
         with:
           header: changeset
           number: ${{ fromJson(steps.changeset.outputs.CHANGESET).pr }}

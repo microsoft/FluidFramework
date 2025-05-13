@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	ModelContainerRuntimeFactory,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/legacy";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
 import { DiceCounterInstantiationFactory, IDiceCounter } from "./diceCounter.js";
 import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller.js";

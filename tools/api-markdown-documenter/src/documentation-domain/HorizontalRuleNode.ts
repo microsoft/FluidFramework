@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type MultiLineDocumentationNode } from "./DocumentationNode.js";
+import type { MultiLineDocumentationNode } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**

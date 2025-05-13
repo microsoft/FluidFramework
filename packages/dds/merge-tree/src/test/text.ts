@@ -3,32 +3,46 @@
  * Licensed under the MIT License.
  */
 
+import { NonCollabClient, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
-import { ISegment, Marker } from "../mergeTreeNodes.js";
+import { Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";
+import {
+	overwriteInfo,
+	type IHasInsertionInfo,
+	type SegmentWithInfo,
+} from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
+
+const defaultInsertionInfo: IHasInsertionInfo = {
+	insert: {
+		type: "insert",
+		clientId: NonCollabClient,
+		seq: UniversalSequenceNumber,
+	},
+};
 
 export function loadSegments(
 	content: string,
 	segLimit: number,
 	markers: boolean = false,
 	withProps: boolean = true,
-) {
+): SegmentWithInfo<IHasInsertionInfo>[] {
 	const BOMFreeContent = content.replace(/^\uFEFF/, "");
 
 	const paragraphs = BOMFreeContent.split(/\r?\n/);
 	for (let i = 0, len = paragraphs.length; i < len; i++) {
 		paragraphs[i] = paragraphs[i]
 			.replace(/\r?\n/g, " ")
-			.replace(/\u201c|\u201d/g, '"')
+			.replace(/\u201C|\u201D/g, '"')
 			.replace(/\u2019/g, "'");
 		if (!markers && i !== paragraphs.length - 1) {
 			paragraphs[i] += "\n";
 		}
 	}
 
-	const segments = [] as ISegment[];
+	const segments: SegmentWithInfo<IHasInsertionInfo>[] = [];
 	for (const paragraph of paragraphs) {
 		let pgMarker: Marker | undefined;
 		if (markers) {
@@ -37,11 +51,14 @@ export function loadSegments(
 		if (withProps) {
 			if (paragraph.includes("Chapter") || paragraph.includes("PRIDE AND PREJ")) {
 				if (pgMarker) {
-					pgMarker.addProperties({ header: 2 });
-					segments.push(new TextSegment(paragraph));
+					pgMarker.properties = { header: 2 };
+					segments.push(overwriteInfo(new TextSegment(paragraph), defaultInsertionInfo));
 				} else {
 					segments.push(
-						TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }),
+						overwriteInfo(
+							TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }),
+							defaultInsertionInfo,
+						),
 					);
 				}
 			} else {
@@ -51,21 +68,26 @@ export function loadSegments(
 					if (i & 1) {
 						if (emphStrings[i].length > 0) {
 							segments.push(
-								TextSegment.make(emphStrings[i], { fontStyle: "italic" }),
+								overwriteInfo(
+									TextSegment.make(emphStrings[i], { fontStyle: "italic" }),
+									defaultInsertionInfo,
+								),
 							);
 						}
 					} else {
 						if (emphStrings[i].length > 0) {
-							segments.push(new TextSegment(emphStrings[i]));
+							segments.push(
+								overwriteInfo(new TextSegment(emphStrings[i]), defaultInsertionInfo),
+							);
 						}
 					}
 				}
 			}
 		} else {
-			segments.push(new TextSegment(paragraph));
+			segments.push(overwriteInfo(new TextSegment(paragraph), defaultInsertionInfo));
 		}
 		if (pgMarker) {
-			segments.push(pgMarker);
+			segments.push(overwriteInfo(pgMarker, defaultInsertionInfo));
 		}
 	}
 
@@ -76,7 +98,12 @@ export function loadSegments(
 	return segments;
 }
 
-export function loadText(content: string, mergeTree: MergeTree, segLimit: number, markers = false) {
+export function loadText(
+	content: string,
+	mergeTree: MergeTree,
+	segLimit: number,
+	markers = false,
+): MergeTree {
 	const segments = loadSegments(content, segLimit, markers);
 	mergeTree.reloadFromSegments(segments);
 	return mergeTree;

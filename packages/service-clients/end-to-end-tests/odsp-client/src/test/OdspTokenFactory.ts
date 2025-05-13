@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
+import { IOdspTokenProvider } from "@fluidframework/odsp-client/internal";
 import {
 	IPublicClientConfig,
 	TokenRequestCredentials,
@@ -58,7 +58,7 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		};
 		const credentials: TokenRequestCredentials = {
 			grant_type: "password",
-			username: this.creds.username,
+			username: this.creds.email,
 			password: this.creds.password,
 		};
 		const body = {
@@ -66,7 +66,13 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 			client_id: clientConfig.clientId,
 			...credentials,
 		};
-		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));
+		const response = await unauthPostAsync(
+			getFetchTokenUrl(server),
+			new URLSearchParams(body),
+		);
+		if (!response.ok) {
+			throw new Error(`Failed to obtain tokens: ${await response.text()}`);
+		}
 
 		const parsedResponse = await response.json();
 		const accessToken = parsedResponse.access_token;

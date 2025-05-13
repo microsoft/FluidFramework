@@ -10,25 +10,33 @@ import {
 	generatePairwiseOptions,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
-import { ILoaderOptions } from "@fluidframework/container-loader/internal";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
-	IContainerRuntimeOptions,
+	disabledCompressionConfig,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
+	type ContainerRuntimeOptionsInternal,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
+import type { OptionOverride, TestConfiguration } from "./testConfigFile.js";
 
-const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
+interface ILoaderOptionsExperimental extends ILoaderOptions {
+	enableOfflineSnapshotRefresh?: boolean;
+	snapshotRefreshTimeoutMs?: number;
+}
+
+const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
 	cache: booleanCases,
 	client: [undefined],
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
-	summarizeProtocolTree: [undefined],
 	enableOfflineLoad: booleanCases,
+	enableOfflineSnapshotRefresh: booleanCases,
+	snapshotRefreshTimeoutMs: [undefined, 60 * 5 * 1000 /* 5min */],
 };
 
 export function applyOverrides<T extends Record<string, any>>(
@@ -57,9 +65,9 @@ export function applyOverrides<T extends Record<string, any>>(
 
 export const generateLoaderOptions = (
 	seed: number,
-	overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined,
-): ILoaderOptions[] => {
-	return generatePairwiseOptions<ILoaderOptions>(
+	overrides: Partial<OptionsMatrix<ILoaderOptionsExperimental>> | undefined,
+): ILoaderOptionsExperimental[] => {
+	return generatePairwiseOptions<ILoaderOptionsExperimental>(
 		applyOverrides(loaderOptionsMatrix, overrides),
 		seed,
 	);
@@ -79,7 +87,7 @@ const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
 
 export function generateRuntimeOptions(
 	seed: number,
-	overrides: Partial<OptionsMatrix<IContainerRuntimeOptions>> | undefined,
+	overrides: Partial<OptionsMatrix<ContainerRuntimeOptionsInternal>> | undefined,
 ) {
 	const gcOptions = generatePairwiseOptions(
 		applyOverrides(gcOptionsMatrix, overrides?.gcOptions as any),
@@ -91,7 +99,11 @@ export function generateRuntimeOptions(
 		seed,
 	);
 
-	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
+	// Warning: this appears to incorrectly use `undefined` as a value in the options matrix
+	// with `exactOptionalPropertyTypes` disabled and thus not complaining. Note that `undefined`
+	// is a valid option for `enableRuntimeIdCompressor`. Probably should replace `undefined`
+	// with a sentinel symbol assuming `undefined` does mean something to overall processing.
+	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptionsInternal> = {
 		gcOptions: [undefined, ...gcOptions],
 		summaryOptions: [undefined, ...summaryOptions],
 		loadSequenceNumberVerification: [undefined],
@@ -104,10 +116,11 @@ export function generateRuntimeOptions(
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
+		createBlobPayloadPending: [true, undefined],
 		explicitSchemaControl: [true, false],
 	};
 
-	return generatePairwiseOptions<IContainerRuntimeOptions>(
+	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
 		applyOverrides(runtimeOptionsMatrix, {
 			...overrides,
 			gcOptions: undefined,
@@ -115,6 +128,20 @@ export function generateRuntimeOptions(
 		}),
 		seed,
 	);
+
+	// Override compressionOptions to disable it if Grouped Batching is disabled
+	pairwiseOptions.map((options) => {
+		if (options.enableGroupedBatching === false) {
+			(
+				options as {
+					// Remove readonly modifier to allow overriding
+					-readonly [P in keyof ContainerRuntimeOptionsInternal]: ContainerRuntimeOptionsInternal[P];
+				}
+			).compressionOptions = disabledCompressionConfig;
+		}
+	});
+
+	return pairwiseOptions;
 }
 
 export function generateConfigurations(
@@ -135,7 +162,7 @@ export function generateConfigurations(
  * @returns an option override
  */
 export function getOptionOverride(
-	testConfig: ILoadTestConfig | undefined,
+	testConfig: TestConfiguration | undefined,
 	driverType: TestDriverTypes,
 	endpoint: string | undefined,
 ): OptionOverride | undefined {

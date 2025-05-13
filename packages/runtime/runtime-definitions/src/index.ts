@@ -14,12 +14,17 @@ export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
 	IContainerRuntimeBase,
+	IContainerRuntimeBaseExperimental,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
+	IFluidDataStorePolicies,
 	IFluidDataStoreContext,
 	IFluidParentContext,
 	IFluidDataStoreContextDetached,
+	IPendingMessagesState,
+	StageControlsExperimental,
+	CommitStagedChangesOptionsExperimental,
 } from "./dataStoreContext.js";
 export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
@@ -29,6 +34,7 @@ export type {
 	IProvideFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
+	NamedFluidDataStoreRegistryEntry2,
 } from "./dataStoreRegistry.js";
 export { IFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export type {
@@ -47,8 +53,14 @@ export type {
 	IEnvelope,
 	IInboundSignalMessage,
 	InboundAttachMessage,
-	ISignalEnvelope,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
 } from "./protocol.js";
+export {
+	encodeHandlesInContainerRuntime,
+	notifiesReadOnlyState,
+} from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,
@@ -61,6 +73,7 @@ export type {
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	ITelemetryContextExt,
 	SummarizeInternalFn,
 } from "./summary.js";
 export {

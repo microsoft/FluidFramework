@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "assert";
-import { NodeId } from "../feature-libraries/index.js";
+import { fail } from "node:assert";
+import type { NodeId } from "../feature-libraries/index.js";
 import {
-	ChangeEncodingContext,
-	DeltaFieldMap,
-	FieldKey,
-	FieldKindIdentifier,
+	type ChangeEncodingContext,
+	type DeltaFieldMap,
+	type FieldKey,
+	type FieldKindIdentifier,
 	makeAnonChange,
 } from "../core/index.js";
-import { JsonCompatibleReadOnly, brand } from "../util/index.js";
+import { type JsonCompatibleReadOnly, brand } from "../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { EncodedNodeChangeset } from "../feature-libraries/modular-schema/modularChangeFormat.js";
+import type { EncodedNodeChangeset } from "../feature-libraries/modular-schema/modularChangeFormat.js";
 import { TestChange } from "./testChange.js";
 
 /**

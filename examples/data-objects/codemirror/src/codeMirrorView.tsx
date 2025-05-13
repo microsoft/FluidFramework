@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
 import {
 	Marker,
 	MergeTreeDeltaType,
@@ -10,9 +12,7 @@ import {
 	SequenceDeltaEvent,
 	SharedString,
 	TextSegment,
-	getTextAndMarkers,
-	reservedTileLabelsKey,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 import CodeMirror from "codemirror";
 import React, { useEffect, useRef } from "react";
 
@@ -46,7 +46,7 @@ class CodeMirrorView {
 		// https://stackoverflow.com/questions/18828658/how-to-kill-a-codemirror-instance
 
 		if (this.sequenceDeltaCb) {
-			this.text.removeListener("sequenceDelta", this.sequenceDeltaCb);
+			this.text.off("sequenceDelta", this.sequenceDeltaCb);
 			this.sequenceDeltaCb = undefined;
 		}
 

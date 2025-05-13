@@ -85,6 +85,10 @@
                     "maxItems": 1,
                     "type": "array",
                     "items": {}
+                  },
+                  {
+                    "const": 0,
+                    "type": "number"
                   }
                 ]
               },

@@ -10,6 +10,7 @@ import { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
 import { IDataObjectGridItemEntry, dataObjectRegistry } from "./dataObjectRegistry.js";
 import { DataObjectGridToolbar } from "./toolbar.js";
 
+// eslint-disable-next-line import/no-internal-modules
 import "react-grid-layout/css/styles.css";
 import "./dataObjectGridView.css";
 
@@ -20,7 +21,9 @@ interface IEditPaneProps {
 	removeItem(): void;
 }
 
-const EditPane: React.FC<IEditPaneProps> = (props: React.PropsWithChildren<IEditPaneProps>) => {
+const EditPane: React.FC<IEditPaneProps> = (
+	props: React.PropsWithChildren<IEditPaneProps>,
+) => {
 	const { url, removeItem } = props;
 	return (
 		<div className="data-grid-edit-pane">
@@ -44,7 +47,9 @@ interface IItemViewProps {
 	removeItem(): void;
 }
 
-const ItemView: React.FC<IItemViewProps> = (props: React.PropsWithChildren<IItemViewProps>) => {
+const ItemView: React.FC<IItemViewProps> = (
+	props: React.PropsWithChildren<IItemViewProps>,
+) => {
 	const { url, getItemView, removeItem } = props;
 	const [itemView, setItemView] = React.useState<JSX.Element | undefined>(undefined);
 

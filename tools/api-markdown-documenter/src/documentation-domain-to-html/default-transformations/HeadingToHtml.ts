@@ -9,6 +9,7 @@
  */
 import type { Element as HastElement, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
+
 import type { HeadingNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
@@ -30,7 +31,10 @@ const maxHeadingLevel = 6;
  *
  * Observes {@link RenderContext.headingLevel} to determine the heading level to use.
  */
-export function headingToHtml(headingNode: HeadingNode, context: TransformationContext): HastNodes {
+export function headingToHtml(
+	headingNode: HeadingNode,
+	context: TransformationContext,
+): HastNodes {
 	const { headingLevel } = context;
 
 	// HTML only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple
@@ -50,7 +54,7 @@ export function headingToHtml(headingNode: HeadingNode, context: TransformationC
 	} else {
 		const transformedChildren: HastElement[] = [];
 		if (headingNode.id !== undefined) {
-			transformedChildren.push(h("a", { name: headingNode.id }));
+			transformedChildren.push(h("a", { id: headingNode.id }));
 		}
 		transformedChildren.push(
 			transformChildrenUnderTag({ name: "b" }, headingNode.children, context),

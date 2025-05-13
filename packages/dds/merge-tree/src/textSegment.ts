@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { BaseSegment, ISegment } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
-import { PropertySet } from "./properties.js";
+import type { PropertySet } from "./properties.js";
 
 // Maximum length of text segment to be considered to be merged with other segment.
 // Maximum segment length is at least 2x of it (not taking into account initial segment creation).
@@ -21,6 +21,7 @@ import { PropertySet } from "./properties.js";
 export const TextSegmentGranularity = 256;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IJSONTextSegment extends IJSONSegment {
@@ -28,6 +29,7 @@ export interface IJSONTextSegment extends IJSONSegment {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class TextSegment extends BaseSegment {
@@ -38,26 +40,25 @@ export class TextSegment extends BaseSegment {
 		return segment.type === TextSegment.type;
 	}
 
-	public static make(text: string, props?: PropertySet) {
-		const seg = new TextSegment(text);
-		if (props) {
-			seg.addProperties(props);
-		}
-		return seg;
+	public static make(text: string, props?: PropertySet): TextSegment {
+		return new TextSegment(text, props);
 	}
 
-	public static fromJSONObject(spec: any) {
+	public static fromJSONObject(spec: string | IJSONSegment): TextSegment | undefined {
 		if (typeof spec === "string") {
 			return new TextSegment(spec);
 		} else if (spec && typeof spec === "object" && "text" in spec) {
 			const textSpec = spec as IJSONTextSegment;
-			return TextSegment.make(textSpec.text, textSpec.props as PropertySet);
+			return TextSegment.make(textSpec.text, textSpec.props);
 		}
 		return undefined;
 	}
 
-	constructor(public text: string) {
-		super();
+	constructor(
+		public text: string,
+		props?: PropertySet,
+	) {
+		super(props);
 		this.cachedLength = text.length;
 	}
 
@@ -67,8 +68,8 @@ export class TextSegment extends BaseSegment {
 		return this.properties ? { text: this.text, props: { ...this.properties } } : this.text;
 	}
 
-	public clone(start = 0, end?: number) {
-		const text = this.text.substring(start, end);
+	public clone(start = 0, end?: number): TextSegment {
+		const text = this.text.slice(start, end);
 		const b = TextSegment.make(text, this.properties);
 		this.cloneInto(b);
 		return b;
@@ -83,37 +84,23 @@ export class TextSegment extends BaseSegment {
 		);
 	}
 
-	public toString() {
+	public toString(): string {
 		return this.text;
 	}
 
-	public append(segment: ISegment) {
+	public append(segment: ISegment): void {
 		assert(TextSegment.is(segment), 0x447 /* can only append text segment */);
 		super.append(segment);
 		this.text += segment.text;
 	}
 
-	protected createSplitSegmentAt(pos: number) {
+	protected createSplitSegmentAt(pos: number): TextSegment | undefined {
 		if (pos > 0) {
-			const remainingText = this.text.substring(pos);
-			this.text = this.text.substring(0, pos);
+			const remainingText = this.text.slice(Math.max(0, pos));
+			this.text = this.text.slice(0, Math.max(0, pos));
 			this.cachedLength = this.text.length;
 			const leafSegment = new TextSegment(remainingText);
 			return leafSegment;
 		}
 	}
-}
-
-/**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @alpha
- */
-export interface IMergeTreeTextHelper {
-	getText(
-		refSeq: number,
-		clientId: number,
-		placeholder: string,
-		start?: number,
-		end?: number,
-	): string;
 }

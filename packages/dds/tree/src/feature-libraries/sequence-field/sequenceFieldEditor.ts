@@ -5,116 +5,207 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { ChangesetLocalId } from "../../core/index.js";
-import { brand } from "../../util/index.js";
-import { FieldEditor, NodeId } from "../modular-schema/index.js";
+import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import type { FieldEditor, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
-import {
+import type {
 	CellId,
 	CellMark,
 	Changeset,
 	Insert,
 	Mark,
 	MarkList,
-	MoveId,
 	MoveIn,
 	MoveOut,
 } from "./types.js";
 import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
-	insert(index: number, count: number, firstId: ChangesetLocalId): Changeset;
-	remove(index: number, count: number, id: ChangesetLocalId): Changeset;
-	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset;
+	insert(index: number, count: number, firstId: CellId, revision: RevisionTag): Changeset;
+	remove(index: number, count: number, id: ChangesetLocalId, revision: RevisionTag): Changeset;
+	revive(
+		index: number,
+		count: number,
+		detachEvent: CellId,
+		revision: RevisionTag,
+		isIntention?: true,
+	): Changeset;
 
 	/**
 	 *
 	 * @param sourceIndex - The index of the first node move
 	 * @param count - The number of nodes to move
 	 * @param destIndex - The index the nodes should be moved to, interpreted before detaching the moved nodes
+	 * @param detachCellId - The local ID to assign to the first cell being emptied by the move
+	 * @param attachCellId - The ID to assign to the first cell being filled by the move
+	 * @param revision - The revision to assign to the move marks
 	 */
-	move(sourceIndex: number, count: number, destIndex: number, id: ChangesetLocalId): Changeset;
+	move(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		detachCellId: ChangesetLocalId,
+		attachCellId: CellId,
+		revision: RevisionTag,
+	): Changeset;
 
-	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset;
-	moveIn(destIndex: number, count: number, id: ChangesetLocalId): Changeset;
+	moveOut(
+		sourceIndex: number,
+		count: number,
+		id: ChangesetLocalId,
+		revision: RevisionTag,
+	): Changeset;
+	moveIn(
+		destIndex: number,
+		count: number,
+		moveId: ChangesetLocalId,
+		attachCellId: CellId,
+		revision: RevisionTag,
+	): Changeset;
 
-	return(sourceIndex: number, count: number, destIndex: number, detachEvent: CellId): Changeset;
+	return(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		detachCellId: CellId,
+		attachCellId: CellId,
+		revision: RevisionTag,
+	): Changeset;
 }
 
 export const sequenceFieldEditor = {
-	buildChildChange: (index: number, change: NodeId): Changeset =>
-		markAtIndex(index, { count: 1, changes: change }),
-	insert: (index: number, count: number, firstId: ChangesetLocalId): Changeset => {
+	buildChildChanges: (changes: Iterable<[number, NodeId]>): Changeset => {
+		const changeset: Changeset = [];
+		let currentIndex = 0;
+		for (const [index, change] of changes) {
+			assert(index >= currentIndex, 0xabe /* Child changes must be in order. */);
+			if (index > currentIndex) {
+				changeset.push({ count: index - currentIndex });
+			}
+			changeset.push({ count: 1, changes: change });
+			currentIndex = index + 1;
+		}
+		return changeset;
+	},
+	insert: (
+		index: number,
+		count: number,
+		firstId: CellId,
+		revision: RevisionTag | undefined,
+	): Changeset => {
 		const mark: CellMark<Insert> = {
 			type: "Insert",
-			id: firstId,
+			id: firstId.localId,
 			count,
-			cellId: { localId: firstId },
+			cellId: firstId,
+			revision,
 		};
 		return markAtIndex(index, mark);
 	},
-	remove: (index: number, count: number, id: ChangesetLocalId): Changeset =>
-		count === 0 ? [] : markAtIndex(index, { type: "Remove", count, id }),
+	remove: (
+		index: number,
+		count: number,
+		id: ChangesetLocalId,
+		revision: RevisionTag | undefined,
+	): Changeset =>
+		count === 0 ? [] : markAtIndex(index, { type: "Remove", count, id, revision }),
 
-	revive: (index: number, count: number, detachEvent: CellId): Changeset => {
+	revive: (
+		index: number,
+		count: number,
+		detachEvent: CellId,
+		revision: RevisionTag | undefined,
+	): Changeset => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: CellMark<Insert> = {
 			type: "Insert",
 			id: detachEvent.localId,
 			count,
 			cellId: detachEvent,
+			revision,
 		};
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
 
-	move(sourceIndex: number, count: number, destIndex: number, id: ChangesetLocalId): Changeset {
+	move(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		detachCellId: ChangesetLocalId,
+		attachCellId: CellId,
+		revision: RevisionTag | undefined,
+	): Changeset {
 		const moveIn: Mark = {
 			type: "MoveIn",
-			id,
+			id: detachCellId,
 			count,
-			cellId: { localId: id },
+			cellId: attachCellId,
+			revision,
 		};
 		const moveOut: Mark = {
 			type: "MoveOut",
-			id,
+			id: detachCellId,
 			count,
+			revision,
 		};
 		return moveMarksToMarkList(sourceIndex, count, destIndex, moveOut, moveIn);
 	},
 
-	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset {
+	moveOut(
+		sourceIndex: number,
+		count: number,
+		detachCellId: ChangesetLocalId,
+		revision: RevisionTag,
+	): Changeset {
 		const moveOut: Mark = {
 			type: "MoveOut",
-			id,
+			id: detachCellId,
 			count,
+			revision,
 		};
 		return markAtIndex(sourceIndex, moveOut);
 	},
 
-	moveIn(destIndex: number, count: number, id: ChangesetLocalId): Changeset {
+	moveIn(
+		destIndex: number,
+		count: number,
+		moveId: ChangesetLocalId,
+		attachCellId: CellId,
+		revision: RevisionTag,
+	): Changeset {
 		const moveIn: Mark = {
 			type: "MoveIn",
-			id,
+			id: moveId,
 			count,
-			cellId: { localId: id },
+			cellId: attachCellId,
+			revision,
 		};
 		return markAtIndex(destIndex, moveIn);
 	},
 
-	return(sourceIndex: number, count: number, destIndex: number, detachEvent: CellId): Changeset {
-		const id = brand<MoveId>(0);
+	return(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		detachCellId: CellId,
+		attachCellId: CellId,
+		revision: RevisionTag | undefined,
+	): Changeset {
 		const moveOut: CellMark<MoveOut> = {
 			type: "MoveOut",
-			id,
+			id: attachCellId.localId,
+			idOverride: detachCellId,
 			count,
+			revision,
 		};
 
 		const returnTo: CellMark<MoveIn> = {
 			type: "MoveIn",
-			id,
+			id: attachCellId.localId,
 			count,
-			cellId: detachEvent,
+			cellId: attachCellId,
+			revision,
 		};
 
 		return moveMarksToMarkList(sourceIndex, count, destIndex, moveOut, returnTo);

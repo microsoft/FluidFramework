@@ -4,11 +4,11 @@
  */
 
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
-import { ChangeEncodingContext } from "../core/index.js";
-import { JsonCompatibleReadOnly, fail } from "../util/index.js";
+import type { ChangeEncodingContext } from "../core/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * Translates decoded data to encoded data.
@@ -35,18 +35,18 @@ export interface IDecoder<TDecoded, TEncoded, TContext> {
 /**
  * Validates data complies with some particular schema.
  * Implementations are typically created by a {@link JsonValidator}.
- * @internal
+ * @alpha
  */
 export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
-	 * @returns Whether the data matches a schema.
+	 * Returns whether the data matches a schema.
 	 */
 	check(data: unknown): data is Static<Schema>;
 }
 
 /**
  * JSON schema validator compliant with draft 6 schema. See https://json-schema.org.
- * @internal
+ * @alpha
  */
 export interface JsonValidator {
 	/**
@@ -63,7 +63,7 @@ export interface JsonValidator {
 
 /**
  * Options relating to handling of persisted data.
- * @internal
+ * @alpha
  */
 export interface ICodecOptions {
 	/**
@@ -192,12 +192,7 @@ export function makeCodecFamily<TDecoded, TContext>(
 		[
 			formatVersion: FormatVersion,
 			codec:
-				| IMultiFormatCodec<
-						TDecoded,
-						JsonCompatibleReadOnly,
-						JsonCompatibleReadOnly,
-						TContext
-				  >
+				| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
 				| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
 		]
 	>,
@@ -208,7 +203,7 @@ export function makeCodecFamily<TDecoded, TContext>(
 	> = new Map();
 	for (const [formatVersion, codec] of registry) {
 		if (codecs.has(formatVersion)) {
-			fail("Duplicate codecs specified.");
+			fail(0xabf /* Duplicate codecs specified. */);
 		}
 		codecs.set(formatVersion, ensureBinaryEncoding(codec));
 	}
@@ -281,17 +276,21 @@ export function ensureBinaryEncoding<TDecoded, TContext>(
 /**
  * Codec for objects which carry no information.
  */
-export const unitCodec: IMultiFormatCodec<0, JsonCompatibleReadOnly, JsonCompatibleReadOnly, any> =
-	{
-		json: {
-			encode: () => 0,
-			decode: () => 0,
-		},
-		binary: {
-			encode: () => IsoBuffer.from(""),
-			decode: () => 0,
-		},
-	};
+export const unitCodec: IMultiFormatCodec<
+	0,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	unknown
+> = {
+	json: {
+		encode: () => 0,
+		decode: () => 0,
+	},
+	binary: {
+		encode: () => IsoBuffer.from(""),
+		decode: () => 0,
+	},
+};
 
 /**
  * Wraps a codec with JSON schema validation for its encoded type.
@@ -316,16 +315,46 @@ export function withSchemaValidation<
 		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
-				fail("Encoded schema should validate");
+				fail(0xac0 /* Encoded schema should validate */);
 			}
 			return encoded;
 		},
 		decode: (encoded: TValidate, context: TContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
-				fail("Encoded schema should validate");
+				fail(0xac1 /* Encoded schema should validate */);
 			}
 			// TODO: would be nice to provide a more specific validate type to the inner codec than the outer one gets.
 			return codec.decode(encoded, context) as unknown as TInMemoryFormat;
 		},
 	};
 }
+
+/**
+ * Versions of Fluid Framework client packages.
+ * @remarks
+ * Used to express compatibility requirements by indicating the oldest version with which compatibility must be maintained.
+ * @privateRemarks
+ * This scheme assumes a single version will always be enough to communicate compatibility.
+ * For this to work, compatibility has to be strictly increasing.
+ * If this is violated (for example a subset of incompatible features from 3.x that are not in 3.0 are back ported to 2.x),
+ * a more complex scheme may be needed to allow safely opting into incompatible features in those cases:
+ * such a system can be added if/when its needed since it will be opt in and thus non-breaking.
+ *
+ * TODO: this should likely be defined higher in the stack and specified when creating the container, possibly as part of its schema.
+ * @alpha
+ */
+export enum FluidClientVersion {
+	/** Fluid Framework Client 2.0 and newer. */
+	v2_0 = "v2_0",
+	/** Fluid Framework Client 2.1 and newer. */
+	v2_1 = "v2_1",
+	/** Fluid Framework Client 2.2 and newer. */
+	v2_2 = "v2_2",
+	/** Fluid Framework Client 2.3 and newer. */
+	v2_3 = "v2_3",
+}
+
+/**
+ * The version of this code.
+ */
+export const currentVersion: FluidClientVersion = FluidClientVersion.v2_3;

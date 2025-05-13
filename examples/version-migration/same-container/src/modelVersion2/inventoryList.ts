@@ -4,9 +4,9 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { SharedString } from "@fluidframework/sequence/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
+import { SharedString } from "@fluidframework/sequence/legacy";
 import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
@@ -132,9 +132,8 @@ export class InventoryList extends DataObject implements IInventoryList {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList>(
-	"inventory-list",
-	InventoryList,
-	[SharedMap.getFactory(), SharedString.getFactory()],
-	{},
-);
+export const InventoryListInstantiationFactory = new DataObjectFactory({
+	type: "inventory-list",
+	ctor: InventoryList,
+	sharedObjects: [SharedMap.getFactory(), SharedString.getFactory()],
+});

@@ -6,22 +6,22 @@
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IDocumentStorageService,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	ISnapshotTree,
 	ISummaryBlob,
 	ISummaryHandle,
 	ISummaryTree,
-	IVersion,
 	SummaryObject,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	ISummaryContext,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
 import { compress, decompress } from "lz4js";
 
-import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "..//index.js";
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy.js";
+import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../index.js";
 
 /**
  * @internal
@@ -74,7 +74,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		return !this.hasPrefix(blob)
 			? SummaryCompressionAlgorithm.None
 			: // eslint-disable-next-line no-bitwise
-			  IsoBuffer.from(blob)[0] & 0x0f;
+				IsoBuffer.from(blob)[0] & 0x0f;
 	}
 
 	/**
@@ -83,7 +83,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param algorithm - The algorithm to write.
 	 * @returns The blob with the algorithm as the first byte.
 	 */
-	private static writeAlgorithmToBlob(blob: ArrayBufferLike, algorithm: number): ArrayBufferLike {
+	private static writeAlgorithmToBlob(
+		blob: ArrayBufferLike,
+		algorithm: number,
+	): ArrayBufferLike {
 		if (algorithm === SummaryCompressionAlgorithm.None) {
 			const firstByte = IsoBuffer.from(blob)[0];
 			// eslint-disable-next-line no-bitwise
@@ -136,8 +139,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const original: ArrayBufferLike =
-				DocumentStorageServiceCompressionAdapter.toBinaryArray(summaryBlob.content);
+			const original: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+				summaryBlob.content,
+			);
 			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
 				original,
 				config,
@@ -287,9 +291,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static findMetadataHolderSummary(summary: ISummaryTree): ISummaryTree | undefined {
 		assert(typeof summary === "object", 0x6f7 /* summary must be a non-null object */);
-		for (const key of Object.keys(summary.tree)) {
-			const value = summary.tree[key];
-
+		for (const [key, value] of Object.entries(summary.tree)) {
 			if (Boolean(value) && value.type === SummaryType.Tree) {
 				const found = this.findMetadataHolderSummary(value);
 				if (found) {
@@ -450,6 +452,6 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 					DocumentStorageServiceCompressionAdapter.blobEncoder,
 					DocumentStorageServiceCompressionAdapter.blobDecoder,
 					this._config,
-			  ) as ISummaryTree);
+				) as ISummaryTree);
 	}
 }

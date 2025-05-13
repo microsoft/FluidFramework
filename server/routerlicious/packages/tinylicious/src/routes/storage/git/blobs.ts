@@ -65,7 +65,7 @@ export function create(store: nconf.Provider): Router {
 		const blobP = createBlob(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.body,
 		);
 
@@ -80,7 +80,7 @@ export function create(store: nconf.Provider): Router {
 		const blobP = getBlob(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params.sha,
 			useCache,
 		);
@@ -97,7 +97,7 @@ export function create(store: nconf.Provider): Router {
 		const blobP = getBlob(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params.sha,
 			useCache,
 		);

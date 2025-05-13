@@ -12,18 +12,18 @@ import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definit
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
-import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
-import type { SharedMatrix } from "@fluidframework/matrix/internal";
-import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IDocumentAttributes,
 	ISnapshotTree,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
+import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
+import { createDataStoreFactory } from "@fluidframework/test-utils/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -34,12 +34,11 @@ import {
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 import * as semver from "semver";
-import { pkgVersion } from "../packageVersion.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
+import { pkgVersion } from "../packageVersion.js";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -152,11 +151,7 @@ describeCompat(
 			const channelsTree = assertChannelsTree(rootOrDatastore);
 			return {
 				channelsTree,
-				datastoreTree: assertSubtree(
-					channelsTree,
-					key,
-					msg ?? `${key} channel not present`,
-				),
+				datastoreTree: assertSubtree(channelsTree, key, msg ?? `${key} channel not present`),
 			};
 		}
 		const assertDatastoreTree = (root: ISnapshotTree, key: string, msg?: string) =>
@@ -222,8 +217,8 @@ describeCompat(
 				[sharedCounterId, SharedCounter.getFactory()],
 			]);
 
-			// This dance is to ensure that we get reasonable version of ContainerRuntime.
-			// If we do not set IRuntimeFactory property, LocalCodeLoader will use ContainerRuntime from current version
+			// This dance is to ensure that we get reasonable version of IContainerRuntime.
+			// If we do not set IRuntimeFactory property, LocalCodeLoader will use IContainerRuntime from current version
 			// We only support limited (N/N-1) compatibility for container runtime and data stores, so that will not work.
 			// Use version supplied by test framework
 			const defaultFactory = createDataStoreFactory("default", factory);
@@ -283,8 +278,7 @@ describeCompat(
 				// the future.
 				apis.loader.version !== pkgVersion ||
 				(semver.compare(provider.driver.version, "0.46.0") === -1 &&
-					(provider.driver.type === "routerlicious" ||
-						provider.driver.type === "tinylicious"))
+					(provider.driver.type === "routerlicious" || provider.driver.type === "tinylicious"))
 			) {
 				this.skip();
 			}
@@ -423,8 +417,7 @@ describeCompat(
 
 				const snapshotTree = container.serialize();
 
-				const container2 =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 				// Check for default data store
 				const defaultDataStore =
@@ -437,33 +430,21 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
 					await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-				const sharedCell =
-					await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
+				const sharedCell = await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 				const sharedCounter =
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
-					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-						crcId,
-					);
-				const coc =
-					await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+				const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
 					await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 				assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
-				assert.strictEqual(
-					sharedDir.id,
-					sharedDirectoryId,
-					"Shared directory should exist!!",
-				);
+				assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
 				assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
 				assert.strictEqual(sharedCell.id, sharedCellId, "Shared cell should exist!!");
-				assert.strictEqual(
-					sharedCounter.id,
-					sharedCounterId,
-					"Shared counter should exist!!",
-				);
+				assert.strictEqual(sharedCounter.id, sharedCounterId, "Shared counter should exist!!");
 				assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
@@ -475,8 +456,7 @@ describeCompat(
 
 				const snapshotTree = container.serialize();
 
-				const container2 =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 				await container2.attach(request);
 
 				// Check for default data store
@@ -490,33 +470,21 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
 					await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-				const sharedCell =
-					await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
+				const sharedCell = await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 				const sharedCounter =
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
-					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-						crcId,
-					);
-				const coc =
-					await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+				const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
 					await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 				assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
-				assert.strictEqual(
-					sharedDir.id,
-					sharedDirectoryId,
-					"Shared directory should exist!!",
-				);
+				assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
 				assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
 				assert.strictEqual(sharedCell.id, sharedCellId, "Shared cell should exist!!");
-				assert.strictEqual(
-					sharedCounter.id,
-					sharedCounterId,
-					"Shared counter should exist!!",
-				);
+				assert.strictEqual(sharedCounter.id, sharedCounterId, "Shared counter should exist!!");
 				assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
@@ -542,33 +510,21 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
 					await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-				const sharedCell =
-					await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
+				const sharedCell = await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 				const sharedCounter =
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
-					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-						crcId,
-					);
-				const coc =
-					await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+				const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
 					await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 				assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
-				assert.strictEqual(
-					sharedDir.id,
-					sharedDirectoryId,
-					"Shared directory should exist!!",
-				);
+				assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
 				assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
 				assert.strictEqual(sharedCell.id, sharedCellId, "Shared cell should exist!!");
-				assert.strictEqual(
-					sharedCounter.id,
-					sharedCounterId,
-					"Shared counter should exist!!",
-				);
+				assert.strictEqual(sharedCounter.id, sharedCounterId, "Shared counter should exist!!");
 				assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
@@ -682,8 +638,7 @@ describeCompat(
 
 				const snapshotTree = container.serialize();
 
-				const container2 =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 				const defaultComponentAfter =
 					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
@@ -745,8 +700,7 @@ describeCompat(
 				sharedString1.insertText(0, str);
 				const snapshotTree = container.serialize();
 
-				const container2 =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 				const defaultDataStoreBefore =
 					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
 				const sharedStringBefore =
@@ -776,6 +730,7 @@ describeCompat(
 				);
 			});
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Rehydrate container, don't load a data store and then load after container attachment. Make changes to " +
 					"dds from rehydrated container and check reflection of changes in other container",
@@ -833,6 +788,7 @@ describeCompat(
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Rehydrate container, create but don't load a data store. Attach rehydrated container and load " +
 					"container 2 from another loader. Then load the created dataStore from container 2, make changes to dds " +
@@ -953,8 +909,7 @@ describeCompat(
 
 				const rehydratedEntryPoint =
 					await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
-				const rootOfDds2 =
-					await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
+				const rootOfDds2 = await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 				const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
 				assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
 				const dds2FromRC = await dds2Handle.get();
@@ -963,6 +918,7 @@ describeCompat(
 				assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
 			});
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Container rehydration with not bounded dds handle stored in root of bound dataStore. The not bounded dds " +
 					"also stores handle not bounded data store",
@@ -995,13 +951,10 @@ describeCompat(
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 					const rehydratedEntryPoint =
-						await getContainerEntryPointBackCompat<TestFluidObject>(
-							rehydratedContainer,
-						);
+						await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
 					const rootOfDds2 =
 						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
-					const dds2Handle: IFluidHandle<ISharedMap> | undefined =
-						rootOfDds2.get(dds2Key);
+					const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
 					assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
 					const dds2FromRC = await dds2Handle.get();
 
@@ -1011,10 +964,7 @@ describeCompat(
 
 					const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
 						dds2FromRC.get(dataStore2Key);
-					assert(
-						dataStore2Handle !== undefined,
-						`handle for [${dataStore2Key}] must exist`,
-					);
+					assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
 					const dataStore2FromRC = await dataStore2Handle.get();
 					assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
 					assert.strictEqual(
@@ -1025,6 +975,7 @@ describeCompat(
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Container rehydration with not bounded data store handle stored in root of bound dataStore. " +
 					"The not bounded data store also stores handle not bounded dds",
@@ -1044,8 +995,7 @@ describeCompat(
 						ddsId,
 						SharedMap.getFactory().type,
 					) as ISharedMap;
-					const rootOfDataStore2 =
-						await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
+					const rootOfDataStore2 = await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
 					const dds2Key = "dds2";
 					rootOfDataStore2.set(dds2Key, dds2.handle);
 
@@ -1059,23 +1009,16 @@ describeCompat(
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 					const rehydratedEntryPoint =
-						await getContainerEntryPointBackCompat<TestFluidObject>(
-							rehydratedContainer,
-						);
+						await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
 					const rehydratedRootOfDataStore2 =
 						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 					const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
 						rehydratedRootOfDataStore2.get(dataStore2Key);
-					assert(
-						dataStore2Handle !== undefined,
-						`handle for [${dataStore2Key}] must exist`,
-					);
+					assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
 					const dataStore2FromRC = await dataStore2Handle.get();
 
-					const rootOfDds2 =
-						await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
-					const dds2Handle: IFluidHandle<ISharedMap> | undefined =
-						rootOfDds2.get(dds2Key);
+					const rootOfDds2 = await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
+					const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
 					assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
 					const dds2FromRC = await dds2Handle.get();
 					assert(dds2FromRC, "ddd2 should have been serialized properly");
@@ -1109,9 +1052,7 @@ describeCompat(
 			const summaryTree = buildSummaryTree(baseAttributes, baseQuorum, baseSummarizer);
 			const summaryString = JSON.stringify(summaryTree);
 
-			await assert.doesNotReject(
-				loader.rehydrateDetachedContainerFromSnapshot(summaryString),
-			);
+			await assert.doesNotReject(loader.rehydrateDetachedContainerFromSnapshot(summaryString));
 		});
 
 		it("can rehydrate from summary that does not start with seq. #0", async () => {
@@ -1122,9 +1063,7 @@ describeCompat(
 			const summaryTree = buildSummaryTree(attr, baseQuorum, baseSummarizer);
 			const summaryString = JSON.stringify(summaryTree);
 
-			await assert.doesNotReject(
-				loader.rehydrateDetachedContainerFromSnapshot(summaryString),
-			);
+			await assert.doesNotReject(loader.rehydrateDetachedContainerFromSnapshot(summaryString));
 		});
 
 		// Run once with isolated channels

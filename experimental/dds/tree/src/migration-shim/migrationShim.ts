@@ -10,19 +10,19 @@ import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	IChannelFactory,
-	type IChannelServices,
 	type IFluidDataStoreRuntime,
 	type IChannel,
-} from '@fluidframework/datastore-definitions';
+	type IChannelServices,
+} from '@fluidframework/datastore-definitions/internal';
+import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import type { SessionId } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
-import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from '@fluidframework/runtime-definitions';
+} from '@fluidframework/runtime-definitions/internal';
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { type ITree } from '@fluidframework/tree';
 

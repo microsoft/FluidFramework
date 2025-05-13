@@ -1,0 +1,21 @@
+{
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*"],
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		// Allows writing type checking expression without having to use the results.
+		"noUnusedLocals": false,
+		// Check that the Fluid Framework packages pass type checking.
+		// At the time of writing, this setting is currently the inherited default,
+		// however this package has reason to enable checking libs even if this default is changed in the future
+		// since the main purpose of this package is to type check its dependencies.
+		// Thus this setting is kept here explicitly.
+		"skipLibCheck": false,
+		// Due to several of our own packages' exports failing to build with "exactOptionalPropertyTypes",
+		// disable it to prevent that from erroring when combined with "skipLibCheck".
+		// TODO: these errors should be fixed!
+		"exactOptionalPropertyTypes": false,
+	},
+}

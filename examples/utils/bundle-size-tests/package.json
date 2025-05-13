@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bundle-size-tests",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.41.0",
 	"private": true,
 	"description": "A package for understanding the bundle size of Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -16,59 +16,86 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"clean": "rimraf --glob dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
+		"clean": "rimraf --glob build dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"explore:tree": "fluid-build . --task webpack && source-map-explorer ./build/sharedTree.js --html bundleAnalysis/reportTree.html",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
+		"test": "npm run test:mocha",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:esm": "mocha",
 		"webpack": "webpack",
 		"webpack:profile": "npm run webpack"
 	},
 	"dependencies": {
-		"@fluid-experimental/odsp-client": "workspace:~",
+		"@fluid-experimental/tree": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"fluid-framework": "workspace:~",
-		"source-map-loader": "^2.0.0"
+		"fluid-framework": "workspace:~"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "~1.9.3",
 		"@cerner/duplicate-package-checker-webpack-plugin": "~2.3.0",
-		"@fluid-tools/version-tools": "^0.38.0",
+		"@fluid-tools/version-tools": "^0.55.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/bundle-size-tools": "^0.38.0",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/build-tools": "^0.55.0",
+		"@fluidframework/bundle-size-tools": "^0.55.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"eslint": "~8.55.0",
-		"prettier": "~3.0.3",
-		"puppeteer": "^22.2.0",
+		"mocha": "^10.8.2",
+		"puppeteer": "^23.6.0",
 		"rimraf": "^4.4.0",
+		"source-map-explorer": "^2.5.3",
+		"source-map-loader": "^5.0.0",
 		"string-replace-loader": "^3.1.0",
-		"ts-loader": "^9.3.0",
-		"typescript": "~5.1.6",
-		"webpack": "^5.82.0",
+		"ts-loader": "^9.5.1",
+		"typescript": "~5.4.5",
+		"webpack": "^5.94.0",
 		"webpack-bundle-analyzer": "^4.5.0",
-		"webpack-cli": "^4.9.2"
+		"webpack-cli": "^5.1.4"
 	},
 	"comments": [
 		"@cerner/duplicate-package-checker-webpack-plugin is pinned since newer version (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828"
 	],
+	"fluidBuild": {
+		"tasks": {
+			"build:test": [
+				"...",
+				"webpack"
+			],
+			"webpack": [
+				"^build:esnext"
+			],
+			"test:mocha:esm": [
+				"...",
+				"webpack"
+			]
+		}
+	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

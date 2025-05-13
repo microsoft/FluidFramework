@@ -137,7 +137,9 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 			throw new Error(MSG.CANNOT_INSERT_UNKNOWN_PROPERTY + in_id);
 		}
 
-		if (this._optionalChildren[in_id].toUpperCase() !== in_property.getTypeid().toUpperCase()) {
+		if (
+			this._optionalChildren[in_id].toUpperCase() !== in_property.getTypeid().toUpperCase()
+		) {
 			throw new Error(
 				MSG.MISMATCHING_PROPERTY_TYPEID +
 					this._optionalChildren[in_id] +
@@ -248,11 +250,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 
 		if (this._dynamicChildren[in_key]) {
 			// Remove from the indexed collection
-			IndexedCollectionBaseProperty.prototype._removeByKey.call(
-				this,
-				in_key,
-				in_reportToView,
-			);
+			IndexedCollectionBaseProperty.prototype._removeByKey.call(this, in_key, in_reportToView);
 		} else {
 			console.error(MSG.REMOVING_NON_EXISTING_KEY + in_key);
 		}

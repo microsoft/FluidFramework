@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree } from "@fluidframework/tree";
+import { SharedTree } from "fluid-framework";
 
 export function apisToBundle() {
-	SharedTree.getFactory();
+	return SharedTree;
 }

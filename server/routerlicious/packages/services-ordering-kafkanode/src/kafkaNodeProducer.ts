@@ -13,6 +13,7 @@ import {
 	IProducer,
 	PendingBoxcar,
 	MaxBatchSize,
+	MaxKafkaMessageSize,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import * as kafka from "kafka-node";
@@ -24,9 +25,9 @@ import { ensureTopics } from "./kafkaTopics";
  */
 export class KafkaNodeProducer implements IProducer {
 	private readonly messages = new Map<string, IPendingBoxcar[]>();
-	private client: kafka.KafkaClient;
-	private producer: kafka.Producer;
-	private sendPending: NodeJS.Immediate;
+	private client!: kafka.KafkaClient;
+	private producer!: kafka.Producer;
+	private sendPending?: NodeJS.Immediate;
 	private readonly events = new EventEmitter();
 	private connecting = false;
 	private connected = false;
@@ -44,7 +45,7 @@ export class KafkaNodeProducer implements IProducer {
 	) {
 		clientOptions.clientId = clientId;
 		this.maxBatchSize = maxBatchSize ?? MaxBatchSize;
-		this.maxMessageSize = maxMessageSize ?? Number.MAX_SAFE_INTEGER;
+		this.maxMessageSize = maxMessageSize ?? MaxKafkaMessageSize;
 		this.connect();
 	}
 
@@ -60,10 +61,13 @@ export class KafkaNodeProducer implements IProducer {
 		const key = `${tenantId}/${documentId}`;
 
 		// Get the list of boxcars for the given key
-		if (!this.messages.has(key)) {
-			this.messages.set(key, [new PendingBoxcar(tenantId, documentId)]);
+		const existingBoxcars = this.messages.get(key);
+		const boxcars: IPendingBoxcar[] = existingBoxcars ?? [
+			new PendingBoxcar(tenantId, documentId),
+		];
+		if (!existingBoxcars) {
+			this.messages.set(key, boxcars);
 		}
-		const boxcars = this.messages.get(key);
 
 		// Create a new boxcar if necessary (will only happen when not connected)
 		if (boxcars[boxcars.length - 1].messages.length + messages.length >= this.maxBatchSize) {
@@ -103,6 +107,14 @@ export class KafkaNodeProducer implements IProducer {
 		listener: (...args: any[]) => void,
 	): this {
 		this.events.once(event, listener);
+		return this;
+	}
+
+	public off(
+		event: "connected" | "produced" | "error",
+		listener: (...args: any[]) => void,
+	): this {
+		this.events.off(event, listener);
 		return this;
 	}
 
@@ -222,7 +234,8 @@ export class KafkaNodeProducer implements IProducer {
 		// Close the client if it exists
 		if (this.client) {
 			this.client.close();
-			this.client = undefined;
+			// This gets re-assigned immediately in `this.connect()`
+			this.client = undefined as unknown as kafka.KafkaClient;
 		}
 
 		this.connecting = this.connected = false;

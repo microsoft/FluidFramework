@@ -5,15 +5,16 @@
 
 import { LocalReferencePosition } from "./localReference.js";
 import { ISegment } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export type Trackable = ISegment | LocalReferencePosition;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ITrackingGroup {
@@ -25,14 +26,13 @@ export interface ITrackingGroup {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class TrackingGroup implements ITrackingGroup {
-	// eslint-disable-next-line import/no-deprecated
 	private readonly trackedSet: SortedSegmentSet<Trackable>;
 
 	constructor() {
-		// eslint-disable-next-line import/no-deprecated
 		this.trackedSet = new SortedSegmentSet<Trackable>();
 	}
 
@@ -75,7 +75,7 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 	}
 
 	public get tracked(): readonly Trackable[] {
-		return Array.from(this.trackedSet);
+		return [...this.trackedSet];
 	}
 
 	public get size(): number {
@@ -104,6 +104,7 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 
 /**
  * A collection of {@link ITrackingGroup}.
+ * @legacy
  * @alpha
  */
 export class TrackingGroupCollection {
@@ -145,9 +146,9 @@ export class TrackingGroupCollection {
 	}
 
 	public copyTo(trackable: Trackable): void {
-		this._trackingGroups.forEach((sg) => {
+		for (const sg of this._trackingGroups) {
 			trackable.trackingCollection.link(sg);
-		});
+		}
 	}
 
 	public get empty(): boolean {

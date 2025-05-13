@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getArrayStatistics } from "./ReporterUtilities";
+import { getArrayStatistics } from "./RunnerUtilities";
 
 /**
  * @public

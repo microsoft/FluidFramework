@@ -2,43 +2,69 @@
 
 A [tree](<https://en.wikipedia.org/wiki/Tree_(data_structure)>) data structure for the [Fluid Framework](https://fluidframework.com/).
 
+To get started working with `SharedTree` in your application, read this [quick start guide](https://fluidframework.com/docs/start/tree-start/).
+
 The contents of this package are also reported as part of the [`fluid-framework` package](https://www.npmjs.com/package/fluid-framework) which provides an alternative way to consume the functionality from this package.
 
 [SharedTree Philosophy](./docs/SharedTree%20Philosophy.md) covers the goals of the SharedTree project,
 and some of the implications of those goals for developers working on this package.
 
-## Status
-
-Notable consideration that early adopters should be wary of:
-
--   The persisted format is not stable and long term support for persisted format is not yet in effect.
-    This means clients running more recent versions of SharedTree may find themselves unable to load old document or may corrupt them when editing.
-    Current estimate for LTS is April 2024.
--   SharedTree currently has unbounded memory growth:
-    -   Removed content is retained forever.
-    -   Accessing an `EditableField` object (from its parent, e.g., with `getField`) in a loop will leak unbounded memory.
--   All changes are atomized by the `visitDelta` function.
-    This means that, when inserting/removing/moving 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes.
-    Change notification consumers that are downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
--   Some documentation (such as this readme and [the roadmap](docs/roadmap.md)) are out of date.
-    The [API documentation](https://fluidframework.com/docs/api/v2/tree) which is derived from the documentation comments in the source code should be more up to date.
-
-More details on the development status of various features can be found in the [roadmap](docs/roadmap.md).
-
-<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
 
-When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
+
+If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
+
+## Installation
+
+To get started, install the package by running the following command:
+
+```bash
+npm i @fluidframework/tree
+```
+
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/tree` like normal.
+
+To access the `beta` APIs, import via `@fluidframework/tree/beta`.
+
+To access the `alpha` APIs, import via `@fluidframework/tree/alpha`.
+
+To access the `legacy` APIs, import via `@fluidframework/tree/legacy`.
+
+## API Documentation
+
+API documentation for **@fluidframework/tree** is available at <https://fluidframework.com/docs/apis/tree>.
 
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
+
+## Status
+
+Notable consideration that early adopters should be wary of:
+
+-   The persisted format is stable such that documents created with released versions 2.0.0 or greater of this package are fully supported long term.
+-   In versions prior to 2.1.0, SharedTree had unbounded memory growth:
+    -   Removed content was retained in memory and persisted in the document at rest ([fix](https://github.com/microsoft/FluidFramework/pull/21372)). This was fixed in version 2.1.0.
+-   All range changes are atomized.
+    This means that, when inserting/removing/moving multiple contiguous nodes the edit is split up into separate single node edits.
+    This can impact the merge behavior of these edits, as well as the performance of large array edits.
+-   Some documentation (such as this readme and [the roadmap](docs/roadmap.md)) are out of date.
+    The [API documentation](https://fluidframework.com/docs/api/v2/tree) which is derived from the documentation comments in the source code should be more up to date.
+
+More details on the development status of various features can be found in the [roadmap](docs/roadmap.md).
 
 ## Motivation
 
@@ -104,10 +130,40 @@ This package can be developed using any of the [regular workflows for working on
 -   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
     This will recommend a test runner extension, which should be installed.
 -   Build the the tree package as normal (for run example: `pnpm i && pnpm run build` in the `tree` directory).
--   After editing the tree project, run `npm run build` (still in the `tree`) directory.
+-   After editing the tree project, run `pnpm run build` (still in the `tree`) directory.
 -   Run and debug tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
     both of these are provided by the mocha testing extension thats recommended by the workspace.
     Note that this does not build the tests, so always be sure to build first.
+
+## Frequently asked questions
+
+### Why can't I assign insertable content to a field?
+
+``` typescript
+import { SchemaFactory } from "@fluidframework/tree";
+
+const factory = new SchemaFactory("com.fluidframework.faq");
+class Empty extends factory.object("Empty", {}) {}
+class Test extends factory.object("Test", { data: Empty }) {}
+function set(node: Test) {
+	node.data = {}; // Why does this not compile?
+}
+```
+
+This is due to [a limitation of the TypeScript language](https://github.com/microsoft/TypeScript/issues/43826) which makes it impossible for tree to allow that to type-check while keeping the strong typing on the getters for reading data.
+
+To workaround this, create an unhydrated node:
+
+``` typescript
+node.data = new Empty({}); // The unhydrated node's type matches the type returned by the getter, and thus is compatible with the setter
+```
+
+Insertable content can still be used in other places, like when nested in other insertable content, in ArrayNode editing methods, and when initializing views.
+
+``` typescript
+// The empty node can be implicitly constructed from `{}` here, since this context allows insertable content, not just nodes.
+const node = new Test({ data: {} });
+```
 
 ## Architecture
 
@@ -145,21 +201,20 @@ When nothing in that container references the DDS anymore, it may get garbage co
 The tree DDS itself, or more specifically [`shared-tree-core`](./src/shared-tree-core/README.md) is composed of a collection of indexes (just like a database) which contribute data which get persisted as part of the summary in the container.
 `shared-tree-core` owns these databases, and is responsible for populating them from summaries and updating them when summarizing.
 
-See [indexes and branches](./docs/indexes%20and%20branches.md) for details on how this works with branches.
+See [indexes and branches](./docs/main/indexes-and-branches.md) for details on how this works with branches.
 
-When applications want access to the `tree`'s data, they do so through an [`ISharedTreeView`](./src/shared-tree/sharedTreeView.ts) which abstracts the indexes into nice application facing APIs.
+When applications want access to the `tree`'s data, they do so through an [`TreeView`](./src/simple-tree/tree.ts) which abstracts the indexes into nice application facing APIs based on the [`view-schema`](./src/core/schema-view/README.md).
 Views may also have state from the application, including:
 
 -   [`view-schema`](./src/core/schema-view/README.md)
--   adapters for out-of-schema data
--   request or hints for what subsets of the tree to keep in memory
+-   adapters for out-of-schema data (TODO)
+-   request or hints for what subsets of the tree to keep in memory (TODO)
 -   pending transactions
--   registrations for application callbacks / events.
+-   registrations for application callbacks / events
 
-[`shared-tree`](./src/shared-tree/) provides a default view which it owns, but applications can create more if desired, which they will own.
-Since views subscribe to events from `shared-tree`, explicitly disposing any additionally created ones is required to avoid leaks.
+Since views subscribe to events from `shared-tree`, explicitly disposing any created ones is required to avoid leaks.
 
-[transactions](./src/core/transaction/README.md) are created by `ISharedTreeView`s and are currently synchronous.
+Transactions are created by `Tree.runTransaction` and are currently synchronous.
 Support for asynchronous transactions, with the application managing the lifetime and ensuring it does not exceed the lifetime of the view,
 could be added in the future.
 
@@ -284,6 +339,19 @@ graph LR;
     Indexes--"delta (for apps that want deltas)"-->app
 ```
 
+### Schema Evolvability
+
+Over time, application authors may want to change the schema for their documents.
+For example, they might want to add support for a new application feature or represent existing content in some new way.
+
+Before doing so, application authors must consider compatibility constraints within their ecosystem.
+Most ecosystems don't have a way to ensure all documents an application may open are using the new schema or even that all users within a collaborative session are using the same code version.
+This can be problematic when two clients using code versions with different document schema attempt to collaborate.
+
+As a result, applications must be forward-thinking about policies around when their code supports working with some particular document.
+
+See [Schema Evolution](./docs/user-facing/schema-evolution.md) for a comprehensive treatment of this problem.
+
 ### Dependencies
 
 `@fluidframework/tree` depends on the Fluid runtime (various packages in `@fluidframework/*`)
@@ -319,7 +387,7 @@ Some of the principles used to guide this are:
     Another aspect of reducing transitive dependencies is reducing the required dependencies for particular scenarios.
     This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.
     `shared-tree-core` is an excellent example of this: it can be run with no indexes, and trivial a change family allowing it to have very few required dependencies.
-    This often takes the form of either depending on interfaces (which can have their implementation swapped out or mocked), like [`ChangeFamily`](./src/change-family/README.md), or collection functionality in a registry, like we do for `FieldKinds` and `shared-tree-core`'s indexes.
+    This often takes the form of either depending on interfaces (which can have their implementation swapped out or mocked), like [`ChangeFamily`](./src/core/change-family/README.md), or collection functionality in a registry, like we do for `FieldKinds` and `shared-tree-core`'s indexes.
     Dependency injection is one example of a useful pattern for reducing transitive dependencies.
     In addition to simplifying reasoning about the system (less total to think about for a given scenario) and simplifying testing,
     this approach also makes the lifecycle for new features easier to manage, since they can be fully implemented and tested without having to modify code outside of themselves.
@@ -378,17 +446,101 @@ flowchart
     package-->runtime["Fluid runtime"]
 ```
 
-# Open Design Questions
+## Open Design Questions
 
 The design issues here all impact the architectural role of top-level modules in this package in a way that when fixed will likely require changes to the architectural details covered above.
 Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
 
-## How should specialized sub-tree handling compose?
+### How should specialized sub-tree handling compose?
 
-Applications should have a domain model that can mix editable tree nodes with custom implementations as needed.
-Custom implementations should probably be able to be projections of editable trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
+Applications should have a domain model that can mix tree nodes with custom implementations as needed.
+Custom implementations should probably be able to be projections of flex trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
 This is important for performance/scalability and might be how we do virtualization (maybe subtrees that aren't downloaded are just one custom representation?).
-This might also be the layer at which we hook up schematize.
-Alternatively, it might be an explicitly two-phase setup (schematize then normalize), but we might share logic between the two and have non-copying bypasses.
 
-How all this relates to [dependency-tracking](./src/core/dependency-tracking/README.md) is to be determined.
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Minimum Client Requirements
+
+These are the platform requirements for the current version of Fluid Framework Client Packages.
+These requirements err on the side of being too strict since within a major version they can be relaxed over time, but not made stricter.
+For Long Term Support (LTS) versions this can require supporting these platforms for several years.
+
+It is likely that other configurations will work, but they are not supported: if they stop working, we do not consider that a bug.
+If you would benefit from support for something not listed here, file an issue and the product team will evaluate your request.
+When making such a request please include if the configuration already works (and thus the request is just that it becomes officially supported), or if changes are required to get it working.
+
+### Supported Runtimes
+
+-   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+    -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
+-   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
+
+### Supported Tools
+
+-   TypeScript 5.4:
+    -   All [`strict`](https://www.typescriptlang.org/tsconfig) options are supported.
+    -   [`strictNullChecks`](https://www.typescriptlang.org/tsconfig) is required.
+    -   [Configuration options deprecated in 5.0](https://github.com/microsoft/TypeScript/issues/51909) are not supported.
+    -   `exactOptionalPropertyTypes` is currently not fully supported.
+        If used, narrowing members of Fluid Framework types types using `in`, `Reflect.has`, `Object.hasOwn` or `Object.prototype.hasOwnProperty` should be avoided as they may incorrectly exclude `undefined` from the possible values in some cases.
+-   [webpack](https://webpack.js.org/) 5
+    -   We are not intending to be prescriptive about what bundler to use.
+        Other bundlers which can handle ES Modules should work, but webpack is the only one we actively test.
+
+### Module Resolution
+
+[`Node16`, `NodeNext`, or `Bundler`](https://www.typescriptlang.org/tsconfig#moduleResolution) resolution should be used with TypeScript compilerOptions to follow the [Node.js v12+ ESM Resolution and Loading algorithm](https://nodejs.github.io/nodejs.dev/en/api/v20/esm/#resolution-and-loading-algorithm).
+Node10 resolution is not supported as it does not support Fluid Framework's API structuring pattern that is used to distinguish stable APIs from those that are in development.
+
+### Module Formats
+
+-   ES Modules:
+    ES Modules are the preferred way to consume our client packages (including in NodeJs) and consuming our client packages from ES Modules is fully supported.
+-   CommonJs:
+    Consuming our client packages as CommonJs is supported only in NodeJS and only for the cases listed below.
+    This is done to accommodate some workflows without good ES Module support.
+    If you have a workflow you would like included in this list, file an issue.
+    Once this list of workflows motivating CommonJS support is empty, we may drop support for CommonJS one year after notice of the change is posted here.
+
+    -   Testing with Jest (which lacks [stable ESM support](https://jestjs.io/docs/ecmascript-modules) due to [unstable APIs in NodeJs](https://github.com/nodejs/node/issues/37648))
+
+## Contribution Guidelines
+
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+
+-   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
+-   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+## Help
+
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
+Thank you!
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

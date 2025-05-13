@@ -3,5 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { createDirectoryWithInterception, createSharedMapWithInterception } from "./map/index.js";
+export {
+	createDirectoryWithInterception,
+	createSharedMapWithInterception,
+} from "./map/index.js";
 export { createSharedStringWithInterception } from "./sequence/index.js";

@@ -1,0 +1,115 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-upload-stage-telemetry
+
+# This template adds a new stage to a pipeline.
+# The new stage "targets" another stage (specified as a parameter) and uploads telemetry about that stage to Kusto.
+
+parameters:
+
+# Id for the stage whose runtime + result telemetry will be uploaded to Kusto.
+- name: stageId
+  type: string
+
+# If true, the stage that uploads pipeline telemetry to Kusto will include tasks to upload
+# test pass rate telemetry for the pipeline specified in stageId.
+- name: uploadTestPassRateTelemetry
+  type: boolean
+  default: false
+
+# Unique identifier for the pipeline that is including this template.
+# Used to identify telemetry data in Kusto for this pipeline.
+- name: pipelineIdentifierForTelemetry
+  type: string
+
+- name: testWorkspace
+  type: string
+
+stages:
+- stage: ${{ parameters.stageId }}_upload_telemetry
+  displayName: Upload stage telemetry to Kusto ('${{ parameters.stageId }}')
+  condition: succeededOrFailed()
+  dependsOn:
+    - ${{ parameters.stageId}}
+  variables:
+    - group: ado-feeds
+  jobs:
+  - job: upload_run_telemetry
+    displayName: Upload stage telemetry to Kusto
+    pool: Small-eastus2
+    variables:
+    - group: ado-feeds
+
+    steps:
+    - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
+      parameters:
+        pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
+
+    - task: Bash@3
+      displayName: Get stage timing and result data from ADO
+      env:
+        BUILD_ID: $(Build.BuildId)
+        ADO_API_TOKEN: $(System.AccessToken)
+        WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
+      inputs:
+        targetType: 'inline'
+        script: |
+          set -eu -o pipefail
+
+          echo "Creating output folder '$WORK_FOLDER'"
+          mkdir -p $WORK_FOLDER
+
+          echo "Retrieving data from ADO API";
+          echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2\""
+          curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
+
+    - task: Bash@3
+      displayName: Submit telemetry for stage timing and result
+      env:
+        BUILD_ID: $(Build.BuildId)
+        STAGE_ID: ${{ parameters.stageId }}
+        PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
+        WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(pathToTelemetryGenerator)
+        script: |
+          set -eu -o pipefail
+
+          echo "Listing files in '$WORK_FOLDER'"
+          ls -laR $WORK_FOLDER;
+
+          npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+
+    - ${{ if parameters.uploadTestPassRateTelemetry }}:
+      - task: Bash@3
+        displayName: Get test pass rate data from ADO
+        env:
+          BUILD_ID: $(Build.BuildId)
+          STAGE_ID: ${{ parameters.stageId }}
+          ADO_API_TOKEN: $(System.AccessToken)
+          WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTestPassRate
+        inputs:
+          targetType: 'inline'
+          script: |
+            set -eu -o pipefail
+            echo "Fetching test pass rate data and saving into JSON files"
+            node "$(Build.SourcesDirectory)/scripts/get-test-pass-rate.mjs"
+
+      - task: Bash@3
+        displayName: Submit telemetry for test pass rate
+        env:
+          BUILD_ID: $(Build.BuildId)
+          STAGE_ID: ${{ parameters.stageId }}
+          PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
+          WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTestPassRate
+        inputs:
+          targetType: 'inline'
+          workingDirectory: $(pathToTelemetryGenerator)
+          script: |
+            set -eu -o pipefail
+            echo "Listing files in '$WORK_FOLDER'"
+            ls -laR $WORK_FOLDER;
+
+            npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/testPassRate.js" --dir "$WORK_FOLDER"

@@ -6,94 +6,46 @@
 # It's designed to be included by other yaml files inside a job section.
 
 parameters:
-# Path to the folder that contains the source code for the telemetry-generator package.
-# The default should work in most/all scenarios. Won't work if the repo is checked out as a "secondary repo" in some
-# pipeline (which we don't do today) because $(Build.SourcesDirectory) would then point to the root of the primary repo.
-- name: pathToTelemetryGenerator
-  type: string
-  default: '$(Build.SourcesDirectory)/tools/telemetry-generator'
-
-# URL for the "Dev feed" in our ADO project. All Fluid packages will be resolved from here when installing the
-# dependencies for telemetry generator and aria-logger.
-- name: devFeedUrl
+# Path where the telemetry-generator package should be installed.
+# It should be an empty directory so that it doesn't interfere with anything else.
+# The caller of this template will need to know this in order to point to the correct locations for the handlers,
+# which will be under <this path>/node_modules/@ff-internal/telemetry-generator/dist/handlers/.
+# It must be provided as an absolute path.
+- name: pathForTelemetryGeneratorInstall
   type: string
 
-# URL for the "Office feed" in our ADO project. Packages in the @microsoft scope will be resolved from here when
-# installing the dependencies for telemetry generator and aria-logger.
-- name: officeFeedUrl
+# Version of telemetry-generator to install.
+# Should be specified as a semver range that can be interpreted by npm install @ff-internal/telemetry-generator@<version>.
+# Defaults to latest.
+- name: versionToInstall
   type: string
-
-# If the template should try to checkout the repo. If the job that includes this template already has steps to check out
-# the repo for other purposes, this should be set to false.
-- name: isCheckoutNeeded
-  type: boolean
-  default: false
+  default: latest
 
 steps:
-- ${{ if eq(parameters.isCheckoutNeeded, true) }}:
-  # Need to checkout the repo in order to run @fluid-tools/telemetry-generator which we don't publish right now.
-  - checkout: self
-    clean: true
-
-- template: include-use-node-version.yml
+- template: /tools/pipelines/templates/include-use-node-version.yml@self
 
 - task: Bash@3
   displayName: Print parameter/variable values for template
   inputs:
     targetType: 'inline'
     script: |
+      set -eu -o pipefail
       echo "
       Parameters:
-        pathToTelemetryGenerator=${{ parameters.pathToTelemetryGenerator }}
-        devFeedUrl=${{ parameters.devFeedUrl }}
-        officeFeedUrl=${{ parameters.officeFeedUrl }}
+        pathForTelemetryGeneratorInstall=${{ parameters.pathForTelemetryGeneratorInstall }}
       "
 
-- task: Bash@3
-  displayName: Initialize npmrc
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
-    # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
-    script: |
-      echo Initialize package
-      npm init --yes
-
-      echo Generating .npmrc
-      echo "registry=https://registry.npmjs.org" >> ./.npmrc
-      echo "always-auth=false" >> ./.npmrc
-
-      echo "@fluidframework:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@fluid-experimental:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@fluid-tools:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@fluid-internal:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@fluid-private:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@ff-internal:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@microsoft:registry=${{ parameters.officeFeedUrl }}" >> ./.npmrc
-      echo "always-auth=true" >> ./.npmrc
-      cat .npmrc
-
-# Auth to internal ADO feeds
-- task: npmAuthenticate@0
-  displayName: 'npm authenticate (internal ADO feeds)'
-  inputs:
-    workingFile: ${{ parameters.pathToTelemetryGenerator }}/.npmrc
-
-# Install logger package
-- task: Npm@1
-  displayName: 'npm install aria logger'
-  retryCountOnTaskFailure: 1
-  inputs:
-    workingDir: ${{ parameters.pathToTelemetryGenerator }}
-    command: 'custom'
-    customCommand: 'install @ff-internal/aria-logger'
-    customRegistry: 'useNpmrc'
+- template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
 - task: Bash@3
-  displayName: 'Prepare telemetry-generator'
+  displayName: 'Install telemetry-generator'
+  retryCountOnTaskFailure: 4
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
     script: |
-      npm i;
-      npm run build:compile;
+      set -eu -o pipefail
+
+      mkdir -p ${{ parameters.pathForTelemetryGeneratorInstall }}
+      cd ${{ parameters.pathForTelemetryGeneratorInstall }}
+
+      npm install @ff-internal/telemetry-generator@${{ parameters.versionToInstall }}

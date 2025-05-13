@@ -55,6 +55,16 @@ export interface IConsumer {
 	resume(): Promise<void>;
 
 	/**
+	 * Pauses retrieval of new messages without a rebalance, and seeks the offset to the specified value.
+	 */
+	pauseFetching?(partitionId: number, seekTimeout: number, offset?: number): Promise<void>;
+
+	/**
+	 * Resumes retrieval of messages without a rebalance.
+	 */
+	resumeFetching?(partitionId: number): Promise<void>;
+
+	/**
 	 * Commits consumer checkpoint offset.
 	 */
 	commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void>;
@@ -64,6 +74,12 @@ export interface IConsumer {
 	 * May return undefined if a consumer is not tracking this
 	 */
 	getLatestMessageOffset(partitionId: number): number | undefined;
+
+	/**
+	 * Returns the error codes that should be ignored and the checkpoint should be skipped
+	 * We increment counter for such errors and restart when they reach a threshold
+	 */
+	getIgnoreAndSkipCheckpointOnKafkaErrorCodes?(): number[];
 
 	/**
 	 * Event handlers
@@ -123,6 +139,10 @@ export interface IProducer<T = ITicketedMessage> {
 		listener: (...args: any[]) => void,
 	): this;
 	once(
+		event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "log" | "error",
+		listener: (...args: any[]) => void,
+	): this;
+	off(
 		event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "log" | "error",
 		listener: (...args: any[]) => void,
 	): this;

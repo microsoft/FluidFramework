@@ -65,8 +65,7 @@ const tree1 = {
 															{
 																value: {
 																	type: "blob",
-																	content:
-																		'{"blobs":[],"content":{}}',
+																	content: '{"blobs":[],"content":{}}',
 																	encoding: "utf8",
 																},
 																unreferenced: undefined,
@@ -1619,11 +1618,9 @@ const tree7 = {
 																							type: "blob",
 																							content:
 																								'{"trunk":[],"branches":[],"version":2}',
-																							encoding:
-																								"utf8",
+																							encoding: "utf8",
 																						},
-																						unreferenced:
-																							undefined,
+																						unreferenced: undefined,
 																						path: "String",
 																						type: "blob",
 																					},
@@ -1642,11 +1639,9 @@ const tree7 = {
 																							type: "blob",
 																							content:
 																								'{"version":1,"nodes":{"com.fluidframework.leaf.string":{"leaf":1},"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray":{"object":{"":{"kind":"Sequence","types":["com.fluidframework.leaf.string"]}}}},"root":{"kind":"Value","types":["d302b84c-75f6-4ecd-9663-524f467013e3.StringArray"]}}',
-																							encoding:
-																								"utf8",
+																							encoding: "utf8",
 																						},
-																						unreferenced:
-																							undefined,
+																						unreferenced: undefined,
 																						path: "SchemaString",
 																						type: "blob",
 																					},
@@ -1665,11 +1660,9 @@ const tree7 = {
 																							type: "blob",
 																							content:
 																								'{"keys":["rootFieldKey"],"fields":{"version":1,"identifiers":[],"shapes":[{"c":{"type":"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray","value":false,"fields":[["",1]]}},{"a":2},{"c":{"type":"com.fluidframework.leaf.string","value":true}}],"data":[[0,0]]},"version":1}',
-																							encoding:
-																								"utf8",
+																							encoding: "utf8",
 																						},
-																						unreferenced:
-																							undefined,
+																						unreferenced: undefined,
 																						path: "ForestTree",
 																						type: "blob",
 																					},
@@ -1686,13 +1679,10 @@ const tree7 = {
 																					{
 																						value: {
 																							type: "blob",
-																							content:
-																								'{"version":1,"data":[],"maxId":0}',
-																							encoding:
-																								"utf8",
+																							content: '{"version":1,"data":[],"maxId":0}',
+																							encoding: "utf8",
 																						},
-																						unreferenced:
-																							undefined,
+																						unreferenced: undefined,
 																						path: "DetachedFieldIndexBlob",
 																						type: "blob",
 																					},
@@ -1885,11 +1875,9 @@ const tree8 = {
 																							type: "blob",
 																							content:
 																								'{"trunk":[],"branches":[],"version":2}',
-																							encoding:
-																								"utf8",
+																							encoding: "utf8",
 																						},
-																						unreferenced:
-																							undefined,
+																						unreferenced: undefined,
 																						path: "String",
 																						type: "blob",
 																					},
@@ -1908,11 +1896,9 @@ const tree8 = {
 																							type: "blob",
 																							content:
 																								'{"version":1,"nodes":{"com.fluidframework.leaf.string":{"leaf":1},"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray":{"object":{"":{"kind":"Sequence","types":["com.fluidframework.leaf.string"]}}}},"root":{"kind":"Value","types":["d302b84c-75f6-4ecd-9663-524f467013e3.StringArray"]}}',
-																							encoding:
-																								"utf8",
+																							encoding: "utf8",
 																						},
-																						unreferenced:
-																							undefined,
+																						unreferenced: undefined,
 																						path: "SchemaString",
 																						type: "blob",
 																					},
@@ -1931,11 +1917,9 @@ const tree8 = {
 																							type: "blob",
 																							content:
 																								'{"keys":["rootFieldKey"],"fields":{"version":1,"identifiers":[],"shapes":[{"c":{"type":"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray","value":false,"fields":[["",1]]}},{"a":2},{"c":{"type":"com.fluidframework.leaf.string","value":true}}],"data":[[0,0]]},"version":1}',
-																							encoding:
-																								"utf8",
+																							encoding: "utf8",
 																						},
-																						unreferenced:
-																							undefined,
+																						unreferenced: undefined,
 																						path: "ForestTree",
 																						type: "blob",
 																					},
@@ -1952,13 +1936,10 @@ const tree8 = {
 																					{
 																						value: {
 																							type: "blob",
-																							content:
-																								'{"version":1,"data":[],"maxId":0}',
-																							encoding:
-																								"utf8",
+																							content: '{"version":1,"data":[],"maxId":0}',
+																							encoding: "utf8",
 																						},
-																						unreferenced:
-																							undefined,
+																						unreferenced: undefined,
 																						path: "DetachedFieldIndexBlob",
 																						type: "blob",
 																					},

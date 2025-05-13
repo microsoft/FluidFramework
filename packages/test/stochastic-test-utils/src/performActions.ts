@@ -6,7 +6,12 @@
 import { promises as fs, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 
-import { combineReducers, combineReducersAsync } from "./combineReducers.js";
+import {
+	combineReducers,
+	combineReducersAsync,
+	type BaseOperation,
+} from "./combineReducers.js";
+import { makeRandom } from "./random.js";
 import {
 	AsyncGenerator,
 	AsyncReducer,
@@ -16,6 +21,20 @@ import {
 	SaveInfo,
 	done,
 } from "./types.js";
+
+type RealOperation<T extends BaseOperation> = T & {
+	/**
+	 * An optional flag that can be manually added to an operation during replay to trigger
+	 * the debugger.
+	 */
+	debug?: boolean;
+	/**
+	 * The seed used for this operation to isolate its random usage from other operations
+	 *
+	 * @remarks when forceGlobalSeed is gone. this can become required
+	 */
+	seed?: number;
+};
 
 /**
  * Performs random actions on a set of clients.
@@ -43,6 +62,7 @@ export async function performFuzzActionsAsync<
 	reducer: AsyncReducer<TOperation, TState>,
 	initialState: TState,
 	saveInfo?: SaveInfo,
+	forceGlobalSeed?: boolean,
 ): Promise<TState>;
 /**
  * Performs random actions on a set of clients.
@@ -84,12 +104,13 @@ export async function performFuzzActionsAsync<
 	},
 	initialState: TState,
 	saveInfo?: SaveInfo,
+	forceGlobalSeed?: boolean,
 ): Promise<TState>;
 /**
  * @internal
  */
 export async function performFuzzActionsAsync<
-	TOperation extends { type: string | number },
+	TOperation extends BaseOperation,
 	TState extends BaseFuzzTestState,
 >(
 	generator: AsyncGenerator<TOperation, TState>,
@@ -98,23 +119,57 @@ export async function performFuzzActionsAsync<
 		| { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
 	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false },
+	forceGlobalSeed?: boolean,
 ): Promise<TState> {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;
+
 	const reducer =
 		typeof reducerOrMap === "function"
 			? reducerOrMap
 			: combineReducersAsync<TOperation, TState>(reducerOrMap);
-	const applyOperation: (operation: TOperation) => Promise<TState> = async (op) =>
+	const applyOperation = async (op: RealOperation<TOperation>) =>
 		(await reducer(state, op)) ?? state;
+
+	const runGenerator = async (): Promise<RealOperation<TOperation> | typeof done> => {
+		const seed =
+			forceGlobalSeed === true
+				? undefined
+				: initialState.random.integer(0, Number.MAX_SAFE_INTEGER);
+
+		if (seed !== undefined) {
+			state = {
+				...state,
+				random: makeRandom(seed),
+			};
+		}
+		const op: RealOperation<TOperation> | typeof done = await generator(state);
+		if (op === done) {
+			return op;
+		}
+		// this is for the replay case where the generator returns a pre-generated op
+		// so it could already be seeded, and we want the state to reflect that.
+		if (op.seed !== undefined) {
+			state = {
+				...state,
+				random: makeRandom(op.seed),
+			};
+			return op;
+		}
+
+		return { seed, ...op };
+	};
 
 	try {
 		for (
-			let operation = await generator(state);
+			let operation = await runGenerator();
 			operation !== done;
-			operation = await generator(state)
+			operation = await runGenerator()
 		) {
 			operations.push(operation);
+			if (operation.debug === true) {
+				debugger;
+			}
 			state = (await applyOperation(operation)) ?? state;
 		}
 	} catch (err) {
@@ -139,7 +194,10 @@ export async function performFuzzActionsAsync<
  *
  * @internal
  */
-export async function saveOpsToFile(filepath: string, operations: { type: string | number }[]) {
+export async function saveOpsToFile(
+	filepath: string,
+	operations: { type: string | number }[],
+) {
 	await fs.mkdir(path.dirname(filepath), { recursive: true });
 	await fs.writeFile(filepath, JSON.stringify(operations, undefined, 4));
 }
@@ -214,7 +272,7 @@ export function performFuzzActions<
  * @internal
  */
 export function performFuzzActions<
-	TOperation extends { type: string | number },
+	TOperation extends BaseOperation,
 	TState extends BaseFuzzTestState,
 >(
 	generator: Generator<TOperation, TState>,
@@ -230,7 +288,8 @@ export function performFuzzActions<
 		typeof reducerOrMap === "function"
 			? reducerOrMap
 			: combineReducers<TOperation, TState>(reducerOrMap);
-	const applyOperation: (operation: TOperation) => TState = (op) => reducer(state, op) ?? state;
+	const applyOperation: (operation: TOperation) => TState = (op) =>
+		reducer(state, op) ?? state;
 
 	try {
 		for (let operation = generator(state); operation !== done; operation = generator(state)) {

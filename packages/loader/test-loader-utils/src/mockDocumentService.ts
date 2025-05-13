@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -11,8 +12,8 @@ import {
 	IDocumentServiceEvents,
 	IDocumentStorageService,
 	IResolvedUrl,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import { MockDocumentDeltaStorageService } from "./mockDeltaStorage.js";
 import { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection.js";
@@ -26,7 +27,7 @@ export class MockDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
 {
-	public get deltaStorageMessages() {
+	public get deltaStorageMessages(): ISequencedDocumentMessage[] {
 		return this._deltaStorageMessages;
 	}
 
@@ -41,7 +42,7 @@ export class MockDocumentService
 		super();
 	}
 
-	public dispose() {}
+	public dispose(): void {}
 
 	// TODO: Issue-2109 Implement detach container api or put appropriate comment.
 	public get resolvedUrl(): IResolvedUrl {
@@ -52,13 +53,13 @@ export class MockDocumentService
 		throw new Error("Method not implemented.");
 	}
 	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-		return this.deltaStorageFactory !== undefined
-			? this.deltaStorageFactory()
-			: new MockDocumentDeltaStorageService(this.deltaStorageMessages);
+		return this.deltaStorageFactory === undefined
+			? new MockDocumentDeltaStorageService(this.deltaStorageMessages)
+			: this.deltaStorageFactory();
 	}
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-		return this.deltaConnectionFactory !== undefined
-			? this.deltaConnectionFactory(client)
-			: new MockDocumentDeltaConnection(`mock_client_${this.nextClientId++}`);
+		return this.deltaConnectionFactory === undefined
+			? new MockDocumentDeltaConnection(`mock_client_${this.nextClientId++}`)
+			: this.deltaConnectionFactory(client);
 	}
 }

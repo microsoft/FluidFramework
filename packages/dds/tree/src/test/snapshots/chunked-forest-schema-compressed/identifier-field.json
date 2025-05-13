@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.string",
+        "value": true
+      }
+    }
+  ],
+  "data": [
+    [
+      0,
+      "00000000-0000-4000-b000-000000000000"
+    ]
+  ]
+}

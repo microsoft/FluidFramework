@@ -3,21 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 
 import { FlowDocument } from "../document/index.js";
 import { hostType } from "../package.js";
 
 export class WebFlow extends DataObject {
-	private static readonly factory = new DataObjectFactory<WebFlow>(
-		hostType,
-		WebFlow,
-		[],
-		{},
-		new Map([FlowDocument.getFactory().registryEntry]),
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: hostType,
+		ctor: WebFlow,
+		registryEntries: new Map([FlowDocument.getFactory().registryEntry]),
+	});
 
 	public static getFactory(): IFluidDataStoreFactory {
 		return WebFlow.factory;

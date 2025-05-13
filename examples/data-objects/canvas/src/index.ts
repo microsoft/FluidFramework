@@ -5,7 +5,7 @@
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { Ink } from "@fluid-experimental/ink";
-import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import React from "react";
 
 import { Canvas } from "./canvas.js";
@@ -14,12 +14,11 @@ import { CanvasView } from "./view.js";
 /**
  * @internal
  */
-export const CanvasInstantiationFactory = new DataObjectFactory(
-	"Canvas",
-	Canvas,
-	[Ink.getFactory()],
-	{},
-);
+export const CanvasInstantiationFactory = new DataObjectFactory({
+	type: "Canvas",
+	ctor: Canvas,
+	sharedObjects: [Ink.getFactory()],
+});
 
 const canvasViewCallback = (canvas: Canvas): React.ReactElement =>
 	React.createElement(CanvasView, { canvas });

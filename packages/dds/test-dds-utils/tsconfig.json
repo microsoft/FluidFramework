@@ -7,5 +7,7 @@
 		"outDir": "./lib",
 		// This package implements test utils to be run under Node.JS.
 		"types": ["node"],
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 }

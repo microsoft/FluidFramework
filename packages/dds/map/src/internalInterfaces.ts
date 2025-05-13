@@ -137,6 +137,7 @@ export type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadat
  * channel ID.
  *
  * @deprecated This type is legacy and deprecated(AB#8004).
+ * @legacy
  * @alpha
  */
 export interface ISerializableValue {
@@ -154,7 +155,6 @@ export interface ISerializableValue {
 
 /**
  * Serialized {@link ISerializableValue} counterpart.
- * @alpha
  */
 export interface ISerializedValue {
 	/**

@@ -20,6 +20,7 @@ variables:
   value: true
 - name: pnpmStorePath
   value: $(Pipeline.Workspace)/.pnpm-store
+- group: ado-feeds
 
 # The `resources` specify the location and version of the 1ES PT.
 resources:
@@ -29,20 +30,23 @@ resources:
     name: 1ESPipelineTemplates/M365GPT
     ref: refs/tags/release
 extends:
-  # The pipeline extends the 1ES PT which will inject different SDL and compliance tasks.
-  template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
+  # The pipeline extends the 1ES pipeline template which will inject different SDL and compliance tasks.
+  # Read more: https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/1es-pipeline-templates/onboarding/overview
+  ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+    template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
+  ${{ else }}:
+    # For non-production pipelines, we use "Unofficial" 1ES pipeline template
+    # The unofficial template skips some of the jobs that are irrelevant for the pipelines that do not have the potential to produce a production release candidate.(For example ARROW).
+    template: v1/M365.Unofficial.PipelineTemplate.yml@m365Pipelines
   parameters:
     pool:
-      name: Small-1ES # This is one of the Fluid Orgs new 1ES hosted pools.
+      name: Small-eastus2
       os: linux
     sdl:
-      arrow:
-        # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
-        # Currently we want to use different names for internal and public builds for Arrow Service Connection
-        ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-          armServiceConnection: ff-internal-arrow-arm-sc
-        ${{ else }}:
-          armServiceConnection: ff-public-arrow-arm-sc
+      ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+        arrow:
+          # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
+          serviceConnection: ff-internal-arrow-sc
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
@@ -71,6 +75,7 @@ extends:
             targetType: 'inline'
             workingDirectory: .
             script: |
+              set -eu -o pipefail
               # We only need to install the root dependencies
               pnpm install --workspace-root --frozen-lockfile
 
@@ -86,15 +91,10 @@ extends:
             command: 'custom'
             customCommand: 'run layer-check'
 
-        - task: Npm@1
-          displayName: npm run prettier:root
-          inputs:
-            command: 'custom'
-            customCommand: 'run prettier:root'
-
         - task: Bash@3
           displayName: Prune pnpm store
           inputs:
             targetType: 'inline'
             script: |
+              set -eu -o pipefail
               pnpm store prune

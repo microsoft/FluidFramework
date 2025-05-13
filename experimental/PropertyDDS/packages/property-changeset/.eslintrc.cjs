@@ -54,5 +54,6 @@ module.exports = {
 		"tsdoc/syntax": "off",
 		"unicorn/better-regex": "off",
 		"unicorn/filename-case": "off",
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };

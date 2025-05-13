@@ -3,45 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	FieldKey,
-	FieldKindIdentifier,
-	ITreeCursorSynchronous,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
-	Value,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type ITreeCursorSynchronous,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type Value,
 	forEachNode,
 } from "../../../core/index.js";
-import { fail, getOrCreate } from "../../../util/index.js";
-import { type FlexFieldKind } from "../../modular-schema/index.js";
+import { getOrCreate } from "../../../util/index.js";
+import type { FlexFieldKind } from "../../modular-schema/index.js";
 
-import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
+import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
-	BufferFormat as BufferFormatGeneric,
+	type BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
 	handleShapesAndIdentifiers,
 } from "./chunkEncodingGeneric.js";
-import { FieldBatch } from "./fieldBatch.js";
+import type { FieldBatch } from "./fieldBatch.js";
 import {
-	EncodedAnyShape,
-	EncodedChunkShape,
-	EncodedFieldBatch,
-	EncodedNestedArray,
-	EncodedValueShape,
+	type EncodedAnyShape,
+	type EncodedChunkShape,
+	type EncodedFieldBatch,
+	type EncodedNestedArray,
+	type EncodedValueShape,
+	SpecialField,
 	version,
 } from "./format.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
- * Encode data from `FieldBatch` in into an `EncodedChunk`.
+ * Encode data from `FieldBatch` into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
  *
  * Most of the compression strategy comes from the policy provided via `cache`.
  */
-export function compressedEncode(fieldBatch: FieldBatch, cache: EncoderCache): EncodedFieldBatch {
+export function compressedEncode(
+	fieldBatch: FieldBatch,
+	cache: EncoderCache,
+): EncodedFieldBatch {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
@@ -61,7 +66,7 @@ export type Shape = ShapeGeneric<EncodedChunkShape>;
  */
 export interface KeyedFieldEncoder {
 	readonly key: FieldKey;
-	readonly shape: FieldEncoder;
+	readonly encoder: FieldEncoder;
 }
 
 /**
@@ -268,7 +273,7 @@ export class InlineArrayShape
 			shapes: EncoderCache,
 			outputBuffer: BufferFormat,
 		): void {
-			fail("Empty array should not encode any nodes");
+			fail(0xb4d /* Empty array should not encode any nodes */);
 		},
 	});
 
@@ -319,7 +324,7 @@ export class InlineArrayShape
 		return {
 			b: {
 				length: this.length,
-				shape: shapes.valueToIndex.get(this.inner.shape) ?? fail("missing shape"),
+				shape: shapes.valueToIndex.get(this.inner.shape) ?? fail(0xb4e /* missing shape */),
 			},
 		};
 	}
@@ -375,7 +380,8 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
 		const shape: EncodedNestedArray =
-			shapes.valueToIndex.get(this.inner.shape) ?? fail("index for shape not found in table");
+			shapes.valueToIndex.get(this.inner.shape) ??
+			fail(0xb4f /* index for shape not found in table */);
 		return {
 			a: shape,
 		};
@@ -410,6 +416,10 @@ export function encodeValue(
 			assert(value === undefined, 0x73f /* incompatible value shape: expected no value */);
 		} else if (Array.isArray(shape)) {
 			assert(shape.length === 1, 0x740 /* expected a single constant for value */);
+		} else if (shape === SpecialField.Identifier) {
+			// This case is a special case handling the encoding of identifier fields.
+			assert(value !== undefined, 0x998 /* required value must not be missing */);
+			outputBuffer.push(value);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "Encoding values as deltas is not yet supported");
@@ -424,6 +434,7 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 		private readonly treeEncoder: TreeShapePolicy,
 		private readonly fieldEncoder: FieldShapePolicy,
 		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+		public readonly idCompressor: IIdCompressor,
 	) {}
 
 	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

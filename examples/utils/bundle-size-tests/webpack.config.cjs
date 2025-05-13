@@ -46,9 +46,8 @@ if (isInternalVersionScheme(verString, true, true)) {
 			strict: false,
 		},
 	});
-} else {
 	console.warn(
-		`The version string ${verString} is not a Fluid internal version string. The version string in the bundled code will not be replaced.`,
+		`The version string '${verString}' is a Fluid internal version string. The version string in the bundled code will be replaced with '${newVersion}'.`,
 	);
 }
 
@@ -71,16 +70,20 @@ module.exports = {
 		aqueduct: "./src/aqueduct",
 		azureClient: "./src/azureClient",
 		connectionState: "./src/connectionState",
-		containerRuntime: "./src/containerRuntime",
+		containerRuntime: "./src/containerRuntimeBundle",
+		debugAssert: "./src/debugAssert",
+		directory: "./src/sharedDirectory",
+		experimentalSharedTree: "./src/experimentalSharedTree",
 		fluidFramework: "./src/fluidFramework",
 		loader: "./src/loader",
-		map: "./src/map",
-		matrix: "./src/matrix",
+		map: "./src/sharedMap",
+		matrix: "./src/sharedMatrix",
 		odspClient: "./src/odspClient",
 		odspDriver: "./src/odspDriver",
 		odspPrefetchSnapshot: "./src/odspPrefetchSnapshot",
 		sharedString: "./src/sharedString",
 		sharedTree: "./src/sharedTree",
+		sharedTreeAttributes: "./src/sharedTreeAttributes",
 	},
 	mode: "production",
 	module: {
@@ -90,7 +93,7 @@ module.exports = {
 		extensions: [".tsx", ".ts", ".js"],
 	},
 	output: {
-		path: path.resolve(__dirname, "dist"),
+		path: path.resolve(__dirname, "build"),
 		library: "bundle",
 	},
 	node: false,
@@ -99,7 +102,8 @@ module.exports = {
 			bannedModules: [
 				{
 					moduleName: "assert",
-					reason: "This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
+					reason:
+						"This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
 				},
 			],
 		}),
@@ -112,9 +116,7 @@ module.exports = {
 			 * We try to avoid duplicate packages, but sometimes we have to allow them since the duplication is coming from a third party library we do not control
 			 * IMPORTANT: Do not add any new exceptions to this list without first doing a deep investigation on why a PR adds a new duplication, this hides a bundle size issue
 			 */
-			exclude: (instance) =>
-				// object-is depends on es-abstract 1.18.0-next, which does not satisfy the semver of other packages. We should be able to remove this when es-abstract moves to 1.18.0
-				instance.name === "es-abstract",
+			exclude: (instance) => false,
 		}),
 		new BundleAnalyzerPlugin({
 			analyzerMode: "static",
@@ -129,4 +131,7 @@ module.exports = {
 			file: path.resolve(process.cwd(), "bundleAnalysis/bundleStats.msp.gz"),
 		}),
 	],
+	// Enabling source maps allows using source-map-explorer to investigate bundle contents,
+	// which provides more fine grained details than BundleAnalyzerPlugin, so its nice for manual investigations.
+	devtool: "source-map",
 };

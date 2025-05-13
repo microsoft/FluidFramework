@@ -4,19 +4,25 @@ Tinylicious is a minimal, self-contained, test implementation of the Fluid Frame
 
 ## What is this for?
 
-Tinylicious includes most of the basic features needed to **test** data stores and containers. While we use the [Webpack Fluid Loader](../../packages/tools/webpack-fluid-loader)'s in browser service for much of our data store and container development, Tinylicious offers some advantages because it's a standalone process. For instance, testing a Fluid Container from 2+ simultaneously connected clients can be easier using Tinylicious.
+Tinylicious includes most of the basic features needed to **test** data stores and containers. While we use the [Local Server](../local-server) as an in-browser service for much of our data store and container development, Tinylicious offers some advantages because it's a standalone process. For instance, testing a Fluid Container from 2+ simultaneously connected clients can be easier using Tinylicious.
 
 If you're looking for a reference implementation of the Fluid service, don't look here! Go check out [Routerlicious](../routerlicious).
 
 ## Getting Started
 
-You can install, build, and start this service by running the following
+You can build this service by running the following in the /server/routerlicious directory (NOT in this directory):
 
 ```sh
 npm i -g pnpm
 pnpm i
-npm run build
-npm run start
+pnpm build
+```
+
+Afterwards, you can start and stop this service with the following commands in this directory:
+
+```sh
+pnpm start
+pnpm stop
 ```
 
 ## Configuration
@@ -28,8 +34,14 @@ variable named PORT to the desired number. For example:
 
 ```sh
 $env:PORT=6502
-npm run start
+pnpm start
 ```
+
+### Logging
+
+By default, tinylicious logs all output to stdout. You can adjust the logging level using the `logger__level`
+environment variable. For example, setting `logger__level=error` will log only errors. Using the level `crit` will hide
+all output.
 
 ### Storage
 

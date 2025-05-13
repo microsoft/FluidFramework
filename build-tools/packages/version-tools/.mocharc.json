@@ -1,5 +1,4 @@
 {
-	"require": ["ts-node/register"],
 	"recursive": true,
 	"reporter": "spec",
 	"timeout": 60000

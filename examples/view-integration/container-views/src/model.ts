@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { IValueChanged } from "@fluidframework/map/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { IValueChanged } from "@fluidframework/map/legacy";
 
 import { IDiceRoller } from "./interface.js";
 
@@ -51,9 +51,7 @@ export class DiceRoller extends DataObject implements IDiceRoller {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  * @internal
  */
-export const DiceRollerInstantiationFactory = new DataObjectFactory(
-	DiceRoller.Name,
-	DiceRoller,
-	[],
-	{},
-);
+export const DiceRollerInstantiationFactory = new DataObjectFactory({
+	type: DiceRoller.Name,
+	ctor: DiceRoller,
+});

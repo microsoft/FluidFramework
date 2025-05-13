@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import lodash from "lodash";
-const { isEmpty, last } = lodash;
-
 import {
 	ArrayProperty,
 	BaseProperty,
@@ -17,14 +14,20 @@ import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import {
 	IContainer,
 	IFluidCodeDetails,
-	IHostLoader,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
-import { Loader as ContainerLoader } from "@fluidframework/container-loader/internal";
+import {
+	Loader as ContainerLoader,
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -37,12 +40,14 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
-	createAndAttachContainer,
-	createLoader,
+	createAndAttachContainerUsingProps,
+	createLoaderProps,
 	createSummarizer,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
+import lodash from "lodash";
+const { isEmpty, last } = lodash;
 
 import { SharedPropertyTree } from "../propertyTree.js";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt.js";
@@ -291,7 +296,9 @@ describe("PropertyTree", () => {
 		);
 	});
 
-	const factory2 = new TestFluidObjectFactory([[propertyDdsId, SharedPropertyTree.getFactory()]]);
+	const factory2 = new TestFluidObjectFactory([
+		[propertyDdsId, SharedPropertyTree.getFactory()],
+	]);
 	describe("SharedPropertyTree", () => {
 		executePerPropertyTreeType(
 			codeDetails,
@@ -330,15 +337,15 @@ function executePerPropertyTreeType(
 	let sharedPropertyTree1;
 	let sharedPropertyTree2;
 
-	function createLocalLoader(
+	function createLocalLoaderProps(
 		packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
 		localDeltaConnectionServer: ILocalDeltaConnectionServer,
 		localUrlResolver: IUrlResolver,
 		options?: ILoaderOptions,
-	): IHostLoader {
+	): ILoaderProps {
 		const documentServiceFactory = new LocalDocumentServiceFactory(localDeltaConnectionServer);
 
-		return createLoader(
+		return createLoaderProps(
 			packageEntries,
 			documentServiceFactory,
 			localUrlResolver,
@@ -348,27 +355,33 @@ function executePerPropertyTreeType(
 	}
 
 	async function createContainer(): Promise<IContainer> {
-		const loader = createLocalLoader(
+		const createDetachedContainerProps = createLocalLoaderProps(
 			[[codeDetails, factory]],
 			deltaConnectionServer,
 			urlResolver,
 		);
-		opProcessingController.add(loader);
-		return createAndAttachContainer(
-			codeDetails,
-			loader,
+
+		const containerUsingProps = await createAndAttachContainerUsingProps(
+			{ ...createDetachedContainerProps, codeDetails },
 			urlResolver.createCreateNewRequest(documentId),
 		);
+		opProcessingController.addContainer(containerUsingProps);
+		return containerUsingProps;
 	}
 
 	async function loadContainer(): Promise<IContainer> {
-		const loader = createLocalLoader(
+		const loaderProps = createLocalLoaderProps(
 			[[codeDetails, factory]],
 			deltaConnectionServer,
 			urlResolver,
 		);
-		opProcessingController.add(loader);
-		return loader.resolve({ url: documentLoadUrl });
+
+		const containerUsingPops = await loadExistingContainer({
+			...loaderProps,
+			request: { url: documentLoadUrl },
+		});
+		opProcessingController.addContainer(containerUsingPops);
+		return containerUsingPops;
 	}
 
 	describe("Local state", () => {
@@ -408,18 +421,18 @@ function executePerPropertyTreeType(
 					PropertyFactory.create("String", undefined, "Magic"),
 				);
 
-				expect(
-					(sharedPropertyTree1.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.root.get("test")).to.equal(undefined);
 
 				sharedPropertyTree1.commit();
 
 				await opProcessingController.ensureSynchronized();
 
-				expect(
-					(sharedPropertyTree2.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 			});
 
 			it("Can commit with metadata", async () => {
@@ -430,9 +443,9 @@ function executePerPropertyTreeType(
 					PropertyFactory.create("String", undefined, "Magic"),
 				);
 
-				expect(
-					(sharedPropertyTree1.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.root.get("test")).to.equal(undefined);
 
 				sharedPropertyTree1.commit({ someKey: "some data" });
@@ -442,9 +455,9 @@ function executePerPropertyTreeType(
 
 				await opProcessingController.ensureSynchronized();
 
-				expect(
-					(sharedPropertyTree2.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({
 					someKey: "some data",
 				});
@@ -502,9 +515,7 @@ function executePerPropertyTreeType(
 				await opProcessingController.ensureSynchronized();
 				expect(sharedPropertyTree2.remoteChanges.length).to.equal(1);
 				expect(
-					isEmpty(
-						last((sharedPropertyTree2 as SharedPropertyTree).remoteChanges)?.changeSet,
-					),
+					isEmpty(last((sharedPropertyTree2 as SharedPropertyTree).remoteChanges)?.changeSet),
 				).to.equal(true);
 			});
 
@@ -515,9 +526,9 @@ function executePerPropertyTreeType(
 					PropertyFactory.create("String", undefined, "Magic"),
 				);
 
-				expect(
-					(sharedPropertyTree1.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.root.get("test")).to.be.equal(undefined);
 
 				sharedPropertyTree1.commit();
@@ -530,9 +541,9 @@ function executePerPropertyTreeType(
 
 				await opProcessingController.ensureSynchronized();
 
-				expect(
-					(sharedPropertyTree2.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 			});
 
 			it("Can emit local modification event", () => {

@@ -10,9 +10,11 @@ export type {
 	SharedObjectVisualizers,
 	DataVisualizerEvents,
 } from "./DataVisualization.js";
-export { DataVisualizerGraph, visualizeChildData, VisualizerNode } from "./DataVisualization.js";
-export type { Edit, EditData, EditSharedObject, SharedObjectEdit } from "./DataEditing.js";
-export { defaultEditors } from "./DefaultEditors.js";
+export {
+	DataVisualizerGraph,
+	visualizeChildData,
+	VisualizerNode,
+} from "./DataVisualization.js";
 export {
 	defaultVisualizers,
 	visualizeSharedCell,

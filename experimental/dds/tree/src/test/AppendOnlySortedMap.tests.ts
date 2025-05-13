@@ -189,11 +189,7 @@ describe('AppendOnlySortedMap', () => {
 
 describe('AppendOnlyDoublySortedMap', () => {
 	const mapBuilder = () =>
-		new AppendOnlyDoublySortedMap<number, number, number>(
-			compareFiniteNumbers,
-			(value) => value,
-			compareFiniteNumbers
-		);
+		new AppendOnlyDoublySortedMap<number, number, number>(compareFiniteNumbers, (value) => value, compareFiniteNumbers);
 	runAppendOnlyMapTests(mapBuilder);
 
 	it('detects out-of-order values', () => {

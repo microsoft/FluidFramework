@@ -65,7 +65,7 @@ const installRequiredVersions = async (config: IRequestedFluidVersions) => {
 	}
 };
 
-const defaultTimeoutMs = 20000;
+const defaultTimeoutMs = 180000; // 3 minutes
 const defaultRequestedVersions: IRequestedFluidVersions = { requestRelativeVersions: -2 };
 
 function createTestSuiteWithInstalledVersion(

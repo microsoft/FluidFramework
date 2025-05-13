@@ -76,8 +76,11 @@
 "breaking change":
   - BREAKING.md
 
+"changeset-present":
+  - .changeset/**
+  - server/routerlicious/.changeset/**
+
 dependencies:
-  - lerna-package-lock.json
   - package-lock.json
   - pnpm-lock.yaml
 

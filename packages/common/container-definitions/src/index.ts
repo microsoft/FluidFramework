@@ -10,17 +10,22 @@
  */
 
 export type { IAudience, IAudienceOwner, IAudienceEvents, ISelf } from "./audience.js";
-export type { IFluidBrowserPackage, IFluidBrowserPackageEnvironment } from "./browserPackage.js";
+export type {
+	IFluidBrowserPackage,
+	IFluidBrowserPackageEnvironment,
+} from "./browserPackage.js";
 export { isFluidBrowserPackage } from "./browserPackage.js";
 export type {
 	IConnectionDetails,
 	IDeltaManager,
 	IDeltaManagerEvents,
+	IDeltaManagerFull,
 	IDeltaQueue,
 	IDeltaQueueEvents,
 	IDeltaSender,
 	ReadOnlyInfo,
 } from "./deltas.js";
+export { isIDeltaManagerFull } from "./deltas.js";
 export type { ContainerWarning, ICriticalContainerError } from "./error.js";
 export { ContainerErrorTypes } from "./error.js";
 export type {
@@ -29,6 +34,7 @@ export type {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
+	IContainerPolicies,
 	IFluidCodeResolver,
 	IFluidModuleWithDetails,
 	IHostLoader,
@@ -48,7 +54,11 @@ export type {
 	IFluidCodeDetailsConfig,
 	IProvideFluidCodeDetailsComparer,
 } from "./fluidPackage.js";
-export { IFluidCodeDetailsComparer, isFluidPackage, isFluidCodeDetails } from "./fluidPackage.js";
+export {
+	IFluidCodeDetailsComparer,
+	isFluidPackage,
+	isFluidCodeDetails,
+} from "./fluidPackage.js";
 export type {
 	IBatchMessage,
 	IContainerContext,
@@ -64,15 +74,7 @@ export type {
 	 */
 	IErrorBase,
 	/**
-	 * @deprecated IGenericError is being deprecated as a public export is moving to "core-interfaces".
-	 */
-	IGenericError,
-	/**
 	 * @deprecated IThrottlingWarning is being deprecated as a public export is moving to "core-interfaces".
 	 */
 	IThrottlingWarning,
-	/**
-	 * @deprecated IUsageError is being deprecated as a public export is moving to "core-interfaces".
-	 */
-	IUsageError,
 } from "@fluidframework/core-interfaces/internal";

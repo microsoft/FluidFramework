@@ -39,44 +39,13 @@ import * as path from "node:path";
 import chalk from "chalk";
 import Table from "easy-table";
 
-import { geometricMean, pad, prettyNumber, Stats } from "./ReporterUtilities";
-import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
-import { BenchmarkData, BenchmarkResult, isResultError } from "./runBenchmark";
+import { isResultError, type BenchmarkData, type BenchmarkResult } from "./ResultTypes";
+import { pad, prettyNumber } from "./RunnerUtilities";
 
 interface BenchmarkResults {
 	table: Table;
-	benchmarksMap: Map<string, BenchmarkResult>;
+	benchmarksMap: Map<string, Readonly<BenchmarkResult>>;
 }
-
-const expectedKeys: ExpectedCell[] = [
-	stringCell("error", "error", (message) => chalk.red(message || "Error")),
-	{
-		key: "stats",
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		cell: (table, data): any => {
-			const stats = data.stats as Stats;
-			table.cell(
-				"period (ns/op)",
-				prettyNumber(1e9 * stats.arithmeticMean, 2),
-				Table.padLeft,
-			);
-			table.cell(
-				"relative margin of error",
-				`±${stats.marginOfErrorPercent.toFixed(2)}%`,
-				Table.padLeft,
-			);
-		},
-	},
-	numberCell(
-		"iterationsPerBatch",
-		"iterations per batch",
-		(iterationsPerBatch) => `${prettyNumber(iterationsPerBatch, 0)}`,
-	),
-	numberCell("numberOfBatches", "batch count", (elapsedSeconds) =>
-		prettyNumber(elapsedSeconds, 0),
-	),
-	numberCell("elapsedSeconds", "total time (s)", (elapsedSeconds) => elapsedSeconds.toFixed(2)),
-];
 
 /**
  * Collects and formats performance data for a sequence of suites of benchmarks.
@@ -103,7 +72,6 @@ export class BenchmarkReporter {
 		BenchmarkResults
 	>();
 
-	private readonly allBenchmarkPeriodsSeconds: number[] = [];
 	private totalSumRuntimeSeconds = 0;
 	private totalBenchmarkCount = 0;
 	private totalSuccessfulBenchmarkCount = 0;
@@ -132,24 +100,36 @@ export class BenchmarkReporter {
 	public recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void {
 		let results = this.inProgressSuites.get(suiteName);
 		if (results === undefined) {
-			results = { table: new Table(), benchmarksMap: new Map<string, BenchmarkResult>() };
+			results = {
+				table: new Table(),
+				benchmarksMap: new Map<string, Readonly<BenchmarkResult>>(),
+			};
 			this.inProgressSuites.set(suiteName, results);
 		}
 
 		const { table, benchmarksMap } = results;
 
+		// Make sure to add properties that are not part of the `customData` object here.
 		benchmarksMap.set(testName, result);
 		if (isResultError(result)) {
 			table.cell("status", `${pad(4)}${chalk.red("×")}`);
 		} else {
 			table.cell("status", `${pad(4)}${chalk.green("✔")}`);
 		}
+
 		table.cell("name", chalk.italic(testName));
 
-		// Using this utility to print the data means missing fields don't crash and extra fields are reported.
-		// This is useful if this reporter is given unexpected data (such as from a memory test).
-		// It can also be used as a way to add extensible data formatting in the future.
-		addCells(table, result as unknown as Record<string, unknown>, expectedKeys);
+		if (isResultError(result)) {
+			table.cell("error", result.error);
+		} else {
+			table.cell("total time (s)", prettyNumber(result.elapsedSeconds, 2));
+
+			const customData = result.customData;
+			for (const [key, val] of Object.entries(customData)) {
+				const displayValue = val.formattedValue;
+				table.cell(key, displayValue, Table.padLeft);
+			}
+		}
 
 		table.newRow();
 	}
@@ -183,8 +163,18 @@ export class BenchmarkReporter {
 		console.log(`Results file: ${filenameFull}`);
 		console.log(`${table.toString()}`);
 
+		// Accumulate data for overall summary
+		this.accumulateBenchmarkData(suiteName, benchmarksMap);
+	}
+
+	/**
+	 * Accumulates benchmark data for a suite and logs it to the console.
+	 */
+	private accumulateBenchmarkData(
+		suiteName: string,
+		benchmarksMap: Map<string, BenchmarkResult>,
+	): void {
 		// Accumulate totals for suite
-		const benchmarkPeriodsSeconds: number[] = [];
 		let sumRuntime = 0;
 		let countSuccessful = 0;
 		let countFailure = 0;
@@ -193,7 +183,6 @@ export class BenchmarkReporter {
 			if (isResultError(value)) {
 				countFailure++;
 			} else {
-				benchmarkPeriodsSeconds.push(value.stats.arithmeticMean);
 				sumRuntime += value.elapsedSeconds;
 				countSuccessful++;
 			}
@@ -216,11 +205,6 @@ export class BenchmarkReporter {
 		}
 		this.overallSummaryTable.cell("status", pad(4) + statusSymbol);
 		this.overallSummaryTable.cell("suite name", chalk.italic(suiteName));
-		const geometricMeanString: string = prettyNumber(
-			geometricMean(benchmarkPeriodsSeconds) * 1e9,
-			1,
-		);
-		this.overallSummaryTable.cell("geometric mean (ns)", geometricMeanString, Table.padLeft);
 		this.overallSummaryTable.cell(
 			"# of passed tests",
 			`${countSuccessful} out of ${benchmarksMap.size}`,
@@ -236,7 +220,6 @@ export class BenchmarkReporter {
 		// Update accumulators for overall totals
 		this.totalBenchmarkCount += benchmarksMap.size;
 		this.totalSuccessfulBenchmarkCount += countSuccessful;
-		this.allBenchmarkPeriodsSeconds.push(...benchmarkPeriodsSeconds);
 		this.totalSumRuntimeSeconds += sumRuntime;
 	}
 
@@ -251,12 +234,6 @@ export class BenchmarkReporter {
 
 		const countFailure: number = this.totalBenchmarkCount - this.totalSuccessfulBenchmarkCount;
 		this.overallSummaryTable.cell("suite name", "total");
-		const totalGeometricMeanNanoseconds = geometricMean(this.allBenchmarkPeriodsSeconds) * 1e9;
-		let geometricMeanString: string = prettyNumber(totalGeometricMeanNanoseconds, 1);
-		if (countFailure > 0) {
-			geometricMeanString = `*${geometricMeanString}`;
-		}
-		this.overallSummaryTable.cell("geometric mean (ns)", geometricMeanString, Table.padLeft);
 		this.overallSummaryTable.cell(
 			"# of passed tests",
 			`${this.totalSuccessfulBenchmarkCount} out of ${this.totalBenchmarkCount}`,
@@ -281,21 +258,19 @@ export class BenchmarkReporter {
 
 	private writeCompletedBenchmarks(
 		suiteName: string,
-		benchmarks: Map<string, BenchmarkResult>,
+		benchmarks: Map<string, Readonly<BenchmarkResult>>,
 	): string {
-		const outputFriendlyBenchmarks: unknown[] = [];
-
-		for (const [key, bench] of benchmarks.entries()) {
-			if (!isResultError(bench)) {
-				// successful benchmarks: ready them for output to file
-				outputFriendlyBenchmarks.push(this.outputFriendlyObjectFromBenchmark(key, bench));
-			}
-		}
-
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
 		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
+		const benchmarkArray: unknown[] = [];
+		for (const [key, bench] of benchmarks.entries()) {
+			if (!isResultError(bench)) {
+				const benchData = bench as BenchmarkData; // the if statement above guarantees the `bench` to be of type `BenchmarkData`.
+				benchmarkArray.push(this.outputFriendlyObjectFromBenchmark(key, benchData));
+			}
+		}
 		const outputContentString: string = JSON.stringify(
-			{ suiteName, benchmarks: outputFriendlyBenchmarks },
+			{ suiteName, benchmarks: benchmarkArray },
 			undefined,
 			4,
 		);
@@ -316,31 +291,20 @@ export class BenchmarkReporter {
 		benchmarkName: string,
 		benchmark: BenchmarkData,
 	): Record<string, unknown> {
-		const obj = {
-			iterationsPerSecond: 1 / benchmark.stats.arithmeticMean,
-			stats: this.outputFriendlyObjectFromStats(benchmark.stats),
-			iterationCountPerSample: benchmark.iterationsPerBatch,
-			numSamples: benchmark.stats.samples.length,
-			benchmarkName,
-			totalTimeSeconds: benchmark.elapsedSeconds,
-		};
-		return obj;
-	}
+		const customData: Record<string, unknown> = {};
 
-	/**
-	 * The Stats object contains a lot of data we don't need,
-	 * so this method extracts the necessary data and provides friendlier names.
-	 */
-	private outputFriendlyObjectFromStats(benchmarkStats: Stats): Record<string, unknown> {
-		const obj = {
-			marginOfError: benchmarkStats.marginOfError,
-			marginOfErrorPercent: benchmarkStats.marginOfErrorPercent,
-			arithmeticMean: benchmarkStats.arithmeticMean,
-			standardErrorOfMean: benchmarkStats.standardErrorOfMean,
-			variance: benchmarkStats.variance,
-			standardDeviation: benchmarkStats.standardDeviation,
-			sample: benchmarkStats.samples,
+		// As the name suggests, `customData` should only contain custom data that are specific to the benchmark test.
+		// If there are any other properties that are global to the benchmark test (e.g., `elapsedSeconds`), they should be added in the `benchMarkOutput` object.
+		for (const [key, value] of Object.entries(benchmark.customData)) {
+			customData[key] = value.rawValue;
+		}
+
+		const benchMarkOutput = {
+			benchmarkName,
+			elapsedSeconds: benchmark.elapsedSeconds,
+			customData,
 		};
-		return obj;
+
+		return benchMarkOutput;
 	}
 }

@@ -5,13 +5,16 @@
 
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ConsensusQueueClass } from "./consensusQueue.js";
-import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces.js";
+import {
+	IConsensusOrderedCollection,
+	IConsensusOrderedCollectionFactory,
+} from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -28,11 +31,11 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 		packageVersion: pkgVersion,
 	};
 
-	public get type() {
+	public get type(): string {
 		return ConsensusQueueFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return ConsensusQueueFactory.Attributes;
 	}
 
@@ -59,12 +62,16 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 
 /**
  * {@inheritDoc ConsensusQueueClass}
+ * @legacy
  * @alpha
  */
 export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
 
 /**
  * {@inheritDoc ConsensusQueueClass}
+ * @legacy
  * @alpha
  */
+// TODO: #22835 Use undefined instead of any (breaking change)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

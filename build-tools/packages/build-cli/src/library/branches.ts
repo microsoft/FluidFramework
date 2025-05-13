@@ -6,7 +6,7 @@
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
 
-import { Context } from "./context";
+import { Context } from "./context.js";
 
 import {
 	DEFAULT_PRERELEASE_IDENTIFIER,
@@ -22,8 +22,13 @@ import {
 	toVirtualPatchScheme,
 } from "@fluid-tools/version-tools";
 
-import { ReleaseGroup, ReleasePackage, ReleaseSource, isReleaseGroup } from "../releaseGroups";
-import { DependencyUpdateType } from "./bump";
+import {
+	ReleaseGroup,
+	ReleasePackage,
+	ReleaseSource,
+	isReleaseGroup,
+} from "../releaseGroups.js";
+import { DependencyUpdateType } from "./bump.js";
 
 /**
  * Creates an appropriate branch for a release group and bump type. Does not commit!
@@ -46,7 +51,8 @@ export async function createBumpBranch(
 ): Promise<string> {
 	const version = context.getVersion(releaseGroupOrPackage);
 	const name = generateBumpVersionBranchName(releaseGroupOrPackage, bumpType, version);
-	await context.createBranch(name);
+	const gitRepo = await context.getGitRepository();
+	await gitRepo.createBranch(name);
 	return name;
 }
 
@@ -145,15 +151,12 @@ export function generateReleaseBranchName(
 	}
 
 	if (isReleaseGroup(releaseGroup)) {
-		if (releaseGroup === "client") {
-			if (schemeIsInternal) {
-				const prereleaseId = fromInternalScheme(version, true)[2];
-				// Checking the prerelease ID is necessary because we used "v2int" instead of "internal" in branch names. This
-				// was a bad decision in retrospect, but we're stuck with it for now.
-				branchPath.push(
-					prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER ? "v2int" : releaseGroup,
-				);
-			}
+		if (releaseGroup === "client" && schemeIsInternal) {
+			// Client versions using the internal version scheme
+			const prereleaseId = fromInternalScheme(version, true)[2];
+			// Checking the prerelease ID is necessary because we used "v2int" instead of "internal" in branch names. This
+			// was a bad decision in retrospect, but we're stuck with it for now.
+			branchPath.push(prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER ? "v2int" : releaseGroup);
 		} else {
 			branchPath.push(releaseGroup);
 		}
@@ -278,7 +281,7 @@ export function getDefaultBumpTypeForBranch(
  * @internal
  */
 export function getReleaseSourceForReleaseGroup(
-	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
+	_releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 ): ReleaseSource {
 	// All packages and release groups use release branches.
 	return "releaseBranches";

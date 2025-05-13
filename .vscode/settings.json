@@ -6,8 +6,13 @@
 	],
 	"typescript.tsdk": "node_modules/typescript/lib",
 
-  // We prefer to use type-only imports, so we want the autoimporter to do that by default.
-  "typescript.preferences.preferTypeOnlyAutoImports": true,
+	// We prefer to use type-only imports, so we want the autoimporter to do that by default.
+	"typescript.preferences.preferTypeOnlyAutoImports": true,
+	"typescript.preferences.autoImportFileExcludePatterns": [
+		// Avoid suggesting autoimports for the 'previous' version packages which are used for typetesting.
+		"**/node_modules/**/@fluid*/*-previous",
+		"**/node_modules/**/@fluid*/*-previous/*",
+	],
 
 	// Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
 	// (See https://github.com/Microsoft/vscode/issues/34387)
@@ -20,7 +25,11 @@
 		"fence.json": "jsonc",
 		".git-blame-ignore-revs": "ignore",
 	},
-	"[azure-pipelines].customSchemaFile": "",
+
+	// Leverage the 1ES Pipeline templates schema for syntax check in YAML files if possible.
+	// Only works if signed in to the Azure Pipelines extension with a @microsoft.com account.
+	"azure-pipelines.1ESPipelineTemplatesSchemaFile": true,
+
 	"deno.enable": false,
 	"deno.lint": false,
 	"deno.unstable": false,
@@ -29,18 +38,23 @@
 	"cSpell.words": [
 		"boop",
 		"contoso",
+		"corecursive",
+		"debuggability",
 		"denormalized",
 		"endregion",
 		"fluidframework",
 		"handlecache",
 		"handletable",
+		"incrementality",
 		"injective",
+		"insertable",
 		"losslessly",
 		"mitigations",
 		"mocharc",
 		"multinomial",
 		"nonfinite",
 		"pseudorandomly",
+		"reconnections",
 		"Routerlicious",
 		"runtimes",
 		"snapshotlegacy",
@@ -55,20 +69,20 @@
 		"unsequenced",
 	],
 
-	// Enable prettier as default formatter, and disable rules that disagree with it
-	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	// Enable biome as default formatter, and disable rules that disagree with it
+	"editor.defaultFormatter": "biomejs.biome",
 	"editor.insertSpaces": false,
 	// Also configure the formatter on a per-language basis for some common languages/file-types, to make sure it is applied
 	// even if someone's User Settings specify a different formatter at this level (which overrides the root-level
 	// 'editor.defaultFormatter').
 	"[json]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.defaultFormatter": "biomejs.biome",
 	},
 	"[javascript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.defaultFormatter": "biomejs.biome",
 	},
 	"[typescript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.defaultFormatter": "biomejs.biome",
 	},
 	// Handle trailing whitespace and newlines for all files, in a way that matches how we configure the repo-wide formatter.
 	// They're specified here so they apply to files we don't format explicitly (e.g. yml files).
@@ -76,6 +90,9 @@
 	"files.insertFinalNewline": true,
 	"files.trimFinalNewlines": true,
 	"files.trimTrailingWhitespace": true,
+
+	// Don't search for the biome executable in the path, as it's not a globally installed tool.
+	"biome.searchInPath": false,
 
 	// Customizations for VSCode search results.
 	// These entries should probably be kept more or less in sync with the .gitignore file.
@@ -93,6 +110,8 @@
 		"**/_api-extractor-temp": true,
 		// exclude built `dist` folders
 		"**/dist/*": true,
+		// exclude built `.next` folders (from NextJS' local dev server)
+		"**/.next/*": true,
 		// exclude built `lib` folders but preserve ./common/lib
 		//   paths with packages container
 		"**/packages/**/lib/*": true,

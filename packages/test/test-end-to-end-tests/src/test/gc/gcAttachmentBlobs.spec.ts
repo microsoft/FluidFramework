@@ -10,7 +10,7 @@ import { ITestDataObject, describeCompat } from "@fluid-private/test-version-uti
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
-import { BlobManager } from "@fluidframework/container-runtime/internal/test/blobManager";
+import { blobManagerBasePath } from "@fluidframework/container-runtime/internal/test/blobManager";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	ITestContainerConfig,
@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import {
-	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
@@ -61,7 +60,6 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			const { summary } = await summarizerRuntime.summarize({
 				runGC: true,
 				fullTree: true,
-				trackState: false,
 			});
 
 			const gcState = getGCStateFromSummary(summary);
@@ -70,7 +68,7 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			const nodeTimestamps: Map<string, "referenced" | "unreferenced"> = new Map();
 			for (const [nodePath, nodeData] of Object.entries(gcState.gcNodes)) {
 				// Filter blob nodes.
-				if (nodePath.slice(1).startsWith(BlobManager.basePath)) {
+				if (nodePath.slice(1).startsWith(blobManagerBasePath)) {
 					// Unreferenced nodes have unreferenced timestamp associated with them.
 					nodeTimestamps.set(
 						nodePath,
@@ -108,10 +106,8 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
-			const detachedBlobStorage = new MockDetachedBlobStorage();
 			const loader = provider.makeTestLoader({
 				...gcContainerConfig,
-				loaderProps: { detachedBlobStorage },
 			});
 			container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;

@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockEmptyDeltaConnection,
@@ -29,7 +29,9 @@ async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 	const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
 	// Create a local DataStoreRuntime since we only want to load the summary for a local client.
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		attachState: AttachState.Detached,
+	});
 
 	const matrix2 = await matrixFactory.load(
 		dataStoreRuntime,
@@ -47,7 +49,7 @@ async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 	return matrix2;
 }
 
-[false, true].forEach((isSetCellPolicyFWW: boolean) => {
+for (const isSetCellPolicyFWW of [false, true]) {
 	describe(`Big Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, function () {
 		this.timeout(10000);
 
@@ -228,4 +230,4 @@ async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 			});
 		});
 	});
-});
+}

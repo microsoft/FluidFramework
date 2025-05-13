@@ -3,27 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
 import { brand } from "../../../util/index.js";
 import {
-	EncodingTestData,
+	type EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
+import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
 import { Change, inlineRevision } from "./optionalFieldUtils.js";
 
-const nodeChange1: TestNodeId = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
+const nodeChange1: TestNodeId = TestNodeId.create(
+	{ localId: brand(0) },
+	TestChange.mint([], 1),
+);
 const tag1 = mintRevisionTag();
 
 const change1 = inlineRevision(
@@ -33,8 +37,8 @@ const change1 = inlineRevision(
 
 const change2: OptionalChangeset = inlineRevision(
 	optionalFieldEditor.set(false, {
-		fill: brand(42),
-		detach: brand(2),
+		fill: { localId: brand(42), revision: tag1 },
+		detach: { localId: brand(2), revision: tag1 },
 	}),
 	tag1,
 );
@@ -45,7 +49,7 @@ const change2Inverted = inlineRevision(
 );
 
 const changeWithChildChange = inlineRevision(
-	optionalFieldEditor.buildChildChange(0, nodeChange1),
+	optionalFieldEditor.buildChildChanges([[0, nodeChange1]]),
 	tag1,
 );
 
@@ -64,11 +68,15 @@ const pin = inlineRevision(Change.pin(brand(4)), tag1);
 
 export function testCodecs() {
 	describe("Codecs", () => {
-		const sessionId = { originatorId: "session1" as SessionId, revision: undefined };
+		const baseContext = {
+			originatorId: "session1" as SessionId,
+			revision: undefined,
+			idCompressor: testIdCompressor,
+		};
 		const context: FieldChangeEncodingContext = {
-			baseContext: sessionId,
-			encodeNode: (nodeId) => TestNodeId.encode(nodeId, sessionId),
-			decodeNode: (nodeId) => TestNodeId.decode(nodeId, sessionId),
+			baseContext,
+			encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
+			decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
 		};
 
 		const encodingTestData: EncodingTestData<
@@ -87,6 +95,9 @@ export function testCodecs() {
 			],
 		};
 
-		makeEncodingTestSuite(makeOptionalFieldCodecFamily(testRevisionTagCodec), encodingTestData);
+		makeEncodingTestSuite(
+			makeOptionalFieldCodecFamily(testRevisionTagCodec),
+			encodingTestData,
+		);
 	});
 }

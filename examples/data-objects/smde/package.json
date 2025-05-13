@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/smde",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.41.0",
 	"private": true,
 	"description": "Simple markdown editor",
 	"homepage": "https://fluidframework.com",
@@ -16,13 +16,14 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
@@ -35,9 +36,13 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
-	"dependencies": {
+	"devDependencies": {
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-example/example-utils": "workspace:~",
+		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
@@ -45,33 +50,26 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"react": "^17.0.1",
-		"simplemde": "^1.11.2"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
-		"@fluid-example/webpack-fluid-loader": "workspace:~",
-		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@types/react": "^17.0.44",
+		"@types/react": "^18.3.11",
 		"@types/simplemde": "^1.11.7",
-		"css-loader": "^6.11.0",
+		"css-loader": "^7.1.2",
 		"eslint": "~8.55.0",
-		"prettier": "~3.0.3",
+		"react": "^18.3.1",
 		"rimraf": "^4.4.0",
-		"style-loader": "^1.0.0",
-		"ts-loader": "^9.3.0",
-		"typescript": "~5.1.6",
-		"webpack": "^5.82.0",
-		"webpack-cli": "^4.9.2",
-		"webpack-dev-server": "~4.15.1",
-		"webpack-merge": "^5.8.0"
+		"simplemde": "^1.11.2",
+		"style-loader": "^4.0.0",
+		"ts-loader": "^9.5.1",
+		"typescript": "~5.4.5",
+		"webpack": "^5.94.0",
+		"webpack-cli": "^5.1.4",
+		"webpack-dev-server": "~4.15.2",
+		"webpack-merge": "^6.0.1"
 	},
 	"fluid": {
 		"browser": {
@@ -85,6 +83,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

@@ -36,7 +36,10 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 	}
 
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
+	const dataObjectFactory = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+	});
 
 	const IdleDetectionTime = 100;
 	const summaryConfigOverrides: ISummaryConfiguration = {
@@ -106,7 +109,10 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		// getting the non-default data store and validate it is loaded
 		const handle2 = defaultDataStore._root.get("dataStore2");
 		const testDataStore: TestDataObject = await handle2.get();
-		assert(testDataStore !== undefined, "2nd data store within loaded container is not loaded");
+		assert(
+			testDataStore !== undefined,
+			"2nd data store within loaded container is not loaded",
+		);
 
 		// validate the snapshot was fetched from cache
 		const fetchEvent = mockLogger.events.find(
@@ -161,7 +167,10 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		// getting the non-default data store and validate it is loaded
 		const handle2 = defaultDataStore._root.get("dataStore2");
 		const testDataStore: TestDataObject = await handle2.get();
-		assert(testDataStore !== undefined, "2nd data store within loaded container is not loaded");
+		assert(
+			testDataStore !== undefined,
+			"2nd data store within loaded container is not loaded",
+		);
 
 		// validate the snapshot was fetched from cache
 		const fetchEvent = mockLogger.events.find(

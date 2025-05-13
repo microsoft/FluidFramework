@@ -11,29 +11,33 @@ import type {
 	IEvent,
 	IEventProvider,
 	IFluidHandle,
-	IFluidHandleInternal,
-	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces/internal";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+} from "@fluidframework/core-interfaces";
 import type {
-	IClientDetails,
+	IFluidHandleInternal,
+	IProvideFluidHandleContext,
+} from "@fluidframework/core-interfaces/internal";
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
 	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+import type {
+	IFluidDataStoreFactory,
+	IProvideFluidDataStoreFactory,
+} from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type { IInboundSignalMessage } from "./protocol.js";
+import type { IInboundSignalMessage, IRuntimeMessageCollection } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
@@ -44,6 +48,7 @@ import type {
 
 /**
  * Runtime flush mode handling
+ * @legacy
  * @alpha
  */
 export enum FlushMode {
@@ -81,6 +86,7 @@ export enum FlushModeExperimental {
 /**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
+ * @legacy
  * @alpha
  */
 export const VisibilityState = {
@@ -108,21 +114,37 @@ export const VisibilityState = {
 	GloballyVisible: "GloballyVisible",
 };
 /**
+ * @legacy
  * @alpha
  */
 export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 
 /**
+ * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntimeBaseEvents extends IEvent {
-	(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
 	/**
-	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. it's type and content
-	 * represent internal container runtime type / content.
+	 * Indicates the beginning of an incoming batch of ops
+	 * @param op - The first op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
+	 */
+	(event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void);
+	/**
+	 * Indicates the end of an incoming batch of ops
+	 * @param error - If an error occurred while processing the batch, it is provided here.
+	 * @param op - The last op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
+	 */
+	(
+		event: "batchEnd",
+		listener: (error: unknown, op: Omit<ISequencedDocumentMessage, "contents">) => void,
+	);
+	/**
+	 * Indicates that an incoming op has been processed.
+	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. its type and content
+	 * represent internal container runtime type / content. i.e. A grouped batch of N ops will result in N "op" events
 	 */
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
-	(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "dispose", listener: () => void);
 }
@@ -131,19 +153,30 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
  * Encapsulates the return codes of the aliasing API.
  *
  * 'Success' - the datastore has been successfully aliased. It can now be used.
+ *
  * 'Conflict' - there is already a datastore bound to the provided alias. To acquire it's entry point, use
  * the `IContainerRuntime.getAliasedDataStoreEntryPoint` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
+ *
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
+ * @legacy
  * @alpha
  */
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
  * Exposes some functionality/features of a data store:
+ *
  * - Handle to the data store's entryPoint
+ *
  * - Fluid router for the data store
+ *
  * - Can be assigned an alias
+ *
+ * @privateRemarks
+ * TODO: These docs should define what a datastore is, and not do so by just referencing "data store".
+ *
+ * @legacy
  * @alpha
  */
 export interface IDataStore {
@@ -165,9 +198,12 @@ export interface IDataStore {
 }
 
 /**
- * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
+ * A reduced set of functionality of {@link @fluidframework/container-runtime-definitions#IContainerRuntime} that a data store context/data store runtime will need.
+ * @privateRemarks
  * TODO: this should be merged into IFluidDataStoreContext
+ * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly baseLogger: ITelemetryBaseLogger;
@@ -191,15 +227,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
-	 * @deprecated 0.16 Issue #1537, #3631
-	 */
-	_createDataStoreWithProps(
-		pkg: Readonly<string | string[]>,
-		props?: any,
-		id?: string,
-	): Promise<IDataStore>;
-
-	/**
 	 * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
 	 * as the data store's router. The data store is not bound to a container, and in such state is not persisted to
 	 * storage (file). Storing the entryPoint handle (or any other handle inside the data store, e.g. for DDS) into an
@@ -210,7 +237,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
+	createDataStore(
+		pkg: Readonly<string | string[]>,
+		loadingGroupId?: string,
+	): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
@@ -226,13 +256,24 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	): IFluidDataStoreContextDetached;
 
 	/**
+	 * Returns the aliased data store's entryPoint, given the alias.
+	 * @param alias - The alias for the data store.
+	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
+	 * Returns undefined if no data store has been assigned the given alias.
+	 */
+	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
+
+	/**
 	 * Get an absolute url for a provided container-relative request.
 	 * Returns undefined if the container or data store isn't attached to storage.
 	 * @param relativeUrl - A relative request within the container
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Returns the current quorum.
@@ -246,14 +287,14 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	/**
 	 * Generates a new ID that is guaranteed to be unique across all sessions for this container.
-	 * It could be in compact form (non-negative integer, oppotunistic), but it could also be UUID string.
+	 * It could be in compact form (non-negative integer, opportunistic), but it could also be UUID string.
 	 * UUIDs generated will have low entropy in groups and will compress well.
 	 * It can be leveraged anywhere in container where container unique IDs are required, i.e. any place
 	 * that uses uuid() and stores result in container is likely candidate to start leveraging this API.
 	 * If you always want to convert to string, instead of doing String(generateDocumentUniqueId()), consider
 	 * doing encodeCompactIdToString(generateDocumentUniqueId()).
 	 *
-	 * For more details, please see IIdCompressor.generateDocumentUniqueId()
+	 * @see {@link @fluidframework/id-compressor#IIdCompressor.generateDocumentUniqueId}
 	 */
 	generateDocumentUniqueId(): number | string;
 
@@ -261,7 +302,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Api to fetch the snapshot from the service for a loadingGroupIds.
 	 * @param loadingGroupIds - LoadingGroupId for which the snapshot is asked for.
 	 * @param pathParts - Parts of the path, which we want to extract from the snapshot tree.
-	 * @returns - snapshotTree and the sequence number of the snapshot.
+	 * @returns snapshotTree and the sequence number of the snapshot.
 	 */
 	getSnapshotForLoadingGroupId(
 		loadingGroupIds: string[],
@@ -270,13 +311,98 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 }
 
 /**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface CommitStagedChangesOptionsExperimental {
+	/**
+	 * If true, intermediate states created by changes made while in staging mode will be "squashed" out of the
+	 * ops which were created during staging mode.
+	 * Defaults to false.
+	 * @remarks
+	 * The squash parameter is analogous to `git squash` but differs in a notable way: ops created by a client exiting staging mode
+	 * are not necessarily coalesced into a single op or something like it.
+	 * It still does have the desirable property that "unnecessary changes" (such as inserting some content then removing it) will
+	 * be removed from the set of submitted ops, which means it helps reduce network traffic and the chance of unwanted data being
+	 * persisted--even if only temporarily--in the document.
+	 *
+	 * By not attempting to reduce the set of changes to a single op a la `git squash`, we can better preserve the ordering of
+	 * changes that remote clients see such that they better align with the client which submitted the changes.
+	 */
+	squash?: boolean;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface StageControlsExperimental {
+	/**
+	 * Exit staging mode and commit to any changes made while in staging mode.
+	 * This will cause them to be sent to the ordering service, and subsequent changes
+	 * made by this container will additionally flow freely to the ordering service.
+	 * @param options - Options when committing changes.
+	 */
+	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
+	/**
+	 * Exit staging mode and discard any changes made while in staging mode.
+	 */
+	readonly discardChanges: () => void;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+	enterStagingMode?(): StageControlsExperimental;
+	readonly inStagingMode?: boolean;
+}
+/**
+ * These policies can be set by the author of the data store via its data store runtime to influence behaviors.
+ *
+ * @remarks
+ * Policies allow data store authors to define specific behaviors or constraints for their data stores.
+ * These settings can impact how the data store interacts with the runtime and other components.
+ *
+ * @legacy
+ * @alpha
+ */
+export interface IFluidDataStorePolicies {
+	/**
+	 * When set to true, data stores will appear to be readonly while in staging mode.
+	 *
+	 * @remarks
+	 * This policy is useful for data stores that do not support staging mode, such as those using consensus DDS.
+	 * It ensures that the data store appears readonly during staging mode to discourage unsupported operations.
+	 */
+	readonly readonlyInStagingMode: boolean;
+}
+
+/**
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
  * and connection state notifications
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreChannel extends IDisposable {
+	/**
+	 * Optional policies that the data store channel may adhere to that the data store context should know about.
+	 * These policies influence the behavior of the data store, such as its readonly state in specific modes.
+	 */
+	readonly policies?: IFluidDataStorePolicies;
+
 	/**
 	 * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
 	 * bound handles that represent its dependencies in the container's graph.
@@ -291,17 +417,13 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	/**
 	 * Synchronously retrieves GC Data (representing the outbound routes present) for the initial state of the DataStore
 	 */
-	getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
+	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
-	 * Processes the op.
+	 * Process messages for this channel. The messages here are contiguous messages in a batch.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-		addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void,
-	): void;
+	processMessages(messageCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Processes the signal.
@@ -343,13 +465,32 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	setConnectionState(connected: boolean, clientId?: string);
 
 	/**
-	 * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
+	 * Notifies this object about changes in the readonly state
+	 */
+	notifyReadOnlyState?(readonly: boolean): void;
+
+	/**
+	 * Ask the DDS to resubmit a message. This can happen for several reasons, such as:
+	 *
+	 * - We reconnected and discovered the original message was never acked.
+	 * - The original message was submitted from a reentrant state that is impossible for other clients to interpret correctly
+	 * - The original message was never sent on the wire and subsequent ops have been inbounded
 	 * @param type - The type of the original message.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created by this message.
+	 * This includes any content which this message created but has since been changed or removed by subsequent messages.
+	 * For example, if this message (call it A) inserts content into a DDS that a subsequent op (call it B) removes,
+	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
+	 * account for the fact that A' never inserted content.
+	 *
+	 * @privateRemarks
+	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
-	reSubmit(type: string, content: any, localOpMetadata: unknown);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean);
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
 
 	/**
@@ -358,6 +499,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	rollback?(type: string, content: any, localOpMetadata: unknown): void;
 
 	/**
@@ -372,6 +514,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type CreateChildSummarizerNodeFn = (
@@ -384,19 +527,35 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 /**
+ * The state maintained for messages that are received when a channel isn't yet loaded.
+ * @internal
+ */
+export interface IPendingMessagesState {
+	messageCollections: IRuntimeMessageCollection[];
+	pendingCount: number;
+}
+
+/**
  * Represents the context for the data store like objects. It is used by the data store runtime to
  * get information and call functionality to its parent.
  *
  * This layout is temporary, as {@link IFluidParentContext} and {@link IFluidDataStoreContext} will converge.
  *
+ * @legacy
  * @alpha
  */
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
 		Partial<IProvideFluidDataStoreRegistry> {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
+	/**
+	 * Indicates if the parent context is readonly. If isReadOnly is true, the consumer of
+	 * the context should also consider themselves readonly.
+	 */
+	readonly isReadOnly?: () => boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
@@ -419,7 +578,13 @@ export interface IFluidParentContext
 	 */
 	readonly scope: FluidObject;
 
+	/**
+	 * @deprecated this functionality has been removed.
+	 */
 	readonly gcThrowOnTombstoneUsage: boolean;
+	/**
+	 * @deprecated this functionality has been removed.
+	 */
 	readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/**
@@ -433,19 +598,6 @@ export interface IFluidParentContext
 	getAudience(): IAudience;
 
 	/**
-	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
-	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
-	 * @param callback - the callback to be invoked
-	 *
-	 * @deprecated
-	 * // back-compat: to be removed in 2.0
-	 */
-	ensureNoDataModelChanges<T>(callback: () => T): T;
-
-	/**
 	 * Submits the message to be sent to other clients.
 	 * @param type - Type of the message.
 	 * @param content - Content of the message.
@@ -453,12 +605,14 @@ export interface IFluidParentContext
 	 * the server. This will be sent back when this message is received back from the server. This is also sent if
 	 * we are asked to resubmit the message.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	submitMessage(type: string, content: any, localOpMetadata: unknown): void;
 
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
+	 * @param content - Content of the signal. Should be an {@link IEnvelope} with `contents` that is a JSON
+	 * serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
 	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
@@ -498,31 +652,26 @@ export interface IFluidParentContext
 	): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 
 	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	addedGCOutboundReference?(
-		srcHandle: { absolutePath: string },
-		outboundHandle: { absolutePath: string },
-	): void;
-
-	/**
 	 * Called by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
 	 * @param address - The address of the channel that is dirty.
 	 */
 	setChannelDirty(address: string): void;
+
+	/**
+	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * all references added in the system.
+	 *
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 * @param messageTimestampMs - The timestamp of the message that added the reference.
+	 */
+	addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
 }
 
 /**
  * Represents the context for the data store. It is used by the data store runtime to
  * get information and call functionality to the container.
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreContext extends IFluidParentContext {
@@ -545,6 +694,9 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
+	// Seems like this can be removed now; the issues mentioned in the @deprecated tag are about _createDataStoreWithProps
+	// which we finally removed in FF 2.20 (https://github.com/microsoft/FluidFramework/pull/22996).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	readonly createProps?: any;
 
 	/**
@@ -556,18 +708,30 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
 	/**
-	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
+	 * Synchronously creates a detached child data store.
 	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
+	 * The `createChildDataStore` method allows for the synchronous creation of a detached child data store. This is particularly
+	 * useful in scenarios where immediate availability of the child data store is required, such as during the initialization
+	 * of a parent data store, or when creation is in response to synchronous user input.
 	 *
-	 * @param fromPath - The absolute path of the node that added the reference.
-	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 * In order for this function to succeed:
+	 * 1. The parent data store's factory must also be an `IFluidDataStoreRegistry`.
+	 * 2. The parent data store's registry must include the same instance as the provided child factory.
+	 * 3. The parent data store's registry must synchronously provide the child factory via the `getSync` method.
+	 * 4. The child factory must implement the `createDataStore` method.
+	 *
+	 * These invariants ensure that the child data store can also be created by a remote client running the same code as this client.
+	 *
+	 * @param childFactory - The factory of the data store to be created.
+	 * @returns The created data store channel.
 	 */
-	addedGCOutboundRoute?(fromPath: string, toPath: string): void;
+	createChildDataStore?<T extends IFluidDataStoreFactory>(
+		childFactory: T,
+	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

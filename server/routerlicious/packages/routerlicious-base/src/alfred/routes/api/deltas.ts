@@ -9,6 +9,7 @@ import {
 	IRevokedTokenChecker,
 	ITenantManager,
 	IThrottler,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -16,6 +17,7 @@ import {
 	IThrottleMiddlewareOptions,
 	getParam,
 	getBooleanFromConfig,
+	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -33,6 +35,7 @@ export function create(
 	clusterThrottlers: Map<string, IThrottler>,
 	jwtTokenCache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
@@ -71,7 +74,7 @@ export function create(
 		revokedTokenChecker,
 	};
 
-	function stringToSequenceNumber(value: any): number {
+	function stringToSequenceNumber(value: any): number | undefined {
 		if (typeof value !== "string") {
 			return undefined;
 		}
@@ -88,16 +91,18 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);
-			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+			const tenantId = request.params.tenantId || appTenants[0].id;
+			const documentId = request.params.id;
 
 			// Query for the deltas and return a filtered version of just the operations field
 			const deltasP = deltaService.getDeltasFromSummaryAndStorage(
 				deltasCollectionName,
 				tenantId,
-				getParam(request.params, "id"),
+				documentId,
 				from,
 				to,
 			);
@@ -114,15 +119,13 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
-			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+			const tenantId = request.params.tenantId || appTenants[0].id;
+			const documentId = request.params.id;
 
 			// Query for the raw deltas (no from/to since we want all of them)
-			const deltasP = deltaService.getDeltas(
-				rawDeltasCollectionName,
-				tenantId,
-				getParam(request.params, "id"),
-			);
+			const deltasP = deltaService.getDeltas(rawDeltasCollectionName, tenantId, documentId);
 
 			handleResponse(deltasP, response, undefined, 500);
 		},
@@ -145,30 +148,33 @@ export function create(
 			getDeltasTenantThrottleOptions,
 		),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
+			const documentId = request.params.id;
 			let from = stringToSequenceNumber(request.query.from);
 			let to = stringToSequenceNumber(request.query.to);
 			if (from === undefined && to === undefined) {
 				from = 0;
 				to = from + getDeltasRequestMaxOpsRange + 1;
-			} else if (to === undefined) {
+			} else if (to === undefined && from !== undefined) {
 				to = from + getDeltasRequestMaxOpsRange + 1;
-			} else if (from === undefined) {
+			} else if (from === undefined && to !== undefined) {
 				from = Math.max(0, to - getDeltasRequestMaxOpsRange - 1);
 			}
 
-			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
-			// eslint-disable-next-line @typescript-eslint/no-base-to-string
+			const tenantId = request.params.tenantId || appTenants[0].id;
 			const caller = request.query.caller?.toString();
+			const fetchReason = request.query.fetchReason?.toString();
 
 			// Query for the deltas and return a filtered version of just the operations field
 			const deltasP = deltaService.getDeltas(
 				deltasCollectionName,
 				tenantId,
-				getParam(request.params, "id"),
+				documentId,
 				from,
 				to,
 				caller,
+				fetchReason,
 			);
 
 			handleResponse(deltasP, response, undefined, 500);

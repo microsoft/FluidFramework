@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import type { BaseOperation } from "@fluid-private/stochastic-test-utils";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
-import type { BaseOperation, ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness.js";
+import type { ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness.js";
 
 /**
  * Mock DDS which holds no data.
@@ -114,11 +115,12 @@ const noopGenerator = async () => ({ type: "noop" }) as const;
 
 export const isNoopOp = (op: BaseOperation): op is Operation => op.type === "noop";
 
-export const baseModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> = {
-	workloadName: "test",
-	factory: new SharedNothingFactory(),
-	generatorFactory: () => noopGenerator,
-	reducer: async (state, op) => {},
-	validateConsistency: () => {},
-	minimizationTransforms: [],
-};
+export const baseModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> =
+	{
+		workloadName: "test",
+		factory: new SharedNothingFactory(),
+		generatorFactory: () => noopGenerator,
+		reducer: (state, op) => {},
+		validateConsistency: () => {},
+		minimizationTransforms: [],
+	};

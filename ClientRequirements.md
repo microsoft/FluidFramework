@@ -1,5 +1,10 @@
 # Platform Requirements for Fluid Framework Client Packages
 
+<!-- AUTO-GENERATED-CONTENT:START (CLIENT_REQUIREMENTS:includeHeading=FALSE&headingLevel=1) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
 These are the platform requirements for the current version of Fluid Framework Client Packages.
 These requirements err on the side of being too strict since within a major version they can be relaxed over time, but not made stricter.
 For Long Term Support (LTS) versions this can require supporting these platforms for several years.
@@ -11,6 +16,7 @@ When making such a request please include if the configuration already works (an
 ## Supported Runtimes
 
 -   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+    -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 
 ## Supported Tools
@@ -19,6 +25,8 @@ When making such a request please include if the configuration already works (an
     -   All [`strict`](https://www.typescriptlang.org/tsconfig) options are supported.
     -   [`strictNullChecks`](https://www.typescriptlang.org/tsconfig) is required.
     -   [Configuration options deprecated in 5.0](https://github.com/microsoft/TypeScript/issues/51909) are not supported.
+    -   `exactOptionalPropertyTypes` is currently not fully supported.
+        If used, narrowing members of Fluid Framework types types using `in`, `Reflect.has`, `Object.hasOwn` or `Object.prototype.hasOwnProperty` should be avoided as they may incorrectly exclude `undefined` from the possible values in some cases.
 -   [webpack](https://webpack.js.org/) 5
     -   We are not intending to be prescriptive about what bundler to use.
         Other bundlers which can handle ES Modules should work, but webpack is the only one we actively test.
@@ -39,3 +47,7 @@ Node10 resolution is not supported as it does not support Fluid Framework's API 
     Once this list of workflows motivating CommonJS support is empty, we may drop support for CommonJS one year after notice of the change is posted here.
 
     -   Testing with Jest (which lacks [stable ESM support](https://jestjs.io/docs/ecmascript-modules) due to [unstable APIs in NodeJs](https://github.com/nodejs/node/issues/37648))
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

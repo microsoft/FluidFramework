@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+
 import { AppendOnlySortedMap } from "./appendOnlySortedMap.js";
 import { LocalCompressedId } from "./identifiers.js";
 import { compareFiniteNumbers, genCountFromLocalId } from "./utilities.js";
@@ -43,7 +44,9 @@ import { compareFiniteNumbers, genCountFromLocalId } from "./utilities.js";
 export class SessionSpaceNormalizer {
 	// Run-length encoding of IDs that were generated as local IDs. They are stored as a list of tuples (genCount, count)
 	// that are sorted on the genCount so that contains checks can use a binary search.
-	private readonly localIdRanges = new AppendOnlySortedMap<number, number>(compareFiniteNumbers);
+	private readonly localIdRanges = new AppendOnlySortedMap<number, number>(
+		compareFiniteNumbers,
+	);
 
 	public get idRanges(): Pick<AppendOnlySortedMap<number, number>, "size" | "entries"> {
 		return this.localIdRanges;
@@ -72,6 +75,10 @@ export class SessionSpaceNormalizer {
 		if (ranges.length === 0) {
 			return ranges;
 		}
+		assert(
+			ranges[0] !== undefined,
+			0x9dd /* ranges[0] is undefined in SessionSpaceNormalizer.getRangesBetween */,
+		);
 
 		// now we touch up the first and last ranges to ensure that if they contain the
 		// queried IDs they are trimmed to start/end with the queried IDs
@@ -90,11 +97,16 @@ export class SessionSpaceNormalizer {
 		}
 
 		const lastRangeIndex = ranges.length - 1;
-		const [limitGenCount, limitCount] = ranges[lastRangeIndex];
-		if (this.rangeContains(ranges[lastRangeIndex], lastGenCount)) {
+		const lastRange = ranges[lastRangeIndex];
+		assert(
+			lastRange !== undefined,
+			0x9de /* lastRange is undefined in SessionSpaceNormalizer.getRangesBetween */,
+		);
+		const [limitGenCount, limitCount] = lastRange;
+		if (this.rangeContains(lastRange, lastGenCount)) {
 			ranges[lastRangeIndex] = [limitGenCount, lastGenCount - limitGenCount + 1];
 			assert(
-				this.rangeContains(ranges[lastRangeIndex], lastGenCount),
+				this.rangeContains(lastRange, lastGenCount),
 				0x954 /* Expected the touched up range to contain the queried ID */,
 			);
 		} else {

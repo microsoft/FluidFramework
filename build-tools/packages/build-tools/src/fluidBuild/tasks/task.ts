@@ -7,6 +7,7 @@ import { AsyncPriorityQueue, priorityQueue } from "async";
 
 import * as assert from "assert";
 import registerDebug from "debug";
+import type { BuildContext } from "../buildContext";
 import { BuildPackage, BuildResult } from "../buildGraph";
 import { options } from "../options";
 import { LeafTask } from "./leaf/leafTask";
@@ -29,7 +30,7 @@ export abstract class Task {
 		return priorityQueue(async (taskExec: TaskExec) => {
 			const waitTime = (Date.now() - taskExec.queueTime) / 1000;
 			const task = taskExec.task;
-			task.node.buildContext.taskStats.leafQueueWaitTimeTotal += waitTime;
+			task.node.context.taskStats.leafQueueWaitTimeTotal += waitTime;
 			traceTaskExecWait(`${task.nameColored}: waited in queue ${waitTime}s`);
 			taskExec.resolve(await task.exec());
 			// wait one more turn so that we can queue up dependents we just freed up
@@ -47,9 +48,11 @@ export abstract class Task {
 	public get nameColored() {
 		return `${this.node.pkg.nameColored}#${this.taskName ?? `<${this.command}>`}`;
 	}
+
 	protected constructor(
 		protected readonly node: BuildPackage,
 		public readonly command: string,
+		protected readonly context: BuildContext,
 		public readonly taskName: string | undefined,
 	) {
 		traceTaskInit(`${this.nameColored}`);

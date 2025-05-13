@@ -3,47 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidLoadable } from "@fluidframework/core-interfaces";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
-import {
-	type IFluidDataStoreFactory,
-	type NamedFluidDataStoreRegistryEntry,
-} from "@fluidframework/runtime-definitions/internal";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type ContainerSchema, type DataObjectClass, type LoadableObjectClass } from "./types.js";
+import type { ContainerSchema, LoadableObjectKind } from "./types.js";
 
 /**
- * An internal type used by the internal type guard isDataObjectClass to cast a
- * DataObjectClass to a type that is strongly coupled to IFluidDataStoreFactory.
- * Unlike the external and exported type DataObjectClass which is
- * weakly coupled to the IFluidDataStoreFactory to prevent leaking internals.
+ * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
-export type InternalDataObjectClass<T extends IFluidLoadable> = DataObjectClass<T> &
-	Record<"factory", IFluidDataStoreFactory>;
+export function isDataObjectKind<T extends IFluidLoadable>(
+	obj: LoadableObjectKind<T>,
+): obj is DataObjectKind<T>;
 
 /**
- * Runtime check to determine if a class is a DataObject type.
+ * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
-export function isDataObjectClass<T extends IFluidLoadable>(
-	obj: LoadableObjectClass<T>,
-): obj is InternalDataObjectClass<T>;
+export function isDataObjectKind(
+	obj: LoadableObjectKind,
+): obj is DataObjectKind<IFluidLoadable>;
 
 /**
- * Runtime check to determine if a class is a DataObject type.
+ * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
-export function isDataObjectClass(
-	obj: LoadableObjectClass,
-): obj is InternalDataObjectClass<IFluidLoadable>;
-
-/**
- * Runtime check to determine if a class is a DataObject type.
- */
-export function isDataObjectClass(
-	obj: LoadableObjectClass,
-): obj is InternalDataObjectClass<IFluidLoadable> {
-	const maybe = obj as Partial<InternalDataObjectClass<IFluidLoadable>> | undefined;
+export function isDataObjectKind(
+	obj: LoadableObjectKind,
+): obj is DataObjectKind<IFluidLoadable> {
+	const maybe = obj as Partial<DataObjectKind<IFluidLoadable>> | undefined;
 	const isDataObject =
 		maybe?.factory?.IFluidDataStoreFactory !== undefined &&
 		maybe.factory.IFluidDataStoreFactory === maybe.factory;
@@ -64,9 +53,9 @@ export function isDataObjectClass(
  * Runtime check to determine if a class is a SharedObject type
  */
 export function isSharedObjectKind(
-	obj: LoadableObjectClass,
+	obj: LoadableObjectKind,
 ): obj is ISharedObjectKind<IFluidLoadable> {
-	return !isDataObjectClass(obj);
+	return !isDataObjectKind(obj);
 }
 
 /**
@@ -80,10 +69,10 @@ export const parseDataObjectsFromSharedObjects = (
 	const registryEntries = new Set<NamedFluidDataStoreRegistryEntry>();
 	const sharedObjects = new Set<IChannelFactory>();
 
-	const tryAddObject = (obj: LoadableObjectClass): void => {
+	const tryAddObject = (obj: LoadableObjectKind): void => {
 		if (isSharedObjectKind(obj)) {
 			sharedObjects.add(obj.getFactory());
-		} else if (isDataObjectClass(obj)) {
+		} else if (isDataObjectKind(obj)) {
 			registryEntries.add([obj.factory.type, Promise.resolve(obj.factory)]);
 		} else {
 			throw new Error(`Entry is neither a DataObject or a SharedObject`);
@@ -96,7 +85,7 @@ export const parseDataObjectsFromSharedObjects = (
 		...(schema.dynamicObjectTypes ?? []),
 	]);
 	for (const obj of dedupedObjects) {
-		tryAddObject(obj);
+		tryAddObject(obj as unknown as LoadableObjectKind);
 	}
 
 	if (registryEntries.size === 0 && sharedObjects.size === 0) {

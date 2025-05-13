@@ -2,8 +2,16 @@
 	"tool": "Credential Scanner",
 	"suppressions": [
 		{
-			"file": "server/routerlicious/packages/routerlicious/config/telegraf/telegraf.conf",
-			"_justification": "Sample username password placeholders as part of code comments"
+			"file": "node_modules/.pnpm/secure-keys@1.0.0/node_modules/secure-keys/test/test.secret.key",
+			"_justification": "Test file from a dependency"
+		},
+		{
+			"file": "node_modules/.pnpm/node-rdkafka@3.0.1/node_modules/node-rdkafka/deps/librdkafka/tests/fixtures/ssl/client.keystore.p12",
+			"_justification": "Test file from a dependency"
+		},
+		{
+			"file": "node_modules/.pnpm/node-rdkafka@3.0.1/node_modules/node-rdkafka/deps/librdkafka/tests/fixtures/ssl/client2.key",
+			"_justification": "Test file from a dependency"
 		}
 	]
 }

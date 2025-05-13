@@ -75,7 +75,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 
 	it("snapshot was refreshed", async function () {
 		const provider = getTestObjectProvider();
-		// TODO: This test is consistently failing when ran against FRS. See ADO:7893
+		// TODO: This test is consistently failing when ran against AFR. See ADO:7893
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -89,21 +89,13 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 					send: (tb) => (event) => {
 						tb.send(event);
 						if (
-							event.eventName ===
-							"fluid:telemetry:serializedStateManager:SnapshotRefreshed"
+							event.eventName === "fluid:telemetry:serializedStateManager:SnapshotRefreshed"
 						) {
-							assert(
-								event.snapshotSequenceNumber ?? 0 > 0,
-								"snapshot was not refreshed",
-							);
+							assert(event.snapshotSequenceNumber ?? 0 > 0, "snapshot was not refreshed");
 							assert.strictEqual(
 								event.firstProcessedOpSequenceNumber ?? 0,
 								1,
 								"first sequenced op was not saved",
-							);
-							assert(
-								event.newFirstProcessedOpSequenceNumber ?? 0 > 1,
-								"processed ops were not refreshed",
 							);
 							getLatestSnapshotInfoP.resolve();
 						}
@@ -140,6 +132,70 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		});
 		const pendingOps2 = await container1.closeAndGetPendingLocalState?.();
 		const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		await waitForContainerConnection(container2, true);
+		await provider.ensureSynchronized();
+		assert.strictEqual(map2.get(testKey), testValue);
+	});
+
+	it("snapshot was refreshed after some time", async function () {
+		const provider = getTestObjectProvider();
+		// TODO: This test is consistently failing when ran against AFR. See ADO:7893
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
+		const getLatestSnapshotInfoP = new Deferred<void>();
+		const testContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+			runtimeOptions,
+			loaderProps: {
+				logger: wrapObjectAndOverride<ITelemetryBaseLogger>(mockLogger, {
+					send: (tb) => (event) => {
+						tb.send(event);
+						if (
+							event.eventName === "fluid:telemetry:serializedStateManager:SnapshotRefreshed"
+						) {
+							assert(event.snapshotSequenceNumber ?? 0 > 0, "snapshot was not refreshed");
+							assert.strictEqual(
+								event.firstProcessedOpSequenceNumber ?? 0,
+								1,
+								"first sequenced op was not saved",
+							);
+							getLatestSnapshotInfoP.resolve();
+						}
+					},
+				}),
+				configProvider: configProvider({
+					"Fluid.Container.enableOfflineLoad": true,
+					"Fluid.Container.enableOfflineSnapshotRefresh": true,
+					"Fluid.Container.snapshotRefreshTimeoutMs": 100,
+				}),
+			},
+		};
+		const loader = provider.makeTestLoader(testContainerConfig);
+		const container: IContainerExperimental = await createAndAttachContainer(
+			provider.defaultCodeDetails,
+			loader,
+			provider.driver.createCreateNewRequest(createDocumentId()),
+		);
+
+		const url = await container.getAbsoluteUrl("");
+		assert(url, "no url");
+
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+		map.set(testKey, testValue);
+		await waitForSummary(container);
+		await provider.ensureSynchronized();
+		await timeoutAwait(getLatestSnapshotInfoP.promise, {
+			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
+		});
+		const pendingOps = await container.closeAndGetPendingLocalState?.();
+		assert.ok(pendingOps);
+
+		const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2, true);

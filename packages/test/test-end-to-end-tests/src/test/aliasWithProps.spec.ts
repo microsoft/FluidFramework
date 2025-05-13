@@ -64,8 +64,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 			const props = {
 				registryEntries: [defaultFactory.registryEntry],
 				provideEntryPoint: async (runtime: IContainerRuntime) => {
-					const entrypoint =
-						await runtime.getAliasedDataStoreEntryPoint(defaultDataStoreId);
+					const entrypoint = await runtime.getAliasedDataStoreEntryPoint(defaultDataStoreId);
 					assert(entrypoint !== undefined, "default dataStore must exist");
 					return entrypoint.get();
 				},
@@ -84,10 +83,15 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 	}
 
 	// Registry -----------------------------------------
-	const childDataObjectFactory = new DataObjectFactory("Child", TestDataObject, [], {});
-	const dataObjectFactory = new DataObjectFactory("Test", TestDataObject, [], {}, [
-		childDataObjectFactory.registryEntry,
-	]);
+	const childDataObjectFactory = new DataObjectFactory({
+		type: "Child",
+		ctor: TestDataObject,
+	});
+	const dataObjectFactory = new DataObjectFactory({
+		type: "Test",
+		ctor: TestDataObject,
+		registryEntries: [childDataObjectFactory.registryEntry],
+	});
 	const runtimeFactory = new RuntimeFactoryWithProps(dataObjectFactory);
 
 	let provider: ITestObjectProvider;
@@ -134,7 +138,12 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		const props1 = { a: "1 is different from 2" };
 		const newObjectPromise1 = createAliasedInstance(dataObjectFactory, runtime, props1, "new");
 		const props2 = { a: "Totally not same string" };
-		const newObjectPromise2 = createAliasedInstance(dataObjectFactory, runtime2, props2, "new");
+		const newObjectPromise2 = createAliasedInstance(
+			dataObjectFactory,
+			runtime2,
+			props2,
+			"new",
+		);
 		await provider.ensureSynchronized();
 		await Promise.all([newObjectPromise1, newObjectPromise2]);
 		const newObject1 = await newObjectPromise1;

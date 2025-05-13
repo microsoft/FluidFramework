@@ -7,8 +7,8 @@
 		"extractorMessageReporting": {
 			"ae-forgotten-export": {
 				"logLevel": "warning",
-				"addToApiReportFile": true,
-			},
-		},
-	},
+				"addToApiReportFile": true
+			}
+		}
+	}
 }

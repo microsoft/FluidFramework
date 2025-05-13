@@ -4,18 +4,24 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
-	type IChannelAttributes,
-	type IChannelStorageService,
-	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { type IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
-import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";
+import type { ISharedCounter, ISharedCounterEvents } from "./interfaces.js";
 
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.
@@ -39,9 +45,13 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedCounter}
+ * @legacy
  * @alpha
  */
-export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
+export class SharedCounter
+	extends SharedObject<ISharedCounterEvents>
+	implements ISharedCounter
+{
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -150,7 +160,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 
 		// TODO: Clean up error code linter violations repo-wide.
 
-		// eslint-disable-next-line unicorn/numeric-separators-style
 		assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
 
 		this.increment(counterOp.incrementAmount);

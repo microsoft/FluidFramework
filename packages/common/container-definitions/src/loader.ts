@@ -9,16 +9,18 @@ import type {
 	IEventProvider,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClient,
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
-	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import type {
+	IResolvedUrl,
+	IDocumentMessage,
 	ISequencedProposal,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager, ReadOnlyInfo } from "./deltas.js";
@@ -33,6 +35,7 @@ import type { AttachState } from "./runtime.js";
 
 /**
  * Encapsulates a module entry point with corresponding code details.
+ * @legacy
  * @alpha
  */
 export interface IFluidModuleWithDetails {
@@ -53,6 +56,7 @@ export interface IFluidModuleWithDetails {
 /**
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
+ * @legacy
  * @alpha
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
@@ -101,6 +105,7 @@ export interface IFluidCodeResolver {
 
 /**
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
+ * @legacy
  * @alpha
  */
 export interface IContainerEvents extends IEvent {
@@ -312,6 +317,7 @@ export type ConnectionState =
 
 /**
  * The Host's view of a Container and its connection to storage
+ * @legacy
  * @alpha
  */
 export interface IContainer extends IEventProvider<IContainerEvents> {
@@ -523,6 +529,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
 /**
  * The Runtime's view of the Loader, used for loading Containers
+ * @legacy
  * @alpha
  */
 export interface ILoader extends Partial<IProvideLoader> {
@@ -540,6 +547,7 @@ export interface ILoader extends Partial<IProvideLoader> {
 
 /**
  * The Host's view of the Loader, used for loading Containers
+ * @legacy
  * @alpha
  */
 export interface IHostLoader extends ILoader {
@@ -570,6 +578,7 @@ export interface IHostLoader extends ILoader {
 
 /**
  * Options to configure various behaviors of the ILoader.
+ * @legacy
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -611,7 +620,21 @@ export type ILoaderOptions = {
 };
 
 /**
+ * Policies to have various behaviors during container create and load.
+ * @legacy
+ * @alpha
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type IContainerPolicies = {
+	/**
+	 * Max time (in ms) container will wait for a leave message of a disconnected client.
+	 */
+	maxClientLeaveWaitTime?: number;
+};
+
+/**
  * Accepted header keys for requests coming to the Loader
+ * @legacy
  * @alpha
  */
 export enum LoaderHeader {
@@ -644,6 +667,7 @@ export enum LoaderHeader {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IContainerLoadMode {
@@ -651,7 +675,7 @@ export interface IContainerLoadMode {
 	 * No trailing ops are applied before container is returned.
 	 * Default value.
 	 */
-	| undefined
+		| undefined
 		/*
 		 * Only cached trailing ops are applied before returning container.
 		 * Caching is optional and could be implemented by the driver.
@@ -673,7 +697,7 @@ export interface IContainerLoadMode {
 	 * Connection to delta stream is made only when Container.connect() call is made. Op processing
 	 * is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
 	 */
-	| "none"
+		| "none"
 		/*
 		 * Connection to delta stream is made only when Container.connect() call is made.
 		 * Op fetching from storage is performed and ops are applied as they come in.
@@ -694,10 +718,6 @@ export interface IContainerLoadMode {
  * @internal
  */
 export interface ILoaderHeader {
-	/**
-	 * @deprecated This header has been deprecated and will be removed in a future release
-	 */
-	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
 	[LoaderHeader.reconnect]: boolean;
@@ -705,6 +725,7 @@ export interface ILoaderHeader {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IProvideLoader {
@@ -716,6 +737,7 @@ export interface IProvideLoader {
  * in separate property: {@link ISnapshotTreeWithBlobContents.blobsContents}.
  *
  * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
+ * @legacy
  * @alpha
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {

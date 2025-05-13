@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
 import {
 	Marker,
 	MergeTreeDeltaType,
 	ReferenceType,
 	TextSegment,
-	getTextAndMarkers,
-	reservedTileLabelsKey,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 import React, { useEffect, useRef } from "react";
 import SimpleMDE from "simplemde";
 
@@ -70,10 +70,7 @@ class SmdeView {
 							smde.codemirror.posFromIndex(range.position),
 						);
 					} else if (Marker.is(segment)) {
-						smde.codemirror.replaceRange(
-							"\n",
-							smde.codemirror.posFromIndex(range.position),
-						);
+						smde.codemirror.replaceRange("\n", smde.codemirror.posFromIndex(range.position));
 					}
 				} else if (range.operation === MergeTreeDeltaType.REMOVE) {
 					if (TextSegment.is(segment)) {

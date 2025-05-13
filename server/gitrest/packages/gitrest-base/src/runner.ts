@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { Deferred } from "@fluidframework/common-utils";
-import { IRunner, IWebServer, IWebServerFactory } from "@fluidframework/server-services-core";
+import {
+	IRunner,
+	IWebServer,
+	IWebServerFactory,
+	type IReadinessCheck,
+} from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import * as app from "./app";
 import { IFileSystemManagerFactories, IRepositoryManagerFactory } from "./utils";
 
 export class GitrestRunner implements IRunner {
-	private server: IWebServer;
-	private runningDeferred: Deferred<void>;
+	private server?: IWebServer;
+	private runningDeferred?: Deferred<void>;
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
@@ -21,7 +25,8 @@ export class GitrestRunner implements IRunner {
 		private readonly port: string | number,
 		private readonly fileSystemManagerFactories: IFileSystemManagerFactories,
 		private readonly repositoryManagerFactory: IRepositoryManagerFactory,
-		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
+		private readonly startupCheck: IReadinessCheck,
+		private readonly readinessCheck?: IReadinessCheck,
 	) {}
 
 	public async start(): Promise<void> {
@@ -31,7 +36,8 @@ export class GitrestRunner implements IRunner {
 			this.config,
 			this.fileSystemManagerFactories,
 			this.repositoryManagerFactory,
-			this.asyncLocalStorage,
+			this.startupCheck,
+			this.readinessCheck,
 		);
 		gitrest.set("port", this.port);
 
@@ -43,21 +49,24 @@ export class GitrestRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 
 	public async stop(): Promise<void> {
 		// Close the underlying server and then resolve the runner once closed
 		this.server
-			.close()
+			?.close()
 			.then(() => {
-				this.runningDeferred.resolve();
+				this.runningDeferred?.resolve();
 			})
 			.catch((error) => {
-				this.runningDeferred.reject(error);
+				this.runningDeferred?.reject(error);
 			});
 
-		return this.runningDeferred.promise;
+		return this.runningDeferred?.promise ?? Promise.resolve();
 	}
 
 	/**
@@ -91,8 +100,8 @@ export class GitrestRunner implements IRunner {
 	 */
 
 	private onListening() {
-		const addr = this.server.httpServer.address();
-		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		const addr = this.server?.httpServer.address();
+		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		Lumberjack.info(`Listening on ${bind}`);
 	}
 }

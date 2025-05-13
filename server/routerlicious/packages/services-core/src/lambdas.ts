@@ -94,6 +94,23 @@ export interface IContext {
 	 * Used to log events / errors.
 	 */
 	readonly log: ILogger | undefined;
+
+	/**
+	 * Pauses the context
+	 * @param offset - The offset to pause at. This is the offset from which it will be resumed.
+	 * @param reason - The reason for pausing
+	 */
+	pause(offset: number, reason?: any): void;
+
+	/**
+	 * Resumes the context
+	 */
+	resume(): void;
+
+	/**
+	 * Sets the last successfully processed offset.
+	 */
+	setLastSuccessfulOffset?(offset: number): void;
 }
 
 /**
@@ -107,7 +124,8 @@ export interface IPartitionLambda {
 	readonly activityTimeout?: number;
 
 	/**
-	 * Processes an incoming message
+	 * Processes an incoming message.
+	 * @returns a Promise if there is async work required, otherwise `undefined`.
 	 */
 	handler(message: IQueuedMessage): Promise<void> | undefined;
 
@@ -116,6 +134,16 @@ export interface IPartitionLambda {
 	 * any deferred work.
 	 */
 	close(closeType: LambdaCloseType): void;
+
+	/**
+	 * Pauses the lambda. It should clear any pending work.
+	 */
+	pause?(offset: number): void;
+
+	/**
+	 * Resumes the lambda. This is relevant for documentLambda to resume the documentPartition queueus.
+	 */
+	resume?(): void;
 }
 
 /**
@@ -129,7 +157,7 @@ export interface IPartitionLambdaFactory<TConfig = undefined> extends EventEmitt
 	create(
 		config: TConfig,
 		context: IContext,
-		updateActivityTime?: () => void,
+		updateActivityTime?: (activityTime?: number) => void,
 	): Promise<IPartitionLambda>;
 
 	/**
@@ -145,6 +173,16 @@ export interface IPartitionLambdaFactory<TConfig = undefined> extends EventEmitt
 export interface IPartitionLambdaConfig {
 	tenantId: string;
 	documentId: string;
+}
+
+/**
+ * Whether the boxcar message includes the optional Routing Key fields.
+ * @internal
+ */
+export function isCompleteBoxcarMessage(
+	boxcar: IBoxcarMessage,
+): boxcar is Required<IBoxcarMessage> {
+	return boxcar.documentId !== undefined && boxcar.tenantId !== undefined;
 }
 
 /**
@@ -164,8 +202,8 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
 	if (!parsedMessage) {
 		return {
 			contents: [],
-			documentId: null,
-			tenantId: null,
+			documentId: undefined,
+			tenantId: undefined,
 			type: BoxcarType,
 		};
 	}

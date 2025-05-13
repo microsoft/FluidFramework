@@ -123,9 +123,7 @@ export class PropertyTemplateWrapper {
 			if (currentCreationType === undefined) {
 				this._objectCreationType = in_typeid;
 			} else if (currentCreationType !== in_typeid) {
-				throw new Error(
-					MSG.ONLY_ONE_CREATION_TYPE + currentCreationType + ", " + in_typeid,
-				);
+				throw new Error(MSG.ONLY_ONE_CREATION_TYPE + currentCreationType + ", " + in_typeid);
 			}
 		}
 	}

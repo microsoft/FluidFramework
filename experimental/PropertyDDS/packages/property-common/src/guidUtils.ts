@@ -245,7 +245,7 @@ const generateGUID = function (base64 = false): string {
 // by decoder, e.g. "+Q" and "+Z" result in the same decoding.
 // The only characters with last 4 bits set to 0 are A, Q, g, w.
 const reBase64 = /^[\w-]{21}[AQgw]$/;
-// eslint-disable-next-line unicorn/no-unsafe-regex
+
 const reBase16 = /^[\dA-Fa-f]{8}(?:-[\dA-Fa-f]{4}){3}-[\dA-Fa-f]{12}$/;
 
 /**

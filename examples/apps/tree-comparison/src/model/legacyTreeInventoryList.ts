@@ -14,12 +14,16 @@ import {
 	TreeView,
 	TreeViewNode,
 } from "@fluid-experimental/tree";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces.js";
+import type {
+	IInventoryItem,
+	IInventoryItemEvents,
+	IInventoryList,
+} from "../modelInterfaces.js";
 
 const legacySharedTreeKey = "legacySharedTree";
 
@@ -200,8 +204,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 					const newQuantity = quantityNode.payload as number;
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const inventoryItemNodeId = quantityNode.parentage!.parent;
-					const inventoryItemNode =
-						this.tree.currentView.getViewNode(inventoryItemNodeId);
+					const inventoryItemNode = this.tree.currentView.getViewNode(inventoryItemNodeId);
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
 					const idNode = this.tree.currentView.getViewNode(idNodeId);

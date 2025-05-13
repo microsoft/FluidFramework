@@ -24,21 +24,3 @@ steps:
         searchFolder: ${{ parameters.buildDirectory }}/${{ testResultDir }}
         mergeTestResults: false
       condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-
-  # Console Log Failed Tests
-  # The task above this one doesn't cause a build failure if the testResultDir doesn't exist, it just logs a warning.
-  # This one should behave the same way in that case.
-  - ${{ each testResultDir in parameters.testResultDirs }}:
-    - task: Bash@3
-      displayName: Log Failed Tests in ${{ testResultDir }}
-      inputs:
-        targetType: inline
-        script: |
-          TEST_RESULTS_PATH=$(pwd)/${{ testResultDir }}
-          if [ -d $TEST_RESULTS_PATH ]; then
-            node $(Build.SourcesDirectory)/scripts/report-parser.js ${{ testResultDir }} ;
-          else
-            echo "##vso[task.logissue type=warning]'$TEST_RESULTS_PATH' doesn't exist." ;
-          fi
-        workingDirectory: ${{ parameters.buildDirectory }}
-      condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))

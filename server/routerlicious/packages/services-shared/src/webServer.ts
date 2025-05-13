@@ -52,7 +52,7 @@ export class HttpServer implements core.IHttpServer {
 export class WebServer implements core.IWebServer {
 	constructor(
 		public httpServer: HttpServer,
-		public webSocketServer: core.IWebSocketServer,
+		public webSocketServer: core.IWebSocketServer | undefined,
 	) {}
 
 	/**
@@ -98,7 +98,8 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoAdapterConfig?: any,
 		private readonly httpServerConfig?: IHttpServerConfig,
-		private readonly socketIoConfig?: any,
+		private readonly socketIoConfig?: socketIo.ISocketIoServerConfig,
+		private readonly customCreateAdapter?: socketIo.SocketIoAdapterCreator,
 	) {}
 
 	public create(requestListener: RequestListener): core.IWebServer {
@@ -112,6 +113,8 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 			server,
 			this.socketIoAdapterConfig,
 			this.socketIoConfig,
+			undefined /* ioSetup */,
+			this.customCreateAdapter,
 		);
 
 		return new WebServer(httpServer, socketIoServer);
@@ -129,14 +132,13 @@ export class BasicWebServerFactory implements core.IWebServerFactory {
 		const server = createAndConfigureHttpServer(requestListener, this.httpServerConfig);
 		const httpServer = new HttpServer(server);
 
-		return new WebServer(httpServer, null as unknown as core.IWebSocketServer);
+		return new WebServer(httpServer, undefined);
 	}
 }
 
 /**
  * Node.js Clustering POC.
- * TODO:
- * - Add more to the heartbeat, like CPU and Memory usage, with related process kill checks: process.cpuUsage() and process.memoryUsage()
+ * This is WIP of a Node.js cluster Socket.io server that spawns a number of workers equal to the number of CPUs.
  */
 
 interface IWorkerMessage<T> {
@@ -184,7 +186,7 @@ class NullHttpServer implements core.IHttpServer {
 }
 class NullWebServer implements core.IWebServer {
 	public readonly httpServer: NullHttpServer = new NullHttpServer();
-	public webSocketServer: core.IWebSocketServer = null as unknown as core.IWebSocketServer;
+	public webSocketServer: core.IWebSocketServer | undefined = undefined;
 
 	/**
 	 * Closes the web server
@@ -223,7 +225,7 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 		}
 		const httpServer = this.initializeWorkerThread(requestListener);
 
-		return new WebServer(new HttpServer(httpServer), null as unknown as core.IWebSocketServer);
+		return new WebServer(new HttpServer(httpServer), undefined);
 	}
 
 	protected initializePrimaryThread(): void {
@@ -379,8 +381,9 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoAdapterConfig?: any,
 		httpServerConfig?: IHttpServerConfig,
-		private readonly socketIoConfig?: any,
+		private readonly socketIoConfig?: socketIo.ISocketIoServerConfig,
 		clusterConfig?: Partial<INodeClusterConfig>,
+		private readonly customCreateAdapter?: socketIo.SocketIoAdapterCreator,
 	) {
 		super(httpServerConfig, clusterConfig);
 	}
@@ -394,7 +397,7 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 			setupMaster(server, {
 				loadBalancingMethod: "least-connection", // either "random", "round-robin" or "least-connection"
 			});
-			return new WebServer(new HttpServer(server), null as unknown as core.IWebSocketServer);
+			return new WebServer(new HttpServer(server), undefined);
 		}
 		// Create a worker thread HTTP server and attach socket.io server to it.
 		const httpServer = this.initializeWorkerThread(requestListener);
@@ -405,6 +408,7 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 			this.socketIoAdapterConfig,
 			this.socketIoConfig,
 			setupWorker,
+			this.customCreateAdapter,
 		);
 		return new WebServer(new HttpServer(httpServer), socketIoServer);
 	}

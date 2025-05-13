@@ -1,5 +1,5 @@
 {
-	"name": "@test/test-package",
+	"name": "@fluidframework/test-package",
 	"version": "0.1.0",
 	"description": "This is a mock package.json for use in documentation generation tests.",
 	"homepage": "https://fluidframework.com",
@@ -14,6 +14,11 @@
 	"bin": {
 		"gen-version": "bin/gen-version",
 		"markdown-magic": "bin/markdown-magic"
+	},
+	"exports": {
+		".": "./index.js",
+		"./alpha": "./alpha.js",
+		"./legacy": "./legacy.js"
 	},
 	"scripts": {
 		"test-script-1": "echo This is a test script",

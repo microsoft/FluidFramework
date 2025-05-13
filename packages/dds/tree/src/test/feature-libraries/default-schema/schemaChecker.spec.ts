@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 // Reaching into internal module just to test it
 import {
@@ -13,7 +13,12 @@ import {
 	isNodeInSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/schemaChecker.js";
-import { FieldKinds } from "../../../feature-libraries/index.js";
+import {
+	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
+	FieldKinds,
+	mapTreeFromCursor,
+} from "../../../feature-libraries/index.js";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -31,6 +36,8 @@ import {
 	type Value,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
+import { testTrees } from "../../testTrees.js";
+import { testIdCompressor } from "../../utils.js";
 
 /**
  * Creates a schema and policy. Indicates stored schema validation should be performed.
@@ -48,6 +55,8 @@ function createSchemaAndPolicy(
 			// Note: the value of 'validateSchema' doesn't matter for the tests in this file because they're testing a
 			// layer where we already decided that we are doing validation and are validating that it works correctly.
 			validateSchema: true,
+			// TODO: unit test other options in this file
+			allowUnknownOptionalFields: () => false,
 		},
 	};
 }
@@ -61,7 +70,7 @@ function getFieldSchema(
 ): TreeFieldStoredSchema {
 	return {
 		kind: kind.identifier,
-		types: allowedTypes === undefined ? undefined : new Set(allowedTypes),
+		types: new Set(allowedTypes),
 	};
 }
 
@@ -125,11 +134,28 @@ describe("schema validation", () => {
 	});
 
 	describe("isNodeInSchema", () => {
-		it(`not in schema due to missing node schema entry in schemaCollection`, () => {
+		it(`does validation if stored schema is completely empty`, () => {
 			assert.equal(
 				isNodeInSchema(
 					createLeafNode("myNumberNode", 1, ValueSchema.Number).node,
-					createSchemaAndPolicy(),
+					createSchemaAndPolicy(), // Note this passes an empty stored schema
+				),
+				SchemaValidationErrors.Node_MissingSchema,
+			);
+		});
+
+		it(`not in schema due to missing node schema entry in schemaCollection`, () => {
+			const { node: stringNode, schema: stringSchema } = createLeafNode(
+				"myStringNode",
+				"string",
+				ValueSchema.String,
+			);
+			assert.equal(
+				isNodeInSchema(
+					createLeafNode("myNumberNode", 1, ValueSchema.Number).node,
+					// Note, this cannot use an empty stored schema because that would skip validation,
+					// So just putting a schema for a node that is not the one we pass in for validation.
+					createSchemaAndPolicy(new Map([[stringNode.type, stringSchema]])),
 				),
 				SchemaValidationErrors.Node_MissingSchema,
 			);
@@ -164,9 +190,14 @@ describe("schema validation", () => {
 				const { node, schema } = createLeafNode("myNumberNode", 1, ValueSchema.Number);
 				const stringNode = createLeafNode("myStringNode", "string", ValueSchema.String);
 				const schemaAndPolicy = createSchemaAndPolicy(new Map([[node.type, schema]]));
-				node.fields.set(brand("prop1"), [stringNode.node]);
+				const outOfSchemaNode: MapTree = {
+					type: node.type,
+					value: node.value,
+					fields: new Map([[brand("prop1"), [stringNode.node]]]),
+				};
+
 				assert.equal(
-					isNodeInSchema(node, schemaAndPolicy),
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy),
 					SchemaValidationErrors.LeafNode_FieldsNotAllowed,
 				);
 			});
@@ -183,7 +214,10 @@ describe("schema validation", () => {
 				]);
 				const mapNode = createNonLeafNode(
 					"myUnionMapNode",
-					new Map(),
+					new Map([
+						[brand("prop1"), [numberNode.node]],
+						[brand("prop2"), [stringNode.node]],
+					]),
 					new MapNodeStoredSchema(fieldSchema),
 				);
 				const schemaAndPolicy = createSchemaAndPolicy(
@@ -195,8 +229,6 @@ describe("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.required]]),
 				);
 
-				mapNode.node.fields.set(brand("prop1"), [numberNode.node]);
-				mapNode.node.fields.set(brand("prop2"), [stringNode.node]);
 				assert.equal(
 					isNodeInSchema(mapNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NoError,
@@ -231,7 +263,6 @@ describe("schema validation", () => {
 					new Map([[brand("prop1"), [numberNode.node]]]),
 					new MapNodeStoredSchema(fieldSchema),
 				);
-				mapNode.node.value = "something that's not undefined";
 
 				const schemaAndPolicy = createSchemaAndPolicy(
 					new Map([
@@ -241,8 +272,14 @@ describe("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.required]]),
 				);
 
+				const outOfSchemaNode: MapTree = {
+					type: mapNode.node.type,
+					value: "something that's not undefined",
+					fields: mapNode.node.fields,
+				};
+
 				assert.equal(
-					isNodeInSchema(mapNode.node, schemaAndPolicy),
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy),
 					SchemaValidationErrors.NonLeafNode_ValueNotAllowed,
 				);
 			});
@@ -350,7 +387,6 @@ describe("schema validation", () => {
 					new Map([[brand("prop1"), [numberNode.node]]]),
 					new ObjectNodeStoredSchema(new Map([[brand("requiredProp"), fieldSchema]])),
 				);
-				objectNode.node.value = "something that's not undefined";
 
 				const schemaAndPolicy = createSchemaAndPolicy(
 					new Map([
@@ -360,8 +396,14 @@ describe("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.required]]),
 				);
 
+				const outOfSchemaNode: MapTree = {
+					type: objectNode.node.type,
+					value: "something that's not undefined",
+					fields: objectNode.node.fields,
+				};
+
 				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy),
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy),
 					SchemaValidationErrors.NonLeafNode_ValueNotAllowed,
 				);
 			});
@@ -456,5 +498,23 @@ describe("schema validation", () => {
 				SchemaValidationErrors.Field_IncorrectMultiplicity,
 			);
 		});
+	});
+
+	describe("testTrees", () => {
+		for (const testTree of testTrees) {
+			it(testTree.name, () => {
+				const mapTrees = testTree
+					.treeFactory(testIdCompressor)
+					.map((j) => mapTreeFromCursor(cursorForJsonableTreeNode(j)));
+				const schema = testTree.schemaData;
+				assert.equal(
+					isFieldInSchema(mapTrees, schema.rootFieldSchema, {
+						schema,
+						policy: defaultSchemaPolicy,
+					}),
+					SchemaValidationErrors.NoError,
+				);
+			});
+		}
 	});
 });

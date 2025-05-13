@@ -4,8 +4,8 @@
  */
 
 import {
-	AnchorNode,
-	DetachedField,
+	type AnchorNode,
+	type DetachedField,
 	anchorSlot,
 	getDetachedFieldContainingPath,
 	rootField,
@@ -78,10 +78,35 @@ export interface DetachedFieldCache {
  * Utility function to get a {@link SchemaAndPolicy} object from a {@link FlexTreeNode} or {@link FlexTreeField}.
  * @param nodeOrField - {@link FlexTreeNode} or {@link FlexTreeField} to get the schema and policy from.
  * @returns A {@link SchemaAndPolicy} object with the stored schema and policy from the node or field provided.
+ * For {@link Unhydrated} nodes this schema may only describe the types allowed subtree for this particular entity.
  */
 export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy {
 	return {
-		schema: nodeOrField.context.checkout.storedSchema,
-		policy: nodeOrField.context.schema.policy,
+		schema: nodeOrField.context.schema,
+		policy: nodeOrField.context.schemaPolicy,
 	};
+}
+
+/**
+ * Indexing for {@link FlexTreeField.boxedAt} and {@link FlexTreeSequenceField.at} supports the
+ * usage of negative indices, which regular indexing using `[` and `]` does not.
+ *
+ * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+ * for additional context on the semantics.
+ *
+ * @returns A positive index that can be used in regular indexing. Returns
+ * undefined if that index would be out-of-bounds.
+ */
+export function indexForAt(index: number, length: number): number | undefined {
+	let finalIndex = Math.trunc(+index);
+	if (Number.isNaN(finalIndex)) {
+		finalIndex = 0;
+	}
+	if (finalIndex < -length || finalIndex >= length) {
+		return undefined;
+	}
+	if (finalIndex < 0) {
+		finalIndex = finalIndex + length;
+	}
+	return finalIndex;
 }

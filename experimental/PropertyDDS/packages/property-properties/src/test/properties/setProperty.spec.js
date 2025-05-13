@@ -105,8 +105,7 @@ describe("SetProperty", function () {
 				CS.insert &&
 					CS.insert["autodesk.tests:TestPropertyID-1.0.0"] &&
 					_.keys(CS.insert["autodesk.tests:TestPropertyID-1.0.0"]).length === 1 &&
-					_.keys(CS.insert["autodesk.tests:TestPropertyID-1.0.0"])[0] ===
-						childNode1.getGuid(),
+					_.keys(CS.insert["autodesk.tests:TestPropertyID-1.0.0"])[0] === childNode1.getGuid(),
 			).to.be.ok;
 
 			// Test insertion of the second child
@@ -120,15 +119,11 @@ describe("SetProperty", function () {
 					_.keys(changeSetWithTwoChildren.insert["autodesk.tests:TestPropertyID-1.0.0"])
 						.length === 2 &&
 					_.includes(
-						_.keys(
-							changeSetWithTwoChildren.insert["autodesk.tests:TestPropertyID-1.0.0"],
-						),
+						_.keys(changeSetWithTwoChildren.insert["autodesk.tests:TestPropertyID-1.0.0"]),
 						childNode1.getGuid(),
 					) &&
 					_.includes(
-						_.keys(
-							changeSetWithTwoChildren.insert["autodesk.tests:TestPropertyID-1.0.0"],
-						),
+						_.keys(changeSetWithTwoChildren.insert["autodesk.tests:TestPropertyID-1.0.0"]),
 						childNode2.getGuid(),
 					),
 			).to.be.ok;
@@ -274,14 +269,16 @@ describe("SetProperty", function () {
 
 		it("Should support deserialization", function () {
 			var deserializedNode = PropertyFactory.create("autodesk.tests:TestPropertyID-1.0.0");
-			var deserializedChanges1 =
-				deserializedNode._properties.children.deserialize(changeSetWithTwoChildren);
+			var deserializedChanges1 = deserializedNode._properties.children.deserialize(
+				changeSetWithTwoChildren,
+			);
 			var CS4 = deserializedNode._properties.children.serialize({ dirtyOnly: false });
 			expect(CS4).to.deep.equal(changeSetWithTwoChildren);
 			expect(deserializedChanges1).to.deep.equal(changeSetWithTwoChildren);
 
-			var deserializedChanges2 =
-				deserializedNode._properties.children.deserialize(changeSetWithTwoChildren);
+			var deserializedChanges2 = deserializedNode._properties.children.deserialize(
+				changeSetWithTwoChildren,
+			);
 			expect(deserializedChanges2).to.be.empty;
 
 			var deserializedChanges3 = deserializedNode._properties.children.deserialize({});
@@ -832,12 +829,10 @@ describe("SetProperty", function () {
 					root._properties.children.insert(node1);
 				},
 				op1: function (root) {
-					root._properties.children.getAsArray()[0]._properties.stringProperty.value =
-						"a";
+					root._properties.children.getAsArray()[0]._properties.stringProperty.value = "a";
 				},
 				op2: function (root) {
-					root._properties.children.getAsArray()[0]._properties.stringProperty2.value =
-						"a";
+					root._properties.children.getAsArray()[0]._properties.stringProperty2.value = "a";
 				},
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
@@ -854,12 +849,10 @@ describe("SetProperty", function () {
 					root._properties.children.insert(node1);
 				},
 				op1: function (root) {
-					root._properties.children.getAsArray()[0]._properties.stringProperty.value =
-						"a";
+					root._properties.children.getAsArray()[0]._properties.stringProperty.value = "a";
 				},
 				op2: function (root) {
-					root._properties.children.getAsArray()[0]._properties.stringProperty.value =
-						"a";
+					root._properties.children.getAsArray()[0]._properties.stringProperty.value = "a";
 				},
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
@@ -891,9 +884,7 @@ describe("SetProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(
-						ChangeSet.ConflictType.REMOVE_AFTER_MODIFY,
-					);
+					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.REMOVE_AFTER_MODIFY);
 					expect(conflicts[0].path).to.be.equal("children[" + node1.getGuid() + "]");
 					expect(changeSet["set<NamedProperty>"].children).to.have.all.keys(
 						"remove",

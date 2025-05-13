@@ -6,34 +6,38 @@
 import { strict as assert } from "assert";
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import {
-	IContainer,
-	IFluidCodeDetails,
-	IHostLoader,
-} from "@fluidframework/container-definitions/internal";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import {
 	ContainerMessageType,
 	IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 import { SharedDirectory, type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode, IEnvelope } from "@fluidframework/runtime-definitions/internal";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import { createDataStoreFactory } from "@fluidframework/test-utils/internal";
 import {
+	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainer,
+	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -61,7 +65,7 @@ describe("Ops on Reconnect", () => {
 	let container1Object1String: SharedString;
 	let receivedValues: any[] = [];
 
-	async function createLoader(runtimeOptions?: IContainerRuntimeOptions): Promise<IHostLoader> {
+	function createLoaderProps(runtimeOptions?: IContainerRuntimeOptions): ILoaderProps {
 		const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
 			[map1Id, SharedMap.getFactory()],
 			[map2Id, SharedMap.getFactory()],
@@ -82,26 +86,27 @@ describe("Ops on Reconnect", () => {
 
 		const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-		const loader = new Loader({
+		return {
 			urlResolver,
 			documentServiceFactory,
 			codeLoader,
-		});
-		loaderContainerTracker.add(loader);
-		return loader;
+		};
 	}
 
-	async function createContainer(runtimeOptions?: IContainerRuntimeOptions): Promise<IContainer> {
-		const loader = await createLoader(runtimeOptions);
-		return createAndAttachContainer(
-			codeDetails,
-			loader,
+	async function createContainer(
+		runtimeOptions?: IContainerRuntimeOptions,
+	): Promise<IContainer> {
+		const createDetachedContainerProps = createLoaderProps(runtimeOptions);
+		const container: IContainer = await createAndAttachContainerUsingProps(
+			{ ...createDetachedContainerProps, codeDetails },
 			urlResolver.createCreateNewRequest(documentId),
 		);
+		loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	async function setupFirstContainer(
-		runtimeOptions: IContainerRuntimeOptions = { flushMode: FlushMode.Immediate },
+		runtimeOptions: IContainerRuntimeOptionsInternal = { flushMode: FlushMode.Immediate },
 	) {
 		// Create the first container, dataObject and DDSes.
 		container1 = await createContainer(runtimeOptions);
@@ -115,8 +120,12 @@ describe("Ops on Reconnect", () => {
 	}
 
 	async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
-		const loader = await createLoader();
-		const container2 = await loader.resolve({ url: documentLoadUrl });
+		const loaderProps = createLoaderProps();
+		const container2 = await loadExistingContainer({
+			...loaderProps,
+			request: { url: documentLoadUrl },
+		});
+		loaderContainerTracker.addContainer(container2);
 		await waitForContainerConnection(container2);
 
 		// Get dataStore1 on the second container.
@@ -171,10 +180,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -258,10 +264,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -337,10 +340,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -398,10 +398,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -478,10 +475,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -519,10 +513,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -569,10 +560,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -620,10 +608,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -666,15 +651,12 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// At this point, the delta manager should have the messages
 			// in its buffer but not in its outbound queue,
 			// as ops have not been flushed yet
-			assert.strictEqual(container1.deltaManager.outbound.length, 0);
+			assert.strictEqual(toIDeltaManagerFull(container1.deltaManager).outbound.length, 0);
 			assert.deepStrictEqual(receivedValues, [], "Values have been sent unexpectedly");
 
 			// Wait for the Container to get reconnected.

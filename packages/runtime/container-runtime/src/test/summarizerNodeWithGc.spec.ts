@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IGarbageCollectionDetailsBase,
@@ -15,6 +15,7 @@ import {
 	ISummarizerNodeConfig,
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
+	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
@@ -33,6 +34,12 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc.js";
 
+type SummarizerNodeWithPrivates = ISummarizerNodeWithGC & {
+	baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
+	loadBaseGCDetails(): Promise<void>;
+	hasUsedStateChanged(): boolean;
+};
+
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";
 	const node1Id = "/gcNode1";
@@ -41,7 +48,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 	const subNode2Id = "/gcNode2/subNode";
 
 	let rootSummarizerNode: IRootSummarizerNodeWithGC;
-	let summarizerNode: ISummarizerNodeWithGC;
+	let summarizerNode: SummarizerNodeWithPrivates;
 	// The base GC details of the root summarizer node. The child base GC details from this is passed on to the child
 	// summarizer node during its creation.
 	let rootBaseGCDetails: IGarbageCollectionDetailsBase;
@@ -51,7 +58,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 	const getRootBaseGCDetails = async (): Promise<IGarbageCollectionDetailsBase> =>
 		rootBaseGCDetails;
-	const getChildInternalGCData = async (): Promise<IGarbageCollectionData> => childInternalGCData;
+	const getChildInternalGCData = async (): Promise<IGarbageCollectionData> =>
+		childInternalGCData;
 
 	beforeEach(async () => {
 		mockLogger = new MockLogger();
@@ -72,7 +80,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			{ type: CreateSummarizerNodeSource.FromSummary },
 			undefined,
 			getChildInternalGCData,
-		);
+		) as SummarizerNodeWithPrivates;
 
 		// Initialize the values to be returned by the child node's getGCData.
 		childInternalGCData = {
@@ -223,37 +231,104 @@ describe("SummarizerNodeWithGC Tests", () => {
 		});
 	});
 
-	describe("summarize API", () => {
-		it("should not allow summarizing without running GC first", async () => {
-			// Since GC is enabled, calling summarize without running GC (updating used routes) should result in
-			// an assert being thrown.
-			await assert.rejects(
-				summarizerNode.summarize(true /* fullTree */),
-				"summarize should have thrown since GC was run",
+	describe("Re-summarization due to GC state changes", () => {
+		/**
+		 * Re-summarization is triggered due to GC state change if summarizer node's "hasUsedStateChanged"
+		 * returns true.
+		 */
+		it("should not trigger re-summarization if used routes don't change", async () => {
+			const usedRoutes = ["/route"];
+			const baseGCDetails: IGarbageCollectionDetailsBase = {
+				gcData: {
+					gcNodes: {},
+				},
+				usedRoutes,
+			};
+			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
+			await summarizerNode.loadBaseGCDetails();
+			summarizerNode.updateUsedRoutes(usedRoutes);
+			assert.strictEqual(
+				summarizerNode.hasUsedStateChanged(),
+				false,
+				"Re-summarization should not be triggered",
 			);
 		});
 
-		it("should allow summarizing after running GC", async () => {
-			// Update the used routes which emulates running GC.
-			summarizerNode.updateUsedRoutes([""]);
-			// Summarize should not throw since GC was run before.
-			await assert.doesNotReject(
-				summarizerNode.summarize(true /* fullTree */),
-				"summarize should not have thrown an error since GC was run",
+		it("should trigger re-summarization if used routes changes from base snapshot", async () => {
+			const usedRoutes = ["/route"];
+			const baseGCDetails: IGarbageCollectionDetailsBase = {
+				gcData: {
+					gcNodes: {},
+				},
+				usedRoutes,
+			};
+			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
+			await summarizerNode.loadBaseGCDetails();
+			summarizerNode.updateUsedRoutes([...usedRoutes, "/newRoute"]);
+			assert.strictEqual(
+				summarizerNode.hasUsedStateChanged(),
+				true,
+				"Re-summarization should be triggered",
+			);
+		});
+
+		it("should trigger re-summarization if base snapshot used routes is empty", async () => {
+			const baseGCDetails: IGarbageCollectionDetailsBase = {
+				gcData: {
+					gcNodes: {},
+				},
+				usedRoutes: undefined,
+			};
+			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
+			await summarizerNode.loadBaseGCDetails();
+			summarizerNode.updateUsedRoutes(["/newRoute"]);
+			assert.strictEqual(
+				summarizerNode.hasUsedStateChanged(),
+				true,
+				"Re-summarization should be triggered",
+			);
+		});
+
+		it("should not trigger re-summarization if base snapshot used routes is empty and GC is disabled", async () => {
+			const summarizerNodeGCDisabled = rootSummarizerNode.createChild(
+				summarizeInternal,
+				"nodeGCDisabled",
+				{ type: CreateSummarizerNodeSource.FromSummary },
+				{ gcDisabled: true },
+				getChildInternalGCData,
+			) as SummarizerNodeWithPrivates;
+
+			const baseGCDetails: IGarbageCollectionDetailsBase = {
+				gcData: {
+					gcNodes: {},
+				},
+				usedRoutes: undefined,
+			};
+			summarizerNodeGCDisabled.baseGCDetailsP = Promise.resolve(baseGCDetails);
+			await summarizerNodeGCDisabled.loadBaseGCDetails();
+			summarizerNodeGCDisabled.updateUsedRoutes(["/newRoute"]);
+			assert.strictEqual(
+				summarizerNodeGCDisabled.hasUsedStateChanged(),
+				false,
+				"Re-summarization should not be triggered",
 			);
 		});
 	});
 
 	describe("Validate Summary", () => {
-		const ids = ["rootId", "midId", "leafId"] as const;
+		const nodeIds = {
+			rootId: "", // emptry string to emulate the current behaviour of the summarizerNode for root.
+			midId: "midId",
+			leafId: "leafId",
+		};
 		let rootNode: IRootSummarizerNodeWithGC;
 		let midNode: ISummarizerNodeWithGC | undefined;
 		let leafNode: ISummarizerNodeWithGC | undefined;
 
 		const logger = createChildLogger();
-		const getSummarizeInternalFn = (depth: 0 | 1 | 2) => async (fullTree: boolean) => {
+		const getSummarizeInternalFn = (id: string) => async (fullTree: boolean) => {
 			return {
-				id: ids[depth],
+				id,
 				pathPartsForChildren: undefined, // extra path parts between nodes
 				stats: mergeStats(),
 				summary: { type: SummaryType.Tree, tree: {} } as const,
@@ -272,7 +347,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 		> = {}) {
 			rootNode = createRootSummarizerNodeWithGC(
 				logger,
-				getSummarizeInternalFn(0),
+				getSummarizeInternalFn(nodeIds.rootId),
 				changeSeq,
 				refSeq,
 				config,
@@ -280,11 +355,19 @@ describe("SummarizerNodeWithGC Tests", () => {
 		}
 
 		function createMid(createParam: CreateChildSummarizerNodeParam) {
-			midNode = rootNode.createChild(getSummarizeInternalFn(1), ids[1], createParam);
+			midNode = rootNode.createChild(
+				getSummarizeInternalFn(nodeIds.midId),
+				nodeIds.midId,
+				createParam,
+			);
 		}
 
 		function createLeaf(createParam: CreateChildSummarizerNodeParam) {
-			leafNode = midNode?.createChild(getSummarizeInternalFn(2), ids[2], createParam);
+			leafNode = midNode?.createChild(
+				getSummarizeInternalFn(nodeIds.leafId),
+				nodeIds.leafId,
+				createParam,
+			);
 		}
 
 		it("summary validation should fail if GC not run on root node", () => {
@@ -322,7 +405,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			leafNode?.updateUsedRoutes([""]);
 			await rootNode.summarize(false);
 			await leafNode?.summarize(false);
-			const midNodeId = `/${ids[1]}`;
+			const midNodeId = `/${nodeIds.midId}`;
 
 			// Validate summary fails by calling validateSummary.
 			const expectedResult: ValidateSummaryResult = {
@@ -354,7 +437,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			midNode?.updateUsedRoutes([""]);
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
-			const leafNodeId = `/${ids[1]}/${ids[2]}`;
+			const leafNodeId = `/${nodeIds.midId}/${nodeIds.leafId}`;
 
 			// Validate summary fails by calling validateSummary.
 			const expectedResult: ValidateSummaryResult = {
@@ -393,8 +476,12 @@ describe("SummarizerNodeWithGC Tests", () => {
 			assert(result.isSummaryNewer === true, "should be newer");
 
 			rootNode.startSummary(summaryRefSeq++, logger, latestSummaryRefSeqNum);
-			rootNode.updateUsedRoutes([`/`, `/${ids[1]}`, `/${ids[1]}/${ids[2]}`]);
-			midNode?.updateUsedRoutes([`/`, `/${ids[2]}`]);
+			rootNode.updateUsedRoutes([
+				`/`,
+				`/${nodeIds.midId}`,
+				`/${nodeIds.midId}/${nodeIds.leafId}`,
+			]);
+			midNode?.updateUsedRoutes([`/`, `/${nodeIds.leafId}`]);
 
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
@@ -406,10 +493,10 @@ describe("SummarizerNodeWithGC Tests", () => {
 			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
-			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
-			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
+			const leafNodePath = `${nodeIds.rootId}/${channelsTreeName}/${nodeIds.midId}/${channelsTreeName}/${nodeIds.leafId}`;
+			const leafNodeLatestSummaryHandle = (leafNode as SummarizerNodeWithGC).summaryHandleId;
 			assert.strictEqual(
-				leafNodeLatestSummary?.fullPath.toString(),
+				leafNodeLatestSummaryHandle,
 				leafNodePath,
 				"The child node's latest summary path is incorrect",
 			);
@@ -445,10 +532,10 @@ describe("SummarizerNodeWithGC Tests", () => {
 			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
-			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
-			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
+			const leafNodePath = `${nodeIds.rootId}/${channelsTreeName}/${nodeIds.midId}/${channelsTreeName}/${nodeIds.leafId}`;
+			const leafNodeLatestSummaryHandle = (leafNode as SummarizerNodeWithGC).summaryHandleId;
 			assert.strictEqual(
-				leafNodeLatestSummary?.fullPath.toString(),
+				leafNodeLatestSummaryHandle,
 				leafNodePath,
 				"The child node's latest summary path is incorrect",
 			);

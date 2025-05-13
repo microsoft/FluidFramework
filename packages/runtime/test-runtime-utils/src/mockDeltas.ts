@@ -11,17 +11,18 @@ import {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
-	IClientDetails,
 	IDocumentMessage,
+	MessageType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
+ * @legacy
  * @alpha
  */
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
@@ -97,6 +98,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
 /**
  * Mock implementation of IDeltaManager for testing that creates mock DeltaQueues for testing
+ * @legacy
  * @alpha
  */
 export class MockDeltaManager
@@ -149,7 +151,7 @@ export class MockDeltaManager
 		return undefined as any as IClientConfiguration;
 	}
 
-	public readonly active: boolean = true;
+	public active: boolean = true;
 
 	public close(): void {}
 
@@ -157,7 +159,12 @@ export class MockDeltaManager
 
 	public flush() {}
 
-	public submit(type: MessageType, contents: any, batch = false, localOpMetadata: any): number {
+	public submit(
+		type: MessageType,
+		contents: any,
+		batch = false,
+		localOpMetadata: any,
+	): number {
 		return 0;
 	}
 
@@ -179,7 +186,7 @@ export class MockDeltaManager
 		this.emit("op", message);
 	}
 
-	constructor(private readonly getClientId?: () => string) {
+	constructor(private readonly getClientId?: () => string | undefined) {
 		super();
 
 		this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>();

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { Static, Type } from "@sinclair/typebox";
+import { type Static, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
-import {
+import type {
 	Counter,
 	DeduplicationTable,
 	// eslint-disable-next-line import/no-internal-modules

@@ -1,19 +1,20 @@
 {
 	"name": "@fluid-internal/eslint-plugin-fluid",
-	"version": "0.1.1",
+	"version": "0.1.5",
 	"description": "Custom ESLint rules for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "common/build/eslint-pluig-fluid/"
+		"directory": "common/build/eslint-plugin-fluid"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run build:readme",
+		"build": "npm run build:readme && npm run build:test:examples",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
+		"build:test:examples": "tsc --project ./src/test/example/tsconfig.json",
 		"clean": "rimraf --glob nyc",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
@@ -22,19 +23,18 @@
 	},
 	"dependencies": {
 		"@microsoft/tsdoc": "^0.14.2",
-		"@typescript-eslint/parser": "^6.7.2",
-		"ts-morph": "^20.0.0"
+		"@typescript-eslint/parser": "^6.21.0",
+		"ts-morph": "^22.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"eslint": "^8.50.0",
-		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.1.0",
+		"eslint": "^8.57.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"prettier": "~3.2.5",
+		"rimraf": "^5.0.7",
+		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f"
+	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a"
 }

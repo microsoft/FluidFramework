@@ -3,6 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import type { AxiosError } from "axios";
+import { isAxiosCanceledError } from "./utils";
+
+/**
+ * Represents the internal error code in NetworkError
+ * @internal
+ */
+export enum InternalErrorCode {
+	/**
+	 * The cluster is under draining.
+	 */
+	ClusterDraining = "ClusterDraining",
+
+	/**
+	 * The token has been revoked.
+	 */
+	TokenRevoked = "TokenRevoked",
+}
+
 /**
  * Represents the details associated with a {@link NetworkError}.
  * @internal
@@ -38,6 +57,11 @@ export interface INetworkErrorDetails {
 	 * Refer to {@link NetworkError.source}.
 	 */
 	source?: string;
+	/**
+	 * Represents the internal error code in NetworkError.
+	 * Refer to {@link NetworkError.internalErrorCode}.
+	 */
+	internalErrorCode?: InternalErrorCode;
 }
 
 /**
@@ -55,7 +79,7 @@ export class NetworkError extends Error {
 	 * Value representing the time in seconds that should be waited before retrying.
 	 * TODO: remove in favor of retryAfterMs once driver supports retryAfterMs.
 	 */
-	public readonly retryAfter: number;
+	public readonly retryAfter?: number;
 
 	constructor(
 		/**
@@ -90,6 +114,12 @@ export class NetworkError extends Error {
 		 * @public
 		 */
 		public readonly source?: string,
+		/**
+		 * Optional value indicating the internal error code in NetworkError. It can be used
+		 * with code to provide more information of an error
+		 * @internal
+		 */
+		public readonly internalErrorCode?: InternalErrorCode,
 	) {
 		super(message);
 		this.name = "NetworkError";
@@ -106,7 +136,8 @@ export class NetworkError extends Error {
 			this.canRetry === undefined &&
 			this.isFatal === undefined &&
 			this.retryAfterMs === undefined &&
-			this.source === undefined
+			this.source === undefined &&
+			this.internalErrorCode === undefined
 		) {
 			return this.message;
 		}
@@ -118,6 +149,7 @@ export class NetworkError extends Error {
 			retryAfter: this.retryAfter,
 			retryAfterMs: this.retryAfterMs,
 			source: this.source,
+			internalErrorCode: this.internalErrorCode,
 		};
 	}
 
@@ -133,6 +165,7 @@ export class NetworkError extends Error {
 			retryAfterMs: this.retryAfterMs,
 			retryAfter: this.retryAfter,
 			source: this.source,
+			internalErrorCode: this.internalErrorCode,
 		};
 	}
 }
@@ -168,13 +201,15 @@ export function createFluidServiceNetworkError(
 	let isFatal: boolean | undefined;
 	let retryAfter: number | undefined;
 	let source: string | undefined;
+	let internalErrorCode: InternalErrorCode | undefined;
 
 	if (errorData && typeof errorData === "object") {
 		message = errorData.message ?? "Unknown Error";
 		canRetry = errorData.canRetry;
 		isFatal = errorData.isFatal;
-		retryAfter = errorData.retryAfter;
+		retryAfter = errorData.retryAfterMs ?? errorData.retryAfter;
 		source = errorData.source;
+		internalErrorCode = errorData.internalErrorCode;
 	} else if (errorData && typeof errorData === "string") {
 		message = errorData;
 	} else {
@@ -192,6 +227,7 @@ export function createFluidServiceNetworkError(
 				false /* isFatal */,
 				undefined /* retryAfterMs */,
 				source,
+				internalErrorCode,
 			);
 		case 413:
 		case 422:
@@ -202,6 +238,7 @@ export function createFluidServiceNetworkError(
 				isFatal ?? false /* isFatal */,
 				canRetry ? retryAfter : undefined,
 				source,
+				internalErrorCode,
 			);
 		case 429:
 			return new NetworkError(
@@ -211,6 +248,17 @@ export function createFluidServiceNetworkError(
 				false /* isFatal */,
 				retryAfter,
 				source,
+				internalErrorCode,
+			);
+		case 499:
+			return new NetworkError(
+				statusCode,
+				message,
+				true /* canRetry */,
+				false /* isFatal */,
+				undefined /* retryAfterMs */,
+				source,
+				internalErrorCode,
 			);
 		case 500: {
 			return new NetworkError(
@@ -220,6 +268,7 @@ export function createFluidServiceNetworkError(
 				isFatal ?? false /* isFatal */,
 				canRetry ? retryAfter : undefined,
 				source,
+				internalErrorCode,
 			);
 		}
 		case 502:
@@ -232,6 +281,7 @@ export function createFluidServiceNetworkError(
 				false /* isFatal */,
 				retryAfter,
 				source,
+				internalErrorCode,
 			);
 		default:
 			return new NetworkError(
@@ -241,6 +291,7 @@ export function createFluidServiceNetworkError(
 				true /* isFatal */,
 				undefined /* retryAfterMs */,
 				source,
+				internalErrorCode,
 			);
 	}
 }
@@ -261,4 +312,29 @@ export function throwFluidServiceNetworkError(
 ): never {
 	const networkError = createFluidServiceNetworkError(statusCode, errorData);
 	throw networkError;
+}
+
+/**
+ * @internal
+ */
+export function convertAxiosErrorToNetorkError(error: AxiosError) {
+	const { response, request } = error ?? {};
+	if (response === undefined) {
+		if (request !== undefined) {
+			if (isAxiosCanceledError(error)) {
+				// Request was canceled.
+				return new NetworkError(499, "Client aborted the request.");
+			}
+			// Request was made but no response was received.
+			return new NetworkError(
+				502,
+				`Network Error: ${error?.message ?? "No response received."}`,
+			);
+		}
+	}
+	if (response !== undefined) {
+		// response.data can have potential sensitive information, so we do not return that.
+		return new NetworkError(response.status, response.statusText);
+	}
+	return new NetworkError(500, "Unknown error.");
 }

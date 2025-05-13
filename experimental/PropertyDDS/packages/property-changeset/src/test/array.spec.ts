@@ -8,7 +8,7 @@
  */
 
 import { assert, expect } from "chai";
-import { copy as cloneDeep } from "fastest-json-copy";
+import cloneDeep from "lodash/cloneDeep.js";
 import isEmpty from "lodash/isEmpty.js";
 import isNumber from "lodash/isNumber.js";
 import range from "lodash/range.js";
@@ -697,9 +697,7 @@ describe("Array Operations", function () {
 							),
 							createArrayCS(
 								{
-									insert: [
-										[i + offset, generateNamedEntities(2, undefined, "number")],
-									],
+									insert: [[i + offset, generateNamedEntities(2, undefined, "number")]],
 								},
 								undefined,
 								"array<Float64>",
@@ -946,24 +944,14 @@ describe("Array Operations", function () {
 								insertNames.push("before remove in B");
 							}
 							if (removeInsideInsertB) {
-								insertNames.push(
-									`inside remove range in B (${removeInsideInsertB})`,
-								);
+								insertNames.push(`inside remove range in B (${removeInsideInsertB})`);
 							}
 							let title = "with ";
 							title +=
-								insertNames.length === 0
-									? "no inserts"
-									: `inserts ${insertNames.join(", ")}`;
+								insertNames.length === 0 ? "no inserts" : `inserts ${insertNames.join(", ")}`;
 							it(title, () => {
-								const insertsA: [
-									number,
-									ReturnType<typeof generateNamedEntities>,
-								][] = [];
-								const insertsB: [
-									number,
-									ReturnType<typeof generateNamedEntities>,
-								][] = [];
+								const insertsA: [number, ReturnType<typeof generateNamedEntities>][] = [];
+								const insertsB: [number, ReturnType<typeof generateNamedEntities>][] = [];
 								let offset = 0;
 								if (startInsertA) {
 									insertsA.push([0, generateNamedEntities(1)]);
@@ -984,10 +972,7 @@ describe("Array Operations", function () {
 								if (removeInsideInsertB) {
 									const removeOffset = removeInsideInsertB === "separate" ? 1 : 0;
 
-									insertsB.push([
-										6 + offset + removeOffset,
-										generateNamedEntities(1),
-									]);
+									insertsB.push([6 + offset + removeOffset, generateNamedEntities(1)]);
 									removesB = [
 										[5 + offset + removeOffset, generateNamedEntities(1)],
 										[6 + offset + removeOffset, generateNamedEntities(1)],

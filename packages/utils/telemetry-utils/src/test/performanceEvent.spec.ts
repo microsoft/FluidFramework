@@ -5,20 +5,20 @@
 
 import { strict as assert } from "node:assert";
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 import { PerformanceEvent, TelemetryLogger } from "../logger.js";
-import { ITelemetryLoggerExt } from "../telemetryTypes.js";
+import type { ITelemetryLoggerExt } from "../telemetryTypes.js";
 
 class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	public errorsLogged: number = 0;
 	public eventsLogged: number = 0;
 
-	constructor() {
+	public constructor() {
 		super();
 	}
 
-	send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent): void {
 		if (event.category === "error") {
 			++this.errorsLogged;
 		}
@@ -35,7 +35,7 @@ describe("PerformanceEvent", () => {
 		callbackCalls++;
 	};
 	const asyncCallback = async (event: PerformanceEvent): Promise<string | void> => {
-		const outerPromise: Promise<string> = new Promise((resolve, reject) => {
+		const outerPromise = new Promise<string>((resolve, reject) => {
 			Promise.resolve("A")
 				.finally(() => {
 					reject(new Error("B"));
@@ -63,6 +63,36 @@ describe("PerformanceEvent", () => {
 			cancel: "generic",
 		});
 		assert.equal(logger.errorsLogged, 0, "Shouldn't have logged any errors");
+	});
+
+	it("Cancel then throw (double cancel)", async () => {
+		assert.throws(
+			() =>
+				PerformanceEvent.timedExec(
+					logger,
+					{ eventName: "Testing" },
+					(event) => {
+						callbackCalls++;
+
+						// This is how you can use custom logic to override the "error" category for cancel (specified in the markers below)
+						event.cancel({ category: "generic" });
+						throw new Error("Cancelled already");
+					},
+					{
+						start: true,
+						end: true,
+						cancel: "error",
+					},
+				),
+			(e: Error) => e.message === "Cancelled already",
+			"Should have thrown the error",
+		);
+		assert.equal(logger.errorsLogged, 0, "Shouldn't have logged any errors");
+		assert.equal(
+			logger.eventsLogged,
+			2,
+			"Should have logged a start and cancel event (not with error category)",
+		);
 	});
 
 	describe("Event sampling", () => {

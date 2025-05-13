@@ -4,20 +4,20 @@
  */
 
 export { uniformChunk, ChunkShape } from "./uniformChunk.js";
-export { TreeChunk, dummyRoot } from "./chunk.js";
+export { type TreeChunk, dummyRoot } from "../../core/index.js";
 export {
 	chunkTree,
 	defaultChunkPolicy,
 	makeTreeChunker,
-	IChunker,
+	type IChunker,
 	chunkFieldSingle,
 	chunkField,
 } from "./chunkTree.js";
 export { buildChunkedForest } from "./chunkedForest.js";
 export {
 	EncodedFieldBatch,
-	FieldBatch,
-	FieldBatchCodec,
+	type FieldBatch,
+	type FieldBatchCodec,
 	makeFieldBatchCodec,
-	FieldBatchEncodingContext,
+	type FieldBatchEncodingContext,
 } from "./codec/index.js";

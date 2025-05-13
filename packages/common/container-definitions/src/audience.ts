@@ -4,9 +4,10 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import type { IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 /**
  * Manages the state and the members for {@link IAudience}
+ * @legacy
  * @alpha
  */
 export interface IAudienceOwner extends IAudience {
@@ -34,13 +35,24 @@ export interface IAudienceOwner extends IAudience {
  */
 export interface IAudienceEvents extends IEvent {
 	/**
-	 * "addMember" event is raised when a new user joins collaborative session.
-	 * "removeMember" event is raised when a user leaves collaborative session.
+	 * Raised when a new user joins collaborative session.
+	 *
+	 * @param clientId - clientId of the new user that joined.
+	 * @param client - Information about the new user that joined (including user identity, connection properties).
+	 *
+	 * @eventProperty
 	 */
-	(
-		event: "addMember" | "removeMember",
-		listener: (clientId: string, client: IClient) => void,
-	): void;
+	(event: "addMember", listener: (clientId: string, client: IClient) => void): void;
+
+	/**
+	 * Raised when a user leaves collaborative session.
+	 *
+	 * @param clientId - clientId of the user that left.
+	 * @param client - Information about the user that left (including user identity, connection properties).
+	 *
+	 * @eventProperty
+	 */
+	(event: "removeMember", listener: (clientId: string, client: IClient) => void): void;
 	/**
 	 * Notifies that client established new connection and caught-up on ops.
 	 * @param oldValue - represents old connection. Please note that oldValue.client in almost all cases will be undefined,
@@ -48,7 +60,10 @@ export interface IAudienceEvents extends IEvent {
 	 * @param newValue - represents newly established connection. While {@link IAudience.getSelf} is experimental, it's not guaranteed that
 	 * newValue.client is present. Same is true if you are consuming audience from container runtime layer and running against old version of loader.
 	 */
-	(event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
+	(
+		event: "selfChanged",
+		listener: (oldValue: ISelf | undefined, newValue: ISelf) => void,
+	): void;
 }
 
 /**
@@ -60,7 +75,7 @@ export interface ISelf {
 	 * clientId of current or previous connection (if client is in disconnected or reconnecting / catching up state)
 	 * It changes only when client has reconnected, caught up with latest ops.
 	 */
-	clientId: string;
+	readonly clientId: string;
 
 	/**
 	 * Information about current client (including user identity, connection properties), supplied by ordering service when
@@ -72,7 +87,7 @@ export interface ISelf {
 	 * 2) Container is in the process of establishing new connection. Information about old connection is already reset
 	 * (old clientId is no longer in list of members), but clientId has not yet changed to a new value.
 	 */
-	client?: IClient;
+	readonly client?: IClient;
 }
 
 /**
@@ -128,7 +143,7 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	 * 3. "connect" phase - the following happens synchronously:
 	 * - getSelf() information changes to reflect new connection
 	 * - "selfChanged" event on this object fires
-	 * - Various API surfaces may expose "connected" event. This event fires at the same time as self changes. That said, "connected" event will not fire at ContainerRuntime layer if container is read-only.
+	 * - Various API surfaces may expose "connected" event. This event fires at the same time as self changes. That said, "connected" event will not fire at IContainerRuntime layer if container is read-only.
 	 *
 	 * That said, at the moment this is an experimental API. It depends on some experimental settings that might change in the future.
 	 * Events described in phase #3 may not happen at the same time if kill-bit feature gates are engaged due to a bug discovered in new logic
@@ -141,5 +156,5 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	 * 1. Such clientId is not present in Audience
 	 * 2. Client is not fully caught up
 	 */
-	getSelf: () => ISelf | undefined;
+	getSelf(): ISelf | undefined;
 }

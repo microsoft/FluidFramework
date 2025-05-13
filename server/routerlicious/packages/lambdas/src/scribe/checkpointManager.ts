@@ -31,7 +31,7 @@ export class CheckpointManager implements ICheckpointManager {
 		private readonly documentId: string,
 		private readonly documentRepository: IDocumentRepository,
 		private readonly opCollection: ICollection<ISequencedOperationMessage>,
-		private readonly deltaService: IDeltaService,
+		private readonly deltaService: IDeltaService | undefined,
 		private readonly getDeltasViaAlfred: boolean,
 		private readonly verifyLastOpPersistence: boolean,
 		private readonly checkpointService: ICheckpointService,
@@ -49,9 +49,9 @@ export class CheckpointManager implements ICheckpointManager {
 		noActiveClients: boolean,
 		globalCheckpointOnly: boolean,
 		markAsCorrupt: boolean = false,
-	) {
+	): Promise<void> {
 		const isLocal = isLocalCheckpoint(noActiveClients, globalCheckpointOnly);
-		if (this.getDeltasViaAlfred) {
+		if (this.getDeltasViaAlfred && this.deltaService !== undefined) {
 			if (pending.length > 0 && this.verifyLastOpPersistence) {
 				// Verify that the last pending op has been persisted to op storage
 				// If it is, we can checkpoint
@@ -166,7 +166,7 @@ export class CheckpointManager implements ICheckpointManager {
 	/**
 	 * Removes the checkpoint information from MongoDB
 	 */
-	public async delete(sequenceNumber: number, lte: boolean) {
+	public async delete(sequenceNumber: number, lte: boolean): Promise<void> {
 		// Clears the checkpoint information from mongodb.
 		await this.documentRepository.updateOne(
 			{

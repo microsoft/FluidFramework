@@ -1,5 +1,0 @@
-doc
-node_modules
-dist
-jest.config.cjs
-src/index.d.ts

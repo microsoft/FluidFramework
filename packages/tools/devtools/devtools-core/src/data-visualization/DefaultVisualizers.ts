@@ -15,23 +15,24 @@ import {
 	type ISharedMap,
 	SharedMap,
 	type ISharedDirectory,
-	// eslint-disable-next-line import/no-deprecated
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
-import type { ISharedTree } from "@fluidframework/tree/internal";
-import { SharedTree } from "@fluidframework/tree/internal";
+import type { ISharedObject, IChannelView } from "@fluidframework/shared-object-base/internal";
+import type { ITreeInternal } from "@fluidframework/tree/internal";
+import { FieldKind, SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 
-import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization.js";
+import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
 import {
+	concatenateTypes,
 	determineNodeKind,
 	toVisualTree,
-	visualizeSharedTreeNodeBySchema,
+	visualizeSharedTreeBySchema,
 } from "./SharedTreeVisualizer.js";
+import type { VisualSharedTreeNode } from "./VisualSharedTreeTypes.js";
 import {
 	type FluidObjectNode,
 	type FluidObjectTreeNode,
@@ -103,6 +104,28 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 };
 
 /**
+ * Default {@link VisualizeSharedObject} for {@link DataObject}.
+ * @remarks This takes in a `root` of type {@link ISharedDirectory} from {@link DataObject} and visualizes its children.
+ */
+export const visualizeDataObject: VisualizeSharedObject = async (
+	dataObjectRoot: ISharedObject,
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
+	const renderedChildData = (await visualizeSharedDirectory(
+		dataObjectRoot,
+		visualizeChildData,
+	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
+
+	return {
+		fluidObjectId: dataObjectRoot.id,
+		children: renderedChildData.children,
+		metadata: renderedChildData.metadata,
+		typeMetadata: "DataObject",
+		nodeKind: VisualNodeKind.FluidTreeNode,
+	};
+};
+
+/**
  * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
  */
 export const visualizeSharedCounter: VisualizeSharedObject = async (
@@ -119,7 +142,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 };
 
 /**
- * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
+ * Default {@link VisualizeSharedObject} for {@link SharedDirectory}.
  */
 export const visualizeSharedDirectory: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
@@ -250,26 +273,59 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 };
 
 /**
- * {@link VisualizeSharedObject} for {@link ISharedTree}.
+ * {@link VisualizeSharedObject} for {@link ITree}.
+ *
+ * TODO: [ADO 31468] Refactor the SharedTreeVisualizer to conform to SharedTree API
  */
 export const visualizeSharedTree: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectNode> => {
-	const sharedTree = sharedObject as ISharedTree;
-	const contentSnapshot = sharedTree.contentSnapshot();
+	const sharedTree = sharedObject as IChannelView as ITreeInternal;
 
-	// Root node of the SharedTree's treeview. Assume there is only one root node.
-	const treeView = contentSnapshot.tree[0];
+	// Root node of the SharedTree's content.
+	const treeView = sharedTree.exportVerbose();
+	// All schema definitions for the SharedTree.
+	const treeSimpleSchema = sharedTree.exportSimpleSchema();
+	const treeDefinitions = treeSimpleSchema.definitions;
 
-	// Schema of the tree node.
-	const treeSchema = contentSnapshot.schema.nodeSchema.get(treeView.type);
+	/**
+	 * {@link visualizeSharedTreeBySchema} passes `allowedTypes` into co-recursive functions while constructing the visual representation.
+	 * Since the {@link SimpleTreeSchema.allowedTypes} of each children node is only accessible at the parent field level,
+	 * each node's allowed types are computed at the parent field level.
+	 */
+	const allowedTypes = treeSimpleSchema.root.allowedTypesIdentifiers;
+	const isRequired = treeSimpleSchema.root.kind === FieldKind.Required;
 
-	// Traverses the SharedTree and generates a visual representation of the tree and its schema.
-	const visualTreeRepresentation = await visualizeSharedTreeNodeBySchema(
+	if (treeView === undefined) {
+		return {
+			fluidObjectId: sharedTree.id,
+			typeMetadata: "SharedTree",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+			tooltipContents: {
+				schema: {
+					nodeKind: VisualNodeKind.TreeNode,
+					children: {
+						allowedTypes: {
+							nodeKind: VisualNodeKind.ValueNode,
+							value: concatenateTypes(allowedTypes),
+						},
+						isRequired: {
+							nodeKind: VisualNodeKind.ValueNode,
+							value: isRequired.toString(),
+						},
+					},
+				},
+			},
+			children: {},
+		};
+	}
+
+	// Create a root field visualization that shows the allowed types at the root
+	const visualTreeRepresentation: VisualSharedTreeNode = await visualizeSharedTreeBySchema(
 		treeView,
-		treeSchema,
-		contentSnapshot,
+		treeDefinitions,
+		{ allowedTypes, isRequired },
 		visualizeChildData,
 	);
 
@@ -302,11 +358,11 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 
 /**
  * List of default visualizers included in the library.
+ * @remarks {@link @fluidframework/aqueduct#DataObject} does not have type information, thus not included in the list.
  */
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCell.getFactory().type]: visualizeSharedCell,
 	[SharedCounter.getFactory().type]: visualizeSharedCounter,
-	// eslint-disable-next-line import/no-deprecated
 	[SharedDirectory.getFactory().type]: visualizeSharedDirectory,
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,

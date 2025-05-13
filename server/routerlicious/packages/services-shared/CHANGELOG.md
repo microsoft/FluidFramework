@@ -1,5 +1,16 @@
 # @fluidframework/server-services-shared
 
+## 5.0.0
+
+### Minor Changes
+
+-   server-services-shared: Fixed the ordering in Nexus shutdown ([#21465](https://github.com/microsoft/FluidFramework/pull/21465)) [9427e25689](https://github.com/microsoft/FluidFramework/commit/9427e2568924e0bed83d2a6f78a6e2a20be8a29e)
+
+    Before, the Redis Pub/Sub would be disposed before the socket connections were closed. Now we first close socket
+    connections then do Redis disposal.
+
+    You can find more details in [pull request #20429](https://github.com/microsoft/FluidFramework/pull/20429).
+
 ## 4.0.0
 
 Dependency updates only.

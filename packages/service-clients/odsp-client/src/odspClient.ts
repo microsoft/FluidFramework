@@ -4,25 +4,31 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
+import type {
 	IContainer,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
 import {
-	type FluidObject,
-	type IConfigProviderBase,
-	type IRequest,
+	createDetachedContainer,
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
+import type {
+	FluidObject,
+	IConfigProviderBase,
+	IRequest,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
 	ContainerAttachProps,
-	type ContainerSchema,
+	ContainerSchema,
 	IFluidContainer,
 } from "@fluidframework/fluid-static";
+import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
 import {
-	IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
@@ -30,26 +36,25 @@ import {
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
+	// The comment will be removed up when the deprecated code is removed in AB#31049
+	// eslint-disable-next-line import/no-deprecated
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
-import type {
-	OdspResourceTokenFetchOptions,
-	TokenResponse,
-} from "@fluidframework/odsp-driver-definitions/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
+import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
+import type { TokenResponse } from "./interfaces.js";
+import type {
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
 	OdspContainerServices,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
-import { type IOdspTokenProvider } from "./token.js";
+import type { IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,
@@ -82,26 +87,12 @@ const odspClientFeatureGates = {
 };
 
 /**
- * Feature gates required to support runtime compatibility when V1 and V2 clients are collaborating
- */
-const odspClientV1CompatFeatureGates = {
-	// Disable Garbage Collection
-	"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
-	"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
-	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
-};
-
-/**
  * Wrap the config provider to fall back on the appropriate defaults for ODSP Client.
  * @param baseConfigProvider - The base config provider to wrap
  * @returns A new config provider with the appropriate defaults applied underneath the given provider
  */
 function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
-	const defaults = {
-		...odspClientFeatureGates,
-		...odspClientV1CompatFeatureGates,
-	};
-	return wrapConfigProviderWithDefaults(baseConfigProvider, defaults);
+	return wrapConfigProviderWithDefaults(baseConfigProvider, odspClientFeatureGates);
 }
 
 /**
@@ -113,11 +104,15 @@ export class OdspClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: OdspDriverUrlResolver;
 	private readonly configProvider: IConfigProviderBase | undefined;
+	private readonly connectionConfig: OdspConnectionConfig;
+	private readonly logger: ITelemetryBaseLogger | undefined;
 
-	public constructor(private readonly properties: OdspClientProps) {
+	public constructor(properties: OdspClientProps) {
+		this.connectionConfig = properties.connection;
+		this.logger = properties.logger;
 		this.documentServiceFactory = new OdspDocumentServiceFactory(
-			async (options) => getStorageToken(options, this.properties.connection.tokenProvider),
-			async (options) => getWebsocketToken(options, this.properties.connection.tokenProvider),
+			async (options) => getStorageToken(options, this.connectionConfig.tokenProvider),
+			async (options) => getWebsocketToken(options, this.connectionConfig.tokenProvider),
 		);
 
 		this.urlResolver = new OdspDriverUrlResolver();
@@ -130,17 +125,17 @@ export class OdspClient {
 		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loaderProps = this.getLoaderProps(containerSchema);
 
-		const container = await loader.createDetachedContainer({
-			package: "no-dynamic-package",
-			config: {},
+		const container = await createDetachedContainer({
+			...loaderProps,
+			codeDetails: {
+				package: "no-dynamic-package",
+				config: {},
+			},
 		});
 
-		const fluidContainer = await this.createFluidContainer(
-			container,
-			this.properties.connection,
-		);
+		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
 
 		const services = await this.getContainerServices(container);
 
@@ -154,14 +149,14 @@ export class OdspClient {
 		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loaderProps = this.getLoaderProps(containerSchema);
 		const url = createOdspUrl({
-			siteUrl: this.properties.connection.siteUrl,
-			driveId: this.properties.connection.driveId,
+			siteUrl: this.connectionConfig.siteUrl,
+			driveId: this.connectionConfig.driveId,
 			itemId: id,
 			dataStorePath: "",
 		});
-		const container = await loader.resolve({ url });
+		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
 
 		const fluidContainer = createFluidContainer({
 			container,
@@ -171,8 +166,11 @@ export class OdspClient {
 		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
-	private createLoader(schema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
+	private getLoaderProps(schema: ContainerSchema): ILoaderProps {
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+			compatibilityMode: "2",
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -191,14 +189,14 @@ export class OdspClient {
 			mode: "write",
 		};
 
-		return new Loader({
+		return {
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
-			logger: this.properties.logger,
+			logger: this.logger,
 			options: { client },
 			configProvider: this.configProvider,
-		});
+		};
 	}
 
 	private async createFluidContainer(
@@ -213,6 +211,8 @@ export class OdspClient {
 		const attach = async (
 			odspProps?: ContainerAttachProps<OdspContainerAttachProps>,
 		): Promise<string> => {
+			// The comment will be removed up when the deprecated code is removed in AB#31049
+			// eslint-disable-next-line import/no-deprecated
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
 				connection.siteUrl,
 				connection.driveId,
@@ -231,7 +231,7 @@ export class OdspClient {
 			}
 
 			/**
-			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
+			 * A unique identifier for the file within the provided SharePoint Embedded container ID. When you attach a container,
 			 * a new `itemId` is created in the user's drive, which developers can use for various operations
 			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
 			 */

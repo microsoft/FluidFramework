@@ -1,0 +1,47 @@
+---
+title: Node Types
+sidebar_position: 2
+---
+
+Data on a [SharedTree](./index.mdx) is stored as a [node](./nodes.mdx) of one of the types described below.
+
+## Leaf Nodes
+
+A [leaf](https://fluidframework.com/docs/api/fluid-framework/nodekind-enum#leaf-enummember) node represents an atomic value, while a [TreeNode](https://fluidframework.com/docs/api/fluid-framework/treenode-class) represents an object or collection.
+The following leaf node types are available:
+
+-   [**boolean**](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#boolean-property): Works identically to a JavaScript boolean.
+-   [**number**](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#number-property): Works identically to a JavaScript number except does not support -0, NaN or Infinity.
+-   [**string**](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#string-property): Works identically to a JavaScript string except for not supporting unpaired UTF-16 surrogate pairs.
+-   [**null**](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#null-property): Works identically to a JavaScript null.
+-   [**FluidHandle**](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#handle-property): A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles](../../concepts/handles.mdx).
+
+## TreeNodes
+
+The following subsections describe the available [TreeNode](https://fluidframework.com/docs/api/fluid-framework/treenode-class) types.
+
+### Object Nodes
+
+An [object node](https://fluidframework.com/docs/api/fluid-framework/treeobjectnode-typealias) is a JavaScript object like TreeNode with zero or more named child [fields](https://fluidframework.com/docs/api/fluid-framework/fieldschema-class) exposed as properties of the object.
+The object node's fields can be node types.
+A `SharedTree` can have many object nodes at various places in the tree and they do not all have to conform to the same schema.
+Your schema can specify different properties for different object nodes.
+The schema also specifies whether a child property is
+[required](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#required-property),
+[optional](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#optional-property)
+or an [identifier](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#identifier-property),
+as well as what types of nodes are allowed in the field.
+For example, a property could be either number or string.
+
+### Map Nodes
+
+A map node is a set of zero or more key-value pairs similar to a JavaScript Map object, but the keys can only be strings.
+The schema for the `SharedTree` that your code defines will specify the possible node types that can be values of the keys.
+It can specify that all node types are allowed or only a subset. There is no way to specify different subsets of node types for different keys.
+
+The schema for a map node cannot specify particular key names, nor can it specify a maximum or minimum number of key-value pairs.
+
+### Array Nodes
+
+An array node is an indexed sequence of zero or more values like a JavaScript array.
+In principle, values can be any of the node types, but the schema that your code defines will specify what subset of those types can be the values of any given array item.

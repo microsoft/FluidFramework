@@ -5,17 +5,27 @@
 
 const scripts = require("markdown-magic-package-scripts");
 
-const { formattedGeneratedContentBody, formattedSectionText } = require("../utilities.cjs");
+const {
+	formattedGeneratedContentBody,
+	formattedSectionText,
+	parseHeadingOptions,
+} = require("../utilities.cjs");
 
 /**
- * Generats a simple Markdown heading and contents with a table describing all of the package's npm scripts.
+ * Generates a simple Markdown heading and contents with a table describing all of the package's npm scripts.
  *
  * @param {string} scriptsTable - Table of scripts to display.
  * See `markdown-magic-package-scripts` (imported as `scripts`).
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ * @param {object} headingOptions - Heading generation options.
+ * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
  */
-const generatePackageScriptsSection = (scriptsTable, includeHeading) => {
-	return formattedSectionText(scriptsTable, includeHeading ? "Scripts" : undefined);
+const generatePackageScriptsSection = (scriptsTable, headingOptions) => {
+	return formattedSectionText(scriptsTable, {
+		...headingOptions,
+		headingText: "Scripts",
+	});
 };
 
 /**
@@ -25,20 +35,23 @@ const generatePackageScriptsSection = (scriptsTable, includeHeading) => {
  * @param {object} options - Transform options.
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
  * Default: "./package.json".
- * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
- * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
+ * default: `TRUE`.
+ * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+ * Must be a positive integer.
+ * Default: {@link defaultSectionHeadingLevel}.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function packageScriptsSectionTransform(content, options, config) {
-	const includeHeading = options.includeHeading !== "FALSE";
+function packageScriptsTransform(content, options, config) {
+	const headingOptions = parseHeadingOptions(options);
 	const scriptsTable = scripts(content, options, config);
 	return formattedGeneratedContentBody(
-		generatePackageScriptsSection(scriptsTable, includeHeading),
+		generatePackageScriptsSection(scriptsTable, headingOptions),
 	);
 }
 
 module.exports = {
 	generatePackageScriptsSection,
-	packageScriptsSectionTransform,
+	packageScriptsTransform,
 };

@@ -5,9 +5,13 @@
 
 import * as base64js from "base64-js";
 
+// Note: See 'Isomorphic Code' section in the package README.md
 import { IsoBuffer } from "./bufferBrowser.js";
 
-async function digestBuffer(file: IsoBuffer, algorithm: "SHA-1" | "SHA-256"): Promise<Uint8Array> {
+async function digestBuffer(
+	file: IsoBuffer,
+	algorithm: "SHA-1" | "SHA-256",
+): Promise<Uint8Array> {
 	const hash = await crypto.subtle.digest(algorithm, file);
 	return new Uint8Array(hash);
 }

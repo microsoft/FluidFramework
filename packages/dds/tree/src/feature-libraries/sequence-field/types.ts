@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
-import { NodeId } from "../index.js";
-import { DetachIdOverrideType } from "./format.js";
+import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import type { NodeId } from "../index.js";
 
 export type CellCount = number;
 
@@ -26,49 +25,8 @@ export interface HasMoveId {
 }
 
 /**
- * Represents a position within a contiguous range of nodes detached by a single changeset.
- * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
- * `LineageEvent`s for a given revision can only be meaningfully compared if it is known that they must refer to the
- * same detach.
- * @internal
  */
-export interface LineageEvent {
-	readonly revision: RevisionTag;
-	readonly id: ChangesetLocalId;
-	readonly count: number;
-
-	/**
-	 * The position of this mark within a range of nodes which were detached in this revision.
-	 */
-	readonly offset: number;
-}
-
-/**
- * @internal
- */
-export interface HasLineage {
-	/**
-	 * History of detaches adjacent to the cells described by this `ChangeAtomId`.
-	 */
-	lineage?: LineageEvent[];
-}
-
-export interface IdRange {
-	id: ChangesetLocalId;
-	count: CellCount;
-}
-
-/**
- * @internal
- */
-export interface CellId extends ChangeAtomId, HasLineage {
-	/**
-	 * List of all cell local IDs (including this one) which were adjacent and emptied in the same revision as this one.
-	 * The IDs are ordered in sequence order, and are used for determining the relative position of cells.
-	 * `CellId` objects may share an array, so this should not be mutated.
-	 */
-	adjacentCells?: IdRange[];
-}
+export interface CellId extends ChangeAtomId {}
 
 /**
  * Mark which targets a range of existing cells instead of creating new cells.
@@ -142,19 +100,15 @@ export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
 }
 
-export interface DetachIdOverride {
-	readonly type: DetachIdOverrideType;
-	/**
-	 * This ID should be used instead of the mark's own ID when referring to the cell being emptied.
-	 */
-	readonly id: CellId;
-}
-
 export interface DetachFields {
 	/**
 	 * When set, the detach should use the `CellId` specified in this object to characterize the cell being emptied.
+	 *
+	 * This is used in two situations:
+	 * - to restore the prior ID of a cell in a rollback changeset
+	 * - to represent the impact of a detach composed with a rename
 	 */
-	readonly idOverride?: DetachIdOverride;
+	readonly idOverride?: CellId;
 }
 
 /**
@@ -191,9 +145,12 @@ export type Detach = Remove | MoveOut;
  *
  * Only ever targets empty cells.
  *
- * As a matter of normalization, only use an AttachAndDetach mark when the attach is a new insert or a move
- * destination. In all other cases (the attach would be a revive), we rely on the implicit reviving semantics of the
- * detach and represent that detach on its own (i.e., not wrapped in an AttachAndDetach).
+ * As a matter of normalization, we only use an AttachAndDetach to represent MoveIn ○ Remove.
+ *
+ * We do NOT use AttachAndDetach to represent the following compositions:
+ * - Insert/Revive ○ Remove (represented by a Remove)
+ * - Insert/Revive ○ MoveOut (represented by a MoveOut)
+ * - MoveIn ○ MoveOut (represented by a Rename)
  */
 export interface AttachAndDetach {
 	type: "AttachAndDetach";
@@ -201,7 +158,20 @@ export interface AttachAndDetach {
 	detach: Detach;
 }
 
-export type MarkEffect = NoopMark | Attach | Detach | AttachAndDetach;
+/**
+ * Represents the renaming of an empty cell.
+ *
+ * Only ever targets empty cells.
+ *
+ * Occurs when a MoveIn is composed with a MoveOut.
+ * TODO: Use Rename when an Insert/Revive is composed with a Remove.
+ */
+export interface Rename {
+	type: "Rename";
+	readonly idOverride: CellId;
+}
+
+export type MarkEffect = NoopMark | Attach | Detach | AttachAndDetach | Rename;
 
 export type CellMark<TMark> = TMark & HasMarkFields;
 

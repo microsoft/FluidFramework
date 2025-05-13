@@ -3,36 +3,60 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../schema-stored/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import { NodeData } from "./types.js";
+import type { NodeData } from "./types.js";
 
 /**
- * This modules provides a simple in memory tree format.
+ * This module provides a simple in-memory tree format.
  */
 
 /**
- * Simple in memory tree representation based on Maps.
- * MapTrees should not store empty fields.
- * @internal
+ * Simple in-memory tree representation based on Maps.
+ * @remarks MapTrees should not store empty fields.
  */
 export interface MapTree extends NodeData {
-	fields: Map<FieldKey, MapTree[]>;
+	readonly fields: ReadonlyMap<FieldKey, readonly MapTree[]>;
 }
 
 /**
- * Get a field from `node`, optionally modifying the tree to create it if missing.
+ * A {@link MapTree} which is owned by a single reference, and therefore allowed to be mutated.
+ *
+ * @remarks
+ * To ensure unexpected mutations, this object should have a single owner/context.
+ * Though this type does implement MapTree, it should not be used as a MapTree while it can possibly be mutated.
+ * If it is shared to other contexts, it should first be upcast to a {@link MapTree} and further mutations should be avoided.
  */
-export function getMapTreeField(node: MapTree, key: FieldKey, createIfMissing: boolean): MapTree[] {
-	const field = node.fields.get(key);
-	if (field !== undefined) {
-		return field;
+export interface ExclusiveMapTree extends NodeData, MapTree {
+	fields: Map<FieldKey, ExclusiveMapTree[]>;
+}
+
+/**
+ * Returns a deep copy of the given {@link MapTree}.
+ * @privateRemarks This is implemented iteratively (rather than recursively, which is much simpler)
+ * to avoid the possibility of a stack overflow for very deep trees.
+ */
+export function deepCopyMapTree(mapTree: MapTree): ExclusiveMapTree {
+	type Next = [fields: ExclusiveMapTree["fields"], sourceFields: MapTree["fields"]];
+	const rootFields: ExclusiveMapTree["fields"] = new Map();
+	const nexts: Next[] = [[rootFields, mapTree.fields]];
+	for (let next = nexts.pop(); next !== undefined; next = nexts.pop()) {
+		const [fields, sourceFields] = next;
+		for (const [key, field] of sourceFields) {
+			if (field.length > 0) {
+				const newField: ExclusiveMapTree[] = [];
+				for (const child of field) {
+					const childClone: ExclusiveMapTree = { ...child, fields: new Map() };
+					newField.push(childClone);
+					nexts.push([childClone.fields, child.fields]);
+				}
+				fields.set(key, newField);
+			}
+		}
 	}
-	// Handle missing field:
-	if (createIfMissing === false) {
-		return [];
-	}
-	const newField: MapTree[] = [];
-	node.fields.set(key, newField);
-	return newField;
+
+	return {
+		...mapTree,
+		fields: rootFields,
+	};
 }

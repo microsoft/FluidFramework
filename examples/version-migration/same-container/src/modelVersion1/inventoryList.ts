@@ -4,9 +4,10 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26903: `cell` internals used in examples
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
-import { SharedString } from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/legacy";
 import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
@@ -121,10 +122,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 				itemData.name.get(),
 				itemData.quantity.get(),
 			]);
-			this.inventoryItems.set(
-				id,
-				new InventoryItem(id, nameSharedString, quantitySharedCell),
-			);
+			this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedCell));
 		}
 	}
 }
@@ -135,9 +133,8 @@ export class InventoryList extends DataObject implements IInventoryList {
  * scenario, the fourth argument is not used.
  * @internal
  */
-export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList>(
-	"inventory-list",
-	InventoryList,
-	[SharedCell.getFactory(), SharedString.getFactory()],
-	{},
-);
+export const InventoryListInstantiationFactory = new DataObjectFactory({
+	type: "inventory-list",
+	ctor: InventoryList,
+	sharedObjects: [SharedCell.getFactory(), SharedString.getFactory()],
+});

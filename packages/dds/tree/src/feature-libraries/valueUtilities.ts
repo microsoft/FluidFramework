@@ -4,10 +4,10 @@
  */
 
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { TreeValue, Value, ValueSchema } from "../core/index.js";
+import { type TreeValue, type Value, ValueSchema } from "../core/index.js";
 
 export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
 	if (schema === undefined) {

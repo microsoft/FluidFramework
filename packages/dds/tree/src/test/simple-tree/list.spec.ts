@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "../../simple-tree/index.js";
 
@@ -12,7 +12,7 @@ import { hydrate, pretty } from "./utils.js";
 const schemaFactory = new SchemaFactory("test");
 
 describe("List", () => {
-	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
+	/** Formats 'args' array, inserting commas and eliding trailing `undefine`s.  */
 	function prettyArgs(...args: any[]) {
 		return args.reduce((prev: string, arg, index) => {
 			// If all remaining arguments are 'undefined' elide them.
@@ -95,6 +95,7 @@ describe("List", () => {
 			// An older technique for detecting arrays is to use the 'instanceof' operator.
 			// However, this is not reliable in the presence of multiple global contexts (e.g.,
 			// if an Array is passed across frame boundaries.)
+			// eslint-disable-next-line unicorn/no-instanceof-array
 			test0("instanceof Array", (target: unknown) => target instanceof Array);
 
 			// 'deepEquals' requires that objects have the same prototype to be considered equal.
@@ -194,8 +195,8 @@ describe("List", () => {
 			check(/* length: */ 2, /* index: */ 0);
 			check(/* length: */ 2, /* index: */ 1);
 			check(/* length: */ 2, /* index: */ -2);
-			check(/* length: */ 2, /* index: */ Infinity);
-			check(/* length: */ 2, /* index: */ -Infinity);
+			check(/* length: */ 2, /* index: */ Number.POSITIVE_INFINITY);
+			check(/* length: */ 2, /* index: */ Number.NEGATIVE_INFINITY);
 		});
 
 		describe("[Symbol.isConcatSpreadable] matches array defaults", () => {
@@ -239,9 +240,7 @@ describe("List", () => {
 					assert.deepEqual(actual, expected);
 				}
 
-				it(`${pretty(array)}.${fnName}(${prettyArgs(...args)}) -> ${pretty(
-					expected,
-				)}`, () => {
+				it(`${pretty(array)}.${fnName}(${prettyArgs(...args)}) -> ${pretty(expected)}`, () => {
 					const subject = init(createStringList(array));
 					innerTest(subject, subject);
 				});
@@ -262,9 +261,11 @@ describe("List", () => {
 					target: readonly string[],
 					value: boolean,
 				): readonly string[] => {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(target as any)[Symbol.isConcatSpreadable] = value;
 
 					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						(target as any)[Symbol.isConcatSpreadable],
 						value,
 						"[Symbol.isConcatSpreadable] must be settable",
@@ -345,8 +346,8 @@ describe("List", () => {
 				check([]);
 				check(["a"]);
 				check(["a", "b"]);
-				check(["a", "b"], -Infinity);
-				check(["a", "b"], 0, Infinity);
+				check(["a", "b"], Number.NEGATIVE_INFINITY);
+				check(["a", "b"], 0, Number.POSITIVE_INFINITY);
 
 				for (let i = 0; i < 4; i++) {
 					check(["a", "b"], i);
@@ -366,10 +367,7 @@ describe("List", () => {
 
 				const tests = [[], ["a"], ["a", "b"], ["c", "b"], ["a", "c"]];
 
-				type IterativeFn = (
-					callback: (...args: any[]) => unknown,
-					...args: unknown[]
-				) => unknown;
+				type IterativeFn = (callback: (...args: any[]) => unknown, ...args: any[]) => unknown;
 
 				// Ensure that invoking 'fnName' on an array-like subject returns the same result
 				// as invoking the same function on a true JS array.  This test helper also logs
@@ -388,7 +386,7 @@ describe("List", () => {
 					// Wraps the callback function to log the values of 'this', 'value', and 'index',
 					// which are expected to be identical between a true JS array and our array-like subject.
 					const logCalls = (expectedArrayParam: readonly string[], log: unknown[][]) => {
-						return function (...args: unknown[]) {
+						return function (...args: any[]) {
 							const result = callback(...args);
 
 							// Other than the 'array' parameter, the arguments should be identical.  To make
@@ -417,13 +415,10 @@ describe("List", () => {
 						]);
 
 						// Check the actual result and compare the actual arguments to the callback.
-						function innerTest(
-							subject: readonly string[],
-							fnSource: readonly string[],
-						) {
+						function innerTest(subject: readonly string[], fnSource: readonly string[]) {
 							const actualFn = Reflect.get(fnSource, fnName) as (
 								callback: (...args: any[]) => unknown,
-								...args: unknown[]
+								...args: any[]
 							) => unknown;
 							const actualArgs: unknown[][] = [];
 							const actualResult = actualFn.apply(subject, [
@@ -437,17 +432,16 @@ describe("List", () => {
 							assert.deepEqual(actualArgs, expectedArgs);
 						}
 
-						it(`${pretty(array)}.${fnName}(callback, ${prettyArgs(
-							otherArgs,
-						)}) -> ${pretty(expectedResult)}:${pretty(expectedArgs)}`, () => {
+						it(`${pretty(array)}.${fnName}(callback, ${prettyArgs(otherArgs)}) -> ${pretty(
+							expectedResult,
+						)}:${pretty(expectedArgs)}`, () => {
 							const subject = createStringList(array);
 							innerTest(subject, subject);
 						});
 
-						it(`Array.prototype.${fnName}.call(${prettyArgs(
-							array,
-							...otherArgs,
-						)}) -> ${pretty(expected)}`, () => {
+						it(`Array.prototype.${fnName}.call(${prettyArgs(array, ...otherArgs)}) -> ${pretty(
+							expected,
+						)}`, () => {
 							innerTest(createStringList(array), Array.prototype);
 						});
 					};
@@ -518,8 +512,8 @@ describe("List", () => {
 				check(["a", "b"], "a", /* start: */ -1);
 				check(["a", "b"], "b", /* start: */ -1);
 				check(["a", "b"], "a", /* start: */ -2);
-				check(["a", "b"], "a", /* start: */ Infinity);
-				check(["a", "b"], "a", /* start: */ -Infinity);
+				check(["a", "b"], "a", /* start: */ Number.POSITIVE_INFINITY);
+				check(["a", "b"], "a", /* start: */ Number.NEGATIVE_INFINITY);
 			});
 
 			describe("indexOf()", () => {
@@ -535,8 +529,8 @@ describe("List", () => {
 				check(["a", "b"], "a", /* start: */ -1);
 				check(["a", "b"], "b", /* start: */ -1);
 				check(["a", "b"], "a", /* start: */ -2);
-				check(["a", "b"], "a", /* start: */ Infinity);
-				check(["a", "b"], "a", /* start: */ -Infinity);
+				check(["a", "b"], "a", /* start: */ Number.POSITIVE_INFINITY);
+				check(["a", "b"], "a", /* start: */ Number.NEGATIVE_INFINITY);
 			});
 
 			describe("at()", () => {
@@ -569,8 +563,8 @@ describe("List", () => {
 				check(["a", "b"], -3.000001); // Truncated to -3 - out of bounds
 				check(["a", "b"], -3.5); // Truncated to -3 - out of bounds
 				// Extreme values
-				check(["a", "b"], Infinity);
-				check(["a", "b"], -Infinity);
+				check(["a", "b"], Number.POSITIVE_INFINITY);
+				check(["a", "b"], Number.NEGATIVE_INFINITY);
 				check(["a", "b"], Number.MAX_SAFE_INTEGER);
 				check(["a", "b"], Number.MIN_SAFE_INTEGER);
 				check(["a", "b"], Number.MAX_VALUE);
@@ -586,7 +580,7 @@ describe("List", () => {
 				check(["a", "b"], "-2.999999");
 				check(["a", "b"], "-3.0");
 				check(["a", "b"], "not-a-number");
-				check(["a", "b"], NaN);
+				check(["a", "b"], Number.NaN);
 				check(["a", "b"], true);
 				check(["a", "b"], false);
 				check(["a", "b"], undefined);
@@ -632,8 +626,8 @@ describe("List", () => {
 				check(["a", "b"], "a", /* start: */ -1);
 				check(["a", "b"], "b", /* start: */ -1);
 				check(["a", "b"], "a", /* start: */ -2);
-				check(["a", "b"], "a", /* start: */ Infinity);
-				check(["a", "b"], "a", /* start: */ -Infinity);
+				check(["a", "b"], "a", /* start: */ Number.POSITIVE_INFINITY);
+				check(["a", "b"], "a", /* start: */ Number.NEGATIVE_INFINITY);
 			});
 
 			describe("some()", () => {
@@ -643,16 +637,6 @@ describe("List", () => {
 				};
 
 				[[], ["a"], ["b"], ["b", "c"], ["b", "c", "c"]].forEach(check);
-			});
-
-			describe("values()", () => {
-				const check = (array: readonly string[]) => {
-					test2("values", array, noInit);
-				};
-
-				check([]);
-				check(["a"]);
-				check(["a", "b"]);
 			});
 
 			describe("toLocaleString()", () => {
@@ -696,12 +680,14 @@ describe("List", () => {
 			const subject = createStringList([]);
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any)[0] = "a";
 			});
 
 			subject.insertAtStart("a", "b", "c");
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any)[0] = "a";
 			});
 		});
@@ -710,12 +696,14 @@ describe("List", () => {
 			const subject = createStringList([]);
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any).length = 0;
 			});
 
 			subject.insertAtStart("a", "b", "c");
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any).length = 0;
 			});
 		});

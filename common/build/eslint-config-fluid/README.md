@@ -24,6 +24,12 @@ In particular, use of this config is encouraged for libraries with public facing
 
 Imported via `@fluidframework/eslint-config-fluid/strict`.
 
+### Strict-Biome
+
+A version of the "strict" config that disables rules that are supported by Biome's "recommended" lint config.
+This config is intended to be used in projects that use both eslint and Biome for linting.
+This config is considered experimental.
+
 ## Changing the lint config
 
 If you want to change the shared lint config (that is, this package), you need to do the following:
@@ -43,7 +49,7 @@ ESLint provides a way to print the config that would apply to a file (`--print-c
 print out the applied config as a JSON file. As we make changes to the config, we can print out the config again and get
 a diff to review as part of a PR -- just like we do with API reports for code changes.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCRIPTS) -->
+<!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -64,6 +70,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `print-config:react` | `eslint --config ./index.js --print-config ./src/file.tsx > ./printed-configs/react.json` |
 | `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json` |
 | `print-config:strict` | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json` |
+| `print-config:strict-biome` | `eslint --config ./strict-biome.js --print-config ./src/file.ts > ./printed-configs/strict-biome.json` |
 | `print-config:test` | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`). |
 | `test` | `echo TODO: add tests in @fluidframework/eslint-config-fluid` |
 

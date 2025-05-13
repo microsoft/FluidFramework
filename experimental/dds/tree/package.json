@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.41.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -22,16 +22,6 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./test/EditLog": {
-			"import": {
-				"types": "./lib/EditLog.d.ts",
-				"default": "./lib/EditLog.js"
-			},
-			"require": {
-				"types": "./dist/EditLog.d.ts",
-				"default": "./dist/EditLog.js"
-			}
 		}
 	},
 	"main": "lib/index.js",
@@ -41,26 +31,32 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./test/EditLog",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"check:are-the-types-wrong": "attw --pack .",
+		"check:biome": "biome check .",
+		"check:exports": "concurrently \"npm:check:exports:*\"",
+		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:cjs:EditLog": "echo AB#8147 skip api-extractor run --config api-extractor/api-extractor-lint-EditLog.cjs.json",
+		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
+		"check:exports:esm:EditLog": "echo AB#8147 skip api-extractor run --config api-extractor/api-extractor-lint-EditLog.esm.json",
+		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
+		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
-		"format": "fluid-build --task format .",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./experimental-tree.test-files.tar ./src/test ./dist/test ./lib/test",
-		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit -r node_modules/@fluid-internal/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
+		"pack:tests": "tar -cf ./experimental-tree.test-files.tar ./src/test ./dist/test ./lib/test",
+		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
 		"perf:measure": "npm run perf -- --fgrep @Measurement",
 		"test": "npm run test:mocha",
-		"test:benchmark:report": "mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark -r node_modules/@fluid-internal/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
+		"test:benchmark:report": "mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluid-internal/mocha-test-setup",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=normal mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
@@ -69,8 +65,8 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
@@ -83,45 +79,44 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
+		"@arethetypeswrong/cli": "^0.17.1",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
-		"@fluid-tools/benchmark": "^0.48.0",
+		"@fluid-tools/benchmark": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/undo-redo": "workspace:~",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/chai": "^4.0.0",
 		"@types/lru-cache": "^5.1.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"chai": "^4.2.0",
+		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"easy-table": "^1.1.1",
 		"env-cmd": "^10.1.0",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
-		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

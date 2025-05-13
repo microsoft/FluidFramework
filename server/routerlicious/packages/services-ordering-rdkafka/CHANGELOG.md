@@ -1,5 +1,9 @@
 # @fluidframework/server-services-ordering-rdkafka
 
+## 5.0.0
+
+Dependency updates only.
+
 ## 4.0.0
 
 Dependency updates only.

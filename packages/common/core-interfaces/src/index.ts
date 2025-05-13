@@ -28,10 +28,16 @@ export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable.js";
 export type { IRequest, IRequestHeader, IResponse } from "./fluidRouter.js";
 
 export type {
-	IProvideFluidHandleContext,
-	IProvideFluidHandle,
-	IFluidHandleInternal,
 	IFluidHandleErased,
+	IFluidHandleEvents,
+	IFluidHandleInternal,
+	IFluidHandleInternalPayloadPending,
+	IFluidHandlePayloadPending,
+	ILocalFluidHandle,
+	ILocalFluidHandleEvents,
+	IProvideFluidHandle,
+	IProvideFluidHandleContext,
+	PayloadState,
 } from "./handles.js";
 export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";
 
@@ -48,3 +54,14 @@ export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./pr
 export type { ConfigTypes, IConfigProviderBase } from "./config.js";
 export type { ISignalEnvelope } from "./messages.js";
 export type { ErasedType } from "./erasedType.js";
+
+export type {
+	HasListeners,
+	IEmitter,
+	IsListener,
+	Listeners,
+	Listenable,
+	MapGetSet,
+	NoListenersCallback,
+	Off,
+} from "./events/index.js";

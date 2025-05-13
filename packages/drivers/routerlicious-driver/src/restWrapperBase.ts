@@ -4,6 +4,7 @@
  */
 
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
+import { type QueryStringType } from "./queryStringUtils.js";
 import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
@@ -14,6 +15,12 @@ export abstract class RestWrapper {
 		protected readonly maxContentLength = 1000 * 1024 * 1024,
 	) {}
 
+	/**
+	 * @param url - Relative or absolute request url.(should not contain any query params)
+	 * @param queryString - query params to be appended to the request url
+	 * @param headers - headers
+	 * @param additionalOptions - additionalOptions
+	 */
 	public async get<T>(
 		url: string,
 		queryString?: QueryStringType,
@@ -32,11 +39,19 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "GET",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url,
+			params: { ...this.defaultQueryString, ...queryString },
 		};
 		return this.request<T>(options, 200);
 	}
 
+	/**
+	 * @param url - Relative or absolute request url.(should not contain any query params)
+	 * @param requestBody - requestBody
+	 * @param queryString - query params to be appended to the request url
+	 * @param headers - headers
+	 * @param additionalOptions - additionalOptions
+	 */
 	public async post<T>(
 		url: string,
 		requestBody: any,
@@ -57,11 +72,18 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "POST",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url,
+			params: { ...this.defaultQueryString, ...queryString },
 		};
 		return this.request<T>(options, 201);
 	}
 
+	/**
+	 * @param url - Relative or absolute request url.(should not contain any query params)
+	 * @param queryString - query params to be appended to the request url
+	 * @param headers - headers
+	 * @param additionalOptions - additionalOptions
+	 */
 	public async delete<T>(
 		url: string,
 		queryString?: QueryStringType,
@@ -80,11 +102,19 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "DELETE",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url,
+			params: { ...this.defaultQueryString, ...queryString },
 		};
 		return this.request<T>(options, 204);
 	}
 
+	/**
+	 * @param url - Relative or absolute request url.(should not contain any query params)
+	 * @param requestBody - requestBody
+	 * @param queryString - query params to be appended to the request url
+	 * @param headers - headers
+	 * @param additionalOptions - additionalOptions
+	 */
 	public async patch<T>(
 		url: string,
 		requestBody: any,
@@ -105,7 +135,8 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "PATCH",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url,
+			params: { ...this.defaultQueryString, ...queryString },
 		};
 		return this.request<T>(options, 200);
 	}
@@ -115,32 +146,4 @@ export abstract class RestWrapper {
 		statusCode: number,
 		addNetworkCallProps?: boolean,
 	): Promise<IR11sResponse<T>>;
-
-	protected generateQueryString(queryStringValues?: QueryStringType) {
-		if (this.defaultQueryString || queryStringValues) {
-			const queryStringMap = { ...this.defaultQueryString, ...queryStringValues };
-
-			return getQueryString(queryStringMap);
-		}
-
-		return "";
-	}
 }
-
-/**
- * Generates query string from the given query parameters.
- * @param queryParams - Query parameters from which to create a query.
- */
-export function getQueryString(queryParams: QueryStringType): string {
-	let queryString = "";
-	for (const key of Object.keys(queryParams)) {
-		if (queryParams[key] !== undefined) {
-			const startChar = queryString === "" ? "?" : "&";
-			queryString += `${startChar}${key}=${encodeURIComponent(queryParams[key])}`;
-		}
-	}
-
-	return queryString;
-}
-
-export type QueryStringType = Record<string, string | number | boolean>;

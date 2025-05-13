@@ -8,11 +8,10 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import {
-	ChannelCollection,
 	ChannelCollectionFactory,
-	IContainerRuntimeOptions,
 	ISummarizer,
 	SummaryCollection,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions/internal";
@@ -45,7 +44,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	let summarizer: ISummarizer | undefined;
 	let loader: IHostLoader | undefined;
 
-	const runtimeOptions: IContainerRuntimeOptions = {
+	const runtimeOptions: IContainerRuntimeOptionsInternal = {
 		enableGroupedBatching: true,
 		// Force summarizer heuristics to be disabled so we can control when to summarize
 		summaryOptions: {
@@ -66,8 +65,6 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	const dataStoreFactory = new ChannelCollectionFactory(
 		[[testObjectFactory.type, Promise.resolve(testObjectFactory)]],
 		async (runtime: IFluidDataStoreChannel) => runtime,
-		(...args: ConstructorParameters<typeof ChannelCollection>) =>
-			new ChannelCollection(...args),
 	);
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({

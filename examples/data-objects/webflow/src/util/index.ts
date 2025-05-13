@@ -5,7 +5,13 @@
 
 export { ICaretBounds, ICaretEvent, CaretEventType, caretEnter, caretLeave } from "./caret.js";
 export { ICommand } from "./command.js";
-export { Direction, getDeltaX, getDeltaY, getTabDirection, TabDirection } from "./direction.js";
+export {
+	Direction,
+	getDeltaX,
+	getDeltaY,
+	getTabDirection,
+	TabDirection,
+} from "./direction.js";
 export { Dom } from "./dom.js";
 export { KeyCode } from "./keycode.js";
 export { randomId } from "./random.js";

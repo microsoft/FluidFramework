@@ -11,6 +11,7 @@ import {
 	IPartitionLambda,
 	IRawOperationMessage,
 	IRawOperationMessageBatch,
+	isCompleteBoxcarMessage,
 } from "@fluidframework/server-services-core";
 
 /**
@@ -27,9 +28,16 @@ export class CopierLambda implements IPartitionLambda {
 		protected context: IContext,
 	) {}
 
-	public handler(message: IQueuedMessage) {
+	/**
+	 * {@inheritDoc IPartitionLambda.handler}
+	 */
+	public handler(message: IQueuedMessage): undefined {
 		// Extract batch of raw ops from Kafka message:
 		const boxcar = extractBoxcar(message);
+		if (!isCompleteBoxcarMessage(boxcar)) {
+			// If the boxcar is not complete, it cannot be routed correctly.
+			return undefined;
+		}
 		const batch = boxcar.contents;
 		const topic = `${boxcar.tenantId}/${boxcar.documentId}`;
 
@@ -56,14 +64,12 @@ export class CopierLambda implements IPartitionLambda {
 		return undefined;
 	}
 
-	public close() {
+	public close(): void {
 		this.pendingJobs.clear();
 		this.currentJobs.clear();
-
-		return;
 	}
 
-	private sendPending() {
+	private sendPending(): void {
 		// If there is work currently being sent or we have no pending work return early
 		if (this.currentJobs.size > 0 || this.pendingJobs.size === 0) {
 			return;

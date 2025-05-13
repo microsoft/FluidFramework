@@ -7,6 +7,7 @@
 // and are authored with awareness of the issues with these types.
 
 /* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 
 import type {
@@ -14,6 +15,7 @@ import type {
 	Covariant,
 	Invariant,
 	MakeNominal,
+	areOnlyKeys,
 	areSafelyAssignable,
 	eitherIsAny,
 	isAny,
@@ -32,19 +34,19 @@ declare class Empty1 {}
 declare class Empty2 {}
 
 declare class Nominal1 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Nominal2 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Derived1 extends Nominal1 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Derived2 extends Nominal1 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Generic<_T> {}
@@ -90,10 +92,7 @@ declare class GenericInvariantImplementation<T> implements GenericInvariantInter
 export type EnforceTypeCheckTests =
 	// Add dummy use of type checking types above
 	| requireTrue<
-			isAssignableTo<
-				GenericInvariantImplementation<number>,
-				GenericInvariantInterface<number>
-			>
+			isAssignableTo<GenericInvariantImplementation<number>, GenericInvariantInterface<number>>
 	  >
 
 	// Positive tests
@@ -127,8 +126,12 @@ export type EnforceTypeCheckTests =
 	| requireFalse<isAssignableTo<GenericCovariant<Nominal1>, GenericCovariant<Derived1>>>
 
 	// test Contravariant
-	| requireFalse<isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Nominal2>>>
-	| requireFalse<isAssignableTo<GenericContravariant<Derived1>, GenericContravariant<Nominal1>>>
+	| requireFalse<
+			isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Nominal2>>
+	  >
+	| requireFalse<
+			isAssignableTo<GenericContravariant<Derived1>, GenericContravariant<Nominal1>>
+	  >
 	| requireTrue<isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Derived1>>>
 
 	// test Invariant
@@ -137,8 +140,12 @@ export type EnforceTypeCheckTests =
 	| requireFalse<isAssignableTo<GenericInvariant<Nominal1>, GenericInvariant<Derived1>>>
 
 	// test Multiple parameters
-	| requireFalse<isAssignableTo<GenericMulti<Nominal1, number>, GenericMulti<Derived1, number>>>
-	| requireFalse<isAssignableTo<GenericMulti<number, Nominal1>, GenericMulti<number, Derived1>>>
+	| requireFalse<
+			isAssignableTo<GenericMulti<Nominal1, number>, GenericMulti<Derived1, number>>
+	  >
+	| requireFalse<
+			isAssignableTo<GenericMulti<number, Nominal1>, GenericMulti<number, Derived1>>
+	  >
 	| requireTrue<isAssignableTo<GenericMulti<number, Derived1>, GenericMulti<number, Nominal1>>>
 
 	// test Covariant Interface
@@ -215,10 +222,19 @@ export type EnforceTypeCheckTests =
 	| requireTrue<isStrictSubset<[1, true], [1 | 2, true | false]>>
 	| requireTrue<isStrictSubset<[1, true], [1, true | false]>>
 	| requireTrue<isStrictSubset<[1, true], [1, true] | [1 | false]>>
+	| requireTrue<isStrictSubset<1, number>>
 	| requireFalse<isStrictSubset<1, 1>>
 	| requireFalse<isStrictSubset<1, 2>>
 	| requireFalse<isStrictSubset<[1, true], [1, true]>>
-	| requireFalse<isStrictSubset<1 | 2, 1>>;
+	| requireFalse<isStrictSubset<1 | 2, 1>>
+
+	// areOnlyKeys
+	| requireTrue<areOnlyKeys<{ a: number; b: number }, "a" | "b">>
+	| requireTrue<areOnlyKeys<{ a?: number; b: number }, "a" | "b">>
+	| requireFalse<areOnlyKeys<{ a?: number; b: number }, "b">>
+	| requireFalse<areOnlyKeys<{ a: number; b: number }, "a">>;
+// This case is explicitly documented as unsupported.
+// | requireFalse<areOnlyKeys<Record<string, unknown>, "a">>;
 
 // negative tests (should not build)
 // @ts-expect-error negative test

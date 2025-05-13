@@ -6,11 +6,13 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	ReferenceType,
 	SlidingPreference,
 	reservedRangeLabelsKey,
+	Side,
+	type SequencePlace,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -22,27 +24,31 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { IIntervalCollection, Side } from "../intervalCollection.js";
-import { IntervalIndex } from "../intervalIndex/index.js";
-import { ISerializableInterval, IntervalStickiness, SequenceInterval } from "../intervals/index.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
+import { ISequenceIntervalCollection } from "../intervalCollection.js";
+import type { SequenceIntervalIndex } from "../intervalIndex/index.js";
+import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { ISharedString, SharedStringClass } from "../sharedString.js";
 
-import { assertSequenceIntervals } from "./intervalTestUtils.js";
+import { assertInterval } from "./intervalIndexTestUtils.js";
+import {
+	assertConsistent,
+	assertSequenceIntervals,
+	type Client,
+} from "./intervalTestUtils.js";
+import { constructClients, loadClient } from "./multiClientTestUtils.js";
 
-class MockIntervalIndex<TInterval extends ISerializableInterval>
-	implements IntervalIndex<TInterval>
-{
-	private readonly intervals: TInterval[];
+class MockIntervalIndex implements SequenceIntervalIndex {
+	private readonly intervals: SequenceInterval[];
 	constructor() {
-		this.intervals = new Array<TInterval>();
+		this.intervals = new Array<SequenceInterval>();
 	}
 
-	public add(interval: TInterval) {
+	public add(interval: SequenceInterval) {
 		this.intervals.push(interval);
 	}
 
-	public remove(interval: TInterval): boolean {
+	public remove(interval: SequenceInterval): boolean {
 		const idx = this.intervals.indexOf(interval);
 		if (idx !== -1) {
 			this.intervals.splice(idx, 1);
@@ -51,7 +57,7 @@ class MockIntervalIndex<TInterval extends ISerializableInterval>
 		return false;
 	}
 
-	public get(idx: number): TInterval {
+	public get(idx: number): SequenceInterval {
 		return this.intervals[idx];
 	}
 
@@ -279,13 +285,13 @@ describe("SharedString interval collections", () => {
 			sharedString.removeRange(0, 1);
 			// [D]ABC
 			const collection = sharedString.getIntervalCollection("test");
-			collection.add({ start: 0, end: 0, props: { intervalId: "x" } });
+			collection.add({ start: 0, end: 0 });
 			//    x
 			// [D]ABC
 			sharedString.removeRange(0, 1);
 			//     x
 			// [D][A]BC
-			collection.add({ start: 0, end: 0, props: { intervalId: "y" } });
+			collection.add({ start: 0, end: 0 });
 			//     x y
 			// [D][A]BC
 			sharedString.removeRange(0, 1);
@@ -297,14 +303,14 @@ describe("SharedString interval collections", () => {
 			// x, y are detached
 			//                  [   ]
 			// string is PLMNOEFGHIJK
-			collection.add({ start: 7, end: 11, props: { intervalId: "z" } });
+			collection.add({ start: 7, end: 11 });
 			sharedString.removeRange(11, 12);
 			containerRuntimeFactory.processAllMessages();
 		});
 
 		describe("remain consistent on double-delete", () => {
-			let collection: IIntervalCollection<SequenceInterval>;
-			let collection2: IIntervalCollection<SequenceInterval>;
+			let collection: ISequenceIntervalCollection;
+			let collection2: ISequenceIntervalCollection;
 			beforeEach(() => {
 				sharedString.insertText(0, "01234");
 				collection = sharedString.getIntervalCollection("test");
@@ -548,7 +554,38 @@ describe("SharedString interval collections", () => {
 			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 2 }]);
 		});
 
-		it("can slide intervals on create ack", () => {
+		describe("respects interval slide preference on create", () => {
+			for (const { testName, side, expectedPos } of [
+				{ testName: "Side.Before -> prefer forward", side: Side.Before, expectedPos: 1 },
+				{ testName: "Side.After -> prefer backward", side: Side.After, expectedPos: 0 },
+			]) {
+				it(testName, () => {
+					const collection1 = sharedString.getIntervalCollection("test");
+					sharedString.insertText(0, "ABCD");
+					containerRuntimeFactory.processAllMessages();
+					const collection2 = sharedString2.getIntervalCollection("test");
+					sharedString.removeRange(1, 3);
+
+					collection2.add({
+						start: { pos: 1, side },
+						end: { pos: 2, side },
+					});
+
+					containerRuntimeFactory.processAllMessages();
+					assert.strictEqual(sharedString.getText(), "AD");
+					assert.strictEqual(sharedString2.getText(), "AD");
+
+					assertSequenceIntervals(sharedString, collection1, [
+						{ start: expectedPos, end: expectedPos },
+					]);
+					assertSequenceIntervals(sharedString2, collection2, [
+						{ start: expectedPos, end: expectedPos },
+					]);
+				});
+			}
+		});
+
+		it("can slide intervals backward on create ack", () => {
 			// Create and connect a third SharedString.
 			const dataStoreRuntime3 = new MockFluidDataStoreRuntime({ clientId: "3" });
 			const containerRuntime3 =
@@ -926,16 +963,16 @@ describe("SharedString interval collections", () => {
 			// references to now equal ones can cause issues.
 			// The immediate way this manifests is that attempting to remove the interval fails
 			// in red-black tree code, since the key isn't at the expected location.
-			let collection: IIntervalCollection<SequenceInterval>;
+			let collection: ISequenceIntervalCollection;
 			beforeEach(() => {
 				sharedString.insertText(0, "ABCDEFG");
 				collection = sharedString.getIntervalCollection("test");
 			});
 
 			it("retains intervalTree coherency when falling back to end comparison", () => {
-				collection.add({ start: 1, end: 6 });
-				collection.add({ start: 2, end: 5 });
-				const initiallyLargest = collection.add({ start: 3, end: 4 });
+				collection.add({ start: 1, end: 6 }); // BCDEF
+				collection.add({ start: 2, end: 5 }); // CDE
+				const initiallyLargest = collection.add({ start: 3, end: 4 }); // D
 				sharedString.removeRange(1, 4);
 				// Interval slide doesn't happen until creation is acked, so interval sort order
 				// is still by start position, which do not compare equal despite all appearing to be 1
@@ -990,17 +1027,16 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("retains intervalTree coherency when falling back to id comparison", () => {
-				const [idLowest, idMiddle, idLargest] = ["a", "b", "c"];
-				collection.add({ start: 0, end: 1, props: { intervalId: idLargest } });
-				collection.add({ start: 0, end: 2, props: { intervalId: idMiddle } });
-				collection.add({ start: 0, end: 3, props: { intervalId: idLowest } });
+				collection.add({ start: 0, end: 1 });
+				collection.add({ start: 0, end: 2 });
+				const lowest = collection.add({ start: 0, end: 3 });
 				sharedString.removeRange(1, 4);
 				assertSequenceIntervals(sharedString, collection, [
 					{ start: 0, end: 1 },
 					{ start: 0, end: 1 },
 					{ start: 0, end: 1 },
 				]);
-				collection.removeIntervalById(idLowest);
+				collection.removeIntervalById(lowest.getIntervalId());
 				assertSequenceIntervals(sharedString, collection, [
 					{ start: 0, end: 1 },
 					{ start: 0, end: 1 },
@@ -1013,10 +1049,9 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("retains intervalTree coherency after slide when falling back to id comparison", () => {
-				const [idLowest, idMiddle, idLargest] = ["a", "b", "c"];
-				collection.add({ start: 0, end: 1, props: { intervalId: idLargest } });
-				collection.add({ start: 0, end: 2, props: { intervalId: idMiddle } });
-				collection.add({ start: 0, end: 3, props: { intervalId: idLowest } });
+				collection.add({ start: 0, end: 1 });
+				collection.add({ start: 0, end: 2 });
+				const lowest = collection.add({ start: 0, end: 3 });
 				sharedString.removeRange(1, 4);
 				assertSequenceIntervals(sharedString, collection, [
 					{ start: 0, end: 1 },
@@ -1029,7 +1064,7 @@ describe("SharedString interval collections", () => {
 					{ start: 0, end: 1 },
 					{ start: 0, end: 1 },
 				]);
-				collection.removeIntervalById(idLowest);
+				collection.removeIntervalById(lowest.getIntervalId());
 				assertSequenceIntervals(sharedString, collection, [
 					{ start: 0, end: 1 },
 					{ start: 0, end: 1 },
@@ -1102,21 +1137,21 @@ describe("SharedString interval collections", () => {
 			sharedString.insertText(0, "hello world");
 			containerRuntimeFactory.processAllMessages();
 
-			const collection1: IIntervalCollection<SequenceInterval> =
+			const collection1: ISequenceIntervalCollection =
 				sharedString.getIntervalCollection("test1");
 			const interval1 = collection1.add({ start: 0, end: 1 });
 			const intervalId1 = interval1.getIntervalId();
 			assert(intervalId1);
 			collection1.change(intervalId1, { start: 1, end: 4 });
 
-			const collection2: IIntervalCollection<SequenceInterval> =
+			const collection2: ISequenceIntervalCollection =
 				sharedString2.getIntervalCollection("test2");
 			const interval2 = collection2.add({ start: 0, end: 2 });
 			const intervalId2 = interval2.getIntervalId();
 			assert(intervalId2);
 			collection2.removeIntervalById(intervalId2);
 
-			const collection3: IIntervalCollection<SequenceInterval> =
+			const collection3: ISequenceIntervalCollection =
 				sharedString2.getIntervalCollection("test3");
 			collection3.add({ start: 0, end: 3 });
 
@@ -1127,11 +1162,7 @@ describe("SharedString interval collections", () => {
 				const labels = s.getIntervalCollectionLabels();
 				for (const label of labels) {
 					assert.equal(label, infoArray[i].label, `Bad label ${i}: ${label}`);
-					assert.equal(
-						label,
-						createInfo[i].label,
-						`Bad label ${i}: ${createInfo[i].label}`,
-					);
+					assert.equal(label, createInfo[i].label, `Bad label ${i}: ${createInfo[i].label}`);
 					assert.equal(
 						createInfo[i].local,
 						infoArray[i].local,
@@ -1221,8 +1252,8 @@ describe("SharedString interval collections", () => {
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let sharedString2: ISharedString;
 
-		let collection1: IIntervalCollection<SequenceInterval>;
-		let collection2: IIntervalCollection<SequenceInterval>;
+		let collection1: ISequenceIntervalCollection;
+		let collection2: ISequenceIntervalCollection;
 		let interval: SequenceInterval;
 
 		beforeEach(async () => {
@@ -1453,6 +1484,25 @@ describe("SharedString interval collections", () => {
 			assertSequenceIntervals(sharedString2, collection2, [{ start: 5, end: 8 }]);
 			assertSequenceIntervals(sharedString, collection1, [{ start: 5, end: 8 }]);
 		});
+
+		it("can rebase an interval endpoint onto a locally inserted segment which is the best fit", () => {
+			collection1.removeIntervalById(interval.getIntervalId());
+			containerRuntime1.connected = false;
+			sharedString.insertText(7, "irst f"); // makes "hello first friend"
+			// with an interval around "irst fr"
+			interval = collection1.add({ start: 6, end: 14 });
+			sharedString2.removeRange(0, 7); // removes "hello f", where the "f" is an endpoint of the interval
+			containerRuntimeFactory.processAllMessages();
+			containerRuntime1.connected = true;
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(sharedString.getText(), "irst friend");
+			assert.equal(sharedString2.getText(), "irst friend");
+
+			// At the time the addInterval operation is rebased, the 'irst f' segment has only been inserted locally.
+			// Nonetheless, it should still be a valid slide target for the rebased interval.
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 7 }]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 7 }]);
+		});
 	});
 
 	describe("querying intervals with index API's", () => {
@@ -1507,7 +1557,7 @@ describe("SharedString interval collections", () => {
 	});
 
 	describe("maintain consistency between the collection label and that in interval properties", () => {
-		let collection;
+		let collection: ISequenceIntervalCollection;
 
 		beforeEach(() => {
 			sharedString.initializeLocal();
@@ -1663,10 +1713,7 @@ describe("SharedString interval collections", () => {
 			assert(intervalId);
 			sharedString.insertText(0, "X");
 			containerRuntimeFactory.processAllMessages();
-			assert.strictEqual(
-				interval1.start.getSegment()?.constructor.name,
-				"StartOfTreeSegment",
-			);
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "StartOfTreeSegment");
 			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
 
 			assert.strictEqual(sharedString.getText(), "Xabc", "different text");
@@ -1690,10 +1737,7 @@ describe("SharedString interval collections", () => {
 			assert(intervalId);
 			sharedString.insertText(0, "X");
 			containerRuntimeFactory.processAllMessages();
-			assert.strictEqual(
-				interval1.start.getSegment()?.constructor.name,
-				"StartOfTreeSegment",
-			);
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "StartOfTreeSegment");
 			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
 
 			assert.strictEqual(sharedString.getText(), "Xabc", "different text");
@@ -1828,10 +1872,7 @@ describe("SharedString interval collections", () => {
 
 			assert.strictEqual(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 			assert.strictEqual(interval1.end.slidingPreference, SlidingPreference.FORWARD);
-			assert.strictEqual(
-				interval1.start.getSegment()?.constructor.name,
-				"StartOfTreeSegment",
-			);
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "StartOfTreeSegment");
 			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "EndOfTreeSegment");
 
 			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
@@ -2022,8 +2063,9 @@ describe("SharedString interval collections", () => {
 		it("slides backward reference to correct position when remove multiple segments is unacked", () => {
 			sharedString.insertText(0, "ABC");
 
-			// (AB]C
-			// (AYYYXXXB]C
+			// Interval starts after A (exclusive) and ends after B (inclusive)
+			// A(B]C
+			// A(YYYXXXB]C
 
 			containerRuntimeFactory.processAllMessages();
 
@@ -2037,7 +2079,7 @@ describe("SharedString interval collections", () => {
 
 			sharedString.insertText(1, "XXX");
 			sharedString.insertText(1, "YYY");
-			sharedString.removeText(1, 8);
+			sharedString.removeText(1, 8); // "AYYYXXXBC", remove "YYYXXXB", leaving "A(]C"
 
 			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
 
@@ -2096,5 +2138,310 @@ describe("SharedString interval collections", () => {
 
 			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
 		});
+
+		describe("slides reflect optimistic edit application", () => {
+			const searchText = "ment look";
+			const replacementText = "Themes and styles";
+			const testCases: {
+				name: string;
+				runCopyPasteEdit: (sharedString: SharedString) => void;
+			}[] = [
+				{
+					name: "insert at end then remove",
+					runCopyPasteEdit: (editingSharedString) => {
+						const start = editingSharedString.getText().indexOf(searchText);
+						editingSharedString.insertText(start + searchText.length, replacementText);
+						editingSharedString.removeRange(start, start + searchText.length);
+					},
+				},
+				{
+					name: "remove then insert", // start and end are the same position after removal
+					runCopyPasteEdit: (editingSharedString) => {
+						const start = editingSharedString.getText().indexOf(searchText);
+						editingSharedString.removeRange(start, start + searchText.length);
+						editingSharedString.insertText(start, replacementText);
+					},
+				},
+				// There are a few other valid ways to generate edits with 'replace' semantics which we might want to consider adding here.
+			];
+
+			const getTextIntervalRefersTo = (
+				reader: SharedString,
+				interval: SequenceInterval,
+			): string => {
+				const startPos = reader.localReferencePositionToPosition(interval.start);
+				const endPos = reader.localReferencePositionToPosition(interval.end);
+				return reader.getText(
+					interval.startSide === Side.After ? startPos + 1 : startPos,
+					interval.endSide === Side.After ? endPos + 1 : endPos,
+				);
+			};
+
+			for (const testCase of testCases) {
+				it(`using copy-paste edits: ${testCase.name}`, () => {
+					sharedString.insertText(0, "To make your document look professionally produced");
+					const collection = sharedString.getIntervalCollection("test");
+					const interval1 = collection.add({
+						start: { pos: 12, side: Side.After },
+						end: { pos: 20, side: Side.After },
+					});
+					assert.equal(getTextIntervalRefersTo(sharedString, interval1), "document");
+
+					containerRuntimeFactory.processAllMessages();
+					assert.equal(getTextIntervalRefersTo(sharedString, interval1), "document");
+
+					testCase.runCopyPasteEdit(sharedString);
+
+					assert.equal(
+						sharedString.getText(),
+						"To make your docuThemes and styles professionally produced",
+					);
+
+					assert.equal(getTextIntervalRefersTo(sharedString, interval1), "docu");
+					containerRuntimeFactory.processAllMessages();
+					assert.equal(getTextIntervalRefersTo(sharedString, interval1), "docu");
+				});
+			}
+		});
 	});
+});
+
+describe("the start and end positions of intervals are updated in response to edits", () => {
+	const stringFactory = new SharedStringFactory();
+	let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+	let clients: Client[];
+	beforeEach(() => {
+		containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		clients = constructClients(
+			containerRuntimeFactory,
+			2,
+			{
+				intervalStickinessEnabled: true,
+				mergeTreeEnableObliterate: true,
+				mergeTreeReferencesCanSlideToEndpoint: true,
+			},
+			stringFactory,
+		);
+	});
+
+	const removeRanges: {
+		interval: [SequencePlace, SequencePlace];
+		removeRange: [number, number];
+		expected: [SequencePlace, SequencePlace];
+		skip?: string[];
+	}[] = [
+		// remove the entire interval
+		// end should slide to beginning, resulting in an empty range
+		{
+			interval: ["start", 1],
+			removeRange: [0, 1],
+			expected: ["start", 0],
+			// TODO: #8111: enable after interval side is correctly loaded from summary for endpoints at start or end.
+			skip: ["slide interval loaded from summary"],
+		},
+		{
+			interval: [2, 5],
+			removeRange: [2, 5],
+			expected: [2, 2],
+		},
+		{
+			interval: [
+				{ pos: 5, side: Side.After },
+				{ pos: 9, side: Side.Before },
+			],
+			removeRange: [6, 9],
+			expected: [
+				{ pos: 5, side: Side.After },
+				{ pos: 6, side: Side.Before },
+			],
+		},
+		{
+			interval: [8, "end"],
+			removeRange: [8, 10],
+			expected: ["end", "end"],
+			skip: [
+				// TODO: #8111: enable after interval side is correctly loaded from summary for endpoints at start or end.
+				"slide interval loaded from summary",
+			],
+		},
+		// remove more than the entire interval
+		// end should slide to beginning, which slides back to beginning of removal
+		{
+			interval: ["start", 1],
+			removeRange: [0, 2],
+			expected: ["start", 0],
+			// TODO: #8111: enable after interval side is correctly loaded from summary for endpoints at start or end.
+			skip: ["slide interval loaded from summary"],
+		},
+		{
+			interval: [1, 4],
+			removeRange: [0, 5],
+			expected: [0, 0],
+		},
+		{
+			interval: [2, 4],
+			removeRange: [1, 4],
+			expected: [1, 1],
+		},
+		{
+			interval: [8, "end"],
+			removeRange: [7, 10],
+			expected: ["end", "end"],
+			skip: [
+				// TODO: #8111: enable after interval side is correctly loaded from summary for endpoints at start or end.
+				"slide interval loaded from summary",
+			],
+		},
+		// removing a subsequently adjacent character should not affect the interval
+		{
+			interval: ["start", 1],
+			removeRange: [1, 2],
+			expected: ["start", 1],
+			// TODO: #8111: enable after interval side is correctly loaded from summary for endpoints at start or end.
+			skip: ["slide interval loaded from summary"],
+		},
+		{
+			interval: [1, 4],
+			removeRange: [4, 5],
+			expected: [1, 4],
+		},
+		// removing a preceding character should slide the start and end backward
+		{
+			interval: [1, 4],
+			removeRange: [0, 1],
+			expected: [0, 3],
+		},
+		{
+			interval: [8, "end"],
+			removeRange: [7, 8],
+			expected: [7, "end"],
+			// TODO: #8111: enable after interval side is correctly loaded from summary for endpoints at start or end.
+			skip: ["slide interval loaded from summary"],
+		},
+		// removing the start slides the start position forward
+		{
+			interval: [1, 4],
+			removeRange: [1, 2],
+			expected: [1, 3],
+		},
+		// removing the end slides the end position backward
+		{
+			interval: [1, 4],
+			removeRange: [3, 5],
+			expected: [1, 3],
+		},
+	];
+	function itSelectivelySkipped(
+		skip: string[] | undefined,
+		name: string,
+		test: () => void | Promise<void>,
+	): void {
+		(skip?.includes(name) ? it.skip : it)(name, test);
+	}
+	for (const { interval, removeRange, expected, skip } of removeRanges) {
+		const [start, end] = interval;
+		describe(`slides ${JSON.stringify(interval)} correctly when ${JSON.stringify(
+			removeRange,
+		)} is removed`, () => {
+			const initialText = "0123456789";
+			itSelectivelySkipped(skip, "one client", () => {
+				// setup
+				clients[0].sharedString.insertText(0, initialText);
+				containerRuntimeFactory.processAllMessages();
+				const collection = clients[0].sharedString.getIntervalCollection("test");
+				const initial = collection.add({ start, end });
+				const intervalId = initial.getIntervalId();
+
+				// remove the specified range
+				clients[0].sharedString.removeText(...removeRange);
+				containerRuntimeFactory.processAllMessages();
+
+				// verify that the removal was correct.
+				const expectedTextAfterRemoval = initialText
+					.slice(0, removeRange[0])
+					.concat(initialText.slice(removeRange[1]));
+				assert.strictEqual(
+					clients[0].sharedString.getText(),
+					expectedTextAfterRemoval,
+					"unexpected text",
+				);
+
+				// Verify that the interval was updated correctly in response to removal.
+				assertInterval(clients[0].sharedString, intervalId, expected);
+			});
+			itSelectivelySkipped(skip, "rebase interval over removal", async () => {
+				// setup
+				clients[0].containerRuntime.connected = true;
+				clients[1].containerRuntime.connected = true;
+
+				clients[0].sharedString.insertText(0, initialText);
+				containerRuntimeFactory.processAllMessages();
+				clients[0].containerRuntime.connected = false;
+
+				const collection = clients[0].sharedString.getIntervalCollection("test");
+				const initial = collection.add({ start, end });
+				const intervalId = initial.getIntervalId();
+
+				// remove the specified range
+				clients[1].sharedString.removeText(...removeRange);
+				containerRuntimeFactory.processAllMessages();
+				clients[0].containerRuntime.connected = true;
+				containerRuntimeFactory.processAllMessages();
+				await assertConsistent(clients);
+
+				// Verify that the interval was updated correctly in response to removal.
+				assertInterval(clients[0].sharedString, intervalId, expected);
+			});
+
+			itSelectivelySkipped(skip, "rebase remote removal over interval creation", async () => {
+				// setup
+				clients[0].containerRuntime.connected = true;
+				clients[1].containerRuntime.connected = true;
+
+				clients[0].sharedString.insertText(0, initialText);
+				containerRuntimeFactory.processAllMessages();
+				clients[1].containerRuntime.connected = false;
+				const collection = clients[0].sharedString.getIntervalCollection("test");
+				const initial = collection.add({ start, end });
+				const intervalId = initial.getIntervalId();
+
+				// remove the specified range
+				clients[1].sharedString.removeText(...removeRange);
+				containerRuntimeFactory.processAllMessages();
+				clients[1].containerRuntime.connected = true;
+				containerRuntimeFactory.processAllMessages();
+				await assertConsistent(clients);
+
+				// Verify that the interval was updated correctly in response to removal.
+				assertInterval(clients[0].sharedString, intervalId, expected);
+			});
+
+			itSelectivelySkipped(skip, "slide interval loaded from summary", async () => {
+				clients[0].sharedString.insertText(0, initialText);
+				containerRuntimeFactory.processAllMessages();
+
+				const collection = clients[0].sharedString.getIntervalCollection("test");
+				const initial = collection.add({ start, end });
+				const intervalId = initial.getIntervalId();
+				containerRuntimeFactory.processAllMessages();
+
+				clients.push(
+					await loadClient(containerRuntimeFactory, clients[0], "fromSummary", stringFactory),
+				);
+
+				assert.notEqual(
+					clients[clients.length - 1].sharedString
+						.getIntervalCollection("test")
+						.getIntervalById(intervalId),
+					undefined,
+				);
+
+				clients[1].sharedString.removeText(...removeRange);
+				containerRuntimeFactory.processAllMessages();
+
+				assertInterval(clients[clients.length - 1].sharedString, intervalId, expected);
+				await assertConsistent(clients);
+			});
+		});
+	}
 });

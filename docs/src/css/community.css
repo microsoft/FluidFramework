@@ -1,0 +1,17 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+.ffcom-community-links {
+	display: flex;
+	justify-items: space-evenly;
+	align-items: center;
+	padding-top: 2rem;
+	width: 100%;
+}
+
+.ffcom-community-link-icon {
+	height: 150px;
+	width: 150px;
+}

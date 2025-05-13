@@ -9,9 +9,15 @@ import fs from "fs";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { SharedCell, ISharedCell } from "@fluidframework/cell/internal";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	rehydrateDetachedContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import {
@@ -53,8 +59,12 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 		it(`Rehydrate container from ${filenameShort} and check contents before attach`, async () => {
 			const snapshotTree = fs.readFileSync(filename, "utf8");
 
-			const loader = createTestLoader();
-			const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+			const loaderProps = createTestLoaderProps();
+			const container = await rehydrateDetachedContainer({
+				...loaderProps,
+				serializedState: snapshotTree,
+			});
+			loaderContainerTracker.addContainer(container);
 
 			// Check for default data store
 			const entryPoint = await container.getEntryPoint();
@@ -92,11 +102,18 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 		it(`Rehydrate container from ${filenameShort} round trip serialize/deserialize`, async () => {
 			const snapshotTree = fs.readFileSync(filename, "utf8");
 
-			const loader = createTestLoader();
-			const container1 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-
+			const loaderProps = createTestLoaderProps();
+			const container1 = await rehydrateDetachedContainer({
+				...loaderProps,
+				serializedState: snapshotTree,
+			});
+			loaderContainerTracker.addContainer(container1);
 			const snapshotTree2 = container1.serialize();
-			const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree2);
+			const container2 = await rehydrateDetachedContainer({
+				...loaderProps,
+				serializedState: snapshotTree2,
+			});
+			loaderContainerTracker.addContainer(container2);
 
 			// Check for default data store
 			const entryPoint = await container2.getEntryPoint();
@@ -145,7 +162,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 		const sparseMatrixId = "sparsematrixKey";
 		const sharedCounterId = "sharedcounterKey";
 
-		function createTestLoader(): Loader {
+		function createTestLoaderProps(): ILoaderProps {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
 			const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 			const urlResolver = new LocalResolver();
@@ -162,13 +179,12 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 				[sharedCounterId, SharedCounter.getFactory()],
 			]);
 			const codeLoader = new LocalCodeLoader([[codeDetails, factory]], {});
-			const testLoader = new Loader({
+			const testLoaderProps: ILoaderProps = {
 				urlResolver,
 				documentServiceFactory,
 				codeLoader,
-			});
-			loaderContainerTracker.add(testLoader);
-			return testLoader;
+			};
+			return testLoaderProps;
 		}
 	}
 });

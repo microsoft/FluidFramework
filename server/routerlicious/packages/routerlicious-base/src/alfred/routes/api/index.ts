@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IDeltaService,
@@ -15,16 +14,20 @@ import {
 	IThrottler,
 	ITokenRevocationManager,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
+	IReadinessCheck,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../../services";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 
 export function create(
 	config: Provider,
@@ -38,10 +41,15 @@ export function create(
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: RedisEmitter,
 	clusterDrainingChecker?: IClusterDrainingChecker,
+	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
+	redisCacheForGetSession?: ICache,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -53,6 +61,7 @@ export function create(
 		clusterThrottlers,
 		singleUseTokenCache,
 		revokedTokenChecker,
+		denyList,
 	);
 	const documentsRoute = documents.create(
 		storage,
@@ -67,6 +76,8 @@ export function create(
 		tokenRevocationManager,
 		revokedTokenChecker,
 		clusterDrainingChecker,
+		redisCacheForGetSession,
+		denyList,
 	);
 	const apiRoute = api.create(
 		config,
@@ -77,12 +88,22 @@ export function create(
 		singleUseTokenCache,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
+		fluidAccessTokenGenerator,
+		denyList,
+	);
+
+	const healthCheckEndpoints = createHealthCheckEndpoints(
+		"alfred",
+		startupCheck,
+		readinessCheck,
+		false /* createLivenessEndpoint */,
 	);
 
 	router.use(cors());
 	router.use("/deltas", deltasRoute);
 	router.use("/documents", documentsRoute);
 	router.use("/api/v1", apiRoute);
+	router.use("/healthz", healthCheckEndpoints);
 
 	return router;
 }

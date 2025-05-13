@@ -4,16 +4,15 @@
  */
 
 import chalk from "chalk";
-import { Runner, Suite, Test } from "mocha";
+import { Runner, Suite, Test, type Hook } from "mocha";
 
 import { isChildProcess, ReporterOptions } from "./Configuration";
 import { BenchmarkReporter } from "./Reporter";
-import { getName } from "./ReporterUtilities";
+import { BenchmarkResult, type BenchmarkError } from "./ResultTypes";
 // TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
 // Since it's not moved yet, it needs this lint suppression to do this import:
 // eslint-disable-next-line import/no-internal-modules
-import { getSuiteName } from "./mocha/mochaReporterUtilities";
-import { BenchmarkData, BenchmarkResult } from "./runBenchmark";
+import { getName, getSuiteName } from "./mocha/mochaReporterUtilities";
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).
@@ -26,21 +25,21 @@ import { BenchmarkData, BenchmarkResult } from "./runBenchmark";
  *
  * See https://mochajs.org/api/tutorial-custom-reporter.html for more information about custom mocha reporters.
  */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class, unicorn/prefer-module
+// eslint-disable-next-line unicorn/prefer-module
 module.exports = class {
+	private readonly data: Map<Test, Readonly<BenchmarkResult>> = new Map();
 	public constructor(runner: Runner, options?: { reporterOptions?: ReporterOptions }) {
 		const benchmarkReporter = new BenchmarkReporter(options?.reporterOptions?.reportDir);
-		const data: Map<Test, BenchmarkData> = new Map();
 		runner
 			.on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
 				// Forward results from `benchmark end` to BenchmarkReporter.
-				test.on("benchmark end", (benchmark: BenchmarkData) => {
+				test.on("benchmark end", (benchmark: Readonly<BenchmarkResult>) => {
 					// There are (at least) two ways a benchmark can fail:
 					// The actual benchmark part of the test aborts for some reason OR
 					// the mocha test fails (ex: validation after the benchmark reports an issue).
 					// So instead of reporting the data now, wait until the mocha test ends so we can confirm the
 					// test passed.
-					data.set(test, benchmark);
+					this.data.set(test, benchmark);
 				});
 			})
 			.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
@@ -55,7 +54,7 @@ module.exports = class {
 				}
 
 				const suite = test.parent ? getSuiteName(test.parent) : "root suite";
-				let benchmark: BenchmarkResult | undefined = data.get(test);
+				let benchmark: Readonly<BenchmarkResult> | undefined = this.data.get(test);
 				if (benchmark === undefined) {
 					// Mocha test complected with out reporting data.
 					// This is an error, so report it as such.
@@ -67,7 +66,9 @@ module.exports = class {
 				if (test.state !== "passed") {
 					// The mocha test failed after reporting benchmark data.
 					// This may indicate the benchmark did not measure what was intended, so mark as aborted.
-					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`;
+					const error =
+						(benchmark as BenchmarkError).error ??
+						`Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`;
 					console.error(chalk.red(error));
 					benchmark = { error };
 				}
@@ -82,6 +83,15 @@ module.exports = class {
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
 				if (!isChildProcess) {
 					benchmarkReporter.recordSuiteResults(getSuiteName(suite));
+				}
+			})
+			.on(Runner.constants.EVENT_HOOK_END, (hook: Hook) => {
+				// Documentation ( https://mochajs.org/api/hook#error ) implies this is an Error.
+				// Inspecting with the debugger shows the non-error case uses `null`
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				const error: Error | null = hook.error();
+				if (error !== null) {
+					console.error(chalk.red(`Hook ${hook.fullTitle()} failed with error: `, error));
 				}
 			})
 			.once(Runner.constants.EVENT_RUN_END, () => {

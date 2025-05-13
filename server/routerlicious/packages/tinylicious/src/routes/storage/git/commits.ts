@@ -95,7 +95,7 @@ export function create(store: nconf.Provider): Router {
 		const commitP = createCommit(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.body,
 		);
 
@@ -107,7 +107,7 @@ export function create(store: nconf.Provider): Router {
 		const commitP = getCommit(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params.sha,
 			useCache,
 		);

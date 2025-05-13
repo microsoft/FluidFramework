@@ -166,9 +166,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 						];
 						const places = leftTraitPlaces(testTree, leftTraitNodes);
 
-						sharedTree.applyEdit(
-							...Change.insertTree(leftTraitNodes[0], StablePlace.before(testTree.left))
-						);
+						sharedTree.applyEdit(...Change.insertTree(leftTraitNodes[0], StablePlace.before(testTree.left)));
 						afterEdit();
 						sharedTree.applyEdit(...Change.insertTree(leftTraitNodes[2], StablePlace.after(testTree.left)));
 						afterEdit();
@@ -183,9 +181,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 						afterEdit();
 
 						expect(sharedTree.edits.length).to.equal(4);
-						expect(sharedTree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(
-							3 - countDetached
-						);
+						expect(sharedTree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(3 - countDetached);
 
 						if (!localMode) {
 							containerRuntimeFactory.processAllMessages();
@@ -209,9 +205,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 						}
 
 						expect(sharedTree.edits.length).to.equal(6);
-						expect(sharedTree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(
-							3 - countDetached
-						);
+						expect(sharedTree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(3 - countDetached);
 					});
 				}
 			}

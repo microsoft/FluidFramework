@@ -10,7 +10,7 @@ import {
 	IAuthorizationError,
 	IGenericNetworkError,
 } from "@fluidframework/driver-definitions/internal";
-import { type AuthorizationError, NonRetryableError } from "@fluidframework/driver-utils/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	createOdspNetworkError,
 	throwOdspNetworkError,
@@ -55,7 +55,9 @@ describe("Odsp Error", () => {
 	 * Checks if the input is an {@link IThrottlingWarning}.
 	 */
 	function isIThrottlingWarning(input: unknown): input is IThrottlingWarning {
-		return (input as Partial<IThrottlingWarning>)?.errorType === OdspErrorTypes.throttlingError;
+		return (
+			(input as Partial<IThrottlingWarning>)?.errorType === OdspErrorTypes.throttlingError
+		);
 	}
 
 	/**
@@ -142,7 +144,10 @@ describe("Odsp Error", () => {
 			isIGenericNetworkError(networkError),
 			"networkError should be a genericNetworkError",
 		);
-		assert(networkError.message.includes("error"), "error message should include handler name");
+		assert(
+			networkError.message.includes("error"),
+			"error message should include handler name",
+		);
 		assert(
 			networkError.message.includes("testMessage"),
 			"error message should include socket error message",
@@ -171,7 +176,10 @@ describe("Odsp Error", () => {
 			isIGenericNetworkError(networkError),
 			"networkError should be a genericNetworkError",
 		);
-		assert(networkError.message.includes("error"), "error message should include handler name");
+		assert(
+			networkError.message.includes("error"),
+			"error message should include handler name",
+		);
 		assert(
 			networkError.message.includes("testMessage"),
 			"error message should include socket error message",
@@ -221,11 +229,9 @@ describe("Odsp Error", () => {
 			if (options.refresh) {
 				return 1;
 			} else {
-				throw new NonRetryableError(
-					"some message",
-					OdspErrorTypes.incorrectServerResponse,
-					{ driverVersion: pkgVersion },
-				);
+				throw new NonRetryableError("some message", OdspErrorTypes.incorrectServerResponse, {
+					driverVersion: pkgVersion,
+				});
 			}
 		});
 		assert.equal(res, 1, "did not successfully retried with new token");
@@ -263,30 +269,28 @@ describe("Odsp Error", () => {
 		throwOdspNetworkError(errorMessage, 401, testResponseWithInsufficientClaims);
 	}
 
-	it("Authorization error with insufficient claims first-class properties", async () => {
-		try {
-			throwAuthorizationErrorWithInsufficientClaims("TestMessage");
-		} catch (error: unknown) {
-			assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
-			assert(
-				error.message.includes("TestMessage"),
-				"message should contain original message",
-			);
-			assert.equal((error as AuthorizationError).canRetry, false, "canRetry should be false");
-			assert.equal(
-				(error as AuthorizationError).claims,
-				'{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}',
-				"claims should be extracted from response",
-			);
-		}
+	it("Authorization error with insufficient claims first-class properties", () => {
+		assert.throws(
+			() => throwAuthorizationErrorWithInsufficientClaims("TestMessage"),
+			(error) => {
+				assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
+				assert.match(error.message, /TestMessage/, "message should contain original message");
+				assert.equal(error.canRetry, false, "canRetry should be false");
+				assert.equal(
+					error.claims,
+					'{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}',
+					"claims should be extracted from response",
+				);
+				return true;
+			},
+		);
 	});
 
 	it("Authorization error with insufficient claims results in retry with claims passed in options", async () => {
 		const res = await getWithRetryForTokenRefresh(async (options) => {
 			if (
 				options.refresh &&
-				options.claims ===
-					'{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}'
+				options.claims === '{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}'
 			) {
 				return 1;
 			} else {
@@ -317,26 +321,21 @@ describe("Odsp Error", () => {
 		throwOdspNetworkError(errorMessage, 401, testResponseWithRealm);
 	}
 
-	it("Authorization error with realm first-class properties", async () => {
-		try {
-			throwAuthorizationErrorWithRealm("TestMessage");
-		} catch (error: unknown) {
-			assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
-			assert(
-				error.message.includes("TestMessage"),
-				"message should contain original message",
-			);
-			assert.strictEqual(
-				(error as AuthorizationError).canRetry,
-				false,
-				"canRetry should be false",
-			);
-			assert.strictEqual(
-				(error as AuthorizationError).tenantId,
-				"6c482541-f706-4168-9e58-8e35a9992f58",
-				"realm should be extracted from response",
-			);
-		}
+	it("Authorization error with realm first-class properties", () => {
+		assert.throws(
+			() => throwAuthorizationErrorWithRealm("TestMessage"),
+			(error) => {
+				assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
+				assert.match(error.message, /TestMessage/, "message should contain original message");
+				assert.equal(error.canRetry, false, "canRetry should be false");
+				assert.equal(
+					error.tenantId,
+					"6c482541-f706-4168-9e58-8e35a9992f58",
+					"realm should be extracted from response",
+				);
+				return true;
+			},
+		);
 	});
 
 	it("Authorization error with realm results in retry and realm passed as tenant id", async () => {

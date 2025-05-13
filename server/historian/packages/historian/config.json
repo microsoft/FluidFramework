@@ -27,7 +27,7 @@
 	"alfred": "http://alfred:3000",
 	"requestSizeLimit": "1gb",
 	"enableResponseCloseLatencyMetric": true,
-	"ignoreEphemeralFlag": true,
+	"ignoreEphemeralFlag": false,
 	"redis": {
 		"host": "redis",
 		"port": 6379,
@@ -117,7 +117,8 @@
 	},
 	"restGitService": {
 		"disableGitCache": false,
-		"maxCacheableSummarySize": 100000000
+		"maxCacheableSummarySize": 100000000,
+		"ephemeralDocumentTTLSec": 86400
 	},
 	"storageUrl": "",
 	"tokenRevocation": {

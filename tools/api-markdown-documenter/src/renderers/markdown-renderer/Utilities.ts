@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type DocumentationNode } from "../../documentation-domain/index.js";
-import { type DocumentWriter } from "../DocumentWriter.js";
-import {
-	type RenderContext as HtmlRenderContext,
-	renderNode as renderNodeAsHtml,
-} from "../html-renderer/index.js";
-import { type RenderContext as MarkdownRenderContext } from "./RenderContext.js";
+import type { DocumentationNode } from "../../documentation-domain/index.js";
+import { documentationNodeToHtml } from "../../documentation-domain-to-html/index.js";
+import type { DocumentWriter } from "../DocumentWriter.js";
+import { renderHtml } from "../html-renderer/index.js";
+
+import type { RenderContext as MarkdownRenderContext } from "./RenderContext.js";
 
 /**
  * Renders the provided {@link DocumentationNode} using HTML syntax.
@@ -21,18 +20,7 @@ export function renderNodeWithHtmlSyntax<TNode extends DocumentationNode>(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	renderNodeAsHtml(node, writer, translateContext(context));
-}
-
-/**
- * Translates a {@link MarkdownRenderContext} to a {@link HtmlRenderContext} for rendering HTML content to a Markdown
- * document.
- */
-function translateContext(markdownContext: MarkdownRenderContext): HtmlRenderContext {
-	return {
-		...markdownContext,
-
-		// If we are in a table context, it is not valid to render child contents in a multi-line form.
-		prettyFormatting: !(markdownContext.insideTable ?? false),
-	};
+	const html = documentationNodeToHtml(node, { startingHeadingLevel: context.headingLevel });
+	const htmlString = renderHtml(html, { prettyFormatting: !(context.insideTable ?? false) });
+	writer.write(htmlString);
 }

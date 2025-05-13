@@ -6,9 +6,9 @@
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ITaskManager } from "./interfaces.js";
@@ -58,12 +58,14 @@ export class TaskManagerFactory implements IChannelFactory<ITaskManager> {
 
 /**
  * {@inheritDoc ITaskManager}
+ * @legacy
  * @alpha
  */
 export const TaskManager = createSharedObjectKind(TaskManagerFactory);
 
 /**
  * {@inheritDoc ITaskManager}
+ * @legacy
  * @alpha
  */
 export type TaskManager = ITaskManager;

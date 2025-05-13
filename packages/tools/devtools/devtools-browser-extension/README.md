@@ -124,7 +124,22 @@ You should now see the Devtools usage telemetry events appear!
 Note: The browser extensions may only be published by Microsoft employees.
 For details on the steps required, see [here](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/infrastructure/devtools/publishing-the-browser-extension) (Microsoft only).
 
-<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+#### Store Assets
+
+The following are links to image assets intended for use in the extension store pages:
+
+- Logo (128 x 128 pixels): https://storage.fluidframework.com/static/images/devtools/logo.png
+- Large marquee (1400 x 560 pixels): https://storage.fluidframework.com/static/images/devtools/marquee-large.png
+- Small marquee (440 x 280 pixels): https://storage.fluidframework.com/static/images/devtools/marquee-small.png
+- Sample screenshots (either 640 x 400 pixels or 1280 x 800 pixels)
+  - Audience View: https://storage.fluidframework.com/static/images/devtools/screenshots/audience-view.png
+  - Data View: https://storage.fluidframework.com/static/images/devtools/screenshots/data-view.png
+  - Telemetry View: https://storage.fluidframework.com/static/images/devtools/screenshots/telemetry-view.png
+
+Updates to these assets can only be made by a Microsoft Fluid team member.
+If you update these images, be sure to update each of the browser extension store pages with the new images.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -147,33 +162,13 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
 ## Help
 
-Not finding what you're looking for in this README? Check out our [GitHub
-Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an
-issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 
 Thank you!
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Trademark
 

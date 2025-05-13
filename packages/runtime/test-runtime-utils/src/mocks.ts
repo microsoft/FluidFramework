@@ -15,40 +15,51 @@ import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-
 import {
 	FluidObject,
 	IFluidHandle,
-	IFluidHandleContext,
-	type IFluidHandleInternal,
 	IRequest,
 	IResponse,
 	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IClient } from "@fluidframework/protocol-definitions";
 import {
-	IChannel,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
 	IDeltaHandler,
+	IChannel,
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 	type IDeltaManagerErased,
-} from "@fluidframework/datastore-definitions";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
+} from "@fluidframework/datastore-definitions/internal";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	IQuorumClients,
 	ISequencedClient,
-	ISequencedDocumentMessage,
 	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import {
 	ITreeEntry,
 	MessageType,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type {
+	IIdCompressorCore,
+	IdCreationRange,
+} from "@fluidframework/id-compressor/internal";
 import {
+	ISummaryTreeWithStats,
+	IGarbageCollectionData,
 	FlushMode,
 	IFluidDataStoreChannel,
 	VisibilityState,
+	type ITelemetryContext,
+	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -59,12 +70,13 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { deepFreeze } from "./deepFreeze.js";
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
-import { deepFreeze } from "./deepFreeze.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
+ * @legacy
  * @alpha
  */
 export class MockDeltaConnection implements IDeltaConnection {
@@ -98,8 +110,8 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.setConnectionState(connected);
 	}
 
-	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-		this.handler?.process(message, local, localOpMetadata);
+	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		this.handler?.processMessages?.(messageCollection);
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
@@ -113,6 +125,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
 /**
+ * @legacy
  * @alpha
  */
 export interface IMockContainerRuntimePendingMessage {
@@ -122,10 +135,6 @@ export interface IMockContainerRuntimePendingMessage {
 	localOpMetadata: unknown;
 }
 
-type IMockContainerRuntimeSequencedIdAllocationMessage = ISequencedDocumentMessage & {
-	contents: IMockContainerRuntimeIdAllocationMessage;
-};
-
 export interface IMockContainerRuntimeIdAllocationMessage {
 	type: "idAllocation";
 	contents: IdCreationRange;
@@ -133,6 +142,7 @@ export interface IMockContainerRuntimeIdAllocationMessage {
 
 /**
  * Options for the container runtime mock.
+ * @legacy
  * @alpha
  */
 export interface IMockContainerRuntimeOptions {
@@ -166,17 +176,20 @@ const makeContainerRuntimeOptions = (
 });
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IInternalMockRuntimeMessage {
 	content: any;
 	localOpMetadata?: unknown;
+	referenceSequenceNumber?: number;
 }
 
 /**
- * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
+ * Mock implementation of IContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
+ * @legacy
  * @alpha
  */
 export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
@@ -192,13 +205,13 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	/**
 	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
 	 */
-	private readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
+	protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
 
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
 		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
-		protected readonly overrides?: { minimumSequenceNumber?: number },
+		protected readonly overrides?: { minimumSequenceNumber?: number | undefined },
 	) {
 		super();
 		this.deltaManager = new MockDeltaManager(() => this.clientId);
@@ -248,6 +261,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		const message: IInternalMockRuntimeMessage = {
 			content: messageContent,
 			localOpMetadata,
+			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 		};
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
@@ -281,13 +295,21 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return clientSequenceNumber;
 	}
 
-	private isSequencedAllocationMessage(
-		message: ISequencedDocumentMessage,
-	): message is IMockContainerRuntimeSequencedIdAllocationMessage {
-		return this.isAllocationMessage(message.contents);
+	/**
+	 * If the message is an idAllocation message, it will finalize the id range and return true.
+	 * Otherwise, it will return false.
+	 */
+	protected maybeProcessIdAllocationMessage(message: ISequencedDocumentMessage): boolean {
+		if (this.isAllocationMessage(message.contents)) {
+			this.finalizeIdRange(message.contents.contents);
+			return true;
+		}
+		return false;
 	}
 
-	private isAllocationMessage(message: any): message is IMockContainerRuntimeIdAllocationMessage {
+	private isAllocationMessage(
+		message: any,
+	): message is IMockContainerRuntimeIdAllocationMessage {
 		return (
 			message !== undefined &&
 			(message as IMockContainerRuntimeIdAllocationMessage).type === "idAllocation"
@@ -370,17 +392,12 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		// and in the order they were allocated
 		const orderedMessages = messagesToResubmit
 			.filter((message) => message.content.type === "idAllocation")
-			.concat(
-				messagesToResubmit.filter((message) => message.content.type !== "idAllocation"),
-			);
+			.concat(messagesToResubmit.filter((message) => message.content.type !== "idAllocation"));
 		orderedMessages.forEach((pendingMessage) => {
 			if (pendingMessage.content.type === "idAllocation") {
 				this.submit(pendingMessage.content, pendingMessage.localOpMetadata);
 			} else {
-				this.dataStoreRuntime.reSubmit(
-					pendingMessage.content,
-					pendingMessage.localOpMetadata,
-				);
+				this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
 			}
 		});
 	}
@@ -394,6 +411,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			};
 			return {
 				content: allocationOp,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			};
 		}
 		return undefined;
@@ -405,7 +423,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			{
 				clientSequenceNumber,
 				contents: message.content,
-				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				referenceSequenceNumber:
+					message.referenceSequenceNumber ?? this.deltaManager.lastSequenceNumber,
 				type: MessageType.Operation,
 			},
 		]);
@@ -416,10 +435,17 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.deltaManager.process(message);
 		const [local, localOpMetadata] = this.processInternal(message);
 
-		if (this.isSequencedAllocationMessage(message)) {
+		if (this.isAllocationMessage(message.contents)) {
 			this.finalizeIdRange(message.contents.contents);
 		} else {
-			this.dataStoreRuntime.process(message, local, localOpMetadata);
+			const messagesContent: IRuntimeMessagesContent[] = [
+				{
+					contents: message.contents,
+					clientSequenceNumber: message.clientSequenceNumber,
+					localOpMetadata,
+				},
+			];
+			this.dataStoreRuntime.processMessages({ envelope: message, local, messagesContent });
 		}
 	}
 
@@ -437,7 +463,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.pendingMessages.push(pendingMessage);
 	}
 
-	private processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
+	protected processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
 		let localOpMetadata: unknown;
 		const local = this.clientId === message.clientId;
 		if (local) {
@@ -464,6 +490,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
  * processes them when asked.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeFactoryForReconnection.
+ * @legacy
  * @alpha
  */
 export class MockContainerRuntimeFactory {
@@ -547,8 +574,8 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
-	private lastProcessedMessage?: ISequencedDocumentMessage;
-	private processFirstMessage() {
+	protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
+	protected getFirstMessageToProcess() {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
@@ -567,6 +594,11 @@ export class MockContainerRuntimeFactory {
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
 		this.lastProcessedMessage = message;
+		return message;
+	}
+
+	private processFirstMessage() {
+		const message = this.getFirstMessageToProcess();
 		for (const runtime of this.runtimes) {
 			runtime.process(message);
 		}
@@ -612,6 +644,7 @@ export class MockContainerRuntimeFactory {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
@@ -707,9 +740,13 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 }
 
 /**
+ * @legacy
  * @alpha
  */
-export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+export class MockAudience
+	extends TypedEventEmitter<IAudienceEvents>
+	implements IAudienceOwner
+{
 	private readonly audienceMembers: Map<string, IClient>;
 	private _currentClientId: string | undefined;
 
@@ -737,13 +774,12 @@ export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements 
 		return this.audienceMembers.get(clientId);
 	}
 
-	public getSelf() {
+	public getSelf(): ISelf | undefined {
 		return this._currentClientId === undefined
 			? undefined
 			: {
 					clientId: this._currentClientId,
-					client: undefined,
-			  };
+				};
 	}
 
 	public setCurrentClientId(clientId: string): void {
@@ -767,6 +803,7 @@ const attachStatesToComparableNumbers = {
 
 /**
  * Mock implementation of IRuntime for testing that does nothing
+ * @legacy
  * @alpha
  */
 export class MockFluidDataStoreRuntime
@@ -788,10 +825,14 @@ export class MockFluidDataStoreRuntime
 			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", ""),
 		);
 		this.id = overrides?.id ?? uuid();
-		this.logger = createChildLogger({
-			logger: overrides?.logger,
+		const childLoggerProps: Parameters<typeof createChildLogger>[0] = {
 			namespace: "fluid:MockFluidDataStoreRuntime",
-		});
+		};
+		const logger = overrides?.logger;
+		if (logger !== undefined) {
+			childLoggerProps.logger = logger;
+		}
+		this.logger = createChildLogger(childLoggerProps);
 		this.idCompressor = overrides?.idCompressor;
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
@@ -800,6 +841,8 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 	}
+	private readonly: boolean = false;
+	public readonly isReadOnly = () => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
@@ -832,7 +875,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
-	public idCompressor?: IIdCompressor & IIdCompressorCore;
+	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
 
@@ -888,6 +931,11 @@ export class MockFluidDataStoreRuntime
 		assert(factory !== undefined, "type missing from registry");
 		return factory.create(this, id ?? uuid());
 	}
+
+	/**
+	 * @remarks This is for internal use only.
+	 */
+	public ILayerCompatDetails?: unknown;
 
 	public addChannel(channel: IChannel): void {}
 
@@ -968,9 +1016,12 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		if (this.disposed) {
+			return;
+		}
 		this.deltaConnections.forEach((dc) => {
-			dc.process(message, local, localOpMetadata);
+			dc.processMessages(messageCollection);
 		});
 	}
 
@@ -990,6 +1041,10 @@ export class MockFluidDataStoreRuntime
 		return;
 	}
 
+	public notifyReadOnlyState(readonly: boolean): void {
+		this.readonly = readonly;
+	}
+
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
 		if (request.url !== undefined) {
 			return {
@@ -1004,12 +1059,6 @@ export class MockFluidDataStoreRuntime
 	public async request(request: IRequest): Promise<IResponse> {
 		return null as any as IResponse;
 	}
-
-	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 */
-	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
 
 	public async summarize(
 		fullTree?: boolean,
@@ -1047,6 +1096,14 @@ export class MockFluidDataStoreRuntime
 				tree: {},
 			},
 			stats,
+		};
+	}
+
+	public getAttachGCData(
+		telemetryContext?: ITelemetryContext | undefined,
+	): IGarbageCollectionData {
+		return {
+			gcNodes: {},
 		};
 	}
 
@@ -1118,6 +1175,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 /**
  * Mock implementation of IChannelStorageService
+ * @legacy
  * @alpha
  */
 export class MockObjectStorageService implements IChannelStorageService {
@@ -1141,6 +1199,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 
 /**
  * Mock implementation of IChannelServices
+ * @legacy
  * @alpha
  */
 export class MockSharedObjectServices implements IChannelServices {

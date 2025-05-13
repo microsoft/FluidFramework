@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/dot-notation */
-
 export const summaryTemplate = {
 	type: 1,
 	tree: {
@@ -118,8 +116,7 @@ export const snapshotTree = {
 									id: "353aab1f600b0dd527073e286b4d6dd853c0d212",
 									blobs: {
 										".attributes": "d67e9b02c97d8b2d13b1ea88c4198ea6cdae3c06",
-										"compressed_2_header":
-											"ee84b67e86708c9dd7fc79ff8f3380b78f000b79",
+										"compressed_2_header": "ee84b67e86708c9dd7fc79ff8f3380b78f000b79",
 									},
 									commits: {},
 									trees: {},

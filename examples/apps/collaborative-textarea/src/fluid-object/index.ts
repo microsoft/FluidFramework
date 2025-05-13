@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedString, type ISharedString } from "@fluidframework/sequence/internal";
+import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
 
 /**
  * CollaborativeText uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
@@ -24,12 +24,11 @@ export class CollaborativeText extends DataObject {
 
 	public static readonly Name = "@fluid-example/collaborative-textarea";
 
-	private static readonly factory = new DataObjectFactory(
-		CollaborativeText.Name,
-		CollaborativeText,
-		[SharedString.getFactory()],
-		{},
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: CollaborativeText.Name,
+		ctor: CollaborativeText,
+		sharedObjects: [SharedString.getFactory()],
+	});
 
 	public static getFactory(): DataObjectFactory<CollaborativeText> {
 		return this.factory;

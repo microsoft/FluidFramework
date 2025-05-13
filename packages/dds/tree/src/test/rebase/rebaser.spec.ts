@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { ChangeRebaser, RevisionTag } from "../../core/index.js";
+import type { ChangeRebaser, RevisionTag } from "../../core/index.js";
 
 // Allow importing from these specific files which are being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { GraphCommit, rebaseBranch } from "../../core/rebase/index.js";
-import { fail } from "../../util/index.js";
+import { type GraphCommit, rebaseBranch } from "../../core/rebase/index.js";
 import { mintRevisionTag } from "../utils.js";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */
 function makeRevisionTag(tag: number): RevisionTag {
 	if (tag > 15) {
-		fail("Tags bigger than 15 are not supported");
+		assert.fail("Tags bigger than 15 are not supported");
 	}
 
 	return tag as RevisionTag;
@@ -75,9 +74,9 @@ describe("rebaser", () => {
 					};
 					this[revision] = cur;
 				}
-				this.main = cur ?? fail("Expected main to have at least one commit");
+				this.main = cur ?? assert.fail("Expected main to have at least one commit");
 				const [baseInMain] = branch;
-				cur = this[baseInMain] ?? fail("branch base must be in main");
+				cur = this[baseInMain] ?? assert.fail("branch base must be in main");
 				for (const revision of branch.slice(1)) {
 					cur = {
 						revision: makeRevisionTag(revision),
@@ -86,7 +85,7 @@ describe("rebaser", () => {
 					};
 				}
 
-				this.branch = cur ?? fail("Expected branch to have at least one commit");
+				this.branch = cur ?? assert.fail("Expected branch to have at least one commit");
 			}
 
 			public assertParentage(head: DummyCommit, ...revisions: number[]): void {
@@ -129,7 +128,7 @@ describe("rebaser", () => {
 				const tester = new BranchTester(main, branch);
 				const base =
 					baseInMain !== undefined
-						? tester[baseInMain] ?? fail("Expected baseInMain to be in main")
+						? (tester[baseInMain] ?? assert.fail("Expected baseInMain to be in main"))
 						: tester.main;
 
 				const { newSourceHead } = rebaseBranch(

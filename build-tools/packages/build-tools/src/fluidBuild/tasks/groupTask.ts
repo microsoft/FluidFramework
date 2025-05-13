@@ -5,6 +5,7 @@
 
 import { AsyncPriorityQueue } from "async";
 
+import type { BuildContext } from "../buildContext";
 import { BuildPackage, BuildResult } from "../buildGraph";
 import { LeafTask } from "./leaf/leafTask";
 import { Task, TaskExec } from "./task";
@@ -13,11 +14,12 @@ export class GroupTask extends Task {
 	constructor(
 		node: BuildPackage,
 		command: string,
+		context: BuildContext,
 		protected readonly subTasks: Task[],
 		taskName: string | undefined,
 		private readonly sequential: boolean = false,
 	) {
-		super(node, command, taskName);
+		super(node, command, context, taskName);
 	}
 
 	public initializeDependentLeafTasks() {
@@ -31,7 +33,7 @@ export class GroupTask extends Task {
 				if (prevTask !== undefined) {
 					const leafTasks = new Set<LeafTask>();
 					prevTask.collectLeafTasks(leafTasks);
-					task.addDependentLeafTasks(leafTasks.values());
+					task.addDependentLeafTasks(leafTasks);
 				}
 				prevTask = task;
 			}

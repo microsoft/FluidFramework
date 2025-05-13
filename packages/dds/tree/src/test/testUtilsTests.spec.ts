@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { JsonableTree } from "../core/index.js";
+import type { JsonableTree } from "../core/index.js";
 import { brand } from "../util/index.js";
 
-import { prepareTreeForCompare } from "./utils.js";
+import {
+	createSnapshotCompressor,
+	prepareTreeForCompare,
+	snapshotSessionId,
+} from "./utils.js";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 describe("Test utils", () => {
@@ -61,6 +65,24 @@ describe("Test utils", () => {
 				withHandleExpected,
 				{ type: "foo", fields: { f: [withHandleExpected] } },
 			]);
+		});
+
+		it("createSnapshotCompressor", () => {
+			// Test that createSnapshotCompressor gives a deterministic compressor
+			const compressor = createSnapshotCompressor();
+
+			{
+				const compressed = compressor.generateCompressedId();
+				assert.equal(compressed, 0);
+				const stable = compressor.decompress(compressed);
+				assert.equal(stable, snapshotSessionId);
+			}
+			{
+				const compressed = compressor.generateCompressedId();
+				assert.equal(compressed, 1);
+				const stable = compressor.decompress(compressed);
+				assert.equal(stable, "beefbeef-beef-4000-8000-000000000002");
+			}
 		});
 	});
 });

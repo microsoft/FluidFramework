@@ -3,18 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import {
+	ISharedObject,
+	ISharedObjectEvents,
+} from "@fluidframework/shared-object-base/internal";
 
 /**
  * Describes the event listener format for {@link ITaskManagerEvents} events.
  *
  * @param taskId - The unique identifier of the related task.
+ * @legacy
  * @alpha
  */
 export type TaskEventListener = (taskId: string) => void;
 
 /**
  * Events emitted by {@link ITaskManager}.
+ * @legacy
  * @alpha
  */
 export interface ITaskManagerEvents extends ISharedObjectEvents {
@@ -133,6 +138,7 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
  * when using {@link ITaskManager.subscribeToTask}.
  *
  * See {@link ITaskManagerEvents} for more details.
+ * @legacy
  * @alpha
  */
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {

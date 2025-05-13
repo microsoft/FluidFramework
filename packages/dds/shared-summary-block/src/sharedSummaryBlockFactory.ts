@@ -6,14 +6,14 @@
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
+import type { ISharedSummaryBlock } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 import { SharedSummaryBlockClass } from "./sharedSummaryBlock.js";
-import type { ISharedSummaryBlock } from "./interfaces.js";
 
 /**
  * The factory that defines the shared summary block.
@@ -36,14 +36,14 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
-	public get type() {
+	public get type(): string {
 		return SharedSummaryBlockFactory.Type;
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
 	 */
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return SharedSummaryBlockFactory.Attributes;
 	}
 
@@ -79,12 +79,14 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 
 /**
  * {@inheritDoc ISharedSummaryBlock}
+ * @legacy
  * @alpha
  */
 export const SharedSummaryBlock = createSharedObjectKind(SharedSummaryBlockFactory);
 
 /**
  * {@inheritDoc ISharedSummaryBlock}
+ * @legacy
  * @alpha
  */
 export type SharedSummaryBlock = ISharedSummaryBlock;

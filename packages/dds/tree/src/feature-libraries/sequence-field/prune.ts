@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { NodeChangePruner } from "../modular-schema/index.js";
+import type { NodeChangePruner } from "../modular-schema/index.js";
 import { MarkListFactory } from "./markListFactory.js";
-import { Changeset } from "./types.js";
+import type { Changeset } from "./types.js";
 import { withNodeChange } from "./utils.js";
 
 export function prune(changeset: Changeset, pruneNode: NodeChangePruner): Changeset {

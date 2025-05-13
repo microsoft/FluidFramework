@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
+import {
+	type ISharedDirectory,
+	MapFactory,
+	SharedDirectory,
+} from "@fluidframework/map/internal";
 
 import { PureDataObject } from "./pureDataObject.js";
-import { type DataObjectTypes } from "./types.js";
+import type { DataObjectTypes } from "./types.js";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It
@@ -18,6 +21,7 @@ import { type DataObjectTypes } from "./types.js";
  * will automatically be registered.
  *
  * @typeParam I - The optional input types used to strongly type the data object
+ * @legacy
  * @alpha
  */
 export abstract class DataObject<
@@ -42,7 +46,7 @@ export abstract class DataObject<
 	 * Initializes internal objects and calls initialization overrides.
 	 * Caller is responsible for ensuring this is only invoked once.
 	 */
-	public async initializeInternal(existing: boolean): Promise<void> {
+	public override async initializeInternal(existing: boolean): Promise<void> {
 		if (existing) {
 			// data store has a root directory so we just need to set it before calling initializingFromExisting
 			this.internalRoot = (await this.runtime.getChannel(
@@ -62,7 +66,6 @@ export abstract class DataObject<
 			}
 		} else {
 			// Create a root directory and register it before calling initializingFirstTime
-			// eslint-disable-next-line import/no-deprecated
 			this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
 			this.internalRoot.bindToContext();
 		}

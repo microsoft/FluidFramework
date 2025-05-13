@@ -5,21 +5,23 @@
 
 import * as child_process from "child_process";
 import * as fs from "fs";
-import { pathToFileURL } from "node:url";
 import * as path from "path";
-import * as util from "util";
-import * as glob from "glob";
 import isEqual from "lodash.isequal";
 
 /**
- *	An array of commands that are known to have subcommands and should be parsed as such
+ *	An array of commands that are known to have subcommands and should be parsed as such. These will be combined with
+ *	any additional commands provided in the Fluid build config.
  */
-const multiCommandExecutables = ["flub", "biome"];
+const defaultMultiCommandExecutables = ["flub", "biome"] as const;
 
-export function getExecutableFromCommand(command: string) {
+export function getExecutableFromCommand(command: string, multiCommandExecutables: string[]) {
 	let toReturn: string;
 	const commands = command.split(" ");
-	if (multiCommandExecutables.includes(commands[0])) {
+	const multiExecutables: Set<string> = new Set([
+		...defaultMultiCommandExecutables,
+		...multiCommandExecutables,
+	]);
+	if (multiExecutables.has(commands[0])) {
 		// For multi-commands (e.g., "flub bump ...") our heuristic is to scan for the first argument that cannot
 		// be the name of a sub-command, such as '.' or an argument that starts with '-'.
 		//
@@ -32,41 +34,6 @@ export function getExecutableFromCommand(command: string) {
 	}
 	return toReturn;
 }
-
-export function toPosixPath(s: string) {
-	return path.sep === "\\" ? s.replace(/\\/g, "/") : s;
-}
-
-export async function globFn(pattern: string, options: glob.IOptions = {}): Promise<string[]> {
-	return new Promise((resolve, reject) => {
-		glob.default(pattern, options, (err, matches) => {
-			if (err) {
-				reject(err);
-			}
-			resolve(matches);
-		});
-	});
-}
-
-export function unquote(str: string) {
-	if (str.length >= 2 && str[0] === '"' && str[str.length - 1] === '"') {
-		return str.substr(1, str.length - 2);
-	}
-	return str;
-}
-
-export const statAsync = util.promisify(fs.stat);
-export const lstatAsync = util.promisify(fs.lstat);
-export const readFileAsync = util.promisify(fs.readFile);
-export const writeFileAsync = util.promisify(fs.writeFile);
-export const unlinkAsync = util.promisify(fs.unlink);
-export const existsSync = fs.existsSync;
-export const appendFileAsync = util.promisify(fs.appendFile);
-export const realpathAsync = util.promisify(fs.realpath.native);
-export const symlinkAsync = util.promisify(fs.symlink);
-export const mkdirAsync = util.promisify(fs.mkdir);
-export const copyFileAsync = util.promisify(fs.copyFile);
-export const renameAsync = util.promisify(fs.rename);
 
 export interface ExecAsyncResult {
 	error: child_process.ExecException | null;
@@ -137,34 +104,11 @@ function printExecError(
 				? `${errorPrefix}: ${ret.stdout}\n${ret.stderr}`
 				: `${errorPrefix}: ${ret.stderr}`,
 		);
-	} else if (
-		warning &&
-		ret.stderr &&
-		// tsc-multi writes to stderr even when there are no errors, so this condition excludes that case as a workaround.
-		// Otherwise fluid-build spams warnings for all tsc-multi tasks.
-		!ret.stderr.includes("Found 0 errors")
-	) {
+	} else if (warning && ret.stderr) {
 		// no error code but still error messages, treat them is non fatal warnings
 		console.warn(`${errorPrefix}: warning during command ${command}`);
 		console.warn(`${errorPrefix}: ${ret.stderr}`);
 	}
-}
-
-export function resolveNodeModule(basePath: string, lookupPath: string) {
-	let currentBasePath = basePath;
-	// eslint-disable-next-line no-constant-condition
-	while (true) {
-		const tryPath = path.join(currentBasePath, "node_modules", lookupPath);
-		if (existsSync(tryPath)) {
-			return tryPath;
-		}
-		const nextBasePath = path.resolve(currentBasePath, "..");
-		if (nextBasePath === currentBasePath) {
-			break;
-		}
-		currentBasePath = nextBasePath;
-	}
-	return undefined;
 }
 
 export async function lookUpDirAsync(
@@ -222,14 +166,21 @@ export function isSameFileOrDir(f1: string, f2: string) {
 }
 
 /**
- * Execute a command. If there is an error, print error message and exit process
+ * Execute a command. If there is an error, throw.
  *
- * @param cmd Command line to execute
- * @param dir dir the directory to execute on
- * @param error description of command line to print when error happens
+ * @param cmd - Command line to execute
+ * @param dir - dir the directory to execute on
+ * @param error - description of command line to print when error happens
+ * @param pipeStdIn - optional string to pipe to stdin
  */
-export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
-	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
+export async function exec(
+	cmd: string,
+	dir: string,
+	error: string,
+	pipeStdIn?: string,
+	options?: Omit<child_process.ExecOptions, "cwd">,
+) {
+	const result = await execAsync(cmd, { ...options, cwd: dir }, pipeStdIn);
 	if (result.error) {
 		throw new Error(
 			`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`,
@@ -239,25 +190,20 @@ export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: 
 }
 
 /**
- * Execute a command. If there is an error, print error message and exit process
+ * Execute a command. If there is an error, undefined is returned.
  *
- * @param cmd Command line to execute
- * @param dir dir the directory to execute on
- * @param error description of command line to print when error happens
+ * @param cmd - Command line to execute
+ * @param dir - dir the directory to execute on
+ * @param pipeStdIn - optional string to pipe to stdin
  */
-export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) {
+export async function execNoError(
+	cmd: string,
+	dir: string,
+	pipeStdIn?: string,
+): Promise<string | undefined> {
 	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
 	if (result.error) {
 		return undefined;
 	}
 	return result.stdout;
-}
-
-export async function loadModule(modulePath: string, moduleType?: string) {
-	const ext = path.extname(modulePath);
-	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");
-	if (esm) {
-		return await import(pathToFileURL(modulePath).toString());
-	}
-	return require(modulePath);
 }

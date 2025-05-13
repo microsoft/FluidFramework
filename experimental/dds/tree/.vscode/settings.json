@@ -2,5 +2,5 @@
 	"mochaExplorer.files": ["dist/**/*.tests.js"],
 	"mochaExplorer.pruneFiles": true,
 	"mochaExplorer.require": "node_modules/@fluid-internal/mocha-test-setup",
-	"mochaExplorer.timeout": 999999
+	"mochaExplorer.timeout": 999999,
 }

@@ -9,316 +9,260 @@
  */
 
 import type * as old from "@fluidframework/aqueduct-previous/internal";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 
 import type * as current from "../../index.js";
 
-type ValueOf<T> = T[keyof T];
-type OnlySymbols<T> = T extends symbol ? T : never;
-type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
-/**
- * Omit (replace with never) a key if it is a custom symbol,
- * not just symbol or a well known symbol from the global Symbol.
- */
-type SkipUniqueSymbols<Key> = symbol extends Key
-	? Key // Key is symbol or a generalization of symbol, so leave it as is.
-	: Key extends symbol
-		? Key extends WellKnownSymbols
-			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
-			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
-		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
-/**
- * Remove details of T which are incompatible with type testing while keeping as much as is practical.
- *
- * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
- */
-type TypeOnly<T> = T extends number
-	? number
-	: T extends boolean | bigint | string
-		? T
-		: T extends symbol
-			? SkipUniqueSymbols<T>
-			: {
-					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
-				};
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_BaseContainerRuntimeFactory": {"forwardCompat": false}
+ * "Class_BaseContainerRuntimeFactory": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_BaseContainerRuntimeFactory():
-    TypeOnly<old.BaseContainerRuntimeFactory>;
-declare function use_current_ClassDeclaration_BaseContainerRuntimeFactory(
-    use: TypeOnly<current.BaseContainerRuntimeFactory>): void;
-use_current_ClassDeclaration_BaseContainerRuntimeFactory(
-    get_old_ClassDeclaration_BaseContainerRuntimeFactory());
+declare type old_as_current_for_Class_BaseContainerRuntimeFactory = requireAssignableTo<TypeOnly<old.BaseContainerRuntimeFactory>, TypeOnly<current.BaseContainerRuntimeFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_BaseContainerRuntimeFactory": {"backCompat": false}
+ * "Class_BaseContainerRuntimeFactory": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_BaseContainerRuntimeFactory():
-    TypeOnly<current.BaseContainerRuntimeFactory>;
-declare function use_old_ClassDeclaration_BaseContainerRuntimeFactory(
-    use: TypeOnly<old.BaseContainerRuntimeFactory>): void;
-use_old_ClassDeclaration_BaseContainerRuntimeFactory(
-    get_current_ClassDeclaration_BaseContainerRuntimeFactory());
+declare type current_as_old_for_Class_BaseContainerRuntimeFactory = requireAssignableTo<TypeOnly<current.BaseContainerRuntimeFactory>, TypeOnly<old.BaseContainerRuntimeFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_BaseContainerRuntimeFactoryProps": {"forwardCompat": false}
+ * "Class_ContainerRuntimeFactoryWithDefaultDataStore": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_BaseContainerRuntimeFactoryProps():
-    TypeOnly<old.BaseContainerRuntimeFactoryProps>;
-declare function use_current_InterfaceDeclaration_BaseContainerRuntimeFactoryProps(
-    use: TypeOnly<current.BaseContainerRuntimeFactoryProps>): void;
-use_current_InterfaceDeclaration_BaseContainerRuntimeFactoryProps(
-    get_old_InterfaceDeclaration_BaseContainerRuntimeFactoryProps());
+declare type old_as_current_for_Class_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_BaseContainerRuntimeFactoryProps": {"backCompat": false}
+ * "Class_ContainerRuntimeFactoryWithDefaultDataStore": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_BaseContainerRuntimeFactoryProps():
-    TypeOnly<current.BaseContainerRuntimeFactoryProps>;
-declare function use_old_InterfaceDeclaration_BaseContainerRuntimeFactoryProps(
-    use: TypeOnly<old.BaseContainerRuntimeFactoryProps>): void;
-use_old_InterfaceDeclaration_BaseContainerRuntimeFactoryProps(
-    get_current_InterfaceDeclaration_BaseContainerRuntimeFactoryProps());
+declare type current_as_old_for_Class_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore": {"forwardCompat": false}
+ * "Class_DataObject": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore():
-    TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>;
-declare function use_current_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore(
-    use: TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>): void;
-use_current_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore(
-    get_old_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore());
+declare type old_as_current_for_Class_DataObject = requireAssignableTo<TypeOnly<old.DataObject>, TypeOnly<current.DataObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore": {"backCompat": false}
+ * "Class_DataObject": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore():
-    TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>;
-declare function use_old_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore(
-    use: TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>): void;
-use_old_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore(
-    get_current_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore());
+declare type current_as_old_for_Class_DataObject = requireAssignableTo<TypeOnly<current.DataObject>, TypeOnly<old.DataObject>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"forwardCompat": false}
+ * "Class_DataObjectFactory": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps():
-    TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>;
-declare function use_current_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps(
-    use: TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>): void;
-use_current_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps(
-    get_old_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps());
+declare type old_as_current_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<old.DataObjectFactory<never>>, TypeOnly<current.DataObjectFactory<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"backCompat": false}
+ * "Class_DataObjectFactory": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps():
-    TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>;
-declare function use_old_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps(
-    use: TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>): void;
-use_old_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps(
-    get_current_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps());
+declare type current_as_old_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<current.DataObjectFactory<never>>, TypeOnly<old.DataObjectFactory<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DataObject": {"forwardCompat": false}
+ * "Class_PureDataObject": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_DataObject():
-    TypeOnly<old.DataObject>;
-declare function use_current_ClassDeclaration_DataObject(
-    use: TypeOnly<current.DataObject>): void;
-use_current_ClassDeclaration_DataObject(
-    get_old_ClassDeclaration_DataObject());
+declare type old_as_current_for_Class_PureDataObject = requireAssignableTo<TypeOnly<old.PureDataObject>, TypeOnly<current.PureDataObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DataObject": {"backCompat": false}
+ * "Class_PureDataObject": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_DataObject():
-    TypeOnly<current.DataObject>;
-declare function use_old_ClassDeclaration_DataObject(
-    use: TypeOnly<old.DataObject>): void;
-use_old_ClassDeclaration_DataObject(
-    get_current_ClassDeclaration_DataObject());
+declare type current_as_old_for_Class_PureDataObject = requireAssignableTo<TypeOnly<current.PureDataObject>, TypeOnly<old.PureDataObject>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DataObjectFactory": {"forwardCompat": false}
+ * "Class_PureDataObjectFactory": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_DataObjectFactory():
-    TypeOnly<old.DataObjectFactory<any>>;
-declare function use_current_ClassDeclaration_DataObjectFactory(
-    use: TypeOnly<current.DataObjectFactory<any>>): void;
-use_current_ClassDeclaration_DataObjectFactory(
-    get_old_ClassDeclaration_DataObjectFactory());
+declare type old_as_current_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<old.PureDataObjectFactory<never>>, TypeOnly<current.PureDataObjectFactory<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DataObjectFactory": {"backCompat": false}
+ * "Class_PureDataObjectFactory": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_DataObjectFactory():
-    TypeOnly<current.DataObjectFactory<any>>;
-declare function use_old_ClassDeclaration_DataObjectFactory(
-    use: TypeOnly<old.DataObjectFactory<any>>): void;
-use_old_ClassDeclaration_DataObjectFactory(
-    get_current_ClassDeclaration_DataObjectFactory());
+declare type current_as_old_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<current.PureDataObjectFactory<never>>, TypeOnly<old.PureDataObjectFactory<never>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_BaseContainerRuntimeFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_BaseContainerRuntimeFactory = requireAssignableTo<TypeOnly<typeof current.BaseContainerRuntimeFactory>, TypeOnly<typeof old.BaseContainerRuntimeFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ContainerRuntimeFactoryWithDefaultDataStore": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<typeof current.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<typeof old.ContainerRuntimeFactoryWithDefaultDataStore>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DataObject": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DataObject = requireAssignableTo<TypeOnly<typeof current.DataObject>, TypeOnly<typeof old.DataObject>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DataObjectFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DataObjectFactory = requireAssignableTo<TypeOnly<typeof current.DataObjectFactory>, TypeOnly<typeof old.DataObjectFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_PureDataObject": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_PureDataObject = requireAssignableTo<TypeOnly<typeof current.PureDataObject>, TypeOnly<typeof old.PureDataObject>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_PureDataObjectFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_PureDataObjectFactory = requireAssignableTo<TypeOnly<typeof current.PureDataObjectFactory>, TypeOnly<typeof old.PureDataObjectFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_DataObjectTypes": {"forwardCompat": false}
+ * "Interface_BaseContainerRuntimeFactoryProps": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_DataObjectTypes():
-    TypeOnly<old.DataObjectTypes>;
-declare function use_current_InterfaceDeclaration_DataObjectTypes(
-    use: TypeOnly<current.DataObjectTypes>): void;
-use_current_InterfaceDeclaration_DataObjectTypes(
-    get_old_InterfaceDeclaration_DataObjectTypes());
+declare type old_as_current_for_Interface_BaseContainerRuntimeFactoryProps = requireAssignableTo<TypeOnly<old.BaseContainerRuntimeFactoryProps>, TypeOnly<current.BaseContainerRuntimeFactoryProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_DataObjectTypes": {"backCompat": false}
+ * "Interface_BaseContainerRuntimeFactoryProps": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_DataObjectTypes():
-    TypeOnly<current.DataObjectTypes>;
-declare function use_old_InterfaceDeclaration_DataObjectTypes(
-    use: TypeOnly<old.DataObjectTypes>): void;
-use_old_InterfaceDeclaration_DataObjectTypes(
-    get_current_InterfaceDeclaration_DataObjectTypes());
+declare type current_as_old_for_Interface_BaseContainerRuntimeFactoryProps = requireAssignableTo<TypeOnly<current.BaseContainerRuntimeFactoryProps>, TypeOnly<old.BaseContainerRuntimeFactoryProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IDataObjectProps": {"forwardCompat": false}
+ * "Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IDataObjectProps():
-    TypeOnly<old.IDataObjectProps>;
-declare function use_current_InterfaceDeclaration_IDataObjectProps(
-    use: TypeOnly<current.IDataObjectProps>): void;
-use_current_InterfaceDeclaration_IDataObjectProps(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_InterfaceDeclaration_IDataObjectProps());
+declare type old_as_current_for_Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps = requireAssignableTo<TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>, TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IDataObjectProps": {"backCompat": false}
+ * "Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IDataObjectProps():
-    TypeOnly<current.IDataObjectProps>;
-declare function use_old_InterfaceDeclaration_IDataObjectProps(
-    use: TypeOnly<old.IDataObjectProps>): void;
-use_old_InterfaceDeclaration_IDataObjectProps(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_IDataObjectProps());
+declare type current_as_old_for_Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps = requireAssignableTo<TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>, TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_PureDataObject": {"forwardCompat": false}
+ * "Interface_DataObjectFactoryProps": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_PureDataObject():
-    TypeOnly<old.PureDataObject>;
-declare function use_current_ClassDeclaration_PureDataObject(
-    use: TypeOnly<current.PureDataObject>): void;
-use_current_ClassDeclaration_PureDataObject(
-    get_old_ClassDeclaration_PureDataObject());
+declare type old_as_current_for_Interface_DataObjectFactoryProps = requireAssignableTo<TypeOnly<old.DataObjectFactoryProps<never>>, TypeOnly<current.DataObjectFactoryProps<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_PureDataObject": {"backCompat": false}
+ * "Interface_DataObjectFactoryProps": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_PureDataObject():
-    TypeOnly<current.PureDataObject>;
-declare function use_old_ClassDeclaration_PureDataObject(
-    use: TypeOnly<old.PureDataObject>): void;
-use_old_ClassDeclaration_PureDataObject(
-    get_current_ClassDeclaration_PureDataObject());
+declare type current_as_old_for_Interface_DataObjectFactoryProps = requireAssignableTo<TypeOnly<current.DataObjectFactoryProps<never>>, TypeOnly<old.DataObjectFactoryProps<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_PureDataObjectFactory": {"forwardCompat": false}
+ * "Interface_DataObjectTypes": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_PureDataObjectFactory():
-    TypeOnly<old.PureDataObjectFactory<any>>;
-declare function use_current_ClassDeclaration_PureDataObjectFactory(
-    use: TypeOnly<current.PureDataObjectFactory<any>>): void;
-use_current_ClassDeclaration_PureDataObjectFactory(
-    get_old_ClassDeclaration_PureDataObjectFactory());
+declare type old_as_current_for_Interface_DataObjectTypes = requireAssignableTo<TypeOnly<old.DataObjectTypes>, TypeOnly<current.DataObjectTypes>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_PureDataObjectFactory": {"backCompat": false}
+ * "Interface_DataObjectTypes": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_PureDataObjectFactory():
-    TypeOnly<current.PureDataObjectFactory<any>>;
-declare function use_old_ClassDeclaration_PureDataObjectFactory(
-    use: TypeOnly<old.PureDataObjectFactory<any>>): void;
-use_old_ClassDeclaration_PureDataObjectFactory(
-    get_current_ClassDeclaration_PureDataObjectFactory());
+declare type current_as_old_for_Interface_DataObjectTypes = requireAssignableTo<TypeOnly<current.DataObjectTypes>, TypeOnly<old.DataObjectTypes>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IDataObjectProps": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IDataObjectProps = requireAssignableTo<TypeOnly<old.IDataObjectProps>, TypeOnly<current.IDataObjectProps>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IDataObjectProps": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IDataObjectProps = requireAssignableTo<TypeOnly<current.IDataObjectProps>, TypeOnly<old.IDataObjectProps>>

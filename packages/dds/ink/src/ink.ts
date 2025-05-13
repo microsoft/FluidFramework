@@ -5,14 +5,20 @@
 
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
 import { InkFactory } from "./inkFactory.js";
@@ -106,7 +112,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	 * @param id - Optional name of the Ink; will be assigned a unique ID if not provided
 	 * @returns Newly create Ink object (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string) {
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): Ink {
 		return runtime.createChannel(id, InkFactory.Type) as Ink;
 	}
 
@@ -114,7 +120,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	 * Get a factory for Ink to register with the data store.
 	 * @returns A factory that creates and loads Ink
 	 */
-	public static getFactory() {
+	public static getFactory(): InkFactory {
 		return new InkFactory();
 	}
 

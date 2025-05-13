@@ -5,12 +5,12 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type ContainerKey } from "./CommonInterfaces.js";
+import type { ContainerKey } from "./CommonInterfaces.js";
 import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
-import { type IDevtoolsLogger } from "./DevtoolsLogger.js";
-import { type DevtoolsFeatureFlags } from "./Features.js";
-import { type IContainerDevtools } from "./IContainerDevtools.js";
-import { type IFluidDevtools } from "./IFluidDevtools.js";
+import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
+import type { DevtoolsFeatureFlags } from "./Features.js";
+import type { IContainerDevtools } from "./IContainerDevtools.js";
+import type { IFluidDevtools } from "./IFluidDevtools.js";
 import {
 	ContainerList,
 	DevtoolsDisposed,
@@ -417,4 +417,12 @@ export class FluidDevtools implements IFluidDevtools {
  */
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 	return FluidDevtools.initialize(props);
+}
+
+/**
+ * Gets the Devtools singleton if it has been {@link initializeDevtools | initialized}, otherwise returns `undefined`.
+ * @alpha
+ */
+export function tryGetFluidDevtools(): IFluidDevtools | undefined {
+	return FluidDevtools.tryGet();
 }

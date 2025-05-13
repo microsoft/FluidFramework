@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ILoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	isIDeltaManagerFull,
+	LoaderHeader,
+	type IContainer,
+} from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { GenericError } from "@fluidframework/telemetry-utils/internal";
+
+import { loadExistingContainer } from "./createAndLoadContainerUtils.js";
+import { type ILoaderProps } from "./loader.js";
 
 /* eslint-disable jsdoc/check-indentation */
 
@@ -29,7 +37,7 @@ import type { IErrorBase } from "@fluidframework/core-interfaces";
  *    network connectivity issues / ability to cancel (IContainer.disconnect) or close container (IContainer.close)
  *    This flow needs to fetch ops (potentially connecting to delta connection), and any retriable errors on this path result in infinite retry.
  *    If you need to cancel that process, consider supplying AbortSignal parameter.
- * @param loader - loader instance to use to load container
+ * @param loaderProps - The loader props to use to load the container.
  * @param request - request identifying container instance / load parameters. LoaderHeader.loadMode headers are ignored (see above)
  * @param loadToSequenceNumber - optional sequence number. If provided, ops are processed up to this sequence number.
  * @param signal - optional abort signal that can be used to cancel waiting for the ops.
@@ -38,17 +46,20 @@ import type { IErrorBase } from "@fluidframework/core-interfaces";
  * @internal
  */
 export async function loadContainerPaused(
-	loader: ILoader,
+	loaderProps: ILoaderProps,
 	request: IRequest,
 	loadToSequenceNumber?: number,
 	signal?: AbortSignal,
-) {
-	const container = await loader.resolve({
-		url: request.url,
-		headers: {
-			...request.headers,
-			// ensure we do not process any ops, such that we can examine container before ops starts to flow.
-			[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
+): Promise<IContainer> {
+	const container = await loadExistingContainer({
+		...loaderProps,
+		request: {
+			url: request.url,
+			headers: {
+				...request.headers,
+				// ensure we do not process any ops, such that we can examine container before ops starts to flow.
+				[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
+			},
 		},
 	});
 
@@ -58,8 +69,14 @@ export async function loadContainerPaused(
 	const dm = container.deltaManager;
 	const lastProcessedSequenceNumber = dm.initialSequenceNumber;
 
-	const pauseContainer = () => {
+	const pauseContainer = (): void => {
+		assert(
+			isIDeltaManagerFull(dm),
+			0xa7f /* Delta manager does not have inbound/outbound queues. */,
+		);
+		// eslint-disable-next-line no-void
 		void dm.inbound.pause();
+		// eslint-disable-next-line no-void
 		void dm.outbound.pause();
 	};
 
@@ -86,12 +103,12 @@ export async function loadContainerPaused(
 	let onAbort: () => void;
 	let onClose: (error?: IErrorBase) => void;
 
-	const promise = new Promise<void>((resolve, rejectArg) => {
-		onAbort = () => rejectArg(new GenericError("Canceled due to cancellation request."));
-		onClose = (error?: IErrorBase) => rejectArg(error);
+	const promise = new Promise<void>((resolve, reject) => {
+		onAbort = (): void => reject(new GenericError("Canceled due to cancellation request."));
+		onClose = (error?: IErrorBase): void => reject(error);
 
 		// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
-		opHandler = () => {
+		opHandler = (): void => {
 			// If there is a specified sequence number, keep processing until we reach it.
 			if (
 				loadToSequenceNumber !== undefined &&
@@ -119,7 +136,9 @@ export async function loadContainerPaused(
 
 	// Wait for the ops to be processed.
 	await promise
-		.catch((error) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		.catch((error: any) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			container.close(error);
 			throw error;
 		})

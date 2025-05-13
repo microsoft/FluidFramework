@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 
 /**
  * Kind of audience member change.

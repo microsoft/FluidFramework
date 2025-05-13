@@ -7,8 +7,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable unicorn/consistent-function-scoping */
 /* eslint-disable unicorn/no-null */
 
 import { strict as assert } from "node:assert";
@@ -21,7 +19,7 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
 import {
-	IFluidErrorAnnotations,
+	type IFluidErrorAnnotations,
 	LoggingError,
 	extractLogSafeErrorProperties,
 	isExternalError,
@@ -29,13 +27,9 @@ import {
 	normalizeError,
 	wrapError,
 	wrapErrorAndLog,
+	generateStack,
 } from "../errorLogging.js";
-import {
-	IFluidErrorBase,
-	hasErrorInstanceId,
-	isFluidError,
-	isValidLegacyError,
-} from "../fluidErrorBase.js";
+import { type IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 import type { ITelemetryPropertiesExt } from "../telemetryTypes.js";
@@ -419,7 +413,6 @@ describe("Error Logging", () => {
 			const propsWillBeIgnored = { message: "surprise1", stack: "surprise2" };
 			loggingError.addTelemetryProperties(propsWillBeIgnored);
 			const props = loggingError.getTelemetryProperties();
-			delete props.fluidErrorCode; // It's on there for back compat, not trying to test it here
 			const { message, stack, errorInstanceId } = loggingError;
 			assert.deepStrictEqual(
 				props,
@@ -435,7 +428,6 @@ describe("Error Logging", () => {
 			};
 			loggingError.addTelemetryProperties(propsWillBeIgnored);
 			const props = loggingError.getTelemetryProperties();
-			delete props.fluidErrorCode; // It's on there for back compat, not trying to test it here
 			const { message, stack, errorInstanceId } = loggingError;
 			assert.deepStrictEqual(
 				props,
@@ -502,8 +494,7 @@ describe("Error Logging", () => {
 		});
 		it("object error yields correct message", () => {
 			assert.strictEqual(
-				extractLogSafeErrorProperties({ message: "hello" }, false /* sanitizeStack */)
-					.message,
+				extractLogSafeErrorProperties({ message: "hello" }, false /* sanitizeStack */).message,
 				"hello",
 			);
 			assert.strictEqual(
@@ -530,13 +521,11 @@ describe("Error Logging", () => {
 				"hello",
 			);
 			assert.strictEqual(
-				extractLogSafeErrorProperties({ foo: "hello" }, false /* sanitizeStack */)
-					.errorType,
+				extractLogSafeErrorProperties({ foo: "hello" }, false /* sanitizeStack */).errorType,
 				undefined,
 			);
 			assert.strictEqual(
-				extractLogSafeErrorProperties({ errorType: 42 }, false /* sanitizeStack */)
-					.errorType,
+				extractLogSafeErrorProperties({ errorType: 42 }, false /* sanitizeStack */).errorType,
 				undefined,
 			);
 			assert.strictEqual(
@@ -552,10 +541,7 @@ describe("Error Logging", () => {
 			assert(stack?.includes("asdf"), "stack is expected to contain the message");
 			assert(stack?.includes("FooError"), "stack is expected to contain the name");
 
-			const sanitizedStack = extractLogSafeErrorProperties(
-				e1,
-				true /* sanitizeStack */,
-			).stack;
+			const sanitizedStack = extractLogSafeErrorProperties(e1, true /* sanitizeStack */).stack;
 			assert(typeof sanitizedStack === "string");
 			assert(
 				!sanitizedStack?.includes("asdf"),
@@ -643,20 +629,24 @@ describe("Error Logging", () => {
 });
 
 class TestFluidError implements IFluidErrorBase {
-	readonly atpStub: sinon.SinonStub;
-	readonly gtpSpy: sinon.SinonSpy;
-	expectedTelemetryProps: ITelemetryBaseProperties;
+	public readonly atpStub: sinon.SinonStub;
+	public readonly gtpSpy: sinon.SinonSpy;
+	public expectedTelemetryProps: ITelemetryBaseProperties;
 
-	readonly errorType: string;
-	readonly message: string;
-	readonly stack?: string;
-	readonly name: string = "Error";
-	readonly errorInstanceId: string;
+	public readonly errorType: string;
+	public readonly message: string;
+	public readonly stack?: string;
+	public readonly name: string = "Error";
+	public readonly errorInstanceId: string;
 
-	constructor(
+	public constructor(
 		errorProps: Omit<
 			IFluidErrorBase,
-			"getTelemetryProperties" | "addTelemetryProperties" | "errorInstanceId" | "name"
+			| "getTelemetryProperties"
+			| "addTelemetryProperties"
+			| "errorInstanceId"
+			| "name"
+			| "cause"
 		>,
 	) {
 		this.errorType = errorProps.errorType;
@@ -669,23 +659,23 @@ class TestFluidError implements IFluidErrorBase {
 		this.expectedTelemetryProps = { ...errorProps };
 	}
 
-	getTelemetryProperties(): ITelemetryBaseProperties {
+	public getTelemetryProperties(): ITelemetryBaseProperties {
 		// Don't actually return any props. We'll use the spy to ensure it was called
 		return {};
 	}
 
-	addTelemetryProperties(props: ITelemetryPropertiesExt): void {
+	public addTelemetryProperties(props: ITelemetryPropertiesExt): void {
 		throw new Error("Not Implemented - Expected to be Stubbed via Sinon");
 	}
 
-	withoutProperty(propName: keyof IFluidErrorBase): this {
+	public withoutProperty(propName: keyof IFluidErrorBase): this {
 		const objectWithoutProp = {};
 		objectWithoutProp[propName] = undefined;
 		Object.assign(this, objectWithoutProp);
 		return this;
 	}
 
-	withExpectedTelemetryProps(props: ITelemetryBaseProperties): this {
+	public withExpectedTelemetryProps(props: ITelemetryBaseProperties): this {
 		Object.assign(this.expectedTelemetryProps, props);
 		return this;
 	}
@@ -700,32 +690,6 @@ describe("normalizeError", () => {
 	describe("Valid Errors (Legacy and Current)", () => {
 		for (const annotationCase of Object.keys(annotationCases)) {
 			const annotations = annotationCases[annotationCase];
-			it(`Valid legacy error - Patch and return (annotations: ${annotationCase})`, () => {
-				// Arrange
-				const errorProps = { errorType: "et1", message: "m1" };
-				const legacyError = new TestFluidError(errorProps).withoutProperty(
-					"errorInstanceId",
-				);
-
-				// Act
-				const normalizedError = normalizeError(legacyError, annotations);
-
-				// Assert
-				assert.equal(
-					normalizedError,
-					legacyError,
-					"normalize should yield the same error as passed in",
-				);
-				assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
-				assert.equal(normalizedError.message, "m1", "message should be unchanged");
-				assert.equal(normalizedError.errorInstanceId.length, 36, "should be guid-length");
-				if (annotations.props !== undefined) {
-					assert(
-						legacyError.atpStub.calledWith(annotations.props),
-						"addTelemetryProperties should have been called",
-					);
-				}
-			});
 			it(`Valid Fluid Error - untouched (annotations: ${annotationCase})`, () => {
 				// Arrange
 				const fluidError = new TestFluidError({ errorType: "et1", message: "m1" });
@@ -751,7 +715,7 @@ describe("normalizeError", () => {
 				errorType: "et1",
 				message: "m1",
 			}).withoutProperty("stack");
-			// We don't expect legacyError to be modified itself at all
+			// We don't expect fluidError to be modified itself at all
 			Object.freeze(fluidError);
 
 			// Act
@@ -761,22 +725,10 @@ describe("normalizeError", () => {
 			assert(normalizedError === fluidError);
 			assert(normalizedError.stack === undefined);
 		});
-		it("Frozen legacy error - Throws", () => {
-			// Arrange
-			const errorProps = { errorType: "et1", message: "m1" };
-			const legacyError = new TestFluidError(errorProps).withoutProperty("errorInstanceId");
-			Object.freeze(legacyError);
-
-			// Act/Assert
-			assert.throws(
-				() => normalizeError(legacyError, {}),
-				/Cannot assign to read only property/,
-			);
-		});
 	});
 	describe("Errors Needing Normalization", () => {
 		class NamedError extends Error {
-			name = "CoolErrorName";
+			public name = "CoolErrorName";
 		}
 		const sampleFluidError = (): TestFluidError =>
 			new TestFluidError({
@@ -793,128 +745,123 @@ describe("normalizeError", () => {
 				message,
 				stack: stackHint,
 			});
-		const testCases: { [label: string]: () => { input: any; expectedOutput: TestFluidError } } =
-			{
-				"Fluid Error minus errorType": () => ({
-					input: sampleFluidError().withoutProperty("errorType"),
-					expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+		const testCases: Record<string, () => { input: any; expectedOutput: TestFluidError }> = {
+			"Fluid Error minus errorType": () => ({
+				input: sampleFluidError().withoutProperty("errorType"),
+				expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+			}),
+			"Fluid Error minus message": () => ({
+				input: sampleFluidError().withoutProperty("message"),
+				expectedOutput: typicalOutput("[object Object]", "<<stack from input>>"),
+			}),
+			"Fluid Error minus getTelemetryProperties": () => ({
+				input: sampleFluidError().withoutProperty("getTelemetryProperties"),
+				expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+			}),
+			"Fluid Error minus addTelemetryProperties": () => ({
+				input: sampleFluidError().withoutProperty("addTelemetryProperties"),
+				expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+			}),
+			"Fluid Error minus errorType (no stack)": () => ({
+				input: sampleFluidError().withoutProperty("errorType").withoutProperty("stack"),
+				expectedOutput: typicalOutput("Hello", "<<natural stack>>"),
+			}),
+			"Fluid Error minus message (no stack)": () => ({
+				input: sampleFluidError().withoutProperty("message").withoutProperty("stack"),
+				expectedOutput: typicalOutput("[object Object]", "<<natural stack>>"),
+			}),
+			"Error object": () => ({
+				input: new NamedError("boom"),
+				expectedOutput: typicalOutput(
+					"boom",
+					"<<stack from input>>",
+				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+			}),
+			"LoggingError": () => ({
+				input: new LoggingError("boom"),
+				expectedOutput: typicalOutput("boom", "<<stack from input>>"),
+			}),
+			"Empty object": () => ({
+				input: {},
+				expectedOutput: typicalOutput(
+					"[object Object]",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+			}),
+			"object with stack": () => ({
+				input: { message: "whatever", stack: "fake stack goes here" },
+				expectedOutput: typicalOutput(
+					"whatever",
+					"<<stack from input>>",
+				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+			}),
+			"object with non-string message and name": () => ({
+				input: { message: 42, name: true },
+				expectedOutput: typicalOutput(
+					"[object Object]",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+			}),
+			"nullValue": () => ({
+				input: null,
+				expectedOutput: typicalOutput("null", "<<natural stack>>").withExpectedTelemetryProps({
+					untrustedOrigin: 1,
 				}),
-				"Fluid Error minus message": () => ({
-					input: sampleFluidError().withoutProperty("message"),
-					expectedOutput: typicalOutput("[object Object]", "<<stack from input>>"),
+			}),
+			"undef": () => ({
+				input: undefined,
+				expectedOutput: typicalOutput(
+					"undefined",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ typeofError: "undefined", untrustedOrigin: 1 }),
+			}),
+			"false": () => ({
+				input: false,
+				expectedOutput: typicalOutput("false", "<<natural stack>>").withExpectedTelemetryProps(
+					{ typeofError: "boolean", untrustedOrigin: 1 },
+				),
+			}),
+			"true": () => ({
+				input: true,
+				expectedOutput: typicalOutput("true", "<<natural stack>>").withExpectedTelemetryProps({
+					typeofError: "boolean",
+					untrustedOrigin: 1,
 				}),
-				"Fluid Error minus getTelemetryProperties": () => ({
-					input: sampleFluidError().withoutProperty("getTelemetryProperties"),
-					expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+			}),
+			"number": () => ({
+				input: 3.14,
+				expectedOutput: typicalOutput("3.14", "<<natural stack>>").withExpectedTelemetryProps({
+					typeofError: "number",
+					untrustedOrigin: 1,
 				}),
-				"Fluid Error minus addTelemetryProperties": () => ({
-					input: sampleFluidError().withoutProperty("addTelemetryProperties"),
-					expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+			}),
+			"symbol": () => ({
+				input: Symbol("Unique"),
+				expectedOutput: typicalOutput(
+					"Symbol(Unique)",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ typeofError: "symbol", untrustedOrigin: 1 }),
+			}),
+			"function": () => ({
+				input: (): void => {},
+				expectedOutput: typicalOutput(
+					"() => { }",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ typeofError: "function", untrustedOrigin: 1 }),
+			}),
+			"emptyArray": () => ({
+				input: [],
+				expectedOutput: typicalOutput("", "<<natural stack>>").withExpectedTelemetryProps({
+					untrustedOrigin: 1,
 				}),
-				"Fluid Error minus errorType (no stack)": () => ({
-					input: sampleFluidError().withoutProperty("errorType").withoutProperty("stack"),
-					expectedOutput: typicalOutput("Hello", "<<natural stack>>"),
-				}),
-				"Fluid Error minus message (no stack)": () => ({
-					input: sampleFluidError().withoutProperty("message").withoutProperty("stack"),
-					expectedOutput: typicalOutput("[object Object]", "<<natural stack>>"),
-				}),
-				"Error object": () => ({
-					input: new NamedError("boom"),
-					expectedOutput: typicalOutput(
-						"boom",
-						"<<stack from input>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"LoggingError": () => ({
-					input: new LoggingError("boom"),
-					expectedOutput: typicalOutput("boom", "<<stack from input>>"),
-				}),
-				"Empty object": () => ({
-					input: {},
-					expectedOutput: typicalOutput(
-						"[object Object]",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"object with stack": () => ({
-					input: { message: "whatever", stack: "fake stack goes here" },
-					expectedOutput: typicalOutput(
-						"whatever",
-						"<<stack from input>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"object with non-string message and name": () => ({
-					input: { message: 42, name: true },
-					expectedOutput: typicalOutput(
-						"[object Object]",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"nullValue": () => ({
-					input: null,
-					expectedOutput: typicalOutput(
-						"null",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"undef": () => ({
-					input: undefined,
-					expectedOutput: typicalOutput(
-						"undefined",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "undefined", untrustedOrigin: 1 }),
-				}),
-				"false": () => ({
-					input: false,
-					expectedOutput: typicalOutput(
-						"false",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "boolean", untrustedOrigin: 1 }),
-				}),
-				"true": () => ({
-					input: true,
-					expectedOutput: typicalOutput(
-						"true",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "boolean", untrustedOrigin: 1 }),
-				}),
-				"number": () => ({
-					input: 3.14,
-					expectedOutput: typicalOutput(
-						"3.14",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "number", untrustedOrigin: 1 }),
-				}),
-				"symbol": () => ({
-					input: Symbol("Unique"),
-					expectedOutput: typicalOutput(
-						"Symbol(Unique)",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "symbol", untrustedOrigin: 1 }),
-				}),
-				"function": () => ({
-					input: (): void => {},
-					expectedOutput: typicalOutput(
-						"() => { }",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "function", untrustedOrigin: 1 }),
-				}),
-				"emptyArray": () => ({
-					input: [],
-					expectedOutput: typicalOutput(
-						"",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"array": () => ({
-					input: [1, 2, 3],
-					expectedOutput: typicalOutput(
-						"1,2,3",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-			};
+			}),
+			"array": () => ({
+				input: [1, 2, 3],
+				expectedOutput: typicalOutput("1,2,3", "<<natural stack>>").withExpectedTelemetryProps(
+					{ untrustedOrigin: 1 },
+				),
+			}),
+		};
 		function assertMatching(
 			actual: IFluidErrorBase,
 			expected: TestFluidError,
@@ -924,7 +871,6 @@ describe("normalizeError", () => {
 			expected.withExpectedTelemetryProps({
 				...annotations.props,
 				errorInstanceId: actual.errorInstanceId,
-				fluidErrorCode: "-", // Present for back-compat
 			});
 
 			assertMatchingMessageAndStack(actual, expected, inputStack);
@@ -968,11 +914,9 @@ describe("normalizeError", () => {
 				expected.withExpectedTelemetryProps({ stack: inputStack });
 			}
 		}
-		for (const annotationCase of Object.keys(annotationCases)) {
-			const annotations = annotationCases[annotationCase];
+		for (const [annotationCase, annotations] of Object.entries(annotationCases)) {
 			let doneOnceForThisAnnotationCase = false;
-			for (const caseName of Object.keys(testCases)) {
-				const getTestCase = testCases[caseName];
+			for (const [caseName, getTestCase] of Object.entries(testCases)) {
 				if (!doneOnceForThisAnnotationCase) {
 					doneOnceForThisAnnotationCase = true;
 					// Each test case only differs by what stack/error are.  Test the rest only once per annotation case.
@@ -984,11 +928,7 @@ describe("normalizeError", () => {
 						const normalized = normalizeError(input, annotations);
 
 						// Assert
-						assert.notEqual(
-							input,
-							normalized,
-							"input should have yielded a new error object",
-						);
+						assert.notEqual(input, normalized, "input should have yielded a new error object");
 						assertMatching(normalized, expectedOutput, annotations, input?.stack);
 						if (
 							input instanceof TestFluidError &&
@@ -1017,11 +957,7 @@ describe("normalizeError", () => {
 					const normalized = normalizeError(input, annotations);
 
 					// Assert
-					assert.notEqual(
-						input,
-						normalized,
-						"input should have yielded a new error object",
-					);
+					assert.notEqual(input, normalized, "input should have yielded a new error object");
 					assertMatchingMessageAndStack(normalized, expectedOutput, input?.stack);
 				});
 			}
@@ -1096,7 +1032,11 @@ describe("wrapError", () => {
 describe("wrapErrorAndLog", () => {
 	const mockLogger = new MockLogger();
 	const innerError = new LoggingError("hello");
-	const newError = wrapErrorAndLog(innerError, createTestError, mockLogger.toTelemetryLogger());
+	const newError = wrapErrorAndLog(
+		innerError,
+		createTestError,
+		mockLogger.toTelemetryLogger(),
+	);
 	assert(
 		mockLogger.matchEvents([
 			{
@@ -1126,89 +1066,77 @@ describe("Error Discovery", () => {
 		const wrappedError = wrapError("wrap me", createTestError);
 		assert(!isExternalError(wrappedError));
 		assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
-		assert(!isExternalError(new LoggingError("testLoggingError")));
-	});
-	it("isValidLegacyError", () => {
-		const validLegacyError = {
-			message: "testMessage",
-			errorType: "someErrorType",
-			getTelemetryProperties: (): void => {},
-			addTelemetryProperties: (): void => {},
-		};
-		assert.strictEqual(isValidLegacyError(validLegacyError), true);
-		assert.strictEqual(isValidLegacyError({ ...validLegacyError, message: undefined }), false);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, errorType: undefined }),
-			false,
+
+		const loggingError = new LoggingError("testLoggingError");
+		assert(!isExternalError(loggingError), "new LoggingError is not external");
+		assert(
+			!isExternalError(normalizeError(loggingError)),
+			"normalized LoggingError is not external",
 		);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, getTelemetryProperties: undefined }),
-			false,
+
+		// Future compat - Eventually we want to switch untrustedOrigin to errorRunningExternalCode, so set up "read" code now in 2.0
+		assert(
+			isExternalError(
+				normalizeError(loggingError, { props: { errorRunningExternalCode: 1 } }),
+			),
+			"normalized loggingError with errorRunningExternalCode flag is external",
 		);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, addTelemetryProperties: undefined }),
-			false,
+
+		// Future compat - Eventually we want to switch untrustedOrigin to errorRunningExternalCode, so set up "read" code now in 2.0
+		assert(
+			isExternalError(
+				normalizeError(loggingError, { props: { errorRunningExternalCode: "callback" } }),
+			),
+			"normalized loggingError with errorRunningExternalCode string value is external",
 		);
 	});
 
-	// I copied the old version of isFluidError here, it depends on fluidErrorCode.
-	// I want to make sure that an error built on LoggingError that otherwise matches isFluidError
-	// will match isFluidError in old code (e.g. when an error flows across layers)
-	function isFluidError_old(e: any): e is IFluidErrorBase {
-		const hasTelemetryPropFunctions = (x: any): boolean =>
-			typeof x?.getTelemetryProperties === "function" &&
-			typeof x?.addTelemetryProperties === "function";
-		return (
-			typeof e?.errorType === "string" &&
-			typeof e?.fluidErrorCode === "string" &&
-			typeof e?.message === "string" &&
-			hasErrorInstanceId(e) &&
-			hasTelemetryPropFunctions(e)
+	it("isFluidError", () => {
+		assert(!isFluidError(new Error("hello")), "Plain Error object is not a Fluid Error");
+		assert(
+			!isFluidError(new LoggingError("hello")),
+			"LoggingError is not a Fluid Error (no errorType)",
 		);
+		assert(
+			!isFluidError(
+				Object.assign(new Error("hello"), {
+					errorType: "someErrorType",
+					_errorInstanceId: "12345",
+				}),
+			),
+			"Error with errorType and errorInstanceId but without telemetry prop fns is not a Fluid Error",
+		);
+		assert(
+			!isFluidError(createExternalError("hello")),
+			"Error without errorType is not a Fluid Error",
+		);
+		assert(
+			!isFluidError(Object.assign(createTestError("hello"), { _errorInstanceId: undefined })),
+			"Valid Fluid Error with errorInstanceId removed is not a Fluid Error",
+		);
+		assert(isFluidError(createTestError("hello")), "Valid Fluid Error is a Fluid Error");
+	});
+});
+
+describe("generateStack Tests", () => {
+	function a(stackTraceLimit?: number): string | undefined {
+		return generateStack(stackTraceLimit);
 	}
 
-	function testFluidError(isFluidErrorImpl: (e: any) => boolean, isOld: boolean): void {
-		it(`isFluidError${isOld ? "_old" : ""}`, () => {
-			assert(
-				!isFluidErrorImpl(new Error("hello")),
-				"Plain Error object is not a Fluid Error",
-			);
-			assert(
-				!isFluidErrorImpl(new LoggingError("hello")),
-				"LoggingError is not a Fluid Error (no errorType)",
-			);
-			assert(
-				!isFluidErrorImpl(
-					Object.assign(new Error("hello"), {
-						errorType: "someErrorType",
-						_errorInstanceId: "12345",
-					}),
-				),
-				"Error with errorType and errorInstanceId but without telemetry prop fns is not a Fluid Error",
-			);
-			assert(
-				!isFluidErrorImpl(createExternalError("hello")),
-				"Error without errorType is not a Fluid Error",
-			);
-			assert(
-				!isFluidErrorImpl(
-					Object.assign(createTestError("hello"), { _errorInstanceId: undefined }),
-				),
-				"Valid Fluid Error with errorInstanceId removed is not a Fluid Error",
-			);
-			assert(
-				isFluidErrorImpl(createTestError("hello")),
-				"Valid Fluid Error is a Fluid Error",
-			);
-			assert.equal(
-				!isOld,
-				isFluidErrorImpl(
-					Object.assign(createTestError("hello"), { fluidErrorCode: undefined }),
-				),
-				"Old isFluidError impl should require fluidErrorCode but New should not",
-			);
-		});
+	function b(stackTraceLimit?: number): string | undefined {
+		return a(stackTraceLimit);
 	}
-	testFluidError(isFluidError, false /* isOld */);
-	testFluidError(isFluidError_old, true /* isOld */);
+
+	function c(stackTraceLimit?: number): string | undefined {
+		return b(stackTraceLimit);
+	}
+	it("Show stack trace with a given stackTraceLimit", () => {
+		const originalLimit = Error.stackTraceLimit;
+		const stack = c(1)?.split("\n");
+		assert(stack !== undefined);
+		assert(stack.length === 2);
+		assert(stack[0].includes("<<generated stack>>"));
+		assert(stack[1].includes("at generateErrorWithStack"));
+		assert(originalLimit === Error.stackTraceLimit);
+	});
 });

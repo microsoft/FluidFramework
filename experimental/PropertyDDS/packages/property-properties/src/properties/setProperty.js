@@ -123,7 +123,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 					this,
 					in_segment,
 					in_segmentType,
-			  );
+				);
 	}
 
 	/**

@@ -235,7 +235,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 					this,
 					in_segment,
 					in_segmentType,
-			  );
+				);
 	}
 
 	/**

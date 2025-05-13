@@ -4,7 +4,16 @@
  */
 
 import { strict as assert } from "assert";
+
+import {
+	describeCompat,
+	ITestDataObject,
+	TestDataObjectType,
+} from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	createSummarizer,
 	ITestContainerConfig,
@@ -12,14 +21,10 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+
+import { TestPersistedCache } from "../../testPersistedCache.js";
+import { supportsDataVirtualization, clearCacheIfOdsp } from "../data-virtualization/index.js";
+
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 const interceptResult = <T>(
@@ -46,7 +51,7 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
  */
 describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) => {
 	const configProviderObject = configProvider({
-		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 	});
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
@@ -62,6 +67,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 	};
 
 	let provider: ITestObjectProvider;
+	const persistedCache = new TestPersistedCache();
 
 	const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
 		return createSummarizer(
@@ -88,13 +94,15 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 	}
 
 	beforeEach("setup", async function () {
-		provider = getTestObjectProvider({ syncSummarizer: true });
+		provider = getTestObjectProvider({ syncSummarizer: true, persistedCache });
 
-		// Data virtualization only works with local
-		// TODO: enable for ODSP, AB#7508
-		if (provider.driver.type !== "local") {
+		if (!supportsDataVirtualization(provider)) {
 			this.skip();
 		}
+	});
+
+	afterEach(async () => {
+		persistedCache.reset();
 	});
 
 	it("Virtualized datastore has same gc state even when not downloaded", async () => {
@@ -149,6 +157,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		// Summarize and verify datastore A is unreferenced
 		await provider.ensureSynchronized();
 		callCount = 0;
+		clearCacheIfOdsp(provider, persistedCache);
 		const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
 
 		// Validate GC state datastoreA should be unreferenced
@@ -166,6 +175,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		);
 
 		// Load new container
+		clearCacheIfOdsp(provider, persistedCache);
 		const mainContainer2 = await provider.loadTestContainer(testContainerConfig, {
 			[LoaderHeader.version]: summaryVersion,
 		});

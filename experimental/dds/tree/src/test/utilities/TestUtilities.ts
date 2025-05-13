@@ -17,7 +17,7 @@ import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { createChildLogger } from '@fluidframework/telemetry-utils/internal';
 import {
 	MockContainerRuntimeFactory,
@@ -181,7 +181,7 @@ export function setUpTestSharedTree(
 		factory = SharedTree.getFactory(writeFormat, options);
 	} else {
 		const options = {
-			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: true } : false,
+			summarizeHistory: (summarizeHistory ?? true) ? { uploadEditChunks: true } : false,
 			attributionId,
 		};
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
@@ -321,7 +321,6 @@ export async function setUpLocalServerTestSharedTree(
 
 	const featureGates = options.featureGates ?? {};
 	featureGates['Fluid.Container.enableOfflineLoad'] = true;
-	featureGates['Fluid.ContainerRuntime.DisablePartialFlush'] = true;
 
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;
@@ -330,7 +329,7 @@ export async function setUpLocalServerTestSharedTree(
 		factory = SharedTree.getFactory(writeFormat, options);
 	} else {
 		const options = {
-			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: uploadEditChunks ?? true } : false,
+			summarizeHistory: (summarizeHistory ?? true) ? { uploadEditChunks: uploadEditChunks ?? true } : false,
 			attributionId,
 		};
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
@@ -432,7 +431,10 @@ export function createStableEdits(
 		ChangeInternal.build([node], 0 as DetachedSequenceId),
 		ChangeInternal.insert(
 			0 as DetachedSequenceId,
-			StablePlace.atEndOf({ label: testTraitLabel, parent: idContext.convertToNodeId(initialTree.identifier) })
+			StablePlace.atEndOf({
+				label: testTraitLabel,
+				parent: idContext.convertToNodeId(initialTree.identifier),
+			})
 		),
 	]);
 

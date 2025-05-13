@@ -1,6 +1,6 @@
 {
 	// This config must be used in a "type": "commonjs" environment. (Use `fluid-tsc commonjs`.)
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../common/build/build-common/ts-common-config.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
 		"composite": true,
@@ -10,7 +10,7 @@
 		"module": "Node16",
 		"moduleResolution": "Node16",
 		"rootDir": "./src",
-		"types": ["mocha"]
+		"types": ["mocha"],
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*"],
 }

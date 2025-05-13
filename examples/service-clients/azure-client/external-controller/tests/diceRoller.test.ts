@@ -5,7 +5,6 @@
 
 import { globals } from "../jest.config.cjs";
 
-// Tests disabled -- requires Tinylicious to be running, which our test environment doesn't do.
 describe("external-controller-diceRoller", () => {
 	beforeAll(async () => {
 		// Wait for the page to load first before running any tests

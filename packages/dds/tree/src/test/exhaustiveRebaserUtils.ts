@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core/index.js";
+import type { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../feature-libraries/modular-schema/index.js";
+import type { RebaseRevisionMetadata } from "../feature-libraries/modular-schema/index.js";
 
 /**
  * Given a state tree, constructs the sequence of edits which led to that state.
@@ -44,7 +44,11 @@ export function getSequentialStates<TContent, TChangeset>(
  * - revision metadata source
  */
 export interface BoundFieldChangeRebaser<TChangeset> {
-	invert(change: TaggedChange<TChangeset>, isRollback: boolean): TChangeset;
+	invert(
+		change: TaggedChange<TChangeset>,
+		revision: RevisionTag | undefined,
+		isRollback: boolean,
+	): TChangeset;
 	rebase(
 		change: TaggedChange<TChangeset>,
 		base: TaggedChange<TChangeset>,

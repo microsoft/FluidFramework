@@ -5,12 +5,12 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
+	ISnapshot,
 	IBlob,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
@@ -38,7 +38,10 @@ function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number): void 
  * @param snapshotNode - node to serialize to.
  * @param blobs - blobs that is being serialized
  */
-function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | ArrayBuffer>): void {
+function writeBlobsSection(
+	snapshotNode: NodeCore,
+	blobs: Map<string, IBlob | ArrayBuffer>,
+): void {
 	snapshotNode.addDictionaryString("blobs");
 	const blobsNode = snapshotNode.addNode("list");
 	for (const [storageBlobId, blob] of blobs) {
@@ -48,9 +51,7 @@ function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | Ar
 		if (blob instanceof ArrayBuffer) {
 			blobNode.addBlob(new Uint8Array(blob));
 		} else {
-			blobNode.addBlob(
-				new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf8")),
-			);
+			blobNode.addBlob(new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf8")));
 		}
 	}
 }
@@ -82,8 +83,8 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree):
 			const childNode = treeNode.addNode("list");
 			writeTreeSectionCore(childNode, value);
 		}
-		if (snapshotTree.groupId !== undefined) {
-			addDictionaryStringProperty(treeNode, "groupId", snapshotTree.groupId);
+		if (value.groupId !== undefined) {
+			addDictionaryStringProperty(treeNode, "groupId", value.groupId);
 		}
 	}
 
@@ -167,7 +168,11 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshot): Uint8Arra
 
 	writeSnapshotProps(rootNode, latestSequenceNumber);
 
-	writeSnapshotSection(rootNode, snapshotContents.snapshotTree, snapshotContents.sequenceNumber);
+	writeSnapshotSection(
+		rootNode,
+		snapshotContents.snapshotTree,
+		snapshotContents.sequenceNumber,
+	);
 
 	// Add Blobs
 	writeBlobsSection(rootNode, snapshotContents.blobContents);

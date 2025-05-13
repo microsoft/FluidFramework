@@ -11,18 +11,21 @@ import {
 	type getDataRuntimeApi,
 	type getLoaderApi,
 } from "@fluid-private/test-version-utils";
-import type { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
+	IContainer,
+	type IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
+import type {
 	IContainerRuntimeOptions,
-	type ISummaryRuntimeOptions,
+	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerCore,
+	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -73,7 +76,7 @@ describeCompat(
 		async function createRuntimeFactory(
 			apis: LayerApis,
 			type: "interactive" | "summarizer",
-		): Promise<ContainerRuntimeFactoryWithDefaultDataStore> {
+		): Promise<IRuntimeFactory> {
 			const dataObjectFactory = new apis.dataRuntime.TestFluidObjectFactory([]);
 			dataObjectType = dataObjectFactory.type;
 			const runtimeOptions: IContainerRuntimeOptions = {
@@ -84,7 +87,7 @@ describeCompat(
 								summaryConfigOverrides: {
 									state: "disabled",
 								},
-						  },
+							},
 			};
 			const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
@@ -104,27 +107,24 @@ describeCompat(
 
 		beforeEach("setupContainer", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			// These tests are failing for ODSP and FRS. Disabling them for now.
-			if (provider.driver.type !== "local") {
-				this.skip();
+
+			// ODSP only supports single commit summaries now. Loaders running 1.x didn't have single commit summaries
+			// and only supported two commit summaries. If this test runs with 1.x loaders, summaries fail because ODSP
+			// nacks them. So, skip the test for those combinations.
+			if (provider.driver.type === "odsp") {
+				const loaderVersion = compatApis.loader.version;
+				const loaderVersionForLoading = compatApis.loaderForLoading?.version;
+				if (loaderVersion.startsWith("1.") || loaderVersionForLoading?.startsWith("1.")) {
+					this.skip();
+				}
 			}
+
 			mainContainer = await createContainer(version1Apis);
-			if (mainContainer.getEntryPoint !== undefined) {
-				dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
-			} else {
-				// Back-compat: versions of container-loader before 2.0.0-internal.3.3.0 don't have a getEntryPoint API.
-				const result = await (mainContainer as any).request({ url: "/" });
-				assert.equal(
-					result.status,
-					200,
-					`Request failed: ${result.value}\n${result.stack}`,
-				);
-				dataStoreA = result.value;
-			}
+			dataStoreA = await getContainerEntryPointBackCompat<ITestFluidObject>(mainContainer);
 			await waitForContainerConnection(mainContainer);
 		});
 
-		async function createSummarizer(apis: LayerApis) {
+		async function createSummarizer(apis: LayerApis, summaryVersion?: string) {
 			const runtimeFactory = await createRuntimeFactory(apis, "summarizer");
 			const loader = provider.createLoader(
 				[[provider.defaultCodeDetails, runtimeFactory]],
@@ -137,7 +137,7 @@ describeCompat(
 				// we need to specify this explicitly rather than rely on default behavior.
 				apis.loader.version === version1Apis.loader.version,
 			);
-			const { summarizer } = await createSummarizerCore(mainContainer, loader);
+			const { summarizer } = await createSummarizerCore(mainContainer, loader, summaryVersion);
 			return summarizer;
 		}
 
@@ -161,13 +161,6 @@ describeCompat(
 		 * be read by older / newer versions of the container runtime.
 		 */
 		it("load version validates unreferenced timestamp from summary by create version", async function () {
-			// TODO: This test is consistently failing when ran against FRS. See ADO:7865
-			if (
-				provider.driver.type === "routerlicious" &&
-				provider.driver.endpointName === "frs"
-			) {
-				this.skip();
-			}
 			// Create a new summarizer running version 1 runtime. This client will generate a summary which will be used to load
 			// a new client using the runtime factory version 2.
 			const summarizer1 = await createSummarizer(version1Apis);
@@ -181,11 +174,7 @@ describeCompat(
 			} else {
 				// Back-compat: old runtime versions won't have an entry point API.
 				const result = await (dataStoreB as any).request({ url: "/" });
-				assert.equal(
-					result.status,
-					200,
-					`Request failed: ${result.value}\n${result.stack}`,
-				);
+				assert.equal(result.status, 200, `Request failed: ${result.value}\n${result.stack}`);
 				dataObjectB = result.value;
 			}
 			dataStoreA.root.set("dataStoreB", dataObjectB.handle);
@@ -207,16 +196,12 @@ describeCompat(
 			const summaryResult2 = await summarizeNow(summarizer1);
 			const timestamps2 = await getUnreferencedTimestamps(summaryResult2.summaryTree);
 			const dsBTimestamp2 = timestamps2.get(dataObjectB.context.id);
-			assert(
-				dsBTimestamp2 !== undefined,
-				`new data store should have unreferenced timestamp`,
-			);
+			assert(dsBTimestamp2 !== undefined, `new data store should have unreferenced timestamp`);
 
 			// Create a new summarizer running version 2 from the summary generated by the client running version 1.
 			summarizer1.close();
-			const summarizer2 = await createSummarizer(version2Apis);
+			const summarizer2 = await createSummarizer(version2Apis, summaryResult2.summaryVersion);
 
-			await provider.ensureSynchronized();
 			// `getUnreferencedTimestamps` assumes that the GC result isn't incremental.
 			// Passing fullTree explicitly ensures that.
 			const summaryResult3 = await summarizeNow(summarizer2, {

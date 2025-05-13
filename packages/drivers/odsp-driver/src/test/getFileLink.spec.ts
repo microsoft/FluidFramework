@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { getFileLink } from "../getFileLink.js";
@@ -20,13 +21,24 @@ import {
 
 describe("getFileLink", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
+	const newSiteUrl = "https://microsoft.sharepoint.com/siteUrl";
 	const driveId = "driveId";
 	const logger = new MockLogger();
 	const storageTokenFetcher = async (): Promise<string> => "StorageToken";
 	const fileItemResponse = {
 		webDavUrl: "fetchDavUrl",
 		webUrl: "fetchWebUrl",
-		sharepointIds: { listItemUniqueId: "fetchFileId" },
+		sharepointIds: { listItemUniqueId: "fetchFileId", siteUrl },
+	};
+
+	const getOdspResolvedUrl = (itemId: string): IOdspResolvedUrl => {
+		return {
+			siteUrl,
+			driveId,
+			itemId,
+			odspResolvedUrl: true,
+			endpoints: {},
+		} as unknown as IOdspResolvedUrl;
 	};
 
 	afterEach(() => {
@@ -38,13 +50,12 @@ describe("getFileLink", () => {
 			async () =>
 				getFileLink(
 					storageTokenFetcher,
-					{ siteUrl, driveId, itemId: "itemId4" },
+					getOdspResolvedUrl("itemId4"),
 					logger.toTelemetryLogger(),
 				),
 			[
 				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
-				async (): Promise<MockResponse> =>
-					okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -60,7 +71,7 @@ describe("getFileLink", () => {
 				async () =>
 					getFileLink(
 						storageTokenFetcher,
-						{ siteUrl, driveId, itemId: "itemId5" },
+						getOdspResolvedUrl("itemId5"),
 						logger.toTelemetryLogger(),
 					),
 				[
@@ -78,7 +89,7 @@ describe("getFileLink", () => {
 			mockFetchSingle(async () => {
 				return getFileLink(
 					storageTokenFetcher,
-					{ siteUrl, driveId, itemId: "itemId6" },
+					getOdspResolvedUrl("itemId6"),
 					logger.toTelemetryLogger(),
 				);
 			}, notFound),
@@ -91,15 +102,14 @@ describe("getFileLink", () => {
 			async () =>
 				getFileLink(
 					storageTokenFetcher,
-					{ siteUrl, driveId, itemId: "itemId7" },
+					getOdspResolvedUrl("itemId7"),
 					logger.toTelemetryLogger(),
 				),
 			[
 				async (): Promise<MockResponse> =>
 					createResponse({ "retry-after": "0.001" }, undefined, 900),
 				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
-				async (): Promise<MockResponse> =>
-					okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -110,7 +120,7 @@ describe("getFileLink", () => {
 		// Should be present in cache now and subsequent calls should fetch from cache.
 		const sharelink2 = await getFileLink(
 			storageTokenFetcher,
-			{ siteUrl, driveId, itemId: "itemId7" },
+			getOdspResolvedUrl("itemId7"),
 			logger.toTelemetryLogger(),
 		);
 		assert.strictEqual(
@@ -126,7 +136,7 @@ describe("getFileLink", () => {
 				async () =>
 					getFileLink(
 						storageTokenFetcher,
-						{ siteUrl, driveId, itemId: "itemId7" },
+						getOdspResolvedUrl("itemId7"),
 						logger.toTelemetryLogger(),
 					),
 				[
@@ -143,6 +153,150 @@ describe("getFileLink", () => {
 				],
 			),
 			"did not retries 5 times",
+		);
+	});
+
+	it("should handle location redirection once", async () => {
+		const result = await mockFetchMultiple(
+			async () =>
+				getFileLink(
+					storageTokenFetcher,
+					getOdspResolvedUrl("itemId8"),
+					logger.toTelemetryLogger(),
+				),
+			[
+				async (): Promise<MockResponse> =>
+					okResponse(
+						{},
+						{
+							...fileItemResponse,
+							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+						},
+					),
+				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
+			],
+		);
+		assert.strictEqual(
+			result,
+			"sharelink",
+			"File link should match url returned from sharing information",
+		);
+		// Should be present in cache now and subsequent calls should fetch from cache.
+		const sharelink2 = await getFileLink(
+			storageTokenFetcher,
+			getOdspResolvedUrl("itemId8"),
+			logger.toTelemetryLogger(),
+		);
+		assert.strictEqual(
+			sharelink2,
+			"sharelink",
+			"File link should match url returned from sharing information from cache",
+		);
+	});
+
+	it("should handle location redirection multiple times", async () => {
+		const result = await mockFetchMultiple(
+			async () =>
+				getFileLink(
+					storageTokenFetcher,
+					getOdspResolvedUrl("itemId9"),
+					logger.toTelemetryLogger(),
+				),
+			[
+				async (): Promise<MockResponse> =>
+					okResponse(
+						{},
+						{
+							...fileItemResponse,
+							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+						},
+					),
+				notFound,
+				async (): Promise<MockResponse> =>
+					okResponse(
+						{},
+						{
+							...fileItemResponse,
+							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl },
+						},
+					),
+				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
+			],
+		);
+		assert.strictEqual(
+			result,
+			"sharelink",
+			"File link should match url returned from sharing information",
+		);
+		// Should be present in cache now and subsequent calls should fetch from cache.
+		const sharelink2 = await getFileLink(
+			storageTokenFetcher,
+			getOdspResolvedUrl("itemId9"),
+			logger.toTelemetryLogger(),
+		);
+		assert.strictEqual(
+			sharelink2,
+			"sharelink",
+			"File link should match url returned from sharing information from cache",
+		);
+	});
+
+	it("should handle location redirection max 5 times", async () => {
+		await assert.rejects(
+			mockFetchMultiple(async () => {
+				return getFileLink(
+					storageTokenFetcher,
+					getOdspResolvedUrl("itemId10"),
+					logger.toTelemetryLogger(),
+				);
+			}, [
+				async (): Promise<MockResponse> =>
+					okResponse(
+						{},
+						{
+							...fileItemResponse,
+							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+						},
+					),
+				notFound,
+				async (): Promise<MockResponse> =>
+					okResponse(
+						{},
+						{
+							...fileItemResponse,
+							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl },
+						},
+					),
+				notFound,
+				async (): Promise<MockResponse> =>
+					okResponse(
+						{},
+						{
+							...fileItemResponse,
+							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+						},
+					),
+				notFound,
+				async (): Promise<MockResponse> =>
+					okResponse(
+						{},
+						{
+							...fileItemResponse,
+							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl },
+						},
+					),
+				notFound,
+				async (): Promise<MockResponse> =>
+					okResponse(
+						{},
+						{
+							...fileItemResponse,
+							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+						},
+					),
+				notFound,
+			]),
+			"File link should reject when not found",
 		);
 	});
 });

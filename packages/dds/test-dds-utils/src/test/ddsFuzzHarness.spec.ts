@@ -8,11 +8,11 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
+import type { AsyncGenerator, BaseOperation } from "@fluid-private/stochastic-test-utils";
 import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -21,10 +21,10 @@ import execa from "execa";
 
 import { type Client, hasStashData } from "../clientLoading.js";
 import type {
-	BaseOperation,
 	ChangeConnectionState,
 	ClientSpec,
 	DDSFuzzHarnessEvents,
+	DDSFuzzHarnessModel,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
@@ -65,9 +65,9 @@ function mixinSpying<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 ): {
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>;
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>;
 	generatedOperations: (TOperation | typeof done)[];
 	processedOperations: TOperation[];
 } {
@@ -199,8 +199,7 @@ describe("DDS Fuzz Harness", () => {
 				);
 				await runTestForSeed(model, options, 0);
 				assert.equal(
-					generatedOperations.filter((op) => op !== done && op.type === "synchronize")
-						.length,
+					generatedOperations.filter((op) => op !== done && op.type === "synchronize").length,
 					2,
 				);
 				assert.deepEqual(generatedOperations[2], synchronize);
@@ -210,7 +209,7 @@ describe("DDS Fuzz Harness", () => {
 			it("processes outstanding messages on synchronize ops", async () => {
 				const noValidateModel: Model = {
 					...baseModel,
-					reducer: async ({ clients }, operation) => {
+					reducer: ({ clients }, operation) => {
 						assert(isNoopOp(operation));
 						clients[0].channel.noop();
 					},
@@ -258,9 +257,9 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(
 					[...perPairCallCounts.entries()],
 					[
-						["summarizer vs A", 2],
-						["summarizer vs B", 2],
-						["summarizer vs C", 2],
+						["A vs summarizer", 2],
+						["B vs summarizer", 2],
+						["C vs summarizer", 2],
 					],
 				);
 			});
@@ -304,9 +303,9 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(
 					[...perPairCallCounts.entries()],
 					[
-						["summarizer vs A", 1],
-						["summarizer vs B", 2],
-						["summarizer vs C", 2],
+						["A vs summarizer", 1],
+						["B vs summarizer", 2],
+						["C vs summarizer", 2],
 					],
 				);
 			});
@@ -550,11 +549,11 @@ describe("DDS Fuzz Harness", () => {
 
 			// original client
 			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
-			assert.strictEqual(clientCreates[1].channel.noopCalls, 5);
+			assert.strictEqual(clientCreates[1].channel.noopCalls, 2);
 			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 0);
 
 			// client loaded from stash
-			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 5);
+			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 2);
 			assert.strictEqual(clientCreates[2].channel.noopCalls, 5);
 			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 0);
 		});
@@ -601,11 +600,15 @@ describe("DDS Fuzz Harness", () => {
 
 			// original client
 			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
-			assert.strictEqual(clientCreates[1].channel.noopCalls, 5);
-			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 3);
+			assert.strictEqual(clientCreates[1].channel.noopCalls, 2);
+			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 0);
 
 			// client loaded from stash
-			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 5);
+			assert.strictEqual(
+				clientCreates[2].channel.applyStashedOpCalls,
+				2,
+				"3 should be saved, and 2 should be stashed",
+			);
 			assert.strictEqual(clientCreates[2].channel.noopCalls, 10);
 			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 9);
 		});
@@ -664,8 +667,8 @@ describe("DDS Fuzz Harness", () => {
 					["A", "B", "C"],
 				);
 				assert.equal(finalState.summarizerClient.channel.id, "summarizer");
-				assert.deepEqual(generatedOperations[5], { type: "rehydrate" });
-				assert.deepEqual(generatedOperations[11], { type: "attach" });
+				assert.deepEqual(generatedOperations[6], { type: "rehydrate" });
+				assert.deepEqual(generatedOperations[12], { type: "attach" });
 				verifyClientsSendOpsToEachOther(finalState);
 			});
 		});
@@ -874,17 +877,22 @@ describe("DDS Fuzz Harness", () => {
 					"test:mocha:base",
 					"--silent",
 					"--",
-					"--reporter=json",
+					"--config",
+					path.join(_dirname, "../../.mocharc.harnessTests.cjs"),
 					path.join(_dirname, `./ddsSuiteCases/${name}.js`),
 				],
 				{
 					env: {
+						// These flags help ensure nothing extraneous is logged to the console in the child test process,
+						// ensuring the output is valid JSON.
 						FLUID_TEST_VERBOSE: undefined,
+						SILENT_TEST_OUTPUT: "1",
 					},
 					encoding: "utf8",
 					reject: false,
 				},
 			);
+
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const testResults: MochaReport = JSON.parse(result.stdout);
 			return testResults;
@@ -917,10 +925,7 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[
-						"workload: 2: .only via options seed: 4",
-						"workload: 2: .only via options seed: 7",
-					],
+					["workload: 2: .only via options seed: 4", "workload: 2: .only via options seed: 7"],
 				);
 			});
 
@@ -959,9 +964,7 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 4, 5, 6, 7, 8, 9].map(
-						(i) => `workload: 1: .skip via function seed: ${i}`,
-					),
+					[0, 1, 4, 5, 6, 7, 8, 9].map((i) => `workload: 1: .skip via function seed: ${i}`),
 				);
 			});
 
@@ -971,9 +974,7 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 2, 3, 5, 6, 8, 9].map(
-						(i) => `workload: 2: .skip via options seed: ${i}`,
-					),
+					[0, 1, 2, 3, 5, 6, 8, 9].map((i) => `workload: 2: .skip via options seed: ${i}`),
 				);
 			});
 
@@ -1016,9 +1017,7 @@ describe("DDS Fuzz Harness", () => {
 					],
 				);
 				assert(
-					runResults.failures.every((test) =>
-						test.err.message.includes("Injected failure"),
-					),
+					runResults.failures.every((test) => test.err.message.includes("Injected failure")),
 				);
 			});
 
@@ -1043,7 +1042,9 @@ describe("DDS Fuzz Harness", () => {
 					const contents: unknown = JSON.parse(
 						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
 					);
-					assert.deepEqual(contents, [{ clientId: "A", type: "noop" }]);
+					assert.deepEqual(contents, [
+						{ clientId: "A", seed: 1325690281034360, type: "noop" },
+					]);
 				});
 			}
 		});

@@ -3,22 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	baseModel,
-	defaultFuzzOptions,
-	defaultIntervalOperationGenerationConfig,
-	makeIntervalOperationGenerator,
-} from "./fuzzUtils.js";
-
-const baseIntervalModel = {
-	...baseModel,
-	generatorFactory: () =>
-		takeAsync(100, makeIntervalOperationGenerator(defaultIntervalOperationGenerationConfig)),
-};
+import { defaultFuzzOptions, baseIntervalModel } from "./fuzzUtils.js";
 
 describe("IntervalCollection fuzz testing", () => {
 	const model = {
@@ -28,6 +16,7 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
+		forceGlobalSeed: true,
 		skip: [79],
 		// Note: there are some known eventual consistency issues which the tests don't currently reproduce.
 		// Search this package for AB#6552 (or look at that work item) for a skipped test and further details.
@@ -51,6 +40,7 @@ describe("IntervalCollection with stashing", () => {
 			stashableClientProbability: 0.2,
 		},
 		// AB#7220
+		forceGlobalSeed: true,
 		skip: [79],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
@@ -65,13 +55,14 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	const options = {
 		...defaultFuzzOptions,
+		forceGlobalSeed: true,
 		skip: [79],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.0,
 		},
-	};
+	} as const;
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
@@ -88,6 +79,11 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
+		// Interval collection and obliterate with reconnect+rebase have bugs in the case of repeatedly
+		// resubmitting operations. This likely boils down to bugs in normalization which are known (see AB#6552 and AB#34898),
+		// but any additional fixes necessary are tracked by AB#31001.
+		// These cases should be somewhat rare in practice and the issue occurs at resubmission time, meaning they don't
+		// result in data corruption, just data loss.
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
@@ -98,6 +94,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
+		forceGlobalSeed: true,
 		skip: [79],
 		// Uncomment this line to replay a specific seed from its failure file:
 	});

@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "FluidFramework",
+			"path": "../../../.."
+		},
+		{
+			"name": "@fluid-private/test-end-to-end-tests",
+			"path": ".."
+		},
+		// This is a reasonably convenient entrypoint for the set of installed packages for compat tests.
+		{
+			"name": "Legacy FluidFramework versions",
+			"path": "../../test-version-utils/node_modules/.legacy"
+		}
+	]
+}

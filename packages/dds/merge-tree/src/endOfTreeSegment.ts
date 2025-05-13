@@ -9,7 +9,12 @@ import { LocalClientId } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { IRemovalInfo, ISegment, ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
+import { ISegment, type ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
+import {
+	type IHasInsertionInfo,
+	type IHasRemovalInfo,
+	type IMergeNodeInfo,
+} from "./segmentInfos.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -32,7 +37,9 @@ import { IRemovalInfo, ISegment, ISegmentLeaf, type MergeBlock } from "./mergeTr
  * must be possible in some way to refer to a position before or after the tree
  * respectively. The endpoint segments allow us to support such behavior.
  */
-abstract class BaseEndpointSegment {
+abstract class BaseEndpointSegment
+	implements IMergeNodeInfo, IHasRemovalInfo, IHasInsertionInfo
+{
 	constructor(protected readonly mergeTree: MergeTree) {}
 	/*
 	 * segments must be of at least length one, but
@@ -40,16 +47,13 @@ abstract class BaseEndpointSegment {
 	 * of undefined/0. we leverage this to create
 	 * a 0 length segment for an endpoint of the tree
 	 */
-	removedSeq: number = 0;
-	removedClientIds: number[] = [LocalClientId];
+	removes = [{ type: "setRemove", seq: 0, clientId: LocalClientId } as const];
 	attribution: undefined;
 	propertyManager: undefined;
-	localSeq: undefined;
-	localRemovedSeq: undefined;
 	properties: undefined;
-	seq = 0;
-	clientId = LocalClientId;
 	cachedLength = 1;
+
+	insert = { type: "insert", seq: 0, clientId: LocalClientId } as const;
 
 	isLeaf(): this is ISegment {
 		return true;
@@ -61,11 +65,11 @@ abstract class BaseEndpointSegment {
 		depth: number;
 	};
 
-	get parent() {
+	get parent(): MergeBlock {
 		return this.endpointSegmentProps().parent;
 	}
 
-	get index() {
+	get index(): number {
 		return this.endpointSegmentProps().index;
 	}
 
@@ -77,10 +81,10 @@ abstract class BaseEndpointSegment {
 	 * since this segment isn't real, throw on any segment
 	 * operation that isn't expected
 	 */
-	get segmentGroups() {
+	get segmentGroups(): never {
 		return notSupported();
 	}
-	get trackingCollection() {
+	get trackingCollection(): never {
 		return notSupported();
 	}
 	addProperties = notSupported;
@@ -92,14 +96,14 @@ abstract class BaseEndpointSegment {
 	ack = notSupported;
 }
 
-const notSupported = () => {
+const notSupported = (): never => {
 	assert(false, 0x3ed /* operation not supported */);
 };
 
 /**
  * The position immediately prior to the start of the tree
  */
-export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment, IRemovalInfo {
+export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment {
 	type: string = "StartOfTreeSegment";
 	readonly endpointType = "start";
 
@@ -107,7 +111,11 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment,
 	 * this segment pretends to be a sibling of the first real segment.
 	 * so compute the necessary properties to pretend to be that segment.
 	 */
-	protected endpointSegmentProps() {
+	protected endpointSegmentProps(): {
+		parent: MergeBlock;
+		index: number;
+		depth: number;
+	} {
 		let firstSegment: ISegmentLeaf | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
@@ -134,7 +142,10 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment,
 		};
 	}
 
-	get ordinal() {
+	get ordinal(): string {
+		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
+		// eslint-disable-next-line unicorn/prefer-code-point
 		return String.fromCharCode(0x00);
 	}
 }
@@ -142,7 +153,7 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment,
 /**
  * The position immediately after the end of the tree
  */
-export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment, IRemovalInfo {
+export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment {
 	type: string = "EndOfTreeSegment";
 	readonly endpointType = "end";
 
@@ -150,7 +161,11 @@ export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment, I
 	 * this segment pretends to be a sibling of the last real segment.
 	 * so compute the necessary properties to pretend to be that segment.
 	 */
-	protected endpointSegmentProps() {
+	protected endpointSegmentProps(): {
+		parent: MergeBlock;
+		index: number;
+		depth: number;
+	} {
 		let lastSegment: ISegmentLeaf | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
@@ -177,11 +192,11 @@ export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment, I
 		};
 	}
 
-	get ordinal() {
+	get ordinal(): string {
 		// just compute an arbitrarily big ordinal
 		// we base it on the depth of the tree
 		// to ensure it is bigger than all ordinals in
 		// the tree, as each layer appends to the previous
-		return String.fromCharCode(0xffff).repeat(this.endpointSegmentProps().depth);
+		return String.fromCodePoint(0xffff).repeat(this.endpointSegmentProps().depth);
 	}
 }

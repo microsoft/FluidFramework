@@ -1,0 +1,87 @@
+# release-branches.yml
+#
+# Checks if a PR is targeting a client or server release branch or not, and uploads a CI artifact containing the
+# results, along with the PR number. This allows downstream workflows, such as release-approval, to be triggered by the
+# completion of this workflow and take further action based on the target branch.
+
+name: release-branches
+on:
+  pull_request:
+    types:
+      # This is triggered when the PR is opened. This is not strictly needed since the PR approval state is really
+      # what's evaluated. However, running the job on PR open causes an immediate failure which will make it clearer to
+      # the PR author what they need to do to unblock the merge.
+      - opened
+
+      # This is triggered when the PR branch has new commits pushed to it.
+      - synchronize
+
+      # This is triggered when the base branch changes; handles the case where you open a PR against one branch
+      # then change the base branch to a release branch.
+      - edited
+    branches:
+      - release/client/**
+      - release/server/**
+      - test/release/**
+
+  # This workflow needs to run on review changes because it evaluates the review state.
+  pull_request_review:
+    types:
+      - submitted
+      - dismissed
+
+permissions:
+  pull-requests: read
+
+jobs:
+  check_branch:
+    name: Check target branch
+    runs-on: ubuntu-latest
+    outputs:
+      # This output will be set to true if the target branch is a release branch; false otherwise.
+      is_release_branch: ${{ steps.is-release-branch.outputs.is_release_branch || steps.not-release-branch.outputs.is_release_branch }}
+    steps:
+      - name: Target is a release branch
+        id: is-release-branch
+        if: |
+          startsWith(github.event.pull_request.base.ref, 'release/client/') ||
+          startsWith(github.event.pull_request.base.ref, 'release/server/') ||
+          startsWith(github.event.pull_request.base.ref, 'test/release/')
+        run: |
+          echo "is_release_branch=true" >> $GITHUB_OUTPUT
+          echo ":ship: Release branch detected" >> $GITHUB_STEP_SUMMARY
+
+      - name: Target is not a release branch
+        id: not-release-branch
+        if: |
+          !(startsWith(github.event.pull_request.base.ref, 'release/client/') ||
+          startsWith(github.event.pull_request.base.ref, 'release/server/') ||
+          startsWith(github.event.pull_request.base.ref, 'test/release/'))
+        run: |
+          echo "is_release_branch=false" >> $GITHUB_OUTPUT
+          echo ":no_entry_sign: No release branch detected" >> $GITHUB_STEP_SUMMARY
+
+  save_metadata:
+    name: Save PR details
+    needs: check_branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create artifacts folder
+        run: mkdir -p ./artifacts
+
+      - name: Save PR number
+        run: echo ${{ github.event.pull_request.number }} > ./artifacts/pr
+
+      - name: Save is_release_branch
+        run: echo ${{ needs.check_branch.outputs.is_release_branch }} > ./artifacts/is_release_branch
+
+      - name: Save commit SHA
+        run: echo ${{ github.event.pull_request.head.sha }} > ./artifacts/commit_sha
+
+      - name: Upload artifact
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
+        with:
+          name: release-branch-pr-metadata
+          path: ./artifacts
+          retention-days: 3

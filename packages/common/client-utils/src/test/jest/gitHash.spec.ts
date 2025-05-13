@@ -4,11 +4,10 @@
  */
 
 /* eslint-disable unicorn/prefer-code-point */
-/* eslint-disable unicorn/prefer-module */
 
 import fs from "node:fs";
 import http from "node:http";
-import { AddressInfo } from "node:net";
+import type { AddressInfo } from "node:net";
 import path from "node:path";
 
 import rewire from "rewire";

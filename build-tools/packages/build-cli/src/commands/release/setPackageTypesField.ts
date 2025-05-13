@@ -5,12 +5,13 @@
 
 import { strict as assert } from "node:assert";
 import path from "node:path";
-import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
+import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
+import { Package, PackageJson } from "@fluidframework/build-tools";
 import { ExtractorConfig } from "@microsoft/api-extractor";
 import { Flags } from "@oclif/core";
-import { PackageCommand } from "../../BasePackageCommand";
-import type { PackageSelectionDefault } from "../../flags";
-import { CommandLogger } from "../../logging";
+import { PackageCommand } from "../../BasePackageCommand.js";
+import type { PackageSelectionDefault } from "../../flags.js";
+import { CommandLogger } from "../../logging.js";
 
 /**
  * Represents a list of package categorized into two arrays
@@ -41,6 +42,8 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 	static readonly description =
 		"Updates which .d.ts file is referenced by the `types` field in package.json. This command is used during package publishing (by CI) to select the d.ts file which corresponds to the selected API-Extractor release tag.";
 
+	// This command is deprecated and should no longer be used.
+	static readonly state = "deprecated";
 	static readonly enableJsonFlag = true;
 
 	static readonly flags = {

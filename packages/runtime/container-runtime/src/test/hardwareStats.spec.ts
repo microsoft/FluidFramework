@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import assert from "node:assert";
 
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
-import { MockAudience } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockDeltaManager,
+	MockQuorumClients,
+	MockAudience,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
 
 function setNavigator(
+	// eslint-disable-next-line @rushstack/no-new-null -- testing behavior with global
 	navigator: Partial<Navigator & { deviceMemory?: number }> | undefined | null,
 ) {
 	global.navigator = navigator as Navigator;
@@ -87,6 +91,7 @@ describe("Hardware Stats", () => {
 	});
 
 	it("should generate correct hardware stats with null navigator", async () => {
+		// eslint-disable-next-line unicorn/no-null -- testing behavior with global
 		const navigator = null;
 		setNavigator(navigator);
 		// testing function

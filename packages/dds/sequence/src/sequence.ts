@@ -8,11 +8,14 @@ import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import {
 	Client,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
@@ -32,8 +35,6 @@ import {
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
-	// eslint-disable-next-line import/no-deprecated
-	SegmentGroup,
 	SlidingPreference,
 	createAnnotateRangeOp,
 	// eslint-disable-next-line import/no-deprecated
@@ -42,21 +43,44 @@ import {
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
+	type AdjustParams,
+	type InteriorSequencePlace,
+	type MapLike,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
-import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	ObjectStoragePartition,
+	SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
+import {
+	IFluidSerializer,
+	ISharedObjectEvents,
+	SharedObject,
+	type ISharedObject,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	LoggingError,
+	createChildLogger,
+	createConfigBasedOptionsProxy,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import { IIntervalCollection, SequenceIntervalCollectionValueType } from "./intervalCollection.js";
+import { type ISequenceIntervalCollection } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
-import { IMapMessageLocalMetadata, IValueChanged } from "./intervalCollectionMapInterfaces.js";
-import { SequenceInterval } from "./intervals/index.js";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
-import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
+import {
+	IMapMessageLocalMetadata,
+	type SequenceOptions,
+} from "./intervalCollectionMapInterfaces.js";
+import {
+	SequenceDeltaEvent,
+	SequenceDeltaEventClass,
+	SequenceMaintenanceEvent,
+	SequenceMaintenanceEventClass,
+} from "./sequenceDeltaEvent.js";
 
 const snapshotFileName = "header";
 const contentPath = "content";
@@ -93,6 +117,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
+ * @legacy
  * @alpha
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
@@ -111,21 +136,250 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 /**
+ * @legacy
  * @alpha
+ */
+export interface ISharedSegmentSequence<T extends ISegment>
+	extends ISharedObject<ISharedSegmentSequenceEvents>,
+		MergeTreeRevertibleDriver {
+	/**
+	 * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
+	 * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
+	 * @param segment - Segment to add the local reference on
+	 * @param offset - Offset on the segment at which to place the local reference
+	 * @param refType - ReferenceType for the created local reference
+	 * @param properties - PropertySet to place on the created local reference
+	 */
+	createLocalReferencePosition(
+		segment: T,
+		offset: number,
+		refType: ReferenceType,
+		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
+	): LocalReferencePosition;
+
+	/**
+	 * Removes a `LocalReferencePosition` from this SharedString.
+	 */
+	removeLocalReferencePosition(
+		lref: LocalReferencePosition,
+	): LocalReferencePosition | undefined;
+
+	/**
+	 * Returns the length of the current sequence for the client
+	 */
+	getLength(): number;
+
+	/**
+	 * Returns the current position of a segment, and -1 if the segment
+	 * does not exist in this sequence
+	 * @param segment - The segment to get the position of
+	 */
+	getPosition(segment: ISegment): number;
+
+	/**
+	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
+	 *
+	 * Reference positions that point to a character that has been removed will
+	 * always return the position of the nearest non-removed character, regardless
+	 * of `ReferenceType`. To handle this case specifically, one may wish
+	 * to look at the segment returned by `ReferencePosition.getSegment`.
+	 */
+	localReferencePositionToPosition(lref: ReferencePosition): number;
+
+	/**
+	 * Walk the underlying segments of the sequence.
+	 * The walked segments may extend beyond the range if the segments cross the
+	 * ranges start or end boundaries.
+	 *
+	 * Set split range to true to ensure only segments within the range are walked.
+	 *
+	 * @param handler - The function to handle each segment. Traversal ends if
+	 * this function returns true.
+	 * @param start - Optional. The start of range walk.
+	 * @param end - Optional. The end of range walk
+	 * @param accum - Optional. An object that will be passed to the handler for accumulation
+	 * @param splitRange - Optional. Splits boundary segments on the range boundaries. Defaults to false.
+	 */
+	walkSegments<TClientData>(
+		handler: ISegmentAction<TClientData>,
+		start?: number,
+		end?: number,
+		accum?: TClientData,
+		splitRange?: boolean,
+	): void;
+
+	/**
+	 * Inserts a segment directly before a `ReferencePosition`.
+	 * @param refPos - The reference position to insert the segment at
+	 * @param segment - The segment to insert
+	 */
+	insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
+
+	/**
+	 * Finds the segment information (i.e. segment + offset) corresponding to a character position in the SharedString.
+	 * If the position is past the end of the string, `segment` and `offset` on the returned object may be undefined.
+	 * @param pos - Character position (index) into the current local view of the SharedString.
+	 */
+	getContainingSegment(pos: number): {
+		segment: T | undefined;
+		offset: number | undefined;
+	};
+
+	getPropertiesAtPosition(pos: number): PropertySet | undefined;
+
+	/**
+	 * @returns An iterable object that enumerates the IntervalCollection labels.
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * const iter = this.getIntervalCollectionKeys();
+	 * for (key of iter)
+	 *     const collection = this.getIntervalCollection(key);
+	 *     ...
+	 * ```
+	 */
+	getIntervalCollectionLabels(): IterableIterator<string>;
+
+	/**
+	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
+	 * creates one.
+	 */
+	getIntervalCollection(label: string): ISequenceIntervalCollection;
+
+	/**
+	 * Obliterate is similar to remove, but differs in that segments concurrently
+	 * inserted into an obliterated range will also be removed.
+	 * Inserts are considered concurrent to an obliterate iff the insert op's seq is after the obliterate op's refSeq
+	 * and the insert's refSeq is before the obliterates seq.
+	 * Inserts made by the client which most recently obliterated a range containing the insert position
+	 * are not considered concurrent to any obliteration (the last client to obliterate gets the right to insert).
+	 *
+	 * The endpoints can either be inclusive or exclusive.
+	 * Exclusive endpoints allow the obliterated range to "grow" to include adjacent concurrently inserted segments on that side.
+	 *
+	 * @param start - The start of the range to obliterate.
+	 * Inclusive if side is Before or a number is provided.
+	 * @param end - The end of the range to obliterate. Inclusive if side is After.
+	 * If a number is provided it is treated as exclusive,
+	 * but the endpoint does not expand in order to preserve existing behavior.
+	 *
+	 * @example Given the initial state `"|ABC>"`,
+	 * `obliterateRange({ pos: 0, side: Side.After }, { pos: 4, side: Side.Before })` obliterates `"ABC"`, leaving only `"|>"`.
+	 * `insertFromSpec(1, { text: "AAA"})` would insert `"AAA"` before |, resulting in `"|AAA>"`.
+	 * If another client does the same thing but inserts `"BBB"` and gets sequenced later, all clients will eventually see `|BBB>`.
+	 */
+	obliterateRange(
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
+	): void;
+
+	/**
+	 * @returns The most recent sequence number which has been acked by the server and processed by this
+	 * SharedSegmentSequence.
+	 */
+	getCurrentSeq(): number;
+
+	/**
+	 * Annotates the range with the provided properties
+	 *
+	 * @param start - The inclusive start position of the range to annotate
+	 * @param end - The exclusive end position of the range to annotate
+	 * @param props - The properties to annotate the range with
+	 *
+	 */
+	annotateRange(start: number, end: number, props: PropertySet): void;
+
+	/**
+	 * Annotates a specified range within the sequence by applying the provided adjustments.
+	 *
+	 * @param start - The inclusive start position of the range to annotate. This is a zero-based index.
+	 * @param end - The exclusive end position of the range to annotate. This is a zero-based index.
+	 * @param adjust - A map-like object specifying the properties to adjust. Each key-value pair represents a property and its corresponding adjustment to be applied over the range.
+	 * An adjustment is defined by an object containing a `delta` to be added to the current property value, and optional `min` and `max` constraints to limit the adjusted value.
+	 *
+	 * @remarks
+	 * The range is defined by the start and end positions, where the start position is inclusive and the end position is exclusive.
+	 * The properties provided in the adjust parameter will be applied to the specified range. Each adjustment modifies the current value of the property by adding the specified `value`.
+	 * If the current value is not a number, the `delta` will be summed with 0 to compute the new value. The optional `min` and `max` constraints are applied after the adjustment to ensure the final value falls within the specified bounds.
+	 */
+	annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
+
+	/**
+	 * @param start - The inclusive start of the range to remove
+	 * @param end - The exclusive end of the range to remove
+	 */
+	removeRange(start: number, end: number): void;
+
+	/**
+	 * Resolves a remote client's position against the local sequence
+	 * and returns the remote client's position relative to the local
+	 * sequence. The client ref seq must be above the minimum sequence number
+	 * or the return value will be undefined.
+	 * Generally this method is used in conjunction with signals which provide
+	 * point in time values for the below parameters, and is useful for things
+	 * like displaying user position. It should not be used with persisted values
+	 * as persisted values will quickly become invalid as the remoteClientRefSeq
+	 * moves below the minimum sequence number
+	 * @param remoteClientPosition - The remote client's position to resolve
+	 * @param remoteClientRefSeq - The reference sequence number of the remote client
+	 * @param remoteClientId - The client id of the remote client
+	 */
+	resolveRemoteClientPosition(
+		remoteClientPosition: number,
+		remoteClientRefSeq: number,
+		remoteClientId: string,
+	): number | undefined;
+
+	// #region APIs we might want to remove
+	/**
+	 * Initializes the object as a local, non-shared object. This object can become shared after
+	 * it is attached to the document.
+	 * @privateRemarks
+	 * TODO: determine if this API (from SharedObject) is needed by users of the encapsulated API, declarative API or both,
+	 * and handle exposing it in a consistent way for all SharedObjects if needed.
+	 */
+	initializeLocal(): void;
+
+	/**
+	 * @deprecated The ability to create group ops will be removed in an upcoming
+	 * release, as group ops are redundant with the native batching capabilities
+	 * of the runtime
+	 */
+	// eslint-disable-next-line import/no-deprecated
+	groupOperation(groupOp: IMergeTreeGroupMsg): void;
+
+	getRangeExtentsOfPosition(pos: number): {
+		posStart: number | undefined;
+		posAfterEnd: number | undefined;
+	};
+
+	/**
+	 * Inserts a segment
+	 * @param start - The position to insert the segment at
+	 * @param spec - The segment to inserts spec
+	 */
+	insertFromSpec(pos: number, spec: IJSONSegment): void;
+
+	/**
+	 * Given a position specified relative to a marker id, lookup the marker
+	 * and convert the position to a character position.
+	 * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
+	 */
+	posFromRelativePos(relativePos: IRelativePosition): number;
+
+	// #endregion
+}
+
+/**
+ * @internal
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
-	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
+	implements ISharedSegmentSequence<T>
 {
-	/**
-	 * This promise is always immediately resolved, and awaiting it has no effect.
-	 * @deprecated SharedSegmentSequence no longer supports partial loading.
-	 * References to this promise may safely be deleted without affecting behavior.
-	 */
-	get loaded(): Promise<void> {
-		return Promise.resolve();
-	}
-
 	/**
 	 * This is a safeguard to avoid problematic reentrancy of local ops. This type of scenario occurs if the user of SharedString subscribes
 	 * to the `sequenceDelta` event and uses the callback for a local op to submit further local ops.
@@ -158,11 +412,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						lastAnnotate.pos2 += r.segment.cachedLength;
 					} else {
 						ops.push(
-							createAnnotateRangeOp(
-								r.position,
-								r.position + r.segment.cachedLength,
-								props,
-							),
+							createAnnotateRangeOp(r.position, r.position + r.segment.cachedLength, props),
 						);
 					}
 					break;
@@ -175,15 +425,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				case MergeTreeDeltaType.REMOVE: {
 					const lastRem = ops[ops.length - 1] as IMergeTreeRemoveMsg;
 					if (lastRem?.pos1 === r.position) {
-						assert(
-							lastRem.pos2 !== undefined,
-							0x3ff /* pos2 should not be undefined here */,
-						);
+						assert(lastRem.pos2 !== undefined, 0x3ff /* pos2 should not be undefined here */);
 						lastRem.pos2 += r.segment.cachedLength;
 					} else {
-						ops.push(
-							createRemoveRangeOp(r.position, r.position + r.segment.cachedLength),
-						);
+						ops.push(createRemoveRangeOp(r.position, r.position + r.segment.cachedLength));
 					}
 					break;
 				}
@@ -192,18 +437,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					// eslint-disable-next-line import/no-deprecated
 					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
 					if (lastRem?.pos1 === r.position) {
-						assert(
-							lastRem.pos2 !== undefined,
-							0x874 /* pos2 should not be undefined here */,
-						);
+						assert(lastRem.pos2 !== undefined, 0x874 /* pos2 should not be undefined here */);
 						lastRem.pos2 += r.segment.cachedLength;
 					} else {
-						ops.push(
-							createObliterateRangeOp(
-								r.position,
-								r.position + r.segment.cachedLength,
-							),
-						);
+						ops.push(createObliterateRangeOp(r.position, r.position + r.segment.cachedLength));
 					}
 					break;
 				}
@@ -248,10 +485,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.ongoingResubmitRefSeq ?? this.deltaManager.lastSequenceNumber;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
+	private readonly intervalCollections: IntervalCollectionMap;
 	constructor(
 		dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,
@@ -262,7 +498,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.guardReentrancy =
-			dataStoreRuntime.options.sharedStringPreventReentrancy ?? true
+			(dataStoreRuntime.options.sharedStringPreventReentrancy ?? true)
 				? ensureNoReentrancy
 				: createReentrancyDetector((depth) => {
 						if (totalReentrancyLogs > 0) {
@@ -272,29 +508,47 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 								new LoggingError(reentrancyErrorMessage),
 							);
 						}
-				  });
+					});
 
-		// eslint-disable-next-line import/no-deprecated
+		const options = createConfigBasedOptionsProxy<SequenceOptions>(
+			loggerToMonitoringContext(this.logger).config,
+			"Fluid.Sequence",
+			{
+				mergeTreeEnableObliterate: (c, n) => c.getBoolean(n),
+				mergeTreeEnableSidedObliterate: (c, n) => c.getBoolean(n),
+				intervalStickinessEnabled: (c, n) => c.getBoolean(n),
+				mergeTreeReferencesCanSlideToEndpoint: (c, n) => c.getBoolean(n),
+				mergeTreeEnableAnnotateAdjust: (c, n) => c.getBoolean(n),
+			},
+			dataStoreRuntime.options,
+		);
+
 		this.client = new Client(
 			segmentFromSpec,
 			createChildLogger({
 				logger: this.logger,
 				namespace: "SharedSegmentSequence.MergeTreeClient",
 			}),
-			dataStoreRuntime.options,
+			options,
 			getMinInFlightRefSeq,
 		);
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
-			const event = new SequenceDeltaEvent(opArgs, deltaArgs, this.client);
-			if (event.isLocal) {
+			const event = new SequenceDeltaEventClass(opArgs, deltaArgs, this.client);
+			if (event.isLocal && event.opArgs.rollback !== true) {
 				this.submitSequenceMessage(opArgs.op);
 			}
-			this.emit("sequenceDelta", event, this);
+			if (deltaArgs.deltaSegments.length > 0) {
+				this.emit("sequenceDelta", event, this);
+			}
 		});
 
 		this.client.on("maintenance", (args, opArgs) => {
-			this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
+			this.emit(
+				"maintenance",
+				new SequenceMaintenanceEventClass(opArgs, args, this.client),
+				this,
+			);
 		});
 
 		this.intervalCollections = new IntervalCollectionMap(
@@ -308,45 +562,26 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				this.inFlightRefSeqs.push(this.currentRefSeq);
 				this.submitLocalMessage(op, localOpMetadata);
 			},
-			new SequenceIntervalCollectionValueType(),
-			dataStoreRuntime.options,
+			options,
 		);
 	}
 
-	/**
-	 * @param start - The inclusive start of the range to remove
-	 * @param end - The exclusive end of the range to remove
-	 */
 	public removeRange(start: number, end: number): void {
 		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
 
-	/**
-	 * Obliterate is similar to remove, but differs in that segments concurrently
-	 * inserted into an obliterated range will also be removed
-	 *
-	 * @param start - The inclusive start of the range to obliterate
-	 * @param end - The exclusive end of the range to obliterate
-	 */
-	public obliterateRange(start: number, end: number): void {
+	public obliterateRange(
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
+	): void {
 		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 
-	/**
-	 * @deprecated The ability to create group ops will be removed in an upcoming
-	 * release, as group ops are redundant with the native batching capabilities
-	 * of the runtime
-	 */
 	// eslint-disable-next-line import/no-deprecated
-	public groupOperation(groupOp: IMergeTreeGroupMsg) {
+	public groupOperation(groupOp: IMergeTreeGroupMsg): void {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
 	}
 
-	/**
-	 * Finds the segment information (i.e. segment + offset) corresponding to a character position in the SharedString.
-	 * If the position is past the end of the string, `segment` and `offset` on the returned object may be undefined.
-	 * @param pos - Character position (index) into the current local view of the SharedString.
-	 */
 	public getContainingSegment(pos: number): {
 		segment: T | undefined;
 		offset: number | undefined;
@@ -354,50 +589,33 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.client.getContainingSegment<T>(pos);
 	}
 
-	/**
-	 * Returns the length of the current sequence for the client
-	 */
-	public getLength() {
+	public getLength(): number {
 		return this.client.getLength();
 	}
 
-	/**
-	 * Returns the current position of a segment, and -1 if the segment
-	 * does not exist in this sequence
-	 * @param segment - The segment to get the position of
-	 */
 	public getPosition(segment: ISegment): number {
 		return this.client.getPosition(segment);
 	}
 
-	/**
-	 * Annotates the range with the provided properties
-	 *
-	 * @param start - The inclusive start position of the range to annotate
-	 * @param end - The exclusive end position of the range to annotate
-	 * @param props - The properties to annotate the range with
-	 *
-	 */
 	public annotateRange(start: number, end: number, props: PropertySet): void {
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
 	}
 
-	public getPropertiesAtPosition(pos: number) {
+	public annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void {
+		this.guardReentrancy(() => this.client.annotateAdjustRangeLocal(start, end, adjust));
+	}
+
+	public getPropertiesAtPosition(pos: number): PropertySet | undefined {
 		return this.client.getPropertiesAtPosition(pos);
 	}
 
-	public getRangeExtentsOfPosition(pos: number) {
+	public getRangeExtentsOfPosition(pos: number): {
+		posStart: number | undefined;
+		posAfterEnd: number | undefined;
+	} {
 		return this.client.getRangeExtentsOfPosition(pos);
 	}
 
-	/**
-	 * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
-	 * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
-	 * @param segment - Segment to add the local reference on
-	 * @param offset - Offset on the segment at which to place the local reference
-	 * @param refType - ReferenceType for the created local reference
-	 * @param properties - PropertySet to place on the created local reference
-	 */
 	public createLocalReferencePosition(
 		segment: T,
 		offset: number,
@@ -416,39 +634,16 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	/**
-	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
-	 *
-	 * Reference positions that point to a character that has been removed will
-	 * always return the position of the nearest non-removed character, regardless
-	 * of `ReferenceType`. To handle this case specifically, one may wish
-	 * to look at the segment returned by `ReferencePosition.getSegment`.
-	 */
 	public localReferencePositionToPosition(lref: ReferencePosition): number {
 		return this.client.localReferencePositionToPosition(lref);
 	}
 
-	/**
-	 * Removes a `LocalReferencePosition` from this SharedString.
-	 */
-	public removeLocalReferencePosition(lref: LocalReferencePosition) {
+	public removeLocalReferencePosition(
+		lref: LocalReferencePosition,
+	): LocalReferencePosition | undefined {
 		return this.client.removeLocalReferencePosition(lref);
 	}
 
-	/**
-	 * Resolves a remote client's position against the local sequence
-	 * and returns the remote client's position relative to the local
-	 * sequence. The client ref seq must be above the minimum sequence number
-	 * or the return value will be undefined.
-	 * Generally this method is used in conjunction with signals which provide
-	 * point in time values for the below parameters, and is useful for things
-	 * like displaying user position. It should not be used with persisted values
-	 * as persisted values will quickly become invalid as the remoteClientRefSeq
-	 * moves below the minimum sequence number
-	 * @param remoteClientPosition - The remote client's position to resolve
-	 * @param remoteClientRefSeq - The reference sequence number of the remote client
-	 * @param remoteClientId - The client id of the remote client
-	 */
 	public resolveRemoteClientPosition(
 		remoteClientPosition: number,
 		remoteClientRefSeq: number,
@@ -475,29 +670,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.submitLocalMessage(message, metadata);
 	}
 
-	/**
-	 * Given a position specified relative to a marker id, lookup the marker
-	 * and convert the position to a character position.
-	 * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
-	 */
-	public posFromRelativePos(relativePos: IRelativePosition) {
+	public posFromRelativePos(relativePos: IRelativePosition): number {
 		return this.client.posFromRelativePos(relativePos);
 	}
 
-	/**
-	 * Walk the underlying segments of the sequence.
-	 * The walked segments may extend beyond the range if the segments cross the
-	 * ranges start or end boundaries.
-	 *
-	 * Set split range to true to ensure only segments within the range are walked.
-	 *
-	 * @param handler - The function to handle each segment. Traversal ends if
-	 * this function returns true.
-	 * @param start - Optional. The start of range walk.
-	 * @param end - Optional. The end of range walk
-	 * @param accum - Optional. An object that will be passed to the handler for accumulation
-	 * @param splitRange - Optional. Splits boundary segments on the range boundaries
-	 */
 	public walkSegments<TClientData>(
 		handler: ISegmentAction<TClientData>,
 		start?: number,
@@ -508,52 +684,23 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.client.walkSegments(handler, start, end, accum as TClientData, splitRange);
 	}
 
-	/**
-	 * @returns The most recent sequence number which has been acked by the server and processed by this
-	 * SharedSegmentSequence.
-	 */
-	public getCurrentSeq() {
+	public getCurrentSeq(): number {
 		return this.client.getCurrentSeq();
 	}
 
-	/**
-	 * Inserts a segment directly before a `ReferencePosition`.
-	 * @param refPos - The reference position to insert the segment at
-	 * @param segment - The segment to insert
-	 */
 	public insertAtReferencePosition(pos: ReferencePosition, segment: T): void {
 		this.guardReentrancy(() => this.client.insertAtReferencePositionLocal(pos, segment));
 	}
-	/**
-	 * Inserts a segment
-	 * @param start - The position to insert the segment at
-	 * @param spec - The segment to inserts spec
-	 */
+
 	public insertFromSpec(pos: number, spec: IJSONSegment): void {
 		const segment = this.segmentFromSpec(spec);
 		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
-	/**
-	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
-	 * creates one.
-	 */
-	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
+	public getIntervalCollection(label: string): ISequenceIntervalCollection {
 		return this.intervalCollections.get(label);
 	}
 
-	/**
-	 * @returns An iterable object that enumerates the IntervalCollection labels.
-	 *
-	 * @example
-	 *
-	 * ```typescript
-	 * const iter = this.getIntervalCollectionKeys();
-	 * for (key of iter)
-	 *     const collection = this.getIntervalCollection(key);
-	 *     ...
-	 * ```
-	 */
 	public getIntervalCollectionLabels(): IterableIterator<string> {
 		return this.intervalCollections.keys();
 	}
@@ -643,14 +790,25 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				)
 			) {
 				this.submitSequenceMessage(
-					this.client.regeneratePendingOp(
-						content as IMergeTreeOp,
-						// eslint-disable-next-line import/no-deprecated
-						localOpMetadata as SegmentGroup | SegmentGroup[],
-					),
+					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata),
 				);
 			}
 		});
+	}
+
+	/**
+	 * Revert an op
+	 */
+	protected rollback(content: any, localOpMetadata: unknown): void {
+		const originalRefSeq = this.inFlightRefSeqs.pop();
+		assert(
+			originalRefSeq !== undefined,
+			0xb7f /* Expected a recorded refSeq when rolling back an op  */,
+		);
+
+		if (!this.intervalCollections.tryRollback(content, localOpMetadata)) {
+			this.client.rollback(content, localOpMetadata);
+		}
 	}
 
 	/**
@@ -848,17 +1006,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	private initializeIntervalCollections() {
 		// Listen and initialize new SharedIntervalCollections
-		this.intervalCollections.eventEmitter.on(
-			"create",
-			({ key, previousValue }: IValueChanged, local: boolean) => {
+		this.intervalCollections.events.on(
+			"createIntervalCollection",
+			(key: string, local: boolean) => {
 				const intervalCollection = this.intervalCollections.get(key);
 				if (!intervalCollection.attached) {
 					intervalCollection.attachGraph(this.client, key);
 				}
-				assert(
-					previousValue === undefined,
-					0x2c1 /* "Creating an interval collection that already exists?" */,
-				);
 				this.emit("createIntervalCollection", key, local, this);
 			},
 		);

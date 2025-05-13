@@ -3,18 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { type BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
-import { ChangeFamily, RevisionTag, rootFieldKey } from "../../../core/index.js";
-import { singleJsonCursor } from "../../../domains/index.js";
+import {
+	type ChangeFamily,
+	type RevisionTag,
+	rootFieldKey,
+	type ChangeFamilyEditor,
+} from "../../../core/index.js";
 import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
-import { Commit } from "../../../shared-tree-core/index.js";
+import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
-import { Editor, makeEditMinter } from "../../editMinter.js";
+import { type Editor, makeEditMinter } from "../../editMinter.js";
 import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
-import { failCodecFamily, mintRevisionTag } from "../../utils.js";
+import { chunkFromJsonTrees, failCodecFamily, mintRevisionTag } from "../../utils.js";
 
 import {
 	editManagerFactory,
@@ -44,7 +48,7 @@ describe("EditManager - Bench", () => {
 
 	interface Family<TChange> {
 		readonly name: string;
-		readonly changeFamily: ChangeFamily<any, TChange>;
+		readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
 		readonly mintChange: (revision: RevisionTag | undefined) => TChange;
 		readonly maxEditCount: number;
 	}
@@ -53,10 +57,13 @@ describe("EditManager - Bench", () => {
 	const sequencePrepend: Editor = (builder) => {
 		builder
 			.sequenceField({ parent: undefined, field: rootFieldKey })
-			.insert(0, singleJsonCursor(1));
+			.insert(0, chunkFromJsonTrees([1]));
 	};
 
-	const families: Family<any>[] = [
+	// Family is invariant over the change type, so using any is required to write generic Family processing code.
+	// Refactors to make this more type safe are possible for some usages (ex: extracting a non generic base interface), but are not practical for the tests here.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const families: readonly Family<any>[] = [
 		{
 			name: "TestChange",
 			changeFamily: testChangeFamilyFactory(new NoOpChangeRebaser()),
@@ -264,11 +271,11 @@ describe("EditManager - Bench", () => {
 							const family = testChangeFamilyFactory(new NoOpChangeRebaser());
 							const manager = editManagerFactory(family);
 							// Subscribe to the local branch to emulate the behavior of SharedTree
-							manager.localBranch.on("afterChange", ({ change }) => {});
+							manager.localBranch.events.on("afterChange", ({ change }) => {});
 							const sequencedEdits: Commit<TestChange>[] = [];
 							for (let iChange = 0; iChange < count; iChange++) {
 								const revision = mintRevisionTag();
-								manager.localBranch.apply(TestChange.emptyChange, revision);
+								manager.localBranch.apply({ change: TestChange.emptyChange, revision });
 								sequencedEdits.push({
 									change: TestChange.emptyChange,
 									revision,
@@ -279,8 +286,10 @@ describe("EditManager - Bench", () => {
 							// Measure
 							const before = state.timer.now();
 							for (let iChange = 0; iChange < count; iChange++) {
-								manager.addSequencedChange(
-									sequencedEdits[iChange],
+								const commit = sequencedEdits[iChange];
+								manager.addSequencedChanges(
+									[commit],
+									commit.sessionId,
 									brand(iChange + 1),
 									brand(0),
 								);

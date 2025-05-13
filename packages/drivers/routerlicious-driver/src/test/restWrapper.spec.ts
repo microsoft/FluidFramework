@@ -92,6 +92,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.get(testPath)
+				.query(true)
 				.reply(200);
 			await assert.doesNotReject(restWrapper.get(testUrl));
 		});
@@ -101,6 +102,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.get(testPath)
+				.query(true)
 				.reply(401);
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: false,
@@ -140,6 +142,79 @@ describe("RouterliciousDriverRestWrapper", () => {
 				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
+
+		it("retry query param is appended on subsequent api request - when retried from within request function", async () => {
+			let retryQueryParamTested = false;
+			// Fail first request with retriable error
+			nock(testHost).get(testPath).reply(401);
+			// Second request must contain the query param "retry=1"
+			nock(testHost)
+				.get(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "1");
+					return true;
+				})
+				.reply(429, { retryAfter: 0.001 });
+			// Third request must contain the query param "retry=2"
+			nock(testHost)
+				.get(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "2");
+					retryQueryParamTested = true;
+					return true;
+				})
+				.reply(200);
+			await restWrapper.get(testUrl);
+			assert(retryQueryParamTested);
+		});
+
+		it("retry query param is appended on subsequent api request - when request function is invoked multiple times externally on failure", async () => {
+			let isTestedSuccessfully = false;
+			// Fail first request with retriable error
+			nock(testHost).get(testPath).reply(500);
+			// Second request must contain the query param "retry=1"
+			nock(testHost)
+				.get(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "1");
+					return true;
+				})
+				.reply(500);
+			// Third request must contain the query param "retry=2"
+			nock(testHost)
+				.get(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "2");
+					return true;
+				})
+				.reply(500);
+
+			// Fourth request is emulated to have predefined query params, which should also continue to exist along with retry=1
+			nock(testHost)
+				.get(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === undefined); // Check that original request's retry value is reset
+					assert(q.param_1 === "param_1"); // Check other query params are not lost
+					assert(q.param_2 === "param_2");
+					isTestedSuccessfully = true;
+					return true;
+				})
+				.reply(500);
+
+			await restWrapper.get(testUrl).catch((_) => {});
+			await restWrapper.get(testUrl).catch((_) => {});
+			await restWrapper.get(testUrl).catch((_) => {});
+			// with pre existing query params
+			await restWrapper
+				.get(testUrl, { param_1: "param_1", param_2: "param_2", retry: 100 })
+				.catch((_) => {});
+			assert(isTestedSuccessfully);
+		});
 	});
 
 	describe("post()", () => {
@@ -155,6 +230,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.post(testPath)
+				.query(true)
 				.reply(200);
 			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
 		});
@@ -164,6 +240,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.post(testPath)
+				.query(true)
 				.reply(401);
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: false,
@@ -218,6 +295,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.patch(testPath)
+				.query(true)
 				.reply(200);
 			await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
 		});
@@ -227,6 +305,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.patch(testPath)
+				.query(true)
 				.reply(401);
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: false,
@@ -281,6 +360,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.delete(testPath)
+				.query(true)
 				.reply(200);
 			await assert.doesNotReject(restWrapper.delete(testUrl));
 		});
@@ -290,6 +370,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.delete(testPath)
+				.query(true)
 				.reply(401);
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: false,

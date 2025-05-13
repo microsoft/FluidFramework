@@ -10,11 +10,48 @@ import {
 	AxiosInstance,
 	AxiosRequestConfig,
 	RawAxiosRequestHeaders,
+	type AxiosResponse,
 } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
-import { CorrelationIdHeaderName } from "./constants";
+import {
+	CallingServiceHeaderName,
+	CorrelationIdHeaderName,
+	TelemetryContextHeaderName,
+} from "./constants";
+import { getGlobalTimeoutContext } from "./timeoutContext";
+import { isAxiosCanceledError } from "./utils";
+
+/**
+ * @internal
+ */
+export function setupAxiosInterceptorsForAbortSignals(
+	getAbortController: () => AbortController | undefined,
+) {
+	// Set up an interceptor to add the abort signal to the request
+	Axios.interceptors.request.use((config) => {
+		const abortController = getAbortController();
+		if (abortController) {
+			config.signal = abortController.signal;
+		}
+		return config;
+	});
+}
+
+/**
+ * @internal
+ */
+export interface IBasicRestWrapperMetricProps {
+	axiosError: AxiosError<any>;
+	status: number | string;
+	method: string;
+	baseUrl: string;
+	url: string;
+	correlationId: string;
+	durationInMs: number;
+	timeoutInMs: number | string;
+}
 
 /**
  * @internal
@@ -26,6 +63,19 @@ export abstract class RestWrapper {
 		protected readonly maxBodyLength = 1000 * 1024 * 1024,
 		protected readonly maxContentLength = 1000 * 1024 * 1024,
 	) {}
+
+	private getTimeoutMs(): number | undefined {
+		const timeout = getGlobalTimeoutContext().getTimeRemainingMs();
+		if (timeout && timeout > 0) {
+			return timeout;
+		}
+		// Fallback to the global timeout context if no timeout is set
+		return undefined;
+	}
+
+	private getTimeoutMessage(url: string): string {
+		return `Timeout occurred for request to ${url}`;
+	}
 
 	public async get<T>(
 		url: string,
@@ -46,6 +96,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "GET",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 200);
 	}
@@ -71,6 +123,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "POST",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 201);
 	}
@@ -94,6 +148,8 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "DELETE",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 204);
 	}
@@ -119,13 +175,17 @@ export abstract class RestWrapper {
 			maxContentLength: this.maxContentLength,
 			method: "PATCH",
 			url: `${url}${this.generateQueryString(queryString)}`,
+			timeout: this.getTimeoutMs(),
+			timeoutErrorMessage: this.getTimeoutMessage(url),
 		};
 		return this.request<T>(options, 200);
 	}
 
 	protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 
-	protected generateQueryString(queryStringValues: Record<string, string | number | boolean>) {
+	protected generateQueryString(
+		queryStringValues: Record<string, string | number | boolean> | undefined,
+	) {
 		if (this.defaultQueryString || queryStringValues) {
 			const queryStringRecord = { ...this.defaultQueryString, ...queryStringValues };
 
@@ -162,6 +222,14 @@ export class BasicRestWrapper extends RestWrapper {
 		>,
 		private readonly refreshDefaultHeaders?: () => RawAxiosRequestHeaders,
 		private readonly getCorrelationId?: () => string | undefined,
+		private readonly getTelemetryContextProperties?: () =>
+			| Record<string, string | number | boolean>
+			| undefined,
+		private readonly refreshTokenIfNeeded?: (
+			authorizationHeader: RawAxiosRequestHeaders,
+		) => Promise<RawAxiosRequestHeaders | undefined>,
+		private readonly logHttpMetrics?: (requestProps: IBasicRestWrapperMetricProps) => void,
+		private readonly getCallingServiceName?: () => string | undefined,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -172,15 +240,38 @@ export class BasicRestWrapper extends RestWrapper {
 		canRetry = true,
 	): Promise<T> {
 		const options = { ...requestConfig };
+		const correlationId = this.getCorrelationId?.() ?? uuid();
+		const callingServiceName = this.getCallingServiceName?.();
 		options.headers = this.generateHeaders(
 			options.headers,
-			this.getCorrelationId?.() ?? uuid(),
+			correlationId,
+			this.getTelemetryContextProperties?.(),
+			callingServiceName,
 		);
 
+		// If the request has an Authorization header and a refresh token function is provided, try to refresh the token if needed
+		if (options.headers?.Authorization && this.refreshTokenIfNeeded) {
+			const refreshedToken = await this.refreshTokenIfNeeded(options.headers).catch(
+				(error) => {
+					debug(`request to ${options.url} failed ${error ? error.message : ""}`);
+					throw error;
+				},
+			);
+			if (refreshedToken) {
+				options.headers.Authorization = refreshedToken.Authorization;
+				// Update the default headers to use the refreshed token
+				this.defaultHeaders.Authorization = refreshedToken.Authorization;
+			}
+		}
+
 		return new Promise<T>((resolve, reject) => {
+			const startTime = performance.now();
+			let axiosError: AxiosError;
+			let axiosResponse: AxiosResponse;
 			this.axios
 				.request<T>(options)
 				.then((response) => {
+					axiosResponse = response;
 					resolve(response.data);
 				})
 				.catch((error: AxiosError<any>) => {
@@ -219,11 +310,12 @@ export class BasicRestWrapper extends RestWrapper {
 						const retryConfig = { ...requestConfig };
 						retryConfig.headers = this.generateHeaders(
 							retryConfig.headers,
-							options.headers[CorrelationIdHeaderName] as string,
+							options.headers?.[CorrelationIdHeaderName],
 						);
 
 						this.request<T>(retryConfig, statusCode, false).then(resolve).catch(reject);
 					} else {
+						axiosError = error;
 						const errorSourceMessage = `[${error?.config?.method ?? ""}] request to [${
 							error?.config?.baseURL ?? options.baseURL ?? ""
 						}] failed with [${error.response?.status}] status code`;
@@ -247,6 +339,15 @@ export class BasicRestWrapper extends RestWrapper {
 								);
 							}
 						} else if (error?.request) {
+							// The calling client aborted the request before a valid response was received
+							if (isAxiosCanceledError(error)) {
+								reject(
+									createFluidServiceNetworkError(499, {
+										message: error?.message ?? "Request Aborted by Client",
+										source: errorSourceMessage,
+									}),
+								);
+							}
 							// The request was made but no response was received. That can happen if a service is
 							// temporarily down or inaccessible due to network failures. We leverage that in here
 							// to detect network failures and transform them into a NetworkError with code 502,
@@ -268,6 +369,30 @@ export class BasicRestWrapper extends RestWrapper {
 							reject(createFluidServiceNetworkError(500, details));
 						}
 					}
+				})
+				.finally(() => {
+					if (this.logHttpMetrics) {
+						const status: string | number = axiosError
+							? axiosError?.response?.status ?? "STATUS_UNAVAILABLE"
+							: axiosResponse?.status ?? "STATUS_UNAVAILABLE";
+						const requestProps: IBasicRestWrapperMetricProps = {
+							axiosError,
+							status,
+							baseUrl:
+								options.baseURL ??
+								axiosError?.config?.baseURL ??
+								"BASE_URL_UNAVAILABLE",
+							method: options.method ?? "METHOD_UNAVAILABLE",
+							url: options.url ?? "URL_UNAVAILABLE",
+							correlationId,
+							durationInMs: performance.now() - startTime,
+							timeoutInMs:
+								options.timeout ??
+								this.axios.defaults.timeout ??
+								"TIMEOUT_UNAVAILABLE",
+						};
+						this.logHttpMetrics(requestProps);
+					}
 				});
 		});
 	}
@@ -275,16 +400,25 @@ export class BasicRestWrapper extends RestWrapper {
 	private generateHeaders(
 		headers?: RawAxiosRequestHeaders,
 		fallbackCorrelationId?: string,
+		telemetryContextProperties?: Record<string, string | number | boolean>,
+		callingServiceName?: string,
 	): RawAxiosRequestHeaders {
-		let result = headers ?? {};
-		if (this.defaultHeaders) {
-			result = { ...this.defaultHeaders, ...headers };
+		const result = {
+			...this.defaultHeaders,
+			...headers,
+		};
+
+		if (!result[CorrelationIdHeaderName] && fallbackCorrelationId) {
+			result[CorrelationIdHeaderName] = fallbackCorrelationId;
+		}
+		if (!result[TelemetryContextHeaderName] && telemetryContextProperties) {
+			result[TelemetryContextHeaderName] = JSON.stringify(telemetryContextProperties);
+		}
+		if (!result[CallingServiceHeaderName] && callingServiceName) {
+			result[CallingServiceHeaderName] = callingServiceName;
 		}
 
-		if (result[CorrelationIdHeaderName]) {
-			return result;
-		}
-		return { [CorrelationIdHeaderName]: fallbackCorrelationId, ...result };
+		return result;
 	}
 
 	private refreshOnAuthError(): boolean {

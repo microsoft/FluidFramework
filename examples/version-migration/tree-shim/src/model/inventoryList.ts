@@ -10,16 +10,23 @@ import {
 	SharedTreeShim,
 	SharedTreeShimFactory,
 } from "@fluid-experimental/tree";
-// eslint-disable-next-line import/no-internal-modules
-import { EditLog } from "@fluid-experimental/tree/test/EditLog";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ITree, SharedTree } from "@fluidframework/tree";
+import { ITree } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/legacy";
 
-import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";
+import type {
+	IInventoryItem,
+	IInventoryList,
+	IMigrateBackingData,
+} from "../modelInterfaces.js";
 
 import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController.js";
-import { NewTreeInventoryListController } from "./newTreeInventoryListController.js";
+import {
+	InventoryItem,
+	InventorySchema,
+	NewTreeInventoryListController,
+} from "./newTreeInventoryListController.js";
 
 const isMigratedKey = "isMigrated";
 const treeKey = "tree";
@@ -31,7 +38,7 @@ const newTreeFactory = SharedTree.getFactory();
 
 function migrate(legacyTree: LegacySharedTree, newTree: ITree) {
 	// Revert local edits - otherwise we will be eventually inconsistent
-	const edits = legacyTree.edits as EditLog;
+	const edits = legacyTree.edits;
 	const localEdits = [...edits.getLocalEdits()].reverse();
 	for (const edit of localEdits) {
 		legacyTree.revert(edit.id);
@@ -40,23 +47,26 @@ function migrate(legacyTree: LegacySharedTree, newTree: ITree) {
 	const legacyTreeData = new LegacyTreeInventoryListController(legacyTree);
 	const items = legacyTreeData.getItems();
 
-	const initialTree = {
-		inventoryItemList: {
-			// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
-			"": items.map((item) => {
-				return {
+	const initialTree = new InventorySchema({
+		inventoryItemList: items.map(
+			(item): InventoryItem =>
+				new InventoryItem({
 					id: item.id,
 					name: item.name,
 					quantity: item.quantity,
-				};
-			}),
-		},
-	};
+				}),
+		),
+	});
+
 	NewTreeInventoryListController.initializeTree(newTree, initialTree);
 }
 
 const legacyTreeFactory = LegacySharedTree.getFactory();
-const migrationShimFactory = new MigrationShimFactory(legacyTreeFactory, newTreeFactory, migrate);
+const migrationShimFactory = new MigrationShimFactory(
+	legacyTreeFactory,
+	newTreeFactory,
+	migrate,
+);
 const newTreeShimFactory = new SharedTreeShimFactory(newTreeFactory);
 
 export class InventoryList extends DataObject implements IInventoryList, IMigrateBackingData {
@@ -208,9 +218,8 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const InventoryListFactory = new DataObjectFactory<InventoryList>(
-	"inventory-list",
-	InventoryList,
-	[migrationShimFactory, newTreeShimFactory],
-	{},
-);
+export const InventoryListFactory = new DataObjectFactory({
+	type: "inventory-list",
+	ctor: InventoryList,
+	sharedObjects: [migrationShimFactory, newTreeShimFactory],
+});

@@ -5,15 +5,17 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
-import * as fs from "fs";
+import { strict as assert } from "node:assert";
+import * as fs from "node:fs";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes.js";
+import { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { toRemovalInfo } from "../segmentInfos.js";
+import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -25,10 +27,13 @@ export type TestOperation = (
 	opStart: number,
 	opEnd: number,
 	random: IRandom,
-) => IMergeTreeOp | undefined;
+) => IMergeTreeOp[] | IMergeTreeOp | undefined;
 
-export const removeRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.removeRangeLocal(opStart, opEnd);
+export const removeRange: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+) => client.removeRangeLocal(opStart, opEnd);
 
 export const obliterateRange: TestOperation = (
 	client: TestClient,
@@ -36,8 +41,54 @@ export const obliterateRange: TestOperation = (
 	opEnd: number,
 ) => client.obliterateRangeLocal(opStart, opEnd);
 
-export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
+export const obliterateRangeSided: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+	random: IRandom,
+) => {
+	let startSide: Side;
+	let endSide: Side;
+
+	const oblEnd = random.integer(opStart, client.getLength() - 1);
+	// TODO: to create zero length obliterate ops, change '<=' to '<'.
+	// Doing so may cause different failures than those without zero length.
+	// AB#19930
+	if (oblEnd - opStart <= 1) {
+		startSide = Side.Before;
+		endSide = Side.After;
+	} else {
+		startSide = random.pick([Side.Before, Side.After]);
+		endSide = random.pick([Side.Before, Side.After]);
+	}
+
+	const start = { pos: opStart, side: startSide };
+	const end = { pos: oblEnd, side: endSide };
+	return client.obliterateRangeLocal(start, end);
+};
+
+export const annotateRange: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+	random: IRandom,
+) => {
+	if (random.bool()) {
+		return client.annotateRangeLocal(opStart, opEnd, {
+			[random.integer(1, 5)]: client.longClientId,
+		});
+	} else {
+		const max = random.pick([undefined, random.integer(-10, 100)]);
+		const min = random.pick([undefined, random.integer(-100, 10)]);
+		return client.annotateAdjustRangeLocal(opStart, opEnd, {
+			[random.integer(0, 2).toString()]: {
+				delta: random.integer(-5, 5),
+				min: (min ?? max ?? 0) > (max ?? 0) ? undefined : min,
+				max,
+			},
+		});
+	}
+};
 
 export const insertAtRefPos: TestOperation = (
 	client: TestClient,
@@ -45,7 +96,7 @@ export const insertAtRefPos: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	const segs: ISegment[] = [];
+	const segs: ISegmentPrivate[] = [];
 	// gather all the segments at the pos, including removed segments
 	walkAllChildSegments(client.mergeTree.root, (seg) => {
 		const pos = client.getPosition(seg);
@@ -61,16 +112,17 @@ export const insertAtRefPos: TestOperation = (
 	if (segs.length > 0) {
 		const text = client.longClientId!.repeat(random.integer(1, 3));
 		const seg = random.pick(segs);
+		const removed = toRemovalInfo(seg);
 		const lref = client.createLocalReferencePosition(
 			seg,
-			toRemovalInfo(seg) ? 0 : random.integer(0, seg.cachedLength - 1),
-			toRemovalInfo(seg)
+			removed ? 0 : random.integer(0, seg.cachedLength - 1),
+			removed
 				? ReferenceType.SlideOnRemove
 				: random.pick([
 						ReferenceType.Simple,
 						ReferenceType.SlideOnRemove,
 						ReferenceType.Transient,
-				  ]),
+					]),
 			undefined,
 		);
 
@@ -91,6 +143,12 @@ export const insert: TestOperation = (
 	return client.insertTextLocal(start, text);
 };
 
+const generateInsert = (client: TestClient, random: IRandom): IMergeTreeOp | undefined => {
+	const len = client.getLength();
+	const text = client.longClientId!.repeat(random.integer(1, 3));
+	return client.insertTextLocal(random.integer(0, len), text);
+};
+
 export interface IConfigRange {
 	min: number;
 	max: number;
@@ -101,7 +159,7 @@ export function doOverRange(
 	range: IConfigRange,
 	defaultGrowthFunc: (input: number) => number,
 	doAction: (current: number) => void,
-) {
+): void {
 	let lastCurrent = Number.NaN;
 	for (
 		let current = range.min;
@@ -137,22 +195,27 @@ export function resolveRanges<T extends object>(
 	ranges: T,
 	defaultGrowthFunc: (input: number) => number,
 ): ResolvedRanges<T> {
-	return Object.entries(ranges)
-		.filter(([_, value]) => isConfigRange(value))
-		.map(([key, value]) => [key, resolveRange(value, defaultGrowthFunc)] as const)
-		.reduce((prev, [key, resolvedRange]) => {
-			prev[key] = resolvedRange;
-			return prev;
-		}, {}) as ResolvedRanges<T>;
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const resolvedRanges: ResolvedRanges<T> = {} as ResolvedRanges<T>;
+	for (const [key, value] of Object.entries(ranges)) {
+		if (isConfigRange(value)) {
+			resolvedRanges[key] = resolveRange(value, defaultGrowthFunc);
+		}
+	}
+	return resolvedRanges;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isConfigRange(t: any): t is IConfigRange {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return typeof t === "object" && typeof t.min === "number" && typeof t.max === "number";
 }
 
 type ReplaceRangeWith<T, TReplace> = T extends { min: number; max: number } ? TReplace : never;
 
-type RangePropertyNames<T> = { [K in keyof T]-?: T[K] extends IConfigRange ? K : never }[keyof T];
+type RangePropertyNames<T> = {
+	[K in keyof T]-?: T[K] extends IConfigRange ? K : never;
+}[keyof T];
 
 type PickFromRanges<T> = {
 	[K in RangePropertyNames<T>]: ReplaceRangeWith<T[K], number>;
@@ -169,12 +232,15 @@ interface ProvidesGrowthFunc {
 export function doOverRanges<T extends ProvidesGrowthFunc>(
 	ranges: T,
 	doAction: (selection: PickFromRanges<T>, description: string) => void,
-) {
-	const rangeEntries: [string, IConfigRange][] = Object.entries(ranges).filter(([_, value]) =>
-		isConfigRange(value),
-	);
+): void {
+	const rangeEntries: [string, IConfigRange][] = [];
+	for (const [key, value] of Object.entries(ranges)) {
+		if (isConfigRange(value)) {
+			rangeEntries.push([key, value]);
+		}
+	}
 
-	const doOverRangesHelper = (selections: [string, number][]) => {
+	const doOverRangesHelper = (selections: [string, number][]): void => {
 		if (selections.length === rangeEntries.length) {
 			const selectionsObj = {};
 			for (const [key, value] of selections) {
@@ -200,8 +266,11 @@ export interface IMergeTreeOperationRunnerConfig {
 	readonly opsPerRoundRange: IConfigRange;
 	readonly incrementalLog?: boolean;
 	readonly operations: readonly TestOperation[];
+	readonly applyOpDuringGeneration?: boolean;
 	growthFunc(input: number): number;
 	resultsFilePostfix?: string;
+	insertText?: (client: TestClient, random: IRandom) => IMergeTreeOp | undefined;
+	updateEndpoints?: (client: TestClient, random: IRandom) => { start: number; end: number };
 }
 
 export interface ReplayGroup {
@@ -220,9 +289,11 @@ export function runMergeTreeOperationRunner(
 	minLength: number,
 	config: IMergeTreeOperationRunnerConfig,
 	apply: ApplyMessagesFn = applyMessages,
-) {
+): number {
 	let seq = startingSeq;
 	const results: ReplayGroup[] = [];
+
+	let fakeTime = 1725916319097;
 
 	doOverRange(config.opsPerRoundRange, config.growthFunc, (opsPerRound) => {
 		if (config.incrementalLog) {
@@ -244,14 +315,15 @@ export function runMergeTreeOperationRunner(
 				opsPerRound,
 				minLength,
 				config.operations,
+				config.applyOpDuringGeneration,
+				config.insertText,
 			);
-			const msgs = messageData.map((md) => md[0]);
-			seq = apply(seq, messageData, clients, logger, random);
+			seq = apply(messageData[0][0].sequenceNumber - 1, messageData, clients, logger, random);
 			const resultText = logger.validate();
 			results.push({
 				initialText,
 				resultText,
-				msgs,
+				msgs: messageData.map((md) => ({ ...md[0], timestamp: fakeTime++ })),
 				seq,
 			});
 			logger.dispose();
@@ -260,7 +332,7 @@ export function runMergeTreeOperationRunner(
 
 	if (config.resultsFilePostfix !== undefined) {
 		const resultsFilePath = `${replayResultsPath}/len_${minLength}-clients_${clients.length}-${config.resultsFilePostfix}`;
-		fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined, 4));
+		fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined, "\t"));
 	}
 
 	return seq;
@@ -274,33 +346,43 @@ export function generateOperationMessagesForClients(
 	opsPerRound: number,
 	minLength: number,
 	operations: readonly TestOperation[],
-) {
+	applyOpDuringGeneration?: boolean,
+	insertText?: (client: TestClient, random: IRandom) => IMergeTreeOp | undefined,
+): [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] {
 	const minimumSequenceNumber = startingSeq;
-	let tempSeq = startingSeq * -1;
+	let runningSeq = startingSeq;
 	const messages: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
 
 	for (let i = 0; i < opsPerRound; i++) {
 		// pick a client greater than 0, client 0 only applies remote ops
 		// and is our baseline
 		const client = clients[random.integer(1, clients.length - 1)];
+
+		if (applyOpDuringGeneration === true && messages.length > 0 && random.bool()) {
+			const toApply = messages
+				.filter(([msg]) => msg.sequenceNumber > client.getCollabWindow().currentSeq)
+				.slice(0, random.integer(1, 3));
+			applyMessages(toApply[0][0].sequenceNumber - 1, toApply, [client], logger);
+		}
+
 		const len = client.getLength();
 		const sg = client.peekPendingSegmentGroups();
-		let op: IMergeTreeOp | undefined;
+		let opOrOps: IMergeTreeOp[] | IMergeTreeOp | undefined;
 		if (len === 0 || len < minLength) {
-			const text = client.longClientId!.repeat(random.integer(1, 3));
-			op = client.insertTextLocal(random.integer(0, len), text);
+			opOrOps =
+				insertText === undefined ? generateInsert(client, random) : insertText(client, random);
 		} else {
 			let opIndex = random.integer(0, operations.length - 1);
 			const start = random.integer(0, len - 1);
 			const end = random.integer(start + 1, len);
 
-			for (let y = 0; y < operations.length && op === undefined; y++) {
-				op = operations[opIndex](client, start, end, random);
+			for (let y = 0; y < operations.length && opOrOps === undefined; y++) {
+				opOrOps = operations[opIndex](client, start, end, random);
 				opIndex++;
 				opIndex %= operations.length;
 			}
 		}
-		if (op !== undefined) {
+		if (opOrOps !== undefined) {
 			// Pre-check to avoid logger.toString() in the string template
 			if (sg === client.peekPendingSegmentGroups()) {
 				assert.notEqual(
@@ -309,25 +391,52 @@ export function generateOperationMessagesForClients(
 					`op created but segment group not enqueued.${logger}`,
 				);
 			}
-			const message = client.makeOpMessage(op, --tempSeq);
-			message.minimumSequenceNumber = minimumSequenceNumber;
-			messages.push([
-				message,
-				client.peekPendingSegmentGroups(
+
+			const ops = Array.isArray(opOrOps) ? opOrOps : [opOrOps];
+			const totalIndividualOps = ops
+				.map((o) => (o.type === MergeTreeDeltaType.GROUP ? o.ops.length : 1))
+				.reduce((a, b) => a + b, 0);
+			let allSegmentGroups = client.peekPendingSegmentGroups(totalIndividualOps)!;
+			if (!Array.isArray(allSegmentGroups)) {
+				allSegmentGroups = [allSegmentGroups];
+			}
+			assert(Array.isArray(allSegmentGroups), "Expected array of segment groups");
+			for (const op of ops) {
+				const message = client.makeOpMessage(op, ++runningSeq);
+				message.minimumSequenceNumber = minimumSequenceNumber;
+				const segmentGroups = allSegmentGroups.splice(
+					0,
 					op.type === MergeTreeDeltaType.GROUP ? op.ops.length : 1,
-				)!,
-			]);
+				);
+				messages.push([
+					message,
+					op.type === MergeTreeDeltaType.GROUP ? segmentGroups : segmentGroups[0],
+				]);
+			}
 		}
 	}
+
+	const maxProcessedSeq = Math.max(...clients.map((c) => c.getCollabWindow().currentSeq));
+	if (messages.length > 0) {
+		const index = messages.findIndex(([msg]) => msg.sequenceNumber === maxProcessedSeq);
+		if (index !== -1) {
+			const apply = messages.splice(0, index + 1);
+			applyMessages(apply[0][0].sequenceNumber - 1, apply, clients, logger);
+		}
+	}
+
 	return messages;
 }
 
 export function generateClientNames(): string[] {
 	const clientNames: string[] = [];
-	function addClientNames(startChar: string, count: number) {
-		const startCode = startChar.charCodeAt(0);
+	function addClientNames(startChar: string, count: number): void {
+		const startCode = startChar.codePointAt(0);
+		if (startCode === undefined) {
+			throw new Error("startCode must be a single character");
+		}
 		for (let i = 0; i < count; i++) {
-			clientNames.push(String.fromCharCode(startCode + i));
+			clientNames.push(String.fromCodePoint(startCode + i));
 		}
 	}
 
@@ -351,7 +460,7 @@ export function applyMessages(
 	messageData: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
 	clients: readonly TestClient[],
 	logger: TestClientLogger,
-) {
+): number {
 	let seq = startingSeq;
 	try {
 		// log and apply all the ops created in the round
@@ -359,10 +468,14 @@ export function applyMessages(
 		for (let i = 0; i < messageData.length; i++) {
 			const [message] = messageData[i];
 			message.sequenceNumber = ++seq;
-			clients.forEach((c) => c.applyMsg(message));
+			for (const c of clients) {
+				if (c.getCollabWindow().currentSeq < message.sequenceNumber) {
+					c.applyMsg(message);
+				}
+			}
 		}
-	} catch (e) {
-		throw logger.addLogsToError(e);
+	} catch (error) {
+		throw logger.addLogsToError(error);
 	}
 	return seq;
 }

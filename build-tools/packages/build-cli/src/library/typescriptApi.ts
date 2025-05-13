@@ -6,8 +6,9 @@
 import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from "ts-morph";
 import { Node, SyntaxKind } from "ts-morph";
 
-import type { ApiTag } from "./apiTag";
-import { isKnownApiTag } from "./apiTag";
+import type { ApiLevel } from "./apiLevel.js";
+import type { ApiTag } from "./apiTag.js";
+import { isKnownApiTag } from "./apiTag.js";
 
 interface ExportRecord {
 	name: string;
@@ -15,6 +16,7 @@ interface ExportRecord {
 }
 interface ExportRecords {
 	public: ExportRecord[];
+	legacy: ExportRecord[];
 	beta: ExportRecord[];
 	alpha: ExportRecord[];
 	internal: ExportRecord[];
@@ -42,47 +44,75 @@ function isTypeExport(_decl: ExportedDeclarations): boolean {
 }
 
 /**
- * Searches given JSDocs for known {@link ApiTag} tag.
+ * Searches given JSDocs for known {@link ApiTag} tags.
  *
- * @returns Recognized {@link ApiTag} from JSDocs or undefined.
+ * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
  */
-function getApiTagFromDocs(jsdocs: JSDoc[]): ApiTag | undefined {
+function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiTag[] | undefined {
+	const tags: ApiTag[] = [];
 	for (const jsdoc of jsdocs) {
 		for (const tag of jsdoc.getTags()) {
 			const tagName = tag.getTagName();
 			if (isKnownApiTag(tagName)) {
-				return tagName;
+				tags.push(tagName);
 			}
 		}
 	}
-	return undefined;
+	return tags.length > 0 ? tags : undefined;
 }
 
 /**
- * Searches given Node's JSDocs for known {@link ApiTag} tag.
+ * Searches given Node's JSDocs for known {@link ApiTag} tags.
  *
- * @returns Recognized {@link ApiTag} from JSDocs or undefined.
+ * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
  */
-function getNodeApiTag(node: Node): ApiTag | undefined {
+function getNodeApiTags(node: Node): ApiTag[] | undefined {
 	if (Node.isJSDocable(node)) {
-		return getApiTagFromDocs(node.getJsDocs());
+		return getApiTagsFromDocs(node.getJsDocs());
 	}
 
 	// Some nodes like `ExportSpecifier` are not JSDocable per ts-morph, but
 	// a JSDoc is present.
 	const jsdocChildren = node.getChildrenOfKind(SyntaxKind.JSDoc);
 	if (jsdocChildren.length > 0) {
-		return getApiTagFromDocs(jsdocChildren);
+		return getApiTagsFromDocs(jsdocChildren);
 	}
 
 	// Some nodes like `VariableDeclaration`s are not JSDocable, but an ancestor
 	// like `VariableStatement` is and may contain tag.
 	const parent = node.getParent();
 	if (parent !== undefined) {
-		return getNodeApiTag(parent);
+		return getNodeApiTags(parent);
 	}
 
 	return undefined;
+}
+
+/**
+ * Searches given Node's JSDocs for known {@link ApiTag} tags and derive export level.
+ *
+ * @remarks One of api-extractor standard tags will always be present as required by
+ * api-extractor. So, "legacy" is treated as priority over other tags for determining
+ * level. Otherwise, exactly one tag is required and will be exact level.
+ *
+ * @returns Computed {@link ApiLevel} from JSDocs or undefined.
+ */
+function getNodeApiLevel(node: Node): ApiLevel | undefined {
+	const apiTags = getNodeApiTags(node);
+	if (apiTags === undefined) {
+		return undefined;
+	}
+	if (apiTags.includes("legacy")) {
+		return "legacy";
+	}
+	if (apiTags.length === 1) {
+		return apiTags[0];
+	}
+	throw new Error(
+		`No known level map from ${node.getSymbol()} with tags [${apiTags.join(",")}] at ${node
+			.getSourceFile()
+			.getFilePath()}:${node.getStartLineNumber()}.`,
+	);
 }
 
 /**
@@ -93,6 +123,7 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	const exported = sourceFile.getExportedDeclarations();
 	const records: ExportRecords = {
 		public: [],
+		legacy: [],
 		beta: [],
 		alpha: [],
 		internal: [],
@@ -101,23 +132,23 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	// We can't (don't know how to) distinguish duplication in exports
 	// from a type and a value export. We expect however that those will
 	// share the same tag. Track and throw if there are different tags.
-	const foundNameTags = new Map<string, ApiTag>();
+	const foundNameLevels = new Map<string, ApiLevel>();
 	for (const [name, exportedDecls] of exported.entries()) {
 		for (const exportedDecl of exportedDecls) {
-			const tag = getNodeApiTag(exportedDecl);
-			const existingTag = foundNameTags.get(name);
-			if (tag === undefined) {
+			const level = getNodeApiLevel(exportedDecl);
+			const existingLevel = foundNameLevels.get(name);
+			if (level === undefined) {
 				// Overloads might only have JSDocs for first of set; so ignore
 				// secondary exports without recognized tag.
-				if (existingTag === undefined) {
+				if (existingLevel === undefined) {
 					records.unknown.set(name, { exportedDecl });
 				}
-			} else if (existingTag === undefined) {
-				records[tag].push({ name, isTypeOnly: isTypeExport(exportedDecl) });
-				foundNameTags.set(name, tag);
-			} else if (tag !== existingTag) {
+			} else if (existingLevel === undefined) {
+				records[level].push({ name, isTypeOnly: isTypeExport(exportedDecl) });
+				foundNameLevels.set(name, level);
+			} else if (level !== existingLevel) {
 				throw new Error(
-					`${name} has been exported twice with different api tags.\nFirst as ${existingTag} and now as ${tag} from ${exportedDecl
+					`${name} has been exported twice with different api level.\nFirst as ${existingLevel} and now as ${level} from ${exportedDecl
 						.getSourceFile()
 						.getFilePath()}:${exportedDecl.getStartLineNumber()}.`,
 				);
@@ -154,11 +185,11 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 				console.log(
 					`namespace exports of the form 'export * as foo' are speculatively supported. See ${sourceFile.getFilePath()}:${namespaceDecl.getStartLineNumber()}:\n${namespaceDecl.getText()}`,
 				);
-				const namespaceTag = getNodeApiTag(exportDeclaration);
-				if (namespaceTag === undefined) {
+				const namespaceLevel = getNodeApiLevel(exportDeclaration);
+				if (namespaceLevel === undefined) {
 					unknownExported.exportDecl = exportDeclaration;
 				} else {
-					records[namespaceTag].push({ name, isTypeOnly: exportDeclaration.isTypeOnly() });
+					records[namespaceLevel].push({ name, isTypeOnly: exportDeclaration.isTypeOnly() });
 					records.unknown.delete(name);
 					if (records.unknown.size === 0) {
 						return records;
@@ -182,11 +213,11 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 			const name = exportSpecifier.getName();
 			const unknownExported = records.unknown.get(name);
 			if (unknownExported !== undefined) {
-				const exportTag = getNodeApiTag(exportSpecifier);
-				if (exportTag === undefined) {
+				const exportLevel = getNodeApiLevel(exportSpecifier);
+				if (exportLevel === undefined) {
 					unknownExported.exportDecl = exportDeclaration;
 				} else {
-					records[exportTag].push({
+					records[exportLevel].push({
 						name,
 						isTypeOnly: exportDeclaration.isTypeOnly() || exportSpecifier.isTypeOnly(),
 					});
@@ -200,4 +231,31 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	}
 
 	return records;
+}
+
+/**
+ * Searches given source file for the package documentation (first
+ * `@packageDocumentation` tagged comment).
+ *
+ * @returns Found full text of the package documentation or empty string.
+ *
+ * @privateRemarks
+ * If we find trouble with practical extraction, consider replicating api-extractor's logic at:
+ * {@link https://github.com/microsoft/rushstack/blob/main/apps/api-extractor/src/aedoc/PackageDocComment.ts}
+ *
+ * Here a simplified approach is taken leveraging ts-morph's comment organization.
+ */
+export function getPackageDocumentationText(sourceFile: SourceFile): string {
+	const statements = sourceFile.getStatementsWithComments();
+	for (const statement of statements) {
+		const comments = statement.getLeadingCommentRanges();
+		for (const comment of comments) {
+			const jsDoc = comment.getText();
+			if (jsDoc.includes("@packageDocumentation")) {
+				return jsDoc;
+			}
+		}
+	}
+
+	return "";
 }

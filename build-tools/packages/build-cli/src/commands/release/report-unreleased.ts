@@ -5,11 +5,13 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { isInternalVersionRange, isInternalVersionScheme } from "@fluid-tools/version-tools";
+import { isInternalTestVersion } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
-import { BaseCommand, type ReleaseReport, toReportKind } from "../../library";
+
+import { semverFlag } from "../../flags.js";
+import { BaseCommand, type ReleaseReport, toReportKind } from "../../library/index.js";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly summary =
@@ -19,7 +21,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		`This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily consume them.`;
 
 	static readonly flags = {
-		version: Flags.string({
+		version: semverFlag({
 			description:
 				"Version to generate a report for. Typically, this version is the version of a dev build.",
 			required: true,
@@ -31,6 +33,11 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		fullReportFilePath: Flags.string({
 			description: "Path to a report file in the 'full' format.",
 			exists: true,
+			required: true,
+		}),
+		branchName: Flags.string({
+			description:
+				"Branch name. For release branches, the manifest file is uplaoded by build number and not by current date.",
 			required: true,
 		}),
 		...BaseCommand.flags,
@@ -45,7 +52,13 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		const fullReleaseReport: ReleaseReport = JSON.parse(reportData);
 
 		try {
-			await generateReleaseReport(fullReleaseReport, flags.version, flags.outDir, this.logger);
+			await generateReleaseReport(
+				fullReleaseReport,
+				flags.version.version,
+				flags.outDir,
+				flags.branchName,
+				this.logger,
+			);
 		} catch (error: unknown) {
 			throw new Error(`Error while generating release reports: ${error}`);
 		}
@@ -63,6 +76,7 @@ async function generateReleaseReport(
 	fullReleaseReport: ReleaseReport,
 	version: string,
 	outDir: string,
+	branchName: string,
 	log: Logger,
 ): Promise<void> {
 	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
@@ -73,8 +87,22 @@ async function generateReleaseReport(
 	const simpleReportOutput = toReportKind(fullReleaseReport, "simple");
 
 	await Promise.all([
-		writeReport(outDir, caretReportOutput as ReleaseReport, "manifest", version, log),
-		writeReport(outDir, simpleReportOutput as ReleaseReport, "simpleManifest", version, log),
+		writeReport(
+			outDir,
+			caretReportOutput as ReleaseReport,
+			"manifest",
+			version,
+			branchName,
+			log,
+		),
+		writeReport(
+			outDir,
+			simpleReportOutput as ReleaseReport,
+			"simpleManifest",
+			version,
+			branchName,
+			log,
+		),
 	]);
 
 	log.log("Release report processed successfully.");
@@ -86,6 +114,7 @@ async function generateReleaseReport(
  * @param report - A map of package names to full release reports.
  * @param revisedFileName - The revised file name for the report.
  * @param version - The version string to update packages to.
+ * @param branchName - The branch name
  * @param log - The logger object for logging messages.
  */
 async function writeReport(
@@ -93,21 +122,26 @@ async function writeReport(
 	report: ReleaseReport,
 	revisedFileName: string,
 	version: string,
+	branchName: string,
 	log: Logger,
 ): Promise<void> {
 	const currentDate = formatISO(new Date(), { representation: "date" });
-
 	const buildNumber = extractBuildNumber(version);
 
 	log.log(`Build Number: ${buildNumber}`);
 
-	const outDirByCurrentDate = path.join(outDir, `${revisedFileName}-${currentDate}.json`);
 	const outDirByBuildNumber = path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
 
-	await Promise.all([
-		fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)),
-		fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2)),
-	]);
+	// Generate the build-number manifest unconditionally
+	const promises = [fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2))];
+
+	// Generate the date-based manifest only if the branch is main
+	if (branchName === "refs/heads/main") {
+		const outDirByCurrentDate = path.join(outDir, `${revisedFileName}-${currentDate}.json`);
+		promises.push(fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)));
+	}
+
+	await Promise.all(promises);
 }
 
 /**
@@ -122,19 +156,41 @@ async function updateReportVersions(
 	version: string,
 	log: Logger,
 ): Promise<void> {
+	const clientPackageName = "fluid-framework";
+
+	const packageReleaseDetails = report[clientPackageName];
+
+	if (packageReleaseDetails === undefined) {
+		throw new Error(`Client package ${clientPackageName} is not defined in the report.`);
+	}
+
+	if (packageReleaseDetails.ranges?.caret === undefined) {
+		throw new Error(`Caret version for ${clientPackageName} is not defined in the report.`);
+	}
+
+	if (packageReleaseDetails.version === undefined) {
+		throw new Error(`Simple version for ${clientPackageName} is not defined in the report.`);
+	}
+
+	const clientVersionCaret = report[clientPackageName].ranges.caret;
+	const clientVersionSimple = report[clientPackageName].version;
+
+	log.log(`Caret version: ${clientVersionCaret}`);
+	log.log(`Simple version: ${clientVersionSimple}`);
+
 	for (const packageName of Object.keys(report)) {
 		if (ignorePackageList.has(packageName)) {
 			continue;
 		}
 
-		// updates caret ranges
-		if (isInternalVersionRange(report[packageName].ranges.caret, true)) {
-			// If the caret range is a range, reset it to an exact version.
-			// Note: Post 2.0 release, the versions will no longer be internal versions so another condition will be required that will work after 2.0.
+		const packageInfo = report[packageName];
+
+		// todo: add better checks
+		if (packageInfo.ranges.caret && packageInfo.ranges.caret === clientVersionCaret) {
 			report[packageName].ranges.caret = version;
 		}
 
-		if (isInternalVersionScheme(report[packageName].version)) {
+		if (packageInfo.version && packageInfo.version === clientVersionSimple) {
 			report[packageName].version = version;
 		}
 	}
@@ -149,11 +205,16 @@ async function updateReportVersions(
  *
  * @example
  * Returns 260312
- * extractBuildNumber("2.0.0-dev-rc.4.0.0.260312");
+ * extractBuildNumber("2.1.0-260312");
  */
 
 function extractBuildNumber(version: string): number {
-	const versionParts: string[] = version.split(".");
+	const versionParts: string[] = version.split("-");
+
+	if (isInternalTestVersion(version)) {
+		return Number.parseInt(versionParts[1], 10);
+	}
+
 	// Extract the last part of the version, which is the number you're looking for
 	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }

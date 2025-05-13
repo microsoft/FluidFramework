@@ -5,6 +5,7 @@
 
 import { expect } from "chai";
 import { h } from "hastscript";
+
 import {
 	DocumentNode,
 	HeadingNode,
@@ -15,7 +16,7 @@ import {
 } from "../../documentation-domain/index.js";
 import { documentToHtml } from "../ToHtml.js";
 
-describe("Document HTML rendering tests", () => {
+describe("documentToHtml tests", () => {
 	it("Renders a simple document", () => {
 		const document = new DocumentNode({
 			children: [
@@ -29,9 +30,7 @@ describe("Document HTML rendering tests", () => {
 							[
 								new ParagraphNode([
 									new PlainTextNode("This is test inside of a paragraph. "),
-									new PlainTextNode(
-										"It is also inside of a hierarchical section node. ",
-									),
+									new PlainTextNode("It is also inside of a hierarchical section node. "),
 									SpanNode.createFromPlainText("That's real neat-o.", {
 										italic: true,
 									}),

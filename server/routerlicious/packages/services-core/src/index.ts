@@ -21,6 +21,7 @@ export {
 	IScribeServerConfiguration,
 	IServerConfiguration,
 	IServiceConfiguration,
+	MaxKafkaMessageSize,
 } from "./configuration";
 export {
 	ICheckpointRepository,
@@ -56,6 +57,7 @@ export {
 } from "./http";
 export {
 	extractBoxcar,
+	isCompleteBoxcarMessage,
 	IContext,
 	IContextErrorData,
 	ILogger,
@@ -120,6 +122,12 @@ export {
 	shouldRetryNetworkError,
 } from "./runWithRetry";
 export { ISecretManager } from "./secretManager";
+export {
+	ICollaborationSession,
+	ICollaborationSessionClient,
+	ICollaborationSessionManager,
+	ICollaborationSessionTracker,
+} from "./collabSession";
 export { IStorageNameAllocator } from "./storageNameAllocator";
 export { IStorageNameRetriever } from "./storageNameRetriever";
 export {
@@ -131,7 +139,9 @@ export {
 } from "./taskMessages";
 export {
 	EncryptionKeyVersion,
+	IEncryptedPrivateTenantKeys,
 	IEncryptedTenantKeys,
+	IPlainTextAndEncryptedTenantKeys,
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,
@@ -140,7 +150,9 @@ export {
 	ITenantManager,
 	ITenantOrderer,
 	ITenantStorage,
+	ITenantPrivateKeys,
 	KeyName,
+	IInvalidTokenError,
 } from "./tenant";
 export {
 	IThrottleAndUsageStorageManager,
@@ -168,5 +180,8 @@ export {
 	createCompositeTokenId,
 } from "./tokenRevocationManager";
 export { IServiceMessageResourceManager } from "./serviceMessage";
-export { IClusterDrainingChecker } from "./clusterDraining";
+export { IClusterDrainingChecker, clusterDrainingRetryTimeInMs } from "./clusterDraining";
 export { IWebSocketTracker } from "./webSocketTracker";
+export { IReadinessCheck, IReadinessStatus, ICheck } from "./readinessCheck";
+export { IFluidAccessToken, IFluidAccessTokenGenerator } from "./fluidAccessTokenGenerator";
+export { IDenyList } from "./denyList";

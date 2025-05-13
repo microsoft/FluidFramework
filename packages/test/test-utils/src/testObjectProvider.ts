@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { ITestDriver, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	IContainer,
@@ -16,28 +15,35 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
+	ITelemetryBaseProperties,
+	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
+import { isOdspResolvedUrl } from "@fluidframework/odsp-driver/internal";
 import {
 	type ITelemetryGenericEventExt,
 	createChildLogger,
 	createMultiSinkLogger,
 	type ITelemetryLoggerPropertyBags,
+	TelemetryDataTag,
+	tagData,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
+import { isNonEmptyArray } from "./nonEmptyArrayType.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
 
 const defaultCodeDetails: IFluidCodeDetails = {
@@ -46,12 +52,32 @@ const defaultCodeDetails: IFluidCodeDetails = {
 };
 
 /**
+ * Exposes fine-grained control over the Container's inbound and outbound op queues
+ *
+ * @legacy
  * @alpha
  */
 export interface IOpProcessingController {
+	/**
+	 * Process all ops sitting in the inbound queue, leaving the inbound queue paused afterwards
+	 * @param containers - optional subset of all open containers
+	 */
 	processIncoming(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Process all ops sitting in the outbound queue, leaving the inbound queue paused afterwards.
+	 * Also waits for the outbound ops to arrive in the inbound queue.
+	 * @param containers - optional subset of all open containers
+	 */
 	processOutgoing(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Process all queue activities, to prepare for fine-grained control via processIncoming and processOutgoing
+	 * @param containers - optional subset of all open containers
+	 */
 	pauseProcessing(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Resume all queue activities for normal operation of the container
+	 * @param containers - optional subset of all open containers
+	 */
 	resumeProcessing(...containers: IContainer[]): void;
 }
 
@@ -229,7 +255,7 @@ export interface ITestContainerConfig {
 	registry?: ChannelFactoryRegistry;
 
 	/** Container runtime options for the container instance */
-	runtimeOptions?: IContainerRuntimeOptions;
+	runtimeOptions?: IContainerRuntimeOptionsInternal;
 
 	/** Whether this runtime should be instantiated using a mixed-in attributor class */
 	enableAttribution?: boolean;
@@ -325,7 +351,7 @@ export class EventAndErrorTrackingLogger
 			downgrade: true,
 		},
 		// This log's category changes depending on the op latency. test results shouldn't be affected but if we see lots we'd like an alert from the logs.
-		{ eventName: "fluid:telemetry:OpPerf:OpRoundtripTime" },
+		{ eventName: "fluid:telemetry:OpRoundtripTime" },
 	];
 
 	constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
@@ -348,7 +374,7 @@ export class EventAndErrorTrackingLogger
 	}
 
 	send(event: ITelemetryBaseEvent): void {
-		if (this.expectedEvents.length > 0) {
+		if (isNonEmptyArray(this.expectedEvents)) {
 			const ee = this.expectedEvents[0].event;
 			if (ee.eventName === event.eventName) {
 				let matches = true;
@@ -531,7 +557,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.createContainer}
 	 */
-	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
+	public async createContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",
@@ -546,7 +575,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = true;
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 		return container;
 	}
 
@@ -577,7 +606,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		}
 		await container.attach(this.driver.createCreateNewRequest(this.documentId));
 		this._documentCreated = true;
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 	}
 
 	/**
@@ -637,7 +666,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = true;
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 		return container;
 	}
 
@@ -698,6 +727,11 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 */
 	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
 		this._documentIdStrategy.update(resolvedUrl);
+		this.logger.send({
+			category: "generic",
+			eventName: "DocumentIdUpdated",
+			...getUrlTelemetryProps(resolvedUrl),
+		});
 	}
 
 	/**
@@ -895,7 +929,10 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.createContainer}
 	 */
-	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
+	public async createContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",
@@ -910,7 +947,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		this._documentCreated = true;
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 		return container;
 	}
 
@@ -941,7 +978,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		}
 		await container.attach(this.driver.createCreateNewRequest(this.documentId));
 		this._documentCreated = true;
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 	}
 
 	/**
@@ -1008,7 +1045,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		this._documentCreated = true;
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 		return container;
 	}
 
@@ -1076,6 +1113,11 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 */
 	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
 		this._documentIdStrategy.update(resolvedUrl);
+		this.logger.send({
+			category: "generic",
+			eventName: "DocumentIdUpdated",
+			...getUrlTelemetryProps(resolvedUrl),
+		});
 	}
 
 	/**
@@ -1086,6 +1128,48 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
 	}
 }
+
+/**
+ * Get identifying information for a resolved URL.
+ * @remarks BEWARE: this function is only appropriate for usage in tests, as it logs unhashed document IDs,
+ * which is a privacy concern for production scenarios.
+ */
+function getUrlTelemetryProps(
+	resolvedUrl: IResolvedUrl | undefined,
+): ITelemetryBaseProperties {
+	if (!resolvedUrl) {
+		return {};
+	}
+
+	const props: Record<string, TelemetryBaseEventPropertyType> = {
+		url: resolvedUrl.url,
+		id: resolvedUrl.id,
+	};
+
+	if (isOdspResolvedUrl(resolvedUrl)) {
+		Object.assign(props, {
+			siteUrl: resolvedUrl.siteUrl,
+			driveId: resolvedUrl.driveId,
+			itemId: resolvedUrl.itemId,
+		});
+	}
+
+	return tagData(TelemetryDataTag.UserData, props);
+}
+
+/** Summarize the event with just the primary properties, for succinct output in case of test failure */
+const primaryEventProps = ({
+	category,
+	eventName,
+	error,
+	errorType,
+}: ITelemetryBaseEvent) => ({
+	category,
+	eventName,
+	error,
+	errorType,
+	["..."]: "*** Additional properties not shown, see full log for details ***",
+});
 
 /**
  * @internal
@@ -1101,7 +1185,7 @@ export function getUnexpectedLogErrorException(
 	if (results.unexpectedErrors.length > 0) {
 		return new Error(
 			`${prefix ?? ""}Unexpected Errors in Logs:\n${JSON.stringify(
-				results.unexpectedErrors,
+				results.unexpectedErrors.map(primaryEventProps),
 				undefined,
 				2,
 			)}`,

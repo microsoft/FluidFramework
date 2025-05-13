@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import {
+	type IMemoryTestObject,
+	benchmarkMemory,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { type ISharedMap, SharedMap } from "../../index.js";
@@ -48,7 +52,10 @@ describe("SharedMap memory usage", () => {
 		})(),
 	);
 
-	const numbersOfEntriesForTests = [1000, 10_000, 100_000];
+	const numbersOfEntriesForTests = isInPerformanceTestingMode
+		? [1000, 10_000, 100_000]
+		: // When not measuring perf, use a single smaller data size so the tests run faster.
+			[10];
 
 	for (const x of numbersOfEntriesForTests) {
 		benchmarkMemory(

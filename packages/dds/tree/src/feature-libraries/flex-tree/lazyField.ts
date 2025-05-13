@@ -3,115 +3,121 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	type AnchorNode,
 	CursorLocationType,
-	FieldAnchor,
-	FieldKey,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
-	TreeNavigationResult,
+	type ExclusiveMapTree,
+	type FieldAnchor,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
+	type NormalizedFieldUpPath,
+	type TreeNavigationResult,
 	inCursorNode,
-	isCursor,
 	iterateCursorField,
-	keyAsDetachedField,
+	rootFieldKey,
 } from "../../core/index.js";
-import {
-	assertValidIndex,
-	assertValidRangeIndices,
-	disposeSymbol,
-	fail,
-} from "../../util/index.js";
-// TODO: stop depending on contextuallyTyped
-import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
+import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import {
 	FieldKinds,
-	OptionalFieldEditBuilder,
-	SequenceFieldEditBuilder,
-	ValueFieldEditBuilder,
+	MappedEditBuilder,
+	type IDefaultEditBuilder,
+	type OptionalFieldEditBuilder,
+	type SequenceFieldEditBuilder,
+	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
-import { cursorForMapTreeField } from "../mapTreeCursor.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
 
-import { Context } from "./context.js";
+import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeTypedNodeUnion,
-	FlexTreeUnboxNodeUnion,
-	FlexibleNodeContent,
-	FlexibleNodeSubSequence,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
+	type FlexTreeTypedField,
+	type FlexTreeUnknownUnboxed,
 	TreeStatus,
 	flexTreeMarker,
+	flexTreeSlot,
 } from "./flexTreeTypes.js";
-import {
-	LazyEntity,
-	anchorSymbol,
-	cursorSymbol,
-	forgetAnchorSymbol,
-	isFreedSymbol,
-	tryMoveCursorToAnchorSymbol,
-} from "./lazyEntity.js";
-import { makeTree } from "./lazyNode.js";
-import { unboxedUnion } from "./unboxed.js";
-import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
+import { LazyEntity } from "./lazyEntity.js";
+import { type LazyTreeNode, makeTree } from "./lazyNode.js";
+import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
+import { cursorForMapTreeField } from "../mapTreeCursor.js";
 
 /**
- * Indexing for {@link LazyField.at} and {@link LazyField.boxedAt} supports the
- * usage of negative indices, which regular indexing using `[` and `]` does not.
+ * Reuse fields.
+ * Since field currently own cursors and register themselves for disposal when the node hit end of life,
+ * not reusing them results in memory leaks every time the field is accessed.
+ * Since the fields stay alive until the node is end of life reusing them this way is safe.
  *
- * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
- * for additional context on the semantics.
+ * This ins't a perfect solution:
  *
- * @returns A positive index that can be used in regular indexing. Returns
- * undefined if that index would be out-of-bounds.
+ * - This can cause leaks, like map nodes will keep all accessed field objects around. Since other things cause this same leak already, its not too bad.
+ * - This does not cache the root.
+ * - Finding the parent anchor to do the caching on has significant cost.
+ *
+ * Despite these limitations, this cache provides a large performance win in some common cases (over 10x), especially with how simple tree requests far more field objects than necessary currently.
  */
-function indexForAt(index: number, length: number): number | undefined {
-	let finalIndex = Math.trunc(+index);
-	if (isNaN(finalIndex)) {
-		finalIndex = 0;
-	}
-	if (finalIndex < -length || finalIndex >= length) {
-		return undefined;
-	}
-	if (finalIndex < 0) {
-		finalIndex = finalIndex + length;
-	}
-	return finalIndex;
-}
+const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
 
 export function makeField(
 	context: Context,
-	schema: FlexFieldSchema,
+	schema: FieldKindIdentifier,
 	cursor: ITreeSubscriptionCursor,
 ): FlexTreeField {
 	const fieldAnchor = cursor.buildFieldAnchor();
+	let usedAnchor = false;
 
-	const field = new (kindToClass.get(schema.kind) ?? fail("missing field implementation"))(
-		context,
-		schema,
-		cursor,
-		fieldAnchor,
+	const makeFlexTreeField = (): FlexTreeField => {
+		usedAnchor = true;
+		const field = new (
+			kindToClass.get(schema) ?? fail(0xb0f /* missing field implementation */)
+		)(context, schema, cursor, fieldAnchor);
+		return field;
+	};
+
+	if (fieldAnchor.parent === undefined) {
+		return makeFlexTreeField();
+	}
+
+	// For the common case (all but roots), cache field associated with its node's anchor and field key.
+	const anchorNode =
+		context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
+		fail(0xb10 /* missing anchor */);
+
+	// Since anchor-set could be reused across a flex tree context getting disposed, key off the flex tree node not the anchor.
+	const cacheKey = anchorNode.slots.get(flexTreeSlot);
+
+	// If there is no flex tree parent node, skip caching: this is not expected to be a hot path, but should probably be fixed at some point.
+	if (cacheKey === undefined) {
+		return makeFlexTreeField();
+	}
+
+	const innerCache = getOrCreate(
+		fieldCache,
+		cacheKey,
+		() => new Map<FieldKey, FlexTreeField>(),
 	);
-	return field;
+	const result = getOrCreate(innerCache, fieldAnchor.fieldKey, makeFlexTreeField);
+	if (!usedAnchor) {
+		// The anchor must be disposed to avoid leaking. In the case of a cache hit,
+		// we are not transferring ownership to a new FlexTreeField, so it must be disposed of here to avoid the leak.
+		context.checkout.forest.anchors.forget(fieldAnchor.parent);
+	}
+	return result;
 }
 
 /**
- * A Proxy target, which together with a `fieldProxyHandler` implements a basic access to
- * the nodes of {@link EditableField} by means of the cursors.
+ * Base type for fields implementing {@link FlexTreeField} using cursors.
  */
-export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends FlexAllowedTypes>
-	extends LazyEntity<FlexFieldSchema<TKind, TTypes>, FieldAnchor>
-	implements FlexTreeField
-{
+export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexTreeField {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Field {
 		return FlexTreeEntityKind.Field;
 	}
@@ -125,11 +131,11 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 
 	public constructor(
 		context: Context,
-		schema: FlexFieldSchema<TKind, TTypes>,
+		public readonly schema: FieldKindIdentifier,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
-		super(context, schema, cursor, fieldAnchor);
+		super(context, cursor, fieldAnchor);
 		assert(cursor.mode === CursorLocationType.Fields, 0x77b /* must be in fields mode */);
 		this.key = cursor.getFieldKey();
 		// Fields currently live as long as their parent does.
@@ -137,462 +143,235 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 		if (fieldAnchor.parent !== undefined) {
 			const anchorNode =
 				context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
-				fail("parent anchor node should always exist since field is under a node");
-			this.offAfterDestroy = anchorNode.on("afterDestroy", () => {
+				fail(0xb11 /* parent anchor node should always exist since field is under a node */);
+			this.offAfterDestroy = anchorNode.events.on("afterDestroy", () => {
 				this[disposeSymbol]();
 			});
 		}
 	}
 
-	public is<TSchema extends FlexFieldSchema>(
-		schema: TSchema,
-	): this is FlexTreeTypedField<TSchema> {
+	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
 		assert(
-			this.context.schema.policy.fieldKinds.get(schema.kind.identifier) === schema.kind,
-			0x77c /* Narrowing must be done to a kind that exists in this context */,
+			this.context.schemaPolicy.fieldKinds.get(kind.identifier) === kind,
+			0xa26 /* Narrowing must be done to a kind that exists in this context */,
 		);
 
-		return this.schema.equals(schema);
-	}
-
-	public isSameAs(other: FlexTreeField): boolean {
-		assert(
-			other.context === this.context,
-			0x77d /* Content from different flex trees should not be used together */,
-		);
-		return this.key === other.key && this.parent === other.parent;
+		return this.schema === kind.identifier;
 	}
 
 	public get parent(): FlexTreeNode | undefined {
-		if (this[anchorSymbol].parent === undefined) {
+		if (this.anchor.parent === undefined) {
 			return undefined;
 		}
 
-		const cursor = this[cursorSymbol];
+		const cursor = this.cursor;
 		cursor.exitField();
 		const output = makeTree(this.context, cursor);
 		cursor.enterField(this.key);
 		return output;
 	}
 
-	protected override [tryMoveCursorToAnchorSymbol](
+	protected override tryMoveCursorToAnchor(
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.checkout.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
+		return this.context.checkout.forest.tryMoveCursorToField(this.anchor, cursor);
 	}
 
-	protected override [forgetAnchorSymbol](): void {
+	protected override forgetAnchor(): void {
 		this.offAfterDestroy?.();
-		if (this[anchorSymbol].parent === undefined) return;
-		this.context.checkout.forest.anchors.forget(this[anchorSymbol].parent);
+		if (this.anchor.parent === undefined) return;
+		this.context.checkout.forest.anchors.forget(this.anchor.parent);
 	}
 
 	public get length(): number {
-		return this[cursorSymbol].getFieldLength();
+		return this.cursor.getFieldLength();
 	}
 
-	public atIndex(index: number): FlexTreeUnboxNodeUnion<TTypes> {
-		return inCursorNode(this[cursorSymbol], index, (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
+	public atIndex(index: number): FlexTreeUnknownUnboxed {
+		return inCursorNode(this.cursor, index, (cursor) =>
+			unboxedFlexNode(this.context, cursor, this.anchor),
 		);
 	}
 
-	public boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined {
+	public boxedAt(index: number): FlexTreeNode | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
 			return undefined;
 		}
 
-		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
-			makeTree(this.context, cursor),
-		) as unknown as FlexTreeTypedNodeUnion<TTypes>;
+		return inCursorNode(this.cursor, finalIndex, (cursor) => makeTree(this.context, cursor));
 	}
 
-	public map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[] {
+	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
 	}
 
-	public mapBoxed<U>(
-		callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U,
-	): U[] {
-		return Array.from(this.boxedIterator(), callbackfn);
+	public boxedIterator(): IterableIterator<FlexTreeNode> {
+		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
 	}
 
-	public boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
-		return iterateCursorField(
-			this[cursorSymbol],
-			(cursor) => makeTree(this.context, cursor) as unknown as FlexTreeTypedNodeUnion<TTypes>,
+	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
+		return iterateCursorField(this.cursor, (cursor) =>
+			unboxedFlexNode(this.context, cursor, this.anchor),
 		);
 	}
 
-	public [Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>> {
-		return iterateCursorField(this[cursorSymbol], (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
-		);
-	}
-
-	public treeStatus(): TreeStatus {
-		if (this[isFreedSymbol]()) {
-			return TreeStatus.Deleted;
-		}
-		const fieldAnchor = this[anchorSymbol];
-		const parentAnchor = fieldAnchor.parent;
-		// If the parentAnchor is undefined it is a detached field.
-		if (parentAnchor === undefined) {
-			return treeStatusFromDetachedField(keyAsDetachedField(fieldAnchor.fieldKey));
-		}
-		const parentAnchorNode = this.context.checkout.forest.anchors.locate(parentAnchor);
-
-		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
-		assert(parentAnchorNode !== undefined, 0x77e /* parentAnchorNode must exist. */);
-		return treeStatusFromAnchorCache(parentAnchorNode);
-	}
-
-	public getFieldPath(): FieldUpPath {
-		return this[cursorSymbol].getFieldPath();
+	public getFieldPath(): NormalizedFieldUpPath {
+		return { parent: this.parent?.anchorNode, field: this.key };
 	}
 
 	/**
 	 * Returns the path to this field to use for editing. Throws iff this path is not {@link TreeStatus#InDocument}.
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
-	public getFieldPathForEditing(): FieldUpPath {
-		assert(
-			this.treeStatus() === TreeStatus.InDocument,
-			0x77f /* Editing only allowed on fields with TreeStatus.InDocument status */,
+	public getFieldPathForEditing(): NormalizedFieldUpPath {
+		if (!this.isFreed()) {
+			if (
+				// Only allow editing if we are the root document field...
+				(this.parent === undefined && this.anchor.fieldKey === rootFieldKey) ||
+				// ...or are under a node in the document
+				(this.parent !== undefined &&
+					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument)
+			) {
+				return this.getFieldPath();
+			}
+		}
+
+		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+	}
+
+	protected getEditor(): IDefaultEditBuilder<ITreeCursorSynchronous> {
+		return new MappedEditBuilder(
+			this.context.checkout.editor,
+			(cursor: ITreeCursorSynchronous) => this.context.checkout.forest.chunkField(cursor),
 		);
-		return this.getFieldPath();
 	}
 }
 
-export class LazySequence<TTypes extends FlexAllowedTypes>
-	extends LazyField<typeof FieldKinds.sequence, TTypes>
-	implements FlexTreeSequenceField<TTypes>
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.sequence, TTypes>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-
-	public at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined {
+export class LazySequence extends LazyField implements FlexTreeSequenceField {
+	public at(index: number): FlexTreeUnknownUnboxed | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
 			return undefined;
 		}
 
-		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
-		);
+		return this.atIndex(finalIndex);
 	}
-	public get asArray(): readonly FlexTreeUnboxNodeUnion<TTypes>[] {
+	public get asArray(): readonly FlexTreeUnknownUnboxed[] {
 		return this.map((x) => x);
 	}
 
-	public sequenceEditor(): SequenceFieldEditBuilder {
+	public editor: SequenceFieldEditBuilder<ExclusiveMapTree[]> = {
+		insert: (index, newContent) => {
+			this.sequenceEditor().insert(index, cursorForMapTreeField(newContent));
+		},
+		remove: (index, count) => {
+			this.sequenceEditor().remove(index, count);
+		},
+	};
+
+	private sequenceEditor(): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.checkout.editor.sequenceField(fieldPath);
-		return fieldEditor;
-	}
-
-	public insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void {
-		assertValidIndex(index, this, true);
-		const content: ITreeCursorSynchronous = isCursor(value)
-			? prepareFieldCursorForInsert(value)
-			: cursorForMapTreeField(
-					Array.from(value, (item) =>
-						applyTypesFromContext(this.context, this.schema.allowedTypeSet, item),
-					),
-			  );
-
-		const fieldEditor = this.sequenceEditor();
-		fieldEditor.insert(index, content);
-	}
-
-	public insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void {
-		this.insertAt(0, value);
-	}
-
-	public insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void {
-		this.insertAt(this.length, value);
-	}
-
-	public removeAt(index: number): void {
-		const fieldEditor = this.sequenceEditor();
-		fieldEditor.remove(index, 1);
-	}
-
-	public moveToStart(sourceIndex: number): void;
-	public moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
-	public moveToStart(
-		sourceIndex: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
-	}
-	public moveToEnd(sourceIndex: number): void;
-	public moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
-	public moveToEnd(sourceIndex: number, source?: FlexTreeSequenceField<FlexAllowedTypes>): void {
-		this._moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
-	}
-	public moveToIndex(index: number, sourceIndex: number): void;
-	public moveToIndex(
-		index: number,
-		sourceIndex: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-	public moveToIndex(
-		index: number,
-		sourceIndex: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
-	}
-
-	public moveRangeToStart(sourceStart: number, sourceEnd: number): void;
-	public moveRangeToStart(
-		sourceStart: number,
-		sourceEnd: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-	public moveRangeToStart(
-		sourceStart: number,
-		sourceEnd: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(0, sourceStart, sourceEnd, source);
-	}
-
-	public moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
-	public moveRangeToEnd(
-		sourceStart: number,
-		sourceEnd: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-	public moveRangeToEnd(
-		sourceStart: number,
-		sourceEnd: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
-	}
-
-	public moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-	public moveRangeToIndex(
-		index: number,
-		sourceStart: number,
-		sourceEnd: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-	public moveRangeToIndex(
-		index: number,
-		sourceStart: number,
-		sourceEnd: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(index, sourceStart, sourceEnd, source);
-	}
-
-	private _moveRangeToIndex(
-		index: number,
-		sourceStart: number,
-		sourceEnd: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
-
-		// TODO: determine support for move across different sequence types
-		assert(
-			sourceField instanceof LazySequence,
-			0x7b1 /* Unsupported sequence implementation. */,
-		);
-		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
-		if (this.schema.types !== undefined && sourceField !== this) {
-			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode =
-					sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
-				if (!this.schema.types.has(sourceNode.schema.name)) {
-					throw new Error("Type in source sequence is not allowed in destination.");
-				}
-			}
-		}
-		const movedCount = sourceEnd - sourceStart;
-		assertValidIndex(index, this, true);
-		const sourceFieldPath = sourceField.getFieldPath();
-		const destinationFieldPath = this.getFieldPath();
-		this.context.checkout.editor.move(
-			sourceFieldPath,
-			sourceStart,
-			movedCount,
-			destinationFieldPath,
-			index,
-		);
+		return this.getEditor().sequenceField(fieldPath);
 	}
 }
 
-export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
-	extends LazyField<typeof FieldKinds.required, TTypes>
-	implements FlexTreeRequiredField<TTypes>
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
+export class LazyValueField extends LazyField implements FlexTreeRequiredField {
+	public editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
+		set: (newContent) => {
+			this.valueFieldEditor().set(cursorForMapTreeField([newContent]));
+		},
+	};
+
+	private valueFieldEditor(): ValueFieldEditBuilder<ITreeCursorSynchronous> {
+		const fieldPath = this.getFieldPathForEditing();
+		const fieldEditor = this.getEditor().valueField(fieldPath);
+		return fieldEditor;
 	}
 
-	public get content(): FlexTreeUnboxNodeUnion<TTypes> {
+	public get content(): FlexTreeUnknownUnboxed {
 		return this.atIndex(0);
 	}
-
-	public set content(newContent: FlexibleNodeContent<TTypes>) {
-		fail("cannot set content in readonly field");
-	}
-
-	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
-		return this.boxedAt(0) ?? fail("value node must have 1 item");
-	}
 }
 
-export class LazyValueField<TTypes extends FlexAllowedTypes>
-	extends ReadonlyLazyValueField<TTypes>
-	implements FlexTreeRequiredField<TTypes>
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
+export class LazyOptionalField extends LazyField implements FlexTreeOptionalField {
+	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
+		set: (newContent, wasEmpty) => {
+			this.optionalEditor().set(
+				newContent !== undefined ? cursorForMapTreeField([newContent]) : newContent,
+				wasEmpty,
+			);
+		},
+	};
 
-	private valueFieldEditor(): ValueFieldEditBuilder {
+	private optionalEditor(): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.checkout.editor.valueField(fieldPath);
+		const fieldEditor = this.getEditor().optionalField(fieldPath);
 		return fieldEditor;
 	}
 
-	public override get content(): FlexTreeUnboxNodeUnion<TTypes> {
-		return this.atIndex(0);
-	}
-
-	public override set content(newContent: FlexibleNodeContent<TTypes>) {
-		const content: ITreeCursorSynchronous[] = isCursor(newContent)
-			? prepareNodeCursorForInsert(newContent)
-			: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
-		const fieldEditor = this.valueFieldEditor();
-		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
-		fieldEditor.set(content[0]);
-	}
-
-	public override get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
-		return this.boxedAt(0) ?? fail("value node must have 1 item");
-	}
-}
-
-export class LazyIdentifierField<TTypes extends FlexAllowedTypes>
-	extends ReadonlyLazyValueField<TTypes>
-	implements FlexTreeRequiredField<TTypes>
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-}
-
-export class LazyOptionalField<TTypes extends FlexAllowedTypes>
-	extends LazyField<typeof FieldKinds.optional, TTypes>
-	implements FlexTreeOptionalField<TTypes>
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.optional, TTypes>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-
-	private optionalEditor(): OptionalFieldEditBuilder {
-		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.checkout.editor.optionalField(fieldPath);
-		return fieldEditor;
-	}
-
-	public get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined {
+	public get content(): FlexTreeUnknownUnboxed | undefined {
 		return this.length === 0 ? undefined : this.atIndex(0);
 	}
-
-	public set content(newContent: FlexibleNodeContent<TTypes> | undefined) {
-		const content: ITreeCursorSynchronous[] =
-			newContent === undefined
-				? []
-				: isCursor(newContent)
-				? prepareNodeCursorForInsert(newContent)
-				: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
-		const fieldEditor = this.optionalEditor();
-		assert(
-			content.length <= 1,
-			0x781 /* optional field content should normalize at most one item */,
-		);
-		fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
-	}
-
-	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> | undefined {
-		return this.length === 0 ? undefined : this.boxedAt(0);
-	}
 }
 
-export class LazyForbiddenField<TTypes extends FlexAllowedTypes> extends LazyField<
-	typeof FieldKinds.forbidden,
-	TTypes
-> {}
+export class LazyForbiddenField extends LazyField {}
 
-type Builder = new <TTypes extends FlexAllowedTypes>(
+type Builder = new (
 	context: Context,
-	schema: FlexFieldSchema<any, TTypes>,
+	// Correct use of these builders requires the builder of the matching type to be used.
+	schema: FieldKindIdentifier,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
-) => LazyField<any, TTypes>;
+) => LazyField;
 
-const builderList: [FlexFieldKind, Builder][] = [
-	[FieldKinds.forbidden, LazyForbiddenField],
-	[FieldKinds.optional, LazyOptionalField],
-	[FieldKinds.sequence, LazySequence],
-	[FieldKinds.required, LazyValueField],
-	[FieldKinds.identifier, LazyIdentifierField],
+const builderList: [FieldKindIdentifier, Builder][] = [
+	[FieldKinds.forbidden.identifier, LazyForbiddenField],
+	[FieldKinds.optional.identifier, LazyOptionalField],
+	[FieldKinds.sequence.identifier, LazySequence],
+	[FieldKinds.required.identifier, LazyValueField],
+	[FieldKinds.identifier.identifier, LazyValueField],
 ];
 
-const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);
+const kindToClass: ReadonlyMap<FieldKindIdentifier, Builder> = new Map(builderList);
 
 /**
- * Prepare a fields cursor (holding a sequence of nodes) for inserting.
+ * Returns the flex tree node, or the value if it has one.
  */
-function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
-	// TODO: optionally validate content against schema.
+export function unboxedFlexNode(
+	context: Context,
+	cursor: ITreeSubscriptionCursor,
+	fieldAnchor: FieldAnchor,
+): FlexTreeUnknownUnboxed {
+	const value = cursor.value;
+	if (value !== undefined) {
+		return value;
+	}
 
-	assert(cursor.mode === CursorLocationType.Fields, 0x8cb /* should be in fields mode */);
-	return cursor;
-}
+	// Try accessing cached child node via anchors.
+	// This avoids O(depth) related costs from makeTree in the cached case.
+	const anchor = fieldAnchor.parent;
+	let child: AnchorNode | undefined;
+	if (anchor !== undefined) {
+		const anchorNode = context.checkout.forest.anchors.locate(anchor);
+		assert(anchorNode !== undefined, 0xa4c /* missing anchor */);
+		child = anchorNode.childIfAnchored(fieldAnchor.fieldKey, cursor.fieldIndex);
+	} else {
+		child = context.checkout.forest.anchors.find({
+			parent: undefined,
+			parentField: fieldAnchor.fieldKey,
+			parentIndex: cursor.fieldIndex,
+		});
+	}
 
-/**
- * Prepare a node cursor (holding a single node) for inserting.
- */
-function prepareNodeCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous[] {
-	// TODO: optionally validate content against schema.
+	if (child !== undefined) {
+		const cached = child.slots.get(flexTreeSlot);
+		if (cached !== undefined) {
+			return cached;
+		}
+	}
 
-	assert(cursor.mode === CursorLocationType.Nodes, 0x805 /* should be in nodes mode */);
-	return [cursor];
+	return makeTree(context, cursor);
 }

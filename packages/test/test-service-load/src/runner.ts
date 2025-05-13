@@ -11,20 +11,26 @@ import {
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
+import {
+	IContainerExperimental,
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
+import { createLogger } from "./FileLogger.js";
 import {
 	FaultInjectionDocumentServiceFactory,
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
+import { getProfile } from "./getProfile.js";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -35,18 +41,10 @@ import {
 import {
 	configProvider,
 	createCodeLoader,
-	createLogger,
 	createTestDriver,
-	getProfile,
 	globalConfigurations,
-	safeExit,
+	printStatus,
 } from "./utils.js";
-
-function printStatus(runConfig: IRunConfig, message: string) {
-	if (runConfig.verbose) {
-		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
-	}
-}
 
 async function main() {
 	const parseIntArg = (value: any): number => {
@@ -70,6 +68,7 @@ async function main() {
 			parseIntArg,
 		)
 		.requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
+		.requiredOption("-o, --outputDir <path>", "Path for log output files")
 		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
 		.option(
 			"-l, --log <filter>",
@@ -87,24 +86,14 @@ async function main() {
 	const log: string | undefined = commander.log;
 	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed;
+	const outputDir: string = commander.outputDir;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
-
-	const profile = getProfile(profileName);
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
 	}
 
-	if (url === undefined) {
-		console.error("Missing --url argument needed to run child process");
-		process.exit(-1);
-	}
-
-	// combine the runId with the seed for generating local randoms
-	// this makes runners repeatable, but ensures each runner
-	// will get its own set of randoms
-	const random = makeRandom(seed, runId);
-	const logger = await createLogger({
+	const { logger, flush } = await createLogger(outputDir, runId.toString(), {
 		runId,
 		driverType: driver,
 		driverEndpointName: endpoint,
@@ -129,7 +118,19 @@ async function main() {
 
 	let result = -1;
 	try {
-		result = await runnerProcess(
+		const profile = getProfile(profileName);
+
+		if (url === undefined) {
+			console.error("Missing --url argument needed to run child process");
+			throw new Error("Missing --url argument needed to run child process");
+		}
+
+		// combine the runId with the seed for generating local randoms
+		// this makes runners repeatable, but ensures each runner
+		// will get its own set of randoms
+		const random = makeRandom(seed, runId);
+
+		await runnerProcess(
 			driver,
 			endpoint,
 			{
@@ -144,10 +145,19 @@ async function main() {
 			seed,
 			enableOpsMetrics,
 		);
+		result = 0;
 	} catch (e) {
 		logger.sendErrorEvent({ eventName: "runnerFailed" }, e);
 	} finally {
-		await safeExit(result, url, runId);
+		// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+		// TODO: Track down the dangling promise and fix it.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 1000);
+		});
+		// Flush the logs
+		await flush();
+
+		process.exit(result);
 	}
 }
 
@@ -194,7 +204,7 @@ async function runnerProcess(
 	url: string,
 	seed: number,
 	enableOpsMetrics: boolean,
-): Promise<number> {
+): Promise<void> {
 	// Assigning no-op value due to linter.
 	let metricsCleanup: () => void = () => {};
 
@@ -204,7 +214,13 @@ async function runnerProcess(
 	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
 	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
 
-	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
+	const testDriver: ITestDriver = await createTestDriver(
+		driver,
+		endpoint,
+		seed,
+		runConfig.runId,
+		false, // supportsBrowserAuth
+	);
 
 	// Cycle between creating new factory vs. reusing factory.
 	// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
@@ -228,7 +244,9 @@ async function runnerProcess(
 
 			// Construct the loader
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
-			const testConfiguration = configurations[runConfig.runId % configurations.length];
+			// non-null guaranteed by bounds check
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const testConfiguration = configurations[runConfig.runId % configurations.length]!;
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",
 				details: JSON.stringify({
@@ -238,7 +256,7 @@ async function runnerProcess(
 					configurations: { ...globalConfigurations, ...testConfiguration },
 				}),
 			});
-			const loader = new Loader({
+			const loaderProps: ILoaderProps = {
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
 				codeLoader: createCodeLoader(
@@ -247,12 +265,16 @@ async function runnerProcess(
 				logger: runConfig.logger,
 				options: runConfig.loaderConfig,
 				configProvider: configProvider(testConfiguration),
-			});
+			};
 
 			const stashedOps = stashedOpP ? await stashedOpP : undefined;
 			stashedOpP = undefined; // delete to avoid reuse
 
-			container = await loader.resolve({ url, headers }, stashedOps);
+			container = await loadExistingContainer({
+				...loaderProps,
+				request: { url, headers },
+				pendingLocalState: stashedOps,
+			});
 
 			container.connect();
 			const test = (await container.getEntryPoint()) as ILoadTest;
@@ -289,12 +311,7 @@ async function runnerProcess(
 			// If undefined then no fault injection.
 			const faultInjection = runConfig.testConfig.faultInjectionMs;
 			if (faultInjection) {
-				scheduleContainerClose(
-					container,
-					runConfig,
-					faultInjection.min,
-					faultInjection.max,
-				);
+				scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
 				scheduleFaultInjection(
 					documentServiceFactory,
 					container,
@@ -348,7 +365,6 @@ async function runnerProcess(
 			metricsCleanup();
 		}
 	}
-	return 0;
 }
 
 function scheduleFaultInjection(
@@ -370,8 +386,9 @@ function scheduleFaultInjection(
 				container.connectionState === ConnectionState.Connected &&
 				container.resolvedUrl !== undefined
 			) {
-				const deltaConn = ds.documentServices.get(container.resolvedUrl)
-					?.documentDeltaConnection;
+				const deltaConn = ds.documentServices.get(
+					container.resolvedUrl,
+				)?.documentDeltaConnection;
 				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);
@@ -449,9 +466,7 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close(
-									new FaultInjectionError("scheduleContainerClose", false),
-								);
+								container.close(new FaultInjectionError("scheduleContainerClose", false));
 							}
 						}, leaveTime);
 					}
@@ -551,8 +566,9 @@ async function setupOpsMetrics(
 	const getUserName = (userContainer: IContainer) => {
 		const clientId = userContainer.clientId;
 		if (clientId !== undefined && clientId.length > 0) {
-			if (clientIdUserNameMap[clientId]) {
-				return clientIdUserNameMap[clientId];
+			const maybeUserName = clientIdUserNameMap[clientId];
+			if (maybeUserName !== undefined) {
+				return maybeUserName;
 			}
 
 			const userName: string | undefined = userContainer.getQuorum().getMember(clientId)
@@ -681,6 +697,9 @@ async function setupOpsMetrics(
 }
 
 main().catch((error) => {
+	// Most of the time we'll exit the process through the process.exit() in main.
+	// However, if we error outside of that try/catch block we'll catch it here.
+	console.error("Error occurred during setup");
 	console.error(error);
 	process.exit(-1);
 });

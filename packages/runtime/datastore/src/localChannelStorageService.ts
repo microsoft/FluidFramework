@@ -4,8 +4,8 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import { IBlob, ITree, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils/internal";
 
 export class LocalChannelStorageService implements IChannelStorageService {
@@ -43,10 +43,7 @@ export class LocalChannelStorageService implements IChannelStorageService {
 
 				case TreeEntry.Tree:
 					if (path.startsWith(entry.path)) {
-						return this.readBlobSyncInternal(
-							path.substr(entry.path.length + 1),
-							entry.value,
-						);
+						return this.readBlobSyncInternal(path.substr(entry.path.length + 1), entry.value);
 					}
 					break;
 

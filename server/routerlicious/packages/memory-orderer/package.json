@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-memory-orderer",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"description": "Fluid server in memory orderer",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,7 +32,7 @@
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:webpack": "webpack --config webpack.config.cjs",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -66,7 +66,7 @@
 		"@types/debug": "^4.1.5",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/lodash": "^4.14.118",
-		"@types/node": "^18.17.1",
+		"@types/node": "^18.19.39",
 		"@types/ws": "^6.0.1",
 		"assert": "^2.0.0",
 		"debug": "^4.3.4",
@@ -74,27 +74,43 @@
 		"events": "^3.1.0",
 		"lodash": "^4.17.21",
 		"sillyname": "^0.1.0",
-		"uuid": "^9.0.0",
-		"ws": "^7.4.6"
+		"uuid": "^11.1.0",
+		"ws": "^7.5.10"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@4.0.0",
+		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@5.0.0",
 		"@types/mocha": "^10.0.1",
-		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6",
-		"webpack": "^5.82.0"
+		"webpack": "^5.94.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Class_LocalContext": {
+				"forwardCompat": false
+			},
+			"Class_LocalKafka": {
+				"forwardCompat": false
+			},
+			"Class_LocalLambdaController": {
+				"forwardCompat": false
+			},
+			"Class_LocalOrderer": {
+				"forwardCompat": false
+			},
+			"Interface_IKafkaSubscriber": {
+				"forwardCompat": false
+			}
+		},
+		"entrypoint": "public"
 	}
 }

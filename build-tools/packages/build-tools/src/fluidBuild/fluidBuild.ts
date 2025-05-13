@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import chalk from "chalk";
+import chalk from "picocolors";
+import { Spinner } from "picospinner";
 
-import { commonOptions } from "../common/commonOptions";
-import { getResolvedFluidRoot } from "../common/fluidUtils";
+import { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { BuildGraph, BuildResult } from "./buildGraph";
+import { commonOptions } from "./commonOptions";
+import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
 import { FluidRepoBuild } from "./fluidRepoBuild";
+import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils";
 import { options, parseOptions } from "./options";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;
@@ -20,11 +23,20 @@ parseOptions(process.argv);
 async function main() {
 	const timer = new Timer(commonOptions.timer);
 	const resolvedRoot = await getResolvedFluidRoot(true);
+	const fluidConfig = getFluidBuildConfig(resolvedRoot, false);
+	const isDefaultConfig = fluidConfig === DEFAULT_FLUIDBUILD_CONFIG;
+	const suffix = isDefaultConfig
+		? ` (${chalk.yellowBright("inferred packages and tasks")})`
+		: "";
+	log(`Build Root: ${resolvedRoot}${suffix}`);
 
-	log(`Build Root: ${resolvedRoot}`);
+	// Load the packages
+	const repo = new FluidRepoBuild({
+		repoRoot: resolvedRoot,
+		gitRepo: new GitRepo(resolvedRoot),
+		fluidBuildConfig: fluidConfig,
+	});
 
-	// Load the package
-	const repo = FluidRepoBuild.create(resolvedRoot);
 	timer.time("Package scan completed");
 
 	// Set matched package based on options filter
@@ -32,12 +44,6 @@ async function main() {
 	if (!matched) {
 		error("No package matched");
 		process.exit(-4);
-	}
-
-	// Dependency checks
-	if (options.depcheck) {
-		await repo.depcheck(false);
-		timer.time("Dependencies check completed", true);
 	}
 
 	// Uninstall
@@ -50,9 +56,7 @@ async function main() {
 
 		if (!options.install) {
 			let errorStep: string | undefined = undefined;
-			if (options.symlink) {
-				errorStep = "symlink";
-			} else if (options.clean) {
+			if (options.clean) {
 				errorStep = "clean";
 			} else if (options.build) {
 				errorStep = "build";
@@ -74,32 +78,24 @@ async function main() {
 		timer.time("Install completed", true);
 	}
 
-	// Symlink check
-	const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
-	await repo.symlink(options);
-	timer.time(`${symlinkTaskName} completed`, options.symlink);
-
 	let failureSummary = "";
 	let exitCode = 0;
 	if (options.buildTaskNames.length !== 0) {
-		log(
-			`Symlink in ${
-				options.fullSymlink
-					? "full"
-					: options.fullSymlink === false
-						? "isolated"
-						: "non-dependent"
-			} mode`,
-		);
-
 		// build the graph
 		let buildGraph: BuildGraph;
+		const spinner = new Spinner("Creating build graph...");
 		try {
-			buildGraph = repo.createBuildGraph(options, options.buildTaskNames);
+			// Warning any text output to terminal before spinner is halted
+			// risks being lost. It is known to drop text that exceeds a single
+			// line or the terminal width.
+			spinner.start();
+			buildGraph = repo.createBuildGraph(options.buildTaskNames);
 		} catch (e: unknown) {
+			spinner.stop();
 			error((e as Error).message);
 			process.exit(-11);
 		}
+		spinner.succeed("Build graph created.");
 		timer.time("Build graph creation completed");
 
 		// Check install
@@ -134,14 +130,12 @@ async function main() {
 		log(`Other switches with no explicit build script, not building.`);
 	}
 
+	const totalTime = timer.getTotalTime();
 	const timeInMinutes =
-		timer.getTotalTime() > 60000
-			? ` (${Math.floor(timer.getTotalTime() / 60000)}m ${(
-					(timer.getTotalTime() % 60000) /
-					1000
-				).toFixed(3)}s)`
+		totalTime > 60000
+			? ` (${Math.floor(totalTime / 60000)}m ${((totalTime % 60000) / 1000).toFixed(3)}s)`
 			: "";
-	log(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s${timeInMinutes}`);
+	log(`Total time: ${(totalTime / 1000).toFixed(3)}s${timeInMinutes}`);
 
 	if (failureSummary !== "") {
 		log(`\n${failureSummary}`);

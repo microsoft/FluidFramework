@@ -5,6 +5,11 @@
 
 /**
  * Base interface for objects that require lifetime management via explicit disposal.
+ * @remarks
+ * This is sealed to reserve the ability to add `Symbol.dispose` and thus extend
+ * {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable} in the future
+ * as a non breaking change.
+ * @sealed
  * @public
  */
 export interface IDisposable {

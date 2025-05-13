@@ -7,13 +7,19 @@ import assert from "assert";
 
 import { ITestDriver, RouterliciousEndpoint } from "@fluid-internal/test-driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
 import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi.js";
+import {
+	RouterliciousDriverApi,
+	RouterliciousDriverApiType,
+} from "./routerliciousDriverApi.js";
 
 interface IServiceEndpoint {
 	deltaStreamUrl: string;
@@ -179,7 +185,10 @@ export class RouterliciousTestDriver implements ITestDriver {
 			name: uuid(),
 		});
 
-		return new this.api.RouterliciousDocumentServiceFactory(tokenProvider, this.driverPolicies);
+		return new this.api.RouterliciousDocumentServiceFactory(
+			tokenProvider,
+			this.driverPolicies,
+		);
 	}
 
 	createUrlResolver(): InsecureUrlResolver {

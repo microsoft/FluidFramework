@@ -3,16 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
-	InsertableTreeFieldFromImplicitField,
+	type InsertableTreeFieldFromImplicitField,
 	type NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,
 } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../simple-tree/proxies.js";
 import { hydrate } from "./utils.js";
 
 describe("SharedTreeObject factories", () => {
@@ -59,9 +57,6 @@ describe("SharedTreeObject factories", () => {
 				["a", 0],
 				["b", 1],
 			]),
-			// TODO: Omit optional field once correctly supported.
-			// https://dev.azure.com/fluidframework/internal/_workitems/edit/6569
-			optional: undefined,
 			grand: {
 				child: {
 					list: [new ChildA({ content: 42 }), new ChildB({ content: 42 })],
@@ -137,56 +132,6 @@ describe("SharedTreeObject factories", () => {
 		assert.deepEqual(root.grand.child.list, [{ content: 43 }, { content: 43 }]);
 		assert.deepEqual(root.grand.child.map.get("a"), { content: 43 });
 		assert.deepEqual(root.grand.child.map.get("b"), { content: 43 });
-	});
-
-	describe("factory content extraction", () => {
-		it("extracts a primitive", () => {
-			assert.equal(extractFactoryContent(42), 42);
-		});
-		it("extracts an object", () => {
-			assert.deepEqual(extractFactoryContent(new ChildA({ content: 42 })), {
-				content: 42,
-			});
-		});
-		it("extracts an array of primitives", () => {
-			assert.deepEqual(extractFactoryContent([42, 42]), [42, 42]);
-		});
-		it("extracts an array of objects", () => {
-			assert.deepEqual(
-				extractFactoryContent([new ChildA({ content: 42 }), new ChildA({ content: 42 })]),
-				[{ content: 42 }, { content: 42 }],
-			);
-		});
-		it("extracts an array of maps", () => {
-			assert.deepEqual(extractFactoryContent([new Map([["a", 42]])]), [new Map([["a", 42]])]);
-		});
-		it("extracts a map of primitives", () => {
-			assert.deepEqual(extractFactoryContent(new Map([["a", 42]])), new Map([["a", 42]]));
-		});
-		it("extracts a map of objects", () => {
-			assert.deepEqual(
-				extractFactoryContent(new Map([["a", new ChildA({ content: 42 })]])),
-				new Map([["a", { content: 42 }]]),
-			);
-		});
-		it("extracts a map of arrays", () => {
-			assert.deepEqual(extractFactoryContent(new Map([["a", [42]]])), new Map([["a", [42]]]));
-		});
-		it("extracts an object tree", () => {
-			assert.deepEqual(
-				extractFactoryContent(
-					new ChildC({
-						child: new ChildD({
-							list: [new ChildA({ content: 42 })],
-							map: new Map([["a", new ChildA({ content: 42 })]]),
-						}),
-					}),
-				),
-				{
-					child: { list: [{ content: 42 }], map: new Map([["a", { content: 42 }]]) },
-				},
-			);
-		});
 	});
 
 	it("produce proxies that are hydrated before the tree can be read", () => {

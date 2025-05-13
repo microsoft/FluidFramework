@@ -6,8 +6,8 @@
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ValueType, bindHandles } from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { ValueType } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMapEvents } from "./interfaces.js";
 import type {
@@ -208,7 +208,7 @@ export class MapKernel {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-					  { value: [nextVal.value[0], nextVal.value[1].value], done: false };
+						{ value: [nextVal.value[0], nextVal.value[1].value], done: false };
 			},
 			[Symbol.iterator](): IterableIterator<[string, unknown]> {
 				return this;
@@ -231,7 +231,7 @@ export class MapKernel {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-					  { value: nextVal.value.value as unknown, done: false };
+						{ value: nextVal.value.value as unknown, done: false };
 			},
 			[Symbol.iterator](): IterableIterator<unknown> {
 				return this;
@@ -299,10 +299,6 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			// this is necessary to bind the potential handles in the value
-			// to this DDS, as we do not walk the object normally unless we
-			// are attached
-			bindHandles(localValue.value, this.serializer, this.handle);
 			return;
 		}
 
@@ -441,13 +437,24 @@ export class MapKernel {
 
 	/**
 	 * Process the given op if a handler is registered.
-	 * @param op - The message to process
+	 * @param message - The message to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @returns True if the operation was processed, false otherwise.
+	 * @returns True if the operation was recognized and thus processed, false otherwise.
+	 *
+	 * @remarks
+	 * When this returns false and the caller doesn't handle the op itself, then the op could be from a different version of this code.
+	 * In such a case, not applying the op would result in this client becoming out of sync with clients that do handle the op
+	 * and could result in data corruption or data loss as well.
+	 * Therefore, in such cases the caller should typically throw an error, ensuring that this client treats the situation as data corruption
+	 * (since its data no longer matches what other clients think the data should be) and will avoid overriding document content or misleading the users into thinking their current state is accurate.
 	 */
-	public tryProcessMessage(op: IMapOperation, local: boolean, localOpMetadata: unknown): boolean {
+	public tryProcessMessage(
+		op: IMapOperation,
+		local: boolean,
+		localOpMetadata: unknown,
+	): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
@@ -546,12 +553,7 @@ export class MapKernel {
 		const previousValue: unknown = previousLocalValue?.value;
 		const successfullyRemoved = this.data.delete(key);
 		if (successfullyRemoved) {
-			this.eventEmitter.emit(
-				"valueChanged",
-				{ key, previousValue },
-				local,
-				this.eventEmitter,
-			);
+			this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
 		}
 		return previousLocalValue;
 	}
@@ -592,11 +594,7 @@ export class MapKernel {
 			serializable.type === ValueType[ValueType.Plain] ||
 			serializable.type === ValueType[ValueType.Shared]
 		) {
-			return this.localValueMaker.fromSerializable(
-				serializable,
-				this.serializer,
-				this.handle,
-			);
+			return this.localValueMaker.fromSerializable(serializable, this.serializer, this.handle);
 		} else {
 			throw new Error("Unknown local value type");
 		}
@@ -616,7 +614,7 @@ export class MapKernel {
 		local: boolean,
 		localOpMetadata: MapLocalOpMetadata,
 	): boolean {
-		if (this.pendingClearMessageIds.length > 0) {
+		if (this.pendingClearMessageIds[0] !== undefined) {
 			if (local) {
 				assert(
 					localOpMetadata !== undefined &&
@@ -771,7 +769,10 @@ export class MapKernel {
 	 * @param op - The map key message
 	 * @param localOpMetadata - Metadata from the previous submit
 	 */
-	private resubmitMapKeyMessage(op: IMapKeyOperation, localOpMetadata: MapLocalOpMetadata): void {
+	private resubmitMapKeyMessage(
+		op: IMapKeyOperation,
+		localOpMetadata: MapLocalOpMetadata,
+	): void {
 		assert(
 			isMapKeyLocalOpMetadata(localOpMetadata),
 			0x2fe /* Invalid localOpMetadata in submit */,

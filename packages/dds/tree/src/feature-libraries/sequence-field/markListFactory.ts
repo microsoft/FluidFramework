@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { sequenceConfig } from "./config.js";
-import { Mark, MarkList } from "./types.js";
+import type { Mark, MarkList } from "./types.js";
 import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils.js";
 
 /**
@@ -31,9 +30,6 @@ export class MarkListFactory {
 	}
 
 	public pushContent(mark: Mark): void {
-		if (isTombstone(mark) && sequenceConfig.cellOrdering !== "Tombstone") {
-			return;
-		}
 		if (isNoopMark(mark) && mark.changes === undefined && !isTombstone(mark)) {
 			this.pushOffset(mark.count);
 			return;
@@ -46,7 +42,7 @@ export class MarkListFactory {
 		if (prev !== undefined && prev.type === mark.type) {
 			const merged = tryMergeMarks(prev, mark);
 			if (merged !== undefined) {
-				this.list.splice(this.list.length - 1, 1, merged);
+				this.list.splice(-1, 1, merged);
 				return;
 			}
 		}

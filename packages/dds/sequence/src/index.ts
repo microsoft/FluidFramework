@@ -15,14 +15,9 @@
  *
  * @packageDocumentation
  */
-export {
-	IMapMessageLocalMetadata,
-	IValueOpEmitter,
-	SequenceOptions,
-} from "./intervalCollectionMapInterfaces.js";
+export { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 export {
 	IInterval,
-	Interval,
 	IntervalOpType,
 	IntervalType,
 	ISerializableInterval,
@@ -30,32 +25,18 @@ export {
 	SequenceInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
-	IIntervalHelpers,
-	sequenceIntervalHelpers,
 } from "./intervals/index.js";
 export {
 	DeserializeCallback,
-	IIntervalCollectionEvent,
-	IIntervalCollection,
-	IntervalLocator,
-	intervalLocatorFromEndpoint,
-	Side,
-	InteriorSequencePlace,
-	SequencePlace,
+	ISequenceIntervalCollection,
+	ISequenceIntervalCollectionEvents,
 } from "./intervalCollection.js";
 export {
-	IntervalIndex,
+	SequenceIntervalIndex,
 	SequenceIntervalIndexes,
-	IOverlappingIntervalsIndex,
-	createOverlappingIntervalsIndex,
-	createOverlappingSequenceIntervalsIndex,
-	IEndpointInRangeIndex,
-	IStartpointInRangeIndex,
-	createEndpointInRangeIndex,
-	createStartpointInRangeIndex,
-	IIdIntervalIndex,
-	createIdIntervalIndex,
+	ISequenceOverlappingIntervalsIndex,
 	IEndpointIndex,
+	createOverlappingIntervalsIndex,
 	createEndpointIndex,
 } from "./intervalIndex/index.js";
 export {
@@ -69,7 +50,11 @@ export {
 	revertSharedStringRevertibles,
 	SharedStringRevertible,
 } from "./revertibles.js";
-export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence.js";
+export {
+	ISharedSegmentSequenceEvents,
+	SharedSegmentSequence,
+	ISharedSegmentSequence,
+} from "./sequence.js";
 export {
 	ISequenceDeltaRange,
 	SequenceDeltaEvent,
@@ -83,11 +68,6 @@ export {
 	SharedStringSegment,
 	SharedStringClass,
 } from "./sharedString.js";
-export {
-	ISharedIntervalCollection,
-	SharedIntervalCollection,
-	SharedIntervalCollectionFactory,
-} from "./sharedIntervalCollection.js";
 export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
 
 export {
@@ -105,4 +85,7 @@ export {
 	reservedRangeLabelsKey,
 	TrackingGroup,
 	LocalReferencePosition,
+	Side,
+	InteriorSequencePlace,
+	SequencePlace,
 } from "@fluidframework/merge-tree/internal";

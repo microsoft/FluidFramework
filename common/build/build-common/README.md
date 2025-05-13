@@ -6,24 +6,31 @@ See [GitHub](https://github.com/microsoft/FluidFramework) for more details on Fl
 
 ## API-Extractor Configuration
 
-This package exports a base configuration for use with [API-Extractor](https://api-extractor.com/).
+This package exports several base configurations for use with [API-Extractor](https://api-extractor.com/).
 It can be extended in your package's local configuration file like the following:
 
 ```json
-"extends": "@fluidframework/build-common/api-extractor-base.json",
+"extends": "@fluidframework/build-common/api-extractor-<task set>.(cjs|esm).<export set>.json",
 ```
 
-### Dual Build Considerations
+Chose `cjs` or `esm` based on primary or only output.
 
-A variety of configuration files were build and named while dual build pattern was being developed and have not been rationalized for what is believed to be the final state. The import aspect is to select a set of files that generate the report once. With the current dual build pattern this means using both of the `api-extractor-base.(cjs|esm).primary.json` files and then configuration override of:
+### API Task Set
 
-```json
-	"apiReport": {
-		"enabled": false
-	}
-```
+| Set Name | report | model | lint | Description                                                 |
+| -------- | ------ | ----- | ---- | ----------------------------------------------------------- |
+| report   | ✔️     |       |      | generates `*.api.md` report files and `tsdoc-metadata.json` |
+| model    |        | ✔️    |      | generates `_api-extractor-temp/doc-models/*.api.json`       |
+| lint     |        |       | ✔️   | performs api-extractor linting                              |
+| base     | ✔️     | ✔️    |      | combined report and model                                   |
 
-preferrably for the CommonJS case.
+### Export Set
+
+| Set Name  | ESM | CJS | Description                   |
+| --------- | --- | --- | ----------------------------- |
+| no-legacy | ✔️  | ✔️  | package has no /legacy export |
+| current   | ✔️  |     | reports non-/legacy APIs      |
+| legacy    | ✔️  |     | reports /legacy APIs          |
 
 ## TypeScript Configurations (`tsconfig.json`)
 
@@ -87,6 +94,3 @@ src/test/tsconfig.cjs.json:
 
 This package also contains a legacy base tsconfig, `ts-common-config.json`. This config is still used in some places
 within the repo but is considered deprecated.
-
-And there are a handful of tsconfigs that we thought we'd want but no longer think they have common purpose:
-`tsconfig.cjs.json`, `tsconfig.esm.json`, `tsconfig.esm-only.json`, and `tsconfig.test.json`

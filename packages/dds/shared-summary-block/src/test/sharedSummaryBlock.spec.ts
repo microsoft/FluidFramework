@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
 import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,

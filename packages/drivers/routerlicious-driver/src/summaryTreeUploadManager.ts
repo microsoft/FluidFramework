@@ -5,14 +5,10 @@
 
 import { IsoBuffer, Uint8ArrayToString, gitHashFile } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { ICreateTreeEntry } from "@fluidframework/gitresources";
-import { getGitMode, getGitType } from "@fluidframework/protocol-base";
-import {
-	ISnapshotTreeEx,
-	ISummaryTree,
-	SummaryObject,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import type { IGitCreateTreeEntry } from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTreeEx } from "@fluidframework/driver-definitions/internal";
+import { getGitMode, getGitType } from "@fluidframework/driver-utils/internal";
 import { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
 
 import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
@@ -45,10 +41,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		previousFullSnapshot: ISnapshotTreeEx | undefined,
 	): Promise<string> {
 		const entries = await Promise.all(
-			Object.keys(summaryTree.tree).map(async (key) => {
-				const entry = summaryTree.tree[key];
+			Object.entries(summaryTree.tree).map(async ([key, entry]) => {
 				const pathHandle = await this.writeSummaryTreeObject(entry, previousFullSnapshot);
-				const treeEntry: ICreateTreeEntry = {
+				const treeEntry: IGitCreateTreeEntry = {
 					mode: getGitMode(entry),
 					path: encodeURIComponent(key),
 					sha: pathHandle,

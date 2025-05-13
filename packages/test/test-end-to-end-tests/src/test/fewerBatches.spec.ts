@@ -6,13 +6,19 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainer, IRuntime } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import type { ISharedMap } from "@fluidframework/map/internal";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions/internal";
 import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import {
+	FlushMode,
+	FlushModeExperimental,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	toIDeltaManagerFull,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -32,6 +38,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 
 	let provider: ITestObjectProvider;
+	/**
+	 * Array of batches (message[]) that were sent by the DeltaManager
+	 */
 	const capturedBatches: IDocumentMessage[][] = [];
 
 	beforeEach("setup", () => {
@@ -81,9 +90,12 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		await waitForContainerConnection(localContainer);
 		await waitForContainerConnection(remoteContainer);
 
-		localContainer.deltaManager.outbound.on("op", (batch: IDocumentMessage[]) => {
-			capturedBatches.push(batch);
-		});
+		toIDeltaManagerFull(localContainer.deltaManager).outbound.on(
+			"op",
+			(batch: IDocumentMessage[]) => {
+				capturedBatches.push(batch);
+			},
+		);
 		await provider.ensureSynchronized();
 	};
 
@@ -147,10 +159,6 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	const expectedErrors = [
-		{
-			eventName: "fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch",
-			error: "Submission of an out of order message",
-		},
 		// A container will not close when an out of order message was detected.
 		// The error below is due to the artificial repro of interleaving op processing and flushing
 		{
@@ -160,28 +168,30 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	];
 
 	itExpects(
-		"Reference sequence number mismatch when doing op reentry - early flush enabled - submits two batches",
+		"Reference sequence number mismatch when doing op reentry submits two batches",
 		expectedErrors,
 		async () => {
 			// By default, we would flush a batch when we detect a reference sequence number mismatch
-			await processOutOfOrderOp({});
+			await processOutOfOrderOp({
+				["Fluid.ContainerRuntime.DisableFlushBeforeProcess"]: true,
+			});
 			assert.strictEqual(capturedBatches.length, 2);
 		},
 	);
 
 	itExpects(
-		"Reference sequence number mismatch when doing op reentry - early flush disabled - submits one batch",
+		"Op reentry submits two batches due to flush before processing",
 		expectedErrors,
 		async () => {
-			await processOutOfOrderOp({ "Fluid.ContainerRuntime.DisablePartialFlush": true });
-			assert.strictEqual(capturedBatches.length, 1);
+			await processOutOfOrderOp({});
+			assert.strictEqual(capturedBatches.length, 2);
 		},
 	);
 
 	/**
 	 * With `FlushMode.TurnBased`, the container will schedule a flush at the end of the JS turn.
 	 * There is a possibility that the DeltaManager's inbound queue to schedule processing in-between the op getting
-	 * create and the flush being scheduled. This function attempts to recreate that scenario artificially.
+	 * created and the flush being scheduled. This function attempts to recreate that scenario artificially.
 	 *
 	 * @param containerConfig - the test container configuration
 	 */
@@ -233,7 +243,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		Promise.resolve()
 			.then(() => {
 				(localContainer.deltaManager as any).lastProcessedSequenceNumber += 1;
-				(dataObject1.context.containerRuntime as ContainerRuntime).process(op, false);
+				(dataObject1.context.containerRuntime as unknown as IRuntime).process(op, false);
 				dataObject1map.set("key2", "value2");
 			})
 			.catch(() => {});

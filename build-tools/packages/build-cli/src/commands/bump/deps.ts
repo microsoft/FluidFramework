@@ -4,13 +4,13 @@
  */
 
 import { Flags } from "@oclif/core";
-import chalk from "chalk";
+import chalk from "picocolors";
 import prompts from "prompts";
 import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import {
 	checkFlags,
 	dependencyUpdateTypeFlag,
@@ -18,7 +18,7 @@ import {
 	releaseGroupFlag,
 	skipCheckFlag,
 	testModeFlag,
-} from "../../flags";
+} from "../../flags.js";
 import {
 	BaseCommand,
 	// eslint-disable-next-line import/no-deprecated
@@ -28,10 +28,10 @@ import {
 	indentString,
 	isDependencyUpdateType,
 	npmCheckUpdates,
-} from "../../library";
+} from "../../library/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { npmCheckUpdatesHomegrown } from "../../library/package";
-import { ReleaseGroup } from "../../releaseGroups";
+import { npmCheckUpdatesHomegrown } from "../../library/package.js";
+import { ReleaseGroup } from "../../releaseGroups.js";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -137,7 +137,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
 
-		const branchName = await context.gitRepo.getCurrentBranchName();
+		const gitRepo = await context.getGitRepository();
+		const branchName = await gitRepo.getCurrentBranchName();
 
 		// eslint-disable-next-line import/no-deprecated
 		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
@@ -291,10 +292,10 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 					flags.releaseGroup,
 				);
 				this.log(`Creating branch ${bumpBranch}`);
-				await context.createBranch(bumpBranch);
-				await context.gitRepo.commit(commitMessage, "Error committing");
+				await gitRepo.createBranch(bumpBranch);
+				await gitRepo.gitClient.commit(commitMessage);
 				this.finalMessages.push(
-					`You can now create a PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
+					`You can now create a PR for branch ${bumpBranch} targeting ${gitRepo.originalBranchName}`,
 				);
 			} else {
 				this.warning(`Skipping commit. You'll need to manually commit changes.`);

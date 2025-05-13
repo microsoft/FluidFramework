@@ -26,7 +26,7 @@ export interface IWebServerFactory {
 export interface IWebSocket {
 	id: string;
 
-	on(event: string, listener: (...args: any[]) => void);
+	on(event: string, listener: (...args: any[]) => void): void;
 
 	join(id: string): Promise<void>;
 
@@ -35,6 +35,8 @@ export interface IWebSocket {
 	emitToRoom(roomId: string, event: string, ...args: any[]): void;
 
 	disconnect(close?: boolean): void;
+
+	dispose?(): void;
 }
 
 /**
@@ -44,7 +46,7 @@ export interface IWebServer {
 	/**
 	 * Web socket interface
 	 */
-	webSocketServer: IWebSocketServer;
+	webSocketServer: IWebSocketServer | undefined;
 
 	/**
 	 * HTTP server interface

@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
-import { BatchMessage, IBatch, OpCompressor } from "../../opLifecycle/index.js";
+import {
+	OutboundBatchMessage,
+	OpCompressor,
+	type OutboundBatch,
+	type OutboundSingletonBatch,
+} from "../../opLifecycle/index.js";
 
 describe("OpCompressor", () => {
 	let compressor: OpCompressor;
@@ -18,10 +24,17 @@ describe("OpCompressor", () => {
 		mockLogger.clear();
 	});
 
-	const createBatch = (length: number, messageSize: number) =>
-		messagesToBatch(new Array(length).fill(createMessage(generateStringOfSize(messageSize))));
-	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
-		content: messages,
+	const createSingletonBatch = (messageSize: number) =>
+		createBatch(1, messageSize) as OutboundSingletonBatch;
+
+	const createBatch = (length: number, messageSize: number) => {
+		const messages = Array.from({ length }, () =>
+			createMessage(generateStringOfSize(messageSize)),
+		);
+		return messagesToBatch(messages);
+	};
+	const messagesToBatch = (messages: OutboundBatchMessage[]): OutboundBatch => ({
+		messages,
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)
 			.reduce((a, b) => a + b),
@@ -33,55 +46,51 @@ describe("OpCompressor", () => {
 		contents,
 		referenceSequenceNumber: 0,
 	});
-	const generateStringOfSize = (sizeInBytes: number): string =>
-		new Array(sizeInBytes + 1).join("0");
+	const generateStringOfSize = (sizeInBytes: number): string => "0".repeat(sizeInBytes);
 	const toMB = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2);
 
-	describe("Compressing batches", () =>
-		[
-			// small batch with one small message
-			createBatch(1, 100 * 1024),
-			// small batch with small messages
-			createBatch(10, 100 * 1024),
-			// small batch with large messages
-			createBatch(2, 2 * 1024 * 1024),
-			// large batch with small messages
-			createBatch(1000, 100 * 1024),
-		].forEach((batch) => {
-			it(`Batch of ${batch.content.length} ops of total size ${toMB(
+	describe("Compressing batches", () => {
+		for (const batch of [
+			// batch with one small message
+			createSingletonBatch(100 * 1024),
+			// batch with one large message
+			createSingletonBatch(100 * 100 * 1024),
+		]) {
+			it(`Batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
 			)} MB`, () => {
 				const compressedBatch = compressor.compressBatch(batch);
-				assert.strictEqual(compressedBatch.content.length, batch.content.length);
-				assert.strictEqual(compressedBatch.content[0].compression, "lz4");
-				assert.strictEqual(compressedBatch.content[0].metadata?.flag, true);
-				if (compressedBatch.content.length > 1) {
-					assert.strictEqual(compressedBatch.content[1].contents, undefined);
-					assert.strictEqual(compressedBatch.content[1].compression, undefined);
-					assert.strictEqual(compressedBatch.content[1].contents, undefined);
-				}
+				assert.strictEqual(compressedBatch.messages.length, batch.messages.length);
+				assert.strictEqual(compressedBatch.messages[0].compression, "lz4");
+				assert.strictEqual(compressedBatch.messages[0].metadata?.flag, true);
 			}).timeout(3000);
-		}));
+		}
+	});
 
-	describe("Unsupported batches", () =>
-		[
+	describe("Unsupported batches", () => {
+		for (const batch of [
 			// large batch with small messages
 			createBatch(6000, 100 * 1024),
 			// small batch with large messages
 			createBatch(6, 100 * 1024 * 1024),
-		].forEach((batch) => {
-			it(`Not compressing batch of ${batch.content.length} ops of total size ${toMB(
+		]) {
+			it(`Not compressing batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
 			)} MB`, () => {
-				assert.throws(() => compressor.compressBatch(batch));
-				mockLogger.assertMatch([
-					{
-						eventName: "OpCompressor:BatchTooLarge",
-						category: "error",
-						length: batch.content.length,
-						size: batch.contentSizeInBytes,
+				assert.throws(
+					() => {
+						compressor.compressBatch(batch as OutboundSingletonBatch); // The need to cast indicates this is not going to work
 					},
-				]);
+					(error: Error) => {
+						validateAssertionError(
+							error,
+							"Batch should not be empty and should contain a single message",
+						); // 0x5a4
+						return true;
+					},
+					"Expected error was not thrown",
+				);
 			});
-		}));
+		}
+	});
 });

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-common",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.41.0",
 	"description": "common functions used in properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -19,12 +19,13 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
@@ -38,12 +39,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -59,42 +62,39 @@
 		"async": "^3.2.2",
 		"base64-js": "^1.5.1",
 		"events_pkg": "npm:events@^3.1.0",
-		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",
 		"murmurhash3js": "3.0.1",
-		"semver": "^7.5.3",
+		"semver": "^7.7.1",
 		"traverse": "0.6.6"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@fluidframework/build-tools": "^0.55.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/chai": "^4.0.0",
 		"@types/debug": "^4.1.5",
 		"@types/lodash": "^4.14.118",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"@types/semver": "^7.5.0",
+		"@types/semver": "^7.7.0",
 		"@types/sinon": "^17.0.3",
 		"c8": "^8.0.1",
 		"chai": "^4.2.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
 		"nock": "^13.3.3",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^17.0.1",
-		"typescript": "~5.1.6"
+		"sinon": "^18.0.1",
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

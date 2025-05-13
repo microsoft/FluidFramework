@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 // Allow importing from these specific files which are being tested:
 import {
-	GraphCommit,
-	RevisionTag,
+	type GraphCommit,
+	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
 	rebaseBranch,
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../core/rebase/index.js";
-import { NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange.js";
+import { type NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange.js";
 import { mintRevisionTag } from "../utils.js";
 
 function newCommit(
@@ -74,7 +74,9 @@ describe("rebaseBranch", () => {
 	// Commit "1" is the common ancestor of the branch with head commit "3" and the branch with head commit "5".
 	// Commit "2" is in parentheses and is the target commit of the rebase operation.
 
-	it("fails if branches are disjoint", () => {
+	// Disabled because the corresponding assert was too expensive.
+	// See comments in `rebaseBranch` for more information.
+	it.skip("fails if branches are disjoint", () => {
 		// 1 ─ 2
 		// 3
 		const n1 = newCommit(1);
@@ -105,12 +107,16 @@ describe("rebaseBranch", () => {
 			newSourceHead: n3_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3, n1);
 		assert.equal(n3_1, n3);
 		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, []);
 		assert.deepEqual(commits.targetCommits, []);
 		assert.deepEqual(commits.sourceCommits, [n2, n3]);
+		assert.equal(telemetryProperties.sourceBranchLength, 2);
+		assert.equal(telemetryProperties.rebaseDistance, 0);
+		assert.equal(telemetryProperties.countDropped, 0);
 	});
 
 	it("can rebase a branch onto the head of another branch", () => {
@@ -128,6 +134,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n3);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(
@@ -147,6 +154,9 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.sourceCommits, newPath);
+		assert.equal(telemetryProperties.sourceBranchLength, 2);
+		assert.equal(telemetryProperties.rebaseDistance, 2);
+		assert.equal(telemetryProperties.countDropped, 0);
 	});
 
 	it("can rebase a branch onto the middle of another branch", () => {
@@ -164,6 +174,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n2, n3);
 		const newPath = getPath(n2, n5_1);
 		assertChanges(
@@ -183,6 +194,9 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
 		assert.deepEqual(commits.targetCommits, [n2]);
 		assert.deepEqual(commits.sourceCommits, newPath);
+		assert.equal(telemetryProperties.sourceBranchLength, 2);
+		assert.equal(telemetryProperties.rebaseDistance, 1);
+		assert.equal(telemetryProperties.countDropped, 0);
 	});
 
 	it("skips and advances over commits with the same revision tag", () => {
@@ -202,6 +216,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n2, n4);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(newPath, {
@@ -213,6 +228,9 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.sourceCommits, newPath);
+		assert.equal(telemetryProperties.sourceBranchLength, 3);
+		assert.equal(telemetryProperties.rebaseDistance, 2);
+		assert.equal(telemetryProperties.countDropped, 2);
 	});
 
 	it("correctly rebases over branches that share some commits", () => {
@@ -232,6 +250,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n4);
 		const newPath = getPath(n4, n5_1);
 		assertChanges(newPath, {
@@ -243,6 +262,9 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3, n4]);
 		assert.deepEqual(commits.sourceCommits, newPath);
+		assert.equal(telemetryProperties.sourceBranchLength, 3);
+		assert.equal(telemetryProperties.rebaseDistance, 3);
+		assert.equal(telemetryProperties.countDropped, 2);
 	});
 
 	it("rebases the source branch farther than `newBase` if the source branch's next commits after `newBase` match those on the target branch", () => {
@@ -263,6 +285,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n6_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n6, n2, n5);
 		const newPath = getPath(n2, n6_1);
 		assertChanges(
@@ -275,6 +298,9 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(commits.deletedSourceCommits, [n3_1, n4_1, n6]);
 		assert.deepEqual(commits.targetCommits, [n2, n3, n4]);
 		assert.deepEqual(commits.sourceCommits, [n6_1]);
+		assert.equal(telemetryProperties.sourceBranchLength, 3);
+		assert.equal(telemetryProperties.rebaseDistance, 3);
+		assert.equal(telemetryProperties.countDropped, 2);
 	});
 
 	it("reports no change for equivalent branches", () => {
@@ -293,12 +319,16 @@ describe("rebaseBranch", () => {
 			newSourceHead: n3_2,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3_1, n3, n4);
 		assert.equal(n3_2, n3);
 		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.sourceCommits, []);
+		assert.equal(telemetryProperties.sourceBranchLength, 2);
+		assert.equal(telemetryProperties.rebaseDistance, 2);
+		assert.equal(telemetryProperties.countDropped, 2);
 	});
 });
 

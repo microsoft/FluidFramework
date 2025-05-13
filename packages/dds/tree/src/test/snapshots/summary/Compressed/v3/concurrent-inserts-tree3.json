@@ -1,0 +1,455 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 4,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 3
+                                            },
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "insert": {
+                                                  "id": 3
+                                                }
+                                              },
+                                              "cellId": 3
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      3,
+                                      0
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
+                                    }
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    0,
+                                    "b"
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 7,
+                      "sequenceNumber": 9,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 5,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "insert": {
+                                                  "id": 4
+                                                }
+                                              },
+                                              "cellId": 4
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      4,
+                                      0
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
+                                    }
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    0,
+                                    "z"
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 10,
+                      "sequenceNumber": 11,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 5,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 2
+                                            },
+                                            {
+                                              "count": 2,
+                                              "effect": {
+                                                "insert": {
+                                                  "id": 0
+                                                }
+                                              },
+                                              "cellId": 0
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
+                                    }
+                                  },
+                                  {
+                                    "a": 2
+                                  },
+                                  {
+                                    "d": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      0,
+                                      "d",
+                                      0,
+                                      "e"
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 11,
+                      "sequenceNumber": 13,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 5,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 3
+                                            },
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "insert": {
+                                                  "id": 3
+                                                }
+                                              },
+                                              "cellId": 3
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      3,
+                                      0
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
+                                    }
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    0,
+                                    "f"
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 12,
+                      "sequenceNumber": 14,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    }
+                  ],
+                  "branches": [],
+                  "version": 3
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
+                    },
+                    "concurrent-inserts.Array<[\"com.fluidframework.leaf.string\"]>": {
+                      "object": {
+                        "": {
+                          "kind": "Sequence",
+                          "types": [
+                            "com.fluidframework.leaf.string"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "root": {
+                    "kind": "Value",
+                    "types": [
+                      "concurrent-inserts.Array<[\"com.fluidframework.leaf.string\"]>"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": {
+                  "keys": [
+                    "rootFieldKey"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
+                      {
+                        "c": {
+                          "type": "concurrent-inserts.Array<[\"com.fluidframework.leaf.string\"]>",
+                          "value": false,
+                          "fields": [
+                            [
+                              "",
+                              1
+                            ]
+                          ]
+                        }
+                      },
+                      {
+                        "a": 2
+                      },
+                      {
+                        "c": {
+                          "type": "com.fluidframework.leaf.string",
+                          "value": true
+                        }
+                      }
+                    ],
+                    "data": [
+                      [
+                        0,
+                        [
+                          "z",
+                          "x",
+                          "d",
+                          "f",
+                          "e",
+                          "y",
+                          "a",
+                          "b",
+                          "c"
+                        ]
+                      ]
+                    ]
+                  },
+                  "version": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "data": [],
+                  "maxId": 9
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -3,29 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import { DetachedFieldIndex, ForestRootId, RevisionTagCodec } from "../../core/index.js";
+import { DetachedFieldIndex, type ForestRootId, RevisionTagCodec } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Format } from "../../core/tree/detachedFieldIndexFormat.js";
+import type { Format } from "../../core/tree/detachedFieldIndexFormat.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes.js";
+import type { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
-	IdAllocator,
-	JsonCompatibleReadOnly,
+	type IdAllocator,
+	type JsonCompatibleReadOnly,
 	brand,
 	idAllocatorFromMaxId,
 } from "../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { createSnapshotCompressor } from "../snapshots/testTrees.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { testIdCompressor, testRevisionTagCodec, createSnapshotCompressor } from "../utils.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();
 const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
@@ -135,7 +133,7 @@ export function generateTestCases(
 			name: "single range with single node",
 			data: {
 				maxId,
-				data: new Map([[revision, new Map([[0, 1]])]]),
+				data: new Map([[revision, new Map([[0, { root: 1 }]])]]),
 			},
 		},
 		{
@@ -146,9 +144,9 @@ export function generateTestCases(
 					[
 						revision,
 						new Map([
-							[2, 1],
-							[0, 2],
-							[1, 4],
+							[2, { root: 1 }],
+							[0, { root: 2 }],
+							[1, { root: 4 }],
 						]),
 					],
 				]),
@@ -162,11 +160,11 @@ export function generateTestCases(
 					[
 						revision,
 						new Map([
-							[1, 2],
-							[3, 4],
-							[2, 3],
-							[7, 6],
-							[6, 5],
+							[1, { root: 2 }],
+							[3, { root: 4 }],
+							[2, { root: 3 }],
+							[7, { root: 6 }],
+							[6, { root: 5 }],
 						]),
 					],
 				]),
@@ -181,6 +179,7 @@ describe("DetachedFieldIndex", () => {
 			"test",
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 			testRevisionTagCodec,
+			testIdCompressor,
 			{ jsonValidator: typeboxValidator },
 		);
 		const expected = {
@@ -191,9 +190,13 @@ describe("DetachedFieldIndex", () => {
 		assert.deepEqual(detachedFieldIndex.encode(), expected);
 	});
 	describe("round-trip through JSON", () => {
-		const codec = makeDetachedNodeToFieldCodec(testRevisionTagCodec, {
-			jsonValidator: typeboxValidator,
-		});
+		const codec = makeDetachedNodeToFieldCodec(
+			testRevisionTagCodec,
+			{
+				jsonValidator: typeboxValidator,
+			},
+			testIdCompressor,
+		);
 		for (const { name, data } of generateTestCases(testIdCompressor)) {
 			it(name, () => {
 				const encoded = codec.encode(data);
@@ -210,6 +213,7 @@ describe("DetachedFieldIndex", () => {
 						"test",
 						idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 						testRevisionTagCodec,
+						testIdCompressor,
 						{
 							jsonValidator: typeboxValidator,
 						},
@@ -226,6 +230,7 @@ describe("DetachedFieldIndex", () => {
 						"test",
 						id,
 						malformedRevisionTagCodec,
+						testIdCompressor,
 						{
 							jsonValidator: typeboxValidator,
 						},
@@ -242,9 +247,13 @@ describe("DetachedFieldIndex", () => {
 		useSnapshotDirectory("detached-field-index");
 		const snapshotIdCompressor = createSnapshotCompressor();
 		const snapshotRevisionTagCodec = new RevisionTagCodec(snapshotIdCompressor);
-		const codec = makeDetachedNodeToFieldCodec(snapshotRevisionTagCodec, {
-			jsonValidator: typeboxValidator,
-		});
+		const codec = makeDetachedNodeToFieldCodec(
+			snapshotRevisionTagCodec,
+			{
+				jsonValidator: typeboxValidator,
+			},
+			testIdCompressor,
+		);
 
 		const testCases = generateTestCases(snapshotIdCompressor);
 

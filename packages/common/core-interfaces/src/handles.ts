@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { type ErasedType } from "./erasedType.js";
+import type { ErasedType } from "./erasedType.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
+import type { Listenable } from "./internal.js";
 
 /**
- * @public
+ * @legacy
+ * @alpha
  */
 export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
 
 /**
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IProvideFluidHandleContext {
 	readonly IFluidHandleContext: IFluidHandleContext;
@@ -20,7 +23,8 @@ export interface IProvideFluidHandleContext {
 
 /**
  * Describes a routing context from which other `IFluidHandleContext`s are defined.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
 	/**
@@ -57,6 +61,7 @@ export const IFluidHandle = "IFluidHandle";
 
 /**
  * @deprecated {@link IFluidHandleInternal} and {@link IFluidHandleInternal} should be identified should be identified using the {@link fluidHandleSymbol} symbol.
+ * @legacy
  * @alpha
  */
 export interface IProvideFluidHandle {
@@ -72,6 +77,7 @@ export interface IProvideFluidHandle {
 
 /**
  * Handle to a shared {@link FluidObject}.
+ * @legacy
  * @alpha
  */
 export interface IFluidHandleInternal<
@@ -92,8 +98,97 @@ export interface IFluidHandleInternal<
 	/**
 	 * Binds the given handle to this one or attach the given handle if this handle is attached.
 	 * A bound handle will also be attached once this handle is attached.
+	 *
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
 	 */
 	bind(handle: IFluidHandleInternal): void;
+}
+
+/**
+ * @privateRemarks
+ * To be merged onto IFluidHandleInternal in accordance with breaking change policy
+ * @internal
+ */
+export interface IFluidHandleInternalPayloadPending<
+	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
+	out T = unknown, // FluidObject & IFluidLoadable,
+> extends IFluidHandleInternal<T> {
+	/**
+	 * Whether the handle has a pending payload, meaning that it may exist before its payload is retrievable.
+	 * For instance, the BlobManager can generate handles before completing the blob upload/attach.
+	 */
+	readonly payloadPending: boolean;
+}
+
+/**
+ * The state of the handle's payload.
+ * - "pending" - The payload is not shared to all collaborators
+ * - "shared" - The payload is available to both the local client and remote collaborators
+ *
+ * @remarks
+ * Clients will see a transition of "pending" to "shared" when the payload has been shared to all collaborators.
+ * @legacy
+ * @alpha
+ */
+export type PayloadState = "pending" | "shared";
+
+/**
+ * Events which fire from an IFluidHandle.
+ * @legacy
+ * @alpha
+ */
+export interface IFluidHandleEvents {
+	/**
+	 * Emitted when the payload becomes available to remote collaborators.
+	 */
+	payloadShared: () => void;
+}
+
+/**
+ * Observable state on the handle regarding its payload sharing state.
+ *
+ * @privateRemarks
+ * Contents to be merged to IFluidHandle, and then this separate interface should be removed.
+ * @legacy
+ * @alpha
+ */
+export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
+	/**
+	 * The current state of the handle's payload.
+	 */
+	readonly payloadState: PayloadState;
+	/**
+	 * Event emitter, with events that emit as the payload state transitions.
+	 */
+	readonly events: Listenable<IFluidHandleEvents>;
+}
+
+/**
+ * Additional events which fire as a local handle's payload state transitions.
+ * @legacy
+ * @alpha
+ */
+export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
+	/**
+	 * Emitted for locally created handles when the payload fails sharing to remote collaborators.
+	 */
+	payloadShareFailed: (error: unknown) => void;
+}
+
+/**
+ * Additional observable state on a local handle regarding its payload sharing state.
+ * @legacy
+ * @alpha
+ */
+export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
+	/**
+	 * The error encountered by the handle while sharing the payload, if one has occurred.  Undefined if no error has occurred.
+	 */
+	readonly payloadShareError: unknown;
+	/**
+	 * Event emitter, with events that emit as the payload state transitions.
+	 */
+	readonly events: Listenable<IFluidHandleEvents & ILocalFluidHandleEvents>;
 }
 
 /**
@@ -116,7 +211,7 @@ export const fluidHandleSymbol: unique symbol = Symbol.for(
 
 /**
  * Handle to a shared {@link FluidObject}.
- * @public
+ * @sealed @public
  */
 export interface IFluidHandle<out T = unknown> {
 	/**
@@ -144,7 +239,7 @@ export interface IFluidHandle<out T = unknown> {
  * These can only be produced by the Fluid Framework and provide the implementation details needed to power {@link (IFluidHandle:interface)}.
  * @privateRemarks
  * Created from {@link IFluidHandleInternal} using {@link toFluidHandleErased}.
- * @public
+ * @sealed @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {}

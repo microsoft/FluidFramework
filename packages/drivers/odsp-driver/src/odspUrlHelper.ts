@@ -95,9 +95,8 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		// 3: optional captured drive ID
 		// 4: Item ID
 		// 5: Drive ID portion of Item ID
-		joinSessionMatch = /(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(
-			pathname,
-		);
+		joinSessionMatch =
+			/(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(pathname);
 
 		if (joinSessionMatch === null) {
 			// Try again but with the OData format ( `/drives('ABC123')/items('ABC123!456')` )
@@ -126,4 +125,22 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	}
+}
+
+/**
+ * Inspect the ODSP siteUrl to guess if this document is in SPDF or MSIT, to aid livesite investigations
+ * @param urlOnSite - The URL of the site or a resource on the site
+ * @returns undefined if the URL doesn't match known SPDF/MSIT patterns, "SPDF" if it's SPDF, "MSIT" if it's MSIT
+ */
+export function checkForKnownServerFarmType(urlOnSite: string): "SPDF" | "MSIT" | undefined {
+	const domain = new URL(urlOnSite).hostname.toLowerCase();
+	if (domain.endsWith(".sharepoint-df.com")) {
+		return "SPDF";
+	} else if (
+		domain === "microsoft.sharepoint.com" ||
+		domain === "microsoft-my.sharepoint.com"
+	) {
+		return "MSIT";
+	}
+	return undefined;
 }

@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/legacy";
 import CodeMirror from "codemirror";
 
 interface IPresenceInfo {

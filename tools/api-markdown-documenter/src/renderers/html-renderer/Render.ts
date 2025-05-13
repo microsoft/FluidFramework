@@ -3,99 +3,71 @@
  * Licensed under the MIT License.
  */
 
-import type { DocumentNode, DocumentationNode } from "../../documentation-domain/index.js";
-import { DocumentWriter } from "../DocumentWriter.js";
-import { type RenderConfiguration, defaultRenderers } from "./configuration/index.js";
-import { type RenderContext, getContextWithDefaults } from "./RenderContext.js";
+import type { Root as HastRoot, Nodes as HastTree } from "hast";
+import { format } from "hast-util-format";
+import { toHtml as toHtmlString } from "hast-util-to-html";
 
-// TODO: Leverage `documentationNodeToHtml` instead of maintaining custom renderers.
+import type { DocumentNode } from "../../documentation-domain/index.js";
+import {
+	documentToHtml,
+	type TransformationConfiguration,
+} from "../../documentation-domain-to-html/index.js";
 
 /**
- * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a `string`.
+ * Configuration for rendering HTML.
+ *
+ * @sealed
+ * @public
+ */
+export interface RenderHtmlConfiguration {
+	/**
+	 * Whether or not to render the generated HTML "pretty", human-readable formatting.
+	 * @defaultValue `true`
+	 */
+	readonly prettyFormatting?: boolean;
+}
+
+/**
+ * Configuration for rendering a document as HTML.
+ *
+ * @sealed
+ * @public
+ */
+export interface RenderDocumentConfiguration
+	extends TransformationConfiguration,
+		RenderHtmlConfiguration {}
+
+/**
+ * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
- * @param config - HTML rendering configuration.
+ * @param config - HTML transformation configuration.
  *
- * @alpha
+ * @public
  */
-export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
-	const { customRenderers, language, startingHeadingLevel } = config;
-
-	const writer = DocumentWriter.create();
-	const renderContext = getContextWithDefaults({
-		headingLevel: startingHeadingLevel,
-		customRenderers,
-	});
-
-	// Write top-level metadata
-	writer.writeLine("<!DOCTYPE html>");
-	writer.writeLine(`<html lang="${language ?? "en"}">`);
-	writer.increaseIndent();
-	writer.writeLine("<head>");
-	writer.increaseIndent();
-	writer.writeLine('<meta charset="utf-8" />');
-	writer.decreaseIndent();
-	writer.writeLine("</head>");
-
-	// Write contents under the document body
-	writer.writeLine(`<body>`);
-	writer.increaseIndent();
-	renderNodes(document.children, writer, renderContext);
-	writer.ensureNewLine();
-	writer.decreaseIndent();
-	writer.writeLine(`</body>`);
-
-	writer.decreaseIndent();
-	writer.writeLine("</html>");
-
-	// Trim any leading and trailing whitespace
-	let renderedDocument = writer.getText().trim();
-
-	// Ensure file ends with a single newline.
-	renderedDocument = [renderedDocument, ""].join("\n");
-
-	return renderedDocument;
+export function renderDocument(
+	document: DocumentNode,
+	config: RenderDocumentConfiguration,
+): string {
+	const htmlTree = documentToHtml(document, config);
+	return renderHtml(htmlTree, config);
 }
 
 /**
- * Renders the provided {@link DocumentationNode} per the configured
- * {@link HtmlRenderContext.customRenderers | renderers}.
+ * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a string.
  *
- * @alpha
- */
-export function renderNode(
-	node: DocumentationNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	if (
-		context.customRenderers !== undefined &&
-		Object.keys(context.customRenderers).includes(node.type)
-	) {
-		// User-provided renderers take precedence. If we found an appropriate one, use it.
-		context.customRenderers[node.type](node, writer, context);
-	} else if (Object.keys(defaultRenderers).includes(node.type)) {
-		// If no user-provided renderer was given for this node type, but we have a default, use the default.
-		defaultRenderers[node.type](node, writer, context);
-	} else {
-		throw new Error(
-			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: ${node.type}. Please provide a renderer for this type.`,
-		);
-	}
-}
-
-/**
- * Renders a list of child {@link DocumentationNode}s per the configured
- * {@link HtmlRenderContext.customRenderers | renderers}.
+ * @param document - The document to render.
+ * @param config - HTML transformation configuration.
  *
- * @alpha
+ * @public
  */
-export function renderNodes(
-	children: DocumentationNode[],
-	writer: DocumentWriter,
-	childContext: RenderContext,
-): void {
-	for (const child of children) {
-		renderNode(child, writer, childContext);
+export function renderHtml(html: HastTree, config: RenderHtmlConfiguration): string {
+	const { prettyFormatting } = config;
+	if (prettyFormatting !== false) {
+		// Pretty formatting. Modifies the tree in place.
+		// Note: this API is specifically typed to only accept a `Root` node, but its code only requires any `Nodes`.
+		// TODO: file an issue.
+		format(html as HastRoot);
 	}
+	return toHtmlString(html);
 }

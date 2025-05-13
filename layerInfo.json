@@ -19,7 +19,7 @@
 					"@fluidframework/driver-definitions",
 					"@fluidframework/odsp-driver-definitions"
 				],
-				"deps": ["Protocol-Definitions", "Core-Interfaces"]
+				"deps": ["Core-Interfaces"]
 			},
 			"Container-Definitions": {
 				"packages": ["@fluidframework/container-definitions"],
@@ -66,7 +66,7 @@
 					"Core-Interfaces",
 					"Core-Utils",
 					"Client-Utils",
-					"Protocol-Definitions"
+					"Driver-Definitions"
 				]
 			}
 		}
@@ -133,6 +133,9 @@
 					"@fluid-private/stochastic-test-utils",
 					"@fluid-private/test-dds-utils",
 					"@fluidframework/local-driver",
+					"@fluid-private/test-drivers",
+					"@fluid-internal/test-driver-definitions",
+					"@fluid-private/test-pairwise-generator",
 					"@fluidframework/test-runtime-utils"
 				]
 			},
@@ -165,7 +168,7 @@
 			},
 			"Azure-Service-Utils": {
 				"packages": ["@fluidframework/azure-service-utils"],
-				"deps": ["Protocol-Definitions", "Server-Shared-Utils", "Test-Utils"]
+				"deps": ["Driver-Definitions", "Server-Shared-Utils", "Test-Utils"]
 			},
 			"Azure-Service": {
 				"packages": ["@fluidframework/azure-local-service"],

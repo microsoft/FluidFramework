@@ -8,6 +8,7 @@
  * Licensed under the MIT License.
  */
 import type { Element as HastElement } from "hast";
+
 import type { ParagraphNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
@@ -18,6 +19,9 @@ import { transformChildrenUnderTag } from "../Utilities.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function paragraphToHtml(node: ParagraphNode, context: TransformationContext): HastElement {
+export function paragraphToHtml(
+	node: ParagraphNode,
+	context: TransformationContext,
+): HastElement {
 	return transformChildrenUnderTag({ name: "p" }, node.children, context);
 }

@@ -30,7 +30,8 @@ module.exports = {
 		// Ideally this section would be empty (and removed).
 		// Items should be removed from here when possible.
 		{
-			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			label:
+				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
 			dependencies: ["@oclif/core"],
 			dependencyTypes: ["pnpmOverrides"],
 			packages: ["**"],
@@ -95,6 +96,8 @@ module.exports = {
 				"@graphql-codegen/cli",
 				"@graphql-codegen/typescript",
 				"@material-ui/*",
+				// api-extractor is patched, so it must use an exact version to avoid the patch breaking when updating.
+				"@microsoft/api-extractor",
 				"@types/chrome",
 				"@types/codemirror",
 				"@types/expect-puppeteer",
@@ -115,6 +118,7 @@ module.exports = {
 		{
 			label: "Must use tilde dependency ranges",
 			dependencies: [
+				"@biomejs/biome",
 				"eslint-plugin-*",
 				"eslint-config-prettier",
 				"eslint",
@@ -126,9 +130,21 @@ module.exports = {
 
 				// pinned since newer versions (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828
 				"@cerner/duplicate-package-checker-webpack-plugin",
+
+				// socket.io-client is forced to avoid 4.8 to avoid https://github.com/socketio/socket.io/issues/5202
+				"socket.io-client",
 			],
 			packages: ["**"],
 			range: "~",
+		},
+
+		// Dev dependencies on <package>-previous (used for type tests) should use exact versions
+		{
+			label: "Type-tests 'previous' deps should use exact versions",
+			dependencies: ["**/*previous"], // Not sure why just "**previous" doesn't work
+			dependencyTypes: ["dev"],
+			packages: ["**"],
+			range: "",
 		},
 
 		// All deps should use caret ranges unless previously overridden
@@ -152,7 +168,8 @@ module.exports = {
 		// Ideally this section would be empty (and removed).
 		// Items should be removed from here when possible.
 		{
-			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			label:
+				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
 			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom"],
 			packages: ["**"],
 			isIgnored: true,
@@ -170,11 +187,15 @@ module.exports = {
 		{
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [
+				"@fluid-internal/eslint-plugin-fluid",
+				"@fluid-tools/benchmark",
+				"@fluid-tools/build-cli",
 				"@fluidframework/build-common",
+				"@fluidframework/build-tools",
 				"@fluidframework/common-utils",
 				"@fluidframework/eslint-config-fluid",
-				"@fluidframework/build-tools",
-				"@fluid-tools/build-cli",
+				"@fluidframework/protocol-definitions",
+				"@fluidframework/test-tools",
 			],
 			packages: ["**"],
 		},
@@ -194,7 +215,8 @@ module.exports = {
 		},
 
 		{
-			label: "Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
+			label:
+				"Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
 			isIgnored: true,
 			packages: [
 				"@fluid-example/**",

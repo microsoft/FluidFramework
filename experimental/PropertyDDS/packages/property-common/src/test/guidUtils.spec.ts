@@ -165,7 +165,6 @@ const test16fromAndTo64 = function (base64, base16) {
 };
 
 describe("Base16", function () {
-	// eslint-disable-next-line unicorn/no-unsafe-regex
 	testGuid(/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i, false);
 	testInitialization("492b176c-bdc9-0dec-7c70-087a6a7bdac2", false);
 	testCorrectness("893fa0d4-c767-4133-829f-27434bf38cc8", "893fa0d4-c?767-4133-829f-27434b-8");
@@ -213,8 +212,16 @@ describe("Base64", function () {
 		[4294967295, 4294967295, 4294967295, 4294967295],
 		true,
 	);
-	testConversion("abcdefgABCDEFG789_-_-w", [2031990633, 537133304, 4235072708, 4223664119], true);
-	testConversion("1218LLkdwolw_---__-2ig", [746352087, 2311200185, 3203399536, 2327248895], true);
+	testConversion(
+		"abcdefgABCDEFG789_-_-w",
+		[2031990633, 537133304, 4235072708, 4223664119],
+		true,
+	);
+	testConversion(
+		"1218LLkdwolw_---__-2ig",
+		[746352087, 2311200185, 3203399536, 2327248895],
+		true,
+	);
 	testConversion(
 		"aaMHUi2id94292---__-ww",
 		[1376232297, 3732382253, 3195008822, 3288268795],
@@ -225,24 +232,53 @@ describe("Base64", function () {
 		[2460787200, 3886096074, 2011865513, 4192128499],
 		true,
 	);
-	testConversion("121dsls----_--ww3k339A", [2992467415, 4026220123, 820837311, 4109848030], true);
+	testConversion(
+		"121dsls----_--ww3k339A",
+		[2992467415, 4026220123, 820837311, 4109848030],
+		true,
+	);
 	testCombine(
 		"AAAAAEJPQgDSBAAAAAAAAA",
 		"8aecac9a-45d6-8009-0000-00002c033cfb",
 		"IO428cglWJ7Y-mLFMGo9pA",
 		true,
 	);
-	testCombine("AAAAAEJPQgDSBAAAAAAAAA", "mqzsigmA1kUAAAAA-zwDLA", "IO428cglWJ7Y-mLFMGo9pA", true);
-	testCombine("AAAAAAAAAAAAAAAAAAAAAA", "_____________________w", "qJxUydIxpfHEv7ErjBMm8w", true);
+	testCombine(
+		"AAAAAEJPQgDSBAAAAAAAAA",
+		"mqzsigmA1kUAAAAA-zwDLA",
+		"IO428cglWJ7Y-mLFMGo9pA",
+		true,
+	);
+	testCombine(
+		"AAAAAAAAAAAAAAAAAAAAAA",
+		"_____________________w",
+		"qJxUydIxpfHEv7ErjBMm8w",
+		true,
+	);
 	testCombine(
 		"00000000-0000-0000-0000-000000000000",
 		"_____________________w",
 		"qJxUydIxpfHEv7ErjBMm8w",
 		true,
 	);
-	testCombine("gggggggggggggggggggggg", "---------------------A", "XFnCZCBvAg8sJ0TwwNuRQg", true);
-	testCombine("Uiedk4939itkff-___---A", "AKKsksoeoeepoep3883e-Q", "aImthHwnGCgQAHhTbFPr4A", true);
-	testCombine("1218LLkdwolw_---__-2ig", "aaMHUi2id94292---__-ww", "BZ58EdgKdtckSxx1_NOt1Q", true);
+	testCombine(
+		"gggggggggggggggggggggg",
+		"---------------------A",
+		"XFnCZCBvAg8sJ0TwwNuRQg",
+		true,
+	);
+	testCombine(
+		"Uiedk4939itkff-___---A",
+		"AKKsksoeoeepoep3883e-Q",
+		"aImthHwnGCgQAHhTbFPr4A",
+		true,
+	);
+	testCombine(
+		"1218LLkdwolw_---__-2ig",
+		"aaMHUi2id94292---__-ww",
+		"BZ58EdgKdtckSxx1_NOt1Q",
+		true,
+	);
 	testCombine(
 		"AAAAAEJPQgDSBAAAAAAAAA",
 		"8aecac9a-45d6-8009-0000-00002c033cfb",

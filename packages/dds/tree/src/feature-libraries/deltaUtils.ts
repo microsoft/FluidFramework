@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, DeltaDetachedNodeId, DeltaRoot, makeDetachedNodeId } from "../core/index.js";
-import { Mutable } from "../util/index.js";
+import {
+	type ChangeAtomId,
+	type DeltaDetachedNodeId,
+	type DeltaRoot,
+	makeDetachedNodeId,
+} from "../core/index.js";
+import type { Mutable } from "../util/index.js";
 
 export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): DeltaDetachedNodeId {
 	return makeDetachedNodeId(changeAtom.revision, changeAtom.localId);
@@ -31,7 +36,20 @@ export function mapRootChanges<TIn, TOut>(
 	if (root.build !== undefined) {
 		out.build = root.build.map(({ id, trees }) => ({
 			id,
-			trees: trees.map(func),
+			trees: func(trees),
+		}));
+	}
+	if (root.global !== undefined) {
+		out.global = root.global.map(({ id, fields }) => ({
+			id,
+			fields,
+		}));
+	}
+	if (root.rename !== undefined) {
+		out.rename = root.rename.map(({ count, oldId, newId }) => ({
+			count,
+			oldId,
+			newId,
 		}));
 	}
 	return out;

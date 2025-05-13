@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Static, TSchema, Type } from "@sinclair/typebox";
+import { type Static, type TSchema, Type } from "@sinclair/typebox";
 
-import { schemaFormat } from "../schema-stored/index.js";
+import { schemaFormatV1 } from "../schema-stored/index.js";
 
 /**
  * This module contains persisted types for a simple, human-readable tree format.
@@ -58,7 +58,7 @@ const EncodedFieldMapObject = <Schema extends TSchema>(tChild: Schema) =>
 type EncodedNodeData = Static<typeof EncodedNodeData>;
 const EncodedNodeData = Type.Object({
 	value: Type.Optional(Type.Any()),
-	type: Type.Readonly(schemaFormat.TreeNodeSchemaIdentifierSchema),
+	type: Type.Readonly(schemaFormatV1.TreeNodeSchemaIdentifierSchema),
 });
 
 /**

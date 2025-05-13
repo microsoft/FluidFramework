@@ -5,15 +5,24 @@
 
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
 
-/** @internal */
-export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
+/**
+ * @internal
+ */
+export class DataStoreContexts
+	implements Iterable<[string, FluidDataStoreContext]>, IDisposable
+{
 	private readonly notBoundContexts = new Set<string>();
 
-	/** Attached and loaded context proxies */
+	/**
+	 * Attached and loaded context proxies
+	 */
 	private readonly _contexts = new Map<string, FluidDataStoreContext>();
 
 	/**
@@ -25,6 +34,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	 */
 	private readonly deferredContexts = new Map<string, Deferred<FluidDataStoreContext>>();
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly disposeOnce = new Lazy<void>(() => {
 		// close/stop all store contexts
 		for (const [fluidDataStoreId, contextD] of this.deferredContexts) {
@@ -58,20 +68,20 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 		return this._contexts.size;
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.disposeOnce.evaluated;
 	}
-	public readonly dispose = () => this.disposeOnce.value;
+	public readonly dispose = (): void => this.disposeOnce.value;
 
-	public notBoundLength() {
+	public notBoundLength(): number {
 		return this.notBoundContexts.size;
 	}
 
-	public isNotBound(id: string) {
+	public isNotBound(id: string): boolean {
 		return this.notBoundContexts.has(id);
 	}
 
-	public has(id: string) {
+	public has(id: string): boolean {
 		return this._contexts.has(id);
 	}
 
@@ -93,7 +103,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	private readonly _recentlyDeletedContexts: Map<string, FluidDataStoreContext | undefined> =
 		new Map();
 
-	public getRecentlyDeletedContext(id: string) {
+	public getRecentlyDeletedContext(id: string): FluidDataStoreContext | undefined {
 		return this._recentlyDeletedContexts.get(id);
 	}
 
@@ -113,7 +123,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	/**
 	 * Add the given context, marking it as to-be-bound
 	 */
-	public addUnbound(context: LocalFluidDataStoreContext) {
+	public addUnbound(context: LocalFluidDataStoreContext): void {
 		const id = context.id;
 		assert(!this._contexts.has(id), 0x158 /* "Creating store with existing ID" */);
 
@@ -156,7 +166,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	/**
 	 * Update this context as bound
 	 */
-	public bind(id: string) {
+	public bind(id: string): void {
 		const removed: boolean = this.notBoundContexts.delete(id);
 		assert(removed, 0x159 /* "The given id was not found in notBoundContexts to delete" */);
 
@@ -167,7 +177,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	 * Triggers the deferred to resolve, indicating the context is not local-only
 	 * @param id - The id of the context to resolve to
 	 */
-	private resolveDeferred(id: string) {
+	private resolveDeferred(id: string): void {
 		const context = this._contexts.get(id);
 		assert(!!context, 0x15a /* "Cannot find context to resolve to" */);
 		assert(
@@ -185,7 +195,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	 * This could be because it's a local context that's been bound, or because it's a remote context.
 	 * @param context - The context to add
 	 */
-	public addBoundOrRemoted(context: FluidDataStoreContext) {
+	public addBoundOrRemoted(context: FluidDataStoreContext): void {
 		const id = context.id;
 		assert(!this._contexts.has(id), 0x15d /* "Creating store with existing ID" */);
 

@@ -1,0 +1,16 @@
+{
+	"name": "other-pkg-a",
+	"version": "2.0.0",
+	"description": "Test package",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/build-infrastructure/src/test/data/testRepo/second/packages/other-pkg-a"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"dependencies": {
+		"other-pkg-b": "workspace:~"
+	}
+}

@@ -4,13 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionDetailsBase,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
+	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
@@ -36,7 +36,9 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 	return metadata.gcFeature ?? 0;
 }
 
-/** Indicates what GC version is in effect for new GC data being written in this session */
+/**
+ * Indicates what GC version is in effect for new GC data being written in this session
+ */
 export function getGCVersionInEffect(configProvider: IConfigProvider): number {
 	// If version upgrade is not enabled, fall back to the stable GC version.
 	return configProvider.getBoolean(gcVersionUpgradeToV4Key) === true
@@ -78,8 +80,12 @@ export function shouldAllowGcSweep(
 /**
  * Sorts the given GC state as per the id of the GC nodes. It also sorts the outbound routes array of each node.
  */
-export function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollectionState {
-	const sortableArray: [string, IGarbageCollectionNodeData][] = Object.entries(gcState.gcNodes);
+export function generateSortedGCState(
+	gcState: IGarbageCollectionState,
+): IGarbageCollectionState {
+	const sortableArray: [string, IGarbageCollectionNodeData][] = Object.entries(
+		gcState.gcNodes,
+	);
 	sortableArray.sort(([a], [b]) => a.localeCompare(b));
 	const sortedGCState: IGarbageCollectionState = { gcNodes: {} };
 	for (const [nodeId, nodeData] of sortableArray) {
@@ -99,7 +105,7 @@ export function concatGarbageCollectionStates(
 	const combinedGCNodes: { [id: string]: IGarbageCollectionNodeData } = {};
 	for (const [nodeId, nodeData] of Object.entries(gcState1.gcNodes)) {
 		combinedGCNodes[nodeId] = {
-			outboundRoutes: Array.from(nodeData.outboundRoutes),
+			outboundRoutes: [...nodeData.outboundRoutes],
 			unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
 		};
 	}
@@ -108,7 +114,7 @@ export function concatGarbageCollectionStates(
 		let combineNodeData = combinedGCNodes[nodeId];
 		if (combineNodeData === undefined) {
 			combineNodeData = {
-				outboundRoutes: Array.from(nodeData.outboundRoutes),
+				outboundRoutes: [...nodeData.outboundRoutes],
 				unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
 			};
 		} else {
@@ -143,7 +149,7 @@ export function concatGarbageCollectionStates(
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		clonedGCNodes[id] = Array.from(outboundRoutes);
+		clonedGCNodes[id] = [...outboundRoutes];
 	}
 	return {
 		gcNodes: clonedGCNodes,
@@ -156,11 +162,11 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
 export function concatGarbageCollectionData(
 	gcData1: IGarbageCollectionData,
 	gcData2: IGarbageCollectionData,
-) {
+): IGarbageCollectionData {
 	const combinedGCData: IGarbageCollectionData = cloneGCData(gcData1);
 	for (const [id, routes] of Object.entries(gcData2.gcNodes)) {
 		if (combinedGCData.gcNodes[id] === undefined) {
-			combinedGCData.gcNodes[id] = Array.from(routes);
+			combinedGCData.gcNodes[id] = [...routes];
 		} else {
 			const combinedRoutes = [...routes, ...combinedGCData.gcNodes[id]];
 			combinedGCData.gcNodes[id] = [...new Set(combinedRoutes)];
@@ -215,7 +221,9 @@ export async function getGCDataFromSnapshot(
  * @param gcDetails - The GC details of a node.
  * @returns A map of GC details of each children of the the given node.
  */
-export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBase) {
+export function unpackChildNodesGCDetails(
+	gcDetails: IGarbageCollectionDetailsBase,
+): Map<string, IGarbageCollectionDetailsBase> {
 	const childGCDetailsMap: Map<string, IGarbageCollectionDetailsBase> = new Map();
 
 	// If GC data is not available, bail out.
@@ -230,8 +238,11 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 			continue;
 		}
 
-		assert(id.startsWith("/"), 0x5d9 /* node id should always be an absolute route */);
 		const childId = id.split("/")[1];
+		assert(
+			childId !== undefined,
+			0x9fe /* node id should be an absolute route with child id part */,
+		);
 		let childGCNodeId = id.slice(childId.length + 1);
 		// GC node id always begins with "/". Handle the special case where a child's id in the parent's GC nodes is
 		// of format `/root`. In this case, the childId is root and childGCNodeId is "". Make childGCNodeId = "/".
@@ -259,8 +270,11 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 	// Remove the node's self used route, if any, and generate the children used routes.
 	const usedRoutes = gcDetails.usedRoutes.filter((route) => route !== "" && route !== "/");
 	for (const route of usedRoutes) {
-		assert(route.startsWith("/"), 0x5db /* Used route should always be an absolute route */);
 		const childId = route.split("/")[1];
+		assert(
+			childId !== undefined,
+			0x9ff /* used route should be an absolute route with child id part */,
+		);
 		const childUsedRoute = route.slice(childId.length + 1);
 
 		const childGCDetails = childGCDetailsMap.get(childId);
@@ -280,11 +294,13 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  * @param str - A string that may contain leading and / or trailing slashes.
  * @returns A new string without leading and trailing slashes.
  */
-function trimLeadingAndTrailingSlashes(str: string) {
+function trimLeadingAndTrailingSlashes(str: string): string {
 	return str.replace(/^\/+|\/+$/g, "");
 }
 
-/** Reformats a request URL to match expected format for a GC node path */
+/**
+ * Reformats a request URL to match expected format for a GC node path
+ */
 export function urlToGCNodePath(url: string): string {
 	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
 }

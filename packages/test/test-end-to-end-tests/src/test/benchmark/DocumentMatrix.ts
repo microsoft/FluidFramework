@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { assertDocumentTypeInfo, isDocumentMatrixInfo } from "@fluid-private/test-version-utils";
+import {
+	assertDocumentTypeInfo,
+	isDocumentMatrixInfo,
+} from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -26,7 +29,10 @@ import {
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils/internal";
+import {
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
 
 import {
 	IDocumentLoaderAndSummarizer,
@@ -176,12 +182,11 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 	 * @param props - Properties for initializing the Document Creator.
 	 */
 	public constructor(private readonly props: IDocumentProps) {
-		this._dataObjectFactory = new DataObjectFactory(
-			"TestDataObject",
-			TestDataObject,
-			[SharedMatrix.getFactory(), SharedString.getFactory()],
-			[],
-		);
+		this._dataObjectFactory = new DataObjectFactory({
+			type: "TestDataObject",
+			ctor: TestDataObject,
+			sharedObjects: [SharedMatrix.getFactory(), SharedString.getFactory()],
+		});
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,
 			registryEntries: [

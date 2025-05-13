@@ -3,24 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainerContext,
+	IRuntime,
+} from "@fluidframework/container-definitions/internal";
 import {
-	ContainerRuntime,
 	FluidDataStoreRegistry,
+	loadContainerRuntime,
 	type IContainerRuntimeOptions,
+	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type FluidObject } from "@fluidframework/core-interfaces";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	type RuntimeRequestHandler,
 	// eslint-disable-next-line import/no-deprecated
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
-import {
-	type IFluidDataStoreRegistry,
-	type IProvideFluidDataStoreRegistry,
-	type NamedFluidDataStoreRegistryEntries,
+import type {
+	IFluidDataStoreRegistry,
+	IProvideFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 import {
@@ -31,6 +35,7 @@ import {
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.
+ * @legacy
  * @alpha
  */
 export interface BaseContainerRuntimeFactoryProps {
@@ -57,12 +62,18 @@ export interface BaseContainerRuntimeFactoryProps {
 	 * created with this factory
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	/**
+	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 */
+	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
  * request handlers, runtimeOptions, and entryPoint initialization function.
  * It can be subclassed to implement a first-time initialization procedure for the containers it creates.
+ * @legacy
  * @alpha
  */
 export class BaseContainerRuntimeFactory
@@ -83,6 +94,7 @@ export class BaseContainerRuntimeFactory
 	// eslint-disable-next-line import/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	private readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();
@@ -93,21 +105,37 @@ export class BaseContainerRuntimeFactory
 		this.provideEntryPoint = props.provideEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
+		this.minVersionForCollab = props.minVersionForCollab;
 	}
 
-	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+	/**
+	 * Called the one time the container is created, and not on any subsequent load.
+	 * i.e. only when it's initialized on the client that first created it
+	 * @param runtime - The runtime for the container being initialized
+	 */
+	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
 		await this.containerInitializingFirstTime(runtime);
 		await this.containerHasInitialized(runtime);
 	}
 
-	public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
+	/**
+	 * Called every time the container runtime is loaded for an existing container.
+	 * i.e. every time it's initialized _except_ for when it is first created
+	 * @param runtime - The runtime for the container being initialized
+	 */
+	public async instantiateFromExisting(runtime: IContainerRuntime): Promise<void> {
 		await this.containerHasInitialized(runtime);
 	}
 
+	/**
+	 * Called at the start of initializing a container, to create the container runtime instance.
+	 * @param context - The context for the container being initialized
+	 * @param existing - Whether the container already exists and is being loaded (else it's being created new just now)
+	 */
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-	): Promise<ContainerRuntime> {
+	): Promise<IContainerRuntime & IRuntime> {
 		const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
 		if (this.dependencyContainer) {
 			const dc = new DependencyContainer<FluidObject>(
@@ -117,7 +145,7 @@ export class BaseContainerRuntimeFactory
 			scope.IFluidDependencySynthesizer = dc;
 		}
 
-		return ContainerRuntime.loadRuntime({
+		return loadContainerRuntime({
 			context,
 			existing,
 			runtimeOptions: this.runtimeOptions,
@@ -126,6 +154,7 @@ export class BaseContainerRuntimeFactory
 			// eslint-disable-next-line import/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
+			minVersionForCollab: this.minVersionForCollab,
 		});
 	}
 

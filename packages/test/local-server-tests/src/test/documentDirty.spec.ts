@@ -8,20 +8,26 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -126,18 +132,18 @@ describe("Document Dirty", () => {
 			const urlResolver = new LocalResolver();
 			const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-			const loader = new Loader({
+			const createDetachedContainerProps: ILoaderProps = {
 				urlResolver,
 				documentServiceFactory,
 				codeLoader,
-			});
-			loaderContainerTracker.add(loader);
+			};
 
-			return createAndAttachContainer(
-				codeDetails,
-				loader,
+			const containerUsingProps = await createAndAttachContainerUsingProps(
+				{ ...createDetachedContainerProps, codeDetails },
 				urlResolver.createCreateNewRequest(documentId),
 			);
+			loaderContainerTracker.addContainer(containerUsingProps);
+			return containerUsingProps;
 		}
 
 		beforeEach(async () => {
@@ -171,7 +177,11 @@ describe("Document Dirty", () => {
 			loaderContainerTracker.reset();
 		});
 
-		function checkDirtyState(when: string, expectedDirty: boolean, expectedCleanCount: number) {
+		function checkDirtyState(
+			when: string,
+			expectedDirty: boolean,
+			expectedCleanCount: number,
+		) {
 			assert.equal(
 				containerRuntime.isDirty,
 				expectedDirty,
@@ -431,7 +441,7 @@ describe("Document Dirty", () => {
 	});
 
 	describe("Detached Container", () => {
-		async function createDetachedContainer(): Promise<IContainer> {
+		async function createDetachedContainerForTest(): Promise<IContainer> {
 			const defaultFactory: TestFluidObjectFactory = new TestFluidObjectFactory(
 				[[mapId, SharedMap.getFactory()]],
 				"default",
@@ -445,14 +455,18 @@ describe("Document Dirty", () => {
 			const urlResolver = new LocalResolver();
 			const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-			const loader = new Loader({
+			const loaderProps: ILoaderProps = {
 				urlResolver,
 				documentServiceFactory,
 				codeLoader,
-			});
-			loaderContainerTracker.add(loader);
+			};
 
-			return loader.createDetachedContainer(codeDetails);
+			const containerUsingPops = await createDetachedContainer({
+				...loaderProps,
+				codeDetails,
+			});
+			loaderContainerTracker.addContainer(containerUsingPops);
+			return containerUsingPops;
 		}
 
 		/**
@@ -513,7 +527,11 @@ describe("Document Dirty", () => {
 			});
 		}
 
-		function checkDirtyState(when: string, expectedDirty: boolean, expectedCleanCount: number) {
+		function checkDirtyState(
+			when: string,
+			expectedDirty: boolean,
+			expectedCleanCount: number,
+		) {
 			assert.equal(
 				containerRuntime.isDirty,
 				expectedDirty,
@@ -545,7 +563,7 @@ describe("Document Dirty", () => {
 			loaderContainerTracker = new LoaderContainerTracker();
 
 			// Create the first container, component and DDSes.
-			container = await createDetachedContainer();
+			container = await createDetachedContainerForTest();
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
@@ -582,6 +600,27 @@ describe("Document Dirty", () => {
 			await loaderContainerTracker.ensureSynchronized();
 
 			checkDirtyState("after attach", false, 1);
+		});
+
+		it("remains dirty when changes are made during attach", async () => {
+			// Make change while attaching
+			container.on("attaching", () => {
+				sharedMap.set("key", "value");
+			});
+
+			checkDirtyState("before attach", true, 0);
+
+			const urlResolver = new LocalResolver();
+			const request = urlResolver.createCreateNewRequest(documentId);
+			await container.attach(request);
+
+			// Document should still be dirty after attach
+			checkDirtyState("after attach", true, 0);
+
+			// Wait for the ops to get processed which should mark the document clean after processing
+			await loaderContainerTracker.ensureSynchronized();
+
+			checkDirtyState("after op processing", false, 1);
 		});
 
 		it("toggles the dirty flag on shared object update", async () => {

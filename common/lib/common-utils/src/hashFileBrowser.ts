@@ -4,6 +4,7 @@
  */
 
 import * as base64js from "base64-js";
+
 import { IsoBuffer } from "./bufferBrowser";
 
 async function digestBuffer(file: IsoBuffer, algorithm: "SHA-1" | "SHA-256"): Promise<Uint8Array> {

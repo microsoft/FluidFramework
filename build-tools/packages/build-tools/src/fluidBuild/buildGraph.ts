@@ -4,12 +4,19 @@
  */
 
 import { AsyncPriorityQueue } from "async";
-import chalk from "chalk";
+import chalk from "picocolors";
+import { Spinner } from "picospinner";
 import * as semver from "semver";
 
 import * as assert from "assert";
 import registerDebug from "debug";
-import { FileHashCache } from "../common/fileHashCache";
+import type { GitRepo } from "../common/gitRepo";
+import { defaultLogger } from "../common/logging";
+import { Package } from "../common/npmPackage";
+import { Timer } from "../common/timer";
+import type { BuildContext } from "./buildContext";
+import { FileHashCache } from "./fileHashCache";
+import type { IFluidBuildConfig } from "./fluidBuildConfig";
 import {
 	TaskDefinition,
 	TaskDefinitions,
@@ -17,10 +24,7 @@ import {
 	getDefaultTaskDefinition,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
-} from "../common/fluidTaskDefinitions";
-import { defaultLogger } from "../common/logging";
-import { Package } from "../common/npmPackage";
-import { Timer } from "../common/timer";
+} from "./fluidTaskDefinitions";
 import { options } from "./options";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
@@ -60,18 +64,29 @@ class TaskStats {
 	public leafQueueWaitTimeTotal = 0;
 }
 
-class BuildContext {
+class BuildGraphContext implements BuildContext {
 	public readonly fileHashCache = new FileHashCache();
 	public readonly taskStats = new TaskStats();
 	public readonly failedTaskLines: string[] = [];
+	public readonly fluidBuildConfig: IFluidBuildConfig;
+	public readonly repoRoot: string;
+	public readonly gitRepo: GitRepo;
 	constructor(
 		public readonly repoPackageMap: Map<string, Package>,
+		readonly buildContext: BuildContext,
 		public readonly workerPool?: WorkerPool,
-	) {}
+	) {
+		this.fluidBuildConfig = buildContext.fluidBuildConfig;
+		this.repoRoot = buildContext.repoRoot;
+		this.gitRepo = buildContext.gitRepo;
+	}
 }
 
 export class BuildPackage {
-	private readonly tasks = new Map<string, Task>();
+	private readonly tasks: Task[] = [];
+
+	// tasks (with lifecycle) to resolved named reference.
+	private readonly targetTasks = new Map<string, Task>();
 
 	// track a script task without the lifecycle (pre/post) tasks
 	private readonly scriptTasks = new Map<string, Task>();
@@ -84,22 +99,16 @@ export class BuildPackage {
 	private readonly _taskDefinitions: TaskDefinitions;
 
 	constructor(
-		public readonly buildContext: BuildContext,
+		public readonly context: BuildGraphContext,
 		public readonly pkg: Package,
 		globalTaskDefinitions: TaskDefinitions,
 	) {
-		this._taskDefinitions = getTaskDefinitions(
-			this.pkg.packageJson,
-			globalTaskDefinitions,
-			this.pkg.isReleaseGroupRoot,
-		);
+		this._taskDefinitions = getTaskDefinitions(this.pkg.packageJson, globalTaskDefinitions, {
+			isReleaseGroupRoot: this.pkg.isReleaseGroupRoot,
+		});
 		traceTaskDef(
 			`${pkg.nameColored}: Task def: ${JSON.stringify(this._taskDefinitions, undefined, 2)}`,
 		);
-	}
-
-	public get taskCount() {
-		return this.tasks.size;
 	}
 
 	public createTasks(buildTaskNames: string[]) {
@@ -147,6 +156,7 @@ export class BuildPackage {
 				dependsOn: [`^${taskName}`],
 				script: false,
 				before: [],
+				children: [],
 				after: [],
 			};
 		}
@@ -156,8 +166,10 @@ export class BuildPackage {
 	private createTask(taskName: string, pendingInitDep: Task[]) {
 		const config = this.getTaskDefinition(taskName);
 		if (config?.script === false) {
-			const task = TaskFactory.CreateTargetTask(this, taskName);
+			const task = TaskFactory.CreateTargetTask(this, this.context, taskName);
 			pendingInitDep.push(task);
+			this.tasks.push(task);
+			this.targetTasks.set(taskName, task);
 			return task;
 		}
 		return this.createScriptTask(taskName, pendingInitDep);
@@ -169,8 +181,9 @@ export class BuildPackage {
 			// Find the script task (without the lifecycle task)
 			let scriptTask = this.scriptTasks.get(taskName);
 			if (scriptTask === undefined) {
-				scriptTask = TaskFactory.Create(this, command, pendingInitDep, taskName);
+				scriptTask = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
 				pendingInitDep.push(scriptTask);
+				this.tasks.push(scriptTask);
 				this.scriptTasks.set(taskName, scriptTask);
 			}
 
@@ -179,15 +192,16 @@ export class BuildPackage {
 			// script task will depend on this instance instead of the standalone script task without the lifecycle.
 			const task = TaskFactory.CreateTaskWithLifeCycle(
 				this,
+				this.context,
 				scriptTask,
 				this.ensureScriptTask(`pre${taskName}`, pendingInitDep),
 				this.ensureScriptTask(`post${taskName}`, pendingInitDep),
 			);
 			if (task !== scriptTask) {
-				// We are doing duplicate work initializeDependentTasks as both the lifecycle task
-				// and script task will have the task name and dependency
 				pendingInitDep.push(task);
+				this.tasks.push(task);
 			}
+			this.targetTasks.set(taskName, task);
 			return task;
 		}
 		return undefined;
@@ -207,14 +221,16 @@ export class BuildPackage {
 			throw new Error(`${this.pkg.nameColored}: '${taskName}' must be a script task`);
 		}
 
-		const task = TaskFactory.Create(this, command, pendingInitDep, taskName);
+		const task = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
 		pendingInitDep.push(task);
+		this.tasks.push(task);
+		this.scriptTasks.set(taskName, task);
 		return task;
 	}
 
-	// Create or return and existing task with a name.  If it is a script, it will also create an return the pre/post script task if it exists
+	// Create or return and existing task with a name.  If it is a script, it will also create and return the pre/post script task if it exists
 	private getTask(taskName: string, pendingInitDep: Task[] | undefined): Task | undefined {
-		const existing = this.tasks.get(taskName);
+		const existing = this.targetTasks.get(taskName);
 		if (existing) {
 			return existing;
 		}
@@ -224,11 +240,7 @@ export class BuildPackage {
 			return undefined;
 		}
 
-		const task = this.createTask(taskName, pendingInitDep);
-		if (task !== undefined) {
-			this.tasks.set(taskName, task);
-		}
-		return task;
+		return this.createTask(taskName, pendingInitDep);
 	}
 
 	public getScriptTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
@@ -237,16 +249,12 @@ export class BuildPackage {
 			// it is not a script task
 			return undefined;
 		}
-		const existing = this.tasks.get(taskName);
+		const existing = this.targetTasks.get(taskName);
 		if (existing) {
 			return existing;
 		}
 
-		const task = this.createScriptTask(taskName, pendingInitDep);
-		if (task !== undefined) {
-			this.tasks.set(taskName, task);
-		}
-		return task;
+		return this.createScriptTask(taskName, pendingInitDep);
 	}
 
 	public getDependsOnTasks(task: Task, taskName: string, pendingInitDep: Task[]) {
@@ -262,7 +270,7 @@ export class BuildPackage {
 	}
 
 	// Create or get the task with names in the `deps` array
-	private getMatchedTasks(deps: string[], pendingInitDep?: Task[]) {
+	private getMatchedTasks(deps: readonly string[], pendingInitDep?: Task[]) {
 		const matchedTasks: Task[] = [];
 		for (const dep of deps) {
 			// If pendingInitDep is undefined, that mean we don't expect the task to be found, so pretend that we already found it.
@@ -278,7 +286,7 @@ export class BuildPackage {
 				for (const depPackage of this.dependentPackages) {
 					if (taskName === "*") {
 						assert.strictEqual(pendingInitDep, undefined);
-						matchedTasks.push(...depPackage.tasks.values());
+						matchedTasks.push(...depPackage.targetTasks.values());
 					} else {
 						const depTask = depPackage.getTask(taskName, pendingInitDep);
 						if (depTask !== undefined) {
@@ -322,7 +330,7 @@ export class BuildPackage {
 				return beforeStarTaskNames;
 			}
 			// avoid circular dependency. ignore mutual before "*" */
-			beforeStarTaskNames = Array.from(this.tasks.keys()).filter(
+			beforeStarTaskNames = Array.from(this.targetTasks.keys()).filter(
 				(depTaskName) => !this.getTaskDefinition(depTaskName)?.before.includes("*"),
 			);
 			return beforeStarTaskNames;
@@ -334,14 +342,14 @@ export class BuildPackage {
 				return afterStarTaskNames;
 			}
 			// avoid circular dependency. ignore mutual after "*" */
-			afterStarTaskNames = Array.from(this.tasks.keys()).filter(
+			afterStarTaskNames = Array.from(this.targetTasks.keys()).filter(
 				(depTaskName) => !this.getTaskDefinition(depTaskName)?.after.includes("*"),
 			);
 			return afterStarTaskNames;
 		};
 
 		// Expand the star entry to all scheduled tasks
-		const expandStar = (deps: string[], getTaskNames: () => string[]) => {
+		const expandStar = (deps: readonly string[], getTaskNames: () => string[]) => {
 			const newDeps = deps.filter((dep) => dep !== "*");
 			if (newDeps.length === deps.length) {
 				return newDeps;
@@ -369,7 +377,6 @@ export class BuildPackage {
 				const matchedTasks = this.getMatchedTasks(before);
 				const dependentTask = [task];
 				for (const matchedTask of matchedTasks) {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					matchedTask.addDependentTasks(dependentTask, taskConfig.isDefault);
 				}
 			}
@@ -382,18 +389,11 @@ export class BuildPackage {
 					} -> ${JSON.stringify(after)}`,
 				);
 				const matchedTasks = this.getMatchedTasks(after);
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				task.addDependentTasks(matchedTasks, taskConfig.isDefault);
 			}
 		};
 
 		this.tasks.forEach(finalizeTask);
-		this.scriptTasks.forEach((task: Task, name: string) => {
-			// Process named script task that hasn't been processed yet.
-			if (this.tasks.get(name) !== task) {
-				finalizeTask(task);
-			}
-		});
 	}
 
 	public initializeDependentLeafTasks() {
@@ -409,11 +409,11 @@ export class BuildPackage {
 	}
 
 	public async isUpToDate(): Promise<boolean> {
-		if (this.tasks.size == 0) {
+		if (this.tasks.length === 0) {
 			return true;
 		}
 		const isUpToDateP = new Array<Promise<boolean>>();
-		for (const task of this.tasks.values()) {
+		for (const task of this.tasks) {
 			isUpToDateP.push(task.isUpToDate());
 		}
 		const isUpToDateArr = await Promise.all(isUpToDateP);
@@ -422,14 +422,14 @@ export class BuildPackage {
 
 	private async buildAllTasks(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		const runP: Promise<BuildResult>[] = [];
-		for (const task of this.tasks.values()) {
+		for (const task of this.tasks) {
 			runP.push(task.run(q));
 		}
 		return summarizeBuildResult(await Promise.all(runP));
 	}
 	public async build(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		if (!this.buildP) {
-			if (this.tasks.size !== 0) {
+			if (this.tasks.length !== 0) {
 				this.buildP = this.buildAllTasks(q);
 			} else {
 				this.buildP = Promise.resolve(BuildResult.UpToDate);
@@ -441,7 +441,7 @@ export class BuildPackage {
 	public async getLockFileHash() {
 		const lockfile = this.pkg.getLockFilePath();
 		if (lockfile) {
-			return this.buildContext.fileHashCache.getFileHash(lockfile);
+			return this.context.fileHashCache.getFileHash(lockfile);
 		}
 		throw new Error("Lock file not found");
 	}
@@ -474,17 +474,19 @@ export class BuildPackage {
 export class BuildGraph {
 	private matchedPackages = 0;
 	private readonly buildPackages = new Map<Package, BuildPackage>();
-	private readonly buildContext;
+	private readonly context: BuildGraphContext;
 
 	public constructor(
 		packages: Map<string, Package>,
 		releaseGroupPackages: Package[],
+		buildContext: BuildContext,
 		private readonly buildTaskNames: string[],
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
 		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
 	) {
-		this.buildContext = new BuildContext(
+		this.context = new BuildGraphContext(
 			packages,
+			buildContext,
 			options.worker
 				? new WorkerPool(options.workerThreads, options.workerMemoryLimit)
 				: undefined,
@@ -500,12 +502,17 @@ export class BuildGraph {
 	}
 
 	private async isUpToDate() {
-		const isUpToDateP = new Array<Promise<boolean>>();
-		this.buildPackages.forEach((node) => {
-			isUpToDateP.push(node.isUpToDate());
-		});
-		const isUpToDateArr = await Promise.all(isUpToDateP);
-		return isUpToDateArr.every((isUpToDate) => isUpToDate);
+		try {
+			const isUpToDateP = new Array<Promise<boolean>>();
+			this.buildPackages.forEach((node) => {
+				isUpToDateP.push(node.isUpToDate());
+			});
+			const isUpToDateArr = await Promise.all(isUpToDateP);
+			return isUpToDateArr.every((isUpToDate) => isUpToDate);
+		} catch {
+			// If checking the up-to-date state fails, we assume that the build is not up to date.
+			return false;
+		}
 	}
 
 	public async checkInstall() {
@@ -521,13 +528,20 @@ export class BuildGraph {
 	public async build(timer?: Timer): Promise<BuildResult> {
 		// This function must only be called once here at the beginning of the build.
 		// It checks the up-to-date state at this moment and will not be changed for the duration of the build.
+		const spinner = new Spinner("Checking incremental build task status...");
+		spinner.start();
+
+		// Note: any console logging done here (e.g. in leafTask.ts' checkIsUpToDate()) runs the risk of getting truncated due to how picospinner works.
+		// Ideally we shouldn't do console logging between starting and stopping a spinner.
 		const isUpToDate = await this.isUpToDate();
-		if (timer) timer.time(`Check up to date completed`);
+
+		spinner.succeed("Tasks loaded.");
+		timer?.time(`Check up to date completed`);
 
 		log(
 			`Start tasks '${chalk.cyanBright(this.buildTaskNames.join("', '"))}' in ${
 				this.matchedPackages
-			} matched packages (${this.buildContext.taskStats.leafTotalCount} total tasks in ${
+			} matched packages (${this.context.taskStats.leafTotalCount} total tasks in ${
 				this.buildPackages.size
 			} packages)`,
 		);
@@ -537,7 +551,7 @@ export class BuildGraph {
 		if (this.numSkippedTasks) {
 			log(`Skipping ${this.numSkippedTasks} up to date tasks.`);
 		}
-		this.buildContext.fileHashCache.clear();
+		this.context.fileHashCache.clear();
 		const q = Task.createTaskQueue();
 		const p: Promise<BuildResult>[] = [];
 		let hasError = false;
@@ -557,31 +571,31 @@ export class BuildGraph {
 			}
 			return summarizeBuildResult(await Promise.all(p));
 		} finally {
-			this.buildContext.workerPool?.reset();
+			this.context.workerPool?.reset();
 		}
 	}
 
 	public get numSkippedTasks(): number {
-		return this.buildContext.taskStats.leafUpToDateCount;
+		return this.context.taskStats.leafUpToDateCount;
 	}
 
 	public get totalElapsedTime(): number {
-		return this.buildContext.taskStats.leafExecTimeTotal;
+		return this.context.taskStats.leafExecTimeTotal;
 	}
 
 	public get totalQueueWaitTime(): number {
-		return this.buildContext.taskStats.leafQueueWaitTimeTotal;
+		return this.context.taskStats.leafQueueWaitTimeTotal;
 	}
 
 	public get taskFailureSummary(): string {
-		if (this.buildContext.failedTaskLines.length === 0) {
+		if (this.context.failedTaskLines.length === 0) {
 			return "";
 		}
-		const summaryLines = this.buildContext.failedTaskLines;
+		const summaryLines = this.context.failedTaskLines;
 		const notRunCount =
-			this.buildContext.taskStats.leafTotalCount -
-			this.buildContext.taskStats.leafUpToDateCount -
-			this.buildContext.taskStats.leafBuiltCount;
+			this.context.taskStats.leafTotalCount -
+			this.context.taskStats.leafUpToDateCount -
+			this.context.taskStats.leafBuiltCount;
 		summaryLines.unshift(chalk.redBright("Failed Tasks:"));
 		summaryLines.push(chalk.yellow(`Did not run ${notRunCount} tasks due to prior failures.`));
 		return summaryLines.join("\n");
@@ -595,7 +609,7 @@ export class BuildGraph {
 		let buildPackage = this.buildPackages.get(pkg);
 		if (buildPackage === undefined) {
 			try {
-				buildPackage = new BuildPackage(this.buildContext, pkg, globalTaskDefinitions);
+				buildPackage = new BuildPackage(this.context, pkg, globalTaskDefinitions);
 			} catch (e: unknown) {
 				throw new Error(
 					`${pkg.nameColored}: Failed to load build package in ${pkg.directory}\n\t${

@@ -182,12 +182,12 @@ export class Collection<T> {
 					if (in_filterKey.includes(in_key)) {
 						rtn.add(in_key, in_item);
 					}
-			  }
+				}
 			: function (in_key, in_item) {
 					if (in_key === in_filterKey) {
 						rtn.add(in_key, in_item);
 					}
-			  };
+				};
 
 		this.iterate(filterCb);
 

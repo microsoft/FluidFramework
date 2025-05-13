@@ -4,11 +4,7 @@
  */
 
 export { INexusResourcesCustomizations } from "./customizations";
+export { OrdererManager, IOrdererManagerOptions } from "./ordererManager";
 export { NexusRunner } from "./runner";
-export {
-	NexusResources,
-	NexusResourcesFactory,
-	NexusRunnerFactory,
-	OrdererManager,
-} from "./runnerFactory";
+export { NexusResources, NexusResourcesFactory, NexusRunnerFactory } from "./runnerFactory";
 export { StorageNameAllocator } from "./services";

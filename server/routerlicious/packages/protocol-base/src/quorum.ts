@@ -6,7 +6,7 @@
 import events_pkg from "events_pkg";
 const { EventEmitter } = events_pkg;
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICommittedProposal,
 	IQuorum,
@@ -16,6 +16,17 @@ import {
 	ISequencedDocumentMessage,
 	ISequencedProposal,
 } from "@fluidframework/protocol-definitions";
+
+/**
+ * Throws if condition is false.
+ * @privateRemarks
+ * TODO: Migrate this to a common assert pattern or library for server code.
+ */
+function assert(condition: boolean, message: string): asserts condition {
+	if (!condition) {
+		throw new Error(message);
+	}
+}
 
 /**
  * Structure for tracking proposals that have been sequenced but not approved yet.
@@ -96,8 +107,8 @@ export class QuorumClients
 	 * Adds a new client to the quorum
 	 */
 	public addMember(clientId: string, details: ISequencedClient) {
-		assert(!!clientId, 0x46f /* clientId has to be non-empty string */);
-		assert(!this.members.has(clientId), 0x1ce /* clientId not found */);
+		assert(!!clientId, "clientId has to be non-empty string");
+		assert(!this.members.has(clientId), "clientId not found");
 		this.members.set(clientId, details);
 		this.emit("addMember", clientId, details);
 
@@ -109,8 +120,8 @@ export class QuorumClients
 	 * Removes a client from the quorum
 	 */
 	public removeMember(clientId: string) {
-		assert(!!clientId, 0x470 /* clientId has to be non-empty string */);
-		assert(this.members.has(clientId), 0x1cf /* clientId not found */);
+		assert(!!clientId, "clientId has to be non-empty string");
+		assert(this.members.has(clientId), "clientId not found");
 		this.members.delete(clientId);
 		this.emit("removeMember", clientId);
 
@@ -319,7 +330,7 @@ export class QuorumProposals
 		local: boolean,
 		clientSequenceNumber: number,
 	) {
-		assert(!this.proposals.has(sequenceNumber), 0x1d0 /* sequenceNumber not found */);
+		assert(!this.proposals.has(sequenceNumber), "sequenceNumber not found");
 
 		const proposal = new PendingProposal(sequenceNumber, key, value, local);
 		this.proposals.set(sequenceNumber, proposal);

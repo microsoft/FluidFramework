@@ -3,41 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
-	IFluidHandleContext,
-	ITelemetryBaseLogger,
 	Tagged,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import {
+	IDocumentStorageService,
 	IBlob,
 	ISnapshotTree,
-	ISummaryBlob,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	IFluidParentContext,
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
 	channelsTreeName,
+	type IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
+import {
+	GCDataBuilder,
+	convertSummaryTreeToITree,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	MockLogger,
 	TelemetryDataTag,
@@ -45,12 +46,16 @@ import {
 	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";
 import {
+	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ChannelCollection, wrapContextForInnerChannel } from "../channelCollection.js";
-import { ContainerRuntime } from "../containerRuntime.js";
+import {
+	type ChannelCollection,
+	getLocalDataStoreType,
+	type IFluidParentContextPrivate,
+} from "../channelCollection.js";
 import { channelToDataStore } from "../dataStore.js";
 import {
 	LocalDetachedFluidDataStoreContext,
@@ -67,6 +72,11 @@ import {
 	summarizerClientType,
 } from "../summary/index.js";
 
+import {
+	createParentContext,
+	createSummarizerNodeAndGetCreateFn,
+} from "./dataStoreCreationHelper.js";
+
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
 	const emptyGCData: IGarbageCollectionData = { gcNodes: {} };
@@ -74,62 +84,16 @@ describe("Data Store Context Tests", () => {
 
 	describe("LocalFluidDataStoreContext", () => {
 		let localDataStoreContext: LocalFluidDataStoreContext;
-		let storage: IDocumentStorageService;
-		let scope: FluidObject;
+		const storage = {} as unknown as IDocumentStorageService;
+		const scope = {} as unknown as FluidObject;
 		const makeLocallyVisibleFn = () => {};
-		let containerRuntime: ContainerRuntime;
+		let parentContext: IFluidParentContextPrivate;
 		let summarizerNode: IRootSummarizerNodeWithGC;
 
-		function createContainerRuntime(
-			logger: ITelemetryBaseLogger = createChildLogger(),
-			clientDetails = {},
-			submitMessage = (type: string, contents: any, localOpMetadata: unknown) => {},
-		): ContainerRuntime {
-			const factory: IFluidDataStoreFactory = {
-				type: "store-type",
-				get IFluidDataStoreFactory() {
-					return factory;
-				},
-				instantiateDataStore: async (context: IFluidDataStoreContext) =>
-					new MockFluidDataStoreRuntime(),
-			};
-			const registry: IFluidDataStoreRegistry = {
-				get IFluidDataStoreRegistry() {
-					return registry;
-				},
-				get: async (pkg) => (pkg === "BOGUS" ? undefined : factory),
-			};
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			return {
-				IFluidDataStoreRegistry: registry,
-				on: (event, listener) => {},
-				baseLogger: logger,
-				clientDetails,
-				submitMessage,
-			} as ContainerRuntime;
-		}
-
 		beforeEach(async () => {
-			summarizerNode = createRootSummarizerNodeWithGC(
-				createChildLogger(),
-				(() => undefined) as unknown as SummarizeInternalFn,
-				0,
-				0,
-			);
-			summarizerNode.startSummary(0, createChildLogger(), 0);
-
-			createSummarizerNodeFn = (
-				summarizeInternal: SummarizeInternalFn,
-				getGCDataFn: () => Promise<IGarbageCollectionData>,
-			) =>
-				summarizerNode.createChild(
-					summarizeInternal,
-					dataStoreId,
-					{ type: CreateSummarizerNodeSource.Local },
-					undefined,
-					getGCDataFn,
-				);
-			containerRuntime = createContainerRuntime();
+			({ summarizerNode, createSummarizerNodeFn } =
+				createSummarizerNodeAndGetCreateFn(dataStoreId));
+			parentContext = createParentContext();
 		});
 
 		describe("Initialization", () => {
@@ -139,7 +103,7 @@ describe("Data Store Context Tests", () => {
 					new LocalFluidDataStoreContext({
 						id: invalidId,
 						pkg: ["TestDataStore1"],
-						parentContext: wrapContextForInnerChannel(invalidId, containerRuntime),
+						parentContext,
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -157,7 +121,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: fullPackageName, // This will cause an error when calling `realizeCore`
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -168,14 +132,14 @@ describe("Data Store Context Tests", () => {
 				try {
 					await localDataStoreContext.realize();
 					assert.fail("realize should have thrown an error due to empty pkg array");
-				} catch (e) {
-					assert(isFluidError(e), "Expected a valid Fluid Error to be thrown");
+				} catch (error) {
+					assert(isFluidError(error), "Expected a valid Fluid Error to be thrown");
 					assert.equal(
-						e.errorType,
+						error.errorType,
 						ContainerErrorTypes.dataProcessingError,
 						"Error should be a DataProcessingError",
 					);
-					const props = e.getTelemetryProperties();
+					const props = error.getTelemetryProperties();
 					assert.strictEqual(
 						(props.fullPackageName as Tagged<TelemetryBaseEventPropertyType>)?.value,
 						fullPackageName.join("/"),
@@ -198,7 +162,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -207,11 +171,8 @@ describe("Data Store Context Tests", () => {
 				});
 
 				await localDataStoreContext.realize();
-				const {
-					attachSummary: { summary },
-					type,
-				} = localDataStoreContext.getAttachData(/* includeGCData: */ false);
-				const snapshot = convertSummaryTreeToITree(summary);
+				const attachSummary = localDataStoreContext.getAttachSummary();
+				const snapshot = convertSummaryTreeToITree(attachSummary.summary);
 
 				const attributesEntry = snapshot.entries.find(
 					(e) => e.path === dataStoreAttributesBlobName,
@@ -245,7 +206,11 @@ describe("Data Store Context Tests", () => {
 					dataStoreAttributes.isRootDataStore,
 					"Local DataStore root state does not match",
 				);
-				assert.strictEqual(type, "TestDataStore1", "Attach message type does not match.");
+				assert.strictEqual(
+					getLocalDataStoreType(localDataStoreContext),
+					"TestDataStore1",
+					"Attach message type does not match.",
+				);
 			});
 
 			it("should generate exception when incorrectly created with array of packages", async () => {
@@ -253,7 +218,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -268,25 +233,29 @@ describe("Data Store Context Tests", () => {
 			});
 
 			it("can initialize and generate attributes when correctly created with array of packages", async () => {
-				const registryWithSubRegistries: { [key: string]: any } = {};
-				registryWithSubRegistries.IFluidDataStoreFactory = registryWithSubRegistries;
-				registryWithSubRegistries.IFluidDataStoreRegistry = registryWithSubRegistries;
-				registryWithSubRegistries.get = async (pkg) =>
-					Promise.resolve(registryWithSubRegistries);
-				registryWithSubRegistries.instantiateDataStore = async (
-					context: IFluidDataStoreContext,
-				) => new MockFluidDataStoreRuntime();
+				const registryWithSubRegistries: IFluidDataStoreRegistry & IFluidDataStoreFactory = {
+					get IFluidDataStoreFactory() {
+						return registryWithSubRegistries;
+					},
+					get IFluidDataStoreRegistry() {
+						return registryWithSubRegistries;
+					},
+					get: async (pkg) => registryWithSubRegistries,
+					type: "store-type",
+					instantiateDataStore: async (context: IFluidDataStoreContext) =>
+						new MockFluidDataStoreRuntime(),
+				};
 
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				containerRuntime = {
+				parentContext = {
 					IFluidDataStoreRegistry: registryWithSubRegistries,
-					on: (event, listener) => {},
-					clientDetails: {},
-				} as ContainerRuntime;
+					clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
+					deltaManager: new MockDeltaManager(),
+					isReadOnly: () => false,
+				} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -296,11 +265,8 @@ describe("Data Store Context Tests", () => {
 
 				await localDataStoreContext.realize();
 
-				const {
-					attachSummary: { summary },
-					type,
-				} = localDataStoreContext.getAttachData(/* includeGCData: */ false);
-				const snapshot = convertSummaryTreeToITree(summary);
+				const attachSummary = localDataStoreContext.getAttachSummary();
+				const snapshot = convertSummaryTreeToITree(attachSummary.summary);
 				const attributesEntry = snapshot.entries.find(
 					(e) => e.path === dataStoreAttributesBlobName,
 				);
@@ -332,14 +298,18 @@ describe("Data Store Context Tests", () => {
 					dataStoreAttributes.isRootDataStore,
 					"Local DataStore root state does not match",
 				);
-				assert.strictEqual(type, "SubComp", "Attach message type does not match.");
+				assert.strictEqual(
+					getLocalDataStoreType(localDataStoreContext),
+					"SubComp",
+					"Attach message type does not match.",
+				);
 			});
 
 			it("can correctly initialize non-root context", async () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -364,14 +334,14 @@ describe("Data Store Context Tests", () => {
 					},
 					type: summarizerClientType,
 				};
-				containerRuntime = createContainerRuntime(mockLogger, clientDetails);
+				parentContext = createParentContext(mockLogger, clientDetails);
 			});
 
 			it("logs when local data store is created in summarizer", async () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: packageName,
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -381,7 +351,7 @@ describe("Data Store Context Tests", () => {
 
 				const expectedEvents = [
 					{
-						eventName: "FluidDataStoreContext:DataStoreCreatedInSummarizer",
+						eventName: "FluidDataStoreContext:DataStoreCreatedWhileReadonly",
 						fullPackageName: {
 							tag: TelemetryDataTag.CodeArtifact,
 							value: packageName.join("/"),
@@ -403,7 +373,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: packageName,
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -420,7 +390,7 @@ describe("Data Store Context Tests", () => {
 
 				const expectedEvents = [
 					{
-						eventName: "FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer",
+						eventName: "FluidDataStoreContext:DataStoreMessageWhileReadonly",
 						type: DataStoreMessageType.ChannelOp,
 						fluidDataStoreId: {
 							tag: TelemetryDataTag.CodeArtifact,
@@ -442,7 +412,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: packageName,
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -461,9 +431,8 @@ describe("Data Store Context Tests", () => {
 				}
 				for (const event of mockLogger.events) {
 					if (
-						event.eventName ===
-							"FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer" ||
-						event.eventName === "FluidDataStoreContext:DataStoreCreatedInSummarizer"
+						event.eventName === "FluidDataStoreContext:DataStoreMessageWhileReadonly" ||
+						event.eventName === "FluidDataStoreContext:DataStoreCreatedWhileReadonly"
 					) {
 						eventCount++;
 					}
@@ -477,7 +446,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -486,18 +455,14 @@ describe("Data Store Context Tests", () => {
 				});
 
 				const gcData = await localDataStoreContext.getGCData();
-				assert.deepStrictEqual(
-					gcData,
-					emptyGCData,
-					"GC data from getGCData should be empty.",
-				);
+				assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
 			});
 
 			it("can successfully update referenced state", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -534,7 +499,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -557,28 +522,33 @@ describe("Data Store Context Tests", () => {
 		let remoteDataStoreContext: RemoteFluidDataStoreContext;
 		let dataStoreAttributes: ReadFluidDataStoreAttributes;
 		const storage: Partial<IDocumentStorageService> = {};
-		let scope: FluidObject;
+		const scope = {} as unknown as FluidObject;
 		let summarizerNode: IRootSummarizerNodeWithGC;
-		let containerRuntime: ContainerRuntime;
+		let parentContext: IFluidParentContextPrivate;
 
 		beforeEach(async () => {
-			const factory: { [key: string]: any } = {};
-			factory.IFluidDataStoreFactory = factory;
-			factory.instantiateDataStore = (context: IFluidDataStoreContext) =>
-				new MockFluidDataStoreRuntime();
-			const registry: { [key: string]: any } = {};
-			registry.IFluidDataStoreRegistry = registry;
-			registry.get = async (pkg) => Promise.resolve(factory);
+			const factory: IFluidDataStoreFactory = {
+				type: "store-type",
+				get IFluidDataStoreFactory() {
+					return factory;
+				},
+				instantiateDataStore: async (context: IFluidDataStoreContext) =>
+					new MockFluidDataStoreRuntime(),
+			};
+			const registry: IFluidDataStoreRegistry = {
+				get IFluidDataStoreRegistry() {
+					return registry;
+				},
+				get: async (pkg) => factory,
+			};
 
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			containerRuntime = {
+			parentContext = {
 				IFluidDataStoreRegistry: registry,
-				on: (event, listener) => {},
-				clientDetails: {},
-				isSnapshotFetchRequired: (path) => false,
-				containerRuntime,
-				blobContents: undefined,
-			} as unknown as ContainerRuntime;
+				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
+				containerRuntime: parentContext as unknown as IContainerRuntimeBase,
+				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
+			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 		});
 
 		describe("Initialization - can correctly initialize and generate attributes", () => {
@@ -621,9 +591,7 @@ describe("Data Store Context Tests", () => {
 				 * @param hasIsolatedChannels - whether we expect to read a snapshot tree with isolated channels or not
 				 * @param attributes - datastore attributes that are in the base snapshot we load from
 				 */
-				async function testGenerateAttributesCore(
-					attributes: ReadFluidDataStoreAttributes,
-				) {
+				async function testGenerateAttributesCore(attributes: ReadFluidDataStoreAttributes) {
 					const buffer = stringToBuffer(JSON.stringify(attributes), "utf8");
 					const attachBlobs = new Map<string, ArrayBufferLike>([
 						["fluidDataStoreAttributes", buffer],
@@ -643,7 +611,7 @@ describe("Data Store Context Tests", () => {
 					remoteDataStoreContext = new RemoteFluidDataStoreContext({
 						id: dataStoreId,
 						snapshot: snapshotTree,
-						parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+						parentContext,
 						storage: new StorageServiceWithAttachBlobs(
 							storage as IDocumentStorageService,
 							attachBlobs,
@@ -655,9 +623,7 @@ describe("Data Store Context Tests", () => {
 					const isRootNode = await remoteDataStoreContext.isRoot();
 					assert.strictEqual(isRootNode, true, "The data store should be root.");
 
-					const summarizeResult = await remoteDataStoreContext.summarize(
-						true /* fullTree */,
-					);
+					const summarizeResult = await remoteDataStoreContext.summarize(true /* fullTree */);
 					assert(
 						summarizeResult.summary.type === SummaryType.Tree,
 						"summarize should always return a tree when fullTree is true",
@@ -666,9 +632,7 @@ describe("Data Store Context Tests", () => {
 						dataStoreAttributesBlobName
 					] as ISummaryBlob;
 
-					const contents = JSON.parse(
-						blob.content as string,
-					) as WriteFluidDataStoreAttributes;
+					const contents = JSON.parse(blob.content as string) as WriteFluidDataStoreAttributes;
 
 					// Validate that generated attributes are as expected.
 					assert.deepStrictEqual(
@@ -692,7 +656,7 @@ describe("Data Store Context Tests", () => {
 					new RemoteFluidDataStoreContext({
 						id: invalidId,
 						pkg: ["TestDataStore1"],
-						parentContext: wrapContextForInnerChannel(invalidId, containerRuntime),
+						parentContext,
 						storage: storage as IDocumentStorageService,
 						scope,
 						createSummarizerNodeFn,
@@ -771,7 +735,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshot: snapshotTree,
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -781,11 +745,7 @@ describe("Data Store Context Tests", () => {
 				});
 
 				const gcData = await remoteDataStoreContext.getGCData();
-				assert.deepStrictEqual(
-					gcData,
-					emptyGCData,
-					"GC data from getGCData should be empty.",
-				);
+				assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
 			});
 
 			it("can generate GC data with GC details in initial summary", async () => {
@@ -793,10 +753,7 @@ describe("Data Store Context Tests", () => {
 					pkg: "TestDataStore1",
 					summaryFormatVersion: undefined,
 				};
-				const attributesBuffer = stringToBuffer(
-					JSON.stringify(dataStoreAttributes),
-					"utf8",
-				);
+				const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
 				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
@@ -823,7 +780,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshot: snapshotTree,
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -845,10 +802,7 @@ describe("Data Store Context Tests", () => {
 					pkg: "TestDataStore1",
 					summaryFormatVersion: undefined,
 				};
-				const attributesBuffer = stringToBuffer(
-					JSON.stringify(dataStoreAttributes),
-					"utf8",
-				);
+				const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
 				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
@@ -875,7 +829,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshot: snapshotTree,
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -929,7 +883,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshot: snapshotTree,
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -1004,7 +958,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshot: snapshotTree,
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -1026,19 +980,18 @@ describe("Data Store Context Tests", () => {
 
 	describe("LocalDetachedFluidDataStoreContext", () => {
 		let localDataStoreContext: LocalDetachedFluidDataStoreContext;
-		let storage: IDocumentStorageService;
-		let scope: FluidObject;
+		const storage = {} as unknown as IDocumentStorageService;
+		const scope = {} as unknown as FluidObject;
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
 		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel) =>
 			channelToDataStore(
 				fluidDataStore,
 				"id",
-				channelCollection,
-				createChildLogger({ logger: containerRuntime.baseLogger }),
+				{} as unknown as ChannelCollection,
+				createChildLogger({ logger: parentContext.baseLogger }),
 			);
-		let containerRuntime: ContainerRuntime;
-		let channelCollection: ChannelCollection;
+		let parentContext: IFluidParentContextPrivate;
 		let provideDsRuntimeWithFailingEntrypoint = false;
 
 		beforeEach(async () => {
@@ -1086,18 +1039,13 @@ describe("Data Store Context Tests", () => {
 				},
 				get: async (pkg) => (pkg === factory.type ? factory : undefined),
 			};
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			containerRuntime = {
+			parentContext = {
 				IFluidDataStoreRegistry: registry,
-				on: (event, listener) => {},
 				baseLogger: createChildLogger(),
-				clientDetails: {},
-			} as unknown as ContainerRuntime;
-
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			channelCollection = {
-				parentContext: containerRuntime as IFluidParentContext,
-			} as ChannelCollection;
+				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
+				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
+			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 		});
 
 		describe("Initialization", () => {
@@ -1107,7 +1055,7 @@ describe("Data Store Context Tests", () => {
 					new LocalDetachedFluidDataStoreContext({
 						id: invalidId,
 						pkg: [factory.type],
-						parentContext: wrapContextForInnerChannel(invalidId, containerRuntime),
+						parentContext,
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -1130,7 +1078,7 @@ describe("Data Store Context Tests", () => {
 					localDataStoreContext = new LocalDetachedFluidDataStoreContext({
 						id: dataStoreId,
 						pkg: ["some-datastore-type-not-present-in-registry"],
-						parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+						parentContext,
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -1139,18 +1087,17 @@ describe("Data Store Context Tests", () => {
 						channelToDataStoreFn,
 					});
 
-					const dataStore = await factory.instantiateDataStore(
-						localDataStoreContext,
-						false,
-					);
-					await localDataStoreContext.attachRuntime(factory, dataStore).catch((error) => {
-						assert.strictEqual(
-							error.message,
-							"Registry does not contain entry for the package",
-							"Unexpected exception thrown",
-						);
-						exceptionOccurred = true;
-					});
+					const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+					await localDataStoreContext
+						.attachRuntime(factory, dataStore)
+						.catch((error: Error) => {
+							assert.strictEqual(
+								error.message,
+								"Registry does not contain entry for the package",
+								"Unexpected exception thrown",
+							);
+							exceptionOccurred = true;
+						});
 					assert.strictEqual(
 						exceptionOccurred,
 						true,
@@ -1166,7 +1113,7 @@ describe("Data Store Context Tests", () => {
 					localDataStoreContext = new LocalDetachedFluidDataStoreContext({
 						id: dataStoreId,
 						pkg: [factory.type],
-						parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+						parentContext,
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -1175,18 +1122,17 @@ describe("Data Store Context Tests", () => {
 						channelToDataStoreFn,
 					});
 
-					const dataStore = await factory.instantiateDataStore(
-						localDataStoreContext,
-						false,
-					);
-					await localDataStoreContext.attachRuntime(factory, dataStore).catch((error) => {
-						assert.strictEqual(
-							error.message,
-							"Simulating failure when initializing EntryPoint",
-							"Unexpected exception thrown",
-						);
-						exceptionOccurred = true;
-					});
+					const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+					await localDataStoreContext
+						.attachRuntime(factory, dataStore)
+						.catch((error: Error) => {
+							assert.strictEqual(
+								error.message,
+								"Simulating failure when initializing EntryPoint",
+								"Unexpected exception thrown",
+							);
+							exceptionOccurred = true;
+						});
 					assert.strictEqual(
 						exceptionOccurred,
 						true,

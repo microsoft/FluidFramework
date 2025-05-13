@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import {
 	type MapTree,
 	type TreeFieldStoredSchema,
@@ -12,10 +12,8 @@ import {
 	MapNodeStoredSchema,
 	Multiplicity,
 	type SchemaAndPolicy,
-	getMapTreeField,
 } from "../../core/index.js";
 import { allowsValue } from "../valueUtilities.js";
-import { fail } from "../../util/index.js";
 
 export const enum SchemaValidationErrors {
 	NoError,
@@ -30,6 +28,9 @@ export const enum SchemaValidationErrors {
 	UnknownError,
 }
 
+/**
+ * Deeply checks that the provided node complies with the schema based on its identifier.
+ */
 export function isNodeInSchema(
 	node: MapTree,
 	schemaAndPolicy: SchemaAndPolicy,
@@ -55,7 +56,7 @@ export function isNodeInSchema(
 		}
 		const uncheckedFieldsFromNode = new Set(node.fields.keys());
 		for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
-			const nodeField = getMapTreeField(node, fieldKey, false);
+			const nodeField = node.fields.get(fieldKey) ?? [];
 			const fieldInSchemaResult = isFieldInSchema(nodeField, fieldSchema, schemaAndPolicy);
 			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
 				return fieldInSchemaResult;
@@ -63,7 +64,10 @@ export function isNodeInSchema(
 			uncheckedFieldsFromNode.delete(fieldKey);
 		}
 		// The node has fields that we did not check as part of looking at every field defined in the node's schema
-		if (uncheckedFieldsFromNode.size !== 0) {
+		if (
+			uncheckedFieldsFromNode.size !== 0 &&
+			!schemaAndPolicy.policy.allowUnknownOptionalFields(node.type)
+		) {
 			return SchemaValidationErrors.ObjectNode_FieldNotInSchema;
 		}
 	} else if (schema instanceof MapNodeStoredSchema) {
@@ -77,14 +81,17 @@ export function isNodeInSchema(
 			}
 		}
 	} else {
-		fail("Unknown TreeNodeStoredSchema type");
+		fail(0xb0e /* Unknown TreeNodeStoredSchema type */);
 	}
 
 	return SchemaValidationErrors.NoError;
 }
 
+/**
+ * Deeply checks that the nodes comply with the field schema and included schema.
+ */
 export function isFieldInSchema(
-	childNodes: MapTree[],
+	childNodes: readonly MapTree[],
 	schema: TreeFieldStoredSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationErrors {

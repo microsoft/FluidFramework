@@ -5,22 +5,16 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
+import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import { ITreeCursorSynchronous } from "./cursor.js";
-import * as Delta from "./delta.js";
-import { ProtoNodes } from "./delta.js";
-import {
-	areDetachedNodeIdsEqual,
-	isAttachMark,
-	isDetachMark,
-	isReplaceMark,
-	offsetDetachId,
-} from "./deltaUtil.js";
-import { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
-import { Major, Minor } from "./detachedFieldIndexTypes.js";
-import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
+import { mapCursorField, type ITreeCursorSynchronous } from "./cursor.js";
+import type * as Delta from "./delta.js";
+import { areDetachedNodeIdsEqual, offsetDetachId } from "./deltaUtil.js";
+import type { DetachedFieldIndex } from "./detachedFieldIndex.js";
+import type { ForestRootId, Major, Minor } from "./detachedFieldIndexTypes.js";
+import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
+import type { RevisionTag, TreeChunk } from "../index.js";
 
 /**
  * Implementation notes:
@@ -32,34 +26,18 @@ import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
  * 4. root destructions
  *
  * The core idea is that before content can be attached, it must first exist and be in a detached field.
- * The detach pass is therefore responsible for making sure that all roots that needs to be attached during the
- * attach pass are detached.
- * In practice, this means the detach pass must:
- * - Create all subtrees that need to be created
- * - Detach all moved nodes
- *
- * In addition to that, the detach pass also detaches nodes that need removing, with the exception of nodes that get
- * replaced. The reason for this exception is that we need to be able to communicate replaces as atomic operations.
- * In order to do that, we need to wait until we are sure that the content to attach is available as a detached root.
- * Replaces are therefore handled during the attach pass.
- * Note that this could theoretically lead to a situation where, in the attach pass, one replace wants to attach
- * a node that has yet to be detached by another replace. This does not occur in practice because we do not support
- * editing operations that would lead to this situation.
  *
  * While the detach pass ensures that nodes to be attached are in a detached state, it does not guarantee that they
- * reside in the correct detach field. That is the responsibility of the root transfers phase.
+ * reside in the correct detached field. That is the responsibility of the root transfers phase.
  *
- * The attach phase carries out attaches and replaces.
+ * The attach phase carries out attaches.
  *
  * After the attach phase, roots destruction is carried out.
  * This needs to happen last to allow modifications to detached roots to be applied before they are destroyed.
  *
  * The details of the delta visit algorithm can impact how/when events are emitted by the objects that own the visitors.
- * For example, as of 2024-03-27, the subtreecChanged event of an AnchorNode is emitted when exiting a node during a
+ * For example, as of 2024-03-27, the subtreeChanged event of an AnchorNode is emitted when exiting a node during a
  * delta visit, and thus the two-pass nature of the algorithm means the event fires twice for any given change.
- * This two-pass nature also means that the event may fire at a time where no change is visible in the tree. E.g.,
- * if a node is being replaced, when the event fires during the detach pass no change in the tree has happened so the
- * listener won't see any; then when it fires during the attach pass, the change will be visible in the event listener.
  */
 
 /**
@@ -71,11 +49,13 @@ import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
  * @param delta - The delta to be crawled.
  * @param visitor - The object to notify of the changes encountered.
  * @param detachedFieldIndex - Index responsible for keeping track of the existing detached fields.
+ * @param latestRevision - The latest revision tag associated with this delta.
  */
 export function visitDelta(
 	delta: Delta.Root,
 	visitor: DeltaVisitor,
 	detachedFieldIndex: DetachedFieldIndex,
+	latestRevision: RevisionTag | undefined,
 ): void {
 	const detachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
@@ -83,13 +63,15 @@ export function visitDelta(
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
 	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
 	delta.refreshers?.forEach(({ id: { major, minor }, trees }) => {
-		for (let i = 0; i < trees.length; i += 1) {
+		const treeCursors = nodeCursorsFromChunk(trees);
+		for (let i = 0; i < trees.topLevelLength; i += 1) {
 			const offsettedId = minor + i;
-			setInNestedMap(refreshers, major, offsettedId, trees[i]);
+			setInNestedMap(refreshers, major, offsettedId, treeCursors[i]);
 		}
 	});
 	const detachConfig: PassConfig = {
 		func: detachPass,
+		latestRevision,
 		refreshers,
 		detachedFieldIndex,
 		detachPassRoots,
@@ -98,11 +80,21 @@ export function visitDelta(
 		rootDestructions,
 	};
 	processBuilds(delta.build, detachConfig, visitor);
+	processGlobal(delta.global, detachConfig, visitor);
+	processRename(delta.rename, detachConfig);
 	visitFieldMarks(delta.fields, visitor, detachConfig);
 	fixedPointVisitOfRoots(visitor, detachPassRoots, detachConfig);
-	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor);
+	transferRoots(
+		rootTransfers,
+		attachPassRoots,
+		detachedFieldIndex,
+		visitor,
+		refreshers,
+		latestRevision,
+	);
 	const attachConfig: PassConfig = {
 		func: attachPass,
+		latestRevision,
 		refreshers,
 		detachedFieldIndex,
 		detachPassRoots,
@@ -151,6 +143,10 @@ function fixedPointVisitOfRoots(
 
 /**
  * Transfers roots from one detached field to another.
+ * This occurs in the following circumstances:
+ * - A changeset moves then removes a node
+ * - A changeset restores then moves a node
+ * - A changeset restores then removes a node
  * TODO#5481: update the DetachedFieldIndex instead of moving the nodes around.
  *
  * @param rootTransfers - The transfers to perform.
@@ -163,6 +159,8 @@ function transferRoots(
 	mapToUpdate: Map<ForestRootId, unknown>,
 	detachedFieldIndex: DetachedFieldIndex,
 	visitor: DeltaVisitor,
+	refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous>,
+	revision?: RevisionTag,
 ): void {
 	type AtomizedNodeRename = Omit<Delta.DetachedNodeRename, "count">;
 	let nextBatch = rootTransfers.flatMap(({ oldId, newId, count }) => {
@@ -183,7 +181,14 @@ function transferRoots(
 		const delayed: AtomizedNodeRename[] = [];
 		const priorSize = nextBatch.length;
 		for (const { oldId, newId } of nextBatch) {
-			const oldRootId = detachedFieldIndex.tryGetEntry(oldId);
+			let oldRootId = detachedFieldIndex.tryGetEntry(oldId);
+			if (oldRootId === undefined) {
+				const tree = tryGetFromNestedMap(refreshers, oldId.major, oldId.minor);
+				if (tree !== undefined) {
+					buildTrees(oldId, [tree], detachedFieldIndex, revision, visitor);
+					oldRootId = detachedFieldIndex.getEntry(oldId);
+				}
+			}
 			if (oldRootId === undefined) {
 				// The source field is not populated.
 				// This can happen when another rename needs to be performed first.
@@ -197,7 +202,7 @@ function transferRoots(
 				delayed.push({ oldId, newId });
 				continue;
 			}
-			newRootId = detachedFieldIndex.createEntry(newId);
+			newRootId = detachedFieldIndex.createEntry(newId, revision);
 			const fields = mapToUpdate.get(oldRootId);
 			if (fields !== undefined) {
 				mapToUpdate.delete(oldRootId);
@@ -206,7 +211,7 @@ function transferRoots(
 			const oldField = detachedFieldIndex.toFieldKey(oldRootId);
 			const newField = detachedFieldIndex.toFieldKey(newRootId);
 			visitor.enterField(oldField);
-			visitor.detach({ start: 0, end: 1 }, newField);
+			visitor.detach({ start: 0, end: 1 }, newField, newId, false);
 			visitor.exitField(oldField);
 			detachedFieldIndex.deleteEntry(oldId);
 		}
@@ -218,12 +223,16 @@ function transferRoots(
 /**
  * Visitor for changes in a delta.
  * Must be freed after use.
- * @internal
  */
 export interface DeltaVisitor {
 	/**
-	 * Frees/releases the visitor. Must be called once the visitor is no longer needed, since trying to acquire
-	 * a new one before freeing an existing one is invalid.
+	 * Frees/releases the visitor.
+	 *
+	 * Must be called once the visitor finished traversing the delta for a couple of reasons:
+	 *
+	 * 1. Some visitors, such as those from forests, are put into a special mode while they have a visitor, forbidding some actions (like making more visitors).
+	 *
+	 * 2. Some visitors, such as those from an anchorSet, defer some events for batching purposes until the visitor is freed.
 	 */
 	free(): void;
 	/**
@@ -232,7 +241,7 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(content: ProtoNodes, destination: FieldKey): void;
+	create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.
@@ -253,17 +262,17 @@ export interface DeltaVisitor {
 	 * @param source - The bounds of the range of nodes to detach.
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
+	 * @param id - The ID assigned to the first detached node as a result of the detach. The other nodes in the detached range are assigned subsequent IDs.
+	 * @param isReplaced - Whether the detached content will be replaced by a later attach.
+	 * This is not guaranteed to be true in all cases where it could be true,
+	 * but it is guaranteed to be true in all cases where a later attach is needed to keep the data compliant with the schema.
 	 */
-	detach(source: Range, destination: FieldKey): void;
-	/**
-	 * Replaces a range of nodes in the current field by transferring them out to a new detached field
-	 * and transferring in all the nodes from an existing detached field in their place.
-	 * The number of nodes being detached must match the number of nodes being attached.
-	 * @param newContentSource - The detached field to transfer the new nodes from.
-	 * @param range - The bounds of the range of nodes to replace.
-	 * @param oldContentDestination - The key for a new detached field to transfer the old nodes to.
-	 */
-	replace(newContentSource: FieldKey, range: Range, oldContentDestination: FieldKey): void;
+	detach(
+		source: Range,
+		destination: FieldKey,
+		id: Delta.DetachedNodeId,
+		isReplaced: boolean,
+	): void;
 
 	/**
 	 * Tells the visitor that it should update its "current location" to be the Node at the specified index
@@ -308,6 +317,13 @@ export interface DeltaVisitor {
 
 interface PassConfig {
 	readonly func: Pass;
+
+	/**
+	 * The latest revision tag associated with the given delta. This is used to keep track
+	 * of when repair data should be garbage collected.
+	 */
+	readonly latestRevision: RevisionTag | undefined;
+
 	readonly detachedFieldIndex: DetachedFieldIndex;
 	/**
 	 * A mapping between forest root id and trees that represent refresher data. Each entry is only
@@ -372,56 +388,36 @@ function visitNode(
 
 /**
  * Performs the following:
- * - Performs all root creations
- * - Collects all roots that may need a detach pass
  * - Collects all roots that may need an attach pass
- * - Collects all relocates
- * - Collects all destructions
- * - Executes detaches (bottom-up) provided they are not part of a replace
- * (because we want to wait until we are sure content to attach is available as a root)
+ * - Executes detaches (bottom-up)
  */
-function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
-	if (delta.global !== undefined) {
-		for (const { id, fields } of delta.global) {
-			let root = config.detachedFieldIndex.tryGetEntry(id);
-			if (root === undefined) {
-				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
-				assert(tree !== undefined, 0x928 /* refresher data not found */);
-				buildTrees(id, [tree], config, visitor);
-				root = config.detachedFieldIndex.getEntry(id);
-			}
-			config.detachPassRoots.set(root, fields);
-			config.attachPassRoots.set(root, fields);
+function detachPass(
+	fieldChanges: Delta.FieldChanges,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+): void {
+	let index = 0;
+	for (const mark of fieldChanges) {
+		if (mark.fields !== undefined) {
+			assert(
+				mark.attach === undefined || mark.detach !== undefined,
+				0x7d0 /* Invalid nested changes on an additive mark */,
+			);
+			visitNode(index, mark.fields, visitor, config);
 		}
-	}
-	if (delta.rename !== undefined) {
-		config.rootTransfers.push(...delta.rename);
-	}
-	if (delta.local !== undefined) {
-		let index = 0;
-		for (const mark of delta.local) {
-			if (mark.fields !== undefined) {
-				assert(
-					mark.attach === undefined || mark.detach !== undefined,
-					0x7d0 /* Invalid nested changes on an additive mark */,
-				);
-				visitNode(index, mark.fields, visitor, config);
-			}
-			if (isDetachMark(mark)) {
-				for (let i = 0; i < mark.count; i += 1) {
-					const root = config.detachedFieldIndex.createEntry(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						offsetDetachId(mark.detach!, i),
-					);
-					if (mark.fields !== undefined) {
-						config.attachPassRoots.set(root, mark.fields);
-					}
-					const field = config.detachedFieldIndex.toFieldKey(root);
-					visitor.detach({ start: index, end: index + 1 }, field);
+		if (mark.detach !== undefined) {
+			for (let i = 0; i < mark.count; i += 1) {
+				const id = offsetDetachId(mark.detach, i);
+				const root = config.detachedFieldIndex.createEntry(id, config.latestRevision);
+				if (mark.fields !== undefined) {
+					config.attachPassRoots.set(root, mark.fields);
 				}
-			} else if (!isAttachMark(mark)) {
-				index += mark.count;
+				const field = config.detachedFieldIndex.toFieldKey(root);
+				visitor.detach({ start: index, end: index + 1 }, field, id, mark.attach !== undefined);
 			}
+		}
+		if (mark.detach === undefined && mark.attach === undefined) {
+			index += mark.count;
 		}
 	}
 }
@@ -429,16 +425,17 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 function buildTrees(
 	id: Delta.DetachedNodeId,
 	trees: readonly ITreeCursorSynchronous[],
-	config: PassConfig,
+	detachedFieldIndex: DetachedFieldIndex,
+	latestRevision: RevisionTag | undefined,
 	visitor: DeltaVisitor,
 ): void {
-	for (let i = 0; i < trees.length; i += 1) {
+	for (const [i, tree] of trees.entries()) {
 		const offsettedId = offsetDetachId(id, i);
-		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
+		let root = detachedFieldIndex.tryGetEntry(offsettedId);
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
-		root = config.detachedFieldIndex.createEntry(offsettedId);
-		const field = config.detachedFieldIndex.toFieldKey(root);
-		visitor.create([trees[i]], field);
+		root = detachedFieldIndex.createEntry(offsettedId, latestRevision);
+		const field = detachedFieldIndex.toFieldKey(root);
+		visitor.create([tree], field);
 	}
 }
 
@@ -449,8 +446,45 @@ function processBuilds(
 ): void {
 	if (builds !== undefined) {
 		for (const { id, trees } of builds) {
-			buildTrees(id, trees, config, visitor);
+			buildTrees(
+				id,
+				nodeCursorsFromChunk(trees),
+				config.detachedFieldIndex,
+				config.latestRevision,
+				visitor,
+			);
 		}
+	}
+}
+
+function processGlobal(
+	global: readonly Delta.DetachedNodeChanges[] | undefined,
+	config: PassConfig,
+	visitor: DeltaVisitor,
+): void {
+	if (global !== undefined) {
+		for (const { id, fields } of global) {
+			let root = config.detachedFieldIndex.tryGetEntry(id);
+			if (root === undefined) {
+				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
+				assert(tree !== undefined, 0x928 /* refresher data not found */);
+				buildTrees(id, [tree], config.detachedFieldIndex, config.latestRevision, visitor);
+				root = config.detachedFieldIndex.getEntry(id);
+			}
+			// the revision is updated for any refresher data included in the delta that is used
+			config.detachedFieldIndex.updateLatestRevision(id, config.latestRevision);
+			config.detachPassRoots.set(root, fields);
+			config.attachPassRoots.set(root, fields);
+		}
+	}
+}
+
+function processRename(
+	rename: readonly Delta.DetachedNodeRename[] | undefined,
+	config: PassConfig,
+): void {
+	if (rename !== undefined) {
+		config.rootTransfers.push(...rename);
 	}
 }
 
@@ -466,63 +500,59 @@ function collectDestroys(
 /**
  * Preforms the following:
  * - Executes attaches (top-down) applying nested changes on the attached nodes
- * - Executes replaces (top-down) applying nested changes on the attached nodes
- * - Collects detached roots (from replaces) that need an attach pass
  */
-function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
-	if (delta.local !== undefined) {
-		let index = 0;
-		for (const mark of delta.local) {
-			if (isAttachMark(mark) || isReplaceMark(mark)) {
-				for (let i = 0; i < mark.count; i += 1) {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const offsetAttachId = offsetDetachId(mark.attach!, i);
-					let sourceRoot = config.detachedFieldIndex.tryGetEntry(offsetAttachId);
-					if (sourceRoot === undefined) {
-						const tree = tryGetFromNestedMap(
-							config.refreshers,
-							offsetAttachId.major,
-							offsetAttachId.minor,
-						);
-						assert(tree !== undefined, 0x92a /* refresher data not found */);
-						buildTrees(offsetAttachId, [tree], config, visitor);
-						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
-					}
-					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
-					const offsetIndex = index + i;
-					if (isReplaceMark(mark)) {
-						const rootDestination = config.detachedFieldIndex.createEntry(
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							offsetDetachId(mark.detach!, i),
-						);
-						const destinationField =
-							config.detachedFieldIndex.toFieldKey(rootDestination);
-						visitor.replace(
-							sourceField,
-							{ start: offsetIndex, end: offsetIndex + 1 },
-							destinationField,
-						);
-						// We may need to do a second pass on the detached nodes
-						if (mark.fields !== undefined) {
-							config.attachPassRoots.set(rootDestination, mark.fields);
-						}
-					} else {
-						// This a simple attach
-						visitor.attach(sourceField, 1, offsetIndex);
-					}
-					config.detachedFieldIndex.deleteEntry(offsetAttachId);
-					const fields = config.attachPassRoots.get(sourceRoot);
-					if (fields !== undefined) {
-						config.attachPassRoots.delete(sourceRoot);
-						visitNode(offsetIndex, fields, visitor, config);
-					}
+function attachPass(
+	fieldChanges: Delta.FieldChanges,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+): void {
+	let index = 0;
+	for (const mark of fieldChanges) {
+		if (mark.attach !== undefined) {
+			for (let i = 0; i < mark.count; i += 1) {
+				const offsetAttachId = offsetDetachId(mark.attach, i);
+				let sourceRoot = config.detachedFieldIndex.tryGetEntry(offsetAttachId);
+				if (sourceRoot === undefined) {
+					const tree = tryGetFromNestedMap(
+						config.refreshers,
+						offsetAttachId.major,
+						offsetAttachId.minor,
+					);
+					assert(tree !== undefined, 0x92a /* refresher data not found */);
+					buildTrees(
+						offsetAttachId,
+						[tree],
+						config.detachedFieldIndex,
+						config.latestRevision,
+						visitor,
+					);
+					sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
 				}
-			} else if (!isDetachMark(mark) && mark.fields !== undefined) {
-				visitNode(index, mark.fields, visitor, config);
-			}
-			if (!isDetachMark(mark)) {
-				index += mark.count;
+				const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
+				const offsetIndex = index + i;
+				visitor.attach(sourceField, 1, offsetIndex);
+				config.detachedFieldIndex.deleteEntry(offsetAttachId);
+				const fields = config.attachPassRoots.get(sourceRoot);
+				if (fields !== undefined) {
+					config.attachPassRoots.delete(sourceRoot);
+					visitNode(offsetIndex, fields, visitor, config);
+				}
 			}
 		}
+		if (mark.detach === undefined && mark.fields !== undefined) {
+			visitNode(index, mark.fields, visitor, config);
+		}
+		if (mark.detach === undefined || mark.attach !== undefined) {
+			index += mark.count;
+		}
 	}
+}
+
+/**
+ * Converts a chunk of trees into an array of cursors.
+ *
+ * TODO: Update the visitDelta logic and downstream APIs to avoid splitting up sequences into individual nodes.
+ */
+function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
+	return mapCursorField(trees.cursor(), (c) => c.fork());
 }

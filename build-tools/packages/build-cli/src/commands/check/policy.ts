@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
 import { Flags } from "@oclif/core";
-import { readJson } from "fs-extra";
 
-import { loadFluidBuildConfig } from "@fluidframework/build-tools";
-
-import { BaseCommand, Context, Handler, Repository, policyHandlers } from "../../library";
+import {
+	BaseCommand,
+	Context,
+	Handler,
+	Repository,
+	policyHandlers,
+} from "../../library/index.js";
 
 type policyAction = "handle" | "resolve" | "final";
 
@@ -93,16 +97,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			required: false,
 			char: "p",
 		}),
-		exclusions: Flags.file({
-			description: `Path to the exclusions.json file.`,
-			exists: true,
-			char: "e",
-			deprecated: {
-				message:
-					"Configure exclusions using the policy.exclusions field in the fluid-build config.",
-				version: "0.26.0",
-			},
-		}),
 		stdin: Flags.boolean({
 			description: `Read list of files from stdin.`,
 			required: false,
@@ -143,8 +137,20 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			this.exit(0);
 		}
 
+		const context = await this.getContext();
+		const { policy } = context.flubConfig;
+		const gitRoot = context.repo.resolvedRoot;
+
 		const pathRegex: RegExp =
-			this.flags.path === undefined ? /.?/ : new RegExp(this.flags.path, "i");
+			this.flags.path === undefined
+				? new RegExp(`${path.relative(gitRoot, process.cwd())}.?`, "i")
+				: new RegExp(this.flags.path, "i");
+
+		if (this.flags.path === undefined) {
+			this.info(`Filtering to files under the current path.`);
+		} else {
+			this.info(`Filtering file paths by regex: ${pathRegex}`);
+		}
 
 		if (this.flags.handler !== undefined) {
 			const handlerRegex: RegExp = new RegExp(this.flags.handler, "i");
@@ -152,25 +158,14 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			handlersToRun = handlersToRun.filter((h) => handlerRegex.test(h.name));
 		}
 
-		if (this.flags.path !== undefined) {
-			this.info(`Filtering file paths by regex: ${pathRegex}`);
-		}
-
 		if (this.flags.fix) {
 			this.info("Resolving errors if possible.");
 		}
 
-		const manifest = loadFluidBuildConfig(this.flags.root ?? process.cwd());
-
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const rawExclusions: string[] =
-			this.flags.exclusions === undefined
-				? manifest.policy?.exclusions
-				: await readJson(this.flags.exclusions);
+		const rawExclusions: string[] = policy?.exclusions ?? [];
 
 		const exclusions: RegExp[] = rawExclusions.map((e) => new RegExp(e, "i"));
-
-		const rawHandlerExclusions = manifest?.policy?.handlerExclusions;
+		const rawHandlerExclusions = policy?.handlerExclusions;
 
 		const handlerExclusions: HandlerExclusions = {};
 		if (rawHandlerExclusions) {
@@ -180,8 +175,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		const filePathsToCheck: string[] = [];
-		const context = await this.getContext();
-		const gitRoot = context.repo.resolvedRoot;
 
 		if (this.flags.stdin) {
 			const stdInput = await readStdin();
@@ -190,15 +183,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				filePathsToCheck.push(...stdInput.split("\n"));
 			}
 		} else {
-			const repo = new Repository({ baseDir: gitRoot });
-			const gitFiles = await repo.gitClient.raw(
-				"ls-files",
-				"-co",
-				"--exclude-standard",
-				"--full-name",
-			);
-
-			filePathsToCheck.push(...gitFiles.split("\n"));
+			const repo = new Repository({ baseDir: gitRoot }, "microsoft/FluidFramework");
+			const gitFiles = await repo.getFiles(".");
+			filePathsToCheck.push(...gitFiles);
 		}
 
 		const commandContext: CheckPolicyCommandContext = {
@@ -245,48 +232,60 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		// Use the repo-relative path so that regexes that specify string start (^) will match repo paths.
 		const relPath = context.repo.relativeToRepo(file);
 
-		await Promise.all(
+		const handlerResults = await Promise.all(
 			handlers
 				.filter((handler) => handler.match.test(relPath))
-				.map(async (handler): Promise<void> => {
+				.filter((handler) => {
 					// doing exclusion per handler
 					const exclusions = handlerExclusions[handler.name];
 					if (exclusions !== undefined && !exclusions.every((regex) => !regex.test(relPath))) {
 						this.verbose(`Excluded ${handler.name} handler: ${relPath}`);
-						return;
+						return false;
 					}
-
-					const result = await runWithPerf(handler.name, "handle", async () =>
-						handler.handler(relPath, gitRoot),
-					);
-					if (result !== undefined && result !== "") {
-						let output = `${newline}file failed the "${handler.name}" policy: ${relPath}${newline}${result}`;
-						const { resolver } = handler;
-						if (this.flags.fix && resolver) {
-							output += `${newline}attempting to resolve: ${relPath}`;
-							const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
-								resolver(relPath, gitRoot),
-							);
-
-							if (resolveResult?.message !== undefined) {
-								output += newline + resolveResult.message;
-							}
-
-							if (!resolveResult.resolved) {
-								process.exitCode = 1;
-							}
-						} else {
-							process.exitCode = 1;
-						}
-
-						if (process.exitCode === 1) {
-							this.warning(output);
-						} else {
-							this.info(output);
-						}
-					}
+					return true;
+				})
+				.map(async (handler): Promise<{ handler: Handler; result: string | undefined }> => {
+					const result = await runWithPerf(handler.name, "handle", async () => {
+						// Pass the handler the absolute file path and the absolute path to the git root
+						return handler.handler(file, gitRoot);
+					});
+					return { handler, result };
 				}),
 		);
+
+		// Now that all handlers have completed, we can react to results which might include running resolvers
+		// that should only be applied one at a time. (Yes, there is an await in the loop intentionally.)
+		for (const { handler, result } of handlerResults) {
+			if (result !== undefined && result !== "") {
+				let output = `${newline}file failed the "${handler.name}" policy: ${relPath}${newline}${result}`;
+				const { resolver } = handler;
+				if (this.flags.fix && resolver) {
+					output += `${newline}attempting to resolve: ${relPath}`;
+					// Resolvers are expected to be run serially to avoid any conflicts.
+					// eslint-disable-next-line no-await-in-loop
+					const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
+						// Pass the resolver the absolute file path and the absolute path to the git root
+						resolver(file, gitRoot),
+					);
+
+					if (resolveResult?.message !== undefined) {
+						output += newline + resolveResult.message;
+					}
+
+					if (!resolveResult.resolved) {
+						process.exitCode = 1;
+					}
+				} else {
+					process.exitCode = 1;
+				}
+
+				if (process.exitCode === 1) {
+					this.warning(output);
+				} else {
+					this.info(output);
+				}
+			}
+		}
 	}
 
 	private logStats(): void {
@@ -314,6 +313,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		const { exclusions, gitRoot, pathRegex } = commandContext;
 
 		const filePath = path.join(gitRoot, inputPath).trim().replace(/\\/g, "/");
+		assert(path.isAbsolute(filePath) === true);
 
 		if (!pathRegex.test(inputPath) || !fs.existsSync(filePath)) {
 			return;
@@ -328,7 +328,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		try {
 			await this.routeToHandlers(filePath, commandContext);
 		} catch (error: unknown) {
-			throw new Error(`Error routing ${filePath} to handler: ${error}`);
+			throw new Error(
+				`Error routing ${filePath} to handler: ${error}\nStack: ${(error as Error).stack}`,
+			);
 		}
 
 		this.processed++;

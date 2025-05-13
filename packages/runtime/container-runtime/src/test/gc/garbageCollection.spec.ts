@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { Timer } from "@fluidframework/core-utils/internal";
-import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
@@ -19,6 +19,7 @@ import {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
+	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
@@ -71,14 +72,17 @@ type WithPrivates<T, TPrivates> = Omit<T, keyof TPrivates> & TPrivates;
 type GcWithPrivates = IGarbageCollector & {
 	readonly runtime: IGarbageCollectionRuntime;
 	readonly configs: IGarbageCollectorConfigs;
+	readonly gcDataFromLastRun: IGarbageCollectionData | undefined;
 	readonly summaryStateTracker: WithPrivates<
 		GCSummaryStateTracker,
 		{
 			latestSummaryGCVersion: GCVersion;
 			latestSummaryData: IGCSummaryTrackingData | undefined;
-			fullGCModeForAutoRecovery: boolean;
 		}
 	>;
+	readonly autoRecovery: {
+		useFullGC: () => boolean;
+	};
 	readonly telemetryTracker: GCTelemetryTracker;
 	readonly mc: MonitoringContext;
 	readonly sessionExpiryTimer: Omit<Timer, "defaultTimeout"> & { defaultTimeout: number };
@@ -87,6 +91,7 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly deletedNodes: Set<string>;
 	readonly unreferencedNodesState: Map<string, UnreferencedStateTracker>;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
+	readonly triggerAutoRecovery: (nodePath: string) => void;
 	runGC: (fullGC: boolean) => Promise<IGCStats>;
 };
 
@@ -129,7 +134,9 @@ describe("Garbage Collection Tests", () => {
 		return sweepReadyRoutes;
 	}
 
-	/** More concise signature for calling IGarbageCollector.nodeUpdated */
+	/**
+	 * More concise signature for calling {@link IGarbageCollector.nodeUpdated}.
+	 */
 	function nodeUpdated(
 		garbageCollector: IGarbageCollector,
 		path: string,
@@ -148,7 +155,7 @@ describe("Garbage Collection Tests", () => {
 	function createGarbageCollector(
 		params: {
 			createParams?: Partial<IGarbageCollectorCreateParams>;
-			gcBlobsMap?: Map<string, any>;
+			gcBlobsMap?: Map<string, unknown>;
 			gcMetadata?: IGCMetadata;
 			closeFn?: (error?: ICriticalContainerError) => void;
 			isSummarizerClient?: boolean;
@@ -173,7 +180,6 @@ describe("Garbage Collection Tests", () => {
 
 		// The runtime to be passed to the garbage collector.
 		const gcRuntime: IGarbageCollectionRuntime = {
-			updateStateBeforeGC: async () => {},
 			getGCData,
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
@@ -299,7 +305,7 @@ describe("Garbage Collection Tests", () => {
 			const spies = {
 				telemetryTracker: { nodeUsed: spy(garbageCollector.telemetryTracker, "nodeUsed") },
 			};
-			garbageCollector.addedOutboundReference("/from", "to/relative/url");
+			garbageCollector.addedOutboundReference("/from", "to/relative/url", Date.now());
 			mockLogger.assertMatch(
 				[{ eventName: "GarbageCollector:InvalidRelativeOutboundRoute", category: "error" }],
 				"Expected error log",
@@ -315,7 +321,7 @@ describe("Garbage Collection Tests", () => {
 			const spies = {
 				telemetryTracker: { nodeUsed: spy(garbageCollector.telemetryTracker, "nodeUsed") },
 			};
-			garbageCollector.addedOutboundReference("/from", "/to/absolute/url");
+			garbageCollector.addedOutboundReference("/from", "/to/absolute/url", Date.now());
 			mockLogger.assertMatchNone(
 				[{ eventName: "GarbageCollector:InvalidRelativeOutboundRoute" }],
 				"unexpected events logged",
@@ -326,6 +332,31 @@ describe("Garbage Collection Tests", () => {
 				"nodeUsed should have been called",
 			);
 		});
+	});
+
+	it("Private Autorecovery API", () => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const autoRecovery: {
+			useFullGC: () => boolean;
+			requestFullGCOnNextRun: () => void;
+			onCompletedGCRun: () => void;
+			onSummaryAck: () => void;
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} = createGarbageCollector().autoRecovery as any;
+
+		assert.equal(autoRecovery.useFullGC(), false, "Expect false by default");
+
+		autoRecovery.requestFullGCOnNextRun();
+		assert.equal(autoRecovery.useFullGC(), true, "Expect true after requesting full GC");
+
+		autoRecovery.onSummaryAck();
+		assert.equal(autoRecovery.useFullGC(), true, "Expect true still after early Summary Ack");
+
+		autoRecovery.onCompletedGCRun();
+		assert.equal(autoRecovery.useFullGC(), true, "Expect true still after full GC alone");
+
+		autoRecovery.onSummaryAck();
+		assert.equal(autoRecovery.useFullGC(), false, "Expect false after post-GC Summary Ack");
 	});
 
 	describe("Tombstone and Sweep", () => {
@@ -434,17 +465,19 @@ describe("Garbage Collection Tests", () => {
 
 			// Simulate GC Data with a route missing (nodes[0] is referenced but missing here)
 			// We'll return this from getGCData unless fullGC is passed in.
-			const corruptedGCData: IGarbageCollectionData = JSON.parse(
+			const corruptedGCData = JSON.parse(
 				JSON.stringify(defaultGCData),
-			);
+			) as IGarbageCollectionData;
 			corruptedGCData.gcNodes["/"] = [nodes[1]];
 
-			// getGCData set up to sometimes return the corrupted data
+			// getGCData set up to return the corrupted data unless fullGC is true
 			gc = createGarbageCollector({
+				createParams: { gcOptions: { enableGCSweep: true } }, // Required to run AutoRecovery
 				getGCData: async (fullGC?: boolean) => {
 					return fullGC ? defaultGCData : corruptedGCData;
 				},
 			});
+
 			// These spies will let us monitor how each of these functions are called (or not) during runSweepPhase.
 			// The original behavior of the function is preserved, but we can check how it was called.
 			const spies = {
@@ -487,7 +520,7 @@ describe("Garbage Collection Tests", () => {
 			assert.deepEqual(gc.tombstones, [nodes[0]], "node 0 should be in the Tombstones list");
 
 			// Simulate usage to trigger TombstoneLoaded op.
-			nodeUpdated(gc, nodes[0], "Loaded");
+			nodeUpdated(gc, nodes[0], "Loaded", Date.now());
 			const [gcTombstoneLoadedMessage] = spies.gc.submitMessage.args[0];
 			assert.deepEqual(
 				gcTombstoneLoadedMessage,
@@ -497,17 +530,21 @@ describe("Garbage Collection Tests", () => {
 						type: GarbageCollectionMessageType.TombstoneLoaded,
 						nodePath: nodes[0],
 					},
-					compatDetails: { behavior: "Ignore" },
 				} satisfies ContainerRuntimeGCMessage,
 				"submitted message not as expected",
 			);
 
+			const autoRecoveryTimestampMs = Date.now();
 			// Plumb the message to processMessage fn to trigger autorecovery
 			// Autorecovery: addedOutboundReference should be called with the tombstoned node, which should transition to "Active" state
-			gc.processMessage(gcTombstoneLoadedMessage, true /* local */);
+			gc.processMessages(
+				[gcTombstoneLoadedMessage.contents],
+				autoRecoveryTimestampMs,
+				true /* local */,
+			);
 			assert.deepEqual(
 				spies.gc.addedOutboundReference.args[0],
-				["/", nodes[0], /* autorecovery: */ true],
+				["/", nodes[0], autoRecoveryTimestampMs, /* autorecovery: */ true],
 				"addedOutboundReference should be called with node 0",
 			);
 			assert.equal(
@@ -519,22 +556,32 @@ describe("Garbage Collection Tests", () => {
 			// Simulate a successful GC/Summary.
 			// GC Data corruption should be fixed (nodes[0] should be referenced again) and autorecovery fullGC state should be reset
 			spies.gc.runGC.resetHistory();
+			// BUG FIX: Start with a spurious summary ack arriving before GC runs. It should not yet reset the autoRecovery state.
+			await gc.refreshLatestSummary({
+				isSummaryTracked: true,
+				isSummaryNewer: false,
+			});
+			assert(
+				gc.autoRecovery.useFullGC(),
+				"autoRecovery.useFullGC should still be true after spurious summary ack (haven't run GC yet)",
+			);
 			await gc.collectGarbage({});
 			assert(
 				spies.gc.runGC.calledWith(/* fullGC: */ true),
 				"runGC should be called with fullGC true",
 			);
+			// This matters in case GC runs but the summary fails. We'll need to run with fullGC again next time.
 			assert(
-				gc.summaryStateTracker.fullGCModeForAutoRecovery,
-				"fullGCModeForAutoRecovery should NOT have been reset to false yet",
+				gc.autoRecovery.useFullGC(),
+				"autoRecovery.useFullGC should still be true after GC run but before summary ack",
 			);
-			await gc.summaryStateTracker.refreshLatestSummary({
+			await gc.refreshLatestSummary({
 				isSummaryTracked: true,
 				isSummaryNewer: false,
 			});
 			assert(
-				!gc.summaryStateTracker.fullGCModeForAutoRecovery,
-				"fullGCModeForAutoRecovery should have been reset to false now",
+				!gc.autoRecovery.useFullGC(),
+				"autoRecovery.useFullGC should have been reset to false now",
 			);
 
 			// Lastly, confirm that the node was successfully restored
@@ -549,10 +596,10 @@ describe("Garbage Collection Tests", () => {
 	describe("errors when unreferenced objects are used after they are inactive / deleted", () => {
 		// Mock node loaded and changed activity for all the nodes in the graph.
 		async function mockNodeChangesAndRunGC(garbageCollector: IGarbageCollector) {
-			nodes.forEach((nodeId) => {
+			for (const nodeId of nodes) {
 				nodeUpdated(garbageCollector, nodeId, "Loaded", Date.now(), testPkgPath);
 				nodeUpdated(garbageCollector, nodeId, "Changed", Date.now(), testPkgPath);
-			});
+			}
 			await garbageCollector.collectGarbage({});
 		}
 
@@ -599,8 +646,8 @@ describe("Garbage Collection Tests", () => {
 					mode === "tombstone"
 						? timeout
 						: mode === "sweep"
-						? timeout - sweepGracePeriodMs
-						: undefined;
+							? timeout - sweepGracePeriodMs
+							: undefined;
 				const gcOptions = { sweepGracePeriodMs };
 				return createGarbageCollector({
 					createParams: { baseSnapshot, gcOptions },
@@ -680,7 +727,7 @@ describe("Garbage Collection Tests", () => {
 				);
 
 				// Add reference from node 1 to node 3 and validate that we get a revived event.
-				garbageCollector.addedOutboundReference(nodes[1], nodes[3]);
+				garbageCollector.addedOutboundReference(nodes[1], nodes[3], Date.now());
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatch(
 					[
@@ -716,7 +763,7 @@ describe("Garbage Collection Tests", () => {
 				clock.tick(1);
 				nodeUpdated(garbageCollector, nodes[2], "Changed", Date.now(), testPkgPath);
 				nodeUpdated(garbageCollector, nodes[2], "Loaded", Date.now(), testPkgPath);
-				garbageCollector.addedOutboundReference(nodes[1], nodes[2]);
+				garbageCollector.addedOutboundReference(nodes[1], nodes[2], Date.now());
 				await garbageCollector.collectGarbage({});
 
 				for (const event of mockLogger.events) {
@@ -816,9 +863,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				gcState.gcNodes[nodes[3]] = node3Data;
 
-				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([
-					[gcBlobId, gcState],
-				]);
+				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([[gcBlobId, gcState]]);
 				const garbageCollector = createGCOverride(baseSnapshot, gcBlobMap);
 
 				// Remove node 3's reference from node 2 so that it is still unreferenced.
@@ -849,7 +894,7 @@ describe("Garbage Collection Tests", () => {
 
 				// Add reference from node 2 to node 3 and validate that revived event is logged.
 				defaultGCData.gcNodes[nodes[2]] = [nodes[3]];
-				garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
+				garbageCollector.addedOutboundReference(nodes[2], nodes[3], Date.now());
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatch(
 					[
@@ -897,9 +942,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				gcState.gcNodes[nodes[3]] = node3Data;
 
-				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([
-					[gcBlobId, gcState],
-				]);
+				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([[gcBlobId, gcState]]);
 				const garbageCollector = createGCOverride(baseSnapshot, gcBlobMap);
 
 				// Initialize the base state which happens during runtime initialization.
@@ -911,9 +954,7 @@ describe("Garbage Collection Tests", () => {
 
 				// Log pending events explicitly. This is needed because summarizer clients don't log these events
 				// until the next GC run which calls this function.
-				await garbageCollector.telemetryTracker.logPendingEvents(
-					garbageCollector.mc.logger,
-				);
+				await garbageCollector.telemetryTracker.logPendingEvents(garbageCollector.mc.logger);
 				mockLogger.assertMatch(
 					[
 						{
@@ -933,11 +974,9 @@ describe("Garbage Collection Tests", () => {
 
 				// Add reference from node 2 to node 3 and validate that revived event is logged. Node 3 needs to be
 				// deleted from unreferencedNodesState otherwise revived events are not logged.
-				garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
+				garbageCollector.addedOutboundReference(nodes[2], nodes[3], Date.now());
 				garbageCollector.unreferencedNodesState.delete(nodes[3]);
-				await garbageCollector.telemetryTracker.logPendingEvents(
-					garbageCollector.mc.logger,
-				);
+				await garbageCollector.telemetryTracker.logPendingEvents(garbageCollector.mc.logger);
 				mockLogger.assertMatch(
 					[
 						{
@@ -1012,7 +1051,7 @@ describe("Garbage Collection Tests", () => {
 				);
 
 				// No revived events should be logged as no timeouts should have occurred
-				garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
+				garbageCollector.addedOutboundReference(nodes[2], nodes[3], Date.now());
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatchNone(
 					[
@@ -1163,8 +1202,8 @@ describe("Garbage Collection Tests", () => {
 			);
 		});
 
-		describe("GC version changes", () => {
-			function getSnapshotWithGCVersion(gcVersion: GCVersion) {
+		describe("Base GC state updates", () => {
+			function getSnapshotWithGCVersion(baseGCVersion: GCVersion) {
 				// Create a snapshot tree to be used as the GC snapshot tree.
 				const gcSnapshotTree = getDummySnapshotTree();
 				const gcBlobId = "root";
@@ -1198,13 +1237,13 @@ describe("Garbage Collection Tests", () => {
 
 				const metadataBlobId = "metadata";
 				const metadata: IContainerRuntimeMetadata = {
-					gcFeature: gcVersion,
+					gcFeature: baseGCVersion,
 					summaryFormatVersion: 1,
 					message: undefined,
 				};
 				snapshotTree.blobs[metadataBlobName] = metadataBlobId;
 
-				const gcBlobsMap: Map<string, any> = new Map();
+				const gcBlobsMap: Map<string, unknown> = new Map();
 				gcBlobsMap.set(gcBlobId, gcState);
 				gcBlobsMap.set(gcTombstoneBlobId, tombstones);
 				gcBlobsMap.set(gcDeletedBlobId, deletedBlobs);
@@ -1213,11 +1252,22 @@ describe("Garbage Collection Tests", () => {
 				return { snapshotTree, gcBlobsMap };
 			}
 
-			function createGCOverride(gcFeature: GCVersion) {
+			function createGCOverride(
+				baseGCVersion: GCVersion,
+				gcStateInBaseSnapshot: boolean = true,
+			) {
 				const gcMetadata: IGCMetadata = {
-					gcFeature,
+					gcFeature: baseGCVersion,
 				};
-				const { snapshotTree, gcBlobsMap } = getSnapshotWithGCVersion(gcFeature);
+				let snapshotTree: ISnapshotTree;
+				let gcBlobsMap: Map<string, unknown> | undefined;
+				if (gcStateInBaseSnapshot) {
+					const snapshotWithGCState = getSnapshotWithGCVersion(baseGCVersion);
+					snapshotTree = snapshotWithGCState.snapshotTree;
+					gcBlobsMap = snapshotWithGCState.gcBlobsMap;
+				} else {
+					snapshotTree = getDummySnapshotTree();
+				}
 				return createGarbageCollector({
 					createParams: { baseSnapshot: snapshotTree },
 					gcBlobsMap,
@@ -1230,10 +1280,7 @@ describe("Garbage Collection Tests", () => {
 
 				// GC state, tombstone state and deleted nodes should all be read from base snapshot.
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
-				assert(
-					baseSnapshotData !== undefined,
-					"base snapshot was not initialized correctly",
-				);
+				assert(baseSnapshotData !== undefined, "base snapshot was not initialized correctly");
 				assert(
 					baseSnapshotData.gcState !== undefined,
 					"GC state in base snapshot should not be available",
@@ -1255,22 +1302,16 @@ describe("Garbage Collection Tests", () => {
 					1,
 					"Expecting 1 tombstone node",
 				);
-				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					1,
-					"Expecting 1 deleted node",
-				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
 			});
 
-			it("discards GC state and tombstone state in base snapshot when GC version changes", async () => {
-				const garbageCollector = createGCOverride(stableGCVersion + 1);
+			it("resets GC / tombstone state when GC version is newer that the one in base snapshot", async () => {
+				// Set the GC version in base snapshot to lower than the stable GC version (current GC version).
+				const garbageCollector = createGCOverride(stableGCVersion - 1);
 
 				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
-				assert(
-					baseSnapshotData !== undefined,
-					"base snapshot was not initialized correctly",
-				);
+				assert(baseSnapshotData !== undefined, "base snapshot was not initialized correctly");
 				assert(
 					baseSnapshotData.gcState === undefined,
 					"GC state in base snapshot should be undefined when GC version changes",
@@ -1284,18 +1325,97 @@ describe("Garbage Collection Tests", () => {
 					"Deleted nodes in base snapshot should be available",
 				);
 
-				// Initialize from the base state and validate that tombstones has 0 entry because it was discarded.
-				// Deleted nodes should have one entry because it is still used.
+				// Initialize from the base state and validate the following:
+				// - GC data should be empty.
+				// - Tombstones should have 0 entries because it is discarded.
+				// - Deleted nodes should have one entry because it is still used.
+				// - GC should be enabled to run.
 				await garbageCollector.initializeBaseState();
 				assert.strictEqual(
 					garbageCollector.tombstones.length,
 					0,
 					"Expecting no tombstone nodes",
 				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
 				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					1,
-					"Expecting 1 deleted node",
+					garbageCollector.configs.gcAllowed,
+					true,
+					"Expected GC to be enabled",
+				);
+			});
+
+			it("resets GC / tombstone state when GC version is older that the one in base snapshot", async () => {
+				// Set the GC version in base snapshot to higher than the stable GC version (current GC version).
+				const garbageCollector = createGCOverride(stableGCVersion + 1);
+
+				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
+				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
+				assert(baseSnapshotData !== undefined, "base snapshot was not initialized correctly");
+				assert(
+					baseSnapshotData.gcState === undefined,
+					"GC state in base snapshot should be undefined when GC version changes",
+				);
+				assert(
+					baseSnapshotData.tombstones === undefined,
+					"Tombstone state in base snapshot should be undefined when GC version changes",
+				);
+				assert(
+					baseSnapshotData.deletedNodes !== undefined,
+					"Deleted nodes in base snapshot should be available",
+				);
+
+				// Initialize from the base state and validate the following:
+				// - GC data should be empty.
+				// - Tombstones should have 0 entries because it is discarded.
+				// - Deleted nodes should have one entry because it is still used.
+				// - GC should be disabled to run.
+				await garbageCollector.initializeBaseState();
+				assert.strict(
+					garbageCollector.gcDataFromLastRun === undefined,
+					"Expecting no GC data",
+				);
+				assert.strictEqual(
+					garbageCollector.tombstones.length,
+					0,
+					"Expecting no tombstone nodes",
+				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
+				assert.strictEqual(
+					garbageCollector.configs.gcAllowed,
+					true,
+					"Expected GC to be enabled",
+				);
+			});
+
+			it("starts with empty GC state when there is no GC state in base snapshot", async () => {
+				const garbageCollector = createGCOverride(
+					stableGCVersion,
+					false /* gcStateInBaseSnapshot */,
+				);
+
+				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
+				assert(baseSnapshotData === undefined, "base snapshot was should not be available");
+
+				// Initialize from the base state and validate the following:
+				// - GC data should be empty.
+				// - Tombstones should have 0 entries because it doesn't exist.
+				// - Deleted nodes should have 0 entries because it doesn't exist.
+				// - GC should be enabled to run.
+				await garbageCollector.initializeBaseState();
+				assert.strict(
+					garbageCollector.gcDataFromLastRun === undefined,
+					"Expecting no GC data",
+				);
+				assert.strictEqual(
+					garbageCollector.tombstones.length,
+					0,
+					"Expecting no tombstone nodes",
+				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 0, "Expecting no deleted node");
+				assert.strictEqual(
+					garbageCollector.configs.gcAllowed,
+					true,
+					"Expected GC to be enabled to run",
 				);
 			});
 		});
@@ -1575,7 +1695,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
 
 				// 2. Add reference from A to B. E = [A -\> B].
-				garbageCollector.addedOutboundReference(nodeA, nodeB);
+				garbageCollector.addedOutboundReference(nodeA, nodeB, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB];
 
 				// 3. Remove reference from A to B. E = [].
@@ -1619,7 +1739,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
 				// 2. Add reference from A to B. E = [A -\> B, B -\> C].
-				garbageCollector.addedOutboundReference(nodeA, nodeB);
+				garbageCollector.addedOutboundReference(nodeA, nodeB, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB];
 
 				// 3. Remove reference from B to C. E = [A -\> B].
@@ -1672,7 +1792,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeDTime1 !== undefined, "D should have unreferenced timestamp");
 
 				// 2. Add reference from A to B. E = [A -\> B, B -\> C, C -\> D].
-				garbageCollector.addedOutboundReference(nodeA, nodeB);
+				garbageCollector.addedOutboundReference(nodeA, nodeB, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB];
 
 				// 3. Remove reference from A to B. E = [B -\> C, C -\> D].
@@ -1726,11 +1846,11 @@ describe("Garbage Collection Tests", () => {
 				defaultGCData.gcNodes[nodeB] = [];
 
 				// 3. Add reference from A to B. E = [A -\> B].
-				garbageCollector.addedOutboundReference(nodeA, nodeB);
+				garbageCollector.addedOutboundReference(nodeA, nodeB, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB];
 
 				// 4. Add reference from B to C. E = [A -\> B, B -\> C].
-				garbageCollector.addedOutboundReference(nodeB, nodeC);
+				garbageCollector.addedOutboundReference(nodeB, nodeC, Date.now());
 				defaultGCData.gcNodes[nodeB] = [nodeC];
 
 				// 5. Remove reference from B to C. E = [A -\> B].
@@ -1775,11 +1895,11 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
 				// 2. Add reference from A to B. E = [A -\> B].
-				garbageCollector.addedOutboundReference(nodeA, nodeB);
+				garbageCollector.addedOutboundReference(nodeA, nodeB, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB];
 
 				// 3. Add reference from A to C. E = [A -\> B, A -\> C].
-				garbageCollector.addedOutboundReference(nodeA, nodeC);
+				garbageCollector.addedOutboundReference(nodeA, nodeC, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB, nodeC];
 
 				// 4. Remove reference from A to B. E = [A -\> C].
@@ -1836,7 +1956,7 @@ describe("Garbage Collection Tests", () => {
 
 				// 4. Add reference from A to D with calling addedOutboundReference
 				defaultGCData.gcNodes[nodeA].push(nodeD);
-				garbageCollector.addedOutboundReference(nodeA, nodeD);
+				garbageCollector.addedOutboundReference(nodeA, nodeD, Date.now());
 
 				// 5. Run GC and generate summary 2. E = [A -\> B, A -\> C, A -\> E, D -\> C, E -\> A].
 				await getUnreferencedTimestamps();
@@ -1891,7 +2011,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
 				// 2. Add reference from B to C. E = [B -\> C].
-				garbageCollector.addedOutboundReference(nodeB, nodeC);
+				garbageCollector.addedOutboundReference(nodeB, nodeC, Date.now());
 				defaultGCData.gcNodes[nodeB] = [nodeC];
 
 				// 3. Run GC and generate summary 2. E = [B -\> C].
@@ -1935,7 +2055,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeDTime1 !== undefined, "C should have unreferenced timestamp");
 
 				// 2. Add reference from B to C. E = [B -\> C, C-\> D].
-				garbageCollector.addedOutboundReference(nodeB, nodeC);
+				garbageCollector.addedOutboundReference(nodeB, nodeC, Date.now());
 				defaultGCData.gcNodes[nodeB] = [nodeC];
 
 				// 3. Run GC and generate summary 2. E = [B -\> C. C -\> D].
@@ -1986,7 +2106,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeDTime1 !== undefined, "C should have unreferenced timestamp");
 
 				// 2. Add reference from B to C. E = [B -\> C, C-\> D].
-				garbageCollector.addedOutboundReference(nodeB, nodeC);
+				garbageCollector.addedOutboundReference(nodeB, nodeC, Date.now());
 				defaultGCData.gcNodes[nodeB] = [nodeC];
 
 				// 3. Remove reference from C to D. E = [B -\> C].
@@ -2100,74 +2220,21 @@ describe("Garbage Collection Tests", () => {
 		assert.strictEqual(garbageCollector.deletedNodes.size, 0, "Expecting 0 deleted nodes");
 	});
 
-	describe("Future GC op type compatibility", () => {
+	it("process remote op with unrecognized type", async () => {
+		const garbageCollector = createGarbageCollector();
 		const gcMessageFromFuture: Record<string, unknown> = {
 			type: "FUTURE_MESSAGE",
 			hello: "HELLO",
 		};
-
-		let garbageCollector: IGarbageCollector;
-		beforeEach(async () => {
-			garbageCollector = createGarbageCollector({
-				createParams: { gcOptions: { enableGCSweep: true } },
-			});
-		});
-
-		it("can submit GC op compat behavior", async () => {
-			const gcWithPrivates = garbageCollector as GcWithPrivates;
-			const containerRuntimeGCMessage: Omit<
-				ContainerRuntimeGCMessage,
-				"type" | "contents"
-			> & {
-				type: string;
-				contents: any;
-			} = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture,
-				compatDetails: { behavior: "Ignore" },
-			};
-
-			assert.doesNotThrow(
-				() =>
-					gcWithPrivates.submitMessage(
-						containerRuntimeGCMessage as ContainerRuntimeGCMessage,
-					),
-				"Cannot submit GC message with compatDetails",
-			);
-		});
-
-		it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
-				compatDetails: { behavior: "Ignore" },
-			};
-			garbageCollector.processMessage(containerRuntimeGCMessage, false /* local */);
-		});
-
-		it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
-			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
-				compatDetails: { behavior: "FailToProcess" },
-			};
-			assert.throws(
-				() => garbageCollector.processMessage(containerRuntimeGCMessage, false /* local */),
-				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-				"Garbage collection message of unknown type FROM_THE_FUTURE",
-			);
-		});
-
-		it("process remote op with unrecognized type and no compat behavior", async () => {
-			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
-			};
-			assert.throws(
-				() => garbageCollector.processMessage(containerRuntimeGCMessage, false /* local */),
-				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-				"Garbage collection message of unknown type FROM_THE_FUTURE",
-			);
-		});
+		assert.throws(
+			() =>
+				garbageCollector.processMessages(
+					[gcMessageFromFuture as unknown as GarbageCollectionMessage],
+					Date.now(),
+					false /* local */,
+				),
+			(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+			"Garbage collection message of unknown type FUTURE_MESSAGE",
+		);
 	});
 });

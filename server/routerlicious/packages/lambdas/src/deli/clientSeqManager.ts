@@ -35,11 +35,11 @@ export class ClientSequenceNumberManager {
 		return node.value;
 	}
 
-	public count() {
+	public count(): number {
 		return this.clientNodeMap.size;
 	}
 
-	public peek() {
+	public peek(): IClientSequenceNumber | undefined {
 		const node = this.clientSeqNumbers.peek();
 		if (node === undefined) {
 			return undefined;

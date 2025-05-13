@@ -18,12 +18,19 @@
  * @packageDocumentation
  */
 
-export { DataObjectFactory, PureDataObjectFactory } from "./data-object-factories/index.js";
+export {
+	DataObjectFactory,
+	PureDataObjectFactory,
+	type DataObjectFactoryProps,
+} from "./data-object-factories/index.js";
 export {
 	DataObject,
+	type DataObjectKind,
 	type DataObjectTypes,
 	type IDataObjectProps,
 	PureDataObject,
+	TreeDataObject,
+	createDataObjectKind,
 } from "./data-objects/index.js";
 export {
 	BaseContainerRuntimeFactory,

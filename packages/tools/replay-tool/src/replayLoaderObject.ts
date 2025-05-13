@@ -28,7 +28,10 @@ export class ReplayUrlResolver implements IUrlResolver {
 		return this.cache.get(request.url);
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		throw new Error("Not implemented");
 	}
 }
@@ -59,7 +62,10 @@ export class ReplayCodeLoader implements ICodeDetailsLoader, IFluidCodeDetailsCo
 		return true;
 	}
 
-	public async compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined> {
+	public async compare(
+		a: IFluidCodeDetails,
+		b: IFluidCodeDetails,
+	): Promise<number | undefined> {
 		return undefined;
 	}
 }

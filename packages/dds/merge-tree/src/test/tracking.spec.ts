@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
+import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 
@@ -23,7 +24,7 @@ describe("MergeTree.tracking", () => {
 
 		assert.equal(testClient.getLength(), 3);
 
-		const segmentInfo = testClient.getContainingSegment(0);
+		const segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
 
 		assert(segmentInfo?.segment?.trackingCollection.empty);
 	});
@@ -32,16 +33,15 @@ describe("MergeTree.tracking", () => {
 		const trackingGroup = new TrackingGroup();
 
 		testClient.on("delta", (opArgs, deltaArgs) => {
-			deltaArgs.deltaSegments.forEach((sg) =>
-				sg.segment.trackingCollection.link(trackingGroup),
-			);
+			for (const sg of deltaArgs.deltaSegments)
+				sg.segment.trackingCollection.link(trackingGroup);
 		});
 
 		testClient.insertTextLocal(0, "abc");
 
 		assert.equal(trackingGroup.size, 1);
 
-		const segmentInfo = testClient.getContainingSegment(0);
+		const segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
 
 		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
 
@@ -54,9 +54,8 @@ describe("MergeTree.tracking", () => {
 		const trackingGroup = new TrackingGroup();
 
 		testClient.on("delta", (opArgs, deltaArgs) => {
-			deltaArgs.deltaSegments.forEach((sg) =>
-				sg.segment.trackingCollection.link(trackingGroup),
-			);
+			for (const sg of deltaArgs.deltaSegments)
+				sg.segment.trackingCollection.link(trackingGroup);
 		});
 
 		const ops = [testClient.insertTextLocal(0, "abc")];
@@ -68,7 +67,7 @@ describe("MergeTree.tracking", () => {
 		assert.equal(testClient.getLength(), 4);
 
 		assert.equal(trackingGroup.size, 2);
-		const segmentInfo = testClient.getContainingSegment(0);
+		const segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
 		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
 	});
 
@@ -76,9 +75,8 @@ describe("MergeTree.tracking", () => {
 		const trackingGroup = new TrackingGroup();
 
 		testClient.on("delta", (opArgs, deltaArgs) => {
-			deltaArgs.deltaSegments.forEach((sg) =>
-				sg.segment.trackingCollection.link(trackingGroup),
-			);
+			for (const sg of deltaArgs.deltaSegments)
+				sg.segment.trackingCollection.link(trackingGroup);
 		});
 
 		const ops = [testClient.insertTextLocal(0, "abc")];
@@ -89,20 +87,20 @@ describe("MergeTree.tracking", () => {
 		assert.equal(testClient.getLength(), 4);
 
 		assert.equal(trackingGroup.size, 3);
-		let segmentInfo = testClient.getContainingSegment(0);
+		let segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
 		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
 
 		let seq = 1;
-		ops.forEach((op) => testClient.applyMsg(testClient.makeOpMessage(op, ++seq)));
+		for (const op of ops) testClient.applyMsg(testClient.makeOpMessage(op, ++seq));
 
 		assert.equal(trackingGroup.size, 3);
-		segmentInfo = testClient.getContainingSegment(0);
+		segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
 		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
 
 		testClient.updateMinSeq(seq);
 
 		assert.equal(trackingGroup.size, 1);
-		segmentInfo = testClient.getContainingSegment(0);
+		segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
 		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
 	});
 
@@ -111,7 +109,7 @@ describe("MergeTree.tracking", () => {
 
 		assert.equal(testClient.getLength(), 3);
 
-		const segmentInfo = testClient.getContainingSegment(0);
+		const segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
 		assert(segmentInfo.segment);
 		const ref = testClient.createLocalReferencePosition(
 			segmentInfo.segment,
@@ -128,7 +126,7 @@ describe("MergeTree.tracking", () => {
 
 		assert.equal(testClient.getLength(), 3);
 
-		const segmentInfo = testClient.getContainingSegment(0);
+		const segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
 		assert(segmentInfo.segment);
 		const ref = testClient.createLocalReferencePosition(
 			segmentInfo.segment,
@@ -159,7 +157,7 @@ describe("MergeTree.tracking", () => {
 
 		testClient.insertTextLocal(0, "abc");
 
-		const { segment } = testClient.getContainingSegment(0);
+		const { segment } = testClient.getContainingSegment<ISegmentPrivate>(0);
 		segment?.trackingCollection.link(trackingGroup);
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 1);
@@ -168,7 +166,11 @@ describe("MergeTree.tracking", () => {
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 0);
 
-		assert.equal(trackingGroup.unlink(segment), false, "repeat unlink segment should be false");
+		assert.equal(
+			trackingGroup.unlink(segment),
+			false,
+			"repeat unlink segment should be false",
+		);
 		assert.equal(
 			segment.trackingCollection.unlink(trackingGroup),
 			false,
@@ -181,7 +183,7 @@ describe("MergeTree.tracking", () => {
 
 		testClient.insertTextLocal(0, "abc");
 
-		const { segment } = testClient.getContainingSegment(0);
+		const { segment } = testClient.getContainingSegment<ISegmentPrivate>(0);
 		segment?.trackingCollection.link(trackingGroup);
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 1);
@@ -192,7 +194,11 @@ describe("MergeTree.tracking", () => {
 		);
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 0);
-		assert.equal(trackingGroup.unlink(segment), false, "repeat unlink segment should be false");
+		assert.equal(
+			trackingGroup.unlink(segment),
+			false,
+			"repeat unlink segment should be false",
+		);
 		assert.equal(
 			segment.trackingCollection.unlink(trackingGroup),
 			false,

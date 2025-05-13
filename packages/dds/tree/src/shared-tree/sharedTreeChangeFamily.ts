@@ -3,35 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
-import { ICodecFamily, ICodecOptions } from "../codec/index.js";
+import type { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
-	ChangeEncodingContext,
-	ChangeFamily,
-	ChangeRebaser,
-	DeltaDetachedNodeId,
-	RevisionMetadataSource,
-	RevisionTag,
-	RevisionTagCodec,
-	TaggedChange,
+	type ChangeEncodingContext,
+	type ChangeFamily,
+	type ChangeRebaser,
+	type DeltaDetachedNodeId,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type RevisionTagCodec,
+	type TaggedChange,
 	mapTaggedChange,
 } from "../core/index.js";
 import {
-	FieldBatchCodec,
+	type FieldBatchCodec,
 	ModularChangeFamily,
-	ModularChangeset,
-	TreeChunk,
-	TreeCompressionStrategy,
+	type ModularChangeset,
+	type TreeChunk,
+	type TreeCompressionStrategy,
 	fieldKindConfigurations,
 	fieldKinds,
 	makeModularChangeCodecFamily,
 } from "../feature-libraries/index.js";
-import { Mutable, NestedSet, addToNestedSet, fail, nestedSetContains } from "../util/index.js";
+import {
+	type Mutable,
+	type NestedSet,
+	addToNestedSet,
+	hasSingle,
+	nestedSetContains,
+} from "../util/index.js";
 
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.
@@ -55,6 +62,7 @@ export class SharedTreeChangeFamily
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 		chunkCompressionStrategy?: TreeCompressionStrategy,
+		private readonly idCompressor?: IIdCompressor,
 	) {
 		const modularChangeCodec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -70,8 +78,15 @@ export class SharedTreeChangeFamily
 		);
 	}
 
-	public buildEditor(changeReceiver: (change: SharedTreeChange) => void): SharedTreeEditBuilder {
-		return new SharedTreeEditBuilder(this.modularChangeFamily, changeReceiver);
+	public buildEditor(
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
+	): SharedTreeEditBuilder {
+		return new SharedTreeEditBuilder(
+			this.modularChangeFamily,
+			mintRevisionTag,
+			changeReceiver,
+		);
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {
@@ -103,7 +118,11 @@ export class SharedTreeChangeFamily
 		return { changes: newChanges };
 	}
 
-	public invert(change: TaggedChange<SharedTreeChange>, isRollback: boolean): SharedTreeChange {
+	public invert(
+		change: TaggedChange<SharedTreeChange>,
+		isRollback: boolean,
+		revision: RevisionTag,
+	): SharedTreeChange {
 		const invertInnerChange: (
 			innerChange: SharedTreeChange["changes"][number],
 		) => SharedTreeChange["changes"][number] = (innerChange) => {
@@ -114,6 +133,7 @@ export class SharedTreeChangeFamily
 						innerChange: this.modularChangeFamily.invert(
 							mapTaggedChange(change, innerChange.innerChange),
 							isRollback,
+							revision,
 						),
 					};
 				case "schema": {
@@ -129,7 +149,7 @@ export class SharedTreeChangeFamily
 					};
 				}
 				default:
-					fail("Unknown SharedTree change type.");
+					fail(0xacc /* Unknown SharedTree change type. */);
 			}
 		};
 		return {
@@ -158,7 +178,7 @@ export class SharedTreeChangeFamily
 			return SharedTreeChangeFamily.emptyChange;
 		}
 		assert(
-			change.change.changes.length === 1 && over.change.changes.length === 1,
+			hasSingle(change.change.changes) && hasSingle(over.change.changes),
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
@@ -198,7 +218,7 @@ export class SharedTreeChangeFamily
 								newRevision,
 								rollbackOf,
 							),
-					  }
+						}
 					: inner;
 			}),
 		};

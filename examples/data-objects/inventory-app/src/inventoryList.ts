@@ -3,8 +3,23 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
 import { treeDataObjectInternal } from "@fluid-experimental/tree-react-api/internal";
-import { treeConfiguration } from "./schema.js";
 
-export const InventoryListFactory = treeDataObjectInternal("tree", treeConfiguration).factory;
+import { Inventory, treeConfiguration } from "./schema.js";
+
+export const InventoryListFactory = treeDataObjectInternal(
+	treeConfiguration,
+	() =>
+		new Inventory({
+			parts: [
+				{
+					name: "nut",
+					quantity: 0,
+				},
+				{
+					name: "bolt",
+					quantity: 0,
+				},
+			],
+		}),
+).factory;

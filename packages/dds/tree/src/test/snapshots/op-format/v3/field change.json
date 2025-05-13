@@ -1,0 +1,70 @@
+[
+  {
+    "revision": -5,
+    "originatorId": "00000000-0000-4000-b000-000000000000",
+    "changeset": [
+      {
+        "data": {
+          "maxId": 2,
+          "changes": [
+            {
+              "fieldKey": "rootFieldKey",
+              "fieldKind": "ModularEditBuilder.Generic",
+              "change": [
+                [
+                  0,
+                  {
+                    "fieldChanges": [
+                      {
+                        "fieldKey": "x",
+                        "fieldKind": "Value",
+                        "change": {
+                          "r": {
+                            "e": false,
+                            "d": 1,
+                            "s": 0
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              ]
+            }
+          ],
+          "builds": {
+            "builds": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ],
+            "trees": {
+              "version": 1,
+              "identifiers": [],
+              "shapes": [
+                {
+                  "c": {
+                    "type": "com.fluidframework.leaf.number",
+                    "value": true
+                  }
+                }
+              ],
+              "data": [
+                [
+                  0,
+                  1
+                ]
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "version": 3
+  }
+]

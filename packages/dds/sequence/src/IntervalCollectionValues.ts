@@ -4,103 +4,25 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { serializeHandles } from "@fluidframework/shared-object-base/internal";
-
-import type { IntervalCollection } from "./intervalCollection.js";
 import {
-	IIntervalCollectionOperation,
-	IIntervalCollectionType,
-	ISerializableIntervalCollection,
-	ISerializedIntervalCollection,
-} from "./intervalCollectionMapInterfaces.js";
-import { type ISerializableInterval, IntervalOpType } from "./intervals/index.js";
+	serializeHandles,
+	IFluidSerializer,
+} from "@fluidframework/shared-object-base/internal";
 
-/**
- * A local value to be stored in a container type DDS.
- */
-export interface ILocalIntervalCollection<T extends ISerializableInterval> {
-	/**
-	 * Type indicator of the value stored within.
-	 */
-	readonly type: string;
+import { type IntervalCollection } from "./intervalCollection.js";
+import { ISerializableIntervalCollection } from "./intervalCollectionMapInterfaces.js";
 
-	/**
-	 * The in-memory value stored within.
-	 */
-	readonly value: IntervalCollection<T>;
-
-	/**
-	 * Retrieve the serialized form of the value stored within.
-	 * @param serializer - Data store runtime's serializer
-	 * @param bind - Container type's handle
-	 * @returns The serialized form of the contained value
-	 */
-	makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedIntervalCollection;
-}
-
-export function makeSerializable<T extends ISerializableInterval>(
-	localValue: ILocalIntervalCollection<T>,
+export function makeSerializable(
+	localValue: IntervalCollection,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
+	version: "1" | "2",
 ): ISerializableIntervalCollection {
-	const value = localValue.makeSerialized(serializer, bind);
+	const storedValueType = localValue.serializeInternal(version);
+
+	const value = serializeHandles(storedValueType, serializer, bind);
 	return {
-		type: value.type,
-		value: value.value && JSON.parse(value.value),
+		type: "sharedStringIntervalCollection",
+		value: value && JSON.parse(value),
 	};
-}
-
-/**
- * Manages a contained value type.
- */
-export class IntervalCollectionTypeLocalValue<T extends ISerializableInterval>
-	implements ILocalIntervalCollection<T>
-{
-	/**
-	 * Create a new ValueTypeLocalValue.
-	 * @param value - The instance of the value type stored within
-	 * @param valueType - The type object of the value type stored within
-	 */
-	constructor(
-		public readonly value: IntervalCollection<T>,
-		private readonly valueType: IIntervalCollectionType<T>,
-	) {}
-
-	/**
-	 * {@inheritDoc ILocalValue."type"}
-	 */
-	public get type(): string {
-		return this.valueType.name;
-	}
-
-	/**
-	 * {@inheritDoc ILocalValue.makeSerialized}
-	 */
-	public makeSerialized(
-		serializer: IFluidSerializer,
-		bind: IFluidHandle,
-	): ISerializedIntervalCollection {
-		const storedValueType = this.valueType.factory.store(this.value);
-		const value = serializeHandles(storedValueType, serializer, bind);
-
-		return {
-			type: this.type,
-			value,
-		};
-	}
-
-	/**
-	 * Get the handler for a given op of this value type.
-	 * @param opName - The name of the operation that needs processing
-	 * @returns The object which can process the given op
-	 */
-	public getOpHandler(opName: IntervalOpType): IIntervalCollectionOperation<T> {
-		const handler = this.valueType.ops.get(opName);
-		if (!handler) {
-			throw new Error("Unknown type message");
-		}
-
-		return handler;
-	}
 }

@@ -7,7 +7,6 @@ import { Server } from "node:http";
 
 import cors from "cors";
 import express from "express";
-import fetch from "node-fetch";
 
 import { ITaskData, assertValidTaskData } from "../model-interface/index.js";
 import { ClientManager } from "../utilities/index.js";
@@ -232,8 +231,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			);
 			// eslint-disable-next-line unicorn/no-array-for-each
 			containerSessionRecords.forEach((record) => {
-				const tenantId = record.TenantId;
-				const documentId = record.DocumentId;
+				const tenantId: string | undefined = record.TenantId;
+				const documentId: string | undefined = record.DocumentId;
 				echoExternalDataWebhookToFluid(
 					taskData,
 					fluidServiceUrl,
@@ -352,9 +351,10 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			}
 
 			// Removes the mapping of the given container URL from all task id's
-			const emptyTaskListRegistrationIds = clientManager.removeAllClientTaskListRegistrations(
-				{ TenantId: tenantId, DocumentId: documentId },
-			);
+			const emptyTaskListRegistrationIds = clientManager.removeAllClientTaskListRegistrations({
+				TenantId: tenantId,
+				DocumentId: documentId,
+			});
 			// If there are any task list id's that no longer have any active client sessions mapped to them
 			// then we should deregister our webhook for that task list id.
 			for (const emptyExternalTaskListId of emptyTaskListRegistrationIds) {

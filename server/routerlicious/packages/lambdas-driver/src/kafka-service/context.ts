@@ -49,6 +49,10 @@ export class Context extends EventEmitter implements IContext {
 	 * @param errorData - Additional information about the error
 	 */
 	public error(error: any, errorData: IContextErrorData) {
+		if (this.closed) {
+			Lumberjack.info("Context already closed, not emitting error");
+			return;
+		}
 		Lumberjack.verbose("Emitting error from context");
 		this.emit("error", error, errorData);
 	}
@@ -60,5 +64,19 @@ export class Context extends EventEmitter implements IContext {
 		this.closed = true;
 
 		this.removeAllListeners();
+	}
+
+	/**
+	 * Pauses the context
+	 */
+	public pause(offset: number, reason?: any): void {
+		this.emit("pause", offset, reason);
+	}
+
+	/**
+	 * Resumes the context
+	 */
+	public resume(): void {
+		this.emit("resume");
 	}
 }

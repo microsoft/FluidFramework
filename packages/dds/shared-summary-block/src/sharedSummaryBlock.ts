@@ -4,16 +4,19 @@
  */
 
 import {
+	Jsonable,
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 import { ISharedSummaryBlock } from "./interfaces.js";
 
@@ -30,6 +33,7 @@ interface ISharedSummaryBlockDataSerializable {
 /**
  * Implementation of a shared summary block. It does not generate any ops. It is only part of the summary.
  * Data should be set in this object in response to a remote op.
+ * @legacy
  * @alpha
  */
 export class SharedSummaryBlockClass extends SharedObject implements ISharedSummaryBlock {
@@ -71,9 +75,9 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const contentsBlob: ISharedSummaryBlockDataSerializable = {};
-		this.data.forEach((value, key) => {
+		for (const [key, value] of this.data.entries()) {
 			contentsBlob[key] = value;
-		});
+		}
 		return createSingleBlobSummary(snapshotFileName, JSON.stringify(contentsBlob));
 	}
 
@@ -93,16 +97,16 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
 	 */
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
 	 */
-	protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
 		throw new Error("shared summary block should not generate any ops.");
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

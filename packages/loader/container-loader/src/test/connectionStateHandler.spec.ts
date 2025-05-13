@@ -3,21 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	ConnectionMode,
-	IClient,
+	IDeltaManager,
+	IDeltaManagerEvents,
+} from "@fluidframework/container-definitions/internal";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { ConnectionMode, IClient, ISequencedClient } from "@fluidframework/driver-definitions";
+import {
 	IClientConfiguration,
-	ISequencedClient,
 	ITokenClaims,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	TelemetryEventCategory,
 	createChildLogger,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
@@ -33,11 +35,11 @@ import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManagerForCatchingUp
 	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">
+	implements Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber" | "lastKnownSeqNumber">
 {
 	lastSequenceNumber: number = 5;
 	lastKnownSeqNumber: number = 10;
-	catchUp(seq = 10) {
+	catchUp(seq = 10): void {
 		this.lastKnownSeqNumber = seq;
 		this.lastSequenceNumber = seq;
 		this.emit("op", { sequenceNumber: this.lastKnownSeqNumber });
@@ -63,6 +65,7 @@ describe("ConnectionStateHandler Tests", () => {
 		details: IConnectionDetailsInternal,
 	) => void;
 	let connectionStateHandler_receivedRemoveMemberEvent: (id: string) => void;
+	let connectionStateHandler_receivedLeaveSignalEvent: (id: string) => void;
 
 	// Stash the real setTimeout because sinon fake timers will hijack it.
 	const realSetTimeout = setTimeout;
@@ -74,7 +77,7 @@ describe("ConnectionStateHandler Tests", () => {
 		});
 	}
 
-	async function tickClock(tickValue: number) {
+	async function tickClock(tickValue: number): Promise<void> {
 		clock.tick(tickValue);
 
 		// Yield the event loop because the outbound op will be processed asynchronously.
@@ -84,12 +87,12 @@ describe("ConnectionStateHandler Tests", () => {
 	function createHandler(
 		connectedRaisedWhenCaughtUp: boolean,
 		readClientsWaitForJoinSignal: boolean,
-	) {
+	): IConnectionStateHandler {
 		const handler = createConnectionStateHandlerCore(
 			connectedRaisedWhenCaughtUp,
 			readClientsWaitForJoinSignal,
 			handlerInputs,
-			deltaManagerForCatchingUp as any,
+			deltaManagerForCatchingUp as unknown as IDeltaManager<unknown, unknown>,
 			undefined,
 		);
 		handler.initProtocol(protocolHandler);
@@ -146,21 +149,22 @@ describe("ConnectionStateHandler Tests", () => {
 			(clientId: string) => false, // shouldClientHaveLeft
 		);
 		shouldClientJoinWrite = false;
+		const logger = createChildLogger();
 		handlerInputs = {
 			maxClientLeaveWaitTime: expectedTimeout,
-			shouldClientJoinWrite: () => shouldClientJoinWrite,
+			shouldClientJoinWrite: (): boolean => shouldClientJoinWrite,
 			logConnectionIssue: (
 				eventName: string,
 				category: TelemetryEventCategory,
 				details?: ITelemetryBaseProperties,
-			) => {
+			): void => {
 				throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`);
 			},
-			connectionStateChanged: () => {},
-			logger: createChildLogger(),
-			clientShouldHaveLeft: (clientId: string) => {},
-			onCriticalError: (error) => {
-				// eslint-disable-next-line @typescript-eslint/no-throw-literal
+			connectionStateChanged: (): void => {},
+			logger,
+			mc: loggerToMonitoringContext(logger),
+			clientShouldHaveLeft: (clientId: string): void => {},
+			onCriticalError: (error): void => {
 				throw error;
 			},
 		};
@@ -172,16 +176,21 @@ describe("ConnectionStateHandler Tests", () => {
 			false,
 		); // readClientsWaitForJoinSignal
 
-		connectionStateHandler_receivedAddMemberEvent = (id: string) => {
-			protocolHandler.quorum.addMember(id, { client: {} } as any as ISequencedClient);
+		connectionStateHandler_receivedAddMemberEvent = (id: string): void => {
+			protocolHandler.quorum.addMember(id, { client: {} } as unknown as ISequencedClient);
 		};
-		connectionStateHandler_receivedRemoveMemberEvent = (id: string) => {
+		connectionStateHandler_receivedRemoveMemberEvent = (id: string): void => {
 			protocolHandler.quorum.removeMember(id);
 		};
-		connectionStateHandler_receivedJoinSignalEvent = (details: IConnectionDetailsInternal) => {
+		connectionStateHandler_receivedJoinSignalEvent = (
+			details: IConnectionDetailsInternal,
+		): void => {
 			protocolHandler.audience.addMember(details.clientId, {
 				mode: details.mode,
-			} as any as IClient);
+			} as unknown as IClient);
+		};
+		connectionStateHandler_receivedLeaveSignalEvent = (id: string): void => {
+			protocolHandler.audience.removeMember(id);
 		};
 	});
 
@@ -433,7 +442,7 @@ describe("ConnectionStateHandler Tests", () => {
 			false, // connectedRaisedWhenCaughtUp,
 			false, // readClientsWaitForJoinSignal
 			handlerInputs,
-			deltaManagerForCatchingUp as any,
+			deltaManagerForCatchingUp as unknown as IDeltaManager<unknown, unknown>,
 			undefined,
 		);
 
@@ -468,7 +477,7 @@ describe("ConnectionStateHandler Tests", () => {
 			false, // connectedRaisedWhenCaughtUp,
 			false, // readClientsWaitForJoinSignal
 			handlerInputs,
-			deltaManagerForCatchingUp as any,
+			deltaManagerForCatchingUp as unknown as IDeltaManager<unknown, unknown>,
 			undefined,
 		);
 
@@ -715,7 +724,7 @@ describe("ConnectionStateHandler Tests", () => {
 		);
 	});
 
-	async function testComplex(client3mode: ConnectionMode) {
+	async function testComplex(client3mode: ConnectionMode): Promise<void> {
 		connectionDetails.mode = "write";
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		connectionStateHandler_receivedAddMemberEvent(pendingClientId);
@@ -924,6 +933,7 @@ describe("ConnectionStateHandler Tests", () => {
 		);
 	});
 
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it(
 		"Should wait for client 1 to leave before moving to connected state(Client 3) when client 2 " +
 			"got disconnected from connected state",
@@ -991,6 +1001,7 @@ describe("ConnectionStateHandler Tests", () => {
 		},
 	);
 
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it(
 		"Should wait for client 1 timeout before moving to connected state(Client 3) when client 2 " +
 			"got disconnected from connected state",
@@ -1066,6 +1077,7 @@ describe("ConnectionStateHandler Tests", () => {
 		},
 	);
 
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it(
 		"Client 3 should wait for client 2(which got disconnected without sending any ops) to leave " +
 			"when client 2 already waited on client 1",
@@ -1138,6 +1150,53 @@ describe("ConnectionStateHandler Tests", () => {
 			await tickClock(expectedTimeout);
 		},
 	);
+
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
+	it("test 'read' reconnect & races ", async () => {
+		connectionStateHandler = createHandler(
+			false, // connectedRaisedWhenCaughtUp,
+			true, // readClientsWaitForJoinSignal
+		);
+
+		// Typical flow to reach connected state ("read" connection)
+		connectionStateHandler.establishingConnection({ text: "initial connect" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		connectionStateHandler_receivedJoinSignalEvent(connectionDetails);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Client 1 should be in connected state",
+		);
+
+		connectionStateHandler.receivedDisconnectEvent({ text: "disconnect" });
+
+		// Another read client is joining, but we don't yet receive its join signal (so not yet in connected state)
+		connectionDetails2.mode = "read";
+		connectionStateHandler.establishingConnection({ text: "initial connect" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails2);
+
+		// Simulate how ConnectionStateHandler observes reconnection flow.
+		// It will see Audience being fully cleared, and then repopulated with new state
+		connectionStateHandler_receivedLeaveSignalEvent(connectionDetails.clientId);
+
+		// We connected to different front-end, it may not processed yet leave signal for first connection,
+		// and thus it appears in the Audience again.
+		connectionStateHandler_receivedJoinSignalEvent(connectionDetails);
+		connectionStateHandler_receivedJoinSignalEvent(connectionDetails2);
+
+		// It should not wait for leave of connectionDetails.clientId
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Client 2 should be in connected state",
+		);
+
+		// This should  not cause any trouble.
+		connectionStateHandler_receivedLeaveSignalEvent(connectionDetails.clientId);
+
+		// Timeout should not raise any error as timer should be cleared
+		await tickClock(expectedTimeout);
+	});
 
 	afterEach(() => {
 		clock.reset();

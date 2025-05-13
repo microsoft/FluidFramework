@@ -278,9 +278,7 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 	private get testTree(): T {
 		return (
 			this._testTree ??
-			fail(
-				'RefreshingTestTree should be created within a describe() block and should only be read within it() blocks'
-			)
+			fail('RefreshingTestTree should be created within a describe() block and should only be read within it() blocks')
 		);
 	}
 

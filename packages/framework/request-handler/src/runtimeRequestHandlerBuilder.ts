@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type IRequest, type IResponse } from "@fluidframework/core-interfaces";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { RequestParser, create404Response } from "@fluidframework/runtime-utils/internal";
 
 // eslint-disable-next-line import/no-deprecated
-import { type RuntimeRequestHandler } from "./requestHandlers.js";
+import type { RuntimeRequestHandler } from "./requestHandlers.js";
 
 /**
  * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.
@@ -25,7 +25,10 @@ class RuntimeRequestHandlerBuilder {
 		}
 	}
 
-	public async handleRequest(request: IRequest, runtime: IContainerRuntime): Promise<IResponse> {
+	public async handleRequest(
+		request: IRequest,
+		runtime: IContainerRuntime,
+	): Promise<IResponse> {
 		const parser = RequestParser.create(request);
 		for (const handler of this.handlers) {
 			const response = await handler(parser, runtime);

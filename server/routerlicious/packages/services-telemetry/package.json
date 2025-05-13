@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-telemetry",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"description": "Fluid server telemetry utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -28,7 +28,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -56,38 +56,48 @@
 		"json-stringify-safe": "^5.0.1",
 		"path-browserify": "^1.0.1",
 		"serialize-error": "^8.1.0",
-		"uuid": "^9.0.0"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@fluidframework/server-services-telemetry-previous": "npm:@fluidframework/server-services-telemetry@4.0.0",
+		"@fluidframework/server-services-telemetry-previous": "npm:@fluidframework/server-services-telemetry@5.0.0",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^18.17.1",
+		"@types/node": "^18.19.39",
+		"@types/sinon": "^17.0.3",
 		"@types/supertest": "^2.0.5",
-		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^9.2.3",
+		"sinon": "^18.0.1",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"broken": {
-			"EnumDeclaration_CommonProperties": {
+			"Class_Lumber": {
 				"backCompat": false
 			},
-			"ClassDeclaration_Lumber": {
+			"Enum_BaseTelemetryProperties": {
 				"backCompat": false
 			},
-			"EnumDeclaration_LumberEventName": {
+			"Enum_HttpProperties": {
+				"backCompat": false
+			},
+			"Enum_LumberEventName": {
+				"backCompat": false
+			},
+			"Interface_ITelemetryContextProperties": {
+				"forwardCompat": false
+			},
+			"Enum_CommonProperties": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

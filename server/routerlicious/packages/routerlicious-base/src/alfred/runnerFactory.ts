@@ -9,7 +9,12 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+import {
+	getGlobalAbortControllerContext,
+	IAlfredTenant,
+	setupAxiosInterceptorsForAbortSignals,
+} from "@fluidframework/server-services-client";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
@@ -20,6 +25,8 @@ import {
 	DocumentDeleteService,
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
@@ -43,11 +50,18 @@ export class AlfredResources implements core.IResources {
 		public documentsCollectionName: string,
 		public documentRepository: core.IDocumentRepository,
 		public documentDeleteService: IDocumentDeleteService,
+		public startupCheck: IReadinessCheck,
+		public redisClientConnectionManagers: utils.IRedisClientConnectionManager[],
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
+		public collaborationSessionEventEmitter?: RedisEmitter,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
+		public readinessCheck?: IReadinessCheck,
+		public fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
+		public redisCacheForGetSession?: core.ICache,
+		public denyList?: core.IDenyList,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -68,11 +82,15 @@ export class AlfredResources implements core.IResources {
 		const serviceMessageManagerP = this.serviceMessageResourceManager
 			? this.serviceMessageResourceManager.close()
 			: Promise.resolve();
+		const redisClientConnectionManagersP = closeRedisClientConnections(
+			this.redisClientConnectionManagers,
+		);
 		await Promise.all([
 			producerClosedP,
 			mongoClosedP,
 			tokenRevocationManagerP,
 			serviceMessageManagerP,
+			redisClientConnectionManagersP,
 		]);
 	}
 }
@@ -100,6 +118,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
+		// List of Redis client connection managers that need to be closed on dispose
+		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -140,15 +160,42 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfig2.enableClustering,
 						redisConfig2.slotsRefreshTimeout,
 						retryDelays,
+						redisConfig2.enableVerboseErrorLogging,
 				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForJwtCache);
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
+
+		const redisClientConnectionManagerForGetSessionCache =
+			customizations?.redisClientConnectionManagerForJwtCache
+				? customizations.redisClientConnectionManagerForJwtCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+						retryDelays,
+						redisConfig2.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForGetSessionCache);
+		const redisGetSessionCache = new services.RedisCache(
+			redisClientConnectionManagerForGetSessionCache,
+			{
+				prefix: "getSession",
+				expireAfterSeconds: 5 * 60,
+			},
+		);
 
 		// Database connection for global db if enabled
 		let globalDbMongoManager;
 		const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 		const factory = await services.getDbFactory(config);
 		if (globalDbEnabled) {
-			globalDbMongoManager = new core.MongoManager(factory, false, null, true);
+			globalDbMongoManager = new core.MongoManager(
+				factory,
+				false,
+				undefined /* retryDelayMs */,
+				true /* global */,
+			);
 		}
 
 		// Database connection for operations db
@@ -191,14 +238,39 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const defaultTTLInSeconds = 864000;
 		const checkpointsTTLSeconds =
 			config.get("checkpoints:checkpointsTTLInSeconds") ?? defaultTTLInSeconds;
-		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+		if (checkpointsCollection.createTTLIndex !== undefined) {
+			await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+		}
 
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");
 
 		// This.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
 
 		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
-		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
+		const redisClientConnectionManagerForInvalidTokenCache =
+			customizations?.redisClientConnectionManagerForInvalidTokenCache
+				? customizations.redisClientConnectionManagerForInvalidTokenCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig2.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
+		const redisCacheForInvalidToken = new services.RedisCache(
+			redisClientConnectionManagerForInvalidTokenCache,
+			{
+				expireAfterSeconds: redisConfig2.keyExpireAfterSeconds,
+				prefix: Constants.invalidTokenCachePrefix,
+			},
+		);
+		const tenantManager = new services.TenantManager(
+			authEndpoint,
+			internalHistorianUrl,
+			redisCacheForInvalidToken,
+		);
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
@@ -217,7 +289,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfigForThrottling.enableClustering,
 						redisConfigForThrottling.slotsRefreshTimeout,
 						retryDelays,
+						redisConfigForThrottling.enableVerboseErrorLogging,
 				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
@@ -317,6 +391,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+		const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+			| number
+			| undefined;
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
@@ -328,6 +405,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableWholeSummaryUpload,
 			opsCollection,
 			storageNameAllocator,
+			ephemeralDocumentTTLSec,
 		);
 
 		const enableClientIPLogging = config.get("alfred:enableClientIPLogging") ?? false;
@@ -365,6 +443,31 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				Lumberjack.error("Failed to initialize token revocation manager", undefined, error);
 			});
 		}
+		const startupCheck = new StartupCheck();
+		const documentsDenyListConfig = config.get("documentDenyList");
+		const tenantsDenyListConfig = config.get("tenantsDenyList");
+		const denyList: core.IDenyList = new utils.DenyList(
+			tenantsDenyListConfig,
+			documentsDenyListConfig,
+		);
+
+		const redisClientConnectionManagerForPub = new RedisClientConnectionManager(
+			undefined,
+			redisConfig,
+			redisConfig.enableClustering,
+			redisConfig.slotsRefreshTimeout,
+			undefined /* retryDelays */,
+			redisConfig.enableVerboseErrorLogging,
+		);
+		redisClientConnectionManagers.push(redisClientConnectionManagerForPub);
+
+		const redisEmitter = new RedisEmitter(redisClientConnectionManagerForPub.getRedisClient());
+		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
+		if (axiosAbortSignalEnabled) {
+			setupAxiosInterceptorsForAbortSignals(() =>
+				getGlobalAbortControllerContext().getAbortController(),
+			);
+		}
 
 		return new AlfredResources(
 			config,
@@ -382,11 +485,18 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentsCollectionName,
 			documentRepository,
 			documentDeleteService,
+			startupCheck,
+			redisClientConnectionManagers,
 			tokenRevocationManager,
 			revokedTokenChecker,
 			serviceMessageResourceManager,
+			redisEmitter,
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
+			customizations?.readinessCheck,
+			customizations?.fluidAccessTokenGenerator,
+			redisGetSessionCache,
+			denyList,
 		);
 	}
 }
@@ -410,11 +520,16 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.producer,
 			resources.documentRepository,
 			resources.documentDeleteService,
+			resources.startupCheck,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
-			null,
+			resources.collaborationSessionEventEmitter,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
+			resources.readinessCheck,
+			resources.fluidAccessTokenGenerator,
+			resources.redisCacheForGetSession,
+			resources.denyList,
 		);
 	}
 }

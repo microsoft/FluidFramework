@@ -8,14 +8,12 @@ import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentStorageService,
-} from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils/internal";
-import {
 	IDocumentAttributes,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	FileSnapshotReader,
 	IFileSnapshot,
@@ -60,7 +58,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
 			return 0;
 		}
 
-		const attributesHash = tree.trees[".protocol"].blobs.attributes;
+		// TODO Why are we non null asserting here
+		const attributesHash = tree.trees[".protocol"]!.blobs.attributes!;
 		const attrib = await readAndParse<IDocumentAttributes>(
 			documentStorageService,
 			attributesHash,
@@ -243,7 +242,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		for (let i = 0; i < buckets; i++) {
 			let prevRequest = Promise.resolve();
 			for (let index = i; index < this.versions.length; index += buckets) {
-				const version = this.versions[index];
+				// Non null asserting here because we are iterating though versions
+				const version = this.versions[index]!;
 				prevRequest = this.downloadVersionInfo(
 					this.documentStorageService,
 					prevRequest,

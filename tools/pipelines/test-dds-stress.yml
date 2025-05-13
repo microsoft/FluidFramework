@@ -20,28 +20,53 @@ resources:
       - next
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+- name: DisableCodeQL
+  value: true
+
+parameters:
+- name: stressMode
+  values:
+    - short
+    - normal
+    - long
+  default: normal
 
 stages:
-  - template: templates/include-conditionally-run-stress-tests.yml
+  - template: /tools/pipelines/templates/include-conditionally-run-stress-tests.yml@self
     parameters:
       artifactBuildId: $(resources.pipeline.client.runID)
       packages:
-      - name: "@fluidframework/sequence"
-        affectedPaths:
-        - packages/dds/sequence
-        - packages/dds/merge-tree
-        testFileTarName: sequence
-        testCommand: test:stress
-      - name: "@fluid-experimental/tree"
-        affectedPaths:
-        - experimental/dds/tree
-        testFileTarName: experimental-tree
-        testCommand: test:stress
-      - name: "@fluidframework/tree"
-        affectedPaths:
-        - packages/dds/tree
-        testFileTarName: tree
-        testCommand: test:stress
+        - name: "@fluidframework/sequence"
+          affectedPaths:
+          - packages/dds/sequence
+          - packages/dds/merge-tree
+          testFileTarName: sequence
+          testCommand: test:stress
+        - name: "@fluid-experimental/tree"
+          affectedPaths:
+          - experimental/dds/tree
+          testFileTarName: experimental-tree
+          testCommand: test:stress
+        - name: "@fluidframework/tree"
+          affectedPaths:
+          - packages/dds/tree
+          testFileTarName: tree
+          testCommand: test:stress
+        - name: "@fluidframework/map"
+          affectedPaths:
+          - packages/dds/map
+          - packages/dds/merge-tree
+          testFileTarName: map
+          testCommand: test:stress
+        - name: "@fluidframework/matrix"
+          affectedPaths:
+          - packages/dds/matrix
+          - packages/dds/merge-tree
+          testFileTarName: matrix
+          testCommand: test:stress
       testWorkspace: ${{ variables.testWorkspace }}
+      stressMode: ${{ parameters.stressMode }}

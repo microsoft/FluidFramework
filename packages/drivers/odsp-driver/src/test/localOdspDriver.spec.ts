@@ -6,19 +6,24 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
-import { DriverError, IStream } from "@fluidframework/driver-definitions/internal";
-import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { IClient, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IClient,
+	DriverError,
+	IStream,
 	ISequencedDocumentMessage,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import {
+	IOdspResolvedUrl,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable import/no-internal-modules */
 import { LocalOdspDocumentService } from "../localOdspDriver/localOdspDocumentService.js";
 import { LocalOdspDocumentServiceFactory } from "../localOdspDriver/localOdspDocumentServiceFactory.js";
 import { LocalOdspDocumentStorageService } from "../localOdspDriver/localOdspDocumentStorageManager.js";
+
+import { _dirname } from "./dirname.cjs";
 
 /* eslint-enable import/no-internal-modules */
 
@@ -47,7 +52,7 @@ describe("Local Odsp driver", () => {
 	};
 
 	const localSnapshot = fs.readFileSync(
-		`${__dirname}/../../src/test/localSnapshots/localSnapshot1.json`,
+		`${_dirname}/../../src/test/localSnapshots/localSnapshot1.json`,
 		{ encoding: "utf8" },
 	);
 
@@ -149,7 +154,7 @@ describe("Local Odsp driver", () => {
 
 		it("Delta storage service returns trailing ops", async () => {
 			const snapshotWithTrailingOps = fs.readFileSync(
-				`${__dirname}/../../src/test/localSnapshots/localSnapshot2.json`,
+				`${_dirname}/../../src/test/localSnapshots/localSnapshot2.json`,
 				{ encoding: "utf8" },
 			);
 			const service = new LocalOdspDocumentService(
@@ -281,10 +286,7 @@ describe("Local Odsp driver", () => {
 					localSnapshot,
 				);
 				for (let i = 0; i < 3; i++) {
-					assert.deepStrictEqual(
-						await storageService.getVersions(null, 1),
-						snapshotVersion,
-					);
+					assert.deepStrictEqual(await storageService.getVersions(null, 1), snapshotVersion);
 				}
 			});
 		});

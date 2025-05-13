@@ -2,7 +2,7 @@ name: "Pull Request Labeler"
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, labeled, unlabeled]
-    branches: [main, next, release/*]
+    branches: [main, next, release/**/*]
 
 permissions:
   pull-requests: write
@@ -39,6 +39,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Label base branches and external contributors
     steps:
-      - uses: srvaroa/labeler@5789c3303e99162cb381c2873ddddd88b0a76e91 # ratchet:srvaroa/labeler@v1
+      - uses: srvaroa/labeler@9c29ad1ef33d169f9ef33c52722faf47a566bcf3 # ratchet:srvaroa/labeler@v1
         env:
           GITHUB_TOKEN: "${{ github.token }}"

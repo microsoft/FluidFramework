@@ -10,7 +10,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { NetworkError } from "@fluidframework/server-services-client";
+import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 
 /**
  * Executes a given API while providing support to retry on failures, ignore failures, and taking action on error.
@@ -26,6 +26,7 @@ import { NetworkError } from "@fluidframework/server-services-client";
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
  * @param shouldLogInitialSuccessVerbose - whether to log successful telemetry as verbose level if there is no retry, default is false
+ * @param maxRetryDelayMs - Maximum cumulative delay time in milliseconds across all retry attempts
  * @internal
  */
 export async function runWithRetry<T>(
@@ -41,39 +42,61 @@ export async function runWithRetry<T>(
 	onErrorFn?: (error) => void,
 	telemetryEnabled = false,
 	shouldLogInitialSuccessVerbose = false,
-): Promise<T | undefined> {
-	let result: T | undefined;
+	maxRetryDelayMs = 30 * 1000, // 30 seconds
+): Promise<T> {
 	let retryCount = 0;
+	let totalRetryDelayMs = 0;
 	let success = false;
-	let metric: Lumber<LumberEventName.RunWithRetry>;
-	let metricError;
+	let metric: Lumber<LumberEventName.RunWithRetry> | undefined;
+	let latestResultError: unknown;
 	if (telemetryEnabled) {
 		metric = Lumberjack.newLumberMetric(LumberEventName.RunWithRetry, telemetryProperties);
 	}
 	try {
-		do {
+		while (retryCount <= maxRetries || maxRetries === -1) {
 			try {
-				result = await api();
+				const result = await api();
 				success = true;
 				if (retryCount >= 1) {
-					Lumberjack.info(
-						`Succeeded in executing ${callName} with ${retryCount} retries`,
-						telemetryProperties,
-					);
+					Lumberjack.info(`Succeeded in executing runWithRetry`, {
+						...telemetryProperties,
+						callName,
+						retryCount,
+						maxRetries,
+					});
 				}
+				return result;
 			} catch (error) {
 				if (onErrorFn !== undefined) {
 					onErrorFn(error);
 				}
-				metricError = error;
-				Lumberjack.error(
-					`Error running ${callName}: retryCount ${retryCount}`,
-					telemetryProperties,
-					error,
-				);
+				latestResultError = error;
+				if (retryCount < maxRetries && maxRetries !== -1) {
+					Lumberjack.warning(
+						`Error in runWithRetry, will retry`,
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+						},
+						error,
+					);
+				} else {
+					Lumberjack.error(
+						`Error in runWithRetry`,
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+						},
+						error,
+					);
+				}
 				if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
 					Lumberjack.info(`Should ignore error for ${callName}`, telemetryProperties);
-					break;
+					return undefined as unknown as T; // Ensure a value of type T is returned
 				} else if (shouldRetry !== undefined && shouldRetry(error) === false) {
 					Lumberjack.error(
 						`Should not retry ${callName} for the current error, rejecting`,
@@ -82,31 +105,37 @@ export async function runWithRetry<T>(
 					);
 					throw error;
 				}
-				// if maxRetries is -1, we retry indefinitely
-				// unless shouldRetry returns false at some point.
-				if (maxRetries !== -1 && retryCount >= maxRetries) {
-					Lumberjack.error(
-						`Error after retrying ${retryCount} times, rejecting`,
-						telemetryProperties,
-						error,
-					);
-					// Needs to be a full rejection here
-					throw error;
-				}
 
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
+				if (totalRetryDelayMs + intervalMs > maxRetryDelayMs) {
+					Lumberjack.error(
+						"Max retry delay will be exceeded, rejecting",
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+							intervalMs,
+							totalRetryDelayMs,
+							maxRetryDelayMs,
+						},
+						error,
+					);
+					throw error;
+				}
+				totalRetryDelayMs += intervalMs;
 				await delay(intervalMs);
 				retryCount++;
 			}
-		} while (!success);
-
-		return result;
+		}
 	} finally {
 		if (telemetryEnabled && metric) {
 			metric.setProperty("retryCount", retryCount);
 			metric.setProperty("callName", callName);
 			metric.setProperty("maxRetries", maxRetries);
 			metric.setProperty("retryAfterMs", retryAfterMs);
+			metric.setProperty("totalRetryDelayMs", totalRetryDelayMs);
+			metric.setProperty("maxRetryDelayMs", maxRetryDelayMs);
 			if (success) {
 				// If we turn on the flag of shouldLogInitialSuccessVerbose and there is no retry,
 				// log as verbose level, otherwise log as info level. By default the flag is off.
@@ -116,10 +145,18 @@ export async function runWithRetry<T>(
 					metric.success("runWithRetry succeeded");
 				}
 			} else {
-				metric.error("runWithRetry failed", metricError);
+				metric.error("runWithRetry failed", latestResultError);
 			}
 		}
 	}
+
+	Lumberjack.error(
+		`Error after retrying ${retryCount} times, rejecting`,
+		telemetryProperties,
+		latestResultError,
+	);
+	// Needs to be a full rejection here
+	throw latestResultError;
 }
 
 /**
@@ -141,6 +178,7 @@ export async function runWithRetry<T>(
  * and retries so far
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
+ * @param maxRetryDelayMs - Maximum cumulative delay time in milliseconds across all retry attempts
  * @internal
  */
 export async function requestWithRetry<T>(
@@ -157,35 +195,60 @@ export async function requestWithRetry<T>(
 	) => number = calculateRetryIntervalForNetworkError,
 	onErrorFn?: (error) => void,
 	telemetryEnabled = false,
+	maxRetryDelayMs = 30 * 1000, // 30 seconds
 ): Promise<T> {
-	let result: T;
 	let retryCount = 0;
+	let totalRetryDelayMs = 0;
 	let success = false;
-	let metric: Lumber<LumberEventName.RequestWithRetry>;
-	let metricError;
+	let metric: Lumber<LumberEventName.RequestWithRetry> | undefined;
+	let latestResultError: unknown;
 	if (telemetryEnabled) {
 		metric = Lumberjack.newLumberMetric(LumberEventName.RequestWithRetry, telemetryProperties);
 	}
 	try {
-		do {
+		// if maxRetries is -1, we retry indefinitely
+		// unless shouldRetry returns false at some point.
+		while (retryCount <= maxRetries || maxRetries === -1) {
 			try {
-				result = await request();
+				const result = await request();
 				success = true;
 				if (retryCount >= 1) {
-					Lumberjack.info(
-						`Succeeded in executing ${callName} with ${retryCount} retries`,
-						telemetryProperties,
-					);
+					Lumberjack.info(`Succeeded in executing requestWithRetry`, {
+						...telemetryProperties,
+						callName,
+						retryCount,
+						maxRetries,
+					});
 				}
-			} catch (error) {
+				return result;
+			} catch (error: unknown) {
 				if (onErrorFn !== undefined) {
 					onErrorFn(error);
 				}
-				Lumberjack.error(
-					`Error running ${callName}: retryCount ${retryCount}`,
-					telemetryProperties,
-					error,
-				);
+				latestResultError = error;
+				if (retryCount < maxRetries && maxRetries !== -1) {
+					Lumberjack.warning(
+						`Error in requestWithRetry, will retry`,
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+						},
+						error,
+					);
+				} else {
+					Lumberjack.error(
+						`Error in requestWithRetry`,
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+						},
+						error,
+					);
+				}
 				if (shouldRetry !== undefined && shouldRetry(error) === false) {
 					Lumberjack.error(
 						`Should not retry ${callName} for the current error, rejecting`,
@@ -194,27 +257,31 @@ export async function requestWithRetry<T>(
 					);
 					throw error;
 				}
-				// if maxRetries is -1, we retry indefinitely
-				// unless shouldRetry returns false at some point.
-				if (maxRetries !== -1 && retryCount >= maxRetries) {
-					Lumberjack.error(
-						`Error after retrying ${retryCount} times, rejecting`,
-						telemetryProperties,
-						error,
-					);
-					// Needs to be a full rejection here
-					throw error;
-				}
 
 				// TODO: if error is a NetworkError, we should respect NetworkError.retryAfter
 				// or NetworkError.retryAfterMs
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
+				if (totalRetryDelayMs + intervalMs > maxRetryDelayMs) {
+					Lumberjack.error(
+						"Max retry delay will be exceeded, rejecting",
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+							intervalMs,
+							totalRetryDelayMs,
+							maxRetryDelayMs,
+						},
+						error,
+					);
+					throw error;
+				}
+				totalRetryDelayMs += intervalMs;
 				await delay(intervalMs);
 				retryCount++;
 			}
-		} while (!success);
-
-		return result;
+		}
 	} finally {
 		if (telemetryEnabled && metric) {
 			metric.setProperty("retryCount", retryCount);
@@ -224,10 +291,17 @@ export async function requestWithRetry<T>(
 			if (success) {
 				metric.success("requestWithRetry succeeded");
 			} else {
-				metric.error("requestWithRetry failed", metricError);
+				metric.error("requestWithRetry failed", latestResultError);
 			}
 		}
 	}
+	Lumberjack.error(
+		`Error after retrying ${retryCount} times, rejecting`,
+		telemetryProperties,
+		latestResultError,
+	);
+	// Needs to be a full rejection here
+	throw latestResultError;
 }
 
 /**
@@ -259,12 +333,8 @@ export function calculateRetryIntervalForNetworkError(
 	numRetries: number,
 	retryAfterInterval: number,
 ): number {
-	if (
-		error instanceof Error &&
-		error?.name === "NetworkError" &&
-		(error as NetworkError).retryAfterMs
-	) {
-		return (error as NetworkError).retryAfterMs;
+	if (isNetworkError(error) && error.retryAfterMs !== undefined) {
+		return error.retryAfterMs;
 	}
 	return retryAfterInterval * 2 ** numRetries;
 }

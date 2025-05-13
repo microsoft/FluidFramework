@@ -18,6 +18,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
@@ -82,10 +83,8 @@ describeCompat(
 			sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
 			sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);
 
-			sharedDirectory1 =
-				await dataObject1.getSharedObject<SharedDirectory>(sharedDirectoryId);
-			sharedDirectory2 =
-				await dataObject2.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(sharedDirectoryId);
 
 			await provider.ensureSynchronized();
 		};
@@ -97,6 +96,11 @@ describeCompat(
 			}
 
 			await setupContainers(testContainerConfig);
+
+			// ! We need to force container1 to be in "write" mode to ensure its messages are sent before container2
+			// ! Saw some flakiness against r11s where container2 would sometimes reconnect faster
+			sharedMap1.set("key3", "3");
+			await provider.ensureSynchronized();
 
 			sharedMap1.on("valueChanged", (changed) => {
 				if (changed.key !== "key2") {
@@ -115,6 +119,7 @@ describeCompat(
 			// The other container is fine
 			assert.equal(sharedMap2.get("key1"), "1");
 			assert.equal(sharedMap2.get("key2"), "2");
+			assert.equal(sharedMap2.get("key3"), "3");
 			assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 		});
 
@@ -225,14 +230,8 @@ describeCompat(
 
 				await provider.ensureSynchronized();
 				assert.strictEqual(
-					sharedDirectory1
-						.getSubDirectory(topLevel)
-						?.getSubDirectory(innerLevel)
-						?.get(key),
-					sharedDirectory2
-						.getSubDirectory(topLevel)
-						?.getSubDirectory(innerLevel)
-						?.get(key),
+					sharedDirectory1.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
+					sharedDirectory2.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
 				);
 			});
 		});
@@ -276,8 +275,9 @@ describeCompat(
 				runtimeOptions: {},
 			});
 
-			await container1.deltaManager.inbound.pause();
-			await container1.deltaManager.outbound.pause();
+			const container1DeltaManager = toIDeltaManagerFull(container1.deltaManager);
+			await container1DeltaManager.inbound.pause();
+			await container1DeltaManager.outbound.pause();
 
 			sharedMap1.on("valueChanged", (changed) => {
 				if (changed.key !== "key2") {
@@ -287,8 +287,8 @@ describeCompat(
 
 			sharedMap1.set("key1", "1");
 
-			container1.deltaManager.inbound.resume();
-			container1.deltaManager.outbound.resume();
+			container1DeltaManager.inbound.resume();
+			container1DeltaManager.outbound.resume();
 
 			await provider.ensureSynchronized();
 
@@ -358,8 +358,9 @@ describeCompat(
 
 					await setupContainers(testConfig.options, testConfig.featureGates);
 
-					await container1.deltaManager.inbound.pause();
-					await container1.deltaManager.outbound.pause();
+					const deltaManagerFull = toIDeltaManagerFull(container1.deltaManager);
+					await deltaManagerFull.inbound.pause();
+					await deltaManagerFull.outbound.pause();
 
 					sharedMap1.on("valueChanged", (changed) => {
 						if (changed.key !== "key2") {
@@ -374,8 +375,8 @@ describeCompat(
 
 					sharedMap1.set("key1", "1");
 
-					container1.deltaManager.inbound.resume();
-					container1.deltaManager.outbound.resume();
+					deltaManagerFull.inbound.resume();
+					deltaManagerFull.outbound.resume();
 					await provider.ensureSynchronized();
 
 					// The offending container is not closed

@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { TreeValue } from "../../../core/index.js";
-import { fail } from "../../../util/index.js";
-import { FluidSerializableReadOnly } from "../../valueUtilities.js";
+import { fail } from "@fluidframework/core-utils/internal";
+import type { TreeValue } from "../../../core/index.js";
+import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
 
 import {
 	Counter,
-	CounterFilter,
-	DeduplicationTable,
+	type CounterFilter,
+	type DeduplicationTable,
 	jsonMinimizingFilter,
 } from "./chunkCodecUtilities.js";
-import { EncodedFieldBatchGeneric } from "./formatGeneric.js";
+import type { EncodedFieldBatchGeneric } from "./formatGeneric.js";
 
 /**
  * An identifier which can be compressed using {@link Counter}.
@@ -81,11 +81,11 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 			} else if (
 				item !== null &&
 				typeof item === "object" &&
-				(item as any).shape instanceof Shape
+				(item as Record<string, unknown>).shape instanceof Shape
 			) {
 				// because "serializable" is allowed in buffer and it has type `any`, its very easy to mess up including of shapes in the buffer.
 				// This catches the easiest way to get it wrong.
-				fail("encoder interface instead of shape written to stream");
+				fail(0xb4b /* encoder interface instead of shape written to stream */);
 			}
 		}
 	}
@@ -108,7 +108,7 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 			if (item instanceof IdentifierToken) {
 				array[index] = identifierTable.valueToIndex.get(item.identifier) ?? item.identifier;
 			} else if (item instanceof Shape) {
-				array[index] = shapeTable.valueToIndex.get(item) ?? fail("missing shape");
+				array[index] = shapeTable.valueToIndex.get(item) ?? fail(0xb4c /* missing shape */);
 			}
 		}
 	}

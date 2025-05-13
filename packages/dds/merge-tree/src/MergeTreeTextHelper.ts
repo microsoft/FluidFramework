@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IIntegerRange } from "./client.js";
-import { MergeTree } from "./mergeTree.js";
-import { ISegment } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
-import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
+import type { IIntegerRange } from "./client.js";
+import type { MergeTree } from "./mergeTree.js";
+import type { ISegmentPrivate } from "./mergeTreeNodes.js";
+import type { Perspective } from "./perspective.js";
+import { TextSegment } from "./textSegment.js";
 
 interface ITextAccumulator {
 	textSegment: TextSegment;
@@ -15,25 +15,29 @@ interface ITextAccumulator {
 	parallelArrays?: boolean;
 }
 
-// eslint-disable-next-line import/no-deprecated
+/**
+ * @internal
+ */
+export interface IMergeTreeTextHelper {
+	getText(perspective: Perspective, placeholder: string, start?: number, end?: number): string;
+}
+
 export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	constructor(private readonly mergeTree: MergeTree) {}
 
 	public getText(
-		refSeq: number,
-		clientId: number,
+		perspective: Perspective,
 		placeholder = "",
 		start?: number,
 		end?: number,
-	) {
-		const range = this.getValidRange(start, end, refSeq, clientId);
+	): string {
+		const range = this.getValidRange(start, end, perspective);
 
 		const accum: ITextAccumulator = { textSegment: new TextSegment(""), placeholder };
 
 		this.mergeTree.mapRange<ITextAccumulator>(
 			gatherText,
-			refSeq,
-			clientId,
+			perspective,
 			accum,
 			range.start,
 			range.end,
@@ -44,11 +48,10 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	private getValidRange(
 		start: number | undefined,
 		end: number | undefined,
-		refSeq: number,
-		clientId: number,
+		perspective: Perspective,
 	): IIntegerRange {
 		const range: IIntegerRange = {
-			end: end ?? this.mergeTree.getLength(refSeq, clientId),
+			end: end ?? this.mergeTree.getLength(perspective),
 			start: start ?? 0,
 		};
 		return range;
@@ -56,7 +59,7 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 }
 
 function gatherText(
-	segment: ISegment,
+	segment: ISegmentPrivate,
 	pos: number,
 	refSeq: number,
 	clientId: number,
@@ -71,7 +74,7 @@ function gatherText(
 			const seglen = segment.text.length;
 			const _start = start < 0 ? 0 : start;
 			const _end = end >= seglen ? undefined : end;
-			textSegment.text += segment.text.substring(_start, _end);
+			textSegment.text += segment.text.slice(_start, _end);
 		}
 	} else if (placeholder && placeholder.length > 0) {
 		const placeholderText =

@@ -1,7 +1,9 @@
 {
 	"require": ["ts-node/register"],
-	"watch-extensions": ["ts"],
+	"watch-extensions": ["ts", "cts", "mts"],
 	"recursive": true,
-	"reporter": "spec",
-	"timeout": 60000
+	"reporter": "mocha-multi-reporters",
+	"reporter-options": "configFile=mocha-multi-reporter-config.json",
+	"timeout": 60000,
+	"node-option": ["loader=ts-node/esm"]
 }

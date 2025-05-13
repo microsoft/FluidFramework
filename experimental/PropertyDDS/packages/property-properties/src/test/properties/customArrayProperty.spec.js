@@ -187,9 +187,9 @@ describe("CustomArrayProperty", function () {
 			arrayParent._properties.MyCustomArray.insertRange(0, entries);
 
 			// Make sure that arrray access works
-			expect(
-				arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value,
-			).to.equal(0);
+			expect(arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value).to.equal(
+				0,
+			);
 			expect(arrayProp.resolvePath("[2]")._properties.MyIntProp.value).to.equal(2);
 
 			// Test out of bounds access
@@ -209,9 +209,9 @@ describe("CustomArrayProperty", function () {
 			var newEntry = PropertyFactory.create("autodesk.tests:TestID-1.0.0");
 			newEntry._properties.MyIntProp.value = -1;
 			arrayParent._properties.MyCustomArray.insertRange(0, [newEntry]);
-			expect(
-				arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value,
-			).to.equal(-1);
+			expect(arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value).to.equal(
+				-1,
+			);
 			expect(myTestArrayProp.getAbsolutePath()).to.equal("/MyCustomArray[6]");
 
 			// Test path resolution after setting
@@ -219,15 +219,15 @@ describe("CustomArrayProperty", function () {
 			var newEntry2 = PropertyFactory.create("autodesk.tests:TestID-1.0.0");
 			newEntry2._properties.MyIntProp.value = -2;
 			arrayParent._properties.MyCustomArray.set(0, newEntry2);
-			expect(
-				arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value,
-			).to.equal(-2);
+			expect(arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value).to.equal(
+				-2,
+			);
 
 			// Test path resolution after removal
 			arrayParent._properties.MyCustomArray.removeRange(0, 1);
-			expect(
-				arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value,
-			).to.equal(0);
+			expect(arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value).to.equal(
+				0,
+			);
 			expect(myTestArrayProp.getAbsolutePath()).to.equal("/MyCustomArray[5]");
 
 			// Test path resolution after insertion via applyChangeSet
@@ -258,9 +258,9 @@ describe("CustomArrayProperty", function () {
 					],
 				],
 			});
-			expect(
-				arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value,
-			).to.equal(17);
+			expect(arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value).to.equal(
+				17,
+			);
 			expect(myTestArrayProp.getAbsolutePath()).to.equal("/MyCustomArray[7]");
 
 			var serialied = arrayParent._properties.MyCustomArray.serialize({ dirtyOnly: false });
@@ -269,17 +269,17 @@ describe("CustomArrayProperty", function () {
 			arrayParent._properties.MyCustomArray.applyChangeSet({
 				remove: [[0, 1]],
 			});
-			expect(
-				arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value,
-			).to.equal(19);
+			expect(arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value).to.equal(
+				19,
+			);
 			expect(myTestArrayProp.getAbsolutePath()).to.equal("/MyCustomArray[6]");
 			expect(arrayParent.resolvePath("MyCustomArray[11]")).to.be.undefined;
 
 			// Test Path resolution after deserialize
 			arrayParent._properties.MyCustomArray.deserialize(serialied);
-			expect(
-				arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value,
-			).to.equal(17);
+			expect(arrayParent.resolvePath("MyCustomArray[0]")._properties.MyIntProp.value).to.equal(
+				17,
+			);
 			expect(arrayParent.resolvePath("MyCustomArray[11]")).not.to.be.undefined;
 
 			arrayParent._properties.MyCustomArray.deserialize({});
@@ -446,8 +446,7 @@ describe("CustomArrayProperty", function () {
 						"autodesk.tests:Array.NamedPropertyWithString-1.0.0",
 					);
 					newNode._properties.guid.value = entry.getGuid();
-					newNode._properties.stringProperty.value =
-						entry._properties.stringProperty.value;
+					newNode._properties.stringProperty.value = entry._properties.stringProperty.value;
 					return newNode;
 				});
 				copiedArray.insertRange(0, copiedEntries);
@@ -484,9 +483,7 @@ describe("CustomArrayProperty", function () {
 				expect(in_testArray.copy.serialize({ dirtyOnly: false })).to.deep.equal(
 					in_testArray.original.serialize({ dirtyOnly: false }),
 				);
-				expect(deserialized).to.deep.equal(
-					in_testArray.copy.serialize({ dirtyOnly: true }),
-				);
+				expect(deserialized).to.deep.equal(in_testArray.copy.serialize({ dirtyOnly: true }));
 
 				// Make sure the returned ChangeSet is correct
 				copy2.applyChangeSet(deserialized);
@@ -689,9 +686,7 @@ describe("CustomArrayProperty", function () {
 								if (testArray.original.length > 0) {
 									var rangeStart = generator.irandom(testArray.original.length);
 									var rangeLength =
-										generator.irandom(
-											testArray.original.length - rangeStart - 1,
-										) + 1;
+										generator.irandom(testArray.original.length - rangeStart - 1) + 1;
 									testArray.original.removeRange(rangeStart, rangeLength);
 
 									modifiedEntries += rangeLength;
@@ -701,10 +696,7 @@ describe("CustomArrayProperty", function () {
 								// Insert entries into the array
 								var rangeStart = generator.irandom(testArray.original.length + 1);
 								var rangeLength = generator.irandom(50);
-								testArray.original.insertRange(
-									rangeStart,
-									createRandomEntries(rangeLength),
-								);
+								testArray.original.insertRange(rangeStart, createRandomEntries(rangeLength));
 
 								modifiedEntries += rangeLength;
 								break;
@@ -712,13 +704,9 @@ describe("CustomArrayProperty", function () {
 								if (testArray.original.length > 0) {
 									// Modify entries in the array
 									var rangeStart = generator.irandom(testArray.original.length);
-									var rangeLength = generator.irandom(
-										testArray.original.length - rangeStart,
-									);
+									var rangeLength = generator.irandom(testArray.original.length - rangeStart);
 									for (var j = rangeStart; j < rangeStart + rangeLength; j++) {
-										testArray.original.get(
-											j,
-										)._properties.stringProperty.value += "modified";
+										testArray.original.get(j)._properties.stringProperty.value += "modified";
 									}
 
 									modifiedEntries += rangeLength;

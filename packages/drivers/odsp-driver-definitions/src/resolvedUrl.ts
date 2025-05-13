@@ -6,6 +6,7 @@
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOdspUrlParts {
@@ -16,6 +17,7 @@ export interface IOdspUrlParts {
 
 /**
  * Sharing scope of the share links created for a file.
+ * @legacy
  * @alpha
  */
 export enum SharingLinkScope {
@@ -27,6 +29,7 @@ export enum SharingLinkScope {
 
 /**
  * View/edit permission role for a sharing link.
+ * @legacy
  * @alpha
  */
 export enum SharingLinkRole {
@@ -37,6 +40,7 @@ export enum SharingLinkRole {
 /**
  * Defines the permissions scope for a share link requested to be created during the creation the file in ODSP.
  * Providing these properties to the /snapshot api will also create and return the requested kind of sharing link.
+ * @legacy
  * @alpha
  */
 export interface ISharingLinkKind {
@@ -50,6 +54,7 @@ export interface ISharingLinkKind {
 
 /**
  * Sharing link data received from the /snapshot api response.
+ * @legacy
  * @alpha
  */
 export interface ISharingLink extends ISharingLinkKind {
@@ -60,6 +65,7 @@ export interface ISharingLink extends ISharingLinkKind {
  * Sharing link data created for the ODSP item.
  * Contains information about either sharing link created while creating a new file or
  * a redeemable share link created when loading an existing file
+ * @legacy
  * @alpha
  */
 export interface ShareLinkInfoType {
@@ -91,6 +97,7 @@ export interface ShareLinkInfoType {
 	sharingLinkToRedeem?: string;
 }
 /**
+ * @legacy
  * @alpha
  */
 export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
@@ -115,6 +122,11 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	tokens: {};
 
 	fileName: string;
+	/**
+	 * Used to track when a file was created with a temporary name. In that case this value will
+	 * be the desired name, which the file is eventually renamed too.
+	 */
+	pendingRename?: string;
 
 	summarizer: boolean;
 
@@ -136,4 +148,17 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	shareLinkInfo?: ShareLinkInfoType;
 
 	isClpCompliantApp?: boolean;
+
+	/**
+	 * Context for given resolved URL. The context of a resolved URL is a string that contains
+	 * the resolved URL and the data store path of the resolved URL.
+	 */
+	context?: string;
+
+	/**
+	 * Name of the application that owns the URL. This hint is used by link handling logic which determines which
+	 * app to redirect to when user navigates directly to the link.
+	 * Can be ommited in case it is not necessary for the link handling logic.
+	 */
+	appName?: string;
 }

@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { IChannel } from "@fluidframework/datastore-definitions";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
@@ -50,7 +50,6 @@ describe("LocalChannelContext Tests", () => {
 				dataStoreContext.baseLogger,
 				() => {},
 				(s: string) => {},
-				(s) => {},
 			);
 		assert.throws(
 			codeBlock,
@@ -72,7 +71,6 @@ describe("LocalChannelContext Tests", () => {
 				dataStoreContext.baseLogger,
 				(content, localOpMetadata) => {},
 				(s: string) => {},
-				(s, o) => {},
 				null as unknown as ISnapshotTree,
 			);
 		assert.throws(

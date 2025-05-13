@@ -5,19 +5,17 @@
 
 /* eslint-disable no-bitwise */
 
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
-	Client,
-	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
+	SequencePlace,
+	Side,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-
-import { SequencePlace, Side } from "../intervalCollection.js";
 
 /**
  * Basic interval abstraction
+ * @legacy
  * @alpha
  */
 export interface IInterval {
@@ -79,10 +77,12 @@ export const IntervalDeltaOpType = {
 	CHANGE: "change",
 } as const;
 
-export type IntervalDeltaOpType = (typeof IntervalDeltaOpType)[keyof typeof IntervalDeltaOpType];
+export type IntervalDeltaOpType =
+	(typeof IntervalDeltaOpType)[keyof typeof IntervalDeltaOpType];
 
 /**
  * Values are used in revertibles.
+ * @legacy
  * @alpha
  */
 export const IntervalOpType = {
@@ -91,11 +91,13 @@ export const IntervalOpType = {
 	POSITION_REMOVE: "positionRemove",
 } as const;
 /**
+ * @legacy
  * @alpha
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 /**
+ * @legacy
  * @alpha
  */
 export enum IntervalType {
@@ -119,6 +121,7 @@ export enum IntervalType {
 /**
  * Serialized object representation of an interval.
  * This representation is used for ops that create or change intervals.
+ * @legacy
  * @alpha
  */
 export interface ISerializedInterval {
@@ -147,29 +150,22 @@ export interface ISerializedInterval {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
-	/***/
-	propertyManager: PropertiesManager;
+
 	/***/
 	serialize(): ISerializedInterval;
-	/***/
-	addProperties(
-		props: PropertySet,
-		collaborating?: boolean,
-		seq?: number,
-	): PropertySet | undefined;
+
 	/**
 	 * Gets the id associated with this interval.
 	 * When the interval is used as part of an interval collection, this id can be used to modify or remove the
 	 * interval.
-	 * @remarks This signature includes `undefined` strictly for backwards-compatibility reasons, as older versions
-	 * of Fluid didn't always write interval ids.
 	 */
-	getIntervalId(): string | undefined;
+	getIntervalId(): string;
 }
 
 /**
@@ -177,7 +173,10 @@ export interface ISerializableInterval extends IInterval {
  * Changes can modify any of start/end/properties, with `undefined` signifying no change should be made.
  * @internal
  */
-export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" | "properties"> &
+export type SerializedIntervalDelta = Omit<
+	ISerializedInterval,
+	"start" | "end" | "properties"
+> &
 	Partial<Pick<ISerializedInterval, "start" | "end" | "properties">>;
 
 /**
@@ -209,46 +208,13 @@ export type CompressedSerializedInterval =
 	| [number | "start" | "end", number | "start" | "end", number, IntervalType, PropertySet];
 
 /**
- * @sealed
- * @deprecated The methods within have substitutions
- * @internal
- */
-export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
-	/**
-	 *
-	 * @param label - label of the interval collection this interval is being added to. This parameter is
-	 * irrelevant for transient intervals.
-	 * @param start - numerical start position of the interval
-	 * @param end - numerical end position of the interval
-	 * @param client - client creating the interval
-	 * @param intervalType - Type of interval to create. Default is SlideOnRemove
-	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
-	 * @param fromSnapshot - If this create came from loading a snapshot. Default is false.
-	 * @param startSide - The side on which the start position lays. See
-	 * {@link SequencePlace} for additional context
-	 * @param endSide - The side on which the end position lays. See
-	 * {@link SequencePlace} for additional context
-	 */
-	create(
-		label: string,
-		start: SequencePlace | undefined,
-		end: SequencePlace | undefined,
-		// eslint-disable-next-line import/no-deprecated
-		client: Client | undefined,
-		intervalType: IntervalType,
-		op?: ISequencedDocumentMessage,
-		fromSnapshot?: boolean,
-		useNewSlidingBehavior?: boolean,
-	): TInterval;
-}
-
-/**
  * Determines how an interval should expand when segments are inserted adjacent
  * to the range it spans
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
  *
+ * @legacy
  * @alpha
  */
 export const IntervalStickiness = {
@@ -281,18 +247,23 @@ export const IntervalStickiness = {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
+ * @legacy
  * @alpha
  */
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
-export function startReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
+export function startReferenceSlidingPreference(
+	stickiness: IntervalStickiness,
+): SlidingPreference {
 	// if any start stickiness, prefer sliding backwards
 	return (stickiness & IntervalStickiness.START) === 0
 		? SlidingPreference.FORWARD
 		: SlidingPreference.BACKWARD;
 }
 
-export function endReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
+export function endReferenceSlidingPreference(
+	stickiness: IntervalStickiness,
+): SlidingPreference {
 	// if any end stickiness, prefer sliding forwards
 	return (stickiness & IntervalStickiness.END) === 0
 		? SlidingPreference.BACKWARD

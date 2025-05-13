@@ -3,7 +3,6 @@
 		"ci": {
 			"opRatePerMin": 10,
 			"signalsPerMin": 10,
-			"futureOpRatePerMin": 0.5,
 			"progressIntervalMs": 15000,
 			"numClients": 120,
 			"totalSendCount": 10000,
@@ -28,18 +27,21 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
+						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": [true, false]
 					}
 				},
 				"odsp-odsp-df": {
 					"configurations": {
 						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
+						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": [true, false]
 					}
 				},
 				"tinylicious": {
 					"configurations": {
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
+						"Fluid.Container.ForceWriteConnection": [true, false]
 					}
 				}
 			},
@@ -48,11 +50,15 @@
 				"opSizeinBytes": 214800,
 				"largeOpRate": 2000,
 				"numClients": 12
+			},
+			"virtualization": {
+				"createRate": 2000,
+				"loadRate": 2000,
+				"numClients": 2
 			}
 		},
 		"ci_frs": {
 			"opRatePerMin": 10,
-			"futureOpRatePerMin": 0.5,
 			"progressIntervalMs": 15000,
 			"numClients": 100,
 			"totalSendCount": 10000,
@@ -77,7 +83,6 @@
 		},
 		"full": {
 			"opRatePerMin": 1920,
-			"futureOpRatePerMin": 1,
 			"progressIntervalMs": 1500000,
 			"numClients": 60,
 			"totalSendCount": 200000,
@@ -89,7 +94,6 @@
 		},
 		"mini": {
 			"opRatePerMin": 60,
-			"futureOpRatePerMin": 1,
 			"progressIntervalMs": 5000,
 			"numClients": 2,
 			"totalSendCount": 30,
@@ -108,7 +112,6 @@
 		},
 		"debug": {
 			"opRatePerMin": 60,
-			"futureOpRatePerMin": 10,
 			"progressIntervalMs": 5000,
 			"numClients": 1,
 			"totalSendCount": 30,
@@ -120,7 +123,6 @@
 		},
 		"ci_nofault": {
 			"opRatePerMin": 10,
-			"futureOpRatePerMin": 0,
 			"progressIntervalMs": 15000,
 			"numClients": 120,
 			"totalSendCount": 10000,
@@ -128,7 +130,6 @@
 		},
 		"scale": {
 			"opRatePerMin": 60,
-			"futureOpRatePerMin": 1,
 			"progressIntervalMs": 20000,
 			"numClients": 10,
 			"totalSendCount": 70000,
@@ -140,7 +141,6 @@
 		},
 		"scale_nofault": {
 			"opRatePerMin": 60,
-			"futureOpRatePerMin": 0,
 			"progressIntervalMs": 20000,
 			"numClients": 10,
 			"totalSendCount": 70000,
@@ -171,7 +171,6 @@
 		},
 		"offline": {
 			"opRatePerMin": 60,
-			"futureOpRatePerMin": 3,
 			"progressIntervalMs": 5000,
 			"numClients": 4,
 			"totalSendCount": 300,

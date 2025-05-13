@@ -4,7 +4,7 @@
  */
 
 import { FluentProvider, makeStyles, shorthands, tokens } from "@fluentui/react-components";
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	type ContainerKey,
 	ContainerList,
@@ -12,7 +12,6 @@ import {
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
-	type HasContainerKey,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
@@ -21,12 +20,17 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import React from "react";
 
 import { useMessageRelay } from "./MessageRelayContext.js";
-import { ConsoleVerboseLogger, LoggerContext, TelemetryOptInLogger } from "./TelemetryUtils.js";
+import {
+	ConsoleVerboseLogger,
+	LoggerContext,
+	TelemetryOptInLogger,
+} from "./TelemetryUtils.js";
 import { ThemeContext, getFluentUIThemeToUse } from "./ThemeHelper.js";
 import {
 	ContainerDevtoolsView,
 	LandingView,
 	Menu,
+	type MenuSelection,
 	NoDevtoolsErrorBar,
 	OpLatencyView,
 	SettingsView,
@@ -48,74 +52,6 @@ const getSupportedFeaturesMessage = GetDevtoolsFeatures.createMessage();
  * Message sent to the webpage to query for the full container list.
  */
 const getContainerListMessage = GetContainerList.createMessage();
-
-/**
- * Indicates that the currently selected menu option is a particular Container.
- * @see {@link MenuSection} for other possible options.
- */
-interface ContainerMenuSelection extends HasContainerKey {
-	/**
-	 * String to differentiate between different types of options in menu.
-	 */
-	type: "containerMenuSelection";
-}
-
-/**
- * Indicates that the currently selected menu option is the Telemetry view.
- * @see {@link MenuSection} for other possible options.
- */
-interface TelemetryMenuSelection {
-	/**
-	 * String to differentiate between different types of options in menu.
-	 */
-	type: "telemetryMenuSelection";
-}
-
-/**
- * Indicates that the currently selected menu option is the Settings view.
- * @see {@link MenuSection} for other possible options.
- */
-interface SettingsMenuSelection {
-	/**
-	 * String to differentiate between different types of options in menu.
-	 */
-	type: "settingsMenuSelection";
-}
-
-/**
- * Indicates that the currently selected menu option is the Home view.
- * @see {@link MenuSection} for other possible options.
- */
-interface HomeMenuSelection {
-	/**
-	 * String to differentiate between different types of options in menu.
-	 */
-	type: "homeMenuSelection";
-}
-
-/**
- * Indicates that the currently selected menu option is the Op Latency view
- * @see {@link MenuSection} for other possible options.
- */
-interface OpLatencyMenuSelection {
-	/**
-	 * String to differentiate between different types of options in menu.
-	 */
-	type: "opLatencyMenuSelection";
-}
-
-/**
- * Discriminated union type for all the selectable options in the menu.
- * Each specific type should contain any additional information it requires.
- * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
- * is selected, and has a 'containerKey' property to indicate which Container.
- */
-type MenuSelection =
-	| TelemetryMenuSelection
-	| ContainerMenuSelection
-	| SettingsMenuSelection
-	| HomeMenuSelection
-	| OpLatencyMenuSelection;
 
 const useDevtoolsStyles = makeStyles({
 	root: {
@@ -269,18 +205,14 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 								/>
 							)}
 							{modalVisible && (
-								<TelemetryConsentModal
-									onClose={(): void => setModalVisible(false)}
-								/>
+								<TelemetryConsentModal onClose={(): void => setModalVisible(false)} />
 							)}
 							<_DevtoolsView supportedFeatures={{}} />
 						</>
 					) : (
 						<>
 							{modalVisible && (
-								<TelemetryConsentModal
-									onClose={(): void => setModalVisible(false)}
-								/>
+								<TelemetryConsentModal onClose={(): void => setModalVisible(false)} />
 							)}
 							<_DevtoolsView supportedFeatures={supportedFeatures} />
 						</>
@@ -305,7 +237,9 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 	const { supportedFeatures } = props;
 
 	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
-	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
+	const [menuSelection, setMenuSelection] = React.useState<MenuSelection>({
+		type: "homeMenuSelection",
+	});
 	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {

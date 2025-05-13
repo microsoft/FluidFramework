@@ -16,27 +16,19 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-// eslint-disable-next-line import/no-internal-modules
-import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IChannel } from "@fluidframework/datastore-definitions";
-import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -61,10 +53,7 @@ const builder = new SchemaFactory("test");
 class QuantityType extends builder.object("quantityObj", {
 	quantity: builder.number,
 }) {}
-
-function getNewTreeView(tree: ITree): TreeView<typeof QuantityType> {
-	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
-}
+const treeConfig = new TreeViewConfiguration({ schema: QuantityType });
 
 describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
@@ -136,12 +125,11 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	// V1 of the registry -----------------------------------------
 	// V1 of the code: Registry setup to create the old document
 	const oldChannelFactory = LegacySharedTree.getFactory();
-	const dataObjectFactory1 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[oldChannelFactory],
-		{},
-	);
+	const dataObjectFactory1 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [oldChannelFactory],
+	});
 
 	// The 1st runtime factory, V1 of the code
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -161,31 +149,26 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		(legacyTree, newTree) => {
 			// Migration code that the customer writes
 			// Revert local edits - otherwise we will be eventually inconsistent
-			const edits = legacyTree.edits as EditLog;
+			const edits = legacyTree.edits;
 			const localEdits = [...edits.getLocalEdits()].reverse();
 			for (const edit of localEdits) {
 				legacyTree.revert(edit.id);
 			}
 			// migrate data
 			const quantity = getQuantity(legacyTree);
-			newTree
-				.schematize(
-					new TreeConfiguration(QuantityType, () => ({
-						quantity,
-					})),
-				)
-				[disposeSymbol]();
+			const view = newTree.viewWith(treeConfig);
+			view.initialize({ quantity });
+			view.dispose();
 		},
 	);
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
 
-	const dataObjectFactory2 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[migrationShimFactory, sharedTreeShimFactory], // Use the migrationShimFactory instead of the LegacySharedTreeFactory
-		{},
-	);
+	const dataObjectFactory2 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [migrationShimFactory, sharedTreeShimFactory],
+	});
 
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -224,7 +207,6 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await provider.loadContainer(runtimeFactory2);
 		await waitForContainerConnection(container2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
-		await provider.ensureSynchronized();
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
 
@@ -254,9 +236,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree as ITree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		await provider.ensureSynchronized();
-		const view2 = getNewTreeView(newTree2);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
 		assert.equal(node1.quantity, node2.quantity, "expected to migrate to the same value");
@@ -322,9 +304,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		await provider.ensureSynchronized();
-		const view2 = getNewTreeView(newTree2);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
 		assert.equal(node1.quantity, originalValue, "Node1 should be the original value");
@@ -350,7 +332,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Check if the shim2 received the op
 		const op2 = await opSent;
-		const env = op2.contents as any;
+		const env = JSON.parse(op2.contents as string);
 		assert.equal(
 			env.contents.address,
 			testObj2.id,

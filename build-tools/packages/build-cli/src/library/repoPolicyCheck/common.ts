@@ -13,8 +13,20 @@ import fs from "node:fs";
 export interface Handler {
 	name: string;
 	match: RegExp;
+
+	/**
+	 *
+	 * @param file - Absolute path to the file.
+	 * @param root - Path to the repo root. This can be used to make repo-relative paths if needed.
+	 * @returns `undefined` if the check is successful. Otherwise returns an error message string.
+	 */
 	handler: (file: string, root: string) => Promise<string | undefined>;
-	resolver?: (file: string, root: string) => { resolved: boolean; message?: string };
+	resolver?: (
+		file: string,
+		root: string,
+	) =>
+		| Promise<{ resolved: boolean; message?: string }>
+		| { resolved: boolean; message?: string };
 	final?: (root: string, resolve: boolean) => { error?: string } | undefined;
 }
 

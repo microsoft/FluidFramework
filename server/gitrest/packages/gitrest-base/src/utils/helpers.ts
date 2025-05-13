@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PathLike, Stats } from "fs";
+import { PathLike, Stats, type BigIntStats } from "fs";
 import * as path from "path";
 import { Request } from "express";
 import {
@@ -30,6 +30,7 @@ import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 } from "./gitrestTelemetryDefinitions";
+import { isFilesystemError, throwFileSystemErrorAsNetworkError } from "./fileSystemHelper";
 
 /**
  * Validates that the input encoding is valid
@@ -72,9 +73,8 @@ export function getExternalWriterParams(
 
 export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerParams {
 	const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-	const storageRoutingId: IStorageRoutingId = parseStorageRoutingId(
-		request.get(Constants.StorageRoutingIdHeader),
-	);
+	const storageRoutingId = parseStorageRoutingId(request.get(Constants.StorageRoutingIdHeader));
+	const simplifiedCustomData = request.get(Constants.SimplifiedCustomDataHeader);
 
 	const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
 
@@ -87,6 +87,7 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 		storageRoutingId,
 		fileSystemManagerParams: {
 			storageName,
+			simplifiedCustomData,
 		},
 		isEphemeralContainer,
 	};
@@ -95,7 +96,7 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 export async function exists(
 	fileSystemManager: IFileSystemManager,
 	fileOrDirectoryPath: PathLike,
-): Promise<Stats | false> {
+): Promise<Stats | BigIntStats | false> {
 	try {
 		const fileOrDirectoryStats = await fileSystemManager.promises.stat(fileOrDirectoryPath);
 		return fileOrDirectoryStats;
@@ -139,11 +140,14 @@ export async function persistLatestFullSummaryInStorage(
 		persistLatestFullSummaryInStorageMetric.success(
 			"Successfully persisted latest full summary in storage",
 		);
-	} catch (error: any) {
+	} catch (error: unknown) {
 		persistLatestFullSummaryInStorageMetric.error(
 			"Failed to persist latest full summary in storage",
 			error,
 		);
+		if (isFilesystemError(error)) {
+			throwFileSystemErrorAsNetworkError(error);
+		}
 		throw error;
 	}
 }
@@ -260,6 +264,9 @@ export function logAndThrowApiError(
 
 	if (isNetworkError(error)) {
 		throw error;
+	}
+	if (isFilesystemError(error)) {
+		throwFileSystemErrorAsNetworkError(error);
 	}
 	// TODO: some APIs might expect 400 responses by default, like GetRef in GitManager. Since `handleResponse` uses
 	// 400 by default, using something different here would override the expected behavior and cause issues. Because

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { pkgVersion } from "../packageVersion.js";
 import {
@@ -12,7 +12,7 @@ import {
 	type IDocumentSchemaFeatures,
 } from "../summary/index.js";
 
-function boolToProp(b: boolean) {
+function boolToProp(b: boolean | undefined) {
 	return b ? true : undefined;
 }
 
@@ -29,16 +29,18 @@ describe("Runtime", () => {
 			compressionLz4: true,
 			idCompressorMode: "delayed",
 			// opGroupingEnabled: undefined,
+			// createBlobPayloadPending: true,
 		},
 	};
 
-	const features: IDocumentSchemaFeatures = {
+	const features = {
 		explicitSchemaControl: true,
 		compressionLz4: true,
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
+		createBlobPayloadPending: undefined,
 		disallowedVersions: [],
-	};
+	} as const satisfies IDocumentSchemaFeatures;
 
 	function createController(config: unknown) {
 		return new DocumentsSchemaController(
@@ -57,8 +59,8 @@ describe("Runtime", () => {
 
 		const controller = createController(validConfig);
 		assert.throws(() =>
-			controller.processDocumentSchemaOp(
-				config as IDocumentSchemaCurrent,
+			controller.processDocumentSchemaMessages(
+				[config as IDocumentSchemaCurrent],
 				false, // local
 				100,
 			),
@@ -151,7 +153,11 @@ describe("Runtime", () => {
 		assert.deepEqual(controller.sessionSchema.runtime.disallowedVersions, ["aaa", "bbb"]);
 		let message = controller.maybeSendSchemaMessage();
 		assert(message !== undefined);
-		controller.processDocumentSchemaOp(message, true /* local */, 100 /* sequenceNumber */);
+		controller.processDocumentSchemaMessages(
+			[message],
+			true /* local */,
+			100 /* sequenceNumber */,
+		);
 		assert.deepEqual(controller.sessionSchema.runtime.disallowedVersions, ["aaa", "bbb"]);
 
 		// Some runtime that drops one version, and adds another version to disallowed list
@@ -175,7 +181,11 @@ describe("Runtime", () => {
 		]);
 		message = controller2.maybeSendSchemaMessage();
 		assert(message !== undefined);
-		controller2.processDocumentSchemaOp(message, true /* local */, 400 /* sequenceNumber */);
+		controller2.processDocumentSchemaMessages(
+			[message],
+			true /* local */,
+			400 /* sequenceNumber */,
+		);
 		assert.deepEqual(controller2.sessionSchema.runtime.disallowedVersions, [
 			"aaa",
 			"bbb",
@@ -192,7 +202,11 @@ describe("Runtime", () => {
 			// onSchemaChange
 			() => {},
 		);
-		controller3.processDocumentSchemaOp(message, true /* local */, 600 /* sequenceNumber */);
+		controller3.processDocumentSchemaMessages(
+			[message],
+			true /* local */,
+			600 /* sequenceNumber */,
+		);
 		assert.deepEqual(controller3.sessionSchema.runtime.disallowedVersions, [
 			"aaa",
 			"bbb",
@@ -257,16 +271,13 @@ describe("Runtime", () => {
 
 		if (!existing || !explicitSchemaControl) {
 			controller.onDisconnect();
-			assert(
-				controller.maybeSendSchemaMessage() === undefined,
-				"no messages should be sent!",
-			);
+			assert(controller.maybeSendSchemaMessage() === undefined, "no messages should be sent!");
 		}
 
 		// get rid of all properties with undefined values.
 		const summarySchema = JSON.parse(
 			JSON.stringify(controller.summarizeDocumentSchema(100 /* refSeq */)),
-		);
+		) as IDocumentSchemaCurrent;
 		if (!explicitSchemaControl) {
 			assert.deepEqual(summarySchema, validConfig, "summarized schema as expected");
 		} else if (existing) {
@@ -292,6 +303,7 @@ describe("Runtime", () => {
 					compressionLz4: boolToProp(featuresModified.compressionLz4),
 					idCompressorMode: featuresModified.idCompressorMode,
 					opGroupingEnabled: boolToProp(featuresModified.opGroupingEnabled),
+					createBlobPayloadPending: featuresModified.createBlobPayloadPending,
 					disallowedVersions: arrayToProp(featuresModified.disallowedVersions),
 				},
 			};
@@ -304,8 +316,8 @@ describe("Runtime", () => {
 
 		// No local messages are expected
 		assert.throws(() =>
-			controller.processDocumentSchemaOp(
-				validConfig,
+			controller.processDocumentSchemaMessages(
+				[validConfig],
 				true, // local
 				100,
 			),
@@ -375,8 +387,8 @@ describe("Runtime", () => {
 		assert(controller.maybeSendSchemaMessage() === undefined);
 
 		assert(
-			controller.processDocumentSchemaOp(
-				message,
+			controller.processDocumentSchemaMessages(
+				[message],
 				true, // local
 				200,
 			) === true,
@@ -397,12 +409,13 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 		);
 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
 		assert.deepEqual((controller2 as any).documentSchema, schema);
 
 		// updates with old refSeq should fail silently.
 		assert(
-			controller.processDocumentSchemaOp(
-				{ ...message, refSeq: 100 },
+			controller.processDocumentSchemaMessages(
+				[{ ...message, refSeq: 100 }],
 				false, // local
 				201,
 			) === false,
@@ -411,8 +424,8 @@ describe("Runtime", () => {
 		// new change with some future sequence number should never happen, thus code should throw.
 		assert.throws(() => {
 			assert(message !== undefined);
-			controller.processDocumentSchemaOp(
-				{ ...message, refSeq: 300 },
+			controller.processDocumentSchemaMessages(
+				[{ ...message, refSeq: 300 }],
 				false, // local
 				202,
 			);
@@ -420,8 +433,8 @@ describe("Runtime", () => {
 
 		// new change in schema with updated ref seq should be allowed
 		assert(
-			controller.processDocumentSchemaOp(
-				{ ...message, refSeq: 200 },
+			controller.processDocumentSchemaMessages(
+				[{ ...message, refSeq: 200 }],
 				false, // local
 				305,
 			) === true,
@@ -430,8 +443,8 @@ describe("Runtime", () => {
 		// Sequence numbers should move only forward.
 		assert.throws(() => {
 			assert(message !== undefined);
-			controller.processDocumentSchemaOp(
-				{ ...message, refSeq: 305 },
+			controller.processDocumentSchemaMessages(
+				[{ ...message, refSeq: 305 }],
 				false, // local
 				300,
 			);
@@ -498,8 +511,8 @@ describe("Runtime", () => {
 		assert(message !== undefined, "message sent");
 		assert(message.runtime.idCompressorMode === "on");
 
-		controller3.processDocumentSchemaOp(
-			message,
+		controller3.processDocumentSchemaMessages(
+			[message],
 			true, // local
 			100,
 		); // sequenceNumber
@@ -527,8 +540,8 @@ describe("Runtime", () => {
 			},
 			() => (schemaChanged = true), // onSchemaChange
 		);
-		controller4.processDocumentSchemaOp(
-			message,
+		controller4.processDocumentSchemaMessages(
+			[message],
 			false, // local
 			200,
 		); // sequenceNumber

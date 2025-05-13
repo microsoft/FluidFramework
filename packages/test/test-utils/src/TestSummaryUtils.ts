@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	IContainer,
 	IHostLoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
@@ -21,16 +21,21 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 
 import { createTestConfigProvider } from "./TestConfigs.js";
+// eslint-disable-next-line import/no-deprecated
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
 import { waitForContainerConnection } from "./containerUtils.js";
-import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+import {
+	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
 import { timeoutAwait } from "./timeoutUtils.js";
 
@@ -117,13 +122,14 @@ export async function createSummarizerFromFactory(
 	container: IContainer,
 	dataStoreFactory: IFluidDataStoreFactory,
 	summaryVersion?: string,
-	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
+	containerRuntimeFactoryType?: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = createTestConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		containerRuntimeFactoryType,
+		// eslint-disable-next-line import/no-deprecated
+		containerRuntimeFactoryType ?? ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataStoreFactory,
 			registryEntries: registryEntries ?? [
@@ -187,7 +193,9 @@ export async function summarizeNow(
 		typeof inputs === "string" ? { reason: inputs } : inputs;
 	const result = summarizer.summarizeOnDemand(options);
 
-	const submitResult = await timeoutAwait(result.summarySubmitted);
+	const submitResult = await timeoutAwait(result.summarySubmitted, {
+		errorMsg: "Promise timed out: summarySubmitted",
+	});
 	if (!submitResult.success) {
 		throw submitResult.error;
 	}
@@ -197,12 +205,16 @@ export async function summarizeNow(
 	);
 	assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
-	const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted);
+	const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted, {
+		errorMsg: "Promise timed out: summaryOpBroadcasted",
+	});
 	if (!broadcastResult.success) {
 		throw broadcastResult.error;
 	}
 
-	const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack);
+	const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack, {
+		errorMsg: "Promise timed out: receivedSummaryAckOrNack",
+	});
 	if (!ackNackResult.success) {
 		throw ackNackResult.error;
 	}

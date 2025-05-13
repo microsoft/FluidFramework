@@ -154,10 +154,7 @@ export class SharedTreeEncoder_0_1_1 {
 		}: SharedTreeSummary,
 		attributionId: AttributionId
 	): SummaryContents {
-		assertWithMessage(
-			version === WriteFormat.v0_1_1,
-			`Invalid summary version to decode: ${version}, expected: 0.1.1`
-		);
+		assertWithMessage(version === WriteFormat.v0_1_1, `Invalid summary version to decode: ${version}, expected: 0.1.1`);
 		assert(typeof editHistory === 'object', 0x633 /* 0.1.1 summary encountered with non-object edit history. */);
 
 		const idCompressor = hasOngoingSession(serializedIdCompressor)
@@ -180,15 +177,13 @@ export class SharedTreeEncoder_0_1_1 {
 				? {
 						get: async () => {
 							const baseHandle = chunk;
-							const contents: EditChunkContents = JSON.parse(
-								IsoBuffer.from(await baseHandle.get()).toString()
-							);
+							const contents: EditChunkContents = JSON.parse(IsoBuffer.from(await baseHandle.get()).toString());
 							// Note: any interned IDs referenced in chunks taken at the time of summarization must be included
 							// in the summary. So this interner is sufficient.
 							return this.decodeEditChunk(contents, sequencedNormalizer, interner);
 						},
 						baseHandle: chunk,
-				  }
+					}
 				: chunk.map((edit) => decompressEdit(this.changeCompressor, interner, sequencedNormalizer, edit)),
 		}));
 		return {
@@ -220,10 +215,7 @@ export class SharedTreeEncoder_0_1_1 {
 			const id = 0 as DetachedSequenceId;
 			changes.push(
 				ChangeInternal.build(children, id),
-				ChangeInternal.insert(
-					id,
-					StablePlaceInternal.atStartOf({ parent: initialTreeId, label: label as TraitLabel })
-				)
+				ChangeInternal.insert(id, StablePlaceInternal.atStartOf({ parent: initialTreeId, label: label as TraitLabel }))
 			);
 		});
 
@@ -262,11 +254,7 @@ export class SharedTreeEncoder_0_1_1 {
 		serializedIdCompressor: SerializedIdCompressorWithNoSession
 	): SharedTreeSummary {
 		const sequencedNormalizer = sequencedIdNormalizer(idNormalizer);
-		const currentTree = this.treeCompressor.compress(
-			getChangeNodeFromView(currentView),
-			interner,
-			sequencedNormalizer
-		);
+		const currentTree = this.treeCompressor.compress(getChangeNodeFromView(currentView), interner, sequencedNormalizer);
 
 		return {
 			currentTree,

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IEnvelope } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
@@ -57,8 +57,8 @@ function generateCompressedBatchMessage(length: number): ISequencedDocumentMessa
 	return {
 		...messageBase,
 		// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		metadata: { ...(messageBase.metadata as any), batch: true },
+
+		metadata: { ...(messageBase.metadata as object), batch: true },
 	};
 }
 

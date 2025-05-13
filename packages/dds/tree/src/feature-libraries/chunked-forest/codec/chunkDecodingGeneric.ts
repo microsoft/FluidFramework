@@ -5,12 +5,18 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
-import { BrandedType } from "../../../util/index.js";
-import { TreeChunk } from "../chunk.js";
+import type { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
+import type { BrandedType } from "../../../util/index.js";
+import type { TreeChunk } from "../../../core/index.js";
 
-import { ChunkDecoder, StreamCursor, getChecked, readStream } from "./chunkCodecUtilities.js";
-import { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
+import {
+	type ChunkDecoder,
+	type StreamCursor,
+	getChecked,
+	readStream,
+} from "./chunkCodecUtilities.js";
+import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
+import type { IdDecodingContext } from "./chunkDecoding.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.
@@ -46,6 +52,7 @@ export class DecoderContext<TEncodedShape = unknown> {
 	public constructor(
 		public readonly identifiers: readonly string[],
 		public readonly shapes: readonly TEncodedShape[],
+		public readonly idDecodingContext: IdDecodingContext,
 	) {}
 
 	public identifier<T extends string & BrandedType<string, string>>(

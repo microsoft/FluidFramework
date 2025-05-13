@@ -28,7 +28,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 	 * Returns the index of the given position in the 'handles' array as a Uint32.
 	 * (If the position is not in the array, returns an integer greater than 'handles.length').
 	 */
-	private getIndex(position: number) {
+	private getIndex(position: number): number {
 		return (position - this.start) >>> 0;
 	}
 
@@ -37,10 +37,10 @@ export class HandleCache implements IVectorConsumer<Handle> {
 	 * the result with 'isValidHandle(..)' to see if a handle has been allocated for
 	 * the given position.
 	 *
-	 * Throws a 'RangeError' if the provided 'position' is out-of-bounds wrt. the
+	 * @throws A 'RangeError' if the provided 'position' is out-of-bounds with regards to the
 	 * PermutationVector's length.
 	 */
-	public getHandle(position: number) {
+	public getHandle(position: number): Handle {
 		const index = this.getIndex(position);
 
 		// Perf: To encourage inlining, handling of the 'cacheMiss(..)' case has been extracted
@@ -53,8 +53,10 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		return index < this.handles.length ? this.handles[index] : this.cacheMiss(position);
 	}
 
-	/** Update the cache when a handle has been allocated for a given position. */
-	public addHandle(position: number, handle: Handle) {
+	/**
+	 * Update the cache when a handle has been allocated for a given position.
+	 */
+	public addHandle(position: number, handle: Handle): void {
 		assert(isHandleValid(handle), 0x017 /* "Trying to add invalid handle!" */);
 
 		const index = this.getIndex(position);
@@ -67,12 +69,16 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		}
 	}
 
-	/** Used by 'CacheMiss()' to retrieve handles for a range of positions. */
-	private getHandles(start: number, end: number) {
+	/**
+	 * Used by {@link HandleCache.cacheMiss} to retrieve handles for a range of positions.
+	 * @param start - The start position (inclusive).
+	 * @param end - The end position (exclusive).
+	 * @param handles - The array to populate with handles. Note that it is mutated in place.
+	 */
+	private getHandles(start: number, end: number, handles: Handle[]): void {
 		// TODO: This can be accelerated substantially using 'walkSegments()'.  The only catch
 		//       is that
 
-		const handles: Handle[] = [];
 		const { vector } = this;
 
 		for (let pos = start; pos < end; pos++) {
@@ -81,11 +87,9 @@ export class HandleCache implements IVectorConsumer<Handle> {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			handles.push(asPerm.start + offset!);
 		}
-
-		return handles;
 	}
 
-	private cacheMiss(position: number) {
+	private cacheMiss(position: number): Handle {
 		// Coercing 'position' to an Uint32 allows us to handle a negative 'position' value
 		// with the same logic that handles 'position' >= length.
 		const _position = position >>> 0;
@@ -98,15 +102,15 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		//       the handle cache).
 
 		if (_position < this.start) {
-			this.handles = this.getHandles(_position, this.start).concat(this.handles);
+			const handles: Handle[] = [];
+			this.getHandles(_position, this.start, handles);
+			handles.push(...this.handles);
+			this.handles = handles;
 			this.start = _position;
 			return this.handles[0];
 		} else {
 			ensureRange(_position, this.vector.getLength());
-
-			this.handles = this.handles.concat(
-				this.getHandles(this.start + this.handles.length, _position + 1),
-			);
+			this.getHandles(this.start + this.handles.length, _position + 1, this.handles);
 			return this.handles[this.handles.length - 1];
 		}
 	}

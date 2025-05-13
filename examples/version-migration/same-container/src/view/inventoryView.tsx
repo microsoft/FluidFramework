@@ -93,20 +93,10 @@ const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
 		<>
 			<tr style={{ borderTop: "3px solid black" }}>
 				<td>
-					<input
-						ref={nameRef}
-						type="text"
-						placeholder="New item"
-						style={{ width: "200px" }}
-					/>
+					<input ref={nameRef} type="text" placeholder="New item" style={{ width: "200px" }} />
 				</td>
 				<td>
-					<input
-						ref={quantityRef}
-						type="number"
-						placeholder="0"
-						style={{ width: "60px" }}
-					/>
+					<input ref={quantityRef} type="number" placeholder="0" style={{ width: "60px" }} />
 				</td>
 			</tr>
 			<tr>

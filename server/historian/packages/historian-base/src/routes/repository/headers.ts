@@ -3,42 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { IHeader } from "@fluidframework/gitresources";
 import {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
+	denyListMiddleware,
 	IThrottleMiddlewareOptions,
 	throttle,
-	getParam,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService } from "../../services";
+import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	storageNameRetriever: IStorageNameRetriever,
+	storageNameRetriever: IStorageNameRetriever | undefined,
 	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
+	ephemeralDocumentTTLSec?: number,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
 	const restTenantGeneralThrottler = restTenantThrottlers.get(
@@ -47,7 +49,7 @@ export function create(
 
 	async function getHeader(
 		tenantId: string,
-		authorization: string,
+		authorization: string | undefined,
 		sha: string,
 		useCache: boolean,
 	): Promise<IHeader> {
@@ -59,15 +61,14 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
-			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getHeader(sha, useCache);
 	}
 
 	async function getTree(
 		tenantId: string,
-		authorization: string,
+		authorization: string | undefined,
 		sha: string,
 		useCache: boolean,
 	): Promise<any> {
@@ -79,8 +80,7 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
-			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getFullTree(sha, useCache);
 	}
@@ -90,6 +90,7 @@ export function create(
 		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const headerP = getHeader(
@@ -107,6 +108,7 @@ export function create(
 		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const headerP = getTree(

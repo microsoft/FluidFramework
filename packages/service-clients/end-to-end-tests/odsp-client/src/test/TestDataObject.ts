@@ -3,26 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct/internal";
+import {
+	DataObject,
+	DataObjectFactory,
+	IDataObjectProps,
+	createDataObjectKind,
+} from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 
-export class TestDataObject extends DataObject {
+class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		TestDataObject.Name,
-		TestDataObject,
-		[],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: TestDataObjectClass.Name,
+		ctor: TestDataObjectClass,
+	});
 
 	constructor(props: IDataObjectProps) {
 		super(props);
 	}
 }
 
-export class CounterTestDataObject extends DataObject {
+export const TestDataObject = createDataObjectKind(TestDataObjectClass);
+export type TestDataObject = TestDataObjectClass;
+
+export class CounterTestDataObjectClass extends DataObject {
 	private _counter: SharedCounter | undefined;
 
 	/**
@@ -40,12 +46,11 @@ export class CounterTestDataObject extends DataObject {
 
 	public static readonly Name = "@fluid-example/counter-test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		CounterTestDataObject.Name,
-		CounterTestDataObject,
-		[SharedCounter.getFactory()],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: CounterTestDataObjectClass.Name,
+		ctor: CounterTestDataObjectClass,
+		sharedObjects: [SharedCounter.getFactory()],
+	});
 
 	public increment(): void {
 		this.counter.increment(1);
@@ -62,3 +67,6 @@ export class CounterTestDataObject extends DataObject {
 		return this._counter;
 	}
 }
+
+export const CounterTestDataObject = createDataObjectKind(CounterTestDataObjectClass);
+export type CounterTestDataObject = CounterTestDataObjectClass;

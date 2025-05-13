@@ -15,22 +15,40 @@ export {
 	mergeKArrays,
 	mergeSortedArrays,
 } from "./array";
-export { CorrelationIdHeaderName, DriverVersionHeaderName, LatestSummaryId } from "./constants";
+export {
+	CorrelationIdHeaderName,
+	DriverVersionHeaderName,
+	LatestSummaryId,
+	TelemetryContextHeaderName,
+	CallingServiceHeaderName,
+} from "./constants";
 export {
 	createFluidServiceNetworkError,
 	INetworkErrorDetails,
+	InternalErrorCode,
 	isNetworkError,
 	NetworkError,
 	throwFluidServiceNetworkError,
+	convertAxiosErrorToNetorkError,
 } from "./error";
 export { choose, getRandomName } from "./generateNames";
 export { GitManager } from "./gitManager";
 export { Heap, IHeapComparator } from "./heap";
-export { getAuthorizationTokenFromCredentials, Historian, ICredentials } from "./historian";
+export {
+	getAuthorizationTokenFromCredentials,
+	Historian,
+	ICredentials,
+	parseToken,
+} from "./historian";
 export { IAlfredTenant, ISession } from "./interfaces";
 export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
-export { BasicRestWrapper, RestWrapper } from "./restWrapper";
+export {
+	BasicRestWrapper,
+	RestWrapper,
+	IBasicRestWrapperMetricProps,
+	setupAxiosInterceptorsForAbortSignals,
+} from "./restWrapper";
 export { defaultHash, getNextHash } from "./rollingHash";
 export {
 	canRead,
@@ -93,3 +111,8 @@ export {
 } from "./timeoutContext";
 export { getOrCreateRepository, getRandomInt } from "./utils";
 export { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
+export {
+	IAbortControllerContext,
+	setGlobalAbortControllerContext,
+	getGlobalAbortControllerContext,
+} from "./abortControllerContext";

@@ -7,12 +7,11 @@
  * @fileoverview Declaration of the PropertyTemplate module.
  * PropertyTemplate is used to describe a static property.
  */
-const _ = require("lodash");
 const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
-const fastestJSONCopy = require("fastest-json-copy");
-const deepCopy = fastestJSONCopy.copy;
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const { MSG } = require("@fluid-experimental/property-common").constants;
+const _ = require("lodash");
+const { cloneDeep: deepCopy } = _;
 
 /**
  * @internal
@@ -93,9 +92,7 @@ export class PropertyTemplate {
 		if (in_currentPropertyLevel.properties) {
 			for (var i = 0; i < in_currentPropertyLevel.properties.length; i++) {
 				if (in_currentPropertyLevel.properties[i].typeid === "Enum") {
-					var dictionary = this._parseEnums(
-						in_currentPropertyLevel.properties[i].properties,
-					);
+					var dictionary = this._parseEnums(in_currentPropertyLevel.properties[i].properties);
 					in_currentPropertyLevel.properties[i]._enumDictionary = dictionary;
 				} else if (in_currentPropertyLevel.properties[i].properties) {
 					// call self

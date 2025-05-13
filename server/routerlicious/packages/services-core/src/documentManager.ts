@@ -16,7 +16,8 @@ export interface IDocumentManager {
 	 * @param documentId - The document ID for the document to be read
 	 * @returns - An IDocument object containing properties with the document's data
 	 */
-	readDocument(tenantId: string, documentId: string): Promise<IDocument>;
+	// eslint-disable-next-line @rushstack/no-new-null
+	readDocument(tenantId: string, documentId: string): Promise<IDocument | null>;
 
 	/**
 	 * Reads only the static data for a specific document, using a cache of the data to do so potentially faster than readDocument.

@@ -65,7 +65,7 @@ export class LocalOrdererManager implements IOrdererManager {
 	}
 
 	public async getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
-		const key = `${tenantId}/${documentId}`;
+		const key = this.getOrdererMapKey(tenantId, documentId);
 
 		let orderer = this.ordererMap.get(key);
 		if (orderer === undefined) {
@@ -147,5 +147,13 @@ export class LocalOrdererManager implements IOrdererManager {
 		);
 
 		return orderer;
+	}
+
+	public async removeOrderer(tenantId: string, documentId: string): Promise<void> {
+		// No-op for local orderer. Orderer connections are managed separately.
+	}
+
+	private getOrdererMapKey(tenantId: string, documentId: string) {
+		return `${tenantId}/${documentId}`;
 	}
 }

@@ -9,7 +9,7 @@ import {
 	type MultiLineDocumentationNode,
 } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { type HeadingNode } from "./HeadingNode.js";
+import type { HeadingNode } from "./HeadingNode.js";
 
 /**
  * Represents a hierarchically nested section.
@@ -36,7 +36,10 @@ import { type HeadingNode } from "./HeadingNode.js";
  *
  * @public
  */
-export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
+export class SectionNode
+	extends DocumentationParentNodeBase
+	implements MultiLineDocumentationNode
+{
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-routerlicious-base",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"description": "Fluid server base classes for routerlicious",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -27,7 +27,7 @@
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:debug": "mocha inspect --recursive \"dist/test/**/*.spec.*js\"",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -67,12 +67,13 @@
 		"@fluidframework/server-services-shared": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@fluidframework/server-services-utils": "workspace:~",
-		"body-parser": "^1.17.1",
+		"@socket.io/redis-emitter": "^4.1.1",
+		"body-parser": "^1.20.3",
 		"bytes": "^3.0.0",
 		"compression": "^1.7.2",
-		"cookie-parser": "^1.4.3",
+		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.4",
-		"express": "^4.19.2",
+		"express": "^4.21.2",
 		"ioredis": "^5.2.3",
 		"json-stringify-safe": "^5.0.1",
 		"jsonwebtoken": "^9.0.0",
@@ -81,17 +82,17 @@
 		"serialize-error": "^8.1.0",
 		"sha.js": "^2.4.11",
 		"sillyname": "^0.1.0",
-		"uuid": "^9.0.0",
+		"uuid": "^11.1.0",
 		"winston": "^3.6.0",
-		"ws": "^7.4.6"
+		"ws": "^7.5.10"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-local-server": "workspace:~",
-		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@4.0.0",
+		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/body-parser": "^1.19.2",
 		"@types/bytes": "^3.0.0",
@@ -105,19 +106,18 @@
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^18.17.1",
-		"@types/sinon": "^9.0.9",
+		"@types/node": "^18.19.39",
+		"@types/sinon": "^17.0.3",
 		"@types/split": "^0.3.28",
 		"@types/supertest": "^2.0.5",
-		"@types/uuid": "^9.0.2",
 		"@types/ws": "^6.0.1",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^9.2.3",
+		"sinon": "^18.0.1",
 		"supertest": "^3.1.0",
 		"typescript": "~5.1.6"
 	},
@@ -131,15 +131,29 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_NexusResources": {
+			"Class_AlfredResources": {
+				"forwardCompat": false
+			},
+			"Class_NexusResources": {
+				"forwardCompat": false
+			},
+			"Class_OrdererManager": {
+				"forwardCompat": false
+			},
+			"Class_RiddlerResources": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Class_TenantManager": {
+				"forwardCompat": false
+			},
+			"ClassStatics_RiddlerResources": {
 				"backCompat": false
 			},
-			"ClassDeclaration_RiddlerResources": {
-				"forwardCompat": false
-			},
-			"VariableDeclaration_Constants": {
-				"forwardCompat": false
+			"Interface_ITenantDocument": {
+				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

@@ -14,7 +14,8 @@ class MongoNetworkTransientTransactionError extends BaseMongoExceptionRetryRule 
 
 	public match(error: any): boolean {
 		return (
-			error.errorLabels?.length &&
+			Array.isArray(error.errorLabels) &&
+			error.errorLabels.length > 0 &&
 			(error.errorLabels as string[]).includes("TransientTransactionError")
 		);
 	}
@@ -29,7 +30,8 @@ class MongoNetworkConnectionClosedError extends BaseMongoExceptionRetryRule {
 
 	public match(error: any): boolean {
 		return (
-			error.message && /^connection .+ closed$/.test(error.message as string) === true // matches any message of format "connection <some-info> closed"
+			typeof error.message === "string" &&
+			/^connection .+ closed$/.test(error.message as string) === true // matches any message of format "connection <some-info> closed"
 		);
 	}
 }
@@ -45,8 +47,8 @@ class MongoNetworkSocketDisconnectedError extends BaseMongoExceptionRetryRule {
 
 	public match(error: any): boolean {
 		return (
-			error.message &&
-			(error.message as string) === MongoNetworkSocketDisconnectedError.errorMessage
+			typeof error.message === "string" &&
+			error.message === MongoNetworkSocketDisconnectedError.errorMessage
 		);
 	}
 }

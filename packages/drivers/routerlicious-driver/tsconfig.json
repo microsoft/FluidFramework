@@ -5,5 +5,8 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
+		"exactOptionalPropertyTypes": false,
+		// TODO: AB#34165 Enable noUncheckedIndexedAccess for packages/drivers/routerlicious-driver
+		"noUncheckedIndexedAccess": false,
 	},
 }

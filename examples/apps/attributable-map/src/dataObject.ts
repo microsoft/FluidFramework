@@ -5,7 +5,7 @@
 
 import type { EventEmitter } from "@fluid-example/example-utils";
 import { AttributableMap, ISharedMap } from "@fluid-experimental/attributable-map";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export const greenKey = "green";
@@ -53,12 +53,11 @@ export class HitCounter extends DataObject implements IHitCounter {
 
 	public static readonly Name = "@fluid-example/attributable-map";
 
-	private static readonly factory = new DataObjectFactory(
-		HitCounter.Name,
-		HitCounter,
-		[AttributableMap.getFactory()],
-		{},
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: HitCounter.Name,
+		ctor: HitCounter,
+		sharedObjects: [AttributableMap.getFactory()],
+	});
 
 	public static getFactory(): DataObjectFactory<HitCounter> {
 		return this.factory;

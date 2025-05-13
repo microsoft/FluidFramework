@@ -6,46 +6,57 @@
 import {
 	BaseContainerRuntimeFactory,
 	DataObject,
+	type DataObjectKind,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import { type ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import {
-	type FluidObject,
-	type IFluidLoadable,
-	type IRequest,
-	type IResponse,
-} from "@fluidframework/core-interfaces";
-import { type IDirectory } from "@fluidframework/map/internal";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { RequestParser } from "@fluidframework/runtime-utils/internal";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+	FluidDataStoreRegistry,
+	type MinimumVersionForCollab,
+} from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { IDirectory } from "@fluidframework/map/internal";
+import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
-import {
-	type ContainerSchema,
-	type IRootDataObject,
-	type LoadableObjectClass,
-	type LoadableObjectClassRecord,
-	type LoadableObjectRecord,
+import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
+import type {
+	CompatibilityMode,
+	ContainerSchema,
+	IRootDataObject,
+	LoadableObjectKind,
+	LoadableObjectKindRecord,
+	LoadableObjectRecord,
 } from "./types.js";
 import {
-	type InternalDataObjectClass,
-	isDataObjectClass,
+	isDataObjectKind,
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
 
 /**
+ * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
+ */
+const compatibilityModeToMinVersionForCollab = {
+	"1": "1.0.0",
+	"2": "2.0.0",
+} as const satisfies Record<CompatibilityMode, MinimumVersionForCollab>;
+
+/**
  * Input props for {@link RootDataObject.initializingFirstTime}.
  */
-export interface RootDataObjectProps {
+interface RootDataObjectProps {
 	/**
 	 * Initial object structure with which the {@link RootDataObject} will be first-time initialized.
 	 *
 	 * @see {@link RootDataObject.initializingFirstTime}
 	 */
-	initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: LoadableObjectKindRecord;
 }
 
 /**
@@ -84,7 +95,9 @@ class RootDataObject
 		const initialObjectsP: Promise<void>[] = [];
 		for (const [id, objectClass] of Object.entries(props.initialObjects)) {
 			const createObject = async (): Promise<void> => {
-				const obj = await this.create<IFluidLoadable>(objectClass);
+				const obj = await this.create<IFluidLoadable>(
+					objectClass as SharedObjectKind<IFluidLoadable>,
+				);
 				this.initialObjectsDir.set(id, obj.handle);
 			};
 			initialObjectsP.push(createObject());
@@ -127,23 +140,24 @@ class RootDataObject
 	/**
 	 * {@inheritDoc IRootDataObject.create}
 	 */
-	public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
-		if (isDataObjectClass(objectClass)) {
-			return this.createDataObject(objectClass);
-		} else if (isSharedObjectKind(objectClass)) {
-			return this.createSharedObject(objectClass);
+	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
+		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
+		if (isDataObjectKind(internal)) {
+			return this.createDataObject(internal);
+		} else if (isSharedObjectKind(internal)) {
+			return this.createSharedObject(internal);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: InternalDataObjectClass<T>,
+		dataObjectClass: DataObjectKind<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
 		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
 		const entryPoint = await dataStore.entryPoint.get();
-		return entryPoint as unknown as T;
+		return entryPoint as T;
 	}
 
 	private createSharedObject<T extends IFluidLoadable>(
@@ -158,26 +172,40 @@ class RootDataObject
 const rootDataStoreId = "rootDOId";
 
 /**
- * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} for a container with a single
- * {@link IRootDataObject}, which is constructed from the provided schema.
+ * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} which constructs containers
+ * with a single {@link IRootDataObject} as their entry point, where the root data object's registry
+ * and initial objects are configured based on the provided schema (and optionally, data store registry).
  *
  * @internal
  */
 export function createDOProviderContainerRuntimeFactory(props: {
+	/**
+	 * The schema for the container.
+	 */
 	schema: ContainerSchema;
+	/**
+	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
+	 */
+	compatibilityMode: CompatibilityMode;
+	/**
+	 * Optional registry of data stores to pass to the DataObject factory.
+	 * If not provided, one will be created based on the schema.
+	 */
+	rootDataStoreRegistry?: IFluidDataStoreRegistry;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema);
+	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
+	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+
+	return new DOProviderContainerRuntimeFactory(
+		props.schema,
+		props.compatibilityMode,
+		new RootDataObjectFactory(sharedObjects, registry),
+	);
 }
 
 /**
- * Container code that provides a single {@link IRootDataObject}.
- *
- * @remarks
- *
- * This data object is dynamically customized (registry and initial objects) based on the schema provided.
- * to the container runtime factory.
- *
- * @internal
+ * Factory for Container Runtime instances that provide a single {@link IRootDataObject}
+ * as their entry point.
  */
 class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
@@ -187,58 +215,45 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		}
 	>;
 
-	private readonly initialObjects: LoadableObjectClassRecord;
+	private readonly initialObjects: LoadableObjectKindRecord;
 
-	public constructor(schema: ContainerSchema) {
-		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
-		const rootDataObjectFactory = new DataObjectFactory(
-			"rootDO",
+	/**
+	 * Create a new instance of a container runtime factory.
+	 * @remarks
+	 * The caller is responsible for making sure that the provided root data object factory is configured
+	 * appropriately based on the schema of the container (e.g. its registry entries contain all the
+	 * DataStore/DDS types that the schema says can be constructed).
+	 *
+	 * Most scenarios probably want to use {@link createDOProviderContainerRuntimeFactory} instead,
+	 * since it can take care of constructing the root data object factory based on the schema.
+	 *
+	 * @param schema - The schema for the container
+	 * @param compatibilityMode - Compatibility mode
+	 * @param rootDataObjectFactory - A factory that can construct the root data object.
+	 */
+	public constructor(
+		schema: ContainerSchema,
+		compatibilityMode: CompatibilityMode,
+		rootDataObjectFactory: DataObjectFactory<
 			RootDataObject,
-			sharedObjects,
-			{},
-			registryEntries,
-		);
+			{ InitialState: RootDataObjectProps }
+		>,
+	) {
 		const provideEntryPoint = async (
 			containerRuntime: IContainerRuntime,
 			// eslint-disable-next-line unicorn/consistent-function-scoping
 		): Promise<FluidObject> => {
-			const entryPoint =
-				await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 			if (entryPoint === undefined) {
 				throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
 			}
 			return entryPoint.get();
 		};
-		const getDefaultObject = async (
-			request: IRequest,
-			runtime: IContainerRuntime,
-			// eslint-disable-next-line unicorn/consistent-function-scoping
-		): Promise<IResponse | undefined> => {
-			const parser = RequestParser.create(request);
-			if (parser.pathParts.length === 0) {
-				// This cast is safe as ContainerRuntime.loadRuntime is called in the base class
-				return (runtime as ContainerRuntime).resolveHandle({
-					url: `/${rootDataStoreId}${parser.query}`,
-					headers: request.headers,
-				});
-			}
-			return undefined; // continue search
-		};
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
-			requestHandlers: [getDefaultObject],
-			// WARNING: These settigs are not compatible with FF 1.3 clients!
-			runtimeOptions: {
-				// temporary workaround to disable message batching until the message batch size issue is resolved
-				// resolution progress is tracked by the Feature 465 work item in AzDO
-				flushMode: FlushMode.Immediate,
-				// The runtime compressor is required to be on to use @fluidframework/tree.
-				enableRuntimeIdCompressor: "on",
-				// For now this was set to false to allow 1.x/2.x testing with AzureClient.
-				// Long term, this config will be set dynamically. See https://github.com/microsoft/FluidFramework/pull/20997.
-				explicitSchemaControl: false,
-			},
+			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
 			provideEntryPoint,
+			minVersionForCollab: compatibilityModeToMinVersionForCollab[compatibilityMode],
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;
@@ -252,5 +267,30 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		await this.rootDataObjectFactory.createRootInstance(rootDataStoreId, runtime, {
 			initialObjects: this.initialObjects,
 		});
+	}
+}
+
+/**
+ * Factory that creates instances of a root data object.
+ */
+class RootDataObjectFactory extends DataObjectFactory<
+	RootDataObject,
+	{ InitialState: RootDataObjectProps }
+> {
+	public constructor(
+		sharedObjects: readonly IChannelFactory[] = [],
+		private readonly dataStoreRegistry: IFluidDataStoreRegistry,
+	) {
+		// Note: we're passing `undefined` registry entries to the base class so it won't create a registry itself,
+		// and instead we override the necessary methods in this class to use the registry received in the constructor.
+		super({
+			type: "rootDO",
+			ctor: RootDataObject,
+			sharedObjects,
+		});
+	}
+
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
+		return this.dataStoreRegistry;
 	}
 }

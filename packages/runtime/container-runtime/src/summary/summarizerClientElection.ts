@@ -5,7 +5,8 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { IClientDetails, MessageType } from "@fluidframework/protocol-definitions";
+import { IClientDetails } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -13,15 +14,15 @@ import {
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection.js";
+import { summarizerClientType } from "./summarizerTypes.js";
 import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
-
-export const summarizerClientType = "summarizer";
 
 export interface ISummarizerClientElectionEvents extends IEvent {
 	(event: "electedSummarizerChanged", handler: () => void): void;
 }
 
-export interface ISummarizerClientElection extends IEventProvider<ISummarizerClientElectionEvents> {
+export interface ISummarizerClientElection
+	extends IEventProvider<ISummarizerClientElectionEvents> {
 	readonly electedClientId: string | undefined;
 	readonly electedParentId: string | undefined;
 }
@@ -49,10 +50,10 @@ export class SummarizerClientElection
 	 */
 	private lastReportedSeq = 0;
 
-	public get electedClientId() {
+	public get electedClientId(): string | undefined {
 		return this.clientElection.electedClient?.clientId;
 	}
-	public get electedParentId() {
+	public get electedParentId(): string | undefined {
 		return this.clientElection.electedParent?.clientId;
 	}
 

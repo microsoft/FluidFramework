@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { isObject } from "@fluidframework/core-utils/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import type { IDirectory } from "../../interfaces.js";
 
@@ -47,22 +47,24 @@ async function assertEventualConsistencyCore(
 				isObject(secondVal),
 				`Values differ at key ${key}: first is an object, second is not`,
 			);
-			const firstHandle = isFluidHandle(firstVal) ? await firstVal.get() : firstVal;
-			const secondHandle = isFluidHandle(secondVal) ? await secondVal.get() : secondVal;
+			const firstHandle = isFluidHandle(firstVal)
+				? toFluidHandleInternal(firstVal).absolutePath
+				: firstVal;
+			const secondHandle = isFluidHandle(secondVal)
+				? toFluidHandleInternal(secondVal).absolutePath
+				: secondVal;
 			assert.equal(
 				firstHandle,
 				secondHandle,
 				`Key not found or value not matching ` +
-					`key: ${key}, value in dir first at path ${
-						first.absolutePath
-					}: ${JSON.stringify(firstHandle)} and in second at path ${
-						second.absolutePath
-					}: ${JSON.stringify(secondHandle)}`,
+					`key: ${key}, value in dir first at path ${first.absolutePath}: ${JSON.stringify(
+						firstHandle,
+					)} and in second at path ${second.absolutePath}: ${JSON.stringify(secondHandle)}`,
 			);
 		} else {
 			assert.strictEqual(
-				first.get(key),
-				second.get(key),
+				firstVal,
+				secondVal,
 				`Key not found or value not matching ` +
 					`key: ${key}, value in dir first at path ${first.absolutePath}: ${first.get(
 						key,

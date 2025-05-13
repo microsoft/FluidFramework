@@ -27,10 +27,16 @@ import {
 	locatorQueryParamName,
 	storeLocatorInOdspUrl,
 } from "./odspFluidFileLink.js";
-import { createOdspLogger, getOdspResolvedUrl } from "./odspUtils.js";
+import {
+	appendNavParam,
+	createOdspLogger,
+	getOdspResolvedUrl,
+	getContainerPackageName,
+} from "./odspUtils.js";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
+ * @legacy
  * @alpha
  */
 export interface ShareLinkFetcherProps {
@@ -44,14 +50,11 @@ export interface ShareLinkFetcherProps {
 	identityType: IdentityType;
 }
 
-// back-compat: GitHub #9653
-const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
-	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
-
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
  * This resolver also handles share links and try to generate one for the use by the app.
+ * @legacy
  * @alpha
  */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
@@ -70,6 +73,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	 * navigates directly to the link.
 	 * @param getContext - callback function which is used to get context for given resolved url. If context
 	 * is returned then it will be embedded into url returned by getAbsoluteUrl() method.
+	 * @param containerPackageInfo - container package information which will be used to extract the container package name.
 	 */
 	public constructor(
 		shareLinkFetcherProps?: ShareLinkFetcherProps | undefined,
@@ -79,6 +83,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			resolvedUrl: IOdspResolvedUrl,
 			dataStorePath: string,
 		) => Promise<string | undefined>,
+		private readonly containerPackageInfo?: IContainerPackageInfo,
 	) {
 		this.logger = createOdspLogger(logger);
 		if (shareLinkFetcherProps) {
@@ -145,6 +150,17 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		const odspResolvedUrl = await new OdspDriverUrlResolver().resolve(requestToBeResolved);
 
+		odspResolvedUrl.context = await this.getContext?.(
+			odspResolvedUrl,
+			odspResolvedUrl.dataStorePath ?? "",
+		);
+
+		odspResolvedUrl.appName = this.appName;
+
+		odspResolvedUrl.codeHint = odspResolvedUrl.codeHint?.containerPackageName
+			? odspResolvedUrl.codeHint
+			: { containerPackageName: getContainerPackageName(this.containerPackageInfo) };
+
 		if (isSharingLinkToRedeem) {
 			// We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
 			// when redeeming the share link during the redeem fallback for trees latest call becomes greater than
@@ -171,9 +187,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 	private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
 		if (this.shareLinkFetcherProps === undefined) {
-			throw new Error(
-				"Failed to get share link because share link fetcher props are missing",
-			);
+			throw new Error("Failed to get share link because share link fetcher props are missing");
 		}
 
 		if (!(resolvedUrl.siteUrl && resolvedUrl.driveId && resolvedUrl.itemId)) {
@@ -240,45 +254,27 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		dataStorePath: string,
 		packageInfoSource?: IContainerPackageInfo,
 	): Promise<string> {
-		const url = new URL(baseUrl);
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 		// If the user has passed an empty dataStorePath, then extract it from the resolved url.
 		const actualDataStorePath = dataStorePath || (odspResolvedUrl.dataStorePath ?? "");
 
-		let containerPackageName: string | undefined;
-		if (packageInfoSource && "name" in packageInfoSource) {
-			containerPackageName = packageInfoSource.name;
-			// packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
-			// TODO: use a stronger type
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		} else if (isFluidPackage((packageInfoSource as any)?.package)) {
-			// TODO: use a stronger type
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			containerPackageName = (packageInfoSource as any)?.package.name;
-		} else {
-			// TODO: use a stronger type
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			containerPackageName = (packageInfoSource as any)?.package;
-		}
-		// TODO: use a stronger type
-		containerPackageName =
-			containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
+		odspResolvedUrl.context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
-		const context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
+		/**
+		 * containerPackageName can be provided by various ways, in the order of priority:
+		 * 1. packageInfoSource - passed by the call of appendLocatorParams
+		 * 2. odspResolvedUrl.codeHint?.containerPackageName - passed by the odsp-driver's resolvedURL object
+		 * 3. this.containerPackageInfo - passed by the constructor of OdspDrvierUrlResolverForShareLink
+		 * */
+		const containerPackageName: string | undefined =
+			getContainerPackageName(packageInfoSource) ??
+			odspResolvedUrl.codeHint?.containerPackageName ??
+			getContainerPackageName(this.containerPackageInfo);
 
-		storeLocatorInOdspUrl(url, {
-			siteUrl: odspResolvedUrl.siteUrl,
-			driveId: odspResolvedUrl.driveId,
-			itemId: odspResolvedUrl.itemId,
-			dataStorePath: actualDataStorePath,
-			appName: this.appName,
-			containerPackageName,
-			fileVersion: odspResolvedUrl.fileVersion,
-			context,
-		});
+		odspResolvedUrl.appName = this.appName;
 
-		return url.href;
+		return appendNavParam(baseUrl, odspResolvedUrl, actualDataStorePath, containerPackageName);
 	}
 
 	/**

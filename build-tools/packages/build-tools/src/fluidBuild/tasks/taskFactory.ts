@@ -4,13 +4,16 @@
  */
 
 import { getExecutableFromCommand } from "../../common/utils";
+import type { BuildContext } from "../buildContext";
 import { BuildPackage } from "../buildGraph";
+import { isConcurrentlyCommand, parseConcurrentlyCommand } from "../parseCommands";
 import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { BiomeTask } from "./leaf/biomeTasks";
+import { createDeclarativeTaskHandler } from "./leaf/declarativeTask";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
-import { LeafTask, UnknownLeafTask } from "./leaf/leafTask";
+import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
 import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
 import {
 	CopyfilesTask,
@@ -22,20 +25,19 @@ import {
 	TypeValidationTask,
 } from "./leaf/miscTasks";
 import { PrettierTask } from "./leaf/prettierTask";
-import { RenameTypesTask } from "./leaf/renamerTask";
 import { Ts2EsmTask } from "./leaf/ts2EsmTask";
-import { TscMultiTask, TscTask } from "./leaf/tscTask";
+import { TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
-import { Task } from "./task";
+import { type Task } from "./task";
+import { type TaskHandler, isConstructorFunction } from "./taskHandlers";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
-	[key: string]: new (node: BuildPackage, command: string, taskName?: string) => LeafTask;
+	[key: string]: TaskHandler;
 } = {
 	"ts2esm": Ts2EsmTask,
 	"tsc": TscTask,
 	"fluid-tsc": TscTask,
-	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,
 	"eslint": EsLintTask,
 	"webpack": WebpackTask,
@@ -47,7 +49,6 @@ const executableToLeafTask: {
 	"gen-version": GenVerTask,
 	"gf": GoodFence,
 	"api-extractor": ApiExtractorTask,
-	"flub list": FlubListTask,
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
 	"flub generate entrypoints": GenerateEntrypointsTask,
@@ -57,73 +58,147 @@ const executableToLeafTask: {
 	"biome check": BiomeTask,
 	"biome format": BiomeTask,
 
-	// Note that this assumes that "renamer" is ONLY used for renaming types. If it is used in a different task in the
-	// pipeline then this mapping will have to be updated.
-	"renamer": RenameTypesTask,
-	"flub rename-types": RenameTypesTask,
-};
+	// flub list does not require a -g flag - the third argument is the release group. Rather than add custom handling for
+	// that, we just add mappings for all three.
+	"flub list": FlubListTask,
+	"flub list build-tools": FlubListTask,
+	"flub list client": FlubListTask,
+	"flub list server": FlubListTask,
+	"flub list gitrest": FlubListTask,
+	"flub list historian": FlubListTask,
+} as const;
+
+/**
+ * Given a command executable, attempts to find a matching `TaskHandler` that will handle the task. If one is found, it
+ * is returned; otherwise, it returns `UnknownLeafTask` as the default handler.
+ *
+ * Any DeclarativeTasks that are defined in the fluid-build config are checked first, followed by the built-in
+ * executableToLeafTask constant.
+ *
+ * @param executable The command executable to find a matching task handler for.
+ * @returns A `TaskHandler` for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
+ */
+function getTaskForExecutable(
+	executable: string,
+	node: BuildPackage,
+	context: BuildContext,
+): TaskHandler {
+	const config = context.fluidBuildConfig;
+	const declarativeTasks = config?.declarativeTasks;
+	const taskMatch =
+		node.pkg.packageJson.fluidBuild?.declarativeTasks?.[executable] ??
+		declarativeTasks?.[executable];
+
+	if (taskMatch !== undefined) {
+		return createDeclarativeTaskHandler(taskMatch);
+	}
+
+	// No declarative task found matching the executable, so look it up in the built-in list.
+	const builtInHandler: TaskHandler | undefined = executableToLeafTask[executable];
+
+	// If no handler is found, return the UnknownLeafTask as the default handler. The task won't support incremental
+	// builds.
+	return builtInHandler ?? UnknownLeafTask;
+}
+
+function getRunScriptName(command: string, packageManager: string): string | undefined {
+	// Remove the package manager name from the command
+	if (command.startsWith("npm run ")) {
+		return command.substring("npm run ".length);
+	}
+	// Only support yarn and pnpm for now
+	if (packageManager === "yarn" || packageManager === "pnpm") {
+		const packageManagerRun = `${packageManager} run `;
+
+		if (command.startsWith(packageManagerRun)) {
+			return command.substring(packageManagerRun.length);
+		}
+	}
+	return undefined;
+}
 
 export class TaskFactory {
 	public static Create(
 		node: BuildPackage,
 		command: string,
+		context: BuildContext,
 		pendingInitDep: Task[],
 		taskName?: string,
-	) {
+	): GroupTask | LeafTask {
 		// Split the "&&" first
 		const subTasks = new Array<Task>();
 		const steps = command.split("&&");
 		if (steps.length > 1) {
 			for (const step of steps) {
-				subTasks.push(TaskFactory.Create(node, step.trim(), pendingInitDep));
+				subTasks.push(TaskFactory.Create(node, step.trim(), context, pendingInitDep));
 			}
 			// create a sequential group task
-			return new GroupTask(node, command, subTasks, taskName, true);
+			return new GroupTask(node, command, context, subTasks, taskName, true);
 		}
 
 		// Parse concurrently
-		const concurrently = command.startsWith("concurrently ");
-		if (concurrently) {
+		if (isConcurrentlyCommand(command)) {
 			const subTasks = new Array<Task>();
-			const steps = command.substring("concurrently ".length).split(" ");
-			for (const step of steps) {
-				const stepT = step.trim();
-				if (stepT.startsWith("npm:")) {
-					const scriptName = stepT.substring("npm:".length);
+			// Note: result of no matches is allowed from concurrenly wildcard, so long as another
+			// concurrently step has a match.
+			// This avoids general tool being overly prescriptive about script patterns. If always
+			// having a match is desired, then such a policy should be enforced.
+			parseConcurrentlyCommand(
+				command,
+				Object.keys(node.pkg.packageJson.scripts),
+				(scriptName) => {
 					const task = node.getScriptTask(scriptName, pendingInitDep);
 					if (task === undefined) {
 						throw new Error(
-							`${node.pkg.nameColored}: Unable to find script '${scriptName}' in 'npm run' command`,
+							`${
+								node.pkg.nameColored
+							}: Unable to find script '${scriptName}' listed in 'concurrently' command${
+								taskName ? ` '${taskName}'` : ""
+							}`,
 						);
 					}
 					subTasks.push(task);
-				} else {
-					subTasks.push(TaskFactory.Create(node, stepT, pendingInitDep));
-				}
-			}
-			return new GroupTask(node, command, subTasks, taskName);
-		}
-
-		// Resolve "npm run" to the actual script
-		if (command.startsWith("npm run ")) {
-			const scriptName = command.substring("npm run ".length);
-			const subTask = node.getScriptTask(scriptName, pendingInitDep);
-			if (subTask === undefined) {
+				},
+				(step) => {
+					subTasks.push(TaskFactory.Create(node, step, context, pendingInitDep));
+				},
+			);
+			if (subTasks.length === 0) {
 				throw new Error(
-					`${node.pkg.nameColored}: Unable to find script '${scriptName}' in 'npm run' command`,
+					`${node.pkg.nameColored}: Unable to find any tasks listed in 'concurrently' command${
+						taskName ? ` '${taskName}'` : ""
+					}`,
 				);
 			}
-			// Even though there is only one task, create a group task for the taskName
-			return new GroupTask(node, command, [subTask], taskName);
+			return new GroupTask(node, command, context, subTasks, taskName);
 		}
 
-		// Leaf task
-		const executable = getExecutableFromCommand(command).toLowerCase();
-		const ctor = executableToLeafTask[executable];
-		if (ctor) {
-			return new ctor(node, command, taskName);
+		// Resolve "npm run" (or other package manager's run command) to the actual script if possible
+		const runScript = getRunScriptName(command, node.pkg.packageManager);
+		if (runScript !== undefined) {
+			const subTask = node.getScriptTask(runScript, pendingInitDep);
+			if (subTask !== undefined) {
+				// Even though there is only one task, create a group task for the taskName
+				return new GroupTask(node, command, context, [subTask], taskName);
+			}
+			// Unable find the script.  Treat it as if it is a plain leaf task.
 		}
-		return new UnknownLeafTask(node, command, taskName);
+
+		// Leaf tasks; map the executable to a known task type. If none is found, the UnknownLeafTask is used.
+		const executable = getExecutableFromCommand(
+			command,
+			context.fluidBuildConfig?.multiCommandExecutables ?? [],
+		).toLowerCase();
+
+		// Will return a task-specific handler or the UnknownLeafTask
+		const handler = getTaskForExecutable(executable, node, context);
+
+		// Invoke the function or constructor to create the task handler
+		if (isConstructorFunction(handler)) {
+			return new handler(node, command, context, taskName);
+		} else {
+			return handler(node, command, context, taskName);
+		}
 	}
 
 	/**
@@ -133,12 +208,17 @@ export class TaskFactory {
 	 * @param taskName target name
 	 * @returns the target task
 	 */
-	public static CreateTargetTask(node: BuildPackage, taskName: string | undefined) {
-		return new GroupTask(node, `fluid-build -t ${taskName}`, [], taskName);
+	public static CreateTargetTask(
+		node: BuildPackage,
+		context: BuildContext,
+		taskName: string | undefined,
+	) {
+		return new GroupTask(node, `fluid-build -t ${taskName}`, context, [], taskName);
 	}
 
 	public static CreateTaskWithLifeCycle(
 		node: BuildPackage,
+		context: BuildContext,
 		scriptTask: Task,
 		preScriptTask?: Task,
 		postScriptTask?: Task,
@@ -157,6 +237,7 @@ export class TaskFactory {
 		return new GroupTask(
 			node,
 			`npm run ${scriptTask.taskName}`,
+			context,
 			subTasks,
 			scriptTask.taskName,
 			true,

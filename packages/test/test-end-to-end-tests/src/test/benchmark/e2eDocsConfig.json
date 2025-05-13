@@ -73,7 +73,7 @@
 				"stringSize": 100
 			},
 			"minSampleCount": 1,
-			"supportedEndpoints": ["local", "odsp"]
+			"supportedEndpoints": []
 		},
 		{
 			"testTitle": "1Mb Map",

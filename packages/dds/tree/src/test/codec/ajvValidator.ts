@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
-import { create404Response } from "@fluidframework/runtime-utils/internal";
-import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import type { Static, TSchema } from "@sinclair/typebox";
 // Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
@@ -17,9 +14,11 @@ import formats from "ajv-formats";
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
 const Ajv =
 	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(ajvModuleOrClass as any);
 
 import type { JsonValidator } from "../../codec/index.js";
+import { mockSerializer } from "../mockSerializer.js";
 
 // See: https://github.com/sinclairzx81/typebox#ajv
 const ajv = formats.default(new Ajv({ strict: false, allErrors: true }), [
@@ -39,28 +38,6 @@ const ajv = formats.default(new Ajv({ strict: false, allErrors: true }), [
 	"regex",
 ]);
 
-class MockHandleContext implements IFluidHandleContext {
-	public isAttached = false;
-	public get IFluidHandleContext() {
-		return this;
-	}
-
-	public constructor(
-		public readonly absolutePath = "",
-		public readonly routeContext?: IFluidHandleContext,
-	) {}
-
-	public attachGraph() {
-		throw new Error("Method not implemented.");
-	}
-
-	public async resolveHandle(request: IRequest) {
-		return create404Response(request);
-	}
-}
-
-const serializer = new FluidSerializer(new MockHandleContext(), () => {});
-
 /**
  * A {@link JsonValidator} implementation which uses Ajv's JSON schema validator.
  *
@@ -75,7 +52,7 @@ export const ajvValidator: JsonValidator = {
 				const valid = validate(data);
 				if (!valid) {
 					throw new Error(
-						`Invalid JSON.\n\nData: ${serializer.stringify(
+						`Invalid JSON.\n\nData: ${mockSerializer.stringify(
 							data,
 							new MockHandle(""),
 						)}\n\nErrors: ${JSON.stringify(validate.errors)}`,

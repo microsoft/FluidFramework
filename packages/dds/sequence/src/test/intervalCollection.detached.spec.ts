@@ -12,8 +12,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { IIntervalCollection } from "../intervalCollection.js";
-import { SequenceInterval } from "../intervals/index.js";
+import { type ISequenceIntervalCollection } from "../intervalCollection.js";
 import { SharedString } from "../sequenceFactory.js";
 
 import { assertEquivalentSharedStrings } from "./intervalTestUtils.js";
@@ -22,7 +21,7 @@ describe("IntervalCollection detached", () => {
 	const factory = SharedString.getFactory();
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let sharedString: SharedString;
-	let collection: IIntervalCollection<SequenceInterval>;
+	let collection: ISequenceIntervalCollection;
 	beforeEach(() => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		sharedString = factory.create(dataStoreRuntime, "A");
@@ -43,7 +42,8 @@ describe("IntervalCollection detached", () => {
 		});
 
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+		const containerRuntime2 =
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 		const sharedString2 = await factory.load(
 			dataStoreRuntime2,
 			"B",
@@ -136,10 +136,7 @@ describe("IntervalCollection detached", () => {
 
 			containerRuntimeFactory.processAllMessages();
 			await assertEquivalentSharedStrings(sharedString, sharedString2);
-			assert.equal(
-				collection.getIntervalById(interval.getIntervalId())?.properties.foo,
-				"a2",
-			);
+			assert.equal(collection.getIntervalById(interval.getIntervalId())?.properties.foo, "a2");
 		});
 
 		it("can be changed by another client after attaching", async () => {
@@ -154,10 +151,7 @@ describe("IntervalCollection detached", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			await assertEquivalentSharedStrings(sharedString, sharedString2);
-			assert.equal(
-				collection.getIntervalById(interval.getIntervalId())?.properties.foo,
-				"b1",
-			);
+			assert.equal(collection.getIntervalById(interval.getIntervalId())?.properties.foo, "b1");
 		});
 	});
 

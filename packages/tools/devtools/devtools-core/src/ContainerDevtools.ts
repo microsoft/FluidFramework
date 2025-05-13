@@ -3,24 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { type IAudience } from "@fluidframework/container-definitions";
-import { type IContainer } from "@fluidframework/container-definitions/internal";
-import { type IFluidLoadable } from "@fluidframework/core-interfaces";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import type { IAudience } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IClient } from "@fluidframework/driver-definitions";
 
-import { type AudienceClientMetadata } from "./AudienceMetadata.js";
-import { type ContainerKey, type FluidObjectId, type HasContainerKey } from "./CommonInterfaces.js";
+import type { AudienceClientMetadata } from "./AudienceMetadata.js";
+import type { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInterfaces.js";
 import { ContainerStateChangeKind } from "./Container.js";
-import { type ContainerStateMetadata } from "./ContainerMetadata.js";
-import { type ContainerDevtoolsFeatureFlags } from "./Features.js";
-import { type IContainerDevtools } from "./IContainerDevtools.js";
-import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from "./Logs.js";
+import type { ContainerStateMetadata } from "./ContainerMetadata.js";
+import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
+import type { IContainerDevtools } from "./IContainerDevtools.js";
+import type { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs.js";
 import {
 	DataVisualizerGraph,
 	type FluidObjectNode,
 	type RootHandleNode,
-	type SharedObjectEdit,
-	defaultEditors,
 	defaultVisualizers,
 } from "./data-visualization/index.js";
 import {
@@ -30,7 +28,6 @@ import {
 	ContainerDevtoolsFeatures,
 	ContainerStateChange,
 	ContainerStateHistory,
-	DataEdit,
 	DataVisualization,
 	DisconnectContainer,
 	GetAudienceSummary,
@@ -236,7 +233,10 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.postAudienceStateChange();
 	};
 
-	private readonly audienceMemberRemovedHandler = (clientId: string, client: IClient): void => {
+	private readonly audienceMemberRemovedHandler = (
+		clientId: string,
+		client: IClient,
+	): void => {
 		this._audienceChangeLog.push({
 			clientId,
 			client,
@@ -289,7 +289,9 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[DisconnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.disconnect(/* TODO: Specify devtools reason here once it is supported */);
+				this.container.disconnect(
+					/* TODO: Specify devtools reason here once it is supported */
+				);
 				return true;
 			}
 			return false;
@@ -328,15 +330,6 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			}
 			return false;
 		},
-
-		[DataEdit.MessageType]: async (untypedMessage) => {
-			const message = untypedMessage as DataEdit.Message;
-			if (message.data.containerKey === this.containerKey) {
-				await this.editData(message.data.edit);
-				return true;
-			}
-			return false;
-		},
 	};
 
 	/**
@@ -345,7 +338,11 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	private readonly windowMessageHandler = (
 		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
-		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
+		handleIncomingWindowMessage(
+			event,
+			this.inboundMessageHandlers,
+			this.messageLoggingOptions,
+		);
 	};
 
 	/**
@@ -459,7 +456,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.dataVisualizer =
 			props.containerData === undefined
 				? undefined
-				: new DataVisualizerGraph(props.containerData, defaultVisualizers, defaultEditors);
+				: new DataVisualizerGraph(props.containerData, defaultVisualizers);
 
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
@@ -536,9 +533,6 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		return {
 			// If no container data was provided to the devtools, we cannot support data visualization.
 			containerDataVisualization: this.containerData !== undefined,
-
-			// TODO: When ready to enable feature set it to this.containerData !== undefined
-			containerDataEditing: false,
 		};
 	}
 
@@ -557,7 +551,9 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		};
 	}
 
-	private async getRootDataVisualizations(): Promise<Record<string, RootHandleNode> | undefined> {
+	private async getRootDataVisualizations(): Promise<
+		Record<string, RootHandleNode> | undefined
+	> {
 		return this.dataVisualizer?.renderRootHandles() ?? undefined;
 	}
 
@@ -565,12 +561,5 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		fluidObjectId: FluidObjectId,
 	): Promise<FluidObjectNode | undefined> {
 		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
-	}
-
-	/**
-	 * Applies an {@link Edit} to a {@link SharedObject}
-	 */
-	private async editData(edit: SharedObjectEdit): Promise<void> {
-		return this.dataVisualizer?.applyEdit(edit);
 	}
 }

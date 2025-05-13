@@ -10,7 +10,6 @@ import {
 	ICommittedProposal,
 } from "@fluidframework/protocol-definitions";
 import { IGitCache, ISession } from "@fluidframework/server-services-client";
-import { LambdaName } from "./lambdas";
 import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
 
 /**
@@ -38,11 +37,12 @@ export interface IDocumentStaticProperties {
  * @internal
  */
 export interface IDocumentStorage {
-	getDocument(tenantId: string, documentId: string): Promise<IDocument>;
+	// eslint-disable-next-line @rushstack/no-new-null
+	getDocument(tenantId: string, documentId: string): Promise<IDocument | null>;
 
 	getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails>;
 
-	getLatestVersion(tenantId: string, documentId: string): Promise<ICommit>;
+	getLatestVersion(tenantId: string, documentId: string): Promise<ICommit | null>;
 
 	getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]>;
 
@@ -111,9 +111,6 @@ export interface IDeliState {
 		| [NackMessagesType, INackMessagesControlMessageContents][]
 		| INackMessagesControlMessageContents
 		| undefined;
-
-	// List of successfully started lambdas at session start
-	successfullyStartedLambdas: LambdaName[];
 
 	// Checkpoint timestamp in UTC epoch
 	checkpointTimestamp: number | undefined;

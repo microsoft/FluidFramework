@@ -5,9 +5,9 @@
 
 import { Machine } from "jssm";
 
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
-import { BaseStateHandler } from "./stateHandlers";
+import { CommandLogger } from "../logging.js";
+import { MachineState } from "../machines/index.js";
+import { BaseStateHandler } from "./stateHandlers.js";
 
 /**
  * A base class that handles the "Init" and "Failed" states in a state machine. These states are commonly used in state
@@ -18,8 +18,8 @@ export abstract class InitFailedStateHandler extends BaseStateHandler {
 		state: MachineState,
 		machine: Machine<unknown>,
 		testMode: boolean,
-		log: CommandLogger,
-		data: unknown,
+		_log: CommandLogger,
+		_data: unknown,
 	): Promise<boolean> {
 		switch (state) {
 			case "Init": {

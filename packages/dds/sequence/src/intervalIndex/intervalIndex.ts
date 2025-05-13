@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializableInterval } from "../intervals/index.js";
+import { type SequenceInterval } from "../intervals/index.js";
 
 /**
  * Collection of intervals.
@@ -13,20 +13,21 @@ import { ISerializableInterval } from "../intervals/index.js";
  * - "find all intervals with start endpoint between these two points"
  * - "find all intervals which overlap this range"
  * etc.
+ * @legacy
  * @alpha
  */
-export interface IntervalIndex<TInterval extends ISerializableInterval> {
+export interface SequenceIntervalIndex {
 	/**
 	 * Adds an interval to the index.
 	 * @remarks Application code should never need to invoke this method on their index for production scenarios:
 	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
 	 */
-	add(interval: TInterval): void;
+	add(interval: SequenceInterval): void;
 
 	/**
 	 * Removes an interval from the index.
 	 * @remarks Application code should never need to invoke this method on their index for production scenarios:
 	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
 	 */
-	remove(interval: TInterval): void;
+	remove(interval: SequenceInterval): void;
 }

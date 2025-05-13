@@ -8,23 +8,16 @@ import { strict as assert } from "assert";
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-} from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
@@ -37,13 +30,8 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 		handle: builder.optional(builder.handle),
 	}) {}
 
-	function getNewTreeView(tree: ITree): TreeView<typeof HandleType> {
-		return tree.schematize(
-			new TreeConfiguration(HandleType, () => ({
-				handle: undefined,
-			})),
-		);
-	}
+	const handleTreeConfig = new TreeViewConfiguration({ schema: HandleType });
+
 	// A Test Data Object that exposes some basic functionality.
 	class TestDataObject extends DataObject {
 		private channel?: IChannel;
@@ -52,8 +40,8 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 			return this.root;
 		}
 
-		public get containerRuntime(): ContainerRuntime {
-			return this.context.containerRuntime as ContainerRuntime;
+		public get containerRuntime(): IContainerRuntime {
+			return this.context.containerRuntime as IContainerRuntime;
 		}
 
 		public async createBlob(content: string): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -101,13 +89,15 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 	};
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
-	const dataObjectFactory2 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[sharedTreeShimFactory], // Use the migrationShimFactory instead of the LegacySharedTreeFactory
-		{},
-	);
-	const childObjectFactory = new DataObjectFactory("ChildDataObject", ChildDataObject, [], {});
+	const dataObjectFactory2 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [sharedTreeShimFactory],
+	});
+	const childObjectFactory = new DataObjectFactory({
+		type: "ChildDataObject",
+		ctor: ChildDataObject,
+	});
 
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -129,7 +119,9 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<SharedTreeShim>();
 		const tree1 = shim1.currentTree;
-		const node1 = getNewTreeView(tree1).root;
+		const view1 = tree1.viewWith(handleTreeConfig);
+		view1.initialize({ handle: undefined });
+		const node1 = view1.root;
 
 		const childObject1 = await childObjectFactory.createInstance(testObj1.containerRuntime);
 		node1.handle = childObject1.handle;
@@ -146,7 +138,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 		await provider.ensureSynchronized();
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const tree2 = shim2.currentTree;
-		const node2 = getNewTreeView(tree2).root;
+		const node2 = tree2.viewWith(handleTreeConfig).root;
 
 		const handle1 = node1.handle;
 		const handle2 = node2.handle;

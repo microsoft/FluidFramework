@@ -12,7 +12,7 @@ import path from "node:path";
 import { type Package, TscUtils } from "@fluidframework/build-tools";
 import type { TsConfigJson } from "type-fest";
 
-import { getGenerateEntrypointsOutput } from "../commands";
+import { getGenerateEntrypointsOutput } from "../commands/index.js";
 
 type PackageName = string;
 type Script = string;
@@ -230,12 +230,17 @@ export class FluidBuildDatabase {
 	 * @param packageGroup - map (cache) of packageName's related packages
 	 * @param packageName - package name
 	 * @param script - packages script name
+	 * @param ignorePackage - optional filter function to ignore select packages
 	 * @returns Array of groups of possible predecessor tasks
 	 */
 	public getPossiblePredecessorTasks(
 		packageGroup: ReadonlyMap<PackageName, Package>,
 		packageName: PackageName,
 		script: Script,
+		ignorePackage?: (packageInfo: {
+			name: string;
+			version: string;
+		}) => boolean,
 	): BuildScript[][] {
 		const pkg = packageGroup.get(packageName);
 		if (pkg === undefined) {
@@ -251,9 +256,10 @@ export class FluidBuildDatabase {
 
 		const predecessors: BuildScript[][] = [];
 
-		// Note that combinedDependencies (as of 2024-05-13) does not consider peer
-		// dependencies that could be linked.
 		for (const dep of pkg.combinedDependencies) {
+			if (ignorePackage?.(dep) ?? false) {
+				continue;
+			}
 			const depPackageName = dep.name;
 			const depBuildScripts = this.packageBuildScripts.get(depPackageName);
 			if (depBuildScripts !== undefined) {

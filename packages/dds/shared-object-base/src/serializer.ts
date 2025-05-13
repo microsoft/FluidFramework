@@ -3,25 +3,27 @@
  * Licensed under the MIT License.
  */
 
-// RATIONALE: Many methods consume and return 'any' by necessity.
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	IFluidHandle,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
+import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import {
+	encodeHandleForSerialization,
 	generateHandleContextPath,
 	isSerializedHandle,
 	isFluidHandle,
 	toFluidHandleInternal,
+	type ISerializedHandle,
+	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
 
-import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
+import { isISharedObjectHandle, type ISharedObjectHandle } from "./handle.js";
 
 /**
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IFluidSerializer {
 	/**
@@ -31,7 +33,7 @@ export interface IFluidSerializer {
 	 * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
 	 * the root to any replaced handles.  (If no handles are found, returns the original object.)
 	 */
-	encode(value: any, bind: IFluidHandle): any;
+	encode(value: unknown, bind: IFluidHandle): unknown;
 
 	/**
 	 * Given a fully-jsonable object tree that may have encoded handle objects embedded within, will return an
@@ -42,18 +44,18 @@ export interface IFluidSerializer {
 	 *
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
-	decode(input: any): any;
+	decode(input: unknown): unknown;
 
 	/**
 	 * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
 	 */
-	stringify(value: any, bind: IFluidHandle): string;
+	stringify(value: unknown, bind: IFluidHandle): string;
 
 	/**
 	 * Parses the given JSON input string and returns the JavaScript object defined by it. Any Fluid
 	 * handles will be realized as part of the parse
 	 */
-	parse(value: string): any;
+	parse(value: string): unknown;
 }
 
 /**
@@ -63,18 +65,14 @@ export interface IFluidSerializer {
 export class FluidSerializer implements IFluidSerializer {
 	private readonly root: IFluidHandleContext;
 
-	public constructor(
-		private readonly context: IFluidHandleContext,
-		// To be called whenever a handle is parsed by this serializer.
-		private readonly handleParsedCb: (handle: IFluidHandle) => void = () => {},
-	) {
+	public constructor(private readonly context: IFluidHandleContext) {
 		this.root = this.context;
 		while (this.root.routeContext !== undefined) {
 			this.root = this.root.routeContext;
 		}
 	}
 
-	public get IFluidSerializer() {
+	public get IFluidSerializer(): IFluidSerializer {
 		return this;
 	}
 
@@ -87,12 +85,13 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
-	public encode(input: any, bind: IFluidHandle) {
+	public encode(input: unknown, bind: IFluidHandleInternal): unknown {
+		assert(isISharedObjectHandle(bind), 0xb8c /* bind must be an ISharedObjectHandle */);
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		return !!input && typeof input === "object"
-			? this.recursivelyReplace(input, this.encodeValue, bind)
+			? this.recursivelyReplace(input, this.encodeValue.bind(this), bind)
 			: input;
 	}
 
@@ -105,37 +104,50 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
-	public decode(input: any) {
+	public decode(input: unknown): unknown {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		return !!input && typeof input === "object"
-			? this.recursivelyReplace(input, this.decodeValue)
+			? this.recursivelyReplace(input, this.decodeValue.bind(this))
 			: input;
 	}
 
-	public stringify(input: unknown, bind: IFluidHandle) {
-		const bindInternal = toFluidHandleInternal(bind);
-		return JSON.stringify(input, (key, value) => this.encodeValue(value, bindInternal));
+	/**
+	 * Serializes the input object into a JSON string.
+	 * Any IFluidHandles in the object will be replaced with their serialized form before stringify,
+	 * being bound to the given bind context in the process.
+	 */
+	public stringify(input: unknown, bind: IFluidHandle): string {
+		assert(isISharedObjectHandle(bind), 0xb8d /* bind must be an ISharedObjectHandle */);
+		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
 	}
 
-	// Parses the serialized data - context must match the context with which the JSON was stringified
-	public parse(input: string) {
+	/**
+	 * Parses the serialized data - context must match the context with which the JSON was stringified
+	 */
+	public parse(input: string): unknown {
 		return JSON.parse(input, (key, value) => this.decodeValue(value));
 	}
 
-	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
-	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
-	private readonly encodeValue = (value: unknown, bind: IFluidHandleInternal) => {
+	/**
+	 * If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
+	 * Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
+	 */
+	protected encodeValue(value: unknown, bind?: ISharedObjectHandle): unknown {
 		// If 'value' is an IFluidHandle return its encoded form.
-		return isFluidHandle(value)
-			? this.serializeHandle(toFluidHandleInternal(value), bind)
-			: value;
-	};
+		if (isFluidHandle(value)) {
+			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
+			return this.bindAndEncodeHandle(toFluidHandleInternal(value), bind);
+		}
+		return value;
+	}
 
-	// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
-	// Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
-	private readonly decodeValue = (value: any) => {
+	/**
+	 * If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
+	 * Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
+	 */
+	protected decodeValue(value: unknown): unknown {
 		// If 'value' is a serialized IFluidHandle return the deserialized result.
 		if (isSerializedHandle(value)) {
 			// Old documents may have handles with relative path in their summaries. Convert these to absolute
@@ -144,22 +156,26 @@ export class FluidSerializer implements IFluidSerializer {
 				? value.url
 				: generateHandleContextPath(value.url, this.context);
 
-			const parsedHandle = new RemoteFluidObjectHandle(absolutePath, this.root);
-			this.handleParsedCb(parsedHandle);
-			return parsedHandle;
+			return new RemoteFluidObjectHandle(
+				absolutePath,
+				this.root,
+				value.payloadPending === true,
+			);
 		} else {
 			return value;
 		}
-	};
+	}
 
-	// Invoked for non-null objects to recursively replace references to IFluidHandles.
-	// Clones as-needed to avoid mutating the `input` object.  If no IFluidHandes are present,
-	// returns the original `input`.
-	private recursivelyReplace(
-		input: any,
-		replacer: (input: any, context: any) => any,
-		context?: any,
-	) {
+	/**
+	 * Invoked for non-null objects to recursively replace references to IFluidHandles.
+	 * Clones as-needed to avoid mutating the `input` object.  If no IFluidHandles are present,
+	 * returns the original `input`.
+	 */
+	private recursivelyReplace<TContext = unknown>(
+		input: object,
+		replacer: (input: unknown, context?: TContext) => unknown,
+		context?: TContext,
+	): unknown {
 		// Note: Caller is responsible for ensuring that `input` is defined / non-null.
 		//       (Required for Object.keys() below.)
 
@@ -167,16 +183,16 @@ export class FluidSerializer implements IFluidSerializer {
 		// is a non-null object.
 		const maybeReplaced = replacer(input, context);
 
-		// If the replacer made a substitution there is no need to decscend further. IFluidHandles are always
-		// leaves in the object graph.
-		if (maybeReplaced !== input) {
+		// If either input or the replaced result is a Fluid Handle, there is no need to descend further.
+		// IFluidHandles are always leaves in the object graph, and the code below cannot deal with IFluidHandle's structure.
+		if (isFluidHandle(input) || isFluidHandle(maybeReplaced)) {
 			return maybeReplaced;
 		}
 
 		// Otherwise descend into the object graph looking for IFluidHandle instances.
 		let clone: object | undefined;
 		for (const key of Object.keys(input)) {
-			const value = input[key];
+			const value: unknown = input[key];
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (!!value && typeof value === "object") {
 				// Note: Except for IFluidHandle, `input` must not contain circular references (as object must
@@ -189,22 +205,28 @@ export class FluidSerializer implements IFluidSerializer {
 				// current property is replaced by the `replaced` value.
 				if (replaced !== value) {
 					// Lazily create a shallow clone of the `input` object if we haven't done so already.
-					clone = clone ?? (Array.isArray(input) ? [...input] : { ...input });
+					clone ??= shallowCloneObject(input);
 
 					// Overwrite the current property `key` in the clone with the `replaced` value.
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					clone![key] = replaced;
+					clone[key] = replaced;
 				}
 			}
 		}
 		return clone ?? input;
 	}
 
-	protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal) {
+	/**
+	 * Encodes the given IFluidHandle into a JSON-serializable form,
+	 * also binding it to another node to ensure it attaches at the right time.
+	 * @param handle - The IFluidHandle to serialize.
+	 * @param bind - The binding context for the handle (the handle will become attached whenever this context is attached).
+	 * @returns The serialized handle.
+	 */
+	protected bindAndEncodeHandle(
+		handle: IFluidHandleInternal,
+		bind: ISharedObjectHandle,
+	): ISerializedHandle {
 		bind.bind(handle);
-		return {
-			type: "__fluid_handle__",
-			url: handle.absolutePath,
-		};
+		return encodeHandleForSerialization(handle);
 	}
 }

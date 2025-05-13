@@ -7,10 +7,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	DetachedField,
-	FieldKey,
-	ITreeCursor,
-	MapTree,
+	type DetachedField,
+	type ExclusiveMapTree,
+	type FieldKey,
+	type ITreeCursor,
+	type MapTree,
 	aboveRootPlaceholder,
 	detachedFieldAsKey,
 	mapCursorField,
@@ -18,24 +19,24 @@ import {
 } from "../core/index.js";
 
 import {
-	CursorAdapter,
-	CursorWithNode,
+	type CursorAdapter,
+	type CursorWithNode,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "./treeCursorUtils.js";
 
 /**
- * @returns An {@link ITreeCursorSynchronous} in nodes mode for a single {@link MapTree}.
+ * Returns an {@link ITreeCursorSynchronous} in nodes mode for a single {@link MapTree}.
  */
 export function cursorForMapTreeNode(root: MapTree): CursorWithNode<MapTree> {
 	return stackTreeNodeCursor(adapter, root);
 }
 
 /**
- * @returns an {@link ITreeCursorSynchronous} in fields mode for a MapTree field.
+ * Returns an {@link ITreeCursorSynchronous} in fields mode for a MapTree field.
  */
 export function cursorForMapTreeField(
-	root: MapTree[],
+	root: readonly MapTree[],
 	detachedField: DetachedField = rootField,
 ): CursorWithNode<MapTree> {
 	const key = detachedFieldAsKey(detachedField);
@@ -59,19 +60,27 @@ const adapter: CursorAdapter<MapTree> = {
 /**
  * Extract a MapTree from the contents of the given ITreeCursor's current node.
  */
-export function mapTreeFromCursor(cursor: ITreeCursor): MapTree {
+export function mapTreeFromCursor(cursor: ITreeCursor): ExclusiveMapTree {
 	assert(cursor.mode === CursorLocationType.Nodes, 0x3b7 /* must start at node */);
-	const fields: Map<FieldKey, MapTree[]> = new Map();
+	const fields: Map<FieldKey, ExclusiveMapTree[]> = new Map();
 	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
-		const field: MapTree[] = mapCursorField(cursor, mapTreeFromCursor);
+		const field: ExclusiveMapTree[] = mapCursorField(cursor, mapTreeFromCursor);
 		fields.set(cursor.getFieldKey(), field);
 	}
 
-	const node: MapTree = {
+	const node: ExclusiveMapTree = {
 		type: cursor.type,
 		value: cursor.value,
 		fields,
 	};
 
 	return node;
+}
+
+/**
+ * Extract an array of MapTrees (a field) from the contents of the given ITreeCursor's current field.
+ */
+export function mapTreeFieldFromCursor(cursor: ITreeCursor): ExclusiveMapTree[] {
+	assert(cursor.mode === CursorLocationType.Fields, 0xa03 /* must start at field */);
+	return mapCursorField(cursor, mapTreeFromCursor);
 }

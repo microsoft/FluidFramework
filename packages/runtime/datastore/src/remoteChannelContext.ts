@@ -4,22 +4,26 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	IChannel,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	IDocumentStorageService,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	IFluidDataStoreContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
+	type IPendingMessagesState,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -39,7 +43,11 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;
-	private pending: ISequencedDocumentMessage[] | undefined = [];
+	/** Tracks the messages for this channel that are sent while it's not loaded */
+	private pendingMessagesState: IPendingMessagesState | undefined = {
+		messageCollections: [],
+		pendingCount: 0,
+	};
 	private readonly channelP: Promise<IChannel>;
 	private channel: IChannel | undefined;
 	private readonly services: ChannelServiceEndpoints;
@@ -54,7 +62,6 @@ export class RemoteChannelContext implements IChannelContext {
 		storageService: IDocumentStorageService,
 		submitFn: (content: any, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
-		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 		private readonly id: string,
 		baseSnapshot: ISnapshotTree,
 		registry: ISharedObjectRegistry,
@@ -73,7 +80,6 @@ export class RemoteChannelContext implements IChannelContext {
 			dataStoreContext.connected,
 			submitFn,
 			() => dirtyFn(this.id),
-			addedGCOutboundReferenceFn,
 			() => runtime.attachState !== AttachState.Detached,
 			storageService,
 			this.subLogger,
@@ -99,20 +105,21 @@ export class RemoteChannelContext implements IChannelContext {
 				this.id,
 			);
 
-			// Send all pending messages to the channel
-			assert(this.pending !== undefined, 0x23f /* "pending undefined" */);
-			for (const message of this.pending) {
-				this.services.deltaConnection.process(
-					message,
-					false,
-					undefined /* localOpMetadata */,
-				);
+			assert(
+				this.pendingMessagesState !== undefined,
+				0xa6c /* pending messages state is undefined */,
+			);
+			for (const messageCollection of this.pendingMessagesState.messageCollections) {
+				this.services.deltaConnection.processMessages(messageCollection);
 			}
-			this.thresholdOpsCounter.send("ProcessPendingOps", this.pending.length);
+			this.thresholdOpsCounter.send(
+				"ProcessPendingOps",
+				this.pendingMessagesState.pendingCount,
+			);
 
 			// Commit changes.
 			this.channel = channel;
-			this.pending = undefined;
+			this.pendingMessagesState = undefined;
 			this.isLoaded = true;
 
 			// Because have some await between we created the service and here, the connection state might have changed
@@ -164,27 +171,38 @@ export class RemoteChannelContext implements IChannelContext {
 		return this.services.deltaConnection.applyStashedOp(content);
 	}
 
-	public processOp(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.summarizerNode.invalidate(message.sequenceNumber);
+	/**
+	 * Process messages for this channel context. The messages here are contiguous messages for this context in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent, local } = messageCollection;
+		this.summarizerNode.invalidate(envelope.sequenceNumber);
 
 		if (this.isLoaded) {
-			this.services.deltaConnection.process(message, local, localOpMetadata);
+			this.services.deltaConnection.processMessages(messageCollection);
 		} else {
 			assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
-			assert(this.pending !== undefined, 0x23e /* "pending is undefined" */);
-			this.pending.push(message);
-			this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
+			assert(
+				this.pendingMessagesState !== undefined,
+				0xa6d /* pending messages queue is undefined */,
+			);
+			this.pendingMessagesState.messageCollections.push({
+				...messageCollection,
+				messagesContent: Array.from(messagesContent),
+			});
+			this.pendingMessagesState.pendingCount += messagesContent.length;
+			this.thresholdOpsCounter.sendIfMultiple(
+				"StorePendingOps",
+				this.pendingMessagesState.pendingCount,
+			);
 		}
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash: boolean) {
 		assert(this.isLoaded, 0x196 /* "Remote channel must be loaded when resubmitting op" */);
 
-		this.services.deltaConnection.reSubmit(content, localOpMetadata);
+		this.services.deltaConnection.reSubmit(content, localOpMetadata, squash);
 	}
 
 	public rollback(content: any, localOpMetadata: unknown) {

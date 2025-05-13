@@ -9,12 +9,13 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { IRequest } from "@fluidframework/core-interfaces/internal";
+import { IRequest } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
 	type IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
@@ -25,7 +26,6 @@ import {
 	TestFluidObjectFactory,
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 /*
 Context no longer provides observability point to when context changes its attach states
@@ -448,6 +448,7 @@ describeCompat(
 			);
 		});
 
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Stick handle of 2 dds(of 2 different dataStores) in each other and then attaching 1 DDS should " +
 				"attach other DDS and dataStore with correct recursion",
@@ -523,6 +524,7 @@ describeCompat(
 			},
 		);
 
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Stick handle of 2 different dataStores and dds in each other and then attaching 1 dataStore should " +
 				"attach other dataStores and dds with correct recursion",
@@ -570,15 +572,11 @@ describeCompat(
 				toFluidHandleInternal(dataStore2.handle).bind(
 					toFluidHandleInternal(dataStore3.handle),
 				);
-				toFluidHandleInternal(dataStore2.handle).bind(
-					toFluidHandleInternal(channel3.handle),
-				);
+				toFluidHandleInternal(dataStore2.handle).bind(toFluidHandleInternal(channel3.handle));
 				toFluidHandleInternal(dataStore3.handle).bind(
 					toFluidHandleInternal(dataStore2.handle),
 				);
-				toFluidHandleInternal(dataStore3.handle).bind(
-					toFluidHandleInternal(channel2.handle),
-				);
+				toFluidHandleInternal(dataStore3.handle).bind(toFluidHandleInternal(channel2.handle));
 
 				toFluidHandleInternal(dataStore2.handle).attachGraph();
 				assert.strictEqual(
@@ -599,6 +597,7 @@ describeCompat(
 			},
 		);
 
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Generate more than 1 dds of a dataStore and then stick handles in different dds and then attaching " +
 				"1 handle should attach entire graph",

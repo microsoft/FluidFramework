@@ -11,7 +11,8 @@ import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/intern
 
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { createOdspUrl } from "../createOdspUrl.js";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { OdspDriverUrlResolver, decodeOdspUrl } from "../odspDriverUrlResolver.js";
+import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 
 describe("Odsp Driver Resolver", () => {
@@ -358,7 +359,7 @@ describe("Odsp Driver Resolver", () => {
 	it("Should resolve url with special characters", async () => {
 		// Arrange
 		const testFilePath = "data1/data2/!@$";
-		const itemId = "item!@$";
+		const itemId = "item! @$";
 		const testRequest: IRequest = {
 			url: `${siteUrl}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`,
 		};
@@ -385,6 +386,32 @@ describe("Odsp Driver Resolver", () => {
 		const expectedResolvedUrl =
 			`https://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` + `${testFilePath}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+	});
+
+	it("Should resolve url with URI encodable characters", async () => {
+		const itemId = "item /";
+		const driveId1 = "driveId {}[] ";
+		const encodedUrl = createOdspUrl({
+			siteUrl,
+			driveId: driveId1,
+			itemId,
+			dataStorePath: "",
+		});
+		const decodedOdspUrl = decodeOdspUrl(encodedUrl);
+		assert.strictEqual(itemId, decodedOdspUrl.itemId, "itemid should match");
+		assert.strictEqual(driveId1, decodedOdspUrl.driveId, "driveId should match");
+
+		const testUrl = new URL(siteUrl);
+		storeLocatorInOdspUrl(testUrl, {
+			driveId: driveId1,
+			itemId,
+			siteUrl,
+			dataStorePath: "",
+		});
+		const decodedUrlLocator = getLocatorFromOdspUrl(testUrl);
+		assert(decodedUrlLocator !== undefined, "locator should be present");
+		assert.strictEqual(itemId, decodedUrlLocator.itemId, "itemid should match in locator");
+		assert.strictEqual(driveId1, decodedUrlLocator.driveId, "driveId should match in locator");
 	});
 
 	it("resolves urls with datastore path in url path", async () => {
@@ -429,5 +456,21 @@ describe("Odsp Driver Resolver", () => {
 		const expectedResolvedUrl =
 			`https://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` + `${testFilePath}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+	});
+	it("Should create request with containerPackageName and resolve it", async () => {
+		request = createOdspCreateContainerRequest(
+			siteUrl,
+			driveId,
+			filePath,
+			fileName,
+			undefined,
+			{ name: "testContainerPackageName" }, // Container package info variable,
+		);
+		const resolvedUrl = await resolver.resolve(request);
+		assert.strictEqual(
+			resolvedUrl.codeHint?.containerPackageName,
+			"testContainerPackageName",
+			"containerPackageName should match",
+		);
 	});
 });

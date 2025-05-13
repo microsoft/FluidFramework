@@ -21,7 +21,7 @@
 	 */
 	"apiReport": {
 		"enabled": true,
-		"reportFileName": "<unscopedPackageName>.api.md",
+		"reportFileName": "<unscopedPackageName>",
 		"reportFolder": "<projectFolder>/api-report/",
 		"reportTempFolder": "<projectFolder>/_api-extractor-temp/"
 	},

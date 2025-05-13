@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 	LogLevel,
-	Tagged,
-	TelemetryBaseEventPropertyType,
+	type Tagged,
+	type TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 
 import {
@@ -23,8 +23,8 @@ import {
 	isILoggingError,
 	isTaggedTelemetryPropertyValue,
 } from "./errorLogging.js";
-import {
-	type ITelemetryErrorEventExt,
+import type {
+	ITelemetryErrorEventExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
@@ -53,18 +53,22 @@ export enum TelemetryDataTag {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 /**
+ * @legacy
  * @alpha
  */
-export interface ITelemetryLoggerPropertyBag {
-	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
-}
+export type ITelemetryLoggerPropertyBag = Record<
+	string,
+	TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes)
+>;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ITelemetryLoggerPropertyBags {
@@ -273,10 +277,9 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		return this.extendProperties(newEvent, includeErrorProps);
 	}
 
-	private extendProperties<T extends ITelemetryLoggerPropertyBag = ITelemetryLoggerPropertyBag>(
-		toExtend: T,
-		includeErrorProps: boolean,
-	): T {
+	private extendProperties<
+		T extends ITelemetryLoggerPropertyBag = ITelemetryLoggerPropertyBag,
+	>(toExtend: T, includeErrorProps: boolean): T {
 		const eventLike: ITelemetryLoggerPropertyBag = toExtend;
 		if (this.properties) {
 			const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
@@ -286,11 +289,10 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 			}
 			for (const props of properties) {
 				if (props !== undefined) {
-					for (const key of Object.keys(props)) {
+					for (const [key, getterOrValue] of Object.entries(props)) {
 						if (eventLike[key] !== undefined) {
 							continue;
 						}
-						const getterOrValue = props[key];
 						// If this throws, hopefully it is handled elsewhere
 						const value =
 							typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
@@ -323,8 +325,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 			category: eventWithTagsMaybe.category,
 			eventName: eventWithTagsMaybe.eventName,
 		};
-		for (const key of Object.keys(eventWithTagsMaybe)) {
-			const taggableProp = eventWithTagsMaybe[key];
+		for (const [key, taggableProp] of Object.entries(eventWithTagsMaybe)) {
 			const { value, tag } =
 				typeof taggableProp === "object"
 					? taggableProp
@@ -368,6 +369,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
  *
  * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
  *
+ * @legacy
  * @alpha
  */
 export function createChildLogger(props?: {
@@ -421,8 +423,8 @@ export class ChildLogger extends TelemetryLogger {
 				baseLogger.namespace === undefined
 					? namespace
 					: namespace === undefined
-					? baseLogger.namespace
-					: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
+						? baseLogger.namespace
+						: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
 			const child = new ChildLogger(
 				baseLogger.baseLogger,
@@ -533,7 +535,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 * @param loggers - The list of loggers to use as sinks
 	 * @param tryInheritProperties - Will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
 	 */
-	constructor(
+	public constructor(
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
 		loggers: ITelemetryBaseLogger[] = [],
@@ -720,11 +722,11 @@ export class PerformanceEvent {
 	}
 
 	public get duration(): number {
-		return performance.now() - this.startTime;
+		return performanceNow() - this.startTime;
 	}
 
 	private event?: ITelemetryGenericEventExt;
-	private readonly startTime = performance.now();
+	private readonly startTime = performanceNow();
 	private startMark?: string;
 
 	protected constructor(
@@ -738,7 +740,11 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
-		if (typeof window === "object" && window?.performance?.mark) {
+		if (
+			typeof window === "object" &&
+			window?.performance?.mark !== undefined &&
+			window?.performance?.mark !== null
+		) {
 			this.startMark = `${event.eventName}-start`;
 			window.performance.mark(this.startMark);
 		}
@@ -757,17 +763,21 @@ export class PerformanceEvent {
 			this.reportEvent("end");
 		}
 		this.performanceEndMark();
+
+		// To prevent the event from being reported again later
 		this.event = undefined;
 	}
 
 	public end(props?: ITelemetryPropertiesExt): void {
 		this.reportEvent("end", props);
 		this.performanceEndMark();
+
+		// To prevent the event from being reported again later
 		this.event = undefined;
 	}
 
 	private performanceEndMark(): void {
-		if (this.startMark && this.event) {
+		if (this.startMark !== undefined && this.event) {
 			const endMark = `${this.event.eventName}-end`;
 			window.performance.mark(endMark);
 			window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
@@ -779,6 +789,8 @@ export class PerformanceEvent {
 		if (this.markers.cancel !== undefined) {
 			this.reportEvent("cancel", { category: this.markers.cancel, ...props }, error);
 		}
+
+		// To prevent the event from being reported again later
 		this.event = undefined;
 	}
 
@@ -790,9 +802,8 @@ export class PerformanceEvent {
 		props?: ITelemetryPropertiesExt,
 		error?: unknown,
 	): void {
-		// There are strange sequences involving multiple Promise chains
-		// where the event can be cancelled and then later a callback is invoked
-		// and the caller attempts to end directly, e.g. issue #3936. Just return.
+		// If the caller invokes cancel or end directly inside the callback for timedExec[Async],
+		// then it's possible to come back through reportEvent twice.  Only the first time counts.
 		if (!this.event) {
 			return;
 		}
@@ -855,7 +866,7 @@ export function convertToBasePropertyType(
 		? {
 				value: convertToBasePropertyTypeUntagged(x.value),
 				tag: x.tag,
-		  }
+			}
 		: convertToBasePropertyTypeUntagged(x);
 }
 
@@ -920,11 +931,11 @@ export const tagData = <
 				? () => {
 						value: ReturnType<V[P]>;
 						tag: T;
-				  }
+					}
 				: {
 						value: Exclude<V[P], undefined>;
 						tag: T;
-				  })
+					})
 		| (V[P] extends undefined ? undefined : never);
 } =>
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -936,7 +947,6 @@ export const tagData = <
 			// The ternary form is less legible in this case.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (typeof value === "function") {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 				pv[key] = () => {
 					return { tag, value: value() };
 				};
@@ -982,10 +992,10 @@ export const tagCodeArtifacts = <
 				? () => {
 						value: ReturnType<T[P]>;
 						tag: TelemetryDataTag.CodeArtifact;
-				  }
+					}
 				: {
 						value: Exclude<T[P], undefined>;
 						tag: TelemetryDataTag.CodeArtifact;
-				  })
+					})
 		| (T[P] extends undefined ? undefined : never);
 } => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);

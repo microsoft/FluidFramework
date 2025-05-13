@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
-	NestedMap,
+	type NestedMap,
 	SizedNestedMap,
 	deleteFromNestedMap,
 	getOrAddInNestedMap,
@@ -15,6 +15,8 @@ import {
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	mapNestedMap,
+	getOrCreateInNestedMap,
 } from "../../util/index.js";
 
 describe("NestedMap unit tests", () => {
@@ -59,6 +61,33 @@ describe("NestedMap unit tests", () => {
 			setInNestedMap(nestedMap, "Foo", "Bar", 1);
 			setInNestedMap(nestedMap, "Foo", "Bar", 2);
 			assert.equal(nestedMap.get("Foo")?.get("Bar"), 2);
+		});
+	});
+
+	describe("getOrCreateInNestedMap", () => {
+		it("New value", () => {
+			const nestedMap: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>();
+			const log: unknown[][] = [];
+			getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) => {
+				log.push(args);
+				return 1;
+			});
+			assert.equal(nestedMap.get("Foo")?.get("Bar"), 1);
+			assert.deepEqual(log, [["Foo", "Bar"]]);
+		});
+
+		it("Existing value", () => {
+			const nestedMap: NestedMap<string, string, number> = new Map();
+			const got1 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) => 1);
+			const got2 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) =>
+				assert.fail("Should not be called"),
+			);
+			assert.equal(got1, 1);
+			assert.equal(got2, 1);
+			assert.equal(nestedMap.get("Foo")?.get("Bar"), 1);
 		});
 	});
 
@@ -292,6 +321,47 @@ describe("NestedMap unit tests", () => {
 					],
 				]),
 			);
+		});
+	});
+
+	describe("mapNestedMap", () => {
+		it("creates a new map with mapped values", () => {
+			const input: NestedMap<string, string, number> = new Map<string, Map<string, number>>();
+			setInNestedMap(input, "Foo", "Bar", 1);
+			setInNestedMap(input, "Foo", "Baz", 2);
+
+			const output = mapNestedMap(input, (n: number) => String(n));
+
+			assert.deepEqual(
+				output,
+				new Map([
+					[
+						"Foo",
+						new Map([
+							["Bar", "1"],
+							["Baz", "2"],
+						]),
+					],
+				]),
+			);
+		});
+
+		it("tolerates empty outer maps", () => {
+			const input: NestedMap<string, string, number> = new Map<string, Map<string, number>>();
+
+			const output = mapNestedMap(input, (n: number) => String(n));
+
+			assert.deepEqual(output, new Map([]));
+		});
+
+		it("tolerates (and preserves) empty inner maps", () => {
+			const input: NestedMap<string, string, number> = new Map<string, Map<string, number>>([
+				["Foo", new Map()],
+			]);
+
+			const output = mapNestedMap(input, (n: number) => String(n));
+
+			assert.deepEqual(output, new Map([["Foo", new Map()]]));
 		});
 	});
 });

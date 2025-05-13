@@ -21,8 +21,37 @@
 			},
 		},
 		{
+			"name": "codeCoverageAnalysis",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/run.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["report", "codeCoverage"],
+			"env": {
+				// Your ADO PAT (Personal Access Token) User settings > Personal Access Tokens > New Token (check read permissions, likely Build, Release, Packaging, and Test Management)
+				"ADO_API_TOKEN": "",
+				"GITHUB_API_TOKEN": "",
+				"GITHUB_PR_NUMBER": "",
+				"ADO_BUILD_ID": "",
+				"ADO_CI_BUILD_DEFINITION_ID_BASELINE": "48",
+				"ADO_CI_BUILD_DEFINITION_ID_PR": "11",
+				"TARGET_BRANCH_NAME": "main",
+				"GITHUB_REPOSITORY_NAME": "microsoft/FluidFramework",
+			},
+		},
+		{
 			"name": "npm test build-cli",
 			"cwd": "${workspaceFolder}/build-tools/packages/build-cli",
+			"request": "launch",
+			"runtimeArgs": ["run-script", "test"],
+			"runtimeExecutable": "npm",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+		},
+		{
+			"name": "npm test version-tools",
+			"cwd": "${workspaceFolder}/build-tools/packages/version-tools",
 			"request": "launch",
 			"runtimeArgs": ["run-script", "test"],
 			"runtimeExecutable": "npm",
@@ -73,6 +102,15 @@
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
 			"args": ["generate", "bundleStats", "-v"],
+		},
+		{
+			"name": "flub generate releaseNotes",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["generate", "releaseNotes", "-g", "client", "-t", "minor", "-v"],
 		},
 		{
 			"name": "flub generate packlist",
@@ -163,6 +201,23 @@
 			"args": ["test-only-filter", "--all"],
 		},
 		{
+			"name": "flub bump build-tools",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [
+				"bump",
+				"build-tools",
+				"-t",
+				"patch",
+				"--verbose",
+				"--no-commit",
+				"--no-install",
+			],
+		},
+		{
 			"name": "flub bump deps",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
 			"cwd": "${workspaceFolder}",
@@ -189,12 +244,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": [
-				"generate",
-				"typetests",
-				"--dir",
-				".",
-			],
+			"args": ["generate", "typetests", "--dir", "."],
 		},
 		{
 			"name": "fluid-type-test-generator",
@@ -352,13 +402,18 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (auto build)",
 			"env": {
-				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "FLUID_TEST_VERBOSE": "1"
+				// "fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
+				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
 				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd",
+			},
+			"linux": {
+				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			},
 			"sourceMaps": true,
 			"program": "${file}",
@@ -400,9 +455,11 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (ESM-lib;no build)",
 			"env": {
-				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "FLUID_TEST_VERBOSE": "1"
+				// "fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
+				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,
@@ -415,6 +472,20 @@
 				"../../../../lib/test/**/${fileBasenameNoExtension}.js",
 			],
 			"cwd": "${fileDirname}",
+			// These skipped files contain exceptions that are consistently thrown during test setup
+			// You can comment out this part if you want to debug these files
+			"skipFiles": [
+				"<node_internals>/**",
+				// @fluid-internal/mocha-test-setup is resolved first using esm resolution algorithm first before cjs resolution algorithm (require)
+				"**/node_modules/mocha/lib/nodejs/esm-utils.js",
+				// We pass multiple glob patterns to mocha (as seen above) to look for the correct spec file to debug
+				// Two of these will always throw file not found error, so we skip them here
+				"**/node_modules/mocha/lib/cli/lookup-files.js",
+				// There's an empty catch here for CommonJS default export support
+				"**/node_modules/uuid/dist/v35.js",
+				// test-version-utils checks for valid semver version first and handles ranges seperately.
+				"**/node_modules/semver/classes/semver.js",
+			],
 			"outFiles": [
 				"${fileDirname}/../../lib/**/*.js",
 				"${fileDirname}/../../../lib/**/*.js",
@@ -426,9 +497,11 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (CommonJS-dist;no build)",
 			"env": {
-				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "FLUID_TEST_VERBOSE": "1"
+				// "fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
+				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,

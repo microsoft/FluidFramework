@@ -41,12 +41,7 @@ export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewP
 		if (canvasRef.current !== null) {
 			const ctx = canvasRef.current.getContext("2d");
 			if (ctx !== null) {
-				renderTriangleToCanvas(
-					ctx,
-					props.coordinate1,
-					props.coordinate2,
-					props.coordinate3,
-				);
+				renderTriangleToCanvas(ctx, props.coordinate1, props.coordinate2, props.coordinate3);
 			}
 		}
 	};

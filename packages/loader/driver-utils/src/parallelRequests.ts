@@ -3,18 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDeltasFetchResult,
 	IStream,
 	IStreamResult,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
 
-import { canRetryOnError, createGenericNetworkError, getRetryDelayFromError } from "./network.js";
+import {
+	canRetryOnError,
+	createGenericNetworkError,
+	getRetryDelayFromError,
+} from "./network.js";
 import { logNetworkFailure } from "./networkUtils.js";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion.js";
@@ -204,13 +211,7 @@ export class ParallelRequests<T> {
 
 			this.requests++;
 
-			const promise = this.requestCallback(
-				this.requests,
-				from,
-				to,
-				this.to !== undefined,
-				{},
-			);
+			const promise = this.requestCallback(this.requests, from, to, this.to !== undefined, {});
 
 			// dispatch any prior received data
 			this.dispatch();
@@ -435,13 +436,11 @@ async function getSingleOpBatch(
 	while (signal?.aborted !== true) {
 		retry++;
 		let lastError: unknown;
-		const startTime = performance.now();
+		const startTime = performanceNow();
 
 		try {
 			// Issue async request for deltas
-			const { messages, partialResult } = await get(
-				{ ...props, retry } /* telemetry props */,
-			);
+			const { messages, partialResult } = await get({ ...props, retry } /* telemetry props */);
 
 			// If we got messages back, return them.  Return regardless of whether we got messages back if we didn't
 			// specify a "to", since we don't have an expectation of how many to receive.
@@ -460,8 +459,8 @@ async function getSingleOpBatch(
 			if (lastSuccessTime === undefined) {
 				// Take timestamp of the first time server responded successfully, even though it wasn't with the ops we asked for.
 				// If we keep getting empty responses we'll eventually fail out below.
-				lastSuccessTime = performance.now();
-			} else if (performance.now() - lastSuccessTime > 30000) {
+				lastSuccessTime = performanceNow();
+			} else if (performanceNow() - lastSuccessTime > 30000) {
 				// If we are connected and receiving proper responses from server, but can't get any ops back,
 				// then give up after some time. This likely indicates the issue with ordering service not flushing
 				// ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
@@ -490,7 +489,7 @@ async function getSingleOpBatch(
 					eventName: "GetDeltas_Error",
 					...props,
 					retry,
-					duration: performance.now() - startTime,
+					duration: performanceNow() - startTime,
 					retryAfter,
 					reason: scenarioName,
 				},
@@ -504,7 +503,7 @@ async function getSingleOpBatch(
 		}
 
 		if (telemetryEvent === undefined) {
-			waitStartTime = performance.now();
+			waitStartTime = performanceNow();
 			telemetryEvent = PerformanceEvent.start(logger, {
 				eventName: "GetDeltasWaitTime",
 			});
@@ -522,7 +521,7 @@ async function getSingleOpBatch(
 		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 		// should probably live in the driver.
 		await waitForOnline();
-		totalRetryAfterTime += performance.now() - waitStartTime;
+		totalRetryAfterTime += performanceNow() - waitStartTime;
 	}
 
 	return nothing;

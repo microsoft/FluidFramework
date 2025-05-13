@@ -3,20 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
+	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 
 import type { IFluidDataStoreRuntime } from "./dataStoreRuntime.js";
 import type { IChannelAttributes } from "./storage.js";
 
 /**
- * @public
+ * An object which can be connected to a
+ * {@link https://fluidframework.com/docs/concepts/architecture#fluid-service|Fluid service} via an {@link IChannelServices} instance.
+ * @remarks
+ * This interface exposes functionality that the service requires to create and maintain summaries of the channel.
+ * This summary support allows for loading a channel without having to reapply all ops that have been applied during its lifetime.
+ * @privateRemarks
+ * Since this is an interface between services (which we only expect to be implemented in this repository) and SharedObjects (which we also only expect to be implemented in this repository),
+ * this should probably eventually become internal.
+ *
+ * {@link IChannelView} subsets this interface removing APIs only needed by the service: if/when IChannel becomes internal, it may make sense to reverse the dependency between these two interfaces,
+ * and promote {@link IChannelView} to expose its APIs more publicly.
+ *
+ * TODO:
+ * Either Channels should become a useful well documented abstraction of which there could be another implementation, or it should be better integrated with SharedObject to reduce concept count.
+ *
+ * @legacy
+ * @alpha
  */
 export interface IChannel extends IFluidLoadable {
 	/**
@@ -119,17 +135,15 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IDeltaHandler {
 	/**
-	 * Processes the op.
-	 * @param message - The message to process
-	 * @param local - Whether the message originated from the local client
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
+	 * Process messages for this channel. The messages here are contiguous messages for this channel in a batch.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
+	processMessages: (messageCollection: IRuntimeMessageCollection) => void;
 
 	/**
 	 * State change events to indicate changes to the delta connection
@@ -144,8 +158,13 @@ export interface IDeltaHandler {
 	 * at all.
 	 * @param message - The original message that was submitted.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created by this message.
+	 * This includes any content which this message created but has since been changed or removed by subsequent messages.
+	 * For example, if this message (call it A) inserts content into a DDS that a subsequent op (call it B) removes,
+	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
+	 * account for the fact that A' never inserted content.
 	 */
-	reSubmit(message: any, localOpMetadata: unknown): void;
+	reSubmit(message: any, localOpMetadata: unknown, squash?: boolean): void;
 
 	/**
 	 * Apply changes from an op just as if a local client has made the change,
@@ -174,7 +193,8 @@ export interface IDeltaHandler {
 
 /**
  * Interface to represent a connection to a delta notification stream.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -198,22 +218,12 @@ export interface IDeltaConnection {
 	 * that needs to be part of the summary but does not generate ops.
 	 */
 	dirty(): void;
-
-	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 }
 
 /**
  * Storage services to read the objects at a given path.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IChannelStorageService {
 	/**
@@ -234,7 +244,8 @@ export interface IChannelStorageService {
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IChannelServices {
 	deltaConnection: IDeltaConnection;
@@ -268,7 +279,8 @@ export interface IChannelServices {
  * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
  * (while still requiring the implementation to implement it).
  *
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IChannelFactory<out TChannel = unknown> {
 	/**

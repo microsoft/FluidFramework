@@ -146,7 +146,7 @@ export class Redis implements IRedis {
 					.getRedisClient()
 					.keys(`${this.getKey(keyPrefix)}*`),
 			RedisFsApis.KeysByPrefix,
-			this.parameters?.enableRedisMetrics,
+			this.parameters?.enableRedisMetrics ?? false,
 			this.parameters?.redisApiMetricsSamplingPeriod,
 			{
 				keyPrefix,
@@ -293,7 +293,7 @@ export class HashMapRedis implements IRedis {
 		const result = await executeRedisFsApiWithMetric(
 			async () => this.redisClientConnectionManager.getRedisClient().hkeys(this.getMapKey()),
 			RedisFsApis.HKeysByPrefix,
-			this.parameters?.enableRedisMetrics,
+			this.parameters?.enableRedisMetrics ?? false,
 			this.parameters?.redisApiMetricsSamplingPeriod,
 			{
 				keyPrefix,
@@ -341,7 +341,7 @@ export class HashMapRedis implements IRedis {
 							.expire(this.getMapKey(), this.expireAfterSeconds);
 					},
 					RedisFsApis.InitHashmapFs,
-					this.parameters?.enableRedisMetrics,
+					this.parameters?.enableRedisMetrics ?? false,
 					this.parameters?.redisApiMetricsSamplingPeriod,
 				);
 			}

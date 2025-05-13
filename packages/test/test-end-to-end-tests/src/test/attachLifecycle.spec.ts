@@ -9,7 +9,7 @@ import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator"
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
@@ -57,7 +57,6 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 		)}`, async function () {
 			// setup shared states
 			const provider = getTestObjectProvider();
-			const timeoutDurationMs = this.timeout() / 2;
 			let containerUrl: IResolvedUrl | undefined;
 			const sharedStringFactory = SharedString.getFactory();
 			const channelFactoryRegistry: [string | undefined, IChannelFactory][] = [
@@ -97,13 +96,9 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 						initContainer.isDirty &&
 						initContainer.attachState !== AttachState.Detached
 					) {
-						await timeoutPromise(
-							(resolve) => initContainer.once("saved", () => resolve()),
-							{
-								durationMs: timeoutDurationMs,
-								errorMsg: "datastoreSaveAfterAttach timeout",
-							},
-						);
+						await timeoutPromise((resolve) => initContainer.once("saved", () => resolve()), {
+							errorMsg: "datastoreSaveAfterAttach timeout",
+						});
 					}
 				};
 				if (testConfig.datastoreAttachPoint === DatastoreCreated) {
@@ -123,13 +118,9 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 						initContainer.isDirty &&
 						initContainer.attachState !== AttachState.Detached
 					) {
-						await timeoutPromise(
-							(resolve) => initContainer.once("saved", () => resolve()),
-							{
-								durationMs: timeoutDurationMs,
-								errorMsg: "ddsSaveAfterAttach timeout",
-							},
-						);
+						await timeoutPromise((resolve) => initContainer.once("saved", () => resolve()), {
+							errorMsg: "ddsSaveAfterAttach timeout",
+						});
 					}
 				};
 				if (testConfig.ddsAttachPoint === DdsCreated) {
@@ -161,17 +152,15 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 				}
 
 				while (initContainer.attachState !== AttachState.Attached) {
-					await timeoutPromise(
-						(resolve) => initContainer.once("attached", () => resolve()),
-						{ durationMs: timeoutDurationMs, errorMsg: "container attach timeout" },
-					);
+					await timeoutPromise((resolve) => initContainer.once("attached", () => resolve()), {
+						errorMsg: "container attach timeout",
+					});
 				}
 
 				while (initContainer.isDirty) {
-					await timeoutPromise(
-						(resolve) => initContainer.once("saved", () => resolve()),
-						{ durationMs: timeoutDurationMs, errorMsg: "final save timeout" },
-					);
+					await timeoutPromise((resolve) => initContainer.once("saved", () => resolve()), {
+						errorMsg: "final save timeout",
+					});
 				}
 				containerUrl = initContainer.resolvedUrl;
 
@@ -182,34 +171,23 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 			{
 				const validationLoader = provider.makeTestLoader(containerConfig);
 				const validationContainer = await validationLoader.resolve({
-					url: await provider.driver.createContainerUrl(
-						provider.documentId,
-						containerUrl,
-					),
+					url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
 				});
 
 				const initDataObject =
 					await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
 
 				const newDatastore = await (
-					await waitKey<IFluidHandle<ITestFluidObject>>(
-						initDataObject.root,
-						"ds",
-						timeoutDurationMs,
-					)
+					await waitKey<IFluidHandle<ITestFluidObject>>(initDataObject.root, "ds")
 				).get();
 
 				const newString = await (
-					await waitKey<IFluidHandle<SharedString>>(
-						newDatastore.root,
-						ddsKey,
-						timeoutDurationMs,
-					)
+					await waitKey<IFluidHandle<SharedString>>(newDatastore.root, ddsKey)
 				).get();
 
 				for (const i of sharedPoints) {
 					assert.equal(
-						await waitChar(newString, convertSharedPointToPos(i), timeoutDurationMs),
+						await waitChar(newString, convertSharedPointToPos(i)),
 						i.toString(),
 						`No match at {i}`,
 					);
@@ -223,11 +201,7 @@ function convertSharedPointToPos(i: number) {
 	return i - sharedPoints[0];
 }
 
-async function waitChar(
-	sharedString: SharedString,
-	pos: number,
-	timeoutDurationMs: number,
-): Promise<string> {
+async function waitChar(sharedString: SharedString, pos: number): Promise<string> {
 	return timeoutPromise<string>(
 		(resolve) => {
 			const text = sharedString.getText();
@@ -244,11 +218,11 @@ async function waitChar(
 				sharedString.on("sequenceDelta", waitFunc);
 			}
 		},
-		{ durationMs: timeoutDurationMs, errorMsg: `${pos} not available before timeout` },
+		{ errorMsg: `${pos} not available before timeout` },
 	);
 }
 
-async function waitKey<T>(map: ISharedMap, key: string, timeoutDurationMs: number): Promise<T> {
+async function waitKey<T>(map: ISharedMap, key: string): Promise<T> {
 	return timeoutPromise<T>(
 		(resolve) => {
 			if (map.has(key)) {
@@ -265,6 +239,6 @@ async function waitKey<T>(map: ISharedMap, key: string, timeoutDurationMs: numbe
 				map.on("valueChanged", waitFunc);
 			}
 		},
-		{ durationMs: timeoutDurationMs, errorMsg: `${key} not available before timeout` },
+		{ errorMsg: `${key} not available before timeout` },
 	);
 }

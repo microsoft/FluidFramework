@@ -8,7 +8,10 @@ import { strict as assert } from "assert";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -41,8 +44,8 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 			]),
 		});
 		fileName = uuid();
-		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		loaderContainerTracker.addContainer(container);
 		await container.attach(provider.driver.createCreateNewRequest(fileName));
 		assert(container.resolvedUrl);
 		containerUrl = container.resolvedUrl;
@@ -57,17 +60,15 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
-			documentServiceFactory:
-				props?.documentServiceFactory ?? provider.documentServiceFactory,
+			documentServiceFactory: props?.documentServiceFactory ?? provider.documentServiceFactory,
 			codeLoader:
 				props?.codeLoader ??
-				new LocalCodeLoader([
-					[provider.defaultCodeDetails, new TestFluidObjectFactory([])],
-				]),
+				new LocalCodeLoader([[provider.defaultCodeDetails, new TestFluidObjectFactory([])]]),
 		});
-		loaderContainerTracker.add(loader);
 		const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
-		return loader.resolve({ url: requestUrl });
+		const container = await loader.resolve({ url: requestUrl });
+		loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	itExpects(

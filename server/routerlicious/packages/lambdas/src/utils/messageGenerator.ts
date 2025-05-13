@@ -12,6 +12,8 @@ import {
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
 
+// TODO: documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
@@ -31,6 +33,8 @@ export const createNackMessage = (
 	},
 });
 
+// TODO: documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
@@ -48,6 +52,8 @@ export function createRoomJoinMessage(clientId: string, client: IClient): ISigna
 	};
 }
 
+// TODO: documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
@@ -61,7 +67,7 @@ export const createRoomLeaveMessage = (clientId: string): ISignalMessage => ({
 
 /**
  * Mirrors ISignalEnvelope from runtime definitions, for signals that come from an external
- * caller (not sent by a client (so no 'clientSignalSequenceNumber') and are always addressed
+ * caller (not sent by a client (so no 'clientBroadcastSignalSequenceNumber') and are always addressed
  * to the Container (so no 'address').
  * @internal
  */

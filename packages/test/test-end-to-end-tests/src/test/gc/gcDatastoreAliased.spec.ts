@@ -40,6 +40,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		return (dataStore._context.containerRuntime as ContainerRuntime).summarize({
 			runGC: true,
 			trackState: false,
+			fullTree: true,
 		});
 	}
 
@@ -77,7 +78,10 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		// Alias a datastore
 		const alias = "alias";
 		const aliasResult1 = await dataStore2.trySetAlias(alias);
-		assert(aliasResult1 === "Success", `Expected an successful aliasing. Got: ${aliasResult1}`);
+		assert(
+			aliasResult1 === "Success",
+			`Expected an successful aliasing. Got: ${aliasResult1}`,
+		);
 		await provider.ensureSynchronized();
 
 		// Should be able to retrieve root datastore from remote

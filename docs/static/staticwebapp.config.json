@@ -1,11 +1,18 @@
 {
-  "globalHeaders": {
-    "cache-control": "must-revalidate, max-age=3600"
-  },
-  "navigationFallback": {
-    "rewrite": "/api/fallback"
-  },
-  "platform": {
-    "apiRuntime": "node:18"
-  }
+	"globalHeaders": {
+		"cache-control": "must-revalidate, max-age=3600",
+		"Content-Security-Policy": "require-trusted-types-for 'script'; trusted-types default dompurify ff#webpack; report-uri https://csp.microsoft.com/report/FluidFramework-WW"
+	},
+	"navigationFallback": {
+		"rewrite": "/api/fallback"
+	},
+	"platform": {
+		"apiRuntime": "node:18"
+	},
+	"routes": [
+		{
+			"route": "/404",
+			"statusCode": 404
+		}
+	]
 }

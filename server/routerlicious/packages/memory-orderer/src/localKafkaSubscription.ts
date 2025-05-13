@@ -51,29 +51,31 @@ export class LocalKafkaSubscription extends EventEmitter {
 
 		const message = this.queue.get(this.queueOffset);
 
-		try {
-			this.processing = true;
+		if (message !== undefined) {
+			try {
+				this.processing = true;
 
-			const optionalPromise = this.subscriber.process(message);
-			if (optionalPromise !== undefined) {
-				await optionalPromise;
+				const optionalPromise = this.subscriber.process(message);
+				if (optionalPromise !== undefined) {
+					await optionalPromise;
+				}
+
+				this.queueOffset++;
+
+				this.emit("processed", this.queueOffset);
+			} catch (ex) {
+				// Lambda failed to process the message
+				this.subscriber.context.error(ex, { restart: false });
+
+				this.retryTimer = setTimeout(() => {
+					this.retryTimer = undefined;
+					this.process().catch((e) => this.handleProcessError(e));
+				}, 500);
+
+				return;
+			} finally {
+				this.processing = false;
 			}
-
-			this.queueOffset++;
-
-			this.emit("processed", this.queueOffset);
-		} catch (ex) {
-			// Lambda failed to process the message
-			this.subscriber.context.error(ex, { restart: false });
-
-			this.retryTimer = setTimeout(() => {
-				this.retryTimer = undefined;
-				this.process().catch((e) => this.handleProcessError(e));
-			}, 500);
-
-			return;
-		} finally {
-			this.processing = false;
 		}
 
 		// Process the next one

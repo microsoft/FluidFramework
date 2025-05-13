@@ -45,7 +45,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
  *
  * Typical usages (use one field like this at the top of a class):
  * ```typescript
- * protected _typeCheck?: MakeNominal;
+ * protected _typeCheck!: MakeNominal;
  * protected _typeCheck?: Contravariant<T>;
  * protected _typeCheck?: Covariant<T>;
  * protected _typeCheck?: Invariant<T>;
@@ -78,11 +78,11 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
  * can use this to prevent undesired assignments.
  * @example
  * ```typescript
- * protected _typeCheck?: MakeNominal;
+ * protected _typeCheck!: MakeNominal;
  * ```
  * @privateRemarks
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
- * @public
+ * @sealed @public
  */
 export interface MakeNominal {}
 
@@ -94,8 +94,6 @@ export interface MakeNominal {}
  * ```typescript
  * protected _typeCheck?: Contravariant<T>;
  * ```
- *
- * @internal
  */
 export interface Contravariant<in T> {
 	_removeCovariance?: (_: T) => void;
@@ -109,8 +107,6 @@ export interface Contravariant<in T> {
  * ```typescript
  * protected _typeCheck?: Covariant<T>;
  * ```
- *
- * @internal
  */
 export interface Covariant<out T> {
 	_removeContravariance?: T;
@@ -124,8 +120,6 @@ export interface Covariant<out T> {
  * ```typescript
  * protected _typeCheck?: Invariant<T>;
  * ```
- *
- * @internal
  */
 export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {}
 
@@ -133,7 +127,6 @@ export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {}
  * Compile time assert that X is True.
  * To use, simply define a type:
  * `type _check = requireTrue<your type check>;`
- *
  * @internal
  */
 export type requireTrue<_X extends true> = true;
@@ -142,7 +135,6 @@ export type requireTrue<_X extends true> = true;
  * Compile time assert that X is False.
  * To use, simply define a type:
  * `type _check = requireFalse<your type check>;`
- *
  * @internal
  */
 export type requireFalse<_X extends false> = true;
@@ -155,34 +147,32 @@ export type requireFalse<_X extends false> = true;
  * @see {@link https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types | distributive-conditional-types} for details.
  * @internal
  */
-export type isAssignableTo<Source, Destination> = [Source] extends [Destination] ? true : false;
+export type isAssignableTo<Source, Destination> = [Source] extends [Destination]
+	? true
+	: false;
 
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
- *
- * @internal
  */
 export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> extends false
 	? false
 	: isAssignableTo<Superset, Subset> extends true
-	? false
-	: true;
+		? false
+		: true;
 
 /**
  * Returns a type parameter that is true iff A and B are assignable to each other, and neither is any.
  * This is useful for checking if the output of a type meta-function is the expected type.
- *
  * @internal
  */
 export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
 	? false
 	: isAssignableTo<A, B> extends true
-	? isAssignableTo<B, A>
-	: false;
+		? isAssignableTo<B, A>
+		: false;
 
 /**
  * Returns a type parameter that is true iff A is any or B is any.
- *
  * @internal
  */
 export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
@@ -202,7 +192,24 @@ export type isAny<T> = boolean extends (T extends never ? true : false) ? true :
  * Compile time assert that A is assignable to (extends) B.
  * To use, simply define a type:
  * `type _check = requireAssignableTo<T, Expected>;`
- *
  * @internal
  */
 export type requireAssignableTo<_A extends B, B> = true;
+
+/**
+ * Returns a type parameter that is true iff the `Keys` union includes all the keys of `T`.
+ *
+ * @remarks
+ * This does not handle when the T has an index signature permitting keys like `string` which
+ * TypeScript cannot omit members from.
+ *
+ * @example
+ * ```ts
+ * type _check = requireTrue<areOnlyKeys<{a: number, b: number}, 'a' | 'b'>> // true`
+ * type _check = requireTrue<areOnlyKeys<{a: number, b: number}, 'a'>> // false`
+ * ```
+ */
+export type areOnlyKeys<T, Keys extends keyof T> = isAssignableTo<
+	Record<string, never>,
+	Omit<Required<T>, Keys>
+>;

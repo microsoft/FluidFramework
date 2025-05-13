@@ -8,6 +8,9 @@ parameters:
   type: boolean
 
 steps:
+# Note: even though we get component governance tasks auto-injected through the 1ES pipeline template, this one is
+# currently necessary because the NOTICE file generation task right below requires that CG has run first.
+# We're trying to see if we could leverage the auto-injected ones for that.
 - task: ComponentGovernanceComponentDetection@0
   displayName: Component Detection
   inputs:

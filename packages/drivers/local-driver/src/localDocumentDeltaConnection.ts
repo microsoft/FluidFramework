@@ -5,12 +5,12 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
-	IClient,
 	IConnect,
 	IDocumentMessage,
 	NackErrorType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { IWebSocketServer } from "@fluidframework/server-services-core";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -75,13 +75,6 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		Promise.resolve().then(() => {
 			this.emitMessages("submitOp", [messages]);
 		});
-	}
-
-	/**
-	 * Submits a new signal to the server
-	 */
-	public submitSignal(message: string): void {
-		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**

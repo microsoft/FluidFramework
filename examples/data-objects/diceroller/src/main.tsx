@@ -4,8 +4,8 @@
  */
 
 import type { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { IValueChanged } from "@fluidframework/map/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { IValueChanged } from "@fluidframework/map/legacy";
 import React from "react";
 
 const diceValueKey = "diceValue";
@@ -34,7 +34,9 @@ export interface IDiceRollerViewProps {
 	model: IDiceRoller;
 }
 
-export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
+export const DiceRollerView: React.FC<IDiceRollerViewProps> = (
+	props: IDiceRollerViewProps,
+) => {
 	const [diceValue, setDiceValue] = React.useState(props.model.value);
 
 	React.useEffect(() => {
@@ -65,7 +67,10 @@ export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRolle
 export class DiceRoller extends DataObject implements IDiceRoller {
 	public static readonly Name = "@fluid-example/dice-roller";
 
-	public static readonly factory = new DataObjectFactory(DiceRoller.Name, DiceRoller, [], {});
+	public static readonly factory = new DataObjectFactory({
+		type: DiceRoller.Name,
+		ctor: DiceRoller,
+	});
 
 	/**
 	 * initializingFirstTime is called only once, it is executed only by the first client to open the

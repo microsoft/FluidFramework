@@ -7,7 +7,10 @@
 sdk = false;
 
 // Export modules to global scope as necessary (only for testing)
-if (typeof process === "object" && Object.prototype.toString.call(process) === "[object process]") {
+if (
+	typeof process === "object" &&
+	Object.prototype.toString.call(process) === "[object process]"
+) {
 	// We are in node. Require modules.
 	chai = require("chai");
 	expect = chai.expect;

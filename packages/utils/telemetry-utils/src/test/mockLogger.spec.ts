@@ -14,6 +14,14 @@ describe("MockLogger", () => {
 			mockLogger = new MockLogger();
 		});
 
+		function assertCleared(): void {
+			assert.equal(
+				mockLogger.events.length,
+				0,
+				"Events should have been cleared post match check.",
+			);
+		}
+
 		it("empty log, none expected", () => {
 			assert(mockLogger.matchEvents([]));
 		});
@@ -219,6 +227,43 @@ describe("MockLogger", () => {
 					true /* inlineDetailsProp */,
 				),
 			);
+		});
+
+		it("Assertion exceptions", () => {
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "A", a: 1 });
+
+			try {
+				mockLogger.assertMatchStrict([{ eventName: "B", b: 2 }]);
+			} catch (error: unknown) {
+				assert.equal(
+					(error as Error).message,
+					'Logs don\'t match\nexpected:\n[{"eventName":"B","b":2}]\n\nactual:\n[{"category":"generic","eventName":"A","a":1}]',
+				);
+				return;
+			}
+			assert.fail("Expected an exception to be thrown.");
+		});
+
+		it("Events are cleared after match check", () => {
+			// Whether or not the match check succeeds should not affect the clearing of events.
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "A", a: 1 });
+			mockLogger.matchEvents([]);
+			assertCleared();
+
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "B", b: 2 });
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "C", c: 3 });
+			mockLogger.matchAnyEvent([{ eventName: "B", b: 2 }]);
+			assertCleared();
+		});
+
+		it("Events aren't cleared when clearAfterMatchCheck is not set", () => {
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "A", a: 1 });
+			mockLogger.matchAnyEvent(
+				[{ eventName: "B", b: 2 }],
+				/* inlineDetailsProp: */ false,
+				/* clearEventsAfterCheck: */ false,
+			);
+			assert(mockLogger.events.length > 0, "Events should not have been cleared.");
 		});
 	});
 });

@@ -13,15 +13,18 @@ import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
 		summaryOptions: {
-			initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without thi
+			initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without this
 			summaryConfigOverrides: {
 				...DefaultSummaryConfiguration,
 				...{ maxOps: 10, initialSummarizerDelayMs: 0, minIdleTime: 10, maxIdleTime: 10 },
@@ -56,8 +59,7 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 
 			const { stats, summary } = await containerRuntime.summarize({
 				runGC: false,
-				fullTree: false,
-				trackState: false,
+				fullTree: true,
 			});
 
 			// Validate stats

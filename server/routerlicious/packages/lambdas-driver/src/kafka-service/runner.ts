@@ -108,9 +108,58 @@ export class KafkaRunner implements IRunner {
 			}
 		});
 
+		this.partitionManager.on("pause", (partitionId: number, offset: number, reason?: any) => {
+			this.pause(partitionId, offset)
+				.then(() => {
+					Lumberjack.info("KafkaRunner paused", {
+						partitionId,
+						offset,
+						reason: serializeError(reason),
+					});
+				})
+				.catch((error) => {
+					Lumberjack.error(
+						"KafkaRunner encountered an error during pause",
+						{ partitionId, offset, reason },
+						error,
+					);
+				});
+		});
+
+		this.partitionManager.on("resume", (partitionId: number) => {
+			this.resume(partitionId)
+				.then(() => {
+					Lumberjack.info("KafkaRunner resumed", { partitionId });
+				})
+				.catch((error) => {
+					Lumberjack.error(
+						"KafkaRunner encountered an error during resume",
+						{ partitionId },
+						error,
+					);
+				});
+		});
+
 		this.stopped = false;
 
 		return this.deferred.promise;
+	}
+
+	public async pause(partitionId: number, offset: number): Promise<void> {
+		Lumberjack.info(`KafkaRunner.pause starting`, { partitionId, offset });
+		if (this.consumer.pauseFetching) {
+			const seekTimeout = this.config?.get("kafka:seekTimeoutAfterPause") ?? 1000;
+			await this.consumer.pauseFetching(partitionId, seekTimeout, offset);
+		}
+		this.partitionManager?.pause(partitionId, offset);
+	}
+
+	public async resume(partitionId: number): Promise<void> {
+		Lumberjack.info(`KafkaRunner.resume starting`, { partitionId });
+		if (this.consumer.resumeFetching) {
+			await this.consumer.resumeFetching(partitionId);
+		}
+		this.partitionManager?.resume(partitionId);
 	}
 
 	/**

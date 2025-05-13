@@ -3,15 +3,22 @@ name: "push-tag-create-release"
 # When a release tag is pushed to the repo, this workflow is triggered. It first installs the Fluid build-tools, then
 # uses the flub release fromTag command to load some release metadata into an environment variable. Once loaded, it
 # checks out the tagged commit and runs flub release report to generate release reports. It also uses auto-changelog to
-# create a changelog for patch releases (only patches). All the artifacts are uploaded for debugging purposes.
+# create a changelog for patch releases, and uses the in-repo release notes for minor and major releases.
 
-# Once the artifacts are created, the workflow creates a GitHub release and attaches the release reports to it. The
-# release is a draft so that the release engineer can verify the contents before publishing.
+# Once the artifacts are created, the workflow creates a GitHub release and attaches the release reports to it. Client
+# and server releases are published automatically, but all others are published as a draft and must be manually
+# published using the GitHub UI.
 
 on:
   push:
     tags:
       - "*_v*"
+  # Allow manually triggering this workflow from the web UI
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'git release tag to process'
+        required: true
 
 permissions:
   contents: write
@@ -21,13 +28,13 @@ jobs:
     name: Create GitHub release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           fetch-depth: "0" # all history
           persist-credentials: false
 
-      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
-      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
+      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
@@ -39,10 +46,10 @@ jobs:
           cd build-tools
           pnpm install --frozen-lockfile
           pnpm run build:compile
-
-          # add the bin dir of build-cli to the path
-          cd packages/build-cli/bin
-          echo "$(pwd)" >> $GITHUB_PATH
+          # We want flub available to call, so we run npm link in the build-cli package, which creates shims that are avilable on the PATH
+          # Use npm link instead of pnpm link because it handles bins better
+          cd packages/build-cli
+          npm link
 
       - name: Check build-tools installation
         run: |
@@ -51,41 +58,68 @@ jobs:
           flub --help
           flub commands
 
+      - name: Set tag name from push
+        if: github.event_name == 'push'
+        run: echo "TAG_NAME=${GITHUB_REF}" >> $GITHUB_ENV
+      - name: Set tag name from manual input
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "TAG_NAME=refs/tags/${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+
       - name: Get release metadata JSON
         run: |
-          flub release fromTag ${{ github.ref }} --json | jq -c > release-metadata.json
+          flub release fromTag $TAG_NAME --json | jq -c > release-metadata.json
       - name: Upload release metadata JSON
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
         with:
           name: release-metadata
           path: release-metadata.json
-          retention-days: 3
+          # We release every few weeks, so this helps ensure that an artifact is available for debugging this workflow
+          # since we are likely to release within a 30 day window.
+          retention-days: 30
       - name: Load release metadata into env variable
         run: |
           echo "RELEASE_JSON=$(cat release-metadata.json)" >> $GITHUB_ENV
       - name: Set releaseType output variable
         run: |
-         echo "releaseType=${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}" >> "$GITHUB_OUTPUT"
+          echo "releaseType=${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}" >> "$GITHUB_OUTPUT"
 
-      # Generate release reports
-      - name: Check out tag
+      - name: Check out tag from push
+        if: github.event_name == 'push'
         run: |
           git checkout ${{ github.ref }}
+      - name: Check out tag from manual input
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git checkout refs/tags/${{ github.event.inputs.tag }}
+
+      # Generate release reports
       - name: Create release reports (manifests)
         run: |
           mkdir reports
           flub release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o reports
       - name: Upload release reports
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
         with:
           name: release-reports
           path: reports
           retention-days: 7
 
-      # Generate changelog
-      - name: Generate changelog
-        # This changelog is only for client patch releases and build-tools releases
-        if: (fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client') || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools'
+      - name: Generate minor/major release notes
+        # This content is the "default" release notes - this should be used for minor and major releases of client and
+        # server release groups. To use this, a release group needs to be using changesets. Build-tools does not use
+        # changesets, so it is excluded.
+        if: fromJson(env.RELEASE_JSON).releaseType != 'patch' && (fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server')
+        run: |
+          flub transform releaseNotes \
+          --inFile RELEASE_NOTES/${{ fromJson(env.RELEASE_JSON).version }}.md \
+          --outFile release-notes.md
+
+      - name: Generate patch release notes
+        # This condition is the logical inverse of the condition for the "Generate minor/major release notes" step.
+        # One of these two steps should be executed each time the workflow is run.
+        if: fromJson(env.RELEASE_JSON).releaseType == 'patch' || (fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'client' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'server')
         run: |
           # We only need the root dependencies
           pnpm install -w --frozen-lockfile
@@ -95,18 +129,13 @@ jobs:
           --starting-version ${{ fromJson(env.RELEASE_JSON).tag }} \
           --ending-version ${{ fromJson(env.RELEASE_JSON).tag }} \
           --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
-          --output auto-changelog.md \
+          --output release-notes.md \
           --template .github/workflows/data/patch-changelog.hbs
-      - name: Generate changelog
-        # This changelog is a basically empty one used for everything except client patches and build-tools.
-        if: ${{ !(fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client') && fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'build-tools' }}
-        run: |
-          echo "This is a **${{ fromJson(env.RELEASE_JSON).releaseType }}** release." > auto-changelog.md
 
-      # Only creates GH releases for client and build-tools releases.
+      # Only creates GH releases for client, server, and build-tools releases.
       - name: Create GH release
         if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server'
-        uses: ncipollo/release-action@eb05307dcee34deaad054e98128088a30d7980dc # ratchet:ncipollo/release-action@main
+        uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5 # ratchet:ncipollo/release-action@v1
         with:
           # Allow updates to existing releases.
           allowUpdates: true
@@ -114,16 +143,19 @@ jobs:
           # Will skip if a published (non-draft) release already exists.
           skipIfReleaseExists: true
 
-          # Leave the release as a draft so that the release engineer can verify it before it's public. Once we are
-          # more confident in the automation, we may update this workflow to publish the release as well.
-          draft: true
-          omitDraftDuringUpdate: true # don't change the draft state when updating
+          # Leave all releases except for client/server as draft; only client and server releases are fully automated.
+          draft: ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'client' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'server' }}
+
+          # Don't change the draft state when updating an existing release. This setting is not really necessary for us
+          # in most cases because we don't pre-create releases, so this workflow always creates a new GH release. It's
+          # included mostly for safety reasons, to ensure that existing drafts aren't published accidentally.
+          omitDraftDuringUpdate: true
 
           name: ${{ fromJson(env.RELEASE_JSON).title }}
           omitNameDuringUpdate: false # always overwrite the name
 
-          # Created in the "Generate changelog" step
-          bodyFile: auto-changelog.md
+          # Created in the "Generate release notes" step(s)
+          bodyFile: release-notes.md
           omitBodyDuringUpdate: true # Don't overwrite the body
 
           # Created in the "Create release reports (manifests)" step

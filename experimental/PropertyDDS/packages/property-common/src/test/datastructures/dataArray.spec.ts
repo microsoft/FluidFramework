@@ -23,9 +23,7 @@ describe("BaseDataArray", function () {
 		} finally {
 			expect(error).to.equal(undefined);
 			expect(myDataArray.length).to.equal(4);
-			expect(Array.prototype.slice.call(myDataArray.getBuffer())).to.deep.equal([
-				1, 2, 31, 5,
-			]);
+			expect(Array.prototype.slice.call(myDataArray.getBuffer())).to.deep.equal([1, 2, 31, 5]);
 		}
 	});
 

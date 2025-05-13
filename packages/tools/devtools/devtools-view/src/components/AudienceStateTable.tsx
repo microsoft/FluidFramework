@@ -8,7 +8,6 @@ import {
 	TableBody,
 	TableCell,
 	TableHeader,
-	TableHeaderCell,
 	TableRow,
 	makeStyles,
 	tokens,
@@ -18,7 +17,7 @@ import React from "react";
 
 import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
 
-import { type TransformedAudienceStateData } from "./AudienceView.js";
+import type { TransformedAudienceStateData } from "./AudienceView.js";
 import {
 	clientIdTooltipText,
 	clientModeTooltipText,
@@ -76,10 +75,12 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 			<TableHeader>
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
-						<TableHeaderCell key={columnIndex}>
+						// TODO: Replace TableCell with TableHeaderCell once https://github.com/microsoft/fluentui/issues/31588 is fixed.
+						<TableCell key={columnIndex}>
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
+									aria-label="Client ID"
 									infoTooltipContent={clientIdTooltipText}
 								>
 									{column.label}
@@ -88,6 +89,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "userId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
+									aria-label="User ID"
 									infoTooltipContent={userIdTooltipText}
 								>
 									{column.label}
@@ -96,6 +98,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "mode" && (
 								<LabelCellLayout
 									icon={<EditRegular />}
+									aria-label="Mode"
 									infoTooltipContent={clientModeTooltipText}
 								>
 									{column.label}
@@ -104,12 +107,13 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "scopes" && (
 								<LabelCellLayout
 									icon={<Search12Regular />}
+									aria-label="Scopes"
 									infoTooltipContent={clientScopesTooltipText}
 								>
 									{column.label}
 								</LabelCellLayout>
 							)}
-						</TableHeaderCell>
+						</TableCell>
 					))}
 				</TableRow>
 			</TableHeader>

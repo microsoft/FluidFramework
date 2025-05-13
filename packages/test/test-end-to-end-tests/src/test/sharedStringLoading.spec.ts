@@ -8,7 +8,10 @@ import { strict as assert } from "assert";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils/internal";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
@@ -102,31 +105,24 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 			{
 				const documentServiceFactory: IDocumentServiceFactory =
-					wrapObjectAndOverride<IDocumentServiceFactory>(
-						provider.documentServiceFactory,
-						{
-							createDocumentService: {
-								connectToStorage: {
-									readBlob: (realStorage) => async (id) => {
-										const blob = await realStorage.readBlob(id);
-										const blobObj = await readAndParse<any>(realStorage, id);
-										// throw when trying to load the header blob
-										if (blobObj.headerMetadata !== undefined) {
-											throw new NonRetryableError(
-												"Not Found",
-												"someErrorType",
-												{
-													statusCode: 404,
-													driverVersion: pkgVersion,
-												},
-											);
-										}
-										return blob;
-									},
+					wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
+						createDocumentService: {
+							connectToStorage: {
+								readBlob: (realStorage) => async (id) => {
+									const blob = await realStorage.readBlob(id);
+									const blobObj = await readAndParse<any>(realStorage, id);
+									// throw when trying to load the header blob
+									if (blobObj.headerMetadata !== undefined) {
+										throw new NonRetryableError("Not Found", "someErrorType", {
+											statusCode: 404,
+											driverVersion: pkgVersion,
+										});
+									}
+									return blob;
 								},
 							},
 						},
-					);
+					});
 
 				const codeDetails = { package: "no-dynamic-pkg" };
 				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]], {

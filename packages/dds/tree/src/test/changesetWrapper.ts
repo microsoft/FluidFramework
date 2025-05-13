@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "assert";
-import { assert } from "@fluidframework/core-utils/internal";
+import { strict as assert } from "node:assert";
 import {
-	ChangeAtomIdMap,
-	DeltaFieldChanges,
-	RevisionTag,
-	TaggedChange,
+	type ChangeAtomIdMap,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
 	tagChange,
 	taggedOptAtomId,
 } from "../core/index.js";
-import {
+import type {
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,
@@ -23,7 +21,6 @@ import {
 	ToDelta,
 } from "../feature-libraries/index.js";
 import {
-	fail,
 	forEachInNestedMap,
 	nestedMapFromFlatList,
 	nestedMapToFlatList,
@@ -31,6 +28,8 @@ import {
 	tryGetFromNestedMap,
 } from "../util/index.js";
 import { TestChange } from "./testChange.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 export interface ChangesetWrapper<T> {
 	fieldChange: T;
@@ -66,7 +65,10 @@ function rebase<T>(
 	) => T,
 ): ChangesetWrapper<T> {
 	const rebasedNodes: ChangeAtomIdMap<TestChange> = new Map();
-	const rebaseChild = (id1: NodeId | undefined, id2: NodeId | undefined): NodeId | undefined => {
+	const rebaseChild = (
+		id1: NodeId | undefined,
+		id2: NodeId | undefined,
+	): NodeId | undefined => {
 		if (id1 !== undefined) {
 			const nodeChange = tryGetFromNestedMap(change.change.nodes, id1.revision, id1.localId);
 			assert(nodeChange !== undefined, "Unknown node ID");
@@ -126,7 +128,7 @@ function compose<T>(
 		const id =
 			taggedOptAtomId(id1, change1.revision) ??
 			taggedOptAtomId(id2, change2.revision) ??
-			fail("Should not compose two undefined nodes");
+			assert.fail("Should not compose two undefined nodes");
 
 		setInNestedMap(composedNodes, id.revision, id.localId, composedNode);
 		return id;
@@ -143,16 +145,22 @@ function compose<T>(
 
 function invert<T>(
 	change: TaggedChange<ChangesetWrapper<T>>,
-	invertField: (field: TaggedChange<T>, isRollback: boolean) => T,
+	invertField: (
+		field: TaggedChange<T>,
+		revision: RevisionTag | undefined,
+		isRollback: boolean,
+	) => T,
+	revision: RevisionTag | undefined,
 	isRollback: boolean = false,
 ): ChangesetWrapper<T> {
 	const invertedField = invertField(
 		tagChange(change.change.fieldChange, change.revision),
+		revision,
 		isRollback,
 	);
 	const invertedNodes: ChangeAtomIdMap<TestChange> = new Map();
-	forEachInNestedMap(change.change.nodes, (testChange, revision, localId) => {
-		setInNestedMap(invertedNodes, revision, localId, TestChange.invert(testChange));
+	forEachInNestedMap(change.change.nodes, (testChange, revision2, localId) => {
+		setInNestedMap(invertedNodes, revision2, localId, TestChange.invert(testChange));
 	});
 
 	return { fieldChange: invertedField, nodes: invertedNodes };
@@ -196,8 +204,8 @@ function prune<T>(
 
 function toDelta<T>(
 	change: ChangesetWrapper<T>,
-	fieldToDelta: (change: T, deltaFromChild: ToDelta) => DeltaFieldChanges,
-): DeltaFieldChanges {
+	fieldToDelta: (change: T, deltaFromChild: ToDelta) => FieldChangeDelta,
+): FieldChangeDelta {
 	const deltaFromChild = (id: NodeId) => {
 		const node = tryGetFromNestedMap(change.nodes, id.revision, id.localId);
 		assert(node !== undefined, "Unknown node ID");
@@ -213,5 +221,5 @@ function assertEqual<T>(
 	assertFieldsEqual: (actual: T, expected: T) => void,
 ): void {
 	assertFieldsEqual(actual.fieldChange, expected.fieldChange);
-	strict.deepEqual(actual.nodes, expected.nodes);
+	assert.deepEqual(actual.nodes, expected.nodes);
 }

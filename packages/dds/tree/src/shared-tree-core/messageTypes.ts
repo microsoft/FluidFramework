@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
-import { GraphCommit } from "../core/index.js";
+import type { GraphCommit } from "../core/index.js";
 
 export interface DecodedMessage<TChange> {
 	commit: GraphCommit<TChange>;

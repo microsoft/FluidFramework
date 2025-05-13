@@ -7,7 +7,7 @@
 	// "pruneFiles" is disabled because it causesd "source-map-support/register" to give `Unknown file extension ".ts"` errors.
 	// "mochaExplorer.pruneFiles": true,
 	"mochaExplorer.require": [
-		"node_modules/@fluid-internal/mocha-test-setup",
+		"node_modules/@fluid-internal/mocha-test-setup/dist/index.js",
 		"source-map-support/register",
 	],
 	"mochaExplorer.configFile": ".mocharc.cjs",
@@ -15,5 +15,34 @@
 	// This extension appears to invoke mocha programmatically, meaning that the enablement of this option in the common
 	// mocha test config isn't sufficient; it also needs to be enabled here.
 	"mochaExplorer.nodeArgv": ["--conditions", "allow-ff-test-exports"],
-	"cSpell.words": ["deprioritized", "endregion", "insertable", "reentrantly", "unhydrated"],
+	"cSpell.words": [
+		"contravariance",
+		"contravariantly",
+		"covariantly",
+		"deprioritized",
+		"enablable",
+		"endregion",
+		"fluidframework",
+		"insertable",
+		"reentrantly",
+		"typeparam",
+		"unannotate",
+		"unhydrated",
+	],
+
+	// Enable biome as default formatter, and disable rules that disagree with it
+	"editor.defaultFormatter": "biomejs.biome",
+	"editor.insertSpaces": false,
+	// Also configure the formatter on a per-language basis for some common languages/file-types, to make sure it is applied
+	// even if someone's User Settings specify a different formatter at this level (which overrides the root-level
+	// 'editor.defaultFormatter').
+	"[json]": {
+		"editor.defaultFormatter": "biomejs.biome",
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "biomejs.biome",
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "biomejs.biome",
+	},
 }

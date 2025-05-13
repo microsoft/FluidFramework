@@ -16,8 +16,6 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-// eslint-disable-next-line import/no-internal-modules
-import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
@@ -26,20 +24,14 @@ import {
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -65,13 +57,7 @@ class HandleType extends builder.object("handleObj", {
 	handle: builder.optional(builder.handle),
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<typeof HandleType> {
-	return tree.schematize(
-		new TreeConfiguration(HandleType, () => ({
-			handle: undefined,
-		})),
-	);
-}
+const treeConfig = new TreeViewConfiguration({ schema: HandleType });
 
 describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
@@ -158,12 +144,11 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 	// V1 of the registry -----------------------------------------
 	// V1 of the code: Registry setup to create the old document
 	const oldChannelFactory = LegacySharedTree.getFactory();
-	const dataObjectFactory1 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[oldChannelFactory],
-		{},
-	);
+	const dataObjectFactory1 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [oldChannelFactory],
+	});
 
 	// The 1st runtime factory, V1 of the code
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -183,33 +168,31 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		(legacyTree, newTree) => {
 			// Migration code that the customer writes
 			// Revert local edits - otherwise we will be eventually inconsistent
-			const edits = legacyTree.edits as EditLog;
+			const edits = legacyTree.edits;
 			const localEdits = [...edits.getLocalEdits()].reverse();
 			for (const edit of localEdits) {
 				legacyTree.revert(edit.id);
 			}
 			// migrate data
 			const handle = getHandle(legacyTree);
-			newTree
-				.schematize(
-					new TreeConfiguration(HandleType, () => ({
-						handle,
-					})),
-				)
-				[disposeSymbol]();
+			const view = newTree.viewWith(treeConfig);
+			view.initialize({ handle });
+			view.dispose();
 		},
 	);
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
 
-	const dataObjectFactory2 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[migrationShimFactory, sharedTreeShimFactory], // Use the migrationShimFactory instead of the LegacySharedTreeFactory
-		{},
-	);
+	const dataObjectFactory2 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [migrationShimFactory, sharedTreeShimFactory],
+	});
 
-	const childObjectFactory = new DataObjectFactory("ChildDataObject", ChildDataObject, [], {});
+	const childObjectFactory = new DataObjectFactory({
+		type: "ChildDataObject",
+		ctor: ChildDataObject,
+	});
 
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -271,8 +254,8 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree as ITree;
-		const view1 = getNewTreeView(newTree1);
-		const view2 = getNewTreeView(newTree2);
+		const view1 = newTree1.viewWith(treeConfig);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
 		assert(node1.handle !== undefined, "expected to migrate handle");
@@ -309,8 +292,8 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree;
-		const view1 = getNewTreeView(newTree1);
-		const view2 = getNewTreeView(newTree2);
+		const view1 = newTree1.viewWith(treeConfig);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
 		assert.equal(node1.handle, undefined, "expected no handle to be stored in node1");

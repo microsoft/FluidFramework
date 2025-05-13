@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ITree, SharedTree, type TreeView } from "@fluidframework/tree/internal";
+import { ITree, type TreeView } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/legacy";
+
 import { AppState } from "./appState.js";
 import { type App, appTreeConfiguration } from "./schema.js";
 
@@ -21,14 +23,15 @@ export class Bubblebench extends DataObject {
 	protected async initializingFirstTime() {
 		const tree = SharedTree.create(this.runtime);
 
-		this.initializeTree(tree);
+		this.view = tree.viewWith(appTreeConfiguration);
+		this.view.initialize({ clients: [] });
 		this.root.set(treeKey, tree.handle);
 	}
 
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const tree = await this.root.get<IFluidHandle<ITree>>(treeKey)!.get();
-		this.initializeTree(tree);
+		this.view = tree.viewWith(appTreeConfiguration);
 	}
 
 	protected async hasInitialized() {
@@ -59,14 +62,6 @@ export class Bubblebench extends DataObject {
 	}
 
 	/**
-	 * Initialize the schema of the shared tree to that of the Bubblebench AppState.
-	 * @param tree - ISharedTree
-	 */
-	initializeTree(tree: ITree) {
-		this.view = tree.schematize(appTreeConfiguration);
-	}
-
-	/**
 	 * Get the SharedTree.
 	 * Cannot be accessed until after initialization has completed.
 	 */
@@ -90,9 +85,8 @@ export class Bubblebench extends DataObject {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  * @internal
  */
-export const BubblebenchInstantiationFactory = new DataObjectFactory(
-	Bubblebench.Name,
-	Bubblebench,
-	[SharedTree.getFactory()], // This is fine for now  but we will have to adjust this API later to allow control of write format
-	{},
-);
+export const BubblebenchInstantiationFactory = new DataObjectFactory({
+	type: Bubblebench.Name,
+	ctor: Bubblebench,
+	sharedObjects: [SharedTree.getFactory()],
+});

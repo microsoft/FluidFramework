@@ -3,23 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
+import path from "node:path";
 
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
+import { type ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { brand } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { Change } from "./optionalFieldUtils.js";
 import { TestChange } from "../../testChange.js";
+import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,
@@ -68,6 +67,7 @@ export function testSnapshots() {
 		const baseContext = {
 			originatorId: snapshotCompressor.localSessionId,
 			revision: undefined,
+			idCompressor: testIdCompressor,
 		};
 
 		for (const version of family.getSupportedFormats()) {

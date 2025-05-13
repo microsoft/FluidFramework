@@ -4,11 +4,12 @@
  */
 
 import { Heap, IComparer } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { RedBlackTree } from "../collections/index.js";
 import { compareNumbers } from "../mergeTreeNodes.js";
+import { PriorPerspective } from "../perspective.js";
 import { PropertySet } from "../properties.js";
 
 import { TestClient } from "./testClient.js";
@@ -36,7 +37,7 @@ export class TestServer extends TestClient {
 		super(options);
 	}
 
-	addClients(clients: TestClient[]) {
+	addClients(clients: TestClient[]): void {
 		this.clientSeqNumbers = new Heap<ClientSeq>(clientSeqComparer);
 		this.clients = clients;
 		for (const client of clients) {
@@ -47,11 +48,12 @@ export class TestServer extends TestClient {
 		}
 	}
 
-	applyMsg(msg: ISequencedDocumentMessage) {
+	applyMsg(msg: ISequencedDocumentMessage): boolean {
 		super.applyMsg(msg);
 		if (TestClient.useCheckQ) {
-			const clid = this.getShortClientId(msg.clientId as string);
-			return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
+			const clientId = this.getShortClientId(msg.clientId as string);
+			const perspective = new PriorPerspective(msg.referenceSequenceNumber, clientId);
+			return checkTextMatchRelative(perspective, this, msg);
 		} else {
 			return false;
 		}
@@ -59,7 +61,7 @@ export class TestServer extends TestClient {
 
 	// TODO: remove mappings when no longer needed using min seq
 	// in upstream message
-	transformUpstreamMessage(msg: ISequencedDocumentMessage) {
+	transformUpstreamMessage(msg: ISequencedDocumentMessage): void {
 		if (msg.referenceSequenceNumber > 0) {
 			msg.referenceSequenceNumber =
 				this.upstreamMap.get(msg.referenceSequenceNumber)?.data ?? 0;
@@ -73,7 +75,7 @@ export class TestServer extends TestClient {
 		msg.sequenceNumber = -1;
 	}
 
-	copyMsg(msg: ISequencedDocumentMessage) {
+	copyMsg(msg: ISequencedDocumentMessage): ISequencedDocumentMessage {
 		return {
 			clientId: msg.clientId,
 			clientSequenceNumber: msg.clientSequenceNumber,
@@ -82,12 +84,12 @@ export class TestServer extends TestClient {
 			referenceSequenceNumber: msg.referenceSequenceNumber,
 			sequenceNumber: msg.sequenceNumber,
 			type: msg.type,
-		} as any as ISequencedDocumentMessage;
+		} as unknown as ISequencedDocumentMessage;
 	}
 
 	private minSeq = 0;
 
-	applyMessages(msgCount: number) {
+	applyMessages(msgCount: number): boolean {
 		let _msgCount = msgCount;
 		while (_msgCount > 0) {
 			const msg = this.dequeueMsg();
@@ -135,13 +137,12 @@ export class TestServer extends TestClient {
  * Used for in-memory testing.  This will queue a reference string for each client message.
  */
 export function checkTextMatchRelative(
-	refSeq: number,
-	clientId: number,
+	perspective: PriorPerspective,
 	server: TestServer,
 	msg: ISequencedDocumentMessage,
-) {
-	const client = server.clients[clientId];
-	const serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
+): boolean {
+	const client = server.clients[perspective.clientId];
+	const serverText = new MergeTreeTextHelper(server.mergeTree).getText(perspective);
 	const cliText = client.checkQ.shift()?.data;
 	if (cliText === undefined || cliText !== serverText) {
 		console.log(`mismatch `);

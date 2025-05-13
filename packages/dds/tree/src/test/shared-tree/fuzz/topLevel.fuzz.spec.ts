@@ -5,19 +5,25 @@
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
+	type DDSFuzzModel,
+	type DDSFuzzSuiteOptions,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
+import { validateFuzzTreeConsistency } from "../../utils.js";
 
-import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
+import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
-import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import {
+	createOnCreate,
+	deterministicIdCompressorFactory,
+	failureDirectory,
+	FuzzTestOnCreate,
+	SharedTreeFuzzTestFactory,
+} from "./fuzzUtils.js";
+import type { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -42,6 +48,7 @@ describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 50;
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
+	// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		set: 3,
 		clear: 1,
@@ -51,10 +58,12 @@ describe("Fuzz - Top-Level", () => {
 		crossFieldMove: 5,
 		start: 1,
 		commit: 1,
-		// TODO: AB#7780 investigate failures when abort is enabled
-		abort: 0,
+		abort: 1,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
-		schema: 1,
+		schema: 0,
+		nodeConstraint: 3,
+		fork: 1,
+		merge: 1,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -63,12 +72,12 @@ describe("Fuzz - Top-Level", () => {
 	 */
 	describe("Everything", () => {
 		const model: DDSFuzzModel<
-			SharedTreeTestFactory,
+			SharedTreeFuzzTestFactory,
 			Operation,
-			DDSFuzzTestState<SharedTreeTestFactory>
+			DDSFuzzTestState<SharedTreeFuzzTestFactory>
 		> = {
 			workloadName: "SharedTree",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -98,12 +107,12 @@ describe("Fuzz - Top-Level", () => {
 
 	describe("Batch rebasing", () => {
 		const model: DDSFuzzModel<
-			SharedTreeTestFactory,
+			SharedTreeFuzzTestFactory,
 			Operation,
-			DDSFuzzTestState<SharedTreeTestFactory>
+			DDSFuzzTestState<SharedTreeFuzzTestFactory>
 		> = {
 			workloadName: "SharedTree rebasing",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeFuzzTestFactory(FuzzTestOnCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,

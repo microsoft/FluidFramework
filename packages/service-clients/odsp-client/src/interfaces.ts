@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
+	IConfigProviderBase,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 
-import { IOdspTokenProvider } from "./token.js";
+import type { IOdspTokenProvider } from "./token.js";
 
 /**
  * Defines the necessary properties that will be applied to all containers
@@ -27,7 +29,7 @@ export interface OdspConnectionConfig {
 	siteUrl: string;
 
 	/**
-	 * RaaS Drive Id of the tenant where Fluid containers are created
+	 * SharePoint Embedded Container Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
 
@@ -57,6 +59,7 @@ export interface OdspClientProps {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface OdspContainerAttachProps {
@@ -112,3 +115,20 @@ export interface OdspMember extends IMember {
  * @beta
  */
 export type IOdspAudience = IServiceAudience<OdspMember>;
+
+/**
+ * Represents token response
+ * @beta
+ */
+export interface TokenResponse {
+	/**
+	 * Token value
+	 */
+	token: string;
+
+	/**
+	 * Whether or not the token was obtained from local cache.
+	 * @remarks `undefined` indicates that it could not be determined whether or not the token was obtained this way.
+	 */
+	fromCache?: boolean;
+}

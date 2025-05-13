@@ -5,7 +5,7 @@
 
 /* eslint-disable prefer-template */
 
-import { IFluidContainer, Tree, TreeView } from "fluid-framework";
+import { Tree, type TreeView } from "fluid-framework";
 import React, { ReactNode, useEffect, useState } from "react";
 
 import { App, Letter } from "./schema.js";
@@ -14,8 +14,8 @@ export function Explanation(): JSX.Element {
 	return (
 		<div className="flex flex-col max-w-md gap-4 justify-left my-32 select-none">
 			<BlackBox>
-				Copy the full URL to another browser tab or send it to someone to see that the data
-				is synched between clients.
+				Copy the full URL to another browser tab or send it to someone to see that the data is
+				synched between clients.
 			</BlackBox>
 		</div>
 	);
@@ -128,7 +128,6 @@ function TopRow(props: { app: App }): JSX.Element {
 
 export function ReactApp(props: {
 	data: TreeView<typeof App>;
-	container: IFluidContainer;
 	cellSize: { x: number; y: number };
 	canvasSize: { x: number; y: number };
 }): JSX.Element {

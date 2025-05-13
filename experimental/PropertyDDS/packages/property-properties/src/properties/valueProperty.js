@@ -173,7 +173,9 @@ export class ValueProperty extends BaseProperty {
 	 * @param {function} printFct - Function to call for printing each property
 	 */
 	_prettyPrint(indent, externalId, printFct) {
-		printFct(indent + externalId + this.getId() + " (" + this.getTypeid() + "): " + this.value);
+		printFct(
+			indent + externalId + this.getId() + " (" + this.getTypeid() + "): " + this.value,
+		);
 	}
 
 	/**

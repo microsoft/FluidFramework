@@ -5,38 +5,46 @@
 
 import type { AttachState, IAudience } from "@fluidframework/container-definitions";
 import type {
+	IFluidHandle,
 	FluidObject,
 	IDisposable,
 	IEvent,
 	IEventProvider,
-	IFluidHandle,
-	IFluidHandleContext,
 	ITelemetryBaseLogger,
 	ErasedType,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IQuorumClients } from "@fluidframework/driver-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type {
-	IQuorumClients,
-	ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 import type { IChannel } from "./channel.js";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
-	(event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);
+	(event: "disconnected", listener: () => void);
+	(event: "dispose", listener: () => void);
+	(event: "attaching", listener: () => void);
+	(event: "attached", listener: () => void);
 	(event: "op", listener: (message: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "connected", listener: (clientId: string) => void);
+	/*
+	 * The readonly event is fired when the readonly state of the datastore runtime changes.
+	 * The isReadOnly param will express the new readonly state.
+	 */
+	(event: "readonly", listener: (isReadOnly: boolean) => void);
 }
 
 /**
  * Manages the transmission of ops between the runtime and storage.
- * @public
+ * @legacy
+ * @alpha
  */
 export type IDeltaManagerErased =
 	ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
@@ -44,7 +52,8 @@ export type IDeltaManagerErased =
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  * @sealed
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
@@ -57,7 +66,6 @@ export interface IFluidDataStoreRuntime
 	readonly channelsRoutingContext: IFluidHandleContext;
 	readonly objectsRoutingContext: IFluidHandleContext;
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 
 	readonly deltaManager: IDeltaManagerErased;
@@ -66,6 +74,12 @@ export interface IFluidDataStoreRuntime
 
 	readonly connected: boolean;
 
+	/**
+	 * Get the current readonly state.
+	 * @returns true if read-only, otherwise false
+	 */
+	readonly isReadOnly: () => boolean;
+
 	readonly logger: ITelemetryBaseLogger;
 
 	/**
@@ -73,7 +87,13 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
-	readonly idCompressor?: IIdCompressor;
+	/**
+	 * An optional ID compressor.
+	 * @remarks
+	 * When provided, can be used to compress and decompress IDs stored in this datastore.
+	 * Some SharedObjects, like SharedTree, require this.
+	 */
+	readonly idCompressor: IIdCompressor | undefined;
 
 	/**
 	 * Returns the channel with the given id
@@ -113,7 +133,10 @@ export interface IFluidDataStoreRuntime
 	 * Api to upload a blob of data.
 	 * @param blob - blob to be uploaded.
 	 */
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Submits the signal to be sent to other clients.
@@ -143,4 +166,25 @@ export interface IFluidDataStoreRuntime
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
+	readonly inStagingMode?: boolean;
+}
+
+/**
+ * Internal configs possibly implemented by IFuidDataStoreRuntimes, for use only within the runtime layer.
+ * For example, temporary layer compatibility details
+ *
+ * @internal
+ */
+export interface IFluidDataStoreRuntimeInternalConfig {
+	readonly submitMessagesWithoutEncodingHandles?: boolean;
 }

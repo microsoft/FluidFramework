@@ -13,7 +13,6 @@ export { ConnectContainer } from "./ConnectContainer.js";
 export { ContainerDevtoolsFeatures } from "./ContainerDevtoolsFeatures.js";
 export { ContainerStateChange } from "./ContainerStateChange.js";
 export { ContainerStateHistory } from "./ContainerStateHistory.js";
-export { DataEdit } from "./DataEdit.js";
 export { DataVisualization } from "./DataVisualization.js";
 export { DisconnectContainer } from "./DisconnectContainer.js";
 export { GetAudienceSummary } from "./GetAudienceSummary.js";

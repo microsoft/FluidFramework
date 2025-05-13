@@ -29,7 +29,7 @@ export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;
 
 	// eslint-disable-next-line import/no-deprecated
-	private runningDeferred: Deferred<void>;
+	private runningDeferred?: Deferred<void>;
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
@@ -71,6 +71,9 @@ export class TinyliciousRunner implements IRunner {
 
 		this.server = this.serverFactory.create(alfred);
 		const httpServer = this.server.httpServer;
+		if (!this.server.webSocketServer) {
+			throw new Error("WebSocket server is not initialized");
+		}
 
 		configureWebSocketServices(
 			this.server.webSocketServer /* webSocketServer */,
@@ -111,17 +114,17 @@ export class TinyliciousRunner implements IRunner {
 			// Close the underlying server and then resolve the runner once closed
 			this.server.close().then(
 				() => {
-					this.runningDeferred.resolve();
+					this.runningDeferred?.resolve();
 				},
 				(error) => {
-					this.runningDeferred.reject(error);
+					this.runningDeferred?.reject(error);
 				},
 			);
 		} else {
-			this.runningDeferred.resolve();
+			this.runningDeferred?.resolve();
 		}
 
-		return this.runningDeferred.promise;
+		return this.runningDeferred?.promise ?? Promise.resolve();
 	}
 
 	/**
@@ -154,10 +157,10 @@ export class TinyliciousRunner implements IRunner {
 		// Handle specific listen errors with friendly messages
 		switch (error.code) {
 			case "EACCES":
-				this.runningDeferred.reject(`${bind} requires elevated privileges`);
+				this.runningDeferred?.reject(`${bind} requires elevated privileges`);
 				break;
 			case "EADDRINUSE":
-				this.runningDeferred.reject(`${bind} is already in use`);
+				this.runningDeferred?.reject(`${bind} is already in use`);
 				break;
 			default:
 				throw error;
@@ -168,8 +171,8 @@ export class TinyliciousRunner implements IRunner {
 	 * Event listener for HTTP server "listening" event.
 	 */
 	private onListening() {
-		const addr = this.server.httpServer.address();
-		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		const addr = this.server?.httpServer?.address();
+		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		winston.info(`Listening on ${bind}`);
 	}
 }

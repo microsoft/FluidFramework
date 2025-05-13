@@ -6,6 +6,7 @@ Release commands are used to manage the Fluid release process.
 * [`flub release`](#flub-release)
 * [`flub release fromTag TAG`](#flub-release-fromtag-tag)
 * [`flub release history`](#flub-release-history)
+* [`flub release prepare PACKAGE_OR_RELEASE_GROUP`](#flub-release-prepare-package_or_release_group)
 * [`flub release report`](#flub-release-report)
 * [`flub release report-unreleased`](#flub-release-report-unreleased)
 * [`flub release setPackageTypesField`](#flub-release-setpackagetypesfield)
@@ -133,6 +134,40 @@ EXAMPLES
 
 _See code: [src/commands/release/history.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/history.ts)_
 
+## `flub release prepare PACKAGE_OR_RELEASE_GROUP`
+
+Runs checks on a local branch to verify it is ready to serve as the base for a release branch.
+
+```
+USAGE
+  $ flub release prepare PACKAGE_OR_RELEASE_GROUP [-v | --quiet]
+
+ARGUMENTS
+  PACKAGE_OR_RELEASE_GROUP  [default: client] The name of a package or a release group. Defaults to the client release
+                            group if not specified.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Runs checks on a local branch to verify it is ready to serve as the base for a release branch.
+
+  Runs the following checks:
+
+  - Branch has no local changes
+  - The local branch is up to date with the microsoft/FluidFramework remote
+  - Dependencies are installed locally
+  - Has no pre-release Fluid dependencies
+  - No repo policy violations
+  - No untagged asserts
+
+ALIASES
+  $ flub release prep
+```
+
+_See code: [src/commands/release/prepare.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/prepare.ts)_
+
 ## `flub release report`
 
 Generates a report of Fluid Framework releases.
@@ -168,7 +203,7 @@ FLAGS
 
   --baseFileName=<value>
       If provided, the output files will be named using this base name followed by the report kind (caret, simple, full,
-      tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named
+      tilde, legacy-compat) and the .json extension. For example, if baseFileName is 'foo', the output files will be named
       'foo.caret.json', 'foo.simple.json', etc.
 
 LOGGING FLAGS
@@ -217,9 +252,12 @@ Creates a release report for an unreleased build (one that is not published to n
 
 ```
 USAGE
-  $ flub release report-unreleased --version <value> --outDir <value> --fullReportFilePath <value> [-v | --quiet]
+  $ flub release report-unreleased --version <value> --outDir <value> --fullReportFilePath <value> --branchName <value> [-v |
+    --quiet]
 
 FLAGS
+  --branchName=<value>          (required) Branch name. For release branches, the manifest file is uplaoded by build
+                                number and not by current date.
   --fullReportFilePath=<value>  (required) Path to a report file in the 'full' format.
   --outDir=<value>              (required) Release report output directory
   --version=<value>             (required) Version to generate a report for. Typically, this version is the version of a
@@ -245,9 +283,11 @@ Updates which .d.ts file is referenced by the `types` field in package.json. Thi
 
 ```
 USAGE
-  $ flub release setPackageTypesField --types <value> [--json] [-v | --quiet] [--checkFileExists] [--concurrency <value>] [--all |
-    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+  $ flub release setPackageTypesField --types <value> [--json] [-v | --quiet] [--checkFileExists] [--concurrency <value>]
+    [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   --[no-]checkFileExists  Check if the file path exists
@@ -257,17 +297,19 @@ FLAGS
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
                                       include release group root packages. To include those, use the --releaseGroupRoot
-                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      argument. Cannot be used with --all.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
-      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
-                                      --releaseGroup, or --releaseGroupRoot.
-      --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
-                                      --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select packages that have changed when compared to a base branch. Use the --branch
+                                      option to specify a different base branch. Cannot be used with --all.
+      --dir=<value>...                Run on the package in this directory. Cannot be used with --all.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all.
       --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
                                       child packages within the release group. To include those, use the --releaseGroup
-                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      argument. Cannot be used with --all.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
 
 LOGGING FLAGS

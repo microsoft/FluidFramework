@@ -24,7 +24,7 @@ import {
 export async function deliCreate(
 	config: Provider,
 	customizations?: Record<string, any>,
-): Promise<core.IPartitionLambdaFactory> {
+): Promise<core.IPartitionLambdaFactory<core.IPartitionLambdaConfig>> {
 	const kafkaEndpoint = config.get("kafka:lib:endpoint");
 	const kafkaLibrary = config.get("kafka:lib:name");
 	const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
@@ -58,11 +58,16 @@ export async function deliCreate(
 	const enableLeaveOpNoClientServerMetadata =
 		(config.get("deli:enableLeaveOpNoClientServerMetadata") as boolean) ?? false;
 
+	const noOpConsolidationTimeout = config.get("deli:noOpConsolidationTimeout");
+
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+	const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+		| number
+		| undefined;
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
 
@@ -84,17 +89,22 @@ export async function deliCreate(
 	core.DefaultServiceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs =
 		ephemeralContainerSoftDeleteTimeInMs;
 
-	let globalDb: core.IDb;
+	let globalDb: core.IDb | undefined;
 	if (globalDbEnabled) {
 		const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
-		const globalDbManager = new core.MongoManager(factory, globalDbReconnect, null, true);
+		const globalDbManager = new core.MongoManager(
+			factory,
+			globalDbReconnect,
+			undefined /* reconnectDelayMs */,
+			true /* global */,
+		);
 		globalDb = await globalDbManager.getDatabase();
 	}
 
 	const operationsDbManager = new core.MongoManager(factory, false);
 	const operationsDb = await operationsDbManager.getDatabase();
 
-	const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
+	const db: core.IDb = globalDbEnabled && globalDb !== undefined ? globalDb : operationsDb;
 
 	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const collection = await db.collection<core.IDocument>(documentsCollectionName);
@@ -154,7 +164,10 @@ export async function deliCreate(
 			undefined,
 			redisConfig.enableClustering,
 			redisConfig.slotsRefreshTimeout,
+			undefined /* retryDelays */,
+			redisConfig.enableVerboseErrorLogging,
 		);
+	// The socketioredispublisher handles redis connection graceful shutdown
 	const publisher = new services.SocketIoRedisPublisher(redisClientConnectionManager);
 	publisher.on("error", (err) => {
 		winston.error("Error with Redis Publisher:", err);
@@ -187,6 +200,7 @@ export async function deliCreate(
 			restartOnCheckpointFailure,
 			kafkaCheckpointOnReprocessingOp,
 			enableLeaveOpNoClientServerMetadata,
+			noOpConsolidationTimeout,
 		},
 	};
 
@@ -196,7 +210,7 @@ export async function deliCreate(
 		localCheckpointEnabled,
 	);
 
-	return new DeliLambdaFactory(
+	const deliLambdaFactory = new DeliLambdaFactory(
 		operationsDbManager,
 		documentRepository,
 		checkpointService,
@@ -207,7 +221,17 @@ export async function deliCreate(
 		reverseProducer,
 		serviceConfiguration,
 		customizations?.clusterDrainingChecker,
+		ephemeralDocumentTTLSec,
 	);
+
+	deliLambdaFactory.on("dispose", () => {
+		broadcasterLambda.close();
+		publisher.close().catch((error) => {
+			Lumberjack.error("Error closing publisher", undefined, error);
+		});
+	});
+
+	return deliLambdaFactory;
 }
 
 export async function create(

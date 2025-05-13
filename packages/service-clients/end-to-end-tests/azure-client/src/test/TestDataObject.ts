@@ -5,28 +5,34 @@
 
 import type { SignalListener } from "@fluid-experimental/data-objects";
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct/internal";
+import {
+	DataObject,
+	DataObjectFactory,
+	IDataObjectProps,
+	createDataObjectKind,
+} from "@fluidframework/aqueduct/internal";
 import { type IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
-export class TestDataObject extends DataObject {
+class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		TestDataObject.Name,
-		TestDataObject,
-		[],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: TestDataObjectClass.Name,
+		ctor: TestDataObjectClass,
+	});
 
 	constructor(props: IDataObjectProps) {
 		super(props);
 	}
 }
 
-export class CounterTestDataObject extends DataObject {
+export const TestDataObject = createDataObjectKind(TestDataObjectClass);
+export type TestDataObject = TestDataObjectClass;
+
+class CounterTestDataObjectClass extends DataObject {
 	private _counter: SharedCounter | undefined;
 
 	/**
@@ -44,12 +50,11 @@ export class CounterTestDataObject extends DataObject {
 
 	public static readonly Name = "@fluid-example/counter-test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		CounterTestDataObject.Name,
-		CounterTestDataObject,
-		[SharedCounter.getFactory()],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: CounterTestDataObjectClass.Name,
+		ctor: CounterTestDataObjectClass,
+		sharedObjects: [SharedCounter.getFactory()],
+	});
 
 	public increment(): void {
 		this.counter.increment(1);
@@ -67,19 +72,20 @@ export class CounterTestDataObject extends DataObject {
 	}
 }
 
+export const CounterTestDataObject = createDataObjectKind(CounterTestDataObjectClass);
+export type CounterTestDataObject = CounterTestDataObjectClass;
+
 /**
  * Test implementation of experimental Signaler for testing scenarios working with signals.
  */
-export class SignalerTestDataObject extends DataObject<{ Events: IErrorEvent }> {
+export class SignalerTestDataObjectClass extends DataObject<{ Events: IErrorEvent }> {
 	private readonly emitter = new EventEmitter();
 	public static readonly Name = "@fluid-example/signaler-test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		SignalerTestDataObject.Name,
-		SignalerTestDataObject,
-		[],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: SignalerTestDataObjectClass.Name,
+		ctor: SignalerTestDataObjectClass,
+	});
 
 	protected async hasInitialized(): Promise<void> {
 		this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
@@ -101,7 +107,10 @@ export class SignalerTestDataObject extends DataObject<{ Events: IErrorEvent }> 
 		return this;
 	}
 
-	public offSignal<T>(signalName: string, listener: SignalListener<T>): SignalerTestDataObject {
+	public offSignal<T>(
+		signalName: string,
+		listener: SignalListener<T>,
+	): SignalerTestDataObject {
 		this.emitter.off(signalName, listener);
 		return this;
 	}
@@ -110,3 +119,6 @@ export class SignalerTestDataObject extends DataObject<{ Events: IErrorEvent }> 
 		this.runtime.submitSignal(signalName, payload);
 	}
 }
+
+export const SignalerTestDataObject = createDataObjectKind(SignalerTestDataObjectClass);
+export type SignalerTestDataObject = SignalerTestDataObjectClass;

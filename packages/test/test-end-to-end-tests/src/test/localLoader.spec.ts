@@ -10,7 +10,7 @@ import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { SharedStringClass, type SharedString } from "@fluidframework/sequence/internal";
@@ -43,12 +43,10 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 			return TestDataObject.factory;
 		}
 
-		private static readonly factory = new DataObjectFactory(
-			TestDataObject.type,
-			TestDataObject,
-			[],
-			{},
-		);
+		private static readonly factory = new DataObjectFactory({
+			type: TestDataObject.type,
+			ctor: TestDataObject,
+		});
 
 		private counter!: SharedCounter;
 
@@ -89,12 +87,11 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	}
 
-	const testDataObjectFactory = new DataObjectFactory(
-		TestDataObject.type,
-		TestDataObject,
-		[SharedCounter.getFactory(), SharedString.getFactory()],
-		{},
-	);
+	const testDataObjectFactory = new DataObjectFactory({
+		type: TestDataObject.type,
+		ctor: TestDataObject,
+		sharedObjects: [SharedCounter.getFactory(), SharedString.getFactory()],
+	});
 
 	let provider: ITestObjectProvider;
 	before(() => {
@@ -125,12 +122,12 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 			provider.urlResolver,
 			provider.logger,
 		);
-		loaderContainerTracker.add(loader);
 		const container = await createAndAttachContainer(
 			codeDetails,
 			loader,
 			provider.driver.createCreateNewRequest(documentId),
 		);
+		loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -149,10 +146,11 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 			provider.urlResolver,
 			provider.logger,
 		);
-		loaderContainerTracker.add(loader);
-		return loader.resolve({
+		const container = await loader.resolve({
 			url: await provider.driver.createContainerUrl(documentId, containerUrl),
 		});
+		loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	describe("1 dataObject", () => {

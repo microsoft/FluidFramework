@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-ordering-rdkafka",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"description": "Fluid server services rdkafka orderer implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -24,7 +24,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -32,28 +32,29 @@
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
+		"@fluidframework/server-services-utils": "workspace:~",
 		"events_pkg": "npm:events@^3.1.0",
 		"nconf": "^0.12.0",
 		"node-rdkafka": "^3.0.1",
 		"sillyname": "^0.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@fluidframework/server-services-ordering-rdkafka-previous": "npm:@fluidframework/server-services-ordering-rdkafka@4.0.0",
+		"@fluidframework/server-services-ordering-rdkafka-previous": "npm:@fluidframework/server-services-ordering-rdkafka@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/amqplib": "^0.5.17",
 		"@types/debug": "^4.1.5",
 		"@types/lru-cache": "^5.1.0",
-		"@types/node": "^18.17.1",
-		"@types/sinon": "^9.0.9",
+		"@types/node": "^18.19.39",
+		"@types/sinon": "^17.0.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^9.2.3",
+		"sinon": "^18.0.1",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
@@ -65,6 +66,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Class_RdkafkaConsumer": {
+				"forwardCompat": false
+			}
+		},
+		"entrypoint": "public"
 	}
 }

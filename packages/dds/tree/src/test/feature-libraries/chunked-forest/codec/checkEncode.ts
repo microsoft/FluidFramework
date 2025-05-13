@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
-import { JsonableTree } from "../../../../core/index.js";
+import type { JsonableTree } from "../../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
+import type { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import/no-internal-modules
 import { handleShapesAndIdentifiers } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
-import {
+import type {
 	BufferFormat,
 	EncoderCache,
 	FieldEncoder,
@@ -20,7 +20,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
-	EncodedFieldBatch,
+	type EncodedFieldBatch,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
@@ -30,6 +30,8 @@ import {
 } from "../../../../feature-libraries/index.js";
 import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { testIdCompressor } from "../../../utils.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export function checkNodeEncode(
 	shape: NodeEncoder,
@@ -50,21 +52,26 @@ export function checkFieldEncode(
 	shape: FieldEncoder,
 	cache: EncoderCache,
 	tree: JsonableTree[],
+	idCompressor?: IIdCompressor,
 ): BufferFormat {
 	const buffer: BufferFormat = [shape.shape];
 	const cursor = cursorForJsonableTreeField(tree);
 	shape.encodeField(cursor, cache, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [tree]);
+	checkDecode([buffer], [tree], idCompressor);
 
 	return buffer.slice(1);
 }
 
-function checkDecode(buffer: BufferFormat[], tree: JsonableTree[][]): void {
+function checkDecode(
+	buffer: BufferFormat[],
+	tree: JsonableTree[][],
+	idCompressor?: IIdCompressor,
+): void {
 	// Check round-trips with identifiers inline and out of line
-	testDecode(buffer, tree, () => false);
-	testDecode(buffer, tree, () => true);
+	testDecode(buffer, tree, () => false, idCompressor);
+	testDecode(buffer, tree, () => true, idCompressor);
 }
 
 /**
@@ -78,13 +85,25 @@ function testDecode(
 	buffer: BufferFormat[],
 	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
+	idCompressor?: IIdCompressor,
 ): EncodedFieldBatch {
 	const chunk = handleShapesAndIdentifiers(version, cloneArrays(buffer), identifierFilter);
 
 	// TODO: check chunk matches schema
 
 	// Check decode
-	const result = decode(chunk);
+	const result = decode(
+		chunk,
+		idCompressor !== undefined
+			? {
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
+				}
+			: {
+					idCompressor: testIdCompressor,
+					originatorId: testIdCompressor.localSessionId,
+				},
+	);
 	assertChunkCursorBatchEquals(result, expectedTree);
 
 	// handles can't be roundtripped through JSON. the FluidSerializer can't be
@@ -109,7 +128,18 @@ function testDecode(
 		// can't check this due to undefined fields
 		// assert.deepEqual(parsed, chunk);
 		// Instead check that it works properly:
-		const parsedResult = decode(parsed);
+		const parsedResult = decode(
+			parsed,
+			idCompressor !== undefined
+				? {
+						idCompressor,
+						originatorId: idCompressor.localSessionId,
+					}
+				: {
+						idCompressor: testIdCompressor,
+						originatorId: testIdCompressor.localSessionId,
+					},
+		);
 		assert.deepEqual(parsedResult, result);
 	}
 

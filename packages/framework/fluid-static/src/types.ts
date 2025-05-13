@@ -3,12 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IEvent,
-	type IEventProvider,
-	type IFluidLoadable,
-} from "@fluidframework/core-interfaces";
-import { type ISharedObjectKind } from "@fluidframework/shared-object-base";
+import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
+import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+/**
+ * Determines the set of runtime options that Fluid Framework will use when running.
+ * In "1" mode we support full interop between 2.x clients and 1.x clients,
+ * while in "2" mode we only support interop between 2.x clients.
+ *
+ * @public
+ */
+export type CompatibilityMode = "1" | "2";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
@@ -19,15 +26,13 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 /**
  * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
  * or `SharedObject`.
- * @public
  */
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
+export type LoadableObjectKindRecord = Record<string, SharedObjectKind>;
 
 /**
- * A class object of `DataObject` or `SharedObject`.
+ * A kind of `DataObject` or `SharedObject`.
  *
- * @typeParam T - The class of the `DataObject` or `SharedObject`.
- * @public
+ * @typeParam T - The kind of `DataObject` or `SharedObject`.
  *
  * @privateRemarks
  * There are some edge cases in TypeScript where the order of the members in a union matter.
@@ -36,29 +41,9 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
  * In this case placing ISharedObjectKind fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
  * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
+export type LoadableObjectKind<T extends IFluidLoadable = IFluidLoadable> =
 	| ISharedObjectKind<T>
-	| DataObjectClass<T>;
-
-/**
- * A class that has a factory that can create a `DataObject` and a
- * constructor that will return the type of the `DataObject`.
- *
- * @typeParam T - The class of the `DataObject`.
- * @privateRemarks
- * Having both `factory` and `LoadableObjectCtor` is redundant.
- * TODO: It appears the factory is what's used, so the constructor should be removed.
- * @public
- */
-export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
-	/**
-	 * @privateRemarks
-	 * This has to implement {@link @fluidframework/runtime-definitions#IFluidDataStoreFactory}.
-	 * TODO: Gain type safety for this without leaking IFluidDataStoreFactory as public using type erasure.
-	 */
-	readonly factory: { readonly IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-} & (new (...args: any[]) => T);
+	| DataObjectKind<T>;
 
 /**
  * Represents properties that can be attached to a container.
@@ -94,7 +79,7 @@ export interface ContainerSchema {
 	 * }
 	 * ```
 	 */
-	readonly initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: Record<string, SharedObjectKind>;
 
 	/**
 	 * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
@@ -106,7 +91,7 @@ export interface ContainerSchema {
 	 * For best practice it's recommended to define all the dynamic types you create even if they are
 	 * included via initialObjects.
 	 */
-	readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
+	readonly dynamicObjectTypes?: readonly SharedObjectKind[];
 }
 
 /**
@@ -134,7 +119,7 @@ export interface IRootDataObject extends IProvideRootDataObject {
 	 *
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
-	create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
 }
 
 /**

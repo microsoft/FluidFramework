@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { useFakeTimers } from "sinon";
+
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
 import {
 	ITestDataObject,
@@ -26,7 +26,7 @@ import {
 	Loader,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -35,7 +35,12 @@ import {
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	DriverErrorTypes,
+	IAnyDriverError,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	FiveDaysMs,
 	IDocumentServiceFactory,
@@ -47,7 +52,6 @@ import {
 	NonRetryableError,
 	RetryableError,
 } from "@fluidframework/driver-utils/internal";
-import { IClient, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
@@ -60,6 +64,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { useFakeTimers } from "sinon";
 import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -89,8 +94,8 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			documentServiceFactory: provider.documentServiceFactory,
 			codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
 		});
-		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(codeDetails);
+		loaderContainerTracker.addContainer(container);
 		await container.attach(provider.driver.createCreateNewRequest("containerTest"));
 	});
 	afterEach(() => {
@@ -101,22 +106,23 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
-			documentServiceFactory:
-				props?.documentServiceFactory ?? provider.documentServiceFactory,
+			documentServiceFactory: props?.documentServiceFactory ?? provider.documentServiceFactory,
 			codeLoader:
 				props?.codeLoader ??
 				new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
 		});
-		loaderContainerTracker.add(loader);
 
-		return loader.resolve({
+		const container = await loader.resolve({
 			url: testRequest.url,
 			headers: { ...testRequest.headers, ...headers },
 		});
+		loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	async function createConnectedContainer(): Promise<IContainer> {
 		const container = await provider.makeTestContainer();
+		loaderContainerTracker.addContainer(container);
 		await waitForContainerConnection(container, true, {
 			durationMs: timeoutMs,
 			errorMsg: "Container initial connection timeout",
@@ -680,7 +686,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			container.on("closed", () => containerClosed++);
 			(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
 			(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
-			(dataObject._context.containerRuntime as ContainerRuntime).on(
+			(dataObject._context.containerRuntime as IContainerRuntime).on(
 				"dispose",
 				() => runtimeDispose++,
 			);
@@ -709,7 +715,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			assert.strictEqual(
 				runtimeDispose,
 				1,
-				"ContainerRuntime should send dispose event on container dispose",
+				"IContainerRuntime should send dispose event on container dispose",
 			);
 		},
 	);
@@ -733,7 +739,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			container.on("closed", () => containerClosed++);
 			(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
 			(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
-			(dataObject._context.containerRuntime as ContainerRuntime).on(
+			(dataObject._context.containerRuntime as IContainerRuntime).on(
 				"dispose",
 				() => runtimeDispose++,
 			);
@@ -744,9 +750,38 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			assert.strictEqual(containerClosed, 1, "Container should send closed event");
 			assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
 			assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
-			assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
+			assert.strictEqual(runtimeDispose, 1, "IContainerRuntime should send dispose event");
 		},
 	);
+
+	describe("0x314 assert", () => {
+		it("Closing container", async () => {
+			const container = await createConnectedContainer();
+			container.deltaManager.on("disconnect", () => {
+				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in DeltaManager ctor)
+				container.close();
+			});
+			container.close();
+		});
+
+		it("Disposing container", async () => {
+			const container = await createConnectedContainer();
+			container.deltaManager.on("disconnect", () => {
+				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in DeltaManager ctor)
+				container.dispose();
+			});
+			container.dispose();
+		});
+
+		it("Mix and match", async () => {
+			const container = await createConnectedContainer();
+			container.on("disconnected", () => {
+				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in Container ctor)
+				container.close();
+			});
+			container.dispose();
+		});
+	});
 
 	// Temporary disable since we reverted the fix that caused an increase in loader bundle size.
 	// Tracking alternative fix in AB#4129.

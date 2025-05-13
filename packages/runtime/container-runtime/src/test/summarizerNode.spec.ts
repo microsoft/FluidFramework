@@ -3,20 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ILoggingError } from "@fluidframework/core-interfaces/internal";
-import {
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	ISummarizerNode,
 	ISummarizerNodeConfig,
-	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -24,8 +20,6 @@ import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-u
 import { IRootSummarizerNode, createRootSummarizerNode } from "../summary/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SummarizerNode } from "../summary/summarizerNode/summarizerNode.js";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
@@ -80,12 +74,7 @@ describe("Runtime", () => {
 				createParam: CreateChildSummarizerNodeParam,
 				config?: ISummarizerNodeConfig,
 			) {
-				midNode = rootNode.createChild(
-					getSummarizeInternalFn(1),
-					ids[1],
-					createParam,
-					config,
-				);
+				midNode = rootNode.createChild(getSummarizeInternalFn(1), ids[1], createParam, config);
 			}
 
 			function createLeaf(
@@ -108,12 +97,9 @@ describe("Runtime", () => {
 			): void {
 				try {
 					fn();
-					throw Error(`${failMsg}: Expected to fail`);
+					throw new Error(`${failMsg}: Expected to fail`);
 				} catch (error: unknown) {
-					assert(
-						expectedErrors.some((e) => e === (error as ILoggingError).message),
-						errMsg,
-					);
+					assert(expectedErrors.includes((error as ILoggingError).message), errMsg);
 				}
 			}
 
@@ -125,12 +111,9 @@ describe("Runtime", () => {
 			): Promise<void> {
 				try {
 					await fn();
-					throw Error(`${failMsg}: Expected to reject`);
+					throw new Error(`${failMsg}: Expected to reject`);
 				} catch (error: unknown) {
-					assert(
-						expectedErrors.some((e) => e === (error as ILoggingError).message),
-						errMsg,
-					);
+					assert(expectedErrors.includes((error as ILoggingError).message), errMsg);
 				}
 			}
 
@@ -138,37 +121,6 @@ describe("Runtime", () => {
 			const fakeOp = (sequenceNumber: number): ISequencedDocumentMessage =>
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				({ sequenceNumber }) as ISequencedDocumentMessage;
-
-			const emptySnapshot: ISnapshotTree = { blobs: {}, trees: {} };
-			const protocolTree: ISnapshotTree = {
-				blobs: { attributes: "protocolAttributes" },
-				trees: {},
-			};
-			const coreSnapshot: ISnapshotTree = {
-				blobs: {},
-				trees: {
-					[ids[1]]: {
-						blobs: {},
-						trees: {
-							[ids[2]]: emptySnapshot,
-						},
-					},
-				},
-			};
-			const simpleSnapshot: ISnapshotTree = {
-				blobs: {},
-				trees: {
-					...coreSnapshot.trees,
-					".protocol": protocolTree,
-				},
-			};
-			const channelsSnapshot: ISnapshotTree = {
-				blobs: {},
-				trees: {
-					[channelsTreeName]: coreSnapshot,
-					".protocol": protocolTree,
-				},
-			};
 
 			beforeEach(() => {
 				summarizeCalls = [0, 0, 0];
@@ -183,34 +135,6 @@ describe("Runtime", () => {
 						"create child",
 						"child node with same id already exists",
 						"0x1ab",
-					);
-				});
-			});
-
-			describe("Load Base Summary", () => {
-				it("Load base summary should do nothing for simple snapshot", async () => {
-					createRoot({ refSeq: 1 });
-					rootNode.updateBaseSummaryState(simpleSnapshot);
-
-					const latestSummary = (rootNode as SummarizerNode).latestSummary;
-					assert(latestSummary !== undefined, "latest summary should exist");
-					assert.strictEqual(
-						latestSummary.additionalPath?.path,
-						undefined,
-						"should not have any path parts for children",
-					);
-				});
-
-				it("Load base summary should strip channels subtree", async () => {
-					createRoot({ refSeq: 1 });
-					rootNode.updateBaseSummaryState(channelsSnapshot);
-
-					const latestSummary = (rootNode as SummarizerNode).latestSummary;
-					assert(latestSummary !== undefined, "latest summary should exist");
-					assert.strictEqual(
-						latestSummary.additionalPath?.path,
-						channelsTreeName,
-						"should have channels path for children",
 					);
 				});
 			});
@@ -269,11 +193,7 @@ describe("Runtime", () => {
 
 					// Failing to refresh the root node should generate failing summaries
 					const result = rootNode.startSummary(21, logger, 12);
-					assert.strictEqual(
-						result.invalidNodes,
-						1,
-						"startSummary fails due to no refresh",
-					);
+					assert.strictEqual(result.invalidNodes, 1, "startSummary fails due to no refresh");
 					assert.deepEqual(
 						result.mismatchNumbers,
 						new Set(["12-11"]),
@@ -376,14 +296,25 @@ describe("Runtime", () => {
 			});
 
 			describe("Summarize", () => {
-				it("Should fail summarize if startSummary is not called", async () => {
+				it("Should fail completeSummary if startSummary is not called", async () => {
 					createRoot();
 					await expectReject(
-						async () => rootNode.summarize(false),
+						async () => rootNode.completeSummary("handle"),
 						"summarize",
 						"no wip referenceSequenceNumber or logger",
-						"0x1a1",
-						"0x1a2",
+						"0x1a4",
+					);
+					assertSummarizeCalls(0, 0, 0);
+				});
+
+				it("Should fail validateSummary if startSummary is not called", async () => {
+					createRoot();
+					await expectReject(
+						async () => rootNode.validateSummary(),
+						"summarize",
+						"no wip referenceSequenceNumber or logger",
+						"0x6fc",
+						"0x6fd",
 					);
 					assertSummarizeCalls(0, 0, 0);
 				});
@@ -428,10 +359,7 @@ describe("Runtime", () => {
 			describe("Refresh Latest Summary", () => {
 				it("Should not refresh latest if already passed ref seq number", async () => {
 					createRoot({ refSeq: summaryRefSeq });
-					const result = await rootNode.refreshLatestSummary(
-						"test-handle",
-						summaryRefSeq,
-					);
+					const result = await rootNode.refreshLatestSummary("test-handle", summaryRefSeq);
 					assert(!result.isSummaryTracked, "we already got this summary");
 				});
 
@@ -443,10 +371,7 @@ describe("Runtime", () => {
 					await rootNode.summarize(false);
 					rootNode.completeSummary(proposalHandle);
 
-					const result = await rootNode.refreshLatestSummary(
-						proposalHandle,
-						summaryRefSeq,
-					);
+					const result = await rootNode.refreshLatestSummary(proposalHandle, summaryRefSeq);
 					assert(result.isSummaryTracked, "should be tracked");
 					assert(result.isSummaryNewer === true, "should be newer");
 				});
@@ -460,11 +385,8 @@ describe("Runtime", () => {
 					await rootNode.summarize(false);
 					await assert.rejects(
 						async () => rootNode.refreshLatestSummary(proposalHandle, summaryRefSeq),
-						(
-							error: ILoggingError & { inProgressSummaryRefSeq: number | undefined },
-						) => {
-							const correctErrorMessage =
-								error.message === "UnexpectedRefreshDuringSummarize";
+						(error: ILoggingError & { inProgressSummaryRefSeq: number | undefined }) => {
+							const correctErrorMessage = error.message === "UnexpectedRefreshDuringSummarize";
 							const correctInProgressRefSeq =
 								error.inProgressSummaryRefSeq === referenceSeqNum;
 							return correctErrorMessage && correctInProgressRefSeq;

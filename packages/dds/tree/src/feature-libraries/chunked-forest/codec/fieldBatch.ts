@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITreeCursorSynchronous } from "../../../core/index.js";
+import type { ITreeCursorSynchronous } from "../../../core/index.js";
 
 /**
  * Collection of field cursors to compress as a batch.

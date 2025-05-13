@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NumberOptions, TUnsafe, Type } from "@sinclair/typebox";
+import { type NumberOptions, type TUnsafe, Type } from "@sinclair/typebox";
 
 /**
  * Create a TypeBox string schema for a branded string type.

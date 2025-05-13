@@ -5,15 +5,17 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { ISubscribable } from "../../events/index.js";
-import { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
+import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
-	Anchor,
-	AnchorSet,
-	DetachedField,
-	ITreeCursor,
-	ITreeCursorSynchronous,
-	UpPath,
+	type Anchor,
+	type AnchorSet,
+	type AnnouncedVisitor,
+	type DetachedField,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
+	type TreeChunk,
+	type UpPath,
 	detachedFieldAsKey,
 	rootField,
 } from "../tree/index.js";
@@ -33,7 +35,6 @@ import type { IEditableForest } from "./editableForest.js";
  * Events for {@link IForestSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
- * @internal
  */
 export interface ForestEvents {
 	/**
@@ -43,15 +44,13 @@ export interface ForestEvents {
 
 	/**
 	 * The forest is about to be changed.
-	 * Emitted before the first change in a batch of changes.
+	 * Emitted before each change in a batch of changes.
+	 * @remarks
+	 * This is the last chance for users of the forest to remove cursors from the forest before the edit.
+	 * Removing these cursors is important since they are not allowed to live across edits and
+	 * not clearing them can lead to corruption of in memory structures.
 	 */
 	beforeChange(): void;
-
-	/**
-	 * The forest was just changed.
-	 * Emitted after the last change in a batch of changes.
-	 */
-	afterChange(): void;
 }
 
 /**
@@ -60,9 +59,13 @@ export interface ForestEvents {
  * Not invalidated when schema changes.
  *
  * When invalidating, all outstanding cursors must be freed or cleared.
- * @internal
  */
-export interface IForestSubscription extends ISubscribable<ForestEvents> {
+export interface IForestSubscription {
+	/**
+	 * Events for this forest.
+	 */
+	readonly events: Listenable<ForestEvents>;
+
 	/**
 	 * Set of anchors this forest is tracking.
 	 *
@@ -81,9 +84,21 @@ export interface IForestSubscription extends ISubscribable<ForestEvents> {
 	clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
 
 	/**
-	 * Allocates a cursor in the "cleared" state.
+	 * Generate a TreeChunk for the content in the given field cursor.
+	 * This can be used to chunk data that is then inserted into the forest.
+	 *
+	 * @remarks
+	 * Like {@link chunkField}, but forces the results into a single TreeChunk.
+	 * While any TreeChunk is compatible with any forest, this method creates one optimized for this specific forest.
+	 * The provided data must be compatible with the forest's current schema.
 	 */
-	allocateCursor(): ITreeSubscriptionCursor;
+	chunkField(cursor: ITreeCursorSynchronous): TreeChunk;
+
+	/**
+	 * Allocates a cursor in the "cleared" state.
+	 * @param source - optional string identifying the source of the cursor for debugging purposes when cursors are not properly cleaned up.
+	 */
+	allocateCursor(source?: string): ITreeSubscriptionCursor;
 
 	/**
 	 * Frees an Anchor, stopping tracking its position across edits.
@@ -109,7 +124,7 @@ export interface IForestSubscription extends ISubscribable<ForestEvents> {
 	): TreeNavigationResult;
 
 	/**
-	 * Set `cursorToMove` to location described by path.
+	 * Set `cursorToMove` to the {@link CursorLocationType.node} described by path.
 	 * This is NOT a relative move: current position is discarded.
 	 * Path must point to existing node.
 	 */
@@ -131,9 +146,20 @@ export interface IForestSubscription extends ISubscribable<ForestEvents> {
 	 * This means no nodes under any detached field, not just the special document root one.
 	 */
 	readonly isEmpty: boolean;
+
+	/**
+	 * Obtains and registers an {@link AnnouncedVisitor} that responds to changes on the forest.
+	 */
+	registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void;
+
+	/**
+	 * Deregister the given visitor so that it stops responding to updates
+	 */
+	deregisterAnnouncedVisitor(visitor: () => AnnouncedVisitor): void;
 }
 
 /**
+ * Returns an anchor to the given field.
  * @param field - defaults to {@link rootField}.
  * @returns anchor to `field`.
  */
@@ -145,8 +171,10 @@ export function rootAnchor(field: DetachedField = rootField): FieldAnchor {
 }
 
 /**
+ * Moves the given cursor to the given detached fields in the given forest.
+ * @param forest - forest to move cursor in.
+ * @param cursorToMove - cursor to move, must be allocated by the given forest
  * @param field - defaults to {@link rootField}.
- * @returns anchor to `field`.
  */
 export function moveToDetachedField(
 	forest: IForestSubscription,
@@ -163,7 +191,6 @@ export function moveToDetachedField(
 /**
  * Anchor to a field.
  * This is structurally based on the parent, so it will move only as the parent moves.
- * @internal
  */
 export interface FieldAnchor {
 	/**
@@ -176,13 +203,13 @@ export interface FieldAnchor {
 
 /**
  * ITreeCursor supporting IForestSubscription and its changes over time.
- * @internal
  */
 export interface ITreeSubscriptionCursor extends ITreeCursor {
 	/**
+	 * @param source - optional string identifying the source of the cursor for debugging purposes when cursors are not properly cleaned up.
 	 * @returns an independent copy of this cursor at the same location in the tree.
 	 */
-	fork(): ITreeSubscriptionCursor;
+	fork(source?: string): ITreeSubscriptionCursor;
 
 	/**
 	 * Release any resources this cursor is holding onto.
@@ -226,7 +253,6 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
 }
 
 /**
- * @internal
  */
 export enum ITreeSubscriptionCursorState {
 	/**
@@ -244,7 +270,6 @@ export enum ITreeSubscriptionCursorState {
 }
 
 /**
- * @internal
  */
 export const enum TreeNavigationResult {
 	/**
@@ -267,4 +292,6 @@ export const enum TreeNavigationResult {
  * TreeNavigationResult, but never "Pending".
  * Can be used when data is never pending.
  */
-export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
+export type SynchronousNavigationResult =
+	| TreeNavigationResult.Ok
+	| TreeNavigationResult.NotFound;

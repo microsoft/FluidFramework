@@ -6,15 +6,12 @@
 import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
-	ControlMessageType,
 	ICheckpointService,
 	ICollection,
 	IContext,
-	IControlMessage,
 	IDeltaService,
 	IDocument,
 	IDocumentRepository,
-	ILambdaStartControlMessageContents,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
@@ -23,15 +20,10 @@ import {
 	ISequencedOperationMessage,
 	IServiceConfiguration,
 	ITenantManager,
-	LambdaName,
 	MongoManager,
 	runWithRetry,
 } from "@fluidframework/server-services-core";
-import {
-	IDocumentSystemMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,
@@ -44,12 +36,7 @@ import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
-import {
-	getClientIds,
-	initializeProtocol,
-	isScribeCheckpointQuorumScrubbed,
-	sendToDeli,
-} from "./utils";
+import { getClientIds, initializeProtocol, isScribeCheckpointQuorumScrubbed } from "./utils";
 import { ILatestSummaryState } from "./interfaces";
 import { PendingMessageReader } from "./pendingMessageReader";
 
@@ -125,10 +112,6 @@ export class ScribeLambdaFactory
 			const errorMessage = "Scribe lambda creation failed.";
 			context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });
 			Lumberjack.error(errorMessage, lumberProperties, error);
-			await this.sendLambdaStartResult(tenantId, documentId, {
-				lambdaName: LambdaName.Scribe,
-				success: false,
-			});
 			scribeSessionMetric?.error("Scribe lambda creation failed", error);
 		};
 
@@ -175,12 +158,14 @@ export class ScribeLambdaFactory
 				}
 			}
 
+			const isEphemeralContainer = document?.isEphemeralContainer;
+
 			scribeSessionMetric = createSessionMetric(
 				tenantId,
 				documentId,
 				LumberEventName.ScribeSessionResult,
 				this.serviceConfiguration,
-				document?.isEphemeralContainer ?? false,
+				isEphemeralContainer,
 			);
 
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
@@ -189,6 +174,7 @@ export class ScribeLambdaFactory
 				documentId,
 				gitManager,
 				this.enableWholeSummaryUpload,
+				isEphemeralContainer,
 			);
 			latestSummary = await summaryReader.readLastSummary();
 			latestSummaryCheckpoint = latestSummary.scribe
@@ -246,11 +232,7 @@ export class ScribeLambdaFactory
 			}. Fetching checkpoint from summary`;
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, lumberProperties);
-			if (!latestSummary.fromSummary) {
-				context.log?.error(`Summary can't be fetched`, { messageMetaData });
-				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
-				lastCheckpoint = DefaultScribe;
-			} else {
+			if (latestSummary.fromSummary) {
 				if (!latestSummaryCheckpoint) {
 					const error = new Error(
 						"Attempted to load from non-existent summary checkpoint.",
@@ -274,6 +256,10 @@ export class ScribeLambdaFactory
 				const checkpointMessage = `Restoring checkpoint from latest summary. Seq number: ${lastCheckpoint.sequenceNumber}`;
 				context.log?.info(checkpointMessage, { messageMetaData });
 				Lumberjack.info(checkpointMessage, lumberProperties);
+			} else {
+				context.log?.error(`Summary can't be fetched`, { messageMetaData });
+				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
+				lastCheckpoint = DefaultScribe;
 			}
 		} else {
 			if (!latestDbCheckpoint) {
@@ -316,10 +302,6 @@ export class ScribeLambdaFactory
 					"Invalid message sequence from checkpoint/summary",
 					error,
 				);
-				await this.sendLambdaStartResult(tenantId, documentId, {
-					lambdaName: LambdaName.Scribe,
-					success: false,
-				});
 
 				throw error;
 			}
@@ -391,11 +373,6 @@ export class ScribeLambdaFactory
 			this.checkpointService.getLocalCheckpointEnabled(),
 			this.maxPendingCheckpointMessagesLength,
 		);
-
-		await this.sendLambdaStartResult(tenantId, documentId, {
-			lambdaName: LambdaName.Scribe,
-			success: true,
-		});
 		return scribeLambda;
 	}
 
@@ -427,27 +404,5 @@ export class ScribeLambdaFactory
 
 	public async dispose(): Promise<void> {
 		await this.mongoManager.close();
-	}
-
-	private async sendLambdaStartResult(
-		tenantId: string,
-		documentId: string,
-		contents: ILambdaStartControlMessageContents | undefined,
-	) {
-		const controlMessage: IControlMessage = {
-			type: ControlMessageType.LambdaStartResult,
-			contents,
-		};
-
-		const operation: IDocumentSystemMessage = {
-			clientSequenceNumber: -1,
-			contents: null,
-			data: JSON.stringify(controlMessage),
-			referenceSequenceNumber: -1,
-			traces: this.serviceConfiguration.enableTraces ? [] : undefined,
-			type: MessageType.Control,
-		};
-
-		return sendToDeli(tenantId, documentId, this.producer, operation);
 	}
 }

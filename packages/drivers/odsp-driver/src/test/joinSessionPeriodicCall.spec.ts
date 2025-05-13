@@ -5,20 +5,21 @@
 
 import { strict as assert } from "node:assert";
 
+import { IClient } from "@fluidframework/driver-definitions";
 import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, SinonStub, stub, useFakeTimers } from "sinon";
 
 import { OdspFluidDataStoreLocator } from "../contractsPublic.js";
 import { createOdspUrl } from "../createOdspUrl.js";
+import { mockify } from "../mockify.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection.js";
 import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection.js";
 import { OdspDocumentService } from "../odspDocumentService.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
-import * as joinSession from "../vroom.js";
+import { fetchJoinSession } from "../vroom.js";
 
 describe("joinSessions Tests", () => {
 	let clock: SinonFakeTimers;
@@ -65,7 +66,7 @@ describe("joinSessions Tests", () => {
 
 	function addJoinSessionStub(time: number): SinonStub {
 		joinSessionResponse.refreshSessionDurationSeconds = time;
-		const joinSessionStub = stub(joinSession, "fetchJoinSession").callsFake(
+		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(
 			async () => joinSessionResponse,
 		);
 		return joinSessionStub;
@@ -82,7 +83,12 @@ describe("joinSessions Tests", () => {
 			new LocalPersistentCache(2000),
 			{ snapshotOptions: { timeout: 2000 } },
 		);
-		const locator: OdspFluidDataStoreLocator = { driveId, itemId, siteUrl, dataStorePath: "/" };
+		const locator: OdspFluidDataStoreLocator = {
+			driveId,
+			itemId,
+			siteUrl,
+			dataStorePath: "/",
+		};
 		const request = createOdspUrl(locator);
 		const resolvedUrl = await resolver.resolve({ url: request });
 		logger = new MockLogger();

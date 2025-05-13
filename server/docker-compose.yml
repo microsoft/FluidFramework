@@ -1,4 +1,3 @@
-version: "3.4"
 services:
   alfred:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}

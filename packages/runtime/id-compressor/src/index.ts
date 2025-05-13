@@ -8,7 +8,12 @@
  */
 
 export { createIdCompressor, deserializeIdCompressor } from "./idCompressor.js";
-export { createSessionId, assertIsStableId, generateStableId, isStableId } from "./utilities.js";
+export {
+	createSessionId,
+	assertIsStableId,
+	generateStableId,
+	isStableId,
+} from "./utilities.js";
 export {
 	IIdCompressorCore,
 	IIdCompressor,

@@ -3,15 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { FluidObject } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import { generateHandleContextPath, FluidHandleBase } from "@fluidframework/runtime-utils/internal";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import {
+	generateHandleContextPath,
+	FluidHandleBase,
+} from "@fluidframework/runtime-utils/internal";
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
+ * @legacy
  * @alpha
  */
-export class FluidObjectHandle<T extends FluidObject = FluidObject> extends FluidHandleBase<T> {
+export class FluidObjectHandle<
+	T extends FluidObject = FluidObject,
+> extends FluidHandleBase<T> {
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	/**
@@ -92,7 +99,8 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> extends Flui
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.bind}
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 * @privateRemarks This implementation will be moved to SharedObjectHandle once this is removed.
 	 */
 	public bind(handle: IFluidHandleInternal) {
 		// If this handle is visible, attach the graph of the incoming handle as well.

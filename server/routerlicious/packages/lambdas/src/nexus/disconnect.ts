@@ -11,31 +11,22 @@ import type {
 	INexusLambdaDependencies,
 	INexusLambdaSettings,
 } from "./interfaces";
-import { getMessageMetadata, getRoomId } from "./utils";
+import { getMessageMetadata, getRoomId, isSummarizer, isWriter } from "./utils";
 import { storeClientConnectivityTime } from "./throttleAndUsage";
 
-export async function disconnectDocument(
-	socket: IWebSocket,
-	{
-		clientManager,
-		logger,
-		throttleAndUsageStorageManager,
-		socketTracker,
-	}: INexusLambdaDependencies,
+/**
+ * Disconnect all orderer connections and store connectivity time for each.
+ */
+function disconnectOrdererConnections(
+	{ ordererManager, logger, throttleAndUsageStorageManager }: INexusLambdaDependencies,
 	{ isClientConnectivityCountingEnabled }: INexusLambdaSettings,
 	{
-		expirationTimer,
 		connectionTimeMap,
 		connectionsMap,
-		roomMap,
-		disconnectedClients,
 		disconnectedOrdererConnections,
 	}: INexusLambdaConnectionStateTrackers,
-) {
-	// Clear token expiration timer on disconnection
-	expirationTimer.clear();
-	const removeAndStoreP: Promise<void>[] = [];
-	// Send notification messages for all client IDs in the connection map
+): Promise<void>[] {
+	const promises: Promise<void>[] = [];
 	for (const [clientId, connection] of connectionsMap) {
 		if (disconnectedOrdererConnections.has(clientId)) {
 			// We already removed this clientId once. Skip it.
@@ -43,10 +34,11 @@ export async function disconnectDocument(
 		}
 		const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
 		logger.info(`Disconnect of ${clientId}`, { messageMetaData });
-		Lumberjack.info(
-			`Disconnect of ${clientId}`,
-			getLumberBaseProperties(connection.documentId, connection.tenantId),
+		const lumberjackProperties = getLumberBaseProperties(
+			connection.documentId,
+			connection.tenantId,
 		);
+		Lumberjack.info(`Disconnect of ${clientId}`, lumberjackProperties);
 
 		connection
 			.disconnect()
@@ -54,19 +46,16 @@ export async function disconnectDocument(
 				// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
 				// for the same clientId if retrying when connectDocument completes after disconnectDocument.
 				disconnectedOrdererConnections.add(clientId);
+				ordererManager.removeOrderer(connection.tenantId, connection.documentId);
 			})
 			.catch((error) => {
 				const errorMsg = `Failed to disconnect client ${clientId} from orderer connection.`;
-				Lumberjack.error(
-					errorMsg,
-					getLumberBaseProperties(connection.documentId, connection.tenantId),
-					error,
-				);
+				Lumberjack.error(errorMsg, lumberjackProperties, error);
 			});
 		if (isClientConnectivityCountingEnabled && throttleAndUsageStorageManager) {
 			const connectionTimestamp = connectionTimeMap.get(clientId);
 			if (connectionTimestamp) {
-				removeAndStoreP.push(
+				promises.push(
 					storeClientConnectivityTime(
 						clientId,
 						connection.documentId,
@@ -78,7 +67,23 @@ export async function disconnectDocument(
 			}
 		}
 	}
-	// Send notification messages for all client IDs in the room map
+	return promises;
+}
+
+/**
+ * Remove clients from the client manager and send client leave notifications to the room.
+ */
+function removeClientAndSendNotifications(
+	socket: IWebSocket,
+	{ clientManager, logger, collaborationSessionTracker }: INexusLambdaDependencies,
+	{
+		roomMap,
+		clientMap,
+		connectionTimeMap,
+		disconnectedClients,
+	}: INexusLambdaConnectionStateTrackers,
+): Promise<void>[] {
+	const promises: Promise<void>[] = [];
 	for (const [clientId, room] of roomMap) {
 		if (disconnectedClients.has(clientId)) {
 			// We already removed this clientId once. Skip it.
@@ -91,7 +96,7 @@ export async function disconnectDocument(
 			`Disconnect of ${clientId} from room`,
 			getLumberBaseProperties(room.documentId, room.tenantId),
 		);
-		removeAndStoreP.push(
+		promises.push(
 			clientManager
 				.removeClient(room.tenantId, room.documentId, clientId)
 				.then(() => {
@@ -117,10 +122,67 @@ export async function disconnectDocument(
 				error,
 			);
 		}
+		// Update session tracker upon disconnection
+		if (collaborationSessionTracker) {
+			const client = clientMap.get(clientId);
+			const connectionTimestamp = connectionTimeMap.get(clientId);
+			if (client) {
+				collaborationSessionTracker
+					.endClientSession(
+						{
+							clientId,
+							joinedTime: connectionTimestamp ?? 0,
+							isSummarizerClient: isSummarizer(client.details),
+							isWriteClient: isWriter(client.scopes, client.mode),
+						},
+						{
+							tenantId: room.tenantId,
+							documentId: room.documentId,
+						},
+					)
+					.catch((error) => {
+						Lumberjack.error(
+							"Failed to update collaboration session tracker for client disconnection",
+							{ messageMetaData },
+							error,
+						);
+					});
+			}
+		}
 	}
+	return promises;
+}
+
+/**
+ * Perform necessary cleanup when a client disconnects from a document.
+ * @internal
+ */
+export async function disconnectDocument(
+	socket: IWebSocket,
+	nexusLambdaDependencies: INexusLambdaDependencies,
+	nexusLambdaSettings: INexusLambdaSettings,
+	nexusLambdaConnectionStateTrackers: INexusLambdaConnectionStateTrackers,
+): Promise<void> {
+	// Clear token expiration timer on disconnection
+	nexusLambdaConnectionStateTrackers.expirationTimer.clear();
+	// Iterate over connection and room maps to disconnect and store connectivity time.
+	const removeAndStoreP: Promise<void>[] = [
+		// Disconnect any orderer connections
+		...disconnectOrdererConnections(
+			nexusLambdaDependencies,
+			nexusLambdaSettings,
+			nexusLambdaConnectionStateTrackers,
+		),
+		// Send notification messages for all client IDs in the room map
+		...removeClientAndSendNotifications(
+			socket,
+			nexusLambdaDependencies,
+			nexusLambdaConnectionStateTrackers,
+		),
+	];
 	// Clear socket tracker upon disconnection
-	if (socketTracker) {
-		socketTracker.removeSocket(socket.id);
+	if (nexusLambdaDependencies.socketTracker) {
+		nexusLambdaDependencies.socketTracker.removeSocket(socket.id);
 	}
 	await Promise.all(removeAndStoreP);
 }
