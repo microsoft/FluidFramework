@@ -137,7 +137,8 @@ table.removeColumn(column0);
 
 #### Listening for changes
 
-Listening for changes to table trees behaves just like it would for any other nodes in a Shared Tree.
+Listening for changes to table trees behaves just like it would for any other nodes in a Shared Tree (see [here](https://fluidframework.com/docs/data-structures/tree/events) for more details).
+
 The most straightforward option is to listen for any changes to the table node and its descendants.
 For example:
 
@@ -163,7 +164,7 @@ Tree.on(table, "treeChanged", () => {
 });
 ```
 
-If you need more granular eventing, that is possible as well.
+If you need more granular eventing to meet your performance needs, that is possible as well.
 For example, if you wish to know when the table's list of rows changes, you could do the following:
 
 ```typescript
