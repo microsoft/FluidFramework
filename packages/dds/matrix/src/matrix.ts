@@ -675,6 +675,7 @@ export class SharedMatrix<T = any>
 		);
 		const artifactsToSummarize = [
 			this.cells.snapshot(),
+			this.pending.snapshot(),
 			this.setCellLwwToFwwPolicySwitchOpSeqNumber,
 		];
 
