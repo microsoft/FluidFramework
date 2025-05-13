@@ -310,10 +310,11 @@ export class ModularChangeFamily
 		}
 
 		for (const [nodeId, fieldId] of crossFieldTable.movedNodeToParent.entries()) {
-			// If composedNodeToParent does not have an entry for this node ID
-			// then it must be an ID from change2 which was subsumed by an ID in change1 for the same node.
-			// In that case the parentage will already be correct since change1 has the same input context as the composed changeset.
-			if (composedNodeToParent.has(nodeId)) {
+			// Moved nodes are from change2.
+			// If there is a corresponding node in change1, then composedNodeToParent will already have the correct entry,
+			// because the location of the node is the same in change1 and the composed change
+			// (since they have the same input context).
+			if (crossFieldTable.newToBaseNodeId.get(nodeId) === undefined) {
 				if (fieldId !== undefined) {
 					composedNodeToParent.set(nodeId, fieldId);
 				} else {
