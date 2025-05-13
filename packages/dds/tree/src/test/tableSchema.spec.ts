@@ -1625,25 +1625,25 @@ describe("TableFactory unit tests", () => {
 						{
 							id: "row-0",
 							cells: {
-								"column-0": "00",
-								"column-1": "01",
-								"column-2": "02",
+								"column-0": "0-0",
+								"column-1": "0-1",
+								"column-2": "0-2",
 							},
 						},
 						{
 							id: "row-1",
 							cells: {
-								"column-0": "10",
-								"column-1": "11",
-								"column-2": "12",
+								"column-0": "1-0",
+								"column-1": "1-1",
+								"column-2": "1-2",
 							},
 						},
 						{
 							id: "row-2",
 							cells: {
-								"column-0": "20",
-								"column-1": "21",
-								"column-2": "22",
+								"column-0": "2-0",
+								"column-1": "2-1",
+								"column-2": "2-2",
 							},
 						},
 					],
