@@ -35,7 +35,6 @@ import {
 	type TreeViewConfiguration,
 	mapTreeFromNodeData,
 	prepareContentForHydration,
-	comparePersistedSchemaInternal,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
@@ -327,15 +326,14 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeView();
 
-		const compatibility = comparePersistedSchemaInternal(
-			this.checkout.storedSchema,
-			this.viewSchema,
-			canInitialize(this.checkout),
-		);
+		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
 
 		let lastRoot =
 			this.compatibility.canView && this.view !== undefined ? this.root : undefined;
-		this.currentCompatibility = compatibility;
+		this.currentCompatibility = {
+			...compatibility,
+			canInitialize: canInitialize(this.checkout),
+		};
 
 		if (compatibility.canView) {
 			// Trigger "rootChanged" if the root changes in the future.
