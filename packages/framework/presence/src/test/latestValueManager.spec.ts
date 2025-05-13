@@ -58,6 +58,18 @@ describe("Presence", () => {
 				assert.deepStrictEqual(workspace.states.obj.local, {});
 			});
 
+			it("throws when validator is provided", () => {
+				assert.throws(() => {
+					const workspace = presence.states.getWorkspace(testWorkspaceName, {
+						obj: StateFactory.latest({
+							local: {},
+							validator: (data) => data as object,
+						}),
+					});
+					assert.deepStrictEqual(workspace.states.obj.local, {});
+				});
+			});
+
 			it("can set and get object with properties as initial value", () => {
 				const workspace = presence.states.getWorkspace(testWorkspaceName, {
 					obj: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),

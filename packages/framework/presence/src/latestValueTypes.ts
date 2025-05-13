@@ -36,7 +36,11 @@ export interface LatestMetadata {
  * @sealed
  * @alpha
  */
-export type RawValueAccessor<_T> = "raw";
+// export type RawValueAccessor<_T> = "raw";
+export interface RawValueAccessor<T> {
+	kind: "raw";
+	accessor: DeepReadonly<JsonDeserialized<T>>;
+}
 
 /**
  * Represents a value that is accessed via a function call, which may result in no value.
@@ -44,7 +48,11 @@ export type RawValueAccessor<_T> = "raw";
  * @sealed
  * @alpha
  */
-export type ProxiedValueAccessor<_T> = "proxied";
+// export type ProxiedValueAccessor<_T> = "proxied";
+export interface ProxiedValueAccessor<T> {
+	kind: "proxied";
+	accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
+}
 
 /**
  * Union of possible accessor types for a value.
@@ -53,6 +61,15 @@ export type ProxiedValueAccessor<_T> = "proxied";
  * @alpha
  */
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
+
+/**
+ * @alpha
+ */
+export type AccessorNonDist<T> = [T] extends [ProxiedValueAccessor<T>]
+	? () => DeepReadonly<JsonDeserialized<T>> | undefined
+	: [T] extends [RawValueAccessor<T>]
+		? DeepReadonly<JsonDeserialized<T>>
+		: never;
 
 /**
  * @alpha
@@ -78,7 +95,14 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 		: TValueAccessor extends RawValueAccessor<T>
 			? DeepReadonly<JsonDeserialized<T>>
 			: never;
+	// value: TValueAccessor;
+	// value: [T] extends [ProxiedValueAccessor<T>]
+	// 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
+	// 	: [T] extends [RawValueAccessor<T>]
+	// 		? DeepReadonly<JsonDeserialized<T>>
+	// 		: never;
 	// value: Accessor<TValueAccessor>;
+	// value: TValueAccessor;
 	metadata: LatestMetadata;
 }
 
@@ -98,6 +122,7 @@ export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>>
  * presence workspace and managed by a value manager.
  *
  * @param unvalidatedData - The unknown data that should be validated. **This data should not be mutated.**
+ * @param metadata - Metadata about the value being validated. See {@link StateSchemaValidatorMetadata}.
  *
  * @returns The validated data, or `undefined` if the data is invalid.
  *
@@ -108,6 +133,9 @@ export type StateSchemaValidator<T> = (
 	 * Unknown data that should be validated. **This data should not be mutated.**
 	 */
 	unvalidatedData: unknown,
+	/**
+	 * Metadata about the value being validated.
+	 */
 	metadata?: StateSchemaValidatorMetadata,
 ) => JsonDeserialized<T> | undefined;
 

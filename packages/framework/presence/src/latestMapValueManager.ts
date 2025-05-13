@@ -592,6 +592,11 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 	 * See {@link BroadcastControlSettings}.
 	 */
 	settings?: BroadcastControlSettings | undefined;
+
+	/**
+	 * An optional function that will be called at runtime to validate the presence data. A runtime validator is strongly
+	 * recommended. See {@link StateSchemaValidator}.
+	 */
 	validator?: StateSchemaValidator<T> | undefined;
 }
 
