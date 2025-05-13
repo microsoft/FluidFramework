@@ -669,7 +669,11 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 }
 
 // @alpha @sealed @legacy
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, ISharedMapCore {
+}
+
+// @alpha @sealed @legacy @system
+export interface ISharedMapCore extends Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }

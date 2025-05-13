@@ -247,17 +247,20 @@ export namespace FluidSerializableAsTree {
     }
     const Tree: readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>];
     export type Data = JsonCompatible<IFluidHandle>;
-    const _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.object", NodeKind_2.Map, TreeMapNodeUnsafe_2<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>]> & WithType_2<"com.fluidframework.serializable.object", NodeKind_2.Map, unknown>, {
-    [Symbol.iterator](): Iterator<[string, string | number | IFluidHandle<unknown> | InsertableTypedNodeUnsafe_2<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | FluidSerializableObject | Array | null], any, undefined>;
+    const // @system
+    _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.object", NodeKind_2.Map, System_Unsafe_2.TreeMapNodeUnsafe<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>]> & WithType_2<"com.fluidframework.serializable.object", NodeKind_2.Map, unknown>, {
+    [Symbol.iterator](): Iterator<[string, string | number | IFluidHandle<unknown> | FluidSerializableObject | Array | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | null], any, undefined>;
     } | {
-    readonly [x: string]: string | number | IFluidHandle<unknown> | InsertableTypedNodeUnsafe_2<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | FluidSerializableObject | Array | null;
+    readonly [x: string]: string | number | IFluidHandle<unknown> | FluidSerializableObject | Array | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | null;
     }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>], undefined>;
     // @sealed
     export class FluidSerializableObject extends _APIExtractorWorkaroundObjectBase {
     }
+    // @system
     export type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<typeof Array>;
-    const _APIExtractorWorkaroundArrayBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.array", NodeKind_2.Array, TreeArrayNodeUnsafe_2<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>]> & WithType_2<"com.fluidframework.serializable.array", NodeKind_2.Array, unknown>, {
-    [Symbol.iterator](): Iterator<string | number | IFluidHandle<unknown> | InsertableTypedNodeUnsafe_2<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | FluidSerializableObject | Array | null, any, undefined>;
+    const // @system
+    _APIExtractorWorkaroundArrayBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.array", NodeKind_2.Array, System_Unsafe_2.TreeArrayNodeUnsafe<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>]> & WithType_2<"com.fluidframework.serializable.array", NodeKind_2.Array, unknown>, {
+    [Symbol.iterator](): Iterator<string | number | IFluidHandle<unknown> | FluidSerializableObject | Array | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | null, any, undefined>;
     }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>], undefined>;
     // (undocumented)
     export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
@@ -444,9 +447,9 @@ export namespace JsonAsTree {
     }
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass<"com.fluidframework.json.object", NodeKind.Map, System_Unsafe.TreeMapNodeUnsafe<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.object", NodeKind.Map, unknown>, {
-        [Symbol.iterator](): Iterator<[string, string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null], any, undefined>;
+        [Symbol.iterator](): Iterator<[string, string | number | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | JsonObject | Array | null], any, undefined>;
     } | {
-        readonly [x: string]: string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null;
+        readonly [x: string]: string | number | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | JsonObject | Array | null;
     }, false, readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], undefined>;
     // (undocumented)
     export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
@@ -454,7 +457,7 @@ export namespace JsonAsTree {
     export type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<typeof Array>;
     const // @system
     _APIExtractorWorkaroundArrayBase: TreeNodeSchemaClass<"com.fluidframework.json.array", NodeKind.Array, System_Unsafe.TreeArrayNodeUnsafe<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.array", NodeKind.Array, unknown>, {
-        [Symbol.iterator](): Iterator<string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null, any, undefined>;
+        [Symbol.iterator](): Iterator<string | number | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | JsonObject | Array | null, any, undefined>;
     }, false, readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], undefined>;
     // (undocumented)
     export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
@@ -783,8 +786,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 export class SchemaFactoryAlpha<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
     arrayAlpha<const Name extends TName, const T extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     arrayRecursive<const Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): ArrayNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
-    static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha_2<FieldKind_2.Identifier, LeafSchema_2<"string", string> & SimpleLeafNodeSchema_2, TCustomMetadata>;
-    static readonly leaves: readonly [LeafSchema_2<"string", string> & SimpleLeafNodeSchema_2, LeafSchema_2<"number", number> & SimpleLeafNodeSchema_2, LeafSchema_2<"boolean", boolean> & SimpleLeafNodeSchema_2, LeafSchema_2<"null", null> & SimpleLeafNodeSchema_2, LeafSchema_2<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema_2];
+    static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha_2<FieldKind_2.Identifier, LeafSchema_3<"string", string> & SimpleLeafNodeSchema_2, TCustomMetadata>;
+    static readonly leaves: readonly [LeafSchema_3<"string", string> & SimpleLeafNodeSchema_2, LeafSchema_3<"number", number> & SimpleLeafNodeSchema_2, LeafSchema_3<"boolean", boolean> & SimpleLeafNodeSchema_2, LeafSchema_3<"null", null> & SimpleLeafNodeSchema_2, LeafSchema_3<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema_2];
     mapAlpha<Name extends TName, const T extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     mapRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): MapNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
     objectAlpha<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: SchemaFactoryObjectOptions<TCustomMetadata>): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
