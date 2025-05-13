@@ -188,5 +188,5 @@ steps:
   # Conditional check
   - ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}:
     - script: |
-        echo ${{ variables[testVariable] }}
+        echo ${{ variables['testVariable'] }}
       displayName: "Conditional check"
