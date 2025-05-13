@@ -6,7 +6,11 @@
 import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
-import { type Brand, brandedStringType } from "../../util/index.js";
+import {
+	type Brand,
+	brandedStringType,
+	JsonCompatibleReadOnlySchema,
+} from "../../util/index.js";
 
 export const version = 2 as const;
 
@@ -47,12 +51,12 @@ export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>(
  */
 export const TreeNodeSchemaIdentifierSchema = brandedStringType<TreeNodeSchemaIdentifier>();
 
-export const PersistedMetadataFormat = Type.Optional(Type.String());
+export const PersistedMetadataFormat = Type.Optional(JsonCompatibleReadOnlySchema);
 
 const FieldSchemaFormatBase = Type.Object({
 	kind: FieldKindIdentifierSchema,
 	types: Type.Array(TreeNodeSchemaIdentifierSchema),
-	persistedData: PersistedMetadataFormat,
+	persistedMetadata: PersistedMetadataFormat,
 });
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
@@ -92,7 +96,7 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 		/**
 		 * Persisted metadata for this node.
 		 */
-		persistedData: PersistedMetadataFormat,
+		persistedMetadata: PersistedMetadataFormat,
 	},
 	unionOptions,
 );

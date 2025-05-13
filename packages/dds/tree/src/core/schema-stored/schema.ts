@@ -131,7 +131,7 @@ export interface TreeFieldStoredSchema {
 	 * @remarks
 	 * Discarded when encoding to {@link SchemaFormatVersion.V1}.
 	 */
-	persistedData?: PersistedMetadataFormat;
+	persistedMetadata?: PersistedMetadataFormat;
 }
 
 /**
@@ -155,7 +155,7 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 	kind: brand(forbiddenFieldKindIdentifier),
 	// This type set also forces the field to be empty not not allowing any types as all.
 	types: new Set(),
-	persistedData: undefined,
+	persistedMetadata: undefined,
 };
 
 /**
@@ -328,7 +328,7 @@ export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaF
 		kind: schema.kind,
 		// Types are sorted by identifier to improve stability of persisted data to increase chance of schema blob reuse.
 		types: [...schema.types].sort(),
-		persistedData: schema.persistedData,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }
 
