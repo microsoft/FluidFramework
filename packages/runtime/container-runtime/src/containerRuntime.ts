@@ -224,7 +224,7 @@ import {
 	PendingStateManager,
 	type PendingBatchResubmitMetadata,
 } from "./pendingStateManager.js";
-import { RunCounter } from "./runCounter.js";
+import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
 	runtimeCompatDetailsForLoader,
 	validateLoaderCompatibility,
@@ -1267,7 +1267,7 @@ export class ContainerRuntime
 
 	private readonly maxConsecutiveReconnects: number;
 
-	private readonly batchRunner = new RunCounter();
+	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
 	private readonly offlineEnabled: boolean;
 	private flushTaskExists = false;
@@ -4443,10 +4443,7 @@ export class ContainerRuntime
 
 		try {
 			// This change should be staged if we're in staging mode but not resubmitting a pre-staged batch.
-			const staged =
-				this.inStagingMode &&
-				this.batchRunner.getAnnotations<ResubmitBatchRunnerAnnotation>().resubmitInfo
-					?.staged !== true;
+			const staged = this.inStagingMode && this.batchRunner.resubmitInfo?.staged !== true;
 
 			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
 			if (!staged) {
@@ -4598,14 +4595,11 @@ export class ContainerRuntime
 			staged,
 		};
 
-		this.batchRunner.run(
-			() => {
-				for (const message of batch) {
-					this.reSubmit(message, squash);
-				}
-			},
-			{ resubmitInfo } satisfies ResubmitBatchRunnerAnnotation,
-		);
+		this.batchRunner.run(() => {
+			for (const message of batch) {
+				this.reSubmit(message, squash);
+			}
+		}, resubmitInfo);
 
 		this.flush(resubmitInfo);
 	}
