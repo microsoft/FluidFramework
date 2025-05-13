@@ -805,7 +805,7 @@ export class SharedMatrix<T = any>
 				assert(pending !== undefined, "local operation must have a pending array");
 				const localSeqIndex = pending.indexOf(localSeq);
 				assert(localSeqIndex >= 0, "local operation must have a pending entry");
-				pending.splice(1);
+				pending.splice(localSeqIndex, 1);
 				// If the mode is LWW, then send the op.
 				// Otherwise if the current mode is FWW and if we generated this op, after seeing the
 				// last set op, or it is the first set op for the cell, then regenerate the op,
