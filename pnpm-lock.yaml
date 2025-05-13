@@ -8106,8 +8106,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.5
-        version: 7.52.5(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
+        specifier: 7.52.8
+        version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
