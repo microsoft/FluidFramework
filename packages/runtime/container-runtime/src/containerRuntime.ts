@@ -748,10 +748,6 @@ export async function loadContainerRuntime(
 
 const defaultMaxConsecutiveReconnects = 7;
 
-interface ResubmitBatchRunnerAnnotation {
-	resubmitInfo: BatchResubmitInfo;
-}
-
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -4442,8 +4438,8 @@ export class ContainerRuntime
 		);
 
 		try {
-			// This change should be staged if we're in staging mode but not resubmitting a pre-staged batch.
-			const staged = this.inStagingMode && this.batchRunner.resubmitInfo?.staged !== true;
+			// If we're resubmitting a batch, keep the same "staged" value as before.  Otherwise, use the current "global" state.
+			const staged = this.batchRunner.resubmitInfo?.staged ?? this.inStagingMode;
 
 			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
 			if (!staged) {
