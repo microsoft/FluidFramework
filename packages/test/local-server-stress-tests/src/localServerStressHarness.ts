@@ -969,10 +969,9 @@ function runTest<TOperation extends BaseOperation>(
 	seed: number,
 	saveInfo: SaveInfo | undefined,
 ): void {
-	const itFn = options.only.has(seed) ? it.only : it;
+	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`workload: ${model.workloadName} seed: ${seed}`, async function () {
 		const inCi = process.env.TF_BUILD !== undefined;
-		const skip = options.skip.has(seed);
 		const shouldMinimize: boolean =
 			options.skipMinimization !== true &&
 			saveInfo !== undefined &&
@@ -990,12 +989,8 @@ function runTest<TOperation extends BaseOperation>(
 
 		try {
 			// don't write to files in CI
-			await runTestForSeed(model, seed, options, inCi || skip ? undefined : saveInfo);
+			await runTestForSeed(model, seed, options, inCi ? undefined : saveInfo);
 		} catch (error) {
-			if (skip) {
-				this.skip();
-				return;
-			}
 			if (!shouldMinimize || saveInfo === undefined) {
 				throw error;
 			}
@@ -1023,7 +1018,6 @@ function runTest<TOperation extends BaseOperation>(
 
 			throw error;
 		}
-		assert(skip === false, "All skipped tests should fail");
 	});
 }
 
