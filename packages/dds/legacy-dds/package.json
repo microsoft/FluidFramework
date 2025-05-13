@@ -123,9 +123,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/shared-object-base": "workspace:~",
-		"@types/sinon": "^17.0.3",
-		"sinon": "^18.0.1"
+		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
