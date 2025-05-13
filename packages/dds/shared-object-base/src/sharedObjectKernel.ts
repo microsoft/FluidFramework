@@ -5,7 +5,7 @@
 
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	IChannelStorageService,
 	type IChannel,
@@ -14,7 +14,6 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
@@ -24,7 +23,6 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { SharedObjectHandle } from "./handle.js";
 import { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKind,
@@ -36,19 +34,24 @@ import { ISharedObjectEvents, type ISharedObject } from "./types.js";
 import type { IChannelView } from "./utils.js";
 
 /**
- * Functionality specific a particular kind of shared object.
+ * Functionality specific to a particular kind of {@link ISharedObject}.
  * @remarks
- * SharedObject's expose APIs for two consumers:
+ * Shared objects expose APIs for two consumers:
  *
- * 1. The runtime, which uses the SharedObject summarize, load and apply ops.
- * 2. The user, who uses the SharedObject to read and write data.
+ * 1. The runtime, which uses {@link @fluidframework/datastore-definitions#IChannel} to summarize and apply ops and {@link @fluidframework/datastore-definitions#IChannelFactory} to create the load summaries.
  *
- * There is some common functionality all shared objects use, provided by {@link SharedObject}.
+ * 2. The app, which uses shared object kind specific APIs to read and write data.
+ *
+ * There is some common functionality all shared objects use, provided by {@link SharedObject} and {@link SharedObjectCore}.
  * SharedKernel describes the portion of the behavior required by the runtime which
  * differs between different kinds of shared objects.
  *
- * {@link makeSharedObjectKind} is then used to wrap up the kernel into a full {@link SharedObject}.
+ * {@link makeSharedObjectKind} is then used to wrap up the kernel into a full {@link ISharedObject} implementation.
  * The runtime specific APIs are then type erased into a {@link SharedObjectKind}.
+ * @privateRemarks
+ * Unlike the `SharedObject` class, this interface is internal, and thus can be adjusted more easily.
+ * Therefore this interface is not intended to address all needs, and will likely need small changes as it gets more adoption.
+ *
  * @internal
  */
 export interface SharedKernel {
@@ -94,6 +97,15 @@ export interface SharedKernel {
 
 /**
  * SharedObject implementation that delegates to a SharedKernel.
+ * @typeParam TOut - The type of the object exposed to the app.
+ * Once initialized, instances of this class forward properties to the `TOut` value provided by the factory.
+ * See {@link mergeAPIs} for more limitations.
+ *
+ * @remarks
+ * The App facing API (TOut) needs to be implemented by this object which also has to implement the runtime facing API (ISharedObject).
+ *
+ * Requiring both of these to be implemented by the same object adds some otherwise unnecessary coupling.
+ * This class is a workaround for that, which takes separate implementations of the two APIs and merges them into one using {@link mergeAPIs}.
  */
 class SharedObjectFromKernel<
 	TOut extends object,
@@ -105,24 +117,10 @@ class SharedObjectFromKernel<
 	 * Explicit initialization to undefined is done so Proxy knows this property is from this class (via `Reflect.has`),
 	 * not from the grafted APIs.
 	 */
-	private lazyData: FactoryOut<TOut> | undefined = undefined;
+	#lazyData: FactoryOut<TOut> | undefined = undefined;
 
-	private readonly kernelArgs: KernelArgs;
+	readonly #kernelArgs: KernelArgs;
 
-	private get data(): FactoryOut<TOut> {
-		this.lazyData ??= this.factory.create(this.kernelArgs);
-		return this.lazyData;
-	}
-
-	private get kernel(): SharedKernel {
-		return this.data.kernel;
-	}
-
-	/**
-	 * @param id - String identifier.
-	 * @param runtime - Data store runtime.
-	 * @param attributes - The attributes for the map.
-	 */
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -132,23 +130,16 @@ class SharedObjectFromKernel<
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
-		// Proxy which grafts the adapter's APIs onto this object.
-		const merged = mergeAPIs(this, () => this.data.view);
-
-		this.handle = new SharedObjectHandle(merged, id, runtime.IFluidHandleContext);
-
-		this.kernelArgs = {
+		this.#kernelArgs = {
 			sharedObject: this,
 			serializer: this.serializer,
 			submitLocalMessage: (op, localOpMetadata) =>
 				this.submitLocalMessage(op, localOpMetadata),
-			eventEmitter: merged,
+			eventEmitter: this,
 			logger: this.logger,
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 		};
-
-		return merged;
 	}
 
 	protected override summarizeCore(
@@ -156,59 +147,78 @@ class SharedObjectFromKernel<
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
-		return this.kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
+		return this.#kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
+	}
+
+	protected override initializeLocalCore(): void {
+		this.#initializeData(this.factory.create(this.#kernelArgs));
+	}
+
+	#initializeData(data: FactoryOut<TOut>): void {
+		assert(this.#lazyData === undefined, "initializeData must be called first and only once");
+		this.#lazyData = data;
+
+		// Make `this` implement TOut.
+		mergeAPIs(this, data.view);
+	}
+
+	get #kernel(): SharedKernel {
+		return (this.#lazyData ?? fail("must initializeData first")).kernel;
 	}
 
 	protected override async loadCore(storage: IChannelStorageService): Promise<void> {
-		assert(this.lazyData === undefined, "loadCore must be called first and only once");
-		this.lazyData ??= await this.factory.loadCore(this.kernelArgs, storage);
+		this.#initializeData(await this.factory.loadCore(this.#kernelArgs, storage));
 	}
 
 	protected override onDisconnect(): void {
-		this.kernel.onDisconnect();
+		this.#kernel.onDisconnect();
 	}
 
 	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
-		this.kernel.reSubmitCore(content, localOpMetadata);
+		this.#kernel.reSubmitCore(content, localOpMetadata);
 	}
 
 	protected override applyStashedOp(content: unknown): void {
-		this.kernel.applyStashedOp(content);
+		this.#kernel.applyStashedOp(content);
 	}
 
-	protected override processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		assert(false, "processCore should not be called");
+	protected override processCore(): void {
+		fail("processCore should not be called");
 	}
 
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
-		this.kernel.processMessagesCore(messagesCollection);
+		this.#kernel.processMessagesCore(messagesCollection);
 	}
 
 	protected override rollback(content: unknown, localOpMetadata: unknown): void {
-		if (this.kernel.rollback === undefined) {
+		if (this.#kernel.rollback === undefined) {
 			super.rollback(content, localOpMetadata);
 		} else {
-			this.kernel.rollback(content, localOpMetadata);
+			this.#kernel.rollback(content, localOpMetadata);
 		}
 	}
 
 	protected override didAttach(): void {
-		this.kernel.didAttach?.();
+		this.#kernel.didAttach?.();
 	}
 }
 
 /**
  * When present on a method, it indicates the methods return value should be replaced with `this` (the wrapper)
  * when wrapping the object with the method.
+ * @remarks
+ * This is useful when using {@link mergeAPIs} with methods where the return type is `this`, like `Map.set`.
  * @internal
  */
 export const thisWrap: unique symbol = Symbol("selfWrap");
 
 /**
+ * A {@link SharedKernel} providing the implementation of some distributed data structure (DDS) and the needed runtime facing APIs,
+ * and a separate view object which exposes the app facing APIs (`T`)
+ * for reading and writing data which are specific to this particular data structure.
+ * @remarks
+ * Output from {@link SharedKernelFactory}.
+ * This is an alternative to defining DDSs by sub-classing {@link SharedObject}.
  * @internal
  */
 export interface FactoryOut<T extends object> {
@@ -217,6 +227,11 @@ export interface FactoryOut<T extends object> {
 }
 
 /**
+ * A factory for creating DDSs.
+ * @remarks
+ * Outputs {@link FactoryOut}.
+ * This is an alternative to directly implementing {@link @fluidframework/datastore-definitions#IChannelFactory}.
+ * Use with {@link makeSharedObjectKind} to create a {@link SharedObjectKind}.
  * @internal
  */
 export interface SharedKernelFactory<T extends object> {
@@ -229,57 +244,114 @@ export interface SharedKernelFactory<T extends object> {
 }
 
 /**
+ * Inputs for building a {@link SharedKernel} via {@link SharedKernelFactory}.
  * @internal
  */
 export interface KernelArgs {
+	/**
+	 * The shared object whose behavior is being implemented.
+	 */
 	readonly sharedObject: IChannelView & IFluidLoadable;
+	/**
+	 * {@inheritdoc SharedObject.serializer}
+	 */
 	readonly serializer: IFluidSerializer;
+	/**
+	 * {@inheritdoc SharedObjectCore.submitLocalMessage}
+	 */
 	readonly submitLocalMessage: (op: unknown, localOpMetadata: unknown) => void;
+	/**
+	 * Top level emitter for events for this object.
+	 * @remarks
+	 * This is needed since the separate kernel and view from {@link FactoryOut} currently have to be recombined,
+	 * and having this as its own thing helps accomplish that.
+	 */
 	readonly eventEmitter: TypedEventEmitter<ISharedObjectEvents>;
+	/**
+	 * {@inheritdoc SharedObjectCore.logger}
+	 */
 	readonly logger: ITelemetryLoggerExt;
+	/**
+	 * {@inheritdoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.idCompressor}
+	 */
 	readonly idCompressor: IIdCompressor | undefined;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#IDeltaManager.lastSequenceNumber}
+	 */
 	readonly lastSequenceNumber: () => number;
 }
 
 /**
- * User a proxy to add APIs from extra onto base.
+ * Add getters to `base` which forward own properties from `extra`.
+ * @remarks
+ * This only handles use of "get" and "has".
+ * Therefore, APIs involving setting properties should not be used as `Extra`.
+ *
+ * Functions from `extra` are bound to the `extra` object and support {@link thisWrap}.
+ *
+ * Asserts when properties collide.
  * @internal
  */
-export function mergeAPIs<Base extends object, Extra extends object>(
+export function mergeAPIs<const Base extends object, const Extra extends object>(
 	base: Base,
-	extraGetter: () => Extra,
-): Base & Extra {
-	// Proxy which grafts the adapter's APIs onto this object.
-	return new Proxy(base, {
-		get: (target, prop, receiver) => {
-			// Prefer `this` over adapter when there is a conflict.
-			if (Reflect.has(target, prop)) {
-				return Reflect.get(target, prop, target);
-			}
-			const extra = extraGetter();
-			const adapted = Reflect.get(extra, prop, extra) as unknown;
-			if (adapted instanceof Function) {
-				// eslint-disable-next-line unicorn/prefer-ternary
-				if (thisWrap in adapted) {
-					return (...args: unknown[]) => {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/ban-types
-						const result = (adapted as unknown as Function).call(extra, ...args);
-						assert(result === extra, "methods returning thisWrap should return this");
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-						return receiver;
-					};
-				} else {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					return adapted.bind(extra);
-				}
-			}
+	extra: Extra,
+): asserts base is Base & Extra {
+	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(extra))) {
+		assert(!Reflect.has(base, key), "colliding properties");
 
-			return adapted;
-		},
-	}) as Base & Extra;
+		// Detect and special case functions.
+		// Currently this is done eagerly (when mergeAPIs is called) rather than lazily (when the property is read):
+		// this eager approach should result in slightly better performance,
+		// but if functions on `extra` are reassigned over time it will produce incorrect behavior.
+		// If this functionality is required, the design can be changed.
+		let getter: () => unknown;
+		// Bind functions to the extra object and handle thisWrap.
+		if (typeof descriptor.value === "function") {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const fromExtra: () => Extra | Base = descriptor.value;
+			getter = () => forwardMethod(fromExtra, extra, base);
+			// To catch (and error on) cases where the function is reassigned and this eager binding approach is not appropriate, make it non-writable.
+			Object.defineProperty(extra, key, { ...descriptor, writable: false });
+		} else {
+			getter = () => extra[key];
+		}
+
+		Object.defineProperty(base, key, {
+			configurable: false,
+			enumerable: descriptor.enumerable,
+			get: getter,
+			// If setters become required, support them here.
+		});
+	}
 }
 
 /**
+ * Wrap a method `f` of `oldThis` to be a method of `newThis`.
+ * @remarks
+ * The wrapped function will be called with `oldThis` as the `this` parameter.
+ * It also accounts for when `f` is marked with {@link thisWrap}.
+ */
+function forwardMethod<TArgs extends [], TReturn>(
+	f: (...args: TArgs) => TReturn,
+	oldThis: TReturn,
+	newThis: TReturn,
+): (...args: TArgs) => TReturn {
+	// eslint-disable-next-line unicorn/prefer-ternary
+	if (thisWrap in f) {
+		return (...args: TArgs) => {
+			const result = f.call(oldThis, ...args);
+			assert(result === oldThis, "methods returning thisWrap should return this");
+			return newThis;
+		};
+	} else {
+		return f.bind(oldThis);
+	}
+}
+
+/**
+ * Options for creating a {@link SharedObjectKind} via {@link makeSharedObjectKind}.
+ * @typeParam T - The type of the object exposed to the app.
+ * This can optionally include members from {@link ISharedObject} which will be provided automatically.
  * @internal
  */
 export interface SharedObjectOptions<T extends object> {
@@ -293,19 +365,28 @@ export interface SharedObjectOptions<T extends object> {
 	 */
 	readonly attributes: IChannelAttributes;
 
+	/**
+	 * The factory used to create the kernel and its view.
+	 * @remarks
+	 * The view produced by this factory will be grafted onto the {@link SharedObject} using {@link mergeAPIs}.
+	 * See {@link mergeAPIs} for more information on limitations that apply.
+	 */
 	readonly factory: SharedKernelFactory<Omit<T, keyof ISharedObject>>;
 
+	/**
+	 * {@inheritDoc SharedObject.telemetryContextPrefix}
+	 */
 	readonly telemetryContextPrefix: string;
 }
 
 /**
- * Utility to create a IChannelFactory classes.
+ * Utility to create a {@link @fluidframework/datastore-definitions#IChannelFactory} classes.
  * @remarks
- * Prefer using {@link makeSharedObjectKind} instead if exposing the factory is not needed for legacy API compatibility.
+ * Use {@link makeSharedObjectKind} instead unless exposing the factory is required for legacy API compatibility.
  * @internal
  */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
-export function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
 	class ChannelFactory implements IChannelFactory<T> {
 		/**
 		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
@@ -373,10 +454,10 @@ export function makeChannelFactory<T extends object>(options: SharedObjectOption
 }
 
 /**
- * Utility to create a SharedObjectKind.
+ * Utility to create a {@link SharedObjectKind}.
  * @privateRemarks
  * Using this API avoids having to subclasses any Fluid Framework types,
- * reducing the coupling between the framework and the shared object implementation.
+ * reducing the coupling between the framework and the SharedObject implementation.
  * @internal
  */
 export function makeSharedObjectKind<T extends object>(

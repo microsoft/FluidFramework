@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/datastore",
-	"version": "2.33.0",
+	"version": "2.41.0",
 	"description": "Fluid data store implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -137,10 +137,10 @@
 		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
-		"@fluidframework/datastore-previous": "npm:@fluidframework/datastore@2.32.0",
+		"@fluidframework/datastore-previous": "npm:@fluidframework/datastore@2.33.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
@@ -158,7 +158,11 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_FluidDataStoreRuntime": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

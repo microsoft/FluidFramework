@@ -13,20 +13,31 @@ import {
 import { testSimpleTrees } from "../../testTrees.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FluidClientVersion } from "../../../codec/index.js";
+import { TreeViewConfigurationAlpha } from "../../../simple-tree/index.js";
 
 describe("simple-tree storedSchema", () => {
 	describe("test-schema", () => {
 		useSnapshotDirectory("simple-tree-storedSchema");
+		// TODO: Should also loop over schema formats once `extractPersistedSchema` takes the format version as an argument.
 		for (const test of testSimpleTrees) {
-			it(test.name, () => {
-				const persisted = extractPersistedSchema(test.schema);
+			it(`${test.name} - schema v1`, () => {
+				const persisted = extractPersistedSchema(
+					new TreeViewConfigurationAlpha({ schema: test.schema }),
+					FluidClientVersion.v2_0,
+				);
+
 				takeJsonSnapshot(persisted);
 			});
 
 			// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
 			// but might as will give it a simple smoke test for the various test schema.
-			it(`comparePersistedSchema to self ${test.name}`, () => {
-				const persistedA = extractPersistedSchema(test.schema);
+			it(`comparePersistedSchema to self ${test.name} - schema v1`, () => {
+				const persistedA = extractPersistedSchema(
+					new TreeViewConfigurationAlpha({ schema: test.schema }),
+					FluidClientVersion.v2_0,
+				);
+
 				const status = comparePersistedSchema(
 					persistedA,
 					test.schema,

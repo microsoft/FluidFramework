@@ -5,7 +5,7 @@
 
 import type { AzureUser } from "@fluidframework/azure-client/internal";
 // eslint-disable-next-line import/no-internal-modules
-import type { ClientSessionId } from "@fluidframework/presence/alpha";
+import type { AttendeeId } from "@fluidframework/presence/alpha";
 
 export type MessageToChild = ConnectCommand | DisconnectSelfCommand;
 interface ConnectCommand {
@@ -20,29 +20,29 @@ interface DisconnectSelfCommand {
 
 export type MessageFromChild =
 	| AttendeeDisconnectedEvent
-	| AttendeeJoinedEvent
+	| attendeeConnectedEvent
 	| ReadyEvent
 	| DisconnectedSelfEvent
 	| ErrorEvent;
 interface AttendeeDisconnectedEvent {
 	event: "attendeeDisconnected";
-	sessionId: ClientSessionId;
+	attendeeId: AttendeeId;
 }
 
-interface AttendeeJoinedEvent {
-	event: "attendeeJoined";
-	sessionId: ClientSessionId;
+interface attendeeConnectedEvent {
+	event: "attendeeConnected";
+	attendeeId: AttendeeId;
 }
 
 interface ReadyEvent {
 	event: "ready";
 	containerId: string;
-	sessionId: ClientSessionId;
+	attendeeId: AttendeeId;
 }
 
 interface DisconnectedSelfEvent {
 	event: "disconnectedSelf";
-	sessionId: ClientSessionId;
+	attendeeId: AttendeeId;
 }
 interface ErrorEvent {
 	event: "error";

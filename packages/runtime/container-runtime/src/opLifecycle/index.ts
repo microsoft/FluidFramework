@@ -14,6 +14,7 @@ export {
 export {
 	LocalBatch,
 	LocalBatchMessage,
+	LocalEmptyBatchPlaceholder,
 	OutboundBatch,
 	OutboundBatchMessage,
 	OutboundSingletonBatch,
@@ -26,6 +27,7 @@ export {
 	ensureContentsDeserialized,
 } from "./opSerialization.js";
 export {
+	BatchResubmitInfo,
 	estimateSocketSize,
 	localBatchToOutboundBatch,
 	Outbox,

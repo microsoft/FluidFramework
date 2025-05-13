@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-client",
-	"version": "2.33.0",
+	"version": "2.41.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -106,14 +106,14 @@
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-tools/build-cli": "^0.55.0",
-		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.32.0",
+		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.33.0",
 		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
@@ -130,7 +130,20 @@
 		"uuid": "^9.0.0"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_ITokenClaims": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAlias_ScopeType": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Variable_ScopeType": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

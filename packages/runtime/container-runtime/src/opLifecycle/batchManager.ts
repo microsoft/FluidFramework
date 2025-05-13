@@ -10,11 +10,12 @@ import {
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
 import { LocalBatchMessage, IBatchCheckpoint, type LocalBatch } from "./definitions.js";
+import { serializeOp } from "./opSerialization.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
@@ -127,10 +128,12 @@ export class BatchManager {
 	 * Gets the pending batch and clears state for the next batch.
 	 */
 	public popBatch(batchId?: BatchId): LocalBatch {
+		assert(this.pendingBatch[0] !== undefined, 0xb8a /* expected non-empty batch */);
 		const batch: LocalBatch = {
 			messages: this.pendingBatch,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			hasReentrantOps: this.hasReentrantOps,
+			staged: this.pendingBatch[0].staged,
 		};
 
 		this.pendingBatch = [];
@@ -158,9 +161,7 @@ export class BatchManager {
 					throw new LoggingError("Ops generated during rollback", {
 						count,
 						...tagData(TelemetryDataTag.UserData, {
-							ops: JSON.stringify(
-								this.pendingBatch.slice(startPoint).map((b) => b.serializedOp),
-							),
+							ops: serializeOp(this.pendingBatch.slice(startPoint).map((b) => b.runtimeOp)),
 						}),
 					});
 				}

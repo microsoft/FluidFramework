@@ -134,13 +134,13 @@ describe("schema validation", () => {
 	});
 
 	describe("isNodeInSchema", () => {
-		it(`skips validation if stored schema is completely empty`, () => {
+		it(`does validation if stored schema is completely empty`, () => {
 			assert.equal(
 				isNodeInSchema(
 					createLeafNode("myNumberNode", 1, ValueSchema.Number).node,
 					createSchemaAndPolicy(), // Note this passes an empty stored schema
 				),
-				SchemaValidationErrors.NoError,
+				SchemaValidationErrors.Node_MissingSchema,
 			);
 		});
 

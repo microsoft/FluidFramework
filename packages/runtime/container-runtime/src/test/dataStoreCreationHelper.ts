@@ -5,21 +5,27 @@
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type {
+	IClientDetails,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	CreateSummarizerNodeSource,
 	type CreateChildSummarizerNodeFn,
 	type IFluidDataStoreContext,
 	type IFluidDataStoreFactory,
 	type IFluidDataStoreRegistry,
-	type IFluidParentContext,
 	type IGarbageCollectionData,
 	type ISummarizerNodeWithGC,
 	type SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockDeltaManager,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
 
+import type { IFluidParentContextPrivate } from "../channelCollection.js";
 import {
 	LocalFluidDataStoreContext,
 	type ILocalFluidDataStoreContextProps,
@@ -31,9 +37,9 @@ import {
 
 export function createParentContext(
 	logger: ITelemetryBaseLogger = createChildLogger(),
-	clientDetails = {} as unknown as IFluidParentContext["clientDetails"],
+	clientDetailsOverrides?: Partial<IClientDetails> | undefined,
 	compatDetails?: ILayerCompatDetails,
-): IFluidParentContext {
+): IFluidParentContextPrivate {
 	const factory: IFluidDataStoreFactory = {
 		type: "store-type",
 		get IFluidDataStoreFactory() {
@@ -53,12 +59,18 @@ export function createParentContext(
 		},
 		get: async (pkg) => (pkg === "BOGUS" ? undefined : factory),
 	};
+	const clientDetails: IClientDetails = {
+		capabilities: { interactive: true },
+		...clientDetailsOverrides,
+	};
 	return {
 		IFluidDataStoreRegistry: registry,
 		baseLogger: logger,
 		clientDetails,
 		submitMessage: () => {},
-	} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
+		deltaManager: new MockDeltaManager(),
+		isReadOnly: () => !clientDetails.capabilities.interactive,
+	} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 }
 
 export function createSummarizerNodeAndGetCreateFn(dataStoreId: string): {

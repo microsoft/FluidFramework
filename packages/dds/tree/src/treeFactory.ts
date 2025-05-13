@@ -18,10 +18,10 @@ import {
 
 import {
 	SharedTreeKernel,
-	type ITreeInternal,
 	type ITreePrivate,
 	type SharedTreeOptions,
 	type SharedTreeOptionsInternal,
+	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
 
@@ -40,16 +40,17 @@ export interface ISharedTree extends ISharedObject, ITreePrivate {}
  * Creates a factory for shared tree kernels with the given options.
  * @remarks
  * Exposes {@link ITreePrivate} to allow access to internals in tests without a cast.
+ * Code exposing this beyond this package will need to update to a more public type.
  */
-function treeKernelFactoryPrivate(
+function treeKernelFactory(
 	options: SharedTreeOptionsInternal,
-): SharedKernelFactory<ITreePrivate> {
+): SharedKernelFactory<SharedTreeKernelView> {
 	function treeFromKernelArgs(args: KernelArgs): SharedTreeKernel {
 		if (args.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
 		return new SharedTreeKernel(
-			new Breakable("Shared Tree"),
+			new Breakable("SharedTree"),
 			args.sharedObject,
 			args.serializer,
 			args.submitLocalMessage,
@@ -61,10 +62,7 @@ function treeKernelFactoryPrivate(
 	}
 
 	return {
-		create: (args: KernelArgs): FactoryOut<ITreePrivate> => {
-			if (args.idCompressor === undefined) {
-				throw new UsageError("IdCompressor must be enabled to use SharedTree");
-			}
+		create: (args: KernelArgs): FactoryOut<SharedTreeKernelView> => {
 			const k = treeFromKernelArgs(args);
 			return { kernel: k, view: k.view };
 		},
@@ -72,21 +70,13 @@ function treeKernelFactoryPrivate(
 		async loadCore(
 			args: KernelArgs,
 			storage: IChannelStorageService,
-		): Promise<FactoryOut<ITreePrivate>> {
+		): Promise<FactoryOut<SharedTreeKernelView>> {
 			const k = treeFromKernelArgs(args);
 			await k.loadCore(storage);
 			return { kernel: k, view: k.view };
 		},
 	};
 }
-
-/**
- * Creates a factory for shared tree kernels with the given options.
- * @internal
- */
-export const treeKernelFactory: (
-	options: SharedTreeOptions,
-) => SharedKernelFactory<ITreeInternal> = treeKernelFactoryPrivate;
 
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
@@ -125,16 +115,12 @@ export const SharedTree = configuredSharedTree({});
 export function configuredSharedTree(
 	options: SharedTreeOptions,
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
-	return makeSharedObjectKind<ITree>(configuredSharedTreeOptions(options));
-}
-
-export function configuredSharedTreeOptions(
-	options: SharedTreeOptions,
-): SharedObjectOptions<ITree> {
-	return {
+	const sharedObjectOptions: SharedObjectOptions<ITree> = {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,
 		telemetryContextPrefix: "fluid_sharedTree_",
 		factory: treeKernelFactory(options),
 	};
+
+	return makeSharedObjectKind<ITree>(sharedObjectOptions);
 }
