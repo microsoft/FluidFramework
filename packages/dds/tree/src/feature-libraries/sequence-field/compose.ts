@@ -214,7 +214,7 @@ function composeMarksIgnoreChild(
 		const attachId = getAttachedNodeId(newMark);
 
 		// Note that we cannot assert that this returns true,
-		// as MCF may not be able to tell that this is a reattach of the same node on the first pass.
+		// as it may not be until a second pass that MCF can tell that this is a reattach of the same node.
 		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, false);
 		return createNoopMark(baseMark.count, undefined);
 	}
