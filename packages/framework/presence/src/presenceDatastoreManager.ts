@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
@@ -108,6 +109,16 @@ function isPresenceMessage(
 ): message is DatastoreUpdateMessage | ClientJoinMessage | AcknowledgementMessage {
 	return message.type.startsWith("Pres:");
 }
+
+function isLayerCompatDetails(value: unknown): value is ILayerCompatDetails {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"supportedFeatures" in value &&
+		value.supportedFeatures instanceof Set
+	);
+}
+
 /**
  * @internal
  */
@@ -423,13 +434,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// If the message requests an acknowledgement, we will send one back.
 			if (
 				message.content.ackRequested &&
-				this.runtime.supportedFeatures?.has("submit_signals_v2") === true
+				isLayerCompatDetails(this.runtime.ILayerCompatDetails) &&
+				this.runtime.ILayerCompatDetails?.supportedFeatures?.has("submit_signals_v2") === true
 			) {
 				this.runtime.submitSignal(
 					acknowledgementMessageType,
 					{
 						type: acknowledgementMessageType,
-						// Using client Id + datastore update message content as messageId for now.
+						// Using client  Id + datastore update message content as messageId for now.
 						// This is a temporary solution until we settle on a final unique message id format.
 						content: { messageId: message.clientId + JSON.stringify(message.content.data) },
 					} satisfies AcknowledgementMessage["content"],
