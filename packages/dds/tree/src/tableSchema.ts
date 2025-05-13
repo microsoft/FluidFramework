@@ -470,8 +470,8 @@ export namespace System_TableSchema {
 			})
 			implements TableSchema.Table<TCellSchema, TColumnSchema, TRowSchema>
 		{
-			public static empty(): Table {
-				return this.createFromInsertable({ columns: [], rows: [] }) as Table;
+			public static empty<TThis extends typeof Table>(this: TThis): InstanceType<TThis> {
+				return new this({ columns: [], rows: [] }) as InstanceType<TThis>;
 			}
 
 			public getColumn(id: string): ColumnValueType | undefined {
