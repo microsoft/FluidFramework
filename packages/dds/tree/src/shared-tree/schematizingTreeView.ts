@@ -12,7 +12,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
+import { anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -207,15 +207,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const result = ensureSchema(
-				this.viewSchema,
-				AllowedUpdateType.SchemaCompatible,
-				this.checkout,
-				{
-					schema: this.viewSchema.viewSchemaAsStored,
-					initialTree: undefined,
-				},
-			);
+			const result = ensureSchema(this.viewSchema, this.checkout);
 			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
 		});
 	}
