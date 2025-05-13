@@ -217,10 +217,13 @@ describe("TableFactory unit tests", () => {
 
 	describe("Initialization", () => {
 		it("Empty", () => {
-			const { treeView, Table } = createTableTree();
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+			}) {}
 
-			treeView.initialize(Table.empty());
-			assertEqualTrees(treeView.root, { columns: [], rows: [] });
+			const table: Table = Table.empty();
+			assertEqualTrees(table, { columns: [], rows: [] });
 		});
 
 		it("Non-empty", () => {
