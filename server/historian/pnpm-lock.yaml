@@ -181,29 +181,29 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: 6.0.0-335712
-        version: 6.0.0-335712
+        specifier: 6.0.0-337416
+        version: 6.0.0-337416
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
       '@fluidframework/server-services':
-        specifier: 6.0.0-335712
-        version: 6.0.0-335712
+        specifier: 6.0.0-337416
+        version: 6.0.0-337416
       '@fluidframework/server-services-client':
-        specifier: 6.0.0-335712
-        version: 6.0.0-335712
+        specifier: 6.0.0-337416
+        version: 6.0.0-337416
       '@fluidframework/server-services-core':
-        specifier: 6.0.0-335712
-        version: 6.0.0-335712
+        specifier: 6.0.0-337416
+        version: 6.0.0-337416
       '@fluidframework/server-services-shared':
-        specifier: 6.0.0-335712
-        version: 6.0.0-335712
+        specifier: 6.0.0-337416
+        version: 6.0.0-337416
       '@fluidframework/server-services-telemetry':
-        specifier: 6.0.0-335712
-        version: 6.0.0-335712
+        specifier: 6.0.0-337416
+        version: 6.0.0-337416
       '@fluidframework/server-services-utils':
-        specifier: 6.0.0-335712
-        version: 6.0.0-335712
+        specifier: 6.0.0-337416
+        version: 6.0.0-337416
       '@types/ioredis-mock':
         specifier: ^8.2.5
         version: 8.2.5
@@ -254,8 +254,8 @@ importers:
         specifier: ^5.1.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-test-utils':
-        specifier: 6.0.0-335712
-        version: 6.0.0-335712
+        specifier: 6.0.0-337416
+        version: 6.0.0-337416
       '@types/compression':
         specifier: 0.0.36
         version: 0.0.36
@@ -582,14 +582,14 @@ packages:
   '@fluidframework/gitresources@6.0.0-287165':
     resolution: {integrity: sha512-bfCshXEH2WGtG7C+ylUqzwoHbHd4KEtASaym4q+ah2pEA2fxw2qfTOvGDat+xSBdmy1vvBib9P8vbhJ9bO4xdQ==}
 
-  '@fluidframework/gitresources@6.0.0-335712':
-    resolution: {integrity: sha512-woyycX8BC1KxLPjxQYwIhx8toqWNCI+4K6NGckaVuBkw3kH9T9XXfTyYUUKEbkOTfdakYcg8ugPSyUvqOJ2xMA==}
+  '@fluidframework/gitresources@6.0.0-337416':
+    resolution: {integrity: sha512-x7Dmxx1To/Oh5+OWloKb9raponlOXZqUwpJbQIbSq+S1H6mptJO2/3EJTIgdyaDpJu24EeAzBvIkQLar6JCf9g==}
 
   '@fluidframework/protocol-base@6.0.0-287165':
     resolution: {integrity: sha512-6C8tS3TIH/ABpBvLlicLaj1oAdAR6JguTKj4FBeNVJcyInE/jn65IXVK8u3Eh00nFs8SG13m3FKVKgZd0fmF0A==}
 
-  '@fluidframework/protocol-base@6.0.0-335712':
-    resolution: {integrity: sha512-Ilfivw5HDADj+Wkr52qJfC5iEP8s5eOvNL6+fnfNMxOrvdrERVIvumg/gCu/k2mPovFzYIuHCFkTCu9KqPDUvQ==}
+  '@fluidframework/protocol-base@6.0.0-337416':
+    resolution: {integrity: sha512-mOM3SmMLwEMRHqNbFmG7ykxZvxv/RIA9PxGkX826mi3p+1WlKtg1Mm/eVEXKMLvBqKordNgiYbHu/8hF9dNi4g==}
 
   '@fluidframework/protocol-definitions@3.2.0':
     resolution: {integrity: sha512-xgcyMN4uF6dAp2/XYFSHvGFITIV7JbVt3itA+T0c71/lZjq/HU/a/ClPIxfl9AEN0RbtuR/1n5LP4FXSV9j0hA==}
@@ -597,47 +597,47 @@ packages:
   '@fluidframework/server-services-client@6.0.0-287165':
     resolution: {integrity: sha512-vZ3n96/gCCQnR0w11RZSygj242HCV6pJIfNRiQt5PbUJma75KKXrkH6R9w9skbQTHa8XJ7fpNAimKdqXfUv8PQ==}
 
-  '@fluidframework/server-services-client@6.0.0-335712':
-    resolution: {integrity: sha512-VyKYVMPETXYiwYAHvAVjSc2P6JDPJDiVAF/qj7AGaiGJnHvO2t6n7DG1pD4Hzzhsmjczv/lsQ43PbgNIAUj1Fw==}
+  '@fluidframework/server-services-client@6.0.0-337416':
+    resolution: {integrity: sha512-k4uPQvguHvsx6sDUkMHVXNBnlqRGusQeXO+E7gr1133NfuVdwDCEIP8ggQJTcy8HwdfX2OSm/xhb2wgEluMbOA==}
 
   '@fluidframework/server-services-core@6.0.0-287165':
     resolution: {integrity: sha512-bWYAOJEpQjy5eTGBcTes07nzENkaKbxDz4GtBp9GOD69TiooENxWeryz2HmWsNL7ZeDvZ1j5ozAtLsy5dBSMug==}
 
-  '@fluidframework/server-services-core@6.0.0-335712':
-    resolution: {integrity: sha512-JqzNyG4x24wJ9aGXBN0jBWsnRU42gh8T1szoRjMZHVKkbDBN293hCW2lLJB6cFTUnbadewejqdWAOBzH5lgHsg==}
+  '@fluidframework/server-services-core@6.0.0-337416':
+    resolution: {integrity: sha512-ESAFK0i25r6p8QAZGhd2RLAQLRaE97ByyP3OKA5P7NKOtEgBU3Wte5ErHBQyiSwXVDRajQbNl8bbI+j0IfhuYw==}
 
-  '@fluidframework/server-services-ordering-kafkanode@6.0.0-335712':
-    resolution: {integrity: sha512-iEYCYhksgRF8i9M2ksG0jUHyEIKvBLbUzJS5C3oCorYJutHHEL4UgFV7a5FeMteEFDezg2R+6obLoJ0+/GqMHA==}
+  '@fluidframework/server-services-ordering-kafkanode@6.0.0-337416':
+    resolution: {integrity: sha512-o38BRQya1c2mJg+zXXdOsVZzPPTFg5se2Vl8dzLVXfeLvWR1/GYX5Mm7f2dVXvsI1JlrtrMjTrZwCaq8gEW7Jg==}
 
-  '@fluidframework/server-services-ordering-rdkafka@6.0.0-335712':
-    resolution: {integrity: sha512-rbQk0m78NgzmFdxEP8+wyvr/YLy0qu9VL8MFdWuT1JZ3MWmewXetyjQXn5xpkFzcBr2AxRlc7cF4zv95pC41Rg==}
+  '@fluidframework/server-services-ordering-rdkafka@6.0.0-337416':
+    resolution: {integrity: sha512-7PIPwGr6pEhINIPZRAxu7ikzSfyRe5SOZkTT9MXspPyEWBMu+dpJ3LsLeofKK4rXY2d5GEAxokDfkd3WpYCnRg==}
 
-  '@fluidframework/server-services-ordering-zookeeper@6.0.0-335712':
-    resolution: {integrity: sha512-4ApJ5808WLLmasGrVbsPZjbvueME32Fh4biHNI/Aa/nGELXjFSqKOrl4s25hSog2tqRME9uNDj04csQ95TtNGQ==}
+  '@fluidframework/server-services-ordering-zookeeper@6.0.0-337416':
+    resolution: {integrity: sha512-x/Oz8BGzRElqOGn8pCTsfycxWFKtP+oSWKP14+KYv69onIZfH34Dev25I9vOrQXCxoSLvQ45GsIyitFNEfEQ7w==}
 
   '@fluidframework/server-services-shared@6.0.0-287165':
     resolution: {integrity: sha512-hUcGH3/61AwGGxeV0gssj7VwD2/Pjh7j3M+X/7PLhc3L8UT2NMiOUDw9XFI+5IgS1VeZp6mLRmDqEYHFPIVdlw==}
 
-  '@fluidframework/server-services-shared@6.0.0-335712':
-    resolution: {integrity: sha512-eihmC2HgSaQCfQoc/8Mf0a0RFKOoDcwgBgya7XVuueBteQnoudS9fpNrAR7MIVT0c1ucRfzuO48EX+vGZ4r9dw==}
+  '@fluidframework/server-services-shared@6.0.0-337416':
+    resolution: {integrity: sha512-G7YhMHFuONRN2SwjDp//+6GZp/60QgvVVnX6kzeb327fowmjQjxPghbA/1L7P/7rOenZpvLNsbQ4/5K3KrNwSA==}
 
   '@fluidframework/server-services-telemetry@6.0.0-287165':
     resolution: {integrity: sha512-atRyaaoowJh90XmIdjvybMwHyxQBaV2FpXIOfHPQnW4xzaD72sngD4jecedYijX5flvexupL3PhHq7uVHRezzg==}
 
-  '@fluidframework/server-services-telemetry@6.0.0-335712':
-    resolution: {integrity: sha512-lxqLvinjWLjwH4BYpYqP3mdmBQqeXP5DmMoAPu2+5R+1/NCARNXYNNnFc3zxH709rmTnHqVdwl5zmbiokAU/Kw==}
+  '@fluidframework/server-services-telemetry@6.0.0-337416':
+    resolution: {integrity: sha512-aP5PIlx1Ggj7b88K1t2bQ5oXFgT/z6fPBVfKAOE1AknnIRAByD/+x73d672hZdLs/LEn9EjrBQ7dQkn5S7h39w==}
 
   '@fluidframework/server-services-utils@6.0.0-287165':
     resolution: {integrity: sha512-29ZIPdjVNg9tKr3S1Xs22+FOSztVwq/ZnqSD/v6WyqpH3ack5NpDy2oxw509XVW3Bd8xln9ReV+xm0pgUdONAw==}
 
-  '@fluidframework/server-services-utils@6.0.0-335712':
-    resolution: {integrity: sha512-yRDmCZRsmDPs5KCLh7aEltSzPrCykF4J/B4yfG3SIUngwwNzx7ZCW5y2ZMZB+65ub8L6s82Q5qvArAES10WSJg==}
+  '@fluidframework/server-services-utils@6.0.0-337416':
+    resolution: {integrity: sha512-1FbTti6myQBra+PIDTbxK8E/VjCItH0K+fmOh+/8vw7jYutVAi0ylow6yN3kH5OLWrJbYxzjL6tTDSRbU9ntvA==}
 
-  '@fluidframework/server-services@6.0.0-335712':
-    resolution: {integrity: sha512-NGP+7IX9bJoRgWszH80zwGn8gkE1pKuaTJrtBK3zDS99UtbNliMwJECHsikj6Dn7mFhrx3xQ3uoEFqPck217tg==}
+  '@fluidframework/server-services@6.0.0-337416':
+    resolution: {integrity: sha512-9h7s2ysY3AW6yWToAGqk41gd2QI9VzxO6KtKA5udlpfrzhQC4B5Pl2NP3Cj1Ox+1Jk4+2w2bfYLIfzHUE6x+qA==}
 
-  '@fluidframework/server-test-utils@6.0.0-335712':
-    resolution: {integrity: sha512-yddbwmQT5dybmiw9mmg/2sneRkFVbjKqza0qeYKAQqLxvqSGkZ1ciH+02qpsfw5/qfv08wYVofAp8HOGx6fvag==}
+  '@fluidframework/server-test-utils@6.0.0-337416':
+    resolution: {integrity: sha512-6YpHQ7tWHm1jdEGWyCaACibLwzxJCa3Lo0IkwAitr/stnFNXBkU3D0bIOeqW/o+ijVjB6luYY1nO6gTJPfiDYA==}
 
   '@gar/promisify@1.1.3':
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
@@ -3930,10 +3930,6 @@ packages:
     resolution: {integrity: sha512-ozCC6gdQ+glXOQsveKD0YsDy8DSQFjDTz4zyzEHNV5+JP5D62LmfDZ6o1cycFx9ouG940M5dE8C8CTewdj2YWQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  lru-cache@10.1.0:
-    resolution: {integrity: sha512-/1clY/ui8CzjKFyjdvwPWJUYKiFVXG2I2cY0ssG7h4+hwk+XOIX7ZSG9Q7TW8TW3Kp3BUSqgFWBLgL4PJ+Blag==}
-    engines: {node: 14 || >=16.14}
-
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
@@ -6829,9 +6825,9 @@ snapshots:
       '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -6856,9 +6852,9 @@ snapshots:
       '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -6875,7 +6871,7 @@ snapshots:
 
   '@fluidframework/gitresources@6.0.0-287165': {}
 
-  '@fluidframework/gitresources@6.0.0-335712': {}
+  '@fluidframework/gitresources@6.0.0-337416': {}
 
   '@fluidframework/protocol-base@6.0.0-287165':
     dependencies:
@@ -6884,10 +6880,10 @@ snapshots:
       '@fluidframework/protocol-definitions': 3.2.0
       events_pkg: events@3.3.0
 
-  '@fluidframework/protocol-base@6.0.0-335712':
+  '@fluidframework/protocol-base@6.0.0-337416':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 6.0.0-335712
+      '@fluidframework/gitresources': 6.0.0-337416
       '@fluidframework/protocol-definitions': 3.2.0
       events_pkg: events@3.3.0
 
@@ -6910,11 +6906,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-client@6.0.0-335712':
+  '@fluidframework/server-services-client@6.0.0-337416':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 6.0.0-335712
-      '@fluidframework/protocol-base': 6.0.0-335712
+      '@fluidframework/gitresources': 6.0.0-337416
+      '@fluidframework/protocol-base': 6.0.0-337416
       '@fluidframework/protocol-definitions': 3.2.0
       axios: 1.8.4(debug@4.4.0)
       crc-32: 1.2.0
@@ -6942,13 +6938,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-core@6.0.0-335712':
+  '@fluidframework/server-services-core@6.0.0-337416':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 6.0.0-335712
+      '@fluidframework/gitresources': 6.0.0-337416
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 6.0.0-335712
-      '@fluidframework/server-services-telemetry': 6.0.0-335712
+      '@fluidframework/server-services-client': 6.0.0-337416
+      '@fluidframework/server-services-telemetry': 6.0.0-337416
       '@types/nconf': 0.10.3
       '@types/node': 18.19.3
       debug: 4.4.0(supports-color@8.1.1)
@@ -6957,12 +6953,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-ordering-kafkanode@6.0.0-335712':
+  '@fluidframework/server-services-ordering-kafkanode@6.0.0-337416':
     dependencies:
-      '@fluidframework/server-services-client': 6.0.0-335712
-      '@fluidframework/server-services-core': 6.0.0-335712
-      '@fluidframework/server-services-ordering-zookeeper': 6.0.0-335712
-      '@fluidframework/server-services-telemetry': 6.0.0-335712
+      '@fluidframework/server-services-client': 6.0.0-337416
+      '@fluidframework/server-services-core': 6.0.0-337416
+      '@fluidframework/server-services-ordering-zookeeper': 6.0.0-337416
+      '@fluidframework/server-services-telemetry': 6.0.0-337416
       events_pkg: events@3.3.0
       kafka-node: 5.0.0
       nconf: 0.12.0
@@ -6970,13 +6966,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-ordering-rdkafka@6.0.0-335712':
+  '@fluidframework/server-services-ordering-rdkafka@6.0.0-337416':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/server-services-client': 6.0.0-335712
-      '@fluidframework/server-services-core': 6.0.0-335712
-      '@fluidframework/server-services-telemetry': 6.0.0-335712
-      '@fluidframework/server-services-utils': 6.0.0-335712
+      '@fluidframework/server-services-client': 6.0.0-337416
+      '@fluidframework/server-services-core': 6.0.0-337416
+      '@fluidframework/server-services-telemetry': 6.0.0-337416
+      '@fluidframework/server-services-utils': 6.0.0-337416
       events_pkg: events@3.3.0
       nconf: 0.12.0
       node-rdkafka: 3.0.1
@@ -6984,9 +6980,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-ordering-zookeeper@6.0.0-335712':
+  '@fluidframework/server-services-ordering-zookeeper@6.0.0-337416':
     dependencies:
-      '@fluidframework/server-services-core': 6.0.0-335712
+      '@fluidframework/server-services-core': 6.0.0-337416
       zookeeper: 5.6.0
     transitivePeerDependencies:
       - supports-color
@@ -7022,16 +7018,16 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-services-shared@6.0.0-335712':
+  '@fluidframework/server-services-shared@6.0.0-337416':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 6.0.0-335712
-      '@fluidframework/protocol-base': 6.0.0-335712
+      '@fluidframework/gitresources': 6.0.0-337416
+      '@fluidframework/protocol-base': 6.0.0-337416
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 6.0.0-335712
-      '@fluidframework/server-services-core': 6.0.0-335712
-      '@fluidframework/server-services-telemetry': 6.0.0-335712
-      '@fluidframework/server-services-utils': 6.0.0-335712
+      '@fluidframework/server-services-client': 6.0.0-337416
+      '@fluidframework/server-services-core': 6.0.0-337416
+      '@fluidframework/server-services-telemetry': 6.0.0-337416
+      '@fluidframework/server-services-utils': 6.0.0-337416
       '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.5)
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.3
@@ -7062,7 +7058,7 @@ snapshots:
       serialize-error: 8.1.0
       uuid: 9.0.1
 
-  '@fluidframework/server-services-telemetry@6.0.0-335712':
+  '@fluidframework/server-services-telemetry@6.0.0-337416':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       json-stringify-safe: 5.0.1
@@ -7092,12 +7088,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-utils@6.0.0-335712':
+  '@fluidframework/server-services-utils@6.0.0-337416':
     dependencies:
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 6.0.0-335712
-      '@fluidframework/server-services-core': 6.0.0-335712
-      '@fluidframework/server-services-telemetry': 6.0.0-335712
+      '@fluidframework/server-services-client': 6.0.0-337416
+      '@fluidframework/server-services-core': 6.0.0-337416
+      '@fluidframework/server-services-telemetry': 6.0.0-337416
       debug: 4.4.0(supports-color@8.1.1)
       express: 4.21.2
       ioredis: 5.2.3
@@ -7114,17 +7110,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services@6.0.0-335712':
+  '@fluidframework/server-services@6.0.0-337416':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 6.0.0-335712
-      '@fluidframework/server-services-core': 6.0.0-335712
-      '@fluidframework/server-services-ordering-kafkanode': 6.0.0-335712
-      '@fluidframework/server-services-ordering-rdkafka': 6.0.0-335712
-      '@fluidframework/server-services-shared': 6.0.0-335712
-      '@fluidframework/server-services-telemetry': 6.0.0-335712
-      '@fluidframework/server-services-utils': 6.0.0-335712
+      '@fluidframework/server-services-client': 6.0.0-337416
+      '@fluidframework/server-services-core': 6.0.0-337416
+      '@fluidframework/server-services-ordering-kafkanode': 6.0.0-337416
+      '@fluidframework/server-services-ordering-rdkafka': 6.0.0-337416
+      '@fluidframework/server-services-shared': 6.0.0-337416
+      '@fluidframework/server-services-telemetry': 6.0.0-337416
+      '@fluidframework/server-services-utils': 6.0.0-337416
       '@socket.io/redis-emitter': 4.1.1
       '@types/lodash': 4.17.7
       amqplib: 0.10.3
@@ -7146,15 +7142,15 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-test-utils@6.0.0-335712':
+  '@fluidframework/server-test-utils@6.0.0-337416':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 6.0.0-335712
-      '@fluidframework/protocol-base': 6.0.0-335712
+      '@fluidframework/gitresources': 6.0.0-337416
+      '@fluidframework/protocol-base': 6.0.0-337416
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 6.0.0-335712
-      '@fluidframework/server-services-core': 6.0.0-335712
-      '@fluidframework/server-services-telemetry': 6.0.0-335712
+      '@fluidframework/server-services-client': 6.0.0-337416
+      '@fluidframework/server-services-core': 6.0.0-337416
+      '@fluidframework/server-services-telemetry': 6.0.0-337416
       '@types/ioredis-mock': 8.2.5
       assert: 2.0.0
       debug: 4.4.0(supports-color@8.1.1)
@@ -9804,13 +9800,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       debug: 4.3.6
       enhanced-resolve: 5.15.0
       eslint: 8.55.0
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.7.2
       is-core-module: 2.13.1
@@ -9821,14 +9817,14 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -9838,13 +9834,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.0
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       get-tsconfig: 4.7.2
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -11229,8 +11225,6 @@ snapshots:
 
   lowercase-keys@3.0.0: {}
 
-  lru-cache@10.1.0: {}
-
   lru-cache@10.4.3: {}
 
   lru-cache@6.0.0:
@@ -12308,7 +12302,7 @@ snapshots:
 
   path-scurry@1.10.1:
     dependencies:
-      lru-cache: 10.1.0
+      lru-cache: 10.4.3
       minipass: 7.0.4
 
   path-scurry@1.11.1:

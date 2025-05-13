@@ -12,7 +12,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
+import { anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -99,6 +99,9 @@ export class SchematizingSimpleTreeView<
 
 	private readonly viewSchema: SchemaCompatibilityTester;
 
+	/**
+	 * Events to unregister upon disposal.
+	 */
 	private readonly unregisterCallbacks = new Set<() => void>();
 
 	public disposed = false;
@@ -173,19 +176,20 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
+			const schema = this.viewSchema.viewSchemaAsStored;
 			const mapTree = mapTreeFromNodeData(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
 				this.nodeKeyManager,
 				{
-					schema: this.checkout.storedSchema,
+					schema,
 					policy: this.schemaPolicy,
 				},
 			);
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.viewSchema.viewSchemaAsStored,
+				schema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -207,15 +211,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const result = ensureSchema(
-				this.viewSchema,
-				AllowedUpdateType.SchemaCompatible,
-				this.checkout,
-				{
-					schema: this.viewSchema.viewSchemaAsStored,
-					initialTree: undefined,
-				},
-			);
+			const result = ensureSchema(this.viewSchema, this.checkout);
 			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
 		});
 	}

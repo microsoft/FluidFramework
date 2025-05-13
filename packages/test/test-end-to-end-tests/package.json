@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.40.0",
+	"version": "2.41.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -86,7 +86,7 @@
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-private/test-version-utils": "workspace:~",
-		"@fluid-tools/benchmark": "^0.50.0",
+		"@fluid-tools/benchmark": "^0.51.0",
 		"@fluidframework/agent-scheduler": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
