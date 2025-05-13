@@ -21,7 +21,7 @@ import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
-describe("TableFactory unit tests", () => {
+describe.only("TableFactory unit tests", () => {
 	function createTableTree() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
@@ -280,8 +280,8 @@ describe("TableFactory unit tests", () => {
 
 	describe("insertColumn", () => {
 		it("Insert new column into empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertColumn({
 				index: 0,
@@ -368,11 +368,8 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Inserting column at out-of-bounds index fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [],
-			});
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			assert.throws(
 				() =>
@@ -406,8 +403,8 @@ describe("TableFactory unit tests", () => {
 
 	describe("insertColumns", () => {
 		it("Insert empty columns list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertColumns({ index: 0, columns: [] });
 
@@ -418,8 +415,8 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Insert single column into empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertColumns({
 				index: 0,
@@ -588,8 +585,8 @@ describe("TableFactory unit tests", () => {
 
 	describe("insertRow", () => {
 		it("Insert new row into empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertRow({
 				index: 0,
@@ -748,8 +745,8 @@ describe("TableFactory unit tests", () => {
 
 	describe("insertRows", () => {
 		it("Insert empty rows list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertRows({ index: 0, rows: [] });
 
@@ -760,8 +757,8 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Insert single row into empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertRows({
 				index: 0,
