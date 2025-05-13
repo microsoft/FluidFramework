@@ -1591,7 +1591,14 @@ export class Container
 	private async createDocumentService(
 		serviceProvider: () => Promise<IDocumentService>,
 	): Promise<IDocumentService> {
-		const service = await serviceProvider();
+		const service = await runWithRetry(
+			async () => serviceProvider(),
+			"containerLoad",
+			this.mc.logger,
+			{
+				cancel: this._deltaManager.closeAbortController.signal,
+			},
+		);
 		// Back-compat for Old driver
 		if (service.on !== undefined) {
 			service.on("metadataUpdate", this.metadataUpdateHandler);
