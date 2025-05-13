@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
@@ -34,7 +35,8 @@ export type IEphemeralRuntime = Pick<
 	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
 	"clientId" | "connected" | "getAudience" | "getQuorum" | "off" | "on" | "submitSignal"
 > &
-	Partial<Pick<IFluidDataStoreRuntime, "logger">>;
+	Partial<Pick<IFluidDataStoreRuntime, "logger">> &
+	Partial<Pick<ILayerCompatDetails, "supportedFeatures">>;
 
 /**
  * @internal

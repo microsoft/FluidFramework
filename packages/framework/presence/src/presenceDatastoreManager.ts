@@ -75,6 +75,7 @@ interface DatastoreUpdateMessage extends IInboundSignalMessage {
 		sendTimestamp: number;
 		avgLatency: number;
 		isComplete?: true;
+		ackRequested?: true;
 		data: DatastoreMessageContent;
 	};
 }
@@ -418,6 +419,22 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);
 			if (message.content.isComplete) {
 				this.refreshBroadcastRequested = false;
+			}
+			// If the message requests an acknowledgement, we will send one back.
+			if (
+				message.content.ackRequested &&
+				this.runtime.supportedFeatures?.has("submit_signals_v2") === true
+			) {
+				this.runtime.submitSignal(
+					acknowledgementMessageType,
+					{
+						type: acknowledgementMessageType,
+						// Using client Id + datastore update message content as messageId for now.
+						// This is a temporary solution until we settle on a final unique message id format.
+						content: { messageId: message.clientId + JSON.stringify(message.content.data) },
+					} satisfies AcknowledgementMessage["content"],
+					message.clientId,
+				);
 			}
 		}
 
