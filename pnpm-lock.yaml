@@ -8051,6 +8051,100 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
+  packages/dds/legacy-dds:
+    dependencies:
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/datastore-definitions
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../shared-object-base
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.17.1
+        version: 0.17.1
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
+      '@fluid-tools/build-cli':
+        specifier: ^0.55.0
+        version: 0.55.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.55.0
+        version: 0.55.0(@types/node@18.19.67)
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.7.3
+        version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/test-runtime-utils
+      '@microsoft/api-extractor':
+        specifier: 7.52.5
+        version: 7.52.5(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
+      '@types/jest':
+        specifier: 29.5.3
+        version: 29.5.3
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.67
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.2
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   packages/dds/map:
     dependencies:
       '@fluid-internal/client-utils':
