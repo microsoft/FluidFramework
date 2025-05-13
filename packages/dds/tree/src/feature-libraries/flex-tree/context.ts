@@ -79,6 +79,9 @@ export const ContextSlot = anchorSlot<Context>();
  * Implementation of `FlexTreeContext`.
  *
  * @remarks An editor is required to edit the FlexTree.
+ *
+ * A {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
+ * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export class Context implements FlexTreeHydratedContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();
@@ -87,14 +90,12 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	private readonly eventUnregister: (() => void)[];
 	private disposed = false;
 
-	/**
-	 * @param flexSchema - Schema to use when working with the  tree.
-	 * @param checkout - The checkout.
-	 * @param nodeKeyManager - An object which handles node key generation and conversion
-	 */
 	public constructor(
 		public readonly schemaPolicy: SchemaPolicy,
 		public readonly checkout: ITreeCheckout,
+		/**
+		 * An object which handles node key generation and conversion
+		 */
 		public readonly nodeKeyManager: NodeIdentifierManager,
 	) {
 		this.eventUnregister = [
@@ -174,21 +175,4 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	public get events(): Listenable<ForestEvents> {
 		return this.checkout.forest.events;
 	}
-}
-
-/**
- * A simple API for a Forest to interact with the tree.
- *
- * @param forest - the Forest
- * @param editor - an editor that makes changes to the forest.
- * @param nodeKeyManager - an object which handles node key generation and conversion.
- * @returns {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
- * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
- */
-export function getTreeContext(
-	schema: SchemaPolicy,
-	checkout: ITreeCheckout,
-	nodeKeyManager: NodeIdentifierManager,
-): Context {
-	return new Context(schema, checkout, nodeKeyManager);
 }
