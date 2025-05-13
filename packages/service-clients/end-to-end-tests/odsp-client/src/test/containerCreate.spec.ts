@@ -6,9 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema } from "@fluidframework/fluid-static";
+import {
+	IFluidContainerInternal,
+	isInternalFluidContainer,
+} from "@fluidframework/fluid-static/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import { OdspClient } from "@fluidframework/odsp-client/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
@@ -160,7 +163,7 @@ describe("Container create scenarios", () => {
 	 *
 	 * Expected behavior: readonly flag should be false a new attached container.
 	 */
-	it("Readonly flag should be false on new attached container)", async () => {
+	it("Readonly flag should be false on new attached container", async () => {
 		const { container } = await client.createContainer(schema);
 		const itemId = await container.attach();
 
@@ -179,7 +182,7 @@ describe("Container create scenarios", () => {
 		);
 
 		assert.strictEqual(
-			container.getReadOnlyState(),
+			container.isReadOnly(),
 			false,
 			"Readonly is not false on newly attached container",
 		);
@@ -190,8 +193,21 @@ describe("Container create scenarios", () => {
 	 *
 	 * Expected behavior: readonly event should be fired when readonly status changed.
 	 */
-	it("Readonly event should be fired when readonly status changed)", async () => {
+	it("Readonly event should be fired when readonly status changed", async () => {
 		const { container } = await client.createContainer(schema);
+
+		// The readonly only event is fired when container is attached. And it should be false by default.
+		let expectedReadonlyFlagInEventHandler = false;
+		let readonlyEventFired = false;
+		container.on("readonlyChanged", (readonly: boolean) => {
+			readonlyEventFired = true;
+			assert.strictEqual(
+				readonly,
+				expectedReadonlyFlagInEventHandler,
+				"Readonly is not expected in readonly event",
+			);
+		});
+
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -209,42 +225,42 @@ describe("Container create scenarios", () => {
 		);
 
 		assert.strictEqual(
-			container.getReadOnlyState(),
+			readonlyEventFired,
+			true,
+			"Readonly event is not fired after container is attached",
+		);
+		assert.strictEqual(
+			container.isReadOnly(),
 			false,
 			"Readonly is not false on newly attached container",
 		);
 
-		let readonlyEventFired = false;
-		container.on("readonly", (readonly: boolean) => {
-			readonlyEventFired = true;
-			assert.strictEqual(
-				readonly,
-				true,
-				"Readonly should not be false after forceReadonly is called",
-			);
-		});
-
 		// Trigger the forceReadonly function in IContainer to test readonly event.
-		// This interface is to expose the forceReadonly function at IFluidContainer level. It helps to silence the TS error when retrieving IContainer from IFluidContainer.
-		interface ITestFluidContainer extends IFluidContainer {
-			readonly container: IContainer;
+		if (isInternalFluidContainer(container)) {
+			const iContainer = (container as IFluidContainerInternal).container;
+
+			assert(iContainer !== undefined, "iContainer is undefined");
+			assert(
+				iContainer.forceReadonly !== undefined,
+				"iContainer's forceReadonly function is undefined",
+			);
+			// Reset the flag for next scenario.
+			readonlyEventFired = false;
+			// The readonly should be true in readonly event after forceReadonly is called.
+			expectedReadonlyFlagInEventHandler = true;
+			iContainer.forceReadonly(true);
+			assert.strictEqual(
+				readonlyEventFired,
+				true,
+				"Readonly event was not fired after forceReadonly",
+			);
+			assert.strictEqual(
+				container.isReadOnly(),
+				true,
+				"Readonly should be true after forceReadonly is called",
+			);
+		} else {
+			assert.fail("container is not a FluidContainer instance");
 		}
-		const iContainer = (container as ITestFluidContainer).container;
-		assert(iContainer !== undefined, "iContainer is undefined");
-		assert(
-			iContainer.forceReadonly !== undefined,
-			"iContainer's forceReadonly function is undefined",
-		);
-		iContainer.forceReadonly(true);
-		assert.strictEqual(
-			readonlyEventFired,
-			true,
-			"Readonly event was not fired after forceReadonly",
-		);
-		assert.strictEqual(
-			container.getReadOnlyState(),
-			true,
-			"Readonly should be true after forceReadonly is called",
-		);
 	});
 });

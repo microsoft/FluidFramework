@@ -101,7 +101,7 @@ export interface IFluidContainerEvents extends IEvent {
 	 *
 	 * - `readonly`: If the container is read-only, this will be true. Otherwise, it will be false.
 	 */
-	(event: "readonly", listener: (readonly: boolean) => void): void;
+	(event: "readonlyChanged", listener: (readonly: boolean) => void): void;
 }
 
 /**
@@ -172,9 +172,9 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * @remarks
 	 *
 	 * This is used to determine if the container is read-only or not.
-	 * undefined means that the read-only state is not known yet, like when container is not connected.
+	 * Read-only is true on disconnected contaienrs.
 	 */
-	getReadOnlyState(): boolean | undefined;
+	isReadOnly(): boolean;
 
 	/**
 	 * A newly created container starts detached from the collaborative service.
@@ -311,7 +311,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	private readonly savedHandler = (): boolean => this.emit("saved");
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
 	private readonly readonlyHandler = (readonly: boolean): boolean =>
-		this.emit("readonly", readonly);
+		this.emit("readonlyChanged", readonly);
 
 	public constructor(
 		public readonly container: IContainer,
@@ -346,8 +346,8 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		return this.rootDataObject.initialObjects as InitialObjects<TContainerSchema>;
 	}
 
-	public getReadOnlyState(): boolean | undefined {
-		return this.container.readOnlyInfo.readonly;
+	public isReadOnly(): boolean {
+		return this.container.readOnlyInfo.readonly ?? true;
 	}
 
 	/**
