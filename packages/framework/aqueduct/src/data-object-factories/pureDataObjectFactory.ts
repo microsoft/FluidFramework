@@ -23,6 +23,7 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreFactory,
+	IFluidDataStorePolicies,
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
@@ -48,6 +49,7 @@ interface CreateDataObjectProps<TObj extends PureDataObject, I extends DataObjec
 	runtimeClassArg: typeof FluidDataStoreRuntime;
 	existing: boolean;
 	initialState?: I["InitialState"];
+	policies?: Partial<IFluidDataStorePolicies>;
 }
 /**
  * Proxy over PureDataObject
@@ -64,6 +66,7 @@ async function createDataObject<
 	runtimeClassArg,
 	existing,
 	initialState: initProps,
+	policies,
 }: CreateDataObjectProps<TObj, I>): Promise<{
 	instance: TObj;
 	runtime: FluidDataStoreRuntime;
@@ -101,6 +104,7 @@ async function createDataObject<
 			await instance.finishInitialization(true);
 			return instance;
 		} /* provideEntryPoint */,
+		policies,
 	);
 
 	// Create object right away.
@@ -179,6 +183,12 @@ export interface DataObjectFactoryProps<
 	 * The runtime class to use for the data object.
 	 */
 	readonly runtimeClass?: typeof FluidDataStoreRuntime;
+
+	/**
+	 * Optional policies that can be applied to the DataObject.
+	 * These policies define specific behaviors or constraints for the data object.
+	 */
+	readonly policies?: Partial<IFluidDataStorePolicies>;
 }
 
 /**
@@ -250,6 +260,7 @@ export class PureDataObjectFactory<
 			optionalProviders: newProps.optionalProviders ?? {},
 			sharedObjectRegistry: new Map(newProps.sharedObjects?.map((ext) => [ext.type, ext])),
 			runtimeClassArg: newProps.runtimeClass ?? FluidDataStoreRuntime,
+			policies: newProps.policies,
 		};
 
 		if (newProps.registryEntries !== undefined) {

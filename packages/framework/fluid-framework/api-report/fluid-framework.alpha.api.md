@@ -196,7 +196,7 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha
-export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible;
+export function extractPersistedSchema(schema: SimpleTreeSchema, oldestCompatibleClient: FluidClientVersion): JsonCompatible;
 
 // @alpha @system
 export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;
@@ -970,6 +970,9 @@ export type Off = () => void;
 
 // @alpha
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
+
+// @alpha
+export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;
 
 // @alpha @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
