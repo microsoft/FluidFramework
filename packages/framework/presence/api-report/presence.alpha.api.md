@@ -215,7 +215,6 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
         [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
     };
     settings?: BroadcastControlSettings | undefined;
-    // (undocumented)
     validator?: StateSchemaValidator<T> | undefined;
 }
 
@@ -374,7 +373,8 @@ export interface StateMap<K extends string | number, V> {
 
 // @alpha
 export type StateSchemaValidator<T> = (
-unvalidatedData: Readonly<unknown>, metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
+unvalidatedData: Readonly<unknown>,
+metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
 
 // @alpha
 export interface StateSchemaValidatorMetadata {
