@@ -19,7 +19,7 @@ Note: these APIs require the use of [SchemaFactoryAlpha](https://fluidframework.
 #### Creating a table
 
 You can craft a table schema with `TableSchema.table`.
-Note that you will still be required to provide a schema for the cells that will appear in the table.
+This includes providing a schema for the cells that will appear in the table:
 
 ```typescript
 class Table extends TableSchema.table({
@@ -35,14 +35,14 @@ const table = new Table({
 
 #### Creating a table with custom column and row schema
 
-If you need to associate additional data with your rows or columns, you can customize your row and column schema via `TableSchema.column` and `TableSchema.row`.
+To associate additional data with your rows or columns, generate custom row and column schema using `TableSchema.column` and `TableSchema.row`.
 These schema can then be provided to `TableSchema.table`:
 
 ```typescript
 const Cell = schemaFactory.string;
 
 class ColumnProps extends schemaFactory.object("TableColumnProps", {
-	/** The column label to display. */
+	/** A column label to display. */
 	label: schemaFactory.string,
 }) {}
 
