@@ -244,7 +244,7 @@ export class SharedMatrix<T = any>
 	private readonly cols: PermutationVector; // Map logical col to storage handle (if any)
 
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
-	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
+	private readonly pending = new SparseArray2D<number[]>(); // Tracks pending writes.
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence number and clientId in a cell.
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
 	private setCellLwwToFwwPolicySwitchOpSeqNumber: number;
@@ -489,7 +489,9 @@ export class SharedMatrix<T = any>
 		};
 
 		this.submitLocalMessage(op, metadata);
-		this.pending.setCell(rowHandle, colHandle, localSeq);
+		const pending = this.pending.getCell(rowHandle, colHandle) ?? [];
+		pending.push(localSeq);
+		this.pending.setCell(rowHandle, colHandle, pending);
 	}
 
 	/**
@@ -673,7 +675,6 @@ export class SharedMatrix<T = any>
 		);
 		const artifactsToSummarize = [
 			this.cells.snapshot(),
-			this.pending.snapshot(),
 			this.setCellLwwToFwwPolicySwitchOpSeqNumber,
 		];
 
@@ -800,6 +801,11 @@ export class SharedMatrix<T = any>
 					rowHandle,
 					colHandle,
 				);
+				const pending = this.pending.getCell(rowHandle, colHandle);
+				pending?.splice(
+					pending?.findIndex((v) => v === localSeq),
+					1,
+				);
 				// If the mode is LWW, then send the op.
 				// Otherwise if the current mode is FWW and if we generated this op, after seeing the
 				// last set op, or it is the first set op for the cell, then regenerate the op,
@@ -819,9 +825,6 @@ export class SharedMatrix<T = any>
 						previous as MatrixItem<T>,
 						localSeq,
 					);
-				} else if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
-					// Clear the pending changes if any as we are not sending the op.
-					this.pending.setCell(rowHandle, colHandle, undefined);
 				}
 			}
 		} else {
@@ -973,9 +976,9 @@ export class SharedMatrix<T = any>
 						});
 					}
 
-					if (isLatestPendingOp) {
-						this.pending.setCell(rowHandle, colHandle, undefined);
-					}
+					const pending = this.pending.getCell(rowHandle, colHandle);
+					assert(pending?.[0] === localSeq, "must the expect op");
+					pending.shift();
 				} else {
 					const adjustedRow = this.rows.adjustPosition(row, msg);
 					if (adjustedRow !== undefined) {
@@ -1007,7 +1010,7 @@ export class SharedMatrix<T = any>
 										consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
 									}
 									// Check is there are any pending changes, which will be rejected. If so raise conflict.
-									if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
+									if ((this.pending.getCell(rowHandle, colHandle)?.length ?? 0) > 0) {
 										// Don't reset the pending value yet, as there maybe more fww op from same client, so we want
 										// to raise conflict event for that op also.
 										this.emit(
@@ -1020,7 +1023,7 @@ export class SharedMatrix<T = any>
 										);
 									}
 								}
-							} else if (this.pending.getCell(rowHandle, colHandle) === undefined) {
+							} else if ((this.pending.getCell(rowHandle, colHandle)?.length ?? 0) === 0) {
 								// If there is a pending (unACKed) local write to the same cell, skip the current op
 								// since it "happened before" the pending write.
 								this.cells.setCell(rowHandle, colHandle, value);
@@ -1067,7 +1070,7 @@ export class SharedMatrix<T = any>
 					setMetadata.colHandle,
 					true,
 				);
-				this.pending.setCell(setMetadata.rowHandle, setMetadata.colHandle, undefined);
+				this.pending.getCell(setMetadata.rowHandle, setMetadata.colHandle)?.pop();
 			}
 			default:
 		}
@@ -1135,7 +1138,8 @@ export class SharedMatrix<T = any>
 		localSeq: number,
 	): boolean {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const pendingLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
+		const pending = this.pending.getCell(rowHandle, colHandle)!;
+		const pendingLocalSeq = pending[pending.length - 1];
 
 		// Note while we're awaiting the ACK for a local set, it's possible for the row/col to be
 		// locally removed and the row/col handles recycled.  If this happens, the pendingLocalSeq will
