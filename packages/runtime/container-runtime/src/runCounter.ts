@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import type { BatchResubmitInfo } from "./opLifecycle/index.js";
 
 /**
@@ -43,6 +45,7 @@ export class BatchRunCounter extends RunCounter {
 	}
 
 	public run<T>(act: () => T, resubmitInfo?: BatchResubmitInfo): T {
+		assert(this.#resubmitInfo === undefined, "Reentrancy not allowed in BatchRunCounter");
 		this.#resubmitInfo = resubmitInfo;
 		try {
 			return super.run(act);
