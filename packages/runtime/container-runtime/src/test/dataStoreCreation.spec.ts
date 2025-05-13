@@ -115,6 +115,7 @@ describe("Data Store Creation Tests", () => {
 				baseLogger: createChildLogger(),
 				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
 			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 			const summarizerNode = createRootSummarizerNodeWithGC(
 				createChildLogger(),

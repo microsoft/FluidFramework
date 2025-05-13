@@ -17,13 +17,14 @@ export {
 } from "./treeNodeKernel.js";
 export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {
-	type TreeChangeEvents,
-	TreeNode,
 	type Unhydrated,
-	inPrototypeChain,
 	type InternalTreeNode,
-	privateToken,
 } from "./types.js";
+export {
+	TreeNode,
+	privateToken,
+	inPrototypeChain,
+} from "./treeNode.js";
 export {
 	type TreeNodeSchema,
 	NodeKind,

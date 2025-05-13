@@ -158,8 +158,13 @@ export interface IDeltaHandler {
 	 * at all.
 	 * @param message - The original message that was submitted.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created by this message.
+	 * This includes any content which this message created but has since been changed or removed by subsequent messages.
+	 * For example, if this message (call it A) inserts content into a DDS that a subsequent op (call it B) removes,
+	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
+	 * account for the fact that A' never inserted content.
 	 */
-	reSubmit(message: any, localOpMetadata: unknown): void;
+	reSubmit(message: any, localOpMetadata: unknown, squash?: boolean): void;
 
 	/**
 	 * Apply changes from an op just as if a local client has made the change,
