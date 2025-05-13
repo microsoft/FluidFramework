@@ -34,7 +34,11 @@ export interface LatestMetadata {
  * @sealed
  * @alpha
  */
-export type RawValueAccessor<_T> = "raw";
+// export type RawValueAccessor<_T> = "raw";
+export interface RawValueAccessor<T> {
+	kind: "raw";
+	accessor: DeepReadonly<JsonDeserialized<T>>;
+}
 
 /**
  * Represents a value that is accessed via a function call, which may result in no value.
@@ -42,22 +46,11 @@ export type RawValueAccessor<_T> = "raw";
  * @sealed
  * @alpha
  */
-export type ProxiedValueAccessor<_T> = "proxied";
-
-/**
- * NOTE: copied from SharedTree for convenience.
- *
- * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
- * @privateRemarks
- * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
- * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
- * @system @public
- */
-export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
-	k: infer U,
-) => unknown
-	? U
-	: never;
+// export type ProxiedValueAccessor<_T> = "proxied";
+export interface ProxiedValueAccessor<T> {
+	kind: "proxied";
+	accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
+}
 
 /**
  * Union of possible accessor types for a value.
@@ -67,7 +60,14 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
  */
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
-// export type ValueAccessorIntersection<T> = UnionToIntersection<ValueAccessor<T>>;
+/**
+ * @alpha
+ */
+export type AccessorNonDist<T> = [T] extends [ProxiedValueAccessor<T>]
+	? () => DeepReadonly<JsonDeserialized<T>> | undefined
+	: [T] extends [RawValueAccessor<T>]
+		? DeepReadonly<JsonDeserialized<T>>
+		: never;
 
 /**
  * @alpha
@@ -93,7 +93,14 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 		: TValueAccessor extends RawValueAccessor<T>
 			? DeepReadonly<JsonDeserialized<T>>
 			: never;
+	// value: TValueAccessor;
+	// value: [T] extends [ProxiedValueAccessor<T>]
+	// 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
+	// 	: [T] extends [RawValueAccessor<T>]
+	// 		? DeepReadonly<JsonDeserialized<T>>
+	// 		: never;
 	// value: Accessor<TValueAccessor>;
+	// value: TValueAccessor;
 	metadata: LatestMetadata;
 }
 
