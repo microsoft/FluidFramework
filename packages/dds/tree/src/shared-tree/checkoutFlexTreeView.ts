@@ -55,7 +55,6 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 	) {
 		this.context = new Context(schema, this.checkout, nodeKeyManager);
 		contextToTreeViewMap.set(this.context, this);
-		this.flexTree = this.context.root;
 	}
 
 	public [disposeSymbol](): void {
