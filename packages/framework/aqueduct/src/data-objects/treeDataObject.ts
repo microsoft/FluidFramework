@@ -58,7 +58,6 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 
 	/**
 	 * Gets the underlying {@link @fluidframework/tree#ITree | tree}.
-	 * @remarks Used to give access to the underlying tree and its schema.
 	 */
 	public get sharedTree(): ITree {
 		if (this.#sharedTree === undefined) {
