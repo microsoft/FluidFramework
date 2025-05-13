@@ -1060,12 +1060,13 @@ export class ContainerRuntime
 			(schema) => {
 				runtime.onSchemaChange(schema);
 			},
-			minVersionForCollab,
+			{ minVersionForCollab },
 			logger,
 		);
 
 		// If the minVersionForCollab for this client is greater than the existing one, we should use that one going forward.
-		const existingMinVersionForCollab = metadata?.documentSchema?.minVersionForCollab;
+		const existingMinVersionForCollab =
+			documentSchemaController.sessionSchema.info.minVersionForCollab;
 		const updatedMinVersionForCollab =
 			existingMinVersionForCollab === undefined ||
 			gt(minVersionForCollab, existingMinVersionForCollab)
@@ -4450,7 +4451,7 @@ export class ContainerRuntime
 					newRuntimeSchema: JSON.stringify(schemaChangeMessage.runtime),
 					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
-					minVersionForCollab: schemaChangeMessage.minVersionForCollab,
+					minVersionForCollab: schemaChangeMessage.info.minVersionForCollab,
 				});
 				const msg: ContainerRuntimeDocumentSchemaMessage = {
 					type: ContainerMessageType.DocumentSchemaChange,

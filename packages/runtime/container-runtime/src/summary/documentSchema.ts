@@ -74,6 +74,15 @@ export interface IDocumentSchema {
 
 	runtime: Record<string, DocumentSchemaValueType>;
 
+	// Other document related properties that are not related to the schema.
+	info: IDocumentSchemaInfo;
+}
+
+/**
+ * Top-level properties of the document that do not relate to the schema itself.
+ * @internal
+ */
+export interface IDocumentSchemaInfo {
 	/**
 	 * minVersionForCollab that was used when this document was created.
 	 * We use this to issue telemetry warning events if a client tries to open a document
@@ -142,7 +151,7 @@ export const currentDocumentVersionSchema = 1;
 export type IDocumentSchemaCurrent = {
 	version: 1;
 	refSeq: number;
-	minVersionForCollab: MinimumVersionForCollab;
+	info: IDocumentSchemaInfo;
 	runtime: {
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
@@ -329,7 +338,7 @@ function and(
 	return {
 		version: currentDocumentVersionSchema,
 		refSeq: currentDocSchema.refSeq,
-		minVersionForCollab: currentDocSchema.minVersionForCollab,
+		info: { minVersionForCollab: currentDocSchema.info?.minVersionForCollab },
 		runtime,
 	} as unknown as IDocumentSchemaCurrent;
 }
@@ -351,16 +360,19 @@ function or(
 
 	// We take the greater of the current/desired minVersionForCollab
 	const minVersionForCollab =
-		currentDocSchema.minVersionForCollab === undefined
-			? desiredDocSchema.minVersionForCollab
-			: gt(currentDocSchema.minVersionForCollab, desiredDocSchema.minVersionForCollab)
-				? currentDocSchema.minVersionForCollab
-				: desiredDocSchema.minVersionForCollab;
+		currentDocSchema.info?.minVersionForCollab === undefined
+			? desiredDocSchema.info.minVersionForCollab
+			: gt(
+						currentDocSchema.info.minVersionForCollab,
+						desiredDocSchema.info.minVersionForCollab,
+					)
+				? currentDocSchema.info.minVersionForCollab
+				: desiredDocSchema.info.minVersionForCollab;
 
 	return {
 		version: currentDocumentVersionSchema,
 		refSeq: currentDocSchema.refSeq,
-		minVersionForCollab,
+		info: { minVersionForCollab },
 		runtime,
 	} as unknown as IDocumentSchemaCurrent;
 }
@@ -370,8 +382,8 @@ function same(
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): boolean {
 	if (
-		currentDocSchema.minVersionForCollab === undefined ||
-		!eq(currentDocSchema.minVersionForCollab, desiredDocSchema.minVersionForCollab)
+		currentDocSchema.info?.minVersionForCollab === undefined ||
+		!eq(currentDocSchema.info?.minVersionForCollab, desiredDocSchema.info.minVersionForCollab)
 	) {
 		// If the current/desired minVersionForCollab are not equal, then we need a schema change
 		return false;
@@ -494,7 +506,8 @@ export class DocumentsSchemaController {
 	 * @param documentMetadataSchema - current document's schema, if present.
 	 * @param features - features of the document schema that current session wants to see enabled.
 	 * @param onSchemaChange - callback that is called whenever schema is changed (not called on creation / load, only when processing document schema change ops)
-	 * @param minVersionForCollab - minimum version of the runtime that is supported for collaboration with this document.
+	 * @param info - top-level properties of the document that do not relate to the schema itself
+	 * @param logger - telemetry logger from the runtime
 	 */
 	constructor(
 		existing: boolean,
@@ -502,7 +515,7 @@ export class DocumentsSchemaController {
 		documentMetadataSchema: IDocumentSchema | undefined,
 		features: IDocumentSchemaFeatures,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
-		minVersionForCollab: MinimumVersionForCollab,
+		info: IDocumentSchemaInfo,
 		logger: ITelemetryLoggerExt,
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
@@ -518,7 +531,7 @@ export class DocumentsSchemaController {
 		// the existing document's schema. We still want to issue a warning regardless if this client can or cannot understand the
 		// schema since it may be a sign that the customer is not properly waiting for saturation before updating their
 		// `minVersionForCollab` value, which could cause disruptions to users in the future.
-		const existingMinVersionForCollab = documentMetadataSchema?.minVersionForCollab;
+		const existingMinVersionForCollab = documentMetadataSchema?.info?.minVersionForCollab;
 		if (
 			existingMinVersionForCollab !== undefined &&
 			gt(existingMinVersionForCollab, pkgVersion)
@@ -534,7 +547,7 @@ export class DocumentsSchemaController {
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
 			refSeq: documentMetadataSchema?.refSeq ?? 0,
-			minVersionForCollab,
+			info,
 			runtime: {
 				explicitSchemaControl: boolToProp(features.explicitSchemaControl),
 				compressionLz4: boolToProp(features.compressionLz4),
@@ -558,7 +571,7 @@ export class DocumentsSchemaController {
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
 					refSeq: 0,
-					minVersionForCollab,
+					info,
 					// If it's existing document and it has no schema, then it was written by legacy client.
 					// If it's a new document, then we define it's legacy-related behaviors.
 					runtime: {

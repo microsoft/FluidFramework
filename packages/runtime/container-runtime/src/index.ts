@@ -91,6 +91,7 @@ export {
 	IRetriableFailureError,
 	IdCompressorMode,
 	IDocumentSchema,
+	IDocumentSchemaInfo,
 	DocumentSchemaValueType,
 	IDocumentSchemaCurrent,
 	currentDocumentVersionSchema,
