@@ -690,6 +690,7 @@ function verifyRebaseLeftDistributivity<TChangeset>(
 		expectedChangeset = fieldRebaser.rebase(
 			mapTaggedChange(edit, expectedChangeset),
 			editToRebaseOver,
+			rebaseMetaData,
 		);
 	}
 	const expectedChange = tagChange(expectedChangeset, edit.revision);
