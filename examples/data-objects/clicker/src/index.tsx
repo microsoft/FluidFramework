@@ -140,12 +140,11 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 
 // ----- FACTORY SETUP -----
 
-export const ClickerInstantiationFactory = new DataObjectFactory(
-	ClickerName,
-	Clicker,
-	[SharedCounter.getFactory(), TaskManager.getFactory()],
-	{},
-);
+export const ClickerInstantiationFactory = new DataObjectFactory({
+	type: ClickerName,
+	ctor: Clicker,
+	sharedObjects: [SharedCounter.getFactory(), TaskManager.getFactory()],
+});
 
 const clickerViewCallback = (clicker: Clicker) => <ClickerReactView clicker={clicker} />;
 

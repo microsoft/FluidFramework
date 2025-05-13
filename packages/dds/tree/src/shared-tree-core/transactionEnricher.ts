@@ -40,12 +40,15 @@ export class TransactionEnricher<TChange> {
 
 	/**
 	 * Commits the current transaction.
-	 * @returns If and only if the closed transaction was the outermost transaction, returns a function which can be used to compute the composed change for that transaction's commits.
+	 * @returns A function which can be used to compute the composed change for that transaction's commits. Undefined if the transaction is still ongoing or contained no committed changes.
 	 */
 	public commitTransaction(): ((revision: RevisionTag) => TChange) | undefined {
 		const commitsCommitted = this.#transactionScopesStart.pop();
 		assert(commitsCommitted !== undefined, 0x985 /* No transaction to commit */);
 		if (this.#transactionScopesStart.length === 0) {
+			if (this.#transactionCommits.length === 0) {
+				return undefined;
+			}
 			const transactionCommits = this.#transactionCommits;
 			this.#transactionCommits = [];
 			return (revision: RevisionTag) =>

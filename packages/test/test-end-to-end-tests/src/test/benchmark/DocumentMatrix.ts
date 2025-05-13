@@ -182,12 +182,11 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 	 * @param props - Properties for initializing the Document Creator.
 	 */
 	public constructor(private readonly props: IDocumentProps) {
-		this._dataObjectFactory = new DataObjectFactory(
-			"TestDataObject",
-			TestDataObject,
-			[SharedMatrix.getFactory(), SharedString.getFactory()],
-			[],
-		);
+		this._dataObjectFactory = new DataObjectFactory({
+			type: "TestDataObject",
+			ctor: TestDataObject,
+			sharedObjects: [SharedMatrix.getFactory(), SharedString.getFactory()],
+		});
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,
 			registryEntries: [

@@ -23,9 +23,10 @@ import {
 	defaultSchemaPolicy,
 	TreeCompressionStrategy,
 	initializeForest,
+	SchemaCodecVersion,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../feature-libraries/schema-index/format.js";
+import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
@@ -92,7 +93,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
 	const fieldBatchCodec = makeFieldBatchCodec(options, 1);
-	const schemaCodec = makeSchemaCodec(options);
+	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
 
 	const schema = new TreeStoredSchemaRepository(schemaCodec.decode(content.schema as Format));
 	const forest = buildConfiguredForest(
@@ -134,7 +135,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
  */
 export interface ViewContent {
 	/**
-	 * Compressed tree from {@link TreeAlpha.exportCompressed}.
+	 * Compressed tree from {@link (TreeAlpha:interface).exportCompressed}.
 	 * @remarks
 	 * This is an owning reference:
 	 * consumers of this content might modify this data in place (for example when applying edits) to avoid copying.

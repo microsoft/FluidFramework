@@ -14,7 +14,7 @@ export enum DataStoreMessageType {
 
 // @alpha @legacy
 export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>, policies?: Partial<IFluidDataStorePolicies>);
     // (undocumented)
     get absolutePath(): string;
     addChannel(channel: IChannel): void;
@@ -73,6 +73,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get objectsRoutingContext(): this;
     // (undocumented)
     readonly options: Record<string | number, any>;
+    // (undocumented)
+    readonly policies: IFluidDataStorePolicies;
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
     processSignal(message: IInboundSignalMessage, local: boolean): void;
@@ -80,7 +82,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
-    reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown, squash?: boolean): void;
     rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): this;
@@ -108,6 +110,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> extends Flui
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     readonly absolutePath: string;
     attachGraph(): void;
+    // @deprecated (undocumented)
     bind(handle: IFluidHandleInternal): void;
     get(): Promise<any>;
     get isAttached(): boolean;

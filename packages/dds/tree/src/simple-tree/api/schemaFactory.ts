@@ -39,6 +39,9 @@ import {
 	type NodeSchemaOptions,
 	markSchemaMostDerived,
 	type FieldSchemaAlpha,
+	type ImplicitAnnotatedAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
+	type UnannotateSchemaRecord,
 } from "../schemaTypes.js";
 import type {
 	NodeKind,
@@ -125,7 +128,7 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 * ```
 	 *
 	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
-	 * {@link TreeAlpha.importVerbose|import}/{@link TreeAlpha.exportVerbose|export} APIs with persistent keys.
+	 * {@link (TreeAlpha:interface).importVerbose|import}/{@link (TreeAlpha:interface).exportVerbose|export} APIs with persistent keys.
 	 *
 	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
 	 * this problem as SharedTree's implementation stores the entire node in its lower layers. It's only when application code
@@ -179,7 +182,9 @@ export interface SchemaStatics {
 	 *
 	 * @remarks
 	 * The number is a {@link https://en.wikipedia.org/wiki/Double-precision_floating-point_format | double-precision 64-bit binary format IEEE 754} value, however there are some exceptions:
+	 *
 	 * - `NaN`, and the infinities are converted to `null` (and may therefore only be used where `null` is allowed by the schema).
+	 *
 	 * - `-0` may be converted to `0` in some cases.
 	 *
 	 * These limitations match the limitations of JSON.
@@ -289,6 +294,58 @@ const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 	return undefined;
 });
 
+// The following overloads for optional and required are used to get around the fact that
+// the compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T when T is known to extend ImplicitAllowedTypes
+
+function optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+	t: T,
+	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata>;
+
+function optional<
+	const T extends ImplicitAnnotatedAllowedTypes,
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlpha<FieldKind.Optional, UnannotateImplicitAllowedTypes<T>, TCustomMetadata>;
+
+function optional<
+	const T extends ImplicitAnnotatedAllowedTypes,
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlpha<FieldKind.Optional, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
+	return createFieldSchema(FieldKind.Optional, t, {
+		defaultProvider: defaultOptionalProvider,
+		...props,
+	});
+}
+
+function required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+	t: T,
+	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata>;
+
+function required<
+	const T extends ImplicitAnnotatedAllowedTypes,
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlpha<FieldKind.Required, UnannotateImplicitAllowedTypes<T>, TCustomMetadata>;
+
+function required<
+	const T extends ImplicitAnnotatedAllowedTypes,
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlpha<FieldKind.Required, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
+	return createFieldSchema(FieldKind.Required, t, props);
+}
+
 /**
  * Implementation of {@link SchemaStatics}.
  * @remarks
@@ -303,22 +360,9 @@ export const schemaStaticsBase = {
 	handle: handleSchema,
 	leaves: [stringSchema, numberSchema, booleanSchema, nullSchema, handleSchema],
 
-	optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
-		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata> => {
-		return createFieldSchema(FieldKind.Optional, t, {
-			defaultProvider: defaultOptionalProvider,
-			...props,
-		});
-	},
+	optional,
 
-	required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
-		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata> => {
-		return createFieldSchema(FieldKind.Required, t, props);
-	},
+	required,
 
 	optionalRecursive: <
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
@@ -387,9 +431,13 @@ const schemaStaticsPublic: SchemaStatics = schemaStatics;
  * It is legal to subclass the returned class, and even subclass that class,
  * but only a single class from that class hierarchy can ever be instantiated or passed to any API as a {@link TreeNodeSchema|schema}.
  * These base classes can be used with `instanceof`, but not with schema based APIs like `Tree.is`.
+ *
  * 2. If overriding the constructor, the constructor must accept the same argument as the base constructor `super` and forward it to `super` unchanged.
+ *
  * 3. Properties for fields defined in the schema should not be overridden.
+ *
  * 4. Additional static members added to schema should pick relatively unique keys to reduce the risk of colliding with implementation details what are not exposed in the API.
+ *
  * 5. If exporting the schema from a package which uses API-Extractor, export the base class and derived class separately to work around [a known limitation](https://github.com/microsoft/rushstack/issues/4429).
  *
  * Note:
@@ -607,12 +655,36 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		return objectSchema(
+		// The compiler can't infer that UnannotateSchemaRecord<T> is equal to T so we have to do a bunch of typing to make the error go away.
+		const object: TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<UnannotateSchemaRecord<T>, ScopedSchemaName<TScope, Name>>,
+			object & InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>,
+			true,
+			T
+		> = objectSchema(
 			this.scoped(name),
 			fields,
 			true,
 			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
 		);
+
+		return object as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
+			unknown,
+			true,
+			T
+		> as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+			object & InsertableObjectFromSchemaRecord<T>,
+			true,
+			T
+		>;
 	}
 
 	/**
@@ -747,7 +819,17 @@ export class SchemaFactory<
 		T,
 		undefined
 	> {
-		return mapSchema(
+		// The compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T so we have to do a bunch of typing to make the error go away.
+		const map: TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Map,
+			TreeMapNode<UnannotateImplicitAllowedTypes<T>> &
+				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
+			MapNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			ImplicitlyConstructable,
+			T,
+			undefined
+		> = mapSchema(
 			this.scoped(name),
 			allowedTypes,
 			implicitlyConstructable,
@@ -755,6 +837,25 @@ export class SchemaFactory<
 			!customizable,
 			undefined,
 		);
+
+		return map as TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Map,
+			TreeMapNode<UnannotateImplicitAllowedTypes<T>> &
+				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
+			MapNodeInsertableData<ImplicitAllowedTypes>,
+			ImplicitlyConstructable,
+			T,
+			undefined
+		> as TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Map,
+			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
+			MapNodeInsertableData<T>,
+			ImplicitlyConstructable,
+			T,
+			undefined
+		>;
 	}
 
 	/**
@@ -901,7 +1002,22 @@ export class SchemaFactory<
 		T,
 		undefined
 	> {
-		return arraySchema(this.scoped(name), allowedTypes, implicitlyConstructable, customizable);
+		const array = arraySchema(
+			this.scoped(name),
+			allowedTypes,
+			implicitlyConstructable,
+			customizable,
+		);
+
+		return array as TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Array,
+			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			ImplicitlyConstructable,
+			T,
+			undefined
+		>;
 	}
 
 	/**
@@ -954,8 +1070,11 @@ export class SchemaFactory<
 	 * The identifier generated by the SharedTree has the following properties:
 	 *
 	 * - It is a UUID which will not collide with other generated UUIDs.
+	 *
 	 * - It is compressed to a space-efficient representation when stored in the document.
+	 *
 	 * - A compressed form of the identifier can be accessed at runtime via the {@link TreeNodeApi.shortId|Tree.shortId()} API.
+	 *
 	 * - It will error if read (and will not be present in the object's iterable properties) before the node has been inserted into a tree.
 	 *
 	 * However, a user may alternatively supply their own string as the identifier if desired (for example, if importing identifiers from another system).

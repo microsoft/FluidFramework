@@ -221,7 +221,7 @@ describe("getJsonSchema", () => {
 
 	it("Object schema", () => {
 		const schemaFactory = new SchemaFactoryAlpha("test");
-		const Schema = schemaFactory.object(
+		const Schema = schemaFactory.objectAlpha(
 			"object",
 			{
 				foo: schemaFactory.optional(schemaFactory.number, {

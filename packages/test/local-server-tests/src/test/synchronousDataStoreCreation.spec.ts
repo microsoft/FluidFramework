@@ -151,13 +151,11 @@ class ParentDataObject extends DataObject {
  * This is the parent DataObjects factory. It specifies the child data stores
  * factory in a sub-registry. This is requires for synchronous creation of the child.
  */
-const parentDataObjectFactory = new DataObjectFactory(
-	"ParentDataObject",
-	ParentDataObject,
-	undefined,
-	{},
-	[[ChildDataStoreFactory.instance.type, ChildDataStoreFactory.instance]],
-);
+const parentDataObjectFactory = new DataObjectFactory({
+	type: "ParentDataObject",
+	ctor: ParentDataObject,
+	registryEntries: [[ChildDataStoreFactory.instance.type, ChildDataStoreFactory.instance]],
+});
 
 // a simple container runtime factory with a single datastore aliased as default.
 // the default datastore is also returned as the entrypoint

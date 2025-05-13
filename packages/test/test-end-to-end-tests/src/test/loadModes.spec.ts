@@ -47,12 +47,10 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			return TestDataObject.factory;
 		}
 
-		private static readonly factory = new DataObjectFactory(
-			TestDataObject.type,
-			TestDataObject,
-			[],
-			{},
-		);
+		private static readonly factory = new DataObjectFactory({
+			type: TestDataObject.type,
+			ctor: TestDataObject,
+		});
 
 		private counter!: SharedCounter;
 
@@ -93,12 +91,11 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 		}
 	}
 
-	const testDataObjectFactory = new DataObjectFactory(
-		TestDataObject.type,
-		TestDataObject,
-		[SharedCounter.getFactory()],
-		{},
-	);
+	const testDataObjectFactory = new DataObjectFactory({
+		type: TestDataObject.type,
+		ctor: TestDataObject,
+		sharedObjects: [SharedCounter.getFactory()],
+	});
 
 	let provider: ITestObjectProvider;
 	before(() => {

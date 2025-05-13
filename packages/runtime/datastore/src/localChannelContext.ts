@@ -107,13 +107,13 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		}
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash: boolean) {
 		assert(this.isLoaded, 0x18a /* "Channel should be loaded to resubmit ops" */);
 		assert(
 			this.globallyVisible,
 			0x2d4 /* "Local channel must be globally visible when resubmitting op" */,
 		);
-		this.services.value.deltaConnection.reSubmit(content, localOpMetadata);
+		this.services.value.deltaConnection.reSubmit(content, localOpMetadata, squash);
 	}
 	public rollback(content: any, localOpMetadata: unknown) {
 		assert(this.isLoaded, 0x2ee /* "Channel should be loaded to rollback ops" */);

@@ -118,6 +118,7 @@ export class DeltaManager implements IDeltaService {
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			refreshTokenIfNeeded,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		return restWrapper;
 	}

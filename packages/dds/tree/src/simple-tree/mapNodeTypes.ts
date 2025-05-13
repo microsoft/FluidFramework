@@ -4,7 +4,10 @@
  */
 
 import type { MapNodeInsertableData, TreeMapNode } from "./mapNode.js";
-import type { ImplicitAllowedTypes } from "./schemaTypes.js";
+import type {
+	ImplicitAnnotatedAllowedTypes,
+	UnannotateImplicitAllowedTypes,
+} from "./schemaTypes.js";
 import {
 	NodeKind,
 	type TreeNodeSchemaClass,
@@ -21,14 +24,14 @@ import type { SimpleMapNodeSchema } from "./simpleSchema.js";
  */
 export interface MapNodeCustomizableSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Map,
-			TreeMapNode<T> & WithType<TName, NodeKind.Map, T>,
-			MapNodeInsertableData<T>,
+			TreeMapNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Map, T>,
+			MapNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable,
 			T,
 			undefined,
@@ -42,14 +45,14 @@ export interface MapNodeCustomizableSchema<
  */
 export interface MapNodePojoEmulationSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<
 			TName,
 			NodeKind.Map,
-			TreeMapNode<T> & WithType<TName, NodeKind.Map, T>,
-			MapNodeInsertableData<T>,
+			TreeMapNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Map, T>,
+			MapNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable,
 			T,
 			undefined,

@@ -405,7 +405,7 @@ describe("Outbox", () => {
 		assert.equal(state.pendingOpContents.length, 0);
 		const batchId = "batchId";
 		// ...But if batchId is provided, it's resubmit, and we need to send an empty batch with the batchId
-		outbox.flush(batchId);
+		outbox.flush({ batchId, staged: false });
 		assert.equal(state.opsSubmitted, 1);
 		assert.equal(state.batchesSubmitted.length, 1);
 		assert.equal(
@@ -430,17 +430,17 @@ describe("Outbox", () => {
 		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0")); // Separate batch, batch ID not used
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "2"));
-		outbox.flush("batchId-A");
+		outbox.flush({ batchId: "batchId-A", staged: false });
 
 		// Flush 2 - resubmit single-message batch
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "3"));
-		outbox.flush("batchId-B");
+		outbox.flush({ batchId: "batchId-B", staged: false });
 
 		// Flush 3 - resubmit blob attach batch
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "4"));
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "5"));
 		currentSeqNumbers.referenceSequenceNumber = 0;
-		outbox.flush("batchId-C");
+		outbox.flush({ batchId: "batchId-C", staged: false });
 
 		// Flush 4 - no batch ID given
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "6"));

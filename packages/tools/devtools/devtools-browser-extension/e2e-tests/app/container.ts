@@ -82,12 +82,11 @@ class CollaborativeText extends DataObject {
 		return "browser-extension-test-app";
 	}
 
-	private static readonly factory = new DataObjectFactory(
-		CollaborativeText.Name,
-		CollaborativeText,
-		[SharedString.getFactory()],
-		{},
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: CollaborativeText.name,
+		ctor: CollaborativeText,
+		sharedObjects: [SharedString.getFactory()],
+	});
 
 	public static getFactory() {
 		return this.factory;

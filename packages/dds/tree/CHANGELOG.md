@@ -1,5 +1,69 @@
 # @fluidframework/tree
 
+## 2.40.0
+
+### Minor Changes
+
+- SchemaFactoryAlpha.object has been renamed to SchemaFactoryAlpha.objectAlpha ([#24478](https://github.com/microsoft/FluidFramework/pull/24478)) [12e5ab3b33](https://github.com/microsoft/FluidFramework/commit/12e5ab3b335a8af263e1cc84f8951cf02db79b8b)
+
+  This rename was done so that changes can be made to the signature of the class.
+  This is a breaking change and uses of `SchemaFactoryAlpha.object` may need to be changed to `SchemaFactoryAlpha.objectAlpha`.
+
+- AllowedTypes array handling has been updated ([#24484](https://github.com/microsoft/FluidFramework/pull/24484)) [f0a71ccce7](https://github.com/microsoft/FluidFramework/commit/f0a71ccce7a055e99ce9f4ba15e1cede529bbc9c)
+
+  As an optimization, how [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) arrays are processed has changed.
+  Now much larger arrays can be provided without hitting:
+
+  > "Type instantiation is excessively deep and possibly infinite.ts"
+
+  Previously, arrays of around 43 schema would start having this issue, but now arrays of hundreds work correctly.
+
+  This optimization has resulted in a small change in behavior for how [input types](https://fluidframework.com/docs/api/fluid-framework/input-typealias) are computed.
+  When the `AllowedTypes` array has a type that is a union of two arrays, and the two arrays start with the same subsequence of types,
+  previously this would allow the types from the common prefix of the arrays.
+  For example `[typeof A] | [typeof A, typeof B]` would permit inserting content compatible with `A`.
+  Now all such unions produce `never` for their insertable node types (just like this example would if the order of the second array were reversed).
+  This case was not intentionally supported, and as documented in [input types](https://fluidframework.com/docs/api/fluid-framework/input-typealias), non-exact types, like these unions,
+  are not guaranteed to produce anything other than `never`.
+
+  If providing exact schema is impractical and the previous behavior is required, convert the union of arrays to an array of unions.
+  The above example can be turned into `[typeof A, typeof B | typeof A]`.
+
+  This is also fix for a case where
+  [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias)
+  was order dependent, which violates its documented order independence.
+
+- A SharedTree document corruption bug has been fixed ([#24565](https://github.com/microsoft/FluidFramework/pull/24565)) [6b3e150395](https://github.com/microsoft/FluidFramework/commit/6b3e15039543a2bab4de5b2e969301f0e7f1f3db)
+
+  There was a bug where local changes were not correctly sent to peers.
+  This could lead to a permanent loss of consistency and ultimately document corruption.
+  See [PR24561](https://github.com/microsoft/FluidFramework/pull/24561) for details.
+
+- The extractPersistedSchema (alpha) API has had its arguments adjusted ([#24562](https://github.com/microsoft/FluidFramework/pull/24562)) [2e6b0cfd74](https://github.com/microsoft/FluidFramework/commit/2e6b0cfd74f3c3db5ce3b6b3f8ff8decbfc24ab6)
+
+  The [extractPersistedSchema](https://fluidframework.com/docs/api/tree/#extractpersistedschema-function) function has been updated to take in [SimpleTreeSchema](https://fluidframework.com/docs/api/fluid-framework/simpletreeschema-interface).
+  This makes it possible to use with simple schema derived from stored schema, like those returned from [ITreeAlpha.exportSimpleSchema](https://fluidframework.com/docs/api/fluid-framework/itreealpha-interface#exportsimpleschema-methodsignature).
+  Like [TreeAlpha.exportCompressed](https://fluidframework.com/docs/api/tree#treealpha-variable), `extractPersistedSchema` now takes in [FluidClientVersion](https://fluidframework.com/docs/api/fluid-framework/fluidclientversion-enum) to make it possible to opt into newer formats when they become available.
+
+  Additionally, `persistedToSimpleSchema` has been added to fill in a gap in the API.
+  Without `persistedToSimpleSchema` it would be impossible to parse the persisted format without a valid compressed tree to provide to [independentInitializedView](https://fluidframework.com/docs/api/tree/#independentinitializedview-functionc).
+
+- SchemaFactoryAlpha supports adding metadata to AllowedTypes ([#24478](https://github.com/microsoft/FluidFramework/pull/24478)) [12e5ab3b33](https://github.com/microsoft/FluidFramework/commit/12e5ab3b335a8af263e1cc84f8951cf02db79b8b)
+
+  This change allows metadata to be added to [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) as well as individual types in a set of `AllowedTypes`.
+  Users can define custom metadata by putting their `AllowedTypes` in an object with `metadata` and `types` properties:
+
+  ```typescript
+  schemaFactoryAlpha.arrayAlpha({
+    metadata: {
+      custom: "these allowed types are annotated",
+    },
+    types: [SchemaFactory.string, SchemaFactory.number],
+  });
+  ```
+
+  This annotation system will also be used to implement future schema features.
+
 ## 2.33.0
 
 ### Minor Changes

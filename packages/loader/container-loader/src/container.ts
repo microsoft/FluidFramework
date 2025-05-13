@@ -72,7 +72,6 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	type ConnectionMode,
-	type IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -713,17 +712,6 @@ export class Container
 	 */
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
 		return this._loadedCodeDetails;
-	}
-
-	/**
-	 * Get the package info for the code details that were used to load the container.
-	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined otherwise
-	 * @deprecated To be removed in 2.40.
-	 * Use getLoadedCodeDetails instead; see https://github.com/microsoft/FluidFramework/issues/23898 for details.
-	 * Deprecating the function here to avoid polluting public container api surface.
-	 */
-	public getContainerPackageInfo?(): IContainerPackageInfo | undefined {
-		return getPackageName(this._loadedCodeDetails);
 	}
 
 	private _loadedModule: IFluidModuleWithDetails | undefined;
@@ -1835,7 +1823,7 @@ export class Container
 			if (attachmentBlobs !== undefined) {
 				assert(
 					this.detachedBlobStorage !== undefined,
-					"detached blob storage should always exist when detached",
+					0xb8e /* detached blob storage should always exist when detached */,
 				);
 				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
 			}

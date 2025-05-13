@@ -21,7 +21,7 @@ import { getUnhydratedContext } from "../createContext.js";
  * @remarks
  * This is "concise" meaning that explicit type information is omitted.
  * If the schema is compatible with {@link ITreeConfigurationOptions.preventAmbiguity},
- * types will be lossless and compatible with {@link TreeAlpha.create} (unless the options are used to customize it).
+ * types will be lossless and compatible with {@link (TreeAlpha:interface).create} (unless the options are used to customize it).
  *
  * Every {@link TreeNode} is an array or object.
  * Any IFluidHandle values have been replaced by `THandle`.

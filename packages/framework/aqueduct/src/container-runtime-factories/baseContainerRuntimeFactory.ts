@@ -11,6 +11,7 @@ import {
 	FluidDataStoreRegistry,
 	loadContainerRuntime,
 	type IContainerRuntimeOptions,
+	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
@@ -61,6 +62,11 @@ export interface BaseContainerRuntimeFactoryProps {
 	 * created with this factory
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	/**
+	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 */
+	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }
 
 /**
@@ -88,6 +94,7 @@ export class BaseContainerRuntimeFactory
 	// eslint-disable-next-line import/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	private readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();
@@ -98,6 +105,7 @@ export class BaseContainerRuntimeFactory
 		this.provideEntryPoint = props.provideEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
+		this.minVersionForCollab = props.minVersionForCollab;
 	}
 
 	/**
@@ -146,6 +154,7 @@ export class BaseContainerRuntimeFactory
 			// eslint-disable-next-line import/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
+			minVersionForCollab: this.minVersionForCollab,
 		});
 	}
 

@@ -337,6 +337,7 @@ declare type current_as_old_for_TypeAlias_IAzureAudience = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_ITokenClaims": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_ITokenClaims = requireAssignableTo<TypeOnly<old.ITokenClaims>, TypeOnly<current.ITokenClaims>>
 
 /*
@@ -346,6 +347,7 @@ declare type old_as_current_for_TypeAlias_ITokenClaims = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_ITokenClaims": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_ITokenClaims = requireAssignableTo<TypeOnly<current.ITokenClaims>, TypeOnly<old.ITokenClaims>>
 
 /*
@@ -355,6 +357,7 @@ declare type current_as_old_for_TypeAlias_ITokenClaims = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_ScopeType": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_ScopeType = requireAssignableTo<TypeOnly<old.ScopeType>, TypeOnly<current.ScopeType>>
 
 /*
@@ -364,6 +367,7 @@ declare type old_as_current_for_TypeAlias_ScopeType = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "TypeAlias_ScopeType": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_ScopeType = requireAssignableTo<TypeOnly<current.ScopeType>, TypeOnly<old.ScopeType>>
 
 /*
@@ -373,4 +377,5 @@ declare type current_as_old_for_TypeAlias_ScopeType = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Variable_ScopeType": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Variable_ScopeType = requireAssignableTo<TypeOnly<typeof current.ScopeType>, TypeOnly<typeof old.ScopeType>>

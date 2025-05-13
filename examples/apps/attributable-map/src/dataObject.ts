@@ -53,12 +53,11 @@ export class HitCounter extends DataObject implements IHitCounter {
 
 	public static readonly Name = "@fluid-example/attributable-map";
 
-	private static readonly factory = new DataObjectFactory(
-		HitCounter.Name,
-		HitCounter,
-		[AttributableMap.getFactory()],
-		{},
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: HitCounter.Name,
+		ctor: HitCounter,
+		sharedObjects: [AttributableMap.getFactory()],
+	});
 
 	public static getFactory(): DataObjectFactory<HitCounter> {
 		return this.factory;

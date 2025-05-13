@@ -62,11 +62,11 @@ describe("compatUtils", () => {
 		};
 
 		const testCases: {
-			compatibilityVersion: SemanticVersion;
+			minVersionForCollab: SemanticVersion;
 			expectedConfig: Partial<ITestConfigMap>;
 		}[] = [
 			{
-				compatibilityVersion: "0.5.0",
+				minVersionForCollab: "0.5.0",
 				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
@@ -77,7 +77,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "1.0.0",
+				minVersionForCollab: "1.0.0",
 				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
@@ -88,7 +88,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "1.5.0",
+				minVersionForCollab: "1.5.0",
 				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
@@ -99,7 +99,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "2.0.0",
+				minVersionForCollab: "2.0.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -110,7 +110,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "2.1.5",
+				minVersionForCollab: "2.1.5",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -121,7 +121,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "2.5.0",
+				minVersionForCollab: "2.5.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -132,7 +132,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "3.0.0",
+				minVersionForCollab: "3.0.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b2",
@@ -143,7 +143,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "3.7.2",
+				minVersionForCollab: "3.7.2",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b2",
@@ -154,7 +154,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "5.0.1",
+				minVersionForCollab: "5.0.1",
 				expectedConfig: {
 					featureA: "a3",
 					featureB: "b2",
@@ -165,7 +165,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "6.9.9",
+				minVersionForCollab: "6.9.9",
 				expectedConfig: {
 					featureA: "a3",
 					featureB: "b3",
@@ -176,7 +176,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "8.2.3",
+				minVersionForCollab: "8.2.3",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b3",
@@ -187,7 +187,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "9.7.0",
+				minVersionForCollab: "9.7.0",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
@@ -198,7 +198,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "10.0.0",
+				minVersionForCollab: "10.0.0",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
@@ -211,12 +211,12 @@ describe("compatUtils", () => {
 		];
 
 		for (const testCase of testCases) {
-			it(`returns correct configs for compatibilityVersion = "${testCase.compatibilityVersion}"`, () => {
-				const config = getConfigsForCompatMode(testCase.compatibilityVersion, testConfigMap);
+			it(`returns correct configs for minVersionForCollab = "${testCase.minVersionForCollab}"`, () => {
+				const config = getConfigsForCompatMode(testCase.minVersionForCollab, testConfigMap);
 				assert.deepEqual(
 					config,
 					testCase.expectedConfig,
-					`Failed for compatibilityVersion: ${testCase.compatibilityVersion}`,
+					`Failed for minVersionForCollab: ${testCase.minVersionForCollab}`,
 				);
 			});
 		}

@@ -51,6 +51,7 @@ import {
 	tagCodeArtifacts,
 	type ICustomData,
 	type IFluidErrorBase,
+	LoggingError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -70,7 +71,18 @@ interface ProcessTelemetryProperties {
 }
 
 /**
- * Base class from which all shared objects derive.
+ * Base class from which all {@link ISharedObject|shared objects} derive.
+ * @remarks
+ * This class implements common behaviors that implementations of {@link ISharedObject} may want to reuse.
+ * Even more such behaviors are implemented in the {@link SharedObject} class.
+ * @privateRemarks
+ * Currently some documentation (like the above) implies that this is supposed to be the only implementation of ISharedObject, which is both package-exported and not `@sealed`.
+ * This situation should be clarified to indicate if other implementations of ISharedObject are allowed and just currently don't exist,
+ * or if the intention is that no other implementations should exist and creating some might break things.
+ * As part of this, any existing implementations of ISharedObject (via SharedObjectCore or otherwise) in use by legacy API users will need to be considered.
+ *
+ * TODO:
+ * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
  * @legacy
  * @alpha
  */
@@ -509,6 +521,27 @@ export abstract class SharedObjectCore<
 	}
 
 	/**
+	 * Called when a message has to be resubmitted but its content should be "squashed" if any subsequent pending changes
+	 * override the content in the fashion described on {@link @fluidframework/datastore-definitions#IDeltaHandler.reSubmit}.
+	 *
+	 * @param content - The content of the original message.
+	 * @param localOpMetadata - The local metadata associated with the original message.
+	 */
+	protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		const allowStagingModeWithoutSquashing =
+			loggerToMonitoringContext(this.logger).config.getBoolean(
+				"Fluid.SharedObject.AllowStagingModeWithoutSquashing",
+			) ??
+			(this.runtime.options.allowStagingModeWithoutSquashing as boolean | undefined) ??
+			true;
+		if (allowStagingModeWithoutSquashing) {
+			this.reSubmitCore(content, localOpMetadata);
+		} else {
+			this.throwUnsupported("reSubmitSquashed");
+		}
+	}
+
+	/**
 	 * Promises that are waiting for an ack from the server before resolving should use this instead of new Promise.
 	 * It ensures that if something changes that will interrupt that ack (e.g. the FluidDataStoreRuntime disposes),
 	 * the Promise will reject.
@@ -554,8 +587,8 @@ export abstract class SharedObjectCore<
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
-			reSubmit: (content: unknown, localOpMetadata: unknown) => {
-				this.reSubmit(content, localOpMetadata);
+			reSubmit: (content: unknown, localOpMetadata: unknown, squash?: boolean) => {
+				this.reSubmit(content, localOpMetadata, squash);
 			},
 			applyStashedOp: (content: unknown): void => {
 				this.applyStashedOp(parseHandles(content, this.serializer));
@@ -672,16 +705,24 @@ export abstract class SharedObjectCore<
 	 * reconnection.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - Optional. If `true`, the message will be resubmitted in a squashed form. If `undefined` or `false`,
+	 * the legacy behavior (no squashing) will be used. Defaults to `false` for backward compatibility.
 	 */
-	private reSubmit(content: unknown, localOpMetadata: unknown): void {
-		this.reSubmitCore(content, localOpMetadata);
+	private reSubmit(content: unknown, localOpMetadata: unknown, squash?: boolean): void {
+		// Back-compat: squash argument may not be provided by container-runtime layer.
+		// Default to previous behavior (no squash).
+		if (squash ?? false) {
+			this.reSubmitSquashed(content, localOpMetadata);
+		} else {
+			this.reSubmitCore(content, localOpMetadata);
+		}
 	}
 
 	/**
 	 * Revert an op
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
-		throw new Error("rollback not supported");
+		this.throwUnsupported("rollback");
 	}
 
 	/**
@@ -730,11 +771,24 @@ export abstract class SharedObjectCore<
 	private emitInternal(event: EventEmitterEventType, ...args: unknown[]): boolean {
 		return super.emit(event, ...args);
 	}
+
+	private throwUnsupported(featureName: string): never {
+		throw new LoggingError("Unsupported DDS feature", {
+			featureName,
+			...tagCodeArtifacts({ ddsType: this.attributes.type }),
+		});
+	}
 }
 
 /**
- * SharedObject with simplified, synchronous summarization and GC.
- * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
+ * Helper for implementing {@link ISharedObject} with simplified, synchronous summarization and garbage collection.
+ * @remarks
+ * DDS implementations with async and incremental summarization should extend {@link SharedObjectCore} directly instead.
+ * @privateRemarks
+ * TODO:
+ * This class is badly named.
+ * Once it becomes `@internal` "SharedObjectCore" should probably become "SharedObject"
+ * and this class should be renamed to something like "SharedObjectSynchronous".
  * @legacy
  * @alpha
  */

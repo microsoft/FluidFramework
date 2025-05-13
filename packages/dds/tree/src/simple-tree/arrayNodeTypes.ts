@@ -5,8 +5,9 @@
 
 import type { TreeArrayNode } from "./arrayNode.js";
 import type {
-	ImplicitAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	UnannotateImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	NodeKind,
@@ -24,14 +25,14 @@ import type { SimpleArrayNodeSchema } from "./simpleSchema.js";
  */
 export interface ArrayNodeCustomizableSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Array,
-			TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			TreeArrayNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Array, T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>,
 			ImplicitlyConstructable,
 			T,
 			undefined,
@@ -45,14 +46,14 @@ export interface ArrayNodeCustomizableSchema<
  */
 export interface ArrayNodePojoEmulationSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<
 			TName,
 			NodeKind.Array,
-			TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			TreeArrayNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Array, T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>,
 			ImplicitlyConstructable,
 			T,
 			undefined,

@@ -51,6 +51,7 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 	}
 

@@ -391,6 +391,7 @@ const uploadBlob = async (
 		() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 		undefined /* refreshTokenIfNeeded */,
 		logHttpMetrics /* logHttpMetrics */,
+		() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 	);
 	return restWrapper.post(uri, blobData, undefined, {
 		"Content-Type": "application/json",

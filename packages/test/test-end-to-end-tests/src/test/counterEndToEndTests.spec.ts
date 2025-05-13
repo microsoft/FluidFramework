@@ -239,8 +239,9 @@ describeCompat(
 			[
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "RollbackError: rollback not supported",
+					error: "RollbackError: Unsupported DDS feature",
 					errorType: ContainerErrorTypes.dataProcessingError,
+					featureName: "rollback",
 				},
 			],
 			async () => {

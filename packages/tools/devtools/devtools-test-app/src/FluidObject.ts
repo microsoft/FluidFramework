@@ -32,12 +32,11 @@ export class AppDataTwo extends DataObject {
 		return this._text;
 	}
 
-	private static readonly factory = new DataObjectFactory(
-		AppDataTwo.Name,
-		AppDataTwo,
-		[SharedString.getFactory()],
-		{},
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: AppDataTwo.Name,
+		ctor: AppDataTwo,
+		sharedObjects: [SharedString.getFactory()],
+	});
 
 	public static getFactory(): DataObjectFactory<AppDataTwo> {
 		return this.factory;
@@ -135,19 +134,18 @@ export class AppData extends DataObject {
 
 	public static readonly Name = "@devtools-example/test-app";
 
-	private static readonly factory = new DataObjectFactory(
-		AppData.Name,
-		AppData,
-		[
+	private static readonly factory = new DataObjectFactory({
+		type: AppData.Name,
+		ctor: AppData,
+		sharedObjects: [
 			SharedString.getFactory(),
 			SharedCounter.getFactory(),
 			SharedMatrix.getFactory(),
 			SharedCell.getFactory(),
 			SharedTree.getFactory(),
 		],
-		{},
-		new Map([AppDataTwo.getFactory().registryEntry]),
-	);
+		registryEntries: new Map([AppDataTwo.getFactory().registryEntry]),
+	});
 
 	public static getFactory(): DataObjectFactory<AppData> {
 		return this.factory;

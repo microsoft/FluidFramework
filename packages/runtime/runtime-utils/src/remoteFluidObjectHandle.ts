@@ -8,7 +8,7 @@ import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import { responseToException } from "./dataStoreHelpers.js";
 import { FluidHandleBase } from "./handles.js";
@@ -70,7 +70,10 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 		return;
 	}
 
+	/**
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 */
 	public bind(handle: IFluidHandleInternal): void {
-		handle.attachGraph();
+		fail("RemoteFluidObjectHandle not supported as a bind source");
 	}
 }

@@ -918,12 +918,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 	}
 }
 
-const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
-	LoadTestDataStore.DataStoreName,
-	LoadTestDataStore,
-	[SharedCounter.getFactory(), TaskManager.getFactory()],
-	{},
-);
+const LoadTestDataStoreInstantiationFactory = new DataObjectFactory({
+	type: LoadTestDataStore.DataStoreName,
+	ctor: LoadTestDataStore,
+	sharedObjects: [SharedCounter.getFactory(), TaskManager.getFactory()],
+});
 
 export const createFluidExport = (runtimeOptions?: IContainerRuntimeOptions | undefined) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({

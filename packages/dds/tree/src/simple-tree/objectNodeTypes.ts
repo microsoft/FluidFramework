@@ -6,10 +6,14 @@
 import type { RestrictiveStringRecord } from "../util/index.js";
 import type {
 	TreeObjectNode,
-	InsertableObjectFromSchemaRecord,
 	SimpleKeyMap,
+	InsertableObjectFromAnnotatedSchemaRecord,
 } from "./objectNode.js";
-import type { ImplicitFieldSchema, FieldSchemaAlpha } from "./schemaTypes.js";
+import type {
+	FieldSchemaAlpha,
+	ImplicitAnnotatedFieldSchema,
+	UnannotateSchemaRecord,
+} from "./schemaTypes.js";
 import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "./simpleSchema.js";
@@ -22,14 +26,14 @@ import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "./simpleSc
 export interface ObjectNodeSchema<
 	out TName extends string = string,
 	in out T extends
-		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
+		RestrictiveStringRecord<ImplicitAnnotatedFieldSchema> = RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Object,
-			TreeObjectNode<T, TName>,
-			InsertableObjectFromSchemaRecord<T>,
+			TreeObjectNode<UnannotateSchemaRecord<T>, TName>,
+			InsertableObjectFromAnnotatedSchemaRecord<T>,
 			ImplicitlyConstructable,
 			T,
 			never,

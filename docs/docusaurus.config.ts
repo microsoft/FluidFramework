@@ -109,7 +109,7 @@ const config: Config = {
 						if (docPath.startsWith("api/")) {
 							return undefined;
 						}
-						return `${githubDocsUrl}/${versionDocsDirPath}${docPath}`;
+						return `${githubDocsUrl}/${versionDocsDirPath}/${docPath}`;
 					},
 				},
 				// We can add support for blog posts in the future.

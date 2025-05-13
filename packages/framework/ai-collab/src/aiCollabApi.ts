@@ -7,6 +7,8 @@ import type { TreeNode } from "@fluidframework/tree";
 // eslint-disable-next-line import/no-named-as-default
 import type OpenAI from "openai";
 
+import type { Diff } from "./diffTypes.js";
+
 /**
  * Core Debug event type for the ai-collab
  * @alpha
@@ -168,6 +170,10 @@ export interface AiCollabSuccessResponse {
 	 * {@inheritDoc TokenUsage}
 	 */
 	readonly tokensUsed: TokenUsage;
+	/**
+	 * A list of diffs that represent the changes made by the AI collaboration.
+	 */
+	readonly diffs: readonly Diff[];
 }
 
 /**
@@ -200,6 +206,10 @@ export interface AiCollabErrorResponse {
 	 * {@inheritDoc TokenUsage}
 	 */
 	readonly tokensUsed: TokenUsage;
+	/**
+	 * A list of diffs that represent the changes made by the AI collaboration.
+	 */
+	readonly diffs: readonly Diff[];
 }
 
 /**

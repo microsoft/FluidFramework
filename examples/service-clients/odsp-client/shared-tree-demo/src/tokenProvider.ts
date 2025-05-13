@@ -6,17 +6,38 @@
 import { PublicClientApplication } from "@azure/msal-browser";
 import { IOdspTokenProvider, TokenResponse } from "@fluidframework/odsp-client/beta";
 
-export class OdspTestTokenProvider implements IOdspTokenProvider {
-	private readonly msalInstance: PublicClientApplication;
-	constructor(clientId: string) {
-		const msalConfig = {
-			auth: {
-				clientId,
-				authority: "https://login.microsoftonline.com/common/",
-			},
-		};
-		this.msalInstance = new PublicClientApplication(msalConfig);
+// Helper function to authenticate the user
+export async function createMsalInstance(): Promise<PublicClientApplication> {
+	// Get the client id (app id) from the environment variables
+	const clientId = process.env.SPE_CLIENT_ID;
+
+	if (clientId === undefined) {
+		throw new Error("SPE_CLIENT_ID is not defined");
 	}
+
+	const tenantId = process.env.SPE_ENTRA_TENANT_ID;
+	if (tenantId === undefined) {
+		throw new Error("SPE_ENTRA_TENANT_ID is not defined");
+	}
+
+	// Create the MSAL instance
+	const msalConfig = {
+		auth: {
+			clientId,
+			authority: `https://login.microsoftonline.com/${tenantId}/`,
+			tenantId,
+		},
+	};
+
+	// Initialize the MSAL instance
+	const msalInstance = new PublicClientApplication(msalConfig);
+	await msalInstance.initialize();
+
+	return msalInstance;
+}
+
+export class OdspTestTokenProvider implements IOdspTokenProvider {
+	private readonly msalInstance: Promise<PublicClientApplication> = createMsalInstance();
 
 	public async fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
 		const pushScope = ["offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All"];
@@ -39,13 +60,14 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 	}
 
 	private async fetchTokens(scope: string[]): Promise<string> {
-		const accounts = this.msalInstance.getAllAccounts();
+		const msal = await this.msalInstance;
+		const accounts = msal.getAllAccounts();
 		let response;
 
 		if (accounts.length === 0) {
 			try {
 				// This will only work if loginPopup is synchronous, otherwise, you may need to handle the response in a different way
-				response = await this.msalInstance.loginPopup({
+				response = await msal.loginPopup({
 					scopes: ["FileStorageContainer.Selected"],
 				});
 			} catch (error) {
@@ -56,10 +78,10 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-		this.msalInstance.setActiveAccount(response.account);
+		msal.setActiveAccount(response.account);
 
 		try {
-			const result = await this.msalInstance.acquireTokenSilent({ scopes: scope });
+			const result = await msal.acquireTokenSilent({ scopes: scope });
 			return result.accessToken;
 		} catch (error) {
 			throw new Error(`MSAL error: ${error}`);

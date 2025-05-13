@@ -42,7 +42,10 @@ describe("entryPoint compat", () => {
 	}
 
 	async function createContainer(): Promise<IContainer> {
-		const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
+		const dataObjectFactory = new DataObjectFactory({
+			type: "TestDataObject",
+			ctor: TestDataObject,
+		});
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],

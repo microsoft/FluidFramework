@@ -22,7 +22,11 @@ export class VirtualDataStore extends DataObject {
  */
 export class VirtualDataObjectFactory extends DataObjectFactory<VirtualDataStore> {
 	constructor() {
-		super("virtual-service-load", VirtualDataStore, [SharedCounter.getFactory()], {});
+		super({
+			type: "virtual-service-load",
+			ctor: VirtualDataStore,
+			sharedObjects: [SharedCounter.getFactory()],
+		});
 	}
 
 	/**

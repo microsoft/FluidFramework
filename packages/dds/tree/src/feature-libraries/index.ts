@@ -17,7 +17,13 @@ export {
 	mapTreeFieldFromCursor,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
-export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/index.js";
+export {
+	SchemaSummarizer,
+	encodeTreeSchema,
+	makeSchemaCodec,
+	makeSchemaCodecs,
+	SchemaCodecVersion,
+} from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
 	type CursorAdapter,
@@ -152,7 +158,6 @@ export {
 	type FlexTreeEntity,
 	type FlexTreeField,
 	type FlexTreeNode,
-	getTreeContext,
 	TreeStatus,
 	Context,
 	type FlexTreeNodeEvents,

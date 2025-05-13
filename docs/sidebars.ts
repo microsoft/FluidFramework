@@ -52,7 +52,7 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "link",
 			label: "Release Notes",
-			href: "https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0",
+			href: "https://github.com/microsoft/FluidFramework/releases?q=client",
 		},
 		{
 			type: "category",

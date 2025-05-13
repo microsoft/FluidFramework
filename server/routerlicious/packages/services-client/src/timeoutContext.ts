@@ -24,6 +24,11 @@ export interface ITimeoutContext {
 	 * If exceeded, throws a 503 Timeout error
 	 */
 	checkTimeout(): void;
+	/**
+	 * Returns the time remaining before the timeout is exceeded.
+	 * If no timeout is set, returns undefined.
+	 */
+	getTimeRemainingMs(): number | undefined;
 }
 
 /**
@@ -38,6 +43,9 @@ class NullTimeoutContext implements ITimeoutContext {
 		return callback();
 	}
 	checkTimeout(): void {}
+	getTimeRemainingMs(): number | undefined {
+		return undefined;
+	}
 }
 const nullTimeoutContext = new NullTimeoutContext();
 

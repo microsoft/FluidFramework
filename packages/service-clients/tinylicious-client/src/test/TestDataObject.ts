@@ -16,12 +16,10 @@ import {
 class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		TestDataObjectClass.Name,
-		TestDataObjectClass,
-		[],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: TestDataObjectClass.Name,
+		ctor: TestDataObjectClass,
+	});
 
 	public constructor(props: IDataObjectProps) {
 		super(props);

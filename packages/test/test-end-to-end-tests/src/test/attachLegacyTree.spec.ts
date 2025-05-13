@@ -31,12 +31,11 @@ describeCompat("Can attach Legacy Shared Tree", "NoCompat", (getTestObjectProvid
 		}
 	}
 
-	const dataObjectFactory = new DataObjectFactory(
-		"test",
-		TestDataObject,
-		[SharedTree.getFactory()],
-		undefined,
-	);
+	const dataObjectFactory = new DataObjectFactory({
+		type: "test",
+		ctor: TestDataObject,
+		sharedObjects: [SharedTree.getFactory()],
+	});
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
 		registryEntries: [["test", Promise.resolve(dataObjectFactory)]],

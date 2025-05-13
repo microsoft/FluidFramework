@@ -25,6 +25,7 @@ import type {
 	TokenLimits,
 	TokenUsage,
 } from "../aiCollabApi.js";
+import type { Diff } from "../diffTypes.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
@@ -100,6 +101,7 @@ export interface GenerateTreeEditsOptions {
 interface GenerateTreeEditsSuccessResponse {
 	status: "success";
 	tokensUsed: TokenUsage;
+	readonly diffs: readonly Diff[];
 }
 
 interface GenerateTreeEditsErrorResponse {
@@ -111,6 +113,7 @@ interface GenerateTreeEditsErrorResponse {
 		| "aborted"
 		| "unexpectedError";
 	tokensUsed: TokenUsage;
+	readonly diffs: readonly Diff[];
 }
 
 /**
@@ -128,6 +131,8 @@ export async function generateTreeEdits(
 ): Promise<GenerateTreeEditsSuccessResponse | GenerateTreeEditsErrorResponse> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
+	const diffs: Diff[] = [];
+
 	let editCount = 0;
 	let sequentialErrorCount = 0;
 
@@ -165,8 +170,8 @@ export async function generateTreeEdits(
 					simpleSchema.definitions,
 					options.validator,
 				);
-				const explanation = result.explanation;
-				editLog.push({ edit: { ...result, explanation } });
+				editLog.push({ edit: { ...result.edit } });
+				diffs.push(result.diff);
 				sequentialErrorCount = 0;
 
 				options.debugEventLogHandler?.({
@@ -201,6 +206,7 @@ export async function generateTreeEdits(
 					editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure",
 				errorMessage: "unexpectedError",
 				tokensUsed,
+				diffs,
 			};
 
 			if (options.limiters?.abortController?.signal.aborted === true) {
@@ -250,6 +256,7 @@ export async function generateTreeEdits(
 					editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure",
 				errorMessage: "tokenLimitExceeded",
 				tokensUsed,
+				diffs,
 			};
 		}
 		throw error;
@@ -266,6 +273,7 @@ export async function generateTreeEdits(
 	return {
 		status: "success",
 		tokensUsed,
+		diffs,
 	};
 }
 

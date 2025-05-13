@@ -4,4 +4,7 @@
  */
 
 export { DataObjectFactory } from "./dataObjectFactory.js";
-export { PureDataObjectFactory } from "./pureDataObjectFactory.js";
+export {
+	type DataObjectFactoryProps,
+	PureDataObjectFactory,
+} from "./pureDataObjectFactory.js";

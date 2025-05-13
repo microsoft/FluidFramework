@@ -24,3 +24,9 @@ export const TelemetryContextHeaderName = "x-telemetry-context";
  * @internal
  */
 export const LatestSummaryId = "latest";
+
+/**
+ * HTTP Header name for the calling service to be sent to the service for telemetry purposes.
+ * @internal
+ */
+export const CallingServiceHeaderName = "x-calling-service";

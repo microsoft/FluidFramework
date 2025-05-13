@@ -93,6 +93,9 @@
 			},
 			"Interface_ITelemetryContextProperties": {
 				"forwardCompat": false
+			},
+			"Enum_CommonProperties": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"

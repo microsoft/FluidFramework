@@ -56,4 +56,19 @@ export {
 	type EventFlowDebugEvent,
 } from "./aiCollabApi.js";
 
+export {
+	type DiffBase,
+	type Diff,
+	type NodePath,
+	type InsertDiff,
+	type ModifyDiff,
+	type RemoveDiff,
+	type RemoveNodeDiff,
+	type ArraySingleRemoveDiff,
+	type ArrayRangeRemoveDiff,
+	type MoveDiff,
+	type MoveSingleDiff,
+	type MoveRangeDiff,
+} from "./diffTypes.js";
+
 export { aiCollab } from "./aiCollab.js";

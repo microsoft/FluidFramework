@@ -51,9 +51,7 @@ export class DiceRoller extends DataObject implements IDiceRoller {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  * @internal
  */
-export const DiceRollerInstantiationFactory = new DataObjectFactory(
-	DiceRoller.Name,
-	DiceRoller,
-	[],
-	{},
-);
+export const DiceRollerInstantiationFactory = new DataObjectFactory({
+	type: DiceRoller.Name,
+	ctor: DiceRoller,
+});

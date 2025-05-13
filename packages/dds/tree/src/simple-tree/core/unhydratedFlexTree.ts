@@ -597,7 +597,12 @@ function getOrCreateField(
 		return new UnhydratedTreeSequenceField(parent.simpleContext, schema, key, parent, onEdit);
 	}
 
-	return new UnhydratedFlexTreeField(parent.simpleContext, schema, key, parent, onEdit);
+	// TODO: this seems to used by unknown optional fields. They should probably use "optional" not "Forbidden" schema.
+	if (schema === FieldKinds.forbidden.identifier) {
+		return new UnhydratedFlexTreeField(parent.simpleContext, schema, key, parent, onEdit);
+	}
+
+	return fail("unsupported field kind");
 }
 
 // #endregion Caching and unboxing utilities

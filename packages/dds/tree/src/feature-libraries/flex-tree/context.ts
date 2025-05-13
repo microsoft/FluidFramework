@@ -79,6 +79,9 @@ export const ContextSlot = anchorSlot<Context>();
  * Implementation of `FlexTreeContext`.
  *
  * @remarks An editor is required to edit the FlexTree.
+ *
+ * A {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
+ * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export class Context implements FlexTreeHydratedContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();
@@ -88,13 +91,19 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	private disposed = false;
 
 	/**
-	 * @param flexSchema - Schema to use when working with the  tree.
-	 * @param checkout - The checkout.
-	 * @param nodeKeyManager - An object which handles node key generation and conversion
+	 * Stores the last accessed version of the root.
+	 * @remarks
+	 * Anything which can delete this field must clear it.
+	 * Currently "clear" is the only case.
 	 */
+	private lazyRootCache: FlexTreeField | undefined;
+
 	public constructor(
 		public readonly schemaPolicy: SchemaPolicy,
 		public readonly checkout: ITreeCheckout,
+		/**
+		 * An object which handles node key generation and conversion
+		 */
 		public readonly nodeKeyManager: NodeIdentifierManager,
 	) {
 		this.eventUnregister = [
@@ -158,37 +167,26 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		for (const target of this.withAnchors) {
 			target[disposeSymbol]();
 		}
+		this.lazyRootCache = undefined;
 		assert(this.withCursors.size === 0, 0x774 /* free should remove all cursors */);
 		assert(this.withAnchors.size === 0, 0x775 /* free should remove all anchors */);
 	}
 
 	public get root(): FlexTreeField {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
+		if (this.lazyRootCache !== undefined) {
+			return this.lazyRootCache;
+		}
+
 		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor);
 		const field = makeField(this, this.schema.rootFieldSchema.kind, cursor);
 		cursor.free();
+		this.lazyRootCache = field;
 		return field;
 	}
 
 	public get events(): Listenable<ForestEvents> {
 		return this.checkout.forest.events;
 	}
-}
-
-/**
- * A simple API for a Forest to interact with the tree.
- *
- * @param forest - the Forest
- * @param editor - an editor that makes changes to the forest.
- * @param nodeKeyManager - an object which handles node key generation and conversion.
- * @returns {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
- * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
- */
-export function getTreeContext(
-	schema: SchemaPolicy,
-	checkout: ITreeCheckout,
-	nodeKeyManager: NodeIdentifierManager,
-): Context {
-	return new Context(schema, checkout, nodeKeyManager);
 }

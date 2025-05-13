@@ -8,16 +8,10 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type TreeNodeSchema,
-} from "../../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
 import { getView, validateUsageError } from "../../utils.js";
-import { independentView, Tree } from "../../../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { checkUnion } from "../../../simple-tree/api/tree.js";
+import { Tree } from "../../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -29,7 +23,7 @@ const factory = SharedTree.getFactory();
 
 describe("simple-tree tree", () => {
 	it("ListRoot", () => {
-		const config = new TreeViewConfiguration({ schema: NodeList });
+		const config = new TreeViewConfiguration({ schema: SchemaFactory.required(NodeList) });
 		const view = getView(config);
 		view.initialize(new NodeList(["a", "b"]));
 		assert.deepEqual([...view.root], ["a", "b"]);
@@ -46,174 +40,6 @@ describe("simple-tree tree", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
 		const view = getView(config);
 		view.initialize({ stuff: ["a", "b"] });
-	});
-
-	it("preventAmbiguity", () => {
-		const config = new TreeViewConfiguration({
-			schema: [schema.array(schema.string), schema.array(schema.number)],
-			preventAmbiguity: false,
-		});
-		assert.throws(
-			() =>
-				new TreeViewConfiguration({
-					schema: [schema.array(schema.string), schema.array(schema.number)],
-					preventAmbiguity: true,
-				}),
-			validateUsageError(/More than one kind of array/),
-		);
-		const config2 = new TreeViewConfiguration({
-			schema: [schema.object("foo", {}), schema.array(schema.number)],
-			preventAmbiguity: true,
-		});
-		assert.throws(
-			() =>
-				new TreeViewConfiguration({
-					schema: schema.array([schema.array(schema.string), schema.array(schema.number)]),
-					preventAmbiguity: true,
-				}),
-			validateUsageError(/More than one kind of array/),
-		);
-	});
-
-	it("preventAmbiguity - example ambiguous", () => {
-		const schemaFactory = new SchemaFactory("com.example");
-		class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
-		class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
-		const config = new TreeViewConfiguration({
-			// This combination of schema is can lead to ambiguous cases, and would error if preventAmbiguity is true.
-			schema: [Feet, Meters],
-			preventAmbiguity: false,
-		});
-		const view = independentView(config, { idCompressor: createIdCompressor() });
-		// This is invalid since it is ambiguous which type of node is being constructed:
-		// view.initialize({ length: 5 });
-		// To work, an explicit type can be provided by using an {@link Unhydrated} Node:
-		view.initialize(new Meters({ length: 5 }));
-	});
-
-	it("preventAmbiguity - example unambiguous", () => {
-		const schemaFactory = new SchemaFactory("com.example");
-		class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
-		class Meters extends schemaFactory.object("Meters", {
-			// To avoid ambiguity when parsing unions of Feet and Meters, this renames the length field to "meters".
-			// To preserve compatibility with existing data from the ambiguous case,
-			// `{ key: "length" }` is set, so when persisted in the tree "length" is used as the field name.
-			meters: schemaFactory.required(schemaFactory.number, { key: "length" }),
-		}) {}
-		const config = new TreeViewConfiguration({
-			// This combination of schema is not ambiguous because `Feet` and `Meters` have different required keys.
-			schema: [Feet, Meters],
-			preventAmbiguity: true,
-		});
-		const view = independentView(config, { idCompressor: createIdCompressor() });
-		// This now works, since the field is sufficient to determine this is a `Meters` node.
-		view.initialize({ meters: 5 });
-	});
-
-	describe("checkUnion", () => {
-		const schemaFactory = new SchemaFactory("test");
-
-		function getErrors(schemaToCheck: Iterable<TreeNodeSchema>): string[] {
-			const errors: string[] = [];
-			checkUnion(schemaToCheck, errors);
-			return errors;
-		}
-
-		it("arrays", () => {
-			assert.deepEqual(
-				getErrors([
-					schemaFactory.array("A", schemaFactory.string),
-					schemaFactory.array("B", schemaFactory.number),
-				]),
-				[
-					`More than one kind of array allowed within union (["test.A", "test.B"]). This would require type disambiguation which is not supported by arrays during import or export.`,
-				],
-			);
-		});
-		it("maps", () => {
-			assert.deepEqual(
-				getErrors([
-					schemaFactory.map("A", schemaFactory.string),
-					schemaFactory.map("B", schemaFactory.number),
-				]),
-				[
-					`More than one kind of map allowed within union (["test.A", "test.B"]). This would require type disambiguation which is not supported by maps during import or export.`,
-				],
-			);
-		});
-		it("array and map", () => {
-			assert.deepEqual(
-				getErrors([
-					schemaFactory.array("A", schemaFactory.string),
-					schemaFactory.map("B", schemaFactory.number),
-				]),
-				[
-					`Both a map and an array allowed within union (["test.A", "test.B"]). Both can be implicitly constructed from iterables like arrays, which are ambiguous when the array is empty.`,
-				],
-			);
-		});
-		it("map and object", () => {
-			assert.deepEqual(
-				getErrors([
-					schemaFactory.map("A", schemaFactory.string),
-					schemaFactory.object("B", {}),
-				]),
-				[
-					`Both a object and a map allowed within union (["test.B", "test.A"]). Both can be constructed from objects and can be ambiguous.`,
-				],
-			);
-		});
-		it("compatible", () => {
-			assert.deepEqual(
-				getErrors([
-					schemaFactory.string,
-					schemaFactory.number,
-					schemaFactory.boolean,
-					schemaFactory.null,
-					schemaFactory.handle,
-					schemaFactory.array("A", schemaFactory.string),
-					schemaFactory.object("B", {}),
-				]),
-				[],
-			);
-		});
-
-		it("compatible objects", () => {
-			// Disjoint field sets
-			assert.deepEqual(
-				getErrors([
-					schemaFactory.object("A", { a: schemaFactory.null }),
-					schemaFactory.object("B", { b: schemaFactory.null }),
-				]),
-				[],
-			);
-			// overlapping fields sets
-			assert.deepEqual(
-				getErrors([
-					schemaFactory.object("A", { a: schemaFactory.null, b: schemaFactory.null }),
-					schemaFactory.object("B", { b: schemaFactory.null, c: schemaFactory.null }),
-					schemaFactory.object("C", { c: schemaFactory.null, a: schemaFactory.null }),
-				]),
-				[],
-			);
-			// empty case
-			assert.deepEqual(getErrors([schemaFactory.object("A", {})]), []);
-		});
-
-		it("incompatible objects", () => {
-			assert.deepEqual(
-				getErrors([
-					schemaFactory.object("A", { a: schemaFactory.null }),
-					schemaFactory.object("B", {
-						b: schemaFactory.null,
-						a: schemaFactory.optional(schemaFactory.null),
-					}),
-				]),
-				[
-					'The required fields of "test.A" are insufficient to differentiate it from the following types: ["test.B"]. For objects to be considered unambiguous, each must have required fields that do not all occur on any other object in the union.',
-				],
-			);
-		});
 	});
 
 	// TODO: AB#9126:
@@ -413,71 +239,5 @@ describe("simple-tree tree", () => {
 			view.initialize(undefined);
 			assert.equal(view.root, "beefbeef-beef-4000-8000-000000000001");
 		});
-	});
-});
-
-describe("object allocation tests", () => {
-	it("accessing leaf on object node does not allocate flex nodes", () => {
-		class TreeWithLeaves extends schema.object("TreeWithLeaves", { leaf: schema.number }) {}
-		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
-		const view = getView(config);
-		view.initialize({ leaf: 1 });
-		const context = view.getView().context;
-		// Note: access the root before trying to access just the leaf, to not count any object allocations that result from
-		// accessing the root as part of the allocations from the leaf access. Also, store it to avoid additional computation
-		// from any intermediate getters when accessing the leaf.
-		const root = view.root;
-		const countBefore = context.withAnchors.size;
-		const _accessLeaf = root.leaf;
-		const countAfter = context.withAnchors.size;
-
-		// As of 2024-07-01 we still allocate flex fields when accessing leaves, so the after-count is expected to be one higher
-		// than the before count.
-		// TODO: if/when we stop allocating flex fields when accessing leaves, this test will fail and should be updated so
-		// the two counts match, plus its title updated accordingly.
-		assert.equal(countAfter, countBefore + 1);
-	});
-
-	it("accessing leaf on map node does not allocate flex nodes", () => {
-		class TreeWithLeaves extends schema.map("MapOfLeaves", schema.number) {}
-		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
-		const view = getView(config);
-		view.initialize(new Map([["1", 1]]));
-		const context = view.getView().context;
-		// Note: access the map that contains leaves before trying to access just the leaf at one of the keys, to not
-		// count any object allocations that result from accessing the root/map as part of the allocations from the leaf
-		// access. Also, store it to avoid additional computation from any intermediate getters when accessing the leaf.
-		const root = view.root;
-		const countBefore = context.withAnchors.size;
-		const _accessLeaf = root.get("1");
-		const countAfter = context.withAnchors.size;
-
-		// As of 2024-07-01 we still allocate flex fields when accessing leaves, so the after-count is expected to be one higher
-		// than the before count.
-		// TODO: if/when we stop allocating flex fields when accessing leaves, this test will fail and should be updated so
-		// the two counts match, plus its title updated accordingly.
-		assert.equal(countAfter, countBefore + 1);
-	});
-
-	it("accessing leaf on array node does not allocate flex nodes", () => {
-		class TreeWithLeaves extends schema.array("ArrayOfLeaves", schema.number) {}
-		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
-		const view = getView(config);
-		view.initialize([1, 2]);
-		const context = view.getView().context;
-		// Note: prior to taking the "before count", access the array that contains leaves *and the first leaf in it*,
-		// to ensure that the sequence field for the array is allocated and accounted for. We expect the sequence field
-		// to be required anyway (vs the field for a leaf property on an object node, for example, where we might be able
-		// to optimize away its allocation) so might as well count it up front. The subsequent access to the second leaf
-		// should then not allocate anything new.
-		// Also, store the array/root to avoid additional computation from any intermediate getters when accessing leaves.
-		const root = view.root;
-		const _accessLeaf0 = root[0];
-		const countBefore = context.withAnchors.size;
-		const _accessLeaf1 = root[1];
-		const countAfter = context.withAnchors.size;
-
-		// The array test is deliberately distinct from the object and map ones, see the comment above for the rationale.
-		assert.equal(countAfter, countBefore);
 	});
 });

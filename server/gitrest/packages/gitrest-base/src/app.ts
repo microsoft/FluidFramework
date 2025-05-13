@@ -4,11 +4,15 @@
  */
 
 import { ICreateRepoParams } from "@fluidframework/gitresources";
-import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
+import {
+	DriverVersionHeaderName,
+	CallingServiceHeaderName,
+} from "@fluidframework/server-services-client";
 import {
 	BaseTelemetryProperties,
 	HttpProperties,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
 	alternativeMorganLoggerMiddleware,
@@ -46,7 +50,7 @@ export function create(
 	// Express app configuration
 	const app: Express = express();
 
-	app.use(bindTelemetryContext());
+	app.use(bindTelemetryContext("gitrest"));
 	const loggerFormat = store.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		const enableResponseCloseLatencyMetric =
@@ -68,6 +72,8 @@ export function create(
 							req,
 						),
 						[BaseTelemetryProperties.documentId]: params.storageRoutingId?.documentId,
+						[CommonProperties.callingServiceName]:
+							req.headers[CallingServiceHeaderName] ?? "",
 					};
 					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
 						additionalProperties.isEphemeralContainer = req.get(
