@@ -301,9 +301,9 @@ describe("SharedTree", () => {
 		});
 
 		it("unhydrated required tree input", () => {
-			// Initializing to a schema with a required root does through a three phase initialization.
+			// Initializing to a schema with a required root goes through a three-phase initialization.
 			// First an optional version of the schema is set, then the content is set, and finally the required schema is set.
-			// This is more likely to break hydration than the optional ase above.
+			// This is more likely to break hydration than the optional case above.
 
 			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			const sb = new SchemaFactory("test-factory");
