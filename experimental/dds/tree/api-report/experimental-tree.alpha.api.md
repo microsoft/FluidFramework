@@ -361,9 +361,6 @@ export interface ForestNode extends NodeData<NodeId> {
     readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
 
-export { getSerializedUploadedEditChunkContents }
-export { getSerializedUploadedEditChunkContents as getUploadedEditChunkContents }
-
 // @alpha
 export interface HasTraits<TChild> {
     // (undocumented)

@@ -24,6 +24,7 @@ import {
 	type TransactionResult,
 	type TransactionResultExt,
 	toStoredSchema,
+	getKernel,
 } from "../../simple-tree/index.js";
 import {
 	checkoutWithContent,
@@ -38,6 +39,10 @@ import {
 	type TreeCheckout,
 	type TreeStoredContent,
 } from "../../shared-tree/index.js";
+import type { Mutable } from "../../util/index.js";
+import { brand } from "../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -69,28 +74,87 @@ function checkoutWithInitialTree(
 const emptySchema = toStoredSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
-	it("Initialize document", () => {
-		const emptyContent = {
-			schema: emptySchema,
-			initialTree: undefined,
-		};
-		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(
-			checkout,
-			config,
-			new MockNodeIdentifierManager(),
-		);
+	describe("initialize", () => {
+		it("Initialize document", () => {
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			const checkout = checkoutWithContent(emptyContent);
+			const view = new SchematizingSimpleTreeView(
+				checkout,
+				config,
+				new MockNodeIdentifierManager(),
+			);
 
-		const { compatibility } = view;
-		assert.equal(compatibility.canView, false);
-		assert.equal(compatibility.canUpgrade, false);
-		assert.equal(compatibility.canInitialize, true);
+			const { compatibility } = view;
+			assert.equal(compatibility.canView, false);
+			assert.equal(compatibility.canUpgrade, false);
+			assert.equal(compatibility.canInitialize, true);
 
-		view.initialize(5);
-		assert.equal(view.root, 5);
+			view.initialize(5);
+			assert.equal(view.root, 5);
+
+			assert.throws(
+				() => view.initialize(5),
+				validateUsageError(/initialized more than once/),
+			);
+		});
+
+		for (const enableSchemaValidation of [true, false]) {
+			it(`Initialize invalid content: enableSchemaValidation: ${enableSchemaValidation}`, () => {
+				const emptyContent = {
+					schema: emptySchema,
+					initialTree: undefined,
+				};
+				const checkout = checkoutWithContent(emptyContent);
+
+				class Root extends schema.object("Root", {
+					content: schema.number,
+				}) {}
+
+				const config2 = new TreeViewConfiguration({
+					schema: Root,
+					enableSchemaValidation,
+				});
+
+				const view = new SchematizingSimpleTreeView(
+					checkout,
+					config2,
+					new MockNodeIdentifierManager(),
+				);
+
+				const root = new Root({ content: 5 });
+
+				const inner = getKernel(root).tryGetInnerNode() ?? assert.fail("Expected child");
+				const field = inner.getBoxed(brand("content"));
+				const child = field.boxedAt(0) ?? assert.fail("Expected child");
+				assert(child instanceof UnhydratedFlexTreeNode);
+
+				// Modify the tree so that it is out of schema.
+				// The public API is supposed to prevent out of schema trees,
+				// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
+				// In production cases this extra validation exists to help prevent corruption when bugs
+				// allow invalid data through the public API.
+				(child.mapTree as Mutable<typeof child.mapTree>).value = "invalid value";
+
+				// Attempt to initialize with invalid content
+				if (enableSchemaValidation) {
+					assert.throws(
+						() => view.initialize(root),
+						validateUsageError(/Tree does not conform to schema./),
+					);
+
+					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+				} else {
+					view.initialize(root);
+					assert.equal(view.root.content, "invalid value");
+				}
+			});
+		}
 	});
 
-	it("Initialize errors", () => {
+	it("Broken state", () => {
 		const emptyContent = {
 			schema: emptySchema,
 			initialTree: undefined,
@@ -102,13 +166,18 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		assert.throws(() => view.root, validateUsageError(/compatibility/));
-
+		// Put into broken state by trying incompatible upgrade
 		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
+
 		assert.throws(
 			() => view.initialize(5),
 			validateUsageError(/invalid state by another error/),
 		);
+		assert.throws(
+			() => view.upgradeSchema(),
+			validateUsageError(/invalid state by another error/),
+		);
+		assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
 	});
 
 	const getChangeData = <T extends ImplicitFieldSchema>(

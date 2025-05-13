@@ -40,6 +40,7 @@ import {
 	defaultDDSFuzzSuiteOptions,
 	type CleanupFunction,
 	ReducerPreconditionError,
+	normalizeSeedOption,
 } from "./ddsFuzzHarness.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
@@ -384,7 +385,7 @@ export namespace createSquashFuzzSuite {
 		): void =>
 			createSquashFuzzSuite(ddsModel, {
 				...providedOptions,
-				only: [...seeds, ...(providedOptions?.only ?? [])],
+				only: [...seeds, ...normalizeSeedOption(providedOptions?.only)],
 			});
 
 	/**
@@ -406,6 +407,6 @@ export namespace createSquashFuzzSuite {
 		): void =>
 			createSquashFuzzSuite(ddsModel, {
 				...providedOptions,
-				skip: [...seeds, ...(providedOptions?.skip ?? [])],
+				skip: [...seeds, ...normalizeSeedOption(providedOptions?.skip)],
 			});
 }

@@ -200,7 +200,7 @@
 		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.33.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.52.5",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/lz4js": "^0.2.0",
 		"@types/mocha": "^10.0.10",

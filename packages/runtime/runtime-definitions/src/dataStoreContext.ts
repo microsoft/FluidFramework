@@ -198,7 +198,7 @@ export interface IDataStore {
 }
 
 /**
- * A reduced set of functionality of {@link IContainerRuntime} that a data store context/data store runtime will need.
+ * A reduced set of functionality of {@link @fluidframework/container-runtime-definitions#IContainerRuntime} that a data store context/data store runtime will need.
  * @privateRemarks
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy

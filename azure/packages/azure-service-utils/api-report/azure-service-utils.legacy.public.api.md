@@ -6,6 +6,4 @@
 
 export { IUser }
 
-export { ScopeType }
-
 ```
