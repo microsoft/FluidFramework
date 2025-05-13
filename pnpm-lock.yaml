@@ -8605,8 +8605,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-utils
       '@microsoft/api-extractor':
-        specifier: 7.50.1
-        version: 7.50.1(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
+        specifier: 7.52.8
+        version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -17579,6 +17579,9 @@ packages:
   '@fluid-internal/test-driver-definitions@2.33.0':
     resolution: {integrity: sha512-Vx5aN1a/IhuNa1X8kBCcWYsjzWdKeUxSfgj4K7bqRlaODkUm9hhAQKEvoG/yu1mlmUxyMoRvX1/iXkOWUdGS6Q==}
 
+  '@fluid-tools/benchmark@0.50.0':
+    resolution: {integrity: sha512-UGvRHYYGp0aRI90oDA8CFT2d8SdJMZMrDqQAJ9Qbw6VSGR3L9ii9xc43NWU33+qGrt3p1NpAzBppX1sVT55rag==}
+
   '@fluid-tools/benchmark@0.51.0':
     resolution: {integrity: sha512-Hych9VQu9RrBlYwBHvb2J20GHIs8abpzx1TgypHHIsYDxqK7IVrQ/NRYTE+e8XvXwVHbiuBWQrtpK9oB9bGm2Q==}
 
@@ -24405,6 +24408,12 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  mocha-json-output-reporter@2.1.0:
+    resolution: {integrity: sha512-FF2BItlMo8nK9+SgN/WAD01ue7G+qI1Po0U3JCZXQiiyTJ5OV3KcT1mSoZKirjYP73JFZznaaPC6Mp052PF3Vw==}
+    peerDependencies:
+      mocha: ^10.0.0
+      moment: ^2.21.0
+
   mocha-multi-reporters@1.5.1:
     resolution: {integrity: sha512-Yb4QJOaGLIcmB0VY7Wif5AjvLMUFAdV57D2TWEva1Y0kU/3LjKpeRVmlMIfuO1SVbauve459kgtIizADqxMWPg==}
     engines: {node: '>=6.0.0'}
@@ -29693,6 +29702,18 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 2.33.0
       '@fluidframework/driver-definitions': 2.33.0
+
+  '@fluid-tools/benchmark@0.50.0':
+    dependencies:
+      chai: 4.5.0
+      chalk: 4.1.2
+      easy-table: 1.2.0
+      mocha: 10.8.2
+      mocha-json-output-reporter: 2.1.0(mocha@10.8.2)(moment@2.30.1)
+      mocha-multi-reporters: 1.5.1(mocha@10.8.2)
+      moment: 2.30.1
+    transitivePeerDependencies:
+      - supports-color
 
   '@fluid-tools/benchmark@0.51.0':
     dependencies:
@@ -39974,6 +39995,11 @@ snapshots:
   mkdirp@2.1.6: {}
 
   mkdirp@3.0.1: {}
+
+  mocha-json-output-reporter@2.1.0(mocha@10.8.2)(moment@2.30.1):
+    dependencies:
+      mocha: 10.8.2
+      moment: 2.30.1
 
   mocha-multi-reporters@1.5.1(mocha@10.8.2):
     dependencies:
