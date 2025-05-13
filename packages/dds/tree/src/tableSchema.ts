@@ -1468,7 +1468,7 @@ export namespace TableSchema {
 	}
 
 	/**
-	 * Factory for creating new table schema without specifying row or column schema.
+	 * Factory for creating new table schema.
 	 * @alpha
 	 */
 	export function table<
@@ -1483,7 +1483,7 @@ export namespace TableSchema {
 		System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>
 	>;
 	/**
-	 * Factory for creating new table schema without specifying row schema.
+	 * Factory for creating new table schema with custom column schema.
 	 * @alpha
 	 */
 	export function table<
@@ -1501,7 +1501,7 @@ export namespace TableSchema {
 		System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>
 	>;
 	/**
-	 * Factory for creating new table schema without specifying column schema.
+	 * Factory for creating new table schema with custom row schema.
 	 * @internal
 	 */
 	export function table<
@@ -1519,7 +1519,7 @@ export namespace TableSchema {
 		TRow
 	>;
 	/**
-	 * Factory for creating new table schema.
+	 * Factory for creating new table schema with custom column and row schema.
 	 * @alpha
 	 */
 	export function table<
