@@ -5,6 +5,7 @@
 
 export class RunCounter {
 	#runs = 0;
+	#annotations: Record<string, unknown> = {};
 
 	public get running(): boolean {
 		return this.#runs !== 0;
@@ -14,12 +15,20 @@ export class RunCounter {
 		return this.#runs;
 	}
 
-	public run<T>(act: () => T): T {
+	public getAnnotations<T extends object>(): Partial<T> {
+		return this.#annotations as Partial<T>;
+	}
+
+	public run<T>(act: () => T, annotations: Record<string, unknown> = {}): T {
 		this.#runs++;
+		const previousAnnotations = this.#annotations;
+		this.#annotations = { ...this.#annotations, ...annotations };
+
 		try {
 			return act();
 		} finally {
 			this.#runs--;
+			this.#annotations = previousAnnotations;
 		}
 	}
 }
