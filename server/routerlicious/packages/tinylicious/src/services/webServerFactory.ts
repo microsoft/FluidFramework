@@ -23,6 +23,10 @@ class SocketIoSocket implements IWebSocket {
 
 	constructor(private readonly socket: Socket) {}
 
+	public get handshake(): any {
+		return this.socket.handshake;
+	}
+
 	public on(event: string, listener: (...args: any[]) => void) {
 		this.socket.on(event, listener);
 	}
