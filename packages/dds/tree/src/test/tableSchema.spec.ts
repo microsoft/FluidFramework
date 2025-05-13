@@ -217,9 +217,9 @@ describe("TableFactory unit tests", () => {
 
 	describe("Initialization", () => {
 		it("Empty", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Table } = createTableTree();
 
-			treeView.initialize({ rows: [], columns: [] });
+			treeView.initialize(Table.empty());
 			assertEqualTrees(treeView.root, { columns: [], rows: [] });
 		});
 
@@ -1602,39 +1602,50 @@ describe("TableFactory unit tests", () => {
 				row: Row,
 			}) {}
 
-			const table = new Table({
-				columns: [
-					{ id: "column-0", props: { label: "Column 0" } },
-					{ id: "column-1", props: { label: "Column 1" } },
-					{ id: "column-2", props: { label: "Column 2" } },
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {
-							"column-0": "00",
-							"column-1": "01",
-							"column-2": "02",
+			const treeView = independentView(
+				new TreeViewConfiguration({
+					schema: Table,
+					enableSchemaValidation: true,
+				}),
+				{ idCompressor: createIdCompressor() },
+			);
+			treeView.initialize(
+				new Table({
+					columns: [
+						{ id: "column-0", props: { label: "Column 0" } },
+						{ id: "column-1", props: { label: "Column 1" } },
+						{ id: "column-2", props: { label: "Column 2" } },
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {
+								"column-0": "00",
+								"column-1": "01",
+								"column-2": "02",
+							},
 						},
-					},
-					{
-						id: "row-1",
-						cells: {
-							"column-0": "10",
-							"column-1": "11",
-							"column-2": "12",
+						{
+							id: "row-1",
+							cells: {
+								"column-0": "10",
+								"column-1": "11",
+								"column-2": "12",
+							},
 						},
-					},
-					{
-						id: "row-2",
-						cells: {
-							"column-0": "20",
-							"column-1": "21",
-							"column-2": "22",
+						{
+							id: "row-2",
+							cells: {
+								"column-0": "20",
+								"column-1": "21",
+								"column-2": "22",
+							},
 						},
-					},
-				],
-			});
+					],
+				}),
+			);
+
+			const table = treeView.root;
 
 			const column1 = table.getColumn("column-1") ?? fail("Column not found");
 

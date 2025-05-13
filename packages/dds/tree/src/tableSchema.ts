@@ -470,6 +470,10 @@ export namespace System_TableSchema {
 			})
 			implements TableSchema.Table<TCellSchema, TColumnSchema, TRowSchema>
 		{
+			public static empty(): Table {
+				return this.createFromInsertable({ columns: [], rows: [] }) as Table;
+			}
+
 			public getColumn(id: string): ColumnValueType | undefined {
 				// TypeScript is unable to narrow the types correctly here, hence the casts.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -831,7 +835,12 @@ export namespace System_TableSchema {
 			/* TInsertable */ object & TableInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof tableFields
-		> = Table;
+		> & {
+			/**
+			 * Create an empty table.
+			 */
+			empty(): TableValueType;
+		} = Table;
 
 		// Return the table schema
 		return TableSchemaType;
@@ -1051,7 +1060,7 @@ export namespace TableSchema {
 
 	/**
 	 * A row in a table.
-	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createRow:2)}.
+	 * @remarks Implemented by the schema class returned from {@link TableSchema.(row:2)}.
 	 * @sealed @alpha
 	 */
 	export interface Row<
