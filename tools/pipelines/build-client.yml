@@ -184,10 +184,7 @@ steps:
   - script: |
       echo "Compile-time value: ${{ variables['release'] }}"
   # Conditional check
-  - script: |
-      if [ "${release}" = "release" ] || [ "${release}" = "prerelease" ]; then
-        echo "true"
-      else
-        echo "false"
-      fi
-    displayName: "Conditional check"
+  - ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}:
+    - script: |
+        echo "True"
+      displayName: "Conditional check"
