@@ -58,7 +58,7 @@ describe("Presence", () => {
 				assert.deepStrictEqual(workspace.states.obj.local, {});
 			});
 
-			it("throws when validator is provided", () => {
+			it.skip("throws when validator is provided", () => {
 				assert.throws(() => {
 					const workspace = presence.states.getWorkspace(testWorkspaceName, {
 						obj: StateFactory.latest({

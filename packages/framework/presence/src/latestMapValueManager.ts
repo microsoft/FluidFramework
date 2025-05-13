@@ -472,14 +472,23 @@ class LatestMapValueManagerImpl<
 										return asDeeplyReadonly(item.validatedValue);
 									}
 
-									// Skip the current attendee since we want to enumerate only other remote attendees
-									if (attendeeId !== allKnownStates.self) {
-										const validData = validator(value);
-										item.validated = true;
-										// FIXME: Cast shouldn't be needed
-										item.validatedValue = validData as JsonDeserialized<T>;
-										return asDeeplyReadonly(item.validatedValue);
-									}
+									// FIXME: This optimization makes testing more difficult because it requires tests have multiple
+									// clients.
+									//
+									// Assume that data for the local attendee is valid
+									// if (attendeeId === allKnownStates.self) {
+									// 	item.validated = true;
+									// 	item.validatedValue = value;
+									// 	return asDeeplyReadonly(item.validatedValue);
+									// }
+
+									// We have remote data that has not been validated, so validate it, store the validated value, and
+									// return it.
+									const validData = validator(value);
+									item.validated = true;
+									// FIXME: Cast shouldn't be needed
+									item.validatedValue = validData as JsonDeserialized<T>;
+									return asDeeplyReadonly(item.validatedValue);
 								},
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
