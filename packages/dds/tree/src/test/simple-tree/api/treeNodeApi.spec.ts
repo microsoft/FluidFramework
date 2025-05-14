@@ -217,6 +217,28 @@ describe("treeNodeApi", () => {
 		// TODO: test Deleted status.
 	});
 
+	it("key2", () => {
+		class Child extends schema.object("Child", {
+			x: Point,
+			y: schema.optional(Point, { key: "stable-y" }),
+		}) {}
+		const Root = schema.array(Child);
+		const config = new TreeViewConfiguration({ schema: Root });
+		const view = getView(config);
+		view.initialize([
+			{ x: {}, y: undefined },
+			{ x: {}, y: {} },
+		]);
+		const { root } = view;
+		assert.equal(TreeAlpha.key2(root), undefined);
+		assert.equal(TreeAlpha.key2(root[0]), 0);
+		assert.equal(TreeAlpha.key2(root[0].x), "x");
+		assert.equal(TreeAlpha.key2(root[1]), 1);
+		assert.equal(TreeAlpha.key2(root[1].x), "x");
+		assert(root[1].y !== undefined);
+		assert.equal(TreeAlpha.key2(root[1].y), "y");
+	});
+
 	describe("shortID", () => {
 		it("returns local id when an identifier fieldkind exists.", () => {
 			const schemaWithIdentifier = schema.object("parent", {

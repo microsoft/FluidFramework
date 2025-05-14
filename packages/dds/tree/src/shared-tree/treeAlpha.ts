@@ -219,7 +219,7 @@ export interface TreeAlpha {
 	 * If `node` is the root node, this returns undefined
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
-	key(node: TreeNode): string | number | undefined;
+	key2(node: TreeNode): string | number | undefined;
 }
 
 /**
@@ -336,7 +336,7 @@ export const TreeAlpha: TreeAlpha = {
 		return TreeBeta.clone<TSchema>(view.root);
 	},
 
-	key(node: TreeNode): string | number | undefined {
+	key2(node: TreeNode): string | number | undefined {
 		// If the parent is undefined, then this node is under the root field,
 		const parent = treeNodeApi.parent(node);
 		if (parent === undefined) {
