@@ -53,7 +53,7 @@ class DataObjectWithStagingMode extends DataObject {
 
 	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
 		this.context.containerRuntime;
-	get ParentDataObject() {
+	get DataObjectWithStagingMode() {
 		return this;
 	}
 
@@ -140,7 +140,7 @@ const runtimeFactory: IRuntimeFactory = {
 
 async function getDataObject(container: IContainer): Promise<DataObjectWithStagingMode> {
 	const entrypoint: FluidObject<DataObjectWithStagingMode> = await container.getEntryPoint();
-	const dataObject = entrypoint.ParentDataObject;
+	const dataObject = entrypoint.DataObjectWithStagingMode;
 	assert(dataObject !== undefined, "dataObject must be defined");
 	return dataObject;
 }
@@ -265,14 +265,12 @@ const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer)
 	return clients;
 };
 
-type Await<T> = T extends PromiseLike<infer U> ? Await<U> : T;
-
 /**
  * Verify clients are consistent via their data representation from `enumerateDataWithHandlesResolved`, which
  * loads DDSes created by `addDDS`.
  */
 async function assertDeepConsistent(
-	clients: Await<ReturnType<typeof createClients>>,
+	clients: Awaited<ReturnType<typeof createClients>>,
 	message: string,
 ): Promise<void> {
 	const { original, loaded } = clients;
@@ -287,7 +285,7 @@ async function assertDeepConsistent(
  * Verify clients are consistent via their data representation from `enumerateDataSynchronous`.
  */
 function assertConsistent(
-	clients: Await<ReturnType<typeof createClients>>,
+	clients: Awaited<ReturnType<typeof createClients>>,
 	message: string,
 ): void {
 	const { original, loaded } = clients;
@@ -302,7 +300,7 @@ function assertConsistent(
  * Verify clients are not consistent via their data representation from `enumerateDataSynchronous`.
  */
 function assertNotConsistent(
-	clients: Await<ReturnType<typeof createClients>>,
+	clients: Awaited<ReturnType<typeof createClients>>,
 	message: string,
 ): void {
 	const { original, loaded } = clients;
