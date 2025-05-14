@@ -290,14 +290,18 @@ export interface TreeViewAlpha<
 	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
 	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
+	 *
 	 * - A "success" flag indicating whether the transaction was successful or not.
+	 *
 	 * - The success of failure value as returned by the transaction function.
 	 * @remarks
 	 * This API will throw an error if the constraints are not met or something unexpected happens.
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -305,9 +309,12 @@ export interface TreeViewAlpha<
 	 *
 	 * Nested transactions:
 	 * This API can be called from within the transaction callback of another runTransaction call. That will have slightly different behavior:
+	 *
 	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
+	 *
 	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
 	 * for the outermost transaction which includes all inner transactions.
+	 *
 	 * - Undo will undo the outermost transaction and all inner transactions.
 	 */
 	runTransaction<TSuccessValue, TFailureValue>(
@@ -317,10 +324,13 @@ export interface TreeViewAlpha<
 	/**
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction. It may return the following:
+	 *
 	 * - Nothing to indicate that the body of the transaction has successfully run.
+	 *
 	 * - A status object of {@link VoidTransactionCallbackStatus | VoidTransactionCallbackStatus } type. It includes a "rollback" property which
 	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
 	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
+	 *
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
 	 * @returns A result object of {@link TransactionResult | TransactionResult} type. It includes a "success" flag indicating whether the
 	 * transaction was successful or not.
@@ -329,7 +339,9 @@ export interface TreeViewAlpha<
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
+	 *
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 *
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -337,9 +349,12 @@ export interface TreeViewAlpha<
 	 *
 	 * Nested transactions:
 	 * This API can be called from within the transaction callback of another runTransaction call. That will have slightly different behavior:
+	 *
 	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
+	 *
 	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
 	 * for the outermost transaction which includes all inner transactions.
+	 *
 	 * - Undo will undo the outermost transaction and all inner transactions.
 	 */
 	runTransaction(
@@ -363,7 +378,9 @@ export interface SchemaCompatibilityStatus {
 	 * exact matches in a strict (schema-based) sense but still allow the same documents, and the document notion is more useful to applications.
 	 *
 	 * Examples which are expressible where this may occur include:
+	 *
 	 * - schema repository `A` has extra schema which schema `B` doesn't have, but they are unused (i.e. not reachable from the root schema)
+	 *
 	 * - field in schema `A` has allowed field members which the corresponding field in schema `B` does not have, but those types are not constructible (ex: an object node type containing a required field with no allowed types)
 	 *
 	 * These cases are typically not interesting to applications.
@@ -441,11 +458,15 @@ export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> 
 
 	/**
 	 * Fired when:
+	 *
 	 * - a local commit is applied outside of a transaction
+	 *
 	 * - a local transaction is committed
 	 *
 	 * The event is not fired when:
+	 *
 	 * - a local commit is applied within a transaction
+	 *
 	 * - a remote commit is applied
 	 *
 	 * @param data - information about the commit that was applied
@@ -481,11 +502,15 @@ export interface TreeViewEvents {
 
 	/**
 	 * Fired when:
+	 *
 	 * - a local commit is applied outside of a transaction
+	 *
 	 * - a local transaction is committed
 	 *
 	 * The event is not fired when:
+	 *
 	 * - a local commit is applied within a transaction
+	 *
 	 * - a remote commit is applied
 	 *
 	 * @param data - information about the commit that was applied

@@ -73,6 +73,7 @@ describe("createChildDataStore", () => {
 			clientDetails: {
 				capabilities: { interactive: true },
 			},
+			isReadOnly: () => false,
 			containerRuntime: {
 				createDetachedDataStore(pkg, loadingGroupId) {
 					return new LocalDetachedFluidDataStoreContext({
