@@ -1250,7 +1250,7 @@ export namespace TableSchema {
 		 *
 		 * @throws Throws an error if the specified index is out of range.
 		 *
-		 * No column is inserted in these cases.
+		 * No column is inserted in this case.
 		 */
 		insertColumn(
 			params: InsertColumnParameters<TColumn>,
@@ -1261,7 +1261,7 @@ export namespace TableSchema {
 		 *
 		 * @throws Throws an error if the specified index is out of range.
 		 *
-		 * No columns are inserted in these cases.
+		 * No columns are inserted in this case.
 		 */
 		insertColumns(
 			params: InsertColumnsParameters<TColumn>,
