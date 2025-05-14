@@ -163,6 +163,17 @@ export type IDocumentSchemaCurrent = {
 	};
 };
 
+/**
+ * Subset of {@link IDocumentSchemaCurrent} that represents the incoming schema from the document metadata.
+ * Some properties are made optional since older schemas may not have all the latest properties that
+ * IDocumentSchemaCurrent has.
+ *
+ * @internal
+ */
+export type IDocumentSchemaIncoming = Omit<IDocumentSchemaCurrent, "info"> & {
+	info?: IDocumentSchemaInfo;
+};
+
 interface IProperty<T = unknown> {
 	and: (currentDocSchema: T, desiredDocSchema: T) => T;
 	or: (currentDocSchema: T, desiredDocSchema: T) => T;
@@ -265,7 +276,7 @@ const documentSchemaSupportedConfigs = {
  * @param documentSchema - current schema
  */
 function checkRuntimeCompatibility(
-	documentSchema: IDocumentSchema | undefined,
+	documentSchema: IDocumentSchema | IDocumentSchemaIncoming | undefined,
 	schemaName: string,
 ): void {
 	// Back-compat - we can't do anything about legacy documents.
@@ -325,7 +336,7 @@ function checkRuntimeCompatibility(
 }
 
 function and(
-	currentDocSchema: IDocumentSchemaCurrent,
+	currentDocSchema: IDocumentSchemaIncoming,
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -348,7 +359,7 @@ function and(
 }
 
 function or(
-	currentDocSchema: IDocumentSchemaCurrent,
+	currentDocSchema: IDocumentSchemaIncoming,
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -382,7 +393,7 @@ function or(
 }
 
 function same(
-	currentDocSchema: IDocumentSchemaCurrent,
+	currentDocSchema: IDocumentSchemaIncoming,
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): boolean {
 	if (
@@ -488,7 +499,7 @@ export class DocumentsSchemaController {
 	private sendOp = true;
 
 	// schema coming from document metadata (snapshot we loaded from)
-	private documentSchema: IDocumentSchemaCurrent;
+	private documentSchema: IDocumentSchemaIncoming;
 
 	// desired schema, based on feature gates / runtime options.
 	// This includes requests to enable to disable functionality
@@ -570,7 +581,7 @@ export class DocumentsSchemaController {
 		const documentMetadataSchemaShallowCopy: IDocumentSchema | undefined =
 			documentMetadataSchema === undefined ? undefined : { ...documentMetadataSchema };
 		this.documentSchema = existing
-			? ((documentMetadataSchemaShallowCopy as IDocumentSchemaCurrent) ??
+			? ((documentMetadataSchemaShallowCopy as IDocumentSchemaIncoming) ??
 				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
@@ -638,7 +649,11 @@ export class DocumentsSchemaController {
 			0x94d /* refSeq should be zero */,
 		);
 
-		return schema;
+		// After processDocumentSchemaMessages() it should be guaranteed that this.documentSchema.info was defined.
+		// This makes schema's implied type (IDocumentSchemaIncoming) equivalent to IDocumentSchemaCurrent.
+		assert(schema.info !== undefined, "schema.info should be defined");
+
+		return schema as IDocumentSchemaCurrent;
 	}
 
 	/**
