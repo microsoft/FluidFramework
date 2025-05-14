@@ -120,8 +120,6 @@ describe("Presence", () => {
 				// });
 				// runtime.signalsExpected.push([joinSignal.type, joinSignal.content]);
 				// runtime.submitSignal(joinSignal.type, joinSignal.content);
-
-				console.log("foobar");
 			});
 		});
 
