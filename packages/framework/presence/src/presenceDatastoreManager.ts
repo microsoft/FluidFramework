@@ -76,7 +76,7 @@ interface DatastoreUpdateMessage extends IInboundSignalMessage {
 		sendTimestamp: number;
 		avgLatency: number;
 		isComplete?: true;
-		ackRequested?: true;
+		acknowledgementId?: number;
 		data: DatastoreMessageContent;
 	};
 }
@@ -101,7 +101,9 @@ interface AcknowledgementMessage extends IInboundSignalMessage {
 	type: typeof acknowledgementMessageType;
 	// TODO: Define what ack content will be shaped like ({ messageId: string }),
 	// Keeping generic for now to allow evolution of this message type.
-	content: unknown;
+	content: {
+		id: number;
+	};
 }
 
 function isPresenceMessage(
@@ -393,10 +395,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			return;
 		}
 
-		// Here we accept acknowledgement messages passively.
-		// Once implemented, these will be used for tracking message delivery status.
-		// For now, we just skip processing these messages.
 		if (message.type === acknowledgementMessageType) {
+			// TODO: Handle acknowledgement messages here.
+			// Placeholder for future implementation.
+			// These acknowledgement messages will be used to confirm receipt
+			// of pending messages that were previously sent.
 			return;
 		}
 
@@ -433,17 +436,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 			// If the message requests an acknowledgement, we will send one back.
 			if (
-				message.content.ackRequested &&
+				message.content.acknowledgementId !== undefined &&
 				isLayerCompatDetails(this.runtime.ILayerCompatDetails) &&
 				this.runtime.ILayerCompatDetails?.supportedFeatures?.has("submit_signals_v2") === true
 			) {
 				this.runtime.submitSignal(
 					acknowledgementMessageType,
 					{
-						type: acknowledgementMessageType,
-						// Using client  Id + datastore update message content as messageId for now.
-						// This is a temporary solution until we settle on a final unique message id format.
-						content: { messageId: message.clientId + JSON.stringify(message.content.data) },
+						id: message.content.acknowledgementId,
 					} satisfies AcknowledgementMessage["content"],
 					message.clientId,
 				);
