@@ -28,7 +28,7 @@ import {
 	tryUnhydratedFlexTreeNode,
 	unhydratedFlexTreeNodeToTreeNode,
 } from "./core/index.js";
-import { debugAssert } from "@fluidframework/core-utils/internal";
+import { debugAssert, oob } from "@fluidframework/core-utils/internal";
 
 /**
  * Prepare content from a user for insertion into a tree.
@@ -164,7 +164,7 @@ function prepareContentForHydration(
 		});
 	}
 
-	bindTreeNodes(batches, forest);
+	scheduleHydration(batches, forest);
 }
 
 function walkMapTree(
@@ -206,12 +206,12 @@ function walkMapTree(
 }
 
 /**
- * Register a collection of nodes with the forest so that they can be hydrated.
+ * Register events which will hydrate batches of nodes when they are inserted, assuming the next edits to forest are their insertions, in order.
  * @param locatedNodes - the nodes to register with the forest.
  * Each index in this array expects its content to be added and produce its own `afterRootFieldCreated` event.
  * If array subsequence insertion is optimized to produce a single event, this will not work correctly as is, and will need to be modified to take in a single {@link LocatedNodesBatch}.
  */
-function bindTreeNodes(
+function scheduleHydration(
 	locatedNodes: readonly LocatedNodesBatch[],
 	forest: IForestSubscription,
 ): void {
@@ -220,13 +220,12 @@ function bindTreeNodes(
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
 		const off = forest.events.on("afterRootFieldCreated", (fieldKey) => {
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const batch = locatedNodes[i]!;
+			// Indexing is safe here because of the length check above. This assumes the array has not been modified which should be the case.
+			const batch = locatedNodes[i] ?? oob();
 			debugAssert(() => batch.rootPath.parentField === placeholderKey);
 			batch.rootPath.parentField = brand(fieldKey);
 			for (const { path, node } of batch.paths) {
-				getKernel(node).anchorProxy(forest.anchors, path);
+				getKernel(node).hydrate(forest.anchors, path);
 			}
 			if (++i === locatedNodes.length) {
 				off();
