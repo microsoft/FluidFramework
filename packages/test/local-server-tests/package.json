@@ -91,6 +91,7 @@
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
+		"sinon": "^18.0.1",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5"
 	},

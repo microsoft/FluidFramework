@@ -153,37 +153,38 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.events.emit("localUpdated", { value: asDeeplyReadonly(value) });
 	}
 
-	public *getRemotes(): IterableIterator<LatestClientData<T, ValueAccessor<T>>> {
-		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [attendeeId, clientState] of objectEntries(allKnownStates.states)) {
-			yield {
-				attendee: this.datastore.lookupClient(attendeeId),
-				value:
-					this.validator === undefined
-						? asDeeplyReadonly(clientState.value)
-						: () => {
-								if (clientState.validated === true) {
-									// Data was previously validated, so return the validated value, which may be undefined.
-									return asDeeplyReadonly(clientState.validatedValue);
-								}
+	public getRemotes: () => IterableIterator<LatestClientData<T, ValueAccessor<T>>> =
+		function* (this: LatestValueManagerImpl<T, Key>) {
+			const allKnownStates = this.datastore.knownValues(this.key);
+			for (const [attendeeId, clientState] of objectEntries(allKnownStates.states)) {
+				yield {
+					attendee: this.datastore.lookupClient(attendeeId),
+					value:
+						this.validator === undefined
+							? asDeeplyReadonly(clientState.value)
+							: () => {
+									if (clientState.validated === true) {
+										// Data was previously validated, so return the validated value, which may be undefined.
+										return asDeeplyReadonly(clientState.validatedValue);
+									}
 
-								// let validData: JsonDeserialized<T> | undefined;
-								// Skip the current attendee since we want to enumerate only other remote attendees
-								if (attendeeId !== allKnownStates.self) {
-									const validData = this.validator?.(clientState.value);
-									clientState.validated = true;
-									// FIXME: Cast shouldn't be needed
-									clientState.validatedValue = validData as JsonDeserialized<T>;
-									return asDeeplyReadonly(clientState.validatedValue);
-								}
-							},
-				metadata: {
-					revision: clientState.rev,
-					timestamp: clientState.timestamp,
-				},
-			};
-		}
-	}
+									// let validData: JsonDeserialized<T> | undefined;
+									// Skip the current attendee since we want to enumerate only other remote attendees
+									if (attendeeId !== allKnownStates.self) {
+										const validData = this.validator?.(clientState.value);
+										clientState.validated = true;
+										// FIXME: Cast shouldn't be needed
+										clientState.validatedValue = validData as JsonDeserialized<T>;
+										return asDeeplyReadonly(clientState.validatedValue);
+									}
+								},
+					metadata: {
+						revision: clientState.rev,
+						timestamp: clientState.timestamp,
+					},
+				};
+			}
+		};
 
 	public getStateAttendees(): Attendee[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
@@ -192,7 +193,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public getRemote(attendee: Attendee): LatestData<T, ValueAccessor<T>> {
+	public getRemote = (attendee: Attendee): LatestData<T, ValueAccessor<T>> => {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
@@ -216,7 +217,7 @@ class LatestValueManagerImpl<T, Key extends string>
 						},
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
-	}
+	};
 
 	public update(
 		attendee: Attendee,

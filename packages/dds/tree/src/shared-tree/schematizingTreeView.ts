@@ -35,7 +35,6 @@ import {
 	type TreeViewConfiguration,
 	mapTreeFromNodeData,
 	prepareContentForHydration,
-	comparePersistedSchemaInternal,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
@@ -99,6 +98,9 @@ export class SchematizingSimpleTreeView<
 
 	private readonly viewSchema: SchemaCompatibilityTester;
 
+	/**
+	 * Events to unregister upon disposal.
+	 */
 	private readonly unregisterCallbacks = new Set<() => void>();
 
 	public disposed = false;
@@ -173,19 +175,20 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
+			const schema = this.viewSchema.viewSchemaAsStored;
 			const mapTree = mapTreeFromNodeData(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
 				this.nodeKeyManager,
 				{
-					schema: this.checkout.storedSchema,
+					schema,
 					policy: this.schemaPolicy,
 				},
 			);
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.viewSchema.viewSchemaAsStored,
+				schema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -323,15 +326,14 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeView();
 
-		const compatibility = comparePersistedSchemaInternal(
-			this.checkout.storedSchema,
-			this.viewSchema,
-			canInitialize(this.checkout),
-		);
+		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
 
 		let lastRoot =
 			this.compatibility.canView && this.view !== undefined ? this.root : undefined;
-		this.currentCompatibility = compatibility;
+		this.currentCompatibility = {
+			...compatibility,
+			canInitialize: canInitialize(this.checkout),
+		};
 
 		if (compatibility.canView) {
 			// Trigger "rootChanged" if the root changes in the future.

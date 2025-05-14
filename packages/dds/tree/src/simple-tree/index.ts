@@ -79,7 +79,6 @@ export {
 	extractPersistedSchema,
 	comparePersistedSchema,
 	type ConciseTree,
-	comparePersistedSchemaInternal,
 	SchemaCompatibilityTester,
 	type Unenforced,
 	type System_Unsafe,
