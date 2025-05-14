@@ -152,18 +152,19 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.events.emit("localUpdated", { value: asDeeplyReadonly(value) });
 	}
 
-	public *getRemotes(): IterableIterator<LatestClientData<T, ValueAccessor<T>>> {
-		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
-			if (attendeeId !== allKnownStates.self) {
-				yield {
-					attendee: this.datastore.lookupClient(attendeeId),
-					value: asDeeplyReadonly(value.value),
-					metadata: { revision: value.rev, timestamp: value.timestamp },
-				};
+	public getRemotes: () => IterableIterator<LatestClientData<T, ValueAccessor<T>>> =
+		function* (this: LatestValueManagerImpl<T, Key>) {
+			const allKnownStates = this.datastore.knownValues(this.key);
+			for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
+				if (attendeeId !== allKnownStates.self) {
+					yield {
+						attendee: this.datastore.lookupClient(attendeeId),
+						value: asDeeplyReadonly(value.value),
+						metadata: { revision: value.rev, timestamp: value.timestamp },
+					};
+				}
 			}
-		}
-	}
+		};
 
 	public getStateAttendees(): Attendee[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
@@ -172,7 +173,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public getRemote(attendee: Attendee): LatestData<T, ValueAccessor<T>> {
+	public getRemote = (attendee: Attendee): LatestData<T, ValueAccessor<T>> => {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
@@ -182,7 +183,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			value: asDeeplyReadonly(clientState.value),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
-	}
+	};
 
 	public update(
 		attendee: Attendee,
