@@ -51,6 +51,7 @@ import { testSimpleTrees } from "../../testTrees.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { TreeAlpha } from "../../../shared-tree/index.js";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 const schema = new SchemaFactory("com.example");
 
@@ -1238,6 +1239,45 @@ describe("treeNodeApi", () => {
 			const A = schema.object("A", { x: schema.number });
 			const a = TreeAlpha.create(A, { x: 1 });
 			assert.deepEqual(a, { x: 1 });
+		});
+
+		it("object with defaulted identifier field", () => {
+			const A = schema.object("A", { x: schema.identifier });
+			const node = TreeAlpha.create(A, { x: undefined });
+
+			// TODO: make this work instead of error:
+			// assert(isStableId(node.x));
+			// // Since no id compressor is associated with the node, Tree.shortId should give back a UUID string.
+			// assert.equal(Tree.shortId(node), node.x)
+
+			// For now validate the error is the correct one:
+			assert.throws(
+				() => node.x,
+				validateUsageError(/identifier may not be queried until the node is inserted/),
+			);
+		});
+
+		it("object with explicit identifier field", () => {
+			const A = schema.object("A", { x: schema.identifier });
+			const node = TreeAlpha.create(A, { x: "id" });
+			assert.deepEqual(node, { x: "id" });
+		});
+
+		// TODO: implement this case
+		it.skip("identifier field", () => {
+			const a = TreeAlpha.create(SchemaFactoryAlpha.identifier(), undefined);
+			assert(isStableId(a));
+		});
+
+		it("reuses existing nodes", () => {
+			const A = schema.object("A", {});
+			const a = new A({});
+			const node = TreeAlpha.create(A, a);
+			assert.equal(node, a);
+
+			const Parent = schema.object("P", { child: A });
+			const parent = TreeAlpha.create(Parent, { child: a });
+			assert.equal(parent.child, a);
 		});
 	});
 
