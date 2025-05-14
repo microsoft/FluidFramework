@@ -55,7 +55,7 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
  * @remarks
  * This is for inserting items into an array, not an {@link TreeArrayNode} (That would use {@link prepareForInsertion}).
  * @privateRemarks
- * This has to be done as a single operation due to how the eventing in prepareContentForHydration.
+ * This has to be done as a single operation due to how the eventing in prepareContentForHydration works.
  */
 export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
