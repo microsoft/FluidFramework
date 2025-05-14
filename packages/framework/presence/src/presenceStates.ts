@@ -178,11 +178,9 @@ export function mergeValueDirectory<
 			return excludeKeys(newObj, ["validated", "validatedValue"]) as TValueState;
 		}
 
-		console.log(`base is a valueDir? ${isValueDirectory(base)}`);
-		return base;
-		// return isValueDirectory(base)
-		// 	? base
-		// 	: (excludeKeys(base, ["validated", "validatedValue"]) as TValueState);
+		return isValueDirectory(base)
+			? base
+			: (excludeKeys(base, ["validated", "validatedValue"]) as TValueState);
 	}
 
 	let mergeBase: InternalTypes.ValueDirectory<T>;
