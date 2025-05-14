@@ -1483,144 +1483,147 @@ describe("TableFactory unit tests", () => {
 		assert.equal(column, column0);
 	});
 
-	// The following test is a demonstration of how users can add runtime type constraints for cells in a column.
-	it("Using column props for runtime type constraints", () => {
-		// The underlying storage format for the cell data is a string.
-		const Cell = schemaFactory.string;
-		type Cell = TreeNodeFromImplicitAllowedTypes<typeof Cell>;
+	// The following tests demonstrate more complex usage scenarios.
+	describe("User stories", () => {
+		// The following test is a demonstration of how users can add runtime type constraints for cells in a column.
+		it("Using column props for runtime type constraints", () => {
+			// The underlying storage format for the cell data is a string.
+			const Cell = schemaFactory.string;
+			type Cell = TreeNodeFromImplicitAllowedTypes<typeof Cell>;
 
-		enum ColumnType {
-			/** A raw string */
-			String = "string",
-			/** An integer - must be parsable by `Number.parseInt` */
-			Integer = "integer",
-			/** A date - must be parsable by `Date.parse` */
-			Date = "date",
-		}
-
-		const ColumnTypeNodes = adaptEnum(schemaFactory, ColumnType);
-		// Defined the types of the nodes which correspond to this the schema.
-		type ColumnTypeNodes = TreeNodeFromImplicitAllowedTypes<typeof ColumnTypeNodes.schema>;
-
-		class ColumnProps extends schemaFactory.object("TableColumnProps", {
-			/** Column label */
-			label: schemaFactory.string,
-			/** ColumnType */
-			type: ColumnTypeNodes.schema,
-		}) {}
-
-		class Column extends TableSchema.column({
-			schemaFactory,
-			props: ColumnProps,
-		}) {
-			/**
-			 * Checks if the provided cell value is valid for the column type.
-			 * If invalid, the cell will be highlighted in red.
-			 */
-			public isCellFormatValid(cell: Cell): boolean {
-				const type = this.props.type.value;
-				switch (type) {
-					case ColumnType.String:
-						return true;
-					case ColumnType.Integer:
-						return !Number.isNaN(Number.parseInt(cell, 10));
-					case ColumnType.Date:
-						return !Number.isNaN(Date.parse(cell));
-					default:
-						throw new Error(`Unknown column type: "${type}"`);
-				}
-			}
-		}
-
-		class Row extends TableSchema.row({
-			schemaFactory,
-			cell: Cell,
-		}) {}
-
-		class Table extends TableSchema.table({
-			schemaFactory,
-			cell: Cell,
-			column: Column,
-			row: Row,
-		}) {
-			// Override `setCell` with validation to ensure only valid cells are set, respecting the column's `type`.
-			public override setCell({
-				key,
-				cell,
-			}: { key: { column: Column; row: Row }; cell: Cell }): void {
-				const { column } = key;
-
-				if (!column.isCellFormatValid(cell)) {
-					throw new UsageError(
-						`Invalid cell format. Expected a ${column.props.type.value} but got "${cell}"`,
-					);
-				}
-				super.setCell({ key, cell });
+			enum ColumnType {
+				/** A raw string */
+				String = "string",
+				/** An integer - must be parsable by `Number.parseInt` */
+				Integer = "integer",
+				/** A date - must be parsable by `Date.parse` */
+				Date = "date",
 			}
 
-			// Note that this is example is somewhat simplified.
-			// A real implementation would want to override row insertion as well, to ensure rows are not inserted with invalid cells.
-		}
+			const ColumnTypeNodes = adaptEnum(schemaFactory, ColumnType);
+			// Defined the types of the nodes which correspond to this the schema.
+			type ColumnTypeNodes = TreeNodeFromImplicitAllowedTypes<typeof ColumnTypeNodes.schema>;
 
-		const treeView = independentView(
-			new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			}),
-			{ idCompressor: createIdCompressor() },
-		);
-		treeView.initialize(Table.empty());
+			class ColumnProps extends schemaFactory.object("TableColumnProps", {
+				/** Column label */
+				label: schemaFactory.string,
+				/** ColumnType */
+				type: ColumnTypeNodes.schema,
+			}) {}
 
-		const table = treeView.root;
+			class Column extends TableSchema.column({
+				schemaFactory,
+				props: ColumnProps,
+			}) {
+				/**
+				 * Checks if the provided cell value is valid for the column type.
+				 * If invalid, the cell will be highlighted in red.
+				 */
+				public isCellFormatValid(cell: Cell): boolean {
+					const type = this.props.type.value;
+					switch (type) {
+						case ColumnType.String:
+							return true;
+						case ColumnType.Integer:
+							return !Number.isNaN(Number.parseInt(cell, 10));
+						case ColumnType.Date:
+							return !Number.isNaN(Date.parse(cell));
+						default:
+							throw new Error(`Unknown column type: "${type}"`);
+					}
+				}
+			}
 
-		const itemColumn = new Column({
-			props: { label: "Item", type: ColumnTypeNodes(ColumnType.String) },
-		});
-		const quantityColumn = new Column({
-			props: { label: "Quantity", type: ColumnTypeNodes(ColumnType.Integer) },
-		});
-		const dateColumn = new Column({
-			props: { label: "Date Sold", type: ColumnTypeNodes(ColumnType.Date) },
-		});
-		table.insertColumns({
-			columns: [itemColumn, quantityColumn, dateColumn],
-		});
+			class Row extends TableSchema.row({
+				schemaFactory,
+				cell: Cell,
+			}) {}
 
-		const row0 = new Row({ cells: {} });
-		table.insertRow({ row: row0 });
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: Cell,
+				column: Column,
+				row: Row,
+			}) {
+				// Override `setCell` with validation to ensure only valid cells are set, respecting the column's `type`.
+				public override setCell({
+					key,
+					cell,
+				}: { key: { column: Column; row: Row }; cell: Cell }): void {
+					const { column } = key;
 
-		// Set a cell in the "item" column
-		table.setCell({
-			key: {
-				row: row0,
-				column: itemColumn,
-			},
-			cell: "Hello world!",
-		});
-		assert.equal(table.getCell({ row: row0, column: itemColumn }), "Hello world!");
+					if (!column.isCellFormatValid(cell)) {
+						throw new UsageError(
+							`Invalid cell format. Expected a ${column.props.type.value} but got "${cell}"`,
+						);
+					}
+					super.setCell({ key, cell });
+				}
 
-		// Set an integer in the "quantity" column
-		table.setCell({
-			key: {
-				row: row0,
-				column: quantityColumn,
-			},
-			cell: "42",
-		});
-		assert.equal(table.getCell({ row: row0, column: quantityColumn }), "42");
+				// Note that this is example is somewhat simplified.
+				// A real implementation would want to override row insertion as well, to ensure rows are not inserted with invalid cells.
+			}
 
-		// Attempt to set a non-date value in the "date" column (should throw an error)
-		assert.throws(
-			() =>
-				table.setCell({
-					key: {
-						row: row0,
-						column: dateColumn,
-					},
-					cell: "I am not a date!",
+			const treeView = independentView(
+				new TreeViewConfiguration({
+					schema: Table,
+					enableSchemaValidation: true,
 				}),
-			validateUsageError(/Invalid cell format. Expected a date but got "I am not a date!"/),
-		);
+				{ idCompressor: createIdCompressor() },
+			);
+			treeView.initialize(Table.empty());
+
+			const table = treeView.root;
+
+			const itemColumn = new Column({
+				props: { label: "Item", type: ColumnTypeNodes(ColumnType.String) },
+			});
+			const quantityColumn = new Column({
+				props: { label: "Quantity", type: ColumnTypeNodes(ColumnType.Integer) },
+			});
+			const dateColumn = new Column({
+				props: { label: "Date Sold", type: ColumnTypeNodes(ColumnType.Date) },
+			});
+			table.insertColumns({
+				columns: [itemColumn, quantityColumn, dateColumn],
+			});
+
+			const row0 = new Row({ cells: {} });
+			table.insertRow({ row: row0 });
+
+			// Set a cell in the "item" column
+			table.setCell({
+				key: {
+					row: row0,
+					column: itemColumn,
+				},
+				cell: "Hello world!",
+			});
+			assert.equal(table.getCell({ row: row0, column: itemColumn }), "Hello world!");
+
+			// Set an integer in the "quantity" column
+			table.setCell({
+				key: {
+					row: row0,
+					column: quantityColumn,
+				},
+				cell: "42",
+			});
+			assert.equal(table.getCell({ row: row0, column: quantityColumn }), "42");
+
+			// Attempt to set a non-date value in the "date" column (should throw an error)
+			assert.throws(
+				() =>
+					table.setCell({
+						key: {
+							row: row0,
+							column: dateColumn,
+						},
+						cell: "I am not a date!",
+					}),
+				validateUsageError(/Invalid cell format. Expected a date but got "I am not a date!"/),
+			);
+		});
 	});
 
 	// The code within the following tests is included in TSDoc comments in the source code.
