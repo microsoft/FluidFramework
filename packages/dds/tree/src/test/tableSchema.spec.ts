@@ -133,12 +133,102 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
+	describe("Table Schema", () => {
+		it("Can create without custom column/row schema", () => {
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+		});
+
+		it("Can create with custom column schema", () => {
+			class Column extends TableSchema.column({
+				schemaFactory,
+				props: schemaFactory.object("column-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+				column: Column,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0", props: { label: "Column 0" } }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+		});
+
+		it("Can create with custom row schema", () => {
+			const Cell = schemaFactory.string;
+			class Row extends TableSchema.row({
+				schemaFactory,
+				cell: Cell,
+				props: schemaFactory.object("row-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+				row: Row,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+			});
+		});
+
+		it("Can create with custom column and row schema", () => {
+			const Cell = schemaFactory.string;
+			class Column extends TableSchema.column({
+				schemaFactory,
+				props: schemaFactory.object("column-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Row extends TableSchema.row({
+				schemaFactory,
+				cell: Cell,
+				props: schemaFactory.object("row-props", {
+					label: schemaFactory.string,
+				}),
+			}) {}
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+				column: Column,
+				row: Row,
+			}) {}
+
+			const _table = new Table({
+				columns: [{ id: "column-0", props: { label: "Column 0" } }],
+				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+			});
+		});
+	});
+
 	describe("Initialization", () => {
 		it("Empty", () => {
-			const { treeView } = createTableTree();
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+			}) {
+				// Custom property on derived class included to verify that the
+				// return type of `Table.empty()` is correct.
+				public customProp: string = "Hello world!";
+			}
 
-			treeView.initialize({ rows: [], columns: [] });
-			assertEqualTrees(treeView.root, { columns: [], rows: [] });
+			const table: Table = Table.empty();
+			assertEqualTrees(table, { columns: [], rows: [] });
+			assert(table.customProp === "Hello world!");
 		});
 
 		it("Non-empty", () => {
@@ -198,8 +288,8 @@ describe("TableFactory unit tests", () => {
 
 	describe("insertColumn", () => {
 		it("Insert new column into empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertColumn({
 				index: 0,
@@ -286,11 +376,8 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Inserting column at out-of-bounds index fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [],
-			});
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			assert.throws(
 				() =>
@@ -324,8 +411,8 @@ describe("TableFactory unit tests", () => {
 
 	describe("insertColumns", () => {
 		it("Insert empty columns list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertColumns({ index: 0, columns: [] });
 
@@ -336,8 +423,8 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Insert single column into empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertColumns({
 				index: 0,
@@ -506,8 +593,8 @@ describe("TableFactory unit tests", () => {
 
 	describe("insertRow", () => {
 		it("Insert new row into empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertRow({
 				index: 0,
@@ -666,8 +753,8 @@ describe("TableFactory unit tests", () => {
 
 	describe("insertRows", () => {
 		it("Insert empty rows list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertRows({ index: 0, rows: [] });
 
@@ -678,8 +765,8 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Insert single row into empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({ rows: [], columns: [] });
+			const { treeView, Table } = createTableTree();
+			treeView.initialize(Table.empty());
 
 			treeView.root.insertRows({
 				index: 0,

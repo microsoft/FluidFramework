@@ -470,6 +470,12 @@ export namespace System_TableSchema {
 			})
 			implements TableSchema.Table<TCellSchema, TColumnSchema, TRowSchema>
 		{
+			public static empty<TThis extends TableConstructorType>(
+				this: TThis,
+			): InstanceType<TThis> {
+				return new this({ columns: [], rows: [] }) as InstanceType<TThis>;
+			}
+
 			public getColumn(id: string): ColumnValueType | undefined {
 				// TypeScript is unable to narrow the types correctly here, hence the casts.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -818,6 +824,7 @@ export namespace System_TableSchema {
 			TableSchema.Table<TCellSchema, TColumnSchema, TRowSchema> &
 			WithType<ScopedSchemaName<Scope, "Table">>;
 		type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
+		type TableConstructorType = new (data: TableInsertableType) => TableValueType;
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
@@ -831,7 +838,12 @@ export namespace System_TableSchema {
 			/* TInsertable */ object & TableInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof tableFields
-		> = Table;
+		> & {
+			/**
+			 * Create an empty table.
+			 */
+			empty<TThis extends TableConstructorType>(this: TThis): InstanceType<TThis>;
+		} = Table;
 
 		// Return the table schema
 		return TableSchemaType;
@@ -1418,7 +1430,7 @@ export namespace TableSchema {
 	}
 
 	/**
-	 * Factory for creating new table schema without specifying row or column schema.
+	 * Factory for creating new table schema.
 	 * @internal
 	 */
 	export function table<
@@ -1433,7 +1445,7 @@ export namespace TableSchema {
 		System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>
 	>;
 	/**
-	 * Factory for creating new table schema without specifying row schema.
+	 * Factory for creating new table schema with custom column schema.
 	 * @internal
 	 */
 	export function table<
@@ -1451,7 +1463,25 @@ export namespace TableSchema {
 		System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>
 	>;
 	/**
-	 * Factory for creating new table schema.
+	 * Factory for creating new table schema with custom row schema.
+	 * @internal
+	 */
+	export function table<
+		const TScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
+	>(
+		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
+			readonly row: TRow;
+		},
+	): System_TableSchema.TableSchemaBase<
+		TScope,
+		TCell,
+		System_TableSchema.ColumnSchemaBase<TScope, System_TableSchema.DefaultPropsType>,
+		TRow
+	>;
+	/**
+	 * Factory for creating new table schema with custom column and row schema.
 	 * @internal
 	 */
 	export function table<
