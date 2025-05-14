@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { eq, gt } from "semver-ts";
 
-import { type MinimumVersionForCollab } from "../compatUtils.js";
+import { type SemanticVersion } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 
 /**
@@ -89,8 +89,12 @@ export interface IDocumentSchemaInfo {
 	 * with a runtime version lower than this.
 	 *
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for additional details on `minVersionForCollab`.
+	 *
+	 * @remarks
+	 * We use `SemanticVersion` instead of `MinimumVersionForCollab` since we may open future documents that with a
+	 * minVersionForCollab version that `MinimumVersionForCollab` does not support.
 	 */
-	minVersionForCollab: MinimumVersionForCollab;
+	minVersionForCollab: SemanticVersion;
 }
 
 /**

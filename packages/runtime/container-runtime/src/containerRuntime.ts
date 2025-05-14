@@ -169,6 +169,7 @@ import {
 	isValidMinVersionForCollab,
 	type RuntimeOptionsAffectingDocSchema,
 	type MinimumVersionForCollab,
+	type SemanticVersion,
 } from "./compatUtils.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
@@ -1440,7 +1441,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		private readonly minVersionForCollab: MinimumVersionForCollab,
+		private readonly minVersionForCollab: SemanticVersion,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,

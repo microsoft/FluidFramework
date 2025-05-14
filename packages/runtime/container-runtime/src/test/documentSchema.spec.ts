@@ -726,7 +726,6 @@ describe("Runtime", () => {
 		new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
-			// @ts-expect-error - Testing with an arbitrarily high minVersionForCollab
 			{ ...validConfig, info: { minVersionForCollab: documentMinVersionForCollab } }, // old schema,
 			features, // features
 			() => {}, // onSchemaChange
