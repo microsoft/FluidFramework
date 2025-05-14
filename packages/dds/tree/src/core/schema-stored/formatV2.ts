@@ -96,7 +96,7 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 		/**
 		 * Persisted metadata for this node.
 		 */
-		persistedMetadata: PersistedMetadataFormat,
+		metadata: PersistedMetadataFormat,
 	},
 	unionOptions,
 );

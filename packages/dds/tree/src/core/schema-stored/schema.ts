@@ -138,7 +138,7 @@ export interface TreeFieldStoredSchema {
 	 * @remarks
 	 * Discarded when encoding to {@link SchemaFormatVersion.V1}.
 	 */
-	persistedMetadata?: PersistedMetadataFormat;
+	readonly persistedMetadata: PersistedMetadataFormat | undefined;
 }
 
 /**
@@ -366,9 +366,7 @@ export function encodeFieldSchemaV1(schema: TreeFieldStoredSchema): FieldSchemaF
 
 export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaFormatV2 {
 	return {
-		kind: schema.kind,
-		// Types are sorted by identifier to improve stability of persisted data to increase chance of schema blob reuse.
-		types: [...schema.types].sort(),
+		...encodeFieldSchemaV1(schema),
 		persistedMetadata: schema.persistedMetadata,
 	};
 }
