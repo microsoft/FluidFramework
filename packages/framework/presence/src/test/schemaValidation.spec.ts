@@ -11,11 +11,7 @@ import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import {
 	StateFactory,
-	// type PresenceStates,
 	type StateSchemaValidator,
-	// SessionClientStatus,
-	// type ClientConnectionId,
-	// type ISessionClient,
 } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
