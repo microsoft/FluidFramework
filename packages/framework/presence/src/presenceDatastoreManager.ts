@@ -99,8 +99,6 @@ const acknowledgementMessageType = "Pres:Ack";
 // These are lightweight and typically contain only the messageId being acknowledged.
 interface AcknowledgementMessage extends IInboundSignalMessage {
 	type: typeof acknowledgementMessageType;
-	// TODO: Define what ack content will be shaped like ({ messageId: string }),
-	// Keeping generic for now to allow evolution of this message type.
 	content: {
 		id: number;
 	};
