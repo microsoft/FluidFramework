@@ -76,10 +76,9 @@ export interface DetachedFieldCache {
 }
 
 /**
- * Utility function to get a {@link SchemaAndPolicy} object from a {@link FlexTreeNode} or {@link FlexTreeField}.
- * @param nodeOrField - {@link FlexTreeNode} or {@link FlexTreeField} to get the schema and policy from.
- * @returns A {@link SchemaAndPolicy} object with the stored schema and policy from the node or field provided.
- * For {@link Unhydrated} nodes this schema may only describe the types allowed subtree for this particular entity.
+ * Utility function to get a {@link SchemaAndPolicy} object from a {@link FlexTreeContext}.
+ * @returns A {@link SchemaAndPolicy} object with the stored schema and policy from the context provided.
+ * For {@link Unhydrated} contexts this schema may only describe the types allowed subtree for this particular entity.
  */
 export function getSchemaAndPolicy(context: FlexTreeContext): SchemaAndPolicy {
 	return {

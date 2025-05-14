@@ -36,7 +36,7 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
 	schema: ImplicitFieldSchema,
 	destinationContext: FlexTreeContext,
-): ExclusiveMapTree | undefined extends TIn ? undefined : never {
+): TIn extends undefined ? undefined : ExclusiveMapTree {
 	return prepareForInsertionContextless(
 		data,
 		schema,
@@ -84,7 +84,7 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	schema: ImplicitFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
-): ExclusiveMapTree | undefined extends TIn ? undefined : never {
+): TIn extends undefined ? undefined : ExclusiveMapTree {
 	const mapTree = mapTreeFromNodeData(
 		data,
 		schema,
@@ -96,7 +96,7 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 		prepareContentForHydration(mapTree, hydratedData.checkout.forest);
 	}
 
-	return mapTree as ExclusiveMapTree | undefined extends TIn ? undefined : never;
+	return mapTree as TIn extends undefined ? undefined : ExclusiveMapTree;
 }
 
 // #region Content insertion and proxy binding
