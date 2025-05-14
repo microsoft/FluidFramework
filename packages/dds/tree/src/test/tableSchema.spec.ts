@@ -131,6 +131,53 @@ describe("TableFactory unit tests", () => {
 			const column = new Row({ id: "row-0", cells: {}, props: "Row 0" });
 			assert.equal(column.props, "Row 0");
 		});
+
+		it("getCells", () => {
+			const { treeView, Table, Row } = createTableTree();
+			treeView.initialize(Table.empty());
+			const table = treeView.root;
+
+			// Calling `getCells` on a row that has not been inserted into the table throws an error.
+			const row = new Row({ id: "row-0", cells: {} });
+			assert.throws(
+				() => row.getCells(),
+				validateUsageError(/Row with ID "row-0" is not contained in a table./),
+			);
+
+			table.insertRow({ row });
+
+			// No columns or cells have been inserted yet.
+			assert.equal([...row.getCells()].length, 0);
+
+			table.insertColumns({
+				columns: [
+					{ id: "column-0", props: { label: "Column 0" } },
+					{ id: "column-1", props: { label: "Column 0" } },
+					{ id: "column-2", props: { label: "Column 0" } },
+				],
+			});
+			table.setCell({
+				key: {
+					row: row.id,
+					column: "column-0",
+				},
+				cell: { value: "0-0" },
+			});
+			table.setCell({
+				key: {
+					row: row.id,
+					column: "column-2",
+				},
+				cell: { value: "0-2" },
+			});
+
+			const cells = [...row.getCells()];
+			assert.equal(cells.length, 2);
+			assert.equal(cells[0][0], "column-0");
+			assertEqualTrees(cells[0][1], { value: "0-0" });
+			assert.equal(cells[1][0], "column-2");
+			assertEqualTrees(cells[1][1], { value: "0-2" });
+		});
 	});
 
 	describe("Table Schema", () => {
