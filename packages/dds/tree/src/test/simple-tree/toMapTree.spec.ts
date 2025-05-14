@@ -847,7 +847,7 @@ describe("toMapTree", () => {
 
 			const tree = {};
 
-			const actual = mapTreeFromNodeData(tree, schema, nodeKeyManager);
+			const actual = mapTreeFromNodeData(tree, schema, { context: nodeKeyManager });
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -954,7 +954,7 @@ describe("toMapTree", () => {
 			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), undefined);
 
 			// This time, pass the context in
-			mapTree = mapTreeFromNodeData(nodeData, RootObject, nodeKeyManager);
+			mapTree = mapTreeFromNodeData(nodeData, RootObject, { context: nodeKeyManager });
 
 			// Assert that all defaults are populated
 			assert.equal(getConstantValue(getObject()), defaultValue);
@@ -1331,12 +1331,10 @@ describe("toMapTree", () => {
 				it("Success", () => {
 					const content = "Hello world";
 					const schemaValidationPolicy = createSchemaAndPolicyForLeafNode();
-					mapTreeFromNodeData(
-						content,
-						[schemaFactory.string],
-						new MockNodeIdentifierManager(),
+					mapTreeFromNodeData(content, [schemaFactory.string], {
+						context: new MockNodeIdentifierManager(),
 						schemaValidationPolicy,
-					);
+					});
 				});
 
 				it("Failure", () => {
@@ -1344,12 +1342,10 @@ describe("toMapTree", () => {
 					const schemaValidationPolicy = createSchemaAndPolicyForLeafNode(true);
 					assert.throws(
 						() =>
-							mapTreeFromNodeData(
-								content,
-								[schemaFactory.string],
-								new MockNodeIdentifierManager(),
+							mapTreeFromNodeData(content, [schemaFactory.string], {
+								context: new MockNodeIdentifierManager(),
 								schemaValidationPolicy,
-							),
+							}),
 						outOfSchemaExpectedError,
 					);
 				});
@@ -1386,24 +1382,20 @@ describe("toMapTree", () => {
 				}
 				it("Success", () => {
 					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode();
-					mapTreeFromNodeData(
-						content,
-						[myObjectSchema, schemaFactory.string],
-						new MockNodeIdentifierManager(),
+					mapTreeFromNodeData(content, [myObjectSchema, schemaFactory.string], {
+						context: new MockNodeIdentifierManager(),
 						schemaValidationPolicy,
-					);
+					});
 				});
 
 				it("Failure", () => {
 					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode(true);
 					assert.throws(
 						() =>
-							mapTreeFromNodeData(
-								content,
-								[myObjectSchema, schemaFactory.string],
-								new MockNodeIdentifierManager(),
+							mapTreeFromNodeData(content, [myObjectSchema, schemaFactory.string], {
+								context: new MockNodeIdentifierManager(),
 								schemaValidationPolicy,
-							),
+							}),
 						outOfSchemaExpectedError,
 					);
 				});
@@ -1417,8 +1409,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						{ foo: "Hello world", notInSchemaKey: 5, anotherNotInSchemaKey: false },
 						[myObjectSchema, schemaFactory.string],
-						new MockNodeIdentifierManager(),
-						schemaValidationPolicy,
+						{ context: new MockNodeIdentifierManager(), schemaValidationPolicy },
 					);
 				});
 			});
@@ -1447,24 +1438,20 @@ describe("toMapTree", () => {
 				}
 				it("Success", () => {
 					const schemaValidationPolicy = createSchemaAndPolicyForMapNode();
-					mapTreeFromNodeData(
-						content,
-						[myMapSchema, schemaFactory.string],
-						new MockNodeIdentifierManager(),
+					mapTreeFromNodeData(content, [myMapSchema, schemaFactory.string], {
+						context: new MockNodeIdentifierManager(),
 						schemaValidationPolicy,
-					);
+					});
 				});
 
 				it("Failure", () => {
 					const schemaValidationPolicy = createSchemaAndPolicyForMapNode(true);
 					assert.throws(
 						() =>
-							mapTreeFromNodeData(
-								content,
-								[myMapSchema, schemaFactory.string],
-								new MockNodeIdentifierManager(),
+							mapTreeFromNodeData(content, [myMapSchema, schemaFactory.string], {
+								context: new MockNodeIdentifierManager(),
 								schemaValidationPolicy,
-							),
+							}),
 						outOfSchemaExpectedError,
 					);
 				});
@@ -1494,24 +1481,20 @@ describe("toMapTree", () => {
 				}
 				it("Success", () => {
 					const schemaValidationPolicy = createSchemaAndPolicyForMapNode();
-					mapTreeFromNodeData(
-						content,
-						[myArrayNodeSchema, schemaFactory.string],
-						new MockNodeIdentifierManager(),
+					mapTreeFromNodeData(content, [myArrayNodeSchema, schemaFactory.string], {
+						context: new MockNodeIdentifierManager(),
 						schemaValidationPolicy,
-					);
+					});
 				});
 
 				it("Failure", () => {
 					const schemaValidationPolicy = createSchemaAndPolicyForMapNode(true);
 					assert.throws(
 						() =>
-							mapTreeFromNodeData(
-								content,
-								[myArrayNodeSchema, schemaFactory.string],
-								new MockNodeIdentifierManager(),
+							mapTreeFromNodeData(content, [myArrayNodeSchema, schemaFactory.string], {
+								context: new MockNodeIdentifierManager(),
 								schemaValidationPolicy,
-							),
+							}),
 						outOfSchemaExpectedError,
 					);
 				});

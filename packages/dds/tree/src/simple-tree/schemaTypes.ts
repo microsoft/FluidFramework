@@ -148,7 +148,7 @@ export interface AnnotatedAllowedType<T extends TreeNodeSchema = TreeNodeSchema>
 export function isAnnotatedAllowedType(
 	allowedType: AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
 ): allowedType is AnnotatedAllowedType {
-	return "metadata" in allowedType && "type" in allowedType;
+	return allowedType !== undefined && "metadata" in allowedType && "type" in allowedType;
 }
 
 /**
@@ -170,7 +170,7 @@ export interface AllowedTypeMetadata {
 /**
  * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
  *
- * TODO what type should this be?
+ * TODO:#38722 make this a unique type and use it for runtime schema upgrades
  * @alpha
  */
 export type SchemaUpgradeToken = string;
@@ -617,17 +617,19 @@ export function normalizeFieldSchema(
  * @internal
  */
 export function normalizeAllowedTypes(
-	types: ImplicitAllowedTypes,
+	types: ImplicitAnnotatedAllowedTypes,
 ): ReadonlySet<TreeNodeSchema> {
+	// remove annotations before normalizing
+	const unannotated = unannotateImplicitAllowedTypes(types);
 	const normalized = new Set<TreeNodeSchema>();
-	if (isReadonlyArray(types)) {
+	if (isReadonlyArray(unannotated)) {
 		// Types array must not be modified after it is normalized since that would result in the user of the normalized data having wrong (out of date) content.
-		Object.freeze(types);
-		for (const lazyType of types) {
+		Object.freeze(unannotated);
+		for (const lazyType of unannotated) {
 			normalized.add(evaluateLazySchema(lazyType));
 		}
 	} else {
-		normalized.add(evaluateLazySchema(types));
+		normalized.add(evaluateLazySchema(unannotated));
 	}
 	return normalized;
 }

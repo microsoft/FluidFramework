@@ -176,10 +176,14 @@ export class SchematizingSimpleTreeView<
 			const mapTree = mapTreeFromNodeData(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
-				this.nodeKeyManager,
 				{
-					schema: this.checkout.storedSchema,
-					policy: this.schemaPolicy,
+					context: this.nodeKeyManager,
+					schemaValidationPolicy: {
+						schema: this.checkout.storedSchema,
+						policy: this.schemaPolicy,
+					},
+					// this allows enablable allowed types to be loaded into a tree
+					enforceNonEnabled: false,
 				},
 			);
 
@@ -470,7 +474,7 @@ export class SchematizingSimpleTreeView<
 		const view = this.getView();
 		setField(
 			view.context.root,
-			this.rootFieldSchema,
+			normalizeFieldSchema(this.rootFieldSchema),
 			newRoot as InsertableContent | undefined,
 		);
 	}

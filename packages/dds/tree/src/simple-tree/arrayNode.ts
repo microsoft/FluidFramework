@@ -799,15 +799,15 @@ type Insertable<T extends ImplicitAllowedTypes> = readonly (
 	| IterableTreeArrayContent<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 )[];
 
-abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
+abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes>
 	extends TreeNodeWithArrayFeatures<
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		TreeNodeFromImplicitAllowedTypes<T>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>,
+		TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>
 	>
-	implements TreeArrayNode<T>
+	implements TreeArrayNode<UnannotateImplicitAllowedTypes<T>>
 {
 	// Indexing must be provided by subclass.
-	[k: number]: TreeNodeFromImplicitAllowedTypes<T>;
+	[k: number]: TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>;
 
 	public static readonly kind = NodeKind.Array;
 
@@ -820,12 +820,16 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	>;
 
 	public constructor(
-		input?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+		input?:
+			| Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>
+			| InternalTreeNode,
 	) {
 		super(input ?? []);
 	}
 
-	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
+	#mapTreesFromFieldData(
+		value: Insertable<UnannotateImplicitAllowedTypes<T>>,
+	): ExclusiveMapTree[] {
 		const sequenceField = getSequenceField(this);
 		const content = value as readonly (
 			| InsertableContent
@@ -837,14 +841,12 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
 			)
 			.map((c) =>
-				mapTreeFromNodeData(
-					c,
-					this.simpleSchema,
-					sequenceField.context.isHydrated()
+				mapTreeFromNodeData(c, this.simpleSchema, {
+					context: sequenceField.context.isHydrated()
 						? sequenceField.context.nodeKeyManager
 						: undefined,
-					getSchemaAndPolicy(sequenceField),
-				),
+					schemaValidationPolicy: getSchemaAndPolicy(sequenceField),
+				}),
 			);
 
 		if (sequenceField.context.isHydrated()) {
@@ -867,7 +869,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return fail(0xadb /* Proxy should intercept length */);
 	}
 
-	public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public [Symbol.iterator](): IterableIterator<
+		TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>
+	> {
 		return this.values();
 	}
 
@@ -879,9 +883,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 
 	public at(
-		this: TreeArrayNode<T>,
+		this: TreeArrayNode<UnannotateImplicitAllowedTypes<T>>,
 		index: number,
-	): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+	): TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>> | undefined {
 		const field = getSequenceField(this);
 		const val = field.boxedAt(index);
 
@@ -889,18 +893,23 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			return val;
 		}
 
-		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
+		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<
+			UnannotateImplicitAllowedTypes<T>
+		>;
 	}
-	public insertAt(index: number, ...value: Insertable<T>): void {
+	public insertAt(
+		index: number,
+		...value: Insertable<UnannotateImplicitAllowedTypes<T>>
+	): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "insertAt", true);
 		const content = this.#mapTreesFromFieldData(value);
 		field.editor.insert(index, content);
 	}
-	public insertAtStart(...value: Insertable<T>): void {
+	public insertAtStart(...value: Insertable<UnannotateImplicitAllowedTypes<T>>): void {
 		this.insertAt(0, ...value);
 	}
-	public insertAtEnd(...value: Insertable<T>): void {
+	public insertAtEnd(...value: Insertable<UnannotateImplicitAllowedTypes<T>>): void {
 		this.insertAt(this.length, ...value);
 	}
 	public removeAt(index: number): void {
@@ -1040,12 +1049,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 	}
 
-	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public values(): IterableIterator<
+		TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>
+	> {
 		return this.generateValues(getKernel(this).generationNumber);
 	}
 	private *generateValues(
 		initialLastUpdatedStamp: number,
-	): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
+	): Generator<TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>> {
 		const kernel = getKernel(this);
 		if (initialLastUpdatedStamp !== kernel.generationNumber) {
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
@@ -1096,7 +1107,7 @@ export function arraySchema<
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
-	class Schema extends CustomArrayNodeBase<UnannotateImplicitAllowedTypes<T>> {
+	class Schema extends CustomArrayNodeBase<T> {
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
@@ -1183,8 +1194,8 @@ export function arraySchema<
 			return Schema.constructorCached?.constructor as unknown as Output;
 		}
 
-		protected get simpleSchema(): UnannotateImplicitAllowedTypes<T> {
-			return unannotatedTypes;
+		protected get simpleSchema(): T {
+			return info;
 		}
 		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;

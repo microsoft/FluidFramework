@@ -95,12 +95,10 @@ export function cursorFromInsertable<
 		schema: storedSchema,
 	};
 
-	const mapTree = mapTreeFromNodeData(
-		data as InsertableField<UnsafeUnknownSchema>,
-		schema,
+	const mapTree = mapTreeFromNodeData(data as InsertableField<UnsafeUnknownSchema>, schema, {
 		context,
 		schemaValidationPolicy,
-	);
+	});
 	if (mapTree === undefined) {
 		assert(
 			storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier,

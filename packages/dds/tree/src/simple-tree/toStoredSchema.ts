@@ -27,6 +27,7 @@ import {
 	FieldSchema,
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type ImplicitFieldSchema,
 } from "./schemaTypes.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
@@ -89,9 +90,9 @@ const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
 ]);
 
 /**
- * Normalizes an {@link ImplicitAllowedTypes} into an {@link TreeTypeSet}.
+ * Normalizes an {@link ImplicitAnnotatedAllowedTypes} into an {@link TreeTypeSet}.
  */
-export function convertAllowedTypes(schema: ImplicitAllowedTypes): TreeTypeSet {
+export function convertAllowedTypes(schema: ImplicitAnnotatedAllowedTypes): TreeTypeSet {
 	return new Set([...normalizeAllowedTypes(schema)].map((item) => brand(item.identifier)));
 }
 

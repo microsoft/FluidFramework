@@ -194,8 +194,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const mapTree = mapTreeFromNodeData(
 			value as InsertableContent | undefined,
 			createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
-			node.context.isHydrated() ? node.context.nodeKeyManager : undefined,
-			getSchemaAndPolicy(node),
+			{
+				context: node.context.isHydrated() ? node.context.nodeKeyManager : undefined,
+				schemaValidationPolicy: getSchemaAndPolicy(node),
+			},
 		);
 
 		const field = node.getBoxed(brand(key));
@@ -277,7 +279,10 @@ export function mapSchema<
 		): UnhydratedFlexTreeNode {
 			return UnhydratedFlexTreeNode.getOrCreate(
 				unhydratedContext,
-				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
+				mapTreeFromNodeData(
+					input as FactoryContent,
+					this as unknown as ImplicitAnnotatedAllowedTypes,
+				),
 			);
 		}
 
