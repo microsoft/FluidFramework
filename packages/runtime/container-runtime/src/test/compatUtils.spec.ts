@@ -6,13 +6,13 @@
 import { strict as assert } from "node:assert";
 
 import {
-	getConfigsForCompatMode,
+	getConfigsForMinVersionForCollab,
 	type ConfigMap,
 	type SemanticVersion,
 } from "../compatUtils.js";
 
 describe("compatUtils", () => {
-	describe("getConfigsForCompatMode", () => {
+	describe("getConfigsForMinVersionForCollab", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
 		type ITestConfigMap = {
 			featureA: string;
@@ -212,7 +212,10 @@ describe("compatUtils", () => {
 
 		for (const testCase of testCases) {
 			it(`returns correct configs for minVersionForCollab = "${testCase.minVersionForCollab}"`, () => {
-				const config = getConfigsForCompatMode(testCase.minVersionForCollab, testConfigMap);
+				const config = getConfigsForMinVersionForCollab(
+					testCase.minVersionForCollab,
+					testConfigMap,
+				);
 				assert.deepEqual(
 					config,
 					testCase.expectedConfig,

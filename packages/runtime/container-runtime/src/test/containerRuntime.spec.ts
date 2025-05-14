@@ -3844,7 +3844,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("minVersionForCollab not provided, with manual configs for each property", async () => {
+			it("minVersionForCollab not provided, with manual configs", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3859,7 +3859,6 @@ describe("Runtime", () => {
 						chunkSizeInBytes: 200,
 						enableRuntimeIdCompressor: "on",
 						enableGroupedBatching: false, // By turning off batching, we will also disable compression automatically
-						explicitSchemaControl: true,
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -3877,7 +3876,7 @@ describe("Runtime", () => {
 					chunkSizeInBytes: 200,
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
-					explicitSchemaControl: true,
+					explicitSchemaControl: false,
 				};
 
 				logger.assertMatchAny([
@@ -3987,6 +3986,25 @@ describe("Runtime", () => {
 						minVersionForCollab,
 					},
 				]);
+			});
+
+			it("throws when manual configs are incompatible with minVersionForCollab", async () => {
+				const logger = new MockLogger();
+				const minVersionForCollab = "1.0.0";
+				await assert.rejects(async () => {
+					await ContainerRuntime.loadRuntime({
+						context: getMockContext({ logger }) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions: {
+							// Turning on batching when minVersionForCollab is "1.0.0" will throw a UsageError, since batching requires
+							// at least FF runtime 2.0 to collaborate.
+							enableGroupedBatching: true,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+						minVersionForCollab,
+					});
+				});
 			});
 		});
 	});

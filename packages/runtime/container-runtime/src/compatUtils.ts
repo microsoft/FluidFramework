@@ -4,13 +4,17 @@
  */
 
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { compare, gte, lte, valid } from "semver-ts";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { compare, gt, gte, lte, valid } from "semver-ts";
 
 import {
 	disabledCompressionConfig,
 	enabledCompressionConfig,
 } from "./compressionDefinitions.js";
-import type { ContainerRuntimeOptionsInternal } from "./containerRuntime.js";
+import type {
+	ContainerRuntimeOptionsInternal,
+	IContainerRuntimeOptions,
+} from "./containerRuntime.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -176,7 +180,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 export function getMinVersionForCollabDefaults(
 	minVersionForCollab: MinimumVersionForCollab,
 ): RuntimeOptionsAffectingDocSchema {
-	return getConfigsForCompatMode(
+	return getConfigsForMinVersionForCollab(
 		minVersionForCollab,
 		runtimeOptionsAffectingDocSchemaConfigMap,
 		// This is a bad cast away from Partial that getConfigsForCompatMode provides.
@@ -187,7 +191,7 @@ export function getMinVersionForCollabDefaults(
 /**
  * Returns a default configuration given minVersionForCollab and configuration version map.
  */
-export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknown>>(
+export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
 	minVersionForCollab: SemanticVersion,
 	configMap: ConfigMap<T>,
 ): Partial<T> {
@@ -225,4 +229,34 @@ export function isValidMinVersionForCollab(
 		gte(minVersionForCollab, lowestMinVersionForCollab) &&
 		lte(minVersionForCollab, pkgVersion)
 	);
+}
+
+/**
+ * Validates if the runtime options passed in from the user are compatible with the minVersionForCollab.
+ * For example, if a user sets the `enableGroupedBatching` option to true, but the minVersionForCollab
+ * is set to "1.0.0", then we should throw a UsageError since 1.x clients do not support batching.
+ */
+export function validateRuntimeOptions(
+	runtimeOptions: IContainerRuntimeOptions,
+	minVersionForCollab: MinimumVersionForCollab,
+): void {
+	// Iterate through runtime options and compare against config map
+	for (const [key, value] of Object.entries(runtimeOptions)) {
+		// Skip if key is not in config map
+		if (!(key in runtimeOptionsAffectingDocSchemaConfigMap)) {
+			continue;
+		}
+
+		const config =
+			runtimeOptionsAffectingDocSchemaConfigMap[key as keyof RuntimeOptionsAffectingDocSchema];
+		const versions = Object.keys(config).sort(compare);
+
+		for (const version of versions) {
+			if (value === config[version] && gt(version, minVersionForCollab)) {
+				throw new UsageError(
+					`Runtime option ${key}:${JSON.stringify(value)} is not compatible with minVersionForCollab: ${minVersionForCollab}.`,
+				);
+			}
+		}
+	}
 }

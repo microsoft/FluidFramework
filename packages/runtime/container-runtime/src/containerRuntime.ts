@@ -168,6 +168,7 @@ import {
 	isValidMinVersionForCollab,
 	type RuntimeOptionsAffectingDocSchema,
 	type MinimumVersionForCollab,
+	validateRuntimeOptions,
 } from "./compatUtils.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
@@ -838,6 +839,10 @@ export class ContainerRuntime
 				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 2.22.1).`,
 			);
 		}
+		// We also validate that there is not a mismatch between `minVersionForCollab` and runtime options that
+		// were manually set.
+		validateRuntimeOptions(runtimeOptions, minVersionForCollab);
+
 		const defaultsAffectingDocSchema = getMinVersionForCollabDefaults(minVersionForCollab);
 
 		// The following are the default values for the options that do not affect the DocumentSchema.
