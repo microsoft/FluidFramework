@@ -11582,6 +11582,9 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../test/test-utils
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../service-clients/tinylicious-client
       '@microsoft/api-extractor':
         specifier: 7.52.8
         version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
@@ -11624,9 +11627,15 @@ importers:
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
+      tinylicious:
+        specifier: ^5.0.0
+        version: 5.0.0
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
 
   packages/framework/request-handler:
     dependencies:

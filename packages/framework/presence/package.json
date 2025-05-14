@@ -123,6 +123,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
+		"@fluidframework/tinylicious-client": "workspace:~",
 		"@microsoft/api-extractor": "7.52.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
@@ -137,7 +138,9 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
 		"sinon": "^18.0.1",
-		"typescript": "~5.4.5"
+		"tinylicious": "^5.0.0",
+		"typescript": "~5.4.5",
+		"uuid": "^9.0.0"
 	},
 	"fluidBuild": {
 		"tasks": {
