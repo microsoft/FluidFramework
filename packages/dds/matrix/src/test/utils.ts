@@ -14,7 +14,7 @@ import {
 	IMatrixWriter,
 } from "@tiny-calc/nano";
 
-import { SharedMatrix, type ISharedMatrix } from "../index.js";
+import { SharedMatrix, ISharedMatrix } from "../index.js";
 
 /**
  * Convenience export of SharedMatrix's factory for usage in tests.
@@ -228,18 +228,18 @@ export function insertFragmented(
 /**
  * Creates a local matrix with the specified size and for dense test matrix given initial value.
  * Otherwise, leaving the initial value as undefined will create a sparse matrix.
- * @param id - The id of the matrix.
- * @param size - The size of the matrix.
- * @param initialValue - The initial value of each cell in the dense matrix.
  */
 export function createLocalMatrix({
 	id,
 	size,
 	initialValue,
 }: {
-	id: string;
-	size: number;
-	initialValue?: string;
+	// The id of the matrix.
+	readonly id: string;
+	// The number of rows and columns that will be in the matrix.
+	readonly size: number;
+	// The initial value of each cell in the dense matrix. If not specified, no cell values will be inserted into the table, leaving it sparse.
+	readonly initialValue?: string;
 }): ISharedMatrix & IChannel {
 	const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), id);
 	matrix.insertRows(0, size);

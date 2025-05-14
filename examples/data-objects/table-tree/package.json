@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/table-tree",
-	"version": "2.40.0",
+	"version": "2.41.0",
 	"private": true,
 	"description": "Simple table example app.",
 	"homepage": "https://fluidframework.com",
@@ -50,6 +50,7 @@
 		"@fluidframework/tree": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
+		"scheduler": "^0.20.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -93,5 +94,10 @@
 				"library": "main"
 			}
 		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }
