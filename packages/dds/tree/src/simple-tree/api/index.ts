@@ -107,7 +107,6 @@ export {
 
 export {
 	extractPersistedSchema,
-	comparePersistedSchemaInternal,
 	comparePersistedSchema,
 } from "./storedSchema.js";
 

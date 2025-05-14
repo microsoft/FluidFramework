@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-tests",
-	"version": "2.40.0",
+	"version": "2.41.0",
 	"private": true,
 	"description": "Tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -91,6 +91,7 @@
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
+		"sinon": "^18.0.1",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5"
 	},

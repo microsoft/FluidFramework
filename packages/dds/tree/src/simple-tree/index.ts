@@ -79,7 +79,6 @@ export {
 	extractPersistedSchema,
 	comparePersistedSchema,
 	type ConciseTree,
-	comparePersistedSchemaInternal,
 	SchemaCompatibilityTester,
 	type Unenforced,
 	type System_Unsafe,
@@ -184,10 +183,7 @@ export {
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";
-export {
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
+export { getTreeNodeForField } from "./proxies.js";
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
@@ -220,6 +216,10 @@ export {
 	type FactoryContent,
 	type FactoryContentObject,
 } from "./toMapTree.js";
+export {
+	prepareForInsertion,
+	prepareForInsertionContextless,
+} from "./prepareForInsertion.js";
 export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
 export {
 	numberSchema,
