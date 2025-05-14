@@ -444,6 +444,7 @@ describe("LazyField", () => {
 		const rootSchema: TreeFieldStoredSchema = {
 			kind: FieldKinds.sequence.identifier,
 			types: new Set([brand(numberSchema.identifier)]),
+			persistedMetadata: undefined,
 		};
 		const schema: TreeStoredSchema = {
 			rootFieldSchema: rootSchema,

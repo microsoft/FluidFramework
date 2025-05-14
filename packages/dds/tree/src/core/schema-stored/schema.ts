@@ -380,11 +380,12 @@ export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaF
 	};
 }
 
-export function decodeFieldSchema(schema: FieldSchemaFormat): TreeFieldStoredSchema {
+export function decodeFieldSchema(schema: FieldSchemaFormatV2): TreeFieldStoredSchema {
 	const out: TreeFieldStoredSchema = {
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: schema.kind,
 		types: new Set(schema.types),
+		persistedMetadata: schema.persistedMetadata,
 	};
 	return out;
 }

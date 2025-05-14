@@ -20,8 +20,8 @@ import {
 	decodeFieldSchema,
 	encodeFieldSchemaV1,
 	encodeFieldSchemaV2,
-	schemaFormatV1,
-	schemaFormatV2,
+	type schemaFormatV1,
+	type schemaFormatV2,
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
 import { brand, type JsonCompatible } from "../../util/index.js";
@@ -111,7 +111,7 @@ function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 		});
 	}
 	return {
-		version: schemaFormatV1.version,
+		version: SchemaCodecVersion.v1,
 		nodes: nodeSchema,
 		root: rootFieldSchema,
 	};
@@ -131,7 +131,7 @@ function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 		});
 	}
 	return {
-		version: schemaFormatV2.version,
+		version: SchemaCodecVersion.v2,
 		nodes: nodeSchema,
 		root: rootFieldSchema,
 	};
@@ -154,7 +154,7 @@ function decode(f: FormatV1 | FormatV2): TreeStoredSchema {
  * @returns The codec.
  */
 function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV1> {
-	return makeVersionedValidatedCodec(options, new Set([schemaFormatV1.version]), FormatV1, {
+	return makeVersionedValidatedCodec(options, new Set([SchemaCodecVersion.v1]), FormatV1, {
 		encode: (data: TreeStoredSchema) => encodeRepoV1(data),
 		decode: (data: FormatV1) => decode(data),
 	});
@@ -166,7 +166,7 @@ function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema,
  * @returns The codec.
  */
 function makeSchemaCodecV2(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV2> {
-	return makeVersionedValidatedCodec(options, new Set([schemaFormatV2.version]), FormatV2, {
+	return makeVersionedValidatedCodec(options, new Set([SchemaCodecVersion.v2]), FormatV2, {
 		encode: (data: TreeStoredSchema) => encodeRepoV2(data),
 		decode: (data: FormatV2) => decode(data),
 	});

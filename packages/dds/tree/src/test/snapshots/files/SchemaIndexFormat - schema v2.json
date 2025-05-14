@@ -30,8 +30,7 @@
                       "items": {
                         "type": "string"
                       }
-                    },
-                    "persistedMetadata": {}
+                    }
                   },
                   "required": [
                     "kind",
@@ -52,8 +51,7 @@
                   "items": {
                     "type": "string"
                   }
-                },
-                "persistedMetadata": {}
+                }
               },
               "required": [
                 "kind",
@@ -84,7 +82,7 @@
                 }
               ]
             },
-            "persistedMetadata": {}
+            "metadata": {}
           }
         }
       }
