@@ -34,6 +34,8 @@ import { debugAssert, oob } from "@fluidframework/core-utils/internal";
  * Prepare content from a user for insertion into a tree.
  * @remarks
  * This validates and converts the input, and if necessary invokes {@link prepareContentForHydration}.
+ *
+ * The next edit made to the context must be the insertion of this content otherwise hydration will break.
  */
 export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
@@ -50,13 +52,12 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 
 /**
  * {@link prepareForInsertion} but batched for array content.
+ * @remarks
+ * This is for inserting items into an array, not an {@link TreeArrayNode} (That would use {@link prepareForInsertion}).
  * @privateRemarks
- * TODO:
- * Experimentally it was determined that making separate calls to prepareContentForHydration for each array item did not work.
- * This should be understood and fixed or have the factors that cause it clearly documented.
- * If fixed, this function should be removed, and arrays can just map over prepareForInsertion.
+ * This has to be done as a single operation due to how the eventing in prepareContentForHydration.
  */
-export function prepareArrayForInsertion(
+export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
 	schema: ImplicitAllowedTypes,
 	destinationContext: FlexTreeContext,
