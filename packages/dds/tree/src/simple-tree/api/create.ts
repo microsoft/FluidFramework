@@ -28,12 +28,11 @@ import {
 import {
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
-	inSchemaOrThrow,
 	mapTreeFromCursor,
 	type NodeIdentifierManager,
 } from "../../feature-libraries/index.js";
 import { isFieldInSchema } from "../../feature-libraries/index.js";
-import { mapTreeFromNodeData } from "../toMapTree.js";
+import { inSchemaOrThrow, mapTreeFromNodeData } from "../toMapTree.js";
 import { getUnhydratedContext } from "../createContext.js";
 import { createUnknownOptionalFieldPolicy } from "../objectNode.js";
 
