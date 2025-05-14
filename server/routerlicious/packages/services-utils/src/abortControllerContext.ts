@@ -17,7 +17,6 @@ export const bindAbortControllerContext = (): RequestHandler => {
 	return (request, response, next) => {
 		const abortControllerContext = getGlobalAbortControllerContext();
 		const abortController = new AbortController();
-		abortControllerContext.bindAbortController(abortController, () => next());
 		// Set up listener for client disconnection
 		request.socket.on("close", () => {
 			// Only if the response has not been sent yet, abort the signal
@@ -42,6 +41,6 @@ export const bindAbortControllerContext = (): RequestHandler => {
 				});
 			}
 		});
-		next();
+		abortControllerContext.bindAbortController(abortController, () => next());
 	};
 };
