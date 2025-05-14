@@ -112,7 +112,7 @@ interface Root extends UpPath {
 }
 
 /**
- * The path from the included node to the to the root of the content tree it was inserted as part of.
+ * The path from the included node to the root of the content tree it was inserted as part of.
  */
 interface RelativeNodePath {
 	readonly path: UpPath;
