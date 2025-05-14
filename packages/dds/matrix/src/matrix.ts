@@ -69,6 +69,7 @@ interface ISetOpMetadata {
 	rowsRef: LocalReferencePosition;
 	colsRef: LocalReferencePosition;
 	referenceSeqNumber: number;
+	previous: MatrixItem<unknown>;
 }
 
 /**
@@ -243,7 +244,7 @@ export class SharedMatrix<T = any>
 	private readonly cols: PermutationVector; // Map logical col to storage handle (if any)
 
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
-	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
+	private readonly pending = new SparseArray2D<number[]>(); // Tracks pending writes.
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence number and clientId in a cell.
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
 	private setCellLwwToFwwPolicySwitchOpSeqNumber: number;
@@ -410,21 +411,21 @@ export class SharedMatrix<T = any>
 		value: MatrixItem<T>,
 		rowHandle = this.rows.getAllocatedHandle(row),
 		colHandle = this.cols.getAllocatedHandle(col),
+		rollback?: boolean,
 	): void {
 		this.protectAgainstReentrancy(() => {
+			let oldValue = this.cells.getCell(rowHandle, colHandle);
+			if (oldValue === null) {
+				oldValue = undefined;
+			}
 			if (this.undo !== undefined) {
-				let oldValue = this.cells.getCell(rowHandle, colHandle);
-				if (oldValue === null) {
-					oldValue = undefined;
-				}
-
 				this.undo.cellSet(rowHandle, colHandle, oldValue);
 			}
 
 			this.cells.setCell(rowHandle, colHandle, value);
 
-			if (this.isAttached()) {
-				this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+			if (this.isAttached() && rollback !== true) {
+				this.sendSetCellOp(row, col, value, rowHandle, colHandle, oldValue);
 			}
 
 			// Avoid reentrancy by raising change notifications after the op is queued.
@@ -458,6 +459,7 @@ export class SharedMatrix<T = any>
 		value: MatrixItem<T>,
 		rowHandle: Handle,
 		colHandle: Handle,
+		previous: MatrixItem<T>,
 		localSeq = this.nextLocalSeq(),
 	): void {
 		assert(
@@ -483,10 +485,13 @@ export class SharedMatrix<T = any>
 			rowsRef,
 			colsRef,
 			referenceSeqNumber: this.deltaManager.lastSequenceNumber,
+			previous,
 		};
 
 		this.submitLocalMessage(op, metadata);
-		this.pending.setCell(rowHandle, colHandle, localSeq);
+		const pending = this.pending.getCell(rowHandle, colHandle) ?? [];
+		pending.push(localSeq);
+		this.pending.setCell(rowHandle, colHandle, pending);
 	}
 
 	/**
@@ -623,7 +628,7 @@ export class SharedMatrix<T = any>
 				const colHandle = this.colHandles.getHandle(col);
 				const value = this.cells.getCell(rowHandle, colHandle);
 				if (this.isAttached() && value !== undefined && value !== null) {
-					this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+					this.sendSetCellOp(row, col, value, rowHandle, colHandle, undefined);
 				}
 			}
 		}
@@ -647,7 +652,7 @@ export class SharedMatrix<T = any>
 				const rowHandle = this.rowHandles.getHandle(row);
 				const value = this.cells.getCell(rowHandle, colHandle);
 				if (this.isAttached() && value !== undefined && value !== null) {
-					this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+					this.sendSetCellOp(row, col, value, rowHandle, colHandle, undefined);
 				}
 			}
 		}
@@ -776,8 +781,15 @@ export class SharedMatrix<T = any>
 
 		if (content.type === MatrixOp.set && content.target === undefined) {
 			const setOp = content;
-			const { rowHandle, colHandle, localSeq, rowsRef, colsRef, referenceSeqNumber } =
-				localOpMetadata as ISetOpMetadata;
+			const {
+				rowHandle,
+				colHandle,
+				localSeq,
+				rowsRef,
+				colsRef,
+				referenceSeqNumber,
+				previous,
+			} = localOpMetadata as ISetOpMetadata;
 
 			// If after rebasing the op, we get a valid row/col number, that means the row/col
 			// handles have not been recycled and we can safely use them.
@@ -790,6 +802,11 @@ export class SharedMatrix<T = any>
 					rowHandle,
 					colHandle,
 				);
+				const pending = this.pending.getCell(rowHandle, colHandle);
+				assert(pending !== undefined, "local operation must have a pending array");
+				const localSeqIndex = pending.indexOf(localSeq);
+				assert(localSeqIndex >= 0, "local operation must have a pending entry");
+				pending.splice(localSeqIndex, 1);
 				// If the mode is LWW, then send the op.
 				// Otherwise if the current mode is FWW and if we generated this op, after seeing the
 				// last set op, or it is the first set op for the cell, then regenerate the op,
@@ -800,10 +817,15 @@ export class SharedMatrix<T = any>
 					lastCellModificationDetails === undefined ||
 					referenceSeqNumber >= lastCellModificationDetails.seqNum
 				) {
-					this.sendSetCellOp(row, col, setOp.value, rowHandle, colHandle, localSeq);
-				} else if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
-					// Clear the pending changes if any as we are not sending the op.
-					this.pending.setCell(rowHandle, colHandle, undefined);
+					this.sendSetCellOp(
+						row,
+						col,
+						setOp.value,
+						rowHandle,
+						colHandle,
+						previous as MatrixItem<T>,
+						localSeq,
+					);
 				}
 			}
 		} else {
@@ -939,7 +961,17 @@ export class SharedMatrix<T = any>
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq, rowsRef, colsRef } =
 						localOpMetadata as ISetOpMetadata;
-					const isLatestPendingOp = this.isLatestPendingWrite(rowHandle, colHandle, localSeq);
+
+					const pending = this.pending.getCell(rowHandle, colHandle);
+					assert(
+						pending?.[0] === localSeq,
+						"the local seq of the metadata and the oldest pending entry should always match",
+					);
+					pending.shift();
+
+					// if there are no more pending entries, the current must be the latest
+					//
+					const isLatestPendingOp = pending.length === 0;
 					this.rows.removeLocalReferencePosition(rowsRef);
 					this.cols.removeLocalReferencePosition(colsRef);
 					// If policy is switched and cell should be modified too based on policy, then update the tracker.
@@ -953,10 +985,6 @@ export class SharedMatrix<T = any>
 							seqNum: msg.sequenceNumber,
 							clientId: msg.clientId,
 						});
-					}
-
-					if (isLatestPendingOp) {
-						this.pending.setCell(rowHandle, colHandle, undefined);
 					}
 				} else {
 					const adjustedRow = this.rows.adjustPosition(row, msg);
@@ -989,7 +1017,7 @@ export class SharedMatrix<T = any>
 										consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
 									}
 									// Check is there are any pending changes, which will be rejected. If so raise conflict.
-									if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
+									if ((this.pending.getCell(rowHandle, colHandle)?.length ?? 0) > 0) {
 										// Don't reset the pending value yet, as there maybe more fww op from same client, so we want
 										// to raise conflict event for that op also.
 										this.emit(
@@ -1002,7 +1030,7 @@ export class SharedMatrix<T = any>
 										);
 									}
 								}
-							} else if (this.pending.getCell(rowHandle, colHandle) === undefined) {
+							} else if ((this.pending.getCell(rowHandle, colHandle)?.length ?? 0) === 0) {
 								// If there is a pending (unACKed) local write to the same cell, skip the current op
 								// since it "happened before" the pending write.
 								this.cells.setCell(rowHandle, colHandle, value);
@@ -1022,6 +1050,42 @@ export class SharedMatrix<T = any>
 			default: {
 				unreachableCase(target, "unknown target");
 			}
+		}
+	}
+
+	protected rollback(content: unknown, localOpMetadata: unknown): void {
+		const contents = content as MatrixSetOrVectorOp<T>;
+		const target = contents.target;
+
+		switch (target) {
+			case SnapshotPath.cols: {
+				this.cols.rollback(content, localOpMetadata);
+				break;
+			}
+			case SnapshotPath.rows: {
+				this.rows.rollback(content, localOpMetadata);
+				break;
+			}
+			case undefined: {
+				assert(contents.type === MatrixOp.set, "only sets supported");
+				const setMetadata = localOpMetadata as ISetOpMetadata;
+				this.setCellCore(
+					contents.row,
+					contents.col,
+					setMetadata.previous as MatrixItem<T>,
+					setMetadata.rowHandle,
+					setMetadata.colHandle,
+					true,
+				);
+				const localSeq = this.pending
+					.getCell(setMetadata.rowHandle, setMetadata.colHandle)
+					?.pop();
+				assert(
+					localSeq === setMetadata.localSeq,
+					"we should only rollback the last local operation",
+				);
+			}
+			default:
 		}
 	}
 
@@ -1071,35 +1135,6 @@ export class SharedMatrix<T = any>
 				this.setCellLwwToFwwPolicySwitchOpSeqNumber = 0;
 			}
 		}
-	}
-
-	/**
-	 * Returns true if the latest pending write to the cell indicated by the given row/col handles
-	 * matches the given 'localSeq'.
-	 *
-	 * A return value of `true` indicates that there are no later local operations queued that will
-	 * clobber the write op at the given 'localSeq'.  This includes later ops that overwrite the cell
-	 * with a different value as well as row/col removals that might recycled the given row/col handles.
-	 */
-	private isLatestPendingWrite(
-		rowHandle: Handle,
-		colHandle: Handle,
-		localSeq: number,
-	): boolean {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const pendingLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
-
-		// Note while we're awaiting the ACK for a local set, it's possible for the row/col to be
-		// locally removed and the row/col handles recycled.  If this happens, the pendingLocalSeq will
-		// be 'undefined' or > 'localSeq'.
-		assert(
-			!(pendingLocalSeq < localSeq),
-			0x023 /* "The 'localSeq' of pending write (if any) must be <= the localSeq of the currently processed op." */,
-		);
-
-		// If this is the most recent write to the cell by the local client, the stored localSeq
-		// will be an exact match for the given 'localSeq'.
-		return pendingLocalSeq === localSeq;
 	}
 
 	public toString(): string {

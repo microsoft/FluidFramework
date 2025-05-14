@@ -76,6 +76,7 @@
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
+		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
@@ -105,7 +106,8 @@
 				"^tsc",
 				"^api-extractor:commonjs",
 				"@fluidframework/sequence#build:test",
-				"@fluidframework/map#build:test"
+				"@fluidframework/map#build:test",
+				"@fluidframework/matrix#build:test"
 			]
 		}
 	},

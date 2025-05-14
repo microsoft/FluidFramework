@@ -93,7 +93,6 @@ describe("Local Server Stress with rollback", () => {
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
 		skip: [
 			...[1], // closed container: 0xb85
-			...[47], //  Mismatch in pending changes
 			...[15, 23, 51, 63, 65], //  Number of subDirectories/keys not same
 			...[13], // 0xb86 and 0xb89: exit staging mode logic failing due to id compressor allocation ops
 		],

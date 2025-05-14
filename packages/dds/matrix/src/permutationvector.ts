@@ -342,16 +342,18 @@ export class PermutationVector extends Client {
 			case MergeTreeDeltaType.INSERT: {
 				// Pass 1: Perform any internal maintenance first to avoid reentrancy.
 				for (const { segment, position } of ranges) {
-					// HACK: We need to include the allocated handle in the segment's JSON representation
-					//       for snapshots, but need to ignore the remote client's handle allocations when
-					//       processing remote ops.
-					segment.reset();
+					if (opArgs.rollback !== true) {
+						// HACK: We need to include the allocated handle in the segment's JSON representation
+						//       for snapshots, but need to ignore the remote client's handle allocations when
+						//       processing remote ops.
+						segment.reset();
 
-					this.handleCache.itemsChanged(
-						position,
-						/* deleteCount: */ 0,
-						/* insertCount: */ segment.cachedLength,
-					);
+						this.handleCache.itemsChanged(
+							position,
+							/* deleteCount: */ 0,
+							/* insertCount: */ segment.cachedLength,
+						);
+					}
 				}
 
 				// Pass 2: Notify the 'deltaCallback', which may involve callbacks into user code.
