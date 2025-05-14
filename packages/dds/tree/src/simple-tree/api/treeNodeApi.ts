@@ -288,7 +288,7 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 /**
  * Gets the stored key with which the provided node is associated in the parent.
  */
-function getStoredKey(node: TreeNode): string | number {
+export function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
@@ -309,7 +309,7 @@ function getStoredKey(node: TreeNode): string | number {
 /**
  * Given a node schema, gets the property key corresponding with the provided {@link FieldProps.key | stored key}.
  */
-function getPropertyKeyFromStoredKey(
+export function getPropertyKeyFromStoredKey(
 	schema: TreeNodeSchema,
 	storedKey: string | number,
 ): string | number {
