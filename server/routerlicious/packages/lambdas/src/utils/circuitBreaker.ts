@@ -109,7 +109,7 @@ export class LambdaCircuitBreaker {
 			openCount: this.circuitBreakerOpenCount,
 			state: this.circuitBreaker.toJSON()?.state,
 		};
-		if (this.circuitBreakerMetric) {
+		if (this.circuitBreakerMetric && !this.circuitBreakerMetric.isCompleted()) {
 			this.circuitBreakerMetric?.setProperties(metricProperties);
 			this.circuitBreakerMetric?.success("Circuit breaker shutdown"); // could be due to rebalancing
 		} else {
