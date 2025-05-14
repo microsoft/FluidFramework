@@ -181,9 +181,15 @@ export abstract class TreeNodeStoredSchema {
 	 * This is uses an opaque type to avoid leaking these types out of the package,
 	 * and is runtime validated by the codec.
 	 */
-	public abstract encode(
-		schemaWriteVersion: SchemaCodecVersion,
-	): TreeNodeSchemaDataFormatV1 | TreeNodeSchemaDataFormatV2;
+	public abstract encodeV1(): TreeNodeSchemaDataFormatV1;
+
+	/**
+	 * @privateRemarks
+	 * Returns TreeNodeSchemaDataFormat.
+	 * This is uses an opaque type to avoid leaking these types out of the package,
+	 * and is runtime validated by the codec.
+	 */
+	public abstract encodeV2(): TreeNodeSchemaDataFormatV2;
 
 	/**
 	 * Returns the schema for the provided field.
@@ -208,29 +214,35 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(
-		schemaWriteVersion: SchemaCodecVersion,
-	): TreeNodeSchemaDataFormatV1 | TreeNodeSchemaDataFormatV2 {
+	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
 		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {
-			let value: FieldSchemaFormatV1 | FieldSchemaFormatV2 | undefined;
+			const value = encodeFieldSchemaV1(
+				this.objectNodeFields.get(key) ?? fail(0xae6 /* missing field */),
+			);
 
-			switch (schemaWriteVersion) {
-				case SchemaCodecVersion.v1:
-					value = encodeFieldSchemaV1(
-						this.objectNodeFields.get(key) ?? fail(0xae6 /* missing field */),
-					);
-					break;
-				case SchemaCodecVersion.v2:
-					value = encodeFieldSchemaV2(
-						this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
-					);
-					break;
-				default:
-					fail(`Cannot decode schema version ${schemaWriteVersion}`);
-			}
+			Object.defineProperty(fieldsObject, key, {
+				enumerable: true,
+				configurable: true,
+				writable: true,
+				value,
+			});
+		}
+		return {
+			object: fieldsObject,
+		};
+	}
+
+	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
+		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
+		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
+		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
+		for (const key of [...this.objectNodeFields.keys()].sort()) {
+			const value = encodeFieldSchemaV1(
+				this.objectNodeFields.get(key) ?? fail(0xae6 /* missing field */),
+			);
 
 			Object.defineProperty(fieldsObject, key, {
 				enumerable: true,
@@ -264,23 +276,16 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(
-		schemaWriteVersion: SchemaCodecVersion,
-	): TreeNodeSchemaDataFormatV1 | TreeNodeSchemaDataFormatV2 {
-		switch (schemaWriteVersion) {
-			case SchemaCodecVersion.v1: {
-				return {
-					map: encodeFieldSchemaV1(this.mapFields),
-				};
-			}
-			case SchemaCodecVersion.v2: {
-				return {
-					map: encodeFieldSchemaV2(this.mapFields),
-				};
-			}
-			default:
-				fail(`Cannot decode schema version ${schemaWriteVersion}`);
-		}
+	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
+		return {
+			map: encodeFieldSchemaV1(this.mapFields),
+		};
+	}
+
+	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
+		return {
+			map: encodeFieldSchemaV2(this.mapFields),
+		};
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
@@ -307,9 +312,13 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(
-		schemaWriteVersion: SchemaCodecVersion,
-	): TreeNodeSchemaDataFormatV1 | TreeNodeSchemaDataFormatV2 {
+	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
+		return {
+			leaf: encodeValueSchema(this.leafValue),
+		};
+	}
+
+	public override encodeV2(): TreeNodeSchemaDataFormatV1 {
 		return {
 			leaf: encodeValueSchema(this.leafValue),
 		};

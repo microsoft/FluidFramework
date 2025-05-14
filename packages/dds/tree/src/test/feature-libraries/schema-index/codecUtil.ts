@@ -30,8 +30,6 @@ export function schemaFormatToClientVersion(
 	switch (schemaFormat) {
 		case SchemaCodecVersion.v1:
 			return FluidClientVersion.v2_0;
-		case SchemaCodecVersion.v2:
-			return FluidClientVersion.v2_4;
 		default:
 			assert(false, `Unsupported schema format: ${schemaFormat}`);
 	}

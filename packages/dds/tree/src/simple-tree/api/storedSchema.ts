@@ -3,18 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
+import type { ICodecOptions } from "../../codec/index.js";
 import { SchemaCodecVersion, type TreeStoredSchema } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
 	makeSchemaCodec,
 } from "../../feature-libraries/index.js";
-import {
-	clientVersionToSchemaVersion,
-	type FormatV1,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/schema-index/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { FormatV1 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
 import { simpleToStoredSchema } from "../toStoredSchema.js";
@@ -54,11 +51,10 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
  */
 export function extractPersistedSchema(
 	schema: SimpleTreeSchema,
-	oldestCompatibleClient: FluidClientVersion,
+	schemaWriteVersion: number,
 ): JsonCompatible {
 	const stored = simpleToStoredSchema(schema);
-	const writeVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
-	return encodeTreeSchema(stored, writeVersion);
+	return encodeTreeSchema(stored, schemaWriteVersion);
 }
 
 /**

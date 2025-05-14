@@ -44,8 +44,6 @@ export function clientVersionToSchemaVersion(
 		case FluidClientVersion.v2_2:
 		case FluidClientVersion.v2_3:
 			return SchemaCodecVersion.v1;
-		case FluidClientVersion.v2_4:
-			return SchemaCodecVersion.v2;
 		default:
 			unreachableCase(clientVersion);
 	}
@@ -109,7 +107,7 @@ function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: schema.encode(SchemaCodecVersion.v1),
+			value: schema.encodeV1(),
 		});
 	}
 	return {
@@ -129,7 +127,7 @@ function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: schema.encode(SchemaCodecVersion.v2),
+			value: schema.encodeV2(),
 		});
 	}
 	return {

@@ -13,8 +13,8 @@ import {
 import { testSimpleTrees } from "../../testTrees.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
-import { FluidClientVersion } from "../../../codec/index.js";
 import { TreeViewConfigurationAlpha } from "../../../simple-tree/index.js";
+import { SchemaCodecVersion } from "../../../core/index.js";
 
 describe("simple-tree storedSchema", () => {
 	describe("test-schema", () => {
@@ -24,7 +24,7 @@ describe("simple-tree storedSchema", () => {
 			it(`${test.name} - schema v1`, () => {
 				const persisted = extractPersistedSchema(
 					new TreeViewConfigurationAlpha({ schema: test.schema }),
-					FluidClientVersion.v2_0,
+					SchemaCodecVersion.v1,
 				);
 
 				takeJsonSnapshot(persisted);
@@ -35,7 +35,7 @@ describe("simple-tree storedSchema", () => {
 			it(`comparePersistedSchema to self ${test.name} - schema v1`, () => {
 				const persistedA = extractPersistedSchema(
 					new TreeViewConfigurationAlpha({ schema: test.schema }),
-					FluidClientVersion.v2_0,
+					SchemaCodecVersion.v1,
 				);
 
 				const status = comparePersistedSchema(
