@@ -60,7 +60,10 @@ describe("Presence", () => {
 		}
 
 		beforeEach(() => {
-			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+			presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+
+			// Pass a little time (to mimic reality)
+			clock.tick(10);
 		});
 
 		afterEach(() => {
@@ -68,6 +71,58 @@ describe("Presence", () => {
 				cleanUp();
 			}
 			afterCleanUp.length = 0;
+		});
+
+		describe("multiple users", () => {
+			beforeEach(() => {});
+
+			it("connects", () => {
+				runtime.signalsExpected.push([
+					"Pres:DatastoreUpdate",
+					{
+						"avgLatency": 10,
+						"data": {
+							"system:presence": {
+								"clientToSessionId": {
+									"client2": {
+										"rev": 0,
+										"timestamp": initialTime,
+										"value": "attendeeId-2",
+									},
+								},
+							},
+						},
+						"isComplete": true,
+						"sendTimestamp": clock.now,
+					},
+				]);
+
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:ClientJoin",
+						content: {
+							sendTimestamp: clock.now - 50,
+							avgLatency: 50,
+							data: {},
+							updateProviders: ["client2"],
+						},
+						clientId: "client4",
+					},
+					false,
+				);
+
+				// Join a second user
+				// const joinSignal = generateBasicClientJoin(initialTime + 50, {
+				// 	attendeeId: "attendeeId-3",
+				// 	clientConnectionId: "client3",
+				// 	updateProviders: ["client2"],
+				// });
+				// runtime.signalsExpected.push([joinSignal.type, joinSignal.content]);
+				// runtime.submitSignal(joinSignal.type, joinSignal.content);
+
+				console.log("foobar");
+			});
 		});
 
 		describe("LatestValueManager", () => {
