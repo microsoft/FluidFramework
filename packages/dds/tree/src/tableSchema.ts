@@ -524,26 +524,10 @@ export namespace System_TableSchema {
 				columns,
 				index,
 			}: TableSchema.InsertColumnsParameters<TColumnSchema>): ColumnValueType[] {
-				// #region Input validation
-
 				// Ensure index is valid
 				if (index !== undefined) {
 					Table.validateInsertionIndex(index, this.columns);
 				}
-
-				// Check all of the columns being inserted an ensure the table does not already contain any with the same ID.
-				for (const column of columns) {
-					// TypeScript is unable to narrow the type of the column type correctly here, hence the casts below.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					const maybeId = (column as ColumnValueType).id;
-					if (maybeId !== undefined && this.containsColumnWithId(maybeId)) {
-						throw new UsageError(
-							`A column with ID "${(column as ColumnValueType).id}" already exists in the table.`,
-						);
-					}
-				}
-
-				// #endregion
 
 				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -584,14 +568,6 @@ export namespace System_TableSchema {
 				// Note: TypeScript is unable to narrow the type of the row type correctly here, hence the casts below.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				for (const newRow of rows) {
-					// Check all of the rows being inserted an ensure the table does not already contain any with the same ID.
-					const maybeId = (newRow as RowValueType).id;
-					if (maybeId !== undefined && this.containsRowWithId(maybeId)) {
-						throw new UsageError(
-							`A row with ID "${(newRow as RowValueType).id}" already exists in the table.`,
-						);
-					}
-
 					// If the row contains cells, verify that the table contains the columns for those cells.
 					// Note: we intentionally hide `cells` on `IRow` to avoid leaking the internal data representation as much as possible, so we have to cast here.
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1272,12 +1248,7 @@ export namespace TableSchema {
 		/**
 		 * Inserts a column into the table.
 		 *
-		 * @throws
-		 * Throws an error in the following cases:
-		 *
-		 * - The column, or a column with the same ID is already in the tree.
-		 *
-		 * - The specified index is out of range.
+		 * @throws Throws an error if the specified index is out of range.
 		 *
 		 * No column is inserted in these cases.
 		 */
@@ -1288,12 +1259,7 @@ export namespace TableSchema {
 		/**
 		 * Inserts 0 or more columns into the table.
 		 *
-		 * @throws
-		 * Throws an error in the following cases:
-		 *
-		 * - At least one column, or a column with the same ID is already in the tree.
-		 *
-		 * - The specified index is out of range.
+		 * @throws Throws an error if the specified index is out of range.
 		 *
 		 * No columns are inserted in these cases.
 		 */
@@ -1306,8 +1272,6 @@ export namespace TableSchema {
 		 *
 		 * @throws
 		 * Throws an error in the following cases:
-		 *
-		 * - The row, or a row with the same ID is already in the tree.
 		 *
 		 * - The row contains cells, but the table does not contain matching columns for one or more of those cells.
 		 *
@@ -1322,8 +1286,6 @@ export namespace TableSchema {
 		 *
 		 * @throws
 		 * Throws an error in the following cases:
-		 *
-		 * - At least one row, or a row with the same ID is already in the tree.
 		 *
 		 * - The row contains cells, but the table does not contain matching columns for one or more of those cells.
 		 *

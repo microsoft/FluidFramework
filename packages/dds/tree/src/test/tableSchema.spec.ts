@@ -388,25 +388,6 @@ describe("TableFactory unit tests", () => {
 				validateUsageError(/The index specified for insertion is out of bounds./),
 			);
 		});
-
-		it("Inserting existing column fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [],
-				columns: [
-					{ id: "column-a", props: {} },
-					{ id: "column-b", props: {} },
-				],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertColumn({
-						column: { id: "column-b", props: {} },
-					}),
-				validateUsageError(/A column with ID "column-b" already exists in the table./),
-			);
-		});
 	});
 
 	describe("insertColumns", () => {
@@ -551,44 +532,6 @@ describe("TableFactory unit tests", () => {
 				rows: [],
 			});
 		});
-
-		it("Inserting existing column fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-				],
-				rows: [],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertColumns({
-						columns: [
-							{
-								id: "column-c",
-								props: {},
-							},
-							{
-								// A column with this ID already exists in the table
-								id: "column-a",
-								props: {},
-							},
-						],
-					}),
-				validateUsageError(/A column with ID "column-a" already exists in the table./),
-			);
-
-			// Ensure no columns were inserted
-			assert(treeView.root.columns.length === 2);
-		});
 	});
 
 	describe("insertRow", () => {
@@ -701,25 +644,6 @@ describe("TableFactory unit tests", () => {
 						row: { cells: {}, props: {} },
 					}),
 				validateUsageError(/The index specified for insertion is out of bounds./),
-			);
-		});
-
-		it("Inserting existing row fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [
-					{ id: "row-a", cells: {}, props: {} },
-					{ id: "row-b", cells: {}, props: {} },
-				],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertRow({
-						row: { id: "row-b", cells: {}, props: {} },
-					}),
-				validateUsageError(/A row with ID "row-b" already exists in the table./),
 			);
 		});
 
@@ -910,48 +834,6 @@ describe("TableFactory unit tests", () => {
 					},
 				],
 			});
-		});
-
-		it("Inserting existing row fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-				],
-				columns: [],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertRows({
-						rows: [
-							{
-								id: "row-c",
-								cells: {},
-								props: {},
-							},
-							{
-								// A row with this ID already exists in the table
-								id: "row-a",
-								cells: {},
-								props: {},
-							},
-						],
-					}),
-				validateUsageError(/A row with ID "row-a" already exists in the table./),
-			);
-
-			// Ensure no rows were inserted
-			assert(treeView.root.rows.length === 2);
 		});
 	});
 
