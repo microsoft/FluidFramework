@@ -8,7 +8,6 @@
  */
 
 module.exports = {
-	"exit": true,
 	"fgrep": ["@Benchmark", "@ExecutionTime"],
 	"node-option": ["expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
 	"recursive": true,

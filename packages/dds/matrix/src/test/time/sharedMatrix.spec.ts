@@ -26,19 +26,19 @@ describe("SharedMatrix execution time", () => {
 
 	let localMatrix: SharedMatrix;
 	for (const matrixSize of matrixSizes) {
-		beforeEach(() => {
-			localMatrix = createLocalMatrix({
-				id: "testLocalMatrix",
-				size: matrixSize,
-				initialValue: matrixValue,
-			});
-		});
 		describe(`Size of ${matrixSize}*${matrixSize} SharedMatrix`, () => {
 			// Filter counts to ensure remove operation do not exceed matrixSize
 			const validRemoveCounts = operationCounts.filter((count) => count <= matrixSize);
 
-			// Insert related tests that are not limited by matrixSize
+			// Insert-related tests that are not limited by matrixSize
 			for (const count of operationCounts) {
+				beforeEach(() => {
+					localMatrix = createLocalMatrix({
+						id: "testLocalMatrix",
+						size: matrixSize,
+						initialValue: matrixValue,
+					});
+				});
 				// Test the execute time of the SharedMatrix for inserting a column in the middle for a given number of times.
 				benchmark({
 					title: `Insert a column in the middle ${count} times`,
@@ -71,11 +71,17 @@ describe("SharedMatrix execution time", () => {
 				});
 			}
 
+			// Set/Remove-related tests that are limited by matrixSize
 			for (const count of validRemoveCounts) {
 				// Test the execute time of the SharedMatrix for removing a column in the middle for a given number of times.
 				benchmark({
 					title: `Remove the middle column ${count} times`,
 					benchmarkFn: () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
 						for (let i = 0; i < count; i++) {
 							localMatrix.removeCols(Math.floor(localMatrix.colCount / 2), 1);
 						}
@@ -86,6 +92,11 @@ describe("SharedMatrix execution time", () => {
 				benchmark({
 					title: `Remove the middle row ${count} times`,
 					benchmarkFn: () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
 						for (let i = 0; i < count; i++) {
 							localMatrix.removeRows(Math.floor(localMatrix.rowCount / 2), 1);
 						}
@@ -96,6 +107,11 @@ describe("SharedMatrix execution time", () => {
 				benchmark({
 					title: `Remove the middle row and column ${count} times`,
 					benchmarkFn: () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
 						for (let i = 0; i < count; i++) {
 							localMatrix.removeCols(Math.floor(localMatrix.colCount / 2), 1);
 							localMatrix.removeRows(Math.floor(localMatrix.rowCount / 2), 1);
@@ -106,13 +122,6 @@ describe("SharedMatrix execution time", () => {
 				// Test the execute time of the SharedMatrix for setting a string in a cell for a given number of times.
 				benchmark({
 					title: `Set a 3-character string in ${count} cells`,
-					before: () => {
-						localMatrix = createLocalMatrix({
-							id: "testLocalMatrix",
-							size: matrixSize,
-							initialValue: matrixValue,
-						});
-					},
 					benchmarkFn: () => {
 						for (let i = 0; i < count; i++) {
 							localMatrix.setCell(i, i, "abc");
