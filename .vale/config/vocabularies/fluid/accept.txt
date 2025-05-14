@@ -3,3 +3,6 @@ FluidFramework
 JavaScript
 SharedTree
 TypeScript
+API
+APIs
+namespace
