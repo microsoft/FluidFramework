@@ -14,16 +14,10 @@ export interface OdspTestCredentials {
 	SPE_ENTRA_TENANT_ID: string;
 }
 
-declare global {
-	const process: {
-		env: OdspTestCredentials;
-	};
-}
-
 const connectionConfig: OdspConnectionConfig = {
 	tokenProvider: new OdspTestTokenProvider(),
-	siteUrl: process.env.SITE_URL,
-	driveId: process.env.SPE_DRIVE_ID,
+	siteUrl: process.env.SITE_URL as string,
+	driveId: process.env.SPE_DRIVE_ID as string,
 	filePath: "",
 };
 

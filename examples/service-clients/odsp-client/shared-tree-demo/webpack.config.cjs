@@ -61,6 +61,12 @@ module.exports = (env) => {
 					title: "Hello Demo",
 					favicon: "",
 				}),
+				new webpack.DefinePlugin({
+					"process.env.SITE_URL": JSON.stringify(process.env.SITE_URL),
+					"process.env.SPE_DRIVE_ID": JSON.stringify(process.env.SPE_DRIVE_ID),
+					"process.env.SPE_CLIENT_ID": JSON.stringify(process.env.SPE_CLIENT_ID),
+					"process.env.SPE_ENTRA_TENANT_ID": JSON.stringify(process.env.SPE_ENTRA_TENANT_ID),
+				}),
 			],
 		},
 		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
