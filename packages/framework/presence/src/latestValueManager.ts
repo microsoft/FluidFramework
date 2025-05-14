@@ -197,7 +197,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
-			throw new Error("No entry for clientId");
+			throw new Error(`No entry for attendeeId: ${attendee.attendeeId}`);
 		}
 		return {
 			value:
