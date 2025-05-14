@@ -1,5 +1,119 @@
 # @fluid-experimental/presence
 
+## 2.40.0
+
+Dependency updates only.
+
+## 2.33.0
+
+### Minor Changes
+
+- Latest and LatestMap support more types ([#24417](https://github.com/microsoft/FluidFramework/pull/24417)) [619af0b05e2](https://github.com/microsoft/FluidFramework/commit/619af0b05e23c469feb754e93351b7edca1a74a4)
+
+  - `Latest` (`StateFactory.latest`) permits `null` so that nullable types may be used.
+  - `LatestMap` (`StateFactory.latestMap`) permits `boolean`, `number`, `string`, and `null`.
+
+- StateFactory.latest/latestMap take an object as its only argument ([#24414](https://github.com/microsoft/FluidFramework/pull/24414)) [446d4183769](https://github.com/microsoft/FluidFramework/commit/446d418376907317179b19b1111c170b9120103c)
+
+  The `StateFactory.latest` and `StateFactory.latestMap` functions now take a single object argument.
+  To convert existing code, pass any initial data in the `local` argument and broadcast settings in the `settings` argument.
+  For example:
+
+  Before:
+
+  ```ts
+  const statesWorkspace = presence.states.getWorkspace("name:workspace", {
+    cursor: StateFactory.latest(
+      { x: 0, y: 0 },
+      { allowableUpdateLatencyMs: 100 },
+    ),
+  });
+  ```
+
+  After:
+
+  ```ts
+  const statesWorkspace = presence.states.getWorkspace("name:workspace", {
+    cursor: StateFactory.latest({
+      local: { x: 0, y: 0 },
+      settings: { allowableUpdateLatencyMs: 100 },
+    }),
+  });
+  ```
+
+- Presence object is accessible from Workspaces and State objects ([#24396](https://github.com/microsoft/FluidFramework/pull/24396)) [c056567dcdf](https://github.com/microsoft/FluidFramework/commit/c056567dcdfaf5cc126e0487db2451220d3609ba)
+
+  Users can now access the `Presence` object through `.presence` on all Workspaces and State objects:
+
+  `Latest.presence`
+  `LatestMap.presence`
+  `Notifications.presence`
+  `NotificationsWorkspace.presence`
+  `StatesWorkspace.presence`
+
+- Presence APIs have been renamed ([#24384](https://github.com/microsoft/FluidFramework/pull/24384)) [ea95ef0a4f3](https://github.com/microsoft/FluidFramework/commit/ea95ef0a4f372c3fe01187a24515dafc1bfcef91)
+
+  The following API changes have been made to improve clarity and consistency:
+
+  | Before 2.33.0                              | 2.33.0                                              |
+  | ------------------------------------------ | --------------------------------------------------- |
+  | `acquirePresence`                          | `getPresence`                                       |
+  | `acquirePresenceViaDataObject`             | `getPresenceViaDataObject`                          |
+  | `ClientSessionId`                          | `AttendeeId`                                        |
+  | `IPresence`                                | `Presence`                                          |
+  | `IPresence.events["attendeeJoined"]`       | `Presence.attendees.events["attendeeConnected"]`    |
+  | `IPresence.events["attendeeDisconnected"]` | `Presence.attendees.events["attendeeDisconnected"]` |
+  | `IPresence.getAttendee`                    | `Presence.attendees.getAttendee`                    |
+  | `IPresence.getAttendees`                   | `Presence.attendees.getAttendees`                   |
+  | `IPresence.getMyself`                      | `Presence.attendees.getMyself`                      |
+  | `IPresence.getNotifications`               | `Presence.notifications.getWorkspace`               |
+  | `IPresence.getStates`                      | `Presence.states.getWorkspace`                      |
+  | `ISessionClient`                           | `Attendee`                                          |
+  | `Latest` (import)                          | `StateFactory`                                      |
+  | `Latest` (call)                            | `StateFactory.latest`                               |
+  | `LatestEvents.updated`                     | `LatestRawEvents.remoteUpdated`                     |
+  | `LatestMap` (import)                       | `StateFactory`                                      |
+  | `LatestMap` (call)                         | `StateFactory.latestMap`                            |
+  | `LatestMapEvents.itemRemoved`              | `LatestMapRawEvents.remoteItemRemoved`              |
+  | `LatestMapEvents.itemUpdated`              | `LatestMapRawEvents.remoteItemUpdated`              |
+  | `LatestMapEvents.updated`                  | `LatestMapRawEvents.remoteUpdated`                  |
+  | `LatestMapItemValueClientData`             | `LatestMapItemUpdatedClientData`                    |
+  | `LatestMapValueClientData`                 | `LatestMapClientData`                               |
+  | `LatestMapValueManager`                    | `LatestMapRaw`                                      |
+  | `LatestMapValueManager.clients`            | `LatestMapRaw.getStateAttendees`                    |
+  | `LatestMapValueManager.clientValue`        | `LatestMapRaw.getRemote`                            |
+  | `LatestMapValueManager.clientValues`       | `LatestMapRaw.getRemotes`                           |
+  | `LatestMapValueManagerEvents`              | `LatestMapRawEvents`                                |
+  | `LatestValueClientData`                    | `LatestClientData`                                  |
+  | `LatestValueData`                          | `LatestData`                                        |
+  | `LatestValueManager`                       | `LatestRaw`                                         |
+  | `LatestValueManager.clients`               | `LatestRaw.getStateAttendees`                       |
+  | `LatestValueManager.clientValue`           | `LatestRaw.getRemote`                               |
+  | `LatestValueManager.clientValues`          | `LatestRaw.getRemotes`                              |
+  | `LatestValueManagerEvents`                 | `LatestRawEvents`                                   |
+  | `LatestValueMetadata`                      | `LatestMetadata`                                    |
+  | `PresenceEvents.attendeeDisconnected`      | `AttendeesEvents.attendeeDisconnected`              |
+  | `PresenceEvents.attendeeJoined`            | `AttendeesEvents.attendeeConnected`                 |
+  | `PresenceNotifications`                    | `NotificationsWorkspace`                            |
+  | `PresenceNotifications.props`              | `NotificationsWorkspace.notifications`              |
+  | `PresenceNotificationsSchema`              | `NotificationsWorkspaceSchema`                      |
+  | `PresenceStates`                           | `StatesWorkspace`                                   |
+  | `PresenceStates.props`                     | `StatesWorkspace.states`                            |
+  | `PresenceStatesEntries`                    | `StatesWorkspaceEntries`                            |
+  | `PresenceStatesSchema`                     | `StatesWorkspaceSchema`                             |
+  | `PresenceWorkspaceAddress`                 | `WorkspaceAddress`                                  |
+  | `PresenceWorkspaceEntry`                   | `StatesWorkspaceEntry`                              |
+  | `SessionClientStatus`                      | `AttendeeStatus`                                    |
+  | `ValueMap`                                 | `StateMap`                                          |
+
+  > [!NOTE]
+  > To fully replace the former `Latest` and `LatestMap` functions, you should import `StateFactory` and call `StateFactory.latest` and `StateFactory.latestMap` respectively.
+  > The new `LatestRaw` and `LatestMapRaw` APIs replace `LatestValueManager` and `LatestMapValueManager` respectively.
+
+## 2.32.0
+
+Dependency updates only.
+
 ## 2.31.0
 
 Dependency updates only.

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy, fail } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey, SchemaPolicy } from "../core/index.js";
@@ -29,6 +29,9 @@ import {
 	type NodeSchemaMetadata,
 	type FieldSchemaAlpha,
 	ObjectFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
+	unannotateSchemaRecord,
+	type UnannotateSchemaRecord,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -56,6 +59,10 @@ import type { SimpleObjectFieldSchema } from "./simpleSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
+ * @remarks
+ * Due to {@link https://github.com/microsoft/TypeScript/issues/43826}, we can't enable implicit construction of {@link TreeNode|TreeNodes} for setters.
+ * Therefore code assigning to these fields must explicitly construct nodes using the schema's constructor or create method,
+ * or using some other method like {@link (TreeAlpha:interface).create}.
  * @system @public
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
@@ -69,14 +76,17 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
 			};
 
 /**
- * A {@link TreeNode} which modules a JavaScript object.
+ * A {@link TreeNode} which models a JavaScript object.
  * @remarks
- * Object nodes consist of a type which specifies which {@link TreeNodeSchema} they use (see {@link TreeNodeApi.schema}), and a collections of fields, each with a distinct `key` and its own {@link FieldSchema} defining what can be placed under that key.
+ * Object nodes consist of a type which specifies which {@link TreeNodeSchema} they use (see {@link TreeNodeApi.schema} and {@link SchemaFactory.object}),
+ * and a collections of fields, each with a distinct `key` and its own {@link FieldSchema} defining what can be placed under that key.
  *
  * All fields on an object node are exposed as own properties with string keys.
  * Non-empty fields are enumerable and empty optional fields are non-enumerable own properties with the value `undefined`.
  * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
  * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
+ *
+ * The API for fields is defined by {@link ObjectFromSchemaRecord}.
  * @public
  */
 export type TreeObjectNode<
@@ -85,7 +95,9 @@ export type TreeObjectNode<
 > = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
 /**
- * Type utility for determining whether or not an implicit field schema has a default value.
+ * Type utility for determining if an implicit field schema is known to have a default value.
+ *
+ * @remarks Yields `false` when unknown.
  *
  * @privateRemarks
  * TODO: Account for field schemas with default value providers.
@@ -93,9 +105,9 @@ export type TreeObjectNode<
  *
  * @system @public
  */
-export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
-	FieldKind.Optional | FieldKind.Identifier
->
+export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
+	FieldSchema<FieldKind.Optional | FieldKind.Identifier>,
+]
 	? true
 	: false;
 
@@ -148,6 +160,18 @@ export type InsertableObjectFromSchemaRecord<
 		>;
 
 /**
+ * Helper used to remove annotations from a schema record and produce insertable objects,
+ *
+ * @privateremarks
+ * This calls {@link InsertableObjectFromSchemaRecord} in order to produce the insertable objects.
+ *
+ * @system @alpha
+ */
+export type InsertableObjectFromAnnotatedSchemaRecord<
+	T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+> = InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>;
+
+/**
  * Maps from simple field keys ("property" keys) to information about the field.
  *
  * @remarks
@@ -174,6 +198,8 @@ function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): Simp
 }
 
 /**
+ * Creates a proxy handler for the given schema.
+ *
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
  * TODO: consider implementing this using `Object.preventExtension` instead.
@@ -196,9 +222,9 @@ function createProxyHandler(
 	const handler: ProxyHandler<TreeNode> = {
 		get(target, propertyKey, proxy): unknown {
 			const fieldInfo = schema.flexKeyMap.get(propertyKey);
-
 			if (fieldInfo !== undefined) {
 				const flexNode = getOrCreateInnerNode(proxy);
+				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
 					return getTreeNodeForField(field);
@@ -345,7 +371,7 @@ abstract class CustomObjectNodeBase<
  */
 export function objectSchema<
 	TName extends string,
-	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+	const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -359,12 +385,14 @@ export function objectSchema<
 	// Field set can't be modified after this since derived data is stored in maps.
 	Object.freeze(info);
 
+	const unannotatedInfo = unannotateSchemaRecord(info);
+
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
-	assertUniqueKeys(identifier, info);
+	assertUniqueKeys(identifier, unannotatedInfo);
 
 	// Performance optimization: cache property key => stored key and schema.
-	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
+	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(unannotatedInfo);
 
 	const identifierFieldKeys: FieldKey[] = [];
 	for (const item of flexKeyMap.values()) {
@@ -381,17 +409,22 @@ export function objectSchema<
 	let customizable: boolean;
 	let unhydratedContext: Context;
 
-	class CustomObjectNode extends CustomObjectNodeBase<T> {
+	class CustomObjectNode extends CustomObjectNodeBase<UnannotateSchemaRecord<T>> {
 		public static readonly fields: ReadonlyMap<
 			string,
 			FieldSchemaAlpha & SimpleObjectFieldSchema
 		> = new Map(
 			Array.from(flexKeyMap, ([key, value]) => [
 				key as string,
-				new ObjectFieldSchema(value.schema.kind, value.schema.allowedTypes, {
-					...value.schema.props,
-					key: getStoredKey(key as string, value.schema),
-				}),
+				new ObjectFieldSchema(
+					value.schema.kind,
+					value.schema.allowedTypes,
+					(value.schema as FieldSchemaAlpha).annotatedAllowedTypes,
+					{
+						...value.schema.props,
+						key: getStoredKey(key as string, value.schema),
+					},
+				),
 			]),
 		);
 		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
@@ -504,8 +537,8 @@ export function objectSchema<
 	}
 	type Output = typeof CustomObjectNode &
 		(new (
-			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
-		) => TreeObjectNode<T, TName>);
+			input: InsertableObjectFromAnnotatedSchemaRecord<T> | InternalTreeNode,
+		) => TreeObjectNode<UnannotateSchemaRecord<T>, TName>);
 	return CustomObjectNode as Output;
 }
 

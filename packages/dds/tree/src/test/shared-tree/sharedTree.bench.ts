@@ -53,7 +53,7 @@ import {
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
 import { cursorFromInsertable, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { TreeFactory } from "../../treeFactory.js";
+import { configuredSharedTree } from "../../treeFactory.js";
 import { makeArray } from "../../util/index.js";
 
 // number of nodes in test for wide trees
@@ -70,10 +70,10 @@ const nodesCountDeep = [
 ];
 
 // TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
-const factory = new TreeFactory({
+const factory = configuredSharedTree({
 	jsonValidator: typeboxValidator,
 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
-});
+}).getFactory();
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {

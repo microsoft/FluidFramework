@@ -3,65 +3,84 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IChannelAttributes,
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-	IChannelServices,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
+	type ISharedObject,
 	type ISharedObjectKind,
-	createSharedObjectKind,
+	makeSharedObjectKind,
+	type KernelArgs,
+	type SharedKernelFactory,
+	type SharedObjectOptions,
+	type FactoryOut,
 } from "@fluidframework/shared-object-base/internal";
 
 import {
-	SharedTree as SharedTreeImpl,
+	SharedTreeKernel,
+	type ITreePrivate,
 	type SharedTreeOptions,
 	type SharedTreeOptionsInternal,
+	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
 
+import { Breakable } from "./util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+import { FluidClientVersion } from "./codec/index.js";
 
 /**
- * A channel factory that creates an {@link ITree}.
+ * {@link ITreePrivate} extended with ISharedObject.
+ * @remarks
+ * This is used when integration testing this package with the Fluid runtime as it exposes the APIs the runtime consumes to manipulate the tree.
  */
-export class TreeFactory implements IChannelFactory<ITree> {
-	public static Type: string = SharedTreeFactoryType;
-	public readonly type: string = SharedTreeFactoryType;
+export interface ISharedTree extends ISharedObject, ITreePrivate {}
 
-	public readonly attributes: IChannelAttributes = SharedTreeAttributes;
-
-	public constructor(private readonly options: SharedTreeOptionsInternal) {}
-
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<SharedTreeImpl> {
-		const tree = this.createInner(runtime, id, channelAttributes);
-		await tree.load(services);
-		return tree;
+/**
+ * Creates a factory for shared tree kernels with the given options.
+ * @remarks
+ * Exposes {@link ITreePrivate} to allow access to internals in tests without a cast.
+ * Code exposing this beyond this package will need to update to a more public type.
+ */
+function treeKernelFactory(
+	options: SharedTreeOptionsInternal,
+): SharedKernelFactory<SharedTreeKernelView> {
+	function treeFromKernelArgs(args: KernelArgs): SharedTreeKernel {
+		if (args.idCompressor === undefined) {
+			throw new UsageError("IdCompressor must be enabled to use SharedTree");
+		}
+		const adjustedOptions = { ...options };
+		// TODO: get default from runtime once something like runtime.minimumSupportedVersion exists.
+		// Using default of 2.0 since that is the oldest version that supports SharedTree.
+		adjustedOptions.minimumSupportedVersion ??= FluidClientVersion.v2_0;
+		return new SharedTreeKernel(
+			new Breakable("SharedTree"),
+			args.sharedObject,
+			args.serializer,
+			args.submitLocalMessage,
+			args.lastSequenceNumber,
+			args.logger,
+			args.idCompressor,
+			adjustedOptions,
+		);
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeImpl {
-		const tree = this.createInner(runtime, id);
-		tree.initializeLocal();
-		return tree;
-	}
+	return {
+		create: (args: KernelArgs): FactoryOut<SharedTreeKernelView> => {
+			const k = treeFromKernelArgs(args);
+			return { kernel: k, view: k.view };
+		},
 
-	private createInner(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		channelAttributes?: Readonly<IChannelAttributes>,
-	): SharedTreeImpl {
-		const options = { ...this.options };
-		// TODO: make this exist
-		options.minimumSupportedVersion ??= runtime.minimumSupportedVersion;
-		return new SharedTreeImpl(id, runtime, channelAttributes ?? this.attributes, options);
-	}
+		async loadCore(
+			args: KernelArgs,
+			storage: IChannelStorageService,
+		): Promise<FactoryOut<SharedTreeKernelView>> {
+			const k = treeFromKernelArgs(args);
+			await k.loadCore(storage);
+			return { kernel: k, view: k.view };
+		},
+	};
 }
 
 /**
@@ -101,10 +120,12 @@ export const SharedTree = configuredSharedTree({});
 export function configuredSharedTree(
 	options: SharedTreeOptions,
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
-	class ConfiguredFactory extends TreeFactory {
-		public constructor() {
-			super(options);
-		}
-	}
-	return createSharedObjectKind<ITree>(ConfiguredFactory);
+	const sharedObjectOptions: SharedObjectOptions<ITree> = {
+		type: SharedTreeFactoryType,
+		attributes: SharedTreeAttributes,
+		telemetryContextPrefix: "fluid_sharedTree_",
+		factory: treeKernelFactory(options),
+	};
+
+	return makeSharedObjectKind<ITree>(sharedObjectOptions);
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/benchmark",
-	"version": "0.51.0",
+	"version": "0.52.0",
 	"description": "Benchmarking tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -27,7 +27,7 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha --config ./.mocharc.cjs --v8-expose-gc --timeout 999999 --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
+		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha --config ./.mocharc.cjs --v8-expose-gc --timeout 999999 --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"test": "npm run test:mocha",
@@ -39,7 +39,7 @@
 		"chai": "^4.2.0",
 		"chalk": "^4.1.2",
 		"easy-table": "^1.2.0",
-		"mocha": "^10.0.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0"
 	},
@@ -47,7 +47,7 @@
 		"@fluid-internal/mocha-test-setup": "^2.12.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@microsoft/api-extractor": "^7.50.1",
+		"@microsoft/api-extractor": "^7.52.5",
 		"@types/chai": "^4.3.4",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",

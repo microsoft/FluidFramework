@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-lambdas": major
+"__section": fix
 ---
 
 User input validation added in Nexus Lambda connect_document handler

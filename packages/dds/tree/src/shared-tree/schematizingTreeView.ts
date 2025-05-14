@@ -12,7 +12,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
+import { anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -30,13 +30,11 @@ import {
 	getTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	ViewSchema,
+	SchemaCompatibilityTester,
 	type InsertableContent,
 	type TreeViewConfiguration,
 	mapTreeFromNodeData,
 	prepareContentForHydration,
-	comparePersistedSchemaInternal,
-	toStoredSchema,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
@@ -98,8 +96,11 @@ export class SchematizingSimpleTreeView<
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
-	private readonly viewSchema: ViewSchema;
+	private readonly viewSchema: SchemaCompatibilityTester;
 
+	/**
+	 * Events to unregister upon disposal.
+	 */
 	private readonly unregisterCallbacks = new Set<() => void>();
 
 	public disposed = false;
@@ -133,7 +134,11 @@ export class SchematizingSimpleTreeView<
 			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(this.rootFieldSchema),
 		};
 
-		this.viewSchema = new ViewSchema(this.schemaPolicy, {}, this.rootFieldSchema);
+		this.viewSchema = new SchemaCompatibilityTester(
+			this.schemaPolicy,
+			{},
+			this.rootFieldSchema,
+		);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -170,19 +175,20 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
+			const schema = this.viewSchema.viewSchemaAsStored;
 			const mapTree = mapTreeFromNodeData(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
 				this.nodeKeyManager,
 				{
-					schema: this.checkout.storedSchema,
+					schema,
 					policy: this.schemaPolicy,
 				},
 			);
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: toStoredSchema(this.viewSchema.schema),
+				schema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -204,15 +210,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const result = ensureSchema(
-				this.viewSchema,
-				AllowedUpdateType.SchemaCompatible,
-				this.checkout,
-				{
-					schema: toStoredSchema(this.viewSchema.schema),
-					initialTree: undefined,
-				},
-			);
+			const result = ensureSchema(this.viewSchema, this.checkout);
 			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
 		});
 	}
@@ -328,15 +326,14 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeView();
 
-		const compatibility = comparePersistedSchemaInternal(
-			this.checkout.storedSchema,
-			this.viewSchema,
-			canInitialize(this.checkout),
-		);
+		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
 
 		let lastRoot =
 			this.compatibility.canView && this.view !== undefined ? this.root : undefined;
-		this.currentCompatibility = compatibility;
+		this.currentCompatibility = {
+			...compatibility,
+			canInitialize: canInitialize(this.checkout),
+		};
 
 		if (compatibility.canView) {
 			// Trigger "rootChanged" if the root changes in the future.
@@ -502,12 +499,12 @@ export function getCheckout(context: TreeBranch): TreeCheckout {
 }
 
 /**
- * Creates a view that self-disposes whenenever the stored schema changes.
+ * Creates a view that self-disposes whenever the stored schema changes.
  * This may only be called when the schema is already known to be compatible (typically via ensureSchema).
  */
 export function requireSchema(
 	checkout: ITreeCheckout,
-	viewSchema: ViewSchema,
+	viewSchema: SchemaCompatibilityTester,
 	onDispose: () => void,
 	nodeKeyManager: NodeIdentifierManager,
 	schemaPolicy: FullSchemaPolicy,

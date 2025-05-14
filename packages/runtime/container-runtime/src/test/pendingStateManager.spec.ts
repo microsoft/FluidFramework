@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+
 import assert from "node:assert";
 
 import {
@@ -16,10 +18,14 @@ import {
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import type { InboundSequencedContainerRuntimeMessage } from "../messageTypes.js";
+import {
+	ContainerMessageType,
+	type InboundSequencedContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
+} from "../messageTypes.js";
 import {
 	BatchManager,
-	BatchMessage,
+	LocalBatchMessage,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 import {
@@ -31,6 +37,14 @@ import {
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
 	initialMessages: Deque<IPendingMessage>;
 };
+
+// Make a mock op with distinguishable contents
+function op(data: string = ""): LocalContainerRuntimeMessage {
+	return {
+		type: ContainerMessageType.FluidDataStoreOp,
+		contents: data as unknown,
+	} as LocalContainerRuntimeMessage;
+}
 
 describe("Pending State Manager", () => {
 	const mockLogger = new MockLogger();
@@ -45,15 +59,17 @@ describe("Pending State Manager", () => {
 
 	describe("Rollback", () => {
 		let rollbackCalled: boolean;
-		let rollbackContent: BatchMessage[];
+		let rollbackContent: LocalBatchMessage[];
 		let rollbackShouldThrow: boolean;
 		let batchManager: BatchManager;
 
 		function getMessage(payload: string) {
-			return { contents: payload } as unknown as BatchMessage;
+			return {
+				runtimeOp: op(payload),
+			} as LocalBatchMessage;
 		}
 
-		const rollBackCallback = (m: BatchMessage) => {
+		const rollBackCallback = (m: LocalBatchMessage) => {
 			rollbackCalled = true;
 			rollbackContent.push(m);
 			if (rollbackShouldThrow) {
@@ -66,7 +82,7 @@ describe("Pending State Manager", () => {
 			rollbackContent = [];
 			rollbackShouldThrow = false;
 
-			batchManager = new BatchManager({ hardLimit: 950 * 1024, canRebase: true });
+			batchManager = new BatchManager({ canRebase: true });
 		});
 
 		it("should do nothing when rolling back empty pending stack", () => {
@@ -95,9 +111,9 @@ describe("Pending State Manager", () => {
 
 			assert.strictEqual(rollbackCalled, true);
 			assert.strictEqual(rollbackContent.length, 3);
-			assert.strictEqual(rollbackContent[0].contents, "33");
-			assert.strictEqual(rollbackContent[1].contents, "22");
-			assert.strictEqual(rollbackContent[2].contents, "11");
+			assert.strictEqual(rollbackContent[0].runtimeOp.contents, "33");
+			assert.strictEqual(rollbackContent[1].runtimeOp.contents, "22");
+			assert.strictEqual(rollbackContent[2].runtimeOp.contents, "11");
 			assert.strictEqual(batchManager.empty, true);
 		});
 
@@ -110,8 +126,8 @@ describe("Pending State Manager", () => {
 
 			assert.strictEqual(rollbackCalled, true);
 			assert.strictEqual(rollbackContent.length, 2);
-			assert.strictEqual(rollbackContent[0].contents, "33");
-			assert.strictEqual(rollbackContent[1].contents, "22");
+			assert.strictEqual(rollbackContent[0].runtimeOp.contents, "33");
+			assert.strictEqual(rollbackContent[1].runtimeOp.contents, "22");
 			assert.strictEqual(batchManager.empty, false);
 		});
 
@@ -154,13 +170,17 @@ describe("Pending State Manager", () => {
 			localOpMetadata?: unknown,
 		) => {
 			pendingStateManager.onFlushBatch(
-				messages.map<BatchMessage>((message) => ({
-					contents: JSON.stringify({ type: message.type, contents: message.contents }),
+				messages.map<LocalBatchMessage>((message) => ({
+					runtimeOp: {
+						type: message.type,
+						contents: message.contents,
+					} as LocalContainerRuntimeMessage,
 					referenceSequenceNumber: message.referenceSequenceNumber!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
 					metadata: message.metadata as Record<string, unknown> | undefined,
 					localOpMetadata,
 				})),
 				clientSequenceNumber ?? messages[0]?.clientSequenceNumber,
+				false /* staged */,
 			);
 		};
 
@@ -446,11 +466,15 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: JSON.stringify({ contents: message.contents, type: message.type }),
+							runtimeOp: {
+								contents: message.contents,
+								type: message.type,
+							} as LocalContainerRuntimeMessage,
 							referenceSequenceNumber: 0,
 						},
 					],
 					0 /* clientSequenceNumber */,
+					false /* staged */,
 				);
 
 				assert.throws(
@@ -490,15 +514,16 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: JSON.stringify({
+							runtimeOp: {
 								type: message.type,
 								contents: message.contents,
 								somethingElse: 123, // Unexpected key
-							}),
+							} as LocalContainerRuntimeMessage,
 							referenceSequenceNumber: 0,
 						},
 					],
 					0 /* clientSequenceNumber */,
+					false /* staged */,
 				);
 
 				assert.throws(
@@ -669,7 +694,7 @@ describe("Pending State Manager", () => {
 
 	describe("replayPendingStates", () => {
 		let pendingStateManager: PendingStateManager;
-		const resubmittedBatchIds: string[] = [];
+		const resubmittedBatchIds: (string | undefined)[] = [];
 		const clientId = "clientId";
 
 		beforeEach(async () => {
@@ -679,7 +704,7 @@ describe("Pending State Manager", () => {
 					applyStashedOp: async () => undefined,
 					clientId: () => clientId,
 					connected: () => true,
-					reSubmitBatch: (batch, batchId) => {
+					reSubmitBatch: (batch, { batchId }) => {
 						resubmittedBatchIds.push(batchId);
 					},
 					isActiveConnection: () => false,
@@ -693,24 +718,28 @@ describe("Pending State Manager", () => {
 		it("replays pending states", () => {
 			const messages = [
 				{
-					type: MessageType.Operation,
+					type: ContainerMessageType.Rejoin,
 					clientSequenceNumber: 0,
 					referenceSequenceNumber: 0,
-					contents: {},
+					contents: undefined,
 				},
 				{
-					type: MessageType.Operation,
+					type: ContainerMessageType.Rejoin,
 					clientSequenceNumber: 1,
 					referenceSequenceNumber: 0,
-					contents: {},
+					contents: undefined,
 				},
-			];
+			] as const;
 			pendingStateManager.onFlushBatch(
-				messages.map<BatchMessage>((message) => ({
-					contents: JSON.stringify({ type: message.type, contents: message.contents }),
+				messages.map<LocalBatchMessage>((message) => ({
+					runtimeOp: {
+						type: message.type,
+						contents: message.contents,
+					},
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				})),
 				0,
+				false /* staged */,
 			);
 			pendingStateManager.replayPendingStates();
 			assert.strictEqual(resubmittedBatchIds[0], `${clientId}_[0]`);
@@ -718,17 +747,14 @@ describe("Pending State Manager", () => {
 		});
 
 		it("replays pending states with empty batch", () => {
-			// Empty batch is reflected in the pending state manager as a single message
-			// with the following metadata:
-			pendingStateManager.onFlushBatch(
-				[
-					{
-						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
-						referenceSequenceNumber: 0,
-						metadata: { emptyBatch: true, batchId: "batchId" },
-					},
-				],
+			pendingStateManager.onFlushEmptyBatch(
+				{
+					localOpMetadata: { emptyBatch: true },
+					referenceSequenceNumber: 0,
+					metadata: { batchId: "batchId" },
+				},
 				0,
+				false /* staged */,
 			);
 			pendingStateManager.replayPendingStates();
 			assert.strictEqual(resubmittedBatchIds[0], "batchId");
@@ -745,7 +771,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 10,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
 				},
 				{
 					type: "message",
@@ -753,7 +779,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 11,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
 				},
 			];
 
@@ -783,7 +809,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 10,
 					opMetadata: undefined,
 					localOpMetadata: { emptyBatch: true },
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
 				},
 			];
 
@@ -806,14 +832,24 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Pending messages state", () => {
-		const messages = [
+		const forInitialMessages = [
 			{ type: "message", content: '{"type":"component"}', referenceSequenceNumber: 10 },
 			{
 				type: "message",
 				content: '{"type": "component", "contents": {"prop1": "value"}}',
 				referenceSequenceNumber: 10,
 			},
-		] as unknown as IPendingMessage[];
+		] as IPendingMessage[];
+		const forFlushedMessages: LocalBatchMessage[] = [
+			{
+				runtimeOp: { type: "component" } as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: 10,
+			},
+			{
+				runtimeOp: { type: "component" } as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: 10,
+			},
+		];
 
 		function createPendingStateManager(
 			pendingStates: IPendingMessage[] | undefined,
@@ -849,15 +885,16 @@ describe("Pending State Manager", () => {
 		it("has pending messages but no initial messages", () => {
 			const pendingStateManager = createPendingStateManager(undefined);
 			// let each message be its own batch
-			for (const message of messages) {
+			for (const message of forFlushedMessages) {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: message.content,
+							runtimeOp: message.runtimeOp,
 							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],
 					0,
+					false /* staged */,
 				);
 			}
 			assert.strictEqual(
@@ -867,13 +904,13 @@ describe("Pending State Manager", () => {
 			);
 			assert.strictEqual(
 				pendingStateManager.pendingMessagesCount,
-				messages.length,
+				forFlushedMessages.length,
 				"Pending messages count should be same as pending messages",
 			);
 		});
 
 		it("has initial messages but no pending messages", () => {
-			const pendingStateManager = createPendingStateManager(messages);
+			const pendingStateManager = createPendingStateManager(forInitialMessages);
 			assert.strictEqual(
 				pendingStateManager.hasPendingMessages(),
 				true,
@@ -881,23 +918,24 @@ describe("Pending State Manager", () => {
 			);
 			assert.strictEqual(
 				pendingStateManager.pendingMessagesCount,
-				messages.length,
+				forFlushedMessages.length,
 				"Pending messages count should be same as initial messages",
 			);
 		});
 
 		it("has both pending messages and initial messages", () => {
-			const pendingStateManager = createPendingStateManager(messages);
+			const pendingStateManager = createPendingStateManager(forInitialMessages);
 			// let each message be its own batch
-			for (const message of messages) {
+			for (const message of forFlushedMessages) {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: message.content,
+							runtimeOp: message.runtimeOp,
 							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],
 					0,
+					false /* staged */,
 				);
 			}
 			assert.strictEqual(
@@ -907,21 +945,21 @@ describe("Pending State Manager", () => {
 			);
 			assert.strictEqual(
 				pendingStateManager.pendingMessagesCount,
-				messages.length * 2,
+				forInitialMessages.length + forFlushedMessages.length,
 				"Pending messages count should be same as pending + initial messages",
 			);
 		});
 	});
 
 	describe("Minimum sequence number", () => {
-		const messages: IPendingMessage[] = [
+		const forInitialMessages: IPendingMessage[] = [
 			{
 				type: "message",
 				content: '{"type":"component"}',
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
 			},
 			{
 				type: "message",
@@ -929,7 +967,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
 			},
 			{
 				type: "message",
@@ -937,7 +975,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 3, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 3, length: 1, staged: false },
 			},
 			{
 				type: "message",
@@ -945,9 +983,15 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 4, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 4, length: 1, staged: false },
 			},
 		];
+		const forFlushedMessages = forInitialMessages.map<LocalBatchMessage>(
+			(message: IPendingMessage) => ({
+				runtimeOp: JSON.parse(message.content) as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+			}),
+		);
 
 		function createPendingStateManager(
 			pendingStates?: IPendingMessage[],
@@ -967,7 +1011,7 @@ describe("Pending State Manager", () => {
 		}
 
 		it("minimum sequence number can be retrieved from initial messages", async () => {
-			const pendingStateManager = createPendingStateManager(messages);
+			const pendingStateManager = createPendingStateManager(forInitialMessages);
 			await pendingStateManager.applyStashedOpsAt();
 
 			assert.strictEqual(
@@ -993,15 +1037,16 @@ describe("Pending State Manager", () => {
 				"No pending messages should mean no minimum seq number",
 			);
 			// Each message has a different reference sequence number so let them each be their own batch
-			for (const message of messages) {
+			for (const message of forFlushedMessages) {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: message.content,
+							runtimeOp: message.runtimeOp,
 							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],
 					0,
+					false /* staged */,
 				);
 			}
 

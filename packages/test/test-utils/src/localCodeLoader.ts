@@ -17,8 +17,9 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/inte
 import {
 	IProvideFluidDataStoreFactory,
 	IProvideFluidDataStoreRegistry,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 
 // eslint-disable-next-line import/no-deprecated
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
@@ -38,6 +39,32 @@ export type SupportedExportInterfaces = Partial<
  * @internal
  */
 export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
+
+/**
+ * @internal
+ */
+export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
+
+/**
+ * @internal
+ */
+export function createDataStoreFactory(
+	type: string,
+	factory: Factory | Promise<Factory>,
+): IFluidDataStoreFactory & IFluidDataStoreRegistry {
+	return {
+		type,
+		get IFluidDataStoreFactory() {
+			return this;
+		},
+		get IFluidDataStoreRegistry() {
+			return this;
+		},
+		instantiateDataStore: async (context, existing) =>
+			(await factory).instantiateDataStore(context, existing),
+		get: async (name: string) => (await factory).IFluidDataStoreRegistry?.get(name),
+	};
+}
 
 /**
  * A simple code loader that caches a mapping of package name to a Fluid entry point.

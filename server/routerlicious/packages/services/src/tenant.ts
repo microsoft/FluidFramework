@@ -12,6 +12,8 @@ import {
 	getAuthorizationTokenFromCredentials,
 	IGitManager,
 	parseToken,
+	isNetworkError,
+	NetworkError,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
@@ -28,6 +30,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { RawAxiosRequestHeaders } from "axios";
 import { IsEphemeralContainer } from ".";
+import type { IInvalidTokenError } from "@fluidframework/server-services-core";
 
 export function getRefreshTokenIfNeededCallback(
 	tenantManager: core.ITenantManager,
@@ -103,6 +106,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 	constructor(
 		private readonly endpoint: string,
 		private readonly internalHistorianUrl: string,
+		private readonly invalidTokenCache?: core.ICache,
 	) {}
 
 	public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
@@ -119,10 +123,11 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
 			`/api/tenants/${encodeURIComponent(tenantId || "")}`,
-			undefined,
+			undefined /* requestBody */,
 		);
 		return result;
 	}
@@ -238,6 +243,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			refreshTokenIfNeeded,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);
@@ -245,7 +251,34 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		return gitManager;
 	}
 
+	private throwInvalidTokenErrorAsNetworkError(cachedInvalidTokenError: string): void {
+		try {
+			const errorObject: IInvalidTokenError = JSON.parse(cachedInvalidTokenError);
+			const networkError = new NetworkError(
+				errorObject.code,
+				errorObject.message,
+				false,
+				false,
+				undefined,
+				"InvalidTokenCache",
+			);
+			throw networkError;
+		} catch (error: unknown) {
+			if (isNetworkError(error)) {
+				throw error;
+			}
+			// Do not throw an error if the cached invalid token error is not a valid JSON
+			Lumberjack.error("Failed to parse cached invalid token error", {}, error);
+		}
+	}
+
 	public async verifyToken(tenantId: string, token: string): Promise<void> {
+		if (this.invalidTokenCache) {
+			const cachedInvalidTokenError = await this.invalidTokenCache.get(token);
+			if (cachedInvalidTokenError) {
+				this.throwInvalidTokenErrorAsNetworkError(cachedInvalidTokenError);
+			}
+		}
 		const restWrapper = new BasicRestWrapper(
 			this.endpoint /* baseUrl */,
 			undefined /* defaultQueryString */,
@@ -259,10 +292,36 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
-		await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, {
-			token,
-		});
+		try {
+			await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, {
+				token,
+			});
+		} catch (error: unknown) {
+			if (isNetworkError(error)) {
+				// In case of a 401 or 403 error, we cache the token in the invalid token cache
+				// to avoid hitting the endpoint again with the same token.
+				if (error.code === 401 || error.code === 403) {
+					const errorToCache: IInvalidTokenError = {
+						code: error.code,
+						message: error.message,
+					};
+					// Cache the token in the invalid token cache
+					// to avoid hitting the endpoint again with the same token.
+					this.invalidTokenCache
+						?.set(token, JSON.stringify(errorToCache))
+						.catch((err) => {
+							Lumberjack.error(
+								"Failed to set token in invalid token cache",
+								{ tenantId },
+								err,
+							);
+						});
+				}
+			}
+			throw error;
+		}
 	}
 
 	public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
@@ -279,6 +338,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.get<core.ITenantKeys>(
 			`/api/tenants/${encodeURIComponent(tenantId)}/keys`,
@@ -310,6 +370,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.post<core.IFluidAccessToken>(
 			`/api/tenants/${encodeURIComponent(tenantId)}/accesstoken`,
@@ -351,6 +412,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		return restWrapper.get<core.ITenantConfig>(`/api/tenants/${tenantId}`, {
 			includeDisabledTenant,

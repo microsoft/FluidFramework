@@ -20,7 +20,6 @@ import type {
 	ISequencedProposal,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
-	IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
@@ -356,16 +355,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * loaded.
 	 */
 	getLoadedCodeDetails(): IFluidCodeDetails | undefined;
-
-	/**
-	 * Get the package info for the code details that were used to load the container.
-	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined if
-	 * the container package doesn't have a name.
-	 * @deprecated To be removed in 2.40.
-	 * Use getLoadedCodeDetails instead; see https://github.com/microsoft/FluidFramework/issues/23898 for details.
-	 * Deprecating the function here to avoid polluting public container api surface.
-	 */
-	getContainerPackageInfo?(): IContainerPackageInfo | undefined;
 
 	/**
 	 * Returns true if the container has been closed and/or disposed, otherwise false.

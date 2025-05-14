@@ -5,20 +5,28 @@
 
 import { assertIdenticalTypes } from "./testUtils.js";
 
-import type { IFluidHandle, IFluidHandleErased } from "@fluidframework/core-interfaces";
+import type {
+	ErasedType,
+	IFluidHandle,
+	IFluidHandleErased,
+} from "@fluidframework/core-interfaces";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import type { ReadonlyNonNullJsonObjectWith } from "@fluidframework/core-interfaces/internal";
 import type {
 	JsonTypeWith,
 	InternalUtilityTypes,
+	ReadonlyJsonTypeWith,
+	NonNullJsonObjectWith,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 
 export const boolean: boolean = true as boolean; // Use `as` to avoid type conversion to `true`
 export const number: number = 0;
 export const string: string = "";
-export const symbol = Symbol("symbol");
+export const symbol: symbol = Symbol("symbol");
 export const uniqueSymbol: unique symbol = Symbol("unique symbol");
 export const bigint: bigint = 0n;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,7 +34,7 @@ export const aFunction = (): any => {};
 export const unknownValueOfSimpleRecord = { key: "value" } as unknown;
 export const unknownValueWithBigint = { bigint: 1n } as unknown;
 export const voidValue = null as unknown as void;
-const never = null as never;
+export const never = null as never;
 
 export const stringOrSymbol = Symbol("objectSymbol") as string | symbol;
 export const bigintOrString = "not bigint" as string | bigint;
@@ -82,13 +90,16 @@ export const arrayOfUnknown: unknown[] = [unknownValueOfSimpleRecord];
 export const arrayOfFunctions = [aFunction];
 export const arrayOfFunctionsWithProperties = [functionWithProperties];
 export const arrayOfObjectAndFunctions = [objectAndFunction];
-export const arrayOfBigintAndObjects: (bigint | { property: string })[] = [
+export const arrayOfBigintOrObjects: (bigint | { property: string })[] = [
 	{ property: "string" },
 	bigint,
 ];
-export const arrayOfSymbolsAndObjects: (symbol | { property: string })[] = [Symbol("symbol")];
+export const arrayOfSymbolOrObjects: (symbol | { property: string })[] = [Symbol("symbol")];
+export const arrayOfBigintOrSymbols = [bigintOrSymbol];
+export const arrayOfNumberBigintOrSymbols = [numberOrBigintOrSymbol];
 
 export const readonlyArrayOfNumbers: readonly number[] = arrayOfNumbers;
+export const readonlyArrayOfObjects: readonly { property: string }[] = [];
 
 // #endregion
 
@@ -118,6 +129,7 @@ export const objectWithOptionalBigint: { bigint?: bigint } = { bigint: 0n };
 
 export const objectWithNumberKey = { 3: "value" };
 export const objectWithSymbolKey = { [symbol]: "value" };
+export const objectWithUniqueSymbolKey = { [uniqueSymbol]: "value" };
 
 export const objectWithArrayOfNumbers = { arrayOfNumbers };
 export const objectWithArrayOfNumbersSparse = { arrayOfNumbersSparse };
@@ -128,8 +140,8 @@ export const objectWithArrayOfUnknown = { arrayOfUnknown };
 export const objectWithArrayOfFunctions = { arrayOfFunctions };
 export const objectWithArrayOfFunctionsWithProperties = { arrayOfFunctionsWithProperties };
 export const objectWithArrayOfObjectAndFunctions = { arrayOfObjectAndFunctions };
-export const objectWithArrayOfBigintAndObjects = { arrayOfBigintAndObjects };
-export const objectWithArrayOfSymbolsAndObjects = { arrayOfSymbolsAndObjects };
+export const objectWithArrayOfBigintOrObjects = { arrayOfBigintOrObjects };
+export const objectWithArrayOfSymbolOrObjects = { arrayOfSymbolOrObjects };
 export const objectWithReadonlyArrayOfNumbers = { readonlyArrayOfNumbers };
 
 export const objectWithUnknown = { unknown: "value" as unknown };
@@ -259,6 +271,10 @@ export const stringRecordOfNumbers: Record<string, number> = { key: 0 };
 export const stringRecordOfUndefined: Record<string, undefined> = { key: undefined };
 export const stringRecordOfUnknown: Record<string, unknown> = { key: 0 };
 export const stringOrNumberRecordOfStrings: Record<string | number, string> = { 5: "value" };
+export const stringOrNumberRecordOfObjects: Record<string | number, { string: string }> = {
+	8: { string: "string value" },
+	knownNumber: { string: "4" },
+};
 // Ideally TypeScript would not allow this assignment. Index signatures are
 // inherently optional and modification via `Partial` should not modify the
 // type (particularly under exactOptionalPropertyTypes=true).
@@ -292,7 +308,6 @@ export const mixedRecordOfUnknown: Record<
 };
 
 // Must use `type` over `interface` to enable intersection with `Record<>`.
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type KnownStringAndNumber = { knownString: string; knownNumber: number };
 export const stringRecordOfNumbersOrStringsWithKnownProperties: InternalUtilityTypes.FlattenIntersection<
 	Record<string, number | string> & KnownStringAndNumber
@@ -333,23 +348,30 @@ export const stringOrNumberRecordOfUndefinedWithKnownNumber = {
 
 // #region Recursive types
 
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-
 type ObjectWithPossibleRecursion = {
 	[x: string]: ObjectWithPossibleRecursion | string;
 };
 export const objectWithPossibleRecursion: ObjectWithPossibleRecursion = {
 	recursive: { stop: "here" },
 };
-type ObjectWithOptionalRecursion = {
+export type ObjectWithOptionalRecursion = {
 	recursive?: ObjectWithOptionalRecursion;
 };
 export const objectWithOptionalRecursion: ObjectWithOptionalRecursion = {
 	recursive: {},
 };
+export type ReadonlyObjectWithOptionalRecursion = {
+	readonly recursive?: ReadonlyObjectWithOptionalRecursion;
+};
+export const readonlyObjectWithOptionalRecursion: ReadonlyObjectWithOptionalRecursion =
+	objectWithOptionalRecursion;
+
 export const objectWithEmbeddedRecursion = {
 	outer: objectWithOptionalRecursion,
 };
+export const readonlyObjectWithEmbeddedRecursion = {
+	outer: readonlyObjectWithOptionalRecursion,
+} as const;
 export const objectWithSelfReference: ObjectWithOptionalRecursion = {};
 objectWithSelfReference.recursive = objectWithSelfReference;
 
@@ -368,6 +390,14 @@ export const objectWithAlternatingRecursion: ObjectWithAlternatingRecursionA = {
 		},
 	},
 };
+type ReadonlyObjectWithAlternatingRecursionA = {
+	readonly recurseA: ReadonlyObjectWithAlternatingRecursionB | number;
+};
+type ReadonlyObjectWithAlternatingRecursionB = {
+	readonly recurseB: ReadonlyObjectWithAlternatingRecursionA | "stop";
+};
+export const readonlyObjectWithAlternatingRecursion: ReadonlyObjectWithAlternatingRecursionA =
+	objectWithAlternatingRecursion;
 
 export type ObjectWithSymbolOrRecursion = {
 	recurse: ObjectWithSymbolOrRecursion | symbol;
@@ -375,6 +405,11 @@ export type ObjectWithSymbolOrRecursion = {
 export const objectWithSymbolOrRecursion: ObjectWithSymbolOrRecursion = {
 	recurse: { recurse: Symbol("stop") },
 };
+type ReadonlyObjectWithSymbolOrRecursion = {
+	readonly recurse: ReadonlyObjectWithSymbolOrRecursion | symbol;
+};
+export const readonlyObjectWithSymbolOrRecursion: ReadonlyObjectWithSymbolOrRecursion =
+	objectWithSymbolOrRecursion;
 
 type ObjectWithFluidHandleOrRecursion = {
 	recurseToHandle: ObjectWithFluidHandleOrRecursion | IFluidHandle<string>;
@@ -382,6 +417,13 @@ type ObjectWithFluidHandleOrRecursion = {
 export const objectWithFluidHandleOrRecursion: ObjectWithFluidHandleOrRecursion = {
 	recurseToHandle: { recurseToHandle: "fake-handle" as unknown as IFluidHandle<string> },
 };
+type ReadonlyObjectWithFluidHandleOrRecursion = {
+	readonly recurseToHandle:
+		| ReadonlyObjectWithFluidHandleOrRecursion
+		| Readonly<IFluidHandle<string>>;
+};
+export const readonlyObjectWithFluidHandleOrRecursion: ReadonlyObjectWithFluidHandleOrRecursion =
+	objectWithFluidHandleOrRecursion;
 
 export const objectWithUnknownAdjacentToOptionalRecursion = {
 	unknown: unknownValueOfSimpleRecord,
@@ -409,6 +451,18 @@ type ObjectWithOptionalUnknownInOptionalRecursion = {
 export const objectWithOptionalUnknownInOptionalRecursion: ObjectWithOptionalUnknownInOptionalRecursion =
 	objectWithUnknownInOptionalRecursion;
 
+type StringRecordWithRecursionOrNumber = {
+	[x: string]: StringRecordWithRecursionOrNumber | number;
+};
+export const stringRecordWithRecursionOrNumber: StringRecordWithRecursionOrNumber = {
+	outer: { inner: 5 },
+};
+type ReadonlyStringRecordWithRecursionOrNumber = {
+	readonly [x: string]: ReadonlyStringRecordWithRecursionOrNumber | number;
+};
+export const readonlyStringRecordWithRecursionOrNumber: ReadonlyStringRecordWithRecursionOrNumber =
+	stringRecordWithRecursionOrNumber;
+
 export type SelfRecursiveFunctionWithProperties = (() => number) & {
 	recurse?: SelfRecursiveFunctionWithProperties;
 };
@@ -425,13 +479,19 @@ export const selfRecursiveObjectAndFunction: SelfRecursiveObjectAndFunction =
 // assignment of one to the other.
 assertIdenticalTypes(selfRecursiveObjectAndFunction, selfRecursiveFunctionWithProperties);
 
-/* eslint-enable @typescript-eslint/consistent-type-definitions */
+export type ReadonlySelfRecursiveFunctionWithProperties = (() => number) & {
+	readonly recurse?: ReadonlySelfRecursiveFunctionWithProperties;
+};
+export const readonlySelfRecursiveFunctionWithProperties: ReadonlySelfRecursiveFunctionWithProperties =
+	selfRecursiveFunctionWithProperties;
+export type ReadonlySelfRecursiveObjectAndFunction = {
+	readonly recurse?: ReadonlySelfRecursiveObjectAndFunction;
+} & (() => number);
+export const readonlySelfRecursiveObjectAndFunction: ReadonlySelfRecursiveObjectAndFunction =
+	selfRecursiveObjectAndFunction;
 
-export interface SimpleObjectWithOptionalRecursion {
-	recursive?: SimpleObjectWithOptionalRecursion;
-}
 interface ObjectInheritingOptionalRecursionAndWithNestedSymbol
-	extends SimpleObjectWithOptionalRecursion {
+	extends ObjectWithOptionalRecursion {
 	complex: {
 		number: number;
 		symbol: symbol;
@@ -451,6 +511,10 @@ export const objectInheritingOptionalRecursionAndWithNestedSymbol: ObjectInherit
 	};
 
 export const simpleJson: JsonTypeWith<never> = { a: [{ b: { b2: 8 }, c: true }] };
+export const simpleImmutableJson: ReadonlyJsonTypeWith<never> = simpleJson;
+
+export const jsonObject: NonNullJsonObjectWith<never> = [simpleJson];
+export const immutableJsonObject: ReadonlyNonNullJsonObjectWith<never> = jsonObject;
 
 // #endregion
 
@@ -531,13 +595,23 @@ export const classInstanceWithPublicDataAndIsFunction = Object.assign(
 	() => 26,
 );
 
-// #region Common Class types
+// #region Built-in Class types
+
+export type Point = { x: number; y: number };
+export type StringRecordOfPoints = {
+	[p: string]: Point;
+};
 
 export const mapOfStringsToNumbers = new Map<string, number>();
 export const readonlyMapOfStringsToNumbers: ReadonlyMap<string, number> =
 	mapOfStringsToNumbers;
+export const mapOfPointToRecord = new Map<Point, StringRecordOfPoints>();
+export const readonlyMapOfPointToRecord: ReadonlyMap<Point, StringRecordOfPoints> =
+	mapOfPointToRecord;
 export const setOfNumbers = new Set<number>();
 export const readonlySetOfNumbers: ReadonlySet<number> = setOfNumbers;
+export const setOfRecords = new Set<StringRecordOfPoints>();
+export const readonlySetOfRecords: ReadonlySet<StringRecordOfPoints> = setOfRecords;
 
 // #endregion
 
@@ -565,19 +639,32 @@ export const objectWithBrandedString = { brandedString };
 
 // #region Fluid types
 
-export const fluidHandleToNumber: IFluidHandle<number> = {
-	isAttached: false,
-	async get(): Promise<number> {
-		throw new Error("Function not implemented.");
-	},
-	[fluidHandleSymbol]: undefined as unknown as IFluidHandleErased<number>,
-};
+function makeFauxFluidHandle<T>(): IFluidHandle<T> {
+	return {
+		isAttached: false,
+		async get(): Promise<T> {
+			throw new Error("Function not implemented.");
+		},
+		[fluidHandleSymbol]: undefined as unknown as IFluidHandleErased<T>,
+	};
+}
+
+export const fluidHandleToNumber = makeFauxFluidHandle<number>();
+export const fluidHandleToRecord = makeFauxFluidHandle<{
+	[p: string]: { x: number; y: number };
+}>();
 
 export const objectWithFluidHandle = {
 	handle: fluidHandleToNumber,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface TestErasedType<T> extends ErasedType<readonly ["TestCustomType", T]> {}
+
+export const erasedType: TestErasedType<number> = 0 as unknown as TestErasedType<number>;
+
 // #endregion
 
+/* eslint-enable @typescript-eslint/consistent-type-definitions */
 /* eslint-enable unicorn/no-null */
 /* eslint-enable jsdoc/require-jsdoc */
