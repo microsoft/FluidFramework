@@ -549,7 +549,7 @@ function isSharedObject(value: unknown): value is ISharedObject {
  * Determines whether or not the provided value is an {@link DataObject} using `instanceof`, for the purposes of this library.
  * @remarks
  * Uses `instanceof` over checking specific properties or methods, because we decided that a version mix-up with
- * {@link @fluidframework/aqueduct#}  is unlikely between devtools and end-user applications, and we don't support it anyway.
+ * {@link @fluidframework/aqueduct#} is unlikely between devtools and end-user applications, and we don't support it anyway.
  */
 function isDataObject(value: unknown): value is DataObject {
 	if (
@@ -571,11 +571,33 @@ function isDataObject(value: unknown): value is DataObject {
 }
 
 /**
- * TODO
+ * Determines whether or not the provided value is an {@link TreeDataObject} using `instanceof`, for the purposes of this library.
+ * @remarks
+ * Uses `instanceof` over checking specific properties or methods, because we decided that a version mix-up with
+ * {@link @fluidframework/aqueduct#} is unlikely between devtools and end-user applications, and we don't support it anyway.
+ * In addition, we check for the presence of key properties that make a `TreeDataObject` unique:
+ * - {@link TreeDataObject#sharedTree | sharedTree} getter
+ * - {@link TreeDataObject#treeView | treeView} getter
+ * - {@link TreeDataObject#initializeInternal | initializeInternal} method
  */
 function isTreeDataObject(value: unknown): value is TreeDataObject<unknown> {
-	if (value instanceof TreeDataObject) {
+	if (
+		value instanceof TreeDataObject ||
+		(typeof (value as TreeDataObject<unknown>).initializeInternal === "function" &&
+			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "sharedTree")?.get !==
+				undefined &&
+			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "treeView")?.get !==
+				undefined)
+	) {
+		const tree = (value as TreeDataObject<unknown>).sharedTree;
+		if (tree === undefined) {
+			throw new Error(
+				"TreeDataObject must have a `sharedTree` property, but it was undefined.",
+			);
+		}
+
 		return true;
 	}
+
 	return false;
 }
