@@ -38,7 +38,7 @@ const useStyles = makeStyles({
 	},
 	todoItemInput: {
 		boxSizing: "border-box",
-		border: "none",
+		border: "1px solid #666",
 		width: "100%",
 		height: "50px",
 		margin: "10px 0 10px 10px",

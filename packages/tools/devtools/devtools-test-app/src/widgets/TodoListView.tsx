@@ -15,14 +15,14 @@ import { TodoItemView, useTree } from "./TodoItemView.js";
 
 const useStyles = makeStyles({
 	todoView: {
-		maxWidth: "800px",
+		maxWidth: "400px",
 		margin: "0 auto",
 		padding: "0 15px",
 	},
 	todoTitle: {
 		width: "100%",
 		border: "none",
-		fontSize: "50px",
+		fontSize: "30px",
 		textAlign: "center",
 		marginBottom: "5px",
 		marginTop: "5px",
