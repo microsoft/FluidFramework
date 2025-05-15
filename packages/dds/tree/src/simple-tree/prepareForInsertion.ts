@@ -35,7 +35,7 @@ import { debugAssert, oob } from "@fluidframework/core-utils/internal";
  * @remarks
  * This validates and converts the input, and if necessary invokes {@link prepareContentForHydration}.
  *
- * The next edit made to the context must be the insertion of this content otherwise hydration will break.
+ * The next edit made to the context must be the insertion of this content, otherwise hydration will break.
  */
 export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
@@ -53,7 +53,7 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 /**
  * {@link prepareForInsertion} but batched for array content.
  * @remarks
- * This is for inserting items into an array, not an {@link TreeArrayNode} (That would use {@link prepareForInsertion}).
+ * This is for inserting items into an array, not an {@link TreeArrayNode} (that would use {@link prepareForInsertion}).
  * @privateRemarks
  * This has to be done as a single operation due to how the eventing in prepareContentForHydration works.
  */
