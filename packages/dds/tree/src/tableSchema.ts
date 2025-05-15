@@ -1074,7 +1074,7 @@ export namespace TableSchema {
 		>);
 
 		/**
-		 * Gets all of the populated cells in the row, keyed by their associated column IDs.
+		 * Gets all of the populated cells in the column, keyed by their associated row IDs.
 		 */
 		getCells(): ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<TCell>>;
 	}
