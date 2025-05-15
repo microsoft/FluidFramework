@@ -1484,11 +1484,11 @@ describe("TableFactory unit tests", () => {
 				schemaFactory,
 				cell: Cell,
 				props: schemaFactory.object("TableColumnProps", {
-				/** Column label */
-				label: schemaFactory.string,
-				/** ColumnType */
-				type: ColumnTypeNodes.schema,
-			}),
+					/** Column label */
+					label: schemaFactory.string,
+					/** ColumnType */
+					type: ColumnTypeNodes.schema,
+				}),
 			}) {
 				/**
 				 * Checks if the provided cell value is valid for the column type.
@@ -1710,8 +1710,8 @@ describe("TableFactory unit tests", () => {
 				schemaFactory,
 				cell: Cell,
 				props: schemaFactory.object("TableColumnProps", {
-				label: schemaFactory.string,
-			}),
+					label: schemaFactory.string,
+				}),
 			}) {}
 
 			class Row extends TableSchema.row({
