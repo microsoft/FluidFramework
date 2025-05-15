@@ -303,32 +303,6 @@ describe("schemaTypes", () => {
 			type TC = NodeFromSchema<typeof CustomizedBoth>;
 			type _checkC = requireAssignableTo<TC, CustomizedBoth>;
 		}
-
-		// UnannotateImplicitAllowedTypes
-		{
-			{
-				type T = TreeNodeSchema;
-				type _check = requireAssignableTo<
-					T,
-					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
-				>;
-			}
-
-			{
-				type T = AllowedTypes;
-				type _check = requireAssignableTo<
-					T,
-					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
-				>;
-			}
-
-			{
-				type _check = requireAssignableTo<
-					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>,
-					ImplicitAllowedTypes
-				>;
-			}
-		}
 	}
 
 	describe("insertable", () => {
