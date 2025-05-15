@@ -76,4 +76,29 @@ export namespace InternalUtilityTypes {
 	) => any
 		? JsonSerializable<P>
 		: never;
+
+	/**
+	 * Brand to ensure state values internal type safety without revealing
+	 * internals that are subject to change.
+	 *
+	 * @system
+	 */
+	export declare class JsonDeserializedBrand<T> {
+		private readonly JsonDeserialized: JsonDeserialized<T>;
+	}
+
+	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
+	export type JsonDeserializedHandle<T> = T & JsonDeserializedBrand<T>;
+}
+
+export function toJsonDeserializedHandle<T>(
+	value: JsonDeserialized<T>,
+): InternalUtilityTypes.JsonDeserializedHandle<T> {
+	return value as InternalUtilityTypes.JsonDeserializedHandle<T>;
+}
+
+export function fromJsonDeserializedHandle<T>(
+	value: InternalUtilityTypes.JsonDeserializedHandle<T>,
+): JsonDeserialized<T> {
+	return value as JsonDeserialized<T>;
 }
