@@ -3,115 +3,110 @@
  * Licensed under the MIT License.
  */
 
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { type ITree, SharedTree } from "@fluidframework/tree/internal";
+import { CollaborativeInput } from "@fluid-example/example-utils";
+import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
+import { Tree } from "@fluidframework/tree/legacy";
+import React, { useEffect, useRef, useState } from "react";
 
-import { PureDataObject } from "./pureDataObject.js";
+// eslint-disable-next-line import/no-unassigned-import
+import "./style.css";
 
-/**
- * Channel ID of {@link TreeDataObject}'s root {@link @fluidframework/tree#SharedTree}.
- */
-const treeChannelId = "tree-data-object";
+import { TodoItemView } from "../TodoItem/index.js";
+import { useTree } from "../Utils/index.js";
 
-const uninitializedErrorString =
-	"The tree has not yet been initialized. The data object must be initialized before accessing.";
+import { type TodoListDataObject } from "./index.js";
 
-/**
- * {@link @fluidframework/tree#SharedTree}-backed {@link PureDataObject | data object}.
- *
- * @remarks
- *
- * Note: to initialize the tree's data for initial creation, implementers of this class will need to override {@link PureDataObject.initializingFirstTime} and set the data in {@link TreeDataObject.treeView}.
- *
- * @typeParam TTreeView - View derived from the underlying tree.
- * Can be used to derive schema-aware views of the tree.
- * See {@link TreeDataObject.generateView}.
- *
- * @example Implementing `initializingFirstTime`
- *
- * ```typescript
- * protected override async initializingFirstTime(): Promise<void> {
- * 	this.tree.initialize(...);
- * }
- * ```
- *
- * @privateRemarks
- * TODO: Before promoting this beyond internal, we should consider alternative API patterns that don't depend on
- * sub-classing and don't leak Fluid concepts that should ideally be internal.
- * See `tree-react-api` for an example of a pattern that avoids unnecessary leakage of implementation details.
- *
- * @internal
- */
-export abstract class TreeDataObject<TTreeView> extends PureDataObject {
-	/**
-	 * Generates a view of the data object's {@link @fluidframework/tree#ITree | tree}.
-	 * @remarks Called once during initialization.
-	 */
-	protected abstract generateView(tree: ITree): TTreeView;
-
-	/**
-	 * Implementation of SharedTree which is used to generate the view.
-	 * @remarks Created once during initialization.
-	 */
-	#sharedTree: ITree | undefined;
-
-	/**
-	 * Gets the underlying {@link @fluidframework/tree#ITree | tree}.
-	 */
-	public get sharedTree(): ITree {
-		if (this.#sharedTree === undefined) {
-			throw new UsageError(uninitializedErrorString);
-		}
-		return this.#sharedTree;
-	}
-
-	/**
-	 * View derived from the underlying tree.
-	 * @remarks Populated via {@link TreeDataObject.generateView}.
-	 */
-	#view: TTreeView | undefined;
-
-	/**
-	 * Gets the derived view of the underlying tree.
-	 *
-	 * @throws
-	 * If the tree has not yet been initialized, this will throw an error.
-	 */
-	public get treeView(): TTreeView {
-		if (this.#view === undefined) {
-			throw new UsageError(uninitializedErrorString);
-		}
-		return this.#view;
-	}
-
-	public override async initializeInternal(existing: boolean): Promise<void> {
-		if (existing) {
-			// data store has a root tree so we just need to set it before calling initializingFromExisting
-			const channel = await this.runtime.getChannel(treeChannelId);
-
-			// TODO: Support using a Directory to Tree migration shim and DataObject's root channel ID
-			// to allow migrating from DataObject to TreeDataObject instead of just erroring in that case.
-			if (!SharedTree.is(channel)) {
-				throw new Error(
-					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
-				);
-			}
-			const sharedTree: ITree = channel;
-
-			this.#sharedTree = sharedTree;
-			this.#view = this.generateView(sharedTree);
-		} else {
-			const sharedTree = SharedTree.create(this.runtime, treeChannelId);
-			(sharedTree as unknown as ISharedObject).bindToContext();
-
-			this.#sharedTree = sharedTree;
-			this.#view = this.generateView(sharedTree);
-
-			// Note, the implementer is responsible for initializing the tree with initial data.
-			// Generally, this can be done via `initializingFirstTime`.
-		}
-
-		await super.initializeInternal(existing);
-	}
+export interface TodoListProps {
+	readonly todoModel: TodoListDataObject;
+	readonly getDirectLink: (itemId: string) => string;
 }
+
+export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
+	const { todoModel, getDirectLink } = props;
+	const [titleString, setTitleString] = useState<SharedString | undefined>();
+
+	const newItemTextInputRef = useRef<HTMLInputElement>(null);
+
+	useTree(todoModel.treeView.root);
+
+	useEffect(() => {
+		Promise.resolve(todoModel.treeView.root.title.get())
+			.then((title) => {
+				setTitleString(title as ISharedString);
+			})
+			.catch((error) => {
+				console.log("todomodel");
+				console.log(todoModel);
+				console.error(error);
+			});
+		return () => {};
+	}, [todoModel]);
+
+	if (titleString === undefined) {
+		return <div>Loading...</div>;
+	}
+	const handleCreateClick = (ev: React.FormEvent<HTMLFormElement>): void => {
+		ev.preventDefault();
+
+		const input = newItemTextInputRef.current;
+		if (!input) {
+			throw new Error("New item text field missing");
+		}
+
+		todoModel
+			.addTodoItem({ startingText: input.value })
+			.then(() => {
+				input.value = "";
+			})
+			.catch((error) => {
+				console.error("Failed to create todo item:", error);
+			});
+	};
+
+	// Using the list of TodoItem objects, make a list of TodoItemViews.
+	const todoItemViews = Array.from(todoModel.treeView.root.items.entries()).map(
+		([id, todoItem]) => (
+			<div className="item-wrap" key={id}>
+				<TodoItemView todoItemModel={todoItem} className="todo-item-view" />
+				<button
+					name="OpenInNewTab"
+					id={id}
+					className="action-button"
+					onClick={() => window.open(getDirectLink(id), "_blank")}
+				>
+					↗
+				</button>
+				<button
+					className="action-button"
+					onClick={() => {
+						todoModel.treeView.root.items.delete(id);
+						Tree.on(todoModel.treeView.root.items, "treeChanged", () => {});
+					}}
+				>
+					X
+				</button>
+			</div>
+		),
+	);
+
+	// TodoView is made up of an editable title input, an input/button for submitting new items, and the list
+	// of TodoItemViews.
+	return (
+		<div className="todo-view">
+			<CollaborativeInput className="todo-title" sharedString={titleString} />
+			<form className="new-item-form" onSubmit={handleCreateClick}>
+				<input
+					className="new-item-text"
+					type="text"
+					ref={newItemTextInputRef}
+					name="itemName"
+					autoFocus
+				/>
+				<button className="new-item-button" type="submit" name="createItem">
+					+
+				</button>
+			</form>
+			<div className="todo-item-list">{todoItemViews}</div>
+		</div>
+	);
+};

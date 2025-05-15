@@ -227,7 +227,6 @@ export class DataVisualizerGraph
 					result[key] = unknownObjectNode;
 				} else {
 					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
-
 					result[key] =
 						fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);
 				}
