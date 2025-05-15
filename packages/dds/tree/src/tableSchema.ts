@@ -44,11 +44,6 @@ import {
 const tableSchemaFactorySubScope = "table";
 
 /**
- * A private symbol put on table nodes to help identify them.
- */
-const tableSchemaSymbol: unique symbol = Symbol("tableNode");
-
-/**
  * Gets the table containing the provided row/column node, if the node is part of a table.
  * @remarks Assumes that the table is the grandparent of the row/column node.
  */
@@ -76,6 +71,11 @@ function getParentTable<
 
 	return tableNode;
 }
+
+/**
+ * A private symbol put on table nodes to help identify them.
+ */
+const tableSchemaSymbol: unique symbol = Symbol("tableNode");
 
 /**
  * Type-guard to determine if a node is a table node.
