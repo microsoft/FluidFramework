@@ -114,7 +114,7 @@ import {
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
-import { proxySlot } from "../../simple-tree/core/treeNodeKernel.js";
+import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 
 const enableSchemaValidation = true;
 
@@ -203,9 +203,9 @@ describe("SharedTree", () => {
 						assert(node.context.isDisposed() === false);
 						assert(allowNodes);
 					}
-					const proxy = anchor.slots.get(proxySlot);
-					if (proxy !== undefined) {
-						assert.equal(Tree.status(proxy), TreeStatus.InDocument);
+					const treeNode = anchor.slots.get(simpleTreeNodeSlot);
+					if (treeNode !== undefined) {
+						assert.equal(Tree.status(treeNode), TreeStatus.InDocument);
 						assert(allowNodes);
 					}
 				}

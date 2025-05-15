@@ -28,12 +28,15 @@ import {
 	tryUnhydratedFlexTreeNode,
 	unhydratedFlexTreeNodeToTreeNode,
 } from "./core/index.js";
-import { debugAssert } from "@fluidframework/core-utils/internal";
+import { debugAssert, oob } from "@fluidframework/core-utils/internal";
 
 /**
  * Prepare content from a user for insertion into a tree.
  * @remarks
  * This validates and converts the input, and if necessary invokes {@link prepareContentForHydration}.
+ *
+ * The next edit made to `destinationContext`'s forest must be the creation of a detached field containing this content,
+ * (Triggering {@link ForestEvents.afterRootFieldCreated}) otherwise hydration will break.
  */
 export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
@@ -50,13 +53,18 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 
 /**
  * {@link prepareForInsertion} but batched for array content.
+ * @remarks
+ * This is for inserting items into an array, not a inserting a {@link TreeArrayNode} (that would use {@link prepareForInsertion}).
+ *
+ * The next edits made to `destinationContext`'s forest must be the creation of a detached field.
+ * One edit for each item in `data`, in order.
+ *
  * @privateRemarks
- * TODO:
- * Experimentally it was determined that making separate calls to prepareContentForHydration for each array item did not work.
- * This should be understood and fixed or have the factors that cause it clearly documented.
- * If fixed, this function should be removed, and arrays can just map over prepareForInsertion.
+ * This has to be done as a single operation for all items in data
+ * (as opposed to mapping {@link prepareForInsertion} over the array)
+ * due to how the eventing in prepareContentForHydration works.
  */
-export function prepareArrayForInsertion(
+export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
 	schema: ImplicitAllowedTypes,
 	destinationContext: FlexTreeContext,
@@ -164,7 +172,7 @@ function prepareContentForHydration(
 		});
 	}
 
-	bindTreeNodes(batches, forest);
+	scheduleHydration(batches, forest);
 }
 
 function walkMapTree(
@@ -206,12 +214,13 @@ function walkMapTree(
 }
 
 /**
- * Register a collection of nodes with the forest so that they can be hydrated.
+ * Register events which will hydrate batches of nodes when they are inserted.
+ * The next edits to forest must be their insertions, in order, or data corruption can occur.
  * @param locatedNodes - the nodes to register with the forest.
  * Each index in this array expects its content to be added and produce its own `afterRootFieldCreated` event.
  * If array subsequence insertion is optimized to produce a single event, this will not work correctly as is, and will need to be modified to take in a single {@link LocatedNodesBatch}.
  */
-function bindTreeNodes(
+function scheduleHydration(
 	locatedNodes: readonly LocatedNodesBatch[],
 	forest: IForestSubscription,
 ): void {
@@ -220,13 +229,12 @@ function bindTreeNodes(
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
 		const off = forest.events.on("afterRootFieldCreated", (fieldKey) => {
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const batch = locatedNodes[i]!;
+			// Indexing is safe here because of the length check above. This assumes the array has not been modified which should be the case.
+			const batch = locatedNodes[i] ?? oob();
 			debugAssert(() => batch.rootPath.parentField === placeholderKey);
 			batch.rootPath.parentField = brand(fieldKey);
 			for (const { path, node } of batch.paths) {
-				getKernel(node).anchorProxy(forest.anchors, path);
+				getKernel(node).hydrate(forest.anchors, path);
 			}
 			if (++i === locatedNodes.length) {
 				off();

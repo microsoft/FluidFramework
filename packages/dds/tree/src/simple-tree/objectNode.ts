@@ -14,7 +14,7 @@ import {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 } from "../feature-libraries/index.js";
-import { getTreeNodeForField } from "./proxies.js";
+import { getTreeNodeForField } from "./getTreeNodeForField.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
