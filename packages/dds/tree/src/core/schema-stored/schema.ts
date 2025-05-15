@@ -376,7 +376,7 @@ export function encodeFieldSchemaV1(schema: TreeFieldStoredSchema): FieldSchemaF
 export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaFormatV2 {
 	return {
 		...encodeFieldSchemaV1(schema),
-		persistedMetadata: schema.persistedMetadata,
+		metadata: schema.persistedMetadata,
 	};
 }
 
@@ -385,7 +385,7 @@ export function decodeFieldSchema(schema: FieldSchemaFormatV2): TreeFieldStoredS
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: schema.kind,
 		types: new Set(schema.types),
-		persistedMetadata: schema.persistedMetadata,
+		persistedMetadata: schema.metadata,
 	};
 	return out;
 }

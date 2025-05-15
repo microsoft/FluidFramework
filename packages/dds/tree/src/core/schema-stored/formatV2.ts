@@ -18,7 +18,7 @@ export const PersistedMetadataFormat = Type.Optional(JsonCompatibleReadOnlySchem
 const FieldSchemaFormatBase = Type.Object({
 	kind: FieldKindIdentifierSchema,
 	types: Type.Array(TreeNodeSchemaIdentifierSchema),
-	persistedMetadata: PersistedMetadataFormat,
+	metadata: PersistedMetadataFormat,
 });
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
