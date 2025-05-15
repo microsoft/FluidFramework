@@ -10,10 +10,8 @@ import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
-	getSchemaAndPolicy,
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
-import { prepareContentForHydration } from "./proxies.js";
 import {
 	normalizeAllowedTypes,
 	unannotateImplicitAllowedTypes,
@@ -41,6 +39,7 @@ import {
 	type TreeNodeSchemaClass,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
+import { prepareArrayForInsertion } from "./prepareForInsertion.js";
 import {
 	getKernel,
 	UnhydratedFlexTreeNode,
@@ -173,8 +172,11 @@ export interface TreeArrayNode<
 	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
 	 *
 	 * - `0` (between the start of the array and `A`'s original position)
+	 *
 	 * - `1` (between `A`'s original position and `B`'s original position)
+	 *
 	 * - `2` (between `B`'s original position and `C`'s original position)
+	 *
 	 * - `3` (between `C`'s original position and the end of the array)
 	 *
 	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
@@ -183,13 +185,17 @@ export interface TreeArrayNode<
 	 * or relative to the start or end of the array:
 	 *
 	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 *
 	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 *
 	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 *
 	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
 	 *
 	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
 	 *
 	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 *
 	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
 	 *
 	 * Notice the asymmetry between `-1` and `+2` in the above examples.
@@ -215,8 +221,11 @@ export interface TreeArrayNode<
 	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
 	 *
 	 * - `0` (between the start of the array and `A`'s original position)
+	 *
 	 * - `1` (between `A`'s original position and `B`'s original position)
+	 *
 	 * - `2` (between `B`'s original position and `C`'s original position)
+	 *
 	 * - `3` (between `C`'s original position and the end of the array)
 	 *
 	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
@@ -225,13 +234,17 @@ export interface TreeArrayNode<
 	 * or relative to the start or end of the array:
 	 *
 	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 *
 	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 *
 	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 *
 	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
 	 *
 	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
 	 *
 	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 *
 	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
 	 *
 	 * Notice the asymmetry between `-1` and `+2` in the above examples.
@@ -299,8 +312,11 @@ export interface TreeArrayNode<
 	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
 	 *
 	 * - `0` (between the start of the array and `A`'s original position)
+	 *
 	 * - `1` (between `A`'s original position and `B`'s original position)
+	 *
 	 * - `2` (between `B`'s original position and `C`'s original position)
+	 *
 	 * - `3` (between `C`'s original position and the end of the array)
 	 *
 	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
@@ -309,13 +325,17 @@ export interface TreeArrayNode<
 	 * or relative to the start or end of the array:
 	 *
 	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 *
 	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 *
 	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 *
 	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
 	 *
 	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
 	 *
 	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 *
 	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
 	 *
 	 * Notice the asymmetry between `-1` and `+2` in the above examples.
@@ -343,8 +363,11 @@ export interface TreeArrayNode<
 	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
 	 *
 	 * - `0` (between the start of the array and `A`'s original position)
+	 *
 	 * - `1` (between `A`'s original position and `B`'s original position)
+	 *
 	 * - `2` (between `B`'s original position and `C`'s original position)
+	 *
 	 * - `3` (between `C`'s original position and the end of the array)
 	 *
 	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
@@ -353,13 +376,17 @@ export interface TreeArrayNode<
 	 * or relative to the start or end of the array:
 	 *
 	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 *
 	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 *
 	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 *
 	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
 	 *
 	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
 	 *
 	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 *
 	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
 	 *
 	 * Notice the asymmetry between `-1` and `+2` in the above examples.
@@ -832,24 +859,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			| IterableTreeArrayContent<InsertableContent>
 		)[];
 
-		const mapTrees = content
-			.flatMap((c): InsertableContent[] =>
-				c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
-			)
-			.map((c) =>
-				mapTreeFromNodeData(
-					c,
-					this.simpleSchema,
-					sequenceField.context.isHydrated()
-						? sequenceField.context.nodeKeyManager
-						: undefined,
-					getSchemaAndPolicy(sequenceField),
-				),
-			);
-
-		if (sequenceField.context.isHydrated()) {
-			prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
-		}
+		const contentArray = content.flatMap((c): InsertableContent[] =>
+			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
+		);
+		const mapTrees = prepareArrayForInsertion(
+			contentArray,
+			this.simpleSchema,
+			sequenceField.context,
+		);
 
 		return mapTrees;
 	}
