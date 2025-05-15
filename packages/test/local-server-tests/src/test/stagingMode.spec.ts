@@ -16,13 +16,17 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import {
+	IContainerRuntimeOptions,
+	loadContainerRuntime,
+} from "@fluidframework/container-runtime/internal";
 import {
 	type ConfigTypes,
 	type FluidObject,
 	type IConfigProviderBase,
 	type IErrorBase,
 } from "@fluidframework/core-interfaces/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -57,8 +61,21 @@ class DataObjectWithStagingMode extends DataObject {
 		return this;
 	}
 
+	private getIdCompressor(): IIdCompressor {
+		const idCompressor = this.runtime.idCompressor;
+		assert(idCompressor !== undefined, "IdCompressor must be enabled for these tests.");
+		return idCompressor;
+	}
+
 	public makeEdit(prefix: string) {
 		this.root.set(`${prefix}-${this.instanceNumber}`, this.root.size);
+	}
+
+	public makeCompressedIdEdit(prefix: string): void {
+		const idCompressor = this.getIdCompressor();
+		const compressedId = idCompressor.generateCompressedId();
+
+		this.root.set(`${prefix}-compressed-${this.instanceNumber}`, `id-${compressedId}`);
 	}
 
 	public addDDS(prefix: string): void {
@@ -120,10 +137,14 @@ const runtimeFactory: IRuntimeFactory = {
 		return this;
 	},
 	instantiateRuntime: async (context, existing) => {
+		const runtimeOptions: IContainerRuntimeOptions = {
+			enableRuntimeIdCompressor: "on",
+		};
 		return loadContainerRuntime({
 			context,
 			existing,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			runtimeOptions,
 			provideEntryPoint: async (rt) => {
 				const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
 				if (maybeRoot === undefined) {
@@ -436,6 +457,63 @@ describe("Staging Mode", () => {
 			hasEdit(clients.original, "branch-only"),
 			false,
 			"Edit submitted while in staging mode should be rolled back.",
+		);
+	});
+
+	it("commitChanges sends compressed ID edit applied to other clients", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const clients = await createClients(deltaConnectionServer);
+
+		const stagingControls = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.makeCompressedIdEdit("branch-compressed-id");
+		clients.loaded.dataObject.makeEdit("after-branch");
+
+		await waitForSave([clients.loaded]);
+
+		stagingControls.commitChanges();
+
+		await waitForSave(clients);
+
+		assertConsistent(clients, "states should match after save");
+		assert.equal(
+			hasEdit(clients.original, "branch-compressed-id"),
+			true,
+			"Compressed ID edit submitted while in staging mode should be committed.",
+		);
+		assert.equal(
+			hasEdit(clients.loaded, "branch-compressed-id"),
+			true,
+			"Loaded client should receive the committed compressed ID edit.",
+		);
+
+		clients.original.dataObject.makeCompressedIdEdit("after-commit-staged");
+		await waitForSave(clients);
+		assertConsistent(clients, "states should match after save");
+	});
+
+	it("discardChanges rolls back compressed ID edit applied in staging mode", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const clients = await createClients(deltaConnectionServer);
+		const stagingControls = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.makeCompressedIdEdit("branch-compressed");
+		clients.loaded.dataObject.makeEdit("after-branch");
+
+		await waitForSave([clients.loaded]);
+
+		stagingControls.discardChanges();
+
+		await waitForSave(clients);
+
+		assertConsistent(clients, "states should match after save");
+		assert.equal(
+			hasEdit(clients.original, "branch-compressed"),
+			false,
+			"Compressed ID edit submitted while in staging mode should be rolled back.",
+		);
+		assert.equal(
+			hasEdit(clients.loaded, "branch-compressed"),
+			false,
+			"Loaded client should not have the rolled back compressed ID edit.",
 		);
 	});
 
