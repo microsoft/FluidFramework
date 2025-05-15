@@ -21,7 +21,7 @@ import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
-describe("TableFactory unit tests", () => {
+describe.only("TableFactory unit tests", () => {
 	function createTableTree() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
@@ -35,6 +35,7 @@ describe("TableFactory unit tests", () => {
 		}) {}
 		class Column extends TableSchema.column({
 			schemaFactory,
+			cell: Cell,
 			props: ColumnProps,
 		}) {}
 
@@ -86,7 +87,7 @@ describe("TableFactory unit tests", () => {
 
 	describe("Column Schema", () => {
 		it("Can create without props", () => {
-			class Column extends TableSchema.column({ schemaFactory }) {}
+			class Column extends TableSchema.column({ schemaFactory, cell: schemaFactory.string }) {}
 			const column = new Column({ id: "column-0" });
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
@@ -98,10 +99,58 @@ describe("TableFactory unit tests", () => {
 		it("Can create with props", () => {
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: schemaFactory.string,
 				props: schemaFactory.string,
 			}) {}
 			const column = new Column({ id: "column-0", props: "Column 0" });
 			assert.equal(column.props, "Column 0");
+		});
+
+		it("getCells", () => {
+			const { treeView, Table, Column } = createTableTree();
+			treeView.initialize(Table.empty());
+			const table = treeView.root;
+
+			// Calling `getCells` on a column that has not been inserted into the table throws an error.
+			const column0 = new Column({ id: "column-0", props: {} });
+			assert.throws(
+				() => column0.getCells(),
+				validateUsageError(/Column with ID "column-0" is not contained in a table./),
+			);
+
+			table.insertColumn({ column: column0 });
+
+			// No rows or cells have been inserted yet.
+			assert.equal([...column0.getCells()].length, 0);
+
+			table.insertRows({
+				rows: [
+					{ id: "row-0", cells: {} },
+					{ id: "row-1", cells: {} },
+					{ id: "row-2", cells: {} },
+				],
+			});
+			table.setCell({
+				key: {
+					column: column0,
+					row: "row-0",
+				},
+				cell: { value: "0-0" },
+			});
+			table.setCell({
+				key: {
+					column: column0,
+					row: "row-2",
+				},
+				cell: { value: "2-0" },
+			});
+
+			const cells = [...column0.getCells()];
+			assert.equal(cells.length, 2);
+			assert.equal(cells[0][0], "row-0");
+			assertEqualTrees(cells[0][1], { value: "0-0" });
+			assert.equal(cells[1][0], "row-2");
+			assertEqualTrees(cells[1][1], { value: "2-0" });
 		});
 	});
 
@@ -194,15 +243,17 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Can create with custom column schema", () => {
+			const Cell = schemaFactory.string;
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: Cell,
 				props: schemaFactory.object("column-props", {
 					label: schemaFactory.string,
 				}),
 			}) {}
 			class Table extends TableSchema.table({
 				schemaFactory,
-				cell: schemaFactory.string,
+				cell: Cell,
 				column: Column,
 			}) {}
 
@@ -237,6 +288,7 @@ describe("TableFactory unit tests", () => {
 			const Cell = schemaFactory.string;
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: Cell,
 				props: schemaFactory.object("column-props", {
 					label: schemaFactory.string,
 				}),
@@ -1353,6 +1405,7 @@ describe("TableFactory unit tests", () => {
 
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: Cell,
 				props: ColumnProps,
 			}) {}
 
