@@ -392,20 +392,6 @@ export function areOutputCellsEmpty(mark: Mark): boolean {
 }
 
 /**
- * Creates a mark that is equivalent to the given `mark` but with effects removed if those have no impact in the input
- * context of that mark.
- *
- * @param mark - The mark to settle. Never mutated.
- * @returns either the original mark or a shallow clone of it with effects stripped out.
- */
-export function settleMark(mark: Mark): Mark {
-	if (isImpactful(mark)) {
-		return mark;
-	}
-	return omitMarkEffect(mark);
-}
-
-/**
  * @returns true, iff the given `mark` would have impact on the field when applied.
  * Ignores the impact of nested changes.
  * CellRename effects are considered impactful if they actually change the ID of the cells.

@@ -2862,22 +2862,31 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			count,
 		);
 
-		const { value: baseDetachId } = firstDetachIdFromAttachId(
-			this.table.baseChange.rootNodes,
-			baseAttachId,
-			1,
-		);
-		const detachFields = getFieldsForCrossFieldKey(
-			this.table.baseChange,
-			{
-				...baseDetachId,
-				target: CrossFieldTarget.Source,
-			},
-			1,
-		);
-		// We invalidate the detach location even if there are no new changes because adding the rename entry
-		// may affect the result of `composeDetachAttach` at that location.
-		this.invalidateBaseFields(detachFields);
+		let countToProcess = count;
+		let currBaseAttachId = baseAttachId;
+		while (countToProcess > 0) {
+			const detachIdEntry = firstDetachIdFromAttachId(
+				this.table.baseChange.rootNodes,
+				currBaseAttachId,
+				countToProcess,
+			);
+
+			const detachFields = getFieldsForCrossFieldKey(
+				this.table.baseChange,
+				{
+					...detachIdEntry.value,
+					target: CrossFieldTarget.Source,
+				},
+				detachIdEntry.length,
+			);
+
+			// We invalidate the detach location even if there are no new changes because adding the rename entry
+			// may affect the result of `composeDetachAttach` at that location.
+			this.invalidateBaseFields(detachFields);
+
+			countToProcess -= detachIdEntry.length;
+			currBaseAttachId = offsetChangeAtomId(currBaseAttachId, detachIdEntry.length);
+		}
 	}
 
 	public sendNewChangesToBaseSourceLocation(

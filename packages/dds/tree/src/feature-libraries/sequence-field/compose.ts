@@ -5,7 +5,12 @@
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
-import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
+import {
+	areEqualChangeAtomIds,
+	type ChangeAtomId,
+	type RevisionMetadataSource,
+	type RevisionTag,
+} from "../../core/index.js";
 import type { IdAllocator } from "../../util/index.js";
 import type {
 	ComposeNodeManager,
@@ -49,7 +54,6 @@ import {
 	markFillsCells,
 	markHasCellEffect,
 	normalizeCellRename,
-	settleMark,
 	withNodeChange,
 } from "./utils.js";
 
@@ -87,14 +91,7 @@ function composeMarkLists(
 	const queue = new ComposeQueue(baseMarkList, newMarkList, moveEffects, revisionMetadata);
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
-		const settledNewMark = settleMark(newMark);
-		const settledBaseMark = settleMark(baseMark);
-		const composedMark = composeMarks(
-			settledBaseMark,
-			settledNewMark,
-			composeChild,
-			moveEffects,
-		);
+		const composedMark = composeMarks(baseMark, newMark, composeChild, moveEffects);
 		factory.push(composedMark);
 	}
 
@@ -183,11 +180,23 @@ function composeMarksIgnoreChild(
 		}
 	}
 
+	// XXX: Handle pins
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
 		return createNoopMark(newMark.count, undefined, getInputCellId(baseMark));
 	} else if (!markHasCellEffect(baseMark)) {
 		return newMark;
 	} else if (!markHasCellEffect(newMark)) {
+		if (isAttach(newMark) && isAttach(baseMark)) {
+			// When composing two inserts, the second insert (which is a pin) should take precedence.
+			// We treat the pin as a detach and reattach.
+			moveEffects.composeAttachDetach(
+				getAttachedNodeId(baseMark),
+				getAttachedNodeId(newMark),
+				baseMark.count,
+			);
+
+			return { cellId: baseMark.cellId, ...newMark };
+		}
 		return baseMark;
 	} else if (areInputCellsEmpty(baseMark)) {
 		assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
@@ -216,7 +225,16 @@ function composeMarksIgnoreChild(
 		// Note that we cannot assert that this returns true,
 		// as it may not be until a second pass that MCF can tell that this is a reattach of the same node.
 		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, false);
-		return createNoopMark(baseMark.count, undefined);
+
+		if (areEqualChangeAtomIds(getAttachedNodeId(newMark), getDetachedNodeId(baseMark))) {
+			// These are inverses which cancel out.
+			return createNoopMark(baseMark.count, undefined);
+		}
+
+		// The composition has no net effect but we preserve the second change's intention to pin the nodes here.
+		const composedMark = { ...newMark };
+		delete composedMark.cellId;
+		return composedMark;
 	}
 }
 
