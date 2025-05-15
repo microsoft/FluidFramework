@@ -1622,7 +1622,7 @@ describe("toMapTree", () => {
 					}),
 				}) {}
 				const m: ExclusiveMapTree = { type: brand(Test.identifier), fields: new Map() };
-				addDefaultsToMapTree(m, Test, undefined);
+				addDefaultsToMapTree(m, Test, undefined, false);
 				assert.deepEqual(
 					m.fields,
 					new Map([["stored", [{ type: f.number.identifier, fields: new Map(), value: 5 }]]]),

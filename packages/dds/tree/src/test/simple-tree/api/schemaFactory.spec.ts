@@ -13,6 +13,7 @@ import {
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
+	mapTreeFromNodeData,
 	SchemaFactoryAlpha,
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
@@ -1054,6 +1055,97 @@ describe("schemaFactory", () => {
 		assert.deepEqual(getKeys(obj), ["a"]);
 		assert.deepEqual(getKeys(arr), [0]);
 		assert.deepEqual(getKeys(mapNode), ["x"]);
+	});
+
+	describe("enablable", () => {
+		const schemaFactory = new SchemaFactoryAlpha("Enablable");
+
+		class TestObject extends schemaFactory.objectAlpha("TestObject", {
+			foo: [schemaFactory.number, schemaFactory.enablable(schemaFactory.string)],
+			fo1: schemaFactory.optional(schemaFactory.string),
+		}) {}
+
+		describe("in objects", () => {
+			it("can't be initialized", () => {
+				assert.throws(() => {
+					const _ = new TestObject({ foo: "test" });
+				});
+			});
+
+			it("can't be set", () => {
+				const testObject = new TestObject({ foo: 3 });
+				assert.throws(() => {
+					testObject.foo = "test";
+				});
+			});
+
+			it("does not prevent normal allowed types from being set", () => {
+				const testObject = new TestObject({ foo: 3 });
+				testObject.foo = 42;
+			});
+		});
+
+		describe("in maps", () => {
+			class TestMap extends schemaFactory.mapAlpha("TestMap", [
+				schemaFactory.number,
+				schemaFactory.enablable(schemaFactory.string),
+			]) {}
+
+			it("can't be initialized", () => {
+				assert.throws(() => {
+					const _ = new TestMap({ foo: "test" });
+				});
+			});
+
+			it("can't be set", () => {
+				const testMap = new TestMap({ foo: 3 });
+				assert.throws(() => {
+					testMap.set("foo", "test");
+				});
+			});
+
+			it("does not prevent normal allowed types from being set", () => {
+				const testMap = new TestMap();
+				testMap.set("foo", 42);
+				assert.equal(testMap.get("foo"), 42);
+			});
+		});
+
+		describe("in arrays", () => {
+			class TestArray extends schemaFactory.arrayAlpha("TestArray", [
+				schemaFactory.number,
+				schemaFactory.enablable(schemaFactory.string),
+			]) {}
+
+			it("can't be initialized", () => {
+				assert.throws(() => {
+					const _ = new TestArray(["test"]);
+				});
+			});
+
+			it("can't be set", () => {
+				const testArray = new TestArray([3]);
+				assert.throws(() => {
+					testArray.insertAtEnd("test");
+				});
+			});
+
+			it("does not prevent normal allowed types from being inserted", () => {
+				const testArray = new TestArray([3]);
+				testArray.insertAtEnd(5);
+				assert.deepEqual(Array.from(testArray.values()), [3, 5]);
+			});
+		});
+
+		it("can be permitted by mapTreeFromNodeData", () => {
+			const _ = mapTreeFromNodeData(
+				{
+					foo: "test",
+				},
+				TestObject,
+				{ allowNonEnabledTypes: true },
+			);
+		});
 	});
 });
 
