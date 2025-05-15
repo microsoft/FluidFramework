@@ -152,7 +152,7 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha
-export function extractPersistedSchema(schema: SimpleTreeSchema, schemaWriteVersion: number): JsonCompatible;
+export function extractPersistedSchema(schema: SimpleTreeSchema, oldestCompatibleClient: FluidClientVersion): JsonCompatible;
 
 // @alpha @system
 export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;
@@ -237,7 +237,8 @@ export enum FluidClientVersion {
     v2_0 = "v2_0",
     v2_1 = "v2_1",
     v2_2 = "v2_2",
-    v2_3 = "v2_3"
+    v2_3 = "v2_3",
+    v2_4 = "v2_4"
 }
 
 // @alpha

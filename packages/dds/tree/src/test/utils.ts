@@ -176,6 +176,8 @@ import type {
 	ISharedObjectKind,
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { ajvValidator } from "./codec/ajvValidator.js";
 
 // Testing utilities
 
@@ -981,7 +983,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// pattern.
 			const jsonCodec =
 				codec.json.encodedSchema !== undefined
-					? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, ajvValidator)
 					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {

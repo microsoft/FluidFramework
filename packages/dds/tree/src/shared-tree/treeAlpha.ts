@@ -38,8 +38,13 @@ import {
 	TreeViewConfigurationAlpha,
 } from "../simple-tree/index.js";
 import type { JsonCompatible } from "../util/index.js";
-import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
-import { SchemaCodecVersion, type ITreeCursorSynchronous } from "../core/index.js";
+import {
+	currentVersion,
+	noopValidator,
+	type FluidClientVersion,
+	type ICodecOptions,
+} from "../codec/index.js";
+import type { ITreeCursorSynchronous } from "../core/index.js";
 import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
@@ -316,7 +321,7 @@ export const TreeAlpha: TreeAlpha = {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
 			// TODO
-			schema: extractPersistedSchema(config, SchemaCodecVersion.v2),
+			schema: extractPersistedSchema(config, currentVersion),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
