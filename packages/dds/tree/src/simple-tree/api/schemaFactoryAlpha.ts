@@ -55,6 +55,7 @@ export class SchemaFactoryAlpha<
 
 	/**
 	 * Declares a type enablable in a set of {@link AllowedTypes}.
+	 * This means that the type can be read from the document but cannot be written.
 	 *
 	 * @remarks
 	 * t is frozen and should not be modified after being passed in.
