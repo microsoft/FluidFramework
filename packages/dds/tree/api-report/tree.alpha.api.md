@@ -18,7 +18,6 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 // @alpha
 export interface AllowedTypeMetadata {
     readonly custom?: unknown;
-    // (undocumented)
     readonly enabledUponSchemaUpgrade?: SchemaUpgradeToken;
 }
 
@@ -806,7 +805,7 @@ export interface SchemaStatics {
 }
 
 // @alpha
-export type SchemaUpgradeToken = string;
+export type SchemaUpgradeToken = true;
 
 // @alpha
 export interface SchemaValidationFunction<Schema extends TSchema> {
