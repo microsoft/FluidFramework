@@ -150,11 +150,12 @@ interface Client {
 	dataObject: DataObjectWithStagingMode;
 }
 
-const waitForSave = async (clients: Client[] | Record<string, Client>) =>
+/** Returns the max sequence number from the clients once each has had its local state saved */
+const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<number> =>
 	Promise.all(
 		Object.entries(clients).map(
 			async ([key, { container }]) =>
-				new Promise<void>((resolve, reject) => {
+				new Promise<number>((resolve, reject) => {
 					if (container.closed || container.disposed) {
 						reject(
 							new Error(
@@ -165,7 +166,7 @@ const waitForSave = async (clients: Client[] | Record<string, Client>) =>
 					}
 
 					if (!container.isDirty) {
-						resolve();
+						resolve(container.deltaManager.lastSequenceNumber);
 						return;
 					}
 
@@ -181,7 +182,7 @@ const waitForSave = async (clients: Client[] | Record<string, Client>) =>
 					};
 
 					const resolveHandler = () => {
-						resolve();
+						resolve(container.deltaManager.lastSequenceNumber);
 						off();
 					};
 
@@ -196,7 +197,59 @@ const waitForSave = async (clients: Client[] | Record<string, Client>) =>
 					container.on("disposed", rejectHandler);
 				}),
 		),
+	).then((sequenceNumbers) => Math.max(...sequenceNumbers));
+
+/** Wait for all clients to process the given sequenceNumber */
+const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumber: number) => {
+	return Promise.all(
+		Object.entries(clients).map(
+			async ([key, { container }]) =>
+				new Promise<void>((resolve, reject) => {
+					if (container.closed || container.disposed) {
+						reject(
+							new Error(
+								`Container ${key} already closed or disposed when waitForCaughtUp was called`,
+							),
+						);
+						return;
+					}
+
+					if (container.deltaManager.lastSequenceNumber >= sequenceNumber) {
+						resolve();
+						return;
+					}
+
+					const rejectHandler = (error?: IErrorBase | undefined) => {
+						reject(
+							wrapError(
+								error,
+								(message) =>
+									new LoggingError(`Container "${key}" closed or disposed: ${message}`),
+							),
+						);
+						off();
+					};
+
+					const opHandler = (message) => {
+						if (message.sequenceNumber >= sequenceNumber) {
+							resolve();
+							off();
+						}
+					};
+
+					const off = () => {
+						container.off("op", opHandler);
+						container.off("closed", rejectHandler);
+						container.off("disposed", rejectHandler);
+					};
+
+					container.on("op", opHandler);
+					container.on("closed", rejectHandler);
+					container.on("disposed", rejectHandler);
+				}),
+		),
 	);
+};
 
 const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
 	const {
@@ -358,9 +411,8 @@ describe("Staging Mode", () => {
 
 		assertNotConsistent(clients, "should not match before save");
 
-		await waitForSave([clients.loaded]);
-		// Wait for the mainline changes to propagate
-		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+		const seq = await waitForSave([clients.loaded]);
+		await catchUp(clients, seq);
 
 		assertNotConsistent(clients, "should not match after save");
 		assert.equal(
@@ -382,9 +434,8 @@ describe("Staging Mode", () => {
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
-		await waitForSave([clients.loaded]);
-		// Wait for the mainline changes to propagate
-		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+		const seq = await waitForSave([clients.loaded]);
+		await catchUp(clients, seq);
 
 		assert.equal(
 			hasEdit(clients.original, "after-branch"),
@@ -396,13 +447,13 @@ describe("Staging Mode", () => {
 	it("commitChanges sends changes applied to other clients", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
+
 		const stagingControls = clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
-		await waitForSave([clients.loaded]);
-		// Wait for the mainline changes to propagate
-		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+		const seq = await waitForSave([clients.loaded]);
+		await catchUp(clients, seq);
 
 		stagingControls.commitChanges();
 
@@ -419,13 +470,13 @@ describe("Staging Mode", () => {
 	it("discardChanges rolls back all changes applied in staging mode", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
+
 		const stagingControls = clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
-		await waitForSave([clients.loaded]);
-		// Wait for the mainline changes to propagate
-		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+		const seq = await waitForSave([clients.loaded]);
+		await catchUp(clients, seq);
 
 		stagingControls.discardChanges();
 
@@ -453,9 +504,8 @@ describe("Staging Mode", () => {
 
 		assertNotConsistent(clients, "should not match before save");
 
-		await waitForSave([clients.loaded]);
-		// Wait for the mainline changes to propagate
-		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+		const seq = await waitForSave([clients.loaded]);
+		await catchUp(clients, seq);
 
 		assertNotConsistent(clients, "should not match after save");
 
