@@ -52,6 +52,7 @@ function getParentTable(
 ):
 	| (TreeNode &
 			TableSchema.Table<
+			string | undefined,
 				ImplicitAllowedTypes,
 				System_TableSchema.ColumnSchemaBase,
 				System_TableSchema.RowSchemaBase
@@ -82,6 +83,7 @@ function isTableNode(
 	node: TreeNode,
 ): node is TreeNode &
 	TableSchema.Table<
+		string | undefined,
 		ImplicitAllowedTypes,
 		System_TableSchema.ColumnSchemaBase,
 		System_TableSchema.RowSchemaBase
@@ -568,7 +570,7 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.Table<TCellSchema, TColumnSchema, TRowSchema>
+			implements TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema>
 		{
 			public static empty<TThis extends TableConstructorType>(
 				this: TThis,
@@ -908,7 +910,7 @@ export namespace System_TableSchema {
 		(Table as any)[tableSchemaSymbol] = true;
 
 		type TableValueType = TreeNode &
-			TableSchema.Table<TCellSchema, TColumnSchema, TRowSchema> &
+			TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema> &
 			WithType<ScopedSchemaName<Scope, "Table">>;
 		type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
 		type TableConstructorType = new (data: TableInsertableType) => TableValueType;
@@ -1364,12 +1366,17 @@ export namespace TableSchema {
 
 	/**
 	 * A table.
+	 * @typeParam TScope - The {@link SchemaFactoryAlpha.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the table.
+	 * @typeParam TColumn - The type of the columns in the table.
+	 * @typeParam TRow - The type of the rows in the table.
 	 * @sealed @internal
 	 */
 	export interface Table<
+		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
-		TColumn extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-		TRow extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
+		TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>
 	> {
 		/**
 		 * The table's columns.
