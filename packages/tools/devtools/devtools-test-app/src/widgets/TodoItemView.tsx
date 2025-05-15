@@ -14,13 +14,18 @@ import React from "react";
 
 import type { TodoItem } from "../Schema.js";
 
+/**
+ * {@link TodoItemView} input props.
+ * @internal
+ */
 interface TodoItemViewProps {
 	readonly todoItemModel: TodoItem;
 	readonly className?: string;
 }
 
 /**
- * TODO
+ * Todo Item that will be stored in the {@link TodoListView} tree.
+ * Contains a title, description and a checkbox to mark it as completed.
  */
 export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItemModel, className } = props;

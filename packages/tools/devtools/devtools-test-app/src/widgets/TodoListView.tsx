@@ -13,14 +13,15 @@ import type { AppDataTree } from "../FluidObject.js";
 import { TodoItemView, useTree } from "./TodoItemView.js";
 
 /**
- * TODO
+ * {@link TodoListView} input props.
+ * @internal
  */
 export interface TodoListProps {
 	readonly todoModel: AppDataTree;
 }
 
 /**
- * TODO
+ * Contains the list of {@link TodoItemView}, an editable title input and an input/button for submitting new items.
  */
 export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 	const { todoModel } = props;
@@ -62,7 +63,6 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 			});
 	};
 
-	// Using the list of TodoItem objects, make a list of TodoItemViews.
 	const todoItemViews = [...todoModel.treeView.root.items.entries()].map(([id, todoItem]) => (
 		<div className="item-wrap" key={id}>
 			<TodoItemView todoItemModel={todoItem} className="todo-item-view" />
@@ -78,8 +78,6 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 		</div>
 	));
 
-	// TodoView is made up of an editable title input, an input/button for submitting new items, and the list
-	// of TodoItemViews.
 	return (
 		<div className="todo-view">
 			<CollaborativeInput className="todo-title" sharedString={titleString} />

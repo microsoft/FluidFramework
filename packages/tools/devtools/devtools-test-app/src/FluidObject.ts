@@ -16,6 +16,7 @@ import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree, type TreeView } from "@fluidframework/tree/internal";
+import { v4 as uuid } from "uuid";
 
 import { TodoList, TodoItem, type TodoItemProps } from "./Schema.js";
 
@@ -83,7 +84,7 @@ export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 		// TODO: We should consider creating a separate field for date, so that we do not need to
 		// concatenate it to the id.
 		// Generate an ID that we can sort on later, and store the handle.
-		const id = `${Date.now()}-${Math.random()}`;
+		const id = `${Date.now()}-${uuid()}`;
 
 		this.treeView.root.items.set(id, todoItem);
 	}
@@ -120,7 +121,6 @@ export class AppDataTwo extends DataObject {
 	}
 
 	protected async initializingFirstTime(): Promise<void> {
-		console.log("Initializing first time DATAOBJECT");
 		// Create the shared objects and store their handles in the root SharedDirectory
 		const text = SharedString.create(this.runtime, this.sharedTextKey);
 
@@ -235,7 +235,10 @@ export class AppData extends DataObject {
 			SharedCell.getFactory(),
 			SharedTree.getFactory(),
 		],
-		registryEntries: new Map([AppDataTwo.getFactory().registryEntry, AppDataTree.getFactory().registryEntry]),
+		registryEntries: new Map([
+			AppDataTwo.getFactory().registryEntry,
+			AppDataTree.getFactory().registryEntry,
+		]),
 	});
 
 	public static getFactory(): DataObjectFactory<AppData> {

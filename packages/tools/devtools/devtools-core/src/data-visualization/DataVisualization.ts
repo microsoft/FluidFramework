@@ -253,6 +253,8 @@ export class DataVisualizerGraph
 	private registerVisualizerForVisualizableObject(
 		visualizableObject: VisualizableFluidObject,
 	): FluidObjectId {
+		// In case the visualizable object is a `DataObject` or a `TreeDataObjct`, we extract the id of its root `ISharedObject` so that the view can correctly render the newly updated `VisualizerNode`.
+		// This is necessary because it is the `ISharedObject` (e.g., root or sharedTree of `DataObject` and `TreeDataObject`) which emits the event NOT the `DataObject` and `TreeDataObject`.
 		const fluidObjectId = isDataObject(visualizableObject)
 			? (visualizableObject as unknown as { readonly root: ISharedDirectory }).root.id
 			: isTreeDataObject(visualizableObject)
@@ -278,8 +280,6 @@ export class DataVisualizerGraph
 				visualizationFunction,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
-
-			console.log("visualizerNode", visualizerNode);
 
 			// Register event handler so we can bubble up update events
 			visualizerNode.on("update", this.onVisualUpdateHandler);

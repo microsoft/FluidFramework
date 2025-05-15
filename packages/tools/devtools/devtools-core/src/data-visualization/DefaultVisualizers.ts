@@ -126,19 +126,20 @@ export const visualizeDataObject: VisualizeSharedObject = async (
 };
 
 /**
- * TODO
+ * Default {@link VisualizeSharedObject} for {@link TreeDataObject}.
+ * @remarks This takes in a `rootTree` of type {@link ISharedDirectory} from {@link TreeDataObject} and visualizes its children.
  */
 export const visualizeTreeDataObject: VisualizeSharedObject = async (
-	treeDataObjectRoot: ISharedObject,
+	rootTree: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
 	const renderedChildData = (await visualizeSharedTree(
-		treeDataObjectRoot,
+		rootTree,
 		visualizeChildData,
 	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
 
 	return {
-		fluidObjectId: treeDataObjectRoot.id,
+		fluidObjectId: rootTree.id,
 		children: renderedChildData.children,
 		metadata: renderedChildData.metadata,
 		typeMetadata: "TreeDataObject",

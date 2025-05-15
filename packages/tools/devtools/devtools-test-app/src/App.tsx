@@ -271,7 +271,7 @@ function AppView(props: AppViewProps): React.ReactElement {
 			<EmojiMatrixView emojiMatrix={appData.emojiMatrix} />
 			<CounterView sharedCounter={appData.counter} />
 			<TextView sharedText={appData.text} />
-			<TodoListViewHelper todoModel={appData.treeDataObject} />
+			<TodoAppView todoModel={appData.treeDataObject} />
 		</div>
 	);
 }
@@ -312,11 +312,11 @@ function EmojiMatrixView(props: EmojiMatrixViewProps): React.ReactElement {
 	return emojiMatrix === undefined ? <Spinner /> : <EmojiGrid emojiMatrix={emojiMatrix} />;
 }
 
-interface TodoListViewProps {
+interface TodoAppViewProps {
 	todoModel: AppDataTree;
 }
 
-function TodoListViewHelper(props: TodoListViewProps): React.ReactElement {
+function TodoAppView(props: TodoAppViewProps): React.ReactElement {
 	const { todoModel } = props;
 
 	return todoModel === undefined ? <Spinner /> : <TodoListView todoModel={todoModel} />;
