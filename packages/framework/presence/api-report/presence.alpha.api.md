@@ -346,10 +346,20 @@ export interface PresenceEvents {
 }
 
 // @alpha @sealed
-export type ProxiedValueAccessor<_T> = "proxied";
+export interface ProxiedValueAccessor<T> {
+    // (undocumented)
+    accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
+    // (undocumented)
+    kind: "proxied";
+}
 
 // @alpha @sealed
-export type RawValueAccessor<_T> = "raw";
+export interface RawValueAccessor<T> {
+    // (undocumented)
+    accessor: DeepReadonly<JsonDeserialized<T>>;
+    // (undocumented)
+    kind: "raw";
+}
 
 // @alpha
 export const StateFactory: {
@@ -374,7 +384,8 @@ export interface StateMap<K extends string | number, V> {
 
 // @alpha
 export type StateSchemaValidator<T> = (
-unvalidatedData: Readonly<unknown>, metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
+unvalidatedData: unknown,
+metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
 
 // @alpha
 export interface StateSchemaValidatorMetadata {
