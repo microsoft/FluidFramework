@@ -8,6 +8,7 @@ import {
 	MockHandle,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
@@ -51,7 +52,6 @@ import { testSimpleTrees } from "../../testTrees.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { TreeAlpha } from "../../../shared-tree/index.js";
-import { isStableId } from "@fluidframework/id-compressor/internal";
 
 const schema = new SchemaFactory("com.example");
 
