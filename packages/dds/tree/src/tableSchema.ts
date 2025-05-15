@@ -70,7 +70,7 @@ function getParentTable(
 }
 
 /**
- * A private symbol put on table nodes to help identify them.
+ * A private symbol put on table schema to help identify them.
  */
 const tableSchemaSymbol: unique symbol = Symbol("tableNode");
 
