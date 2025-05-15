@@ -53,8 +53,6 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				runtimeOptions: {
 					createBlobPayloadPending,
 				},
-				// createBlobPayloadPending requires minVersionForCollab of at least 2.40.0
-				minVersionForCollab: "2.40.0",
 			};
 
 			describe("from attached container", () => {

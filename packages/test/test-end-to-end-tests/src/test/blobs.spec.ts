@@ -67,8 +67,6 @@ function makeTestContainerConfig(
 			createBlobPayloadPending,
 		},
 		registry,
-		// createBlobPayloadPending requires minVersionForCollab of at least 2.40.0
-		minVersionForCollab: "2.40.0",
 	};
 }
 
