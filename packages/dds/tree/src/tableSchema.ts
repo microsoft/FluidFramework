@@ -1076,6 +1076,7 @@ export namespace TableSchema {
 
 		/**
 		 * Gets all of the populated cells in the column, keyed by their associated row IDs.
+		 * @throws Throws an error if the column is not in a table.
 		 */
 		getCells(): readonly {
 			rowId: string;
