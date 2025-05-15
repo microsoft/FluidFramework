@@ -44,6 +44,8 @@ export function clientVersionToSchemaVersion(
 		case FluidClientVersion.v2_2:
 		case FluidClientVersion.v2_3:
 			return SchemaCodecVersion.v1;
+		case FluidClientVersion.v2_4:
+			return SchemaCodecVersion.v2;
 		default:
 			unreachableCase(clientVersion);
 	}
