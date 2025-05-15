@@ -52,7 +52,7 @@ function getParentTable(
 ):
 	| (TreeNode &
 			TableSchema.Table<
-			string | undefined,
+				string | undefined,
 				ImplicitAllowedTypes,
 				System_TableSchema.ColumnSchemaBase,
 				System_TableSchema.RowSchemaBase
@@ -1376,7 +1376,7 @@ export namespace TableSchema {
 		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
 		TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
-		TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>
+		TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
 	> {
 		/**
 		 * The table's columns.
