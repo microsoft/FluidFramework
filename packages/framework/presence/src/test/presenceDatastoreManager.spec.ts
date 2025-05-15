@@ -438,7 +438,7 @@ describe("Presence", () => {
 				assert.strictEqual(listener.callCount, 1);
 			});
 
-			it("with requested acknowledgment sends acknowledgment back to requestor", () => {
+			it("with acknowledgementId sends targeted acknowledgment messsage back to requestor", () => {
 				// Setup
 				logger.registerExpectedEvent({
 					eventName: "Presence:AckSent",
