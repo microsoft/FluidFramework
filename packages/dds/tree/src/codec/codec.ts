@@ -334,7 +334,7 @@ export function withSchemaValidation<
  * @remarks
  * Used to express compatibility requirements by indicating the oldest version with which compatibility must be maintained.
  *
- * When no compatibility impacting landed in a given version, the value associated with its enum entry may point to the older version which which its fully compatible.
+ * When no compatibility impacting change landed in a given version, the value associated with its enum entry may point to the older version which its fully compatible with.
  * Note that this can change if a future version of the framework introduces an option to use something which is only supported at a particular version, then the values of the enum may shift,
  * but the semantics of keys in this enum will not change.
  *
