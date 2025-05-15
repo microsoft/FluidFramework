@@ -12,7 +12,6 @@ import {
 	type DeltaMark,
 	type RevisionTag,
 	areEqualChangeAtomIdOpts,
-	areEqualChangeAtomIds,
 	makeChangeAtomId,
 	replaceAtomRevisions,
 } from "../../core/index.js";
@@ -43,7 +42,7 @@ import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose,
 	invert: (
-		{ change, roots }: ContextualizedFieldChange<OptionalChangeset>,
+		{ change }: ContextualizedFieldChange<OptionalChangeset>,
 		isRollback: boolean,
 		genId: IdAllocator<ChangesetLocalId>,
 		revision: RevisionTag | undefined,
@@ -53,7 +52,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		let childChange = change.childChange;
 
 		const replace = change.valueReplace;
-		if (isReplaceEffectful(replace, roots) || isPin(replace, roots)) {
+		if (isReplaceEffectful(replace)) {
 			const invertedReplace: Mutable<Replace> =
 				replace.src === undefined
 					? {
@@ -86,7 +85,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 	rebase: (
 		{ change: newChange, roots: newRoots }: ContextualizedFieldChange<OptionalChangeset>,
-		{ change: overChange, roots: overRoots }: ContextualizedFieldChange<OptionalChangeset>,
+		{ change: overChange }: ContextualizedFieldChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
 		_genId: IdAllocator,
 		nodeManager: RebaseNodeManager,
@@ -101,16 +100,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		// (_ B)
 
 		// The same is true for `overChange` but we don't care about intentions that have no effect.
-		const overReplace = isReplaceEffectful(overChange.valueReplace, overRoots)
+		const overReplace = isReplaceEffectful(overChange.valueReplace)
 			? overChange.valueReplace
 			: undefined;
-		// This makes (_ _) equivalent to (_▲_), and makes (A A) equivalent to (A▼A).
-		// This leaves us with the following 5 cases to consider for `overChange`:
-		// (_ _)
-		// (A A)
-		// (A C)
-		// (A _)
-		// (_ C)
 
 		// This does not however lead to 7*5=35 possible rebase cases because both input changes must have the same input context:
 		if (newChange.valueReplace?.isEmpty === true) {
@@ -480,13 +472,13 @@ type EffectfulReplace =
 
 function isReplaceEffectful(
 	replace: Replace | undefined,
-	rootsInfo: RootsInfo,
+	rootsInfo?: RootsInfo,
 ): replace is EffectfulReplace {
 	if (replace === undefined) {
 		return false;
 	}
 
-	if (isPin(replace, rootsInfo)) {
+	if (rootsInfo !== undefined && isPin(replace, rootsInfo)) {
 		return false;
 	}
 	return !replace.isEmpty || replace.src !== undefined;
