@@ -232,6 +232,62 @@ export function isValidMinVersionForCollab(
 }
 
 /**
+ * Returns true if all properties and values in subset are present in obj (recursively).
+ */
+function objectContains(obj: unknown, subset: unknown): boolean {
+	if (
+		typeof obj !== "object" ||
+		obj === null ||
+		typeof subset !== "object" ||
+		subset === null
+	) {
+		return obj === subset;
+	}
+	const objRec = obj as Record<string, unknown>;
+	const subsetRec = subset as Record<string, unknown>;
+	for (const key of Object.keys(subsetRec)) {
+		if (!objectContains(objRec[key], subsetRec[key])) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/**
+ * TODO: TSDoc + typing
+ */
+const runtimeOptionsAffectingDocSchemaValidationMap = {
+	enableGroupedBatching: {
+		"1.0.0": [false],
+		"2.0.0-defaults": [true],
+	} as const,
+	compressionOptions: {
+		"1.0.0": [disabledCompressionConfig],
+		"2.0.0-defaults": [enabledCompressionConfig],
+	} as const,
+	enableRuntimeIdCompressor: {
+		"1.0.0": [undefined],
+		"2.0.0-defaults": ["on", "delayed"],
+	} as const,
+	explicitSchemaControl: {
+		"1.0.0": [false],
+		"2.0.0-defaults": [true],
+	} as const,
+	flushMode: {
+		"1.0.0": [FlushMode.Immediate],
+		"2.0.0-defaults": [FlushMode.TurnBased],
+	} as const,
+	gcOptions: {
+		"1.0.0": [{}, undefined],
+		"2.0.0-defaults": [{ enableGCSweep: true }],
+	} as const,
+	createBlobPayloadPending: {
+		"1.0.0": [undefined],
+		"2.40.0": [true],
+	} as const,
+};
+
+/**
  * Validates if the runtime options passed in from the user are compatible with the minVersionForCollab.
  * For example, if a user sets the `enableGroupedBatching` option to true, but the minVersionForCollab
  * is set to "1.0.0", then we should throw a UsageError since 1.x clients do not support batching.
@@ -240,22 +296,50 @@ export function validateRuntimeOptions(
 	runtimeOptions: IContainerRuntimeOptions,
 	minVersionForCollab: MinimumVersionForCollab,
 ): void {
-	// Iterate through runtime options and compare against config map
-	for (const [key, value] of Object.entries(runtimeOptions)) {
-		// Skip if key is not in config map
-		if (!(key in runtimeOptionsAffectingDocSchemaConfigMap)) {
+	// Iterate through each runtime option passed in by the user
+	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(
+		runtimeOptions,
+	)) {
+		// Skip if passedRuntimeOption is not in validation map
+		if (!(passedRuntimeOption in runtimeOptionsAffectingDocSchemaValidationMap)) {
 			continue;
 		}
 
-		const config =
-			runtimeOptionsAffectingDocSchemaConfigMap[key as keyof RuntimeOptionsAffectingDocSchema];
-		const versions = Object.keys(config).sort(compare);
-
+		const validationConfig =
+			runtimeOptionsAffectingDocSchemaValidationMap[
+				passedRuntimeOption as keyof RuntimeOptionsAffectingDocSchema
+			];
+		const versions = Object.keys(validationConfig).sort(compare);
+		// For each version in the validation config, we will check if it's greater than the minVersionForCollab.
+		// If so, we will check if the passedRuntimeOptionValue is in the validation config for that version.
+		// If so, then this is considered a UsageError, since the user is trying to use a runtime option for that
+		// version that is not compatible with the minVersionForCollab.
+		// For example, if the minVersionForCollab is "1.0.0" and the user sets enableGroupedBatching to true,
+		// then this will throw once it reaches "2.0.0-defaults", since true is in the array of values for that version.
 		for (const version of versions) {
-			if (value === config[version] && gt(version, minVersionForCollab)) {
-				throw new UsageError(
-					`Runtime option ${key}:${JSON.stringify(value)} is not compatible with minVersionForCollab: ${minVersionForCollab}.`,
-				);
+			//
+			if (gt(version, minVersionForCollab)) {
+				for (const configValue of validationConfig[version]) {
+					// If the value is an object, check if user value contains all keys/values of configValue
+					if (
+						typeof passedRuntimeOptionValue === "object" &&
+						passedRuntimeOptionValue !== null &&
+						typeof configValue === "object" &&
+						configValue !== null
+					) {
+						// If it's an object, check if the user passed value contains the configValue
+						if (objectContains(passedRuntimeOptionValue, configValue)) {
+							throw new UsageError(
+								`Runtime option ${passedRuntimeOption}:${JSON.stringify(passedRuntimeOptionValue)} is not compatible with minVersionForCollab: ${minVersionForCollab}.`,
+							);
+						}
+					} else if (passedRuntimeOptionValue === configValue) {
+						// If it's not an object we can just check if it's equal
+						throw new UsageError(
+							`Runtime option ${passedRuntimeOption}:${JSON.stringify(passedRuntimeOptionValue)} is not compatible with minVersionForCollab: ${minVersionForCollab}.`,
+						);
+					}
+				}
 			}
 		}
 	}

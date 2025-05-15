@@ -74,7 +74,7 @@ import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
 import { defaultMinVersionForCollab } from "../compatUtils.js";
-import { CompressionAlgorithms } from "../compressionDefinitions.js";
+import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
@@ -3988,24 +3988,36 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("throws when manual configs are incompatible with minVersionForCollab", async () => {
-				const logger = new MockLogger();
-				const minVersionForCollab = "1.0.0";
-				await assert.rejects(async () => {
-					await ContainerRuntime.loadRuntime({
-						context: getMockContext({ logger }) as IContainerContext,
-						registryEntries: [],
-						existing: false,
-						runtimeOptions: {
-							// Turning on batching when minVersionForCollab is "1.0.0" will throw a UsageError, since batching requires
-							// at least FF runtime 2.0 to collaborate.
-							enableGroupedBatching: true,
-						},
-						provideEntryPoint: mockProvideEntryPoint,
-						minVersionForCollab,
+			for (const runtimeOption of [
+				{ enableGroupedBatching: true },
+				{ compressionOptions: enabledCompressionConfig },
+				{ explicitSchemaControl: true },
+				{ gcOptions: { enableGCSweep: true } },
+				// Add in an arbitrary entry into the object
+				{ gcOptions: { enableGCSweep: true, sweepGracePeriodMs: 1 } },
+				{ enableRuntimeIdCompressor: "on" },
+				{ enableRuntimeIdCompressor: "delayed" },
+				{ createBlobPayloadPending: true },
+				{ flushMode: FlushMode.TurnBased },
+			]) {
+				it(`throws if minVersionForCollab is incompatible with runtimeOptions: ${JSON.stringify(runtimeOption)}`, async () => {
+					const runtimeOptions = {
+						...runtimeOption,
+					} as unknown as IContainerRuntimeOptionsInternal;
+					const logger = new MockLogger();
+					const minVersionForCollab = "1.0.0";
+					await assert.rejects(async () => {
+						await ContainerRuntime.loadRuntime({
+							context: getMockContext({ logger }) as IContainerContext,
+							registryEntries: [],
+							existing: false,
+							runtimeOptions,
+							provideEntryPoint: mockProvideEntryPoint,
+							minVersionForCollab,
+						});
 					});
 				});
-			});
+			}
 		});
 	});
 });
