@@ -163,7 +163,10 @@ export interface AllowedTypeMetadata {
 	 */
 	readonly custom?: unknown;
 
-	// TODO metadata for enablable types will be added here
+	/**
+	 * If defined, indicates that an allowed type is enablable. Before upgrade, this type can be loading into the tree from a document
+	 * but not written to the tree.
+	 */
 	readonly enabledUponSchemaUpgrade?: SchemaUpgradeToken;
 }
 
