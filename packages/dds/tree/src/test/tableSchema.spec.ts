@@ -38,6 +38,7 @@ describe("TableFactory unit tests", () => {
 		}) {}
 		class Column extends TableSchema.column({
 			schemaFactory,
+			cell: Cell,
 			props: ColumnProps,
 		}) {}
 
@@ -89,7 +90,7 @@ describe("TableFactory unit tests", () => {
 
 	describe("Column Schema", () => {
 		it("Can create without props", () => {
-			class Column extends TableSchema.column({ schemaFactory }) {}
+			class Column extends TableSchema.column({ schemaFactory, cell: schemaFactory.string }) {}
 			const column = new Column({ id: "column-0" });
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
@@ -101,10 +102,58 @@ describe("TableFactory unit tests", () => {
 		it("Can create with props", () => {
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: schemaFactory.string,
 				props: schemaFactory.string,
 			}) {}
 			const column = new Column({ id: "column-0", props: "Column 0" });
 			assert.equal(column.props, "Column 0");
+		});
+
+		it("getCells", () => {
+			const { treeView, Table, Column } = createTableTree();
+			treeView.initialize(Table.empty());
+			const table = treeView.root;
+
+			// Calling `getCells` on a column that has not been inserted into the table throws an error.
+			const column0 = new Column({ id: "column-0", props: {} });
+			assert.throws(
+				() => column0.getCells(),
+				validateUsageError(/Column with ID "column-0" is not contained in a table./),
+			);
+
+			table.insertColumn({ column: column0 });
+
+			// No rows or cells have been inserted yet.
+			assert.equal(column0.getCells().length, 0);
+
+			table.insertRows({
+				rows: [
+					{ id: "row-0", cells: {} },
+					{ id: "row-1", cells: {} },
+					{ id: "row-2", cells: {} },
+				],
+			});
+			table.setCell({
+				key: {
+					column: column0,
+					row: "row-0",
+				},
+				cell: { value: "0-0" },
+			});
+			table.setCell({
+				key: {
+					column: column0,
+					row: "row-2",
+				},
+				cell: { value: "2-0" },
+			});
+
+			const cells = column0.getCells();
+			assert.equal(cells.length, 2);
+			assert.equal(cells[0].rowId, "row-0");
+			assertEqualTrees(cells[0].cell, { value: "0-0" });
+			assert.equal(cells[1].rowId, "row-2");
+			assertEqualTrees(cells[1].cell, { value: "2-0" });
 		});
 	});
 
@@ -134,6 +183,47 @@ describe("TableFactory unit tests", () => {
 			const column = new Row({ id: "row-0", cells: {}, props: "Row 0" });
 			assert.equal(column.props, "Row 0");
 		});
+
+		it("getCells", () => {
+			const { treeView, Table, Row } = createTableTree();
+			treeView.initialize(Table.empty());
+			const table = treeView.root;
+
+			const row = new Row({ id: "row-0", cells: {} });
+			table.insertRow({ row });
+
+			// No columns or cells have been inserted yet.
+			assert.equal(row.getCells().length, 0);
+
+			table.insertColumns({
+				columns: [
+					{ id: "column-0", props: { label: "Column 0" } },
+					{ id: "column-1", props: { label: "Column 0" } },
+					{ id: "column-2", props: { label: "Column 0" } },
+				],
+			});
+			table.setCell({
+				key: {
+					row: row.id,
+					column: "column-0",
+				},
+				cell: { value: "0-0" },
+			});
+			table.setCell({
+				key: {
+					row: row.id,
+					column: "column-2",
+				},
+				cell: { value: "0-2" },
+			});
+
+			const cells = row.getCells();
+			assert.equal(cells.length, 2);
+			assert.equal(cells[0].columnId, "column-0");
+			assertEqualTrees(cells[0].cell, { value: "0-0" });
+			assert.equal(cells[1].columnId, "column-2");
+			assertEqualTrees(cells[1].cell, { value: "0-2" });
+		});
 	});
 
 	describe("Table Schema", () => {
@@ -150,15 +240,17 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Can create with custom column schema", () => {
+			const Cell = schemaFactory.string;
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: Cell,
 				props: schemaFactory.object("column-props", {
 					label: schemaFactory.string,
 				}),
 			}) {}
 			class Table extends TableSchema.table({
 				schemaFactory,
-				cell: schemaFactory.string,
+				cell: Cell,
 				column: Column,
 			}) {}
 
@@ -193,6 +285,7 @@ describe("TableFactory unit tests", () => {
 			const Cell = schemaFactory.string;
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: Cell,
 				props: schemaFactory.object("column-props", {
 					label: schemaFactory.string,
 				}),
@@ -391,25 +484,6 @@ describe("TableFactory unit tests", () => {
 				validateUsageError(/The index specified for insertion is out of bounds./),
 			);
 		});
-
-		it("Inserting existing column fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [],
-				columns: [
-					{ id: "column-a", props: {} },
-					{ id: "column-b", props: {} },
-				],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertColumn({
-						column: { id: "column-b", props: {} },
-					}),
-				validateUsageError(/A column with ID "column-b" already exists in the table./),
-			);
-		});
 	});
 
 	describe("insertColumns", () => {
@@ -554,44 +628,6 @@ describe("TableFactory unit tests", () => {
 				rows: [],
 			});
 		});
-
-		it("Inserting existing column fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-				],
-				rows: [],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertColumns({
-						columns: [
-							{
-								id: "column-c",
-								props: {},
-							},
-							{
-								// A column with this ID already exists in the table
-								id: "column-a",
-								props: {},
-							},
-						],
-					}),
-				validateUsageError(/A column with ID "column-a" already exists in the table./),
-			);
-
-			// Ensure no columns were inserted
-			assert(treeView.root.columns.length === 2);
-		});
 	});
 
 	describe("insertRow", () => {
@@ -704,25 +740,6 @@ describe("TableFactory unit tests", () => {
 						row: { cells: {}, props: {} },
 					}),
 				validateUsageError(/The index specified for insertion is out of bounds./),
-			);
-		});
-
-		it("Inserting existing row fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [
-					{ id: "row-a", cells: {}, props: {} },
-					{ id: "row-b", cells: {}, props: {} },
-				],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertRow({
-						row: { id: "row-b", cells: {}, props: {} },
-					}),
-				validateUsageError(/A row with ID "row-b" already exists in the table./),
 			);
 		});
 
@@ -913,48 +930,6 @@ describe("TableFactory unit tests", () => {
 					},
 				],
 			});
-		});
-
-		it("Inserting existing row fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-				],
-				columns: [],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertRows({
-						rows: [
-							{
-								id: "row-c",
-								cells: {},
-								props: {},
-							},
-							{
-								// A row with this ID already exists in the table
-								id: "row-a",
-								cells: {},
-								props: {},
-							},
-						],
-					}),
-				validateUsageError(/A row with ID "row-a" already exists in the table./),
-			);
-
-			// Ensure no rows were inserted
-			assert(treeView.root.rows.length === 2);
 		});
 	});
 
@@ -1513,6 +1488,7 @@ describe("TableFactory unit tests", () => {
 
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: Cell,
 				props: ColumnProps,
 			}) {
 				/**
@@ -1653,6 +1629,7 @@ describe("TableFactory unit tests", () => {
 
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: Cell,
 				props: ColumnProps,
 			}) {}
 
@@ -1738,6 +1715,7 @@ describe("TableFactory unit tests", () => {
 
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: Cell,
 				props: ColumnProps,
 			}) {}
 

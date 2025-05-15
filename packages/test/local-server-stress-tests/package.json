@@ -104,6 +104,7 @@
 			"build:test": [
 				"^tsc",
 				"^api-extractor:commonjs",
+				"@fluidframework/id-compressor#build:test",
 				"@fluidframework/sequence#build:test",
 				"@fluidframework/map#build:test"
 			]
