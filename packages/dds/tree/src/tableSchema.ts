@@ -1046,6 +1046,8 @@ export namespace TableSchema {
 	/**
 	 * A column in a table.
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(column:2)}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @typeParam TProps - Additional properties to associate with the column.
 	 * @sealed @internal
 	 */
 	export interface Column<
@@ -1082,6 +1084,8 @@ export namespace TableSchema {
 
 	/**
 	 * Factory for creating new table column schema.
+	 * @typeParam TScope - The {@link SchemaFactoryAlpha.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @internal
 	 */
 	export function column<
@@ -1092,6 +1096,9 @@ export namespace TableSchema {
 	): System_TableSchema.ColumnSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table column schema.
+	 * @typeParam TScope - The {@link SchemaFactoryAlpha.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @typeParam TProps - Additional properties to associate with the column.
 	 * @internal
 	 */
 	export function column<
@@ -1126,6 +1133,8 @@ export namespace TableSchema {
 	/**
 	 * A row in a table.
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(row:2)}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @typeParam TProps - Additional properties to associate with the row.
 	 * @sealed @internal
 	 */
 	export interface Row<
@@ -1200,6 +1209,8 @@ export namespace TableSchema {
 
 	/**
 	 * Factory for creating new table column schema.
+	 * @typeParam TScope - The {@link SchemaFactoryAlpha.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @internal
 	 */
 	export function row<
@@ -1210,6 +1221,9 @@ export namespace TableSchema {
 	): System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table row schema.
+	 * @typeParam TScope - The {@link SchemaFactoryAlpha.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @typeParam TProps - Additional properties to associate with the column.
 	 * @internal
 	 */
 	export function row<
@@ -1531,6 +1545,8 @@ export namespace TableSchema {
 
 	/**
 	 * Factory for creating new table schema.
+	 * @typeParam TScope - The {@link SchemaFactoryAlpha.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the table.
 	 * @internal
 	 */
 	export function table<
@@ -1546,12 +1562,15 @@ export namespace TableSchema {
 	>;
 	/**
 	 * Factory for creating new table schema with custom column schema.
+	 * @typeParam TScope - The {@link SchemaFactoryAlpha.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the table.
+	 * @typeParam TColumn - The type of the columns in the table.
 	 * @internal
 	 */
 	export function table<
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope>,
+		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
 	>(
 		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 			readonly column: TColumn;
@@ -1564,6 +1583,9 @@ export namespace TableSchema {
 	>;
 	/**
 	 * Factory for creating new table schema with custom row schema.
+	 * @typeParam TScope - The {@link SchemaFactoryAlpha.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the table.
+	 * @typeParam TRow - The type of the rows in the table.
 	 * @internal
 	 */
 	export function table<
@@ -1582,6 +1604,10 @@ export namespace TableSchema {
 	>;
 	/**
 	 * Factory for creating new table schema with custom column and row schema.
+	 * @typeParam TScope - The {@link SchemaFactoryAlpha.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the table.
+	 * @typeParam TColumn - The type of the columns in the table.
+	 * @typeParam TRow - The type of the rows in the table.
 	 * @internal
 	 */
 	export function table<
