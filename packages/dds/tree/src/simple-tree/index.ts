@@ -12,7 +12,6 @@ export {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
-	type TreeChangeEvents,
 	// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
 	// See docs on TreeNode for more details.
 	type TreeNode,
@@ -80,8 +79,7 @@ export {
 	extractPersistedSchema,
 	comparePersistedSchema,
 	type ConciseTree,
-	comparePersistedSchemaInternal,
-	ViewSchema,
+	SchemaCompatibilityTester,
 	type Unenforced,
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
@@ -120,6 +118,10 @@ export {
 	allowUnused,
 	type FieldSchemaAlphaUnsafe,
 	type TreeSchema,
+	type ValidateRecursiveSchemaTemplate,
+	type FixRecursiveRecursionLimit,
+	schemaStatics,
+	type TreeChangeEvents,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -135,13 +137,26 @@ export type {
 export {
 	type NodeFromSchema,
 	isTreeNodeSchemaClass,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
 	type ImplicitFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
+	type UnannotateAllowedTypes,
+	type UnannotateAllowedType,
+	type UnannotateAllowedTypesList,
+	type UnannotateAllowedTypeOrLazyItem,
+	type UnannotateImplicitFieldSchema,
+	type UnannotateSchemaRecord,
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
 	type AllowedTypes,
+	type AllowedTypeMetadata,
+	type AllowedTypesMetadata,
 	FieldKind,
 	FieldSchema,
 	type FieldSchemaAlpha,
@@ -168,10 +183,7 @@ export {
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";
-export {
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
+export { getTreeNodeForField } from "./proxies.js";
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
@@ -191,6 +203,7 @@ export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
+	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,
 	createUnknownOptionalFieldPolicy,
@@ -203,6 +216,10 @@ export {
 	type FactoryContent,
 	type FactoryContentObject,
 } from "./toMapTree.js";
+export {
+	prepareForInsertion,
+	prepareForInsertionContextless,
+} from "./prepareForInsertion.js";
 export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
 export {
 	numberSchema,
