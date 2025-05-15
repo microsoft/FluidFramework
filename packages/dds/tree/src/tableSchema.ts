@@ -47,17 +47,14 @@ const tableSchemaFactorySubScope = "table";
  * Gets the table containing the provided row/column node, if the node is part of a table.
  * @remarks Assumes that the table is the grandparent of the row/column node.
  */
-function getParentTable<
-	const TScope extends string | undefined,
-	const TCellSchema extends ImplicitAllowedTypes,
->(
+function getParentTable(
 	rowOrColumnNode: TreeNode,
 ):
 	| (TreeNode &
 			TableSchema.Table<
-				TCellSchema,
-				System_TableSchema.ColumnSchemaBase<TScope>,
-				System_TableSchema.RowSchemaBase<TScope, TCellSchema>
+				ImplicitAllowedTypes,
+				System_TableSchema.ColumnSchemaBase,
+				System_TableSchema.RowSchemaBase
 			>)
 	| undefined {
 	const rowListNode = Tree.parent(rowOrColumnNode);
@@ -65,7 +62,7 @@ function getParentTable<
 		return undefined;
 	}
 	const tableNode = Tree.parent(rowListNode);
-	if (tableNode === undefined || !isTableNode<TScope, TCellSchema>(tableNode)) {
+	if (tableNode === undefined || !isTableNode(tableNode)) {
 		return undefined;
 	}
 
@@ -81,16 +78,13 @@ const tableSchemaSymbol: unique symbol = Symbol("tableNode");
  * Type-guard to determine if a node is a table node.
  * @remarks Uses {@link tableSchemaSymbol} to identify table nodes.
  */
-function isTableNode<
-	const TScope extends string | undefined,
-	const TCellSchema extends ImplicitAllowedTypes,
->(
+function isTableNode(
 	node: TreeNode,
 ): node is TreeNode &
 	TableSchema.Table<
-		TCellSchema,
-		System_TableSchema.ColumnSchemaBase<TScope>,
-		System_TableSchema.RowSchemaBase<TScope, TCellSchema>
+		ImplicitAllowedTypes,
+		System_TableSchema.ColumnSchemaBase,
+		System_TableSchema.RowSchemaBase
 	> {
 	// tableNodeSymbol is not publicly exposed, so we must cast to access it.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
