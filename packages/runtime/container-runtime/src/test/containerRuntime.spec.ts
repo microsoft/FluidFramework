@@ -4018,6 +4018,20 @@ describe("Runtime", () => {
 					});
 				});
 			}
+			it("does not throw if minVersionForCollab is not set and the default is incompatible with runtimeOptions", async () => {
+				const logger = new MockLogger();
+				await assert.doesNotReject(async () => {
+					await ContainerRuntime.loadRuntime({
+						context: getMockContext({ logger }) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
+						// not explicity set minVersionForCollab, we allow it.
+						runtimeOptions: { createBlobPayloadPending: true },
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+				});
+			});
 		});
 	});
 });

@@ -296,6 +296,11 @@ export function validateRuntimeOptions(
 	runtimeOptions: IContainerRuntimeOptions,
 	minVersionForCollab: MinimumVersionForCollab,
 ): void {
+	if (minVersionForCollab === defaultMinVersionForCollab) {
+		// If the minVersionForCollab is set to the default value, then we will not validate the runtime options
+		// This is to avoid disruption to users who have not yet set the minVersionForCollab value explicitly.
+		return;
+	}
 	// Iterate through each runtime option passed in by the user
 	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(
 		runtimeOptions,
