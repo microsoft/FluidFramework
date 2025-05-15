@@ -1225,7 +1225,7 @@ export namespace TableSchema {
 	 * Factory for creating new table row schema.
 	 * @typeParam TScope - The {@link SchemaFactoryAlpha.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
-	 * @typeParam TProps - Additional properties to associate with the column.
+	 * @typeParam TProps - Additional properties to associate with the row.
 	 * @internal
 	 */
 	export function row<
