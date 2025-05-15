@@ -6,6 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
+	type FluidClientVersion,
 	type ICodecOptions,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
@@ -37,6 +38,13 @@ export type FieldBatchCodec = IJsonCodec<
 	JsonCompatibleReadOnly,
 	FieldBatchEncodingContext
 >;
+
+/**
+ * TODO: the makeFieldBatchCodec (adn makeVersionedValidatedCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion.
+ */
+export function fieldBatchCodecVersionToFormat(version: FluidClientVersion): number {
+	return 1;
+}
 
 export function makeFieldBatchCodec(
 	options: ICodecOptions,

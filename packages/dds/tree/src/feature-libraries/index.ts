@@ -109,6 +109,7 @@ export {
 	type FieldBatchCodec,
 	makeTreeChunker,
 	makeFieldBatchCodec,
+	fieldBatchCodecVersionToFormat,
 	type FieldBatchEncodingContext,
 } from "./chunked-forest/index.js";
 
