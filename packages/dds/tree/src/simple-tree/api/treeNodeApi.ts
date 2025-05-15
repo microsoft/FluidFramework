@@ -217,7 +217,7 @@ export const treeNodeApi: TreeNodeApi = {
 		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);
 	},
 	shortId(node: TreeNode): number | string | undefined {
-		return getIdentifierFromNode(node, true);
+		return getIdentifierFromNode(node, IdentifierCompression.PreferCompressed);
 	},
 };
 
@@ -251,6 +251,26 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 }
 
 /**
+ * Type of compression you want for an identifier.
+ */
+export enum IdentifierCompression {
+	/**
+	 * When you want an uncompressed identifier.
+	 */
+	Uncompressed,
+
+	/**
+	 * When you prefer a compressed identifier if possible, but the uncompressed identifier otherwise.
+	 */
+	PreferCompressed,
+
+	/**
+	 * When you want the compressed identifier.
+	 */
+	Compressed,
+}
+
+/**
  *
  * Gets the identifier from a node.
  *
@@ -269,15 +289,19 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
  */
 export function getIdentifierFromNode(
 	node: TreeNode,
-	preferCompressed: true,
+	compression: IdentifierCompression.PreferCompressed,
 ): number | string | undefined;
 export function getIdentifierFromNode(
 	node: TreeNode,
-	preferCompressed: false,
+	compression: IdentifierCompression.Compressed,
+): number | undefined;
+export function getIdentifierFromNode(
+	node: TreeNode,
+	compression: IdentifierCompression.Uncompressed,
 ): string | undefined;
 export function getIdentifierFromNode(
 	node: TreeNode,
-	preferCompressed: boolean,
+	compression: IdentifierCompression,
 ): number | string | undefined {
 	const schema = node[typeSchemaSymbol];
 	if (!isObjectNodeSchema(schema)) {
@@ -306,10 +330,14 @@ export function getIdentifierFromNode(
 			);
 			const identifierValue = identifier.value as string;
 
-			if (preferCompressed) {
+			if (compression === IdentifierCompression.PreferCompressed) {
 				const localNodeKey =
 					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
 				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
+			} else if (compression === IdentifierCompression.Compressed) {
+				const localNodeKey =
+					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
+				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
 			}
 			return identifierValue;
 		}

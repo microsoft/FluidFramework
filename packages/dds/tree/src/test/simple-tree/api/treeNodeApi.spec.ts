@@ -462,7 +462,7 @@ describe("treeNodeApi", () => {
 				assert.equal(TreeAlpha.identifier.getShort(view.root), undefined);
 			});
 
-			it("returns the uncompressed identifier value when the provided identifier is an invalid stable id.", () => {
+			it("returns the undefined when the provided identifier is an invalid stable id.", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.identifier,
 				});
@@ -470,10 +470,10 @@ describe("treeNodeApi", () => {
 				const view = getView(config);
 				view.initialize({ identifier: "invalidUUID" });
 
-				assert.equal(TreeAlpha.identifier.getShort(view.root), "invalidUUID");
+				assert.equal(TreeAlpha.identifier.getShort(view.root), undefined);
 			});
 
-			it("returns the uncompressed identifier value when the provided identifier is a valid stable id, but unknown by the idCompressor.", () => {
+			it("returns the undefined when the provided identifier is a valid stable id, but unknown by the idCompressor.", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.identifier,
 				});
@@ -487,7 +487,7 @@ describe("treeNodeApi", () => {
 				const view = getView(config);
 				view.initialize({ identifier: stableNodeKey });
 
-				assert.equal(TreeAlpha.identifier.getShort(view.root), stableNodeKey);
+				assert.equal(TreeAlpha.identifier.getShort(view.root), undefined);
 			});
 
 			it("errors if multiple identifiers exist on the same node", () => {
@@ -526,9 +526,9 @@ describe("treeNodeApi", () => {
 				class HasIdentifier extends schema.object("HasIdentifier", {
 					identifier: schema.identifier,
 				}) {}
-				it("returns uncompressed string for unhydrated nodes", () => {
+				it("returns undefined for unhydrated nodes", () => {
 					const node = new HasIdentifier({ identifier: "x" });
-					assert.equal(TreeAlpha.identifier.getShort(node), "x");
+					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
 				});
 				it("errors accessing defaulted", () => {
 					const node = new HasIdentifier({});
@@ -541,7 +541,7 @@ describe("treeNodeApi", () => {
 				});
 
 				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
-				it("returns string when unhydrated then local id when hydrated", () => {
+				it("returns undefined when unhydrated then local id when hydrated", () => {
 					const config = new TreeViewConfiguration({ schema: HasIdentifier });
 					const view = getView(config);
 					view.initialize({});
@@ -554,7 +554,7 @@ describe("treeNodeApi", () => {
 					);
 
 					const node = new HasIdentifier({ identifier });
-					assert.equal(TreeAlpha.identifier.getShort(node), identifier);
+					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
 					view.root = node;
 					assert.equal(TreeAlpha.identifier.getShort(node), shortId);
 				});
@@ -684,9 +684,7 @@ describe("treeNodeApi", () => {
 				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 				const view = getView(config);
 
-				const nodeKeyManager = view.nodeKeyManager;
-
-				const generatedIdentifier = TreeAlpha.identifier.generateIdentifier(view);
+				const generatedIdentifier = TreeAlpha.identifier.generate(view);
 				const shortIdentifier = TreeAlpha.identifier.shorten(view, generatedIdentifier);
 				assert(typeof shortIdentifier === "number");
 			});

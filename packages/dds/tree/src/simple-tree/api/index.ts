@@ -49,6 +49,7 @@ export {
 	type TreeNodeApi,
 	tryGetSchema,
 	getIdentifierFromNode,
+	IdentifierCompression,
 } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable, createFromCursor } from "./create.js";
 export {
