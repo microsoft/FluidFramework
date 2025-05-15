@@ -4087,5 +4087,85 @@ describe("Runtime", () => {
 				});
 			});
 		});
+		describe("Staging Mode", () => {
+			let containerRuntime: ContainerRuntime;
+
+			beforeEach(async () => {
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				submittedOps.length = 0; // reuse array defined higher in this file
+			});
+
+			it("entering and exiting updates inStagingMode flag", () => {
+				const controls = containerRuntime.enterStagingMode();
+				assert.equal(
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					(containerRuntime as any).inStagingMode, //* any
+					true,
+					"Runtime should be in staging mode after entry",
+				);
+
+				controls.commitChanges();
+				assert.equal(
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					(containerRuntime as any).inStagingMode, //* any
+					false,
+					"Runtime should exit staging mode after commit",
+				);
+
+				// Enter / discard as a second exit-path
+				containerRuntime.enterStagingMode().discardChanges();
+				assert.equal(
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					(containerRuntime as any).inStagingMode, //* any
+					false,
+					"Runtime should exit staging mode after discard",
+				);
+			});
+
+			it("commitChanges submits staged ops", () => {
+				const controls = containerRuntime.enterStagingMode();
+
+				//* The ID/address needs to be real, or we need to intercept ChannelCollection.resubmit
+				submitDataStoreOp(containerRuntime, "1", "staged-op");
+				// staged ops should not yet have hit submitFn
+				assert.equal(submittedOps.length, 0, "No ops expected while staged");
+
+				controls.commitChanges();
+				// flush any queued messages
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(containerRuntime as any).flush(); //* any
+
+				assert.equal(
+					submittedOps.length,
+					1,
+					"Staged op should be submitted after commitChanges",
+				);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(submittedOps[0].contents.address, "1");
+			});
+
+			it("discardChanges drops staged ops", () => {
+				const controls = containerRuntime.enterStagingMode();
+
+				submitDataStoreOp(containerRuntime, "2", "staged-op");
+				assert.equal(submittedOps.length, 0, "No ops expected while staged");
+
+				controls.discardChanges();
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(containerRuntime as any).flush(); //* any
+
+				assert.equal(
+					submittedOps.length,
+					0,
+					"Staged op should NOT be submitted after discardChanges",
+				);
+			});
+		});
 	});
 });
