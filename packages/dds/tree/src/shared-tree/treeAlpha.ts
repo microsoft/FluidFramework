@@ -99,8 +99,9 @@ Object.freeze(identifier);
  * A utility interface for retrieving or converting node identifiers.
  *
  * This provides methods to:
- * - Retrieve uncompressed or compressed identifiers from nodes
- * - Convert between stable identifiers and local identifiers
+ * - Retrieve long or short identifiers from nodes
+ * - Convert between long identifiers and short identifiers
+ * - Generates long identifiers
  *
  * @alpha @sealed
  */

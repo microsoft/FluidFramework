@@ -1404,6 +1404,8 @@ export interface TreeAlpha {
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
     exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
+    // (undocumented)
+    identifier: TreeIdentifierUtils;
     importCompressed<const TSchema extends ImplicitFieldSchema>(schema: TSchema, compressedData: JsonCompatible<IFluidHandle>, options: {
         idCompressor?: IIdCompressor;
     } & ICodecOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
@@ -1495,6 +1497,15 @@ export interface TreeEncodingOptions {
 
 // @public
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TreeNode | TreeLeafValue | undefined;
+
+// @alpha @sealed
+export interface TreeIdentifierUtils {
+    (node: TreeNode): string | undefined;
+    generate(branch: TreeBranch): string;
+    getShort(node: TreeNode): number | string | undefined;
+    lengthen(branch: TreeBranch, nodeIdentifier: number): string;
+    shorten(branch: TreeBranch, nodeIdentifier: string): number | undefined;
+}
 
 // @alpha
 export interface TreeIndex<TKey extends TreeIndexKey, TValue> extends ReadonlyMap<TKey, TValue> {
