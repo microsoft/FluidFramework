@@ -69,18 +69,9 @@ export class WindowMessageRelay
 		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
 		const message = event.data;
-		// console.log("WindowMessageRelay: Received message:", message);
 		if (isDevtoolsMessage(message) && message.source === devtoolsMessageSource) {
-			// console.log("WindowMessageRelay: Forwarding message to subscribers");
 			// Forward incoming message onto subscribers.
 			this.emit("message", message);
 		}
-		// else {
-		// 	console.log("WindowMessageRelay: Message not forwarded because:", {
-		// 		isDevtoolsMessage: isDevtoolsMessage(message),
-		// 		messageSource: message.source,
-		// 		expectedSource: devtoolsMessageSource,
-		// 	});
-		// }
 	};
 }

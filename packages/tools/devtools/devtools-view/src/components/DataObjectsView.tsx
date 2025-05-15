@@ -82,8 +82,6 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 		return <Waiting />;
 	}
 
-	console.log("rootDataHandles", rootDataHandles);
-
 	return (
 		<FluentTree aria-label="Data tree view">
 			{Object.entries(rootDataHandles).map(([key, fluidObject], index) => {

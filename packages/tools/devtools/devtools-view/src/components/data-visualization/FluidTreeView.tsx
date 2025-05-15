@@ -27,14 +27,9 @@ export interface FluidTreeViewProps
 export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	const { containerKey, label, node } = props;
 
-	console.log("node", node);
-
-	const childNodes = Object.entries(node.children).map(
-		([key, fluidObject]) => (
-			console.log("key", key, "fluidObject", fluidObject),
-			(<TreeDataView key={key} containerKey={containerKey} label={key} node={fluidObject} />)
-		),
-	);
+	const childNodes = Object.entries(node.children).map(([key, fluidObject]) => (
+		<TreeDataView key={key} containerKey={containerKey} label={key} node={fluidObject} />
+	));
 
 	const metadata = JSON.stringify(node.metadata);
 	const header = (
