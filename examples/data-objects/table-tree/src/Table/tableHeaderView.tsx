@@ -173,9 +173,7 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 				>
 					<div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
 						<div style={{ display: "flex", gap: "4px", width: "100%" }}>
-							<span style={{ wordBreak: "break-word" }}>
-								{col.props?.label ?? col.id}
-							</span>
+							<span style={{ wordBreak: "break-word" }}>{col.props?.label ?? col.id}</span>
 							<Button
 								appearance="subtle"
 								size="small"
@@ -193,7 +191,7 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 								}
 							}}
 							size="small"
-							style={{ marginTop: "4px"}}
+							style={{ marginTop: "4px" }}
 						>
 							<Option value="text">Text</Option>
 							<Option value="checkbox">Checkbox</Option>
