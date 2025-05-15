@@ -214,3 +214,12 @@ Tree.runTransaction(table, () => {
 > [!WARNING]
 > Note that even with the above precaution, it is possible to enter such an orphaned cell state via the merging of edits.
 > For example: one client might add a row while another concurrently removes a column, orphaning the cell where the column and row intersected.
+
+##### Column-specific cell type constraints
+
+Currently, the table APIs do not offer any ability to express cell-typing constraints on a per-column basis.
+A cell type can be defined for *all* cells in the table, uniformly.
+
+It is possible, however, to extend the APIs to add some level of runtime validation to enforce stricter cell typing at the column level.
+
+A simplified example of such a pattern can be found in `tableSchema.spec.ts` in a test called "Using column props for runtime type constraints".

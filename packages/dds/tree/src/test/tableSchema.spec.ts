@@ -1461,6 +1461,7 @@ describe("TableFactory unit tests", () => {
 	// The following tests demonstrate more complex usage scenarios.
 	describe("User stories", () => {
 		// The following test is a demonstration of how users can add runtime type constraints for cells in a column.
+		// TODO: in the future, we want to find better ways to express such type constraints directly through the factory APIs.
 		it("Using column props for runtime type constraints", () => {
 			// The underlying storage format for the cell data is a string.
 			const Cell = schemaFactory.string;
@@ -1479,21 +1480,19 @@ describe("TableFactory unit tests", () => {
 			// Defined the types of the nodes which correspond to this the schema.
 			type ColumnTypeNodes = TreeNodeFromImplicitAllowedTypes<typeof ColumnTypeNodes.schema>;
 
-			class ColumnProps extends schemaFactory.object("TableColumnProps", {
+			class MyColumn extends TableSchema.column({
+				schemaFactory,
+				cell: Cell,
+				props: schemaFactory.object("TableColumnProps", {
 				/** Column label */
 				label: schemaFactory.string,
 				/** ColumnType */
 				type: ColumnTypeNodes.schema,
-			}) {}
-
-			class Column extends TableSchema.column({
-				schemaFactory,
-				cell: Cell,
-				props: ColumnProps,
+			}),
 			}) {
 				/**
 				 * Checks if the provided cell value is valid for the column type.
-				 * If invalid, the cell will be highlighted in red.
+				 * If invalid, the UI will display the cell contents highlighted in red.
 				 */
 				public isCellFormatValid(cell: Cell): boolean {
 					const type = this.props.type.value;
@@ -1510,22 +1509,22 @@ describe("TableFactory unit tests", () => {
 				}
 			}
 
-			class Row extends TableSchema.row({
+			class MyRow extends TableSchema.row({
 				schemaFactory,
 				cell: Cell,
 			}) {}
 
-			class Table extends TableSchema.table({
+			class MyTable extends TableSchema.table({
 				schemaFactory,
 				cell: Cell,
-				column: Column,
-				row: Row,
+				column: MyColumn,
+				row: MyRow,
 			}) {
 				// Override `setCell` with validation to ensure only valid cells are set, respecting the column's `type`.
 				public override setCell({
 					key,
 					cell,
-				}: { key: { column: Column; row: Row }; cell: Cell }): void {
+				}: { key: { column: MyColumn; row: MyRow }; cell: Cell }): void {
 					const { column } = key;
 
 					if (!column.isCellFormatValid(cell)) {
@@ -1542,29 +1541,29 @@ describe("TableFactory unit tests", () => {
 
 			const treeView = independentView(
 				new TreeViewConfiguration({
-					schema: Table,
+					schema: MyTable,
 					enableSchemaValidation: true,
 				}),
 				{ idCompressor: createIdCompressor() },
 			);
-			treeView.initialize(Table.empty());
+			treeView.initialize(MyTable.empty());
 
 			const table = treeView.root;
 
-			const itemColumn = new Column({
+			const itemColumn = new MyColumn({
 				props: { label: "Item", type: ColumnTypeNodes(ColumnType.String) },
 			});
-			const quantityColumn = new Column({
+			const quantityColumn = new MyColumn({
 				props: { label: "Quantity", type: ColumnTypeNodes(ColumnType.Integer) },
 			});
-			const dateColumn = new Column({
+			const dateColumn = new MyColumn({
 				props: { label: "Date Sold", type: ColumnTypeNodes(ColumnType.Date) },
 			});
 			table.insertColumns({
 				columns: [itemColumn, quantityColumn, dateColumn],
 			});
 
-			const row0 = new Row({ cells: {} });
+			const row0 = new MyRow({ cells: {} });
 			table.insertRow({ row: row0 });
 
 			// Set a cell in the "item" column
