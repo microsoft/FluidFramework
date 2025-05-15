@@ -117,6 +117,11 @@ export function saveDocument(destination: string | undefined, tree: List): void 
 }
 
 /**
+ * Oldest version of the Fluid Framework client that is supported for reading data output by this app.
+ */
+const compatVersion = FluidClientVersion.v2_0;
+
+/**
  * Examples showing how to export data in a variety of formats.
  *
  * @param destination - File path used to select the format.
@@ -146,7 +151,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 		case "compressed": {
 			return TreeAlpha.exportCompressed(tree, {
 				...options,
-				oldestCompatibleClient: FluidClientVersion.v2_3,
+				oldestCompatibleClient: compatVersion,
 			}) as JsonCompatible;
 		}
 		case "snapshot": {
@@ -154,11 +159,11 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 			const idCompressor = createIdCompressor();
 			const file: File = {
 				tree: TreeAlpha.exportCompressed(tree, {
-					oldestCompatibleClient: FluidClientVersion.v2_3,
+					oldestCompatibleClient: compatVersion,
 					idCompressor,
 				}),
 
-				schema: extractPersistedSchema(config, FluidClientVersion.v2_3),
+				schema: extractPersistedSchema(config, compatVersion),
 				idCompressor: idCompressor.serialize(true),
 			};
 			return file as JsonCompatible;
