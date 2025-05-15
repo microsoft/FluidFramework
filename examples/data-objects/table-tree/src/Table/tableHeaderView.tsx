@@ -84,11 +84,6 @@ export interface TableHeaderViewProps {
 	 * Handler invoked when the user confirms adding a new column.
 	 */
 	handleAddColumn: () => void;
-
-	/**
-	 * Function to update the column's hint prop.
-	 */
-	onChangeColumnHint: (index: number, hint: string) => void;
 }
 
 /**
@@ -115,91 +110,99 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	newColumnHint,
 	setNewColumnHint,
 	handleAddColumn,
-	onChangeColumnHint,
-}) => (
-	<TableHeader>
-		{showAddColumnInput && (
-			<TableRow className="custom-header-row">
-				<TableHeaderCell colSpan={columns.length + 1}>
-					<div style={{ display: "flex", gap: "8px" }}>
-						<Input
-							type="text"
-							placeholder="Column Label"
-							value={newColumnId}
-							onChange={(e) => setNewColumnId(e.target.value)}
-							size="small"
-						/>
-						<Dropdown
-							placeholder="Select hint"
-							value={newColumnHint}
-							onOptionSelect={(_, data) => {
-								if (data.optionValue !== undefined) {
-									setNewColumnHint(data.optionValue);
-								}
-							}}
-							size="small"
-						>
-							<Option value="text">Text</Option>
-							<Option value="checkbox">Checkbox</Option>
-							<Option value="date">Date</Option>
-						</Dropdown>
-						<Button
-							icon={<Checkmark24Regular />}
-							appearance="subtle"
-							size="small"
-							onClick={handleAddColumn}
-						/>
-					</div>
-				</TableHeaderCell>
-			</TableRow>
-		)}
-		<TableRow className="custom-header-row">
-			<TableHeaderCell className="custom-header-cell">
-				<Button
-					icon={<Add24Regular />}
-					appearance="subtle"
-					size="small"
-					onClick={() => setShowAddColumnInput(true)}
-				/>
-			</TableHeaderCell>
-			{columns.map((col, index) => (
-				<TableHeaderCell
-					key={col.id}
-					className="custom-header-cell"
-					draggable
-					onDragStart={() => onColumnDragStart(index)}
-					onDragOver={onColumnDragOver}
-					onDrop={() => onColumnDrop(index)}
-				>
-					<div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-						<div style={{ display: "flex", gap: "4px", width: "100%" }}>
-							<span style={{ wordBreak: "break-word" }}>{col.props?.label ?? col.id}</span>
+}) => {
+	const handleChangeColumnHint = (index: number, hint: string): void => {
+		const column = columns[index];
+		if (column?.props !== undefined && column.getCells().length === 0) {
+			column.props.hint = hint;
+		}
+	};
+
+	return (
+		<TableHeader>
+			{showAddColumnInput && (
+				<TableRow className="custom-header-row">
+					<TableHeaderCell colSpan={columns.length + 1}>
+						<div style={{ display: "flex", gap: "8px" }}>
+							<Input
+								type="text"
+								placeholder="Column Label"
+								value={newColumnId}
+								onChange={(e) => setNewColumnId(e.target.value)}
+								size="small"
+							/>
+							<Dropdown
+								placeholder="Select hint"
+								value={newColumnHint}
+								onOptionSelect={(_, data) => {
+									if (data.optionValue !== undefined) {
+										setNewColumnHint(data.optionValue);
+									}
+								}}
+								size="small"
+							>
+								<Option value="text">Text</Option>
+								<Option value="checkbox">Checkbox</Option>
+								<Option value="date">Date</Option>
+							</Dropdown>
 							<Button
+								icon={<Checkmark24Regular />}
 								appearance="subtle"
 								size="small"
-								onClick={() => onRemoveColumn(index)}
-								icon={<Delete24Regular />}
-								style={{ padding: 0, minWidth: "auto" }}
+								onClick={handleAddColumn}
 							/>
 						</div>
-						<Dropdown
-							placeholder="Type"
-							value={col.props?.hint ?? ""}
-							onOptionSelect={(_, data) => {
-								if (data.optionValue !== undefined) {
-									onChangeColumnHint(index, data.optionValue);
-								}
-							}}
-							size="small"
-							style={{ marginTop: "4px" }}
-						>
-							<Option value="text">Text</Option>
-							<Option value="checkbox">Checkbox</Option>
-							<Option value="date">Date</Option>
-						</Dropdown>
-					</div>
+					</TableHeaderCell>
+				</TableRow>
+			)}
+			<TableRow className="custom-header-row">
+				<TableHeaderCell className="custom-header-cell">
+					<Button
+						icon={<Add24Regular />}
+						appearance="subtle"
+						size="small"
+						onClick={() => setShowAddColumnInput(true)}
+					/>
 				</TableHeaderCell>
-			))}
-		</TableRow>
-	</TableHeader>
-);
+				{columns.map((col, index) => (
+					<TableHeaderCell
+						key={col.id}
+						className="custom-header-cell"
+						draggable
+						onDragStart={() => onColumnDragStart(index)}
+						onDragOver={onColumnDragOver}
+						onDrop={() => onColumnDrop(index)}
+					>
+						<div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+							<div style={{ display: "flex", gap: "4px", width: "100%" }}>
+								<span style={{ wordBreak: "break-word" }}>{col.props?.label ?? col.id}</span>
+								<Button
+									appearance="subtle"
+									size="small"
+									onClick={() => onRemoveColumn(index)}
+									icon={<Delete24Regular />}
+									style={{ padding: 0, minWidth: "auto" }}
+								/>
+							</div>
+							<Dropdown
+								placeholder="Type"
+								value={col.props?.hint ?? ""}
+								onOptionSelect={(_, data) => {
+									if (data.optionValue !== undefined) {
+										handleChangeColumnHint(index, data.optionValue);
+									}
+								}}
+								size="small"
+								style={{ marginTop: "4px" }}
+							>
+								<Option value="text">Text</Option>
+								<Option value="checkbox">Checkbox</Option>
+								<Option value="date">Date</Option>
+							</Dropdown>
+						</div>
+					</TableHeaderCell>
+				))}
+			</TableRow>
+		</TableHeader>
+	);
+};
