@@ -510,8 +510,8 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
 // @public @sealed
-export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
-    attach(props?: ContainerAttachProps): Promise<string>;
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema, TAttachProps = unknown> extends IEventProvider<IFluidContainerEvents> {
+    attach(props?: ContainerAttachProps1<TAttachProps>): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionStateType;

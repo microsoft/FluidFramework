@@ -95,6 +95,22 @@ export interface IFluidContainerEvents extends IEvent {
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
+export interface OdspContainerAttachProps {
+	/**
+	 * The file path where Fluid containers are created. If undefined, the file is created at the root.
+	 */
+	filePath: string | undefined;
+
+	/**
+	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
+	 */
+	fileName: string | undefined;
+}
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+export type ContainerAttachProps1<T = unknown> = OdspContainerAttachProps & T;
+
 /**
  * Provides an entrypoint into the client side of collaborative Fluid data.
  * Provides access to the data as well as status on the collaboration session.
@@ -106,8 +122,10 @@ export interface IFluidContainerEvents extends IEvent {
  * @sealed
  * @public
  */
-export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
-	extends IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer<
+	TContainerSchema extends ContainerSchema = ContainerSchema,
+	TAttachProps = unknown,
+> extends IEventProvider<IFluidContainerEvents> {
 	/**
 	 * Provides the current connected state of the container
 	 */
@@ -170,7 +188,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 *
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
-	attach(props?: ContainerAttachProps): Promise<string>;
+	attach(props?: ContainerAttachProps1<TAttachProps>): Promise<string>;
 
 	/**
 	 * Attempts to connect the container to the delta stream and process operations.
