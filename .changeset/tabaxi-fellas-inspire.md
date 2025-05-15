@@ -22,12 +22,12 @@ You can craft a table schema with `TableSchema.table`.
 This includes providing a schema for the cells that will appear in the table:
 
 ```typescript
-class Table extends TableSchema.table({
+class MyTable extends TableSchema.table({
 	schemaFactory,
 	cell: schemaFactory.string,
 }) {}
 
-const table = new Table({
+const table = new MyTable({
 	columns: [{ id: "column-0" }],
 	rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
 });
@@ -39,35 +39,31 @@ To associate additional data with your rows or columns, generate custom row and 
 These schema can then be provided to `TableSchema.table`:
 
 ```typescript
-const Cell = schemaFactory.string;
-
-class ColumnProps extends schemaFactory.object("TableColumnProps", {
-	/** A column label to display. */
-	label: schemaFactory.string,
-}) {}
-
-class Column extends TableSchema.column({
+class MyColumn extends TableSchema.column({
 	schemaFactory,
-	props: ColumnProps,
+	cell: Cell,
+	props: schemaFactory.object("TableColumnProps", {
+		label: schemaFactory.string,
+	}),
 }) {}
 
-class Row extends TableSchema.row({
+class MyRow extends TableSchema.row({
 	schemaFactory,
 	cell: Cell,
 }) {}
 
-class Table extends TableSchema.table({
+class MyTable extends TableSchema.table({
 	schemaFactory,
 	cell: Cell,
-	column: Column,
-	row: Row,
+	column: MyColumn,
+	row: MyRow,
 }) {}
 
-const table = new Table({
+const table = new MyTable({
 	columns: [
-		new Column({ props: { label: "Entry" } }),
-		new Column({ props: { label: "Date" } }),
-		new Column({ props: { label: "Amount" } }),
+		new MyColumn({ props: { label: "Entry" } }),
+		new MyColumn({ props: { label: "Date" } }),
+		new MyColumn({ props: { label: "Amount" } }),
 	],
 	rows: [],
 });
@@ -83,9 +79,9 @@ These include:
 
 ```typescript
 // Create an empty table
-const table = Table.empty();
+const table = MyTable.empty();
 
-const column0 = new Column({
+const column0 = new MyColumn({
 	props: { label: "Column 0" },
 });
 
@@ -95,8 +91,8 @@ table.insertColumn({
 });
 
 const rows = [
-	new Row({ cells: { } }),
-	new Row({ cells: { } }),
+	new MyRow({ cells: { } }),
+	new MyRow({ cells: { } }),
 ];
 
 // Insert rows at the beginning of the table.

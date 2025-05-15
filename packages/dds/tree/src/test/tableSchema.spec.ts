@@ -1606,12 +1606,12 @@ describe("TableFactory unit tests", () => {
 	// If you need to update any of these, please update the corresponding TSDoc comments as well.
 	describe("TSDoc comment examples", () => {
 		it("TableSchema: Defining a Table schema", () => {
-			class Table extends TableSchema.table({
+			class MyTable extends TableSchema.table({
 				schemaFactory,
 				cell: schemaFactory.string,
 			}) {}
 
-			const table = new Table({
+			const table = new MyTable({
 				columns: [{ id: "column-0" }],
 				rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
 			});
@@ -1623,33 +1623,31 @@ describe("TableFactory unit tests", () => {
 		it("TableSchema: Customizing Column and Row schema", () => {
 			const Cell = schemaFactory.string;
 
-			class ColumnProps extends schemaFactory.object("TableColumnProps", {
-				label: schemaFactory.string,
-			}) {}
-
-			class Column extends TableSchema.column({
+			class MyColumn extends TableSchema.column({
 				schemaFactory,
 				cell: Cell,
-				props: ColumnProps,
+				props: schemaFactory.object("TableColumnProps", {
+					label: schemaFactory.string,
+				}),
 			}) {}
 
-			class Row extends TableSchema.row({
+			class MyRow extends TableSchema.row({
 				schemaFactory,
 				cell: Cell,
 			}) {}
 
-			class Table extends TableSchema.table({
+			class MyTable extends TableSchema.table({
 				schemaFactory,
 				cell: Cell,
-				column: Column,
-				row: Row,
+				column: MyColumn,
+				row: MyRow,
 			}) {}
 
-			const table = new Table({
+			const table = new MyTable({
 				columns: [
-					new Column({ props: { label: "Entry" } }),
-					new Column({ props: { label: "Date" } }),
-					new Column({ props: { label: "Amount" } }),
+					new MyColumn({ props: { label: "Entry" } }),
+					new MyColumn({ props: { label: "Date" } }),
+					new MyColumn({ props: { label: "Amount" } }),
 				],
 				rows: [],
 			});
@@ -1709,14 +1707,12 @@ describe("TableFactory unit tests", () => {
 
 			const Cell = schemaFactory.string;
 
-			class ColumnProps extends schemaFactory.object("TableColumnProps", {
-				label: schemaFactory.string,
-			}) {}
-
 			class Column extends TableSchema.column({
 				schemaFactory,
 				cell: Cell,
-				props: ColumnProps,
+				props: schemaFactory.object("TableColumnProps", {
+				label: schemaFactory.string,
+			}),
 			}) {}
 
 			class Row extends TableSchema.row({
