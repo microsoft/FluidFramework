@@ -77,27 +77,49 @@ export namespace InternalUtilityTypes {
 		? JsonSerializable<P>
 		: never;
 
+	/**
+	 * @system
+	 */
 	export declare class JsonDeserializedBrand<T> {
 		private readonly JsonDeserialized: JsonDeserialized<T>;
 	}
 
+	/**
+	 * @system
+	 */
 	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
 	export type JsonDeserializedHandle<T> = T & JsonDeserializedBrand<T>;
 
+	/**
+	 * @system
+	 */
 	export declare class JsonSerializableBrand<T> {
 		private readonly JsonSerializable: JsonSerializable<T>;
 	}
 
+	/**
+	 * @system
+	 */
 	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
 	export type JsonSerializableHandle<T> = T & JsonSerializableBrand<T>;
 }
 
+/**
+ * Cast a JsonDeserialized value to its branded version.
+ *
+ * @system
+ */
 export function toJsonDeserializedHandle<T>(
 	value: JsonDeserialized<T>,
 ): InternalUtilityTypes.JsonDeserializedHandle<T> {
 	return value as InternalUtilityTypes.JsonDeserializedHandle<T>;
 }
 
+/**
+ * Cast a branded JsonDeserialized value back to its unbranded version.
+ *
+ * @system
+ */
 export function fromJsonDeserializedHandle<T>(
 	value: InternalUtilityTypes.JsonDeserializedHandle<T>,
 ): JsonDeserialized<T> {

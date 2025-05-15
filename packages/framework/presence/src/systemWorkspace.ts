@@ -9,6 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import { toJsonDeserializedHandle } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
 import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
@@ -169,7 +170,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		this.datastore.clientToSessionId[clientConnectionId] = {
 			rev: this.selfAttendee.order++,
 			timestamp: Date.now(),
-			value: this.selfAttendee.attendeeId,
+			value: toJsonDeserializedHandle(this.selfAttendee.attendeeId),
 		};
 
 		// Mark 'Connected' remote attendees connections as stale

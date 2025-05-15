@@ -177,7 +177,11 @@ class NotificationsManagerImpl<
 				{
 					rev: 0,
 					timestamp: 0,
-					value: { name, args: [...(args as JsonTypeWith<never>[])] },
+					value: {
+						name,
+						args: [...(args as JsonTypeWith<never>[])],
+						// FIXME: Why doesn't as cast work?
+					} as unknown as InternalUtilityTypes.JsonDeserializedHandle<InternalTypes.NotificationType>,
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.
@@ -190,7 +194,11 @@ class NotificationsManagerImpl<
 				{
 					rev: 0,
 					timestamp: 0,
-					value: { name, args: [...(args as JsonTypeWith<never>[])] },
+					value: {
+						name,
+						args: [...(args as JsonTypeWith<never>[])],
+						// FIXME: Why doesn't as cast work?
+					} as unknown as InternalUtilityTypes.JsonDeserializedHandle<InternalTypes.NotificationType>,
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.

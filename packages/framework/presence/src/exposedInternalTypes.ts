@@ -7,6 +7,7 @@ import type {
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 
 /**
