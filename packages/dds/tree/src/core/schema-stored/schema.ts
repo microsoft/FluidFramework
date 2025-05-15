@@ -220,7 +220,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {
 			const value = encodeFieldSchemaV1(
-				this.objectNodeFields.get(key) ?? fail(0xae6 /* missing field */),
+				this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
 			);
 
 			Object.defineProperty(fieldsObject, key, {
@@ -237,11 +237,11 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 
 	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
 		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
-		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
+		// Sort fields to ensure output is identical for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {
 			const value = encodeFieldSchemaV1(
-				this.objectNodeFields.get(key) ?? fail(0xae6 /* missing field */),
+				this.objectNodeFields.get(key) ?? fail("missing field"),
 			);
 
 			Object.defineProperty(fieldsObject, key, {
