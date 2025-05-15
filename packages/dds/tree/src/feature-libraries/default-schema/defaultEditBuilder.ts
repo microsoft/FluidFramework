@@ -300,11 +300,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			let adjustedAttachField = destinationField;
 			// `sharedDepth` is the number of elements, starting from the root, that both paths have in common.
 			if (sharedDepth === detachPath.length) {
-				const lowestCommonAncestor: NormalizedUpPath = attachPath[sharedDepth] ?? oob();
-				const attachField = lowestCommonAncestor.parentField ?? destinationField.field;
+				const lowestCommonAncestor: NormalizedUpPath | undefined = attachPath[sharedDepth];
+				const attachField = lowestCommonAncestor?.parentField ?? destinationField.field;
 				if (attachField === sourceField.field) {
 					// The detach occurs in an ancestor field of the field where the attach occurs.
-					const attachAncestorIndex = lowestCommonAncestor.parentIndex ?? sourceIndex;
+					const attachAncestorIndex = lowestCommonAncestor?.parentIndex ?? destIndex;
 					if (attachAncestorIndex < sourceIndex) {
 						// The attach path runs through a node located before the detached nodes.
 						// No need to adjust the attach path.
@@ -313,10 +313,18 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						// adjust the index for the node at that depth of the path, so that it is interpreted correctly
 						// in the composition performed by `submitChanges`.
 						const adjustedAttachAncestorIndex = attachAncestorIndex - count;
-						let parent: NormalizedUpPath = {
-							...lowestCommonAncestor,
-							parentIndex: adjustedAttachAncestorIndex,
-						};
+						let parent: NormalizedUpPath =
+							lowestCommonAncestor === undefined
+								? {
+										parent: undefined,
+										detachedNodeId: undefined,
+										parentIndex: adjustedAttachAncestorIndex,
+										parentField: destinationField.field,
+									}
+								: {
+										...lowestCommonAncestor,
+										parentIndex: adjustedAttachAncestorIndex,
+									};
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {
 								...(attachPath[i] ?? oob()),
