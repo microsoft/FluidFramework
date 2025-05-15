@@ -220,7 +220,7 @@ export namespace System_TableSchema {
 					const cell = row.getCell(this.id);
 					if (cell !== undefined) {
 						if (!Tree.is(cell, cellSchema)) {
-							throw new UsageError("Parent table contains a cell with unexpected schema.");
+							throw new UsageError("Parent table contains a cell with incompatible with this column.");
 						}
 
 						result.push({ rowId: row.id, cell: cell as CellValueType });
