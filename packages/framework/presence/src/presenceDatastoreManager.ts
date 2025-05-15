@@ -95,8 +95,9 @@ interface ClientJoinMessage extends IInboundSignalMessage {
 // Message type identifier for presence acknowledgment messages.
 const acknowledgementMessageType = "Pres:Ack";
 
-// Signal message format used to acknowledge receipt of presence-related messages.
-// These are lightweight and typically contain only the messageId being acknowledged.
+/**
+ * Message type used to acknowledge receipt of remote update messages.
+ */
 interface AcknowledgementMessage extends IInboundSignalMessage {
 	type: typeof acknowledgementMessageType;
 	content: {
