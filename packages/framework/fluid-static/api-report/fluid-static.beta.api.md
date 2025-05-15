@@ -4,11 +4,17 @@
 
 ```ts
 
+// @public (undocumented)
+export interface AttachProps {
+    fileName: string | undefined;
+    filePath: string | undefined;
+}
+
 // @public
 export type CompatibilityMode = "1" | "2";
 
 // @public
-export type ContainerAttachProps<T = unknown> = T;
+export type ContainerAttachProps<T extends object = object> = AttachProps & T;
 
 // @public
 export interface ContainerSchema {
@@ -23,8 +29,8 @@ export interface IConnection {
 }
 
 // @public @sealed
-export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema, TAttachProps = unknown> extends IEventProvider<IFluidContainerEvents> {
-    attach(props?: ContainerAttachProps1<TAttachProps>): Promise<string>;
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema, TAttachProps extends object = object> extends IEventProvider<IFluidContainerEvents> {
+    attach(props?: ContainerAttachProps<TAttachProps>): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionState;

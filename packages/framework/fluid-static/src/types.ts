@@ -45,11 +45,24 @@ export type LoadableObjectKind<T extends IFluidLoadable = IFluidLoadable> =
 	| ISharedObjectKind<T>
 	| DataObjectKind<T>;
 
+// eslint-disable-next-line jsdoc/require-jsdoc
+export interface AttachProps {
+	/**
+	 * The file path where Fluid containers are created. If undefined, the file is created at the root.
+	 */
+	filePath: string | undefined;
+
+	/**
+	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
+	 */
+	fileName: string | undefined;
+}
+
 /**
  * Represents properties that can be attached to a container.
  * @public
  */
-export type ContainerAttachProps<T = unknown> = T;
+export type ContainerAttachProps<T extends object = object> = AttachProps & T;
 
 /**
  * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.
