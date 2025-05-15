@@ -46,8 +46,8 @@ describe("import tests", () => {
 		}) {}
 		class Column extends TableSchema.column({
 			schemaFactory,
-			cell: Cell,
-			props: schemaFactory.optional(ColumnProps),
+			Cell,
+			Props: schemaFactory.optional(ColumnProps),
 		}) {}
 
 		class RowProps extends schemaFactory.object("table-row-props", {
@@ -55,15 +55,15 @@ describe("import tests", () => {
 		}) {}
 		class Row extends TableSchema.row({
 			schemaFactory,
-			cell: Cell,
-			props: RowProps,
+			Cell,
+			Props: RowProps,
 		}) {}
 
 		class Table extends TableSchema.table({
 			schemaFactory,
-			cell: Cell,
-			column: Column,
-			row: Row,
+			Cell,
+			Column,
+			Row,
 		}) {}
 
 		const _table = new Table({

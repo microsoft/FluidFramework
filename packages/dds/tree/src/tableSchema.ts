@@ -136,7 +136,7 @@ export namespace System_TableSchema {
 		/**
 		 * Schema for the table's cells.
 		 */
-		readonly cell: TCellSchema;
+		readonly Cell: TCellSchema;
 	}
 
 	// #region Column
@@ -987,7 +987,7 @@ export namespace System_TableSchema {
  *
  * class Table extends TableSchema.table({
  * 	schemaFactory,
- * 	cell: Cell,
+ * 	Cell,
  * }) {}
  *
  * const table = new Table({
@@ -1012,20 +1012,20 @@ export namespace System_TableSchema {
  *
  * class Column extends TableSchema.column({
  * 	schemaFactory,
- * 	cell: Cell,
- * 	props: ColumnProps,
+ * 	Cell,
+ * 	Props: ColumnProps,
  * }) {}
  *
  * class Row extends TableSchema.row({
  * 	schemaFactory,
- * 	cell: Cell,
+ * 	Cell,
  * }) {}
  *
  * class Table extends TableSchema.table({
  * 	schemaFactory,
- * 	cell: Cell,
- * 	column: Column,
- * 	row: Row,
+ * 	Cell,
+ * 	Column,
+ * 	Row,
  * }) {}
  *
  * const table = new Table({
@@ -1114,7 +1114,7 @@ export namespace TableSchema {
 			/**
 			 * Optional column properties.
 			 */
-			readonly props: TProps;
+			readonly Props: TProps;
 		},
 	): System_TableSchema.ColumnSchemaBase<TScope, TCell, TProps>;
 	/**
@@ -1122,12 +1122,12 @@ export namespace TableSchema {
 	 */
 	export function column({
 		schemaFactory,
-		cell,
-		props = SchemaFactory.optional(SchemaFactory.null),
+		Cell,
+		Props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateColumnOptionsBase & {
-		readonly props?: ImplicitAnnotatedFieldSchema;
+		readonly Props?: ImplicitAnnotatedFieldSchema;
 	}): TreeNodeSchema {
-		return System_TableSchema.createColumnSchema(schemaFactory, cell, props);
+		return System_TableSchema.createColumnSchema(schemaFactory, Cell, Props);
 	}
 
 	// #endregion
@@ -1239,7 +1239,7 @@ export namespace TableSchema {
 			/**
 			 * Optional row properties.
 			 */
-			readonly props: TProps;
+			readonly Props: TProps;
 		},
 	): System_TableSchema.RowSchemaBase<TScope, TCell, TProps>;
 	/**
@@ -1247,12 +1247,12 @@ export namespace TableSchema {
 	 */
 	export function row({
 		schemaFactory,
-		cell,
-		props = SchemaFactory.optional(SchemaFactory.null),
+		Cell,
+		Props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateRowOptionsBase & {
-		readonly props?: ImplicitAnnotatedFieldSchema;
+		readonly Props?: ImplicitAnnotatedFieldSchema;
 	}): TreeNodeSchema {
-		return System_TableSchema.createRowSchema(schemaFactory, cell, props);
+		return System_TableSchema.createRowSchema(schemaFactory, Cell, Props);
 	}
 
 	// #endregion
@@ -1582,7 +1582,7 @@ export namespace TableSchema {
 		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
 	>(
 		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
-			readonly column: TColumn;
+			readonly Column: TColumn;
 		},
 	): System_TableSchema.TableSchemaBase<
 		TScope,
@@ -1603,7 +1603,7 @@ export namespace TableSchema {
 		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
 	>(
 		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
-			readonly row: TRow;
+			readonly Row: TRow;
 		},
 	): System_TableSchema.TableSchemaBase<
 		TScope,
@@ -1626,8 +1626,8 @@ export namespace TableSchema {
 		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
 	>(
 		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
-			readonly column: TColumn;
-			readonly row: TRow;
+			readonly Column: TColumn;
+			readonly Row: TRow;
 		},
 	): System_TableSchema.TableSchemaBase<TScope, TCell, TColumn, TRow>;
 	/**
@@ -1635,24 +1635,24 @@ export namespace TableSchema {
 	 */
 	export function table({
 		schemaFactory,
-		cell: cellSchema,
-		column: columnSchema = column({
+		Cell: CellSchema,
+		Column: ColumnSchema = column({
 			schemaFactory,
-			cell: cellSchema,
+			Cell: CellSchema,
 		}),
-		row: rowSchema = row({
+		Row: RowSchema = row({
 			schemaFactory,
-			cell: cellSchema,
+			Cell: CellSchema,
 		}),
 	}: System_TableSchema.TableFactoryOptionsBase & {
-		readonly column?: System_TableSchema.ColumnSchemaBase;
-		readonly row?: System_TableSchema.RowSchemaBase;
+		readonly Column?: System_TableSchema.ColumnSchemaBase;
+		readonly Row?: System_TableSchema.RowSchemaBase;
 	}): TreeNodeSchema {
 		return System_TableSchema.createTableSchema(
 			schemaFactory,
-			cellSchema,
-			columnSchema,
-			rowSchema,
+			CellSchema,
+			ColumnSchema,
+			RowSchema,
 		);
 	}
 

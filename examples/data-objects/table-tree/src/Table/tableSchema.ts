@@ -97,21 +97,21 @@ export class ColumnProps extends schemaFactory.object("table-column-props", {
 }) {}
 export class Column extends TableSchema.column({
 	schemaFactory,
-	cell: Cell,
-	props: ColumnProps,
+	Cell,
+	Props: ColumnProps,
 }) {}
 export class RowProps extends schemaFactory.object("table-row-props", {
 	label: schemaFactory.optional(schemaFactory.string),
 }) {}
 export class Row extends TableSchema.row({
 	schemaFactory,
-	cell: Cell,
-	props: RowProps,
+	Cell,
+	Props: RowProps,
 }) {}
 
 export class Table extends TableSchema.table({
 	schemaFactory,
-	cell: Cell,
-	column: Column,
-	row: Row,
+	Cell,
+	Column,
+	Row,
 }) {}
