@@ -173,7 +173,7 @@ export interface AllowedTypeMetadata {
  * TODO:#38722 make this a unique type and use it for runtime schema upgrades
  * @alpha
  */
-export type SchemaUpgradeToken = string;
+export type SchemaUpgradeToken = true;
 
 /**
  * Kind of a field on an {@link TreeObjectNode}.

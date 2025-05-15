@@ -68,7 +68,7 @@ export class SchemaFactoryAlpha<
 			type: annotatedType.type,
 			metadata: {
 				...annotatedType.metadata,
-				enabledUponSchemaUpgrade: "TODO generate upgrade token",
+				enabledUponSchemaUpgrade: true,
 			},
 		};
 	}
