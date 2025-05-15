@@ -6,17 +6,14 @@
 import { strict as assert, fail } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { independentView, Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
-	adaptEnum,
 	allowUnused,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ConciseTree,
 	type TreeNode,
-	type TreeNodeFromImplicitAllowedTypes,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
 import type { areSafelyAssignable, requireTrue } from "../util/index.js";
