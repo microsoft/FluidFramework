@@ -535,7 +535,7 @@ export namespace System_TableSchema {
 	export function createTableSchema<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
-		const TColumnSchema extends ColumnSchemaBase<TInputScope>,
+		const TColumnSchema extends ColumnSchemaBase<TInputScope, TCellSchema>,
 		const TRowSchema extends RowSchemaBase<TInputScope, TCellSchema>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
@@ -943,7 +943,7 @@ export namespace System_TableSchema {
 	export type TableSchemaBase<
 		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
-		TColumn extends ColumnSchemaBase<TScope>,
+		TColumn extends ColumnSchemaBase<TScope, TCell>,
 		TRow extends RowSchemaBase<TScope, TCell>,
 	> = ReturnType<typeof createTableSchema<TScope, TCell, TColumn, TRow>>;
 
@@ -1613,7 +1613,7 @@ export namespace TableSchema {
 	export function table<
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope>,
+		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
 		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
 	>(
 		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
