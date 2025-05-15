@@ -84,6 +84,11 @@ export interface TableHeaderViewProps {
 	 * Handler invoked when the user confirms adding a new column.
 	 */
 	handleAddColumn: () => void;
+
+	/**
+	 * Function to update the column's hint prop.
+	 */
+	onChangeColumnHint: (index: number, hint: string) => void;
 }
 
 /**
@@ -110,12 +115,13 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	newColumnHint,
 	setNewColumnHint,
 	handleAddColumn,
+	onChangeColumnHint,
 }) => (
 	<TableHeader>
 		{showAddColumnInput && (
 			<TableRow className="custom-header-row">
 				<TableHeaderCell colSpan={columns.length + 1}>
-					<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+					<div style={{ display: "flex", gap: "8px" }}>
 						<Input
 							type="text"
 							placeholder="Column Label"
@@ -165,16 +171,35 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 					onDragOver={onColumnDragOver}
 					onDrop={() => onColumnDrop(index)}
 				>
-					<span style={{ display: "flex", justifyContent: "space-between", gap: "4px" }}>
-						{col.props?.label ?? col.id}
-						<Button
-							appearance="subtle"
+					<div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+						<div style={{ display: "flex", gap: "4px", width: "100%" }}>
+							<span style={{ wordBreak: "break-word" }}>
+								{col.props?.label ?? col.id}
+							</span>
+							<Button
+								appearance="subtle"
+								size="small"
+								onClick={() => onRemoveColumn(index)}
+								icon={<Delete24Regular />}
+								style={{ padding: 0, minWidth: "auto" }}
+							/>
+						</div>
+						<Dropdown
+							placeholder="Type"
+							value={col.props?.hint ?? ""}
+							onOptionSelect={(_, data) => {
+								if (data.optionValue !== undefined) {
+									onChangeColumnHint(index, data.optionValue);
+								}
+							}}
 							size="small"
-							onClick={() => onRemoveColumn(index)}
-							icon={<Delete24Regular />}
-							style={{ padding: 0, minWidth: "auto" }}
-						/>
-					</span>
+							style={{ marginTop: "4px"}}
+						>
+							<Option value="text">Text</Option>
+							<Option value="checkbox">Checkbox</Option>
+							<Option value="date">Date</Option>
+						</Dropdown>
+					</div>
 				</TableHeaderCell>
 			))}
 		</TableRow>

@@ -89,6 +89,15 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 		}
 	};
 
+	const handleChangeColumnHint = (index: number, hint: string): void => {
+		const column = columns[index];
+		if (column?.props !== undefined) {
+			// TODO: once getCells method is in, use it to check if columns and prevent updating the column hint if there is data present.
+			// This is to prevent invalid data with a different column type.
+			column.props.hint = hint;
+		}
+	};
+
 	const handleRowDragStart = (index: number): void => {
 		setDraggedRowIndex(index);
 	};
@@ -139,6 +148,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 						newColumnHint={newColumnHint}
 						setNewColumnHint={setNewColumnHint}
 						handleAddColumn={handleAddColumn}
+						onChangeColumnHint={handleChangeColumnHint}
 					/>
 					<TableBody>
 						{rows.map((row, index) => (
