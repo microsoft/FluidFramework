@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { makeStyles } from "@fluentui/react-components";
 import {
 	CollaborativeInput,
 	CollaborativeTextArea,
@@ -13,6 +14,42 @@ import { Tree, type TreeNode } from "@fluidframework/tree/internal";
 import React from "react";
 
 import type { TodoItem } from "../Schema.js";
+
+const useStyles = makeStyles({
+	todoItemHeader: {
+		margin: 0,
+		display: "flex",
+	},
+	todoItemExpandButton: {
+		boxSizing: "border-box",
+		width: "30px",
+		height: "50px",
+		margin: "10px 0 10px 10px",
+		border: "none",
+		padding: 0,
+		fontSize: "30px",
+		background: "none",
+	},
+	todoItemCheckbox: {
+		boxSizing: "border-box",
+		width: "50px",
+		height: "50px",
+		margin: "10px 0 10px 10px",
+	},
+	todoItemInput: {
+		boxSizing: "border-box",
+		border: "none",
+		width: "100%",
+		height: "50px",
+		margin: "10px 0 10px 10px",
+		padding: 0,
+		fontSize: "20px",
+		outline: "none",
+	},
+	todoItemDetails: {
+		width: "100%",
+	},
+});
 
 /**
  * {@link TodoItemView} input props.
@@ -29,6 +66,7 @@ interface TodoItemViewProps {
  */
 export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItemModel, className } = props;
+	const styles = useStyles();
 
 	const [itemTitle, setItemTitle] = React.useState<SharedString | undefined>(undefined);
 	const [itemDescription, setItemDescription] = React.useState<SharedString | undefined>(
@@ -70,15 +108,15 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 
 	return (
 		<div className={`todo-item${className === undefined ? "" : ` ${className}`}`}>
-			<h2 className="todo-item-header">
+			<h2 className={styles.todoItemHeader}>
 				<input
 					type="checkbox"
-					className="todo-item-checkbox"
+					className={styles.todoItemCheckbox}
 					checked={todoItemModel.completed}
 					onChange={checkChangedHandler}
 				/>
 				<button
-					className="todo-item-expand-button"
+					className={styles.todoItemExpandButton}
 					name="toggleDetailsVisible"
 					onClick={() => {
 						setDetailsVisible(!detailsVisible);
@@ -86,11 +124,11 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 				>
 					{detailsVisible ? "▲" : "▼"}
 				</button>
-				<CollaborativeInput sharedString={itemTitle} className="todo-item-input" />
+				<CollaborativeInput sharedString={itemTitle} className={styles.todoItemInput} />
 			</h2>
 			{detailsVisible && (
 				<CollaborativeTextArea
-					className="todo-item-details"
+					className={styles.todoItemDetails}
 					sharedStringHelper={new SharedStringHelper(itemDescription)}
 				/>
 			)}

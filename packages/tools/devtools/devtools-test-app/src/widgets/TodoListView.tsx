@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { makeStyles } from "@fluentui/react-components";
 import { CollaborativeInput } from "@fluid-example/example-utils";
 import type { SharedString, ISharedString } from "@fluidframework/sequence/internal";
 import { Tree } from "@fluidframework/tree/internal";
@@ -11,6 +12,61 @@ import React from "react";
 import type { AppDataTree } from "../FluidObject.js";
 
 import { TodoItemView, useTree } from "./TodoItemView.js";
+
+const useStyles = makeStyles({
+	todoView: {
+		maxWidth: "800px",
+		margin: "0 auto",
+		padding: "0 15px",
+	},
+	todoTitle: {
+		width: "100%",
+		border: "none",
+		fontSize: "50px",
+		textAlign: "center",
+		marginBottom: "5px",
+		marginTop: "5px",
+		outline: "none",
+	},
+	newItemForm: {
+		margin: "20px 0",
+	},
+	newItemText: {
+		boxSizing: "border-box",
+		width: "calc(100% - 50px)",
+		height: "50px",
+		border: "1px solid #666",
+		verticalAlign: "middle",
+		fontSize: "30px",
+		outline: "0",
+	},
+	newItemButton: {
+		width: "50px",
+		height: "50px",
+		border: "1px solid #666",
+		verticalAlign: "middle",
+		fontSize: "30px",
+	},
+	itemWrap: {
+		display: "flex",
+	},
+	todoItemView: {
+		display: "inline-block",
+		width: "calc(100% - 100px)",
+	},
+	actionButton: {
+		boxSizing: "border-box",
+		width: "50px",
+		height: "50px",
+		margin: "10px 0 10px 10px",
+		border: "1px solid #666",
+		padding: "0",
+		fontSize: "30px",
+		"&:last-child": {
+			margin: "10px",
+		},
+	},
+});
 
 /**
  * {@link TodoListView} input props.
@@ -25,6 +81,7 @@ export interface TodoListProps {
  */
 export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 	const { todoModel } = props;
+	const styles = useStyles();
 	const [titleString, setTitleString] = React.useState<SharedString | undefined>();
 
 	const newItemTextInputRef = React.useRef<HTMLInputElement>(null);
@@ -64,10 +121,10 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 	};
 
 	const todoItemViews = [...todoModel.treeView.root.items.entries()].map(([id, todoItem]) => (
-		<div className="item-wrap" key={id}>
-			<TodoItemView todoItemModel={todoItem} className="todo-item-view" />
+		<div className={styles.itemWrap} key={id}>
+			<TodoItemView todoItemModel={todoItem} className={styles.todoItemView} />
 			<button
-				className="action-button"
+				className={styles.actionButton}
 				onClick={() => {
 					todoModel.treeView.root.items.delete(id);
 					Tree.on(todoModel.treeView.root.items, "treeChanged", () => {});
@@ -79,21 +136,21 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 	));
 
 	return (
-		<div className="todo-view">
-			<CollaborativeInput className="todo-title" sharedString={titleString} />
-			<form className="new-item-form" onSubmit={handleCreateClick}>
+		<div className={styles.todoView}>
+			<CollaborativeInput className={styles.todoTitle} sharedString={titleString} />
+			<form className={styles.newItemForm} onSubmit={handleCreateClick}>
 				<input
-					className="new-item-text"
+					className={styles.newItemText}
 					type="text"
 					ref={newItemTextInputRef}
 					name="itemName"
 					autoFocus
 				/>
-				<button className="new-item-button" type="submit" name="createItem">
+				<button className={styles.newItemButton} type="submit" name="createItem">
 					+
 				</button>
 			</form>
-			<div className="todo-item-list">{todoItemViews}</div>
+			<div>{todoItemViews}</div>
 		</div>
 	);
 };

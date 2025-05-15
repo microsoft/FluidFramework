@@ -69,7 +69,7 @@
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"scheduler": "^0.20.0",
-		"@types/uuid": "^9.0.2"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
@@ -86,6 +86,7 @@
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
 		"@types/testing-library__jest-dom": "^5.14.5",
+		"@types/uuid": "^9.0.2",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
