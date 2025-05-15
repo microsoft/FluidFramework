@@ -8,6 +8,6 @@ export type {
 	ISharedSignal,
 	ISharedSignalEvents,
 	ISignalOperation,
-} from "./signal/index.js";
-export { SharedSignal } from "./signal/index.js";
-export { SharedSignalFactory } from "./signal/index.js";
+} from "./interfaces.js";
+export { SharedSignal } from "./sharedSignal.js";
+export { SharedSignalFactory } from "./sharedSignalFactory.js";

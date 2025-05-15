@@ -124,6 +124,7 @@ export {
 	type FixRecursiveRecursionLimit,
 	schemaStatics,
 	type TreeChangeEvents,
+	createFromMapTree,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -185,10 +186,7 @@ export {
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";
-export {
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
+export { getTreeNodeForField } from "./proxies.js";
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
@@ -221,6 +219,10 @@ export {
 	type FactoryContent,
 	type FactoryContentObject,
 } from "./toMapTree.js";
+export {
+	prepareForInsertion,
+	prepareForInsertionContextless,
+} from "./prepareForInsertion.js";
 export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
 export {
 	numberSchema,
