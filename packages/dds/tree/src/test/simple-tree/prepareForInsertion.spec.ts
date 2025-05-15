@@ -18,10 +18,10 @@ const factory = new SchemaFactory("test");
 describe("prepareForInsertion", () => {
 	it("multiple top level objects", () => {
 		class Obj extends factory.object("Obj", {}) {}
-		class A extends factory.array("testA", Obj) {}
+		class ParentArray extends factory.array("testA", Obj) {}
 		const a = new Obj({});
 		const b = new Obj({});
-		const root = hydrate(A, []);
+		const root = hydrate(ParentArray, []);
 		root.insertAtStart(TreeArrayNode.spread([a, b]));
 		// Check that the inserted and read proxies are the same object
 		assert.equal(a, root[0]);
