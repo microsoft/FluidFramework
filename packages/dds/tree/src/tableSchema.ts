@@ -86,9 +86,7 @@ function isTableNode(
 		System_TableSchema.ColumnSchemaBase,
 		System_TableSchema.RowSchemaBase
 	> {
-	// tableNodeSymbol is not publicly exposed, so we must cast to access it.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return (Tree.schema(node) as any)[tableSchemaSymbol] === true;
+	return tableSchemaSymbol in Tree.schema(node);
 }
 
 /**
