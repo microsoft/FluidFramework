@@ -251,7 +251,12 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 				const nestedFieldEdit: FieldEditDescription = {
 					type: "field",
 					field: {
-						parent: { parent: undefined, parentField: rootFieldKey, parentIndex: 0 },
+						parent: {
+							parent: undefined,
+							parentField: rootFieldKey,
+							parentIndex: 0,
+							detachedNodeId: undefined,
+						},
 						field: brand("foo"),
 					},
 					fieldKind: optional.identifier,

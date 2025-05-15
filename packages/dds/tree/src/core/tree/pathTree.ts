@@ -126,7 +126,7 @@ export interface FieldUpPath<TUpPath = UpPath> {
  */
 export function isDetachedUpPathRoot<T>(
 	path: UpPath<T> | NormalizedUpPath,
-): path is NormalizedUpPathRoot {
+): path is NormalizedUpPathRoot & { readonly detachedNodeId: DetachedNodeId } {
 	return (path as NormalizedUpPathRoot).detachedNodeId !== undefined;
 }
 
@@ -218,8 +218,8 @@ export function clonePath(path: UpPath | undefined): UpPath | undefined {
  * @returns The elements of the given `path`, ordered from root-most to child-most.
  * These elements are unchanged and therefore still point "up".
  */
-export function topDownPath(path: UpPath | undefined): UpPath[] {
-	const out: UpPath[] = [];
+export function topDownPath<T extends UpPath<T>>(path: T | undefined): T[] {
+	const out: T[] = [];
 	let curr = path;
 	while (curr !== undefined) {
 		out.push(curr);

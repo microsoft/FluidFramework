@@ -227,18 +227,21 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	 */
 	public getFieldPathForEditing(): NormalizedFieldUpPath {
 		if (!this.isFreed()) {
-			if (
-				// Only allow editing if we are the root document field...
-				(this.parent === undefined && this.anchor.fieldKey === rootFieldKey) ||
-				// ...or are under a node in the document
-				(this.parent !== undefined &&
-					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument)
-			) {
+			// Only allow editing if we are the root document field...
+			if (this.parent === undefined && this.anchor.fieldKey === rootFieldKey) {
+				return this.getFieldPath();
+			}
+			assert(this.parent !== undefined, "Unexpected edit to non-root detached field");
+			const status = treeStatusFromAnchorCache(this.parent.anchorNode);
+			// ...or are under a node that is hydrated and not deleted
+			if (status === TreeStatus.InDocument || status === TreeStatus.Removed) {
 				return this.getFieldPath();
 			}
 		}
 
-		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+		throw new UsageError(
+			"Editing only allowed on fields with TreeStatus.InDocument or TreeStatus.Removed status",
+		);
 	}
 
 	protected getEditor(): IDefaultEditBuilder<ITreeCursorSynchronous> {

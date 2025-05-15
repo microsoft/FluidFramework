@@ -16,7 +16,6 @@ import {
 	chunkTree,
 	defaultChunkPolicy,
 	type TreeChunk,
-	cursorForJsonableTreeField,
 	chunkFieldSingle,
 	makeFieldBatchCodec,
 	type NodeId,
@@ -28,7 +27,6 @@ import {
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type EditDescription,
-	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -37,26 +35,22 @@ import {
 	type TaggedChange,
 	type FieldKindIdentifier,
 	type FieldKey,
-	type UpPath,
 	revisionMetadataSourceFromInfo,
 	type ITreeCursorSynchronous,
 	type DeltaFieldChanges,
 	type DeltaRoot,
 	type DeltaDetachedNodeId,
 	type ChangeEncodingContext,
-	type ChangeAtomIdMap,
 	Multiplicity,
 	replaceAtomRevisions,
-	type FieldUpPath,
 	type RevisionInfo,
+	type NormalizedUpPath,
+	type NormalizedFieldUpPath,
 } from "../../../core/index.js";
 import {
-	type Mutable,
 	brand,
-	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	newTupleBTree,
-	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import {
@@ -73,17 +67,11 @@ import {
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
-import {
-	newCrossFieldRangeTable,
-	type ChangeAtomIdBTree,
-	type CrossFieldKeyTable,
-	type FieldChangeMap,
-	type FieldId,
-	type NodeChangeset,
+import type {
+	NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
-	getFieldKind,
 	intoDelta,
 	updateRefreshers,
 	// eslint-disable-next-line import/no-internal-modules
@@ -202,13 +190,23 @@ const valueChange2: ValueChangeset = { old: 1, new: 2 };
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 
-const pathA: FieldUpPath = { parent: undefined, field: fieldA };
-const pathA0: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
-const pathB: FieldUpPath = { parent: undefined, field: fieldB };
-const pathB0: UpPath = { parent: undefined, parentField: fieldB, parentIndex: 0 };
-const pathA0A: FieldUpPath = { parent: pathA0, field: fieldA };
-const pathA0B: FieldUpPath = { parent: pathA0, field: fieldB };
-const pathB0A: FieldUpPath = { parent: pathB0, field: fieldA };
+const pathA: NormalizedFieldUpPath = { parent: undefined, field: fieldA };
+const pathA0: NormalizedUpPath = {
+	detachedNodeId: undefined,
+	parent: undefined,
+	parentField: fieldA,
+	parentIndex: 0,
+};
+const pathB: NormalizedFieldUpPath = { parent: undefined, field: fieldB };
+const pathB0: NormalizedUpPath = {
+	detachedNodeId: undefined,
+	parent: undefined,
+	parentField: fieldB,
+	parentIndex: 0,
+};
+const pathA0A: NormalizedFieldUpPath = { parent: pathA0, field: fieldA };
+const pathA0B: NormalizedFieldUpPath = { parent: pathA0, field: fieldB };
+const pathB0A: NormalizedFieldUpPath = { parent: pathB0, field: fieldA };
 
 const mainEditor = family.buildEditor(() => undefined);
 const rootChange1a = removeAliases(
@@ -1464,7 +1462,8 @@ describe("ModularChangeFamily", () => {
 	it("build child change", () => {
 		const [changeReceiver, getChanges] = testChangeReceiver(family);
 		const editor = family.buildEditor(changeReceiver);
-		const path: UpPath = {
+		const path: NormalizedUpPath = {
+			detachedNodeId: undefined,
 			parent: undefined,
 			parentField: fieldA,
 			parentIndex: 0,
@@ -1525,7 +1524,7 @@ function buildChangeset(edits: EditDescription[]): ModularChangeset {
 	return editor.buildChanges(edits);
 }
 
-function buildExistsConstraint(path: UpPath): ModularChangeset {
+function buildExistsConstraint(path: NormalizedUpPath): ModularChangeset {
 	const edits: ModularChangeset[] = [];
 	const editor = family.buildEditor((taggedChange) => edits.push(taggedChange.change));
 	editor.addNodeExistsConstraint(path, mintRevisionTag());

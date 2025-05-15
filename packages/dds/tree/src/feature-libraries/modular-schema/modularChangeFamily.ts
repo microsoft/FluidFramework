@@ -22,12 +22,10 @@ import {
 	EditBuilder,
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldUpPath,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
-	type UpPath,
 	makeDetachedNodeId,
 	replaceAtomRevisions,
 	revisionMetadataSourceFromInfo,
@@ -44,6 +42,9 @@ import {
 	newChangeAtomIdTransform,
 	subtractChangeAtomIds,
 	makeChangeAtomId,
+	type NormalizedFieldUpPath,
+	type NormalizedUpPath,
+	isDetachedUpPathRoot,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -3094,7 +3095,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	 * @param revision - the revision of the change
 	 */
 	public submitChange(
-		field: FieldUpPath,
+		field: NormalizedFieldUpPath,
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
 		revision: RevisionTag,
@@ -3168,7 +3169,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		return brand(this.idAllocator.allocate(count));
 	}
 
-	public addNodeExistsConstraint(path: UpPath, revision: RevisionTag): void {
+	public addNodeExistsConstraint(path: NormalizedUpPath, revision: RevisionTag): void {
 		const nodeChange: NodeChangeset = {
 			nodeExistsConstraint: { violated: false },
 		};
@@ -3189,7 +3190,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		);
 	}
 
-	public addNodeExistsConstraintOnRevert(path: UpPath, revision: RevisionTag): void {
+	public addNodeExistsConstraintOnRevert(path: NormalizedUpPath, revision: RevisionTag): void {
 		const nodeChange: NodeChangeset = {
 			nodeExistsConstraintOnRevert: { violated: false },
 		};
@@ -3212,7 +3213,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 }
 
 export function buildModularChangesetFromField(props: {
-	path: FieldUpPath;
+	path: NormalizedFieldUpPath;
 	fieldChange: FieldChange;
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
 	nodeToParent: ChangeAtomIdBTree<FieldId>;
@@ -3247,7 +3248,6 @@ export function buildModularChangesetFromField(props: {
 			});
 		}
 
-		// XXX: Roots
 		return makeModularChangeset({
 			fieldChanges,
 			nodeChanges,
@@ -3288,7 +3288,7 @@ export function buildModularChangesetFromField(props: {
 }
 
 function buildModularChangesetFromNode(props: {
-	path: UpPath;
+	path: NormalizedUpPath;
 	nodeChange: NodeChangeset;
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
 	nodeToParent: ChangeAtomIdBTree<FieldId>;
@@ -3302,29 +3302,46 @@ function buildModularChangesetFromNode(props: {
 		nodeId = { localId: brand(props.idAllocator.allocate()), revision: props.revision },
 	} = props;
 	setInChangeAtomIdMap(props.nodeChanges, nodeId, props.nodeChange);
-	const fieldChangeset = genericFieldKind.changeHandler.editor.buildChildChanges([
-		[path.parentIndex, nodeId],
-	]);
 
-	const fieldChange: FieldChange = {
-		fieldKind: genericFieldKind.identifier,
-		change: fieldChangeset,
-	};
+	if (isDetachedUpPathRoot(path)) {
+		const rootNodes = newRootTable();
+		rootNodes.nodeChanges.set(
+			[path.detachedNodeId.major, brand(path.detachedNodeId.minor)],
+			nodeId,
+		);
+		return makeModularChangeset({
+			rootNodes,
+			nodeChanges: props.nodeChanges,
+			nodeToParent: props.nodeToParent,
+			crossFieldKeys: props.crossFieldKeys,
+			maxId: props.idAllocator.getMaxId(),
+			revisions: [{ revision: props.revision }],
+		});
+	} else {
+		const fieldChangeset = genericFieldKind.changeHandler.editor.buildChildChanges([
+			[path.parentIndex, nodeId],
+		]);
 
-	return buildModularChangesetFromField({
-		...props,
-		path: { parent: path.parent, field: path.parentField },
-		fieldChange,
-		localCrossFieldKeys: [],
-		childId: nodeId,
-	});
+		const fieldChange: FieldChange = {
+			fieldKind: genericFieldKind.identifier,
+			change: fieldChangeset,
+		};
+
+		return buildModularChangesetFromField({
+			...props,
+			path: { parent: path.parent, field: path.parentField },
+			fieldChange,
+			localCrossFieldKeys: [],
+			childId: nodeId,
+		});
+	}
 }
 
 /**
  */
 export interface FieldEditDescription {
 	type: "field";
-	field: FieldUpPath;
+	field: NormalizedFieldUpPath;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
 	revision: RevisionTag;

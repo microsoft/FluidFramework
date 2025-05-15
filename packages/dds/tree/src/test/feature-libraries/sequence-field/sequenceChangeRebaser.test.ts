@@ -731,7 +731,12 @@ const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = fu
 		const nestedFieldEdit: FieldEditDescription = {
 			type: "field",
 			field: {
-				parent: { parent: undefined, parentField: rootFieldKey, parentIndex: i },
+				parent: {
+					parent: undefined,
+					parentField: rootFieldKey,
+					parentIndex: i,
+					detachedNodeId: undefined,
+				},
 				field: brand("foo"),
 			},
 			fieldKind: sequence.identifier,

@@ -5,7 +5,6 @@
 
 import {
 	type ChangeAtomId,
-	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
@@ -15,7 +14,6 @@ import {
 	type NormalizedUpPath,
 	type RevisionTag,
 	type TaggedChange,
-	type UpPath,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	tagChange,
@@ -36,12 +34,7 @@ import {
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
-import {
-	type IdAllocator,
-	type Mutable,
-	brand,
-	idAllocatorFromMaxId,
-} from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
 	assertDeltaEqual,
 	chunkFromJsonTrees,
@@ -58,13 +51,13 @@ import type {
 } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	assertEqual,
 	assertModularChangesetsEqual,
 	Change,
 	normalizeDelta,
 	removeAliases,
+	// eslint-disable-next-line import/no-internal-modules
 } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
@@ -85,6 +78,27 @@ const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
 const tag4: RevisionTag = mintRevisionTag();
 
+const rootPath: NormalizedUpPath = {
+	detachedNodeId: undefined,
+	parent: undefined,
+	parentField: rootField,
+	parentIndex: 0,
+};
+
+const fieldARootPath: NormalizedUpPath = {
+	detachedNodeId: undefined,
+	parent: undefined,
+	parentField: fieldA,
+	parentIndex: 0,
+};
+
+const fieldBRootPath: NormalizedUpPath = {
+	detachedNodeId: undefined,
+	parent: undefined,
+	parentField: fieldB,
+	parentIndex: 0,
+};
+
 // Tests the integration of ModularChangeFamily with the default field kinds.
 describe("ModularChangeFamily integration", () => {
 	describe("rebase", () => {
@@ -92,12 +106,8 @@ describe("ModularChangeFamily integration", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 
-			const rootPath = { parent: undefined, parentField: rootField, parentIndex: 0 };
 			editor.move(
-				{
-					parent: rootPath,
-					field: fieldA,
-				},
+				{ parent: rootPath, field: fieldA },
 				1,
 				2,
 				{ parent: { parent: rootPath, parentField: fieldB, parentIndex: 0 }, field: fieldC },
@@ -149,7 +159,6 @@ describe("ModularChangeFamily integration", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 
-			const rootPath = { parent: undefined, parentField: rootField, parentIndex: 0 };
 			editor.move(
 				{
 					parent: rootPath,
@@ -213,12 +222,7 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			editor
-				.sequenceField({
-					parent: { parent: undefined, parentField: fieldA, parentIndex: 0 },
-					field: fieldC,
-				})
-				.remove(0, 1);
+			editor.sequenceField({ parent: fieldARootPath, field: fieldC }).remove(0, 1);
 
 			const [move, remove] = getChanges();
 			const rebased = family.rebase(
@@ -409,8 +413,8 @@ describe("ModularChangeFamily integration", () => {
 		it("over change which moves node upward", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
-			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
-			const nodeBPath: UpPath = {
+			const nodeAPath = fieldARootPath;
+			const nodeBPath: NormalizedUpPath = {
 				parent: nodeAPath,
 				parentField: fieldB,
 				parentIndex: 0,
@@ -424,11 +428,7 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			const nodeBPathAfterMove: UpPath = {
-				parent: undefined,
-				parentField: fieldA,
-				parentIndex: 0,
-			};
+			const nodeBPathAfterMove = fieldARootPath;
 
 			editor.sequenceField({ parent: nodeBPath, field: fieldC }).remove(0, 1);
 			editor.sequenceField({ parent: nodeBPathAfterMove, field: fieldC }).remove(0, 1);
@@ -456,7 +456,12 @@ describe("ModularChangeFamily integration", () => {
 		it("over change which moves into moved subtree", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
-			const nodePath1: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 1 };
+			const nodePath1: NormalizedUpPath = {
+				detachedNodeId: undefined,
+				parent: undefined,
+				parentField: fieldA,
+				parentIndex: 1,
+			};
 
 			// The base changeset consists of the following two move edits.
 			// This edit moves node2 from field B into field C which is under node1 in field A.
@@ -516,8 +521,8 @@ describe("ModularChangeFamily integration", () => {
 		it("prunes its output", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
-			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
-			const nodeBPath: UpPath = { parent: undefined, parentField: fieldB, parentIndex: 0 };
+			const nodeAPath = fieldARootPath;
+			const nodeBPath = fieldBRootPath;
 
 			editor.sequenceField({ parent: nodeAPath, field: fieldA }).remove(0, 1);
 			editor.sequenceField({ parent: nodeBPath, field: fieldB }).remove(0, 1);
@@ -548,7 +553,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
-			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			const nodeAPath = fieldARootPath;
 
 			// Moves A to an adjacent cell to its right
 			const fieldAPath = { parent: undefined, field: fieldA };
@@ -557,12 +562,20 @@ describe("ModularChangeFamily integration", () => {
 			// Moves B into A
 			editor.move(fieldAPath, 1, 1, { parent: nodeAPath, field: fieldB }, 0);
 
-			const nodeBPath: UpPath = { parent: nodeAPath, parentField: fieldB, parentIndex: 0 };
+			const nodeBPath: NormalizedUpPath = {
+				parent: nodeAPath,
+				parentField: fieldB,
+				parentIndex: 0,
+			};
 
 			// Moves C into B
 			editor.move(fieldAPath, 1, 1, { parent: nodeBPath, field: fieldC }, 0);
 
-			const nodeCPath: UpPath = { parent: nodeBPath, parentField: fieldC, parentIndex: 0 };
+			const nodeCPath: NormalizedUpPath = {
+				parent: nodeBPath,
+				parentField: fieldC,
+				parentIndex: 0,
+			};
 
 			// Modifies C by removing a node from it
 			editor.sequenceField({ parent: nodeCPath, field: fieldC }).remove(0, 1);
@@ -620,12 +633,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newNode = chunkFromJsonTrees(["new value"]);
-			editor
-				.sequenceField({
-					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
-					field: fieldC,
-				})
-				.insert(0, newNode);
+			editor.sequenceField({ parent: fieldBRootPath, field: fieldC }).insert(0, newNode);
 
 			const [move, insert] = getChanges();
 			const composed = family.compose([makeAnonChange(move), makeAnonChange(insert)]);
@@ -667,12 +675,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newNode = chunkFromJsonTrees(["new value"]);
-			editor
-				.sequenceField({
-					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
-					field: fieldC,
-				})
-				.insert(0, newNode);
+			editor.sequenceField({ parent: fieldBRootPath, field: fieldC }).insert(0, newNode);
 
 			const [move, insert] = getChanges();
 			const moveTagged = tagChangeInline(move, tag1);
@@ -772,9 +775,8 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			const nodePath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
-			editor.sequenceField({ parent: nodePath, field: fieldB }).remove(0, 1);
-			editor.sequenceField({ parent: nodePath, field: fieldB }).remove(0, 1);
+			editor.sequenceField({ parent: fieldARootPath, field: fieldB }).remove(0, 1);
+			editor.sequenceField({ parent: fieldARootPath, field: fieldB }).remove(0, 1);
 
 			const [move, modify1, modify2] = getChanges();
 			const moveAndModify = family.compose([makeAnonChange(move), makeAnonChange(modify1)]);
@@ -815,12 +817,7 @@ describe("ModularChangeFamily integration", () => {
 			editor.enterTransaction();
 
 			// Remove a node
-			editor
-				.sequenceField({
-					parent: { parent: undefined, parentField: fieldA, parentIndex: 0 },
-					field: fieldC,
-				})
-				.remove(0, 1);
+			editor.sequenceField({ parent: fieldARootPath, field: fieldC }).remove(0, 1);
 
 			// Move the parent of the removed node to another field
 			editor.move(
@@ -909,7 +906,7 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			// Modifies node2 so that both fieldA and fieldB have changes that need to be transfered
+			// Modifies node2 so that both fieldA and fieldB have changes that need to be transferred
 			// from a move source to a destination during invert.
 			editor
 				.sequenceField({

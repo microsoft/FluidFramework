@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
@@ -15,7 +15,7 @@ import {
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
 } from "../../core/index.js";
-import type { ITreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
+import { Tree, type ITreeCheckout, type TreeStoredContent } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
@@ -26,11 +26,17 @@ import {
 	expectNoRemovedRoots,
 	makeTreeFromJson,
 	moveWithin,
+	TestTreeProviderLite,
 	validateUsageError,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
-import { SchemaFactory, toStoredSchema } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	toStoredSchema,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
+import { TreeStatus } from "../../index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -2272,6 +2278,74 @@ describe("Editing", () => {
 				});
 			}
 		});
+
+		it.skip("reinsert hydrated node in hydrated array", () => {
+			const sf = new SchemaFactory(undefined);
+			class Child extends sf.object("Child", {}) {}
+			class Parent extends sf.object("Parent", {
+				children: sf.array(Child),
+			}) {}
+
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({
+				schema: Parent,
+			});
+			const view = provider.trees[0].viewWith(config);
+			view.initialize(new Parent({ children: [new Child({})] }));
+			const hydratedChild = view.root.children[0];
+			// Detach the child so it is insertable again
+			view.root.children.removeAt(0);
+			assert.equal(view.root.children.length, 0);
+
+			view.root.children.insertAtEnd(hydratedChild);
+			assert.equal(view.root.children.length, 1);
+			assert.equal(view.root.children[0], hydratedChild);
+		});
+
+		it.skip("a removed array node can be edited", () => {
+			const sf = new SchemaFactory(undefined);
+			class Child extends sf.object("Child", {}) {}
+			class Parent extends sf.object("Parent", {
+				children: sf.optional(sf.array(Child)),
+			}) {}
+
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({
+				schema: Parent,
+			});
+			const view0 = provider.trees[0].viewWith(config);
+			const view1 = provider.trees[1].viewWith(config);
+			view0.initialize(new Parent({ children: [new Child({})] }));
+			provider.synchronizeMessages();
+
+			const hydratedArray0 = view0.root.children ?? fail("Expected array to be present");
+			const hydratedArray1 = view1.root.children ?? fail("Expected array to be present");
+			assert.equal(Tree.status(hydratedArray0), TreeStatus.InDocument);
+			assert.equal(Tree.status(hydratedArray1), TreeStatus.InDocument);
+			assert.equal(hydratedArray0.length, 1);
+			assert.equal(hydratedArray1.length, 1);
+
+			view0.root.children = undefined;
+
+			// Do some edit on view1 to ensure that when it removes the array (on the next call to synchronizeMessages), it puts the array in a different detached field.
+			// This is necessary to ensure that this test doesn't just pass because both views are storing the removed array in the same detached field.
+			hydratedArray1.insertAtStart(new Child({}));
+			hydratedArray1.removeAt(0);
+
+			provider.synchronizeMessages();
+
+			assert.equal(Tree.status(hydratedArray0), TreeStatus.Removed);
+			assert.equal(Tree.status(hydratedArray1), TreeStatus.Removed);
+
+			// The array can still be edited
+			hydratedArray0.removeAt(0);
+
+			assert.equal(hydratedArray0.length, 0);
+
+			provider.synchronizeMessages();
+
+			assert.equal(hydratedArray1.length, 0);
+		});
 	});
 
 	describe("Optional Field", () => {
@@ -2640,6 +2714,51 @@ describe("Editing", () => {
 			fork.rebaseOnto(tree);
 			tree.merge(fork, false);
 			expectJsonTree([fork, tree], []);
+		});
+
+		it.skip("a removed object node can be edited", () => {
+			const sf = new SchemaFactory(undefined);
+			class Child extends sf.object("Child", {}) {}
+			class Parent extends sf.object("Parent", {
+				child: sf.optional(Child),
+			}) {}
+
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({
+				schema: sf.optional(Parent),
+			});
+			const view0 = provider.trees[0].viewWith(config);
+			const view1 = provider.trees[1].viewWith(config);
+			view0.initialize(new Parent({ child: new Child({}) }));
+			provider.synchronizeMessages();
+
+			const hydratedParent0 = view0.root ?? fail("Expected parent to be present");
+			const hydratedParent1 = view1.root ?? fail("Expected parent to be present");
+			assert.equal(Tree.status(hydratedParent0), TreeStatus.InDocument);
+			assert.equal(Tree.status(hydratedParent1), TreeStatus.InDocument);
+			assert.notEqual(hydratedParent0.child, undefined);
+			assert.notEqual(hydratedParent1.child, undefined);
+
+			view0.root = undefined;
+
+			// Do some edit on view1 to ensure that when it removes the parent node (on the next call to synchronizeMessages), it puts the parent in a different detached field.
+			// This is necessary to ensure that this test doesn't just pass because both views are storing the removed parent in the same detached field.
+			view1.root = new Parent({});
+			view1.root = undefined;
+
+			provider.synchronizeMessages();
+
+			assert.equal(Tree.status(hydratedParent0), TreeStatus.Removed);
+			assert.equal(Tree.status(hydratedParent1), TreeStatus.Removed);
+
+			// The object can still be edited
+			hydratedParent0.child = undefined;
+
+			assert.equal(hydratedParent0.child, undefined);
+
+			provider.synchronizeMessages();
+
+			assert.equal(hydratedParent1.child, undefined);
 		});
 	});
 

@@ -11,8 +11,9 @@ import {
 	type FieldKey,
 	type IForestSubscription,
 	type JsonableTree,
+	type NormalizedFieldUpPath,
+	type NormalizedUpPath,
 	type TaggedChange,
-	type UpPath,
 	applyDelta,
 	makeDetachedFieldIndex,
 	mapCursorField,
@@ -48,49 +49,55 @@ const rootKey = rootFieldKey;
 const fooKey = brand<FieldKey>("foo");
 const barKey = brand<FieldKey>("bar");
 
-const root: UpPath = {
+const rootField: NormalizedFieldUpPath = {
+	parent: undefined,
+	field: rootFieldKey,
+};
+
+const root: NormalizedUpPath = {
 	parent: undefined,
 	parentField: rootKey,
 	parentIndex: 0,
+	detachedNodeId: undefined,
 };
 
-const root_foo0: UpPath = {
+const root_foo0: NormalizedUpPath = {
 	parent: root,
 	parentField: fooKey,
 	parentIndex: 0,
 };
 
-const root_foo1: UpPath = {
+const root_foo1: NormalizedUpPath = {
 	parent: root,
 	parentField: fooKey,
 	parentIndex: 1,
 };
 
-const root_foo2: UpPath = {
+const root_foo2: NormalizedUpPath = {
 	parent: root,
 	parentField: fooKey,
 	parentIndex: 2,
 };
 
-const root_foo0_foo0: UpPath = {
+const root_foo0_foo0: NormalizedUpPath = {
 	parent: root_foo0,
 	parentField: fooKey,
 	parentIndex: 0,
 };
 
-const root_foo2_foo5: UpPath = {
+const root_foo2_foo5: NormalizedUpPath = {
 	parent: root_foo2,
 	parentField: fooKey,
 	parentIndex: 5,
 };
 
-const root_bar0: UpPath = {
+const root_bar0: NormalizedUpPath = {
 	parent: root,
 	parentField: barKey,
 	parentIndex: 0,
 };
 
-const root_bar0_bar0: UpPath = {
+const root_bar0_bar0: NormalizedUpPath = {
 	parent: root_bar0,
 	parentField: barKey,
 	parentIndex: 0,
@@ -172,7 +179,7 @@ describe("DefaultEditBuilder", () => {
 		});
 		assert.equal(deltas.length, 0);
 
-		const fooPath = { parent: root, field: fooKey };
+		const fooPath: NormalizedFieldUpPath = { parent: root, field: fooKey };
 		const fooEditor = builder.sequenceField(fooPath);
 		fooEditor.remove(0, 1);
 		assert.equal(deltas.length, 1);
@@ -197,7 +204,7 @@ describe("DefaultEditBuilder", () => {
 			const { builder, forest } = initializeEditableForest({
 				type: brand(JsonAsTree.JsonObject.identifier),
 			});
-			builder.valueField({ parent: undefined, field: rootKey }).set(nodeXChunk);
+			builder.valueField(rootField).set(nodeXChunk);
 			expectForest(forest, nodeX);
 		});
 
@@ -242,7 +249,7 @@ describe("DefaultEditBuilder", () => {
 			const { builder, forest } = initializeEditableForest({
 				type: brand(JsonAsTree.JsonObject.identifier),
 			});
-			builder.optionalField({ parent: undefined, field: rootKey }).set(nodeXChunk, false);
+			builder.optionalField(rootField).set(nodeXChunk, false);
 			expectForest(forest, nodeX);
 		});
 
@@ -283,7 +290,7 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can set an empty root field", () => {
 			const { builder, forest } = initializeEditableForest();
-			builder.optionalField({ parent: undefined, field: rootKey }).set(nodeXChunk, true);
+			builder.optionalField(rootField).set(nodeXChunk, true);
 			expectForest(forest, nodeX);
 		});
 
@@ -316,7 +323,7 @@ describe("DefaultEditBuilder", () => {
 	describe("Sequence Field Edits", () => {
 		it("Can insert a root node", () => {
 			const { builder, forest } = initializeEditableForest();
-			builder.sequenceField({ parent: undefined, field: rootKey }).insert(0, nodeXChunk);
+			builder.sequenceField(rootField).insert(0, nodeXChunk);
 			expectForest(forest, nodeX);
 		});
 
@@ -370,7 +377,7 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can remove a root node", () => {
 			const { builder, forest } = initializeEditableForest(nodeX);
-			builder.sequenceField({ parent: undefined, field: rootKey }).remove(0, 1);
+			builder.sequenceField(rootField).remove(0, 1);
 			expectForest(forest, []);
 		});
 
