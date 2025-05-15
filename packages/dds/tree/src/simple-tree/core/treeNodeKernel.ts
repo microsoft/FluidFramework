@@ -270,6 +270,7 @@ export class TreeNodeKernel {
 	}
 
 	public dispose(): void {
+		debugAssert(() => !this.disposed || "Cannot dispose a disposed node");
 		this.disposed = true;
 		if (isHydrated(this.#hydrationState)) {
 			for (const off of this.#hydrationState.offAnchorNode) {
