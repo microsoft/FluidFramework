@@ -24,6 +24,7 @@ export type {
 	ISharedMap,
 	ISharedMapEvents,
 	IValueChanged,
+	ISharedMapCore,
 } from "./interfaces.js";
 export { SharedMap } from "./mapFactory.js";
 export { SharedDirectory } from "./directoryFactory.js";
@@ -37,3 +38,24 @@ export type {
 	IDirectoryNewStorageFormat,
 	IDirectoryDataObject,
 } from "./directory.js";
+
+// Internal
+export type { ILocalValue } from "./localValues.js";
+export type {
+	IMapClearLocalOpMetadata,
+	IMapKeyEditLocalOpMetadata,
+	IMapKeyAddLocalOpMetadata,
+	ISerializedValue,
+} from "./internalInterfaces.js";
+export {
+	type IMapOperation,
+	type IMapKeyOperation,
+	mapKernelFactory,
+	type MapLocalOpMetadata,
+	type MapKeyLocalOpMetadata,
+} from "./mapKernel.js";
+export type {
+	IMapClearOperation,
+	IMapDeleteOperation,
+	IMapSetOperation,
+} from "./internalInterfaces.js";

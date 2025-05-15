@@ -14,6 +14,7 @@ import {
 	type SharedKernelFactory,
 	type SharedObjectOptions,
 	type FactoryOut,
+	type IChannelView,
 } from "@fluidframework/shared-object-base/internal";
 
 import {
@@ -22,12 +23,14 @@ import {
 	type SharedTreeOptions,
 	type SharedTreeOptionsInternal,
 	type SharedTreeKernelView,
+	type ITreeInternal,
 } from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
 
 import { Breakable } from "./util/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -42,7 +45,7 @@ export interface ISharedTree extends ISharedObject, ITreePrivate {}
  * Exposes {@link ITreePrivate} to allow access to internals in tests without a cast.
  * Code exposing this beyond this package will need to update to a more public type.
  */
-function treeKernelFactory(
+function treeKernelFactoryPrivate(
 	options: SharedTreeOptionsInternal,
 ): SharedKernelFactory<SharedTreeKernelView> {
 	function treeFromKernelArgs(args: KernelArgs): SharedTreeKernel {
@@ -77,6 +80,15 @@ function treeKernelFactory(
 		},
 	};
 }
+
+/**
+ * Creates a factory for shared tree kernels with the given options.
+ * @internal
+ */
+export const treeKernelFactory: (
+	options: SharedTreeOptions,
+) => SharedKernelFactory<Omit<ITreeInternal, keyof (IChannelView & IFluidLoadable)>> =
+	treeKernelFactoryPrivate;
 
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
