@@ -121,7 +121,7 @@ describe.only("TableFactory unit tests", () => {
 			table.insertColumn({ column: column0 });
 
 			// No rows or cells have been inserted yet.
-			assert.equal([...column0.getCells()].length, 0);
+			assert.equal(column0.getCells().length, 0);
 
 			table.insertRows({
 				rows: [
@@ -145,12 +145,12 @@ describe.only("TableFactory unit tests", () => {
 				cell: { value: "2-0" },
 			});
 
-			const cells = [...column0.getCells()];
+			const cells = column0.getCells();
 			assert.equal(cells.length, 2);
-			assert.equal(cells[0][0], "row-0");
-			assertEqualTrees(cells[0][1], { value: "0-0" });
-			assert.equal(cells[1][0], "row-2");
-			assertEqualTrees(cells[1][1], { value: "2-0" });
+			assert.equal(cells[0].rowId, "row-0");
+			assertEqualTrees(cells[0].cell, { value: "0-0" });
+			assert.equal(cells[1].rowId, "row-2");
+			assertEqualTrees(cells[1].cell, { value: "2-0" });
 		});
 	});
 
@@ -186,17 +186,11 @@ describe.only("TableFactory unit tests", () => {
 			treeView.initialize(Table.empty());
 			const table = treeView.root;
 
-			// Calling `getCells` on a row that has not been inserted into the table throws an error.
 			const row = new Row({ id: "row-0", cells: {} });
-			assert.throws(
-				() => row.getCells(),
-				validateUsageError(/Row with ID "row-0" is not contained in a table./),
-			);
-
 			table.insertRow({ row });
 
 			// No columns or cells have been inserted yet.
-			assert.equal([...row.getCells()].length, 0);
+			assert.equal(row.getCells().length, 0);
 
 			table.insertColumns({
 				columns: [
@@ -220,12 +214,12 @@ describe.only("TableFactory unit tests", () => {
 				cell: { value: "0-2" },
 			});
 
-			const cells = [...row.getCells()];
+			const cells = row.getCells();
 			assert.equal(cells.length, 2);
-			assert.equal(cells[0][0], "column-0");
-			assertEqualTrees(cells[0][1], { value: "0-0" });
-			assert.equal(cells[1][0], "column-2");
-			assertEqualTrees(cells[1][1], { value: "0-2" });
+			assert.equal(cells[0].columnId, "column-0");
+			assertEqualTrees(cells[0].cell, { value: "0-0" });
+			assert.equal(cells[1].columnId, "column-2");
+			assertEqualTrees(cells[1].cell, { value: "0-2" });
 		});
 	});
 

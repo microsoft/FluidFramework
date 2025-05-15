@@ -212,20 +212,22 @@ export namespace System_TableSchema {
 			})
 			implements TableSchema.Column<TCellSchema, TPropsSchema>
 		{
-			public getCells(): ReadonlyMap<string, CellValueType> {
+			public getCells(): {
+				rowId: string;
+				cell: CellValueType;
+			}[] {
 				const tableNode = getParentTable(this);
 				if (tableNode === undefined) {
 					throw new UsageError(`Column with ID "${this.id}" is not contained in a table.`);
 				}
 
-				const result = new Map<string, CellValueType>();
+				const result = [];
 				for (const row of tableNode.rows) {
 					const cell = row.getCell(this.id);
 					if (cell !== undefined) {
-						result.set(row.id, cell as CellValueType);
+						result.push({ rowId: row.id, cell: cell as CellValueType });
 					}
 				}
-
 				return result;
 			}
 		}
@@ -416,20 +418,19 @@ export namespace System_TableSchema {
 				return cell;
 			}
 
-			public getCells(): ReadonlyMap<string, CellValueType> {
-				const tableNode = getParentTable(this);
-				if (tableNode === undefined) {
-					throw new UsageError(`Row with ID "${this.id}" is not contained in a table.`);
-				}
-
-				const result = new Map<string, CellValueType>();
-				for (const column of tableNode.columns) {
-					const cell = this.getCell(column.id);
+			public getCells(): {
+				columnId: string;
+				cell: CellValueType;
+			}[] {
+				const result = [];
+				for (const [columnId, cell] of this.cells.entries()) {
 					if (cell !== undefined) {
-						result.set(column.id, cell);
+						result.push({
+							columnId,
+							cell,
+						});
 					}
 				}
-
 				return result;
 			}
 		}
@@ -1074,9 +1075,13 @@ export namespace TableSchema {
 		>);
 
 		/**
-		 * Gets all of the populated cells in the row, keyed by their associated column IDs.
+		 * Gets all of the populated cells in the row, keyed by their associated row IDs.
+		 * @throws Throws an error if the column is not in a table.
 		 */
-		getCells(): ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<TCell>>;
+		getCells(): readonly {
+			rowId: string;
+			cell: TreeNodeFromImplicitAllowedTypes<TCell>;
+		}[];
 	}
 
 	/**
@@ -1152,7 +1157,10 @@ export namespace TableSchema {
 		/**
 		 * Gets all of the populated cells in the row, keyed by their associated column IDs.
 		 */
-		getCells(): ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<TCell>>;
+		getCells(): readonly {
+			columnId: string;
+			cell: TreeNodeFromImplicitAllowedTypes<TCell>;
+		}[];
 
 		/**
 		 * Sets the cell in the specified column.
