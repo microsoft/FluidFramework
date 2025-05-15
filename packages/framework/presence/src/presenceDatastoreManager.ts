@@ -107,7 +107,7 @@ interface AcknowledgementMessage extends IInboundSignalMessage {
 
 function isPresenceMessage(
 	message: IInboundSignalMessage,
-): message is DatastoreUpdateMessage | ClientJoinMessage | AcknowledgementMessage {
+): message is DatastoreUpdateMessage | ClientJoinMessage {
 	return message.type.startsWith("Pres:");
 }
 
@@ -182,6 +182,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private refreshBroadcastRequested = false;
 	private readonly timer = new TimerManager();
 	private readonly workspaces = new Map<string, AnyWorkspaceEntry<StatesWorkspaceSchema>>();
+	private readonly supportsTargetedSignals =
+		isLayerCompatDetails(this.runtime.ILayerCompatDetails) &&
+		this.runtime.ILayerCompatDetails.supportedFeatures.has("submit_signals_v2");
 
 	public constructor(
 		private readonly attendeeId: AttendeeId,
@@ -381,24 +384,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// IExtensionMessage is a subset of IInboundSignalMessage so this is safe.
 		// Change types of DatastoreUpdateMessage | ClientJoinMessage to
 		// IExtensionMessage<> derivatives to see the issues.
-		message:
-			| IInboundSignalMessage
-			| DatastoreUpdateMessage
-			| ClientJoinMessage
-			| AcknowledgementMessage,
+		message: IInboundSignalMessage | DatastoreUpdateMessage | ClientJoinMessage,
 		local: boolean,
 	): void {
 		const received = Date.now();
 		assert(message.clientId !== null, 0xa3a /* Map received signal without clientId */);
 		if (!isPresenceMessage(message)) {
-			return;
-		}
-
-		if (message.type === acknowledgementMessageType) {
-			// TODO: Handle acknowledgement messages here.
-			// Placeholder for future implementation.
-			// These acknowledgement messages will be used to confirm receipt
-			// of pending messages that were previously sent.
 			return;
 		}
 
@@ -433,12 +424,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			if (message.content.isComplete) {
 				this.refreshBroadcastRequested = false;
 			}
-			// If the message requests an acknowledgement, we will send one back.
-			if (
-				message.content.acknowledgementId !== undefined &&
-				isLayerCompatDetails(this.runtime.ILayerCompatDetails) &&
-				this.runtime.ILayerCompatDetails?.supportedFeatures?.has("submit_signals_v2") === true
-			) {
+			// If the message requests an acknowledgement, we will send a targeted acknowledgement message back to just the requestor.
+			if (message.content.acknowledgementId !== undefined) {
+				assert(this.supportsTargetedSignals, "Targeted signals not supported");
 				this.runtime.submitSignal(
 					acknowledgementMessageType,
 					{
@@ -446,6 +434,13 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					} satisfies AcknowledgementMessage["content"],
 					message.clientId,
 				);
+				this.logger?.sendTelemetryEvent({
+					eventName: "AckSent",
+					details: {
+						requestor: message.clientId,
+						responder: this.runtime.clientId,
+					},
+				});
 			}
 		}
 
