@@ -214,7 +214,8 @@ function walkMapTree(
 }
 
 /**
- * Register events which will hydrate batches of nodes when they are inserted, assuming the next edits to forest are their insertions, in order.
+ * Register events which will hydrate batches of nodes when they are inserted.
+ * The next edits to forest must be their insertions, in order, or data corruption can occur.
  * @param locatedNodes - the nodes to register with the forest.
  * Each index in this array expects its content to be added and produce its own `afterRootFieldCreated` event.
  * If array subsequence insertion is optimized to produce a single event, this will not work correctly as is, and will need to be modified to take in a single {@link LocatedNodesBatch}.
