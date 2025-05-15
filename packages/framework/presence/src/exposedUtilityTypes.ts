@@ -88,7 +88,7 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
-	export type JsonDeserializedHandle<T> = T & JsonDeserializedBrand<T>;
+	export type JsonDeserializedHandle<T> = JsonDeserializedBrand<T>;
 
 	/**
 	 * @system
@@ -101,7 +101,7 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
-	export type JsonSerializableHandle<T> = T & JsonSerializableBrand<T>;
+	export type JsonSerializableHandle<T> = JsonSerializableBrand<T>;
 }
 
 /**
