@@ -348,8 +348,7 @@ export const TreeAlpha: TreeAlpha = {
 		// the stored key from the flex-domain, and get property key its simple-domain counterpart was created with.
 		const storedKey = getStoredKey(node);
 		const parentSchema = treeNodeApi.schema(parent);
-		const propertyKey = getPropertyKeyFromStoredKey(parentSchema, storedKey);
-		return propertyKey;
+		return getPropertyKeyFromStoredKey(parentSchema, storedKey);
 	},
 };
 
