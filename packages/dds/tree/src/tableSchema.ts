@@ -160,7 +160,7 @@ export namespace System_TableSchema {
 		const TPropsSchema extends ImplicitAnnotatedFieldSchema,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		_cellSchema: TCellSchema,
+		cellSchema: TCellSchema,
 		propsSchema: TPropsSchema,
 	) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
@@ -217,6 +217,10 @@ export namespace System_TableSchema {
 				for (const row of tableNode.rows) {
 					const cell = row.getCell(this.id);
 					if (cell !== undefined) {
+						if (!Tree.is(cell, cellSchema)) {
+							throw new UsageError("Parent table contains cells with unexpected schema.");
+						}
+
 						result.push({ rowId: row.id, cell: cell as CellValueType });
 					}
 				}
