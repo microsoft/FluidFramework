@@ -10,10 +10,8 @@ import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
-	getSchemaAndPolicy,
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
-import { prepareContentForHydration } from "./proxies.js";
 import {
 	normalizeAllowedTypes,
 	unannotateImplicitAllowedTypes,
@@ -41,6 +39,7 @@ import {
 	type TreeNodeSchemaClass,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
+import { prepareArrayForInsertion } from "./prepareForInsertion.js";
 import {
 	getKernel,
 	UnhydratedFlexTreeNode,
@@ -860,24 +859,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			| IterableTreeArrayContent<InsertableContent>
 		)[];
 
-		const mapTrees = content
-			.flatMap((c): InsertableContent[] =>
-				c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
-			)
-			.map((c) =>
-				mapTreeFromNodeData(
-					c,
-					this.simpleSchema,
-					sequenceField.context.isHydrated()
-						? sequenceField.context.nodeKeyManager
-						: undefined,
-					getSchemaAndPolicy(sequenceField),
-				),
-			);
-
-		if (sequenceField.context.isHydrated()) {
-			prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
-		}
+		const contentArray = content.flatMap((c): InsertableContent[] =>
+			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
+		);
+		const mapTrees = prepareArrayForInsertion(
+			contentArray,
+			this.simpleSchema,
+			sequenceField.context,
+		);
 
 		return mapTrees;
 	}
