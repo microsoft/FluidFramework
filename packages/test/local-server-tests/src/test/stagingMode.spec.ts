@@ -26,7 +26,7 @@ import {
 	type IConfigProviderBase,
 	type IErrorBase,
 } from "@fluidframework/core-interfaces/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -61,21 +61,19 @@ class DataObjectWithStagingMode extends DataObject {
 		return this;
 	}
 
-	private getIdCompressor(): IIdCompressor {
+	private generateCompressedId(): SessionSpaceCompressedId {
 		const idCompressor = this.runtime.idCompressor;
 		assert(idCompressor !== undefined, "IdCompressor must be enabled for these tests.");
-		return idCompressor;
+		return idCompressor.generateCompressedId();
 	}
 
+	/** Add to the root map including prefix in the key name, and a compressed ID in the value (for ID Compressor test coverage) */
 	public makeEdit(prefix: string) {
-		this.root.set(`${prefix}-${this.instanceNumber}`, this.root.size);
-	}
-
-	public makeCompressedIdEdit(prefix: string): void {
-		const idCompressor = this.getIdCompressor();
-		const compressedId = idCompressor.generateCompressedId();
-
-		this.root.set(`${prefix}-compressed-${this.instanceNumber}`, `id-${compressedId}`);
+		const compressedId = this.generateCompressedId();
+		this.root.set(`${prefix}-${this.instanceNumber}`, {
+			n: this.root.size,
+			someId: compressedId,
+		});
 	}
 
 	public addDDS(prefix: string): void {
@@ -476,13 +474,17 @@ describe("Staging Mode", () => {
 		const seq = await waitForSave([clients.loaded]);
 		await catchUp(clients, seq);
 
+		// Make another change in before exiting staging mode
+		clients.original.dataObject.makeEdit("branch-second-batch");
+
 		stagingControls.commitChanges();
 
 		await waitForSave(clients);
 
 		assertConsistent(clients, "states should match after save");
 		assert.equal(
-			hasEdit(clients.original, "branch-only"),
+			hasEdit(clients.original, "branch-only") &&
+				hasEdit(clients.original, "branch-second-batch"),
 			true,
 			"Edit submitted while in staging mode should be committed.",
 		);
@@ -499,74 +501,18 @@ describe("Staging Mode", () => {
 		const seq = await waitForSave([clients.loaded]);
 		await catchUp(clients, seq);
 
+		// Make another change in before exiting staging mode
+		clients.original.dataObject.makeEdit("branch-second-batch");
+
 		stagingControls.discardChanges();
 
 		await waitForSave(clients);
 
 		assertConsistent(clients, "states should match after save");
 		assert.equal(
-			hasEdit(clients.original, "branch-only"),
+			hasEdit(clients.original, "branch-"), // branch-only or branch-second-batch
 			false,
 			"Edit submitted while in staging mode should be rolled back.",
-		);
-	});
-
-	it("commitChanges sends compressed ID edit applied to other clients", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const clients = await createClients(deltaConnectionServer);
-
-		const stagingControls = clients.original.dataObject.enterStagingMode();
-		clients.original.dataObject.makeCompressedIdEdit("branch-compressed-id");
-		clients.loaded.dataObject.makeEdit("after-branch");
-
-		const seq = await waitForSave([clients.loaded]);
-		await catchUp(clients, seq);
-
-		stagingControls.commitChanges();
-
-		await waitForSave(clients);
-
-		assertConsistent(clients, "states should match after save");
-		assert.equal(
-			hasEdit(clients.original, "branch-compressed-id"),
-			true,
-			"Compressed ID edit submitted while in staging mode should be committed.",
-		);
-		assert.equal(
-			hasEdit(clients.loaded, "branch-compressed-id"),
-			true,
-			"Loaded client should receive the committed compressed ID edit.",
-		);
-
-		clients.original.dataObject.makeCompressedIdEdit("after-commit-staged");
-		await waitForSave(clients);
-		assertConsistent(clients, "states should match after save");
-	});
-
-	it("discardChanges rolls back compressed ID edit applied in staging mode", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const clients = await createClients(deltaConnectionServer);
-		const stagingControls = clients.original.dataObject.enterStagingMode();
-		clients.original.dataObject.makeCompressedIdEdit("branch-compressed");
-		clients.loaded.dataObject.makeEdit("after-branch");
-
-		const seq = await waitForSave([clients.loaded]);
-		await catchUp(clients, seq);
-
-		stagingControls.discardChanges();
-
-		await waitForSave(clients);
-
-		assertConsistent(clients, "states should match after save");
-		assert.equal(
-			hasEdit(clients.original, "branch-compressed"),
-			false,
-			"Compressed ID edit submitted while in staging mode should be rolled back.",
-		);
-		assert.equal(
-			hasEdit(clients.loaded, "branch-compressed"),
-			false,
-			"Loaded client should not have the rolled back compressed ID edit.",
 		);
 	});
 
