@@ -32,6 +32,7 @@ import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+import { pkgVersion } from "./packageVersion.js";
 import type { TestConfiguration } from "./testConfigFile.js";
 import { printStatus } from "./utils.js";
 import { VirtualDataStoreFactory, type VirtualDataStore } from "./virtualDataStore.js";
@@ -932,4 +933,5 @@ export const createFluidExport = (runtimeOptions?: IContainerRuntimeOptions | un
 			VirtualDataStoreFactory.registryEntry,
 		],
 		runtimeOptions,
+		minVersionForCollab: pkgVersion,
 	});

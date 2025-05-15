@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type {
+	IContainerRuntimeOptions,
+	MinimumVersionForCollab,
+} from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,
 	// eslint-disable-next-line import/no-deprecated
@@ -61,6 +64,11 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 * created with this factory
 	 */
 	provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	/**
+	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 */
+	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }
 
 /**
@@ -101,6 +109,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 			...props,
 			requestHandlers: [getDefaultObject, ...requestHandlers],
 			provideEntryPoint,
+			minVersionForCollab: props.minVersionForCollab,
 		});
 
 		this.defaultFactory = props.defaultFactory;

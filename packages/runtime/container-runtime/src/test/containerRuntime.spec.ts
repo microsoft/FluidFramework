@@ -3993,7 +3993,7 @@ describe("Runtime", () => {
 				{ compressionOptions: enabledCompressionConfig },
 				{ explicitSchemaControl: true },
 				{ gcOptions: { enableGCSweep: true } },
-				// Add in an arbitrary entry into the object
+				// Adding in an arbitrary entry into the IGCRuntimeOptions object
 				{ gcOptions: { enableGCSweep: true, sweepGracePeriodMs: 1 } },
 				{ enableRuntimeIdCompressor: "on" },
 				{ enableRuntimeIdCompressor: "delayed" },
