@@ -251,6 +251,10 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	// #region Data-related event handlers
 
 	private readonly dataUpdateHandler = (visualization: FluidObjectNode): void => {
+		// console.log(
+		// 	"ContainerDevtools: dataUpdateHandler called with visualization:",
+		// 	visualization,
+		// );
 		this.postDataVisualization(visualization.fluidObjectId, visualization);
 	};
 
@@ -416,7 +420,13 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		fluidObjectId: FluidObjectId,
 		visualization: FluidObjectNode | undefined,
 	): void => {
-		console.log("postDataVisualization visualization", visualization);
+		console.log("ContainerDevtools: postDataVisualization called with:", {
+			fluidObjectId,
+			visualizationFluidObjectId: visualization?.fluidObjectId,
+			containerKey: this.containerKey,
+			messageType: DataVisualization.MessageType,
+		});
+		console.log("visualization", visualization);
 		postMessagesToWindow(
 			this.messageLoggingOptions,
 			DataVisualization.createMessage({

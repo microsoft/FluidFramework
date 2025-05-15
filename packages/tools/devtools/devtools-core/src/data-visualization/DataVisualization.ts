@@ -227,6 +227,7 @@ export class DataVisualizerGraph
 					result[key] = unknownObjectNode;
 				} else {
 					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
+
 					result[key] =
 						fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);
 				}
@@ -253,7 +254,13 @@ export class DataVisualizerGraph
 	private registerVisualizerForVisualizableObject(
 		visualizableObject: VisualizableFluidObject,
 	): FluidObjectId {
-		if (!this.visualizerNodes.has(visualizableObject.id)) {
+		const fluidObjectId = isDataObject(visualizableObject)
+			? (visualizableObject as unknown as { readonly root: ISharedDirectory }).root.id
+			: isTreeDataObject(visualizableObject)
+				? (visualizableObject.sharedTree as unknown as ISharedObject).id
+				: visualizableObject.id;
+
+		if (!this.visualizerNodes.has(fluidObjectId)) {
 			// Create visualizer node for the shared object
 			const visualizationFunction = isDataObject(visualizableObject)
 				? visualizeDataObject
@@ -273,13 +280,15 @@ export class DataVisualizerGraph
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
 
+			console.log("visualizerNode", visualizerNode);
+
 			// Register event handler so we can bubble up update events
 			visualizerNode.on("update", this.onVisualUpdateHandler);
 
 			// Add the visualizer node to our collection
-			this.visualizerNodes.set(visualizableObject.id, visualizerNode);
+			this.visualizerNodes.set(fluidObjectId, visualizerNode);
 		}
-		return visualizableObject.id;
+		return fluidObjectId;
 	}
 
 	/**

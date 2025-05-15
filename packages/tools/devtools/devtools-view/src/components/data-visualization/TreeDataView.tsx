@@ -33,8 +33,6 @@ export interface TreeDataViewProps
 export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 	const { containerKey, label, node } = props;
 
-	console.log(containerKey, label, node);
-
 	switch (node.nodeKind) {
 		/**
 		 * Node with children.
@@ -76,6 +74,7 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		 * POST request to FluidClientDebugger.
 		 */
 		case VisualNodeKind.FluidHandleNode: {
+			console.log("node", node);
 			return (
 				<FluidHandleView
 					containerKey={containerKey}

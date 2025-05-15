@@ -248,7 +248,7 @@ export class AppData extends DataObject {
 		// Create the shared objects and store their handles in the root SharedDirectory
 		const text = SharedString.create(this.runtime, this.sharedTextKey);
 		const counter = SharedCounter.create(this.runtime, this.sharedCounterKey);
-		const sharedTree = SharedTree.create(this.runtime);
+		const sharedTree = SharedTree.create(this.runtime, this.sharedTreeKey);
 
 		const emojiMatrix = SharedMatrix.create(this.runtime, this.emojiMatrixKey);
 		const matrixDimension = 2; // Height and Width

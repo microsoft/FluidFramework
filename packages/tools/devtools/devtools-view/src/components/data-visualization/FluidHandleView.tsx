@@ -37,6 +37,8 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	const { containerKey, fluidObjectId, label } = props;
 	const messageRelay = useMessageRelay();
 
+	console.log("containerKey, fluidObjectId, label", containerKey, fluidObjectId, label);
+
 	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
 
 	React.useEffect(() => {
@@ -46,14 +48,26 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		const inboundMessageHandlers: InboundHandlers = {
 			[DataVisualization.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DataVisualization.Message;
+
+				console.log("ContainerKey Comparison", message.data.containerKey, containerKey);
+				console.log("ID Comparison", message.data.fluidObjectId, fluidObjectId);
+
+				if (message.data.fluidObjectId === "tree-data-object") {
+					console.log("FluidHandleView: TreeDataObject message", message);
+				}
+
 				if (
 					message.data.containerKey === containerKey &&
 					message.data.fluidObjectId === fluidObjectId
 				) {
-					console.log("DATA_VISUALIZATION");
+					console.log(
+						"FluidHandleView: Updating visualTree with:",
+						message.data.visualization,
+					);
 					setVisualTree(message.data.visualization);
 					return true;
 				} else {
+					console.log("FluidHandleView: Message not for this component");
 					return false;
 				}
 			},
@@ -82,7 +96,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerKey, visualTree, setVisualTree, fluidObjectId, messageRelay]);
+	}, [containerKey, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
 		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;

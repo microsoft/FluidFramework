@@ -116,6 +116,7 @@ export const visualizeDataObject: VisualizeSharedObject = async (
 		visualizeChildData,
 	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
 
+	console.log("dataObjectRoot id:", dataObjectRoot.id);
 	return {
 		fluidObjectId: dataObjectRoot.id,
 		children: renderedChildData.children,
@@ -137,6 +138,8 @@ export const visualizeTreeDataObject: VisualizeSharedObject = async (
 		visualizeChildData,
 	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
 
+	console.log("treeDataObjectRoot id:", treeDataObjectRoot.id);
+
 	return {
 		fluidObjectId: treeDataObjectRoot.id,
 		children: renderedChildData.children,
@@ -153,6 +156,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 ): Promise<FluidObjectValueNode> => {
 	const sharedCounter = sharedObject as SharedCounter;
+
 	return {
 		fluidObjectId: sharedCounter.id,
 		value: sharedCounter.value,
