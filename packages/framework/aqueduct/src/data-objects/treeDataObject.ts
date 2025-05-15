@@ -51,15 +51,13 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 	protected abstract generateView(tree: ITree): TTreeView;
 
 	/**
-	 * Implemenation of SharedTree which is used to generated the view.
+	 * Implementation of SharedTree which is used to generate the view.
 	 * @remarks Created once during initialization.
 	 */
 	#sharedTree: ITree | undefined;
 
 	/**
-	 * Gets the underlying tree.
-	 *
-	 * @remarks Used to give access to the underlying tree and its schema.
+	 * Gets the underlying {@link @fluidframework/tree#ITree | tree}.
 	 */
 	public get sharedTree(): ITree {
 		if (this.#sharedTree === undefined) {

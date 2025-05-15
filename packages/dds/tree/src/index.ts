@@ -152,6 +152,20 @@ export {
 	type FactoryContentObject,
 	type ReadableField,
 	type ReadSchema,
+	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAnnotatedFieldSchema,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type AllowedTypeMetadata,
+	type AllowedTypesMetadata,
+	type InsertableObjectFromAnnotatedSchemaRecord,
+	type UnannotateImplicitAllowedTypes,
+	type UnannotateAllowedTypes,
+	type UnannotateAllowedType,
+	type UnannotateAllowedTypesList,
+	type UnannotateAllowedTypeOrLazyItem,
+	type UnannotateImplicitFieldSchema,
+	type UnannotateSchemaRecord,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -240,6 +254,7 @@ export {
 	configuredSharedTree,
 } from "./treeFactory.js";
 export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
+export { persistedToSimpleSchema } from "./shared-tree/index.js";
 
 export {
 	type ICodecOptions,
@@ -288,4 +303,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
-export { TableSchema } from "./tableSchema.js";
+export { TableSchema, type System_TableSchema } from "./tableSchema.js";

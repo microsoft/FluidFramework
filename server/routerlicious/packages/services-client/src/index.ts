@@ -20,6 +20,7 @@ export {
 	DriverVersionHeaderName,
 	LatestSummaryId,
 	TelemetryContextHeaderName,
+	CallingServiceHeaderName,
 } from "./constants";
 export {
 	createFluidServiceNetworkError,
@@ -42,7 +43,12 @@ export {
 export { IAlfredTenant, ISession } from "./interfaces";
 export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
-export { BasicRestWrapper, RestWrapper, IBasicRestWrapperMetricProps } from "./restWrapper";
+export {
+	BasicRestWrapper,
+	RestWrapper,
+	IBasicRestWrapperMetricProps,
+	setupAxiosInterceptorsForAbortSignals,
+} from "./restWrapper";
 export { defaultHash, getNextHash } from "./rollingHash";
 export {
 	canRead,
@@ -105,3 +111,8 @@ export {
 } from "./timeoutContext";
 export { getOrCreateRepository, getRandomInt } from "./utils";
 export { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
+export {
+	IAbortControllerContext,
+	setGlobalAbortControllerContext,
+	getGlobalAbortControllerContext,
+} from "./abortControllerContext";

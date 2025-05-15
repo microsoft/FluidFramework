@@ -4,7 +4,7 @@
  */
 
 import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
-import type { TreeNode } from "./types.js";
+import type { TreeNode } from "./treeNode.js";
 
 /**
  * The type of a {@link TreeNode}.

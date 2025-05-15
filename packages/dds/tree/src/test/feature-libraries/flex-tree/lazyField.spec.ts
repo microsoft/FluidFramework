@@ -31,7 +31,7 @@ import {
 	MockNodeIdentifierManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
-	getTreeContext,
+	Context,
 	isFlexTreeNode,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
@@ -459,7 +459,7 @@ describe("LazyField", () => {
 				schema,
 				initialTree: content,
 			});
-			const context = getTreeContext(
+			const context = new Context(
 				defaultSchemaPolicy,
 				new MockTreeCheckout(forest, {
 					schema: new TreeStoredSchemaRepository(schema),

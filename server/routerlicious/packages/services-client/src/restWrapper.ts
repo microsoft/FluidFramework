@@ -15,8 +15,29 @@ import {
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
-import { CorrelationIdHeaderName, TelemetryContextHeaderName } from "./constants";
+import {
+	CallingServiceHeaderName,
+	CorrelationIdHeaderName,
+	TelemetryContextHeaderName,
+} from "./constants";
 import { getGlobalTimeoutContext } from "./timeoutContext";
+import { isAxiosCanceledError } from "./utils";
+
+/**
+ * @internal
+ */
+export function setupAxiosInterceptorsForAbortSignals(
+	getAbortController: () => AbortController | undefined,
+) {
+	// Set up an interceptor to add the abort signal to the request
+	Axios.interceptors.request.use((config) => {
+		const abortController = getAbortController();
+		if (abortController) {
+			config.signal = abortController.signal;
+		}
+		return config;
+	});
+}
 
 /**
  * @internal
@@ -208,6 +229,7 @@ export class BasicRestWrapper extends RestWrapper {
 			authorizationHeader: RawAxiosRequestHeaders,
 		) => Promise<RawAxiosRequestHeaders | undefined>,
 		private readonly logHttpMetrics?: (requestProps: IBasicRestWrapperMetricProps) => void,
+		private readonly getCallingServiceName?: () => string | undefined,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -219,10 +241,12 @@ export class BasicRestWrapper extends RestWrapper {
 	): Promise<T> {
 		const options = { ...requestConfig };
 		const correlationId = this.getCorrelationId?.() ?? uuid();
+		const callingServiceName = this.getCallingServiceName?.();
 		options.headers = this.generateHeaders(
 			options.headers,
 			correlationId,
 			this.getTelemetryContextProperties?.(),
+			callingServiceName,
 		);
 
 		// If the request has an Authorization header and a refresh token function is provided, try to refresh the token if needed
@@ -315,6 +339,15 @@ export class BasicRestWrapper extends RestWrapper {
 								);
 							}
 						} else if (error?.request) {
+							// The calling client aborted the request before a valid response was received
+							if (isAxiosCanceledError(error)) {
+								reject(
+									createFluidServiceNetworkError(499, {
+										message: error?.message ?? "Request Aborted by Client",
+										source: errorSourceMessage,
+									}),
+								);
+							}
 							// The request was made but no response was received. That can happen if a service is
 							// temporarily down or inaccessible due to network failures. We leverage that in here
 							// to detect network failures and transform them into a NetworkError with code 502,
@@ -368,6 +401,7 @@ export class BasicRestWrapper extends RestWrapper {
 		headers?: RawAxiosRequestHeaders,
 		fallbackCorrelationId?: string,
 		telemetryContextProperties?: Record<string, string | number | boolean>,
+		callingServiceName?: string,
 	): RawAxiosRequestHeaders {
 		const result = {
 			...this.defaultHeaders,
@@ -379,6 +413,9 @@ export class BasicRestWrapper extends RestWrapper {
 		}
 		if (!result[TelemetryContextHeaderName] && telemetryContextProperties) {
 			result[TelemetryContextHeaderName] = JSON.stringify(telemetryContextProperties);
+		}
+		if (!result[CallingServiceHeaderName] && callingServiceName) {
+			result[CallingServiceHeaderName] = callingServiceName;
 		}
 
 		return result;
