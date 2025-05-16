@@ -109,10 +109,14 @@ export namespace InternalTypes {
     // @system (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
+        validatedValue?: JsonDeserialized<TValue>;
+        // (undocumented)
         value?: JsonDeserialized<TValue>;
     }
     // @system (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
+        // (undocumented)
+        validatedValue?: JsonDeserialized<TValue>;
         // (undocumented)
         value: JsonDeserialized<TValue>;
     }
@@ -122,6 +126,7 @@ export namespace InternalTypes {
         rev: number;
         // (undocumented)
         timestamp: number;
+        validated?: boolean;
     }
 }
 
@@ -139,28 +144,72 @@ export namespace InternalUtilityTypes {
     };
 }
 
+// @alpha @sealed
+export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestEvents<T, TRemoteAccessor>>;
+    getRemote(attendee: Attendee): LatestData<T, TRemoteAccessor>;
+    getRemotes(): IterableIterator<LatestClientData<T, TRemoteAccessor>>;
+    getStateAttendees(): Attendee[];
+    get local(): DeepReadonly<JsonDeserialized<T>>;
+    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+    readonly presence: Presence;
+}
+
 // @alpha
-export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T> & {
+    validator: StateSchemaValidator<T>;
+}): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
+// @alpha
+export function latest<T extends object | null, Key extends string = string>(args: Omit<LatestArguments<T>, "validator">): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
 // @alpha
 export interface LatestArguments<T extends object | null> {
     local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
     settings?: BroadcastControlSettings | undefined;
+    validator?: StateSchemaValidator<T> | undefined;
 }
 
 // @alpha @sealed
-export interface LatestClientData<T> extends LatestData<T> {
+export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> extends LatestData<T, TValueAccessor> {
     // (undocumented)
     attendee: Attendee;
 }
 
 // @alpha @sealed
-export interface LatestData<T> {
+export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     // (undocumented)
     metadata: LatestMetadata;
     // (undocumented)
-    value: DeepReadonly<JsonDeserialized<T>>;
+    value: TValueAccessor extends ProxiedValueAccessor<T> ? () => DeepReadonly<JsonDeserialized<T>> | undefined : TValueAccessor extends RawValueAccessor<T> ? DeepReadonly<JsonDeserialized<T>> : never;
 }
+
+// @alpha @sealed (undocumented)
+export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> {
+    // @eventProperty
+    localUpdated: (update: {
+        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+    }) => void;
+    // @eventProperty
+    remoteUpdated: (update: LatestClientData<T, TRemoteValueAccessor>) => void;
+}
+
+// @alpha @sealed
+export interface LatestMap<T, Keys extends string | number = string | number, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestMapEvents<T, Keys, TRemoteAccessor>>;
+    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, TRemoteAccessor>>;
+    getRemotes(): IterableIterator<LatestMapClientData<T, Keys, TRemoteAccessor>>;
+    getStateAttendees(): Attendee[];
+    readonly local: StateMap<Keys, T>;
+    readonly presence: Presence;
+}
+
+// @alpha
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys> & {
+    validator: StateSchemaValidator<T>;
+}): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
 // @alpha
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
@@ -171,13 +220,33 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
         [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
     };
     settings?: BroadcastControlSettings | undefined;
+    validator?: StateSchemaValidator<T> | undefined;
 }
 
 // @alpha @sealed
-export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
+export interface LatestMapClientData<T, Keys extends string | number, TValueAccessor extends ValueAccessor<T>, SpecificAttendeeId extends AttendeeId = AttendeeId> {
     attendee: Attendee<SpecificAttendeeId>;
     // (undocumented)
-    items: ReadonlyMap<Keys, LatestData<T>>;
+    items: ReadonlyMap<Keys, LatestData<T, TValueAccessor>>;
+}
+
+// @alpha @sealed (undocumented)
+export interface LatestMapEvents<T, K extends string | number, TRemoteValueAccessor extends ValueAccessor<T>> {
+    // @eventProperty
+    localItemRemoved: (removedItem: {
+        key: K;
+    }) => void;
+    // @eventProperty
+    localItemUpdated: (updatedItem: {
+        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        key: K;
+    }) => void;
+    // @eventProperty
+    remoteItemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
+    // @eventProperty
+    remoteItemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K, TRemoteValueAccessor>) => void;
+    // @eventProperty
+    remoteUpdated: (updates: LatestMapClientData<T, K, TRemoteValueAccessor>) => void;
 }
 
 // @alpha @sealed
@@ -191,40 +260,13 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 }
 
 // @alpha @sealed
-export interface LatestMapItemUpdatedClientData<T, K extends string | number> extends LatestClientData<T> {
+export interface LatestMapItemUpdatedClientData<T, K extends string | number, TValueAccessor extends ValueAccessor<T>> extends LatestClientData<T, TValueAccessor> {
     // (undocumented)
     key: K;
 }
 
 // @alpha @sealed
-export interface LatestMapRaw<T, Keys extends string | number = string | number> {
-    readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestMapRawEvents<T, Keys>>;
-    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
-    getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
-    getStateAttendees(): Attendee[];
-    readonly local: StateMap<Keys, T>;
-    readonly presence: Presence;
-}
-
-// @alpha @sealed (undocumented)
-export interface LatestMapRawEvents<T, K extends string | number> {
-    // @eventProperty
-    localItemRemoved: (removedItem: {
-        key: K;
-    }) => void;
-    // @eventProperty
-    localItemUpdated: (updatedItem: {
-        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
-        key: K;
-    }) => void;
-    // @eventProperty
-    remoteItemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
-    // @eventProperty
-    remoteItemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
-    // @eventProperty
-    remoteUpdated: (updates: LatestMapClientData<T, K>) => void;
-}
+export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<T, Keys, RawValueAccessor<T>>;
 
 // @alpha @sealed
 export interface LatestMetadata {
@@ -233,26 +275,7 @@ export interface LatestMetadata {
 }
 
 // @alpha @sealed
-export interface LatestRaw<T> {
-    readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestRawEvents<T>>;
-    getRemote(attendee: Attendee): LatestData<T>;
-    getRemotes(): IterableIterator<LatestClientData<T>>;
-    getStateAttendees(): Attendee[];
-    get local(): DeepReadonly<JsonDeserialized<T>>;
-    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
-    readonly presence: Presence;
-}
-
-// @alpha @sealed (undocumented)
-export interface LatestRawEvents<T> {
-    // @eventProperty
-    localUpdated: (update: {
-        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
-    }) => void;
-    // @eventProperty
-    remoteUpdated: (update: LatestClientData<T>) => void;
-}
+export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
 
 // @alpha @sealed
 export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationListeners<E>> {
@@ -326,6 +349,22 @@ export interface PresenceEvents {
     workspaceActivated: (workspaceAddress: WorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 
+// @alpha @sealed
+export interface ProxiedValueAccessor<T> {
+    // (undocumented)
+    accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
+    // (undocumented)
+    kind: "proxied";
+}
+
+// @alpha @sealed
+export interface RawValueAccessor<T> {
+    // (undocumented)
+    accessor: DeepReadonly<JsonDeserialized<T>>;
+    // (undocumented)
+    kind: "raw";
+}
+
 // @alpha
 export const StateFactory: {
     latest: typeof latest;
@@ -345,6 +384,16 @@ export interface StateMap<K extends string | number, V> {
     set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
     // (undocumented)
     readonly size: number;
+}
+
+// @alpha
+export type StateSchemaValidator<T> = (
+unvalidatedData: unknown,
+metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
+
+// @alpha
+export interface StateSchemaValidatorMetadata {
+    key?: string | number;
 }
 
 // @alpha @sealed
@@ -371,6 +420,9 @@ export interface StatesWorkspaceSchema {
     // (undocumented)
     [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
+
+// @alpha @sealed
+export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
 // @alpha
 export type WorkspaceAddress = `${string}:${string}`;
