@@ -11,6 +11,7 @@ import type {
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import { asDeeplyReadonly } from "./internalUtils.js";
 import type { Attendee } from "./presence.js";
+import { brandJson } from "./exposedUtilityTypes.js";
 
 /**
  * Metadata for the value state.
@@ -179,7 +180,7 @@ export function createValidatedGetter<T>(
 		const validData = validator(clientState.value);
 		clientState.validated = true;
 		// FIXME: Cast shouldn't be needed
-		clientState.validatedValue = validData as JsonDeserialized<T>;
+		clientState.validatedValue = validData === undefined ? undefined : brandJson(validData);
 		return asDeeplyReadonly(clientState.validatedValue);
 	};
 }

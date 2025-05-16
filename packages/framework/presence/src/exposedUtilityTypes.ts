@@ -143,7 +143,7 @@ export function unbrandJson<T>(
  * Converts a JsonDeserializedHandle to a deeply readonly JsonDeserialized value.
  */
 export function asDeeplyReadonlyFromJsonHandle<T>(
-	value?: InternalUtilityTypes.OpaqueJsonDeserialized<T>,
-): DeepReadonly<JsonDeserialized<T>> | undefined {
-	return value === undefined ? undefined : asDeeplyReadonlyFromJsonHandle<T>(value);
+	value: InternalUtilityTypes.OpaqueJsonDeserialized<T>,
+): DeepReadonly<JsonDeserialized<T>> {
+	return asDeeplyReadonlyFromJsonHandle(value);
 }
