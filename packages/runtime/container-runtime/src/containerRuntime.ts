@@ -841,7 +841,7 @@ export class ContainerRuntime
 		}
 		// We also validate that there is not a mismatch between `minVersionForCollab` and runtime options that
 		// were manually set.
-		validateRuntimeOptions(runtimeOptions, minVersionForCollab);
+		validateRuntimeOptions(minVersionForCollab, runtimeOptions);
 
 		const defaultsAffectingDocSchema = getMinVersionForCollabDefaults(minVersionForCollab);
 

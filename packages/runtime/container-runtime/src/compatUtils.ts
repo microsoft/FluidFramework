@@ -11,10 +11,7 @@ import {
 	disabledCompressionConfig,
 	enabledCompressionConfig,
 } from "./compressionDefinitions.js";
-import type {
-	ContainerRuntimeOptionsInternal,
-	IContainerRuntimeOptions,
-} from "./containerRuntime.js";
+import type { ContainerRuntimeOptionsInternal } from "./containerRuntime.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -79,6 +76,15 @@ export type SemanticVersion =
 export type ConfigMap<T extends Record<string, unknown>> = {
 	[K in keyof T]-?: {
 		[version: MinimumMinorSemanticVersion]: T[K];
+	};
+};
+
+/**
+ * Generic type for runtimeOptionsAffectingDocSchemaConfigValidationMap
+ */
+export type ConfigValidationMap<T extends Record<string, unknown>> = {
+	[K in keyof T]-?: {
+		[version: MinimumMinorSemanticVersion]: T[K][];
 	};
 };
 
@@ -175,6 +181,45 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
 
 /**
+ * Validation map for runtime options affecting doc schema.
+ * This is distinct from `runtimeOptionsAffectingDocSchemaConfigMap`, since
+ * this map is used to validate that the runtime options passed in by the user
+ * are compatible with the minVersionForCollab they passed in. The above map
+ * is used to get the default values for the runtime options based on the
+ * minVersionForCollab. These are often different values.
+ */
+const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
+	enableGroupedBatching: {
+		"1.0.0": [false],
+		"2.0.0-defaults": [true],
+	} as const,
+	compressionOptions: {
+		"1.0.0": [disabledCompressionConfig],
+		"2.0.0-defaults": [enabledCompressionConfig],
+	} as const,
+	enableRuntimeIdCompressor: {
+		"1.0.0": [undefined],
+		"2.0.0-defaults": ["on", "delayed"],
+	} as const,
+	explicitSchemaControl: {
+		"1.0.0": [false],
+		"2.0.0-defaults": [true],
+	} as const,
+	flushMode: {
+		"1.0.0": [FlushMode.Immediate],
+		"2.0.0-defaults": [FlushMode.TurnBased],
+	} as const,
+	gcOptions: {
+		"1.0.0": [{}], // removed undefined for type safety
+		"2.0.0-defaults": [{ enableGCSweep: true }],
+	} as const,
+	createBlobPayloadPending: {
+		"1.0.0": [undefined],
+		"2.40.0": [true],
+	} as const,
+} as const satisfies ConfigValidationMap<RuntimeOptionsAffectingDocSchema>;
+
+/**
  * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
  */
 export function getMinVersionForCollabDefaults(
@@ -254,47 +299,28 @@ function objectContains(obj: unknown, subset: unknown): boolean {
 }
 
 /**
- * TODO: TSDoc + typing
- */
-const runtimeOptionsAffectingDocSchemaValidationMap = {
-	enableGroupedBatching: {
-		"1.0.0": [false],
-		"2.0.0-defaults": [true],
-	} as const,
-	compressionOptions: {
-		"1.0.0": [disabledCompressionConfig],
-		"2.0.0-defaults": [enabledCompressionConfig],
-	} as const,
-	enableRuntimeIdCompressor: {
-		"1.0.0": [undefined],
-		"2.0.0-defaults": ["on", "delayed"],
-	} as const,
-	explicitSchemaControl: {
-		"1.0.0": [false],
-		"2.0.0-defaults": [true],
-	} as const,
-	flushMode: {
-		"1.0.0": [FlushMode.Immediate],
-		"2.0.0-defaults": [FlushMode.TurnBased],
-	} as const,
-	gcOptions: {
-		"1.0.0": [{}, undefined],
-		"2.0.0-defaults": [{ enableGCSweep: true }],
-	} as const,
-	createBlobPayloadPending: {
-		"1.0.0": [undefined],
-		"2.40.0": [true],
-	} as const,
-};
-
-/**
  * Validates if the runtime options passed in from the user are compatible with the minVersionForCollab.
  * For example, if a user sets the `enableGroupedBatching` option to true, but the minVersionForCollab
  * is set to "1.0.0", then we should throw a UsageError since 1.x clients do not support batching.
- */
+ * */
 export function validateRuntimeOptions(
-	runtimeOptions: IContainerRuntimeOptions,
 	minVersionForCollab: MinimumVersionForCollab,
+	runtimeOptions: Partial<ContainerRuntimeOptionsInternal>,
+): void {
+	getValidationForRuntimeOptions(
+		minVersionForCollab,
+		runtimeOptions,
+		runtimeOptionsAffectingDocSchemaConfigValidationMap,
+	);
+}
+
+/**
+ * Generic function to validate runtime options against the minVersionForCollab.
+ */
+export function getValidationForRuntimeOptions<T extends Record<SemanticVersion, unknown[]>>(
+	minVersionForCollab: SemanticVersion,
+	runtimeOptions: Partial<T>,
+	validationMap: ConfigValidationMap<T>,
 ): void {
 	if (minVersionForCollab === defaultMinVersionForCollab) {
 		// If the minVersionForCollab is set to the default value, then we will not validate the runtime options
@@ -306,14 +332,11 @@ export function validateRuntimeOptions(
 		runtimeOptions,
 	)) {
 		// Skip if passedRuntimeOption is not in validation map
-		if (!(passedRuntimeOption in runtimeOptionsAffectingDocSchemaValidationMap)) {
+		if (!(passedRuntimeOption in validationMap)) {
 			continue;
 		}
 
-		const validationConfig =
-			runtimeOptionsAffectingDocSchemaValidationMap[
-				passedRuntimeOption as keyof RuntimeOptionsAffectingDocSchema
-			];
+		const validationConfig = validationMap[passedRuntimeOption as keyof typeof validationMap];
 		const versions = Object.keys(validationConfig).sort(compare);
 		// For each version in the validation config, we will check if it's greater than the minVersionForCollab.
 		// If so, we will check if the passedRuntimeOptionValue is in the validation config for that version.
