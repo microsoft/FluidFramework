@@ -37,7 +37,6 @@ import {
 	type TreeBranch,
 	TreeViewConfigurationAlpha,
 	getIdentifierFromNode,
-	IdentifierCompression,
 	mapTreeFromNodeData,
 } from "../simple-tree/index.js";
 import { extractFromOpaque, type JsonCompatible } from "../util/index.js";
@@ -60,7 +59,7 @@ import { currentVersion } from "../codec/index.js";
 import { createFromMapTree } from "../simple-tree/index.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
-	const nodeIdentifier = getIdentifierFromNode(node, IdentifierCompression.Uncompressed);
+	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");
 	if (typeof nodeIdentifier === "number") {
 		throw new TypeError("identifier should be uncompressed.");
 	}
@@ -83,11 +82,11 @@ identifier.lengthen = (branch: TreeBranch, nodeIdentifier: number): string => {
 };
 
 identifier.getShort = (node: TreeNode): number | undefined => {
-	const shortIdentifier = getIdentifierFromNode(node, IdentifierCompression.Compressed);
+	const shortIdentifier = getIdentifierFromNode(node, "compressed");
 	return typeof shortIdentifier === "number" ? shortIdentifier : undefined;
 };
 
-identifier.generate = (branch: TreeBranch): string => {
+identifier.create = (branch: TreeBranch): string => {
 	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
 		.nodeKeyManager;
 	return nodeKeyManager.stabilizeNodeIdentifier(nodeKeyManager.generateLocalNodeIdentifier());
@@ -148,8 +147,6 @@ export interface TreeIdentifierUtils {
 	 * Note that the node must already have been inserted into the tree in order to retrieve a generated UUID (or getShort will error).
 	 * This is useful for performance-sensitive scenarios involving many nodes with identifiers that need to be compactly retained in memory or used for efficient lookup.
 	 *
-	 * If the node's identifier is any other user-provided string, then this will return that string.
-	 *
 	 * If the node has no identifier (that is, it has no {@link SchemaFactory.identifier | identifier} field), then this returns `undefined`.
 	 *
 	 * If the node has more than one identifier, then this will throw an error.
@@ -158,16 +155,16 @@ export interface TreeIdentifierUtils {
 	 * Its lifetime is that of the current in-memory instance of the FF container for this client, and it is not guaranteed to be unique or stable outside of that context.
 	 * The same node's identifier may, for example, be different across multiple sessions for the same client and document, or different across two clients in the same session.
 	 */
-	getShort(node: TreeNode): number | string | undefined;
+	getShort(node: TreeNode): number | undefined;
 
 	/**
 	 *
-	 * Generates and returns a long identifier.
+	 * Creates and returns a long identifier.
 	 *
 	 * @param branch - TreeBranch from where you want to get the id compressor to generate the identifier from.
 	 *
 	 */
-	generate(branch: TreeBranch): string;
+	create(branch: TreeBranch): string;
 }
 
 /**

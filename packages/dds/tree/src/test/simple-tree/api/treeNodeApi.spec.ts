@@ -676,7 +676,7 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		describe("getIdentifier", () => {
+		describe("create", () => {
 			it("generates and returns a stable identifier.", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.identifier,
@@ -685,7 +685,7 @@ describe("treeNodeApi", () => {
 				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 				const view = getView(config);
 
-				const generatedIdentifier = TreeAlpha.identifier.generate(view);
+				const generatedIdentifier = TreeAlpha.identifier.create(view);
 				const shortIdentifier = TreeAlpha.identifier.shorten(view, generatedIdentifier);
 				assert(typeof shortIdentifier === "number");
 			});

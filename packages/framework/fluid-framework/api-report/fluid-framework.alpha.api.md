@@ -1501,8 +1501,8 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 // @alpha @sealed
 export interface TreeIdentifierUtils {
     (node: TreeNode): string | undefined;
-    generate(branch: TreeBranch): string;
-    getShort(node: TreeNode): number | string | undefined;
+    create(branch: TreeBranch): string;
+    getShort(node: TreeNode): number | undefined;
     lengthen(branch: TreeBranch, nodeIdentifier: number): string;
     shorten(branch: TreeBranch, nodeIdentifier: string): number | undefined;
 }

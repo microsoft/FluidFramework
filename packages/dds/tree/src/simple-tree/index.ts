@@ -118,7 +118,6 @@ export {
 	allowUnused,
 	type FieldSchemaAlphaUnsafe,
 	getIdentifierFromNode,
-	IdentifierCompression,
 	type TreeSchema,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
