@@ -218,7 +218,7 @@ export function latest<T extends object | null, Key extends string = string>(
 	// copy for basic protection.
 	const internalValue =
 		local === null
-			? (local as InternalUtilityTypes.JsonDeserializedHandle<T>)
+			? (local as unknown as InternalUtilityTypes.JsonDeserializedHandle<T>)
 			: // FIXME: Why isn't this directly castable?
 				(shallowCloneObject(
 					local,

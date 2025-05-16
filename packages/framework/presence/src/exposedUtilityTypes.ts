@@ -4,6 +4,7 @@
  */
 
 import type {
+	DeepReadonly,
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
@@ -80,8 +81,28 @@ export namespace InternalUtilityTypes {
 	/**
 	 * @system
 	 */
-	export declare class JsonDeserializedBrand<T> {
-		private readonly JsonDeserialized: JsonDeserialized<T>;
+	// export declare class JsonDeserializedBrandOrig<T> {
+	// 	private readonly JsonDeserialized: T;
+	// }
+
+	/**
+	 * Base branded type
+	 *
+	 * @system
+	 */
+	export declare class BrandedType<Brand> {
+		protected readonly brand: (dummy: never) => Brand;
+		protected constructor();
+		public static [Symbol.hasInstance](value: never): value is never;
+	}
+
+	/**
+	 * @system
+	 */
+	declare class JsonDeserializedBrand<T> extends BrandedType<T> {
+		public toString(): string;
+		private readonly EncodedValue: T;
+		private constructor();
 	}
 
 	/**
@@ -124,4 +145,13 @@ export function fromJsonDeserializedHandle<T>(
 	value: InternalUtilityTypes.JsonDeserializedHandle<T>,
 ): JsonDeserialized<T> {
 	return value as JsonDeserialized<T>;
+}
+
+/**
+ * Converts a JsonDeserializedHandle to a deeply readonly JsonDeserialized value.
+ */
+export function asDeeplyReadonlyFromJsonHandle<T>(
+	value: InternalUtilityTypes.JsonDeserializedHandle<T>,
+): DeepReadonly<JsonDeserialized<T>> {
+	return asDeeplyReadonlyFromJsonHandle<T>(value);
 }

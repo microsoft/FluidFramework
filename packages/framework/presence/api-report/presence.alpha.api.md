@@ -128,25 +128,36 @@ export namespace InternalTypes {
 // @alpha @system
 export namespace InternalUtilityTypes {
     // @system
+    export class BrandedType<Brand> {
+        // (undocumented)
+        static [Symbol.hasInstance](value: never): value is never;
+        protected constructor();
+        // (undocumented)
+        protected readonly brand: (dummy: never) => Brand;
+    }
+    // @system
     export type IsNotificationListener<Event> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, true, false> : false;
     // @system (undocumented)
-    export class JsonDeserializedBrand<T> {
+    export class JsonDeserializedBrand<T> extends BrandedType<T> {
+        // (undocumented)
+        toString(): string;
     }
     // @system (undocumented)
-    export type JsonDeserializedHandle<T> = T & JsonDeserializedBrand<T>;
+    export type JsonDeserializedHandle<T> = JsonDeserializedBrand<T>;
     // @system
     export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
     // @system (undocumented)
     export class JsonSerializableBrand<T> {
     }
     // @system (undocumented)
-    export type JsonSerializableHandle<T> = T & JsonSerializableBrand<T>;
+    export type JsonSerializableHandle<T> = JsonSerializableBrand<T>;
     // @system
     export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
     // @system
     export type NotificationListeners<E> = {
         [P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
     };
+        {};
 }
 
 // @alpha

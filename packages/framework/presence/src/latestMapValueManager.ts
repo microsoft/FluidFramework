@@ -16,7 +16,7 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import {
-	fromJsonDeserializedHandle,
+	asDeeplyReadonlyFromJsonHandle,
 	toJsonDeserializedHandle,
 	// type InternalUtilityTypes,
 } from "./exposedUtilityTypes.js";
@@ -271,14 +271,13 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	): void {
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				const unbrandedValue = fromJsonDeserializedHandle(item.value);
-				callbackfn(asDeeplyReadonly(unbrandedValue), key, this);
+				callbackfn(asDeeplyReadonlyFromJsonHandle(item.value), key, this);
 			}
 		}
 	}
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
 		const data = this.value.items[key]?.value;
-		return data === undefined ? undefined : asDeeplyReadonly(fromJsonDeserializedHandle(data));
+		return data === undefined ? undefined : asDeeplyReadonlyFromJsonHandle(data);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -420,7 +419,7 @@ class LatestMapRawValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
-					value: asDeeplyReadonly(fromJsonDeserializedHandle(value)),
+					value: asDeeplyReadonlyFromJsonHandle(value),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -471,7 +470,7 @@ class LatestMapRawValueManagerImpl<
 			currentState.items[key] = item;
 			const metadata = { revision: item.rev, timestamp: item.timestamp };
 			if (item.value !== undefined) {
-				const itemValue = asDeeplyReadonly(fromJsonDeserializedHandle(item.value));
+				const itemValue = asDeeplyReadonlyFromJsonHandle(item.value);
 				const updatedItem = {
 					attendee,
 					key,
