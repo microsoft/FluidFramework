@@ -18,7 +18,6 @@ import {
 	storedEmptyFieldSchema,
 	ValueSchema,
 	type FieldKey,
-	type FieldKindData,
 	type FieldKindIdentifier,
 	type SchemaAndPolicy,
 	type TreeFieldStoredSchema,
@@ -28,6 +27,7 @@ import {
 import { brand } from "../../util/index.js";
 import { checkoutWithContent } from "../utils.js";
 import {
+	defaultSchemaPolicy,
 	FieldKinds,
 	MockNodeIdentifierManager,
 	type FlexTreeHydratedContext,
@@ -91,14 +91,13 @@ describe("prepareForInsertion", () => {
 		 */
 		function createSchemaAndPolicy(
 			nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map(),
-			fieldKinds: Map<FieldKindIdentifier, FieldKindData> = new Map(),
 		): [SchemaAndPolicy, Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager">] {
 			const schemaAndPolicy = {
 				schema: {
 					nodeSchema,
 				},
 				policy: {
-					fieldKinds,
+					fieldKinds: defaultSchemaPolicy.fieldKinds,
 					validateSchema: true,
 					// toMapTree drops all extra fields, so varying this policy is unnecessary
 					// (schema validation only occurs after converting to a MapTree)
@@ -142,7 +141,7 @@ describe("prepareForInsertion", () => {
 			}
 
 			describe("Leaf node", () => {
-				function createSchemaAndPolicyForLeafNode(invalid: boolean = false) {
+				function createSchemaAndPolicyForString(invalid: boolean = false) {
 					return createSchemaAndPolicy(
 						new Map([
 							[
@@ -153,13 +152,12 @@ describe("prepareForInsertion", () => {
 									: new LeafNodeStoredSchema(ValueSchema.String),
 							],
 						]),
-						new Map(),
 					);
 				}
 
 				it("Success", () => {
 					const content = "Hello world";
-					const schemaValidationPolicy = createSchemaAndPolicyForLeafNode();
+					const schemaValidationPolicy = createSchemaAndPolicyForString();
 					prepareForInsertionContextless(
 						content,
 						schemaFactory.string,
@@ -169,7 +167,7 @@ describe("prepareForInsertion", () => {
 
 				it("Failure", () => {
 					const content = "Hello world";
-					const schemaValidationPolicy = createSchemaAndPolicyForLeafNode(true);
+					const schemaValidationPolicy = createSchemaAndPolicyForString(true);
 					assert.throws(
 						() =>
 							prepareForInsertionContextless(
@@ -208,7 +206,6 @@ describe("prepareForInsertion", () => {
 								),
 							],
 						]),
-						new Map([[fieldSchema.kind, FieldKinds.required]]),
 					);
 				}
 				it("Success", () => {
@@ -266,7 +263,6 @@ describe("prepareForInsertion", () => {
 							],
 							[brand(myMapSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
 						]),
-						new Map([[fieldSchema.kind, FieldKinds.required]]),
 					);
 				}
 				it("Success", () => {
@@ -311,7 +307,6 @@ describe("prepareForInsertion", () => {
 							],
 							[brand(myArrayNodeSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
 						]),
-						new Map([[fieldSchema.kind, FieldKinds.required]]),
 					);
 				}
 				it("Success", () => {
