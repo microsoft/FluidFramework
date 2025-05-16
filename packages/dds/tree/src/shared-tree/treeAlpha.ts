@@ -102,6 +102,7 @@ Object.freeze(identifier);
  *
  * @remarks
  * This provides methods to:
+ * 
  * - Retrieve long or short identifiers from nodes
  *
  * - Convert between long identifiers and short identifiers

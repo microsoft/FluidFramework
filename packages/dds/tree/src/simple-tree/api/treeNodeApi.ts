@@ -260,11 +260,15 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
  * If the node does not contain an identifier field, it returns undefined.
  *
  * If `compression` is set to `compressed`:
+ * 
  * - If the node contains a compressible identifier known by the id compressor, the compressed identifier is returned.
+ * 
  * - If the node contains an identifier, but is not compressible or unknown by the id compressor, `undefined` is returned.
  *
  * If `compression` is set to `preferCompressed`:
+ * 
  * - If the node contains a compressible identifier known by the id compressor, the compressed identifier is returned.
+ * 
  * - If the node contains an identifier, but is not compressible or unknown by the id compressor, the uncompressed identifier is returned.
  *
  * If `compression` is set to `uncompressed`:
