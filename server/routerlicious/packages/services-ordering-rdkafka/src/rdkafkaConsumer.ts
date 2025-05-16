@@ -582,6 +582,18 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				seekTimeout,
 				(err) => {
 					if (err) {
+						Lumberjack.error(
+							`Consumer seek failed`,
+							{
+								topic: this.topic,
+								partitionId,
+								offset,
+								isConsumerConnected: this.consumer?.isConnected(),
+								isConsumerRebalancing: this.isRebalancing,
+								consumerAssignments: this.consumer?.assignments()?.length,
+							},
+							err,
+						);
 						this.error(err, {
 							restart: true,
 							errorLabel: "rdkafkaConsumer:pauseFetching.seek",
