@@ -155,6 +155,49 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
+		it("remove over move and remove", () => {
+			const targetChange = Change.build(
+				{ family, maxId: 2 },
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.remove(2, { revision: tag1, localId: brand(0) }),
+					MarkMaker.insert(1, { revision: tag1, localId: brand(2) }, { id: brand(0) }),
+				]),
+			);
+
+			const sourceChange = Change.build(
+				{ family, maxId: 1 },
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.remove(2, { revision: tag2, localId: brand(0) }),
+				]),
+			);
+
+			const rebased = family.rebase(
+				tagChange(sourceChange, tag2),
+				tagChange(targetChange, tag1),
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 2,
+					renames: [
+						{
+							oldId: { revision: tag1, localId: brand(1) },
+							newId: { revision: tag2, localId: brand(1) },
+							count: 1,
+						},
+					],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.tomb(tag1, brand(0), 2),
+					MarkMaker.remove(1, { revision: tag2, localId: brand(0) }),
+				]),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
 		it("remove over cross-field move to edited field", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);

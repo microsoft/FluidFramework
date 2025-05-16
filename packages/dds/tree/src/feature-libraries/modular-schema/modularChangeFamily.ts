@@ -985,7 +985,8 @@ export class ModularChangeFamily
 			baseToRebasedNodeId: newTupleBTree(),
 			rebasedFields: new Set(),
 			rebasedNodeToParent: brand(change.nodeToParent.clone()),
-			rebasedCrossFieldKeys: change.crossFieldKeys.clone(),
+			rebasedDetachLocations: newChangeAtomIdRangeMap(),
+			movedDetaches: newChangeAtomIdRangeMap(),
 			nodeIdPairs: [],
 			affectedBaseFields,
 			fieldsWithUnattachedChild: new Set(),
@@ -1045,7 +1046,11 @@ export class ModularChangeFamily
 				crossFieldTable.rebasedNodeToParent,
 			),
 			nodeAliases: change.nodeAliases,
-			crossFieldKeys: crossFieldTable.rebasedCrossFieldKeys,
+			crossFieldKeys: rebaseCrossFieldKeys(
+				change.crossFieldKeys,
+				crossFieldTable.movedDetaches,
+				crossFieldTable.rebasedDetachLocations,
+			),
 			maxId: idState.maxId,
 			revisions: change.revisions,
 			constraintViolationCount: constraintState.violationCount,
@@ -2371,7 +2376,8 @@ interface RebaseTable {
 	readonly baseToRebasedNodeId: ChangeAtomIdBTree<NodeId>;
 	readonly rebasedFields: Set<FieldChange>;
 	readonly rebasedNodeToParent: ChangeAtomIdBTree<FieldId>;
-	readonly rebasedCrossFieldKeys: CrossFieldKeyTable;
+	readonly rebasedDetachLocations: ChangeAtomIdRangeMap<FieldId>;
+	readonly movedDetaches: ChangeAtomIdRangeMap<boolean>;
 	readonly rebasedRootNodes: RootNodeTable;
 
 	/**
@@ -2666,11 +2672,8 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 		// TODO: Consider moving these two checks into a separate method so that this function has no side effects.
 		if (result.value?.detachId !== undefined) {
-			this.table.rebasedCrossFieldKeys.set(
-				{
-					target: CrossFieldTarget.Source,
-					...result.value.detachId,
-				},
+			this.table.rebasedDetachLocations.set(
+				result.value.detachId,
 				result.length,
 				this.fieldId,
 			);
@@ -2693,25 +2696,30 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		newDetachId: ChangeAtomId | undefined,
 		nodeChange: NodeId | undefined,
 	): void {
-		const { value: baseAttachId, length } = firstAttachIdFromDetachId(
-			this.table.baseRoots,
-			baseDetachId,
-			count,
-		);
+		let countToProcess = count;
+		const attachIdEntry = firstAttachIdFromDetachId(this.table.baseRoots, baseDetachId, count);
+		const baseAttachId = attachIdEntry.value;
+		countToProcess = attachIdEntry.length;
 
 		// XXX: Handle the case where some of the keys in this range have an attach and some don't.
-		const attachFields = getFieldsForCrossFieldKey(
+		const attachFieldEntry = getFirstFieldForCrossFieldKey(
 			this.table.baseChange,
-			{ ...baseAttachId, target: CrossFieldTarget.Destination },
+			{ ...attachIdEntry.value, target: CrossFieldTarget.Destination },
 			count,
 		);
 
-		if (attachFields.length > 0) {
+		countToProcess = attachFieldEntry.length;
+
+		if (attachFieldEntry.value !== undefined) {
 			// The base detach is part of a move in the base changeset.
-			setInCrossFieldMap(this.table.entries, baseAttachId, length, {
+			setInCrossFieldMap(this.table.entries, baseAttachId, countToProcess, {
 				nodeChange,
 				detachId: newDetachId,
 			});
+
+			if (nodeChange !== undefined || newDetachId !== undefined) {
+				this.invalidateBaseFields([attachFieldEntry.value]);
+			}
 		} else {
 			if (nodeChange !== undefined) {
 				setInChangeAtomIdMap(
@@ -2726,19 +2734,19 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					this.table.rebasedRootNodes,
 					baseAttachId,
 					newDetachId,
-					length,
+					countToProcess,
 					this.table.newChange.rootNodes.newToOldId,
 					this.table.newChange.rootNodes.oldToNewId,
 				);
 			}
 		}
 
-		if (nodeChange !== undefined || newDetachId !== undefined) {
-			this.invalidateBaseFields(attachFields);
+		if (newDetachId !== undefined) {
+			this.table.movedDetaches.set(newDetachId, count, true);
 		}
 
-		if (length < count) {
-			const remainingCount = count - length;
+		if (countToProcess < count) {
+			const remainingCount = count - countToProcess;
 
 			const nextDetachId =
 				newDetachId !== undefined
@@ -3494,6 +3502,19 @@ function getFieldsForCrossFieldKey(
 		.map(({ value: fieldId }) => normalizeFieldId(fieldId, changeset.nodeAliases));
 }
 
+function getFirstFieldForCrossFieldKey(
+	changeset: ModularChangeset,
+	key: CrossFieldKey,
+	count: number,
+): RangeQueryResult<CrossFieldKey, FieldId> {
+	const result = changeset.crossFieldKeys.getFirst(key, count);
+	if (result.value === undefined) {
+		return result;
+	}
+
+	return { ...result, value: normalizeFieldId(result.value, changeset.nodeAliases) };
+}
+
 // This is only exported for use in test utilities.
 export function normalizeFieldId(
 	fieldId: FieldId,
@@ -3584,6 +3605,27 @@ function firstDetachIdFromAttachId(
 ): RangeQueryEntry<ChangeAtomId, ChangeAtomId> {
 	const result = roots.newToOldId.getFirst(attachId, count);
 	return { ...result, value: result.value ?? attachId };
+}
+
+function rebaseCrossFieldKeys(
+	sourceTable: CrossFieldKeyTable,
+	movedDetaches: ChangeAtomIdRangeMap<boolean>,
+	newDetachLocations: ChangeAtomIdRangeMap<FieldId>,
+): CrossFieldKeyTable {
+	const rebasedTable = sourceTable.clone();
+	for (const entry of movedDetaches.entries()) {
+		rebasedTable.delete({ ...entry.start, target: CrossFieldTarget.Source }, entry.length);
+	}
+
+	for (const entry of newDetachLocations.entries()) {
+		rebasedTable.set(
+			{ ...entry.start, target: CrossFieldTarget.Source },
+			entry.length,
+			entry.value,
+		);
+	}
+
+	return rebasedTable;
 }
 
 export function newRootTable(): RootNodeTable {
