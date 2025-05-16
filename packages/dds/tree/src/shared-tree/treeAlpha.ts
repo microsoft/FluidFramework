@@ -36,6 +36,7 @@ import {
 	extractPersistedSchema,
 	type TreeBranch,
 	TreeViewConfigurationAlpha,
+	mapTreeFromNodeData,
 } from "../simple-tree/index.js";
 import type { JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
@@ -53,6 +54,7 @@ import {
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { currentVersion } from "../codec/index.js";
+import { createFromMapTree } from "../simple-tree/index.js";
 
 /**
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
@@ -80,11 +82,8 @@ export interface TreeAlpha {
 	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
 	 * This function exists as a generalization that can be used in other cases as well,
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
-	 *
-	 * Like with {@link TreeNodeSchemaClass}'s constructor, it's an error to provide an existing node to this API.
-	 * For that case, use {@link (TreeBeta:interface).clone}.
 	 * @privateRemarks
-	 * There should be a way to provide a source for defaulted identifiers, wither via this API or some way to add them to its output later.
+	 * There should be a way to provide a source for defaulted identifiers, either via this API or some way to add them to its output later.
 	 */
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -229,7 +228,24 @@ export const TreeAlpha: TreeAlpha = {
 		return view;
 	},
 
-	create: createFromInsertable,
+	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		schema: UnsafeUnknownSchema extends TSchema
+			? ImplicitFieldSchema
+			: TSchema & ImplicitFieldSchema,
+		data: InsertableField<TSchema>,
+	): Unhydrated<
+		TSchema extends ImplicitFieldSchema
+			? TreeFieldFromImplicitField<TSchema>
+			: TreeNode | TreeLeafValue | undefined
+	> {
+		const mapTree = mapTreeFromNodeData(data as InsertableField<UnsafeUnknownSchema>, schema);
+		const result = mapTree === undefined ? undefined : createFromMapTree(schema, mapTree);
+		return result as Unhydrated<
+			TSchema extends ImplicitFieldSchema
+				? TreeFieldFromImplicitField<TSchema>
+				: TreeNode | TreeLeafValue | undefined
+		>;
+	},
 
 	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema

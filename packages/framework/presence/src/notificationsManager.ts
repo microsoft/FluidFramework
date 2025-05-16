@@ -8,7 +8,7 @@ import type { Listeners, Listenable, Off } from "@fluidframework/core-interfaces
 import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import { unbrandJson, type InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -177,7 +177,11 @@ class NotificationsManagerImpl<
 				{
 					rev: 0,
 					timestamp: 0,
-					value: { name, args: [...(args as JsonTypeWith<never>[])] },
+					value: {
+						name,
+						args: [...(args as JsonTypeWith<never>[])],
+						// FIXME: Why doesn't as cast work?
+					} as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<InternalTypes.NotificationType>,
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.
@@ -190,7 +194,11 @@ class NotificationsManagerImpl<
 				{
 					rev: 0,
 					timestamp: 0,
-					value: { name, args: [...(args as JsonTypeWith<never>[])] },
+					value: {
+						name,
+						args: [...(args as JsonTypeWith<never>[])],
+						// FIXME: Why doesn't as cast work?
+					} as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<InternalTypes.NotificationType>,
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.
@@ -237,12 +245,13 @@ class NotificationsManagerImpl<
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): PostUpdateAction[] {
+		const unbrandedValue = unbrandJson(value.value);
 		const postUpdateActions: PostUpdateAction[] = [];
-		const eventName = value.value.name as keyof Listeners<NotificationSubscriptions<T>>;
+		const eventName = unbrandedValue.name as keyof Listeners<NotificationSubscriptions<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.
 			// For now we assume the user is sending the correct types and there is no corruption along the way.
-			const args = [attendee, ...value.value.args] as Parameters<
+			const args = [attendee, ...unbrandedValue.args] as Parameters<
 				NotificationSubscriptions<T>[typeof eventName]
 			>;
 			postUpdateActions.push(() => this.notificationsInternal.emit(eventName, ...args));
@@ -250,9 +259,9 @@ class NotificationsManagerImpl<
 			postUpdateActions.push(() =>
 				this.events.emit(
 					"unattendedNotification",
-					value.value.name,
+					unbrandedValue.name,
 					attendee,
-					...value.value.args,
+					...unbrandedValue.args,
 				),
 			);
 		}

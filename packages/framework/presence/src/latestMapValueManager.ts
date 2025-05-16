@@ -15,6 +15,11 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import {
+	asDeeplyReadonlyFromJsonHandle,
+	brandJson,
+	// type InternalUtilityTypes,
+} from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
 import type {
@@ -286,17 +291,24 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		// TODO: This is a data read, so we need to validate.
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(asDeeplyReadonly(item.value), key, this);
+				callbackfn(asDeeplyReadonlyFromJsonHandle(item.value), key, this);
 			}
 		}
 	}
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
 		const data = this.value.items[key]?.value;
 		if (this.validator === undefined) {
-			return asDeeplyReadonly(data);
+			return this.value.items[key]?.value === undefined
+				? undefined
+				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
+					asDeeplyReadonlyFromJsonHandle(this.value.items[key]!.value!);
 		}
 		const maybeValid = this.validator(data, { key });
 		return asDeeplyReadonly(maybeValid);
+		return this.value.items[key]?.value === undefined
+			? undefined
+			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
+				asDeeplyReadonlyFromJsonHandle(this.value.items[key]!.value!);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -304,9 +316,9 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value };
+			this.value.items[key] = { rev: 0, timestamp: 0, value: brandJson(value) };
 		}
-		this.updateItem(key, value);
+		this.updateItem(key, brandJson(value));
 		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
 		return this;
 	}
@@ -463,13 +475,17 @@ class LatestMapValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
+					// value: asDeeplyReadonlyFromJsonHandle(value),
 					value:
 						validator === undefined
-							? asDeeplyReadonly(value)
+							? asDeeplyReadonlyFromJsonHandle(value)
 							: () => {
 									if (item.validated === true) {
+										// if(item.validatedValue === undefined) {
+										// 	throw new Error("v")
+										// }
 										// Data was previously validated, so return the validated value, which may be undefined.
-										return asDeeplyReadonly(item.validatedValue);
+										return asDeeplyReadonlyFromJsonHandle(item.validatedValue);
 									}
 
 									// FIXME: This optimization makes testing more difficult because it requires tests have multiple
@@ -487,7 +503,7 @@ class LatestMapValueManagerImpl<
 									const validData = validator(value);
 									item.validated = true;
 									// FIXME: Cast shouldn't be needed
-									item.validatedValue = validData as JsonDeserialized<T>;
+									item.validatedValue = validData;
 									return asDeeplyReadonly(item.validatedValue);
 								},
 					metadata: { revision: item.rev, timestamp: item.timestamp },
@@ -543,6 +559,7 @@ class LatestMapValueManagerImpl<
 				timestamp: item.timestamp,
 			};
 			if (item.value !== undefined) {
+				<<<<<<< HEAD
 				const itemValue = asDeeplyReadonly(item.value);
 				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 				const valueGetter = () => {
@@ -554,9 +571,10 @@ class LatestMapValueManagerImpl<
 					const validData = this.validator?.(itemValue);
 					item.validated = true;
 					// FIXME: Cast shouldn't be needed
-					item.validatedValue = validData as JsonDeserialized<T>;
+					item.validatedValue = validData;
 					return asDeeplyReadonly(item.validatedValue);
 				};
+
 				const updatedItem = {
 					attendee,
 					key,
@@ -677,7 +695,7 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				value: initialValues[key],
+				value: brandJson(initialValues[key]),
 			};
 		}
 	}

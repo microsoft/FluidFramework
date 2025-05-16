@@ -4,6 +4,7 @@
  */
 
 import type {
+	DeepReadonly,
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
@@ -76,4 +77,73 @@ export namespace InternalUtilityTypes {
 	) => any
 		? JsonSerializable<P>
 		: never;
+
+	/**
+	 * Base branded type
+	 *
+	 * @system
+	 */
+	export declare class BrandedType<Brand> {
+		protected readonly brand: (dummy: never) => Brand;
+		protected constructor();
+		public static [Symbol.hasInstance](value: never): value is never;
+	}
+
+	/**
+	 * @system
+	 */
+	declare class JsonDeserializedBrand<T> extends BrandedType<T> {
+		private readonly EncodedValue: T;
+		private constructor();
+	}
+
+	/**
+	 * @system
+	 */
+	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
+	export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
+
+	/**
+	 * @system
+	 */
+	export declare class JsonSerializableBrand<T> {
+		private readonly JsonSerializable: JsonSerializable<T>;
+	}
+
+	/**
+	 * @system
+	 */
+	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
+	export type OpaqueJsonSerializable<T> = JsonSerializableBrand<T>;
+}
+
+/**
+ * Cast a JsonDeserialized value to its branded version.
+ *
+ * @system
+ */
+export function brandJson<T>(
+	value: JsonDeserialized<T>,
+): InternalUtilityTypes.OpaqueJsonDeserialized<T> {
+	return value as InternalUtilityTypes.OpaqueJsonDeserialized<T>;
+}
+
+/**
+ * Cast a branded JsonDeserialized value back to its unbranded version.
+ *
+ * @system
+ */
+export function unbrandJson<T>(
+	value: InternalUtilityTypes.OpaqueJsonDeserialized<T>,
+): JsonDeserialized<T> {
+	return value as JsonDeserialized<T>;
+}
+
+/**
+ * Converts a JsonDeserializedHandle to a deeply readonly JsonDeserialized value.
+ */
+export function asDeeplyReadonlyFromJsonHandle<T>(
+	value?: InternalUtilityTypes.OpaqueJsonDeserialized<T>,
+): DeepReadonly<JsonDeserialized<T>> | undefined {
+	return value === undefined ? undefined : asDeeplyReadonlyFromJsonHandle<T>(value);
 }
