@@ -40,9 +40,14 @@ export type FieldBatchCodec = IJsonCodec<
 >;
 
 /**
- * TODO: makeFieldBatchCodec (and makeVersionedValidatedCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion directly.
+ * Get the write version for {@link makeFieldBatchCodec} based on the `oldestCompatibleClient` version.
+ * @privateRemarks
+ * TODO: makeFieldBatchCodec (and makeVersionDispatchingCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion directly.
  */
-export function fieldBatchCodecVersionToFormat(version: FluidClientVersion): number {
+export function fluidVersionToFieldBatchCodecWriteVersion(
+	oldestCompatibleClient: FluidClientVersion,
+): number {
+	// There is currently on only 1 version.
 	return 1;
 }
 
@@ -59,6 +64,7 @@ export function makeFieldBatchCodec(
 		0x935 /* Invalid write version for FieldBatch codec */,
 	);
 
+	// TODO: use makeVersionDispatchingCodec to support adding more versions in the future.
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
 		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 			for (const cursor of data) {

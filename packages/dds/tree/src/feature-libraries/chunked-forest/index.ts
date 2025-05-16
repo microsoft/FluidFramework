@@ -20,5 +20,5 @@ export {
 	type FieldBatchCodec,
 	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
-	fieldBatchCodecVersionToFormat,
+	fluidVersionToFieldBatchCodecWriteVersion,
 } from "./codec/index.js";
