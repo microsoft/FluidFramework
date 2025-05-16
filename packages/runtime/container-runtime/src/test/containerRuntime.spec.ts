@@ -848,10 +848,7 @@ describe("Runtime", () => {
 			}
 		});
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		describe.only("Dirty flag", () => {
+		describe("Dirty flag", () => {
 			const sandbox = createSandbox();
 			const createMockContext = (
 				attachState: AttachState,
