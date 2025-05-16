@@ -28,6 +28,7 @@ import type { ITree } from "./simple-tree/index.js";
 import { Breakable } from "./util/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+import { FluidClientVersion } from "./codec/index.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -49,6 +50,10 @@ function treeKernelFactory(
 		if (args.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
+		const adjustedOptions = { ...options };
+		// TODO: get default from runtime once something like runtime.minimumSupportedVersion exists.
+		// Using default of 2.0 since that is the oldest version that supports SharedTree.
+		adjustedOptions.minimumSupportedVersion ??= FluidClientVersion.v2_0;
 		return new SharedTreeKernel(
 			new Breakable("SharedTree"),
 			args.sharedObject,
@@ -57,7 +62,7 @@ function treeKernelFactory(
 			args.lastSequenceNumber,
 			args.logger,
 			args.idCompressor,
-			options,
+			adjustedOptions,
 		);
 	}
 
