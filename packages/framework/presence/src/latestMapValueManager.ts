@@ -276,8 +276,9 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		}
 	}
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
-		const data = this.value.items[key]?.value;
-		return data === undefined ? undefined : asDeeplyReadonlyFromJsonHandle(data);
+		return this.value.items[key]?.value === undefined
+			? undefined
+			: asDeeplyReadonlyFromJsonHandle(this.value.items[key]?.value);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
