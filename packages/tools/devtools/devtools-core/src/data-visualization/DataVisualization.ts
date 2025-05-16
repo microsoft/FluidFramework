@@ -306,7 +306,11 @@ export class DataVisualizerGraph
 	): Promise<FluidObjectId | undefined> {
 		const resolvedObject = await handle.get();
 
-		if (isDataObject(resolvedObject) || isTreeDataObject(resolvedObject)) {
+		if (isDataObject(resolvedObject)) {
+			return this.registerVisualizerForVisualizableObject(resolvedObject);
+		}
+
+		if (isTreeDataObject(resolvedObject)) {
 			return this.registerVisualizerForVisualizableObject(resolvedObject);
 		}
 
