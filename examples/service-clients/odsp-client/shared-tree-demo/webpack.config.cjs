@@ -4,6 +4,7 @@
  */
 
 const path = require("path");
+const Dotenv = require("dotenv-webpack");
 const { merge } = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
@@ -61,11 +62,8 @@ module.exports = (env) => {
 					title: "Hello Demo",
 					favicon: "",
 				}),
-				new webpack.DefinePlugin({
-					"process.env.SITE_URL": JSON.stringify(process.env.SITE_URL),
-					"process.env.SPE_DRIVE_ID": JSON.stringify(process.env.SPE_DRIVE_ID),
-					"process.env.SPE_CLIENT_ID": JSON.stringify(process.env.SPE_CLIENT_ID),
-					"process.env.SPE_ENTRA_TENANT_ID": JSON.stringify(process.env.SPE_ENTRA_TENANT_ID),
+				new Dotenv({
+					systemvars: true,
 				}),
 			],
 		},
