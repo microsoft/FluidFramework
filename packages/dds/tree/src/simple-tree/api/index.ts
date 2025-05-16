@@ -50,7 +50,7 @@ export {
 	tryGetSchema,
 	getStoredKey,
 	getPropertyKeyFromStoredKey,
-	getIdentifierFromNode
+	getIdentifierFromNode,
 } from "./treeNodeApi.js";
 export {
 	createFromInsertable,
