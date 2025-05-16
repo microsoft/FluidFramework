@@ -32,7 +32,7 @@ These cases include:
 You can retrieve the short identifier from a node with `TreeAlpha.identifier.getShort(node)` where `node` is a `TreeNode`.
 If it is not possible to retrieve the short identifier, it will return `undefined`
 
-### Example for a node with valid identifier
+##### Example for a node with valid identifier
 ```typescript
 // This will retrieve the short identifier from the node.
 const shortIdentifier = TreeAlpha.identifier.getShort(nodeWithValidIdentifier)
