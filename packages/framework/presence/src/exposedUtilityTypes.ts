@@ -109,7 +109,7 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
-	export type JsonDeserializedHandle<T> = JsonDeserializedBrand<T>;
+	export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
 
 	/**
 	 * @system
@@ -122,7 +122,7 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
-	export type JsonSerializableHandle<T> = JsonSerializableBrand<T>;
+	export type OpaqueJsonSerializable<T> = JsonSerializableBrand<T>;
 }
 
 /**
@@ -130,10 +130,10 @@ export namespace InternalUtilityTypes {
  *
  * @system
  */
-export function toJsonDeserializedHandle<T>(
+export function brandJson<T>(
 	value: JsonDeserialized<T>,
-): InternalUtilityTypes.JsonDeserializedHandle<T> {
-	return value as InternalUtilityTypes.JsonDeserializedHandle<T>;
+): InternalUtilityTypes.OpaqueJsonDeserialized<T> {
+	return value as InternalUtilityTypes.OpaqueJsonDeserialized<T>;
 }
 
 /**
@@ -141,8 +141,8 @@ export function toJsonDeserializedHandle<T>(
  *
  * @system
  */
-export function fromJsonDeserializedHandle<T>(
-	value: InternalUtilityTypes.JsonDeserializedHandle<T>,
+export function unbrandJson<T>(
+	value: InternalUtilityTypes.OpaqueJsonDeserialized<T>,
 ): JsonDeserialized<T> {
 	return value as JsonDeserialized<T>;
 }
@@ -151,7 +151,7 @@ export function fromJsonDeserializedHandle<T>(
  * Converts a JsonDeserializedHandle to a deeply readonly JsonDeserialized value.
  */
 export function asDeeplyReadonlyFromJsonHandle<T>(
-	value: InternalUtilityTypes.JsonDeserializedHandle<T>,
+	value: InternalUtilityTypes.OpaqueJsonDeserialized<T>,
 ): DeepReadonly<JsonDeserialized<T>> {
 	return asDeeplyReadonlyFromJsonHandle<T>(value);
 }

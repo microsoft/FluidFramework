@@ -8,10 +8,7 @@ import type { Listeners, Listenable, Off } from "@fluidframework/core-interfaces
 import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import {
-	fromJsonDeserializedHandle,
-	type InternalUtilityTypes,
-} from "./exposedUtilityTypes.js";
+import { unbrandJson, type InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -184,7 +181,7 @@ class NotificationsManagerImpl<
 						name,
 						args: [...(args as JsonTypeWith<never>[])],
 						// FIXME: Why doesn't as cast work?
-					} as unknown as InternalUtilityTypes.JsonDeserializedHandle<InternalTypes.NotificationType>,
+					} as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<InternalTypes.NotificationType>,
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.
@@ -201,7 +198,7 @@ class NotificationsManagerImpl<
 						name,
 						args: [...(args as JsonTypeWith<never>[])],
 						// FIXME: Why doesn't as cast work?
-					} as unknown as InternalUtilityTypes.JsonDeserializedHandle<InternalTypes.NotificationType>,
+					} as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<InternalTypes.NotificationType>,
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.
@@ -248,7 +245,7 @@ class NotificationsManagerImpl<
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): PostUpdateAction[] {
-		const unbrandedValue = fromJsonDeserializedHandle(value.value);
+		const unbrandedValue = unbrandJson(value.value);
 		const postUpdateActions: PostUpdateAction[] = [];
 		const eventName = unbrandedValue.name as keyof Listeners<NotificationSubscriptions<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {

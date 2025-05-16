@@ -16,10 +16,7 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
-import {
-	fromJsonDeserializedHandle,
-	toJsonDeserializedHandle,
-} from "./exposedUtilityTypes.js";
+import { unbrandJson, brandJson } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries } from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
@@ -117,13 +114,13 @@ class LatestValueManagerImpl<T, Key extends string>
 	}
 
 	public get local(): DeepReadonly<JsonDeserialized<T>> {
-		return asDeeplyReadonly(fromJsonDeserializedHandle(this.value.value));
+		return asDeeplyReadonly(unbrandJson(this.value.value));
 	}
 
 	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
-		this.value.value = toJsonDeserializedHandle(value);
+		this.value.value = brandJson(value);
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
@@ -137,7 +134,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			if (attendeeId !== allKnownStates.self) {
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: asDeeplyReadonly(fromJsonDeserializedHandle(value.value)),
+					value: asDeeplyReadonly(unbrandJson(value.value)),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
 			}
@@ -158,7 +155,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 		return {
-			value: asDeeplyReadonly(fromJsonDeserializedHandle(clientState.value)),
+			value: asDeeplyReadonly(unbrandJson(clientState.value)),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -179,7 +176,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					value: asDeeplyReadonly(fromJsonDeserializedHandle(value.value)),
+					value: asDeeplyReadonly(unbrandJson(value.value)),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];
@@ -218,11 +215,11 @@ export function latest<T extends object | null, Key extends string = string>(
 	// copy for basic protection.
 	const internalValue =
 		local === null
-			? (local as unknown as InternalUtilityTypes.JsonDeserializedHandle<T>)
+			? (local as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<T>)
 			: // FIXME: Why isn't this directly castable?
 				(shallowCloneObject(
 					local,
-				) as unknown as InternalUtilityTypes.JsonDeserializedHandle<T>);
+				) as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<T>);
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),

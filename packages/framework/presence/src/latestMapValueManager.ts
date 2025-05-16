@@ -17,7 +17,7 @@ import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import {
 	asDeeplyReadonlyFromJsonHandle,
-	toJsonDeserializedHandle,
+	brandJson,
 	// type InternalUtilityTypes,
 } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
@@ -285,9 +285,9 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value: toJsonDeserializedHandle(value) };
+			this.value.items[key] = { rev: 0, timestamp: 0, value: brandJson(value) };
 		}
-		this.updateItem(key, toJsonDeserializedHandle(value));
+		this.updateItem(key, brandJson(value));
 		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
 		return this;
 	}
@@ -545,7 +545,7 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				value: toJsonDeserializedHandle(initialValues[key]),
+				value: brandJson(initialValues[key]),
 			};
 		}
 	}

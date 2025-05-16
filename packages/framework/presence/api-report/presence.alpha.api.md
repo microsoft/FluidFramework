@@ -109,12 +109,12 @@ export namespace InternalTypes {
     // @system (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
-        value?: InternalUtilityTypes.JsonDeserializedHandle<TValue>;
+        value?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
     }
     // @system (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
         // (undocumented)
-        value: InternalUtilityTypes.JsonDeserializedHandle<TValue>;
+        value: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
     }
     // @system (undocumented)
     export interface ValueStateMetadata {
@@ -142,21 +142,21 @@ export namespace InternalUtilityTypes {
         // (undocumented)
         toString(): string;
     }
-    // @system (undocumented)
-    export type JsonDeserializedHandle<T> = JsonDeserializedBrand<T>;
     // @system
     export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
     // @system (undocumented)
     export class JsonSerializableBrand<T> {
     }
-    // @system (undocumented)
-    export type JsonSerializableHandle<T> = JsonSerializableBrand<T>;
     // @system
     export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
     // @system
     export type NotificationListeners<E> = {
         [P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
     };
+    // @system (undocumented)
+    export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
+    // @system (undocumented)
+    export type OpaqueJsonSerializable<T> = JsonSerializableBrand<T>;
         {};
 }
 

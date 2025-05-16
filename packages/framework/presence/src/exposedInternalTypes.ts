@@ -31,14 +31,14 @@ export namespace InternalTypes {
 	 * @system
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-		value?: InternalUtilityTypes.JsonDeserializedHandle<TValue>;
+		value?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
 	}
 
 	/**
 	 * @system
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-		value: InternalUtilityTypes.JsonDeserializedHandle<TValue>;
+		value: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
 	}
 
 	/**
