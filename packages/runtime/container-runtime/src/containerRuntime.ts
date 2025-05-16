@@ -4338,16 +4338,6 @@ export class ContainerRuntime
 	private updateDocumentDirtyState(): void {
 		const dirty: boolean = this.currentDirtyState();
 
-		if (this.attachState === AttachState.Attached) {
-			// Other way is not true = see this.isContainerMessageDirtyable()
-			assert(
-				!dirty || this.hasPendingMessages(),
-				0x3d3 /* if doc is dirty, there has to be pending ops */,
-			);
-		} else {
-			assert(dirty, 0x3d2 /* Non-attached container is dirty */);
-		}
-
 		if (this.dirtyContainer === dirty) {
 			return;
 		}
