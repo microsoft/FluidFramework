@@ -1052,6 +1052,47 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(inverse, expected);
 		});
+
+		it("Revive and modify", () => {
+			const change = Change.build(
+				{
+					family,
+					maxId: 3,
+					roots: [
+						{
+							detachId: { localId: brand(1) },
+							change: Change.nodeWithId(
+								0,
+								{ localId: brand(2) },
+								Change.field(fieldB, sequence.identifier, [MarkMaker.remove(1, brand(3))]),
+							),
+						},
+					],
+				},
+				Change.field(fieldA, sequence.identifier, [MarkMaker.insert(2, brand(0))]),
+			);
+
+			const taggedChange = tagChangeInline(change, tag1);
+			const inverse = family.invert(taggedChange, true, tag2);
+
+			const expected = Change.build(
+				{ family, maxId: 3, revisions: [{ revision: tag2, rollbackOf: tag1 }] },
+				Change.field(
+					fieldA,
+					sequence.identifier,
+					[MarkMaker.remove(2, { revision: tag1, localId: brand(0) })],
+					Change.nodeWithId(
+						1,
+						{ revision: tag1, localId: brand(2) },
+						Change.field(fieldB, sequence.identifier, [
+							MarkMaker.insert(1, { revision: tag1, localId: brand(3) }),
+						]),
+					),
+				),
+			);
+
+			assertModularChangesetsEqual(inverse, expected);
+		});
 	});
 
 	describe("toDelta", () => {

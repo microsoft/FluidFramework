@@ -473,6 +473,7 @@ interface BuildArgs {
 	maxId?: number;
 	revisions?: RevisionInfo[];
 	renames?: RenameDescription[];
+	roots?: { detachId: ChangeAtomId; change: NodeChangesetDescription }[];
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
@@ -491,11 +492,30 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 		idAllocator,
 	);
 
+	const rootNodes = newRootTable();
+
+	if (args.roots !== undefined) {
+		for (const { detachId, change } of args.roots) {
+			rootNodes.nodeChanges.set(
+				[detachId.revision, detachId.localId],
+				addNodeToChangeset(
+					args.family,
+					change,
+					undefined,
+					nodeChanges,
+					nodeToParent,
+					crossFieldKeys,
+					idAllocator,
+				),
+			);
+		}
+	}
+
 	assert(args.maxId === undefined || args.maxId >= idAllocator.getMaxId());
 	const result: Mutable<ModularChangeset> = {
 		nodeChanges,
 		fieldChanges,
-		rootNodes: newRootTable(),
+		rootNodes,
 		nodeToParent,
 		crossFieldKeys,
 		nodeAliases: newTupleBTree(),
@@ -574,6 +594,40 @@ function addNodeToField(
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator,
 ): unknown {
+	const fieldWithChange = changeHandler.editor.buildChildChanges([
+		[
+			nodeDescription.index,
+			addNodeToChangeset(
+				family,
+				nodeDescription,
+				parentId,
+				nodes,
+				nodeToParent,
+				crossFieldKeys,
+				idAllocator,
+			),
+		],
+	]);
+
+	return changeHandler.rebaser.compose(
+		contextualizeFieldChangeset(fieldWithChange),
+		contextualizeFieldChangeset(fieldChangeset),
+		(node1, node2) => node1 ?? node2 ?? assert.fail("Should not compose two undefined nodes"),
+		idAllocator,
+		dummyComposeManager,
+		dummyRevisionMetadata,
+	);
+}
+
+function addNodeToChangeset(
+	family: ModularChangeFamily,
+	nodeDescription: NodeChangesetDescription,
+	parentId: FieldId | undefined,
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeToParent: ChangeAtomIdBTree<FieldId>,
+	crossFieldKeys: CrossFieldKeyTable,
+	idAllocator: IdAllocator,
+): NodeId {
 	const nodeId: NodeId = nodeDescription.id ?? {
 		localId: brand(idAllocator.allocate()),
 	};
@@ -591,20 +645,12 @@ function addNodeToField(
 	};
 
 	nodes.set([nodeId.revision, nodeId.localId], nodeChangeset);
-	nodeToParent.set([nodeId.revision, nodeId.localId], parentId);
 
-	const fieldWithChange = changeHandler.editor.buildChildChanges([
-		[nodeDescription.index, nodeId],
-	]);
+	if (parentId !== undefined) {
+		nodeToParent.set([nodeId.revision, nodeId.localId], parentId);
+	}
 
-	return changeHandler.rebaser.compose(
-		contextualizeFieldChangeset(fieldWithChange),
-		contextualizeFieldChangeset(fieldChangeset),
-		(node1, node2) => node1 ?? node2 ?? assert.fail("Should not compose two undefined nodes"),
-		idAllocator,
-		dummyComposeManager,
-		dummyRevisionMetadata,
-	);
+	return nodeId;
 }
 
 const unsupportedFunc = () => assert.fail("Not supported");

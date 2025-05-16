@@ -2584,14 +2584,17 @@ class InvertNodeManagerI implements InvertNodeManager {
 		}
 
 		// XXX: This needs to look at all IDs in the range, not just the first.
-		const nodeId = getFromChangeAtomIdMap(
+		const nodeIdEntry = rangeQueryChangeAtomIdMap(
 			this.table.change.rootNodes.nodeChanges,
 			detachIdEntry.value,
+			countToProcess,
 		);
 
+		countToProcess = nodeIdEntry.length;
+
 		const result: RangeQueryResult<ChangeAtomId, NodeId> =
-			nodeId !== undefined
-				? { start: attachId, value: nodeId, length: 1 }
+			nodeIdEntry.value !== undefined
+				? { start: attachId, value: nodeIdEntry.value, length: countToProcess }
 				: this.table.entries.getFirst(attachId, countToProcess);
 
 		if (result.value !== undefined) {
@@ -2608,7 +2611,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		private readonly allowInval: boolean = true,
 	) {}
 
-	// XXX: Support moving cross field keys
 	public getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
