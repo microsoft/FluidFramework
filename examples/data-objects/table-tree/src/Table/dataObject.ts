@@ -54,7 +54,7 @@ export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 					{
 						id: "row-1",
 						cells: {
-							"column-1": { value: "Hello world!" },
+							"column-1": "Hello world!",
 						},
 						props: {},
 					},

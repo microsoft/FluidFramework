@@ -87,9 +87,7 @@ export class Vote extends schemaFactory.object("Vote", {
 	}
 }
 
-export class Cell extends schemaFactory.object("table-cell", {
-	value: schemaFactory.optional([schemaFactory.string, schemaFactory.boolean, DateTime]),
-}) {}
+export const Cell = [schemaFactory.string, schemaFactory.boolean, DateTime] as const;
 
 export class Column extends TableSchema.column({
 	schemaFactory,
