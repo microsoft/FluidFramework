@@ -215,7 +215,7 @@ export interface TreeAlpha {
 	 * The key of the given node under its parent.
 	 * @remarks
 	 * If `node` is an element in a {@link (TreeArrayNode:interface)}, this returns the index of `node` in the array node (a `number`).
-	 * If `node` is the root node, this returns undefined
+	 * If `node` is the root node, this returns undefined.
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	key2(node: TreeNode): string | number | undefined;

@@ -2,6 +2,6 @@
 "@fluidframework/tree": minor
 "__section": feature
 ---
-Adds an alpha API method `TreeAlpha.key2`
+TreeAlpha.key2 API added
 
-This method is meant to eventually replace the public Tree.key method. This new method now returns undefined in the case where there is a root node.
+The `TreeAlpha.key2` method is meant to eventually replace the public `Tree.key` method. This new method now returns undefined in the case where there is a root node.
