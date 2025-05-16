@@ -4,7 +4,6 @@
  */
 
 import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
-import type { TreeStoredSchema } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
@@ -96,8 +95,7 @@ export function comparePersistedSchema(
 	persisted: JsonCompatible,
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
-	canInitialize: boolean,
-): SchemaCompatibilityStatus {
+): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	// Any version can be passed down to makeSchemaCodec here.
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
 	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
@@ -107,20 +105,5 @@ export function comparePersistedSchema(
 		{},
 		normalizeFieldSchema(view),
 	);
-	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);
-}
-
-/**
- * Compute compatibility for viewing a document with `stored` schema using `viewSchema`.
- * `canInitialize` is passed through to the return value unchanged and otherwise unused.
- */
-export function comparePersistedSchemaInternal(
-	stored: TreeStoredSchema,
-	viewSchema: SchemaCompatibilityTester,
-	canInitialize: boolean,
-): SchemaCompatibilityStatus {
-	return {
-		...viewSchema.checkCompatibility(stored),
-		canInitialize,
-	};
+	return viewSchema.checkCompatibility(stored);
 }

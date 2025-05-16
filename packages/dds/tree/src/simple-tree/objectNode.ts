@@ -13,9 +13,8 @@ import {
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
-	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
-import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
+import { getTreeNodeForField } from "./getTreeNodeForField.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
@@ -47,6 +46,7 @@ import {
 	getOrCreateInnerNode,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
+import { prepareForInsertion } from "./prepareForInsertion.js";
 import type { RestrictiveStringRecord, FlattenKeys } from "../util/index.js";
 import {
 	isObjectNodeSchema,
@@ -328,16 +328,7 @@ export function setField(
 	simpleFieldSchema: FieldSchema,
 	value: InsertableContent | undefined,
 ): void {
-	const mapTree = mapTreeFromNodeData(
-		value,
-		simpleFieldSchema,
-		field.context.isHydrated() ? field.context.nodeKeyManager : undefined,
-		getSchemaAndPolicy(field),
-	);
-
-	if (field.context.isHydrated()) {
-		prepareContentForHydration(mapTree, field.context.checkout.forest);
-	}
+	const mapTree = prepareForInsertion(value, simpleFieldSchema, field.context);
 
 	switch (field.schema) {
 		case FieldKinds.required.identifier: {
