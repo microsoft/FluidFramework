@@ -217,42 +217,7 @@ export const treeNodeApi: TreeNodeApi = {
 		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);
 	},
 	shortId(node: TreeNode): number | string | undefined {
-		const schema = node[typeSchemaSymbol];
-		if (!isObjectNodeSchema(schema)) {
-			return undefined;
-		}
-
-		const flexNode = getOrCreateInnerNode(node);
-		const identifierFieldKeys = schema.identifierFieldKeys;
-
-		switch (identifierFieldKeys.length) {
-			case 0:
-				return undefined;
-			case 1: {
-				const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
-				if (flexNode instanceof UnhydratedFlexTreeNode) {
-					if (identifier === undefined) {
-						throw new UsageError(
-							"Tree.shortId cannot access default identifiers on unhydrated nodes",
-						);
-					}
-					return identifier.value as string;
-				}
-				assert(
-					identifier?.context.isHydrated() === true,
-					0xa27 /* Expected hydrated identifier */,
-				);
-				const identifierValue = identifier.value as string;
-
-				const localNodeKey =
-					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
-			}
-			default:
-				throw new UsageError(
-					"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
-				);
-		}
+		return getIdentifierFromNode(node, "preferCompressed");
 	},
 };
 
@@ -282,6 +247,91 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 		}
 		default:
 			return undefined;
+	}
+}
+
+/**
+ * Gets the identifier from a node.
+ *
+ * @param node - {@link TreeNode} where you want to extract the identifier from.
+ * @param compression - string value to determine what type of identifier you want to retrieve.
+ *
+ * @remarks
+ * If the node does not contain an identifier field, it returns undefined.
+ *
+ * If `compression` is set to `compressed`:
+ *
+ * - If the node contains a compressible identifier known by the id compressor, the compressed identifier is returned.
+ *
+ * - If the node contains an identifier, but is not compressible or unknown by the id compressor, `undefined` is returned.
+ *
+ * If `compression` is set to `preferCompressed`:
+ *
+ * - If the node contains a compressible identifier known by the id compressor, the compressed identifier is returned.
+ *
+ * - If the node contains an identifier, but is not compressible or unknown by the id compressor, the uncompressed identifier is returned.
+ *
+ * If `compression` is set to `uncompressed`:
+ * - If the node contains an identifier field, the uncompressed identifier is returned.
+ */
+export function getIdentifierFromNode(
+	node: TreeNode,
+	compression: "preferCompressed",
+): number | string | undefined;
+export function getIdentifierFromNode(
+	node: TreeNode,
+	compression: "compressed",
+): number | undefined;
+export function getIdentifierFromNode(
+	node: TreeNode,
+	compression: "uncompressed",
+): string | undefined;
+export function getIdentifierFromNode(
+	node: TreeNode,
+	compression: "preferCompressed" | "compressed" | "uncompressed",
+): number | string | undefined {
+	const schema = node[typeSchemaSymbol];
+	if (!isObjectNodeSchema(schema)) {
+		return undefined;
+	}
+
+	const flexNode = getOrCreateInnerNode(node);
+	const identifierFieldKeys = schema.identifierFieldKeys;
+
+	switch (identifierFieldKeys.length) {
+		case 0:
+			return undefined;
+		case 1: {
+			const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
+			if (flexNode instanceof UnhydratedFlexTreeNode) {
+				if (identifier === undefined) {
+					throw new UsageError(
+						"Tree.shortId cannot access default identifiers on unhydrated nodes",
+					);
+				}
+				return identifier.value as string;
+			}
+			assert(
+				identifier?.context.isHydrated() === true,
+				0xa27 /* Expected hydrated identifier */,
+			);
+			const identifierValue = identifier.value as string;
+
+			if (compression === "preferCompressed") {
+				const localNodeKey =
+					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
+				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
+			} else if (compression === "compressed") {
+				const localNodeKey =
+					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
+				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+			}
+			return identifierValue;
+		}
+		default:
+			throw new UsageError(
+				"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
+			);
 	}
 }
 
