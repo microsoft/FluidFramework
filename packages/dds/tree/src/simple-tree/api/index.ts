@@ -48,7 +48,9 @@ export {
 	treeNodeApi,
 	type TreeNodeApi,
 	tryGetSchema,
-	getIdentifierFromNode,
+	getStoredKey,
+	getPropertyKeyFromStoredKey,
+	getIdentifierFromNode
 } from "./treeNodeApi.js";
 export {
 	createFromInsertable,

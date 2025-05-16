@@ -88,6 +88,8 @@ export {
 	type TreeBranch,
 	type TreeBranchEvents,
 	tryGetSchema,
+	getStoredKey,
+	getPropertyKeyFromStoredKey,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
@@ -185,7 +187,7 @@ export {
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";
-export { getTreeNodeForField } from "./proxies.js";
+export { getTreeNodeForField } from "./getTreeNodeForField.js";
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
