@@ -81,7 +81,7 @@ export class Vote extends schemaFactory.object("Vote", {
 		return this.votes.size;
 	}
 
-	// TODO: not sure if userId is neccessary for this example app
+	// TODO: not sure if userId is necessary for this example app
 	hasVoted(userId: string): boolean {
 		return this.votes.has(userId);
 	}
