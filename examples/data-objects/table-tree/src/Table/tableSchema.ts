@@ -91,22 +91,20 @@ export class Cell extends schemaFactory.object("table-cell", {
 	value: schemaFactory.optional([schemaFactory.string, schemaFactory.boolean, DateTime]),
 }) {}
 
-export class ColumnProps extends schemaFactory.object("table-column-props", {
-	label: schemaFactory.optional(schemaFactory.string),
-	hint: schemaFactory.optional(schemaFactory.string),
-}) {}
 export class Column extends TableSchema.column({
 	schemaFactory,
 	cell: Cell,
-	props: ColumnProps,
-}) {}
-export class RowProps extends schemaFactory.object("table-row-props", {
-	label: schemaFactory.optional(schemaFactory.string),
+	props: schemaFactory.object("table-column-props", {
+		label: schemaFactory.optional(schemaFactory.string),
+		hint: schemaFactory.optional(schemaFactory.string),
+	}),
 }) {}
 export class Row extends TableSchema.row({
 	schemaFactory,
 	cell: Cell,
-	props: RowProps,
+	props: schemaFactory.object("table-row-props", {
+		label: schemaFactory.optional(schemaFactory.string),
+	}),
 }) {}
 
 export class Table extends TableSchema.table({
