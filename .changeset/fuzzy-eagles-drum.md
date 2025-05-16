@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-SharedTrees's FluidClientVersion enum (alpha) has been redesigned.
+SharedTrees's FluidClientVersion enum (alpha) has been redesigned
 
 Users of [FluidClientVersion](https://fluidframework.com/docs/api/fluid-framework/fluidclientversion-enum)'s `v2_1`, `v2_2`, and `v2_3` entries should specify `v2_0` instead.
 This will result in no functional differences since no code currently opts into any additional functionality based on specifying those versions.
