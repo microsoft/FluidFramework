@@ -3466,8 +3466,7 @@ export class ContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
-		//* Switch to currentDirtyState
-		return this.lastEmittedDirty;
+		return this.currentDirtyState();
 	}
 
 	//* Comment
