@@ -2687,7 +2687,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		return result;
 	}
 
-	// XXX: Support moving/deleting cross field keys
 	public rebaseOverDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
@@ -2722,7 +2721,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 				);
 			}
 
-			// XXX: Store fieldData
 			if (newDetachId !== undefined) {
 				renameNodes(
 					this.table.rebasedRootNodes,
@@ -2735,8 +2733,9 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			}
 		}
 
-		// XXX: Only need to do this if `nodeChange !== undefined || newDetachId !== undefined`
-		this.invalidateBaseFields(attachFields);
+		if (nodeChange !== undefined || newDetachId !== undefined) {
+			this.invalidateBaseFields(attachFields);
+		}
 
 		if (length < count) {
 			const remainingCount = count - length;
