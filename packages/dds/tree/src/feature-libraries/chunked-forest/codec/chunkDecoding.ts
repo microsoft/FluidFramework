@@ -4,6 +4,11 @@
  */
 
 import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
+import type {
+	IIdCompressor,
+	OpSpaceCompressedId,
+	SessionId,
+} from "@fluidframework/id-compressor";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type {
@@ -42,11 +47,6 @@ import {
 	type EncodedValueShape,
 	SpecialField,
 } from "./format.js";
-import type {
-	IIdCompressor,
-	OpSpaceCompressedId,
-	SessionId,
-} from "@fluidframework/id-compressor";
 
 export interface IdDecodingContext {
 	idCompressor: IIdCompressor;
