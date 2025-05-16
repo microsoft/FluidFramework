@@ -240,7 +240,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		// Sort fields to ensure output is identical for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {
-			const value = encodeFieldSchemaV1(
+			const value = encodeFieldSchemaV2(
 				this.objectNodeFields.get(key) ?? fail("missing field"),
 			);
 
@@ -329,8 +329,26 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 }
 
-export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
+export const storedSchemaDecodeDispatcherV1: DiscriminatedUnionDispatcher<
 	TreeNodeSchemaDataFormatV1,
+	[],
+	TreeNodeStoredSchema
+> = new DiscriminatedUnionDispatcher({
+	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
+	object: (
+		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>,
+	): TreeNodeStoredSchema => {
+		const map = new Map();
+		for (const [key, value] of Object.entries(data)) {
+			map.set(key, decodeFieldSchema(value));
+		}
+		return new ObjectNodeStoredSchema(map);
+	},
+	map: (data: FieldSchemaFormat) => new MapNodeStoredSchema(decodeFieldSchema(data)),
+});
+
+export const storedSchemaDecodeDispatcherV2: DiscriminatedUnionDispatcher<
+	TreeNodeSchemaDataFormatV2,
 	[],
 	TreeNodeStoredSchema
 > = new DiscriminatedUnionDispatcher({

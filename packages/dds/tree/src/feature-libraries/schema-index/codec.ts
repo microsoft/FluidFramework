@@ -22,7 +22,8 @@ import {
 	encodeFieldSchemaV2,
 	type schemaFormatV1,
 	type schemaFormatV2,
-	storedSchemaDecodeDispatcher,
+	storedSchemaDecodeDispatcherV1,
+	storedSchemaDecodeDispatcherV2,
 } from "../../core/index.js";
 import { brand, type JsonCompatible } from "../../util/index.js";
 
@@ -139,10 +140,21 @@ function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 	};
 }
 
-function decode(f: FormatV1 | FormatV2): TreeStoredSchema {
+function decodeV1(f: FormatV1): TreeStoredSchema {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const [key, schema] of Object.entries(f.nodes)) {
-		nodeSchema.set(brand(key), storedSchemaDecodeDispatcher.dispatch(schema));
+		nodeSchema.set(brand(key), storedSchemaDecodeDispatcherV1.dispatch(schema));
+	}
+	return {
+		rootFieldSchema: decodeFieldSchema(f.root),
+		nodeSchema,
+	};
+}
+
+function decodeV2(f: FormatV2): TreeStoredSchema {
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
+	for (const [key, schema] of Object.entries(f.nodes)) {
+		nodeSchema.set(brand(key), storedSchemaDecodeDispatcherV2.dispatch(schema));
 	}
 	return {
 		rootFieldSchema: decodeFieldSchema(f.root),
@@ -158,7 +170,7 @@ function decode(f: FormatV1 | FormatV2): TreeStoredSchema {
 function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV1> {
 	return makeVersionedValidatedCodec(options, new Set([SchemaCodecVersion.v1]), FormatV1, {
 		encode: (data: TreeStoredSchema) => encodeRepoV1(data),
-		decode: (data: FormatV1) => decode(data),
+		decode: (data: FormatV1) => decodeV1(data),
 	});
 }
 
@@ -170,6 +182,6 @@ function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema,
 function makeSchemaCodecV2(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV2> {
 	return makeVersionedValidatedCodec(options, new Set([SchemaCodecVersion.v2]), FormatV2, {
 		encode: (data: TreeStoredSchema) => encodeRepoV2(data),
-		decode: (data: FormatV2) => decode(data),
+		decode: (data: FormatV2) => decodeV2(data),
 	});
 }
