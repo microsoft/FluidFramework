@@ -33,9 +33,6 @@ import {
 	SchemaCompatibilityTester,
 	type InsertableContent,
 	type TreeViewConfiguration,
-	mapTreeFromNodeData,
-	prepareContentForHydration,
-	comparePersistedSchemaInternal,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
@@ -55,6 +52,7 @@ import {
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
+	prepareForInsertionContextless,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -99,6 +97,9 @@ export class SchematizingSimpleTreeView<
 
 	private readonly viewSchema: SchemaCompatibilityTester;
 
+	/**
+	 * Events to unregister upon disposal.
+	 */
 	private readonly unregisterCallbacks = new Set<() => void>();
 
 	public disposed = false;
@@ -174,17 +175,16 @@ export class SchematizingSimpleTreeView<
 
 		this.runSchemaEdit(() => {
 			const schema = this.viewSchema.viewSchemaAsStored;
-			const mapTree = mapTreeFromNodeData(
+			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
-				this.nodeKeyManager,
 				{
 					schema,
 					policy: this.schemaPolicy,
 				},
+				this,
 			);
 
-			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
 				schema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
@@ -324,15 +324,14 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeView();
 
-		const compatibility = comparePersistedSchemaInternal(
-			this.checkout.storedSchema,
-			this.viewSchema,
-			canInitialize(this.checkout),
-		);
+		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
 
 		let lastRoot =
 			this.compatibility.canView && this.view !== undefined ? this.root : undefined;
-		this.currentCompatibility = compatibility;
+		this.currentCompatibility = {
+			...compatibility,
+			canInitialize: canInitialize(this.checkout),
+		};
 
 		if (compatibility.canView) {
 			// Trigger "rootChanged" if the root changes in the future.

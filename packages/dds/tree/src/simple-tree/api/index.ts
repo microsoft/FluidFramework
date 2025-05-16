@@ -45,7 +45,12 @@ export {
 	singletonSchema,
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi, tryGetSchema } from "./treeNodeApi.js";
-export { createFromInsertable, cursorFromInsertable, createFromCursor } from "./create.js";
+export {
+	createFromInsertable,
+	cursorFromInsertable,
+	createFromCursor,
+	createFromMapTree,
+} from "./create.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -107,7 +112,6 @@ export {
 
 export {
 	extractPersistedSchema,
-	comparePersistedSchemaInternal,
 	comparePersistedSchema,
 } from "./storedSchema.js";
 
