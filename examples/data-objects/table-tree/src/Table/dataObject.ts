@@ -44,9 +44,10 @@ export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 						id: "column-0",
 						props: {
 							label: "Column 0",
+							hint: "text",
 						},
 					}),
-					new Column({ props: { label: "Column 1" } }),
+					new Column({ props: { label: "Column 1", hint: "date" } }),
 					new Column({ props: { label: "Column 2", hint: "checkbox" } }),
 				],
 				rows: [

@@ -39,7 +39,7 @@ import {
 	type TreeNodeSchemaClass,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
-import { prepareArrayForInsertion } from "./prepareForInsertion.js";
+import { prepareArrayContentForInsertion } from "./prepareForInsertion.js";
 import {
 	getKernel,
 	UnhydratedFlexTreeNode,
@@ -862,7 +862,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const contentArray = content.flatMap((c): InsertableContent[] =>
 			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
 		);
-		const mapTrees = prepareArrayForInsertion(
+		const mapTrees = prepareArrayContentForInsertion(
 			contentArray,
 			this.simpleSchema,
 			sequenceField.context,

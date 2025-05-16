@@ -146,6 +146,7 @@ export {
 	SchemaValidationErrors,
 	isNodeInSchema,
 	isFieldInSchema,
+	inSchemaOrThrow,
 } from "./default-schema/index.js";
 
 export {

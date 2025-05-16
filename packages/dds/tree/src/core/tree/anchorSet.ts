@@ -5,10 +5,10 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
-import type { Listenable } from "@fluidframework/core-interfaces/internal";
-import { createEmitter } from "@fluid-internal/client-utils";
 import {
 	type Brand,
 	type BrandedKey,
@@ -22,7 +22,9 @@ import {
 } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
+import type { ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
+import { offsetDetachId } from "./deltaUtil.js";
 import {
 	isDetachedUpPathRoot,
 	type INormalizedUpPath,
@@ -33,8 +35,6 @@ import {
 } from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
-import { offsetDetachId } from "./deltaUtil.js";
-import type { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.

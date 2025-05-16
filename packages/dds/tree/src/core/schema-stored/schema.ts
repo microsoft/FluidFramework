@@ -4,8 +4,10 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import { type MakeNominal, brand, invertMap } from "../../util/index.js";
+
 import {
 	type FieldKey,
 	type FieldKindIdentifier,
