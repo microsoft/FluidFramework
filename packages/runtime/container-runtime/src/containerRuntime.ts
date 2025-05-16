@@ -3037,11 +3037,7 @@ export class ContainerRuntime
 
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
-		// If there are no more pending messages after processing a local message,
-		// the document is no longer dirty.
-		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState();
-		}
+		this.updateDocumentDirtyState();
 
 		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
 		// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
@@ -3073,11 +3069,7 @@ export class ContainerRuntime
 		local: boolean,
 		savedOp?: boolean,
 	): void {
-		// If there are no more pending messages after processing a local message,
-		// the document is no longer dirty.
-		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState();
-		}
+		this.updateDocumentDirtyState();
 
 		// Get the contents without the localOpMetadata because not all message types know about localOpMetadata.
 		const contents = messagesContent.map((c) => c.contents);
@@ -3542,9 +3534,7 @@ export class ContainerRuntime
 			this.emit("attached");
 		}
 
-		if (!this.currentDirtyState()) {
-			this.updateDocumentDirtyState();
-		}
+		this.updateDocumentDirtyState();
 		this.channelCollection.setAttachState(attachState);
 	}
 
