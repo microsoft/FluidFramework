@@ -88,6 +88,8 @@ export {
 	type TreeBranch,
 	type TreeBranchEvents,
 	tryGetSchema,
+	getStoredKey,
+	getPropertyKeyFromStoredKey,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,

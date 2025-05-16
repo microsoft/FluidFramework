@@ -36,6 +36,9 @@ import {
 	extractPersistedSchema,
 	type TreeBranch,
 	TreeViewConfigurationAlpha,
+	getStoredKey,
+	getPropertyKeyFromStoredKey,
+	treeNodeApi,
 	mapTreeFromNodeData,
 } from "../simple-tree/index.js";
 import type { JsonCompatible } from "../util/index.js";
@@ -207,6 +210,15 @@ export interface TreeAlpha {
 		compressedData: JsonCompatible<IFluidHandle>,
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+
+	/**
+	 * The key of the given node under its parent.
+	 * @remarks
+	 * If `node` is an element in a {@link (TreeArrayNode:interface)}, this returns the index of `node` in the array node (a `number`).
+	 * If `node` is the root node, this returns undefined.
+	 * Otherwise, this returns the key of the field that it is under (a `string`).
+	 */
+	key2(node: TreeNode): string | number | undefined;
 }
 
 /**
@@ -338,6 +350,21 @@ export const TreeAlpha: TreeAlpha = {
 		};
 		const view = independentInitializedView(config, options, content);
 		return TreeBeta.clone<TSchema>(view.root);
+	},
+
+	key2(node: TreeNode): string | number | undefined {
+		// If the parent is undefined, then this node is under the root field,
+		const parent = treeNodeApi.parent(node);
+		if (parent === undefined) {
+			return undefined;
+		}
+
+		// The flex-domain strictly operates in terms of "stored keys".
+		// To find the associated developer-facing "property key", we need to look up the field associated with
+		// the stored key from the flex-domain, and get property key its simple-domain counterpart was created with.
+		const storedKey = getStoredKey(node);
+		const parentSchema = treeNodeApi.schema(parent);
+		return getPropertyKeyFromStoredKey(parentSchema, storedKey);
 	},
 };
 
