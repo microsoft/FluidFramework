@@ -29,13 +29,13 @@ describe("Local Server Stress", () => {
 		saveFailures,
 		// saveSuccesses,
 		skip: [
-			...[15], // 0x54e
-			...[39], // 0xa6f
-			...[5, 22, 36], // Number of keys not same
+			...[15], // 0x54e (IntervalCollection)
+			...[39], // 0xa6f (merge-tree PropertiesManager)
+			...[62], // 0x2f5 (Sequence interval createPositionReference)
+			...[5, 22, 31, 36], // Number of keys not same
 			...[6], // channel maps should be the same size
 			...[7], // Number of subDirectories not same,
 			...[12], // Rollback op does not match last pending
-			...[31, 58, 62, 87], // Client closes due to id compressor related asserts in a fatal codepath
 		],
 	});
 });
