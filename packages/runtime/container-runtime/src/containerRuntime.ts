@@ -1306,7 +1306,7 @@ export class ContainerRuntime
 		return this._disposed;
 	}
 
-	private dirtyContainer: boolean;
+	private lastEmittedDirty: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
@@ -1532,7 +1532,7 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "Attached",
 				details: {
-					dirtyContainer: this.dirtyContainer,
+					dirtyContainer: this.lastEmittedDirty,
 					hasPendingMessages: this.hasPendingMessages(),
 				},
 			});
@@ -1897,8 +1897,9 @@ export class ContainerRuntime
 		this.closeSummarizerDelayMs =
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
-		this.dirtyContainer = this.currentDirtyState();
-		context.updateDirtyContainerState(this.dirtyContainer);
+		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
+		this.lastEmittedDirty = this.currentDirtyState();
+		context.updateDirtyContainerState(this.lastEmittedDirty);
 
 		if (!this.skipSafetyFlushDuringProcessStack) {
 			// Reference Sequence Number may have just changed, and it must be consistent across a batch,
@@ -2527,14 +2528,10 @@ export class ContainerRuntime
 			return;
 		}
 
-		// We need to temporary clear the dirty flags and disable
-		// dirty state change events to detect whether replaying ops
-		// has any effect.
-
-		// Save the old state and disable event emit
-		// No need set this.dirtyContainer to false though, it will be updated throughout replay
-		const oldState = this.dirtyContainer;
-
+		// Replaying is an internal operation and we don't want to generate noise while doing it.
+		// So temporarily disable dirty state change events, and save the old state.
+		// When we're done, we'll emit the event if the state changed.
+		const oldState = this.lastEmittedDirty;
 		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
 		this.emitDirtyDocumentEvent = false;
 
@@ -2549,11 +2546,11 @@ export class ContainerRuntime
 			this.pendingStateManager.replayPendingStates();
 		} finally {
 			// Restore the old state, re-enable event emit
-			this.dirtyContainer = oldState;
+			this.lastEmittedDirty = oldState;
 			this.emitDirtyDocumentEvent = true;
 		}
 
-		// Officially transition from the old state to the new state.
+		// This will emit an event if the state changed relative to before replay
 		this.updateDocumentDirtyState();
 	}
 
@@ -3470,7 +3467,7 @@ export class ContainerRuntime
 	 */
 	public get isDirty(): boolean {
 		//* Switch to currentDirtyState
-		return this.dirtyContainer;
+		return this.lastEmittedDirty;
 	}
 
 	//* Comment
@@ -4338,11 +4335,11 @@ export class ContainerRuntime
 	private updateDocumentDirtyState(): void {
 		const dirty: boolean = this.currentDirtyState();
 
-		if (this.dirtyContainer === dirty) {
+		if (this.lastEmittedDirty === dirty) {
 			return;
 		}
 
-		this.dirtyContainer = dirty;
+		this.lastEmittedDirty = dirty;
 		if (this.emitDirtyDocumentEvent) {
 			this.emit(dirty ? "dirty" : "saved");
 		}
