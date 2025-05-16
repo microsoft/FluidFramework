@@ -4,6 +4,7 @@
  */
 
 import { assert, oob, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	CursorLocationType,
@@ -19,7 +20,6 @@ import {
 	detachedFieldAsKey,
 	rootField,
 } from "../core/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.

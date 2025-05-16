@@ -14,11 +14,11 @@ import {
 	getDepth,
 	rootField,
 	rootFieldKey,
-} from "../../core/index.js";
+} from "../../../core/index.js";
 // This import is targeting the code being tested
 // eslint-disable-next-line import/no-internal-modules
-import { getDetachedFieldContainingPath } from "../../core/tree/pathTree.js";
-import { brand } from "../../util/index.js";
+import { getDetachedFieldContainingPath } from "../../../core/tree/pathTree.js";
+import { brand } from "../../../util/index.js";
 
 const rootKey = brand<FieldKey>("root");
 const fooKey = brand<FieldKey>("foo");
