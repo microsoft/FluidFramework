@@ -27,7 +27,7 @@ export {
 } from "./defaultEditBuilder.js";
 
 export {
-	SchemaValidationErrors,
+	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
 	inSchemaOrThrow,

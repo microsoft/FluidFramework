@@ -25,7 +25,7 @@ import {
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import { checkoutWithContent } from "../utils.js";
+import { checkoutWithContent, validateUsageError } from "../utils.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
@@ -120,9 +120,7 @@ describe("prepareForInsertion", () => {
 			] as const;
 		}
 
-		const outOfSchemaExpectedError: Partial<Error> = {
-			message: "Tree does not conform to schema.",
-		};
+		const outOfSchemaExpectedError = validateUsageError(/Tree does not conform to schema/);
 
 		const schemaFactory = new SchemaFactory("test");
 
@@ -175,7 +173,7 @@ describe("prepareForInsertion", () => {
 								[schemaFactory.string],
 								...schemaValidationPolicy,
 							),
-						outOfSchemaExpectedError,
+						validateUsageError(/LeafNode_InvalidValue/),
 					);
 				});
 			});
