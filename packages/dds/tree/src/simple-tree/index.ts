@@ -122,6 +122,7 @@ export {
 	type FixRecursiveRecursionLimit,
 	schemaStatics,
 	type TreeChangeEvents,
+	createFromMapTree,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -183,7 +184,7 @@ export {
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";
-export { getTreeNodeForField } from "./proxies.js";
+export { getTreeNodeForField } from "./getTreeNodeForField.js";
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
