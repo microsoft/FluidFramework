@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	type DeltaRoot,
