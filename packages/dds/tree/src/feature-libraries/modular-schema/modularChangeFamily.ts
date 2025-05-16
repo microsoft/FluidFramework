@@ -2583,7 +2583,6 @@ class InvertNodeManagerI implements InvertNodeManager {
 			}
 		}
 
-		// XXX: This needs to look at all IDs in the range, not just the first.
 		const nodeIdEntry = rangeQueryChangeAtomIdMap(
 			this.table.change.rootNodes.nodeChanges,
 			detachIdEntry.value,
