@@ -254,16 +254,20 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
  * Gets the identifier from a node.
  *
  * @param node - {@link TreeNode} where you want to extract the identifier from.
- * @param isCompressed - boolean for whether or not to return the compressed identifier, if possible.
+ * @param compression - string value to determine what type of identifier you want to retrieve.
  *
  * @remarks
  * If the node does not contain an identifier field, it returns undefined.
  *
- * If isCompressed is set to `true`:
+ * If `compression` is set to `compressed`:
+ * - If the node contains a compressible identifier known by the id compressor, the compressed identifier is returned.
+ * - If the node contains an identifier, but is not compressible or unknown by the id compressor, `undefined` is returned.
+ *
+ * If `compression` is set to `preferCompressed`:
  * - If the node contains a compressible identifier known by the id compressor, the compressed identifier is returned.
  * - If the node contains an identifier, but is not compressible or unknown by the id compressor, the uncompressed identifier is returned.
  *
- * If isCompressed is set to `false`:
+ * If `compression` is set to `uncompressed`:
  * - If the node contains an identifier field, the uncompressed identifier is returned.
  */
 export function getIdentifierFromNode(
