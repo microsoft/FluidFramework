@@ -99,6 +99,10 @@ export function prepareArrayContentForInsertion(
 
 /**
  * Split out from {@link prepareForInsertion} as to allow use without a context.
+ *
+ * @param hydratedData - If specified, the `mapTrees` will be prepared for hydration into this context.
+ * `undefined` when `mapTrees` are being inserted into an {@link Unhydrated} tree.
+ *
  * @remarks
  * Adding this entry point is a workaround for initialize not currently having a context.
  */
@@ -119,6 +123,9 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 
 /**
  * If hydrating, do a final validation against the schema and prepare the content for hydration.
+ *
+ * @param hydratedData - If specified, the `mapTrees` will be prepared for hydration into this context.
+ * `undefined` when `mapTrees` are being inserted into an {@link Unhydrated} tree.
  */
 function validateAndPrepare(
 	schemaAndPolicy: SchemaAndPolicy,
