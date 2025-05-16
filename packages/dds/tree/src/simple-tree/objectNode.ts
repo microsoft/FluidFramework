@@ -23,7 +23,6 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type FieldSchema,
 	normalizeFieldSchema,
-	type ImplicitAllowedTypes,
 	FieldKind,
 	type NodeSchemaMetadata,
 	type FieldSchemaAlpha,
@@ -31,6 +30,7 @@ import {
 	type ImplicitAnnotatedFieldSchema,
 	unannotateSchemaRecord,
 	type UnannotateSchemaRecord,
+	type ImplicitAnnotatedAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -187,11 +187,15 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
-	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
+function createFlexKeyMapping(
+	fields: Record<string, ImplicitAnnotatedFieldSchema>,
+): SimpleKeyMap {
+	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchemaAlpha }> =
+		new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
-		const storedKey = getStoredKey(propertyKey, fieldSchema);
-		keyMap.set(propertyKey, { storedKey, schema: normalizeFieldSchema(fieldSchema) });
+		const schema = normalizeFieldSchema(fieldSchema);
+		const storedKey = getStoredKey(propertyKey, schema);
+		keyMap.set(propertyKey, { storedKey, schema });
 	}
 
 	return keyMap;
@@ -269,7 +273,7 @@ function createProxyHandler(
 
 			setField(
 				getOrCreateInnerNode(proxy).getBoxed(fieldInfo.storedKey),
-				fieldInfo.schema,
+				normalizeFieldSchema(fieldInfo.schema),
 				value,
 			);
 			return true;
@@ -325,7 +329,7 @@ function createProxyHandler(
 
 export function setField(
 	field: FlexTreeField,
-	simpleFieldSchema: FieldSchema,
+	simpleFieldSchema: FieldSchemaAlpha,
 	value: InsertableContent | undefined,
 ): void {
 	const mapTree = prepareForInsertion(value, simpleFieldSchema, field.context);
@@ -383,7 +387,7 @@ export function objectSchema<
 	assertUniqueKeys(identifier, unannotatedInfo);
 
 	// Performance optimization: cache property key => stored key and schema.
-	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(unannotatedInfo);
+	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
 
 	const identifierFieldKeys: FieldKey[] = [];
 	for (const item of flexKeyMap.values()) {
@@ -468,7 +472,7 @@ export function objectSchema<
 		): UnhydratedFlexTreeNode {
 			return UnhydratedFlexTreeNode.getOrCreate(
 				unhydratedContext,
-				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
+				mapTreeFromNodeData(input as object, this as unknown as ImplicitAnnotatedAllowedTypes),
 			);
 		}
 

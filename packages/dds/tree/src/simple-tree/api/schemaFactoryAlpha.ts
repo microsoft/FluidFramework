@@ -10,16 +10,18 @@ import {
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
-import type {
-	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
-	ImplicitAnnotatedFieldSchema,
-	ImplicitFieldSchema,
-	NodeSchemaOptions,
+import {
+	normalizeToAnnotatedAllowedType,
+	type AnnotatedAllowedType,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAnnotatedFieldSchema,
+	type ImplicitFieldSchema,
+	type NodeSchemaOptions,
 } from "../schemaTypes.js";
 import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
+import type { NodeKind, TreeNodeSchema, TreeNodeSchemaClass } from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
@@ -49,6 +51,34 @@ export class SchemaFactoryAlpha<
 		return (
 			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
 		) as ScopedSchemaName<TScope, Name>;
+	}
+
+	/**
+	 * Declares a type enablable in a set of {@link AllowedTypes}.
+	 *
+	 * @remarks
+	 * An allowed type that is enablable can be read from the document but cannot be written.
+	 * Enablables add support for reading a type which can be used for schema evolution to add members to
+	 * an {@link AllowedTypes} while supporting cross version collaboration.
+	 *
+	 * Once enough clients supporting reading the type, support for writing can be added by removing the use of
+	 * `enablable` from the schema definition.
+	 *
+	 * A future change will allow writing the type using a runtime schema upgrade so that the type can be enabled
+	 * using a configuration flag change rather than a code change.
+	 *
+	 */
+	public enablable<const T extends TreeNodeSchema>(
+		t: T | AnnotatedAllowedType<T>,
+	): AnnotatedAllowedType<T> {
+		const annotatedType = normalizeToAnnotatedAllowedType(t);
+		return {
+			type: annotatedType.type,
+			metadata: {
+				...annotatedType.metadata,
+				enabledUponSchemaUpgrade: true,
+			},
+		};
 	}
 
 	/**

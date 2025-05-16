@@ -22,7 +22,13 @@ import {
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 import { NodeKind } from "./core/index.js";
-import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
+import {
+	FieldKind,
+	normalizeAllowedTypes,
+	normalizeFieldSchema,
+	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitFieldSchema,
+} from "./schemaTypes.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import type {
@@ -97,6 +103,13 @@ const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
 	[FieldKind.Required, FieldKinds.required],
 	[FieldKind.Identifier, FieldKinds.identifier],
 ]);
+
+/**
+ * Normalizes an {@link ImplicitAnnotatedAllowedTypes} into an {@link TreeTypeSet}.
+ */
+export function convertAllowedTypes(schema: ImplicitAnnotatedAllowedTypes): TreeTypeSet {
+	return new Set([...normalizeAllowedTypes(schema)].map((item) => brand(item.identifier)));
+}
 
 /**
  * Converts a {@link TreeNodeSchema} into a {@link TreeNodeStoredSchema}.

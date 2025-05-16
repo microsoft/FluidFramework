@@ -18,7 +18,10 @@ import {
 	getSchemaAndPolicy,
 	type FlexTreeHydratedContext,
 } from "../feature-libraries/index.js";
-import type { ImplicitAllowedTypes, ImplicitFieldSchema } from "./schemaTypes.js";
+import type {
+	ImplicitAnnotatedAllowedTypes,
+	ImplicitAnnotatedFieldSchema,
+} from "./schemaTypes.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
@@ -40,14 +43,16 @@ import { debugAssert, oob } from "@fluidframework/core-utils/internal";
  */
 export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	schema: ImplicitFieldSchema,
+	schema: ImplicitAnnotatedFieldSchema,
 	destinationContext: FlexTreeContext,
+	allowNonEnabledTypes = false,
 ): TIn extends undefined ? undefined : ExclusiveMapTree {
 	return prepareForInsertionContextless(
 		data,
 		schema,
 		getSchemaAndPolicy(destinationContext),
 		destinationContext.isHydrated() ? destinationContext : undefined,
+		allowNonEnabledTypes,
 	);
 }
 
@@ -66,16 +71,14 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
  */
 export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
-	schema: ImplicitAllowedTypes,
+	schema: ImplicitAnnotatedAllowedTypes,
 	destinationContext: FlexTreeContext,
 ): ExclusiveMapTree[] {
 	const mapTrees: ExclusiveMapTree[] = data.map((item) =>
-		mapTreeFromNodeData(
-			item,
-			schema,
-			destinationContext.isHydrated() ? destinationContext.nodeKeyManager : undefined,
-			getSchemaAndPolicy(destinationContext),
-		),
+		mapTreeFromNodeData(item, schema, {
+			context: destinationContext.isHydrated() ? destinationContext.nodeKeyManager : undefined,
+			schemaValidationPolicy: getSchemaAndPolicy(destinationContext),
+		}),
 	);
 
 	if (destinationContext.isHydrated()) {
@@ -92,16 +95,16 @@ export function prepareArrayContentForInsertion(
  */
 export function prepareForInsertionContextless<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	schema: ImplicitFieldSchema,
+	schema: ImplicitAnnotatedFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
+	allowNonEnabledTypes: boolean,
 ): TIn extends undefined ? undefined : ExclusiveMapTree {
-	const mapTree = mapTreeFromNodeData(
-		data,
-		schema,
-		hydratedData?.nodeKeyManager,
-		schemaAndPolicy,
-	);
+	const mapTree = mapTreeFromNodeData(data, schema, {
+		context: hydratedData?.nodeKeyManager,
+		schemaValidationPolicy: schemaAndPolicy,
+		allowNonEnabledTypes,
+	});
 
 	if (mapTree !== undefined && hydratedData !== undefined) {
 		prepareContentForHydration([mapTree], hydratedData.checkout.forest);

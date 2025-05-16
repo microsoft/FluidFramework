@@ -90,11 +90,9 @@ export function cursorFromInsertable<
 ):
 	| ITreeCursorSynchronous
 	| (TSchema extends FieldSchema<FieldKind.Optional> ? undefined : never) {
-	const mapTree = mapTreeFromNodeData(
-		data as InsertableField<UnsafeUnknownSchema>,
-		schema,
+	const mapTree = mapTreeFromNodeData(data as InsertableField<UnsafeUnknownSchema>, schema, {
 		context,
-	);
+	});
 	if (mapTree === undefined) {
 		return undefined as TSchema extends FieldSchema<FieldKind.Optional> ? undefined : never;
 	}

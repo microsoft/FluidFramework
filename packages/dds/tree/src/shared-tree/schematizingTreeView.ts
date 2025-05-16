@@ -183,6 +183,8 @@ export class SchematizingSimpleTreeView<
 					policy: this.schemaPolicy,
 				},
 				this,
+				// this allows enablable allowed types to be loaded into a tree
+				true,
 			);
 
 			initialize(this.checkout, {
@@ -462,7 +464,7 @@ export class SchematizingSimpleTreeView<
 		const view = this.getView();
 		setField(
 			view.context.root,
-			this.rootFieldSchema,
+			normalizeFieldSchema(this.rootFieldSchema),
 			newRoot as InsertableContent | undefined,
 		);
 	}

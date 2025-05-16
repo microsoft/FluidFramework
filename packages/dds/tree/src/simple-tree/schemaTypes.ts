@@ -148,7 +148,7 @@ export interface AnnotatedAllowedType<T extends TreeNodeSchema = TreeNodeSchema>
 export function isAnnotatedAllowedType(
 	allowedType: AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
 ): allowedType is AnnotatedAllowedType {
-	return "metadata" in allowedType && "type" in allowedType;
+	return allowedType !== undefined && "metadata" in allowedType && "type" in allowedType;
 }
 
 /**
@@ -163,8 +163,20 @@ export interface AllowedTypeMetadata {
 	 */
 	readonly custom?: unknown;
 
-	// TODO metadata for enablable types will be added here
+	/**
+	 * If defined, indicates that an allowed type is enablable. Before upgrade, this type can be loaded into the tree from a document
+	 * but not written to the tree.
+	 */
+	readonly enabledUponSchemaUpgrade?: SchemaUpgradeToken;
 }
+
+/**
+ * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
+ *
+ * TODO:#38722 make this a unique type and use it for runtime schema upgrades
+ * @alpha
+ */
+export type SchemaUpgradeToken = true;
 
 /**
  * Kind of a field on an {@link TreeObjectNode}.
@@ -608,27 +620,33 @@ export function normalizeFieldSchema(
  * @internal
  */
 export function normalizeAllowedTypes(
-	types: ImplicitAllowedTypes,
+	types: ImplicitAnnotatedAllowedTypes,
 ): ReadonlySet<TreeNodeSchema> {
+	// remove annotations before normalizing
+	const unannotated = unannotateImplicitAllowedTypes(types);
 	const normalized = new Set<TreeNodeSchema>();
-	if (isReadonlyArray(types)) {
+	if (isReadonlyArray(unannotated)) {
 		// Types array must not be modified after it is normalized since that would result in the user of the normalized data having wrong (out of date) content.
-		Object.freeze(types);
-		for (const lazyType of types) {
+		Object.freeze(unannotated);
+		for (const lazyType of unannotated) {
 			normalized.add(evaluateLazySchema(lazyType));
 		}
 	} else {
-		normalized.add(evaluateLazySchema(types));
+		normalized.add(evaluateLazySchema(unannotated));
 	}
 	return normalized;
 }
 
 /**
  * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
+ *
+ * @remarks
+ * type is frozen and should not be modified after being passed in.
  */
 export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
 	type: T | AnnotatedAllowedType<T>,
 ): AnnotatedAllowedType<T> {
+	Object.freeze(type);
 	return isAnnotatedAllowedType(type)
 		? type
 		: {

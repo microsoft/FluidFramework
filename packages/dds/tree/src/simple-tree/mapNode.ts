@@ -273,7 +273,10 @@ export function mapSchema<
 		): UnhydratedFlexTreeNode {
 			return UnhydratedFlexTreeNode.getOrCreate(
 				unhydratedContext,
-				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
+				mapTreeFromNodeData(
+					input as FactoryContent,
+					this as unknown as ImplicitAnnotatedAllowedTypes,
+				),
 			);
 		}
 
