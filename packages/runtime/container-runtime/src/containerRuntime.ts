@@ -1533,7 +1533,7 @@ export class ContainerRuntime
 				eventName: "Attached",
 				details: {
 					dirtyContainer: this.lastEmittedDirty,
-					hasPendingMessages: this.hasPendingMessages(),
+					hasPendingMessages: this.pendingMessagesCount !== 0,
 				},
 			});
 		});
@@ -1898,8 +1898,8 @@ export class ContainerRuntime
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
-		this.lastEmittedDirty = this.currentDirtyState();
-		context.updateDirtyContainerState(this.lastEmittedDirty);
+		this.lastEmittedDirty = this.isDirty;
+		context.updateDirtyContainerState(this.isDirty);
 
 		if (!this.skipSafetyFlushDuringProcessStack) {
 			// Reference Sequence Number may have just changed, and it must be consistent across a batch,
@@ -2497,7 +2497,7 @@ export class ContainerRuntime
 			return true;
 		}
 
-		if (!this.hasPendingMessages()) {
+		if (this.pendingMessagesCount === 0) {
 			// If there are no pending messages, we can always reconnect
 			this.resetReconnectCount();
 			return true;
@@ -2531,8 +2531,9 @@ export class ContainerRuntime
 		// Replaying is an internal operation and we don't want to generate noise while doing it.
 		// So temporarily disable dirty state change events, and save the old state.
 		// When we're done, we'll emit the event if the state changed.
-		const oldState = this.lastEmittedDirty;
+		assert(this.lastEmittedDirty === this.isDirty, "Unnoticed change in dirty state");
 		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
+		const oldState = this.lastEmittedDirty;
 		this.emitDirtyDocumentEvent = false;
 
 		try {
@@ -3245,7 +3246,6 @@ export class ContainerRuntime
 						checkpoint.rollback((message: LocalBatchMessage) =>
 							this.rollback(message.runtimeOp, message.localOpMetadata),
 						);
-						// reset the dirty state after rollback to what it was before to keep it consistent
 						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
 						stageControls = undefined;
@@ -3457,12 +3457,7 @@ export class ContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
-		return this.currentDirtyState();
-	}
-
-	//* Comment
-	private currentDirtyState(): boolean {
-		return this.attachState !== AttachState.Attached || this.hasPendingMessages();
+		return this.attachState !== AttachState.Attached || this.pendingMessagesCount !== 0;
 	}
 
 	private isContainerMessageDirtyable({
@@ -4315,13 +4310,16 @@ export class ContainerRuntime
 		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
 	}
 
-	//* Maybe remove?
-	private hasPendingMessages(): boolean {
-		return this.pendingMessagesCount !== 0;
-	}
-
+	/**
+	 * Emit "dirty" or "saved" event based on the current dirty state of the document.
+	 * This must be called every time the states underlying the dirty state change.
+	 *
+	 * @privateRemarks - It's helpful to think of this as an event handler registered
+	 * for hypothetical "changed" events for PendingStateManager, Outbox, and Container Attach machinery.
+	 * But those events don't exist so we manually call this wherever we know those changes happen.
+	 */
 	private updateDocumentDirtyState(): void {
-		const dirty: boolean = this.currentDirtyState();
+		const dirty = this.isDirty;
 
 		if (this.lastEmittedDirty === dirty) {
 			return;
