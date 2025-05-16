@@ -459,10 +459,7 @@ export abstract class SharedObjectCore<
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(
-				makeHandlesSerializable(content, this.serializer, this.handle),
-				localOpMetadata,
-			);
+			this.services!.deltaConnection.submit(content, localOpMetadata);
 		}
 	}
 
