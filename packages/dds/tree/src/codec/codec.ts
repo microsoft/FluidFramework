@@ -334,18 +334,18 @@ export function withSchemaValidation<
  * @remarks
  * Used to express compatibility requirements by indicating the oldest version with which compatibility must be maintained.
  *
- * When no compatibility impacting change landed in a given version, the value associated with its enum entry may point to the older version which its fully compatible with.
- * Note that this can change if a future version of the framework introduces an option to use something which is only supported at a particular version, then the values of the enum may shift,
+ * When no compatibility-impacting change landed in a given version, the value associated with its enum entry may point to the older version which it's fully compatible with.
+ * Note that this can change if a future version of the framework introduces an option to use something which is only supported at a particular version. In which case, the values of the enum may shift,
  * but the semantics of keys in this enum will not change.
  *
- * Do not depend on the format of value of this enums's entries: only depend on the keys (enum members) themselves.
+ * Do not depend on the value of this enums's entries: only depend on the keys (enum members) themselves.
  *
- * Some release may also be omitted is there is currently no need to express that specific version.
- * If there is a need for them they might be added in the future.
+ * Some release may also be omitted if there is currently no need to express that specific version.
+ * If the need arises, they might be added in the future.
  *
  * @privateRemarks
  * Entries in these enums should document the user facing impact of opting into a particular version.
- * For example, document if there is an encoding efficiency improvement if oping into that version or newer.
+ * For example, document if there is an encoding efficiency improvement of oping into that version or newer.
  * Versions with no notable impact can be omitted.
  *
  * These use numeric values for easy threshold comparisons.
@@ -373,7 +373,7 @@ export enum FluidClientVersion {
 	v2_0 = 2.0,
 
 	/** Fluid Framework Client 2.1 and newer. */
-	// If we thing we might want to start allowing opting into something that landed in 2.1 (without opting into something newer),
+	// If we think we might want to start allowing opting into something that landed in 2.1 (without opting into something newer),
 	// we could add an entry like this to allow users to indicate that they can be opted in once we are ready,
 	// then update it to "v2_1" once we actually have the opt in working.
 	// v2_1 = v2_0,
@@ -388,7 +388,7 @@ export enum FluidClientVersion {
 	 * Using this value can result in documents which can not be opened in future versions of the framework.
 	 * It can also result in data corruption by enabling unfinished features which may not handle all cases correctly.
 	 *
-	 * This can be used with specific APIs when the caller has knowledge of what specific features those APIs will be oped into with it.
+	 * This can be used with specific APIs when the caller has knowledge of what specific features those APIs will be opted into with it.
 	 * This is useful for testing features before they are released, but should not be used in production code.
 	 */
 	EnableUnstableFeatures = Number.POSITIVE_INFINITY,

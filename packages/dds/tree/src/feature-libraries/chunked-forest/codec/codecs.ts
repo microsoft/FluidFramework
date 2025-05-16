@@ -40,7 +40,7 @@ export type FieldBatchCodec = IJsonCodec<
 >;
 
 /**
- * TODO: the makeFieldBatchCodec (adn makeVersionedValidatedCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion.
+ * TODO: makeFieldBatchCodec (and makeVersionedValidatedCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion directly.
  */
 export function fieldBatchCodecVersionToFormat(version: FluidClientVersion): number {
 	return 1;
