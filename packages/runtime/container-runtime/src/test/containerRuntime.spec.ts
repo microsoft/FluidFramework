@@ -1044,7 +1044,7 @@ describe("Runtime", () => {
 				return clientId;
 			};
 
-			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
+			const addPendingMessage = (pendingStateManager: PendingStateManager): void => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
@@ -1059,6 +1059,10 @@ describe("Runtime", () => {
 					1,
 					false /* staged */,
 				);
+				(
+					containerRuntime as unknown as { updateDocumentDirtyState: () => void }
+				).updateDocumentDirtyState();
+			};
 
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
