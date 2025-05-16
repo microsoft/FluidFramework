@@ -2537,7 +2537,6 @@ export class ContainerRuntime
 
 		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
 		this.emitDirtyDocumentEvent = false;
-		let newState: boolean;
 
 		try {
 			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
@@ -2549,14 +2548,16 @@ export class ContainerRuntime
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
 		} finally {
-			// Save the new start and restore the old state, re-enable event emit
-			newState = this.dirtyContainer;
+			// Restore the old state, re-enable event emit
 			this.dirtyContainer = oldState;
 			this.emitDirtyDocumentEvent = true;
 		}
 
 		// Officially transition from the old state to the new state.
-		this.updateDocumentDirtyState(newState);
+		//* NOTE: newState was set to whatever this.dirtyContainer was after replaying,
+		//* which would have been set via updateDocumentDirtyState which always takes in a value equivalent to this.currentDirtyState
+		//* (and we're in a synchronous context so no interleaving is possible)
+		this.updateDocumentDirtyState(this.currentDirtyState());
 	}
 
 	/**
@@ -3045,7 +3046,8 @@ export class ContainerRuntime
 		// If there are no more pending messages after processing a local message,
 		// the document is no longer dirty.
 		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
+			//* NOTE: We are attached, currentDirtyState will give false
+			this.updateDocumentDirtyState(this.currentDirtyState());
 		}
 
 		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
@@ -3081,7 +3083,8 @@ export class ContainerRuntime
 		// If there are no more pending messages after processing a local message,
 		// the document is no longer dirty.
 		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
+			//* NOTE: We are attached, currentDirtyState will give false
+			this.updateDocumentDirtyState(this.currentDirtyState());
 		}
 
 		// Get the contents without the localOpMetadata because not all message types know about localOpMetadata.
@@ -3238,7 +3241,6 @@ export class ContainerRuntime
 	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
-		const checkpointDirtyState = this.dirtyContainer;
 		// eslint-disable-next-line import/no-deprecated
 		let stageControls: StageControlsExperimental | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
@@ -3261,7 +3263,10 @@ export class ContainerRuntime
 							this.rollback(message.runtimeOp, message.localOpMetadata),
 						);
 						// reset the dirty state after rollback to what it was before to keep it consistent
-						this.updateDocumentDirtyState(checkpointDirtyState);
+						//* NOTE: In terms of the dirty calculation, all rollback does is change number of ops in the outbox.
+						//* When setting checkpointDirtyState at the top of this function, this.dirtyContainer presumably matched currentDirtyState.
+						//* Rollback would put the outbox back the way it was before.  So we can use currentDirtyState here now.
+						this.updateDocumentDirtyState(this.currentDirtyState());
 						stageControls?.discardChanges();
 						stageControls = undefined;
 					} catch (error_) {
@@ -3360,7 +3365,8 @@ export class ContainerRuntime
 					);
 					this.rollback(runtimeOp, localOpMetadata);
 				});
-				this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
+				//* NOTE: Since we're attached, currentDirtyState === hasPendingMessages
+				this.updateDocumentDirtyState(this.currentDirtyState());
 			}),
 			commitChanges: (optionsParam) => {
 				const options = { ...defaultStagingCommitOptions, ...optionsParam };
@@ -3476,7 +3482,7 @@ export class ContainerRuntime
 		return this.dirtyContainer;
 	}
 
-	//* COmment
+	//* Comment
 	private currentDirtyState(): boolean {
 		return this.attachState !== AttachState.Attached || this.hasPendingMessages();
 	}
@@ -3549,8 +3555,9 @@ export class ContainerRuntime
 			this.emit("attached");
 		}
 
-		if (attachState === AttachState.Attached && !this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
+		if (!this.currentDirtyState()) {
+			//* NOTE: Obviously, false matches currentDirtyState
+			this.updateDocumentDirtyState(this.currentDirtyState());
 		}
 		this.channelCollection.setAttachState(attachState);
 	}
@@ -4507,7 +4514,8 @@ export class ContainerRuntime
 		}
 
 		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
-			this.updateDocumentDirtyState(true);
+			//* NOTE: Since we're attached and just pushed something to the outbox, currentDirtyState() will give true
+			this.updateDocumentDirtyState(this.currentDirtyState());
 		}
 	}
 
