@@ -114,7 +114,7 @@ function createTestSuiteWithInstalledVersion(
 			return provider;
 		});
 
-		afterEach("Reset TestObjectProvider", function () {
+		afterEach("Reset TestObjectProvider", () => {
 			if (provider === undefined) {
 				throw new Error("Expected provider to be set up by before hook");
 			}
