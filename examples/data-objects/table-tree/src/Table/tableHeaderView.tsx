@@ -192,6 +192,7 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 										handleChangeColumnHint(index, data.optionValue);
 									}
 								}}
+								disabled={col.getCells().length > 0}
 								size="small"
 								style={{ marginTop: "4px" }}
 							>
