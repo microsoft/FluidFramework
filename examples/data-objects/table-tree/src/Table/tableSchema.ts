@@ -97,6 +97,7 @@ export class ColumnProps extends schemaFactory.object("table-column-props", {
 }) {}
 export class Column extends TableSchema.column({
 	schemaFactory,
+	cell: Cell,
 	props: ColumnProps,
 }) {}
 export class RowProps extends schemaFactory.object("table-row-props", {
