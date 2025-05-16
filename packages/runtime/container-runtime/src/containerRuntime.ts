@@ -1897,8 +1897,7 @@ export class ContainerRuntime
 		this.closeSummarizerDelayMs =
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
-		this.dirtyContainer =
-			this.attachState !== AttachState.Attached || this.hasPendingMessages();
+		this.dirtyContainer = this.currentDirtyState();
 		context.updateDirtyContainerState(this.dirtyContainer);
 
 		if (!this.skipSafetyFlushDuringProcessStack) {
@@ -2532,9 +2531,9 @@ export class ContainerRuntime
 		// dirty state change events to detect whether replaying ops
 		// has any effect.
 
-		// Save the old state, reset to false, disable event emit
+		// Save the old state and disable event emit
+		// No need set this.dirtyContainer to false though, it will be updated throughout replay
 		const oldState = this.dirtyContainer;
-		this.dirtyContainer = false;
 
 		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
 		this.emitDirtyDocumentEvent = false;
@@ -3262,9 +3261,7 @@ export class ContainerRuntime
 							this.rollback(message.runtimeOp, message.localOpMetadata),
 						);
 						// reset the dirty state after rollback to what it was before to keep it consistent
-						if (this.dirtyContainer !== checkpointDirtyState) {
-							this.updateDocumentDirtyState(checkpointDirtyState);
-						}
+						this.updateDocumentDirtyState(checkpointDirtyState);
 						stageControls?.discardChanges();
 						stageControls = undefined;
 					} catch (error_) {
@@ -3328,7 +3325,10 @@ export class ContainerRuntime
 	// eslint-disable-next-line import/no-deprecated
 	public enterStagingMode = (): StageControlsExperimental => {
 		if (this.stageControls !== undefined) {
-			throw new Error("already in staging mode");
+			throw new UsageError("already in staging mode");
+		}
+		if (this.attachState === AttachState.Detached) {
+			throw new UsageError("cannot enter staging mode when detached");
 		}
 
 		// Make sure all BatchManagers are empty before entering staging mode,
@@ -3360,9 +3360,7 @@ export class ContainerRuntime
 					);
 					this.rollback(runtimeOp, localOpMetadata);
 				});
-				if (this.attachState === AttachState.Attached) {
-					this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
-				}
+				this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
 			}),
 			commitChanges: (optionsParam) => {
 				const options = { ...defaultStagingCommitOptions, ...optionsParam };
@@ -3474,7 +3472,13 @@ export class ContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
+		//* Switch to currentDirtyState
 		return this.dirtyContainer;
+	}
+
+	//* COmment
+	private currentDirtyState(): boolean {
+		return this.attachState !== AttachState.Attached || this.hasPendingMessages();
 	}
 
 	private isContainerMessageDirtyable({
@@ -4329,6 +4333,7 @@ export class ContainerRuntime
 		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
 	}
 
+	//* Maybe remove?
 	private hasPendingMessages(): boolean {
 		return this.pendingMessagesCount !== 0;
 	}
