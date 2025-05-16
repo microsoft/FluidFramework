@@ -4,7 +4,6 @@
  */
 
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ISharedObject,
@@ -15,6 +14,7 @@ import {
 	type SharedObjectOptions,
 	type FactoryOut,
 } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	SharedTreeKernel,
@@ -23,11 +23,9 @@ import {
 	type SharedTreeOptionsInternal,
 	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
-import type { ITree } from "./simple-tree/index.js";
-
-import { Breakable } from "./util/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+import type { ITree } from "./simple-tree/index.js";
+import { Breakable } from "./util/index.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
