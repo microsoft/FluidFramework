@@ -227,7 +227,7 @@ describe("compatUtils", () => {
 		}
 	});
 
-	describe.only("getValidationForRuntimeOptions", () => {
+	describe("getValidationForRuntimeOptions", () => {
 		type FeatureTestType = string | boolean | object;
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigValidationMap processing
 		type ITestConfigValidationMap = {
