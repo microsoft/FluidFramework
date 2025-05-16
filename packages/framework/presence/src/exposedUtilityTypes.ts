@@ -79,13 +79,6 @@ export namespace InternalUtilityTypes {
 		: never;
 
 	/**
-	 * @system
-	 */
-	// export declare class JsonDeserializedBrandOrig<T> {
-	// 	private readonly JsonDeserialized: T;
-	// }
-
-	/**
 	 * Base branded type
 	 *
 	 * @system
@@ -100,7 +93,6 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	declare class JsonDeserializedBrand<T> extends BrandedType<T> {
-		public toString(): string;
 		private readonly EncodedValue: T;
 		private constructor();
 	}

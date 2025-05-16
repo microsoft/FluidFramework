@@ -139,8 +139,6 @@ export namespace InternalUtilityTypes {
     export type IsNotificationListener<Event> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, true, false> : false;
     // @system (undocumented)
     export class JsonDeserializedBrand<T> extends BrandedType<T> {
-        // (undocumented)
-        toString(): string;
     }
     // @system
     export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
