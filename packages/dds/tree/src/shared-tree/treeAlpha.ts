@@ -319,6 +319,9 @@ export interface TreeAlpha {
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
+	/**
+	 * Group of identifier related API methods to create, convert, and retrieve identifiers.
+	 */
 	identifier: TreeIdentifierUtils;
 }
 

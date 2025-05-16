@@ -251,7 +251,6 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 }
 
 /**
- *
  * Gets the identifier from a node.
  *
  * @param node - {@link TreeNode} where you want to extract the identifier from.
