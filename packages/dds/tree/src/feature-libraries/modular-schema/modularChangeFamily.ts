@@ -2701,7 +2701,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		const baseAttachId = attachIdEntry.value;
 		countToProcess = attachIdEntry.length;
 
-		// XXX: Handle the case where some of the keys in this range have an attach and some don't.
 		const attachFieldEntry = getFirstFieldForCrossFieldKey(
 			this.table.baseChange,
 			{ ...attachIdEntry.value, target: CrossFieldTarget.Destination },
