@@ -18,6 +18,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 // @alpha
 export interface AllowedTypeMetadata {
     readonly custom?: unknown;
+    readonly enabledUponSchemaUpgrade?: SchemaUpgradeToken;
 }
 
 // @public @system
@@ -1117,6 +1118,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 export class SchemaFactoryAlpha<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
     arrayAlpha<const Name extends TName, const T extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     arrayRecursive<const Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): ArrayNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
+    enablable<const T extends TreeNodeSchema>(t: T | AnnotatedAllowedType<T>): AnnotatedAllowedType<T>;
     static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha_2<FieldKind_2.Identifier, LeafSchema_2<"string", string> & SimpleLeafNodeSchema_2, TCustomMetadata>;
     static readonly leaves: readonly [LeafSchema_2<"string", string> & SimpleLeafNodeSchema_2, LeafSchema_2<"number", number> & SimpleLeafNodeSchema_2, LeafSchema_2<"boolean", boolean> & SimpleLeafNodeSchema_2, LeafSchema_2<"null", null> & SimpleLeafNodeSchema_2, LeafSchema_2<"handle", IFluidHandle_2<unknown>> & SimpleLeafNodeSchema_2];
     mapAlpha<Name extends TName, const T extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
@@ -1161,6 +1163,9 @@ export interface SchemaStatics {
     readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
     readonly string: LeafSchema<"string", string>;
 }
+
+// @alpha
+export type SchemaUpgradeToken = true;
 
 // @alpha
 export interface SchemaValidationFunction<Schema extends TSchema> {

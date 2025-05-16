@@ -5,9 +5,20 @@
 ---
 Adds enablable allowed types to SchemaFactoryAlpha
 
-This adds the `enablable` API to [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class). Enablables can be passed in as [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) to declare that a type can be read at a particular location in the tree but not written there.
+This adds the `enablable` API to [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
+Enablables can be used for schema evolution to add members to an [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) while supporting cross version collaboration.
 
-This example array schema permits loading strings from the document but does not permit writing strings to the tree:
+Enablables are allowed types that can be read by the tree but not written. Attempting to write an enablable type will cause a runtime error.
+
+To add a new member to an `AllowedTypes`, add the type wrapped by `enablable`:
 ```typescript
 schemaFactoryAlpha.arrayAlpha("TestArray", [schemaFactoryAlpha.number, schemaFactoryAlpha.enablable(schemaFactoryAlpha.string)]);
 ```
+
+Once enough clients have this code update, it is safe to allow writing strings to the array.
+To enable writing strings to the array, a code change must be made to remove the enablable annotation:
+```typescript
+schemaFactoryAlpha.arrayAlpha("TestArray", [schemaFactoryAlpha.number, schemaFactoryAlpha.string]);
+```
+
+A future change will add an API that allows enablables to be enabled via a runtime schema upgrade so that the type can be enabled using a configuration flag change rather than a code change.

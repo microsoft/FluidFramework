@@ -639,10 +639,14 @@ export function normalizeAllowedTypes(
 
 /**
  * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
+ *
+ * @remarks
+ * type is frozen and should not be modified after being passed in.
  */
 export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
 	type: T | AnnotatedAllowedType<T>,
 ): AnnotatedAllowedType<T> {
+	Object.freeze(type);
 	return isAnnotatedAllowedType(type)
 		? type
 		: {
