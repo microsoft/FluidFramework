@@ -7,7 +7,7 @@ TreeAlpha identifier APIs for converting, retrieving, and generating identifiers
 
 ## TreeAlpha.identifier
 You can retrieve the long identifier with `TreeAlpha.identifier(node)`, where `node` is a `TreeNode`.
-If the node does not contain an identifier field, it will return `undefined`
+If the identifier cannot be returned, it will return `undefined`.
 
 ### Example for a valid node with identifier
 ```typescript
@@ -71,14 +71,13 @@ const lengthenedIdentifier = TreeAlpha.identifier.lengthen(branch, invalidShortI
 You can retrieve the short identifier from a node with `TreeAlpha.identifier.getShort(node)` where `node` is a `TreeNode`.
 If it is not possible to retrieve the short identifier, it will return `undefined`
 
-### Example for a node with valid identifier.
-This will happen when the node contains a valid, compressible identifier recognized by the nodes' associated idCompressor.
+### Example for a node with valid identifier
 ```typescript
 // This will retrieve the short identifier from the node.
 const shortIdentifier = TreeAlpha.identifier.getShort(nodeWithValidIdentifier)
 ```
 
-### Examples for when you get undefined.
+### Examples for when you get undefined
 If the node provided does not contain an identifier that is recognized or compressible by the idCompressor, this method will return undefined.
 This will occur in the following cases:
 - The node is an unhydrated node with a user provided identifier. Note that if it is an unhydrated node without an identifier provided, it will throw an error.
