@@ -518,6 +518,49 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
+		it("change to detached root over attach of that node", () => {
+			const nodeDescription = Change.nodeWithId(
+				1,
+				{ revision: tag2, localId: brand(0) },
+				Change.field(fieldB, sequence.identifier, [
+					MarkMaker.remove(1, { revision: tag2, localId: brand(1) }),
+				]),
+			);
+			const sourceChange = Change.build({
+				family,
+				maxId: 2,
+				roots: [
+					{
+						detachId: { revision: tag1, localId: brand(1) },
+						change: nodeDescription,
+					},
+				],
+			});
+
+			const targetChange = Change.build(
+				{
+					family,
+					maxId: 1,
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.insert(2, { revision: tag1, localId: brand(0) }),
+				]),
+			);
+
+			const rebased = family.rebase(
+				tagChange(sourceChange, tag2),
+				tagChange(targetChange, tag1),
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const expected = Change.build(
+				{ family, maxId: 2 },
+				Change.field(fieldA, sequence.identifier, [], nodeDescription),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
 		it("prunes its output", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);

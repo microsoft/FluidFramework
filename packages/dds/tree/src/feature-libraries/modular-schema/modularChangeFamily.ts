@@ -2624,17 +2624,16 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 		countToProcess = baseRenameEntry.length;
 
-		// XXX: This should do a range query on nodeChanges.
-		this.table.rebasedRootNodes.nodeChanges.delete([
-			baseRenameEntry.value.revision,
-			baseRenameEntry.value.localId,
-		]);
-
 		const nodeEntry = rangeQueryChangeAtomIdMap(
 			this.table.newChange.rootNodes.nodeChanges,
 			baseRenameEntry.value,
 			countToProcess,
 		);
+
+		this.table.rebasedRootNodes.nodeChanges.delete([
+			baseRenameEntry.value.revision,
+			baseRenameEntry.value.localId,
+		]);
 
 		countToProcess = nodeEntry.length;
 		const newNodeId = nodeEntry.value;
