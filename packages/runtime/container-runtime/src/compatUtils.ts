@@ -345,7 +345,6 @@ export function getValidationForRuntimeOptions<T extends Record<SemanticVersion,
 		// For example, if the minVersionForCollab is "1.0.0" and the user sets enableGroupedBatching to true,
 		// then this will throw once it reaches "2.0.0-defaults", since true is in the array of values for that version.
 		for (const version of versions) {
-			//
 			if (gt(version, minVersionForCollab)) {
 				for (const configValue of validationConfig[version]) {
 					// If the value is an object, check if user value contains all keys/values of configValue
