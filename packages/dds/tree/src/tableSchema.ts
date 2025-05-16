@@ -99,7 +99,7 @@ function isTableNode(
  * This namespace should be strictly type-exported by the package.
  * All members should be tagged with `@system`.
  *
- * @system @internal
+ * @system @alpha
  */
 export namespace System_TableSchema {
 	/**
@@ -108,7 +108,7 @@ export namespace System_TableSchema {
 	 * Longer term, it would be better to simply omit "props" altogether by default.
 	 * For now, this ensures that the user doesn't have to specify a "props" entry when initializing column/row nodes
 	 * and ensures that they cannot set anything that might conflict with future evolutions of the schema.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	export type DefaultPropsType = ReturnType<typeof SchemaFactory.optional<[]>>;
 
@@ -116,7 +116,7 @@ export namespace System_TableSchema {
 	 * A base interface for factory input options which include an schema factory.
 	 * @remarks This interface should not be referenced directly.
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryAlpha> {
 		/**
@@ -130,7 +130,7 @@ export namespace System_TableSchema {
 	 * A base interface for factory input options which include the table cell schema.
 	 * @remarks This interface should not be referenced directly.
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	export interface OptionsWithCellSchema<TCellSchema extends ImplicitAllowedTypes> {
 		/**
@@ -144,7 +144,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table cow schema.
 	 * @remarks Includes parameters common to all column factory overloads.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	export type CreateColumnOptionsBase<
 		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
@@ -153,7 +153,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating column schema.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumnSchema<
@@ -305,7 +305,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base column schema type.
-	 * @sealed @system @internal
+	 * @sealed @system @alpha
 	 */
 	export type ColumnSchemaBase<
 		TScope extends string | undefined = string | undefined,
@@ -320,7 +320,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table row schema.
 	 * @remarks Includes parameters common to all row factory overloads.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	export type CreateRowOptionsBase<
 		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
@@ -329,7 +329,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating row schema.
-	 * @sealed @internal
+	 * @sealed @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createRowSchema<
@@ -509,7 +509,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @system @internal
+	 * @sealed @system @alpha
 	 */
 	export type RowSchemaBase<
 		TScope extends string | undefined = string | undefined,
@@ -524,7 +524,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table schema.
 	 * @remarks Includes parameters common to all table factory overloads.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	export type TableFactoryOptionsBase<
 		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
@@ -533,7 +533,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating table schema.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createTableSchema<
@@ -942,7 +942,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @system @internal
+	 * @sealed @system @alpha
 	 */
 	export type TableSchemaBase<
 		TScope extends string | undefined,
@@ -959,6 +959,11 @@ export namespace System_TableSchema {
  *
  * @remarks
  *
+ * WARNING: These APIs are in preview and are subject to change.
+ * Until these APIs have stabilized, it is not recommended to use them in production code.
+ * There may be breaking changes to these APIs and their underlying data format.
+ * Using these APIs in production code may result in data loss or corruption.
+ *
  * Tables created using these APIs are...
  *
  * - sparse, meaning that cells may be omitted, and new rows are empty by default.
@@ -972,69 +977,103 @@ export namespace System_TableSchema {
  * Column and Row schema created using these APIs are extensible via the `props` field.
  * This allows association of additional properties with column and row nodes.
  *
- * Note: for now it is possible for table cells to become "orphaned".
+ * Cells in the table may become "orphaned."
  * That is, it is possible to enter a state where one or more rows contain cells with no corresponding column.
- * To help avoid this situation, you can manually remove corresponding cells when removing columns.
+ * To reduce the likelihood of this, you can manually remove corresponding cells when removing columns.
  * Either way, it is possible to enter such a state via the merging of edits.
  * For example: one client might add a row while another concurrently removes a column, orphaning the cell where the column and row intersected.
  *
- * @example Using default Column and Row schema
+ * @example Defining a Table schema
  *
  * ```typescript
- * class Cell extends schemaFactory.object("TableCell", {
- * 	value: schemaFactory.string,
- * }) {}
- *
- * class Table extends TableSchema.table({
+ * class MyTable extends TableSchema.table({
  * 	schemaFactory,
- * 	cell: Cell,
+ * 	cell: schemaFactory.string,
  * }) {}
  *
- * const table = new Table({
+ * const table = new MyTable({
  * 	columns: [{ id: "column-0" }],
- * 	rows: [{ id: "row-0", cells: {} }],
+ * 	rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
  * });
  * ```
  *
  * @example Customizing Column and Row schema
  *
  * ```typescript
- * class Cell extends schemaFactory.object("TableCell", {
- * 	value: schemaFactory.string,
- * }) {}
+ * const Cell = schemaFactory.string;
  *
- * class ColumnProps extends schemaFactory.object("TableColumnProps", {
- * 	// Column label to display.
- * 	label: schemaFactory.string,
- * 	// The type of data represented by the cells. Default: string.
- * 	dataType: schemaFactory.optional(schemaFactory.string),
- * }) {}
- *
- * class Column extends TableSchema.column({
+ * class MyColumn extends TableSchema.column({
  * 	schemaFactory,
  * 	cell: Cell,
- * 	props: ColumnProps,
+ * 	props: schemaFactory.object("TableColumnProps", {
+ * 		label: schemaFactory.string,
+ * 	}),
  * }) {}
  *
- * class Row extends TableSchema.row({
+ * class MyRow extends TableSchema.row({
  * 	schemaFactory,
  * 	cell: Cell,
  * }) {}
  *
- * class Table extends TableSchema.table({
+ * class MyTable extends TableSchema.table({
  * 	schemaFactory,
  * 	cell: Cell,
- * 	column: Column,
- * 	row: Row,
+ * 	column: MyColumn,
+ * 	row: MyRow,
  * }) {}
  *
- * const table = new Table({
+ * const table = new MyTable({
  * 	columns: [
- * 		new Column({ props: { label: "Entry", dataType: "string" } }),
- * 		new Column({ props: { label: "Date", dataType: "date" } }),
- * 		new Column({ props: { label: "Amount", dataType: "number" } }),
+ * 		new MyColumn({ props: { label: "Entry" } }),
+ * 		new MyColumn({ props: { label: "Date" } }),
+ * 		new MyColumn({ props: { label: "Amount" } }),
  * 	],
  * 	rows: [],
+ * });
+ * ```
+ *
+ * @example Listening for changes in the table
+ *
+ * ```typescript
+ * // Listen for any changes to the table and its children.
+ * // The "treeChanged" event will fire when the associated node or any of its descendants change.
+ * Tree.on(table, "treeChanged", () => {
+ * 	// Respond to the change.
+ * });
+ * ```
+ *
+ * @example Listening for changes to the rows list only
+ *
+ * ```typescript
+ * // Listen for any changes to the list of rows.
+ * // The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).
+ * // In this case, the event will fire when a row is added or removed, or the order of the list is changed.
+ * // But it won't fire when a row's properties change, or when the row's cells change, etc.
+ * Tree.on(table.rows, "nodeChanged", () => {
+ * 	// Respond to the change.
+ * });
+ * ```
+ *
+ * @example Removing column and cells in a transaction
+ *
+ * When removing a column, if you wish to ensure that all of its corresponding cells are also removed (and not
+ * orphaned), you can remove the column and all of the relevant cells in a transaction.
+ * Note that there are performance implications to this.
+ *
+ * ```typescript
+ * // Remove column1 and all of its cells.
+ * // The "transaction" method will ensure that all changes are applied atomically.
+ * Tree.runTransaction(table, () => {
+ * 	// Remove column1.
+ * 	table.removeColumn(column1);
+ *
+ * 	// Remove the cell at column1 for each row.
+ * 	for (const row of table.rows) {
+ * 		table.removeCell({
+ * 			column: column1,
+ * 			row,
+ * 		});
+ * 	}
  * });
  * ```
  *
@@ -1042,7 +1081,7 @@ export namespace System_TableSchema {
  * The above examples are backed by tests in `tableSchema.spec.ts`.
  * Those tests and these examples should be kept in-sync to ensure that the examples are correct.
  *
- * @internal
+ * @alpha
  */
 export namespace TableSchema {
 	// #region Column
@@ -1052,7 +1091,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(column:2)}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the column.
-	 * @sealed @internal
+	 * @sealed @alpha
 	 */
 	export interface Column<
 		TCell extends ImplicitAllowedTypes,
@@ -1090,7 +1129,7 @@ export namespace TableSchema {
 	 * Factory for creating new table column schema.
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
-	 * @internal
+	 * @alpha
 	 */
 	export function column<
 		const TScope extends string | undefined,
@@ -1103,7 +1142,7 @@ export namespace TableSchema {
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the column.
-	 * @internal
+	 * @alpha
 	 */
 	export function column<
 		const TScope extends string | undefined,
@@ -1139,7 +1178,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(row:2)}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the row.
-	 * @sealed @internal
+	 * @sealed @alpha
 	 */
 	export interface Row<
 		TCell extends ImplicitAllowedTypes,
@@ -1215,7 +1254,7 @@ export namespace TableSchema {
 	 * Factory for creating new table column schema.
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
-	 * @internal
+	 * @alpha
 	 */
 	export function row<
 		const TScope extends string | undefined,
@@ -1228,7 +1267,7 @@ export namespace TableSchema {
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the row.
-	 * @internal
+	 * @alpha
 	 */
 	export function row<
 		const TScope extends string | undefined,
@@ -1261,7 +1300,7 @@ export namespace TableSchema {
 
 	/**
 	 * A key to uniquely identify a cell within a table.
-	 * @internal
+	 * @alpha
 	 */
 	export interface CellKey<
 		TColumn extends ImplicitAllowedTypes,
@@ -1280,7 +1319,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.insertColumn} parameters.
-	 * @internal
+	 * @alpha
 	 */
 	export interface InsertColumnParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
@@ -1297,7 +1336,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.insertColumns} parameters.
-	 * @internal
+	 * @alpha
 	 */
 	export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
@@ -1314,7 +1353,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.insertRow} parameters.
-	 * @internal
+	 * @alpha
 	 */
 	export interface InsertRowParameters<TRow extends ImplicitAllowedTypes> {
 		/**
@@ -1331,7 +1370,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.insertRows} parameters.
-	 * @internal
+	 * @alpha
 	 */
 	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
 		/**
@@ -1348,7 +1387,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.setCell} parameters.
-	 * @internal
+	 * @alpha
 	 */
 	export interface SetCellParameters<
 		TCell extends ImplicitAllowedTypes,
@@ -1372,7 +1411,7 @@ export namespace TableSchema {
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TColumn - The type of the columns in the table.
 	 * @typeParam TRow - The type of the rows in the table.
-	 * @sealed @internal
+	 * @sealed @alpha
 	 */
 	export interface Table<
 		TScope extends string | undefined,
@@ -1556,7 +1595,7 @@ export namespace TableSchema {
 	 * Factory for creating new table schema.
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the table.
-	 * @internal
+	 * @alpha
 	 */
 	export function table<
 		const TScope extends string | undefined,
@@ -1574,7 +1613,7 @@ export namespace TableSchema {
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TColumn - The type of the columns in the table.
-	 * @internal
+	 * @alpha
 	 */
 	export function table<
 		const TScope extends string | undefined,
@@ -1595,7 +1634,7 @@ export namespace TableSchema {
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TRow - The type of the rows in the table.
-	 * @internal
+	 * @alpha
 	 */
 	export function table<
 		const TScope extends string | undefined,
@@ -1617,7 +1656,7 @@ export namespace TableSchema {
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TColumn - The type of the columns in the table.
 	 * @typeParam TRow - The type of the rows in the table.
-	 * @internal
+	 * @alpha
 	 */
 	export function table<
 		const TScope extends string | undefined,
