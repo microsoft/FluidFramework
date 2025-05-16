@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
@@ -15,7 +15,7 @@ import {
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
 } from "../../core/index.js";
-import type { ITreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
+import { Tree, type ITreeCheckout, type TreeStoredContent } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
@@ -26,11 +26,17 @@ import {
 	expectNoRemovedRoots,
 	makeTreeFromJson,
 	moveWithin,
+	TestTreeProviderLite,
 	validateUsageError,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
-import { SchemaFactory, toStoredSchema } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	toStoredSchema,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
+import { TreeStatus } from "../../index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -95,10 +101,8 @@ describe("Editing", () => {
 		});
 
 		it("can rebase remove over move", () => {
-			const tree1 = makeTreeFromJsonSequence([]);
+			const tree1 = makeTreeFromJsonSequence(["a", "b"]);
 			const tree2 = tree1.branch();
-			insert(tree1, 0, "a", "b");
-			tree2.rebaseOnto(tree1);
 
 			// Move b before a
 			tree1.editor.move(rootField, 1, 1, rootField, 0);
@@ -111,6 +115,48 @@ describe("Editing", () => {
 
 			const expected = ["a"];
 			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can rebase move over remove", () => {
+			const tree1 = makeTreeFromJsonSequence(["a", "b"]);
+			const tree2 = tree1.branch();
+
+			// Remove b
+			remove(tree1, 1, 1);
+
+			// Move b before a
+			tree2.editor.move(rootField, 1, 1, rootField, 0);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			const expected = ["b", "a"];
+			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can apply a composition of [move + undo]", () => {
+			const tree1 = makeTreeFromJsonSequence(["a"]);
+			const tree2 = tree1.branch();
+
+			const { undoStack } = createTestUndoRedoStacks(tree2.events);
+
+			tree2.editor.move(
+				rootField,
+				0,
+				1,
+				{
+					parent: undefined,
+					field: brand("foo"),
+				},
+				0,
+			);
+			undoStack.pop()?.revert();
+
+			expectJsonTree(tree2, ["a"]);
+
+			tree1.merge(tree2);
+
+			expectJsonTree(tree1, ["a"]);
 		});
 
 		it("can rebase intra-field move over inter-field move of same node and its parent", () => {
@@ -257,6 +303,20 @@ describe("Editing", () => {
 			expectJsonTree([tree, delAB, delCD, addX, addY], ["x", "y"]);
 		});
 
+		it("can edit node created in same transaction", () => {
+			const tree1 = makeTreeFromJsonSequence([]);
+			const tree2 = tree1.branch();
+			tree2.transaction.start();
+			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees([{}]));
+			const aEditor = tree2.editor.sequenceField({ parent: rootNode, field: brand("foo") });
+			aEditor.insert(0, chunkFromJsonTrees(["a"]));
+
+			tree2.transaction.commit();
+
+			tree1.merge(tree2);
+			expectJsonTree([tree1, tree2], [{ foo: "a" }]);
+		});
+
 		it("can rebase a change under a node whose insertion is also rebased", () => {
 			const tree1 = makeTreeFromJsonSequence(["B"]);
 			const tree2 = tree1.branch();
@@ -372,6 +432,7 @@ describe("Editing", () => {
 				field: brand(""),
 			};
 			const listEditor = tree2.editor.sequenceField(fooListPath);
+
 			moveWithin(tree2.editor, fooListPath, 2, 1, 1);
 			listEditor.insert(3, chunkFromJsonTrees(["D"]));
 			listEditor.remove(0, 1);
@@ -1069,6 +1130,7 @@ describe("Editing", () => {
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			// Move to bar: [{}, { bar: ["a"] }}]
+			// TODO: Is this edit supposed to be to tree2?
 			tree.editor.move(
 				{ parent: rootNode, field: brand("foo") },
 				0,
@@ -2216,6 +2278,74 @@ describe("Editing", () => {
 				});
 			}
 		});
+
+		it.skip("reinsert hydrated node in hydrated array", () => {
+			const sf = new SchemaFactory(undefined);
+			class Child extends sf.object("Child", {}) {}
+			class Parent extends sf.object("Parent", {
+				children: sf.array(Child),
+			}) {}
+
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({
+				schema: Parent,
+			});
+			const view = provider.trees[0].viewWith(config);
+			view.initialize(new Parent({ children: [new Child({})] }));
+			const hydratedChild = view.root.children[0];
+			// Detach the child so it is insertable again
+			view.root.children.removeAt(0);
+			assert.equal(view.root.children.length, 0);
+
+			view.root.children.insertAtEnd(hydratedChild);
+			assert.equal(view.root.children.length, 1);
+			assert.equal(view.root.children[0], hydratedChild);
+		});
+
+		it.skip("a removed array node can be edited", () => {
+			const sf = new SchemaFactory(undefined);
+			class Child extends sf.object("Child", {}) {}
+			class Parent extends sf.object("Parent", {
+				children: sf.optional(sf.array(Child)),
+			}) {}
+
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({
+				schema: Parent,
+			});
+			const view0 = provider.trees[0].viewWith(config);
+			const view1 = provider.trees[1].viewWith(config);
+			view0.initialize(new Parent({ children: [new Child({})] }));
+			provider.synchronizeMessages();
+
+			const hydratedArray0 = view0.root.children ?? fail("Expected array to be present");
+			const hydratedArray1 = view1.root.children ?? fail("Expected array to be present");
+			assert.equal(Tree.status(hydratedArray0), TreeStatus.InDocument);
+			assert.equal(Tree.status(hydratedArray1), TreeStatus.InDocument);
+			assert.equal(hydratedArray0.length, 1);
+			assert.equal(hydratedArray1.length, 1);
+
+			view0.root.children = undefined;
+
+			// Do some edit on view1 to ensure that when it removes the array (on the next call to synchronizeMessages), it puts the array in a different detached field.
+			// This is necessary to ensure that this test doesn't just pass because both views are storing the removed array in the same detached field.
+			hydratedArray1.insertAtStart(new Child({}));
+			hydratedArray1.removeAt(0);
+
+			provider.synchronizeMessages();
+
+			assert.equal(Tree.status(hydratedArray0), TreeStatus.Removed);
+			assert.equal(Tree.status(hydratedArray1), TreeStatus.Removed);
+
+			// The array can still be edited
+			hydratedArray0.removeAt(0);
+
+			assert.equal(hydratedArray0.length, 0);
+
+			provider.synchronizeMessages();
+
+			assert.equal(hydratedArray1.length, 0);
+		});
 	});
 
 	describe("Optional Field", () => {
@@ -2584,6 +2714,51 @@ describe("Editing", () => {
 			fork.rebaseOnto(tree);
 			tree.merge(fork, false);
 			expectJsonTree([fork, tree], []);
+		});
+
+		it.skip("a removed object node can be edited", () => {
+			const sf = new SchemaFactory(undefined);
+			class Child extends sf.object("Child", {}) {}
+			class Parent extends sf.object("Parent", {
+				child: sf.optional(Child),
+			}) {}
+
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({
+				schema: sf.optional(Parent),
+			});
+			const view0 = provider.trees[0].viewWith(config);
+			const view1 = provider.trees[1].viewWith(config);
+			view0.initialize(new Parent({ child: new Child({}) }));
+			provider.synchronizeMessages();
+
+			const hydratedParent0 = view0.root ?? fail("Expected parent to be present");
+			const hydratedParent1 = view1.root ?? fail("Expected parent to be present");
+			assert.equal(Tree.status(hydratedParent0), TreeStatus.InDocument);
+			assert.equal(Tree.status(hydratedParent1), TreeStatus.InDocument);
+			assert.notEqual(hydratedParent0.child, undefined);
+			assert.notEqual(hydratedParent1.child, undefined);
+
+			view0.root = undefined;
+
+			// Do some edit on view1 to ensure that when it removes the parent node (on the next call to synchronizeMessages), it puts the parent in a different detached field.
+			// This is necessary to ensure that this test doesn't just pass because both views are storing the removed parent in the same detached field.
+			view1.root = new Parent({});
+			view1.root = undefined;
+
+			provider.synchronizeMessages();
+
+			assert.equal(Tree.status(hydratedParent0), TreeStatus.Removed);
+			assert.equal(Tree.status(hydratedParent1), TreeStatus.Removed);
+
+			// The object can still be edited
+			hydratedParent0.child = undefined;
+
+			assert.equal(hydratedParent0.child, undefined);
+
+			provider.synchronizeMessages();
+
+			assert.equal(hydratedParent1.child, undefined);
 		});
 	});
 

@@ -9,14 +9,12 @@ import { MarkListFactory } from "./markListFactory.js";
 import {
 	type Changeset,
 	type Detach,
-	type HasMoveFields,
 	type HasRevisionTag,
 	type Mark,
 	type MarkEffect,
 	NoopMarkType,
 	type Rename,
 } from "./types.js";
-import type { MoveMarkEffect } from "./helperTypes.js";
 import { isDetach, isRename } from "./utils.js";
 
 export function replaceRevisions(
@@ -64,20 +62,6 @@ function updateEffect<TMark extends MarkEffect>(
 		case "Rename":
 		case NoopMarkType:
 			return mark;
-		case "AttachAndDetach":
-			return {
-				...mark,
-				attach: updateEffect(mark.attach, revisionsToReplace, newRevision),
-				detach: updateEffect(mark.detach, revisionsToReplace, newRevision),
-			};
-		case "MoveIn":
-		case "MoveOut":
-			return updateMoveEffect<TMark & MoveMarkEffect>(
-				// For some reason, TypeScript is not able to infer that `mark` cannot be a `NoopMark` here.
-				mark as MoveMarkEffect,
-				revisionsToReplace,
-				newRevision,
-			);
 		case "Insert":
 		case "Remove":
 			return updateRevision<TMark & HasRevisionTag>(mark, revisionsToReplace, newRevision);
@@ -101,23 +85,6 @@ function updateIdOverride<TEffect extends Detach | Rename>(
 	} else {
 		return effect;
 	}
-}
-
-function updateMoveEffect<TEffect extends HasMoveFields>(
-	effect: TEffect,
-	revisionsToReplace: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-): TEffect {
-	return effect.finalEndpoint !== undefined
-		? updateRevision(
-				{
-					...effect,
-					finalEndpoint: updateRevision(effect.finalEndpoint, revisionsToReplace, newRevision),
-				},
-				revisionsToReplace,
-				newRevision,
-			)
-		: updateRevision(effect, revisionsToReplace, newRevision);
 }
 
 function updateRevision<T extends HasRevisionTag>(

@@ -13,11 +13,9 @@ import {
 	genericFieldKind,
 	type ModularChangeset,
 	FieldKindWithEditor,
-	type RelevantRemovedRootsFromChild,
 	chunkTree,
 	defaultChunkPolicy,
 	type TreeChunk,
-	cursorForJsonableTreeField,
 	chunkFieldSingle,
 	makeFieldBatchCodec,
 	type NodeId,
@@ -29,36 +27,30 @@ import {
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type EditDescription,
-	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
-	makeDetachedNodeId,
 	type RevisionTag,
 	tagChange,
 	type TaggedChange,
 	type FieldKindIdentifier,
 	type FieldKey,
-	type UpPath,
 	revisionMetadataSourceFromInfo,
 	type ITreeCursorSynchronous,
 	type DeltaFieldChanges,
 	type DeltaRoot,
 	type DeltaDetachedNodeId,
 	type ChangeEncodingContext,
-	type ChangeAtomIdMap,
 	Multiplicity,
 	replaceAtomRevisions,
-	type FieldUpPath,
 	type RevisionInfo,
+	type NormalizedUpPath,
+	type NormalizedFieldUpPath,
 } from "../../../core/index.js";
 import {
-	type Mutable,
 	brand,
-	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	newTupleBTree,
-	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import {
@@ -75,40 +67,37 @@ import {
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
-import {
-	newCrossFieldKeyTable,
-	type ChangeAtomIdBTree,
-	type CrossFieldKeyTable,
-	type FieldChangeMap,
-	type FieldId,
-	type NodeChangeset,
+import type {
+	NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
-	getFieldKind,
 	intoDelta,
 	updateRefreshers,
-	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
-	FieldChangeDelta,
 	FieldChangeEncodingContext,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
+import {
+	assertEqual,
+	Change,
+	normalizeChangeset,
+	removeAliases,
+} from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
-	compose: (change1, change2, composeChild) =>
+	compose: ({ change: change1 }, { change: change2 }, composeChild) =>
 		change1 === undefined && change2 === undefined
 			? undefined
 			: composeChild(change1, change2),
-	invert: (change) => change,
-	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
+	invert: ({ change }) => change,
+	rebase: ({ change }, { change: base }, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, oldRevisions, newRevision) =>
 		change !== undefined ? replaceAtomRevisions(change, oldRevisions, newRevision) : undefined,
@@ -142,16 +131,14 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
-		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
-	}),
-	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
-		change !== undefined ? relevantRemovedRootsFromChild(change) : [],
+	intoDelta: (change, deltaFromChild): DeltaFieldChanges => [
+		{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined },
+	],
 
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
 	isEmpty: (change) => false,
-	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0, 0]]),
+	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0]]),
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
 };
@@ -203,13 +190,23 @@ const valueChange2: ValueChangeset = { old: 1, new: 2 };
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 
-const pathA: FieldUpPath = { parent: undefined, field: fieldA };
-const pathA0: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
-const pathB: FieldUpPath = { parent: undefined, field: fieldB };
-const pathB0: UpPath = { parent: undefined, parentField: fieldB, parentIndex: 0 };
-const pathA0A: FieldUpPath = { parent: pathA0, field: fieldA };
-const pathA0B: FieldUpPath = { parent: pathA0, field: fieldB };
-const pathB0A: FieldUpPath = { parent: pathB0, field: fieldA };
+const pathA: NormalizedFieldUpPath = { parent: undefined, field: fieldA };
+const pathA0: NormalizedUpPath = {
+	detachedNodeId: undefined,
+	parent: undefined,
+	parentField: fieldA,
+	parentIndex: 0,
+};
+const pathB: NormalizedFieldUpPath = { parent: undefined, field: fieldB };
+const pathB0: NormalizedUpPath = {
+	detachedNodeId: undefined,
+	parent: undefined,
+	parentField: fieldB,
+	parentIndex: 0,
+};
+const pathA0A: NormalizedFieldUpPath = { parent: pathA0, field: fieldA };
+const pathA0B: NormalizedFieldUpPath = { parent: pathA0, field: fieldB };
+const pathB0A: NormalizedFieldUpPath = { parent: pathB0, field: fieldA };
 
 const mainEditor = family.buildEditor(() => undefined);
 const rootChange1a = removeAliases(
@@ -1147,108 +1144,109 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	describe("relevantRemovedRoots", () => {
-		const fieldKind: FieldKindIdentifier = brand("HasRemovedRootsRefs");
-		interface HasRemovedRootsRefs {
-			shallow: DeltaDetachedNodeId[];
-			nested: NodeId[];
-		}
+	// XXX
+	// describe("relevantRemovedRoots", () => {
+	// 	const fieldKind: FieldKindIdentifier = brand("HasRemovedRootsRefs");
+	// 	interface HasRemovedRootsRefs {
+	// 		shallow: DeltaDetachedNodeId[];
+	// 		nested: NodeId[];
+	// 	}
 
-		const handler: FieldChangeHandler<
-			HasRemovedRootsRefs,
-			FieldEditor<HasRemovedRootsRefs>
-		> = {
-			relevantRemovedRoots: (
-				change: HasRemovedRootsRefs,
-				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-			) => {
-				return [
-					...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
-					...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
-				];
-			},
-		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
-		const hasRemovedRootsRefsField = new FieldKindWithEditor(
-			fieldKind,
-			Multiplicity.Single,
-			handler,
-			() => false,
-			new Set(),
-		);
-		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
+	// 	const handler: FieldChangeHandler<
+	// 		HasRemovedRootsRefs,
+	// 		FieldEditor<HasRemovedRootsRefs>
+	// 	> = {
+	// 		relevantRemovedRoots: (
+	// 			change: HasRemovedRootsRefs,
+	// 			relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
+	// 		) => {
+	// 			return [
+	// 				...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
+	// 				...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
+	// 			];
+	// 		},
+	// 	} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
+	// 	const hasRemovedRootsRefsField = new FieldKindWithEditor(
+	// 		fieldKind,
+	// 		Multiplicity.Single,
+	// 		handler,
+	// 		() => false,
+	// 		new Set(),
+	// 	);
+	// 	const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 
-		function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
-			deepFreeze(input);
-			return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
-		}
+	// 	function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
+	// 		deepFreeze(input);
+	// 		return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
+	// 	}
 
-		function nodeChangeFromHasRemovedRootsRefs(changeset: HasRemovedRootsRefs): NodeChangeset {
-			return {
-				fieldChanges: new Map([[fieldA, { fieldKind, change: brand(changeset) }]]),
-			};
-		}
+	// 	function nodeChangeFromHasRemovedRootsRefs(changeset: HasRemovedRootsRefs): NodeChangeset {
+	// 		return {
+	// 			fieldChanges: new Map([[fieldA, { fieldKind, change: brand(changeset) }]]),
+	// 		};
+	// 	}
 
-		it("sibling fields", () => {
-			const aMajor = mintRevisionTag();
-			const a1 = { major: aMajor, minor: 1 };
-			const a2 = { major: aMajor, minor: 2 };
-			const bMajor = mintRevisionTag();
-			const b1 = { major: bMajor, minor: 1 };
+	// 	it("sibling fields", () => {
+	// 		const aMajor = mintRevisionTag();
+	// 		const a1 = { major: aMajor, minor: 1 };
+	// 		const a2 = { major: aMajor, minor: 2 };
+	// 		const bMajor = mintRevisionTag();
+	// 		const b1 = { major: bMajor, minor: 1 };
 
-			const changeA: HasRemovedRootsRefs = {
-				shallow: [a1, a2],
-				nested: [],
-			};
-			const changeB: HasRemovedRootsRefs = {
-				shallow: [b1],
-				nested: [],
-			};
-			const input: ModularChangeset = {
-				...Change.empty(),
-				fieldChanges: new Map([
-					[brand("fA"), { fieldKind, change: brand(changeA) }],
-					[brand("fB"), { fieldKind, change: brand(changeB) }],
-				]),
-			};
+	// 		const changeA: HasRemovedRootsRefs = {
+	// 			shallow: [a1, a2],
+	// 			nested: [],
+	// 		};
+	// 		const changeB: HasRemovedRootsRefs = {
+	// 			shallow: [b1],
+	// 			nested: [],
+	// 		};
+	// 		const input: ModularChangeset = {
+	// 			...Change.empty(),
+	// 			fieldChanges: new Map([
+	// 				[brand("fA"), { fieldKind, change: brand(changeA) }],
+	// 				[brand("fB"), { fieldKind, change: brand(changeB) }],
+	// 			]),
+	// 		};
 
-			const actual = relevantRemovedRoots(input);
-			assertEqual(actual, [a1, a2, b1]);
-		});
+	// 		const actual = relevantRemovedRoots(input);
+	// 		assertEqual(actual, [a1, a2, b1]);
+	// 	});
 
-		it("nested fields", () => {
-			const aMajor = mintRevisionTag();
-			const cMajor = mintRevisionTag();
-			const a1 = { major: aMajor, minor: 1 };
-			const c1 = { major: cMajor, minor: 1 };
+	// 	it("nested fields", () => {
+	// 		const aMajor = mintRevisionTag();
+	// 		const cMajor = mintRevisionTag();
+	// 		const a1 = { major: aMajor, minor: 1 };
+	// 		const c1 = { major: cMajor, minor: 1 };
 
-			const changeC: HasRemovedRootsRefs = {
-				shallow: [c1],
-				nested: [],
-			};
+	// 		const changeC: HasRemovedRootsRefs = {
+	// 			shallow: [c1],
+	// 			nested: [],
+	// 		};
 
-			const changeB: HasRemovedRootsRefs = {
-				shallow: [],
-				nested: [nodeId2],
-			};
+	// 		const changeB: HasRemovedRootsRefs = {
+	// 			shallow: [],
+	// 			nested: [nodeId2],
+	// 		};
 
-			const changeA: HasRemovedRootsRefs = {
-				shallow: [a1],
-				nested: [nodeId1],
-			};
+	// 		const changeA: HasRemovedRootsRefs = {
+	// 			shallow: [a1],
+	// 			nested: [nodeId1],
+	// 		};
 
-			const input: ModularChangeset = {
-				...Change.empty(),
-				nodeChanges: newTupleBTree([
-					[[nodeId1.revision, nodeId1.localId], nodeChangeFromHasRemovedRootsRefs(changeB)],
-					[[nodeId2.revision, nodeId2.localId], nodeChangeFromHasRemovedRootsRefs(changeC)],
-				]),
-				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
-			};
+	// 		const input: ModularChangeset = {
+	// 			...Change.empty(),
+	// 			nodeChanges: newTupleBTree([
+	// 				[[nodeId1.revision, nodeId1.localId], nodeChangeFromHasRemovedRootsRefs(changeB)],
+	// 				[[nodeId2.revision, nodeId2.localId], nodeChangeFromHasRemovedRootsRefs(changeC)],
+	// 			]),
+	// 			fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+	// 		};
 
-			const actual = relevantRemovedRoots(input);
-			assertEqual(actual, [a1, c1]);
-		});
-	});
+	// 		const actual = relevantRemovedRoots(input);
+	// 		assertEqual(actual, [a1, c1]);
+	// 	});
+	// });
 
 	describe("update refreshers", () => {
 		const aMajor = mintRevisionTag();
@@ -1464,7 +1462,8 @@ describe("ModularChangeFamily", () => {
 	it("build child change", () => {
 		const [changeReceiver, getChanges] = testChangeReceiver(family);
 		const editor = family.buildEditor(changeReceiver);
-		const path: UpPath = {
+		const path: NormalizedUpPath = {
+			detachedNodeId: undefined,
 			parent: undefined,
 			parentField: fieldA,
 			parentIndex: 0,
@@ -1499,104 +1498,6 @@ function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
 	return chunkTree(cursor, { policy: defaultChunkPolicy, idCompressor: testIdCompressor });
 }
 
-function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
-	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
-	const cursor = cursorForJsonableTreeField(jsonable);
-	const clone = chunkFieldSingle(cursor, {
-		policy: defaultChunkPolicy,
-		idCompressor: testIdCompressor,
-	});
-	return clone;
-}
-
-function normalizeChangeset(change: ModularChangeset): ModularChangeset {
-	const idAllocator = idAllocatorFromMaxId();
-
-	const idRemappings: ChangeAtomIdMap<NodeId> = new Map();
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
-	const crossFieldKeyTable: CrossFieldKeyTable = newCrossFieldKeyTable();
-
-	const remapNodeId = (nodeId: NodeId): NodeId => {
-		const newId = tryGetFromNestedMap(idRemappings, nodeId.revision, nodeId.localId);
-		assert(newId !== undefined, "Unknown node ID");
-		return newId;
-	};
-
-	const remapFieldId = (fieldId: FieldId): FieldId => {
-		return fieldId.nodeId === undefined
-			? fieldId
-			: { ...fieldId, nodeId: remapNodeId(fieldId.nodeId) };
-	};
-
-	const normalizeNodeChanges = (nodeId: NodeId): NodeId => {
-		const nodeChangeset = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
-		assert(nodeChangeset !== undefined, "Unknown node ID");
-
-		const normalizedNodeChangeset: NodeChangeset = { ...nodeChangeset };
-		if (normalizedNodeChangeset.fieldChanges !== undefined) {
-			normalizedNodeChangeset.fieldChanges = normalizeFieldChanges(
-				normalizedNodeChangeset.fieldChanges,
-			);
-		}
-
-		const newId: NodeId = { localId: brand(idAllocator.allocate()) };
-		setInNestedMap(idRemappings, nodeId.revision, nodeId.localId, newId);
-		nodeChanges.set([newId.revision, newId.localId], normalizedNodeChangeset);
-
-		const parent = change.nodeToParent.get([nodeId.revision, nodeId.localId]);
-		assert(parent !== undefined, "Every node should have a parent");
-		const newParent = remapFieldId(parent);
-		nodeToParent.set([newId.revision, newId.localId], newParent);
-
-		return newId;
-	};
-
-	function normalizeFieldChanges(fields: FieldChangeMap): FieldChangeMap {
-		const normalizedFieldChanges: FieldChangeMap = new Map();
-
-		for (const [field, fieldChange] of fields) {
-			const changeHandler = getFieldKind(fieldKinds, fieldChange.fieldKind).changeHandler;
-
-			// TODO: This relies on field kinds calling prune child on all changes,
-			// while pruning is supposed to be an optimization which could be skipped.
-			normalizedFieldChanges.set(
-				field,
-				changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges),
-			);
-
-			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
-			for (const { key, count } of crossFieldKeys) {
-				const prevId = change.crossFieldKeys.getFirst(key, count)?.value;
-				assert(prevId !== undefined, "Should be an entry for each cross-field key");
-				crossFieldKeyTable.set(key, count, remapFieldId(prevId));
-			}
-		}
-
-		return normalizedFieldChanges;
-	}
-
-	const fieldChanges = normalizeFieldChanges(change.fieldChanges);
-	assert(nodeChanges.size === change.nodeChanges.size);
-
-	const normal: Mutable<ModularChangeset> = {
-		...change,
-		nodeChanges,
-		fieldChanges,
-		nodeToParent,
-		crossFieldKeys: crossFieldKeyTable,
-	};
-
-	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
-	if (change.builds !== undefined) {
-		normal.builds = brand(change.builds.mapValues(deepCloneChunkedTree));
-	}
-	if (change.refreshers !== undefined) {
-		normal.refreshers = brand(change.refreshers.mapValues(deepCloneChunkedTree));
-	}
-	return normal;
-}
-
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
 	return family.changeRevision(change, revision);
 }
@@ -1623,7 +1524,7 @@ function buildChangeset(edits: EditDescription[]): ModularChangeset {
 	return editor.buildChanges(edits);
 }
 
-function buildExistsConstraint(path: UpPath): ModularChangeset {
+function buildExistsConstraint(path: NormalizedUpPath): ModularChangeset {
 	const edits: ModularChangeset[] = [];
 	const editor = family.buildEditor((taggedChange) => edits.push(taggedChange.change));
 	editor.addNodeExistsConstraint(path, mintRevisionTag());

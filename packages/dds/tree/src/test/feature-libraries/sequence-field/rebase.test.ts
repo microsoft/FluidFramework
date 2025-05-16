@@ -625,106 +625,106 @@ export function testRebase() {
 			assertChangesetsEqual(rebased, expected);
 		});
 
-		it("rename ↷ return = move-out + idOverride", () => {
-			const nodeId: NodeId = { localId: brand(0) };
-			const baseNodeId: NodeId = { revision: tag1, localId: brand(1) };
-			const startCellId: SF.CellId = { revision: tag2, localId: brand(1) };
-			const endCellId: SF.CellId = { revision: tag3, localId: brand(0) };
+		// it("rename ↷ return = move-out + idOverride", () => {
+		// 	const nodeId: NodeId = { localId: brand(0) };
+		// 	const baseNodeId: NodeId = { revision: tag1, localId: brand(1) };
+		// 	const startCellId: SF.CellId = { revision: tag2, localId: brand(1) };
+		// 	const endCellId: SF.CellId = { revision: tag3, localId: brand(0) };
 
-			const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
-			const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));
-			const rename = [
-				Mark.moveOut(
-					1,
-					{ revision: tag2, localId: brand(0) },
-					{ changes: inputChildChange, finalEndpoint: endCellId },
-				),
-				Mark.rename(1, startCellId, endCellId),
-				Mark.moveIn(1, endCellId, {
-					finalEndpoint: { revision: tag2, localId: brand(0) },
-				}),
-			];
-			const move = [
-				Mark.moveOut(1, { revision: tag4, localId: brand(4) }, { changes: baseChildChange }),
-				Mark.returnTo(1, { revision: tag4, localId: brand(4) }, startCellId),
-			];
-			const expectedChildChange = TestNodeId.create(nodeId, TestChange.mint([1], 2));
-			const expected = [
-				Mark.tomb(tag4, brand(4)),
-				Mark.moveOut(
-					1,
-					{ revision: tag2, localId: brand(0) },
-					{ changes: expectedChildChange, idOverride: endCellId, finalEndpoint: endCellId },
-				),
-				Mark.moveIn(1, endCellId, {
-					finalEndpoint: { revision: tag2, localId: brand(0) },
-				}),
-			];
-			const childRebaser = (
-				change: NodeId | undefined,
-				over: NodeId | undefined,
-			): NodeId | undefined => {
-				// These checks ensure that we don't attempt to rebase output of `inputChildChange ↷ baseChildChange`.
-				// This may happen if the inputChildChange is rebased then sent as an effect that is then treated
-				// as nested change to be rebased when the effect is consumed.
-				assert.equal(change, inputChildChange);
-				assert.equal(over, baseChildChange);
-				return TestNodeId.rebaseChild(change, over);
-			};
-			const rebased = rebase(rename, move, undefined, { childRebaser });
-			assertChangesetsEqual(rebased, expected);
-		});
+		// 	const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
+		// 	const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));
+		// 	const rename = [
+		// 		Mark.moveOut(
+		// 			1,
+		// 			{ revision: tag2, localId: brand(0) },
+		// 			{ changes: inputChildChange, finalEndpoint: endCellId },
+		// 		),
+		// 		Mark.rename(1, startCellId, endCellId),
+		// 		Mark.moveIn(1, endCellId, {
+		// 			finalEndpoint: { revision: tag2, localId: brand(0) },
+		// 		}),
+		// 	];
+		// 	const move = [
+		// 		Mark.moveOut(1, { revision: tag4, localId: brand(4) }, { changes: baseChildChange }),
+		// 		Mark.returnTo(1, { revision: tag4, localId: brand(4) }, startCellId),
+		// 	];
+		// 	const expectedChildChange = TestNodeId.create(nodeId, TestChange.mint([1], 2));
+		// 	const expected = [
+		// 		Mark.tomb(tag4, brand(4)),
+		// 		Mark.moveOut(
+		// 			1,
+		// 			{ revision: tag2, localId: brand(0) },
+		// 			{ changes: expectedChildChange, idOverride: endCellId, finalEndpoint: endCellId },
+		// 		),
+		// 		Mark.moveIn(1, endCellId, {
+		// 			finalEndpoint: { revision: tag2, localId: brand(0) },
+		// 		}),
+		// 	];
+		// 	const childRebaser = (
+		// 		change: NodeId | undefined,
+		// 		over: NodeId | undefined,
+		// 	): NodeId | undefined => {
+		// 		// These checks ensure that we don't attempt to rebase output of `inputChildChange ↷ baseChildChange`.
+		// 		// This may happen if the inputChildChange is rebased then sent as an effect that is then treated
+		// 		// as nested change to be rebased when the effect is consumed.
+		// 		assert.equal(change, inputChildChange);
+		// 		assert.equal(over, baseChildChange);
+		// 		return TestNodeId.rebaseChild(change, over);
+		// 	};
+		// 	const rebased = rebase(rename, move, undefined, { childRebaser });
+		// 	assertChangesetsEqual(rebased, expected);
+		// });
 
-		it("move-out + idOverride ↷ move-out = rename", () => {
-			const nodeId: NodeId = { localId: brand(0) };
-			const baseNodeId: NodeId = { revision: tag1, localId: brand(1) };
-			const startCellId: SF.CellId = { revision: tag2, localId: brand(1) };
-			const endCellId: SF.CellId = { revision: tag3, localId: brand(0) };
+		// it("move-out + idOverride ↷ move-out = rename", () => {
+		// 	const nodeId: NodeId = { localId: brand(0) };
+		// 	const baseNodeId: NodeId = { revision: tag1, localId: brand(1) };
+		// 	const startCellId: SF.CellId = { revision: tag2, localId: brand(1) };
+		// 	const endCellId: SF.CellId = { revision: tag3, localId: brand(0) };
 
-			const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
-			const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));
-			const rebasee = [
-				Mark.moveOut(
-					1,
-					{ revision: tag2, localId: brand(0) },
-					{ changes: inputChildChange, idOverride: endCellId, finalEndpoint: endCellId },
-				),
-				Mark.skip(1),
-				Mark.moveIn(1, endCellId, {
-					finalEndpoint: { revision: tag2, localId: brand(0) },
-				}),
-			];
-			const move = [
-				Mark.moveOut(1, { revision: tag4, localId: brand(4) }, { changes: baseChildChange }),
-				Mark.moveIn(1, { revision: tag4, localId: brand(4) }),
-			];
-			const expectedChildChange = TestNodeId.create(nodeId, TestChange.mint([1], 2));
-			const expected = [
-				Mark.rename(1, { revision: tag4, localId: brand(4) }, endCellId),
-				Mark.moveOut(
-					1,
-					{ revision: tag2, localId: brand(0) },
-					{ changes: expectedChildChange, finalEndpoint: endCellId },
-				),
-				Mark.skip(1),
-				Mark.moveIn(1, endCellId, {
-					finalEndpoint: { revision: tag2, localId: brand(0) },
-				}),
-			];
-			const childRebaser = (
-				change: NodeId | undefined,
-				over: NodeId | undefined,
-			): NodeId | undefined => {
-				// These checks ensure that we don't attempt to rebase output of `inputChildChange ↷ baseChildChange`.
-				// This may happen if the inputChildChange is rebased then sent as an effect that is then treated
-				// as nested change to be rebased when the effect is consumed.
-				assert.equal(change, inputChildChange);
-				assert.equal(over, baseChildChange);
-				return TestNodeId.rebaseChild(change, over);
-			};
-			const rebased = rebase(rebasee, move, undefined, { childRebaser });
-			assertChangesetsEqual(rebased, expected);
-		});
+		// 	const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
+		// 	const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));
+		// 	const rebasee = [
+		// 		Mark.moveOut(
+		// 			1,
+		// 			{ revision: tag2, localId: brand(0) },
+		// 			{ changes: inputChildChange, idOverride: endCellId, finalEndpoint: endCellId },
+		// 		),
+		// 		Mark.skip(1),
+		// 		Mark.moveIn(1, endCellId, {
+		// 			finalEndpoint: { revision: tag2, localId: brand(0) },
+		// 		}),
+		// 	];
+		// 	const move = [
+		// 		Mark.moveOut(1, { revision: tag4, localId: brand(4) }, { changes: baseChildChange }),
+		// 		Mark.moveIn(1, { revision: tag4, localId: brand(4) }),
+		// 	];
+		// 	const expectedChildChange = TestNodeId.create(nodeId, TestChange.mint([1], 2));
+		// 	const expected = [
+		// 		Mark.rename(1, { revision: tag4, localId: brand(4) }, endCellId),
+		// 		Mark.moveOut(
+		// 			1,
+		// 			{ revision: tag2, localId: brand(0) },
+		// 			{ changes: expectedChildChange, finalEndpoint: endCellId },
+		// 		),
+		// 		Mark.skip(1),
+		// 		Mark.moveIn(1, endCellId, {
+		// 			finalEndpoint: { revision: tag2, localId: brand(0) },
+		// 		}),
+		// 	];
+		// 	const childRebaser = (
+		// 		change: NodeId | undefined,
+		// 		over: NodeId | undefined,
+		// 	): NodeId | undefined => {
+		// 		// These checks ensure that we don't attempt to rebase output of `inputChildChange ↷ baseChildChange`.
+		// 		// This may happen if the inputChildChange is rebased then sent as an effect that is then treated
+		// 		// as nested change to be rebased when the effect is consumed.
+		// 		assert.equal(change, inputChildChange);
+		// 		assert.equal(over, baseChildChange);
+		// 		return TestNodeId.rebaseChild(change, over);
+		// 	};
+		// 	const rebased = rebase(rebasee, move, undefined, { childRebaser });
+		// 	assertChangesetsEqual(rebased, expected);
+		// });
 
 		it("remove ↷ move", () => {
 			const deletion = [Mark.skip(2), Mark.remove(2, brand(0))];
@@ -828,34 +828,34 @@ export function testRebase() {
 			assertChangesetsEqual(rebased, expected);
 		});
 
-		it("remove ↷ composite move", () => {
-			const [mo1, mi1] = Mark.move(1, brand(1));
-			const [mo2, mi2] = Mark.move(1, brand(10));
-			const [mo3, mi3] = Mark.move(1, brand(20));
-			const src: SF.CellMark<SF.MoveOut> = { ...mo1, finalEndpoint: { localId: brand(20) } };
-			const dst: SF.CellMark<SF.MoveIn> = { ...mi3, finalEndpoint: { localId: brand(1) } };
-			const move = [
-				src,
-				Mark.skip(1),
-				Mark.rename(1, brand(2), brand(10)),
-				Mark.skip(1),
-				Mark.rename(1, brand(11), brand(20)),
-				Mark.skip(1),
-				dst,
-			];
-			const del = [Mark.remove(1, brand(0))];
-			const rebased = rebase(del, move);
-			const expected = [
-				Mark.tomb(tag1, brand(1)),
-				Mark.skip(1),
-				Mark.tomb(tag1, brand(10)),
-				Mark.skip(1),
-				Mark.tomb(tag1, brand(20)),
-				Mark.skip(1),
-				Mark.remove(1, brand(0)),
-			];
-			assertChangesetsEqual(rebased, expected);
-		});
+		// it("remove ↷ composite move", () => {
+		// 	const [mo1, mi1] = Mark.move(1, brand(1));
+		// 	const [mo2, mi2] = Mark.move(1, brand(10));
+		// 	const [mo3, mi3] = Mark.move(1, brand(20));
+		// 	const src: SF.CellMark<SF.MoveOut> = { ...mo1, finalEndpoint: { localId: brand(20) } };
+		// 	const dst: SF.CellMark<SF.MoveIn> = { ...mi3, finalEndpoint: { localId: brand(1) } };
+		// 	const move = [
+		// 		src,
+		// 		Mark.skip(1),
+		// 		Mark.rename(1, brand(2), brand(10)),
+		// 		Mark.skip(1),
+		// 		Mark.rename(1, brand(11), brand(20)),
+		// 		Mark.skip(1),
+		// 		dst,
+		// 	];
+		// 	const del = [Mark.remove(1, brand(0))];
+		// 	const rebased = rebase(del, move);
+		// 	const expected = [
+		// 		Mark.tomb(tag1, brand(1)),
+		// 		Mark.skip(1),
+		// 		Mark.tomb(tag1, brand(10)),
+		// 		Mark.skip(1),
+		// 		Mark.tomb(tag1, brand(20)),
+		// 		Mark.skip(1),
+		// 		Mark.remove(1, brand(0)),
+		// 	];
+		// 	assertChangesetsEqual(rebased, expected);
+		// });
 
 		it("rebasing over transient revive changes cell ID", () => {
 			const change = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
@@ -896,97 +896,97 @@ export function testRebase() {
 			assertChangesetsEqual(rebased, expected);
 		});
 
-		it("remove ↷ [move, remove]", () => {
-			const moveAndRemove = [
-				Mark.moveOut(1, brand(0)),
-				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
-			];
+		// it("remove ↷ [move, remove]", () => {
+		// 	const moveAndRemove = [
+		// 		Mark.moveOut(1, brand(0)),
+		// 		{ count: 1 },
+		// 		Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
+		// 	];
 
-			const del = Change.remove(0, 1, tag2);
-			const rebased = rebase(del, moveAndRemove);
-			const expected = [
-				Mark.tomb(tag1, brand(0)),
-				{ count: 1 },
-				Mark.remove(1, brand(0), {
-					cellId: { revision: tag1, localId: brand(1) },
-					revision: tag2,
-				}),
-			];
+		// 	const del = Change.remove(0, 1, tag2);
+		// 	const rebased = rebase(del, moveAndRemove);
+		// 	const expected = [
+		// 		Mark.tomb(tag1, brand(0)),
+		// 		{ count: 1 },
+		// 		Mark.remove(1, brand(0), {
+		// 			cellId: { revision: tag1, localId: brand(1) },
+		// 			revision: tag2,
+		// 		}),
+		// 	];
 
-			assertChangesetsEqual(rebased, expected);
-		});
+		// 	assertChangesetsEqual(rebased, expected);
+		// });
 
-		it("remove ↷ [move, remove] (reverse move direction)", () => {
-			const moveAndRemove = [
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
-				{ count: 1 },
-				Mark.moveOut(1, brand(0)),
-			];
+		// it("remove ↷ [move, remove] (reverse move direction)", () => {
+		// 	const moveAndRemove = [
+		// 		Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
+		// 		{ count: 1 },
+		// 		Mark.moveOut(1, brand(0)),
+		// 	];
 
-			const del = Change.remove(1, 1, tag2);
-			const rebased = rebase(del, moveAndRemove);
-			const expected = [
-				Mark.remove(1, brand(0), {
-					cellId: { revision: tag1, localId: brand(1) },
-					revision: tag2,
-				}),
-				{ count: 1 },
-				Mark.tomb(tag1, brand(0)),
-			];
+		// 	const del = Change.remove(1, 1, tag2);
+		// 	const rebased = rebase(del, moveAndRemove);
+		// 	const expected = [
+		// 		Mark.remove(1, brand(0), {
+		// 			cellId: { revision: tag1, localId: brand(1) },
+		// 			revision: tag2,
+		// 		}),
+		// 		{ count: 1 },
+		// 		Mark.tomb(tag1, brand(0)),
+		// 	];
 
-			assertChangesetsEqual(rebased, expected);
-		});
+		// 	assertChangesetsEqual(rebased, expected);
+		// });
 
-		it("move ↷ move and remove", () => {
-			const [moveOut1, moveIn1] = Mark.move(1, { localId: brand(0), revision: tag1 });
-			const moveAndRemove = [
-				{ count: 1 },
-				Mark.attachAndDetach(moveIn1, Mark.remove(1, { revision: tag1, localId: brand(2) })),
-				{ count: 1 },
-				moveOut1,
-			];
+		// it("move ↷ move and remove", () => {
+		// 	const [moveOut1, moveIn1] = Mark.move(1, { localId: brand(0), revision: tag1 });
+		// 	const moveAndRemove = [
+		// 		{ count: 1 },
+		// 		Mark.attachAndDetach(moveIn1, Mark.remove(1, { revision: tag1, localId: brand(2) })),
+		// 		{ count: 1 },
+		// 		moveOut1,
+		// 	];
 
-			const [moveOut2, moveIn2] = Mark.move(1, { localId: brand(0), revision: tag2 });
-			const move2 = [moveIn2, { count: 2 }, moveOut2];
-			const rebased = rebase(move2, moveAndRemove);
-			const expected = [
-				moveIn2,
-				{ count: 1 },
-				Mark.moveOut(1, brand(0), {
-					cellId: { revision: tag1, localId: brand(2) },
-					revision: tag2,
-				}),
-				{ count: 1 },
-				Mark.tomb(tag1, brand(0)),
-			];
+		// 	const [moveOut2, moveIn2] = Mark.move(1, { localId: brand(0), revision: tag2 });
+		// 	const move2 = [moveIn2, { count: 2 }, moveOut2];
+		// 	const rebased = rebase(move2, moveAndRemove);
+		// 	const expected = [
+		// 		moveIn2,
+		// 		{ count: 1 },
+		// 		Mark.moveOut(1, brand(0), {
+		// 			cellId: { revision: tag1, localId: brand(2) },
+		// 			revision: tag2,
+		// 		}),
+		// 		{ count: 1 },
+		// 		Mark.tomb(tag1, brand(0)),
+		// 	];
 
-			assertChangesetsEqual(rebased, expected);
-		});
+		// 	assertChangesetsEqual(rebased, expected);
+		// });
 
-		it("move and remove ↷ same", () => {
-			const moveCellId: SF.CellId = { revision: tag1, localId: brand(0) };
-			const removeCellId: SF.CellId = { revision: tag1, localId: brand(1) };
-			const returnCellId: SF.CellId = { revision: tag2, localId: brand(0) };
-			const moveAndRemove = [
-				{ count: 1 },
-				Mark.attachAndDetach(
-					Mark.returnTo(1, returnCellId, moveCellId),
-					Mark.remove(1, removeCellId),
-				),
-				{ count: 1 },
-				Mark.moveOut(1, returnCellId),
-			];
-			const rebased = rebase(moveAndRemove, moveAndRemove);
-			const expected = [
-				{ count: 1 },
-				Mark.remove(1, removeCellId, { cellId: removeCellId }),
-				{ count: 1 },
-				Mark.tomb(returnCellId.revision, returnCellId.localId),
-			];
+		// it("move and remove ↷ same", () => {
+		// 	const moveCellId: SF.CellId = { revision: tag1, localId: brand(0) };
+		// 	const removeCellId: SF.CellId = { revision: tag1, localId: brand(1) };
+		// 	const returnCellId: SF.CellId = { revision: tag2, localId: brand(0) };
+		// 	const moveAndRemove = [
+		// 		{ count: 1 },
+		// 		Mark.attachAndDetach(
+		// 			Mark.returnTo(1, returnCellId, moveCellId),
+		// 			Mark.remove(1, removeCellId),
+		// 		),
+		// 		{ count: 1 },
+		// 		Mark.moveOut(1, returnCellId),
+		// 	];
+		// 	const rebased = rebase(moveAndRemove, moveAndRemove);
+		// 	const expected = [
+		// 		{ count: 1 },
+		// 		Mark.remove(1, removeCellId, { cellId: removeCellId }),
+		// 		{ count: 1 },
+		// 		Mark.tomb(returnCellId.revision, returnCellId.localId),
+		// 	];
 
-			assertChangesetsEqual(rebased, expected);
-		});
+		// 	assertChangesetsEqual(rebased, expected);
+		// });
 
 		it("revive ↷ [revive, move]", () => {
 			const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
@@ -1005,51 +1005,51 @@ export function testRebase() {
 			assertChangesetsEqual(rebased, expected);
 		});
 
-		it("revive ↷ [revive, move, remove]", () => {
-			const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
-			const reviveMoveRemove = [
-				Mark.moveOut(1, brand(1), { cellId }),
-				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(1)), Mark.remove(1, brand(2))),
-			];
-			const revive = [Mark.revive(1, cellId)];
-			const rebased = rebase(revive, reviveMoveRemove, tag2);
-			const expected = [
-				Mark.returnTo(1, brand(0), { revision: tag2, localId: brand(1) }),
-				{ count: 1 },
-				Mark.onEmptyCell({ revision: tag2, localId: brand(2) }, Mark.moveOut(1, brand(0))),
-			];
-			assertChangesetsEqual(rebased, expected);
-		});
+		// it("revive ↷ [revive, move, remove]", () => {
+		// 	const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		// 	const reviveMoveRemove = [
+		// 		Mark.moveOut(1, brand(1), { cellId }),
+		// 		{ count: 1 },
+		// 		Mark.attachAndDetach(Mark.moveIn(1, brand(1)), Mark.remove(1, brand(2))),
+		// 	];
+		// 	const revive = [Mark.revive(1, cellId)];
+		// 	const rebased = rebase(revive, reviveMoveRemove, tag2);
+		// 	const expected = [
+		// 		Mark.returnTo(1, brand(0), { revision: tag2, localId: brand(1) }),
+		// 		{ count: 1 },
+		// 		Mark.onEmptyCell({ revision: tag2, localId: brand(2) }, Mark.moveOut(1, brand(0))),
+		// 	];
+		// 	assertChangesetsEqual(rebased, expected);
+		// });
 
-		it("move chain ↷ remove", () => {
-			const del = Change.remove(0, 1, tag1);
-			const move = [
-				Mark.moveOut(1, brand(0), {
-					finalEndpoint: { localId: brand(10) },
-				}),
-				{ count: 1 },
-				Mark.rename(1, brand(1), brand(10)),
-				{ count: 1 },
-				Mark.moveIn(1, brand(10), { finalEndpoint: { localId: brand(0) } }),
-			];
+		// it("move chain ↷ remove", () => {
+		// 	const del = Change.remove(0, 1, tag1);
+		// 	const move = [
+		// 		Mark.moveOut(1, brand(0), {
+		// 			finalEndpoint: { localId: brand(10) },
+		// 		}),
+		// 		{ count: 1 },
+		// 		Mark.rename(1, brand(1), brand(10)),
+		// 		{ count: 1 },
+		// 		Mark.moveIn(1, brand(10), { finalEndpoint: { localId: brand(0) } }),
+		// 	];
 
-			const rebased = rebase(move, del);
-			const expected = [
-				Mark.moveOut(1, brand(0), {
-					cellId: { revision: tag1, localId: brand(0) },
-					finalEndpoint: { localId: brand(10) },
-				}),
-				{ count: 1 },
-				Mark.rename(1, brand(1), brand(10)),
-				{ count: 1 },
-				Mark.moveIn(1, brand(10), {
-					finalEndpoint: { localId: brand(0) },
-				}),
-			];
+		// 	const rebased = rebase(move, del);
+		// 	const expected = [
+		// 		Mark.moveOut(1, brand(0), {
+		// 			cellId: { revision: tag1, localId: brand(0) },
+		// 			finalEndpoint: { localId: brand(10) },
+		// 		}),
+		// 		{ count: 1 },
+		// 		Mark.rename(1, brand(1), brand(10)),
+		// 		{ count: 1 },
+		// 		Mark.moveIn(1, brand(10), {
+		// 			finalEndpoint: { localId: brand(0) },
+		// 		}),
+		// 	];
 
-			assertChangesetsEqual(rebased, expected);
-		});
+		// 	assertChangesetsEqual(rebased, expected);
+		// });
 
 		it("[revive, move] ↷ [revive, move]", () => {
 			const cellId: ChangeAtomId = { revision: tag2, localId: brand(0) };

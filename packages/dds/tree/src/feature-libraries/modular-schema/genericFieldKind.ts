@@ -4,21 +4,20 @@
  */
 
 import {
-	type DeltaDetachedNodeId,
 	type DeltaMark,
 	Multiplicity,
 	type RevisionTag,
 	replaceAtomRevisions,
+	type DeltaFieldChanges,
 } from "../../core/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	FieldChangeDelta,
+	ContextualizedFieldChange,
 	FieldChangeHandler,
 	NestedChangesIndices,
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,
-	RelevantRemovedRootsFromChild,
 	ToDelta,
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
@@ -33,7 +32,7 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	rebaser: {
 		compose,
-		invert: (change: GenericChangeset): GenericChangeset => change,
+		invert: ({ change }): GenericChangeset => change,
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
 		replaceRevisions,
@@ -44,7 +43,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return newGenericChangeset(Array.from(changes));
 		},
 	},
-	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): FieldChangeDelta => {
+	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): DeltaFieldChanges => {
 		let nodeIndex = 0;
 		const markList: DeltaMark[] = [];
 		for (const [index, nodeChange] of change.entries()) {
@@ -56,9 +55,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
 			nodeIndex += 1;
 		}
-		return { local: markList };
+		return markList;
 	},
-	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 	getNestedChanges,
 	createEmpty: newGenericChangeset,
@@ -66,8 +64,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 };
 
 function compose(
-	change1: GenericChangeset,
-	change2: GenericChangeset,
+	{ change: change1 }: ContextualizedFieldChange<GenericChangeset>,
+	{ change: change2 }: ContextualizedFieldChange<GenericChangeset>,
 	composeChildren: NodeChangeComposer,
 ): GenericChangeset {
 	const composed = change1.clone();
@@ -82,12 +80,12 @@ function compose(
 
 function getNestedChanges(change: GenericChangeset): NestedChangesIndices {
 	// For generic changeset, the indices in the input and output contexts are the same.
-	return change.toArray().map(([index, nodeChange]) => [nodeChange, index, index]);
+	return change.toArray().map(([index, nodeChange]) => [nodeChange, index]);
 }
 
 function rebaseGenericChange(
-	change: GenericChangeset,
-	over: GenericChangeset,
+	{ change }: ContextualizedFieldChange<GenericChangeset>,
+	{ change: over }: ContextualizedFieldChange<GenericChangeset>,
 	rebaseChild: NodeChangeRebaser,
 ): GenericChangeset {
 	const rebased: GenericChangeset = new BTree();
@@ -181,13 +179,4 @@ export function convertGenericChange<TChange>(
 	target: FieldChangeHandler<TChange>,
 ): TChange {
 	return target.editor.buildChildChanges(changeset.entries());
-}
-
-function* relevantRemovedRoots(
-	change: GenericChangeset,
-	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-): Iterable<DeltaDetachedNodeId> {
-	for (const nodeChange of change.values()) {
-		yield* relevantRemovedRootsFromChild(nodeChange);
-	}
 }

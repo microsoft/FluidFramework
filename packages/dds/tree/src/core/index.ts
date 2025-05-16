@@ -74,7 +74,7 @@ export {
 	type AnchorNode,
 	anchorSlot,
 	type UpPathDefault,
-	isDetachedUpPath,
+	isDetachedUpPathRoot,
 	inCursorField,
 	inCursorNode,
 	type AnchorEvents,
@@ -201,6 +201,7 @@ export {
 	isAncestor,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
+	newChangeAtomIdTransform,
 	compareRevisions,
 } from "./rebase/index.js";
 

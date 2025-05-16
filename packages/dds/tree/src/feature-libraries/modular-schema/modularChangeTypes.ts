@@ -6,6 +6,7 @@
 import {
 	subtractChangeAtomIds,
 	type ChangeAtomId,
+	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -36,6 +37,9 @@ export interface ModularChangeset extends HasFieldChanges {
 	 * Maps from this changeset's canonical ID for a node (see comment on node aliases) to the changes for that node.
 	 */
 	readonly nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
+
+	// XXX: Could this be merged with nodeAliases?
+	readonly rootNodes: RootNodeTable;
 
 	/**
 	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
@@ -71,12 +75,20 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
 }
 
+export interface RootNodeTable {
+	// TODO: Include builds, destroys, refreshers, and field changes
+	oldToNewId: ChangeAtomIdRangeMap<ChangeAtomId>;
+	newToOldId: ChangeAtomIdRangeMap<ChangeAtomId>;
+	nodeChanges: ChangeAtomIdBTree<NodeId>;
+}
+
 export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
 
-export type CrossFieldKeyTable = RangeMap<CrossFieldKey, FieldId>;
+export type CrossFieldRangeTable<T> = RangeMap<CrossFieldKey, T>;
+export type CrossFieldKeyTable = CrossFieldRangeTable<FieldId>;
 
-export function newCrossFieldKeyTable(): CrossFieldKeyTable {
-	return new RangeMap(offsetCrossFieldKey, subtractCrossFieldKeys);
+export function newCrossFieldRangeTable<V>(): CrossFieldRangeTable<V> {
+	return new RangeMap<CrossFieldKey, V>(offsetCrossFieldKey, subtractCrossFieldKeys);
 }
 
 function offsetCrossFieldKey(key: CrossFieldKey, offset: number): CrossFieldKey {

@@ -22,7 +22,7 @@ import {
 	anchorSlot,
 	clonePath,
 	getDetachedFieldContainingPath,
-	isDetachedUpPath,
+	isDetachedUpPathRoot,
 	keyAsDetachedField,
 	makeDetachedFieldIndex,
 	rootFieldKey,
@@ -307,7 +307,7 @@ describe("AnchorSet", () => {
 			detachedFieldIndex,
 		});
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 3], [fieldBar, 4]));
-		assert(isDetachedUpPath(anchors.locate(anchor1) as UpPath) === false);
+		assert(isDetachedUpPathRoot(anchors.locate(anchor1) as UpPath) === false);
 		checkRemoved(anchors.locate(anchor2), undefined, brand("repair-0"));
 		checkRemoved(anchors.locate(anchor3), { minor: 43 }, brand("repair-1"));
 		checkEquality(anchors.locate(anchor4), makePath([fieldFoo, 3]));
@@ -376,13 +376,13 @@ describe("AnchorSet", () => {
 			v.exitField(fieldFoo);
 		});
 
-		assert(isDetachedUpPath(anchors.locate(bAnchor) as UpPath) === false);
+		assert(isDetachedUpPathRoot(anchors.locate(bAnchor) as UpPath) === false);
 		const bPathLookup = anchors.locate(bAnchor);
 		const ePathLookup = anchors.locate(eAnchor);
 		assert(bPathLookup !== undefined);
 		assert(ePathLookup !== undefined);
-		assert(isDetachedUpPath(bPathLookup) === false);
-		assert(isDetachedUpPath(ePathLookup) === true);
+		assert(isDetachedUpPathRoot(bPathLookup) === false);
+		assert(isDetachedUpPathRoot(ePathLookup) === true);
 	});
 
 	describe("internalize path", () => {
