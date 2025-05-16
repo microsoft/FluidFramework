@@ -4,6 +4,7 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
 	type FieldKey,
@@ -24,7 +25,6 @@ import {
 	encodeValue,
 } from "./compressedEncode.js";
 import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
-import { isStableId } from "@fluidframework/id-compressor/internal";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	/**
