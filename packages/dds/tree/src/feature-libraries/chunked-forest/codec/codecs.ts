@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import {
+	type FluidClientVersion,
 	type ICodecOptions,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
@@ -38,6 +39,18 @@ export type FieldBatchCodec = IJsonCodec<
 	FieldBatchEncodingContext
 >;
 
+/**
+ * Get the write version for {@link makeFieldBatchCodec} based on the `oldestCompatibleClient` version.
+ * @privateRemarks
+ * TODO: makeFieldBatchCodec (and makeVersionDispatchingCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion directly.
+ */
+export function fluidVersionToFieldBatchCodecWriteVersion(
+	oldestCompatibleClient: FluidClientVersion,
+): number {
+	// There is currently on only 1 version.
+	return 1;
+}
+
 export function makeFieldBatchCodec(
 	options: ICodecOptions,
 	writeVersion: number,
@@ -51,6 +64,7 @@ export function makeFieldBatchCodec(
 		0x935 /* Invalid write version for FieldBatch codec */,
 	);
 
+	// TODO: use makeVersionDispatchingCodec to support adding more versions in the future.
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
 		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 			for (const cursor of data) {

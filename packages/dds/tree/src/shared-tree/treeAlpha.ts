@@ -53,6 +53,7 @@ import {
 	TreeCompressionStrategy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
+	fluidVersionToFieldBatchCodecWriteVersion,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
@@ -319,7 +320,7 @@ export const TreeAlpha: TreeAlpha = {
 		},
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const format = versionToFormat[options.oldestCompatibleClient];
+		const format = fluidVersionToFieldBatchCodecWriteVersion(options.oldestCompatibleClient);
 		const codec = makeFieldBatchCodec({ jsonValidator: noopValidator }, format);
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
@@ -417,10 +418,3 @@ function borrowFieldCursorFromTreeNodeOrValue(
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
 }
-
-const versionToFormat = {
-	v2_0: 1,
-	v2_1: 1,
-	v2_2: 1,
-	v2_3: 1,
-};
