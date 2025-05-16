@@ -20,12 +20,15 @@ class TestTimeout {
 
 	private static instance: TestTimeout = new TestTimeout();
 	public static reset(runnable: Mocha.Runnable) {
-		TestTimeout.clear();
+		TestTimeout.instance.clearTimer();
+		TestTimeout.instance = new TestTimeout();
 		TestTimeout.instance.resetTimer(runnable);
 	}
 
 	public static clear() {
+		// TODO: Check general setup here to see if we want tweaks.
 		if (TestTimeout.instance.deferred.isCompleted) {
+			// Problem was that this line basically never happened because clearTimer resets the deffered state!
 			TestTimeout.instance = new TestTimeout();
 		} else {
 			TestTimeout.instance.clearTimer();
@@ -174,6 +177,7 @@ export async function timeoutPromise<T = void>(
 	) => void,
 	timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ): Promise<T> {
+	// return new Promise(executor);
 	// create the timeout error outside the async task, so its callstack includes
 	// the original call site, this makes it easier to debug
 	const err =
