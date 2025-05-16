@@ -2956,7 +2956,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			count,
 		);
 
-		assert(renamedDetachEntry.length === count, "XXX: Handle splitting");
+		assert(renamedDetachEntry.length === count, "TODO: Handle splitting");
 		const isReattachOfSameNodes = areEqualChangeAtomIds(renamedDetachEntry.value, newAttachId);
 		if (isReattachOfSameNodes && !preserveRename) {
 			// These nodes have been moved back to their original location, so the composed changeset should not have any renames for them.
