@@ -19,7 +19,7 @@ const longIdentifier = TreeAlpha.identifier(node)
 In some cases, this method will be unable to retrieve an identifier.
 This will occur in the following cases:
 - The node does not contain an identifier field.
-- The node is an unhydrated node with a user provided identifier. Note that if it is an unhydrated node without an identifier provided, it will throw an error.
+- The node is an non-hydrated node with a user provided identifier. Note that if it is an non-hydrated node without an identifier provided, it will throw an error.
 
 ```typescript
 // This returns undefined.
@@ -61,7 +61,7 @@ const shortenedIdentifier = TreeAlpha.identifier.shorten(branch, lengthenedIdent
 ```
 
 ### Example for an invalid short identifier
-The identifier is an invalid short identifier unrecognized by the branch's associated idCompressor.
+The identifier is an invalid short identifier unrecognized by the branch's associated id compressor.
 ```typescript
 // This will throw an error, as the identifier is invalid, and cannot be lengthened.
 const lengthenedIdentifier = TreeAlpha.identifier.lengthen(branch, invalidShortIdentifier)
@@ -78,12 +78,12 @@ const shortIdentifier = TreeAlpha.identifier.getShort(nodeWithValidIdentifier)
 ```
 
 ### Examples for when you get undefined
-If the node provided does not contain an identifier that is recognized or compressible by the idCompressor, this method will return undefined.
+If the node provided does not contain an identifier that is recognized or compressible by the id compressor, this method will return undefined.
 This will occur in the following cases:
-- The node is an unhydrated node with a user provided identifier. Note that if it is an unhydrated node without an identifier provided, it will throw an error.
+- The node is an non-hydrated node with a user provided identifier. Note that if it is an non-hydrated node without an identifier provided, it will throw an error.
 - The node does not contain an identifier field.
-- The node contains a compressible long identifier, but it is unrecognized by the node's associated idCompressor. This can occur if the identifier was created by a different idCompressor instance.
-- The node contains an identifier which is not compressible by its idCompressor. This can occur if the node's identifier was a user provided string.
+- The node contains a compressible long identifier, but it is unrecognized by the node's associated id compressor. This can occur if the identifier was created by a different id compressor instance.
+- The node contains an identifier which is not compressible by its id compressor. This can occur if the node's identifier was a user provided string.
 ```typescript
 // This will return undefined
 const shortIdentifier = TreeAlpha.identifier.getShort(node)
