@@ -4,6 +4,7 @@
  */
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+
 import {
 	type MapTree,
 	type TreeFieldStoredSchema,
@@ -35,14 +36,6 @@ export function isNodeInSchema(
 	node: MapTree,
 	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationErrors {
-	// If the stored schema is completely empty it _probably_ (in almost all cases?) means the tree is brand new and we
-	// shouldn't validate the data.
-	// TODO: AB#8197
-	// See https://github.com/microsoft/FluidFramework/pull/21305#discussion_r1626595991 for further discussion.
-	if (schemaAndPolicy.schema.nodeSchema.size === 0) {
-		return SchemaValidationErrors.NoError;
-	}
-
 	// Validate the schema declared by the node exists
 	const schema = schemaAndPolicy.schema.nodeSchema.get(node.type);
 	if (schema === undefined) {

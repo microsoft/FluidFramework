@@ -9,7 +9,6 @@ import {
 	buildForest,
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
-	getSchemaAndPolicy,
 	initializeForest,
 	MockNodeIdentifierManager,
 } from "../../feature-libraries/index.js";
@@ -17,7 +16,6 @@ import {
 	HydratedContext,
 	isTreeNode,
 	isTreeNodeSchemaClass,
-	mapTreeFromNodeData,
 	normalizeFieldSchema,
 	SimpleContextSlot,
 	type ImplicitFieldSchema,
@@ -33,9 +31,8 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	getTreeNodeForField,
-	prepareContentForHydration,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/proxies.js";
+} from "../../simple-tree/getTreeNodeForField.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";
@@ -43,6 +40,7 @@ import type { TreeCheckout } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import { CheckoutFlexTreeView, createTreeCheckout } from "../../shared-tree/index.js";
+import { prepareForInsertion } from "../../simple-tree/index.js";
 
 /**
  * Initializes a node with the given schema and content.
@@ -135,12 +133,12 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 		new HydratedContext(normalizeFieldSchema(schema).allowedTypeSet, checkout.context),
 	);
 	assert(field.context.isHydrated(), "Expected LazyField");
-	const mapTree = mapTreeFromNodeData(initialTree as InsertableContent, schema, {
-		context: field.context.nodeKeyManager,
-		schemaValidationPolicy: getSchemaAndPolicy(field),
-		allowNonEnabledTypes: true,
-	});
-	prepareContentForHydration(mapTree, field.context.checkout.forest);
+	const mapTree = prepareForInsertion(
+		initialTree as InsertableContent,
+		schema,
+		field.context,
+		true,
+	);
 	if (mapTree === undefined) return undefined as TreeFieldFromImplicitField<TSchema>;
 	const cursor = cursorForMapTreeField([mapTree]);
 	initializeForest(forest, cursor, testRevisionTagCodec, testIdCompressor, true);

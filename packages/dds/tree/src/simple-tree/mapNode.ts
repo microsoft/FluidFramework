@@ -4,13 +4,12 @@
  */
 
 import { Lazy } from "@fluidframework/core-utils/internal";
-import {
-	type FlexTreeNode,
-	type FlexTreeOptionalField,
-	type OptionalFieldEditBuilder,
-	getSchemaAndPolicy,
+import type {
+	FlexTreeNode,
+	FlexTreeOptionalField,
+	OptionalFieldEditBuilder,
 } from "../feature-libraries/index.js";
-import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
+import { getTreeNodeForField } from "./getTreeNodeForField.js";
 import {
 	createFieldSchema,
 	FieldKind,
@@ -42,6 +41,7 @@ import {
 	type FactoryContent,
 	type InsertableContent,
 } from "./toMapTree.js";
+import { prepareForInsertion } from "./prepareForInsertion.js";
 import { brand, count, type RestrictiveStringRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import type { ExclusiveMapTree } from "../core/index.js";
@@ -191,19 +191,13 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);
 		const node = this.innerNode;
-		const mapTree = mapTreeFromNodeData(
+		const mapTree = prepareForInsertion(
 			value as InsertableContent | undefined,
 			createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
-			{
-				context: node.context.isHydrated() ? node.context.nodeKeyManager : undefined,
-				schemaValidationPolicy: getSchemaAndPolicy(node),
-			},
+			node.context,
 		);
 
 		const field = node.getBoxed(brand(key));
-		if (node.context.isHydrated()) {
-			prepareContentForHydration(mapTree, node.context.checkout.forest);
-		}
 
 		this.editor(key).set(mapTree, field.length === 0);
 		return this;

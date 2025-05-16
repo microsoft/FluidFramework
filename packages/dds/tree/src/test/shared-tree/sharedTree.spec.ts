@@ -95,10 +95,9 @@ import {
 	SharedTree as SharedTreeKind,
 	type ISharedTree,
 } from "../../treeFactory.js";
-import {
-	SharedObjectCore,
-	type ISharedObjectKind,
-	type SharedObjectKind,
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -116,7 +115,7 @@ import {
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
-import { proxySlot } from "../../simple-tree/core/treeNodeKernel.js";
+import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 
 const enableSchemaValidation = true;
 
@@ -221,9 +220,9 @@ describe("SharedTree", () => {
 						assert(node.context.isDisposed() === false);
 						assert(allowNodes);
 					}
-					const proxy = anchor.slots.get(proxySlot);
-					if (proxy !== undefined) {
-						assert.equal(Tree.status(proxy), TreeStatus.InDocument);
+					const treeNode = anchor.slots.get(simpleTreeNodeSlot);
+					if (treeNode !== undefined) {
+						assert.equal(Tree.status(treeNode), TreeStatus.InDocument);
 						assert(allowNodes);
 					}
 				}
@@ -304,7 +303,25 @@ describe("SharedTree", () => {
 			view2.upgradeSchema();
 		});
 
-		it("unhydrated tree input", () => {
+		it("unhydrated optional tree input", () => {
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
+			const sb = new SchemaFactory("test-factory");
+			class Foo extends sb.object("Foo", {}) {}
+
+			const view = tree.viewWith(
+				new TreeViewConfiguration({ schema: SchemaFactory.optional(Foo) }),
+			);
+			const unhydratedInitialTree = new Foo({});
+			view.initialize(unhydratedInitialTree);
+
+			assert(view.root === unhydratedInitialTree);
+		});
+
+		it("unhydrated required tree input", () => {
+			// Initializing to a schema with a required root goes through a three-phase initialization.
+			// First an optional version of the schema is set, then the content is set, and finally the required schema is set.
+			// This is more likely to break hydration than the optional case above.
+
 			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
@@ -757,12 +774,15 @@ describe("SharedTree", () => {
 		getBranch(tree).branch();
 		view.root.insertAtEnd("b");
 
-		const tree2 = sharedTreeFactory.create(runtime, "tree2");
-		assert(tree2 instanceof SharedObjectCore);
-		await tree2.load({
-			deltaConnection: runtime.createDeltaConnection(),
-			objectStorage: MockStorage.createFromSummary((await tree.summarize()).summary),
-		});
+		const tree2 = await sharedTreeFactory.load(
+			runtime,
+			"tree2",
+			{
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary((await tree.summarize()).summary),
+			},
+			sharedTreeFactory.attributes,
+		);
 
 		const loadedView = tree2.viewWith(
 			new TreeViewConfiguration({

@@ -4,12 +4,12 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree } from "./shared-tree/index.js";
 import {
 	type FieldHasDefault,
 	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
@@ -24,18 +24,72 @@ import {
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
 	type InternalTreeNode,
-	type FieldSchema,
-	type FieldKind,
 	SchemaFactory,
 	type ImplicitAnnotatedFieldSchema,
 	type UnannotateImplicitFieldSchema,
+	isArrayNodeSchema,
 } from "./simple-tree/index.js";
 
-// Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
+// Future improvement TODOs:
+// - Omit `cells` property from Row insertion type.
 // - Record-like type parameters / input parameters?
 // - Omit `props` properties from Row and Column schemas when not provided?
 
+// Longer-term work:
+// - Add constraint APIs to make it possible to avoid situations that could yield "orphaned" cells.
+
+/**
+ * The sub-scope applied to user-provided {@link SchemaFactory}s by table schema factories.
+ */
 const tableSchemaFactorySubScope = "table";
+
+/**
+ * Gets the table containing the provided row/column node, if the node is part of a table.
+ * @remarks Assumes that the table is the grandparent of the row/column node.
+ */
+function getParentTable(
+	rowOrColumnNode: TreeNode,
+):
+	| (TreeNode &
+			TableSchema.Table<
+				string | undefined,
+				ImplicitAllowedTypes,
+				System_TableSchema.ColumnSchemaBase,
+				System_TableSchema.RowSchemaBase
+			>)
+	| undefined {
+	const rowListNode = Tree.parent(rowOrColumnNode);
+	if (rowListNode === undefined || !isArrayNodeSchema(Tree.schema(rowListNode))) {
+		return undefined;
+	}
+	const tableNode = Tree.parent(rowListNode);
+	if (tableNode === undefined || !isTableNode(tableNode)) {
+		return undefined;
+	}
+
+	return tableNode;
+}
+
+/**
+ * A private symbol put on table schema to help identify them.
+ */
+const tableSchemaSymbol: unique symbol = Symbol("tableNode");
+
+/**
+ * Type-guard to determine if a node is a table node.
+ * @remarks Uses {@link tableSchemaSymbol} to identify table nodes.
+ */
+function isTableNode(
+	node: TreeNode,
+): node is TreeNode &
+	TableSchema.Table<
+		string | undefined,
+		ImplicitAllowedTypes,
+		System_TableSchema.ColumnSchemaBase,
+		System_TableSchema.RowSchemaBase
+	> {
+	return tableSchemaSymbol in Tree.schema(node);
+}
 
 /**
  * Not intended for use outside of this package.
@@ -45,34 +99,40 @@ const tableSchemaFactorySubScope = "table";
  * This namespace should be strictly type-exported by the package.
  * All members should be tagged with `@system`.
  *
- * @system @internal
+ * @system @alpha
  */
 export namespace System_TableSchema {
+	/**
+	 * Default type used for column and row "props" fields.
+	 * @privateRemarks
+	 * Longer term, it would be better to simply omit "props" altogether by default.
+	 * For now, this ensures that the user doesn't have to specify a "props" entry when initializing column/row nodes
+	 * and ensures that they cannot set anything that might conflict with future evolutions of the schema.
+	 * @system @alpha
+	 */
+	export type DefaultPropsType = ReturnType<typeof SchemaFactory.optional<[]>>;
+
 	/**
 	 * A base interface for factory input options which include an schema factory.
 	 * @remarks This interface should not be referenced directly.
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
-	 * @system @internal
+	 * @system @alpha
 	 */
-	export interface OptionsWithSchemaFactory<
-		TScope extends string | undefined = string | undefined,
-	> {
+	export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryAlpha> {
 		/**
 		 * Schema factory with which the Column schema will be associated.
 		 * @remarks Can be used to associate the resulting schema with an existing {@link SchemaFactory.scope|scope}.
 		 */
-		readonly schemaFactory: SchemaFactoryAlpha<TScope>;
+		readonly schemaFactory: TSchemaFactory;
 	}
 
 	/**
 	 * A base interface for factory input options which include the table cell schema.
 	 * @remarks This interface should not be referenced directly.
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
-	 * @system @internal
+	 * @system @alpha
 	 */
-	export interface OptionsWithCellSchema<
-		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> {
+	export interface OptionsWithCellSchema<TCellSchema extends ImplicitAllowedTypes> {
 		/**
 		 * Schema for the table's cells.
 		 */
@@ -84,23 +144,31 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table cow schema.
 	 * @remarks Includes parameters common to all column factory overloads.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	export type CreateColumnOptionsBase<
-		TInputScope extends string | undefined = string | undefined,
-	> = OptionsWithSchemaFactory<TInputScope>;
+		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
+		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
 	/**
-	 * Factory for creating new table column schema.
-	 * @system @internal
+	 * Factory for creating column schema.
+	 * @system @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
-	export function createColumnInternal<
+	export function createColumnSchema<
 		const TInputScope extends string | undefined,
+		const TCellSchema extends ImplicitAllowedTypes,
 		const TPropsSchema extends ImplicitAnnotatedFieldSchema,
-	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, propsSchema: TPropsSchema) {
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		cellSchema: TCellSchema,
+		propsSchema: TPropsSchema,
+	) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
+
+		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
 
 		// Note: `columnFields` is broken into two parts to work around a TypeScript bug
 		// that results in broken `.d.ts` output.
@@ -136,10 +204,36 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.IColumn<TPropsSchema> {}
+			implements TableSchema.Column<TCellSchema, TPropsSchema>
+		{
+			public getCells(): {
+				rowId: string;
+				cell: CellValueType;
+			}[] {
+				const tableNode = getParentTable(this);
+				if (tableNode === undefined) {
+					throw new UsageError(`Column with ID "${this.id}" is not contained in a table.`);
+				}
+
+				const result = [];
+				for (const row of tableNode.rows) {
+					const cell = row.getCell(this.id);
+					if (cell !== undefined) {
+						if (!Tree.is(cell, cellSchema)) {
+							throw new UsageError(
+								"Parent table contains a cell with incompatible with this column.",
+							);
+						}
+
+						result.push({ rowId: row.id, cell: cell as CellValueType });
+					}
+				}
+				return result;
+			}
+		}
 
 		type ColumnValueType = TreeNode &
-			TableSchema.IColumn<TPropsSchema> &
+			TableSchema.Column<TCellSchema, TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Column">>;
 
 		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof columnFields>`,
@@ -151,7 +245,7 @@ export namespace System_TableSchema {
 			typeof columnFieldsBuiltInParts
 		> &
 			(FieldHasDefault<UnannotateImplicitFieldSchema<TPropsSchema>> extends true
-				? // Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
+				? // Note: The docs on the below properties are copied from `IColumn.props`' docs to ensure that the
 					// documentation appears in the data insertion scenario.
 					// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
 					// support `@inheritDoc`.
@@ -211,12 +305,13 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base column schema type.
-	 * @sealed @system @internal
+	 * @sealed @system @alpha
 	 */
 	export type ColumnSchemaBase<
 		TScope extends string | undefined = string | undefined,
-		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
-	> = ReturnType<typeof TableSchema.createColumn<TScope, TPropsSchema>>;
+		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TPropsSchema extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
+	> = ReturnType<typeof createColumnSchema<TScope, TCellSchema, TPropsSchema>>;
 
 	// #endregion
 
@@ -225,23 +320,22 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table row schema.
 	 * @remarks Includes parameters common to all row factory overloads.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	export type CreateRowOptionsBase<
-		TScope extends string | undefined = string | undefined,
+		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> = OptionsWithSchemaFactory<TScope> & OptionsWithCellSchema<TCell>;
+	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
 	/**
-	 * Factory for creating new table row schema.
-	 *
-	 * @sealed @internal
+	 * Factory for creating row schema.
+	 * @sealed @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
-	export function createRowInternal<
+	export function createRowSchema<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
-		const TPropsSchema extends ImplicitFieldSchema,
+		const TPropsSchema extends ImplicitAnnotatedFieldSchema,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		cellSchema: TCellSchema,
@@ -289,32 +383,60 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.IRow<TCellSchema, TPropsSchema>
+			implements TableSchema.Row<TCellSchema, TPropsSchema>
 		{
-			public getCell(columnOrId: TableSchema.IColumn | string): CellValueType | undefined {
+			public getCell(
+				columnOrId: TableSchema.Column<TCellSchema> | string,
+			): CellValueType | undefined {
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 				return this.cells.get(columnId) as CellValueType | undefined;
 			}
 
 			public setCell(
-				columnOrId: TableSchema.IColumn | string,
+				columnOrId: TableSchema.Column<TCellSchema> | string,
 				value: CellInsertableType | undefined,
 			): void {
+				// TODO: throw if column does not exist in the owning table.
+
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 				this.cells.set(columnId, value);
 			}
 
-			public removeCell(columnOrId: TableSchema.IColumn | string): void {
+			public removeCell(
+				columnOrId: TableSchema.Column<TCellSchema> | string,
+			): CellValueType | undefined {
+				// TODO: throw if column does not exist in the owning table.
+
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-				if (!this.cells.has(columnId)) {
-					return;
+
+				const cell: CellValueType | undefined = this.cells.get(columnId);
+				if (cell === undefined) {
+					return undefined;
 				}
+
 				this.cells.delete(columnId);
+				return cell;
+			}
+
+			public getCells(): {
+				columnId: string;
+				cell: CellValueType;
+			}[] {
+				const result = [];
+				for (const [columnId, cell] of this.cells.entries()) {
+					if (cell !== undefined) {
+						result.push({
+							columnId,
+							cell,
+						});
+					}
+				}
+				return result;
 			}
 		}
 
 		type RowValueType = TreeNode &
-			TableSchema.IRow<TCellSchema, TPropsSchema> &
+			TableSchema.Row<TCellSchema, TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Row">>;
 
 		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof rowFields>`,
@@ -324,7 +446,7 @@ export namespace System_TableSchema {
 		// the issue.
 		// type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
 		type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFieldsBuiltInParts> &
-			(FieldHasDefault<TPropsSchema> extends true
+			(FieldHasDefault<UnannotateImplicitFieldSchema<TPropsSchema>> extends true
 				? // Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
 					// documentation appears in the data insertion scenario.
 					// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
@@ -336,7 +458,9 @@ export namespace System_TableSchema {
 						 * @remarks This is a user-defined schema that can be used to store additional information
 						 * about the row.
 						 */
-						props?: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props?: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					}
 				: {
 						/**
@@ -344,10 +468,12 @@ export namespace System_TableSchema {
 						 * @remarks This is a user-defined schema that can be used to store additional information
 						 * about the row.
 						 */
-						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					});
 
-		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
+		// Modified version of `Row` that ensures the constructor (and `createFromInsertable`) are
 		// typed correctly in terms of our insertable type.
 		// This lets us be selective in our type-cast for the value returned from this function,
 		// preserving as much type-safety as we reasonably can.
@@ -383,13 +509,13 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @system @internal
+	 * @sealed @system @alpha
 	 */
 	export type RowSchemaBase<
 		TScope extends string | undefined = string | undefined,
 		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
-	> = ReturnType<typeof TableSchema.createRow<TScope, TCellSchema, TPropsSchema>>;
+		TPropsSchema extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
+	> = ReturnType<typeof createRowSchema<TScope, TCellSchema, TPropsSchema>>;
 
 	// #endregion
 
@@ -398,26 +524,23 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table schema.
 	 * @remarks Includes parameters common to all table factory overloads.
-	 * @system @internal
+	 * @system @alpha
 	 */
 	export type TableFactoryOptionsBase<
-		TScope extends string | undefined = string | undefined,
+		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	> = OptionsWithSchemaFactory<TScope> & OptionsWithCellSchema<TCell>;
+	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
 	/**
-	 * Factory for creating new table schema.
-	 * @system @internal
+	 * Factory for creating table schema.
+	 * @system @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
-	export function createTableInternal<
+	export function createTableSchema<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
-		const TColumnSchema extends ColumnSchemaBase<TInputScope> = ColumnSchemaBase<TInputScope>,
-		const TRowSchema extends RowSchemaBase<TInputScope, TCellSchema> = RowSchemaBase<
-			TInputScope,
-			TCellSchema
-		>,
+		const TColumnSchema extends ColumnSchemaBase<TInputScope, TCellSchema>,
+		const TRowSchema extends RowSchemaBase<TInputScope, TCellSchema>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCellSchema,
@@ -428,13 +551,8 @@ export namespace System_TableSchema {
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
-		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>;
-
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
-		type ColumnInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>;
-
 		type RowValueType = TreeNodeFromImplicitAllowedTypes<TRowSchema>;
-		type RowInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>;
 
 		/**
 		 * {@link Table} fields.
@@ -444,7 +562,7 @@ export namespace System_TableSchema {
 		const tableFields = {
 			rows: schemaFactory.array("Table.rows", rowSchema),
 			columns: schemaFactory.array("Table.columns", columnSchema),
-		} as const satisfies Record<string, ImplicitFieldSchema>;
+		} as const satisfies Record<string, ImplicitAnnotatedFieldSchema>;
 
 		/**
 		 * The Table schema
@@ -454,8 +572,14 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.ITable<TCellSchema, TColumnSchema, TRowSchema>
+			implements TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema>
 		{
+			public static empty<TThis extends TableConstructorType>(
+				this: TThis,
+			): InstanceType<TThis> {
+				return new this({ columns: [], rows: [] }) as InstanceType<TThis>;
+			}
+
 			public getColumn(id: string): ColumnValueType | undefined {
 				// TypeScript is unable to narrow the types correctly here, hence the casts.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -472,51 +596,106 @@ export namespace System_TableSchema {
 					| undefined;
 			}
 
-			public getCell(key: TableSchema.CellKey): CellValueType | undefined {
-				const { columnId, rowId } = key;
-				const row = this.getRow(rowId);
-				if (row !== undefined) {
-					const column = this.getColumn(columnId);
-					if (column !== undefined) {
-						return row.getCell(column.id);
-					}
+			public getCell(
+				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
+			): CellValueType | undefined {
+				const { column: columnOrId, row: rowOrId } = key;
+				const row = this._getRow(rowOrId);
+				if (row === undefined) {
+					return undefined;
 				}
-				// If the cell does not exist return undefined
-				return undefined;
+
+				const column = this._getColumn(columnOrId);
+				if (column === undefined) {
+					return undefined;
+				}
+
+				return row.getCell(column);
 			}
 
 			public insertColumn({
 				column,
 				index,
-			}: TableSchema.InsertColumnParameters<ColumnInsertableType>): ColumnValueType {
-				if (index === undefined) {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.columns.insertAtEnd(column as any);
-				} else {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.columns.insertAt(index, column as any);
+			}: TableSchema.InsertColumnParameters<TColumnSchema>): ColumnValueType {
+				const inserted = this.insertColumns({
+					columns: [column],
+					index,
+				});
+				return inserted[0] ?? oob();
+			}
+
+			public insertColumns({
+				columns,
+				index,
+			}: TableSchema.InsertColumnsParameters<TColumnSchema>): ColumnValueType[] {
+				// Ensure index is valid
+				if (index !== undefined) {
+					Table.validateInsertionIndex(index, this.columns);
 				}
 
-				// Inserting the input node into the tree hydrates it, making it usable as a node.
-				return column as ColumnValueType;
+				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				if (index === undefined) {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					this.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
+				} else {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					this.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
+				}
+
+				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
+				return columns as unknown as ColumnValueType[];
+			}
+
+			public insertRow({
+				row,
+				index,
+			}: TableSchema.InsertRowParameters<TRowSchema>): RowValueType {
+				const inserted = this.insertRows({
+					rows: [row],
+					index,
+				});
+				return inserted[0] ?? oob();
 			}
 
 			public insertRows({
 				index,
 				rows,
-			}: TableSchema.InsertRowsParameters<RowInsertableType>): RowValueType[] {
+			}: TableSchema.InsertRowsParameters<TRowSchema>): RowValueType[] {
+				// #region Input validation
+
+				// Ensure index is valid
+				if (index !== undefined) {
+					Table.validateInsertionIndex(index, this.rows);
+				}
+
+				// Note: TypeScript is unable to narrow the type of the row type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				for (const newRow of rows) {
+					// If the row contains cells, verify that the table contains the columns for those cells.
+					// Note: we intentionally hide `cells` on `IRow` to avoid leaking the internal data representation as much as possible, so we have to cast here.
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					if ((newRow as any).cells !== undefined) {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						const keys: string[] = Object.keys((newRow as any).cells);
+						for (const key of keys) {
+							if (!this.containsColumnWithId(key)) {
+								throw new UsageError(
+									`Attempted to insert row a cell under column ID "${key}", but the table does not contain a column with that ID.`,
+								);
+							}
+						}
+					}
+				}
+
+				// #endregion
+
+				// TypeScript is unable to narrow the row type correctly here, hence the casts below.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
 				if (index === undefined) {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
 				} else {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
 				}
@@ -525,67 +704,218 @@ export namespace System_TableSchema {
 				return rows as unknown as RowValueType[];
 			}
 
-			public setCell({ key, cell }: TableSchema.SetCellParameters<CellInsertableType>): void {
-				const { columnId, rowId } = key;
-				const row = this.getRow(rowId);
-				if (row !== undefined) {
-					const column = this.getColumn(columnId);
-					if (column !== undefined) {
-						row.setCell(column.id, cell);
-					}
+			public setCell({
+				key,
+				cell,
+			}: TableSchema.SetCellParameters<TCellSchema, TColumnSchema, TRowSchema>): void {
+				const { column: columnOrId, row: rowOrId } = key;
+
+				const row = this._getRow(rowOrId);
+				if (row === undefined) {
+					const rowId = this._getRowId(rowOrId);
+					throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
 				}
+
+				const column = this._getColumn(columnOrId);
+				if (column === undefined) {
+					const columnId = this._getColumnId(columnOrId);
+					throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
+				}
+
+				row.setCell(column, cell);
 			}
 
-			public removeColumn(column: ColumnValueType): void {
-				const index = this.columns.indexOf(column);
-				// If the column is not in the table, do nothing
-				if (index === -1) return;
-				this.columns.removeAt(index);
-			}
-
-			public removeRows(rows: readonly RowValueType[]): void {
-				// If there are no rows to remove, do nothing
-				if (rows.length === 0) {
-					return;
+			public removeColumns(
+				columns: readonly string[] | readonly ColumnValueType[],
+			): ColumnValueType[] {
+				// If there are no columns to remove, do nothing
+				if (columns.length === 0) {
+					return [];
 				}
 
-				// If there is only one row to remove, remove it
-				if (rows.length === 1) {
-					const index = this.rows.indexOf(rows[0] ?? oob());
-					this.rows.removeAt(index);
-					return;
+				// If there is only one column to remove, remove it (and don't incur cost of transaction)
+				if (columns.length === 1) {
+					const removedColumn = this.removeColumn(columns[0] ?? oob());
+					return [removedColumn];
 				}
-				// If there are multiple rows to remove, remove them in a transaction
-				// This is to avoid the performance issues of deleting multiple rows at once
+
+				// If there are multiple columns to remove, remove them in a transaction.
+				const removedColumns: ColumnValueType[] = [];
 				Tree.runTransaction(this, () => {
-					// Iterate over the rows and remove them
-					for (const row of rows) {
-						const index = this.rows.indexOf(row);
-						this.rows.removeAt(index);
+					// Note, throwing an error within a transaction will abort the entire transaction.
+					// So if we throw an error here for any row, no columns will be removed.
+					for (const columnToRemove of columns) {
+						const removedRow = this.removeColumn(columnToRemove);
+						removedColumns.push(removedRow);
 					}
 				});
+				return removedColumns;
 			}
 
-			public removeAllRows(): void {
-				this.rows.removeRange();
+			public removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
+				const column = this._getColumn(columnOrId);
+				const index = column === undefined ? -1 : this.columns.indexOf(column);
+				if (index === -1) {
+					const columnId = this._getColumnId(columnOrId);
+					throw new UsageError(
+						`Specified column with ID "${columnId}" does not exist in the table.`,
+					);
+				}
+				this.columns.removeAt(index);
+				return column as ColumnValueType;
 			}
 
-			public removeCell(key: TableSchema.CellKey): void {
-				const { columnId, rowId } = key;
-				const row = this.getRow(rowId);
-				if (row !== undefined) {
-					const column = this.getColumn(columnId);
-					if (column !== undefined) {
-						row.removeCell(column.id);
+			public removeAllColumns(): ColumnValueType[] {
+				// TypeScript is unable to narrow the row type correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return this.removeColumns(this.columns as unknown as ColumnValueType[]);
+			}
+
+			public removeRows(rows: readonly string[] | readonly RowValueType[]): RowValueType[] {
+				// If there are no rows to remove, do nothing
+				if (rows.length === 0) {
+					return [];
+				}
+
+				// If there is only one row to remove, remove it (and don't incur cost of transaction)
+				if (rows.length === 1) {
+					const removedRow = this.removeRow(rows[0] ?? oob());
+					return [removedRow];
+				}
+
+				// If there are multiple rows to remove, remove them in a transaction.
+				const removedRows: RowValueType[] = [];
+				Tree.runTransaction(this, () => {
+					// Note, throwing an error within a transaction will abort the entire transaction.
+					// So if we throw an error here for any row, no rows will be removed.
+					for (const rowToRemove of rows) {
+						const removedRow = this.removeRow(rowToRemove);
+						removedRows.push(removedRow);
 					}
+				});
+				return removedRows;
+			}
+
+			public removeRow(rowOrId: string | RowValueType): RowValueType {
+				const rowToRemove = this._getRow(rowOrId);
+				const index = rowToRemove === undefined ? -1 : this.rows.indexOf(rowToRemove);
+
+				// If the row does not exist in the table, throw an error.
+				if (index === -1) {
+					const rowId = this._getRowId(rowOrId);
+					throw new UsageError(
+						`Specified row with ID "${rowId}" does not exist in the table.`,
+					);
+				}
+
+				this.rows.removeAt(index);
+				return rowToRemove as RowValueType;
+			}
+
+			public removeAllRows(): RowValueType[] {
+				// TypeScript is unable to narrow the row type correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return this.removeRows(this.rows as unknown as RowValueType[]);
+			}
+
+			public removeCell(
+				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
+			): CellValueType | undefined {
+				const { column: columnOrId, row: rowOrId } = key;
+				const row = this._getRow(rowOrId);
+				if (row === undefined) {
+					const rowId = this._getRowId(rowOrId);
+					throw new UsageError(
+						`Specified row with ID "${rowId}" does not exist in the table.`,
+					);
+				}
+
+				const column = this._getColumn(columnOrId);
+				if (column === undefined) {
+					const columnId = this._getColumnId(columnOrId);
+					throw new UsageError(
+						`Specified column with ID "${columnId}" does not exist in the table.`,
+					);
+				}
+
+				const cell: CellValueType | undefined = row.getCell(column.id);
+				if (cell === undefined) {
+					return undefined;
+				}
+
+				row.removeCell(column.id);
+				return cell;
+			}
+
+			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType | undefined {
+				return typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+			}
+
+			private _getColumnId(columnOrId: string | ColumnValueType): string {
+				return typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+			}
+
+			private _getRow(rowOrId: string | RowValueType): RowValueType | undefined {
+				return typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+			}
+
+			private _getRowId(rowOrId: string | RowValueType): string {
+				return typeof rowOrId === "string" ? rowOrId : rowOrId.id;
+			}
+
+			private containsColumnWithId(columnId: string): boolean {
+				// TypeScript is unable to narrow the types correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return (
+					this.columns.find(
+						(column) => (column as TableSchema.Column<TCellSchema>).id === columnId,
+					) !== undefined
+				);
+			}
+
+			private containsRowWithId(rowId: string): boolean {
+				// TypeScript is unable to narrow the types correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return (
+					this.rows.find((row) => (row as TableSchema.Row<TCellSchema>).id === rowId) !==
+					undefined
+				);
+			}
+
+			/**
+			 * Ensure that the specified index is a valid location for item insertion in the destination list.
+			 * @throws Throws a usage error if the destination is invalid.
+			 */
+			private static validateInsertionIndex(
+				index: number,
+				destinationList: readonly unknown[],
+			): void {
+				if (index < 0) {
+					throw new UsageError("The index must be greater than or equal to 0.");
+				}
+
+				if (index > destinationList.length) {
+					throw new UsageError("The index specified for insertion is out of bounds.");
+				}
+
+				if (!Number.isInteger(index)) {
+					throw new UsageError("The index must be an integer.");
 				}
 			}
 		}
 
+		// Set a private symbol on the schema class that marks it as having been generated by this factory.
+		// Column / Row functionality use this to validate that they are being used in a table.
+		// This is effectively a work-around that allows columns and rows to invoke table methods
+		// without having to pass the table as a parameter to their construction, which isn't possible.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(Table as any)[tableSchemaSymbol] = true;
+
 		type TableValueType = TreeNode &
-			TableSchema.ITable<TCellSchema, TColumnSchema, TRowSchema> &
+			TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema> &
 			WithType<ScopedSchemaName<Scope, "Table">>;
 		type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
+		type TableConstructorType = new (data: TableInsertableType) => TableValueType;
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
@@ -599,7 +929,12 @@ export namespace System_TableSchema {
 			/* TInsertable */ object & TableInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof tableFields
-		> = Table;
+		> & {
+			/**
+			 * Create an empty table.
+			 */
+			empty<TThis extends TableConstructorType>(this: TThis): InstanceType<TThis>;
+		} = Table;
 
 		// Return the table schema
 		return TableSchemaType;
@@ -607,36 +942,159 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @system @internal
+	 * @sealed @system @alpha
 	 */
 	export type TableSchemaBase<
 		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
-		TColumn extends ColumnSchemaBase<TScope> = ColumnSchemaBase<TScope>,
-		TRow extends RowSchemaBase<TScope, TCell, ImplicitAllowedTypes> = RowSchemaBase<
-			TScope,
-			TCell,
-			ImplicitAllowedTypes
-		>,
-	> = ReturnType<typeof TableSchema.createTable<TScope, TCell, TColumn, TRow>>;
+		TColumn extends ColumnSchemaBase<TScope, TCell>,
+		TRow extends RowSchemaBase<TScope, TCell>,
+	> = ReturnType<typeof createTableSchema<TScope, TCell, TColumn, TRow>>;
 
 	// #endregion
 }
 
 /**
  * Contains types and factories for creating schema to represent dynamic tabular data.
- * @privateRemarks TODO: document in more detail and add `@example`s.
- * @internal
+ *
+ * @remarks
+ *
+ * WARNING: These APIs are in preview and are subject to change.
+ * Until these APIs have stabilized, it is not recommended to use them in production code.
+ * There may be breaking changes to these APIs and their underlying data format.
+ * Using these APIs in production code may result in data loss or corruption.
+ *
+ * Tables created using these APIs are...
+ *
+ * - sparse, meaning that cells may be omitted, and new rows are empty by default.
+ *
+ * - dynamic, meaning that their structure can be modified at runtime.
+ * Columns and rows can be inserted, removed, modified, and reordered.
+ * Cells can be inserted, removed, and modified.
+ *
+ * - row-major, meaning that operating on rows (including inserts, removal, moves, and traversal) is more efficient than operating on columns.
+ *
+ * Column and Row schema created using these APIs are extensible via the `props` field.
+ * This allows association of additional properties with column and row nodes.
+ *
+ * Cells in the table may become "orphaned."
+ * That is, it is possible to enter a state where one or more rows contain cells with no corresponding column.
+ * To reduce the likelihood of this, you can manually remove corresponding cells when removing columns.
+ * Either way, it is possible to enter such a state via the merging of edits.
+ * For example: one client might add a row while another concurrently removes a column, orphaning the cell where the column and row intersected.
+ *
+ * @example Defining a Table schema
+ *
+ * ```typescript
+ * class MyTable extends TableSchema.table({
+ * 	schemaFactory,
+ * 	cell: schemaFactory.string,
+ * }) {}
+ *
+ * const table = new MyTable({
+ * 	columns: [{ id: "column-0" }],
+ * 	rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
+ * });
+ * ```
+ *
+ * @example Customizing Column and Row schema
+ *
+ * ```typescript
+ * const Cell = schemaFactory.string;
+ *
+ * class MyColumn extends TableSchema.column({
+ * 	schemaFactory,
+ * 	cell: Cell,
+ * 	props: schemaFactory.object("TableColumnProps", {
+ * 		label: schemaFactory.string,
+ * 	}),
+ * }) {}
+ *
+ * class MyRow extends TableSchema.row({
+ * 	schemaFactory,
+ * 	cell: Cell,
+ * }) {}
+ *
+ * class MyTable extends TableSchema.table({
+ * 	schemaFactory,
+ * 	cell: Cell,
+ * 	column: MyColumn,
+ * 	row: MyRow,
+ * }) {}
+ *
+ * const table = new MyTable({
+ * 	columns: [
+ * 		new MyColumn({ props: { label: "Entry" } }),
+ * 		new MyColumn({ props: { label: "Date" } }),
+ * 		new MyColumn({ props: { label: "Amount" } }),
+ * 	],
+ * 	rows: [],
+ * });
+ * ```
+ *
+ * @example Listening for changes in the table
+ *
+ * ```typescript
+ * // Listen for any changes to the table and its children.
+ * // The "treeChanged" event will fire when the associated node or any of its descendants change.
+ * Tree.on(table, "treeChanged", () => {
+ * 	// Respond to the change.
+ * });
+ * ```
+ *
+ * @example Listening for changes to the rows list only
+ *
+ * ```typescript
+ * // Listen for any changes to the list of rows.
+ * // The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).
+ * // In this case, the event will fire when a row is added or removed, or the order of the list is changed.
+ * // But it won't fire when a row's properties change, or when the row's cells change, etc.
+ * Tree.on(table.rows, "nodeChanged", () => {
+ * 	// Respond to the change.
+ * });
+ * ```
+ *
+ * @example Removing column and cells in a transaction
+ *
+ * When removing a column, if you wish to ensure that all of its corresponding cells are also removed (and not
+ * orphaned), you can remove the column and all of the relevant cells in a transaction.
+ * Note that there are performance implications to this.
+ *
+ * ```typescript
+ * // Remove column1 and all of its cells.
+ * // The "transaction" method will ensure that all changes are applied atomically.
+ * Tree.runTransaction(table, () => {
+ * 	// Remove column1.
+ * 	table.removeColumn(column1);
+ *
+ * 	// Remove the cell at column1 for each row.
+ * 	for (const row of table.rows) {
+ * 		table.removeCell({
+ * 			column: column1,
+ * 			row,
+ * 		});
+ * 	}
+ * });
+ * ```
+ *
+ * @privateRemarks
+ * The above examples are backed by tests in `tableSchema.spec.ts`.
+ * Those tests and these examples should be kept in-sync to ensure that the examples are correct.
+ *
+ * @alpha
  */
 export namespace TableSchema {
 	// #region Column
 
 	/**
 	 * A column in a table.
-	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createColumn:2)}.
-	 * @sealed @internal
+	 * @remarks Implemented by the schema class returned from {@link TableSchema.(column:2)}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @typeParam TProps - Additional properties to associate with the column.
+	 * @sealed @alpha
 	 */
-	export interface IColumn<
+	export interface Column<
+		TCell extends ImplicitAllowedTypes,
 		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> {
 		/**
@@ -649,53 +1107,66 @@ export namespace TableSchema {
 		 * The column's properties.
 		 * @remarks This is a user-defined schema that can be used to store additional information about the column.
 		 * @privateRemarks
-		 * Note: these docs are duplicated on the inline type definitions in {@link createColumn}.
+		 * Note: these docs are duplicated on the inline type definitions in {@link System_TableSchema.createColumnSchema}.
 		 * If you update the docs here, please also update the inline type definitions.
 		 */
-		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>> | undefined;
+		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>>;
 		set props(value: InsertableTreeFieldFromImplicitField<
 			UnannotateImplicitFieldSchema<TProps>
 		>);
+
+		/**
+		 * Gets all of the populated cells in the column, keyed by their associated row IDs.
+		 * @throws Throws an error if the column is not in a table.
+		 */
+		getCells(): readonly {
+			rowId: string;
+			cell: TreeNodeFromImplicitAllowedTypes<TCell>;
+		}[];
 	}
 
 	/**
 	 * Factory for creating new table column schema.
-	 * @internal
+	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @alpha
 	 */
-	export function createColumn<const TScope extends string | undefined>({
-		schemaFactory,
-	}: System_TableSchema.CreateColumnOptionsBase<TScope>): ReturnType<
-		typeof System_TableSchema.createColumnInternal<
-			TScope,
-			FieldSchema<FieldKind.Optional, typeof SchemaFactoryAlpha.null>
-		>
-	>;
+	export function column<
+		const TScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+	>(
+		params: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryAlpha<TScope>, TCell>,
+	): System_TableSchema.ColumnSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table column schema.
-	 * @internal
+	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @typeParam TProps - Additional properties to associate with the column.
+	 * @alpha
 	 */
-	export function createColumn<
+	export function column<
 		const TScope extends string | undefined,
-		const TProps extends ImplicitFieldSchema,
-	>({
-		schemaFactory,
-		props,
-	}: System_TableSchema.CreateColumnOptionsBase<TScope> & {
-		/**
-		 * Optional column properties.
-		 */
-		readonly props: TProps;
-	}): ReturnType<typeof System_TableSchema.createColumnInternal<TScope, TProps>>;
+		const TCell extends ImplicitAllowedTypes,
+		const TProps extends ImplicitAnnotatedFieldSchema,
+	>(
+		params: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
+			/**
+			 * Optional column properties.
+			 */
+			readonly props: TProps;
+		},
+	): System_TableSchema.ColumnSchemaBase<TScope, TCell, TProps>;
 	/**
 	 * Overload implementation
 	 */
-	export function createColumn({
+	export function column({
 		schemaFactory,
+		cell,
 		props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateColumnOptionsBase & {
-		readonly props?: ImplicitFieldSchema;
+		readonly props?: ImplicitAnnotatedFieldSchema;
 	}): TreeNodeSchema {
-		return System_TableSchema.createColumnInternal(schemaFactory, props);
+		return System_TableSchema.createColumnSchema(schemaFactory, cell, props);
 	}
 
 	// #endregion
@@ -704,10 +1175,12 @@ export namespace TableSchema {
 
 	/**
 	 * A row in a table.
-	 * @remarks Implemented by the schema class returned from {@link TableSchema.(createRow:2)}.
-	 * @sealed @internal
+	 * @remarks Implemented by the schema class returned from {@link TableSchema.(row:2)}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @typeParam TProps - Additional properties to associate with the row.
+	 * @sealed @alpha
 	 */
-	export interface IRow<
+	export interface Row<
 		TCell extends ImplicitAllowedTypes,
 		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> {
@@ -720,8 +1193,9 @@ export namespace TableSchema {
 		/**
 		 * Gets the cell in the specified column.
 		 * @returns The cell if it exists, otherwise undefined.
+		 * @privateRemarks TODO: throw if the column does not belong to the same table as the row.
 		 */
-		getCell(column: IColumn): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+		getCell(column: Column<TCell>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 		/**
 		 * Gets the cell in the specified column, denoted by column ID.
 		 * @returns The cell if it exists, otherwise undefined.
@@ -729,32 +1203,45 @@ export namespace TableSchema {
 		getCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 
 		/**
-		 * Sets the cell in the specified column.
-		 * @remarks To remove a cell, call {@link TableSchema.IRow.(removeCell:1)} instead.
+		 * Gets all of the populated cells in the row, keyed by their associated column IDs.
 		 */
-		setCell(column: IColumn, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
+		getCells(): readonly {
+			columnId: string;
+			cell: TreeNodeFromImplicitAllowedTypes<TCell>;
+		}[];
+
+		/**
+		 * Sets the cell in the specified column.
+		 * @remarks To remove a cell, call {@link TableSchema.Row.(removeCell:1)} instead.
+		 * @privateRemarks TODO: Throw an error if the column does not exist in the table.
+		 */
+		setCell(
+			column: Column<TCell>,
+			value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>,
+		): void;
 		/**
 		 * Sets the cell in the specified column, denoted by column ID.
-		 * @remarks To remove a cell, call {@link TableSchema.IRow.(removeCell:2)} instead.
+		 * @remarks To remove a cell, call {@link TableSchema.Row.(removeCell:2)} instead.
 		 */
 		setCell(columnId: string, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
 
 		/**
 		 * Removes the cell in the specified column.
-		 * @privateRemarks TODO: return removed cell
+		 * @returns The cell if it exists, otherwise undefined.
+		 * @privateRemarks TODO: Throw if the column does not belong to the same table as the row.
 		 */
-		removeCell(column: IColumn): void;
+		removeCell(column: Column<TCell>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 		/**
 		 * Removes the cell in the specified column, denoted by column ID.
-		 * @privateRemarks TODO: return removed cell
+		 * @returns The cell if it exists, otherwise undefined.
 		 */
-		removeCell(columnId: string): void;
+		removeCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 
 		/**
 		 * The row's properties.
 		 * @remarks This is a user-defined schema that can be used to store additional information about the row.
 		 * @privateRemarks
-		 * Note: these docs are duplicated on the inline type definitions in {@link createColumn}.
+		 * Note: these docs are duplicated on the inline type definitions in {@link System_TableSchema.createRowSchema}.
 		 * If you update the docs here, please also update the inline type definitions.
 		 */
 		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>>;
@@ -765,50 +1252,46 @@ export namespace TableSchema {
 
 	/**
 	 * Factory for creating new table column schema.
-	 * @internal
+	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @alpha
 	 */
-	export function createRow<
+	export function row<
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-	>({
-		schemaFactory,
-		cell,
-	}: System_TableSchema.CreateRowOptionsBase<TScope, TCell>): ReturnType<
-		typeof System_TableSchema.createRowInternal<
-			TScope,
-			TCell,
-			FieldSchema<FieldKind.Optional, typeof SchemaFactoryAlpha.null>
-		>
-	>;
+	>(
+		params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryAlpha<TScope>, TCell>,
+	): System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
-	 * Factory for creating new table column schema.
-	 * @internal
+	 * Factory for creating new table row schema.
+	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @typeParam TProps - Additional properties to associate with the row.
+	 * @alpha
 	 */
-	export function createRow<
+	export function row<
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TProps extends ImplicitFieldSchema,
-	>({
-		schemaFactory,
-		cell,
-		props,
-	}: System_TableSchema.CreateRowOptionsBase<TScope, TCell> & {
-		/**
-		 * Optional row properties.
-		 */
-		readonly props: TProps;
-	}): ReturnType<typeof System_TableSchema.createRowInternal<TScope, TCell, TProps>>;
+		const TProps extends ImplicitAnnotatedFieldSchema,
+	>(
+		params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
+			/**
+			 * Optional row properties.
+			 */
+			readonly props: TProps;
+		},
+	): System_TableSchema.RowSchemaBase<TScope, TCell, TProps>;
 	/**
 	 * Overload implementation
 	 */
-	export function createRow({
+	export function row({
 		schemaFactory,
 		cell,
 		props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateRowOptionsBase & {
-		readonly props?: ImplicitFieldSchema;
+		readonly props?: ImplicitAnnotatedFieldSchema;
 	}): TreeNodeSchema {
-		return System_TableSchema.createRowInternal(schemaFactory, cell, props);
+		return System_TableSchema.createRowSchema(schemaFactory, cell, props);
 	}
 
 	// #endregion
@@ -816,26 +1299,29 @@ export namespace TableSchema {
 	// #region Table
 
 	/**
-	 * A key to uniquely identify a cell in a table.
-	 * @internal
+	 * A key to uniquely identify a cell within a table.
+	 * @alpha
 	 */
-	export interface CellKey {
+	export interface CellKey<
+		TColumn extends ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes,
+	> {
 		/**
-		 * {@link TableSchema.IColumn.id} of the containing {@link TableSchema.IColumn}.
+		 * {@link TableSchema.Column} or {@link TableSchema.Column.id} at which the cell is located.
 		 */
-		readonly columnId: string;
+		readonly column: string | TreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		/**
-		 * {@link TableSchema.IRow.id} of the containing {@link TableSchema.IRow}.
+		 * {@link TableSchema.Row} or {@link TableSchema.Row.id} at which the cell is located.
 		 */
-		readonly rowId: string;
+		readonly row: string | TreeNodeFromImplicitAllowedTypes<TRow>;
 	}
 
 	/**
-	 * {@link TableSchema.ITable.insertColumn} parameters.
-	 * @internal
+	 * {@link TableSchema.Table.insertColumn} parameters.
+	 * @alpha
 	 */
-	export interface InsertColumnParameters<TInsertableColumn> {
+	export interface InsertColumnParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
 		 * The index at which to insert the new column.
 		 * @remarks If not provided, the column will be appended to the end of the table.
@@ -845,14 +1331,48 @@ export namespace TableSchema {
 		/**
 		 * The column to insert.
 		 */
-		readonly column: TInsertableColumn;
+		readonly column: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
 	}
 
 	/**
-	 * {@link TableSchema.ITable.insertRows} parameters.
-	 * @internal
+	 * {@link TableSchema.Table.insertColumns} parameters.
+	 * @alpha
 	 */
-	export interface InsertRowsParameters<TInsertableRow> {
+	export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
+		/**
+		 * The index at which to insert the new columns.
+		 * @remarks If not provided, the columns will be appended to the end of the table.
+		 */
+		readonly index?: number | undefined;
+
+		/**
+		 * The columns to insert.
+		 */
+		readonly columns: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[];
+	}
+
+	/**
+	 * {@link TableSchema.Table.insertRow} parameters.
+	 * @alpha
+	 */
+	export interface InsertRowParameters<TRow extends ImplicitAllowedTypes> {
+		/**
+		 * The index at which to insert the new row.
+		 * @remarks If not provided, the row will be appended to the end of the table.
+		 */
+		readonly index?: number | undefined;
+
+		/**
+		 * The row to insert.
+		 */
+		readonly row: InsertableTreeNodeFromImplicitAllowedTypes<TRow>;
+	}
+
+	/**
+	 * {@link TableSchema.Table.insertRows} parameters.
+	 * @alpha
+	 */
+	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
 		/**
 		 * The index at which to insert the new rows.
 		 * @remarks If not provided, the rows will be appended to the end of the table.
@@ -862,33 +1382,42 @@ export namespace TableSchema {
 		/**
 		 * The rows to insert.
 		 */
-		readonly rows: TInsertableRow[];
+		readonly rows: InsertableTreeNodeFromImplicitAllowedTypes<TRow>[];
 	}
 
 	/**
-	 * {@link TableSchema.ITable.setCell} parameters.
-	 * @internal
+	 * {@link TableSchema.Table.setCell} parameters.
+	 * @alpha
 	 */
-	export interface SetCellParameters<TInsertableCell> {
+	export interface SetCellParameters<
+		TCell extends ImplicitAllowedTypes,
+		TColumn extends ImplicitAllowedTypes,
+		TRow extends ImplicitAllowedTypes,
+	> {
 		/**
 		 * The key to uniquely identify a cell in a table.
 		 */
-		readonly key: CellKey;
+		readonly key: CellKey<TColumn, TRow>;
 
 		/**
 		 * The cell to set.
 		 */
-		readonly cell: TInsertableCell;
+		readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
 	}
 
 	/**
 	 * A table.
-	 * @sealed @internal
+	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the table.
+	 * @typeParam TColumn - The type of the columns in the table.
+	 * @typeParam TRow - The type of the rows in the table.
+	 * @sealed @alpha
 	 */
-	export interface ITable<
+	export interface Table<
+		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
-		TColumn extends ImplicitAllowedTypes,
-		TRow extends ImplicitAllowedTypes,
+		TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
+		TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
 	> {
 		/**
 		 * The table's columns.
@@ -901,139 +1430,269 @@ export namespace TableSchema {
 		readonly rows: TreeArrayNode<TRow>;
 
 		/**
-		 * Gets a table column by its {@link TableSchema.IRow.id}.
+		 * Gets a table column by its {@link TableSchema.Column.id}.
 		 */
 		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
 
 		/**
-		 * Gets a table row by its {@link TableSchema.IRow.id}.
+		 * Gets a table row by its {@link TableSchema.Row.id}.
 		 */
 		getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
 
 		/**
 		 * Gets a cell in the table by column and row IDs.
 		 * @param key - A key that uniquely distinguishes a cell in the table, represented as a combination of the column ID and row ID.
-		 * @privateRemarks TODO: add overload that takes row and column nodes.
 		 */
-		getCell(key: CellKey): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+		getCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 
 		/**
 		 * Inserts a column into the table.
-		 * @throws Throws an error if the column is already in the tree, or if the specified index is out of range.
+		 *
+		 * @throws Throws an error if the specified index is out of range.
+		 *
+		 * No column is inserted in this case.
 		 */
 		insertColumn(
-			params: InsertColumnParameters<InsertableTreeNodeFromImplicitAllowedTypes<TColumn>>,
+			params: InsertColumnParameters<TColumn>,
 		): TreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		/**
-		 * Inserts 0 or more rows into the table.
-		 * @throws Throws an error if any of the rows are already in the tree, or if the specified index is out of range.
+		 * Inserts 0 or more columns into the table.
+		 *
+		 * @throws Throws an error if the specified index is out of range.
+		 *
+		 * No columns are inserted in this case.
 		 */
-		insertRows(
-			params: InsertRowsParameters<InsertableTreeNodeFromImplicitAllowedTypes<TRow>>,
-		): TreeNodeFromImplicitAllowedTypes<TRow>[];
+		insertColumns(
+			params: InsertColumnsParameters<TColumn>,
+		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+
+		/**
+		 * Inserts a row into the table.
+		 *
+		 * @throws
+		 * Throws an error in the following cases:
+		 *
+		 * - The row contains cells, but the table does not contain matching columns for one or more of those cells.
+		 *
+		 * - The specified index is out of range.
+		 *
+		 * No row is inserted in these cases.
+		 */
+		insertRow(params: InsertRowParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>;
+
+		/**
+		 * Inserts 0 or more rows into the table.
+		 *
+		 * @throws
+		 * Throws an error in the following cases:
+		 *
+		 * - The row contains cells, but the table does not contain matching columns for one or more of those cells.
+		 *
+		 * - The specified index is out of range.
+		 *
+		 * No rows are inserted in these cases.
+		 */
+		insertRows(params: InsertRowsParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
 		 * Sets the cell at the specified location in the table.
-		 * @remarks To remove a cell, call {@link TableSchema.ITable.removeCell} instead.
-		 * @privateRemarks TODO: add overload that takes column/row nodes?
+		 * @remarks To remove a cell, call {@link TableSchema.Table.removeCell} instead.
 		 */
-		setCell(
-			params: SetCellParameters<InsertableTreeNodeFromImplicitAllowedTypes<TCell>>,
-		): void;
+		setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
 
 		/**
 		 * Removes the specified column from the table.
-		 * @remarks Note: this does not remove any cells from the table's rows.
-		 * @privateRemarks
-		 * TODO:
-		 * - Policy for when the column is not in the table.
-		 * - Actually remove corresponding cells from table rows.
+		 *
+		 * @remarks
+		 * Note: this does not remove any cells from the table's rows.
+		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
+		 *
+		 * @param column - The {@link TableSchema.Column | column} or {@link TableSchema.Column.id | column ID} to remove.
+		 * @throws Throws an error if the column is not in the table.
+		 * @privateRemarks TODO (future): Actually remove corresponding cells from table rows.
 		 */
-		removeColumn: (column: TreeNodeFromImplicitAllowedTypes<TColumn>) => void;
+		removeColumn(
+			column: string | TreeNodeFromImplicitAllowedTypes<TColumn>,
+		): TreeNodeFromImplicitAllowedTypes<TColumn>;
+
+		/**
+		 * Removes 0 or more columns from the table.
+		 *
+		 * @remarks
+		 * Note: this does not remove any cells from the table's rows.
+		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
+		 *
+		 * @param columns - The columns to remove.
+		 * @throws Throws an error if any of the columns are not in the table.
+		 * In this case, no columns are removed.
+		 */
+		removeColumns(
+			columns: readonly TreeNodeFromImplicitAllowedTypes<TColumn>[],
+		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+		/**
+		 * Removes 0 or more columns from the table.
+		 *
+		 * @remarks
+		 * Note: this does not remove any cells from the table's rows.
+		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
+		 *
+		 * @param columns - The columns to remove, specified by their {@link TableSchema.Column.id}.
+		 * @throws Throws an error if any of the columns are not in the table.
+		 * In this case, no columns are removed.
+		 */
+		removeColumns(columns: readonly string[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+
+		/**
+		 * Removes all columns from the table.
+		 * @returns The removed columns.
+		 */
+		removeAllColumns(): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+
+		/**
+		 * Removes the specified row from the table.
+		 * @param row - The {@link TableSchema.Row | row} or {@link TableSchema.Row.id | row ID} to remove.
+		 * @throws Throws an error if the row is not in the table.
+		 */
+		removeRow(
+			row: string | TreeNodeFromImplicitAllowedTypes<TRow>,
+		): TreeNodeFromImplicitAllowedTypes<TRow>;
 
 		/**
 		 * Removes 0 or more rows from the table.
-		 * @privateRemarks TODO: policy for when 1 or more rows are not in the table.
+		 * @param rows - The rows to remove.
+		 * @throws Throws an error if any of the rows are not in the table.
+		 * In this case, no rows are removed.
 		 */
-		removeRows: (rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]) => void;
+		removeRows(
+			rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[],
+		): TreeNodeFromImplicitAllowedTypes<TRow>[];
+		/**
+		 * Removes 0 or more rows from the table.
+		 * @param rows - The rows to remove, specified by their {@link TableSchema.Row.id}.
+		 * @throws Throws an error if any of the rows are not in the table.
+		 * In this case, no rows are removed.
+		 */
+		removeRows(rows: readonly string[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
 		 * Removes all rows from the table.
+		 * @returns The removed rows.
 		 */
-		removeAllRows: () => void;
+		removeAllRows(): TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
 		 * Removes the cell at the specified location in the table.
-		 * @privateRemarks TODO: add overload that takes column/row nodes?
+		 * @returns The cell if it exists, otherwise undefined.
+		 * @throws Throws an error if the location does not exist in the table.
 		 */
-		removeCell: (key: CellKey) => void;
+		removeCell(
+			key: CellKey<TColumn, TRow>,
+		): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	}
 
 	/**
-	 * Factory for creating new table schema without specifying row or column schema.
-	 * @internal
+	 * Factory for creating new table schema.
+	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the table.
+	 * @alpha
 	 */
-	export function createTable<
+	export function table<
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-	>({
-		schemaFactory,
-		cell,
-	}: System_TableSchema.TableFactoryOptionsBase<TScope, TCell>): ReturnType<
-		typeof System_TableSchema.createTableInternal<TScope, TCell>
+	>(
+		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell>,
+	): System_TableSchema.TableSchemaBase<
+		TScope,
+		TCell,
+		System_TableSchema.ColumnSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>,
+		System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>
 	>;
 	/**
-	 * Factory for creating new table schema without specifying row schema.
-	 * @internal
+	 * Factory for creating new table schema with custom column schema.
+	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the table.
+	 * @typeParam TColumn - The type of the columns in the table.
+	 * @alpha
 	 */
-	export function createTable<
+	export function table<
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope>,
-	>({
-		schemaFactory,
-		cell,
-		column,
-	}: System_TableSchema.TableFactoryOptionsBase<TScope, TCell> & {
-		readonly column: TColumn;
-	}): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, TColumn>>;
+		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
+	>(
+		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
+			readonly column: TColumn;
+		},
+	): System_TableSchema.TableSchemaBase<
+		TScope,
+		TCell,
+		TColumn,
+		System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>
+	>;
 	/**
-	 * Factory for creating new table schema.
-	 * @internal
+	 * Factory for creating new table schema with custom row schema.
+	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the table.
+	 * @typeParam TRow - The type of the rows in the table.
+	 * @alpha
 	 */
-	export function createTable<
+	export function table<
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope>,
 		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
-	>({
-		schemaFactory,
-		cell,
-		column,
-		row,
-	}: System_TableSchema.TableFactoryOptionsBase<TScope, TCell> & {
-		readonly column: TColumn;
-		readonly row: TRow;
-	}): ReturnType<typeof System_TableSchema.createTableInternal<TScope, TCell, TColumn, TRow>>;
+	>(
+		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
+			readonly row: TRow;
+		},
+	): System_TableSchema.TableSchemaBase<
+		TScope,
+		TCell,
+		System_TableSchema.ColumnSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>,
+		TRow
+	>;
+	/**
+	 * Factory for creating new table schema with custom column and row schema.
+	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * @typeParam TCell - The type of the cells in the table.
+	 * @typeParam TColumn - The type of the columns in the table.
+	 * @typeParam TRow - The type of the rows in the table.
+	 * @alpha
+	 */
+	export function table<
+		const TScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
+		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
+	>(
+		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
+			readonly column: TColumn;
+			readonly row: TRow;
+		},
+	): System_TableSchema.TableSchemaBase<TScope, TCell, TColumn, TRow>;
 	/**
 	 * Overload implementation
 	 */
-	export function createTable({
+	export function table({
 		schemaFactory,
-		cell,
-		column = createColumn({
+		cell: cellSchema,
+		column: columnSchema = column({
 			schemaFactory,
+			cell: cellSchema,
 		}),
-		row = createRow({
+		row: rowSchema = row({
 			schemaFactory,
-			cell,
+			cell: cellSchema,
 		}),
 	}: System_TableSchema.TableFactoryOptionsBase & {
 		readonly column?: System_TableSchema.ColumnSchemaBase;
 		readonly row?: System_TableSchema.RowSchemaBase;
 	}): TreeNodeSchema {
-		return System_TableSchema.createTableInternal(schemaFactory, cell, column, row);
+		return System_TableSchema.createTableSchema(
+			schemaFactory,
+			cellSchema,
+			columnSchema,
+			rowSchema,
+		);
 	}
 
 	// #endregion

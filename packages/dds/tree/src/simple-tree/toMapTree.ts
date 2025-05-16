@@ -559,7 +559,7 @@ For class-based schema, this can be done by replacing an expression like "{foo: 
 }
 
 /**
- * @returns all types for which the data is schema-compatible.
+ * Returns all types for which the data is schema-compatible.
  */
 export function getPossibleTypes(
 	allowedTypes: ReadonlySet<TreeNodeSchema>,

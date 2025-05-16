@@ -48,6 +48,7 @@ import { brand } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { isLazy, type LazyItem } from "../simple-tree/flexList.js";
+import { schemaStatics } from "../simple-tree/index.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -213,7 +214,7 @@ const library = {
 	nodeSchema: new Map([
 		[brand(Minimal.identifier), getStoredSchema(Minimal)],
 		[allTheFieldsName, allTheFields],
-		[brand(factory.number.identifier), getStoredSchema(factory.number)],
+		[brand(factory.number.identifier), getStoredSchema(schemaStatics.number)],
 	]),
 } satisfies Partial<TreeStoredSchema>;
 

@@ -21,18 +21,22 @@ import {
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate } from "../util/index.js";
-import { NodeKind, type TreeNodeSchema } from "./core/index.js";
+import { NodeKind } from "./core/index.js";
 import {
 	FieldKind,
-	FieldSchema,
 	normalizeAllowedTypes,
-	type ImplicitAllowedTypes,
+	normalizeFieldSchema,
 	type ImplicitAnnotatedAllowedTypes,
 	type ImplicitFieldSchema,
 } from "./schemaTypes.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
-import { isObjectNodeSchema } from "./objectNodeTypes.js";
+import type {
+	SimpleFieldSchema,
+	SimpleNodeSchema,
+	SimpleNodeSchemaBase,
+	SimpleTreeSchema,
+} from "./simpleSchema.js";
 
 const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
 
@@ -41,8 +45,9 @@ const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
  */
 export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 	return getOrCreate(viewToStoredCache, root, () => {
+		const normalized = normalizeFieldSchema(root);
 		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
-		walkFieldSchema(root, {
+		walkFieldSchema(normalized, {
 			node(schema) {
 				if (nodeSchema.has(brand(schema.identifier))) {
 					// Use JSON.stringify to quote and escape identifier string.
@@ -52,34 +57,44 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 						)}. Remove or rename them to avoid the collision.`,
 					);
 				}
-				nodeSchema.set(brand(schema.identifier), getStoredSchema(schema));
+				nodeSchema.set(
+					brand(schema.identifier),
+					getStoredSchema(schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema),
+				);
 			},
 		});
 
 		const result: TreeStoredSchema = {
 			nodeSchema,
-			rootFieldSchema: convertField(root),
+			rootFieldSchema: convertField(normalized),
 		};
-		viewToStoredCache.set(root, result);
 		return result;
 	});
 }
 
 /**
+ * Converts a {@link SimpleTreeSchema} into a {@link TreeStoredSchema}.
+ */
+export function simpleToStoredSchema(root: SimpleTreeSchema): TreeStoredSchema {
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
+	for (const [identifier, schema] of root.definitions) {
+		nodeSchema.set(brand(identifier), getStoredSchema(schema));
+	}
+
+	const result: TreeStoredSchema = {
+		nodeSchema,
+		rootFieldSchema: convertField(root.root),
+	};
+	return result;
+}
+
+/**
  * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
  */
-export function convertField(schema: ImplicitFieldSchema): TreeFieldStoredSchema {
-	let kind: FieldKindIdentifier;
-	let allowedTypes: ImplicitAllowedTypes;
-	if (schema instanceof FieldSchema) {
-		kind =
-			convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
-		allowedTypes = schema.allowedTypes;
-	} else {
-		kind = FieldKinds.required.identifier;
-		allowedTypes = schema;
-	}
-	const types = convertAllowedTypes(allowedTypes);
+export function convertField(schema: SimpleFieldSchema): TreeFieldStoredSchema {
+	const kind: FieldKindIdentifier =
+		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
+	const types: TreeTypeSet = schema.allowedTypesIdentifiers as TreeTypeSet;
 	return { kind, types };
 }
 
@@ -99,32 +114,30 @@ export function convertAllowedTypes(schema: ImplicitAnnotatedAllowedTypes): Tree
 /**
  * Converts a {@link TreeNodeSchema} into a {@link TreeNodeStoredSchema}.
  */
-export function getStoredSchema(schema: TreeNodeSchema): TreeNodeStoredSchema {
+export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
 			assert(schema instanceof LeafNodeSchema, 0xa4a /* invalid kind */);
-			return new LeafNodeStoredSchema(schema.info);
+			return new LeafNodeStoredSchema(schema.leafKind);
 		}
 		case NodeKind.Map: {
-			const fieldInfo = schema.info as ImplicitAllowedTypes;
-			const types = convertAllowedTypes(fieldInfo);
+			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
 			return new MapNodeStoredSchema({ kind: FieldKinds.optional.identifier, types });
 		}
 		case NodeKind.Array: {
-			const fieldInfo = schema.info as ImplicitAllowedTypes;
+			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
 			const field = {
 				kind: FieldKinds.sequence.identifier,
-				types: convertAllowedTypes(fieldInfo),
+				types,
 			};
 			const fields = new Map([[EmptyKey, field]]);
 			return new ObjectNodeStoredSchema(fields);
 		}
 		case NodeKind.Object: {
-			assert(isObjectNodeSchema(schema), 0xa4b /* invalid kind */);
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
-			for (const field of schema.flexKeyMap.values()) {
-				fields.set(field.storedKey, convertField(field.schema));
+			for (const fieldSchema of schema.fields.values()) {
+				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema));
 			}
 			return new ObjectNodeStoredSchema(fields);
 		}

@@ -12,7 +12,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
+import { anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -33,9 +33,6 @@ import {
 	SchemaCompatibilityTester,
 	type InsertableContent,
 	type TreeViewConfiguration,
-	mapTreeFromNodeData,
-	prepareContentForHydration,
-	comparePersistedSchemaInternal,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
@@ -55,6 +52,7 @@ import {
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
+	prepareForInsertionContextless,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -99,6 +97,9 @@ export class SchematizingSimpleTreeView<
 
 	private readonly viewSchema: SchemaCompatibilityTester;
 
+	/**
+	 * Events to unregister upon disposal.
+	 */
 	private readonly unregisterCallbacks = new Set<() => void>();
 
 	public disposed = false;
@@ -173,23 +174,21 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const mapTree = mapTreeFromNodeData(
+			const schema = this.viewSchema.viewSchemaAsStored;
+			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
 				{
-					context: this.nodeKeyManager,
-					schemaValidationPolicy: {
-						schema: this.checkout.storedSchema,
-						policy: this.schemaPolicy,
-					},
-					// this allows enablable allowed types to be loaded into a tree
-					allowNonEnabledTypes: true,
+					schema,
+					policy: this.schemaPolicy,
 				},
+				this,
+				// this allows enablable allowed types to be loaded into a tree
+				true,
 			);
 
-			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.viewSchema.viewSchemaAsStored,
+				schema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -211,15 +210,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const result = ensureSchema(
-				this.viewSchema,
-				AllowedUpdateType.SchemaCompatible,
-				this.checkout,
-				{
-					schema: this.viewSchema.viewSchemaAsStored,
-					initialTree: undefined,
-				},
-			);
+			const result = ensureSchema(this.viewSchema, this.checkout);
 			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
 		});
 	}
@@ -335,15 +326,14 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeView();
 
-		const compatibility = comparePersistedSchemaInternal(
-			this.checkout.storedSchema,
-			this.viewSchema,
-			canInitialize(this.checkout),
-		);
+		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
 
 		let lastRoot =
 			this.compatibility.canView && this.view !== undefined ? this.root : undefined;
-		this.currentCompatibility = compatibility;
+		this.currentCompatibility = {
+			...compatibility,
+			canInitialize: canInitialize(this.checkout),
+		};
 
 		if (compatibility.canView) {
 			// Trigger "rootChanged" if the root changes in the future.

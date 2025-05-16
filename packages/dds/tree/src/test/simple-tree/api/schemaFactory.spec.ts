@@ -185,6 +185,31 @@ describe("schemaFactory", () => {
 		const _check3 = new Foo({ x: 1 });
 	});
 
+	it("empty field", () => {
+		// A field with no allowed types and thus must always be empty.
+		const config = new TreeViewConfiguration({ schema: SchemaFactory.optional([]) });
+		const view = getView(config);
+		view.initialize(undefined);
+		assert.equal(view.root, undefined);
+		type Field = typeof view.root;
+		type _check = requireTrue<areSafelyAssignable<Field, undefined>>;
+	});
+
+	it("empty object field", () => {
+		const factory = new SchemaFactory("test-scope");
+		class Foo extends factory.object("foo", {
+			// A field with no allowed types and thus must always be empty.
+			x: SchemaFactory.optional([]),
+		}) {}
+
+		const config = new TreeViewConfiguration({ schema: Foo });
+		const view = getView(config);
+		view.initialize({});
+		assert.equal(view.root.x, undefined);
+		type Field = typeof view.root.x;
+		type _check = requireTrue<areSafelyAssignable<Field, undefined>>;
+	});
+
 	it("Required fields", () => {
 		const factory = new SchemaFactory("test");
 		class Foo extends factory.object("foo", {

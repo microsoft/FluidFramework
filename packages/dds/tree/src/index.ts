@@ -255,6 +255,7 @@ export {
 	configuredSharedTree,
 } from "./treeFactory.js";
 export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
+export { persistedToSimpleSchema } from "./shared-tree/index.js";
 
 export {
 	type ICodecOptions,
