@@ -2554,10 +2554,7 @@ export class ContainerRuntime
 		}
 
 		// Officially transition from the old state to the new state.
-		//* NOTE: newState was set to whatever this.dirtyContainer was after replaying,
-		//* which would have been set via updateDocumentDirtyState which always takes in a value equivalent to this.currentDirtyState
-		//* (and we're in a synchronous context so no interleaving is possible)
-		this.updateDocumentDirtyState(this.currentDirtyState());
+		this.updateDocumentDirtyState();
 	}
 
 	/**
@@ -3046,8 +3043,7 @@ export class ContainerRuntime
 		// If there are no more pending messages after processing a local message,
 		// the document is no longer dirty.
 		if (!this.hasPendingMessages()) {
-			//* NOTE: We are attached, currentDirtyState will give false
-			this.updateDocumentDirtyState(this.currentDirtyState());
+			this.updateDocumentDirtyState();
 		}
 
 		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
@@ -3083,8 +3079,7 @@ export class ContainerRuntime
 		// If there are no more pending messages after processing a local message,
 		// the document is no longer dirty.
 		if (!this.hasPendingMessages()) {
-			//* NOTE: We are attached, currentDirtyState will give false
-			this.updateDocumentDirtyState(this.currentDirtyState());
+			this.updateDocumentDirtyState();
 		}
 
 		// Get the contents without the localOpMetadata because not all message types know about localOpMetadata.
@@ -3263,10 +3258,7 @@ export class ContainerRuntime
 							this.rollback(message.runtimeOp, message.localOpMetadata),
 						);
 						// reset the dirty state after rollback to what it was before to keep it consistent
-						//* NOTE: In terms of the dirty calculation, all rollback does is change number of ops in the outbox.
-						//* When setting checkpointDirtyState at the top of this function, this.dirtyContainer presumably matched currentDirtyState.
-						//* Rollback would put the outbox back the way it was before.  So we can use currentDirtyState here now.
-						this.updateDocumentDirtyState(this.currentDirtyState());
+						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
 						stageControls = undefined;
 					} catch (error_) {
@@ -3365,8 +3357,7 @@ export class ContainerRuntime
 					);
 					this.rollback(runtimeOp, localOpMetadata);
 				});
-				//* NOTE: Since we're attached, currentDirtyState === hasPendingMessages
-				this.updateDocumentDirtyState(this.currentDirtyState());
+				this.updateDocumentDirtyState();
 			}),
 			commitChanges: (optionsParam) => {
 				const options = { ...defaultStagingCommitOptions, ...optionsParam };
@@ -3556,8 +3547,7 @@ export class ContainerRuntime
 		}
 
 		if (!this.currentDirtyState()) {
-			//* NOTE: Obviously, false matches currentDirtyState
-			this.updateDocumentDirtyState(this.currentDirtyState());
+			this.updateDocumentDirtyState();
 		}
 		this.channelCollection.setAttachState(attachState);
 	}
@@ -4345,7 +4335,9 @@ export class ContainerRuntime
 		return this.pendingMessagesCount !== 0;
 	}
 
-	private updateDocumentDirtyState(dirty: boolean): void {
+	private updateDocumentDirtyState(): void {
+		const dirty: boolean = this.currentDirtyState();
+
 		if (this.attachState === AttachState.Attached) {
 			// Other way is not true = see this.isContainerMessageDirtyable()
 			assert(
@@ -4514,8 +4506,7 @@ export class ContainerRuntime
 		}
 
 		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
-			//* NOTE: Since we're attached and just pushed something to the outbox, currentDirtyState() will give true
-			this.updateDocumentDirtyState(this.currentDirtyState());
+			this.updateDocumentDirtyState();
 		}
 	}
 
