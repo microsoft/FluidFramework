@@ -2917,7 +2917,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		if (newChanges !== undefined) {
 			if (detachFields.length > 0) {
-				// XXX: Handle the case where some of the IDs in the range have a detach and some do not.
 				// The base attach is part of a move in the base changeset.
 				setInCrossFieldMap(this.table.entries, baseDetachId, 1, newChanges);
 			} else {
