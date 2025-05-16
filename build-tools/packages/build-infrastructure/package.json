@@ -107,8 +107,7 @@
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.2",
 		"typedoc": "^0.26.10",
-		"typedoc-plugin-markdown": "^4.2.9",
-		"unionfs": "^4.5.4"
+		"typedoc-plugin-markdown": "^4.2.9"
 	},
 	"oclif": {
 		"bin": "buildProject",
