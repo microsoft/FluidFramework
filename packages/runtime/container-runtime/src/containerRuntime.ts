@@ -3453,11 +3453,19 @@ export class ContainerRuntime
 	}
 
 	/**
+	 * Temporary override of the dirty value calculation
+	 */
+	private dirtyOverride: boolean | undefined;
+
+	/**
 	 * Returns true of container is dirty, i.e. there are some pending local changes that
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
-		return this.attachState !== AttachState.Attached || this.pendingMessagesCount !== 0;
+		return (
+			this.dirtyOverride ??
+			(this.attachState !== AttachState.Attached || this.pendingMessagesCount !== 0)
+		);
 	}
 
 	private isContainerMessageDirtyable({
@@ -4314,11 +4322,16 @@ export class ContainerRuntime
 	 * Emit "dirty" or "saved" event based on the current dirty state of the document.
 	 * This must be called every time the states underlying the dirty state change.
 	 *
+	 * @param dirtyOverride - If provided, this will override the dirty state of the document
+	 * until the next time this function is called (since it clears the override if none is provided).
+	 *
 	 * @privateRemarks - It's helpful to think of this as an event handler registered
 	 * for hypothetical "changed" events for PendingStateManager, Outbox, and Container Attach machinery.
 	 * But those events don't exist so we manually call this wherever we know those changes happen.
 	 */
-	private updateDocumentDirtyState(): void {
+	private updateDocumentDirtyState(dirtyOverride?: boolean): void {
+		this.dirtyOverride = dirtyOverride;
+
 		const dirty = this.isDirty;
 
 		if (this.lastEmittedDirty === dirty) {
@@ -4414,6 +4427,11 @@ export class ContainerRuntime
 			0x9a5 /* IdAllocation should be submitted directly to outbox. */,
 		);
 
+		// Get ready to override the value to the pre-submit value if necessary
+		const dirtyOverrideValue = this.isContainerMessageDirtyable(containerRuntimeMessage)
+			? undefined
+			: this.isDirty;
+
 		try {
 			// If we're resubmitting a batch, keep the same "staged" value as before.  Otherwise, use the current "global" state.
 			const staged = this.batchRunner.resubmitInfo?.staged ?? this.inStagingMode;
@@ -4478,9 +4496,7 @@ export class ContainerRuntime
 			throw dpe;
 		}
 
-		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
-			this.updateDocumentDirtyState();
-		}
+		this.updateDocumentDirtyState(dirtyOverrideValue);
 	}
 
 	private scheduleFlush(): void {
