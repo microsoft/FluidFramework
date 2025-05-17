@@ -116,6 +116,8 @@ export interface ITestDriver {
 	 * when resolving the container  URL.
 	 */
 	createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
+
+	dispose?(): void;
 }
 
 /**
