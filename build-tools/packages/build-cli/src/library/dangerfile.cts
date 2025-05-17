@@ -34,7 +34,7 @@ declare const danger: {
 const adoConstants = {
 	orgUrl: "https://dev.azure.com/fluidframework",
 	projectName: "public",
-	ciBuildDefinitionId: 48,
+	ciBuildDefinitionId: 11, // 11 = Build - client packages ; this definition only exists in the public ADO project
 	bundleAnalysisArtifactName: "bundleAnalysis",
 };
 
