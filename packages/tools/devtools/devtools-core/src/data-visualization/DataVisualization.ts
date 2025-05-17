@@ -240,31 +240,34 @@ export class DataVisualizerGraph
 	private registerVisualizerForVisualizableObject(
 		visualizableObject: VisualizableFluidObject,
 	): FluidObjectId {
-		// In case the visualizable object is a `DataObject` or a `TreeDataObjct`, we extract the ID of its root DDS so that the view can correctly render the newly updated `VisualizerNode`.
-		// This is necessary because it is the DDS for which data updates are automatically emitted on change, rather than the containing `DataObject` and `TreeDataObject`.
-		const fluidObjectId = isDataObject(visualizableObject)
-			? `${visualizableObject.id}-${(visualizableObject as unknown as { readonly root: ISharedDirectory }).root.id}`
-			: isTreeDataObject(visualizableObject)
-				? `${visualizableObject.id}-${(visualizableObject.sharedTree as unknown as ISharedObject).id}`
+		// Store type check results to avoid recomputing
+		const isDataObj = isDataObject(visualizableObject);
+		const isTreeDataObj = isTreeDataObject(visualizableObject);
+
+		// Get the root shared object and its ID based on the object type
+		const rootSharedObject = isDataObj
+			? (visualizableObject as unknown as { readonly root: ISharedDirectory }).root
+			: isTreeDataObj
+				? (visualizableObject.sharedTree as unknown as ISharedObject)
+				: visualizableObject;
+
+		// Generate the fluidObjectId based on the object type
+		const fluidObjectId =
+			isDataObj || isTreeDataObj
+				? `${visualizableObject.id}-${rootSharedObject.id}`
 				: visualizableObject.id;
 
 		if (!this.visualizerNodes.has(fluidObjectId)) {
 			// Create visualizer node for the shared object
-			const visualizationFunction: VisualizeSharedObject = isDataObject(visualizableObject)
+			const visualizationFunction: VisualizeSharedObject = isDataObj
 				? createDataObjectVisualizer(visualizableObject.id)
-				: isTreeDataObject(visualizableObject)
+				: isTreeDataObj
 					? createTreeDataObjectVisualizer(visualizableObject.id)
-					: ((this.visualizers[visualizableObject.attributes.type] as
-							| VisualizeSharedObject
-							| undefined) ?? visualizeUnknownSharedObject);
+					: ((this.visualizers[visualizableObject.attributes.type] as VisualizeSharedObject) ??
+						visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
-				// Double-casting `sharedObject` is necessary for `DataObject` visualization, because the `root` property is inaccessible in `DataObject` (private).
-				isDataObject(visualizableObject)
-					? (visualizableObject as unknown as { readonly root: ISharedDirectory }).root
-					: isTreeDataObject(visualizableObject)
-						? (visualizableObject.sharedTree as unknown as ISharedObject)
-						: visualizableObject,
+				rootSharedObject,
 				visualizationFunction,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
