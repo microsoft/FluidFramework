@@ -3457,7 +3457,17 @@ export class ContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
-		return this.attachState !== AttachState.Attached || this.pendingMessagesCount !== 0;
+		return (
+			this.attachState !== AttachState.Attached ||
+			this.pendingStateManager.hasAnyMatchingFilter(
+				(message) =>
+					message.runtimeOp !== undefined && //* This doesn't work for initial messages.
+					this.isContainerMessageDirtyable(message.runtimeOp),
+			) ||
+			this.outbox.hasAnyMatchingFilter((message) =>
+				this.isContainerMessageDirtyable(message.runtimeOp),
+			)
+		);
 	}
 
 	private isContainerMessageDirtyable({

@@ -168,6 +168,13 @@ export class BatchManager {
 			},
 		};
 	}
+
+	/**
+	 * Returns true as soon as it finds a message that matches the filter, false if it's empty or none match.
+	 */
+	public hasAnyMatchingFilter(filter: (message: LocalBatchMessage) => boolean): boolean {
+		return this.pendingBatch.some((message) => filter(message));
+	}
 }
 
 const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {

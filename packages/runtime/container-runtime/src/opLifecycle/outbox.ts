@@ -237,6 +237,17 @@ export class Outbox {
 	}
 
 	/**
+	 * Returns true as soon as it finds a message that matches the filter, false if it's empty or none match.
+	 */
+	public hasAnyMatchingFilter(filter: (message: LocalBatchMessage) => boolean): boolean {
+		return (
+			this.mainBatch.hasAnyMatchingFilter(filter) ||
+			this.blobAttachBatch.hasAnyMatchingFilter(filter) ||
+			this.idAllocationBatch.hasAnyMatchingFilter(filter) // In practice the filter passed will return false for this whole batch
+		);
+	}
+
+	/**
 	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that (if allowed) and create a new batch with the new
 	 * message as the first message. If flushing partial batch is not enabled, we will throw (except for reentrant ops).

@@ -283,6 +283,29 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
+	 * Returns true as soon as it finds a message that matches the filter, false if it's empty or none match.
+	 */
+	public hasAnyMatchingFilter(
+		filter: (message: IPendingMessage | IPendingMessageFromStash) => boolean,
+	): boolean {
+		for (let i = 0; i < this.pendingMessages.length; i++) {
+			const element = this.pendingMessages.get(i);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			if (filter(element!)) {
+				return true;
+			}
+		}
+		for (let i = 0; i < this.initialMessages.length; i++) {
+			const element = this.initialMessages.get(i);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			if (filter(element!)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * The minimumPendingMessageSequenceNumber is the minimum of the first pending message and the first initial message.
 	 *
 	 * We need this so that we can properly keep local data and maintain the correct sequence window.
