@@ -19,20 +19,14 @@ class TestTimeout {
 	private deferred: Deferred<void> = new Deferred<void>();
 
 	private static instance: TestTimeout = new TestTimeout();
-	public static reset(runnable: Mocha.Runnable) {
+	public static updateOnYield(runnable: Mocha.Runnable) {
 		TestTimeout.instance.clearTimer();
-		TestTimeout.instance = new TestTimeout();
 		TestTimeout.instance.resetTimer(runnable);
 	}
 
-	public static clear() {
-		// TODO: Check general setup here to see if we want tweaks.
-		if (TestTimeout.instance.deferred.isCompleted) {
-			// Problem was that this line basically never happened because clearTimer resets the deffered state!
-			TestTimeout.instance = new TestTimeout();
-		} else {
-			TestTimeout.instance.clearTimer();
-		}
+	public static reset() {
+		TestTimeout.instance.clearTimer();
+		TestTimeout.instance = new TestTimeout();
 	}
 
 	public static getInstance() {
@@ -86,14 +80,25 @@ if (globalThis.getMochaModule !== undefined) {
 	const runnablePrototype = mochaModule.Runnable.prototype;
 	// eslint-disable-next-line @typescript-eslint/unbound-method
 	const oldResetTimeoutFunc = runnablePrototype.resetTimeout;
+	let resetTimeoutCallDepth = 0;
+	// Mocha invokes resetTimeout after each async yield a test performs.
 	runnablePrototype.resetTimeout = function (this: Mocha.Runnable) {
-		oldResetTimeoutFunc.call(this);
-		TestTimeout.reset(this);
+		resetTimeoutCallDepth++;
+		try {
+			oldResetTimeoutFunc.call(this);
+		} finally {
+			resetTimeoutCallDepth--;
+		}
+		TestTimeout.updateOnYield(this);
 	};
 	// eslint-disable-next-line @typescript-eslint/unbound-method
 	const oldClearTimeoutFunc = runnablePrototype.clearTimeout;
 	runnablePrototype.clearTimeout = function (this: Mocha.Runnable) {
-		TestTimeout.clear();
+		if (resetTimeoutCallDepth === 0) {
+			// Mocha's runnable invokes clearTimeout as part of its resetTimeout as well as at the end of Runnables.
+			// We only want to fully reset the TestTimeout instance at the end of each runnable, not on JS turn boundaries.
+			TestTimeout.reset();
+		}
 		oldClearTimeoutFunc.call(this);
 	};
 }
