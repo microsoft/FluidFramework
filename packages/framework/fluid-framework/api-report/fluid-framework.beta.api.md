@@ -352,6 +352,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
     readonly disposed: boolean;
     readonly initialObjects: InitialObjects<TContainerSchema>;
     readonly isDirty: boolean;
+    isReadOnly(): boolean;
 }
 
 // @public @sealed
@@ -361,6 +362,7 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "saved", listener: () => void): void;
     (event: "dirty", listener: () => void): void;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
+    (event: "readonlyChanged", listener: (readonly: boolean) => void): void;
 }
 
 // @public (undocumented)
