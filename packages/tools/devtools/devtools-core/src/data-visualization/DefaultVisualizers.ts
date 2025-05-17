@@ -380,7 +380,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 
 /**
  * List of default visualizers included in the library.
- * @remarks {@link @fluidframework/aqueduct#DataObject} does not have type information, thus not included in the list.
+ * @remarks {@link @fluidframework/aqueduct#DataObject} & {@link @fluidframework/aqueduct#TreeDataObject} does not have type information, thus not included in the list.
  */
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCell.getFactory().type]: visualizeSharedCell,

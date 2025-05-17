@@ -71,19 +71,6 @@ export type VisualizeSharedObject = (
 ) => Promise<FluidObjectNode>;
 
 /**
- * Generates a visual description of the provided {@link DataObject}'s current state.
- *
- * @param dataObject - The object whose data will be rendered.
- * @param visualizeChildData - Callback to render child content of the shared object.
- *
- * @returns A visual tree representation of the provided `dataObject`.
- */
-export type VisualizeDataObject = (
-	dataObject: DataObject,
-	visualizeChildData: VisualizeChildData,
-) => Promise<FluidObjectNode>;
-
-/**
  * Recursively renders child contents of a {@link @fluidframework/shared-object-base#ISharedObject}.
  *
  * @param data - The child data to render.
