@@ -104,48 +104,55 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 };
 
 /**
- * Default {@link VisualizeSharedObject} for {@link DataObject}.
- * @remarks This takes in a `root` of type {@link ISharedDirectory} from {@link DataObject} and visualizes its children.
+ * Creates a visualizer function that captures the parent object's ID for use in generating the fluidObjectId.
+ * @param parentId - The ID of the parent DataObject to use in generating unique fluidObjectIds
+ * @returns A VisualizeSharedObject function that will use the parentId in its fluidObjectId generation
  */
-export const visualizeDataObject: VisualizeSharedObject = async (
-	dataObjectRoot: ISharedObject,
-	visualizeChildData: VisualizeChildData,
-): Promise<FluidObjectTreeNode> => {
-	const renderedChildData = (await visualizeSharedDirectory(
-		dataObjectRoot,
-		visualizeChildData,
-	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
+export function createDataObjectVisualizer(parentId: string): VisualizeSharedObject {
+	return async (
+		dataObjectRoot: ISharedObject,
+		visualizeChildData: VisualizeChildData,
+	): Promise<FluidObjectTreeNode> => {
+		const renderedChildData = (await visualizeSharedDirectory(
+			dataObjectRoot,
+			visualizeChildData,
+		)) as FluidObjectTreeNode;
 
-	return {
-		fluidObjectId: dataObjectRoot.id,
-		children: renderedChildData.children,
-		metadata: renderedChildData.metadata,
-		typeMetadata: "DataObject",
-		nodeKind: VisualNodeKind.FluidTreeNode,
+		return {
+			fluidObjectId: `${parentId}-${dataObjectRoot.id}`,
+			children: renderedChildData.children,
+			metadata: renderedChildData.metadata,
+			typeMetadata: "DataObject",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+		};
 	};
-};
+}
 
 /**
- * Default {@link VisualizeSharedObject} for {@link TreeDataObject}.
- * @remarks This takes in a `rootTree` of type {@link ISharedDirectory} from {@link TreeDataObject} and visualizes its children.
+ * Creates a visualizer function that captures the parent object's ID for use in generating the fluidObjectId.
+ * @param parentId - The ID of the parent TreeDataObject to use in generating unique fluidObjectIds
+ * @returns A VisualizeSharedObject function that will use the parentId in its fluidObjectId generation
  */
-export const visualizeTreeDataObject: VisualizeSharedObject = async (
-	rootTree: ISharedObject,
-	visualizeChildData: VisualizeChildData,
-): Promise<FluidObjectTreeNode> => {
-	const renderedChildData = (await visualizeSharedTree(
-		rootTree,
-		visualizeChildData,
-	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
+export function createTreeDataObjectVisualizer(parentId: string): VisualizeSharedObject {
+	return async (
+		rootTree: ISharedObject,
+		visualizeChildData: VisualizeChildData,
+	): Promise<FluidObjectTreeNode> => {
+		const fluidObjectId = `${parentId}-${rootTree.id}`;
+		const renderedChildData = (await visualizeSharedTree(
+			rootTree,
+			visualizeChildData,
+		)) as FluidObjectTreeNode;
 
-	return {
-		fluidObjectId: rootTree.id,
-		children: renderedChildData.children,
-		metadata: renderedChildData.metadata,
-		typeMetadata: "TreeDataObject",
-		nodeKind: VisualNodeKind.FluidTreeNode,
+		return {
+			fluidObjectId,
+			children: renderedChildData.children,
+			metadata: renderedChildData.metadata,
+			typeMetadata: "TreeDataObject",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+		};
 	};
-};
+}
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
