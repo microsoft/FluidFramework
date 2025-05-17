@@ -254,7 +254,7 @@ export class DataVisualizerGraph
 		visualizableObject: VisualizableFluidObject,
 	): FluidObjectId {
 		// In case the visualizable object is a `DataObject` or a `TreeDataObjct`, we extract the id of its root `ISharedObject` so that the view can correctly render the newly updated `VisualizerNode`.
-		// This is necessary because it is the `ISharedObject` (e.g., root or sharedTree of `DataObject` and `TreeDataObject`) which emits the event NOT the `DataObject` and `TreeDataObject`.
+		// This is necessary because it is the DDS for which data updates are automatically emitted on change, rather than the containing `DataObject` and `TreeDataObject`.
 		const fluidObjectId = isDataObject(visualizableObject)
 			? (visualizableObject as unknown as { readonly root: ISharedDirectory }).root.id
 			: isTreeDataObject(visualizableObject)
