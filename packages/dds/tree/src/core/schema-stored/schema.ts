@@ -24,7 +24,9 @@ import type { Multiplicity } from "./multiplicity.js";
 
 export enum SchemaCodecVersion {
 	v1 = 1,
-	// Adds persisted metadata to the schema.
+	/**
+	 * Adds persisted metadata to the node schema and field schema.
+	 */
 	v2 = 2,
 }
 
