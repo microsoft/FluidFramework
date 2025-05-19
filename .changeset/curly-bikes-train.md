@@ -23,4 +23,4 @@ To enable writing strings to the array, a code change must be made to remove the
 schemaFactoryAlpha.arrayAlpha("TestArray", [schemaFactoryAlpha.number, schemaFactoryAlpha.string]);
 ```
 
-A future change will add an API that allows enablables to be enabled via a runtime schema upgrade so that the type can be enabled using a configuration flag change rather than a code change.
+In the future, SharedTree may add an API that allows enablables to be enabled via a runtime schema upgrade so that the type can be more easily deployed using a configuration flag change rather than a code change.
