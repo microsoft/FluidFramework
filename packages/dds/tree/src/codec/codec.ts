@@ -349,8 +349,9 @@ export function withSchemaValidation<
  * Versions with no notable impact can be omitted.
  *
  * These use numeric values for easy threshold comparisons.
- * This is complicated by the fact that 2.2 is larger than 2.10.
- * Using leading zeros for the minor version mitigates this.
+ * Without zero padding, version 2.10 is treated as 2.1, which is numerically less than 2.2.
+ * Adding leading zeros to the minor version ensures correct comparisons.
+ * For example, version 2.20.0 is encoded as 2.020, and version 2.2.0 is encoded as 2.002.
  * For example FF 2.20.0 is encoded as 2.020 and FF 2.2.0 is encoded as 2.002.
  *
  * This scheme assumes a single version will always be enough to communicate compatibility.
