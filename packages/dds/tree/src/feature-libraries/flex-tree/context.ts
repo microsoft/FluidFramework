@@ -86,7 +86,7 @@ export const ContextSlot = anchorSlot<Context>();
  * A {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  *
- * This context and the trees is produces observe the kinds of fields from the schema
+ * This context and the trees it produces observe the kinds of fields from the schema
  */
 export class Context implements FlexTreeHydratedContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();
