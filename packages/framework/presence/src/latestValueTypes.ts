@@ -40,11 +40,11 @@ export interface LatestMetadata {
  * @sealed
  * @alpha
  */
-// export type RawValueAccessor<_T> = "raw";
-export interface RawValueAccessor<T> {
-	kind: "raw";
-	accessor: DeepReadonly<JsonDeserialized<T>>;
-}
+export type RawValueAccessor<_T> = "raw";
+// export interface RawValueAccessor<T> {
+// 	kind: "raw";
+// 	accessor: DeepReadonly<JsonDeserialized<T>>;
+// }
 
 /**
  * Represents a value that is accessed via a function call, which may result in no value.
@@ -52,11 +52,11 @@ export interface RawValueAccessor<T> {
  * @sealed
  * @alpha
  */
-// export type ProxiedValueAccessor<_T> = "proxied";
-export interface ProxiedValueAccessor<T> {
-	kind: "proxied";
-	accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
-}
+export type ProxiedValueAccessor<_T> = "proxied";
+// export interface ProxiedValueAccessor<T> {
+// 	kind: "proxied";
+// 	accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
+// }
 
 /**
  * Union of possible accessor types for a value.
@@ -69,16 +69,17 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 /**
  * @alpha
  */
-export type AccessorNonDist<T> = [T] extends [ProxiedValueAccessor<T>]
-	? () => DeepReadonly<JsonDeserialized<T>> | undefined
-	: [T] extends [RawValueAccessor<T>]
-		? DeepReadonly<JsonDeserialized<T>>
-		: never;
+// export type AccessorNonDist<T> = [T] extends [ProxiedValueAccessor<T>]
+// 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
+// 	: [T] extends [RawValueAccessor<T>]
+// 		? DeepReadonly<JsonDeserialized<T>>
+// 		: never;
 
 /**
+ * Utility type that conditionally represents an accesstor type based on the base accessor type.
+ *
  * @alpha
  */
-
 export type Accessor<T> = T extends ProxiedValueAccessor<infer U>
 	? () => DeepReadonly<JsonDeserialized<U>> | undefined
 	: T extends RawValueAccessor<infer U>

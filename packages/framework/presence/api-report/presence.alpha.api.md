@@ -369,20 +369,10 @@ export interface PresenceEvents {
 }
 
 // @alpha @sealed
-export interface ProxiedValueAccessor<T> {
-    // (undocumented)
-    accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
-    // (undocumented)
-    kind: "proxied";
-}
+export type ProxiedValueAccessor<_T> = "proxied";
 
 // @alpha @sealed
-export interface RawValueAccessor<T> {
-    // (undocumented)
-    accessor: DeepReadonly<JsonDeserialized<T>>;
-    // (undocumented)
-    kind: "raw";
-}
+export type RawValueAccessor<_T> = "raw";
 
 // @alpha
 export const StateFactory: {
