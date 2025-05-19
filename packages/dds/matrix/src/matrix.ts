@@ -941,7 +941,6 @@ export class SharedMatrix<T = any>
 				);
 
 				const { row, col, value, fwwMode } = contents;
-				const isPreviousSetCellPolicyModeFWW = this.fwwPolicy.state;
 				// If this is the first op notifying us of the policy change, then set the policy change seq number.
 				if (fwwMode === true && this.fwwPolicy.state !== "on") {
 					this.fwwPolicy = {
@@ -991,10 +990,7 @@ export class SharedMatrix<T = any>
 								// If someone tried to Overwrite the cell value or first write on this cell or
 								// same client tried to modify the cell or if the previous mode was LWW, then we need to still
 								// overwrite the cell and raise conflict if we have pending changes as our change is going to be lost.
-								if (
-									isPreviousSetCellPolicyModeFWW === undefined ||
-									this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)
-								) {
+								if (this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)) {
 									const previousValue = this.cells.getCell(rowHandle, colHandle);
 									this.cells.setCell(rowHandle, colHandle, value);
 									this.fwwPolicy.cellLastWriteTracker.setCell(rowHandle, colHandle, {
