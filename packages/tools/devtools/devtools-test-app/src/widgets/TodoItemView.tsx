@@ -144,7 +144,6 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
  * it's impractical to implement an ergonomic and efficient more fine-grained invalidation hook.
  * TODO: This was copied over from "fluid-experimental/tree-react-api".
  * Once the API has stabilized, this local copy should be removed and import from that package.
- * @public
  */
 export function useTree(subtreeRoot: TreeNode): void {
 	// Use a React effect hook to invalidate this component when the subtreeRoot changes.
