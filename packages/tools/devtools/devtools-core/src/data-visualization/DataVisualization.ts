@@ -562,7 +562,7 @@ function isDataObject(value: unknown): value is DataObject {
 }
 
 /**
- * Determines whether or not the provided value is an {@link TreeDataObject} using `instanceof`, for the purposes of this library.
+ * Determines whether or not the provided value is a {@link TreeDataObject} using `instanceof`, for the purposes of this library.
  * @remarks
  * Uses `instanceof` over checking specific properties or methods, because we decided that a version mix-up with
  * {@link @fluidframework/aqueduct#} is unlikely between devtools and end-user applications, and we don't support it anyway.
