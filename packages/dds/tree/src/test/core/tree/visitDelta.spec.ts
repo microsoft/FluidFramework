@@ -18,8 +18,8 @@ import {
 	type RevisionTag,
 	makeDetachedFieldIndex,
 	visitDelta,
-} from "../../core/index.js";
-import { brand } from "../../util/index.js";
+} from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
 import {
 	chunkFromJsonTrees,
 	chunkToMapTreeField,
@@ -28,9 +28,9 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 	type DeltaParams,
-} from "../utils.js";
+} from "../../utils.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import { mapTreeFromCursor } from "../../feature-libraries/index.js";
+import { mapTreeFromCursor } from "../../../feature-libraries/index.js";
 
 function visit(
 	delta: DeltaRoot,

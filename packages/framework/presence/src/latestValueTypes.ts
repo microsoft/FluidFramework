@@ -78,10 +78,11 @@ export type AccessorNonDist<T> = [T] extends [ProxiedValueAccessor<T>]
 /**
  * @alpha
  */
-export type Accessor<T extends ValueAccessor<T>> = T extends ProxiedValueAccessor<T>
-	? () => DeepReadonly<JsonDeserialized<T>> | undefined
-	: T extends RawValueAccessor<T>
-		? DeepReadonly<JsonDeserialized<T>>
+
+export type Accessor<T> = T extends ProxiedValueAccessor<infer U>
+	? () => DeepReadonly<JsonDeserialized<U>> | undefined
+	: T extends RawValueAccessor<infer U>
+		? DeepReadonly<JsonDeserialized<U>>
 		: never;
 
 /**
