@@ -19,8 +19,6 @@ import {
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
 import type { TreeCheckout } from "../../shared-tree/index.js";
-import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
-
 /**
  * Initializes a node with the given schema and content.
  * @param schema - The schema of the node being initialized
@@ -92,7 +90,7 @@ export function describeHydration(
  * @remarks
  * For minimal/concise targeted unit testing of specific simple-tree content.
  *
- * This this produces "marinated" nodes, meaning hydrated nodes which may not have an inner node cached yet.
+ * This produces "marinated" nodes, meaning hydrated nodes which may not have an inner node cached yet.
  */
 export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
