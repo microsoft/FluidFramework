@@ -349,13 +349,14 @@ export function withSchemaValidation<
  * Versions with no notable impact can be omitted.
  *
  * These use numeric values for easy threshold comparisons.
- * This is complicated by the fact that 2.2 is larger than 2.10.
- * Using leading zeros for the minor version mitigates this.
+ * Without zero padding, version 2.10 is treated as 2.1, which is numerically less than 2.2.
+ * Adding leading zeros to the minor version ensures correct comparisons.
+ * For example, version 2.20.0 is encoded as 2.020, and version 2.2.0 is encoded as 2.002.
+ * For example FF 2.20.0 is encoded as 2.020 and FF 2.2.0 is encoded as 2.002.
+ *
  * Three digest was selected as that will likely be enough, while two digits could easily be too few.
  * If three digest ends up being too few, minor releases of 1000 and higher
  * could still be handled using something like 2.999_00001 without having to change the lower releases.
- *
- * For example FF 2.20.0 is encoded as 2.020 and FF 2.2.0 is encoded as 2.002.
  *
  * This scheme assumes a single version will always be enough to communicate compatibility.
  * For this to work, compatibility has to be strictly increasing.
@@ -364,7 +365,7 @@ export function withSchemaValidation<
  * such a system can be added if/when its needed since it will be opt in and thus non-breaking.
  *
  * TODO: this should likely be defined higher in the stack and specified when creating the container, possibly as part of its schema.
- * TODO: compatibility requirements for how this enum can and cannot be changes should be clarified when/if its used across multiple layers in the stack.
+ * TODO: compatibility requirements for how this enum can and cannot be changed should be clarified when/if it's used across multiple layers in the stack.
  * For example, if needed, would adding more leading zeros to the minor version break things.
  * @alpha
  */
