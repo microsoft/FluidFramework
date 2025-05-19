@@ -33,7 +33,7 @@ import {
 	TestTreeProviderLite,
 	validateUsageError,
 } from "../utils.js";
-import { insert } from "../sequenceRootUtils.js";
+import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
 	CheckoutFlexTreeView,
 	type TreeCheckout,
@@ -73,6 +73,10 @@ function checkoutWithInitialTree(
 // Schema for tree that must always be empty.
 const emptySchema = toStoredSchema(schema.optional([]));
 
+const storedSchema = toStoredSchema(config.schema);
+const storedSchema2 = toStoredSchema(configGeneralized.schema);
+const storedSchema3 = toStoredSchema(configGeneralized2.schema);
+
 describe("SchematizingSimpleTreeView", () => {
 	describe("initialize", () => {
 		it("Initialize document", () => {
@@ -101,56 +105,61 @@ describe("SchematizingSimpleTreeView", () => {
 			);
 		});
 
-		for (const enableSchemaValidation of [true, false]) {
-			it(`Initialize invalid content: enableSchemaValidation: ${enableSchemaValidation}`, () => {
-				const emptyContent = {
-					schema: emptySchema,
-					initialTree: undefined,
-				};
-				const checkout = checkoutWithContent(emptyContent);
+		for (const additionalAsserts of [true, false]) {
+			for (const enableSchemaValidation of [true, false]) {
+				it(`Initialize invalid content: enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
+					const emptyContent = {
+						schema: emptySchema,
+						initialTree: undefined,
+					};
+					const checkout = checkoutWithContent(emptyContent, { additionalAsserts });
 
-				class Root extends schema.object("Root", {
-					content: schema.number,
-				}) {}
+					class Root extends schema.object("Root", {
+						content: schema.number,
+					}) {}
 
-				const config2 = new TreeViewConfiguration({
-					schema: Root,
-					enableSchemaValidation,
-				});
+					const config2 = new TreeViewConfiguration({
+						schema: Root,
+						enableSchemaValidation,
+					});
 
-				const view = new SchematizingSimpleTreeView(
-					checkout,
-					config2,
-					new MockNodeIdentifierManager(),
-				);
-
-				const root = new Root({ content: 5 });
-
-				const inner = getKernel(root).tryGetInnerNode() ?? assert.fail("Expected child");
-				const field = inner.getBoxed(brand("content"));
-				const child = field.boxedAt(0) ?? assert.fail("Expected child");
-				assert(child instanceof UnhydratedFlexTreeNode);
-
-				// Modify the tree so that it is out of schema.
-				// The public API is supposed to prevent out of schema trees,
-				// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
-				// In production cases this extra validation exists to help prevent corruption when bugs
-				// allow invalid data through the public API.
-				(child.mapTree as Mutable<typeof child.mapTree>).value = "invalid value";
-
-				// Attempt to initialize with invalid content
-				if (enableSchemaValidation) {
-					assert.throws(
-						() => view.initialize(root),
-						validateUsageError(/Tree does not conform to schema./),
+					const view = new SchematizingSimpleTreeView(
+						checkout,
+						config2,
+						new MockNodeIdentifierManager(),
 					);
 
-					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
-				} else {
-					view.initialize(root);
-					assert.equal(view.root.content, "invalid value");
-				}
-			});
+					const root = new Root({ content: 5 });
+
+					const inner = getKernel(root).tryGetInnerNode() ?? assert.fail("Expected child");
+					const field = inner.getBoxed(brand("content"));
+					const child = field.boxedAt(0) ?? assert.fail("Expected child");
+					assert(child instanceof UnhydratedFlexTreeNode);
+
+					// Modify the tree so that it is out of schema.
+					// The public API is supposed to prevent out of schema trees,
+					// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
+					// In production cases this extra validation exists to help prevent corruption when bugs
+					// allow invalid data through the public API.
+					(child.mapTree as Mutable<typeof child.mapTree>).value = "invalid value";
+
+					// Attempt to initialize with invalid content
+					if (enableSchemaValidation || additionalAsserts) {
+						assert.throws(
+							() => view.initialize(root),
+							validateUsageError(/Tree does not conform to schema./),
+						);
+
+						assert.throws(
+							() => view.root,
+							validateUsageError(/invalid state by another error/),
+						);
+					} else {
+						view.initialize(root);
+						assert.equal(view.root.content, "invalid value");
+					}
+				});
+			}
 		}
 	});
 
@@ -481,11 +490,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("supports revertibles", () => {
-		const emptyContent = {
-			schema: emptySchema,
-			initialTree: undefined,
-		};
-		const checkout = checkoutWithContent(emptyContent);
+		const checkout = makeTreeFromJsonSequence([]);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			config,
@@ -540,13 +545,13 @@ describe("SchematizingSimpleTreeView", () => {
 	describe("events", () => {
 		it("schemaChanged", () => {
 			const content = {
-				schema: toStoredSchema([]),
+				schema: toStoredSchema(SchemaFactory.optional([])),
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(content);
 			const view = new SchematizingSimpleTreeView(
 				checkout,
-				config,
+				new TreeViewConfiguration({ schema: SchemaFactory.optional(SchemaFactory.number) }),
 				new MockNodeIdentifierManager(),
 			);
 			const log: string[] = [];
@@ -557,16 +562,8 @@ describe("SchematizingSimpleTreeView", () => {
 		});
 
 		it("emits changed events for local edits", () => {
-			const emptyContent = {
-				schema: emptySchema,
-				initialTree: undefined,
-			};
-			const checkout = checkoutWithContent(emptyContent);
-			const view = new SchematizingSimpleTreeView(
-				checkout,
-				config,
-				new MockNodeIdentifierManager(),
-			);
+			const view = getView(config);
+			view.initialize(1);
 
 			let localChanges = 0;
 
@@ -576,7 +573,7 @@ describe("SchematizingSimpleTreeView", () => {
 				}
 			});
 
-			insert(checkout, 0, "a");
+			view.root = 2;
 			assert.equal(localChanges, 1);
 			unsubscribe();
 		});

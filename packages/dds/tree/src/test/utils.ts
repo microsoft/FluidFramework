@@ -93,11 +93,13 @@ import {
 	type DeltaDetachedNodeRename,
 	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
+	type MapTree,
+	aboveRootPlaceholder,
+	rootFieldKey,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	type NodeIdentifierManager,
-	buildForest,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
@@ -110,7 +112,6 @@ import {
 	mapTreeFieldFromCursor,
 	defaultChunkPolicy,
 	cursorForJsonableTreeField,
-	initializeForest,
 	chunkFieldSingle,
 	makeSchemaCodec,
 	SchemaCodecVersion,
@@ -176,6 +177,8 @@ import type {
 	ISharedObjectKind,
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
 
 // Testing utilities
 
@@ -800,6 +803,7 @@ export function checkoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
+		additionalAsserts?: boolean;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -812,9 +816,21 @@ function createCheckoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
+		additionalAsserts?: boolean;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
-	const forest = forestWithContent(content);
+	const fieldCursor = normalizeNewFieldContent(content.initialTree);
+	const roots: MapTree = {
+		type: aboveRootPlaceholder,
+		fields: new Map([[rootFieldKey, mapTreeFieldFromCursor(fieldCursor)]]),
+	};
+	const schema = new TreeStoredSchemaRepository(content.schema);
+	const forest = buildTestForest({
+		additionalAsserts: args?.additionalAsserts ?? true,
+		schema,
+		roots,
+	});
+
 	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
 		testIdCompressor,
@@ -823,7 +839,7 @@ function createCheckoutWithContent(
 		{
 			...args,
 			forest,
-			schema: new TreeStoredSchemaRepository(content.schema),
+			schema,
 			logger,
 		},
 	);
@@ -850,10 +866,35 @@ export function flexTreeViewWithContent(
 	);
 }
 
+/**
+ * Builds a reference forest.
+ */
+export function buildTestForest(options: {
+	schema?: TreeStoredSchemaRepository;
+	additionalAsserts: boolean;
+	roots?: MapTree;
+}): IEditableForest {
+	return new ObjectForest(
+		new Breakable("buildTestForest"),
+		options.schema,
+		undefined,
+		options.additionalAsserts,
+		options.roots,
+	);
+}
+
 export function forestWithContent(content: TreeStoredContent): IEditableForest {
-	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
-	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
+	const roots: MapTree = {
+		type: aboveRootPlaceholder,
+		fields: new Map([[rootFieldKey, mapTreeFieldFromCursor(fieldCursor)]]),
+	};
+	const forest = buildTestForest({
+		additionalAsserts: true,
+		schema: new TreeStoredSchemaRepository(content.schema),
+		roots,
+	});
+
 	return forest;
 }
 
@@ -869,9 +910,11 @@ export const IdentifierSchema = sf.object("identifier-object", {
 /**
  * Crates a tree using the Json domain with a required root field.
  */
-export function makeTreeFromJson(json: JsonCompatible): ITreeCheckout {
+export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
 	return checkoutWithContent({
-		schema: toStoredSchema(JsonAsTree.Tree),
+		schema: toStoredSchema(
+			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
+		),
 		initialTree: singleJsonCursor(json),
 	});
 }
