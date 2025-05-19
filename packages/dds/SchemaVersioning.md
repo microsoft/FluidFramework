@@ -38,7 +38,7 @@ This document makes the following assumptions which relate to use of these schem
         This means two different "current" versions must be able to have different Fluid Framework versions.
 
 1.  Collaboration between users should work as long as they have a version of the application that is "current" for a definition of "current" controlled by the application authors (not the Fluid Framework authors!).
-    This includes cross-client collaboration between multiple current versions of the application with different Fluid Framework versions noted above.
+    This includes cross-client compatibility between multiple current versions of the application with different Fluid Framework versions noted above.
 
 1.  Documents can be read-only for some users, thus in-place conversion is not possible for all clients.
 
