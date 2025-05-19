@@ -6,12 +6,7 @@
 import fs from "fs";
 
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import {
-	getUnexpectedLogErrorException,
-	ITestObjectProvider,
-	TestObjectProvider,
-} from "@fluidframework/test-utils/internal";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
 import { configList } from "./compatConfig.js";
@@ -23,7 +18,10 @@ import {
 	tenantIndex,
 } from "./compatOptions.js";
 import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
-import { ITestObjectProviderOptions } from "./describeCompat.js";
+import {
+	createTestObjectProviderLifecycleHooks,
+	ITestObjectProviderOptions,
+} from "./describeCompat.js";
 import {
 	getDataRuntimeApi,
 	getLoaderApi,
@@ -351,8 +349,6 @@ function createE2EDocCompatSuite(
 			for (const doctype of docTypes) {
 				const name = `${title} - ${doctype.testTitle}`;
 				describe(name, function () {
-					let provider: TestObjectProvider;
-					let resetAfterEach: boolean;
 					const dataRuntimeApi = getDataRuntimeApi(
 						getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
 					);
@@ -372,36 +368,27 @@ function createE2EDocCompatSuite(
 							getRequestedVersion(testBaseVersion(config.loader), config.loader),
 						),
 					};
+					const providerFactory = async (): Promise<ITestObjectProvider> =>
+						// Awaiting the return gives a clearer stack trace.
+						// eslint-disable-next-line @typescript-eslint/return-await
+						await getVersionedTestObjectProviderFromApis(apis, {
+							type: driver,
+							config: {
+								r11s: { r11sEndpointName },
+								odsp: { tenantIndex, odspEndpointName },
+							},
+						});
 
-					before(async function () {
-						try {
-							provider = await getVersionedTestObjectProviderFromApis(apis, {
-								type: driver,
-								config: {
-									r11s: { r11sEndpointName },
-									odsp: { tenantIndex, odspEndpointName },
-								},
-							});
-						} catch (error) {
-							const logger = createChildLogger({
-								logger: getTestLogger?.(),
-								namespace: "DescribeE2EDocs",
-							});
-							logger.sendErrorEvent(
-								{
-									eventName: "TestObjectProviderLoadFailed",
-									driverType: driver,
-								},
-								error,
-							);
-							throw error;
-						}
+					let resetAfterEach: boolean = true;
+					const getProvider = createTestObjectProviderLifecycleHooks(
+						providerFactory,
+						() => resetAfterEach,
+					);
 
-						Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
-					});
 					tests.bind(this)(
 						(options?: ITestObjectProviderOptions) => {
 							resetAfterEach = options?.resetAfterEach ?? true;
+							const provider = getProvider();
 							if (options?.syncSummarizer === true) {
 								provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 							}
@@ -411,21 +398,6 @@ function createE2EDocCompatSuite(
 							return doctype;
 						},
 					);
-
-					afterEach(function (done: Mocha.Done) {
-						// if the test failed for another reason
-						// then we don't need to check errors
-						// and fail the after each as well
-						if (this.currentTest?.state === "passed") {
-							const logErrors = getUnexpectedLogErrorException(provider.tracker);
-							done(logErrors);
-						} else {
-							done();
-						}
-						if (resetAfterEach) {
-							provider.reset();
-						}
-					});
 				});
 			}
 		}

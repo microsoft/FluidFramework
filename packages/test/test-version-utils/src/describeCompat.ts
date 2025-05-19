@@ -43,6 +43,103 @@ import { getRequestedVersion } from "./versionUtils.js";
 // See doc comment on mochaGlobalSetup.
 await mochaGlobalSetup();
 
+/**
+ * Alias for `() => T` to make it clear that the return value may change over the course of test execution.
+ */
+type ReadonlyMutableState<T> = () => T;
+
+export function createTestObjectProviderLifecycleHooks(
+	providerFactory: () => Promise<ITestObjectProvider>,
+	getResetAfterEach: ReadonlyMutableState<boolean>,
+	initializeTimeout?: number,
+): ReadonlyMutableState<ITestObjectProvider> {
+	let currentProvider: ITestObjectProvider | undefined;
+	const getProvider = () => {
+		if (currentProvider === undefined) {
+			throw new Error("Provider is only accessible during mocha hooks or test execution.");
+		}
+		return currentProvider;
+	};
+
+	before("Create TestObjectProvider", async function () {
+		if (initializeTimeout !== undefined) {
+			const timeout = this.timeout();
+			// timeout 0 indicates no timeout and explicitly changing it can interrupt debugging flows.
+			this.timeout(timeout === 0 ? 0 : initializeTimeout);
+		}
+		try {
+			currentProvider = await providerFactory();
+		} catch (error) {
+			const logger = createChildLogger({
+				logger: getTestLogger?.(),
+				namespace: "DescribeCompatSetup",
+			});
+			logger.sendErrorEvent(
+				{
+					eventName: "TestObjectProviderLoadFailed",
+					driverType: driver,
+				},
+				error,
+			);
+			throw error;
+		}
+
+		Object.defineProperty(this, "__fluidTestProvider", {
+			get: () => currentProvider,
+			configurable: true,
+		});
+	});
+
+	afterEach("Verify container telemetry", function (done: Mocha.Done) {
+		const provider = getProvider();
+		const logErrors = getUnexpectedLogErrorException(provider.tracker);
+		// if the test failed for another reason
+		// then we don't need to check errors
+		// and fail the after each as well.
+		// This also avoids failing tests that are skipped from inside the test body, which is
+		// a pattern we use to only run tests on certain drivers.
+		if (this.currentTest?.state === "passed") {
+			done(logErrors);
+		} else {
+			done();
+		}
+	});
+
+	afterEach("Reset TestObjectProvider", () => {
+		if (getResetAfterEach()) {
+			const provider = getProvider();
+			provider.reset();
+		}
+	});
+
+	// Mocha contexts are long-lived, and leaking the testObjectProvider on them severely eats into
+	// memory over the course of our e2e tests. This is especially bad for local server, where the
+	// server ends up retaining direct references to containers. This hook resolves that issue by explicitly
+	// removing retainers for the test object provider from the context.
+	// A good way to test memory impact of changes here is by doing one of:
+	// - Put an existing e2e test's `it` block in a loop to create many copies of it and run only this test
+	// - Put a single test in a `describeCompat` block and put the `describeCompat` block in a loop
+	// then taking heap snapshots over the course of various runs.
+	// Because of things like the summarizer process, containers may not be GC'd as soon as tests are done executing,
+	// but you should see the total number of retained containers as well as server objects stabilize over time rather than grow.
+	// Heap snapshots for a large number of tests within a single suite help detect bugs with leaking objects while a suite executes,
+	// which is problematic for suites that run a large number of test cases (usually combintorially generated).
+	// Heap snapshots for a large number of suites help detect bugs with leaking objects across suites,
+	// which is problematic for issues that tend to get hit "later in the overall test run".
+	after("Cleanup TestObjectProvider", function () {
+		const provider = getProvider();
+		provider.driver.dispose?.();
+		currentProvider = undefined;
+		Object.defineProperty(this, "__fluidTestProvider", {
+			get: () => {
+				throw new Error("Attempted to use __fluidTestProvider after test suite disposed.");
+			},
+		});
+	});
+
+	return getProvider;
+}
+
 /*
  * Mocha Utils for test to generate the compat variants.
  */
@@ -70,54 +167,36 @@ function createCompatSuite(
 				continue;
 			}
 			describe(config.name, function () {
-				let provider: ITestObjectProvider | undefined;
-				let resetAfterEach: boolean;
 				const apis: CompatApis = getVersionedApis(config);
+				const providerFactory = async (): Promise<ITestObjectProvider> =>
+					config.kind === CompatKind.CrossVersion
+						? // Awaiting the return gives a clearer stack trace.
+							// eslint-disable-next-line @typescript-eslint/return-await
+							await getCompatVersionedTestObjectProviderFromApis(apis, {
+								type: driver,
+								config: {
+									r11s: { r11sEndpointName },
+									odsp: { tenantIndex, odspEndpointName },
+								},
+							})
+						: // eslint-disable-next-line @typescript-eslint/return-await
+							await getVersionedTestObjectProviderFromApis(apis, {
+								type: driver,
+								config: {
+									r11s: { r11sEndpointName },
+									odsp: { tenantIndex, odspEndpointName },
+								},
+							});
 
-				before("Create TestObjectProvider", async function () {
-					try {
-						provider =
-							config.kind === CompatKind.CrossVersion
-								? await getCompatVersionedTestObjectProviderFromApis(apis, {
-										type: driver,
-										config: {
-											r11s: { r11sEndpointName },
-											odsp: { tenantIndex, odspEndpointName },
-										},
-									})
-								: await getVersionedTestObjectProviderFromApis(apis, {
-										type: driver,
-										config: {
-											r11s: { r11sEndpointName },
-											odsp: { tenantIndex, odspEndpointName },
-										},
-									});
-					} catch (error) {
-						const logger = createChildLogger({
-							logger: getTestLogger?.(),
-							namespace: "DescribeCompatSetup",
-						});
-						logger.sendErrorEvent(
-							{
-								eventName: "TestObjectProviderLoadFailed",
-								driverType: driver,
-							},
-							error,
-						);
-						throw error;
-					}
-
-					Object.defineProperty(this, "__fluidTestProvider", {
-						get: () => provider,
-						configurable: true,
-					});
-				});
+				let resetAfterEach: boolean = true;
+				const getProvider = createTestObjectProviderLifecycleHooks(
+					providerFactory,
+					() => resetAfterEach,
+				);
 
 				tests.bind(this)((options?: ITestObjectProviderOptions) => {
 					resetAfterEach = options?.resetAfterEach ?? true;
-					if (provider === undefined) {
-						throw new Error("Expected provider to be set up by before hook");
-					}
+					const provider = getProvider();
 					if (options?.syncSummarizer === true) {
 						provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 					}
@@ -126,61 +205,6 @@ function createCompatSuite(
 					}
 					return provider;
 				}, apis);
-
-				afterEach("Verify container telemetry", function (done: Mocha.Done) {
-					if (provider === undefined) {
-						throw new Error("Expected provider to be set up by before hook");
-					}
-					const logErrors = getUnexpectedLogErrorException(provider.tracker);
-					// if the test failed for another reason
-					// then we don't need to check errors
-					// and fail the after each as well.
-					// This also avoids failing tests that are skipped from inside the test body, which is
-					// a pattern we use to only run tests on certain drivers.
-					if (this.currentTest?.state === "passed") {
-						done(logErrors);
-					} else {
-						done();
-					}
-				});
-
-				afterEach("Reset TestObjectProvider", () => {
-					if (provider === undefined) {
-						throw new Error("Expected provider to be set up by before hook");
-					}
-					if (resetAfterEach) {
-						provider.reset();
-					}
-				});
-
-				// Mocha contexts are long-lived, and leaking the testObjectProvider on them severely eats into
-				// memory over the course of our e2e tests. This is especially bad for local server, where the
-				// server ends up retaining direct references to containers. This hook resolves that issue by explicitly
-				// removing retainers for the test object provider from the context.
-				// A good way to test memory impact of changes here is by doing one of:
-				// - Put an existing e2e test's `it` block in a loop to create many copies of it and run only this test
-				// - Put a single test in a `describeCompat` block and put the `describeCompat` block in a loop
-				// then taking heap snapshots over the course of various runs.
-				// Because of things like the summarizer process, containers may not be GC'd as soon as tests are done executing,
-				// but you should see the total number of retained containers as well as server objects stabilize over time rather than grow.
-				// Heap snapshots for a large number of tests within a single suite help detect bugs with leaking objects while a suite executes,
-				// which is problematic for suites that run a large number of test cases (usually combintorially generated).
-				// Heap snapshots for a large number of suites help detect bugs with leaking objects across suites,
-				// which is problematic for issues that tend to get hit "later in the overall test run".
-				after("Cleanup TestObjectProvider", function () {
-					if (provider === undefined) {
-						throw new Error("Expected provider to be set up by before hook");
-					}
-					provider.driver.dispose?.();
-					provider = undefined;
-					Object.defineProperty(this, "__fluidTestProvider", {
-						get: () => {
-							throw new Error(
-								"Attempted to use __fluidTestProvider after test suite disposed.",
-							);
-						},
-					});
-				});
 			});
 		}
 	};
