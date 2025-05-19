@@ -691,7 +691,12 @@ export class SharedMatrix<T = any>
 			// back-compat:  used -1 for disabled
 			artifactsToSummarize.push(
 				-1,
-				// undefined - we should set undefined in place of cellLastWriteTracker to ensure the number of array entries is consistent, but this currently breaks snapshot tests
+				/*
+				 * we should set undefined in place of cellLastWriteTracker to ensure the number of array entries is consistent.
+				 * Doing that currently breaks snapshot tests. Its is probably fine, but if new elements are ever added, we need
+				 * ensure undefined is also set.
+				 */
+				// undefined
 			);
 		}
 		builder.addBlob(
