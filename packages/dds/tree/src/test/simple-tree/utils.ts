@@ -32,7 +32,7 @@ import {
 import {
 	getTreeNodeForField,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/proxies.js";
+} from "../../simple-tree/getTreeNodeForField.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";

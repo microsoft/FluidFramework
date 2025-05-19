@@ -8,22 +8,30 @@ import { strict as assert } from "node:assert";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import { DetachedFieldIndex, type ForestRootId, RevisionTagCodec } from "../../core/index.js";
+import {
+	DetachedFieldIndex,
+	type ForestRootId,
+	RevisionTagCodec,
+} from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec.js";
+import { makeDetachedNodeToFieldCodec } from "../../../core/tree/detachedFieldIndexCodec.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../../core/tree/detachedFieldIndexFormat.js";
+import type { Format } from "../../../core/tree/detachedFieldIndexFormat.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	brand,
 	idAllocatorFromMaxId,
-} from "../../util/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
-import { testIdCompressor, testRevisionTagCodec, createSnapshotCompressor } from "../utils.js";
+} from "../../../util/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import {
+	testIdCompressor,
+	testRevisionTagCodec,
+	createSnapshotCompressor,
+} from "../../utils.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();
 const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);

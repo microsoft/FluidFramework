@@ -35,8 +35,6 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 				setTitleString(title as ISharedString);
 			})
 			.catch((error) => {
-				console.log("todomodel");
-				console.log(todoModel);
 				console.error(error);
 			});
 		return () => {};

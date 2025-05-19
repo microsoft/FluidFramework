@@ -46,6 +46,7 @@ describe("import tests", () => {
 		}) {}
 		class Column extends TableSchema.column({
 			schemaFactory,
+			cell: Cell,
 			props: schemaFactory.optional(ColumnProps),
 		}) {}
 

@@ -26,16 +26,16 @@ import {
 	keyAsDetachedField,
 	makeDetachedFieldIndex,
 	rootFieldKey,
-} from "../../core/index.js";
-import { brand } from "../../util/index.js";
+} from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
 import {
 	applyTestDelta,
 	chunkFromJsonableTrees,
 	expectEqualPaths,
 	testIdCompressor,
 	testRevisionTagCodec,
-} from "../utils.js";
-import { stringSchema } from "../../simple-tree/index.js";
+} from "../../utils.js";
+import { stringSchema } from "../../../simple-tree/index.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
