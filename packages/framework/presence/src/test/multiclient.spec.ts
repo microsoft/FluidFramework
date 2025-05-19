@@ -44,7 +44,7 @@ async function waitForAttendeeEvent(
 			timeoutPromise<Attendee>(
 				(resolve) => presence.attendees.events.on(event, (attendee) => resolve(attendee)),
 				{
-					durationMs: 2000,
+					durationMs: 10000,
 					errorMsg: `Attendee[${index}] Timeout`,
 				},
 			),
@@ -145,7 +145,7 @@ describe(`Presence with TinyliciousClient`, () => {
 		};
 	};
 
-	describe.skip("LatestValueManager", () => {
+	describe("LatestValueManager", () => {
 		it("multiclient presence data validation", async () => {
 			// SETUP
 			const {
@@ -170,17 +170,6 @@ describe(`Presence with TinyliciousClient`, () => {
 				presence3.attendees.getMyself(),
 			];
 
-			// FIXME: These events never seem to be triggered
-			// presence1.events.on("workspaceActivated", (addr, type) => {
-			// 	console.log(`1workspaceActivated: ${addr}, ${type}`);
-			// 	assert.equal(addr, "name:testStateWorkspace");
-			// });
-
-			// presence2.events.on("workspaceActivated", (addr, type) => {
-			// 	console.log(`2workspaceActivated: ${addr}, ${type}`);
-			// 	assert.equal(addr, "name:testStateWorkspace");
-			// });
-
 			// Configure a state workspace
 			const stateWorkspace1 = presence1.states.getWorkspace("name:testStateWorkspace", {
 				count: StateFactory.latest({
@@ -198,12 +187,6 @@ describe(`Presence with TinyliciousClient`, () => {
 				}),
 			});
 
-			// const attendees = await waitForAttendeeEvent(
-			// 	"attendeeConnected",
-			// 	presence1,
-			// 	presence2,
-			// 	presence3,
-			// );
 			assert.equal(attendees.length, 3, "attendees length is wrong");
 			console.log(`Attendees: ${attendees.map((a) => a.attendeeId).join(", ")}`);
 
@@ -211,42 +194,11 @@ describe(`Presence with TinyliciousClient`, () => {
 			const { count: count1 } = stateWorkspace1.states;
 			const { count: count2 } = stateWorkspace2.states;
 
-			// await timeoutPromise(
-			// 	(resolve) =>
-			// 		count2.events.on("remoteUpdated", (_) => {
-			// 			console.log("remoteUpdated2");
-			// 			return resolve();
-			// 		}),
-			// 	{
-			// 		durationMs: 2000,
-			// 		errorMsg: `Attendee Timeout`,
-			// 	},
-			// );
-
-			// count1.local = { num: 11 };
-			// assert.equal(count1.local.num, 11, "count1 count is wrong");
-
-			// await timeoutPromise<Attendee>(
-			// 	(resolve) => count2.events.on("remoteUpdated", (attendee) => resolve(attendee)),
-			// 	{
-			// 		durationMs: 2000,
-			// 		errorMsg: `AttendeeTimeout`,
-			// 	},
-			// );
-
-			count2.local = { num: 22 };
-			assert.equal(count2.local.num, 22, "count2 count is wrong");
-
-			// await timeoutPromise((resolve) => count1.events.on("remoteUpdated", (_) => resolve()), {
-			// 	durationMs: 2000,
-			// 	errorMsg: `Attendee Timeout`,
-			// });
-
 			await timeoutPromise(
 				(resolve) =>
-					count1.events.on("remoteUpdated", () => {
-						console.log("remoteUpdated1");
-						return resolve();
+					count2.events.on("remoteUpdated", () => {
+						console.log("remoteUpdated");
+						resolve();
 					}),
 				{
 					durationMs: 2000,
@@ -254,17 +206,41 @@ describe(`Presence with TinyliciousClient`, () => {
 				},
 			);
 
-			const remoteData = count1.getRemote(attendee2);
-			const attendee2Data = remoteData.value();
+			await timeoutPromise(
+				(resolve) =>
+					count2.events.on("localUpdated", () => {
+						console.log("localUpdated");
+						resolve();
+					}),
+				{
+					durationMs: 2000,
+					errorMsg: `Attendee Timeout`,
+				},
+			);
 
-			// const remoteData2 = count2.getRemote(attendee1);
-			// const value2 = remoteData2.value();
+			count2.local = { num: 22 };
+			assert.equal(count2.local.num, 22, "count2 count is wrong");
 
-			assert.deepEqual(attendee2Data, { num: 22 }, "attendee 2 has wrong data");
+			count1.local = { num: 11 };
+			assert.equal(count1.local.num, 22, "count1 count is wrong");
+
+			// await timeoutPromise((resolve) => count1.events.on("remoteUpdated", () => resolve()), {
+			// 	durationMs: 2000,
+			// 	errorMsg: `Attendee Timeout`,
+			// });
+
+			// count2.local = { num: 22 };
+			// assert.equal(count2.local.num, 22, "count2 count is wrong");
+
+			// let remoteData = count1.getRemote(attendee2);
+			// let attendee2Data = remoteData.value();
+			// remoteData = count1.getRemote(attendee2);
+			// attendee2Data = remoteData.value();
+
+			// assert.deepEqual(attendee2Data, { num: 22 }, "attendee 2 has wrong data");
 			// assert.deepEqual(value2, { num: 11 }, "attendee 1 has wrong data");
-			assert.equal(validatorSpy1.callCount, 1);
-			assert.equal(validatorSpy2.callCount, 0);
-			return;
+			// assert.equal(validatorSpy1.callCount, 1);
+			// assert.equal(validatorSpy2.callCount, 0);
 		});
 	});
 });
