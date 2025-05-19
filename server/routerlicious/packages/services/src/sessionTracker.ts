@@ -150,13 +150,18 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			sessionId,
 			knownConnectedClients,
 		);
-		if (!existingSession) {
-			throw new Error("Existing session not found in endClientSessionCore");
-		}
 
 		// Clear the session end timer if it exists. This shouldn't be necessary if the timer is
 		// properly cleared when the last client reconnects, but this is a safety measure.
 		clearTimeout(this.sessionEndTimers.get(sessionTimerKey));
+		if (!existingSession) {
+			// Session doesn't exist, so we can't end it.
+			Lumberjack.verbose("Session not found in endClientSessionCore", {
+				...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
+				numConnectedClients: knownConnectedClients?.length,
+			});
+			return;
+		}
 		if (otherConnectedClients.length === 0) {
 			// Start a timer to end the session after a period of inactivity
 			const timer = setTimeout(() => {
