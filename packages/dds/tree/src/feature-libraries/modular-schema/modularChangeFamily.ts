@@ -3697,17 +3697,7 @@ function rebaseRename(
 		affectedBaseFields.set(fieldIdKeyFromFieldId(baseAttachEntry.value), true);
 	} else if (baseRenameEntry.value !== undefined) {
 		deleteNodeRename(rebasedRoots, baseRenameEntry.start, count);
-		renameNodes(
-			rebasedRoots,
-			baseRenameEntry.value,
-			offsetChangeAtomId(
-				renameEntry.value,
-
-				// XXX: It would be nice if the entries in `RangeMap.getAll` included their offset from start.
-				subtractChangeAtomIds(renameEntry.start, baseRenameEntry.start),
-			),
-			count,
-		);
+		renameNodes(rebasedRoots, baseRenameEntry.value, renameEntry.value, count);
 	}
 
 	const countRemaining = renameEntry.length - count;
