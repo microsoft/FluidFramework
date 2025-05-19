@@ -107,38 +107,24 @@ function invertMark(
 			assert(mark.revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 			const outputId = getOutputCellId(mark);
 			const inputId = getInputCellId(mark);
-			let inverse: Mutable<Mark>;
+			assert(inputId === undefined, "Unexpected remove of detached node");
 
 			const attachId = { revision: isRollback ? mark.revision : revision, localId: mark.id };
-			if (inputId === undefined) {
-				crossFieldManager.invertDetach(
-					{ revision: mark.revision, localId: mark.id },
-					mark.count,
-					mark.changes,
-					attachId,
-				);
-				inverse = {
-					type: "Insert",
-					id: mark.id,
-					cellId: outputId,
-					count: mark.count,
-					revision: attachId.revision,
-				};
-				return [inverse];
-			} else {
-				// XXX: This case shouldn't happen
-				inverse = {
-					type: "Remove",
-					id: mark.id,
-					cellId: outputId,
-					count: mark.count,
-					revision,
-				};
-				if (isRollback) {
-					inverse.idOverride = inputId;
-				}
-				return [withNodeChange(inverse, mark.changes)];
-			}
+			crossFieldManager.invertDetach(
+				{ revision: mark.revision, localId: mark.id },
+				mark.count,
+				mark.changes,
+				attachId,
+			);
+
+			const inverse: Mark = {
+				type: "Insert",
+				id: mark.id,
+				cellId: outputId,
+				count: mark.count,
+				revision: attachId.revision,
+			};
+			return [inverse];
 		}
 		case "Insert": {
 			const inputId = getInputCellId(mark);
