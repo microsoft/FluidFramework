@@ -8,7 +8,8 @@ Adds enablable allowed types to SchemaFactoryAlpha
 This adds the `enablable` API to [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
 Enablables can be used for schema evolution to add members to an [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) while supporting cross version collaboration.
 
-Enablables are allowed types that can be read by the tree but not written. Attempting to write an enablable type will cause a runtime error.
+Enablables are allowed types that can be enabled by schema upgrades.
+Before being enabled, any attempt to insert or move a node to a location which requires the enablement for its type to be valid will throw an error.
 
 To add a new member to an `AllowedTypes`, add the type wrapped by `enablable`:
 ```typescript
