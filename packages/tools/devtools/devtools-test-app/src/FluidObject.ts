@@ -21,7 +21,7 @@ import { v4 as uuid } from "uuid";
 import { TodoList, TodoItem, type TodoItemProps } from "./Schema.js";
 
 /**
- * Additional {@link TreeDataObject} added to the {@link AppData}.
+ * Object so we can test {@link TreeDataObject} inside {@link AppData}.
  */
 export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 	public static readonly Name = "@devtools-example/test-app-tree-data-object";
