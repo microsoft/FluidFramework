@@ -9,9 +9,12 @@ import type {
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import { asDeeplyReadonly } from "./internalUtils.js";
+import {
+	asDeeplyReadonlyFromJsonHandle,
+	brandJson,
+	unbrandJson,
+} from "./exposedUtilityTypes.js";
 import type { Attendee } from "./presence.js";
-import { brandJson } from "./exposedUtilityTypes.js";
 
 /**
  * Metadata for the value state.
@@ -166,21 +169,43 @@ export function createValidatedGetter<T>(
 	clientState: InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
 	validator?: StateSchemaValidator<T>,
 ): () => DeepReadonly<JsonDeserialized<T>> | undefined {
-	return () => {
-		if (validator === undefined) {
-			// No validator, so return the raw value
-			return asDeeplyReadonly(clientState.value);
-		}
+	const f = (): DeepReadonly<JsonDeserialized<T>> | undefined => {
+		const valueToCheck =
+			validator === undefined
+				? clientState.value
+				: clientState.validated === true
+					? clientState.validatedValue
+					: false;
 
-		if (clientState.validated === true) {
-			// Data was previously validated, so return the validated value, which may be undefined.
-			return asDeeplyReadonly(clientState.validatedValue);
+		if (valueToCheck !== false) {
+			return valueToCheck === undefined
+				? undefined
+				: asDeeplyReadonlyFromJsonHandle(valueToCheck);
 		}
+		// if (validator === undefined) {
+		// 	// No validator, so return the raw value
+		// 	return clientState.value === undefined
+		// 		? undefined
+		// 		: asDeeplyReadonlyFromJsonHandle(clientState.value);
+		// }
 
-		const validData = validator(clientState.value);
+		// if (clientState.validated === true) {
+		// 	// Data was previously validated, so return the validated value, which may be undefined.
+		// 	return clientState.validatedValue === undefined
+		// 		? undefined
+		// 		: asDeeplyReadonlyFromJsonHandle(clientState.validatedValue);
+		// }
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const validData = validator!(
+			clientState.value === undefined ? undefined : unbrandJson(clientState.value),
+		);
 		clientState.validated = true;
 		// FIXME: Cast shouldn't be needed
 		clientState.validatedValue = validData === undefined ? undefined : brandJson(validData);
-		return asDeeplyReadonly(clientState.validatedValue);
+		return clientState.validatedValue === undefined
+			? undefined
+			: asDeeplyReadonlyFromJsonHandle(clientState.validatedValue);
 	};
+	return f;
 }

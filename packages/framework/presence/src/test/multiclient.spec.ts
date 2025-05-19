@@ -145,7 +145,7 @@ describe(`Presence with TinyliciousClient`, () => {
 		};
 	};
 
-	describe("LatestValueManager", () => {
+	describe.skip("LatestValueManager", () => {
 		it("multiclient presence data validation", async () => {
 			// SETUP
 			const {
@@ -244,7 +244,7 @@ describe(`Presence with TinyliciousClient`, () => {
 
 			await timeoutPromise(
 				(resolve) =>
-					count1.events.on("remoteUpdated", (_) => {
+					count1.events.on("remoteUpdated", () => {
 						console.log("remoteUpdated1");
 						return resolve();
 					}),

@@ -109,24 +109,16 @@ export namespace InternalTypes {
     // @system (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
-<<<<<<< HEAD
-        validatedValue?: JsonDeserialized<TValue>;
+        validatedValue?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue> | undefined;
         // (undocumented)
-        value?: JsonDeserialized<TValue>;
-=======
         value?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
->>>>>>> presence-type-branding
     }
     // @system (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
         // (undocumented)
-<<<<<<< HEAD
-        validatedValue?: JsonDeserialized<TValue>;
+        validatedValue?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue> | undefined;
         // (undocumented)
-        value: JsonDeserialized<TValue>;
-=======
         value: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
->>>>>>> presence-type-branding
     }
     // @system (undocumented)
     export interface ValueStateMetadata {

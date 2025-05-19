@@ -37,7 +37,7 @@ export namespace InternalTypes {
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
 		value?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
-		validatedValue?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
+		validatedValue?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue> | undefined;
 	}
 
 	/**

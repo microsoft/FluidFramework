@@ -16,16 +16,21 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
-import { unbrandJson, brandJson } from "./exposedUtilityTypes.js";
+import {
+	unbrandJson,
+	brandJson,
+	asDeeplyReadonlyFromJsonHandle,
+} from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries } from "./internalUtils.js";
-import type {
-	LatestClientData,
-	LatestData,
-	ProxiedValueAccessor,
-	RawValueAccessor,
-	StateSchemaValidator,
-	ValueAccessor,
+import {
+	createValidatedGetter,
+	type LatestClientData,
+	type LatestData,
+	type ProxiedValueAccessor,
+	type RawValueAccessor,
+	type StateSchemaValidator,
+	type ValueAccessor,
 } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -163,23 +168,8 @@ class LatestValueManagerImpl<T, Key extends string>
 					attendee: this.datastore.lookupClient(attendeeId),
 					value:
 						this.validator === undefined
-							? asDeeplyReadonly(clientState.value)
-							: () => {
-									if (clientState.validated === true) {
-										// Data was previously validated, so return the validated value, which may be undefined.
-										return asDeeplyReadonly(clientState.validatedValue);
-									}
-
-									// let validData: JsonDeserialized<T> | undefined;
-									// Skip the current attendee since we want to enumerate only other remote attendees
-									if (attendeeId !== allKnownStates.self) {
-										const validData = this.validator?.(clientState.value);
-										clientState.validated = true;
-										// FIXME: Cast shouldn't be needed
-										clientState.validatedValue = validData;
-										return asDeeplyReadonly(clientState.validatedValue);
-									}
-								},
+							? asDeeplyReadonlyFromJsonHandle(clientState.value)
+							: createValidatedGetter(clientState, this.validator),
 					metadata: {
 						revision: clientState.rev,
 						timestamp: clientState.timestamp,
@@ -204,19 +194,8 @@ class LatestValueManagerImpl<T, Key extends string>
 		return {
 			value:
 				this.validator === undefined
-					? asDeeplyReadonly(clientState.value)
-					: () => {
-							if (clientState.validated === true) {
-								// Data was previously validated, so return the validated value, which may be undefined.
-								return asDeeplyReadonly(clientState.validatedValue);
-							}
-
-							const validData = this.validator?.(clientState.value);
-							clientState.validated = true;
-							// FIXME: Cast shouldn't be needed
-							clientState.validatedValue = validData;
-							return asDeeplyReadonly(clientState.validatedValue);
-						},
+					? asDeeplyReadonlyFromJsonHandle(clientState.value)
+					: createValidatedGetter(clientState, this.validator),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	};

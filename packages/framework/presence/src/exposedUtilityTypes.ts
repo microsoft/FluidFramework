@@ -10,6 +10,8 @@ import type {
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
+import { asDeeplyReadonly } from "./internalUtils.js";
+
 /**
  * Collection of utility types that are not intended to be used/imported
  * directly outside of this package.
@@ -145,5 +147,5 @@ export function unbrandJson<T>(
 export function asDeeplyReadonlyFromJsonHandle<T>(
 	value: InternalUtilityTypes.OpaqueJsonDeserialized<T>,
 ): DeepReadonly<JsonDeserialized<T>> {
-	return asDeeplyReadonlyFromJsonHandle(value);
+	return asDeeplyReadonly(unbrandJson(value));
 }

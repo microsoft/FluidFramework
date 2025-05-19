@@ -15,12 +15,7 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import {
-	asDeeplyReadonlyFromJsonHandle,
-	brandJson,
-	unbrandJson,
-	// type InternalUtilityTypes,
-} from "./exposedUtilityTypes.js";
+import { asDeeplyReadonlyFromJsonHandle, brandJson } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
 import {
@@ -477,39 +472,10 @@ class LatestMapValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
-					// value: asDeeplyReadonlyFromJsonHandle(value),
 					value:
 						validator === undefined
 							? asDeeplyReadonlyFromJsonHandle(value)
-							: createValidatedGetter(unbrandJson(value), validator),
-
-					// () => {
-					// 		if (item.validated === true) {
-					// 			// if(item.validatedValue === undefined) {
-					// 			// 	throw new Error("v")
-					// 			// }
-					// 			// Data was previously validated, so return the validated value, which may be undefined.
-					// 			return asDeeplyReadonlyFromJsonHandle(item.validatedValue);
-					// 		}
-
-					// 		// FIXME: This optimization makes testing more difficult because it requires tests have multiple
-					// 		// clients.
-					// 		//
-					// 		// Assume that data for the local attendee is valid
-					// 		// if (attendeeId === allKnownStates.self) {
-					// 		// 	item.validated = true;
-					// 		// 	item.validatedValue = value;
-					// 		// 	return asDeeplyReadonly(item.validatedValue);
-					// 		// }
-
-					// 		// We have remote data that has not been validated, so validate it, store the validated value, and
-					// 		// return it.
-					// 		const validData = validator(value);
-					// 		item.validated = true;
-					// 		// FIXME: Cast shouldn't be needed
-					// 		item.validatedValue = validData;
-					// 		return asDeeplyReadonly(item.validatedValue);
-					// },
+							: createValidatedGetter(item, validator),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -562,20 +528,20 @@ class LatestMapValueManagerImpl<
 				revision: item.rev,
 				timestamp: item.timestamp,
 			};
+
 			if (item.value !== undefined) {
-				const itemValue = item.value;
 				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				const valueGetter = createValidatedGetter(unbrandJson(itemValue), this.validator);
+				const valueGetter = createValidatedGetter<T>(item, this.validator);
 
 				const updatedItem = {
 					attendee,
 					key,
-					value: this.validator === undefined ? unbrandJson(itemValue) : valueGetter,
+					value: createValidatedGetter(item, this.validator),
 					metadata,
 				} satisfies LatestMapItemUpdatedClientData<T, Keys, ValueAccessor<T>>;
 				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
 				allUpdates.items.set(key, {
-					value: this.validator === undefined ? unbrandJson(itemValue) : valueGetter,
+					value: valueGetter,
 					metadata,
 				});
 			} else if (hadPriorValue !== undefined) {
