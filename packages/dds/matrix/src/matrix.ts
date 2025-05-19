@@ -675,16 +675,21 @@ export class SharedMatrix<T = any>
 			SnapshotPath.cols,
 			this.cols.summarize(this.runtime, this.handle, serializer),
 		);
-		const artifactsToSummarize = [
-			this.cells.snapshot(),
-			this.pending.snapshot(),
-			// back-compat:  used -1 for disabled
-			this.fwwPolicy.state === "on" ? this.fwwPolicy.switchOpSeqNumber : -1,
-		];
+		const artifactsToSummarize: (
+			| undefined
+			| number
+			| ReturnType<SparseArray2D<MatrixItem<T> | number>["snapshot"]>
+		)[] = [this.cells.snapshot(), this.pending.snapshot()];
 
 		// Only need to store it in the snapshot if we have switched the policy already.
 		if (this.fwwPolicy.state === "on") {
-			artifactsToSummarize.push(this.fwwPolicy.cellLastWriteTracker.snapshot());
+			artifactsToSummarize.push(
+				this.fwwPolicy.switchOpSeqNumber,
+				this.fwwPolicy.cellLastWriteTracker.snapshot(),
+			);
+		} else {
+			// back-compat:  used -1 for disabled, and keep the number of items fixed by adding undefined for cellLastWriteTracker
+			artifactsToSummarize.push(-1, undefined);
 		}
 		builder.addBlob(
 			SnapshotPath.cells,
