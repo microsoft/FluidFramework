@@ -110,12 +110,11 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider, apis) => {
 	);
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
 
-	const dataObjectFactory = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[migrationShimFactory, sharedTreeShimFactory],
-		{},
-	);
+	const dataObjectFactory = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [migrationShimFactory, sharedTreeShimFactory],
+	});
 
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({

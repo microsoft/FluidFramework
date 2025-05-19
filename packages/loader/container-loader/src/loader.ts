@@ -22,7 +22,6 @@ import {
 import { IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IDocumentServiceFactory,
-	IDocumentStorageService,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
@@ -171,11 +170,6 @@ export interface ILoaderProps {
 	readonly logger?: ITelemetryBaseLogger;
 
 	/**
-	 * Blobs storage for detached containers.
-	 */
-	readonly detachedBlobStorage?: IDetachedBlobStorage;
-
-	/**
 	 * The configuration provider which may be used to control features.
 	 */
 	readonly configProvider?: IConfigProviderBase;
@@ -229,38 +223,11 @@ export interface ILoaderServices {
 	readonly subLogger: ITelemetryLoggerExt;
 
 	/**
-	 * Blobs storage for detached containers.
-	 * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
-	 */
-	readonly detachedBlobStorage?: IDetachedBlobStorage;
-
-	/**
 	 * Optional property for allowing the container to use a custom
 	 * protocol implementation for handling the quorum and/or the audience.
 	 */
 	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
 }
-
-/**
- * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
- * blobs in detached containers.
- * @legacy
- * @alpha
- *
- * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
- */
-export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
-	size: number;
-	/**
-	 * Return an array of all blob IDs present in storage
-	 */
-	getBlobIds(): string[];
-
-	/**
-	 * After the container is attached, the detached blob storage is no longer needed and will be disposed.
-	 */
-	dispose?(): void;
-};
 
 /**
  * Manages Fluid resource loading
@@ -281,7 +248,6 @@ export class Loader implements IHostLoader {
 			options,
 			scope,
 			logger,
-			detachedBlobStorage,
 			configProvider,
 			protocolHandlerBuilder,
 		} = loaderProps;
@@ -306,7 +272,6 @@ export class Loader implements IHostLoader {
 			options: options ?? {},
 			scope:
 				options?.provideScopeLoader === false ? { ...scope } : { ...scope, ILoader: this },
-			detachedBlobStorage,
 			protocolHandlerBuilder,
 			subLogger: subMc.logger,
 		};
