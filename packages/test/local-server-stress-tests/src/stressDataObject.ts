@@ -344,6 +344,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			} as any,
 		},
 		enableRuntimeIdCompressor: "on",
+		createBlobPayloadPending: true,
 	};
 
 	return {
