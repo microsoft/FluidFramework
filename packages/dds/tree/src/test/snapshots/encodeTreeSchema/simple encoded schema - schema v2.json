@@ -2,9 +2,26 @@
   "version": 2,
   "nodes": {
     "com.fluidframework.json.array": {
-      "object": {
-        "": {
-          "kind": "Sequence",
+      "kind": {
+        "object": {
+          "": {
+            "kind": "Sequence",
+            "types": [
+              "com.fluidframework.json.array",
+              "com.fluidframework.json.object",
+              "com.fluidframework.leaf.boolean",
+              "com.fluidframework.leaf.null",
+              "com.fluidframework.leaf.number",
+              "com.fluidframework.leaf.string"
+            ]
+          }
+        }
+      }
+    },
+    "com.fluidframework.json.object": {
+      "kind": {
+        "map": {
+          "kind": "Optional",
           "types": [
             "com.fluidframework.json.array",
             "com.fluidframework.json.object",
@@ -16,30 +33,25 @@
         }
       }
     },
-    "com.fluidframework.json.object": {
-      "map": {
-        "kind": "Optional",
-        "types": [
-          "com.fluidframework.json.array",
-          "com.fluidframework.json.object",
-          "com.fluidframework.leaf.boolean",
-          "com.fluidframework.leaf.null",
-          "com.fluidframework.leaf.number",
-          "com.fluidframework.leaf.string"
-        ]
+    "com.fluidframework.leaf.boolean": {
+      "kind": {
+        "leaf": 2
       }
     },
-    "com.fluidframework.leaf.boolean": {
-      "leaf": 2
-    },
     "com.fluidframework.leaf.null": {
-      "leaf": 4
+      "kind": {
+        "leaf": 4
+      }
     },
     "com.fluidframework.leaf.number": {
-      "leaf": 0
+      "kind": {
+        "leaf": 0
+      }
     },
     "com.fluidframework.leaf.string": {
-      "leaf": 1
+      "kind": {
+        "leaf": 1
+      }
     }
   },
   "root": {

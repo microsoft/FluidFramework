@@ -2,17 +2,21 @@
   "version": 2,
   "nodes": {
     "test.hasMinimalValueField": {
-      "object": {
-        "field": {
-          "kind": "Value",
-          "types": [
-            "test.minimal"
-          ]
+      "kind": {
+        "object": {
+          "field": {
+            "kind": "Value",
+            "types": [
+              "test.minimal"
+            ]
+          }
         }
       }
     },
     "test.minimal": {
-      "object": {}
+      "kind": {
+        "object": {}
+      }
     }
   },
   "root": {

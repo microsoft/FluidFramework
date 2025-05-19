@@ -2,12 +2,14 @@
   "version": 2,
   "nodes": {
     "test.recursiveType": {
-      "object": {
-        "field": {
-          "kind": "Optional",
-          "types": [
-            "test.recursiveType"
-          ]
+      "kind": {
+        "object": {
+          "field": {
+            "kind": "Optional",
+            "types": [
+              "test.recursiveType"
+            ]
+          }
         }
       }
     }

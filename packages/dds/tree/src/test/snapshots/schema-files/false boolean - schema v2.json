@@ -2,7 +2,9 @@
   "version": 2,
   "nodes": {
     "com.fluidframework.leaf.boolean": {
-      "leaf": 2
+      "kind": {
+        "leaf": 2
+      }
     }
   },
   "root": {

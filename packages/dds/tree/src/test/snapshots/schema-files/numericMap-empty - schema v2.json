@@ -2,14 +2,18 @@
   "version": 2,
   "nodes": {
     "com.fluidframework.leaf.number": {
-      "leaf": 0
+      "kind": {
+        "leaf": 0
+      }
     },
     "test.numericMap": {
-      "map": {
-        "kind": "Optional",
-        "types": [
-          "com.fluidframework.leaf.number"
-        ]
+      "kind": {
+        "map": {
+          "kind": "Optional",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        }
       }
     }
   },

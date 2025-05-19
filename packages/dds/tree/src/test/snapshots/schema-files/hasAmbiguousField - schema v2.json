@@ -2,21 +2,27 @@
   "version": 2,
   "nodes": {
     "test.hasAmbiguousField": {
-      "object": {
-        "field": {
-          "kind": "Value",
-          "types": [
-            "test.minimal",
-            "test.minimal2"
-          ]
+      "kind": {
+        "object": {
+          "field": {
+            "kind": "Value",
+            "types": [
+              "test.minimal",
+              "test.minimal2"
+            ]
+          }
         }
       }
     },
     "test.minimal": {
-      "object": {}
+      "kind": {
+        "object": {}
+      }
     },
     "test.minimal2": {
-      "object": {}
+      "kind": {
+        "object": {}
+      }
     }
   },
   "root": {

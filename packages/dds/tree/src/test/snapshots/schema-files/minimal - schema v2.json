@@ -2,7 +2,9 @@
   "version": 2,
   "nodes": {
     "test.minimal": {
-      "object": {}
+      "kind": {
+        "object": {}
+      }
     }
   },
   "root": {

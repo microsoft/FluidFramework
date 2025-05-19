@@ -2,7 +2,9 @@
   "version": 2,
   "nodes": {
     "com.fluidframework.leaf.handle": {
-      "leaf": 3
+      "kind": {
+        "leaf": 3
+      }
     }
   },
   "root": {

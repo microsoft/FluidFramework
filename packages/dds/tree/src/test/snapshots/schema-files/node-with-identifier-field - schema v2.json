@@ -2,15 +2,19 @@
   "version": 2,
   "nodes": {
     "com.fluidframework.leaf.string": {
-      "leaf": 1
+      "kind": {
+        "leaf": 1
+      }
     },
     "test.hasIdentifierField": {
-      "object": {
-        "field": {
-          "kind": "Identifier",
-          "types": [
-            "com.fluidframework.leaf.string"
-          ]
+      "kind": {
+        "object": {
+          "field": {
+            "kind": "Identifier",
+            "types": [
+              "com.fluidframework.leaf.string"
+            ]
+          }
         }
       }
     }

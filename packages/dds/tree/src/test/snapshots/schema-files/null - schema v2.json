@@ -2,7 +2,9 @@
   "version": 2,
   "nodes": {
     "com.fluidframework.leaf.null": {
-      "leaf": 4
+      "kind": {
+        "leaf": 4
+      }
     }
   },
   "root": {
