@@ -3642,41 +3642,7 @@ function rebaseRoots(
 ): RootNodeTable {
 	const rebasedRoots = cloneRootTable(change.rootNodes);
 	for (const renameEntry of change.rootNodes.oldToNewId.entries()) {
-		for (const baseRenameEntry of base.rootNodes.oldToNewId.getAll2(
-			renameEntry.start,
-			renameEntry.length,
-		)) {
-			const baseAttachEntry = base.crossFieldKeys.getFirst(
-				{
-					...(baseRenameEntry.value ?? baseRenameEntry.start),
-					target: CrossFieldTarget.Destination,
-				},
-				baseRenameEntry.length,
-			);
-
-			assert(baseAttachEntry.length === baseRenameEntry.length, "XXX");
-			if (baseAttachEntry.value !== undefined) {
-				deleteNodeRename(rebasedRoots, baseRenameEntry.start, baseRenameEntry.length);
-
-				// This rename represents an intention to detach these nodes.
-				// The rebased change should have a detach in the field where the base change attaches the nodes,
-				// so we need to ensure that field is processed.
-				affectedBaseFields.set(fieldIdKeyFromFieldId(baseAttachEntry.value), true);
-			} else if (baseRenameEntry.value !== undefined) {
-				deleteNodeRename(rebasedRoots, baseRenameEntry.start, baseRenameEntry.length);
-				renameNodes(
-					rebasedRoots,
-					baseRenameEntry.value,
-					offsetChangeAtomId(
-						renameEntry.value,
-
-						// XXX: It would be nice if the entries in `RangeMap.getAll` included their offset from start.
-						subtractChangeAtomIds(renameEntry.start, baseRenameEntry.start),
-					),
-					baseRenameEntry.length,
-				);
-			}
-		}
+		rebaseRename(rebasedRoots, renameEntry, base, affectedBaseFields);
 	}
 
 	for (const [detachId, nodeId] of change.rootNodes.nodeChanges.entries()) {
@@ -3700,6 +3666,63 @@ function rebaseRoots(
 		}
 	}
 	return rebasedRoots;
+}
+
+function rebaseRename(
+	rebasedRoots: RootNodeTable,
+	renameEntry: RangeQueryEntry<ChangeAtomId, ChangeAtomId>,
+	base: ModularChangeset,
+	affectedBaseFields: TupleBTree<FieldIdKey, boolean>,
+): void {
+	let count = renameEntry.length;
+	const baseRenameEntry = firstAttachIdFromDetachId(base.rootNodes, renameEntry.start, count);
+	count = baseRenameEntry.length;
+
+	const baseAttachEntry = base.crossFieldKeys.getFirst(
+		{
+			...(baseRenameEntry.value ?? renameEntry.start),
+			target: CrossFieldTarget.Destination,
+		},
+		count,
+	);
+
+	count = baseAttachEntry.length;
+
+	if (baseAttachEntry.value !== undefined) {
+		deleteNodeRename(rebasedRoots, baseRenameEntry.start, count);
+
+		// This rename represents an intention to detach these nodes.
+		// The rebased change should have a detach in the field where the base change attaches the nodes,
+		// so we need to ensure that field is processed.
+		affectedBaseFields.set(fieldIdKeyFromFieldId(baseAttachEntry.value), true);
+	} else if (baseRenameEntry.value !== undefined) {
+		deleteNodeRename(rebasedRoots, baseRenameEntry.start, count);
+		renameNodes(
+			rebasedRoots,
+			baseRenameEntry.value,
+			offsetChangeAtomId(
+				renameEntry.value,
+
+				// XXX: It would be nice if the entries in `RangeMap.getAll` included their offset from start.
+				subtractChangeAtomIds(renameEntry.start, baseRenameEntry.start),
+			),
+			count,
+		);
+	}
+
+	const countRemaining = renameEntry.length - count;
+	if (countRemaining > 0) {
+		rebaseRename(
+			rebasedRoots,
+			{
+				start: offsetChangeAtomId(renameEntry.start, count),
+				value: offsetChangeAtomId(renameEntry.value, count),
+				length: countRemaining,
+			},
+			base,
+			affectedBaseFields,
+		);
+	}
 }
 
 function composeRootTables(

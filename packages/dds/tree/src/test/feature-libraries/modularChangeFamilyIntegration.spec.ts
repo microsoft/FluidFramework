@@ -604,6 +604,58 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(rebased, expected);
 		});
 
+		it("rename over revive", () => {
+			const origId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const rename = Change.build(
+				{
+					family,
+					maxId: 1,
+					renames: [{ oldId: origId, newId: { revision: tag3, localId: brand(0) }, count: 2 }],
+					revisions: [{ revision: tag3 }],
+				},
+				Change.field(fieldA, sequence.identifier, [MarkMaker.tomb(tag1, brand(0), 2)]),
+			);
+
+			// This change renames both detached nodes, but only revives the first one.
+			const revive = Change.build(
+				{
+					family,
+					maxId: 0,
+					renames: [{ oldId: origId, newId: { revision: tag2, localId: brand(0) }, count: 2 }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.revive(1, origId, { revision: tag2 }),
+				]),
+			);
+
+			const rebased = family.rebase(
+				tagChange(rename, tag3),
+				tagChange(revive, tag2),
+				revisionMetadataSourceFromInfo([{ revision: tag2 }, { revision: tag3 }]),
+			);
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 1,
+					renames: [
+						{
+							oldId: { revision: tag2, localId: brand(1) },
+							newId: { revision: tag3, localId: brand(1) },
+							count: 1,
+						},
+					],
+					revisions: [{ revision: tag3 }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.remove(1, { revision: tag3, localId: brand(0) }),
+					MarkMaker.tomb(tag1, brand(1), 1),
+				]),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
 		it("prunes its output", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
