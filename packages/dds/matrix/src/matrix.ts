@@ -688,8 +688,11 @@ export class SharedMatrix<T = any>
 				this.fwwPolicy.cellLastWriteTracker.snapshot(),
 			);
 		} else {
-			// back-compat:  used -1 for disabled, and keep the number of items fixed by adding undefined for cellLastWriteTracker
-			artifactsToSummarize.push(-1, undefined);
+			// back-compat:  used -1 for disabled
+			artifactsToSummarize.push(
+				-1,
+				// undefined - we should set undefined in place of cellLastWriteTracker to ensure the number of array entries is consistent, but this currently breaks snapshot tests
+			);
 		}
 		builder.addBlob(
 			SnapshotPath.cells,
