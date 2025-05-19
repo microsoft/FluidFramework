@@ -248,7 +248,8 @@ export class SharedMatrix<T = any>
 
 	private fwwPolicy:
 		| { state: "off"; switchOpSeqNumber?: undefined }
-		| { state: "on"; switchOpSeqNumber: number | undefined } = { state: "off" }; // Set to true when the user calls switchPolicy.
+		| { state: "local"; switchOpSeqNumber?: undefined }
+		| { state: "on"; switchOpSeqNumber: number } = { state: "off" }; // Set to true when the user calls switchPolicy.
 
 	// Used to track if there is any reentrancy in setCell code.
 	private reentrantCount: number = 0;
@@ -1079,10 +1080,12 @@ export class SharedMatrix<T = any>
 
 	public switchSetCellPolicy(): void {
 		if (this.fwwPolicy.state === "off") {
-			this.fwwPolicy = {
-				state: "on",
-				switchOpSeqNumber: this.isAttached() ? undefined : 0,
-			};
+			this.fwwPolicy = this.isAttached()
+				? { state: "local" }
+				: {
+						state: "on",
+						switchOpSeqNumber: 0,
+					};
 		}
 	}
 
