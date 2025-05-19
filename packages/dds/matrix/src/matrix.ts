@@ -252,7 +252,7 @@ export class SharedMatrix<T = any>
 	private readonly cols: PermutationVector; // Map logical col to storage handle (if any)
 
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
-	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
+	private readonly pending = new SparseArray2D<number[]>(); // Tracks pending writes.
 
 	private fwwPolicy: FirstWriterWinsPolicy = {
 		state: "off",
@@ -493,7 +493,9 @@ export class SharedMatrix<T = any>
 		};
 
 		this.submitLocalMessage(op, metadata);
-		this.pending.setCell(rowHandle, colHandle, localSeq);
+		const pending = this.pending.getCell(rowHandle, colHandle) ?? [];
+		pending.push(localSeq);
+		this.pending.setCell(rowHandle, colHandle, pending);
 	}
 
 	/**
@@ -679,7 +681,16 @@ export class SharedMatrix<T = any>
 			| undefined
 			| number
 			| ReturnType<SparseArray2D<MatrixItem<T> | number>["snapshot"]>
-		)[] = [this.cells.snapshot(), this.pending.snapshot()];
+		)[] = [
+			this.cells.snapshot(),
+			/**
+			 * we used to write this.pending.snapshot(). this should have never been done, as pending is only for local
+			 * changes, and there should never be local changes in the summarizer. This was also never used on load
+			 * as there is no way to understand a previous clients pending changes. so we just set this to a constant
+			 * which matches an empty this.pending.snapshot() for back-compat in terms of the array length
+			 */
+			[undefined],
+		];
 
 		// Only need to store it in the snapshot if we have switched the policy already.
 		if (this.fwwPolicy.state === "on") {
@@ -806,22 +817,28 @@ export class SharedMatrix<T = any>
 			const col = this.rebasePosition(this.cols, colsRef, localSeq);
 			this.rows.removeLocalReferencePosition(rowsRef);
 			this.cols.removeLocalReferencePosition(colsRef);
-			if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
-				// If the mode is LWW, then send the op.
+
+			const pending = this.pending.getCell(rowHandle, colHandle);
+			assert(pending !== undefined, "local operation must have a pending array");
+			const localSeqIndex = pending.indexOf(localSeq);
+			assert(localSeqIndex >= 0, "local operation must have a pending entry");
+			const [pendingSeq] = pending.splice(localSeqIndex, 1);
+			assert(pendingSeq === localSeq, "must match");
+
+			if (
+				row !== undefined &&
+				col !== undefined &&
+				row >= 0 &&
+				col >= 0 && // If the mode is LWW, then send the op.
 				// Otherwise if the current mode is FWW and if we generated this op, after seeing the
 				// last set op, or it is the first set op for the cell, then regenerate the op,
 				// otherwise raise conflict. We want to check the current mode here and not that
 				// whether op was made in FWW or not.
-				if (
-					this.fwwPolicy.state !== "on" ||
+				(this.fwwPolicy.state !== "on" ||
 					referenceSeqNumber >=
-						(this.fwwPolicy.cellLastWriteTracker.getCell(rowHandle, colHandle)?.seqNum ?? 0)
-				) {
-					this.sendSetCellOp(row, col, setOp.value, rowHandle, colHandle, localSeq);
-				} else if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
-					// Clear the pending changes if any as we are not sending the op.
-					this.pending.setCell(rowHandle, colHandle, undefined);
-				}
+						(this.fwwPolicy.cellLastWriteTracker.getCell(rowHandle, colHandle)?.seqNum ?? 0))
+			) {
+				this.sendSetCellOp(row, col, setOp.value, rowHandle, colHandle, localSeq);
 			}
 		} else {
 			switch (content.target) {
@@ -968,9 +985,12 @@ export class SharedMatrix<T = any>
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq, rowsRef, colsRef } =
 						localOpMetadata as ISetOpMetadata;
-					const isLatestPendingOp = this.isLatestPendingWrite(rowHandle, colHandle, localSeq);
 					this.rows.removeLocalReferencePosition(rowsRef);
 					this.cols.removeLocalReferencePosition(colsRef);
+
+					const pending = this.pending.getCell(rowHandle, colHandle);
+					assert(pending?.shift() === localSeq, "must match");
+
 					// If policy is switched and cell should be modified too based on policy, then update the tracker.
 					// If policy is not switched, then also update the tracker in case it is the latest.
 					if (
@@ -981,10 +1001,6 @@ export class SharedMatrix<T = any>
 							seqNum: msg.sequenceNumber,
 							clientId: msg.clientId,
 						});
-					}
-
-					if (isLatestPendingOp) {
-						this.pending.setCell(rowHandle, colHandle, undefined);
 					}
 				} else {
 					const adjustedRow = this.rows.adjustPosition(row, msg);
@@ -1014,7 +1030,7 @@ export class SharedMatrix<T = any>
 										consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
 									}
 									// Check is there are any pending changes, which will be rejected. If so raise conflict.
-									if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
+									if ((this.pending.getCell(rowHandle, colHandle)?.length ?? 0) > 0) {
 										// Don't reset the pending value yet, as there maybe more fww op from same client, so we want
 										// to raise conflict event for that op also.
 										this.emit(
@@ -1027,7 +1043,7 @@ export class SharedMatrix<T = any>
 										);
 									}
 								}
-							} else if (this.pending.getCell(rowHandle, colHandle) === undefined) {
+							} else if ((this.pending.getCell(rowHandle, colHandle)?.length ?? 0) === 0) {
 								// If there is a pending (unACKed) local write to the same cell, skip the current op
 								// since it "happened before" the pending write.
 								this.cells.setCell(rowHandle, colHandle, value);
@@ -1104,35 +1120,6 @@ export class SharedMatrix<T = any>
 						cellLastWriteTracker: new SparseArray2D(),
 					};
 		}
-	}
-
-	/**
-	 * Returns true if the latest pending write to the cell indicated by the given row/col handles
-	 * matches the given 'localSeq'.
-	 *
-	 * A return value of `true` indicates that there are no later local operations queued that will
-	 * clobber the write op at the given 'localSeq'.  This includes later ops that overwrite the cell
-	 * with a different value as well as row/col removals that might recycled the given row/col handles.
-	 */
-	private isLatestPendingWrite(
-		rowHandle: Handle,
-		colHandle: Handle,
-		localSeq: number,
-	): boolean {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const pendingLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
-
-		// Note while we're awaiting the ACK for a local set, it's possible for the row/col to be
-		// locally removed and the row/col handles recycled.  If this happens, the pendingLocalSeq will
-		// be 'undefined' or > 'localSeq'.
-		assert(
-			!(pendingLocalSeq < localSeq),
-			0x023 /* "The 'localSeq' of pending write (if any) must be <= the localSeq of the currently processed op." */,
-		);
-
-		// If this is the most recent write to the cell by the local client, the stored localSeq
-		// will be an exact match for the given 'localSeq'.
-		return pendingLocalSeq === localSeq;
 	}
 
 	public toString(): string {
