@@ -37,8 +37,8 @@ interface TodoItemProps {
 export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 	public static readonly Name = "@devtools-example/test-app-tree-data-object";
 
-	public readonly config = new TreeViewConfiguration({ schema: TodoList });
-	public static readonly factory = new PureDataObjectFactory<
+	private readonly config = new TreeViewConfiguration({ schema: TodoList });
+	private static readonly factory = new PureDataObjectFactory<
 		TreeDataObject<TreeView<typeof TodoList>>
 	>(AppDataTree.Name, AppDataTree, [SharedString.getFactory(), SharedTree.getFactory()], {});
 
