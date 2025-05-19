@@ -70,7 +70,6 @@ const useStyles = makeStyles({
 
 /**
  * {@link TodoListView} input props.
- * @internal
  */
 export interface TodoListProps {
 	readonly todoModel: AppDataTree;
