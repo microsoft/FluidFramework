@@ -11,7 +11,8 @@ Enablables can be used for schema evolution to add members to an [`AllowedTypes`
 Enablables are allowed types that can be enabled by schema upgrades.
 Before being enabled, any attempt to insert or move a node to a location which requires the enablement for its type to be valid will throw an error.
 
-To add a new member to an `AllowedTypes`, add the type wrapped by `enablable`:
+To add a new member to an `AllowedTypes`, add the type wrapped by `enablable`.
+For example, migrating an array which previously supported only numbers to support both numbers and strings would start by deploying a version of the app using `enablable`:
 ```typescript
 schemaFactoryAlpha.arrayAlpha("TestArray", [schemaFactoryAlpha.number, schemaFactoryAlpha.enablable(schemaFactoryAlpha.string)]);
 ```
