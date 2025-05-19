@@ -83,7 +83,7 @@ export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 
 		// TODO: We should consider creating a separate field for date, so that we do not need to
 		// concatenate it to the id.
-		// Generate an ID that we can sort on later, and store the handle.
+		// Generate an ID that we can sort on later, and store the todo item.
 		const id = `${Date.now()}-${uuid()}`;
 
 		this.treeView.root.items.set(id, todoItem);
