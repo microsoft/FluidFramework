@@ -53,7 +53,6 @@ const useStyles = makeStyles({
 
 /**
  * {@link TodoItemView} input props.
- * @internal
  */
 interface TodoItemViewProps {
 	readonly todoItemModel: TodoItem;
