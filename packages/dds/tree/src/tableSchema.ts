@@ -964,6 +964,14 @@ export namespace System_TableSchema {
  * There may be breaking changes to these APIs and their underlying data format.
  * Using these APIs in production code may result in data loss or corruption.
  *
+ * The primary APIs for create tabular data schema are:
+ *
+ * - {@link TableSchema.(table:1)}
+ *
+ * - {@link TableSchema.(column:1)}
+ *
+ * - {@link TableSchema.(row:1)}
+ *
  * Tables created using these APIs are...
  *
  * - sparse, meaning that cells may be omitted, and new rows are empty by default.
