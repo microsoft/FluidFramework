@@ -670,7 +670,8 @@ export class SharedMatrix<T = any>
 		const artifactsToSummarize = [
 			this.cells.snapshot(),
 			this.pending.snapshot(),
-			this.fwwPolicy.switchOpSeqNumber,
+			// back-compat:  used -1 for disabled
+			this.fwwPolicy.switchOpSeqNumber ?? -1,
 		];
 
 		// Only need to store it in the snapshot if we have switched the policy already.
@@ -853,14 +854,16 @@ export class SharedMatrix<T = any>
 			];
 
 			this.cells = SparseArray2D.load(cellData);
+			// back-compat:  used -1 for disabled, also may not exist
+			const switchOpSeqNumber = setCellLwwToFwwPolicySwitchOpSeqNumber ?? -1;
 			this.fwwPolicy =
-				setCellLwwToFwwPolicySwitchOpSeqNumber === undefined
+				switchOpSeqNumber === -1
 					? {
 							enabled: false,
 						}
 					: {
 							enabled: true,
-							switchOpSeqNumber: setCellLwwToFwwPolicySwitchOpSeqNumber ?? undefined,
+							switchOpSeqNumber,
 						};
 			if (cellLastWriteTracker !== undefined) {
 				this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
