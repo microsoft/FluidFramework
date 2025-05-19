@@ -19,6 +19,7 @@ import {
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
 import type { TreeCheckout } from "../../shared-tree/index.js";
+import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 
 /**
  * Initializes a node with the given schema and content.
