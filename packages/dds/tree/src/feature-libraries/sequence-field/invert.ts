@@ -23,7 +23,6 @@ import {
 	type MarkList,
 	type NoopMark,
 	NoopMarkType,
-	type Remove,
 	type Rename,
 } from "./types.js";
 import {
@@ -135,7 +134,7 @@ function invertMark(
 				localId: mark.id,
 			};
 
-			const removeMark: Mutable<CellMark<Remove>> = {
+			const removeMark: Mutable<CellMark<Detach>> = {
 				type: "Remove",
 				count: mark.count,
 				id: detachId.localId,

@@ -73,7 +73,7 @@ export interface HasRevisionTag {
  * Carries a `MoveId` in case it is rebased over the content being moved out, in which case this mark
  * will transform into a pair of returns which will move the content back into this cell.
  */
-export interface Insert extends HasMoveId, HasRevisionTag {
+export interface Attach extends HasMoveId, HasRevisionTag {
 	type: "Insert";
 }
 
@@ -105,15 +105,10 @@ export interface DetachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface Remove extends HasRevisionTag, DetachFields {
+export interface Detach extends HasRevisionTag, DetachFields {
 	type: "Remove";
 	id: ChangesetLocalId;
 }
-
-// XXX
-export type Attach = Insert;
-
-export type Detach = Remove;
 
 /**
  * Represents the renaming of an empty cell.

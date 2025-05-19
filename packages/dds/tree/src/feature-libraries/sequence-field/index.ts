@@ -5,11 +5,9 @@
 
 export type {
 	Changeset,
-	Remove,
 	Detach,
 	HasMoveId,
 	HasRevisionTag,
-	Insert,
 	Mark,
 	MarkList,
 	CellCount as NodeCount,

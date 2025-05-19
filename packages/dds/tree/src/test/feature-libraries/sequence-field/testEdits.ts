@@ -180,10 +180,10 @@ function createModifyDetachedChangeset(
 function createInsertMark(
 	count: number,
 	cellId: ChangesetLocalId | SF.CellId,
-	overrides?: Partial<SF.CellMark<SF.Insert>>,
-): SF.CellMark<SF.Insert> {
+	overrides?: Partial<SF.CellMark<SF.Attach>>,
+): SF.CellMark<SF.Attach> {
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
-	const mark: SF.CellMark<SF.Insert> = {
+	const mark: SF.CellMark<SF.Attach> = {
 		type: "Insert",
 		count,
 		id: cellIdObject.localId,
@@ -208,8 +208,8 @@ function createInsertMark(
 function createReviveMark(
 	count: number,
 	cellId: SF.CellId,
-	overrides?: Partial<SF.CellMark<SF.Insert>>,
-): SF.CellMark<SF.Insert> {
+	overrides?: Partial<SF.CellMark<SF.Attach>>,
+): SF.CellMark<SF.Attach> {
 	return {
 		type: "Insert",
 		count,
@@ -222,10 +222,10 @@ function createReviveMark(
 function createPinMark(
 	count: number,
 	id: SF.MoveId | SF.CellId,
-	overrides?: Partial<SF.CellMark<SF.Insert>>,
-): SF.CellMark<SF.Insert> {
+	overrides?: Partial<SF.CellMark<SF.Attach>>,
+): SF.CellMark<SF.Attach> {
 	const cellIdObject: SF.CellId = typeof id === "object" ? id : { localId: id };
-	const mark: SF.CellMark<SF.Insert> = {
+	const mark: SF.CellMark<SF.Attach> = {
 		type: "Insert",
 		count,
 		id: cellIdObject.localId,
@@ -245,10 +245,10 @@ function createPinMark(
 function createRemoveMark(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.CellMark<SF.Remove>>,
-): SF.CellMark<SF.Remove> {
+	overrides?: Partial<SF.CellMark<SF.Detach>>,
+): SF.CellMark<SF.Detach> {
 	const cellId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.CellMark<SF.Remove> = {
+	const mark: SF.CellMark<SF.Detach> = {
 		type: "Remove",
 		count,
 		id: cellId.localId,
@@ -295,8 +295,8 @@ function createRenameMark(
 function createMoveMarks(
 	count: number,
 	detachId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.CellMark<(SF.Remove & SF.Insert) | { changes?: NodeId }>>,
-): [moveOut: SF.CellMark<SF.Remove>, moveIn: SF.CellMark<SF.Insert>] {
+	overrides?: Partial<SF.CellMark<(SF.Detach & SF.Attach) | { changes?: NodeId }>>,
+): [moveOut: SF.CellMark<SF.Detach>, moveIn: SF.CellMark<SF.Attach>] {
 	const moveOut = createMoveOutMark(count, detachId, overrides);
 	const { changes: _, ...overridesWithNoChanges } = overrides ?? {};
 	const moveIn = createMoveInMark(count, detachId, overridesWithNoChanges);
@@ -312,10 +312,10 @@ function createMoveMarks(
 function createMoveOutMark(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.CellMark<SF.Remove>>,
-): SF.CellMark<SF.Remove> {
+	overrides?: Partial<SF.CellMark<SF.Detach>>,
+): SF.CellMark<SF.Detach> {
 	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.CellMark<SF.Remove> = {
+	const mark: SF.CellMark<SF.Detach> = {
 		type: "Remove",
 		count,
 		id: atomId.localId,
@@ -335,10 +335,10 @@ function createMoveOutMark(
 function createMoveInMark(
 	count: number,
 	moveId: ChangesetLocalId | SF.CellId,
-	overrides?: Partial<SF.CellMark<SF.Insert>>,
-): SF.CellMark<SF.Insert> {
+	overrides?: Partial<SF.CellMark<SF.Attach>>,
+): SF.CellMark<SF.Attach> {
 	const moveIdObject = asChangeAtomId(moveId);
-	const mark: SF.CellMark<SF.Insert> = {
+	const mark: SF.CellMark<SF.Attach> = {
 		type: "Insert",
 		id: moveIdObject.localId,
 		cellId: offsetChangeAtomId(moveIdObject, count),
@@ -361,10 +361,10 @@ function createReturnToMark(
 	count: number,
 	moveId: ChangesetLocalId | ChangeAtomId,
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.CellMark<SF.Insert>>,
-): SF.CellMark<SF.Insert> {
+	overrides?: Partial<SF.CellMark<SF.Attach>>,
+): SF.CellMark<SF.Attach> {
 	const atomId = asChangeAtomId(moveId);
-	const mark: SF.CellMark<SF.Insert> = {
+	const mark: SF.CellMark<SF.Attach> = {
 		type: "Insert",
 		id: atomId.localId,
 		count,

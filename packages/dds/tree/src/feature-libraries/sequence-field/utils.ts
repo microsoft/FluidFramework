@@ -31,12 +31,10 @@ import {
 	type Detach,
 	type DetachFields,
 	type HasRevisionTag,
-	type Insert,
 	type Mark,
 	type MarkEffect,
 	type NoopMark,
 	NoopMarkType,
-	type Remove,
 	type CellCount,
 	type Rename,
 } from "./types.js";
@@ -89,7 +87,7 @@ export function isRename(mark: MarkEffect): mark is Rename {
 	return mark.type === "Rename";
 }
 
-export function isInsert(mark: MarkEffect): mark is Insert {
+export function isInsert(mark: MarkEffect): mark is Attach {
 	return mark.type === "Insert";
 }
 
@@ -107,7 +105,7 @@ export function isReattachEffect(effect: MarkEffect, cellId: CellId | undefined)
 
 export function isActiveReattach(
 	mark: Mark,
-): mark is CellMark<Insert> & { conflictsWith?: undefined } {
+): mark is CellMark<Attach> & { conflictsWith?: undefined } {
 	return isAttach(mark) && isReattachEffect(mark, mark.cellId) && mark.cellId !== undefined;
 }
 
@@ -451,7 +449,7 @@ export function isDetach(mark: MarkEffect | undefined): mark is Detach {
 	return type === "Remove";
 }
 
-export function isRemoveMark(mark: Mark | undefined): mark is CellMark<Remove> {
+export function isRemoveMark(mark: Mark | undefined): mark is CellMark<Detach> {
 	return mark?.type === "Remove";
 }
 
@@ -543,7 +541,7 @@ function tryMergeEffects(
 	const type = rhs.type;
 	switch (type) {
 		case "Remove": {
-			const lhsDetach = lhs as Remove;
+			const lhsDetach = lhs as Detach;
 			if (
 				(lhsDetach.id as number) + lhsCount === rhs.id &&
 				haveMergeableIdOverrides(lhsDetach, lhsCount, rhs)
@@ -560,7 +558,7 @@ function tryMergeEffects(
 			break;
 		}
 		case "Insert": {
-			const lhsInsert = lhs as Insert;
+			const lhsInsert = lhs as Attach;
 			if ((lhsInsert.id as number) + lhsCount === rhs.id) {
 				return lhsInsert;
 			}
@@ -624,7 +622,7 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			const effect1 = { ...effect };
 			const id2: ChangesetLocalId = brand((effect.id as number) + length);
 			const effect2 = { ...effect, id: id2 };
-			const effect2Remove = effect2 as Mutable<Remove>;
+			const effect2Remove = effect2 as Mutable<Detach>;
 			if (effect2Remove.idOverride !== undefined) {
 				effect2Remove.idOverride = splitDetachEvent(effect2Remove.idOverride, length);
 			}

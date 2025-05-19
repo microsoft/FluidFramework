@@ -25,11 +25,9 @@ import {
 	type Attach,
 	type Changeset,
 	type Detach,
-	type Insert,
 	type Mark,
 	type MarkEffect,
 	NoopMarkType,
-	type Remove,
 	type Rename,
 } from "./types.js";
 import { getDetachOutputCellId, isNoopMark } from "./utils.js";
@@ -117,9 +115,9 @@ export function makeV2CodecHelpers(
 		/* args */ [context: ChangeEncodingContext],
 		MarkEffect
 	> = {
-		moveIn(encoded: Encoded.MoveIn, context: ChangeEncodingContext): Insert {
+		moveIn(encoded: Encoded.MoveIn, context: ChangeEncodingContext): Attach {
 			const { id, revision } = encoded;
-			const mark: Insert = {
+			const mark: Attach = {
 				type: "Insert",
 				id,
 			};
@@ -128,9 +126,9 @@ export function makeV2CodecHelpers(
 			mark.revision = decodeRevision(revision, context);
 			return mark;
 		},
-		insert(encoded: Encoded.Insert, context: ChangeEncodingContext): Insert {
+		insert(encoded: Encoded.Insert, context: ChangeEncodingContext): Attach {
 			const { id, revision } = encoded;
-			const mark: Insert = {
+			const mark: Attach = {
 				type: "Insert",
 				id,
 			};
@@ -138,9 +136,9 @@ export function makeV2CodecHelpers(
 			mark.revision = decodeRevision(revision, context);
 			return mark;
 		},
-		remove(encoded: Encoded.Remove, context: ChangeEncodingContext): Remove {
+		remove(encoded: Encoded.Remove, context: ChangeEncodingContext): Detach {
 			const { id, revision, idOverride } = encoded;
-			const mark: Mutable<Remove> = {
+			const mark: Mutable<Detach> = {
 				type: "Remove",
 				id,
 			};
@@ -151,9 +149,9 @@ export function makeV2CodecHelpers(
 			}
 			return mark;
 		},
-		moveOut(encoded: Encoded.MoveOut, context: ChangeEncodingContext): Remove {
+		moveOut(encoded: Encoded.MoveOut, context: ChangeEncodingContext): Detach {
 			const { id, idOverride, revision } = encoded;
-			const mark: Mutable<Remove> = {
+			const mark: Mutable<Detach> = {
 				type: "Remove",
 				id,
 			};
