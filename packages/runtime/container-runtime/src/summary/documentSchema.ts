@@ -74,17 +74,21 @@ export interface IDocumentSchema {
 
 	runtime: Record<string, DocumentSchemaValueType>;
 
-	// Other document related properties that are not related to the schema.
+	// Info about this document that can be updated via Document Schema change op, but isn't required
+	// to be understood by all clients (unlike the rest of IDocumentSchema properties).
 	info: IDocumentSchemaInfo;
 }
 
 /**
- * Top-level properties of the document that do not relate to the schema itself.
+ * Informational properties of the document that are not subject to strict schema enforcement.
+ *
  * @internal
  */
 export interface IDocumentSchemaInfo {
 	/**
-	 * minVersionForCollab that was used when this document was created.
+	 * The minimum version of the FF runtime that should be used to load this document.
+	 * Will likely be advanced over time as applications pick up later FF versions.
+	 *
 	 * We use this to issue telemetry warning events if a client tries to open a document
 	 * with a runtime version lower than this.
 	 *
@@ -105,7 +109,7 @@ export interface IDocumentSchemaInfo {
  * @see ContainerRuntimeDocumentSchemaMessage
  * @internal
  */
-export type IDocumentSchemaChangeMessage = IDocumentSchema;
+export type IDocumentSchemaChangeMessage = IDocumentSchemaIncoming;
 
 /**
  * Settings that this session would like to have, based on options and feature gates.
@@ -140,9 +144,14 @@ export interface IDocumentSchemaFeatures {
 
 /**
  * Current version known properties that define document schema
- * This must be bumped whenever the format of document schema or protocol for changing the current document schema changes.
- * Ex: adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version.
- * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version.
+ * This must be bumped whenever the format of document schema or protocol for changing the current document schema changes
+ * in a way that all old/new clients are required to understand.
+ * Ex: Adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version since there is logic
+ * in old clients for handling new/unknown properties.
+ * Ex: Adding a new property to IDocumentSchema.info does not require changing this version, since info properties are not required to be
+ * understood by all clients.
+ * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version
+ * since all clients need to understand the new protocol.
  * @internal
  */
 export const currentDocumentVersionSchema = 1;
@@ -350,12 +359,15 @@ function and(
 		);
 	}
 
+	const minVersionForCollab =
+		currentDocSchema.info?.minVersionForCollab ?? desiredDocSchema.info.minVersionForCollab;
+
 	return {
 		version: currentDocumentVersionSchema,
 		refSeq: currentDocSchema.refSeq,
-		info: { minVersionForCollab: currentDocSchema.info?.minVersionForCollab },
+		info: { minVersionForCollab },
 		runtime,
-	} as unknown as IDocumentSchemaCurrent;
+	};
 }
 
 function or(
@@ -375,7 +387,7 @@ function or(
 
 	// We take the greater of the current/desired minVersionForCollab
 	const minVersionForCollab =
-		currentDocSchema.info?.minVersionForCollab === undefined
+		currentDocSchema.info === undefined
 			? desiredDocSchema.info.minVersionForCollab
 			: gt(
 						currentDocSchema.info.minVersionForCollab,
@@ -389,7 +401,7 @@ function or(
 		refSeq: currentDocSchema.refSeq,
 		info: { minVersionForCollab },
 		runtime,
-	} as unknown as IDocumentSchemaCurrent;
+	};
 }
 
 function same(
@@ -397,7 +409,7 @@ function same(
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): boolean {
 	if (
-		currentDocSchema.info?.minVersionForCollab === undefined ||
+		currentDocSchema.info === undefined ||
 		!eq(currentDocSchema.info?.minVersionForCollab, desiredDocSchema.info.minVersionForCollab)
 	) {
 		// If the current/desired minVersionForCollab are not equal, then we need a schema change
@@ -527,7 +539,7 @@ export class DocumentsSchemaController {
 	constructor(
 		existing: boolean,
 		snapshotSequenceNumber: number,
-		documentMetadataSchema: IDocumentSchema | undefined,
+		documentMetadataSchema: IDocumentSchemaIncoming | undefined,
 		features: IDocumentSchemaFeatures,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 		info: IDocumentSchemaInfo,
@@ -578,7 +590,7 @@ export class DocumentsSchemaController {
 		// Latter is importnat sure that's what will go into summary.
 		// We also create a shallow copy of the documentMetadataSchema to avoid mutating the original object. This
 		// may not be not be necessary for production scenarios, but was causing issues in tests.
-		const documentMetadataSchemaShallowCopy: IDocumentSchema | undefined =
+		const documentMetadataSchemaShallowCopy: IDocumentSchemaIncoming | undefined =
 			documentMetadataSchema === undefined ? undefined : { ...documentMetadataSchema };
 		this.documentSchema = existing
 			? ((documentMetadataSchemaShallowCopy as IDocumentSchemaIncoming) ??
@@ -732,7 +744,7 @@ export class DocumentsSchemaController {
 			// Changes are in effect. Immediately check that this client understands these changes
 			checkRuntimeCompatibility(content, "change");
 
-			const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
+			const schema: IDocumentSchemaIncoming = { ...content, refSeq: sequenceNumber };
 			this.documentSchema = schema as IDocumentSchemaCurrent;
 			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);

@@ -283,6 +283,7 @@ import {
 	DefaultSummaryConfiguration,
 	isSummariesDisabled,
 	summarizerClientType,
+	IDocumentSchemaIncoming,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -1049,7 +1050,7 @@ export class ContainerRuntime
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
-			metadata?.documentSchema,
+			metadata?.documentSchema as IDocumentSchemaIncoming | undefined,
 			{
 				explicitSchemaControl,
 				compressionLz4,
@@ -4471,7 +4472,7 @@ export class ContainerRuntime
 					newRuntimeSchema: JSON.stringify(schemaChangeMessage.runtime),
 					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
-					minVersionForCollab: schemaChangeMessage.info.minVersionForCollab,
+					minVersionForCollab: schemaChangeMessage.info?.minVersionForCollab,
 				});
 				const msg: ContainerRuntimeDocumentSchemaMessage = {
 					type: ContainerMessageType.DocumentSchemaChange,

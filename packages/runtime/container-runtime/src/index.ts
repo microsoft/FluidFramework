@@ -92,6 +92,7 @@ export {
 	IdCompressorMode,
 	IDocumentSchema,
 	IDocumentSchemaInfo,
+	IDocumentSchemaIncoming,
 	DocumentSchemaValueType,
 	IDocumentSchemaCurrent,
 	currentDocumentVersionSchema,

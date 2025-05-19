@@ -104,6 +104,7 @@ export {
 	IDocumentSchemaCurrent,
 	IDocumentSchema,
 	IDocumentSchemaInfo,
+	IDocumentSchemaIncoming,
 	currentDocumentVersionSchema,
 	DocumentSchemaValueType,
 	DocumentsSchemaController,

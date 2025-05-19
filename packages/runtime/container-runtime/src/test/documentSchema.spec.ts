@@ -412,7 +412,7 @@ describe("Runtime", () => {
 		);
 		const message = controller.maybeSendSchemaMessage();
 		assert(message !== undefined);
-		assert.strictEqual(message.info.minVersionForCollab, "2.20.0");
+		assert.strictEqual(message.info?.minVersionForCollab, "2.20.0");
 		assert(
 			controller.processDocumentSchemaMessages(
 				[message],
