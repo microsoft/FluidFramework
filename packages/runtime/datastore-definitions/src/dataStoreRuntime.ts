@@ -87,6 +87,12 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
+	/**
+	 * An optional ID compressor.
+	 * @remarks
+	 * When provided, can be used to compress and decompress IDs stored in this datastore.
+	 * Some SharedObjects, like SharedTree, require this.
+	 */
 	readonly idCompressor: IIdCompressor | undefined;
 
 	/**
@@ -160,6 +166,17 @@ export interface IFluidDataStoreRuntime
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
+	readonly inStagingMode?: boolean;
 }
 
 /**

@@ -218,6 +218,24 @@ declare type current_as_old_for_Interface_ContainerRuntimeFactoryWithDefaultData
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_DataObjectFactoryProps": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_DataObjectFactoryProps = requireAssignableTo<TypeOnly<old.DataObjectFactoryProps<never>>, TypeOnly<current.DataObjectFactoryProps<never>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_DataObjectFactoryProps": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_DataObjectFactoryProps = requireAssignableTo<TypeOnly<current.DataObjectFactoryProps<never>>, TypeOnly<old.DataObjectFactoryProps<never>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_DataObjectTypes": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_DataObjectTypes = requireAssignableTo<TypeOnly<old.DataObjectTypes>, TypeOnly<current.DataObjectTypes>>
@@ -238,7 +256,6 @@ declare type current_as_old_for_Interface_DataObjectTypes = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IDataObjectProps": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IDataObjectProps = requireAssignableTo<TypeOnly<old.IDataObjectProps>, TypeOnly<current.IDataObjectProps>>
 
 /*

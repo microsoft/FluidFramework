@@ -16,6 +16,11 @@ export interface AttributionInfo {
 // @alpha @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
+// @alpha @sealed @deprecated @legacy (undocumented)
+export interface CommitStagedChangesOptionsExperimental {
+    squash?: boolean;
+}
+
 // @alpha @legacy (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
@@ -101,6 +106,14 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "dispose", listener: () => void): any;
 }
 
+// @alpha @sealed @deprecated @legacy (undocumented)
+export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+    // (undocumented)
+    enterStagingMode?(): StageControlsExperimental;
+    // (undocumented)
+    readonly inStagingMode?: boolean;
+}
+
 // @alpha @legacy
 export interface IDataStore {
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
@@ -130,11 +143,12 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
     notifyReadOnlyState?(readonly: boolean): void;
+    readonly policies?: IFluidDataStorePolicies;
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
-    reSubmit(type: string, content: any, localOpMetadata: unknown): any;
+    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): any;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
@@ -173,6 +187,11 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     };
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
+}
+
+// @alpha @legacy
+export interface IFluidDataStorePolicies {
+    readonly readonlyInStagingMode: boolean;
 }
 
 // @alpha @legacy (undocumented)
@@ -392,6 +411,12 @@ Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
 export interface OpAttributionKey {
     seq: number;
     type: "op";
+}
+
+// @alpha @sealed @deprecated @legacy (undocumented)
+export interface StageControlsExperimental {
+    readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
+    readonly discardChanges: () => void;
 }
 
 // @alpha @legacy (undocumented)

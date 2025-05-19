@@ -115,10 +115,8 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const TaskManagerDiceRollerInstantiationFactory = new DataObjectFactory(
-	"@fluid-example/task-manager-dice-roller",
-	TaskManagerDiceRoller,
-	// Since TaskManager is a DDS, we need to register it for creation.
-	[TaskManager.getFactory()],
-	{},
-);
+export const TaskManagerDiceRollerInstantiationFactory = new DataObjectFactory({
+	type: "@fluid-example/task-manager-dice-roller",
+	ctor: TaskManagerDiceRoller,
+	sharedObjects: [TaskManager.getFactory()],
+});

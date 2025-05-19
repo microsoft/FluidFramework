@@ -185,3 +185,21 @@ declare type current_as_old_for_Function_toFluidHandleInternal = requireAssignab
  * "Variable_create404Response": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_create404Response = requireAssignableTo<TypeOnly<typeof current.create404Response>, TypeOnly<typeof old.create404Response>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_isFluidHandlePayloadPending": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_isFluidHandlePayloadPending = requireAssignableTo<TypeOnly<typeof current.isFluidHandlePayloadPending>, TypeOnly<typeof old.isFluidHandlePayloadPending>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_isLocalFluidHandle": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_isLocalFluidHandle = requireAssignableTo<TypeOnly<typeof current.isLocalFluidHandle>, TypeOnly<typeof old.isLocalFluidHandle>>

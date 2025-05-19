@@ -5,10 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	type Context,
+	Context,
 	type FlexTreeField,
 	type NodeIdentifierManager,
-	getTreeContext,
 	type FlexTreeHydratedContext,
 	type FullSchemaPolicy,
 } from "../feature-libraries/index.js";
@@ -19,6 +18,10 @@ import type { ITreeCheckout, ITreeCheckoutFork } from "./treeCheckout.js";
 
 /**
  * An editable view of a (version control style) branch of a shared tree.
+ * @remarks
+ * Does not depend on stored schema, and thus can live across schema changes.
+ * @privateRemarks
+ * This has no state beyond the context, so it likely should be replaced with just the context.
  */
 export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeCheckout> {
 	/**
@@ -30,9 +33,11 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 	public readonly context: Context;
 
 	/**
-	 * Get a typed view of the tree content using the flex-tree API.
+	 * Get a view of the tree content using the flex-tree API.
 	 */
-	public readonly flexTree: FlexTreeField;
+	public get flexTree(): FlexTreeField {
+		return this.context.root;
+	}
 
 	private disposed = false;
 
@@ -48,13 +53,12 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 		public readonly nodeKeyManager: NodeIdentifierManager,
 		private readonly onDispose?: () => void,
 	) {
-		this.context = getTreeContext(schema, this.checkout, nodeKeyManager);
+		this.context = new Context(schema, this.checkout, nodeKeyManager);
 		contextToTreeViewMap.set(this.context, this);
-		this.flexTree = this.context.root;
 	}
 
 	public [disposeSymbol](): void {
-		assert(!this.disposed, "Double disposed");
+		assert(!this.disposed, 0xb80 /* Double disposed */);
 		this.disposed = true;
 
 		for (const anchorNode of this.checkout.forest.anchors) {
@@ -70,7 +74,7 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
 	 */
 	public fork(): CheckoutFlexTreeView<ITreeCheckout & ITreeCheckoutFork> {
-		assert(!this.disposed, "disposed");
+		assert(!this.disposed, 0xb81 /* disposed */);
 		const branch = this.checkout.branch();
 		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
 	}

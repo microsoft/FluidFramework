@@ -167,7 +167,7 @@ function walkMapTree(
 	}
 }
 
-function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): void {
+function bindProxies(proxies: readonly RootedProxyPaths[], forest: IForestSubscription): void {
 	// Only subscribe to the event if there is at least one proxy tree to hydrate - this is not the case when inserting an empty array [].
 	if (proxies.length > 0) {
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element

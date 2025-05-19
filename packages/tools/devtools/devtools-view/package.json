@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-view",
-	"version": "2.33.0",
+	"version": "2.41.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -90,7 +90,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"@microsoft/api-extractor": "7.52.5",
+		"@microsoft/api-extractor": "7.52.8",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/jest-dom": "^5.16.5",
 		"@testing-library/react": "^16.0.1",
