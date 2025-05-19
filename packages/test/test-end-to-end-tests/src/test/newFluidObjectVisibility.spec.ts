@@ -95,7 +95,7 @@ async function getAndValidateDataObject(
 }
 
 /**
- * This function was added to support CrossVersion back compat scenarios for runtime versions
+ * This function was added to support cross-client back compat scenarios for runtime versions
  * that not have `getAliasedDataStoreEntryPoint`.
  *
  * This function can be removed once we no longer support ^2.0.0-internal.7.0.0.

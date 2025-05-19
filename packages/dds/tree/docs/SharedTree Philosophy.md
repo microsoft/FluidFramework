@@ -30,7 +30,7 @@ To best achieve this goal we plan to deliver a set of libraries that enable deve
     This needs to be true, even for novice users of SharedTree without experience writing collaborative experiences.
 
     One way this is achieved is to ensure work and requirements specific to collaboration support will be easy to discover when relevant and easy to learn about and handle when needed.
-    For example, if adding a new editing operation, it should be obvious how to ensure the required application invariants hold—even across merges—, and what the implications are for deployment and cross version collaboration.
+    For example, if adding a new editing operation, it should be obvious how to ensure the required application invariants hold—even across merges—, and what the implications are for deployment and cross-client collaboration.
 
 -   Adopt SharedTree without concern for having to migrate to another solution due to hitting limitations.
 
@@ -65,7 +65,7 @@ Commonly desired collaboration features should be easy for applications to suppo
 
 This include features like:
 
--   cross version collaboration support to enable incremental rollout of updates.
+-   cross-client collaboration support to enable incremental rollout of updates.
 -   compatibility between different applications, including when those applications evolve their schema.
 -   fine grained and/or customized merge resolution.
 -   support for offline use.
@@ -77,7 +77,7 @@ SharedTree's approach to doing all this while being extensible and maintainable 
 
 # A Design For Extensibility and Compatibility with Versioning
 
-SharedTree is a collaborative data-structure allowing cross version collaboration as well as support for loading all old formats.
+SharedTree is a collaborative data-structure allowing cross-client collaboration as well as support for loading all old formats.
 This imposes some very strict compatibility requirements that can make changing its implementation and functionality difficult.
 
 This puts a large tension between maintainability and extensibility, and leads to a design that is focused on
@@ -86,7 +86,7 @@ The approach SharedTree takes for this is separation of concerns and version-abi
 
 Concepts are split into two categories based on compatibility requirements (see [SchemaVersioning](packages/dds/SchemaVersioning.md) for details of why these exist and what is in each):
 
-1. Critical for consistent behavior and thus must have compatibility forever to support old document and cross version collaboration.
+1. Critical for consistent behavior and thus must have compatibility forever to support old document and cross-client collaboration.
 2. Only impacts the current instance of the application, and can be changed without maintaining identical behavior in previously supported cases.
 
 The SharedTree design minimizes the amount of stuff (code, formats, data, etc) in the first category and attempts to keep items in the first category as simple and independent as practical.
@@ -124,7 +124,7 @@ There are also a few kinds of fields which provide different collaborative data-
 
 All of the editing is done in the fields via the `field kind`.
 This allows the editing logic, both API and merge policy, to be packaged together into minimal versionable units (`field kinds`).
-Since the schema explicitly selects what field kinds to use, updating them is opt-in, and can be coordinated with deployment schedules to achieve the required cross version collaboration requirements.
+Since the schema explicitly selects what field kinds to use, updating them is opt-in, and can be coordinated with deployment schedules to achieve the required cross-client collaboration requirements.
 This also leverages all the same collaboration as the rest of schema evolution, making adopting alternative field kinds no different from updating other aspects of the application's schema.
 
 This results in a tree where the overall shape is controlled by the application via its tree schema (for the nodes) and the alternating layers of fields provide all the complex logic, neatly separating the concerns.
