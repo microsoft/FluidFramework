@@ -721,6 +721,37 @@ function renderNode(node: DocumentationNode, writer: DocumentWriter, context: Ma
 // @public
 function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
+// @public
+export type SectionContent = SectionContentMap[keyof SectionContentMap];
+
+// @public
+export interface SectionContentMap {
+    // (undocumented)
+    blockquote: BlockQuoteNode;
+    // (undocumented)
+    codeSpan: CodeSpanNode;
+    // (undocumented)
+    fencedCodeBlock: FencedCodeBlockNode;
+    // (undocumented)
+    horizontalRule: HorizontalRuleNode;
+    // (undocumented)
+    lineBreak: LineBreakNode;
+    // (undocumented)
+    link: LinkNode;
+    // (undocumented)
+    orderedList: OrderedListNode;
+    // (undocumented)
+    paragraph: ParagraphNode;
+    // (undocumented)
+    section: SectionNode;
+    // (undocumented)
+    span: SpanNode;
+    // (undocumented)
+    table: TableNode;
+    // (undocumented)
+    unorderedList: UnorderedListNode;
+}
+
 // @public @sealed
 export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
     readonly kind: HierarchyKind.Section;
@@ -728,8 +759,7 @@ export interface SectionHierarchyConfiguration extends DocumentationHierarchyCon
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
-    constructor(children: DocumentationNode[], heading?: HeadingNode);
-    static combine(...sections: SectionNode[]): SectionNode;
+    constructor(children: SectionContent[], heading?: HeadingNode);
     static readonly Empty: SectionNode;
     readonly heading?: HeadingNode;
     get singleLine(): false;

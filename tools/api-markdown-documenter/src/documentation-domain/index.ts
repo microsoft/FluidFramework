@@ -38,7 +38,7 @@ export { LinkNode } from "./LinkNode.js";
 export { OrderedListNode } from "./OrderedListNode.js";
 export { ParagraphNode } from "./ParagraphNode.js";
 export { PlainTextNode } from "./PlainTextNode.js";
-export { SectionNode } from "./SectionNode.js";
+export { type SectionContent, type SectionContentMap, SectionNode } from "./SectionNode.js";
 export { SpanNode, SingleLineSpanNode } from "./SpanNode.js";
 export {
 	TableCellNode,

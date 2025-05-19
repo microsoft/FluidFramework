@@ -41,6 +41,7 @@ import {
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
+	type SectionContent,
 	SectionNode,
 	type SingleLineDocumentationNode,
 	SingleLineSpanNode,
@@ -95,7 +96,7 @@ export function createSignatureSection(
 	if (apiItem instanceof ApiDeclaredItem) {
 		const signatureExcerpt = apiItem.getExcerptWithModifiers();
 		if (signatureExcerpt !== "") {
-			const contents: DocumentationNode[] = [];
+			const contents: SectionContent[] = [];
 
 			contents.push(
 				FencedCodeBlockNode.createFromPlainText(signatureExcerpt.trim(), "typescript"),
@@ -712,7 +713,7 @@ function createExampleSection(
 	const { logger } = config;
 
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(example.apiItem, config);
-	let exampleParagraph: DocumentationParentNode = transformTsdocSection(
+	let exampleParagraph: ParagraphNode = transformTsdocSection(
 		example.content,
 		tsdocNodeTransformOptions,
 	);
@@ -803,11 +804,11 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
  * In the case where the output is not in a form we expect, we will log an error and return the node we were given,
  * rather than making a copy.
  */
-function stripTitleFromParagraph(
-	node: DocumentationParentNode,
+function stripTitleFromParagraph<TNode extends DocumentationParentNode>(
+	node: TNode,
 	title: string,
 	logger: Logger | undefined,
-): DocumentationParentNode {
+): TNode {
 	// Verify title matches text of first plain text in output.
 	// This is an expected invariant. If this is not the case, then something has gone wrong.
 	// Note: if we ever allow consumers to provide custom DocNode transformations, this invariant will likely
@@ -925,7 +926,7 @@ export function createReturnsSection(
 ): SectionNode | undefined {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
-	const children: DocumentationNode[] = [];
+	const children: SectionContent[] = [];
 
 	// Generate span from `@returns` comment
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
@@ -1007,7 +1008,7 @@ export interface ChildSectionProperties {
 export function createChildDetailsSection(
 	childItems: readonly ChildSectionProperties[],
 	config: ApiItemTransformationConfiguration,
-	createChildContent: (apiItem) => DocumentationNode[],
+	createChildContent: (apiItem) => SectionContent[],
 ): SectionNode[] | undefined {
 	const sections: SectionNode[] = [];
 
@@ -1019,7 +1020,7 @@ export function createChildDetailsSection(
 			!doesItemKindRequireOwnDocument(childItem.itemKind, config.hierarchy) &&
 			childItem.items.length > 0
 		) {
-			const childContents: DocumentationNode[] = [];
+			const childContents: SectionContent[] = [];
 			for (const item of childItem.items) {
 				childContents.push(...createChildContent(item));
 			}
@@ -1036,7 +1037,7 @@ export function createChildDetailsSection(
  * @param nodes - The section's child contents.
  * @param heading - Optional heading to associate with the section.
  */
-export function wrapInSection(nodes: DocumentationNode[], heading?: Heading): SectionNode {
+export function wrapInSection(nodes: SectionContent[], heading?: Heading): SectionNode {
 	return new SectionNode(
 		nodes,
 		heading ? HeadingNode.createFromPlainTextHeading(heading) : undefined,

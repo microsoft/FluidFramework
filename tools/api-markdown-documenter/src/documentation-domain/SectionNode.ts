@@ -3,13 +3,66 @@
  * Licensed under the MIT License.
  */
 
+import type { BlockQuoteNode } from "./BlockQuoteNode.js";
+import type { CodeSpanNode } from "./CodeSpanNode.js";
 import {
-	type DocumentationNode,
 	DocumentationParentNodeBase,
 	type MultiLineDocumentationNode,
 } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import type { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 import type { HeadingNode } from "./HeadingNode.js";
+import type { HorizontalRuleNode } from "./HorizontalRuleNode.js";
+import type { LineBreakNode } from "./LineBreakNode.js";
+import type { LinkNode } from "./LinkNode.js";
+import type { OrderedListNode } from "./OrderedListNode.js";
+import type { ParagraphNode } from "./ParagraphNode.js";
+import type { SpanNode } from "./SpanNode.js";
+import type { TableNode } from "./TableNode.js";
+import type { UnorderedListNode } from "./UnorderedListNode.js";
+
+/**
+ * Registry of all kinds of {@link DocumentationNode} that can occur as children of {@link SectionNode}.
+ *
+ * @remarks
+ *
+ * This interface can be augmented to register custom node types:
+ *
+ * ```typescript
+ * declare module '@fluid-tools/api-markdown-documenter' {
+ *   interface SectionContentMap {
+ *     newContentType: NewContentTypeNode;
+ *   }
+ * }
+ * ```
+ *
+ * For a union of all {@link SectionNode} children, see {@link SectionContent}.
+ *
+ * @public
+ */
+export interface SectionContentMap {
+	blockquote: BlockQuoteNode;
+	lineBreak: LineBreakNode;
+	fencedCodeBlock: FencedCodeBlockNode;
+	section: SectionNode;
+	span: SpanNode;
+	codeSpan: CodeSpanNode;
+	link: LinkNode;
+	orderedList: OrderedListNode;
+	unorderedList: UnorderedListNode;
+	paragraph: ParagraphNode;
+	table: TableNode;
+	horizontalRule: HorizontalRuleNode;
+}
+
+/**
+ * Union of all kinds of {@link DocumentationNode} that can occur as children of {@link SectionNode}
+ *
+ * @remarks To register custom nodes, add them to {@link SectionContentMap}.
+ *
+ * @public
+ */
+export type SectionContent = SectionContentMap[keyof SectionContentMap];
 
 /**
  * Represents a hierarchically nested section.
@@ -65,35 +118,9 @@ export class SectionNode
 		return false;
 	}
 
-	public constructor(children: DocumentationNode[], heading?: HeadingNode) {
+	public constructor(children: SectionContent[], heading?: HeadingNode) {
 		super(children);
 
 		this.heading = heading;
-	}
-
-	/**
-	 * Merges a list of {@link SectionNode}s into a single section.
-	 *
-	 * @remarks This is an option if you wish to group a series of sections without putting them under some parent section
-	 * (which would affect the hierarchy).
-	 * @param sections - The sections to merge.
-	 */
-	public static combine(...sections: SectionNode[]): SectionNode {
-		if (sections.length === 0) {
-			return SectionNode.Empty;
-		}
-
-		if (sections.length === 1) {
-			return sections[0];
-		}
-
-		const childNodes: DocumentationNode[] = [];
-		for (const section of sections) {
-			if (section.heading !== undefined) {
-				childNodes.push(section.heading);
-			}
-			childNodes.push(...section.children);
-		}
-		return new SectionNode(childNodes, undefined);
 	}
 }
