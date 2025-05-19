@@ -30,14 +30,3 @@ export class TodoList extends builder.object("TodoList", {
 
 	items: builder.map([TodoItem]),
 }) {}
-
-/**
- * Props used when creating a new todo item.
- */
-export interface TodoItemProps {
-	/**
-	 * The initial text to populate the todo item's title with.
-	 * This value will be inserted into the shared string at index 0.
-	 */
-	readonly startingText: string;
-}
