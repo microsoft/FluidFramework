@@ -261,9 +261,6 @@ function rebaseMark(
 			0x8dc /* Unexpected collision of new node changes */,
 		);
 		rebasedMark.changes = movedNodeChanges;
-
-		// XXX
-		// moveEffects.onMoveIn(movedNodeChanges);
 	}
 
 	return rebaseMarkIgnoreChild(rebasedMark, baseMark, moveEffects);
@@ -420,9 +417,6 @@ function getMovedEffect(
 	}
 
 	const detach: Detach = { type: "Remove", revision: detachId.revision, id: detachId.localId };
-
-	// XXX
-	// moveEffects.moveKey(CrossFieldTarget.Source, movedEffect.revision, movedEffect.id, count);
 	return detach;
 }
 

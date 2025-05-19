@@ -46,7 +46,6 @@ import {
 	getOutputCellId,
 	isAttach,
 	isDetach,
-	isImpactfulCellRename,
 	isNewAttach,
 	isNoopMark,
 	isRename,
@@ -142,45 +141,6 @@ function composeMarksIgnoreChild(
 		return { ...baseMark, idOverride: newMark.idOverride };
 	}
 
-	if (isImpactfulCellRename(newMark)) {
-		assert(
-			newMark.cellId !== undefined,
-			0x9f3 /* Impactful cell rename must target empty cell */,
-		);
-		if (markEmptiesCells(baseMark)) {
-			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
-			// so we are just left with the detach portion of the AttachAndDetach.
-			const newDetach: CellMark<Detach> = {
-				...newMark,
-			};
-
-			delete newDetach.cellId;
-			return newDetach;
-		}
-
-		if (isImpactfulCellRename(baseMark)) {
-			assert(
-				baseMark.cellId !== undefined,
-				0x9f4 /* Impactful cell rename must target empty cell */,
-			);
-
-			// XXX: Do we need to make a call to the node manager here?
-			return { ...newMark, cellId: baseMark.cellId };
-		}
-
-		return newMark;
-	}
-	if (isImpactfulCellRename(baseMark)) {
-		if (markFillsCells(newMark)) {
-			return { ...newMark, cellId: baseMark.cellId };
-		} else {
-			// Other mark types have been handled by previous conditional branches.
-			assert(newMark.type === NoopMarkType, 0x80a /* Unexpected mark type */);
-			return baseMark;
-		}
-	}
-
-	// XXX: Handle pins
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
 		return createNoopMark(newMark.count, undefined, getInputCellId(baseMark));
 	} else if (!markHasCellEffect(baseMark)) {
@@ -369,11 +329,6 @@ export class ComposeQueue {
 	private dequeueBase(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
-		if (movedChanges !== undefined) {
-			// XXX
-			// this.moveEffects.onMoveIn(movedChanges);
-		}
-
 		const newMark = createNoopMark(baseMark.count, movedChanges, getOutputCellId(baseMark));
 		return { baseMark, newMark };
 	}

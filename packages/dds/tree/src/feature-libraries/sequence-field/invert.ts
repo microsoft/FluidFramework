@@ -180,8 +180,6 @@ function applyMovedChanges(
 	}
 
 	if (entry.value !== undefined) {
-		// XXX
-		// manager.onMoveIn(entry.value.nodeChange);
 		return [withNodeChange<CellMark<Detach>, Detach>(mark, entry.value)];
 	}
 

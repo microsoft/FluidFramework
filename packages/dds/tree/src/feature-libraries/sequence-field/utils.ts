@@ -363,15 +363,6 @@ export function markHasCellEffect(mark: Mark): boolean {
 	return areInputCellsEmpty(mark) !== areOutputCellsEmpty(mark);
 }
 
-// XXX: Remove this
-export function isDetachOfRemovedNodes(mark: Mark): mark is CellMark<DetachOfRemovedNodes> {
-	return isDetach(mark) && mark.cellId !== undefined;
-}
-
-export function isImpactfulCellRename(mark: Mark): mark is CellMark<CellRename> {
-	return isDetachOfRemovedNodes(mark) && isImpactful(mark);
-}
-
 export function areInputCellsEmpty(mark: Mark): mark is EmptyInputCellMark {
 	return mark.cellId !== undefined;
 }
