@@ -24,7 +24,7 @@ export const Format = Type.Object(
 		version: Type.Literal(SchemaCodecVersion.v2),
 		nodes: Type.Record(Type.String(), schemaFormatV2.TreeNodeSchemaDataFormat),
 		root: schemaFormatV2.FieldSchemaFormat,
-		persistedMetadata: schemaFormatV2.PersistedMetadataFormat,
+		metadata: schemaFormatV2.PersistedMetadataFormat,
 	},
 	noAdditionalProps,
 );

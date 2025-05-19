@@ -22,8 +22,7 @@ import {
 	encodeFieldSchemaV2,
 	type schemaFormatV1,
 	type schemaFormatV2,
-	storedSchemaDecodeDispatcherV1,
-	storedSchemaDecodeDispatcherV2,
+	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
 import { brand, type JsonCompatible } from "../../util/index.js";
 
@@ -143,7 +142,7 @@ function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 function decodeV1(f: FormatV1): TreeStoredSchema {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const [key, schema] of Object.entries(f.nodes)) {
-		nodeSchema.set(brand(key), storedSchemaDecodeDispatcherV1.dispatch(schema));
+		nodeSchema.set(brand(key), storedSchemaDecodeDispatcher.dispatch(schema));
 	}
 	return {
 		rootFieldSchema: decodeFieldSchema(f.root),
@@ -154,7 +153,7 @@ function decodeV1(f: FormatV1): TreeStoredSchema {
 function decodeV2(f: FormatV2): TreeStoredSchema {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const [key, schema] of Object.entries(f.nodes)) {
-		nodeSchema.set(brand(key), storedSchemaDecodeDispatcherV2.dispatch(schema));
+		nodeSchema.set(brand(key), storedSchemaDecodeDispatcher.dispatch(schema.kind));
 	}
 	return {
 		rootFieldSchema: decodeFieldSchema(f.root),

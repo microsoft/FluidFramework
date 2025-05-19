@@ -18,6 +18,7 @@ import type {
 	FieldSchemaFormat as FieldSchemaFormatV2,
 	PersistedMetadataFormat,
 	TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV2,
+	TreeNodeSchemaUnionFormat,
 } from "./formatV2.js";
 import type { Multiplicity } from "./multiplicity.js";
 
@@ -236,23 +237,8 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 
 	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
-		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
-		// Sort fields to ensure output is identical for equivalent schema (since field order is not considered significant).
-		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
-		for (const key of [...this.objectNodeFields.keys()].sort()) {
-			const value = encodeFieldSchemaV2(
-				this.objectNodeFields.get(key) ?? fail("missing field"),
-			);
-
-			Object.defineProperty(fieldsObject, key, {
-				enumerable: true,
-				configurable: true,
-				writable: true,
-				value,
-			});
-		}
 		return {
-			object: fieldsObject,
+			kind: this.encodeV1(),
 		};
 	}
 
@@ -284,7 +270,7 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 
 	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
 		return {
-			map: encodeFieldSchemaV2(this.mapFields),
+			kind: this.encodeV1(),
 		};
 	}
 
@@ -318,9 +304,9 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 		};
 	}
 
-	public override encodeV2(): TreeNodeSchemaDataFormatV1 {
+	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
 		return {
-			leaf: encodeValueSchema(this.leafValue),
+			kind: this.encodeV1(),
 		};
 	}
 
@@ -329,26 +315,8 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 }
 
-export const storedSchemaDecodeDispatcherV1: DiscriminatedUnionDispatcher<
-	TreeNodeSchemaDataFormatV1,
-	[],
-	TreeNodeStoredSchema
-> = new DiscriminatedUnionDispatcher({
-	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
-	object: (
-		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>,
-	): TreeNodeStoredSchema => {
-		const map = new Map();
-		for (const [key, value] of Object.entries(data)) {
-			map.set(key, decodeFieldSchema(value));
-		}
-		return new ObjectNodeStoredSchema(map);
-	},
-	map: (data: FieldSchemaFormat) => new MapNodeStoredSchema(decodeFieldSchema(data)),
-});
-
-export const storedSchemaDecodeDispatcherV2: DiscriminatedUnionDispatcher<
-	TreeNodeSchemaDataFormatV2,
+export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
+	TreeNodeSchemaUnionFormat,
 	[],
 	TreeNodeStoredSchema
 > = new DiscriminatedUnionDispatcher({

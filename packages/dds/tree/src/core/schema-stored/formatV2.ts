@@ -5,12 +5,11 @@
 
 import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
-import { unionOptions } from "../../codec/index.js";
 import { JsonCompatibleReadOnlySchema } from "../../util/index.js";
 import {
 	FieldKindIdentifierSchema,
 	TreeNodeSchemaIdentifierSchema,
-	TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV1,
+	TreeNodeSchemaDataFormat as TreeNodeSchemaUnionFormat,
 } from "./formatV1.js";
 
 export const PersistedMetadataFormat = Type.Optional(JsonCompatibleReadOnlySchema);
@@ -26,19 +25,24 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 export const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
 
 /**
- * Discriminated union content of tree node schema.
+ * Format for {@link TreeNodeStoredSchema}.
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */
 export const TreeNodeSchemaDataFormat = Type.Object(
 	{
-		...TreeNodeSchemaDataFormatV1.properties,
 		/**
-		 * Persisted metadata for the schema.
+		 * Node kind specific data.
+		 */
+		kind: TreeNodeSchemaUnionFormat,
+
+		// Data in common for all TreeNode schemas:
+		/**
+		 * Leaf node union member.
 		 */
 		metadata: PersistedMetadataFormat,
 	},
-	unionOptions,
+	noAdditionalProps,
 );
 
 export type TreeNodeSchemaDataFormat = Static<typeof TreeNodeSchemaDataFormat>;
@@ -46,3 +50,5 @@ export type TreeNodeSchemaDataFormat = Static<typeof TreeNodeSchemaDataFormat>;
 export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
 
 export type PersistedMetadataFormat = Static<typeof PersistedMetadataFormat>;
+
+export { TreeNodeSchemaUnionFormat };
