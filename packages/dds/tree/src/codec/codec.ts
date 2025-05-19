@@ -354,8 +354,8 @@ export function withSchemaValidation<
  * For example, version 2.20.0 is encoded as 2.020, and version 2.2.0 is encoded as 2.002.
  * For example FF 2.20.0 is encoded as 2.020 and FF 2.2.0 is encoded as 2.002.
  *
- * Three digest was selected as that will likely be enough, while two digits could easily be too few.
- * If three digest ends up being too few, minor releases of 1000 and higher
+ * Three digits was selected as that will likely be enough, while two digits could easily be too few.
+ * If three digits ends up being too few, minor releases of 1000 and higher
  * could still be handled using something like 2.999_00001 without having to change the lower releases.
  *
  * This scheme assumes a single version will always be enough to communicate compatibility.
