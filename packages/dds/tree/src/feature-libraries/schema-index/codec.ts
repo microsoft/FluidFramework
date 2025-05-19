@@ -5,7 +5,7 @@
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	FluidClientVersion,
+	type FluidClientVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -38,15 +38,8 @@ import { SchemaCodecVersion } from "../../core/index.js";
 export function clientVersionToSchemaVersion(
 	clientVersion: FluidClientVersion,
 ): SchemaCodecVersion {
-	switch (clientVersion) {
-		case FluidClientVersion.v2_0:
-		case FluidClientVersion.v2_1:
-		case FluidClientVersion.v2_2:
-		case FluidClientVersion.v2_3:
-			return SchemaCodecVersion.v1;
-		default:
-			unreachableCase(clientVersion);
-	}
+	// Only one version of the schema codec is currently supported.
+	return SchemaCodecVersion.v1;
 }
 
 /**
