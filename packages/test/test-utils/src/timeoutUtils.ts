@@ -182,7 +182,6 @@ export async function timeoutPromise<T = void>(
 	) => void,
 	timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ): Promise<T> {
-	// return new Promise(executor);
 	// create the timeout error outside the async task, so its callstack includes
 	// the original call site, this makes it easier to debug
 	const err =

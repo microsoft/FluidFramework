@@ -12,7 +12,7 @@ import { timeoutPromise } from "../timeoutUtils.js";
  * is running in a mocha test that is about to time out.
  * Keep that in mind as you read/update the tests below.
  */
-describe.only("TimeoutPromise", () => {
+describe("TimeoutPromise", () => {
 	beforeEach(async () => {
 		// Make sure there are no setTimeouts left behind from previous tests,
 		// by waiting longer than the timeout we use for tests.
