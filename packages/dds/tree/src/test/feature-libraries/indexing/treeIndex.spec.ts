@@ -29,7 +29,7 @@ import {
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
 import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { proxySlot } from "../../../simple-tree/core/treeNodeKernel.js";
+import { simpleTreeNodeSlot } from "../../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../../feature-libraries/flex-tree/lazyNode.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -110,7 +110,7 @@ describe("tree indexes", () => {
 			},
 			(anchorNode: AnchorNode) => {
 				const simpleTree =
-					anchorNode.slots.get(proxySlot) ?? makeTreeNode(anchorNode, forest, root);
+					anchorNode.slots.get(simpleTreeNodeSlot) ?? makeTreeNode(anchorNode, forest, root);
 				if (!isTreeValue(simpleTree)) {
 					return Tree.status(simpleTree);
 				}
@@ -433,7 +433,8 @@ describe("tree indexes", () => {
 					() => 3,
 					(anchorNode: AnchorNode) => {
 						const simpleTree =
-							anchorNode.slots.get(proxySlot) ?? makeTreeNode(anchorNode, forest, view);
+							anchorNode.slots.get(simpleTreeNodeSlot) ??
+							makeTreeNode(anchorNode, forest, view);
 						if (!isTreeValue(simpleTree)) {
 							return Tree.status(simpleTree);
 						}

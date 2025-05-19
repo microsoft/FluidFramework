@@ -4,6 +4,7 @@
  */
 
 import type { NormalizedFieldUpPath, NormalizedUpPath } from "../../core/index.js";
+
 import type {
 	IDefaultEditBuilder,
 	OptionalFieldEditBuilder,

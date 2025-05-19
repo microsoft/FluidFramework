@@ -76,7 +76,7 @@ function createCompatSuite(
 				before(async function () {
 					try {
 						provider =
-							config.kind === CompatKind.CrossVersion
+							config.kind === CompatKind.CrossClient
 								? await getCompatVersionedTestObjectProviderFromApis(apis, {
 										type: driver,
 										config: {
@@ -143,15 +143,15 @@ function createCompatSuite(
  * Get versioned APIs for the given config.
  */
 function getVersionedApis(config: CompatConfig): CompatApis {
-	// If this is cross version compat scenario, make sure we use the correct versions
-	if (config.kind === CompatKind.CrossVersion) {
+	// If this is cross-clients compat scenario, make sure we use the correct versions
+	if (config.kind === CompatKind.CrossClient) {
 		assert(
 			config.createVersion !== undefined,
-			"createVersion must be defined for cross version tests",
+			"createVersion must be defined for cross-client tests",
 		);
 		assert(
 			config.loadVersion !== undefined,
-			"loadVersion must be defined for cross version tests",
+			"loadVersion must be defined for cross-client tests",
 		);
 
 		const dataRuntime = getDataRuntimeApi(config.createVersion);

@@ -69,7 +69,7 @@ interface LocationInField {
  * An unhydrated implementation of {@link FlexTreeNode} which wraps a {@link MapTree}.
  * @remarks
  * MapTreeNodes are unconditionally cached -
- * when retrieved via {@link getOrCreateNode}, the same {@link MapTree} object will always produce the same `UnhydratedFlexTreeNode` object.
+ * when retrieved via {@link getOrCreateNodeFromInnerNode}, the same {@link MapTree} object will always produce the same `UnhydratedFlexTreeNode` object.
  *
  * Create a `UnhydratedFlexTreeNode` by calling {@link getOrCreate}.
  */
@@ -112,9 +112,9 @@ export class UnhydratedFlexTreeNode implements FlexTreeNode {
 	 * Create a new UnhydratedFlexTreeNode.
 	 * @param location - the parentage of this node, if it is being created underneath an existing node and field, or undefined if not
 	 * @remarks This class (and its subclasses) should not be directly constructed outside of this module.
-	 * Instead, use {@link getOrCreateNode} to create a UnhydratedFlexTreeNode from a {@link MapTree}.
+	 * Instead, use {@link getOrCreateNodeFromInnerNode} to create a UnhydratedFlexTreeNode from a {@link MapTree}.
 	 * A `UnhydratedFlexTreeNode` may never be constructed more than once for the same {@link MapTree} object.
-	 * Instead, it should always be acquired via {@link getOrCreateNode}.
+	 * Instead, it should always be acquired via {@link getOrCreateNodeFromInnerNode}.
 	 */
 	public constructor(
 		public readonly simpleContext: Context,
@@ -548,7 +548,7 @@ function getFieldKeyCache(
 
 /**
  * If there exists a {@link UnhydratedFlexTreeNode} for the given {@link MapTree}, returns it, otherwise returns `undefined`.
- * @remarks {@link UnhydratedFlexTreeNode | UnhydratedFlexTreeNodes} are created via {@link getOrCreateNode}.
+ * @remarks {@link UnhydratedFlexTreeNode | UnhydratedFlexTreeNodes} are created via {@link getOrCreateNodeFromInnerNode}.
  */
 export function tryUnhydratedFlexTreeNode(
 	mapTree: MapTree,

@@ -436,10 +436,12 @@ export class Outbox {
 
 		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId);
 
-		// When resubmitting, we respect the staged state of the original batch.
-		// In this case rawBatch.staged will match the state of inStagingMode when
-		// the resubmit occurred, which is not relevant.
-		const staged = resubmitInfo?.staged ?? rawBatch.staged === true;
+		// On resubmit we use the original batch's staged state, so these should match as well.
+		const staged = rawBatch.staged === true;
+		assert(
+			resubmitInfo === undefined || resubmitInfo.staged === staged,
+			"Mismatch in staged state tracking",
+		);
 
 		const groupingEnabled =
 			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();

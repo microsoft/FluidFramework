@@ -88,6 +88,8 @@ export {
 	type TreeBranch,
 	type TreeBranchEvents,
 	tryGetSchema,
+	getStoredKey,
+	getPropertyKeyFromStoredKey,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
@@ -117,11 +119,13 @@ export {
 	type HandleConverter,
 	allowUnused,
 	type FieldSchemaAlphaUnsafe,
+	getIdentifierFromNode,
 	type TreeSchema,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
 	schemaStatics,
 	type TreeChangeEvents,
+	createFromMapTree,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -183,10 +187,7 @@ export {
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";
-export {
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
+export { getTreeNodeForField } from "./getTreeNodeForField.js";
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
@@ -219,6 +220,10 @@ export {
 	type FactoryContent,
 	type FactoryContentObject,
 } from "./toMapTree.js";
+export {
+	prepareForInsertion,
+	prepareForInsertionContextless,
+} from "./prepareForInsertion.js";
 export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
 export {
 	numberSchema,

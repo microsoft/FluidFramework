@@ -33,8 +33,6 @@ import {
 	SchemaCompatibilityTester,
 	type InsertableContent,
 	type TreeViewConfiguration,
-	mapTreeFromNodeData,
-	prepareContentForHydration,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
@@ -54,6 +52,7 @@ import {
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
+	prepareForInsertionContextless,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -176,17 +175,16 @@ export class SchematizingSimpleTreeView<
 
 		this.runSchemaEdit(() => {
 			const schema = this.viewSchema.viewSchemaAsStored;
-			const mapTree = mapTreeFromNodeData(
+			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
-				this.nodeKeyManager,
 				{
 					schema,
 					policy: this.schemaPolicy,
 				},
+				this,
 			);
 
-			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
 				schema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),

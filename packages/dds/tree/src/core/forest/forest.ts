@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
 	type Anchor,
