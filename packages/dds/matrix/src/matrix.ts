@@ -204,6 +204,15 @@ export interface ISharedMatrix<T = any>
 	switchSetCellPolicy(): void;
 }
 
+type FirstWriterWinsPolicy =
+	| { state: "off" }
+	| { state: "local" }
+	| {
+			state: "on";
+			switchOpSeqNumber: number;
+			cellLastWriteTracker: SparseArray2D<CellLastWriteTrackerItem>;
+	  };
+
 /**
  * A SharedMatrix holds a rectangular 2D array of values.  Supported operations
  * include setting values and inserting/removing rows and columns.
@@ -245,16 +254,9 @@ export class SharedMatrix<T = any>
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
 	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
 
-	private fwwPolicy:
-		| { state: "off"; switchOpSeqNumber?: undefined; cellLastWriteTracker?: undefined }
-		| { state: "local"; switchOpSeqNumber?: undefined; cellLastWriteTracker?: undefined }
-		| {
-				state: "on";
-				switchOpSeqNumber: number;
-				cellLastWriteTracker: SparseArray2D<CellLastWriteTrackerItem>;
-		  } = {
+	private fwwPolicy: FirstWriterWinsPolicy = {
 		state: "off",
-	}; // Set to true when the user calls switchPolicy.
+	};
 
 	// Used to track if there is any reentrancy in setCell code.
 	private reentrantCount: number = 0;
@@ -792,19 +794,15 @@ export class SharedMatrix<T = any>
 			this.rows.removeLocalReferencePosition(rowsRef);
 			this.cols.removeLocalReferencePosition(colsRef);
 			if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
-				const lastCellModificationDetails = this.fwwPolicy.cellLastWriteTracker?.getCell(
-					rowHandle,
-					colHandle,
-				);
 				// If the mode is LWW, then send the op.
 				// Otherwise if the current mode is FWW and if we generated this op, after seeing the
 				// last set op, or it is the first set op for the cell, then regenerate the op,
 				// otherwise raise conflict. We want to check the current mode here and not that
 				// whether op was made in FWW or not.
 				if (
-					this.fwwPolicy.switchOpSeqNumber === undefined ||
-					lastCellModificationDetails === undefined ||
-					referenceSeqNumber >= lastCellModificationDetails.seqNum
+					this.fwwPolicy.state !== "on" ||
+					referenceSeqNumber >=
+						(this.fwwPolicy.cellLastWriteTracker.getCell(rowHandle, colHandle)?.seqNum ?? 0)
 				) {
 					this.sendSetCellOp(row, col, setOp.value, rowHandle, colHandle, localSeq);
 				} else if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
@@ -890,11 +888,11 @@ export class SharedMatrix<T = any>
 		message: ISequencedDocumentMessage,
 	): boolean {
 		assert(
-			this.fwwPolicy.switchOpSeqNumber !== undefined,
+			this.fwwPolicy.state === "on",
 			0x85f /* should be in Fww mode when calling this method */,
 		);
 		assert(message.clientId !== null, 0x860 /* clientId should not be null */);
-		const lastCellModificationDetails = this.fwwPolicy.cellLastWriteTracker?.getCell(
+		const lastCellModificationDetails = this.fwwPolicy.cellLastWriteTracker.getCell(
 			rowHandle,
 			colHandle,
 		);
@@ -943,9 +941,9 @@ export class SharedMatrix<T = any>
 				);
 
 				const { row, col, value, fwwMode } = contents;
-				const isPreviousSetCellPolicyModeFWW = this.fwwPolicy.switchOpSeqNumber;
+				const isPreviousSetCellPolicyModeFWW = this.fwwPolicy.state;
 				// If this is the first op notifying us of the policy change, then set the policy change seq number.
-				if (fwwMode === true && this.fwwPolicy.switchOpSeqNumber === undefined) {
+				if (fwwMode === true && this.fwwPolicy.state !== "on") {
 					this.fwwPolicy = {
 						state: "on",
 						switchOpSeqNumber: msg.sequenceNumber,
@@ -964,11 +962,10 @@ export class SharedMatrix<T = any>
 					// If policy is switched and cell should be modified too based on policy, then update the tracker.
 					// If policy is not switched, then also update the tracker in case it is the latest.
 					if (
-						(this.fwwPolicy.switchOpSeqNumber !== undefined &&
-							this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)) ||
-						(this.fwwPolicy.switchOpSeqNumber === undefined && isLatestPendingOp)
+						this.fwwPolicy.state === "on" &&
+						this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)
 					) {
-						this.fwwPolicy.cellLastWriteTracker?.setCell(rowHandle, colHandle, {
+						this.fwwPolicy.cellLastWriteTracker.setCell(rowHandle, colHandle, {
 							seqNum: msg.sequenceNumber,
 							clientId: msg.clientId,
 						});
@@ -990,7 +987,7 @@ export class SharedMatrix<T = any>
 								isHandleValid(rowHandle) && isHandleValid(colHandle),
 								0x022 /* "SharedMatrix row and/or col handles are invalid!" */,
 							);
-							if (this.fwwPolicy.switchOpSeqNumber !== undefined) {
+							if (this.fwwPolicy.state === "on") {
 								// If someone tried to Overwrite the cell value or first write on this cell or
 								// same client tried to modify the cell or if the previous mode was LWW, then we need to still
 								// overwrite the cell and raise conflict if we have pending changes as our change is going to be lost.
@@ -1000,7 +997,7 @@ export class SharedMatrix<T = any>
 								) {
 									const previousValue = this.cells.getCell(rowHandle, colHandle);
 									this.cells.setCell(rowHandle, colHandle, value);
-									this.fwwPolicy.cellLastWriteTracker?.setCell(rowHandle, colHandle, {
+									this.fwwPolicy.cellLastWriteTracker.setCell(rowHandle, colHandle, {
 										seqNum: msg.sequenceNumber,
 										clientId: msg.clientId,
 									});
@@ -1066,10 +1063,12 @@ export class SharedMatrix<T = any>
 		for (const rowHandle of rowHandles) {
 			this.cells.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
 			this.pending.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
-			this.fwwPolicy.cellLastWriteTracker?.clearRows(
-				/* rowStart: */ rowHandle,
-				/* rowCount: */ 1,
-			);
+			if (this.fwwPolicy.state === "on") {
+				this.fwwPolicy.cellLastWriteTracker?.clearRows(
+					/* rowStart: */ rowHandle,
+					/* rowCount: */ 1,
+				);
+			}
 		}
 	};
 
@@ -1077,10 +1076,12 @@ export class SharedMatrix<T = any>
 		for (const colHandle of colHandles) {
 			this.cells.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
 			this.pending.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
-			this.fwwPolicy.cellLastWriteTracker?.clearCols(
-				/* colStart: */ colHandle,
-				/* colCount: */ 1,
-			);
+			if (this.fwwPolicy.state === "on") {
+				this.fwwPolicy.cellLastWriteTracker?.clearCols(
+					/* colStart: */ colHandle,
+					/* colCount: */ 1,
+				);
+			}
 		}
 	};
 
