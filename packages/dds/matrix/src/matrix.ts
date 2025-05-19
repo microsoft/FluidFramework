@@ -247,8 +247,8 @@ export class SharedMatrix<T = any>
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence number and clientId in a cell.
 
 	private fwwPolicy:
-		| { enabled: false; switchOpSeqNumber?: undefined }
-		| { enabled: true; switchOpSeqNumber: number | undefined } = { enabled: false }; // Set to true when the user calls switchPolicy.
+		| { state: "off"; switchOpSeqNumber?: undefined }
+		| { state: "on"; switchOpSeqNumber: number | undefined } = { state: "off" }; // Set to true when the user calls switchPolicy.
 
 	// Used to track if there is any reentrancy in setCell code.
 	private reentrantCount: number = 0;
@@ -333,7 +333,7 @@ export class SharedMatrix<T = any>
 	}
 
 	public isSetCellConflictResolutionPolicyFWW(): boolean {
-		return this.fwwPolicy.enabled;
+		return this.fwwPolicy.state !== "off";
 	}
 
 	public getCell(row: number, col: number): MatrixItem<T> {
@@ -470,7 +470,7 @@ export class SharedMatrix<T = any>
 			row,
 			col,
 			value,
-			fwwMode: this.fwwPolicy.enabled,
+			fwwMode: this.fwwPolicy.state !== "off",
 		};
 
 		const rowsRef = this.createOpMetadataLocalRef(this.rows, row, localSeq);
@@ -671,11 +671,11 @@ export class SharedMatrix<T = any>
 			this.cells.snapshot(),
 			this.pending.snapshot(),
 			// back-compat:  used -1 for disabled
-			this.fwwPolicy.switchOpSeqNumber ?? -1,
+			this.fwwPolicy.state === "on" ? this.fwwPolicy.switchOpSeqNumber : -1,
 		];
 
 		// Only need to store it in the snapshot if we have switched the policy already.
-		if (this.fwwPolicy.enabled) {
+		if (this.fwwPolicy.state === "on") {
 			artifactsToSummarize.push(this.cellLastWriteTracker.snapshot());
 		}
 		builder.addBlob(
@@ -855,14 +855,17 @@ export class SharedMatrix<T = any>
 
 			this.cells = SparseArray2D.load(cellData);
 			// back-compat:  used -1 for disabled, also may not exist
-			const switchOpSeqNumber = setCellLwwToFwwPolicySwitchOpSeqNumber ?? -1;
+			const switchOpSeqNumber =
+				setCellLwwToFwwPolicySwitchOpSeqNumber === -1
+					? undefined
+					: (setCellLwwToFwwPolicySwitchOpSeqNumber ?? undefined);
 			this.fwwPolicy =
-				switchOpSeqNumber === -1
+				switchOpSeqNumber === undefined
 					? {
-							enabled: false,
+							state: "off",
 						}
 					: {
-							enabled: true,
+							state: "on",
 							switchOpSeqNumber,
 						};
 			if (cellLastWriteTracker !== undefined) {
@@ -938,10 +941,10 @@ export class SharedMatrix<T = any>
 				const { row, col, value, fwwMode } = contents;
 				const isPreviousSetCellPolicyModeFWW = this.fwwPolicy.switchOpSeqNumber;
 				// If this is the first op notifying us of the policy change, then set the policy change seq number.
-				if (fwwMode === true) {
+				if (fwwMode === true && this.fwwPolicy.switchOpSeqNumber === undefined) {
 					this.fwwPolicy = {
-						enabled: true,
-						switchOpSeqNumber: this.fwwPolicy.switchOpSeqNumber ?? msg.sequenceNumber,
+						state: "on",
+						switchOpSeqNumber: msg.sequenceNumber,
 					};
 				}
 
@@ -1075,9 +1078,9 @@ export class SharedMatrix<T = any>
 	};
 
 	public switchSetCellPolicy(): void {
-		if (!this.fwwPolicy.enabled) {
+		if (this.fwwPolicy.state === "off") {
 			this.fwwPolicy = {
-				enabled: true,
+				state: "on",
 				switchOpSeqNumber: this.isAttached() ? undefined : 0,
 			};
 		}
