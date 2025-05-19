@@ -11,25 +11,13 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	deepCopyMapTree,
 	EmptyKey,
-	LeafNodeStoredSchema,
-	MapNodeStoredSchema,
-	ObjectNodeStoredSchema,
-	ValueSchema,
 	type ExclusiveMapTree,
 	type FieldKey,
-	type FieldKindData,
-	type FieldKindIdentifier,
 	type MapTree,
-	type SchemaAndPolicy,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
 } from "../../core/index.js";
 import {
 	booleanSchema,
-	cursorFromInsertable,
 	handleSchema,
 	nullSchema,
 	numberSchema,
@@ -57,24 +45,10 @@ import {
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
 import {
-	FieldKinds,
 	MockNodeIdentifierManager,
 	type NodeIdentifierManager,
 } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
-
-/**
- * Helper for building {@link TreeFieldStoredSchema}.
- */
-function getFieldSchema(
-	kind: { identifier: FieldKindIdentifier },
-	allowedTypes?: Iterable<TreeNodeSchemaIdentifier>,
-): TreeFieldStoredSchema {
-	return {
-		kind: kind.identifier,
-		types: new Set(allowedTypes),
-	};
-}
 
 describe("toMapTree", () => {
 	let nodeKeyManager: MockNodeIdentifierManager;
@@ -1283,403 +1257,96 @@ describe("toMapTree", () => {
 		});
 	});
 
-	describe("Stored schema validation", () => {
-		/**
-		 * Creates a schema and policy and indicates stored schema validation should be performed.
-		 */
-		function createSchemaAndPolicy(
-			nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map(),
-			fieldKinds: Map<FieldKindIdentifier, FieldKindData> = new Map(),
-		): SchemaAndPolicy {
-			return {
-				schema: {
-					nodeSchema,
-				},
-				policy: {
-					fieldKinds,
-					validateSchema: true,
-					// toMapTree drops all extra fields, so varying this policy is unnecessary
-					// (schema validation only occurs after converting to a MapTree)
-					allowUnknownOptionalFields: () => false,
-				},
-			};
-		}
-
-		const outOfSchemaExpectedError: Partial<Error> = {
-			message: "Tree does not conform to schema.",
-		};
-
-		const schemaFactory = new SchemaFactory("test");
-
-		describe("mapTreeFromNodeData", () => {
-			describe("Leaf node", () => {
-				function createSchemaAndPolicyForLeafNode(invalid: boolean = false) {
-					return createSchemaAndPolicy(
-						new Map([
-							[
-								// An invalid stored schema will associate the string identifier to a number schema
-								brand(schemaFactory.string.identifier),
-								invalid
-									? new LeafNodeStoredSchema(ValueSchema.Number)
-									: new LeafNodeStoredSchema(ValueSchema.String),
-							],
-						]),
-						new Map(),
-					);
-				}
-
-				it("Success", () => {
-					const content = "Hello world";
-					const schemaValidationPolicy = createSchemaAndPolicyForLeafNode();
-					mapTreeFromNodeData(
-						content,
-						[schemaFactory.string],
-						new MockNodeIdentifierManager(),
-						schemaValidationPolicy,
-					);
-				});
-
-				it("Failure", () => {
-					const content = "Hello world";
-					const schemaValidationPolicy = createSchemaAndPolicyForLeafNode(true);
-					assert.throws(
-						() =>
-							mapTreeFromNodeData(
-								content,
-								[schemaFactory.string],
-								new MockNodeIdentifierManager(),
-								schemaValidationPolicy,
-							),
-						outOfSchemaExpectedError,
-					);
-				});
-			});
-
-			describe("Object node", () => {
-				const content = { foo: "Hello world" };
-				const fieldSchema = getFieldSchema(FieldKinds.required, [
-					brand(schemaFactory.string.identifier),
-				]);
-				const myObjectSchema = schemaFactory.object("myObject", {
-					foo: schemaFactory.string,
-				});
-
-				function createSchemaAndPolicyForObjectNode(invalid: boolean = false) {
-					return createSchemaAndPolicy(
-						new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
-							[
-								// An invalid stored schema will associate the string identifier to a number schema
-								brand(schemaFactory.string.identifier),
-								invalid
-									? new LeafNodeStoredSchema(ValueSchema.Number)
-									: new LeafNodeStoredSchema(ValueSchema.String),
-							],
-							[
-								brand(myObjectSchema.identifier),
-								new ObjectNodeStoredSchema(
-									new Map<FieldKey, TreeFieldStoredSchema>([[brand("foo"), fieldSchema]]),
-								),
-							],
-						]),
-						new Map([[fieldSchema.kind, FieldKinds.required]]),
-					);
-				}
-				it("Success", () => {
-					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode();
-					mapTreeFromNodeData(
-						content,
-						[myObjectSchema, schemaFactory.string],
-						new MockNodeIdentifierManager(),
-						schemaValidationPolicy,
-					);
-				});
-
-				it("Failure", () => {
-					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode(true);
-					assert.throws(
-						() =>
-							mapTreeFromNodeData(
-								content,
-								[myObjectSchema, schemaFactory.string],
-								new MockNodeIdentifierManager(),
-								schemaValidationPolicy,
-							),
-						outOfSchemaExpectedError,
-					);
-				});
-
-				it("Only imports data in the schema", () => {
-					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode();
-					// Note that despite the content containing keys not in the object schema, this test passes.
-					// This is by design: if an app author wants to preserve data that isn't in the schema (ex: to
-					// collaborate with other clients that have newer schema without erasing auxiliary data), they
-					// can use import/export tree APIs as noted in `SchemaFactoryObjectOptions`.
-					mapTreeFromNodeData(
-						{ foo: "Hello world", notInSchemaKey: 5, anotherNotInSchemaKey: false },
-						[myObjectSchema, schemaFactory.string],
-						new MockNodeIdentifierManager(),
-						schemaValidationPolicy,
-					);
-				});
-			});
-
-			describe("Map node", () => {
-				const content = new Map([["foo", "Hello world"]]);
-				const fieldSchema = getFieldSchema(FieldKinds.required, [
-					brand(schemaFactory.string.identifier),
-				]);
-				const myMapSchema = schemaFactory.map("myMap", [schemaFactory.string]);
-
-				function createSchemaAndPolicyForMapNode(invalid: boolean = false) {
-					return createSchemaAndPolicy(
-						new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
-							[
-								// An invalid stored schema will associate the string identifier to a number schema
-								brand(schemaFactory.string.identifier),
-								invalid
-									? new LeafNodeStoredSchema(ValueSchema.Number)
-									: new LeafNodeStoredSchema(ValueSchema.String),
-							],
-							[brand(myMapSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
-						]),
-						new Map([[fieldSchema.kind, FieldKinds.required]]),
-					);
-				}
-				it("Success", () => {
-					const schemaValidationPolicy = createSchemaAndPolicyForMapNode();
-					mapTreeFromNodeData(
-						content,
-						[myMapSchema, schemaFactory.string],
-						new MockNodeIdentifierManager(),
-						schemaValidationPolicy,
-					);
-				});
-
-				it("Failure", () => {
-					const schemaValidationPolicy = createSchemaAndPolicyForMapNode(true);
-					assert.throws(
-						() =>
-							mapTreeFromNodeData(
-								content,
-								[myMapSchema, schemaFactory.string],
-								new MockNodeIdentifierManager(),
-								schemaValidationPolicy,
-							),
-						outOfSchemaExpectedError,
-					);
-				});
-			});
-
-			describe("Array node", () => {
-				const content = ["foo"];
-				const fieldSchema = getFieldSchema(FieldKinds.required, [
-					brand(schemaFactory.string.identifier),
-				]);
-				const myArrayNodeSchema = schemaFactory.array("myArrayNode", [schemaFactory.string]);
-
-				function createSchemaAndPolicyForMapNode(invalid: boolean = false) {
-					return createSchemaAndPolicy(
-						new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
-							[
-								// An invalid stored schema will associate the string identifier to a number schema
-								brand(schemaFactory.string.identifier),
-								invalid
-									? new LeafNodeStoredSchema(ValueSchema.Number)
-									: new LeafNodeStoredSchema(ValueSchema.String),
-							],
-							[brand(myArrayNodeSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
-						]),
-						new Map([[fieldSchema.kind, FieldKinds.required]]),
-					);
-				}
-				it("Success", () => {
-					const schemaValidationPolicy = createSchemaAndPolicyForMapNode();
-					mapTreeFromNodeData(
-						content,
-						[myArrayNodeSchema, schemaFactory.string],
-						new MockNodeIdentifierManager(),
-						schemaValidationPolicy,
-					);
-				});
-
-				it("Failure", () => {
-					const schemaValidationPolicy = createSchemaAndPolicyForMapNode(true);
-					assert.throws(
-						() =>
-							mapTreeFromNodeData(
-								content,
-								[myArrayNodeSchema, schemaFactory.string],
-								new MockNodeIdentifierManager(),
-								schemaValidationPolicy,
-							),
-						outOfSchemaExpectedError,
-					);
-				});
-			});
+	describe("getPossibleTypes", () => {
+		it("array vs map", () => {
+			const f = new SchemaFactory("test");
+			const arraySchema = f.array([f.null]);
+			const mapSchema = f.map([f.null]);
+			// Array makes array
+			assert.deepEqual(getPossibleTypes(new Set([mapSchema, arraySchema]), []), [arraySchema]);
+			// Map makes map
+			assert.deepEqual(getPossibleTypes(new Set([mapSchema, arraySchema]), new Map()), [
+				mapSchema,
+			]);
+			// Iterator can make map or array.
+			assert.deepEqual(getPossibleTypes(new Set([mapSchema, arraySchema]), new Map().keys()), [
+				mapSchema,
+				arraySchema,
+			]);
 		});
 
-		const schemaValidationPolicyForSuccess = createSchemaAndPolicy(
-			new Map([
-				[brand(schemaFactory.string.identifier), new LeafNodeStoredSchema(ValueSchema.String)],
-			]),
-			new Map(),
-		);
-		const schemaValidationPolicyForFailure = createSchemaAndPolicy(
-			new Map([
-				[
-					// Fake a stored schema that associates the string identifier to a number schema
-					brand(schemaFactory.string.identifier),
-					new LeafNodeStoredSchema(ValueSchema.Number),
-				],
-			]),
-			new Map(),
-		);
-
-		describe("cursorFromInsertable", () => {
-			it("Success", () => {
-				cursorFromInsertable(schemaFactory.string, "Hello world", nodeKeyManager);
-			});
-
-			it("Failure", () => {
-				assert.throws(
-					() =>
-						// @ts-expect-error invalid data for schema
-						cursorFromInsertable(schemaFactory.number, "Hello world", nodeKeyManager),
-					validateUsageError(/incompatible/),
-				);
-			});
+		it("array vs map low priority matching", () => {
+			const f = new SchemaFactory("test");
+			const arraySchema = f.array([f.null]);
+			const mapSchema = f.map([f.null]);
+			// Array makes map
+			assert.deepEqual(getPossibleTypes(new Set([mapSchema]), []), [mapSchema]);
+			// Map makes array
+			assert.deepEqual(getPossibleTypes(new Set([arraySchema]), new Map()), [arraySchema]);
 		});
 
-		describe("getPossibleTypes", () => {
-			it("array vs map", () => {
-				const f = new SchemaFactory("test");
-				const arraySchema = f.array([f.null]);
-				const mapSchema = f.map([f.null]);
-				// Array makes array
-				assert.deepEqual(getPossibleTypes(new Set([mapSchema, arraySchema]), []), [
-					arraySchema,
-				]);
-				// Map makes map
-				assert.deepEqual(getPossibleTypes(new Set([mapSchema, arraySchema]), new Map()), [
-					mapSchema,
-				]);
-				// Iterator can make map or array.
-				assert.deepEqual(
-					getPossibleTypes(new Set([mapSchema, arraySchema]), new Map().keys()),
-					[mapSchema, arraySchema],
-				);
-			});
-
-			it("array vs map low priority matching", () => {
-				const f = new SchemaFactory("test");
-				const arraySchema = f.array([f.null]);
-				const mapSchema = f.map([f.null]);
-				// Array makes map
-				assert.deepEqual(getPossibleTypes(new Set([mapSchema]), []), [mapSchema]);
-				// Map makes array
-				assert.deepEqual(getPossibleTypes(new Set([arraySchema]), new Map()), [arraySchema]);
-			});
-
-			it("inherited properties types", () => {
-				const f = new SchemaFactory("test");
-				class Optional extends f.object("x", {
-					constructor: f.optional(f.number),
-				}) {}
-				class Required extends f.object("x", {
-					constructor: f.number,
-				}) {}
-				class Other extends f.object("y", {
-					other: f.number,
-				}) {}
-				// Ignore inherited constructor field
-				assert.deepEqual(getPossibleTypes(new Set([Optional, Required, Other]), {}), [
-					Optional,
-				]);
-				// Allow overridden field
-				assert.deepEqual(
-					getPossibleTypes(new Set([Optional, Required, Other]), { constructor: 5 }),
-					[Optional, Required],
-				);
-				// Allow overridden undefined
-				assert.deepEqual(
-					getPossibleTypes(new Set([Optional, Required, Other]), { constructor: undefined }),
-					[Optional],
-				);
-				// Multiple Fields
-				assert.deepEqual(
-					getPossibleTypes(new Set([Optional, Required, Other]), {
-						constructor: undefined,
-						other: 6,
-					}),
-					[Optional, Other],
-				);
-				assert.deepEqual(
-					getPossibleTypes(new Set([Optional, Required, Other]), {
-						constructor: 5,
-						other: 6,
-					}),
-					[Optional, Required, Other],
-				);
-				// No properties
-				assert.deepEqual(
-					getPossibleTypes(new Set([Optional, Required, Other]), Object.create(null)),
-					[Optional],
-				);
-			});
-		});
-
-		describe("addDefaultsToMapTree", () => {
-			it("custom stored key", () => {
-				const f = new SchemaFactory("test");
-
-				class Test extends f.object("test", {
-					api: createFieldSchema(FieldKind.Required, [f.number], {
-						key: "stored",
-						defaultProvider: getDefaultProvider(() => 5),
-					}),
-				}) {}
-				const m: ExclusiveMapTree = { type: brand(Test.identifier), fields: new Map() };
-				addDefaultsToMapTree(m, Test, undefined);
-				assert.deepEqual(
-					m.fields,
-					new Map([["stored", [{ type: f.number.identifier, fields: new Map(), value: 5 }]]]),
-				);
-			});
+		it("inherited properties types", () => {
+			const f = new SchemaFactory("test");
+			class Optional extends f.object("x", {
+				constructor: f.optional(f.number),
+			}) {}
+			class Required extends f.object("x", {
+				constructor: f.number,
+			}) {}
+			class Other extends f.object("y", {
+				other: f.number,
+			}) {}
+			// Ignore inherited constructor field
+			assert.deepEqual(getPossibleTypes(new Set([Optional, Required, Other]), {}), [Optional]);
+			// Allow overridden field
+			assert.deepEqual(
+				getPossibleTypes(new Set([Optional, Required, Other]), { constructor: 5 }),
+				[Optional, Required],
+			);
+			// Allow overridden undefined
+			assert.deepEqual(
+				getPossibleTypes(new Set([Optional, Required, Other]), { constructor: undefined }),
+				[Optional],
+			);
+			// Multiple Fields
+			assert.deepEqual(
+				getPossibleTypes(new Set([Optional, Required, Other]), {
+					constructor: undefined,
+					other: 6,
+				}),
+				[Optional, Other],
+			);
+			assert.deepEqual(
+				getPossibleTypes(new Set([Optional, Required, Other]), {
+					constructor: 5,
+					other: 6,
+				}),
+				[Optional, Required, Other],
+			);
+			// No properties
+			assert.deepEqual(
+				getPossibleTypes(new Set([Optional, Required, Other]), Object.create(null)),
+				[Optional],
+			);
 		});
 	});
-});
 
-describe("deepCopyMapTree", () => {
-	// Used by `generateMapTree` to give unique types and values to each MapTree
-	let mapTreeGeneration = 0;
-	function generateMapTree(depth: number): ExclusiveMapTree {
-		const generation = mapTreeGeneration++;
-		return {
-			type: brand(String(generation)),
-			value: generation,
-			fields: new Map(
-				depth === 0
-					? []
-					: [
-							[brand("a"), [generateMapTree(depth - 1), generateMapTree(depth - 1)]],
-							[brand("b"), [generateMapTree(depth - 1), generateMapTree(depth - 1)]],
-						],
-			),
-		};
-	}
+	describe("addDefaultsToMapTree", () => {
+		it("custom stored key", () => {
+			const f = new SchemaFactory("test");
 
-	it("empty tree", () => {
-		const mapTree = generateMapTree(0);
-		assert.deepEqual(deepCopyMapTree(mapTree), mapTree);
-	});
-
-	it("shallow tree", () => {
-		const mapTree = generateMapTree(1);
-		assert.deepEqual(deepCopyMapTree(mapTree), mapTree);
-	});
-
-	it("deep tree", () => {
-		const mapTree = generateMapTree(2);
-		assert.deepEqual(deepCopyMapTree(mapTree), mapTree);
+			class Test extends f.object("test", {
+				api: createFieldSchema(FieldKind.Required, [f.number], {
+					key: "stored",
+					defaultProvider: getDefaultProvider(() => 5),
+				}),
+			}) {}
+			const m: ExclusiveMapTree = { type: brand(Test.identifier), fields: new Map() };
+			addDefaultsToMapTree(m, Test, undefined);
+			assert.deepEqual(
+				m.fields,
+				new Map([["stored", [{ type: f.number.identifier, fields: new Map(), value: 5 }]]]),
+			);
+		});
 	});
 });

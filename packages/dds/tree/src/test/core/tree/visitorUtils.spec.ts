@@ -10,8 +10,8 @@ import {
 	type DeltaVisitor,
 	type FieldKey,
 	combineVisitors,
-} from "../../core/index.js";
-import { brand } from "../../util/index.js";
+} from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
 
 class LoggingVisitor implements DeltaVisitor {
 	public readonly name: string;
