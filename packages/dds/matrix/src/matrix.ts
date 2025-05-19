@@ -244,12 +244,17 @@ export class SharedMatrix<T = any>
 
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
 	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
-	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence number and clientId in a cell.
 
 	private fwwPolicy:
-		| { state: "off"; switchOpSeqNumber?: undefined }
-		| { state: "local"; switchOpSeqNumber?: undefined }
-		| { state: "on"; switchOpSeqNumber: number } = { state: "off" }; // Set to true when the user calls switchPolicy.
+		| { state: "off"; switchOpSeqNumber?: undefined; cellLastWriteTracker?: undefined }
+		| { state: "local"; switchOpSeqNumber?: undefined; cellLastWriteTracker?: undefined }
+		| {
+				state: "on";
+				switchOpSeqNumber: number;
+				cellLastWriteTracker: SparseArray2D<CellLastWriteTrackerItem>;
+		  } = {
+		state: "off",
+	}; // Set to true when the user calls switchPolicy.
 
 	// Used to track if there is any reentrancy in setCell code.
 	private reentrantCount: number = 0;
@@ -677,7 +682,7 @@ export class SharedMatrix<T = any>
 
 		// Only need to store it in the snapshot if we have switched the policy already.
 		if (this.fwwPolicy.state === "on") {
-			artifactsToSummarize.push(this.cellLastWriteTracker.snapshot());
+			artifactsToSummarize.push(this.fwwPolicy.cellLastWriteTracker.snapshot());
 		}
 		builder.addBlob(
 			SnapshotPath.cells,
@@ -787,7 +792,7 @@ export class SharedMatrix<T = any>
 			this.rows.removeLocalReferencePosition(rowsRef);
 			this.cols.removeLocalReferencePosition(colsRef);
 			if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
-				const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
+				const lastCellModificationDetails = this.fwwPolicy.cellLastWriteTracker?.getCell(
 					rowHandle,
 					colHandle,
 				);
@@ -868,10 +873,8 @@ export class SharedMatrix<T = any>
 					: {
 							state: "on",
 							switchOpSeqNumber,
+							cellLastWriteTracker: SparseArray2D.load(cellLastWriteTracker),
 						};
-			if (cellLastWriteTracker !== undefined) {
-				this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
-			}
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
 		}
@@ -891,7 +894,7 @@ export class SharedMatrix<T = any>
 			0x85f /* should be in Fww mode when calling this method */,
 		);
 		assert(message.clientId !== null, 0x860 /* clientId should not be null */);
-		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
+		const lastCellModificationDetails = this.fwwPolicy.cellLastWriteTracker?.getCell(
 			rowHandle,
 			colHandle,
 		);
@@ -946,6 +949,7 @@ export class SharedMatrix<T = any>
 					this.fwwPolicy = {
 						state: "on",
 						switchOpSeqNumber: msg.sequenceNumber,
+						cellLastWriteTracker: new SparseArray2D(),
 					};
 				}
 
@@ -964,7 +968,7 @@ export class SharedMatrix<T = any>
 							this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)) ||
 						(this.fwwPolicy.switchOpSeqNumber === undefined && isLatestPendingOp)
 					) {
-						this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
+						this.fwwPolicy.cellLastWriteTracker?.setCell(rowHandle, colHandle, {
 							seqNum: msg.sequenceNumber,
 							clientId: msg.clientId,
 						});
@@ -996,7 +1000,7 @@ export class SharedMatrix<T = any>
 								) {
 									const previousValue = this.cells.getCell(rowHandle, colHandle);
 									this.cells.setCell(rowHandle, colHandle, value);
-									this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
+									this.fwwPolicy.cellLastWriteTracker?.setCell(rowHandle, colHandle, {
 										seqNum: msg.sequenceNumber,
 										clientId: msg.clientId,
 									});
@@ -1021,10 +1025,6 @@ export class SharedMatrix<T = any>
 								// If there is a pending (unACKed) local write to the same cell, skip the current op
 								// since it "happened before" the pending write.
 								this.cells.setCell(rowHandle, colHandle, value);
-								this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
-									seqNum: msg.sequenceNumber,
-									clientId: msg.clientId,
-								});
 								for (const consumer of this.consumers.values()) {
 									consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
 								}
@@ -1066,7 +1066,10 @@ export class SharedMatrix<T = any>
 		for (const rowHandle of rowHandles) {
 			this.cells.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
 			this.pending.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
-			this.cellLastWriteTracker.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
+			this.fwwPolicy.cellLastWriteTracker?.clearRows(
+				/* rowStart: */ rowHandle,
+				/* rowCount: */ 1,
+			);
 		}
 	};
 
@@ -1074,7 +1077,10 @@ export class SharedMatrix<T = any>
 		for (const colHandle of colHandles) {
 			this.cells.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
 			this.pending.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
-			this.cellLastWriteTracker.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
+			this.fwwPolicy.cellLastWriteTracker?.clearCols(
+				/* colStart: */ colHandle,
+				/* colCount: */ 1,
+			);
 		}
 	};
 
@@ -1085,6 +1091,7 @@ export class SharedMatrix<T = any>
 				: {
 						state: "on",
 						switchOpSeqNumber: 0,
+						cellLastWriteTracker: new SparseArray2D(),
 					};
 		}
 	}
