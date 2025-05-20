@@ -32,7 +32,7 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	RevisionTagCodec,
-	SchemaCodecVersion,
+	SchemaVersion,
 	type TaggedChange,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
@@ -166,7 +166,7 @@ export interface ITreePrivate extends ITreeInternal {
  */
 interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 	forest: number;
-	schema: SchemaCodecVersion;
+	schema: SchemaVersion;
 	detachedFieldIndex: number;
 	fieldBatch: number;
 }
@@ -506,7 +506,7 @@ export function persistedToSimpleSchema(
 	persisted: JsonCompatible,
 	options: ICodecOptions,
 ): SimpleTreeSchema {
-	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
+	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 	const stored = schemaCodec.decode(persisted as FormatV1);
 	return exportSimpleSchema(stored);
 }

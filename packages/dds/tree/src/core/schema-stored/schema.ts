@@ -22,7 +22,7 @@ import type {
 } from "./formatV2.js";
 import type { Multiplicity } from "./multiplicity.js";
 
-export enum SchemaCodecVersion {
+export enum SchemaVersion {
 	v1 = 1,
 	/**
 	 * Adds persisted metadata to the node schema and field schema.

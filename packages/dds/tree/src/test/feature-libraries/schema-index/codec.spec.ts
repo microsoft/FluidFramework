@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 // Allow importing from this specific file which is being tested:
 
 import {
-	SchemaCodecVersion,
+	SchemaVersion,
 	type FieldKindIdentifier,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
@@ -32,8 +32,8 @@ import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
 
 const schemaCodecs = makeSchemaCodecs({ jsonValidator: typeboxValidator });
-const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaCodecVersion.v1);
-const codecV2 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaCodecVersion.v2);
+const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v1);
+const codecV2 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v2);
 
 const schema2 = toStoredSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 

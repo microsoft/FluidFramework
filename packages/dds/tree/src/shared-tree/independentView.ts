@@ -13,7 +13,7 @@ import type { ICodecOptions } from "../codec/index.js";
 import {
 	type RevisionTag,
 	RevisionTagCodec,
-	SchemaCodecVersion,
+	SchemaVersion,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -93,7 +93,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
 	const fieldBatchCodec = makeFieldBatchCodec(options, 1);
-	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
+	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 
 	const schema = new TreeStoredSchemaRepository(schemaCodec.decode(content.schema as Format));
 	const forest = buildConfiguredForest(

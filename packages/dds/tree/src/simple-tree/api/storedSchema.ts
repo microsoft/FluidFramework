@@ -4,7 +4,7 @@
  */
 
 import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
-import { SchemaCodecVersion, type TreeStoredSchema } from "../../core/index.js";
+import { SchemaVersion, type TreeStoredSchema } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
@@ -99,7 +99,7 @@ export function comparePersistedSchema(
 ): SchemaCompatibilityStatus {
 	// Any version can be passed down to makeSchemaCodec here.
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
+	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 	const stored = schemaCodec.decode(persisted as FormatV1);
 	const viewSchema = new SchemaCompatibilityTester(
 		defaultSchemaPolicy,
