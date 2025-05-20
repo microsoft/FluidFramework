@@ -1,5 +1,23 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [5.7.4](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.4)
+
+Updates the contexts in which `jsdoc/require-jsdoc` is applied to make it less overzealous.
+Specifically, removes the "VariableDeclaration" context, which would incorrectly trigger for variables that were not exported.
+
+### Example
+
+```typescript
+/**
+ * foo
+ */
+export function foo(): void {
+	// Because the outer scope, `foo`, was exported, this would be incorrectly flagged as needing a JSDoc/TSDoc comment.
+	const bar = "baz";
+	...
+}
+```
+
 ## [5.7.3](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.3)
 
 Added support for two new patterns in the no-unchecked-record-access ESLint rule:

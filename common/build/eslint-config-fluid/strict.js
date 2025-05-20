@@ -42,12 +42,7 @@ module.exports = {
 					// Will report for *any* methods on exported classes, regardless of whether or not they are public
 					MethodDefinition: false,
 				},
-				contexts: [
-					"TSEnumDeclaration",
-					"TSInterfaceDeclaration",
-					"TSTypeAliasDeclaration",
-					"VariableDeclaration",
-				],
+				contexts: ["TSEnumDeclaration", "TSInterfaceDeclaration", "TSTypeAliasDeclaration"],
 			},
 		],
 	},

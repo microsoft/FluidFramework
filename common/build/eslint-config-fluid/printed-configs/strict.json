@@ -713,8 +713,7 @@
                 "contexts": [
                     "TSEnumDeclaration",
                     "TSInterfaceDeclaration",
-                    "TSTypeAliasDeclaration",
-                    "VariableDeclaration"
+                    "TSTypeAliasDeclaration"
                 ],
                 "checkConstructors": true,
                 "checkGetters": true,
