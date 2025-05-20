@@ -1898,7 +1898,7 @@ export class ContainerRuntime
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
-		this.lastEmittedDirty = this.currentDirtyState();
+		this.lastEmittedDirty = !this.attachedAndFullySaved();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
 
 		if (!this.skipSafetyFlushDuringProcessStack) {
@@ -3254,7 +3254,6 @@ export class ContainerRuntime
 						checkpoint.rollback((message: LocalBatchMessage) =>
 							this.rollback(message.runtimeOp, message.localOpMetadata),
 						);
-						// reset the dirty state after rollback to what it was before to keep it consistent
 						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
 						stageControls = undefined;
@@ -3463,13 +3462,19 @@ export class ContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
-		//* Switch to currentDirtyState
+		// Rather than recomputing the dirty state in this moment,
+		// just regurgitate the last emitted dirty state.
+		// Note that this may be "wrong" in cases -
+		// e.g. the only remaining pending local op is non-dirtyable, we will still report as dirty
 		return this.lastEmittedDirty;
 	}
 
-	//* Comment
-	private currentDirtyState(): boolean {
-		return this.attachState !== AttachState.Attached || this.hasPendingMessages();
+	/**
+	 * Returns true if the container is attached and fully saved.
+	 * @remarks Returns false even if the only pending messages are "non-dirtyable".
+	 */
+	private attachedAndFullySaved(): boolean {
+		return this.attachState === AttachState.Attached && !this.hasPendingMessages();
 	}
 
 	private isContainerMessageDirtyable({
@@ -3540,7 +3545,7 @@ export class ContainerRuntime
 			this.emit("attached");
 		}
 
-		if (!this.currentDirtyState()) {
+		if (this.attachedAndFullySaved()) {
 			this.updateDocumentDirtyState();
 		}
 		this.channelCollection.setAttachState(attachState);
@@ -4324,13 +4329,22 @@ export class ContainerRuntime
 		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
 	}
 
-	//* Maybe remove?
 	private hasPendingMessages(): boolean {
 		return this.pendingMessagesCount !== 0;
 	}
 
+	/**
+	 * Emit "dirty" or "saved" event based on the current dirty state of the document.
+	 * This must be called every time the states underlying the dirty state change.
+	 *
+	 * @privateRemarks - It's helpful to think of this as an event handler registered
+	 * for hypothetical "changed" events for PendingStateManager, Outbox, and Container Attach machinery.
+	 * But those events don't exist so we manually call this wherever we know those changes happen.
+	 */
 	private updateDocumentDirtyState(): void {
-		const dirty: boolean = this.currentDirtyState();
+		// If the only pending messages are non-dirtyable, this will be incorrect.
+		// It's not ideal, but callers should avoid updating dirty state if they know that is the case.
+		const dirty: boolean = !this.attachedAndFullySaved();
 
 		if (this.lastEmittedDirty === dirty) {
 			return;
