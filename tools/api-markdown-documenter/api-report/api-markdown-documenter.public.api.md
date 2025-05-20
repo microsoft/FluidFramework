@@ -190,11 +190,13 @@ export class BlockQuoteNode extends DocumentationParentNodeBase<PhrasingContent>
 }
 
 // @public
-export class CodeSpanNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements SingleLineDocumentationNode {
-    constructor(children: SingleLineDocumentationNode[]);
+export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
+    constructor(value: PlainTextNode);
     static createFromPlainText(text: string): CodeSpanNode;
     static readonly Empty: CodeSpanNode;
-    get singleLine(): true;
+    // (undocumented)
+    get isEmpty(): boolean;
+    readonly singleLine = true;
     readonly type = DocumentationNodeType.CodeSpan;
 }
 
