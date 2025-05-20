@@ -389,7 +389,7 @@ export function testForest(config: ForestTestConfiguration): void {
 		assert(forest.anchors.isEmpty());
 	});
 
-	it("using an anchor that went away returns NotFound", () => {
+	it("tryMoveCursorToNode with anchor to deleted node returns NotFound", () => {
 		const forest = factory(new TreeStoredSchemaRepository(optionalArraySchema));
 
 		initializeForest(
