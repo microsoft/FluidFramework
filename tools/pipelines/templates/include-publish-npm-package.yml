@@ -117,12 +117,14 @@ stages:
   - stage: upload_manifests
     displayName: Upload release manifests
     dependsOn:
-    - ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}:
+    - ${{ if in(variables.release, 'release', 'prerelease') }}:
       - publish_npm_public
-    - ${{ if variables.testBuild }}:
+    - ${{ if eq(variables.testBuild, true) }}:
       - publish_npm_internal_test
-    - ${{ else }}:
+    - ${{ elseif eq(variables.testBuild, false) }}:
       - publish_npm_internal_build
+    - ${{ else }}:
+      'Unable to determine testBuild variable at queue time. This indicates an error in include-publish-npm-package.yml.': error
     # Note dev feed packages do not get manifests as we don't intend them to be consumed publicly
     variables:
     - group: ado-feeds
