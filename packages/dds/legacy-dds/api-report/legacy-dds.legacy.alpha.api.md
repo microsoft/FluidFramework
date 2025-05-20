@@ -4,6 +4,37 @@
 
 ```ts
 
+// @alpha @legacy (undocumented)
+export interface IRevertible {
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    revert(): void;
+}
+
+// @public
+export interface ISharedArray<T extends SerializableTypeForSharedArray> extends ISharedObject<ISharedArrayEvents> {
+    // (undocumented)
+    delete(index: number): void;
+    // (undocumented)
+    get(): FullyReadonly<T[]>;
+    // (undocumented)
+    insert<TWrite>(index: number, value: Serializable<TWrite> & T): void;
+    // (undocumented)
+    move(oldIndex: number, newIndex: number): void;
+}
+
+// @public
+export interface ISharedArrayRevertible extends ISharedObject<ISharedArrayEvents> {
+    // (undocumented)
+    toggle(entryId: string): void;
+    // (undocumented)
+    toggleMove(oldEntryId: string, newEntryId: string): void;
+}
+
+// @public
+export type SerializableTypeForSharedArray = boolean | number | string | object;
+
 // (No @packageDocumentation comment for this package)
 
 ```
