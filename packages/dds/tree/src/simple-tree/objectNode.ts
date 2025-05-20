@@ -206,6 +206,35 @@ function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): Simp
 const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
 
 /**
+ * Modify `flexNode` to add a newly generated identifier under the given `storedKey`.
+ * @remarks
+ * This is used after checking if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
+ * This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
+ * In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
+ * @privateRemarks
+ * TODO: this special case logic should move to the inner node (who's schema claims it has an identifier), rather than here, after we already read undefined out of a required field.
+ * TODO: unify this with a more general defaults mechanism.
+ */
+export function lazilyAllocateIdentifier(
+	flexNode: UnhydratedFlexTreeNode,
+	storedKey: FieldKey,
+): string {
+	debugAssert(() => !flexNode.mapTree.fields.has(storedKey) || "Identifier field already set");
+	const value = globalIdentifierAllocator.decompress(
+		globalIdentifierAllocator.generateCompressedId(),
+	);
+	flexNode.mapTree.fields.set(storedKey, [
+		{
+			type: brand(stringSchema.identifier),
+			value,
+			fields: new Map(),
+		},
+	]);
+
+	return value;
+}
+
+/**
  * Creates a proxy handler for the given schema.
  *
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
@@ -238,26 +267,11 @@ function createProxyHandler(
 					return getTreeNodeForField(field);
 				}
 
-				// TODO: this special case logic should move to the inner node (who's schema claims it has an identifier), rather than here, after we already read undefined out of a required field.
-				// Check if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
-				// This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
-				// In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
 				if (
 					fieldInfo.schema.kind === FieldKind.Identifier &&
 					flexNode instanceof UnhydratedFlexTreeNode
 				) {
-					const value = globalIdentifierAllocator.decompress(
-						globalIdentifierAllocator.generateCompressedId(),
-					);
-					flexNode.mapTree.fields.set(fieldInfo.storedKey, [
-						{
-							type: brand(stringSchema.identifier),
-							value,
-							fields: new Map(),
-						},
-					]);
-
-					return value;
+					return lazilyAllocateIdentifier(flexNode, fieldInfo.storedKey);
 				}
 
 				return undefined;
