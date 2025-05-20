@@ -158,6 +158,29 @@ export { ApiPackage }
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
 // @public
+export type BlockContent = BlockContentMap[keyof BlockContentMap];
+
+// @public
+export interface BlockContentMap {
+    // (undocumented)
+    blockquote: BlockQuoteNode;
+    // (undocumented)
+    fencedCodeBlock: FencedCodeBlockNode;
+    // (undocumented)
+    horizontalRule: HorizontalRuleNode;
+    // (undocumented)
+    lineBreak: LineBreakNode;
+    // (undocumented)
+    orderedList: OrderedListNode;
+    // (undocumented)
+    paragraph: ParagraphNode;
+    // (undocumented)
+    table: TableNode;
+    // (undocumented)
+    unorderedList: UnorderedListNode;
+}
+
+// @public
 export class BlockQuoteNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
     constructor(children: DocumentationNode[]);
     static createFromPlainText(text: string): BlockQuoteNode;
@@ -761,29 +784,7 @@ function renderNode(node: DocumentationNode, writer: DocumentWriter, context: Ma
 function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
-export type SectionContent = SectionContentMap[keyof SectionContentMap];
-
-// @public
-export interface SectionContentMap {
-    // (undocumented)
-    blockquote: BlockQuoteNode;
-    // (undocumented)
-    fencedCodeBlock: FencedCodeBlockNode;
-    // (undocumented)
-    horizontalRule: HorizontalRuleNode;
-    // (undocumented)
-    lineBreak: LineBreakNode;
-    // (undocumented)
-    orderedList: OrderedListNode;
-    // (undocumented)
-    paragraph: ParagraphNode;
-    // (undocumented)
-    section: SectionNode;
-    // (undocumented)
-    table: TableNode;
-    // (undocumented)
-    unorderedList: UnorderedListNode;
-}
+export type SectionContent = BlockContent | SectionNode;
 
 // @public @sealed
 export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {

@@ -3,60 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type { BlockQuoteNode } from "./BlockQuoteNode.js";
+import type { BlockContent } from "./BlockContent.js";
 import {
 	DocumentationParentNodeBase,
 	type MultiLineDocumentationNode,
 } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import type { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 import type { HeadingNode } from "./HeadingNode.js";
-import type { HorizontalRuleNode } from "./HorizontalRuleNode.js";
-import type { LineBreakNode } from "./LineBreakNode.js";
-import type { OrderedListNode } from "./OrderedListNode.js";
-import type { ParagraphNode } from "./ParagraphNode.js";
-import type { TableNode } from "./TableNode.js";
-import type { UnorderedListNode } from "./UnorderedListNode.js";
-
-/**
- * Registry of all kinds of {@link DocumentationNode} that can occur as children of {@link SectionNode}.
- *
- * @remarks
- *
- * This interface can be augmented to register custom node types:
- *
- * ```typescript
- * declare module '@fluid-tools/api-markdown-documenter' {
- *   interface SectionContentMap {
- *     newContentType: NewContentTypeNode;
- *   }
- * }
- * ```
- *
- * For a union of all {@link SectionNode} children, see {@link SectionContent}.
- *
- * @public
- */
-export interface SectionContentMap {
-	blockquote: BlockQuoteNode;
-	fencedCodeBlock: FencedCodeBlockNode;
-	horizontalRule: HorizontalRuleNode;
-	lineBreak: LineBreakNode;
-	orderedList: OrderedListNode;
-	paragraph: ParagraphNode;
-	section: SectionNode;
-	table: TableNode;
-	unorderedList: UnorderedListNode;
-}
 
 /**
  * Union of all kinds of {@link DocumentationNode} that can occur as children of {@link SectionNode}
  *
- * @remarks To register custom nodes, add them to {@link SectionContentMap}.
+ * @remarks To register custom nodes, add them to {@link BlockContentMap}.
  *
  * @public
  */
-export type SectionContent = SectionContentMap[keyof SectionContentMap];
+export type SectionContent = BlockContent | SectionNode;
 
 /**
  * Represents a hierarchically nested section.
