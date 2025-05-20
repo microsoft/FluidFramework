@@ -22,8 +22,8 @@ describe("LocalChannelStorageService", () => {
 		assert.deepStrictEqual(await ss.list(""), []);
 		try {
 			await ss.readBlob("test");
-		} catch (error: any) {
-			assert.strictEqual(error.message, "Blob Not Found");
+		} catch (error: unknown) {
+			assert.strictEqual((error as Error).message, "Blob Not Found");
 		}
 	});
 
@@ -35,6 +35,7 @@ describe("LocalChannelStorageService", () => {
 					path: "foo",
 					type: TreeEntry.Blob,
 					value: {
+						// eslint-disable-next-line unicorn/text-encoding-identifier-case -- `utf8` not supported by this API
 						encoding: "utf-8",
 						contents: "bar",
 					},
@@ -63,6 +64,7 @@ describe("LocalChannelStorageService", () => {
 								path: "foo",
 								type: TreeEntry.Blob,
 								value: {
+									// eslint-disable-next-line unicorn/text-encoding-identifier-case -- `utf8` not supported by this API
 									encoding: "utf-8",
 									contents: "bar",
 								},
