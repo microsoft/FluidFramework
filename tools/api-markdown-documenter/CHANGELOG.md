@@ -7,6 +7,19 @@
 Updates default transformation logic for `ApiInterface` items to generate headings that read "Constructor" rather than "Construct Signature" for constructor-like members.
 This better aligns with similar policies for members like interface methods which are labeled "Method" and not "Method Signature", despite the underlying TypeScript AST entry being a "method signature".
 
+### Simplify `DocumentationNode` types
+
+Removes:
+
+- `MultiLineDocumentationNode`
+- `SingleLineDocumentationNode`
+- `SingleLineSpanNode`
+
+Updates `DocumentationNode` types that were constrained to single-line nodes to allow any `DocumentationNode` children.
+Rendering to Markdown falls back to HTML syntax in cases where multi-line content appears in relevant contexts (lists).
+
+Also updates `CodeSpanNode` to only allow plain text content, which is in line with how it is used, and how it is constrained in Markdown.
+
 ## 0.19.0
 
 ### Add the ability to filter out individual API items (and their descendants) from documentation generation
