@@ -27,7 +27,6 @@ export {
 	DocumentationLiteralNodeBase,
 	type DocumentationParentNode,
 	DocumentationParentNodeBase,
-	type SingleLineDocumentationNode,
 } from "./DocumentationNode.js";
 export { DocumentationNodeType } from "./DocumentationNodeType.js";
 export { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";

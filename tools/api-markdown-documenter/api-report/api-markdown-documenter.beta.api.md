@@ -819,11 +819,6 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationConfiguration): boolean;
 
 // @public
-export interface SingleLineDocumentationNode<TData extends object = Data> extends DocumentationNode<TData> {
-    readonly singleLine: true;
-}
-
-// @public
 export type SpanContent = PhrasingContent | BlockContent;
 
 // @public
