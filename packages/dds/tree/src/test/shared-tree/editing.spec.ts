@@ -3223,7 +3223,7 @@ describe("Editing", () => {
 
 	describe("Can abort transactions", () => {
 		/**
-		 * Takes a path to an field containing a single array node, and returns a path to the array node's field.
+		 * Takes a path to a field containing a single array node and returns a path to the array node's field.
 		 */
 		function getInnerSequenceFieldPath(outer: NormalizedFieldUpPath): NormalizedFieldUpPath {
 			return {
