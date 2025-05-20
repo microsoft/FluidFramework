@@ -115,6 +115,7 @@ stages:
 # Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branch.
 - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/test/'))) }}:
   - stage: upload_manifests
+    displayName: Upload release manifests
     dependsOn:
     - publish_npm_public
     - publish_npm_internal_dev
