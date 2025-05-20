@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+// Tests below intentionally use `any` and `unknown`
+/* eslint-disable @rushstack/no-new-null */
+/* eslint-disable unicorn/no-null */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 import type { Jsonable } from "../../index.js";
 
 declare function foo<T>(jsonable: Jsonable<T>): void;
@@ -59,7 +65,7 @@ foo(a2);
 declare const a3: { [key: string]: string };
 foo(a3);
 
-// test "unknown" cannonical Json content
+// test "unknown" canonical Json content
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 declare const json: Json;
 foo(json);
@@ -176,6 +182,7 @@ foo(a14);
 
 // test class with function
 class bar {
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public baz() {}
 }
 // @ts-expect-error should not be jsonable

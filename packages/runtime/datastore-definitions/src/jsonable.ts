@@ -18,6 +18,7 @@
  */
 export type JsonableTypeWith<T> =
 	| undefined
+	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 	| boolean
 	| number
@@ -93,6 +94,7 @@ export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extend
 		? /* 'unknown' => */ JsonableTypeWith<TReplaced>
 		: /* test for Jsonable primitive types */ T extends
 					| undefined /* is not serialized */
+					// eslint-disable-next-line @rushstack/no-new-null
 					| null
 					| boolean
 					| number
