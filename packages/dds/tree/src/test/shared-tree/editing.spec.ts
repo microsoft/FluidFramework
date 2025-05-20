@@ -668,7 +668,6 @@ describe("Editing", () => {
 
 		it("can rebase node deletion over cross-field move of descendant", () => {
 			const tree1 = makeTreeFromJsonSequence([{ foo: ["A"] }]);
-
 			const tree2 = tree1.branch();
 
 			const fooList: NormalizedUpPath = {
@@ -3227,7 +3226,7 @@ describe("Editing", () => {
 
 	describe("Can abort transactions", () => {
 		/**
-		 * Takes a path to an field containing a single array node, and returns a path to the array node's field.
+		 * Takes a path to a field containing a single array node and returns a path to the array node's field.
 		 */
 		function getInnerSequenceFieldPath(outer: NormalizedFieldUpPath): NormalizedFieldUpPath {
 			return {

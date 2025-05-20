@@ -908,7 +908,10 @@ export const IdentifierSchema = sf.object("identifier-object", {
 });
 
 /**
- * Crates a tree using the Json domain with a required root field.
+ * Creates a tree using the Json domain.
+ *
+ * @param json - The JSON-compatible object to initialize the tree with.
+ * @param optionalRoot - If `true`, the root field is optional; otherwise, it is required. Defaults to `false`.
  */
 export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
 	return checkoutWithContent({
