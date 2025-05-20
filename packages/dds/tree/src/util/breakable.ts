@@ -8,14 +8,24 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * An object which can enter a "broken" state where trying to use it is a UsageError.
+ * @remarks
+ * Use {@link WithBreakable} to apply this to another object.
+ * @sealed
  */
 export class Breakable {
 	private brokenBy?: Error;
 
-	public constructor(private readonly name: string) {}
+	public constructor(
+		/**
+		 * A name for a a given breakable scope.
+		 * @remarks
+		 * This is useful for documenting the semantics of a given Breakable and when inspecting things in the debugger, but is currently otherwise unused.
+		 */
+		private readonly name: string,
+	) {}
 
 	/**
-	 * Throws if the object is in the broken state.
+	 * Throws if this object is in the broken state.
 	 * @remarks
 	 * Can use {@link throwIfBroken} to apply this to a method.
 	 */
@@ -47,7 +57,7 @@ export class Breakable {
 	 * @privateRemarks
 	 * If there is a use-case, this should be made public.
 	 */
-	public rethrowCaught(brokenBy: unknown): never {
+	private rethrowCaught(brokenBy: unknown): never {
 		if (brokenBy instanceof Error) {
 			this.break(brokenBy);
 		}
@@ -59,7 +69,7 @@ export class Breakable {
 	/**
 	 * Runs code which should break the object if it throws.
 	 * @remarks
-	 * This also throws if already broken like {@link Breakable.use}.
+	 * Like {@link Breakable.use}, this also throws if already broken.
 	 * Any exceptions this catches are re-thrown.
 	 * Can use {@link breakingMethod} to apply this to a method.
 	 */
@@ -90,6 +100,11 @@ export class Breakable {
  * See decorators {@link breakingMethod} and {@link throwIfBroken} for ease of use.
  */
 export interface WithBreakable {
+	/**
+	 * The breaker for this object.
+	 * @remarks
+	 * If this `breaker` is in the broken state, the `WithBreakable` should be consider in a broken state.
+	 */
 	readonly breaker: Breakable;
 }
 
