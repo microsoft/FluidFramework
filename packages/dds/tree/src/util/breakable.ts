@@ -17,7 +17,7 @@ export class Breakable {
 
 	public constructor(
 		/**
-		 * A name for a a given breakable scope.
+		 * A name for a given breakable scope.
 		 * @remarks
 		 * This is useful for documenting the semantics of a given Breakable and when inspecting things in the debugger, but is currently otherwise unused.
 		 */
@@ -103,7 +103,7 @@ export interface WithBreakable {
 	/**
 	 * The breaker for this object.
 	 * @remarks
-	 * If this `breaker` is in the broken state, the `WithBreakable` should be consider in a broken state.
+	 * If this `breaker` is in the broken state, the `WithBreakable` should be considered in a broken state.
 	 */
 	readonly breaker: Breakable;
 }
