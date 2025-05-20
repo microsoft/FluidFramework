@@ -482,8 +482,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 					// Details for `bar`
 					wrapInSection(
 						[
-							// Summary
-							wrapInSection([ParagraphNode.Empty]), // No summary docs on `bar`
+							// No summary docs on `bar`
+
 							// Beta warning
 							wrapInSection([new ParagraphNode([betaWarningSpan])]),
 							// Signature
@@ -503,8 +503,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 					// Details for `foo`
 					wrapInSection(
 						[
-							// Summary
-							wrapInSection([ParagraphNode.Empty]), // No summary docs on `bar`
+							// No summary docs on `foo`
+
 							// Signature
 							wrapInSection(
 								[FencedCodeBlockNode.createFromPlainText('foo = "foo"', "typescript")],
