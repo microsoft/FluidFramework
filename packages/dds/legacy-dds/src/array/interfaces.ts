@@ -17,10 +17,18 @@ import type { IRevertible } from "./types.js";
  * Basic types for the SharedArray DDS
  * It can be used as a generic constraint (`extends SerializableTypeForSharedArray`) but is
  * *never* meant to be a concrete/real type on its own.
+ *
+ * @internal
  */
 export type SerializableTypeForSharedArray = boolean | number | string | object;
 
-type FullyReadonly<T> = {
+/**
+ *
+ * @typeParam T - The type of the object to make readonly
+ *
+ * @internal
+ */
+export type FullyReadonly<T> = {
 	readonly [P in keyof T]: FullyReadonly<T[P]>;
 };
 
@@ -49,6 +57,8 @@ export interface ISharedArrayEvents extends ISharedObjectEvents {
  * The type of the SharedArray is defined by the type parameter T
  *
  * @typeParam T - The type of the SharedArray
+ *
+ * @internal
  */
 export interface ISharedArray<T extends SerializableTypeForSharedArray>
 	extends ISharedObject<ISharedArrayEvents> {
@@ -64,6 +74,8 @@ export interface ISharedArray<T extends SerializableTypeForSharedArray>
  * The type of the SharedArray is defined by the type parameter T
  *
  * @typeParam T - The type of the SharedArray
+ *
+ * @internal
  */
 export interface ISharedArrayRevertible extends ISharedObject<ISharedArrayEvents> {
 	toggle(entryId: string): void;
@@ -72,6 +84,8 @@ export interface ISharedArrayRevertible extends ISharedObject<ISharedArrayEvents
 
 /**
  * Interface defining the in memory shared array entry of the DDS
+ *
+ * @internal
  */
 export interface SharedArrayEntry<T extends SerializableTypeForSharedArray>
 	extends SharedArrayEntryCore<T> {
@@ -100,6 +114,8 @@ export interface SharedArrayEntry<T extends SerializableTypeForSharedArray>
 
 /**
  * Interface defining the core entry attributes
+ *
+ * @internal
  */
 export interface SharedArrayEntryCore<T extends SerializableTypeForSharedArray> {
 	/**
@@ -130,6 +146,8 @@ export interface SharedArrayEntryCore<T extends SerializableTypeForSharedArray> 
 
 /**
  * Format of the snapshot for the DDS
+ *
+ * @internal
  */
 export interface SnapshotFormat<T> {
 	/**

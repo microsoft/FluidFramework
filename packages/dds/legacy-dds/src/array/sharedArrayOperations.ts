@@ -65,7 +65,10 @@ export interface IToggleMoveOperation {
 	changedToEntryId: string;
 }
 
-type ISharedArrayRevertibleOperation = IToggleOperation | IToggleMoveOperation;
+/**
+ * @internal
+ */
+export type ISharedArrayRevertibleOperation = IToggleOperation | IToggleMoveOperation;
 
 /**
  * @internal

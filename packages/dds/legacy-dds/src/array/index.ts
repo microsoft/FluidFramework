@@ -11,6 +11,16 @@ export type {
 	ISharedArray,
 	ISharedArrayEvents,
 	ISharedArrayRevertible,
+	FullyReadonly,
 } from "./interfaces.js";
-export type { ISharedArrayOperation } from "./sharedArrayOperations.js";
+export type {
+	ISharedArrayOperation,
+	IInsertOperation,
+	IDeleteOperation,
+	IMoveOperation,
+	ISharedArrayRevertibleOperation,
+	OperationType,
+	IToggleMoveOperation,
+	IToggleOperation,
+} from "./sharedArrayOperations.js";
 export type { IRevertible } from "./types.js";
