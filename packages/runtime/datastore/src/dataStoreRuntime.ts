@@ -1138,7 +1138,9 @@ export class FluidDataStoreRuntime
 
 	public submitMessage(
 		type: DataStoreMessageType,
-		content: unknown,
+		// TODO: use something other than `any` here (breaking change)
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+		content: any,
 		localOpMetadata: unknown,
 	): void {
 		this.submit(type, content, localOpMetadata);
@@ -1232,7 +1234,9 @@ export class FluidDataStoreRuntime
 	 */
 	public reSubmit(
 		type: DataStoreMessageType,
-		content: unknown,
+		// TODO: use something other than `any` here (breaking change)
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+		content: any,
 		localOpMetadata: unknown,
 		squash?: boolean,
 	): void {
@@ -1265,7 +1269,9 @@ export class FluidDataStoreRuntime
 	 */
 	public rollback?(
 		type: DataStoreMessageType,
-		content: unknown,
+		// TODO: use something other than `any` here (breaking change)
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+		content: any,
 		localOpMetadata: unknown,
 	): void {
 		this.verifyNotClosed();
