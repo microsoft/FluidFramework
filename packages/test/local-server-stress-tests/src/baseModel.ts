@@ -23,6 +23,8 @@ import type { StressDataObjectOperations } from "./stressDataObject.js";
 export type StressOperations = StressDataObjectOperations | DDSModelOp;
 
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
+	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
+	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
 	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
@@ -57,7 +59,7 @@ export function makeGenerator<T extends BaseOperation>(
 				type: "uploadBlob",
 				tag: state.tag("blob"),
 			}),
-			10,
+			5,
 			// local server doesn't support detached blobs
 			(state) => state.client.container.attachState !== AttachState.Detached,
 		],
@@ -68,6 +70,25 @@ export function makeGenerator<T extends BaseOperation>(
 				tag: state.tag("channel"),
 			}),
 			5,
+		],
+		[
+			async () => ({
+				type: "enterStagingMode",
+			}),
+			5,
+			(state) =>
+				!state.client.entryPoint.inStagingMode() &&
+				state.client.container.attachState !== AttachState.Detached,
+		],
+		[
+			async ({ random }) => ({
+				type: "exitStagingMode",
+				commit: random.bool(),
+			}),
+			25,
+			(state) =>
+				state.client.entryPoint.inStagingMode() &&
+				state.client.container.attachState !== AttachState.Detached,
 		],
 		[DDSModelOpGenerator, 100],
 	]);

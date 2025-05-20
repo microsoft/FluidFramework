@@ -4,7 +4,7 @@
  */
 
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
-import type { Latest, Presence } from "@fluidframework/presence/alpha";
+import type { LatestRaw, Presence } from "@fluidframework/presence/alpha";
 
 import { ICustomUserDetails } from "./app.js";
 import { IDiceRollerController } from "./controller.js";
@@ -108,7 +108,7 @@ function makeDiceValueElement(id: string, value: DiceValues): HTMLDivElement[] {
 
 export function makeDiceValuesView(
 	target: HTMLDivElement,
-	lastRoll: Latest<DiceValues>,
+	lastRoll: LatestRaw<DiceValues>,
 ): void {
 	const children = makeDiceHeaderElement();
 	for (const clientValue of lastRoll.getRemotes()) {
@@ -125,7 +125,7 @@ function addLogEntry(logDiv: HTMLDivElement, entry: string): void {
 
 function makePresenceView(
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
-	presenceConfig?: { presence: Presence; lastRoll: Latest<DiceValues> },
+	presenceConfig?: { presence: Presence; lastRoll: LatestRaw<DiceValues> },
 	audience?: IAzureAudience,
 ): HTMLDivElement {
 	const presenceDiv = document.createElement("div");
@@ -201,7 +201,7 @@ function makePresenceView(
 export function makeAppView(
 	diceRollerControllers: IDiceRollerController[],
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
-	presenceConfig?: { presence: Presence; lastRoll: Latest<DiceValues> },
+	presenceConfig?: { presence: Presence; lastRoll: LatestRaw<DiceValues> },
 	audience?: IAzureAudience,
 ): HTMLDivElement {
 	const diceRollerViews = diceRollerControllers.map((controller) =>

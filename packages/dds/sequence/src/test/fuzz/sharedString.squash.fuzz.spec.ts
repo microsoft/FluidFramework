@@ -163,7 +163,7 @@ describe("SharedString fuzz testing", () => {
 			generatorFactory: () => takeAsync(100, makeSquashOperationGenerator()),
 			exitingStagingModeGeneratorFactory: makeExitingStagingModeGenerator,
 			reducer: makeSquashReducer(),
-			workloadName: "SharedString squashing",
+			workloadName: "squashing",
 			minimizationTransforms: [
 				// Apply all base transformations to op types we inherit from the base model
 				...(baseSharedStringModel.minimizationTransforms?.map(

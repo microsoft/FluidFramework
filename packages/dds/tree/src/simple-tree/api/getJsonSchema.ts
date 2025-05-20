@@ -7,7 +7,7 @@ import type { JsonTreeSchema } from "./jsonSchema.js";
 import type { ImplicitAllowedTypes } from "../schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import type { TreeEncodingOptions } from "./customTree.js";
-import { TreeViewConfigurationAlpha } from "./tree.js";
+import { TreeViewConfigurationAlpha } from "./configuration.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.

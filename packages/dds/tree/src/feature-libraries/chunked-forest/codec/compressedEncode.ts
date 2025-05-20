@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	CursorLocationType,
@@ -34,7 +35,6 @@ import {
 	SpecialField,
 	version,
 } from "./format.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Encode data from `FieldBatch` into an `EncodedChunk`.
@@ -66,7 +66,7 @@ export type Shape = ShapeGeneric<EncodedChunkShape>;
  */
 export interface KeyedFieldEncoder {
 	readonly key: FieldKey;
-	readonly shape: FieldEncoder;
+	readonly encoder: FieldEncoder;
 }
 
 /**

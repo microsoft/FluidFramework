@@ -74,13 +74,13 @@ function createTestSuiteWithInstalledVersion(
 	timeoutMs: number = defaultTimeoutMs,
 ) {
 	return function (this: Mocha.Suite) {
-		let defaultProvider: TestObjectProvider;
+		let provider: TestObjectProvider | undefined;
 		let resetAfterEach: boolean;
-		before(async function () {
+		before("Create TestObjectProvider", async function () {
 			this.timeout(Math.max(defaultTimeoutMs, timeoutMs));
 
 			await installRequiredVersions(requiredVersions);
-			defaultProvider = await getVersionedTestObjectProvider(
+			provider = await getVersionedTestObjectProvider(
 				pkgVersion, // baseVersion
 				pkgVersion, // loaderVersion
 				{
@@ -95,20 +95,39 @@ function createTestSuiteWithInstalledVersion(
 				pkgVersion, // dataRuntimeVersion
 			);
 
-			Object.defineProperty(this, "__fluidTestProvider", { get: () => defaultProvider });
+			Object.defineProperty(this, "__fluidTestProvider", {
+				get: () => provider,
+				configurable: true,
+			});
 		});
 
 		tests.bind(this)((options?: ITestObjectProviderOptions) => {
 			resetAfterEach = options?.resetAfterEach ?? true;
-			if (options?.syncSummarizer === true) {
-				defaultProvider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
+			if (provider === undefined) {
+				throw new Error("Expected provider to be set up by before hook");
 			}
 
-			return defaultProvider;
+			if (options?.syncSummarizer === true) {
+				provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
+			}
+
+			return provider;
 		});
 
-		afterEach(function (done: Mocha.Done) {
-			const logErrors = getUnexpectedLogErrorException(defaultProvider.tracker);
+		afterEach("Reset TestObjectProvider", () => {
+			if (provider === undefined) {
+				throw new Error("Expected provider to be set up by before hook");
+			}
+			if (resetAfterEach) {
+				provider.reset();
+			}
+		});
+
+		afterEach("Verify Container Telemetry", function (done: Mocha.Done) {
+			if (provider === undefined) {
+				throw new Error("Expected provider to be set up by before hook");
+			}
+			const logErrors = getUnexpectedLogErrorException(provider.tracker);
 			// if the test failed for another reason
 			// then we don't need to check errors
 			// and fail the after each as well
@@ -117,10 +136,20 @@ function createTestSuiteWithInstalledVersion(
 			} else {
 				done();
 			}
+		});
 
-			if (resetAfterEach) {
-				defaultProvider.reset();
+		// See remarks in `createCompatSuite` for cleanup justification + tips on debugging memory leaks
+		after("Cleanup TestObjectProvider", function () {
+			if (provider === undefined) {
+				throw new Error("Expected provider to be set up by before hook");
 			}
+			provider.driver.dispose?.();
+			provider = undefined;
+			Object.defineProperty(this, "__fluidTestProvider", {
+				get: () => {
+					throw new Error("Attempted to use __fluidTestProvider after test suite disposed.");
+				},
+			});
 		});
 	};
 }

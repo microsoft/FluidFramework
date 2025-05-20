@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-telemetry",
-	"version": "2.33.0",
+	"version": "2.41.0",
 	"description": "Customer facing Fluid telemetry types and classes for both producing and consuming said telemetry",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -109,7 +109,7 @@
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/chai": "^4.0.0",
 		"@types/mocha": "^10.0.10",
 		"@types/sinon": "^17.0.3",

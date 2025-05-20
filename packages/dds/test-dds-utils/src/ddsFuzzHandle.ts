@@ -43,6 +43,48 @@ export class DDSFuzzHandle extends FluidHandleBase<string> {
 		}
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
+	/**
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 */
+	public bind(handle: IFluidHandle): void {}
+}
+
+export class PoisonedDDSFuzzHandle extends FluidHandleBase<string> implements IPoisonedHandle {
+	private attached: boolean = false;
+
+	public get isAttached(): boolean {
+		return this.routeContext.isAttached && this.attached;
+	}
+
+	public readonly absolutePath: string;
+
+	public readonly poisoned = true;
+
+	constructor(
+		public readonly id: string,
+		public readonly routeContext: IFluidHandleContext,
+		public readonly creatingClientId: string,
+	) {
+		super();
+		this.absolutePath = generateHandleContextPath(id, this.routeContext);
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public async get(): Promise<any> {
+		return this.absolutePath;
+	}
+
+	public attachGraph(): void {
+		if (!this.attached) {
+			this.attached = true;
+		}
+	}
+
+	// eslint-disable-next-line jsdoc/require-description
+	/**
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 */
 	public bind(handle: IFluidHandle): void {}
 }
 

@@ -236,20 +236,6 @@ export class ObjectForest implements IEditableForest {
 					parent.fields.delete(key);
 				}
 			}
-			public replace(
-				newContentSource: FieldKey,
-				range: Range,
-				oldContentDestination: FieldKey,
-				oldContentId: DeltaDetachedNodeId,
-			): void {
-				preEdit();
-				assert(
-					newContentSource !== oldContentDestination,
-					0x7ba /* Replace detached source field and detached destination field must be different */,
-				);
-				this.detachEdit(range, oldContentDestination);
-				this.attachEdit(newContentSource, range.end - range.start, range.start);
-			}
 			public enterNode(index: number): void {
 				cursor.enterNode(index);
 			}
@@ -267,10 +253,7 @@ export class ObjectForest implements IEditableForest {
 		const forestVisitor = new Visitor(this);
 		const announcedVisitors: AnnouncedVisitor[] = [];
 		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
-		const combinedVisitor = combineVisitors(
-			[forestVisitor, ...announcedVisitors],
-			announcedVisitors,
-		);
+		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;
 	}
@@ -559,7 +542,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 // When other forest implementations are created (ex: optimized ones),
 // this function should likely be moved and updated to (at least conditionally) use them.
 /**
- * @returns an implementation of {@link IEditableForest} with no data or schema.
+ * Returns an implementation of {@link IEditableForest} with no content.
  */
 export function buildForest(
 	anchors?: AnchorSet,

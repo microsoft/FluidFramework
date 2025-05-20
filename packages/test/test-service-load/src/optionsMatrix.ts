@@ -16,6 +16,7 @@ import {
 	disabledCompressionConfig,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
+	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
@@ -86,7 +87,7 @@ const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
 
 export function generateRuntimeOptions(
 	seed: number,
-	overrides: Partial<OptionsMatrix<IContainerRuntimeOptionsInternal>> | undefined,
+	overrides: Partial<OptionsMatrix<ContainerRuntimeOptionsInternal>> | undefined,
 ) {
 	const gcOptions = generatePairwiseOptions(
 		applyOverrides(gcOptionsMatrix, overrides?.gcOptions as any),
@@ -98,6 +99,10 @@ export function generateRuntimeOptions(
 		seed,
 	);
 
+	// Warning: this appears to incorrectly use `undefined` as a value in the options matrix
+	// with `exactOptionalPropertyTypes` disabled and thus not complaining. Note that `undefined`
+	// is a valid option for `enableRuntimeIdCompressor`. Probably should replace `undefined`
+	// with a sentinel symbol assuming `undefined` does mean something to overall processing.
 	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptionsInternal> = {
 		gcOptions: [undefined, ...gcOptions],
 		summaryOptions: [undefined, ...summaryOptions],
@@ -111,6 +116,7 @@ export function generateRuntimeOptions(
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
+		createBlobPayloadPending: [true, undefined],
 		explicitSchemaControl: [true, false],
 	};
 
@@ -129,7 +135,7 @@ export function generateRuntimeOptions(
 			(
 				options as {
 					// Remove readonly modifier to allow overriding
-					-readonly [P in keyof IContainerRuntimeOptionsInternal]: IContainerRuntimeOptionsInternal[P];
+					-readonly [P in keyof ContainerRuntimeOptionsInternal]: ContainerRuntimeOptionsInternal[P];
 				}
 			).compressionOptions = disabledCompressionConfig;
 		}

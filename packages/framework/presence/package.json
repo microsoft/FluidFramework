@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/presence",
-	"version": "2.33.0",
+	"version": "2.41.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -123,7 +123,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",

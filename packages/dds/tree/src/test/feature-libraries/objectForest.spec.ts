@@ -18,9 +18,16 @@ import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { fieldJsonCursor } from "../json/index.js";
 
 describe("object-forest", () => {
-	testForest({
-		suiteName: "forest suite",
-		factory: (schema) => buildForest(),
+	describe("forest suite", () => {
+		testForest({
+			factory: (schema) => buildForest(),
+		});
+	});
+
+	describe("forest suite additional assertions", () => {
+		testForest({
+			factory: (schema) => buildForest(undefined, true),
+		});
 	});
 
 	const content: JsonCompatible = {
@@ -65,38 +72,11 @@ describe("object-forest", () => {
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
-				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey, dummyDetachedNodeId),
+				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey, dummyDetachedNodeId, false),
 				(e: Error) =>
 					validateAssertionError(
 						e,
 						/Detach destination field must be different from current field/,
-					),
-			);
-			visitor.exitField(rootFieldKey);
-			visitor.free();
-		});
-		it("replacing content by transferring to and from the same detached field", () => {
-			const forest = buildForest();
-			initializeForest(
-				forest,
-				fieldJsonCursor([content]),
-				testRevisionTagCodec,
-				testIdCompressor,
-			);
-			const visitor = forest.acquireVisitor();
-			visitor.enterField(rootFieldKey);
-			assert.throws(
-				() =>
-					visitor.replace(
-						detachedFieldKey,
-						{ start: 0, end: 1 },
-						detachedFieldKey,
-						dummyDetachedNodeId,
-					),
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						/Replace detached source field and detached destination field must be different/,
 					),
 			);
 			visitor.exitField(rootFieldKey);

@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type {
+	DeepReadonly,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { Attendee } from "./presence.js";
 
 /**
@@ -33,7 +35,7 @@ export interface LatestMetadata {
  * @alpha
  */
 export interface LatestData<T> {
-	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+	value: DeepReadonly<JsonDeserialized<T>>;
 	metadata: LatestMetadata;
 }
 
