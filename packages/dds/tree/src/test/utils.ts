@@ -868,7 +868,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
 
 /**
  * Creates a tree using the Json domain.
- * 
+ *
  * @param json - The JSON-compatible object to initialize the tree with.
  * @param optionalRoot - If `true`, the root field is optional; otherwise, it is required. Defaults to `false`.
  */
