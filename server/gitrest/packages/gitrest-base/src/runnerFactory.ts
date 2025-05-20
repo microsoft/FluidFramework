@@ -22,6 +22,10 @@ import {
 	RedisFsManagerFactory,
 } from "./utils";
 import { IGitrestResourcesCustomizations } from "./customizations";
+import {
+	setupAxiosInterceptorsForAbortSignals,
+	getGlobalAbortControllerContext,
+} from "@fluidframework/server-services-client";
 
 export class GitrestResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -63,6 +67,12 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			fileSystemManagerFactories,
 		);
 		const startupCheck = new services.StartupCheck();
+		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
+		if (axiosAbortSignalEnabled) {
+			setupAxiosInterceptorsForAbortSignals(() =>
+				getGlobalAbortControllerContext().getAbortController(),
+			);
+		}
 
 		return new GitrestResources(
 			config,

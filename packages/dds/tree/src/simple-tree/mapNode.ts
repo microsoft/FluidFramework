@@ -9,7 +9,7 @@ import type {
 	FlexTreeOptionalField,
 	OptionalFieldEditBuilder,
 } from "../feature-libraries/index.js";
-import { getTreeNodeForField } from "./proxies.js";
+import { getTreeNodeForField } from "./getTreeNodeForField.js";
 import {
 	createFieldSchema,
 	FieldKind,
