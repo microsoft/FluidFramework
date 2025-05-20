@@ -45,6 +45,7 @@ export interface OdspConnectionConfig {
 
 // @beta
 export interface OdspContainerServices {
+    attach(odspProps?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
     audience: IOdspAudience;
 }
 
