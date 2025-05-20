@@ -838,13 +838,6 @@ export interface SingleLineDocumentationNode<TData extends object = Data> extend
 }
 
 // @public
-export class SingleLineSpanNode extends SpanNode<SingleLineDocumentationNode> implements SingleLineDocumentationNode {
-    constructor(children: SingleLineDocumentationNode[], formatting?: TextFormatting);
-    static createFromPlainText(text: string, formatting?: TextFormatting): SingleLineSpanNode;
-    get singleLine(): true;
-}
-
-// @public
 export class SpanNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends DocumentationParentNodeBase<TDocumentationNode> {
     constructor(children: TDocumentationNode[], formatting?: TextFormatting);
     static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode;

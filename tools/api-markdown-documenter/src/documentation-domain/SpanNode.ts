@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type DocumentationNode,
-	DocumentationParentNodeBase,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { PlainTextNode } from "./PlainTextNode.js";
 import type { TextFormatting } from "./TextFormatting.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
@@ -76,37 +71,5 @@ export class SpanNode<
 	 */
 	public static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode {
 		return new SpanNode(createNodesFromPlainText(text), formatting);
-	}
-}
-
-/**
- * A {@link SpanNode} that contractually fits on a single line.
- *
- * @public
- */
-export class SingleLineSpanNode
-	extends SpanNode<SingleLineDocumentationNode>
-	implements SingleLineDocumentationNode
-{
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): true {
-		return true;
-	}
-
-	public constructor(children: SingleLineDocumentationNode[], formatting?: TextFormatting) {
-		super(children, formatting);
-	}
-
-	/**
-	 * Generates an `SingleLineSpanNode` from the provided string.
-	 * @param text - The node contents.
-	 */
-	public static createFromPlainText(
-		text: string,
-		formatting?: TextFormatting,
-	): SingleLineSpanNode {
-		return new SingleLineSpanNode([new PlainTextNode(text)], formatting);
 	}
 }

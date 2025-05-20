@@ -46,7 +46,6 @@ import {
 	type SectionContent,
 	SectionNode,
 	type SingleLineDocumentationNode,
-	SingleLineSpanNode,
 	SpanNode,
 	UnorderedListNode,
 } from "../../documentation-domain/index.js";
@@ -344,7 +343,7 @@ export function createTypeParametersSection(
 export function createExcerptSpanWithHyperlinks(
 	excerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
-): SingleLineSpanNode | undefined {
+): SpanNode | undefined {
 	if (excerpt.isEmpty) {
 		return undefined;
 	}
@@ -380,7 +379,7 @@ export function createExcerptSpanWithHyperlinks(
 		}
 	}
 
-	return new SingleLineSpanNode(children);
+	return new SpanNode(children);
 }
 
 /**
