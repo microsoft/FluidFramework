@@ -184,8 +184,7 @@ foo(a14);
 
 // test class with function
 class bar {
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public baz() {}
+	public baz(): void {}
 }
 // @ts-expect-error should not be jsonable
 foo(new bar());
