@@ -190,7 +190,7 @@ export function create(
 			tenantCustomData,
 			enableSharedKeyAccess,
 			enablePrivateKeyAccess,
-			publicNetworkAccessEnabled
+			publicNetworkAccessEnabled,
 		);
 		handleResponse(tenantP, response);
 	});
