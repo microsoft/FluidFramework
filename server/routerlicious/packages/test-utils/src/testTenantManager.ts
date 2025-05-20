@@ -78,6 +78,7 @@ export class TestTenantManager implements ITenantManager {
 			customData: {},
 			enableSharedKeyAccess: true,
 			enablePrivateKeyAccess: false,
+			publicNetworkAccessEnabled: true,
 		};
 	}
 
