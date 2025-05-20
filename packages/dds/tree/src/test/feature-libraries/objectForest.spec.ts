@@ -18,9 +18,16 @@ import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { fieldJsonCursor } from "../json/index.js";
 
 describe("object-forest", () => {
-	testForest({
-		suiteName: "forest suite",
-		factory: (schema) => buildForest(),
+	describe("forest suite", () => {
+		testForest({
+			factory: (schema) => buildForest(),
+		});
+	});
+
+	describe("forest suite additional assertions", () => {
+		testForest({
+			factory: (schema) => buildForest(undefined, true),
+		});
 	});
 
 	const content: JsonCompatible = {
