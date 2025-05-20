@@ -201,22 +201,22 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.idCompressor;
 	}
 
-	public get IFluidHandleContext() {
+	public get IFluidHandleContext(): this {
 		return this;
 	}
 
-	public get rootRoutingContext() {
+	public get rootRoutingContext(): this {
 		return this;
 	}
-	public get channelsRoutingContext() {
+	public get channelsRoutingContext(): this {
 		return this;
 	}
-	public get objectsRoutingContext() {
+	public get objectsRoutingContext(): this {
 		return this;
 	}
 
 	private _disposed = false;
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 
@@ -234,6 +234,8 @@ export class FluidDataStoreRuntime
 
 	public readonly id: string;
 
+	// TODO: use something other than `any` here (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly options: Record<string | number, any>;
 	public readonly deltaManagerInternal: IDeltaManager<
 		ISequencedDocumentMessage,
@@ -508,7 +510,7 @@ export class FluidDataStoreRuntime
 	 * IDs cannot start with "_" as it could result in collision of IDs with auto-assigned (by FF) short IDs.
 	 * @param id - channel ID.
 	 */
-	protected validateChannelId(id: string) {
+	protected validateChannelId(id: string): void {
 		if (id.includes("/")) {
 			throw new UsageError(`Id cannot contain slashes: ${id}`);
 		}
@@ -1134,7 +1136,11 @@ export class FluidDataStoreRuntime
 		}
 	}
 
-	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+	public submitMessage(
+		type: DataStoreMessageType,
+		content: unknown,
+		localOpMetadata: unknown,
+	): void {
 		this.submit(type, content, localOpMetadata);
 	}
 
@@ -1144,9 +1150,9 @@ export class FluidDataStoreRuntime
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: unknown, targetClientId?: string) {
+	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
-		return this.dataStoreContext.submitSignal(type, content, targetClientId);
+		this.dataStoreContext.submitSignal(type, content, targetClientId);
 	}
 
 	/**
@@ -1203,14 +1209,14 @@ export class FluidDataStoreRuntime
 		context.makeVisible();
 	}
 
-	private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
+	private submitChannelOp(address: string, contents: unknown, localOpMetadata: unknown): void {
 		const envelope: IEnvelope = { address, contents };
 		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
 	}
 
 	private submit(
 		type: DataStoreMessageType,
-		content: any,
+		content: unknown,
 		localOpMetadata: unknown = undefined,
 	): void {
 		this.verifyNotClosed();
@@ -1226,10 +1232,10 @@ export class FluidDataStoreRuntime
 	 */
 	public reSubmit(
 		type: DataStoreMessageType,
-		content: any,
+		content: unknown,
 		localOpMetadata: unknown,
 		squash?: boolean,
-	) {
+	): void {
 		this.verifyNotClosed();
 
 		switch (type) {
@@ -1257,7 +1263,11 @@ export class FluidDataStoreRuntime
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	public rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+	public rollback?(
+		type: DataStoreMessageType,
+		content: unknown,
+		localOpMetadata: unknown,
+	): void {
 		this.verifyNotClosed();
 
 		switch (type) {
@@ -1275,10 +1285,14 @@ export class FluidDataStoreRuntime
 		}
 	}
 
+	// TODO: use something other than `any` here
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async applyStashedOp(content: any): Promise<unknown> {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const type = content?.type as DataStoreMessageType;
 		switch (type) {
 			case DataStoreMessageType.Attach: {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				const attachMessage = content.content as IAttachMessage;
 
 				const flatBlobs = new Map<string, ArrayBufferLike>();
@@ -1300,6 +1314,7 @@ export class FluidDataStoreRuntime
 				return;
 			}
 			case DataStoreMessageType.ChannelOp: {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				const envelope = content.content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
@@ -1317,23 +1332,25 @@ export class FluidDataStoreRuntime
 		this.dataStoreContext.setChannelDirty(address);
 	}
 
-	private attachListener() {
+	private attachListener(): void {
 		this.setMaxListeners(Number.MAX_SAFE_INTEGER);
 
 		// back-compat, to be removed in the future.
 		// Added in "2.0.0-rc.2.0.0" timeframe.
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 		(this.dataStoreContext as any).once?.("attaching", () => {
 			this.setAttachState(AttachState.Attaching);
 		});
 
 		// back-compat, to be removed in the future.
 		// Added in "2.0.0-rc.2.0.0" timeframe.
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 		(this.dataStoreContext as any).once?.("attached", () => {
 			this.setAttachState(AttachState.Attached);
 		});
 	}
 
-	private verifyNotClosed() {
+	private verifyNotClosed(): void {
 		if (this._disposed) {
 			throw new LoggingError("Runtime is closed");
 		}
@@ -1348,7 +1365,7 @@ export class FluidDataStoreRuntime
 		eventName: string,
 		channelId: string,
 		channelType: string,
-	) {
+	): void {
 		if (this.clientDetails.type !== "summarizer" || this.localChangesTelemetryCount <= 0) {
 			return;
 		}
@@ -1453,9 +1470,9 @@ export const mixinSummaryHandler = (
 		runtime: FluidDataStoreRuntime,
 	) => Promise<{ path: string[]; content: string } | undefined>,
 	Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-) =>
+): typeof FluidDataStoreRuntime =>
 	class RuntimeWithSummarizerHandler extends Base {
-		private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
+		private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string): void {
 			const firstName = path.shift();
 			if (firstName === undefined) {
 				throw new LoggingError("Path can't be empty");
@@ -1478,7 +1495,7 @@ export const mixinSummaryHandler = (
 			summary.summary.tree[firstName] = blob;
 		}
 
-		async summarize(...args: any[]) {
+		async summarize(...args: any[]): Promise<ISummaryTreeWithStats> {
 			const summary = await super.summarize(...args);
 
 			try {
