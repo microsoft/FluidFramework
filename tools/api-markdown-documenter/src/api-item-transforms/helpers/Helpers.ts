@@ -42,8 +42,6 @@ import {
 	ParagraphNode,
 	PlainTextNode,
 	SectionNode,
-	type SingleLineDocumentationNode,
-	SingleLineSpanNode,
 	SpanNode,
 	UnorderedListNode,
 } from "../../documentation-domain/index.js";
@@ -345,12 +343,12 @@ export function createTypeParametersSection(
 export function createExcerptSpanWithHyperlinks(
 	excerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
-): SingleLineSpanNode | undefined {
+): SpanNode | undefined {
 	if (excerpt.isEmpty) {
 		return undefined;
 	}
 
-	const children: SingleLineDocumentationNode[] = [];
+	const children: DocumentationNode[] = [];
 	for (const token of excerpt.spannedTokens) {
 		// Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
 		// the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
@@ -381,7 +379,7 @@ export function createExcerptSpanWithHyperlinks(
 		}
 	}
 
-	return new SingleLineSpanNode(children);
+	return new SpanNode(children);
 }
 
 /**
