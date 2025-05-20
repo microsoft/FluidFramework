@@ -31,7 +31,7 @@ export enum TableCellKind {
 }
 
 /**
- * The types of child nodes that can be contained within a table cell.
+ * The types of child nodes that can be contained within a {@link TableCellNode}.
  *
  * @public
  */

@@ -802,8 +802,11 @@ export interface SingleLineDocumentationNode<TData extends object = Data> extend
 }
 
 // @public
-export class SpanNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends DocumentationParentNodeBase<TDocumentationNode> {
-    constructor(children: TDocumentationNode[], formatting?: TextFormatting);
+export type SpanContent = PhrasingContent | BlockContent;
+
+// @public
+export class SpanNode extends DocumentationParentNodeBase<SpanContent> {
+    constructor(children: SpanContent[], formatting?: TextFormatting);
     static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode;
     static readonly Empty: SpanNode;
     readonly textFormatting?: TextFormatting;

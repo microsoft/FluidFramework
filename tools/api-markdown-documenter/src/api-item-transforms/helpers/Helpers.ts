@@ -45,7 +45,7 @@ import {
 	PlainTextNode,
 	type SectionContent,
 	SectionNode,
-	type SingleLineDocumentationNode,
+	type SpanContent,
 	SpanNode,
 	UnorderedListNode,
 } from "../../documentation-domain/index.js";
@@ -287,7 +287,7 @@ function createHeritageTypeListSpan(
 			}
 		}
 
-		const renderedList = injectSeparator<DocumentationNode>(
+		const renderedList = injectSeparator<SpanContent>(
 			renderedHeritageTypes,
 			new PlainTextNode(", "),
 		);
@@ -348,7 +348,7 @@ export function createExcerptSpanWithHyperlinks(
 		return undefined;
 	}
 
-	const children: SingleLineDocumentationNode[] = [];
+	const children: SpanContent[] = [];
 	for (const token of excerpt.spannedTokens) {
 		// Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
 		// the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply

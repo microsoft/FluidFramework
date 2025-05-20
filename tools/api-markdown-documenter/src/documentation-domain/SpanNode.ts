@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode.js";
+import type { BlockContent } from "./BlockContent.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import type { TextFormatting } from "./TextFormatting.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
@@ -12,6 +14,13 @@ import { createNodesFromPlainText } from "./Utilities.js";
 // It just groups child nodes with formatting we want applied to them.
 // It also probably makes sense to not wrap the output in a `<span> tag in HTML, since the formatting tags already
 // group the child content.
+
+/**
+ * The types of child nodes that can be contained within a {@link SpanNode}.
+ *
+ * @public
+ */
+export type SpanContent = PhrasingContent | BlockContent;
 
 /**
  * A grouping of text, potentially spanning multiple lines, which may have some {@link TextFormatting}.
@@ -40,9 +49,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  *
  * @public
  */
-export class SpanNode<
-	TDocumentationNode extends DocumentationNode = DocumentationNode,
-> extends DocumentationParentNodeBase<TDocumentationNode> {
+export class SpanNode extends DocumentationParentNodeBase<SpanContent> {
 	/**
 	 * Static singleton representing an empty Span Text node.
 	 */
@@ -60,7 +67,7 @@ export class SpanNode<
 	 */
 	public readonly textFormatting?: TextFormatting;
 
-	public constructor(children: TDocumentationNode[], formatting?: TextFormatting) {
+	public constructor(children: SpanContent[], formatting?: TextFormatting) {
 		super(children);
 		this.textFormatting = formatting;
 	}
