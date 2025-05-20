@@ -91,6 +91,7 @@ describe("Local Server Stress with rollback", () => {
 		saveFailures,
 		// saveSuccesses,
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
+		only: [91],
 		skip: [
 			...[12, 28, 30], // Key not found or value not matching key
 			...[15, 38, 51, 63], // Number of keys not same (directory)
