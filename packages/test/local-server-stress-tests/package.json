@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-stress-tests",
-	"version": "2.33.0",
+	"version": "2.41.0",
 	"private": true,
 	"description": "Stress tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -16,7 +16,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "tsc --project ./src/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -104,6 +104,7 @@
 			"build:test": [
 				"^tsc",
 				"^api-extractor:commonjs",
+				"@fluidframework/id-compressor#build:test",
 				"@fluidframework/sequence#build:test",
 				"@fluidframework/map#build:test"
 			]

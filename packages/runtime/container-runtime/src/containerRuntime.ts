@@ -85,6 +85,11 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	createSessionId,
+	deserializeIdCompressor,
+} from "@fluidframework/id-compressor/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -169,10 +174,11 @@ import {
 	wrapContext,
 } from "./channelCollection.js";
 import {
-	defaultCompatibilityVersion,
-	getCompatibilityVersionDefaults,
-	isValidCompatVersion,
+	defaultMinVersionForCollab,
+	getMinVersionForCollabDefaults,
+	isValidMinVersionForCollab,
 	type RuntimeOptionsAffectingDocSchema,
+	type MinimumVersionForCollab,
 } from "./compatUtils.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
@@ -208,7 +214,6 @@ import {
 } from "./messageTypes.js";
 import { ISavedOpMetadata } from "./metadata.js";
 import {
-	BatchId,
 	LocalBatchMessage,
 	BatchStartInfo,
 	DuplicateBatchDetector,
@@ -221,14 +226,16 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 	type OutboundBatch,
+	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	PendingMessageResubmitData,
 	IPendingLocalState,
 	PendingStateManager,
+	type PendingBatchResubmitMetadata,
 } from "./pendingStateManager.js";
-import { RunCounter } from "./runCounter.js";
+import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
 	runtimeCompatDetailsForLoader,
 	validateLoaderCompatibility,
@@ -434,10 +441,10 @@ export interface ContainerRuntimeOptions {
 	readonly explicitSchemaControl: boolean;
 
 	/**
-	 * Create blob handles with pending payloads when calling createBlob (default is false).
-	 * When enabled, createBlob will return a handle before the blob upload completes.
+	 * Create blob handles with pending payloads when calling createBlob (default is `undefined` (disabled)).
+	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
 	 */
-	readonly createBlobPayloadPending: boolean;
+	readonly createBlobPayloadPending: true | undefined;
 }
 
 /**
@@ -533,6 +540,8 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	viaHandle: false,
 	allowTombstone: false,
 };
+
+const defaultStagingCommitOptions = { squash: false };
 
 /**
  * @deprecated
@@ -801,6 +810,27 @@ export interface LoadContainerRuntimeParams {
 	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 * */
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * The input should be a string that represents the minimum version of the FF runtime that should be
+	 * supported for collaboration. The format of the string must be in valid semver format.
+	 *
+	 * The inputted version will be used to determine the default configuration for
+	 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified version.
+	 *
+	 * @example
+	 * minVersionForCollab: "2.0.0"
+	 *
+	 * @privateRemarks
+	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
+	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
+	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
+	 * understand the new op type. If a customer were to set minVersionForCollab to 2.0.0, then `bar` would be set to
+	 * enable `foo` by default. If a customer were to set minVersionForCollab to 1.0.0, then `bar` would be set to
+	 * disable `foo` by default.
+	 */
+	minVersionForCollab?: MinimumVersionForCollab;
 }
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
@@ -850,6 +880,7 @@ export class ContainerRuntime
 	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
 	 * This allows mixin classes to leverage this method to define their own async initializer.
 	 * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * - minVersionForCollab - Minimum version of the FF runtime that this runtime supports collaboration with.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
 	public static async loadRuntime(params: {
@@ -864,6 +895,7 @@ export class ContainerRuntime
 		 */
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		minVersionForCollab?: MinimumVersionForCollab;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
@@ -874,6 +906,7 @@ export class ContainerRuntime
 			runtimeOptions = {} satisfies IContainerRuntimeOptionsInternal,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
+			minVersionForCollab = defaultMinVersionForCollab,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -895,22 +928,19 @@ export class ContainerRuntime
 		const mc = loggerToMonitoringContext(logger);
 
 		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
-		// based on the compatibility mode.
-		// For example, if compatibility mode is set to "1.0.0", the default configs will ensure compatibility with FF runtime
-		// 1.0.0 or later. If the compatibility mode is set to "2.10.0", the default values will be generated to ensure compatibility
+		// based on the minVersionForCollab.
+		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
+		// 1.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
-		// TODO: We will add in a way for users to pass in compatibilityVersion in a follow up PR.
-		const compatibilityVersion = defaultCompatibilityVersion;
-		if (!isValidCompatVersion(compatibilityVersion)) {
+		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(
-				`Invalid compatibility version: ${compatibilityVersion}. It must be an existing FF version (i.e. 2.22.1).`,
+				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 2.22.1).`,
 			);
 		}
-		const defaultVersionDependentConfigs =
-			getCompatibilityVersionDefaults(compatibilityVersion);
+		const defaultsAffectingDocSchema = getMinVersionForCollabDefaults(minVersionForCollab);
 
 		// The following are the default values for the options that do not affect the DocumentSchema.
-		const defaultConfigsNonVersionDependent: Omit<
+		const defaultsNotAffectingDocSchema: Omit<
 			ContainerRuntimeOptionsInternal,
 			keyof RuntimeOptionsAffectingDocSchema
 		> = {
@@ -922,8 +952,8 @@ export class ContainerRuntime
 		};
 
 		const defaultConfigs = {
-			...defaultVersionDependentConfigs,
-			...defaultConfigsNonVersionDependent,
+			...defaultsAffectingDocSchema,
+			...defaultsNotAffectingDocSchema,
 		};
 
 		// Here we set each option to its corresponding default config value if it's not provided in runtimeOptions.
@@ -1078,11 +1108,7 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
-		const createIdCompressorFn = async (): Promise<IIdCompressor & IIdCompressorCore> => {
-			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
-				"@fluidframework/id-compressor/internal"
-			);
-
+		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
 			 * approximately 5% of all clients. Only the given percentage of sessions will emit telemetry.
@@ -1175,6 +1201,7 @@ export class ContainerRuntime
 			documentSchemaController,
 			featureGatesForTelemetry,
 			provideEntryPoint,
+			minVersionForCollab,
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
@@ -1294,12 +1321,6 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * True if we have ID compressor loading in-flight (async operation). Useful only for
-	 * this.sessionSchema.idCompressorMode === "delayed" mode
-	 */
-	protected _loadIdCompressor: Promise<void> | undefined;
-
-	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.generateDocumentUniqueId}
 	 */
 	public generateDocumentUniqueId(): string | number {
@@ -1344,7 +1365,7 @@ export class ContainerRuntime
 
 	private readonly maxConsecutiveReconnects: number;
 
-	private readonly batchRunner = new RunCounter();
+	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
 	private readonly offlineEnabled: boolean;
 	private flushTaskExists = false;
@@ -1506,11 +1527,12 @@ export class ContainerRuntime
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
-		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
+		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
+		private readonly minVersionForCollab: MinimumVersionForCollab,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -2043,6 +2065,7 @@ export class ContainerRuntime
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+			minVersionForCollab: this.minVersionForCollab,
 		});
 
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
@@ -2075,7 +2098,6 @@ export class ContainerRuntime
 		// As it's implemented right now (with async initialization), this will only work for "off" -> "delayed" transitions.
 		// Anything else is too risky, and requires ability to initialize ID compressor synchronously!
 		if (schema.runtime.idCompressorMode !== undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
 		}
 	}
@@ -2123,7 +2145,7 @@ export class ContainerRuntime
 			this.sessionSchema.idCompressorMode === "on" ||
 			(this.sessionSchema.idCompressorMode === "delayed" && this.connected)
 		) {
-			this._idCompressor = await this.createIdCompressor();
+			this._idCompressor = this.createIdCompressorFn();
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
@@ -2647,7 +2669,12 @@ export class ContainerRuntime
 		let newState: boolean;
 
 		try {
-			this.submitIdAllocationOpIfNeeded(true);
+			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
+			// the corresponding ranges resubmitted (note this call replaces the typical resubmit flow).
+			// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
+			// before staging mode so we can simply say staged: false.
+			this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
+
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
 		} finally {
@@ -2721,29 +2748,20 @@ export class ContainerRuntime
 		}
 	}
 
-	private async loadIdCompressor(): Promise<void | undefined> {
+	private loadIdCompressor(): void {
 		if (
 			this._idCompressor === undefined &&
-			this.sessionSchema.idCompressorMode !== undefined &&
-			this._loadIdCompressor === undefined
+			this.sessionSchema.idCompressorMode !== undefined
 		) {
-			this._loadIdCompressor = this.createIdCompressor()
-				.then((compressor) => {
-					// Finalize any ranges we received while the compressor was turned off.
-					const ops = this.pendingIdCompressorOps;
-					this.pendingIdCompressorOps = [];
-					for (const range of ops) {
-						compressor.finalizeCreationRange(range);
-					}
-					assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
-					this._idCompressor = compressor;
-				})
-				.catch((error) => {
-					this.mc.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
-					throw error;
-				});
+			this._idCompressor = this.createIdCompressorFn();
+			// Finalize any ranges we received while the compressor was turned off.
+			const ops = this.pendingIdCompressorOps;
+			this.pendingIdCompressorOps = [];
+			for (const range of ops) {
+				this._idCompressor.finalizeCreationRange(range);
+			}
+			assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
 		}
-		return this._loadIdCompressor;
 	}
 
 	private readonly notifyReadOnlyState = (readonly: boolean): void =>
@@ -2759,7 +2777,6 @@ export class ContainerRuntime
 		);
 
 		if (connected && this.sessionSchema.idCompressorMode === "delayed") {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
 		}
 		if (connected === false && this.delayConnectClientId !== undefined) {
@@ -3384,23 +3401,20 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Flush the pending ops manually.
-	 * This method is expected to be called at the end of a batch.
+	 * Flush the current batch of ops to the ordering service for sequencing
+	 * This method is not expected to be called in the middle of a batch.
 	 * @remarks - If it throws (e.g. if the batch is too large to send), the container will be closed.
 	 *
-	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
-	 * with the given Batch ID, which must be preserved
-	 * @param resubmittingStagedBatch - If defined, indicates this is a resubmission of a batch that is staged,
-	 * meaning it should not be sent to the ordering service yet.
+	 * @param resubmitInfo - If defined, indicates this is a resubmission of a batch with the given Batch info needed for resubmit.
 	 */
-	private flush(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
+	private flush(resubmitInfo?: BatchResubmitInfo): void {
 		try {
 			assert(
 				!this.batchRunner.running,
 				0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
 			);
 
-			this.outbox.flush(resubmittingBatchId, resubmittingStagedBatch);
+			this.outbox.flush(resubmitInfo);
 			assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 		} catch (error) {
 			const error2 = normalizeError(error, {
@@ -3476,7 +3490,8 @@ export class ContainerRuntime
 				throw error; // throw the original error for the consumer of the runtime
 			}
 		});
-		stageControls?.commitChanges();
+
+		stageControls?.commitChanges({ squash: false });
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
 		if (this.flushMode !== FlushMode.TurnBased && !this.batchRunner.running) {
@@ -3512,16 +3527,23 @@ export class ContainerRuntime
 		// Make sure all BatchManagers are empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.outbox.flush();
+
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			// Final flush of any last staged changes
-			this.outbox.flush(undefined, true /* staged */);
+			this.outbox.flush();
 
 			this.stageControls = undefined;
 
+			// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
+			// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
+			this.submitIdAllocationOpIfNeeded({ staged: false });
 			discardOrCommit();
+
+			this.channelCollection.notifyStagingMode(false);
 		};
 
-		const stageControls = {
+		// eslint-disable-next-line import/no-deprecated
+		const stageControls: StageControlsExperimental = {
 			discardChanges: exitStagingMode(() => {
 				// Pop all staged batches from the PSM and roll them back in LIFO order
 				this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
@@ -3535,18 +3557,21 @@ export class ContainerRuntime
 					this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
 				}
 			}),
-			commitChanges: exitStagingMode(() => {
-				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
-				// FUTURE: Have this do squash-rebase instead of resubmitting all intermediate changes
-				if (this.connected) {
-					this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
-				} else {
-					this.pendingStateManager.clearStagingFlags();
-				}
-			}),
+			commitChanges: (optionsParam) => {
+				const options = { ...defaultStagingCommitOptions, ...optionsParam };
+				return exitStagingMode(() => {
+					this.pendingStateManager.replayPendingStates({
+						onlyStagedBatches: true,
+						squash: options.squash ?? false,
+					});
+				})();
+			},
 		};
 
-		return (this.stageControls = stageControls);
+		this.stageControls = stageControls;
+		this.channelCollection.notifyStagingMode(true);
+
+		return this.stageControls;
 	};
 
 	/**
@@ -3778,8 +3803,7 @@ export class ContainerRuntime
 		wrapSummaryInChannelsTree(summarizeResult);
 		const pathPartsForChildren = [channelsTreeName];
 
-		// Ensure that ID compressor had a chance to load, if we are using delayed mode.
-		await this.loadIdCompressor();
+		this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
 		return {
@@ -4542,7 +4566,13 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
+	private submitIdAllocationOpIfNeeded({
+		resubmitOutstandingRanges = false,
+		staged,
+	}: {
+		resubmitOutstandingRanges?: boolean;
+		staged: boolean;
+	}): void {
 		if (this._idCompressor) {
 			const idRange = resubmitOutstandingRanges
 				? this._idCompressor.takeUnfinalizedCreationRange()
@@ -4556,9 +4586,7 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: LocalBatchMessage = {
 					runtimeOp: idAllocationMessage,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					// Note: For now, we will never stage ID Allocation messages.
-					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
-					staged: false,
+					staged,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
@@ -4600,7 +4628,13 @@ export class ContainerRuntime
 		);
 
 		try {
-			this.submitIdAllocationOpIfNeeded(false);
+			// If we're resubmitting a batch, keep the same "staged" value as before.  Otherwise, use the current "global" state.
+			const staged = this.batchRunner.resubmitInfo?.staged ?? this.inStagingMode;
+
+			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
+			if (!staged) {
+				this.submitIdAllocationOpIfNeeded({ staged: false });
+			}
 
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
@@ -4622,7 +4656,7 @@ export class ContainerRuntime
 				this.outbox.submit({
 					runtimeOp: msg,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					staged: this.inStagingMode,
+					staged,
 				});
 			}
 
@@ -4633,7 +4667,7 @@ export class ContainerRuntime
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-				staged: this.inStagingMode,
+				staged,
 			};
 			if (type === ContainerMessageType.BlobAttach) {
 				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
@@ -4738,22 +4772,26 @@ export class ContainerRuntime
 	 */
 	private reSubmitBatch(
 		batch: PendingMessageResubmitData[],
-		batchId: BatchId,
-		staged: boolean,
+		{ batchId, staged, squash }: PendingBatchResubmitMetadata,
 	): void {
+		const resubmitInfo = {
+			// Only include Batch ID if "Offline Load" feature is enabled
+			// It's only needed to identify batches across container forks arising from misuse of offline load.
+			batchId: this.offlineEnabled ? batchId : undefined,
+			staged,
+		};
+
 		this.batchRunner.run(() => {
 			for (const message of batch) {
-				this.reSubmit(message);
+				this.reSubmit(message, squash);
 			}
-		});
+		}, resubmitInfo);
 
-		// Only include Batch ID if "Offline Load" feature is enabled
-		// It's only needed to identify batches across container forks arising from misuse of offline load.
-		this.flush(this.offlineEnabled ? batchId : undefined, staged);
+		this.flush(resubmitInfo);
 	}
 
-	private reSubmit(message: PendingMessageResubmitData): void {
-		this.reSubmitCore(message.runtimeOp, message.localOpMetadata, message.opMetadata);
+	private reSubmit(message: PendingMessageResubmitData, squash: boolean): void {
+		this.reSubmitCore(message.runtimeOp, message.localOpMetadata, message.opMetadata, squash);
 	}
 
 	/**
@@ -4767,6 +4805,7 @@ export class ContainerRuntime
 		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
+		squash: boolean,
 	): void {
 		assert(
 			this._summarizer === undefined,
@@ -4778,7 +4817,12 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias: {
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
-				this.channelCollection.reSubmit(message.type, message.contents, localOpMetadata);
+				this.channelCollection.reSubmit(
+					message.type,
+					message.contents,
+					localOpMetadata,
+					squash,
+				);
 				break;
 			}
 			case ContainerMessageType.IdAllocation: {

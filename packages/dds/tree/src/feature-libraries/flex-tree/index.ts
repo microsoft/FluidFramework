@@ -28,7 +28,6 @@ export {
 } from "./navigation.js";
 
 export {
-	getTreeContext,
 	type FlexTreeContext,
 	type FlexTreeHydratedContext,
 	Context,

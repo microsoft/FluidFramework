@@ -4,21 +4,23 @@
  */
 
 import { Lazy } from "@fluidframework/core-utils/internal";
-import {
-	type FlexTreeNode,
-	type FlexTreeOptionalField,
-	type OptionalFieldEditBuilder,
-	getSchemaAndPolicy,
+import type {
+	FlexTreeNode,
+	FlexTreeOptionalField,
+	OptionalFieldEditBuilder,
 } from "../feature-libraries/index.js";
-import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
+import { getTreeNodeForField } from "./getTreeNodeForField.js";
 import {
 	createFieldSchema,
 	FieldKind,
 	normalizeAllowedTypes,
+	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
 	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	getKernel,
@@ -39,6 +41,7 @@ import {
 	type FactoryContent,
 	type InsertableContent,
 } from "./toMapTree.js";
+import { prepareForInsertion } from "./prepareForInsertion.js";
 import { brand, count, type RestrictiveStringRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import type { ExclusiveMapTree } from "../core/index.js";
@@ -188,17 +191,13 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);
 		const node = this.innerNode;
-		const mapTree = mapTreeFromNodeData(
+		const mapTree = prepareForInsertion(
 			value as InsertableContent | undefined,
 			createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
-			node.context.isHydrated() ? node.context.nodeKeyManager : undefined,
-			getSchemaAndPolicy(node),
+			node.context,
 		);
 
 		const field = node.getBoxed(brand(key));
-		if (node.context.isHydrated()) {
-			prepareContentForHydration(mapTree, node.context.checkout.forest);
-		}
 
 		this.editor(key).set(mapTree, field.length === 0);
 		return this;
@@ -233,7 +232,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
 	TName extends string,
-	const T extends ImplicitAllowedTypes,
+	const T extends ImplicitAnnotatedAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -243,14 +242,19 @@ export function mapSchema<
 	useMapPrototype: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ) {
-	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+	const lazyChildTypes = new Lazy(() =>
+		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
+	);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
 	let unhydratedContext: Context;
 
-	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
+	class Schema
+		extends CustomMapNodeBase<UnannotateImplicitAllowedTypes<T>>
+		implements TreeMapNode<UnannotateImplicitAllowedTypes<T>>
+	{
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,

@@ -10,17 +10,18 @@ import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
-	getSchemaAndPolicy,
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
-import { prepareContentForHydration } from "./proxies.js";
 import {
 	normalizeAllowedTypes,
+	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	type WithType,
@@ -38,6 +39,7 @@ import {
 	type TreeNodeSchemaClass,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
+import { prepareArrayContentForInsertion } from "./prepareForInsertion.js";
 import {
 	getKernel,
 	UnhydratedFlexTreeNode,
@@ -170,8 +172,11 @@ export interface TreeArrayNode<
 	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
 	 *
 	 * - `0` (between the start of the array and `A`'s original position)
+	 *
 	 * - `1` (between `A`'s original position and `B`'s original position)
+	 *
 	 * - `2` (between `B`'s original position and `C`'s original position)
+	 *
 	 * - `3` (between `C`'s original position and the end of the array)
 	 *
 	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
@@ -180,13 +185,17 @@ export interface TreeArrayNode<
 	 * or relative to the start or end of the array:
 	 *
 	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 *
 	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 *
 	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 *
 	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
 	 *
 	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
 	 *
 	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 *
 	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
 	 *
 	 * Notice the asymmetry between `-1` and `+2` in the above examples.
@@ -212,8 +221,11 @@ export interface TreeArrayNode<
 	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
 	 *
 	 * - `0` (between the start of the array and `A`'s original position)
+	 *
 	 * - `1` (between `A`'s original position and `B`'s original position)
+	 *
 	 * - `2` (between `B`'s original position and `C`'s original position)
+	 *
 	 * - `3` (between `C`'s original position and the end of the array)
 	 *
 	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
@@ -222,13 +234,17 @@ export interface TreeArrayNode<
 	 * or relative to the start or end of the array:
 	 *
 	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 *
 	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 *
 	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 *
 	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
 	 *
 	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
 	 *
 	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 *
 	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
 	 *
 	 * Notice the asymmetry between `-1` and `+2` in the above examples.
@@ -296,8 +312,11 @@ export interface TreeArrayNode<
 	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
 	 *
 	 * - `0` (between the start of the array and `A`'s original position)
+	 *
 	 * - `1` (between `A`'s original position and `B`'s original position)
+	 *
 	 * - `2` (between `B`'s original position and `C`'s original position)
+	 *
 	 * - `3` (between `C`'s original position and the end of the array)
 	 *
 	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
@@ -306,13 +325,17 @@ export interface TreeArrayNode<
 	 * or relative to the start or end of the array:
 	 *
 	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 *
 	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 *
 	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 *
 	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
 	 *
 	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
 	 *
 	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 *
 	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
 	 *
 	 * Notice the asymmetry between `-1` and `+2` in the above examples.
@@ -340,8 +363,11 @@ export interface TreeArrayNode<
 	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
 	 *
 	 * - `0` (between the start of the array and `A`'s original position)
+	 *
 	 * - `1` (between `A`'s original position and `B`'s original position)
+	 *
 	 * - `2` (between `B`'s original position and `C`'s original position)
+	 *
 	 * - `3` (between `C`'s original position and the end of the array)
 	 *
 	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
@@ -350,13 +376,17 @@ export interface TreeArrayNode<
 	 * or relative to the start or end of the array:
 	 *
 	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 *
 	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 *
 	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 *
 	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
 	 *
 	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
 	 *
 	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 *
 	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
 	 *
 	 * Notice the asymmetry between `-1` and `+2` in the above examples.
@@ -829,24 +859,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			| IterableTreeArrayContent<InsertableContent>
 		)[];
 
-		const mapTrees = content
-			.flatMap((c): InsertableContent[] =>
-				c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
-			)
-			.map((c) =>
-				mapTreeFromNodeData(
-					c,
-					this.simpleSchema,
-					sequenceField.context.isHydrated()
-						? sequenceField.context.nodeKeyManager
-						: undefined,
-					getSchemaAndPolicy(sequenceField),
-				),
-			);
-
-		if (sequenceField.context.isHydrated()) {
-			prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
-		}
+		const contentArray = content.flatMap((c): InsertableContent[] =>
+			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
+		);
+		const mapTrees = prepareArrayContentForInsertion(
+			contentArray,
+			this.simpleSchema,
+			sequenceField.context,
+		);
 
 		return mapTrees;
 	}
@@ -1064,7 +1084,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
 	TName extends string,
-	const T extends ImplicitAllowedTypes,
+	const T extends ImplicitAnnotatedAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -1082,7 +1102,9 @@ export function arraySchema<
 	> &
 		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>;
 
-	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+	const unannotatedTypes = unannotateImplicitAllowedTypes(info);
+
+	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(unannotatedTypes));
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
@@ -1091,7 +1113,7 @@ export function arraySchema<
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
-	class Schema extends CustomArrayNodeBase<T> {
+	class Schema extends CustomArrayNodeBase<UnannotateImplicitAllowedTypes<T>> {
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
@@ -1178,8 +1200,8 @@ export function arraySchema<
 			return Schema.constructorCached?.constructor as unknown as Output;
 		}
 
-		protected get simpleSchema(): T {
-			return info;
+		protected get simpleSchema(): UnannotateImplicitAllowedTypes<T> {
+			return unannotatedTypes;
 		}
 		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;

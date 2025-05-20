@@ -12,6 +12,8 @@ import {
 } from "./schemaFactory.js";
 import type {
 	ImplicitAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
+	ImplicitAnnotatedFieldSchema,
 	ImplicitFieldSchema,
 	NodeSchemaOptions,
 } from "../schemaTypes.js";
@@ -56,9 +58,9 @@ export class SchemaFactoryAlpha<
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
 	 * @param options - Additional options for the schema.
 	 */
-	public override object<
+	public objectAlpha<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -121,7 +123,7 @@ export class SchemaFactoryAlpha<
 		Pick<ObjectNodeSchema, "fields"> {
 		// TODO: syntax highting is vs code is broken here. Don't trust it. Use the compiler instead.
 		type TScopedName = ScopedSchemaName<TScope, Name>;
-		return this.object(
+		return this.objectAlpha(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 			options,
@@ -184,7 +186,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public mapAlpha<
 		Name extends TName,
-		const T extends ImplicitAllowedTypes,
+		const T extends ImplicitAnnotatedAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -228,7 +230,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public arrayAlpha<
 		const Name extends TName,
-		const T extends ImplicitAllowedTypes,
+		const T extends ImplicitAnnotatedAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
