@@ -10,13 +10,13 @@ import {
 	type JsonableTree,
 } from "../core/index.js";
 import { FieldKinds } from "../feature-libraries/index.js";
-import type { ITreeCheckout } from "../shared-tree/index.js";
+import type { ITreeCheckout, TreeCheckout } from "../shared-tree/index.js";
 import { stringSchema, toStoredSchema } from "../simple-tree/index.js";
 import { brand, type JsonCompatible } from "../util/index.js";
 import { checkoutWithContent, chunkFromJsonableTrees } from "./utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
-import { singleJsonCursor } from "./json/index.js";
+import { fieldJsonCursor } from "./json/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 
 // This file provides utilities for testing sequence fields using documents where the root is the sequence being tested.
@@ -68,11 +68,10 @@ export function remove(tree: ITreeCheckout, index: number, count: number): void 
 /**
  * Creates a sequence field at the root.
  */
-export function makeTreeFromJsonSequence(json: JsonCompatible[]): ITreeCheckout {
-	const cursors = json.map(singleJsonCursor);
+export function makeTreeFromJsonSequence(json: JsonCompatible[]): TreeCheckout {
 	const tree = checkoutWithContent({
 		schema: jsonSequenceRootSchema,
-		initialTree: cursors,
+		initialTree: fieldJsonCursor(json),
 	});
 	return tree;
 }

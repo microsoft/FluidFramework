@@ -14,6 +14,7 @@ import {
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import {
+	SchemaVersion,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
@@ -28,7 +29,6 @@ import { brand, type JsonCompatible } from "../../util/index.js";
 
 import { Format as FormatV1 } from "./formatV1.js";
 import { Format as FormatV2 } from "./formatV2.js";
-import { SchemaVersion } from "../../core/index.js";
 
 /**
  * Convert a FluidClientVersion to a SchemaVersion.

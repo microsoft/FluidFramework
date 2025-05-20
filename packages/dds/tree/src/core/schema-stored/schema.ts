@@ -4,8 +4,10 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import { type MakeNominal, brand, invertMap } from "../../util/index.js";
+
 import {
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -22,6 +24,9 @@ import type {
 } from "./formatV2.js";
 import type { Multiplicity } from "./multiplicity.js";
 
+/**
+ * The format version for the schema.
+ */
 export enum SchemaVersion {
 	v1 = 1,
 	/**

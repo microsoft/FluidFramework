@@ -10,8 +10,9 @@ import type {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 
+import { pkgVersion } from "../packageVersion.js";
+
 import type { ISharedSignal } from "./interfaces.js";
-import { pkgVersion } from "./packageVersion.js";
 import { SharedSignal } from "./sharedSignal.js";
 
 /**
