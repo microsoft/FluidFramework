@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// Tests below intentionally use `any` and `unknown`
+// Tests below intentionally use `any` and `null`
 /* eslint-disable @rushstack/no-new-null */
 /* eslint-disable unicorn/no-null */
 /* eslint-disable @typescript-eslint/no-explicit-any */
