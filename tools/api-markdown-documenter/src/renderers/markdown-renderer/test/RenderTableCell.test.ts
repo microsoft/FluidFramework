@@ -38,7 +38,7 @@ describe("Table Markdown rendering tests", () => {
 				new ParagraphNode([
 					new PlainTextNode("Hello world!"),
 					LineBreakNode.Singleton,
-					new ParagraphNode([
+					new SpanNode([
 						SpanNode.createFromPlainText("Meaning of life", { bold: true }),
 						new PlainTextNode(": "),
 						SpanNode.createFromPlainText("42", { italic: true }),
@@ -54,7 +54,7 @@ describe("Table Markdown rendering tests", () => {
 				"<p>",
 				"Hello world!",
 				"<br>",
-				"<p>",
+				"<span>",
 				"<span>",
 				"<b>",
 				"Meaning of life",
@@ -66,7 +66,7 @@ describe("Table Markdown rendering tests", () => {
 				"42",
 				"</i>",
 				"</span>",
-				"</p>",
+				"</span>",
 				"</p>",
 			].join("");
 

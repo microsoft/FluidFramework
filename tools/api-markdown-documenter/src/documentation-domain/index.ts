@@ -37,6 +37,7 @@ export { LineBreakNode } from "./LineBreakNode.js";
 export { LinkNode } from "./LinkNode.js";
 export { OrderedListNode } from "./OrderedListNode.js";
 export { ParagraphNode } from "./ParagraphNode.js";
+export type { PhrasingContent, PhrasingContentMap } from "./PhrasingContent.js";
 export { PlainTextNode } from "./PlainTextNode.js";
 export { type SectionContent, type SectionContentMap, SectionNode } from "./SectionNode.js";
 export { SpanNode, SingleLineSpanNode } from "./SpanNode.js";

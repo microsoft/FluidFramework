@@ -4,7 +4,6 @@
  */
 
 import type { BlockQuoteNode } from "./BlockQuoteNode.js";
-import type { CodeSpanNode } from "./CodeSpanNode.js";
 import {
 	DocumentationParentNodeBase,
 	type MultiLineDocumentationNode,
@@ -14,10 +13,8 @@ import type { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 import type { HeadingNode } from "./HeadingNode.js";
 import type { HorizontalRuleNode } from "./HorizontalRuleNode.js";
 import type { LineBreakNode } from "./LineBreakNode.js";
-import type { LinkNode } from "./LinkNode.js";
 import type { OrderedListNode } from "./OrderedListNode.js";
 import type { ParagraphNode } from "./ParagraphNode.js";
-import type { SpanNode } from "./SpanNode.js";
 import type { TableNode } from "./TableNode.js";
 import type { UnorderedListNode } from "./UnorderedListNode.js";
 
@@ -42,15 +39,12 @@ import type { UnorderedListNode } from "./UnorderedListNode.js";
  */
 export interface SectionContentMap {
 	blockquote: BlockQuoteNode;
-	codeSpan: CodeSpanNode;
 	fencedCodeBlock: FencedCodeBlockNode;
 	horizontalRule: HorizontalRuleNode;
 	lineBreak: LineBreakNode;
-	link: LinkNode;
 	orderedList: OrderedListNode;
 	paragraph: ParagraphNode;
 	section: SectionNode;
-	span: SpanNode;
 	table: TableNode;
 	unorderedList: UnorderedListNode;
 }

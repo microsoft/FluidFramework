@@ -26,7 +26,7 @@ import { ApiPropertySignature } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
-import { DocNode } from '@microsoft/tsdoc';
+import { DocDeclarationReference } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
 import type { Literal } from 'unist';
@@ -203,7 +203,7 @@ function createSeeAlsoSection(apiItem: ApiItem, config: ApiItemTransformationCon
 function createSignatureSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
-function createSummaryParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode | undefined;
+function createSummaryParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode;
 
 // @public
 function createThrowsSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): SectionNode | undefined;
@@ -659,12 +659,29 @@ export class OrderedListNode extends DocumentationParentNodeBase<SingleLineDocum
 }
 
 // @public
-export class ParagraphNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
-    constructor(children: DocumentationNode[]);
+export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> implements MultiLineDocumentationNode {
+    constructor(children: PhrasingContent[]);
     static createFromPlainText(text: string): ParagraphNode;
     static readonly Empty: ParagraphNode;
     get singleLine(): false;
     readonly type = DocumentationNodeType.Paragraph;
+}
+
+// @public
+export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
+
+// @public
+export interface PhrasingContentMap {
+    // (undocumented)
+    codeSpan: CodeSpanNode;
+    // (undocumented)
+    lineBreak: LineBreakNode;
+    // (undocumented)
+    link: LinkNode;
+    // (undocumented)
+    span: SpanNode;
+    // (undocumented)
+    text: PlainTextNode;
 }
 
 // @public
@@ -729,23 +746,17 @@ export interface SectionContentMap {
     // (undocumented)
     blockquote: BlockQuoteNode;
     // (undocumented)
-    codeSpan: CodeSpanNode;
-    // (undocumented)
     fencedCodeBlock: FencedCodeBlockNode;
     // (undocumented)
     horizontalRule: HorizontalRuleNode;
     // (undocumented)
     lineBreak: LineBreakNode;
     // (undocumented)
-    link: LinkNode;
-    // (undocumented)
     orderedList: OrderedListNode;
     // (undocumented)
     paragraph: ParagraphNode;
     // (undocumented)
     section: SectionNode;
-    // (undocumented)
-    span: SpanNode;
     // (undocumented)
     table: TableNode;
     // (undocumented)
@@ -758,7 +769,7 @@ export interface SectionHierarchyConfiguration extends DocumentationHierarchyCon
 }
 
 // @public
-export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
+export class SectionNode extends DocumentationParentNodeBase<SectionContent> implements MultiLineDocumentationNode {
     constructor(children: SectionContent[], heading?: HeadingNode);
     static readonly Empty: SectionNode;
     readonly heading?: HeadingNode;
@@ -891,7 +902,13 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[];
 
 // @public
-export function transformTsdocNode(node: DocNode, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): DocumentationNode | undefined;
+export function transformTsdocSection(node: DocSection, options: TsdocNodeTransformOptions): SectionNode;
+
+// @public
+export interface TsdocNodeTransformOptions extends LoggingConfiguration {
+    readonly contextApiItem: ApiItem;
+    readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
+}
 
 // @public
 export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {

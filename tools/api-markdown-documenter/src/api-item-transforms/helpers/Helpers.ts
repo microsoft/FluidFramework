@@ -40,6 +40,7 @@ import {
 	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
+	type PhrasingContent,
 	PlainTextNode,
 	type SectionContent,
 	SectionNode,
@@ -104,7 +105,7 @@ export function createSignatureSection(
 
 			const renderedHeritageTypes = createHeritageTypesParagraph(apiItem, config);
 			if (renderedHeritageTypes !== undefined) {
-				contents.push(renderedHeritageTypes);
+				contents.push(...renderedHeritageTypes);
 			}
 
 			return wrapInSection(contents, {
@@ -163,10 +164,10 @@ export function createSeeAlsoSection(
 export function createHeritageTypesParagraph(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): ParagraphNode | undefined {
+): SectionContent[] | undefined {
 	const { logger } = config;
 
-	const contents: ParagraphNode[] = [];
+	const contents: SectionContent[] = [];
 
 	if (apiItem instanceof ApiClass) {
 		// Render `extends` type if there is one.
@@ -227,19 +228,14 @@ export function createHeritageTypesParagraph(
 			apiItem,
 			config,
 		);
-		contents.push(new ParagraphNode([renderedTypeParameters]));
+		contents.push(renderedTypeParameters);
 	}
 
 	if (contents.length === 0) {
 		return undefined;
 	}
 
-	// If only 1 child paragraph, prevent creating unecessary hierarchy here by not wrapping it.
-	if (contents.length === 1) {
-		return contents[0];
-	}
-
-	return new ParagraphNode(contents);
+	return contents;
 }
 
 /**
@@ -425,7 +421,7 @@ export function createBreadcrumbParagraph(
 	const breadcrumbSeparator = new PlainTextNode(" > ");
 
 	// Inject breadcrumb separator between each link
-	const contents: DocumentationNode[] = injectSeparator<DocumentationNode>(
+	const contents: PhrasingContent[] = injectSeparator<PhrasingContent>(
 		renderedLinks,
 		breadcrumbSeparator,
 	);
@@ -466,11 +462,11 @@ export const betaWarningSpan = SpanNode.createFromPlainText(betaWarningText, { b
 export function createSummaryParagraph(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): ParagraphNode | undefined {
+): SectionNode {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 	return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
 		? transformTsdocSection(apiItem.tsdocComment.summarySection, tsdocNodeTransformOptions)
-		: undefined;
+		: SectionNode.Empty;
 }
 
 /**
@@ -713,7 +709,7 @@ function createExampleSection(
 	const { logger } = config;
 
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(example.apiItem, config);
-	let exampleParagraph: ParagraphNode = transformTsdocSection(
+	let exampleSection: SectionNode = transformTsdocSection(
 		example.content,
 		tsdocNodeTransformOptions,
 	);
@@ -741,14 +737,14 @@ function createExampleSection(
 		logger?.verbose(
 			`Found example comment with title "${exampleTitle}". Adjusting output to adhere to TSDoc spec...`,
 		);
-		exampleParagraph = stripTitleFromParagraph(exampleParagraph, exampleTitle, logger);
+		exampleSection = stripTitleFromParagraph(exampleSection, exampleTitle, logger);
 	}
 
 	const headingId = `${getFileSafeNameForApiItem(example.apiItem)}-example${
 		example.exampleNumber ?? ""
 	}`;
 
-	return wrapInSection([exampleParagraph], {
+	return wrapInSection([exampleSection], {
 		title: headingTitle,
 		id: headingId,
 	});

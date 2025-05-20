@@ -192,25 +192,23 @@ describe("ApiItem to Documentation transformation tests", () => {
 								],
 								"typescript",
 							),
-							new ParagraphNode([
-								new SectionNode(
-									[
-										new TableNode(
-											[
-												new TableBodyRowNode([
-													TableBodyCellNode.createFromPlainText("TTypeParameter"),
-													TableBodyCellNode.createFromPlainText("A test type parameter"),
-												]),
-											],
-											new TableHeaderRowNode([
-												TableHeaderCellNode.createFromPlainText("Parameter"),
-												TableHeaderCellNode.createFromPlainText("Description"),
+							new SectionNode(
+								[
+									new TableNode(
+										[
+											new TableBodyRowNode([
+												TableBodyCellNode.createFromPlainText("TTypeParameter"),
+												TableBodyCellNode.createFromPlainText("A test type parameter"),
 											]),
-										),
-									],
-									HeadingNode.createFromPlainText("Type Parameters"),
-								),
-							]),
+										],
+										new TableHeaderRowNode([
+											TableHeaderCellNode.createFromPlainText("Parameter"),
+											TableHeaderCellNode.createFromPlainText("Description"),
+										]),
+									),
+								],
+								HeadingNode.createFromPlainText("Type Parameters"),
+							),
 						],
 						{
 							title: "Signature",
@@ -487,7 +485,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// Summary
 							wrapInSection([ParagraphNode.Empty]), // No summary docs on `bar`
 							// Beta warning
-							wrapInSection([betaWarningSpan]),
+							wrapInSection([new ParagraphNode([betaWarningSpan])]),
 							// Signature
 							wrapInSection(
 								[FencedCodeBlockNode.createFromPlainText('bar = "bar"', "typescript")],
