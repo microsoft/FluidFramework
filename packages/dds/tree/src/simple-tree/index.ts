@@ -158,7 +158,7 @@ export {
 	type AllowedTypes,
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
-	type SchemaUpgradeToken,
+	type SchemaUpgrade,
 	FieldKind,
 	FieldSchema,
 	type FieldSchemaAlpha,

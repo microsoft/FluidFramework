@@ -11,6 +11,7 @@ import {
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import {
+	createSchemaUpgrade,
 	normalizeToAnnotatedAllowedType,
 	type AnnotatedAllowedType,
 	type ImplicitAllowedTypes,
@@ -76,7 +77,7 @@ export class SchemaFactoryAlpha<
 			type: annotatedType.type,
 			metadata: {
 				...annotatedType.metadata,
-				enabledUponSchemaUpgrade: true,
+				enablableSchemaUpgrade: createSchemaUpgrade(),
 			},
 		};
 	}

@@ -166,16 +166,28 @@ export interface AllowedTypeMetadata {
 	/**
 	 * If defined, indicates that an allowed type is enablable. Before upgrade, any attempt to insert or move a node to the location where this allowed type is declared will throw an error.
 	 */
-	readonly enabledUponSchemaUpgrade?: SchemaUpgradeToken;
+	readonly enablableSchemaUpgrade?: SchemaUpgrade;
 }
+
+/**
+ * Package internal construction API.
+ */
+export let createSchemaUpgrade: () => SchemaUpgrade;
 
 /**
  * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
  *
- * TODO:#38722 make this a unique type and use it for runtime schema upgrades
- * @alpha
+ * TODO:#38722 implement runtime schema upgrades until then, the class purely behaves as a placeholder and we disable no-extraneous-class
+ * @sealed @alpha
  */
-export type SchemaUpgradeToken = true;
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class SchemaUpgrade {
+	static {
+		createSchemaUpgrade = () => new SchemaUpgrade();
+	}
+
+	private constructor() {}
+}
 
 /**
  * Kind of a field on an {@link TreeObjectNode}.
