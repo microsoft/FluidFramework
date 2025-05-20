@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// JSON type definitions require null.
+/* eslint-disable @rushstack/no-new-null */
+
 /**
  * Type constraint for types that are likely serializable as JSON or have a custom
  * alternate type.
@@ -12,13 +15,12 @@
  * See {@link Jsonable} for serialization pitfalls.
  *
  * @privateRemarks
- * Perfer using `Jsonable<unknown>` over this type that is an implementation detail.
+ * Prefer using `Jsonable<unknown>` over this type that is an implementation detail.
  * @legacy
  * @alpha
  */
 export type JsonableTypeWith<T> =
 	| undefined
-	// eslint-disable-next-line @rushstack/no-new-null -- null is a required part of the type definition.
 	| null
 	| boolean
 	| number
@@ -95,7 +97,6 @@ export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extend
 		? /* 'unknown' => */ JsonableTypeWith<TReplaced>
 		: /* test for Jsonable primitive types */ T extends
 					| undefined /* is not serialized */
-					// eslint-disable-next-line @rushstack/no-new-null
 					| null
 					| boolean
 					| number
