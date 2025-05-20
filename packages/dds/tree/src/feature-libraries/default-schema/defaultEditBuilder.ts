@@ -37,6 +37,7 @@ import {
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
 import type { OptionalChangeset } from "../optional-field/index.js";
+import type { CellId } from "../sequence-field/index.js";
 
 import {
 	fieldKinds,
@@ -44,7 +45,6 @@ import {
 	sequence,
 	required as valueFieldKind,
 } from "./defaultFieldKinds.js";
-import type { CellId } from "../sequence-field/index.js";
 
 export type DefaultChangeset = ModularChangeset;
 

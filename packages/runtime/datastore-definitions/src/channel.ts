@@ -16,6 +16,21 @@ import type { IFluidDataStoreRuntime } from "./dataStoreRuntime.js";
 import type { IChannelAttributes } from "./storage.js";
 
 /**
+ * An object which can be connected to a
+ * {@link https://fluidframework.com/docs/concepts/architecture#fluid-service|Fluid service} via an {@link IChannelServices} instance.
+ * @remarks
+ * This interface exposes functionality that the service requires to create and maintain summaries of the channel.
+ * This summary support allows for loading a channel without having to reapply all ops that have been applied during its lifetime.
+ * @privateRemarks
+ * Since this is an interface between services (which we only expect to be implemented in this repository) and SharedObjects (which we also only expect to be implemented in this repository),
+ * this should probably eventually become internal.
+ *
+ * {@link IChannelView} subsets this interface removing APIs only needed by the service: if/when IChannel becomes internal, it may make sense to reverse the dependency between these two interfaces,
+ * and promote {@link IChannelView} to expose its APIs more publicly.
+ *
+ * TODO:
+ * Either Channels should become a useful well documented abstraction of which there could be another implementation, or it should be better integrated with SharedObject to reduce concept count.
+ *
  * @legacy
  * @alpha
  */
@@ -143,8 +158,13 @@ export interface IDeltaHandler {
 	 * at all.
 	 * @param message - The original message that was submitted.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created by this message.
+	 * This includes any content which this message created but has since been changed or removed by subsequent messages.
+	 * For example, if this message (call it A) inserts content into a DDS that a subsequent op (call it B) removes,
+	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
+	 * account for the fact that A' never inserted content.
 	 */
-	reSubmit(message: any, localOpMetadata: unknown): void;
+	reSubmit(message: any, localOpMetadata: unknown, squash?: boolean): void;
 
 	/**
 	 * Apply changes from an op just as if a local client has made the change,

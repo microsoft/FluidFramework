@@ -70,12 +70,12 @@
 		"jsrsasign": "^11.0.0",
 		"jwt-decode": "^4.0.0",
 		"sillyname": "^0.1.0",
-		"uuid": "^9.0.0"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.52.0-315632",
+		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.52.0-315632",
+		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-client-previous": "npm:@fluidframework/server-services-client@5.0.0",
 		"@microsoft/api-extractor": "^7.45.1",
@@ -83,7 +83,6 @@
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.19.39",
-		"@types/uuid": "^9.0.2",
 		"axios-mock-adapter": "^1.19.0",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
@@ -107,6 +106,9 @@
 			},
 			"Interface_INetworkErrorDetails": {
 				"backCompat": false
+			},
+			"Interface_ITimeoutContext": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"

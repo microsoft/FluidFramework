@@ -4,6 +4,7 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+
 import {
 	SchemaFactory,
 	type FixRecursiveArraySchema,
@@ -21,14 +22,14 @@ const sf = new SchemaFactory("com.fluidframework.serializable");
  * @remarks
  * Schema which replicate the Fluid Serializable data model with {@link TreeNode}s.
  *
- * Fluid Serializable data can be imported from the {@link FluidSerializableAsTree.Data|Fluid Serializable format} into this format using {@link TreeAlpha.importConcise} with the {@link FluidSerializableAsTree.(Tree:variable)} schema.
+ * Fluid Serializable data can be imported from the {@link FluidSerializableAsTree.Data|Fluid Serializable format} into this format using {@link (TreeAlpha:interface).importConcise} with the {@link FluidSerializableAsTree.(Tree:variable)} schema.
  * @internal
  */
 export namespace FluidSerializableAsTree {
 	/**
 	 * Data which can be serialized by Fluid.
 	 * @remarks
-	 * Can be encoded as a {@link FluidSerializableAsTree.(Tree:type)} using {@link TreeAlpha.importConcise}.
+	 * Can be encoded as a {@link FluidSerializableAsTree.(Tree:type)} using {@link (TreeAlpha:interface).importConcise}.
 	 * @internal
 	 */
 	export type Data = JsonCompatible<IFluidHandle>;
@@ -100,7 +101,7 @@ export namespace FluidSerializableAsTree {
 	/**
 	 * Arbitrary Fluid Serializable array as a {@link TreeNode}.
 	 * @remarks
-	 * This can be imported using {@link TreeAlpha.importConcise}.
+	 * This can be imported using {@link (TreeAlpha:interface).importConcise}.
 	 * @example
 	 * ```typescript
 	 * // Due to TypeScript restrictions on recursive types, the constructor can be somewhat limiting.

@@ -78,10 +78,16 @@ const executableToLeafTask: {
  * @param executable The command executable to find a matching task handler for.
  * @returns A `TaskHandler` for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
  */
-function getTaskForExecutable(executable: string, context: BuildContext): TaskHandler {
+function getTaskForExecutable(
+	executable: string,
+	node: BuildPackage,
+	context: BuildContext,
+): TaskHandler {
 	const config = context.fluidBuildConfig;
 	const declarativeTasks = config?.declarativeTasks;
-	const taskMatch = declarativeTasks?.[executable];
+	const taskMatch =
+		node.pkg.packageJson.fluidBuild?.declarativeTasks?.[executable] ??
+		declarativeTasks?.[executable];
 
 	if (taskMatch !== undefined) {
 		return createDeclarativeTaskHandler(taskMatch);
@@ -93,6 +99,22 @@ function getTaskForExecutable(executable: string, context: BuildContext): TaskHa
 	// If no handler is found, return the UnknownLeafTask as the default handler. The task won't support incremental
 	// builds.
 	return builtInHandler ?? UnknownLeafTask;
+}
+
+function getRunScriptName(command: string, packageManager: string): string | undefined {
+	// Remove the package manager name from the command
+	if (command.startsWith("npm run ")) {
+		return command.substring("npm run ".length);
+	}
+	// Only support yarn and pnpm for now
+	if (packageManager === "yarn" || packageManager === "pnpm") {
+		const packageManagerRun = `${packageManager} run `;
+
+		if (command.startsWith(packageManagerRun)) {
+			return command.substring(packageManagerRun.length);
+		}
+	}
+	return undefined;
 }
 
 export class TaskFactory {
@@ -151,17 +173,15 @@ export class TaskFactory {
 			return new GroupTask(node, command, context, subTasks, taskName);
 		}
 
-		// Resolve "npm run" to the actual script
-		if (command.startsWith("npm run ")) {
-			const scriptName = command.substring("npm run ".length);
-			const subTask = node.getScriptTask(scriptName, pendingInitDep);
-			if (subTask === undefined) {
-				throw new Error(
-					`${node.pkg.nameColored}: Unable to find script '${scriptName}' in 'npm run' command`,
-				);
+		// Resolve "npm run" (or other package manager's run command) to the actual script if possible
+		const runScript = getRunScriptName(command, node.pkg.packageManager);
+		if (runScript !== undefined) {
+			const subTask = node.getScriptTask(runScript, pendingInitDep);
+			if (subTask !== undefined) {
+				// Even though there is only one task, create a group task for the taskName
+				return new GroupTask(node, command, context, [subTask], taskName);
 			}
-			// Even though there is only one task, create a group task for the taskName
-			return new GroupTask(node, command, context, [subTask], taskName);
+			// Unable find the script.  Treat it as if it is a plain leaf task.
 		}
 
 		// Leaf tasks; map the executable to a known task type. If none is found, the UnknownLeafTask is used.
@@ -172,7 +192,7 @@ export class TaskFactory {
 		).toLowerCase();
 
 		// Will return a task-specific handler or the UnknownLeafTask
-		const handler = getTaskForExecutable(executable, context);
+		const handler = getTaskForExecutable(executable, node, context);
 
 		// Invoke the function or constructor to create the task handler
 		if (isConstructorFunction(handler)) {

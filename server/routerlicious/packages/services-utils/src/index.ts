@@ -8,6 +8,7 @@ export {
 	AsyncLocalStorageContextProvider,
 	AsyncLocalStorageTelemetryContext,
 	AsyncLocalStorageTimeoutContext,
+	AsyncLocalStorageAbortControllerContext,
 } from "./asyncContext";
 export {
 	bindCorrelationId,
@@ -38,7 +39,11 @@ export { FluidServiceError, FluidServiceErrorCode } from "./errorUtils";
 export { executeApiWithMetric } from "./executeApiWithMetric";
 export { executeOnInterval, ScheduledJob } from "./executeOnInterval";
 export { choose, getRandomName } from "./generateNames";
-export { configureGlobalTelemetryContext, configureGlobalTimeoutContext } from "./globalContext";
+export {
+	configureGlobalTelemetryContext,
+	configureGlobalTimeoutContext,
+	configureGlobalAbortControllerContext,
+} from "./globalContext";
 export { configureLogging, IWinstonConfig } from "./logger";
 export {
 	alternativeMorganLoggerMiddleware,
@@ -68,3 +73,5 @@ export {
 export { ITenantKeyGenerator, TenantKeyGenerator } from "./tenantKeyGenerator";
 export { ResponseSizeMiddleware } from "./responseSizeMiddleware";
 export { logHttpMetrics } from "./httpRequestMetricsLogger";
+export { DenyList, denyListMiddleware } from "./denyList";
+export { bindAbortControllerContext } from "./abortControllerContext";
