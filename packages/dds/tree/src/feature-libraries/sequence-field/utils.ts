@@ -302,8 +302,6 @@ export function normalizeCellRename(
 	// we output an (impact-less) Rename mark anyway (as opposed to a Skip)
 	// because the resulting Rename may be rebased over other changes that rename the input cell,
 	// eventually leading to an impactful rename.
-
-	// XXX: Is this right?
 	return {
 		type: "Rename",
 		count,
