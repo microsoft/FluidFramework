@@ -228,7 +228,9 @@ describe("DataStore Layer compatibility", () => {
 			dataStoreContext = new MockFluidDataStoreContext();
 		});
 
-		function createDataStoreRuntime(compatDetails?: ILayerCompatDetails) {
+		function createDataStoreRuntime(
+			compatDetails?: ILayerCompatDetails,
+		): FluidDataStoreRuntime {
 			if (compatDetails !== undefined) {
 				dataStoreContext.ILayerCompatDetails = compatDetails;
 			}

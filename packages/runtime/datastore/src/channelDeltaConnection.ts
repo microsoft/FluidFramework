@@ -41,7 +41,7 @@ function processWithStashedOpMetadataHandling(
 	content: unknown,
 	localOpMetaData: unknown,
 	func: (contents: unknown, metadata: unknown) => void,
-) {
+): void {
 	if (isStashedOpMetadata(localOpMetaData)) {
 		for (const { contents, metadata } of localOpMetaData) func(contents, metadata);
 	} else {
@@ -51,7 +51,7 @@ function processWithStashedOpMetadataHandling(
 
 function getContentsWithStashedOpHandling(
 	messagesContent: readonly IRuntimeMessagesContent[],
-) {
+): IRuntimeMessagesContent[] {
 	const newMessageContents: IRuntimeMessagesContent[] = [];
 	for (const messageContent of messagesContent) {
 		if (isStashedOpMetadata(messageContent.localOpMetadata)) {
@@ -88,12 +88,12 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		private readonly isAttachedAndVisible: () => boolean,
 	) {}
 
-	public attach(handler: IDeltaHandler) {
+	public attach(handler: IDeltaHandler): void {
 		assert(this._handler === undefined, 0x178 /* "Missing delta handler on attach" */);
 		this._handler = handler;
 	}
 
-	public setConnectionState(connected: boolean) {
+	public setConnectionState(connected: boolean): void {
 		this._connected = connected;
 		this.handler.setConnectionState(connected);
 	}
@@ -117,13 +117,13 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		}
 	}
 
-	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean) {
+	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
 		processWithStashedOpMetadataHandling(content, localOpMetadata, (contents, metadata) =>
 			this.handler.reSubmit(contents, metadata, squash),
 		);
 	}
 
-	public rollback(content: unknown, localOpMetadata: unknown) {
+	public rollback(content: unknown, localOpMetadata: unknown): void {
 		if (this.handler.rollback === undefined) {
 			throw new Error("Handler doesn't support rollback");
 		}

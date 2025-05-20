@@ -135,7 +135,7 @@ export class RemoteChannelContext implements IChannelContext {
 			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
 			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-		) =>
+		): Promise<ISummarizeInternalResult> =>
 			this.summarizeInternal(
 				fullTree,
 				trackState,
@@ -159,7 +159,7 @@ export class RemoteChannelContext implements IChannelContext {
 		return this.channelP;
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string) {
+	public setConnectionState(connected: boolean, clientId?: string): void {
 		// Connection events are ignored if the data store is not yet loaded
 		if (!this.isLoaded) {
 			return;
@@ -201,13 +201,13 @@ export class RemoteChannelContext implements IChannelContext {
 		}
 	}
 
-	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean) {
+	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
 		assert(this.isLoaded, 0x196 /* "Remote channel must be loaded when resubmitting op" */);
 
 		this.services.deltaConnection.reSubmit(content, localOpMetadata, squash);
 	}
 
-	public rollback(content: unknown, localOpMetadata: unknown) {
+	public rollback(content: unknown, localOpMetadata: unknown): void {
 		assert(this.isLoaded, 0x2f0 /* "Remote channel must be loaded when rolling back op" */);
 
 		this.services.deltaConnection.rollback(content, localOpMetadata);
@@ -265,7 +265,7 @@ export class RemoteChannelContext implements IChannelContext {
 		return channel.getGCData(fullGC);
 	}
 
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: string[]): void {
 		/**
 		 * Currently, DDSes are always considered referenced and are not garbage collected. Update the summarizer node's
 		 * used routes to contain a route to this channel context.

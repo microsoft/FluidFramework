@@ -17,7 +17,7 @@ export class ChannelStorageService implements IChannelStorageService {
 		base: string,
 		tree: ISnapshotTree,
 		results: { [path: string]: string },
-	) {
+	): void {
 		for (const [path, subtree] of Object.entries(tree.trees)) {
 			ChannelStorageService.flattenTree(`${base}${path}/`, subtree, results);
 		}

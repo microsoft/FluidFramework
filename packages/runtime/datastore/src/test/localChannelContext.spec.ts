@@ -41,7 +41,7 @@ describe("LocalChannelContext Tests", () => {
 	it("LocalChannelContext rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
-		const codeBlock = () =>
+		const codeBlock = (): LocalChannelContext =>
 			new LocalChannelContext(
 				{ id: invalidId } as unknown as IChannel,
 				dataStoreRuntime,
@@ -61,7 +61,7 @@ describe("LocalChannelContext Tests", () => {
 	it("RehydratedLocalChannelContext rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
-		const codeBlock = () =>
+		const codeBlock = (): RehydratedLocalChannelContext =>
 			new RehydratedLocalChannelContext(
 				invalidId,
 				sharedObjectRegistry,

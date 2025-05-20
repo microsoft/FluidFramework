@@ -31,7 +31,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 		context: IFluidDataStoreContext,
 		registry: ISharedObjectRegistry,
 		entrypointInitializationFn?: (rt: IFluidDataStoreRuntime) => Promise<FluidObject>,
-	) {
+	): FluidDataStoreRuntime {
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			registry,
@@ -58,7 +58,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 							attributes: { type, snapshotFormatVersion: "0" },
 							clientDetails: {},
 						}) as unknown as IChannel,
-					load: async () => Promise.resolve({} as unknown as IChannel),
+					load: async (): Promise<IChannel> => Promise.resolve({} as unknown as IChannel),
 				};
 			},
 		};
@@ -67,7 +67,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 	it("constructor rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		dataStoreContext = new MockFluidDataStoreContext(invalidId);
-		const codeBlock = () =>
+		const codeBlock = (): FluidDataStoreRuntime =>
 			new FluidDataStoreRuntime(
 				dataStoreContext,
 				sharedObjectRegistry,
@@ -126,7 +126,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 	it("createChannel rejects ids with slashes", async () => {
 		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		const invalidId = "beforeSlash/afterSlash";
-		const codeBlock = () => dataStoreRuntime.createChannel(invalidId, "SomeType");
+		const codeBlock = (): IChannel => dataStoreRuntime.createChannel(invalidId, "SomeType");
 		assert.throws(
 			codeBlock,
 			(e: IErrorBase) =>
@@ -167,7 +167,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 			attributes: { type, snapshotFormatVersion: "0" },
 			clientDetails: {},
 		} as unknown as IChannel;
-		const codeBlock = () => dataStoreRuntime.addChannel(channel);
+		const codeBlock = (): void => dataStoreRuntime.addChannel(channel);
 		assert.throws(
 			codeBlock,
 			(e: IErrorBase) =>
