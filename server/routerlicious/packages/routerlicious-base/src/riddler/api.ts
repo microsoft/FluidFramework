@@ -182,6 +182,7 @@ export function create(
 			: {};
 		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess ?? false;
 		const enableSharedKeyAccess = request.body.enableSharedKeyAccess ?? true;
+		const publicNetworkAccessEnabled = request.body.publicNetworkAccessEnabled ?? true; // default to true
 		const tenantP = manager.createTenant(
 			tenantId,
 			tenantStorage,
@@ -189,6 +190,7 @@ export function create(
 			tenantCustomData,
 			enableSharedKeyAccess,
 			enablePrivateKeyAccess,
+			publicNetworkAccessEnabled
 		);
 		handleResponse(tenantP, response);
 	});
