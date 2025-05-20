@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { FileMode, ITree, TreeEntry } from "@fluidframework/driver-definitions/internal";
