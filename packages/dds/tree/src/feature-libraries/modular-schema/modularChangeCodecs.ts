@@ -16,6 +16,8 @@ import {
 	withSchemaValidation,
 } from "../../codec/index.js";
 import type {
+	ChangeAtomId,
+	ChangeAtomIdRangeMap,
 	ChangeEncodingContext,
 	ChangesetLocalId,
 	EncodedRevisionTag,
@@ -53,7 +55,9 @@ import {
 	type EncodedFieldChangeMap,
 	EncodedModularChangeset,
 	type EncodedNodeChangeset,
+	type EncodedRenames,
 	type EncodedRevisionInfo,
+	type EncodedRootNodes,
 } from "./modularChangeFormat.js";
 import {
 	newCrossFieldRangeTable,
@@ -67,6 +71,7 @@ import {
 } from "./modularChangeTypes.js";
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 import { newRootTable } from "./modularChangeFamily.js";
+import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -163,27 +168,9 @@ function makeModularChangeCodec(
 		return entry;
 	};
 
+	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
+
 	function encodeFieldChangesForJson(
-		change: FieldChangeMap,
-		context: ChangeEncodingContext,
-		nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	): EncodedFieldChangeMap {
-		const fieldContext: FieldChangeEncodingContext = {
-			baseContext: context,
-
-			encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
-				const node = nodeChanges.get([nodeId.revision, nodeId.localId]);
-				assert(node !== undefined, 0x92e /* Unknown node ID */);
-				return encodeNodeChangesForJson(node, fieldContext);
-			},
-
-			decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
-		};
-
-		return encodeFieldChangesForJsonI(change, fieldContext);
-	}
-
-	function encodeFieldChangesForJsonI(
 		change: FieldChangeMap,
 		context: FieldChangeEncodingContext,
 	): EncodedFieldChangeMap {
@@ -217,7 +204,7 @@ function makeModularChangeCodec(
 		const { fieldChanges, nodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {
-			encodedChange.fieldChanges = encodeFieldChangesForJsonI(fieldChanges, context);
+			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges, context);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -225,6 +212,37 @@ function makeModularChangeCodec(
 		}
 
 		return encodedChange;
+	}
+
+	function encodeRootNodesForJson(
+		roots: ChangeAtomIdBTree<NodeId>,
+		context: FieldChangeEncodingContext,
+	): EncodedRootNodes {
+		const encoded: EncodedRootNodes = [];
+		for (const [[revision, localId], nodeId] of roots.entries()) {
+			encoded.push({
+				detachId: changeAtomIdCodec.encode({ revision, localId }, context.baseContext),
+				nodeChangeset: context.encodeNode(nodeId),
+			});
+		}
+
+		return encoded;
+	}
+
+	function encodeRenamesForJson(
+		renames: ChangeAtomIdRangeMap<ChangeAtomId>,
+		context: ChangeEncodingContext,
+	): EncodedRenames {
+		const encoded: EncodedRenames = [];
+		for (const entry of renames.entries()) {
+			encoded.push({
+				oldId: changeAtomIdCodec.encode(entry.start, context),
+				newId: changeAtomIdCodec.encode(entry.value, context),
+				count: entry.length,
+			});
+		}
+
+		return encoded;
 	}
 
 	function decodeFieldChangesFromJson(
@@ -466,19 +484,36 @@ function makeModularChangeCodec(
 
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
+			const fieldContext: FieldChangeEncodingContext = {
+				baseContext: context,
+
+				encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
+					// TODO: Handle node aliasing.
+					const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
+					assert(node !== undefined, 0x92e /* Unknown node ID */);
+					return encodeNodeChangesForJson(node, fieldContext);
+				},
+
+				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
+			};
+
 			// Destroys only exist in rollback changesets, which are never sent.
 			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
-			return {
+			const encoded: EncodedModularChangeset = {
 				maxId: change.maxId,
 				revisions:
 					change.revisions === undefined
 						? undefined
 						: encodeRevisionInfos(change.revisions, context),
-				changes: encodeFieldChangesForJson(change.fieldChanges, context, change.nodeChanges),
+				fieldChanges: encodeFieldChangesForJson(change.fieldChanges, fieldContext),
+				rootNodes: encodeRootNodesForJson(change.rootNodes.nodeChanges, fieldContext),
+				nodeRenames: encodeRenamesForJson(change.rootNodes.oldToNewId, context),
 				builds: encodeDetachedNodes(change.builds, context),
 				refreshers: encodeDetachedNodes(change.refreshers, context),
 				violations: change.constraintViolationCount,
 			};
+
+			return encoded;
 		},
 
 		decode: (encodedChange: EncodedModularChangeset, context) => {
@@ -492,7 +527,7 @@ function makeModularChangeCodec(
 			};
 
 			decoded.fieldChanges = decodeFieldChangesFromJson(
-				encodedChange.changes,
+				encodedChange.fieldChanges,
 				undefined,
 				decoded,
 				context,
