@@ -596,6 +596,9 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 // this function should likely be moved and updated to (at least conditionally) use them.
 /**
  * Returns an implementation of {@link IEditableForest} with no content.
+ * @privateRemarks
+ * TODO:
+ * refactor to remove this function, and instead place `ForestTypeReference` and `ForestTypeExpensiveDebug` here as a better way to encapsulate ObjectForest.
  */
 export function buildForest(
 	breaker: Breakable,
