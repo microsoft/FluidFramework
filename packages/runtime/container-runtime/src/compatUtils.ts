@@ -129,11 +129,11 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 	enableGroupedBatching: {
 		"1.0.0": false,
 		"2.0.0-defaults": true,
-	} as const,
+	},
 	compressionOptions: {
 		"1.0.0": disabledCompressionConfig,
 		"2.0.0-defaults": enabledCompressionConfig,
-	} as const,
+	},
 	enableRuntimeIdCompressor: {
 		// For IdCompressorMode, `undefined` represents a logical state (off).
 		// However, to satisfy the Required<> constraint while
@@ -145,7 +145,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		// Therefore, we will require customers to explicitly enable it. We
 		// are keeping it as a DocSchema affecting option for now as this may
 		// change in the future.
-	} as const,
+	},
 	explicitSchemaControl: {
 		"1.0.0": false,
 		// This option's intention is to prevent 1.x clients from joining sessions
@@ -159,25 +159,25 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		// Only enable as a default when `minVersionForCollab` is specified at
 		// 2.0.0+.
 		"2.0.0": true,
-	} as const,
+	},
 	flushMode: {
 		// Note: 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
 		// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
 		// fewer messages will be included per flush.
 		"1.0.0": FlushMode.Immediate,
 		"2.0.0-defaults": FlushMode.TurnBased,
-	} as const,
+	},
 	gcOptions: {
 		"1.0.0": {},
 		// Although sweep is supported in 2.x, it is disabled by default until minVersionForCollab>=3.0.0 to be extra safe.
 		"3.0.0": { enableGCSweep: true },
-	} as const,
+	},
 	createBlobPayloadPending: {
 		// This feature is new and disabled by default. In the future we will enable it by default, but we have not
 		// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
 		// exposed on the `@public` API surface.
 		"1.0.0": undefined,
-	} as const,
+	},
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
 
 /**
@@ -192,31 +192,31 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 	enableGroupedBatching: {
 		"1.0.0": [false],
 		"2.0.0-defaults": [true],
-	} as const,
+	},
 	compressionOptions: {
 		"1.0.0": [disabledCompressionConfig],
 		"2.0.0-defaults": [enabledCompressionConfig],
-	} as const,
+	},
 	enableRuntimeIdCompressor: {
 		"1.0.0": [undefined],
 		"2.0.0-defaults": ["on", "delayed"],
-	} as const,
+	},
 	explicitSchemaControl: {
 		"1.0.0": [false],
 		"2.0.0-defaults": [true],
-	} as const,
+	},
 	flushMode: {
 		"1.0.0": [FlushMode.Immediate],
 		"2.0.0-defaults": [FlushMode.TurnBased],
-	} as const,
+	},
 	gcOptions: {
 		"1.0.0": [{}], // removed undefined for type safety
 		"2.0.0-defaults": [{ enableGCSweep: true }],
-	} as const,
+	},
 	createBlobPayloadPending: {
 		"1.0.0": [undefined],
 		"2.40.0": [true],
-	} as const,
+	},
 } as const satisfies ConfigValidationMap<RuntimeOptionsAffectingDocSchema>;
 
 /**

@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	getConfigsForMinVersionForCollab,
 	getValidationForRuntimeOptions,
@@ -331,20 +333,26 @@ describe("compatUtils", () => {
 
 		for (const test of incompatibleCases) {
 			it(`throws for incompatible options: ${JSON.stringify(test)}`, () => {
-				assert.throws(() => {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-					getValidationForRuntimeOptions(
-						test.minVersionForCollab,
-						test.runtimeOptions,
-						testConfigValidationMap,
-					);
-				});
+				const expectedErrorKey = Object.keys(test.runtimeOptions)[0];
+				const expectedErrorMessage = `Runtime option ${Object.keys(test.runtimeOptions)}:${JSON.stringify(test.runtimeOptions[expectedErrorKey])} is not compatible with minVersionForCollab: ${test.minVersionForCollab}.`;
+				assert.throws(
+					() => {
+						getValidationForRuntimeOptions(
+							test.minVersionForCollab,
+							test.runtimeOptions,
+							testConfigValidationMap,
+						);
+					},
+					(error: Error) => {
+						assert(isFluidError(error));
+						return error.message === expectedErrorMessage;
+					},
+				);
 			});
 		}
 		for (const test of compatibleCases) {
 			it(`does not throw for compatible options: ${JSON.stringify(test)}`, () => {
 				assert.doesNotThrow(() => {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 					getValidationForRuntimeOptions(
 						test.minVersionForCollab,
 						test.runtimeOptions,
