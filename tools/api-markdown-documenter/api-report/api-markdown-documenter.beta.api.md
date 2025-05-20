@@ -226,7 +226,7 @@ function createSeeAlsoSection(apiItem: ApiItem, config: ApiItemTransformationCon
 function createSignatureSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
-function createSummarySection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode;
+function createSummarySection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
 function createThrowsSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): SectionNode | undefined;
@@ -574,7 +574,7 @@ declare namespace LayoutUtilities {
         createReturnsSection,
         createSeeAlsoSection,
         createSignatureSection,
-        createSummarySection as createSummaryParagraph,
+        createSummarySection,
         createThrowsSection,
         createTypeParametersSection
     }

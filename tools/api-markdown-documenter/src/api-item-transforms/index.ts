@@ -46,7 +46,7 @@ export {
 	createReturnsSection,
 	createSeeAlsoSection,
 	createSignatureSection,
-	createSummarySection as createSummaryParagraph,
+	createSummarySection,
 	createThrowsSection,
 	createTypeParametersSection,
 } from "./helpers/index.js";

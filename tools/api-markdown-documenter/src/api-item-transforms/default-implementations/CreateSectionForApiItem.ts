@@ -64,7 +64,7 @@ export function createSectionForApiItem(
 	// Render summary comment (if any)
 	const summary = createSummarySection(apiItem, config);
 	if (summary !== undefined) {
-		sections.push(wrapInSection([summary]));
+		sections.push(summary);
 	}
 
 	// Render deprecation notice (if any)

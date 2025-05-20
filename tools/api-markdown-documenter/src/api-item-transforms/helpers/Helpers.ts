@@ -156,7 +156,7 @@ export function createSeeAlsoSection(
 /**
  * Renders a section listing types extended / implemented by the API item, if any.
  *
- * @remarks Displayed as a heading with a comma-separated list of heritage types by catagory under it.
+ * @remarks Displayed as a heading with a comma-separated list of heritage types by category under it.
  *
  * @param apiItem - The API item whose heritage types will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
@@ -464,13 +464,13 @@ export const betaWarningSpan = SpanNode.createFromPlainText(betaWarningText, { b
 export function createSummarySection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionNode {
+): SectionNode | undefined {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 	return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
 		? new SectionNode(
 				transformTsdocSection(apiItem.tsdocComment.summarySection, tsdocNodeTransformOptions),
 			)
-		: SectionNode.Empty;
+		: undefined;
 }
 
 /**
