@@ -18,7 +18,7 @@
  */
 export type JsonableTypeWith<T> =
 	| undefined
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @rushstack/no-new-null -- null is a required part of the type definition.
 	| null
 	| boolean
 	| number
