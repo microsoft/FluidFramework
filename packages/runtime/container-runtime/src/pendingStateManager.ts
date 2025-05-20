@@ -30,7 +30,6 @@ import {
 	type LocalEmptyBatchPlaceholder,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
-import { isContainerMessageDirtyable } from "./opProperties.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -281,21 +280,6 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public get pendingMessagesCount(): number {
 		return this.pendingMessages.length + this.initialMessages.length;
-	}
-
-	/**
-	 * Checks the pending messages to see if any of them represent user changes (aka "dirtyable" messages)
-	 */
-	public hasPendingUserChanges(): boolean {
-		for (let i = 0; i < this.pendingMessages.length; i++) {
-			const element = this.pendingMessages.get(i);
-			if (element?.runtimeOp !== undefined && isContainerMessageDirtyable(element.runtimeOp)) {
-				return true;
-			}
-		}
-		// Consider any initial messages to be user changes
-		// (it's an approximation since we would have to parse them to know for sure)
-		return this.initialMessages.length > 0;
 	}
 
 	/**

@@ -12,7 +12,6 @@ import {
 
 import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
-import { isContainerMessageDirtyable } from "../opProperties.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
 import { LocalBatchMessage, IBatchCheckpoint, type LocalBatch } from "./definitions.js";
@@ -168,13 +167,6 @@ export class BatchManager {
 				}
 			},
 		};
-	}
-
-	/**
-	 * Does this batch current contain user changes ("dirtyable" ops)?
-	 */
-	public containsUserChanges(): boolean {
-		return this.pendingBatch.some((message) => isContainerMessageDirtyable(message.runtimeOp));
 	}
 }
 

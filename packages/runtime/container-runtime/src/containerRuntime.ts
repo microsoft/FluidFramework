@@ -89,6 +89,7 @@ import type {
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	ISummarizeInternalResult,
+	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 	IInboundSignalMessage,
@@ -1532,7 +1533,7 @@ export class ContainerRuntime
 				eventName: "Attached",
 				details: {
 					dirtyContainer: this.lastEmittedDirty,
-					hasPendingMessages: this.pendingMessagesCount !== 0,
+					hasPendingMessages: this.hasPendingMessages(),
 				},
 			});
 		});
@@ -1897,8 +1898,8 @@ export class ContainerRuntime
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
-		this.lastEmittedDirty = this.isDirty;
-		context.updateDirtyContainerState(this.isDirty);
+		this.lastEmittedDirty = this.currentDirtyState();
+		context.updateDirtyContainerState(this.lastEmittedDirty);
 
 		if (!this.skipSafetyFlushDuringProcessStack) {
 			// Reference Sequence Number may have just changed, and it must be consistent across a batch,
@@ -2496,7 +2497,7 @@ export class ContainerRuntime
 			return true;
 		}
 
-		if (this.pendingMessagesCount === 0) {
+		if (!this.hasPendingMessages()) {
 			// If there are no pending messages, we can always reconnect
 			this.resetReconnectCount();
 			return true;
@@ -2530,9 +2531,8 @@ export class ContainerRuntime
 		// Replaying is an internal operation and we don't want to generate noise while doing it.
 		// So temporarily disable dirty state change events, and save the old state.
 		// When we're done, we'll emit the event if the state changed.
-		assert(this.lastEmittedDirty === this.isDirty, "Unnoticed change in dirty state");
-		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
 		const oldState = this.lastEmittedDirty;
+		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
 		this.emitDirtyDocumentEvent = false;
 
 		try {
@@ -2922,9 +2922,6 @@ export class ContainerRuntime
 		runtimeBatch: boolean,
 		groupedBatch: boolean,
 	): void {
-		// This message could have been the last pending local message, in which case we need to update dirty state to "saved"
-		this.updateDocumentDirtyState();
-
 		if (locationInBatch.batchStart) {
 			const firstMessage = messagesWithMetadata[0]?.message;
 			assert(firstMessage !== undefined, 0xa31 /* Batch must have at least one message */);
@@ -3040,6 +3037,12 @@ export class ContainerRuntime
 
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
+		// If there are no more pending messages after processing a local message,
+		// the document is no longer dirty.
+		if (!this.hasPendingMessages()) {
+			this.updateDocumentDirtyState();
+		}
+
 		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
 		// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
 		if (
@@ -3070,6 +3073,12 @@ export class ContainerRuntime
 		local: boolean,
 		savedOp?: boolean,
 	): void {
+		// If there are no more pending messages after processing a local message,
+		// the document is no longer dirty.
+		if (!this.hasPendingMessages()) {
+			this.updateDocumentDirtyState();
+		}
+
 		// Get the contents without the localOpMetadata because not all message types know about localOpMetadata.
 		const contents = messagesContent.map((c) => c.contents);
 
@@ -3245,6 +3254,7 @@ export class ContainerRuntime
 						checkpoint.rollback((message: LocalBatchMessage) =>
 							this.rollback(message.runtimeOp, message.localOpMetadata),
 						);
+						// reset the dirty state after rollback to what it was before to keep it consistent
 						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
 						stageControls = undefined;
@@ -3456,13 +3466,46 @@ export class ContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
-		// We are NOT dirty if the only pending changes are "non-user" changes (e.g. GC, ID compressor, etc.),
-		// since these system messages can be lost without data loss.
-		return (
-			this.attachState !== AttachState.Attached ||
-			this.pendingStateManager.hasPendingUserChanges() ||
-			this.outbox.containsUserChanges()
-		);
+		//* Switch to currentDirtyState
+		return this.lastEmittedDirty;
+	}
+
+	//* Comment
+	private currentDirtyState(): boolean {
+		return this.attachState !== AttachState.Attached || this.hasPendingMessages();
+	}
+
+	private isContainerMessageDirtyable({
+		type,
+		contents,
+	}: LocalContainerRuntimeMessage): boolean {
+		// Certain container runtime messages should not mark the container dirty such as the old built-in
+		// AgentScheduler and Garbage collector messages.
+		switch (type) {
+			case ContainerMessageType.Attach: {
+				const attachMessage = contents as InboundAttachMessage;
+				if (attachMessage.id === agentSchedulerId) {
+					return false;
+				}
+				break;
+			}
+			case ContainerMessageType.FluidDataStoreOp: {
+				const envelope = contents;
+				if (envelope.address === agentSchedulerId) {
+					return false;
+				}
+				break;
+			}
+			case ContainerMessageType.IdAllocation:
+			case ContainerMessageType.DocumentSchemaChange:
+			case ContainerMessageType.GC: {
+				return false;
+			}
+			default: {
+				break;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -3500,7 +3543,9 @@ export class ContainerRuntime
 			this.emit("attached");
 		}
 
-		this.updateDocumentDirtyState();
+		if (!this.currentDirtyState()) {
+			this.updateDocumentDirtyState();
+		}
 		this.channelCollection.setAttachState(attachState);
 	}
 
@@ -4282,16 +4327,13 @@ export class ContainerRuntime
 		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
 	}
 
-	/**
-	 * Emit "dirty" or "saved" event based on the current dirty state of the document.
-	 * This must be called every time the states underlying the dirty state change.
-	 *
-	 * @privateRemarks - It's helpful to think of this as an event handler registered
-	 * for hypothetical "changed" events for PendingStateManager, Outbox, and Container Attach machinery.
-	 * But those events don't exist so we manually call this wherever we know those changes happen.
-	 */
+	//* Maybe remove?
+	private hasPendingMessages(): boolean {
+		return this.pendingMessagesCount !== 0;
+	}
+
 	private updateDocumentDirtyState(): void {
-		const dirty = this.isDirty;
+		const dirty: boolean = this.currentDirtyState();
 
 		if (this.lastEmittedDirty === dirty) {
 			return;
@@ -4450,7 +4492,9 @@ export class ContainerRuntime
 			throw dpe;
 		}
 
-		this.updateDocumentDirtyState();
+		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
+			this.updateDocumentDirtyState();
+		}
 	}
 
 	private scheduleFlush(): void {
