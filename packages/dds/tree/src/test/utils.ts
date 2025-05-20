@@ -869,9 +869,11 @@ export const IdentifierSchema = sf.object("identifier-object", {
 /**
  * Crates a tree using the Json domain with a required root field.
  */
-export function makeTreeFromJson(json: JsonCompatible): ITreeCheckout {
+export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
 	return checkoutWithContent({
-		schema: toStoredSchema(JsonAsTree.Tree),
+		schema: toStoredSchema(
+			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
+		),
 		initialTree: singleJsonCursor(json),
 	});
 }

@@ -33,7 +33,7 @@ import {
 	TestTreeProviderLite,
 	validateUsageError,
 } from "../utils.js";
-import { insert } from "../sequenceRootUtils.js";
+import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
 	CheckoutFlexTreeView,
 	type TreeCheckout,
@@ -481,11 +481,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("supports revertibles", () => {
-		const emptyContent = {
-			schema: emptySchema,
-			initialTree: undefined,
-		};
-		const checkout = checkoutWithContent(emptyContent);
+		const checkout = makeTreeFromJsonSequence([]);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			config,
@@ -540,13 +536,13 @@ describe("SchematizingSimpleTreeView", () => {
 	describe("events", () => {
 		it("schemaChanged", () => {
 			const content = {
-				schema: toStoredSchema([]),
+				schema: toStoredSchema(SchemaFactory.optional([])),
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(content);
 			const view = new SchematizingSimpleTreeView(
 				checkout,
-				config,
+				new TreeViewConfiguration({ schema: SchemaFactory.optional(SchemaFactory.number) }),
 				new MockNodeIdentifierManager(),
 			);
 			const log: string[] = [];
@@ -557,16 +553,8 @@ describe("SchematizingSimpleTreeView", () => {
 		});
 
 		it("emits changed events for local edits", () => {
-			const emptyContent = {
-				schema: emptySchema,
-				initialTree: undefined,
-			};
-			const checkout = checkoutWithContent(emptyContent);
-			const view = new SchematizingSimpleTreeView(
-				checkout,
-				config,
-				new MockNodeIdentifierManager(),
-			);
+			const view = getView(config);
+			view.initialize(1);
 
 			let localChanges = 0;
 
@@ -576,7 +564,7 @@ describe("SchematizingSimpleTreeView", () => {
 				}
 			});
 
-			insert(checkout, 0, "a");
+			view.root = 2;
 			assert.equal(localChanges, 1);
 			unsubscribe();
 		});
