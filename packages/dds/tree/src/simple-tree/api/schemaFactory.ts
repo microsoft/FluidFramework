@@ -1072,10 +1072,11 @@ export class SchemaFactory<
 	 * - It is a UUID which will not collide with other generated UUIDs.
 	 *
 	 * - It is compressed to a space-efficient representation when stored in the document.
+	 * Reading the identifier before inserting the node into a tree reduces this compression.
 	 *
 	 * - A compressed form of the identifier can be accessed at runtime via the {@link TreeNodeApi.shortId|Tree.shortId()} API.
 	 *
-	 * - It will error if read (and will not be present in the object's iterable properties) before the node has been inserted into a tree.
+	 * - It will not be present in the object's iterable properties unless explicitly read or inserted into a tree first.
 	 *
 	 * However, a user may alternatively supply their own string as the identifier if desired (for example, if importing identifiers from another system).
 	 * In that case, if the user requires it to be unique, it is up to them to ensure uniqueness.

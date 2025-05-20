@@ -47,7 +47,7 @@ import {
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { prepareForInsertion } from "./prepareForInsertion.js";
-import type { RestrictiveStringRecord, FlattenKeys } from "../util/index.js";
+import { type RestrictiveStringRecord, type FlattenKeys, brand } from "../util/index.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
@@ -56,6 +56,11 @@ import {
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
 import type { SimpleObjectFieldSchema } from "./simpleSchema.js";
+import {
+	createIdCompressor,
+	type IIdCompressor,
+} from "@fluidframework/id-compressor/internal";
+import { stringSchema } from "./leafNodeSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -197,6 +202,8 @@ function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): Simp
 	return keyMap;
 }
 
+const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
+
 /**
  * Creates a proxy handler for the given schema.
  *
@@ -238,9 +245,18 @@ function createProxyHandler(
 					fieldInfo.schema.kind === FieldKind.Identifier &&
 					flexNode instanceof UnhydratedFlexTreeNode
 				) {
-					throw new UsageError(
-						"An automatically generated node identifier may not be queried until the node is inserted into the tree",
+					const value = globalIdentifierAllocator.decompress(
+						globalIdentifierAllocator.generateCompressedId(),
 					);
+					flexNode.mapTree.fields.set(fieldInfo.storedKey, [
+						{
+							type: brand(stringSchema.identifier),
+							value,
+							fields: new Map(),
+						},
+					]);
+
+					return value;
 				}
 
 				return undefined;

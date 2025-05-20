@@ -1615,20 +1615,32 @@ describe("treeNodeApi", () => {
 			assert.deepEqual(a, { x: 1 });
 		});
 
-		it("object with defaulted identifier field", () => {
+		it("unhydrated object with defaulted read identifier field", () => {
 			const A = schema.object("A", { x: schema.identifier });
 			const node = TreeAlpha.create(A, { x: undefined });
 
 			// TODO: make this work instead of error:
-			// assert(isStableId(node.x));
-			// // Since no id compressor is associated with the node, Tree.shortId should give back a UUID string.
-			// assert.equal(Tree.shortId(node), node.x)
+			const id = node.x;
+			// Check allocated id is saved on node, and thus not regenerated on second access.
+			assert.equal(id, node.x);
+			// Id should be a valid UUID.
+			assert(isStableId(id));
+			// Since no id compressor is associated with the node, Tree.shortId should give back a UUID string.
+			assert.equal(Tree.shortId(node), node.x);
 
-			// For now validate the error is the correct one:
-			assert.throws(
-				() => node.x,
-				validateUsageError(/identifier may not be queried until the node is inserted/),
-			);
+			hydrate(A, node);
+
+			assert.equal(Tree.shortId(node), node.x);
+		});
+
+		it("hydrated object with defaulted unread identifier field", () => {
+			const A = schema.object("A", { x: schema.identifier });
+			const node = TreeAlpha.create(A, { x: undefined });
+
+			hydrate(A, node);
+			assert(isStableId(node.x));
+			const short = Tree.shortId(node);
+			assert.equal(typeof short, "number");
 		});
 
 		it("object with explicit identifier field", () => {
