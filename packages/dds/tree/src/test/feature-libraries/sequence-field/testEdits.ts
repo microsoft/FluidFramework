@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { type Mutable, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";

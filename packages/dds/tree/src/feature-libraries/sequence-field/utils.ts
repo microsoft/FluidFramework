@@ -22,7 +22,7 @@ import {
 	type NestedChangesIndices,
 } from "../modular-schema/index.js";
 
-import type { CellRename, DetachOfRemovedNodes, EmptyInputCellMark } from "./helperTypes.js";
+import type { DetachOfRemovedNodes, EmptyInputCellMark } from "./helperTypes.js";
 import {
 	type Attach,
 	type CellId,

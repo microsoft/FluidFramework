@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ChangeAtomId,
-	type ChangesetLocalId,
-	type RevisionTag,
-} from "../../../core/index.js";
+import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { CellId } from "../../../feature-libraries/sequence-field/index.js";

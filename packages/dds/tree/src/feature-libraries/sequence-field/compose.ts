@@ -22,16 +22,7 @@ import type {
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import type { NodeRangeQueryFunc } from "./moveEffectTable.js";
-import {
-	type CellMark,
-	type Changeset,
-	type Detach,
-	type Mark,
-	type MarkEffect,
-	type MarkList,
-	type NoopMark,
-	NoopMarkType,
-} from "./types.js";
+import type { CellMark, Changeset, Mark, MarkEffect, MarkList, NoopMark } from "./types.js";
 import {
 	CellOrder,
 	areEqualCellIds,
@@ -50,7 +41,6 @@ import {
 	isNoopMark,
 	isRename,
 	markEmptiesCells,
-	markFillsCells,
 	markHasCellEffect,
 	normalizeCellRename,
 	withNodeChange,
