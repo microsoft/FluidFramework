@@ -2004,15 +2004,12 @@ describe("Editing", () => {
 
 			const delAction = (peer: ITreeCheckout, idx: number) => remove(peer, idx, 1);
 			const srcField: NormalizedFieldUpPath = rootField;
-			let dstCounter = 0;
-			const moveAction = (peer: ITreeCheckout, idx: number) => {
-				const dstField: NormalizedFieldUpPath = {
-					parent: undefined,
-					// Produce a unique detached field for each move out to avoid collisions which result in multiple nodes in a single detached field, which currently violated schema assumptions.
-					field: brand(`dst${dstCounter++}`),
-				};
-				return peer.editor.move(srcField, idx, 1, dstField, 0);
+			const dstField: NormalizedFieldUpPath = {
+				parent: undefined,
+				field: brand("dst"),
 			};
+			const moveAction = (peer: ITreeCheckout, idx: number) =>
+				peer.editor.move(srcField, idx, 1, dstField, 0);
 
 			/**
 			 * Runs the given `scenario` using either remove or move operations.
