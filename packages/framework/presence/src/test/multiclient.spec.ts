@@ -25,14 +25,25 @@ import {
 	StateFactory,
 	type Attendee,
 	type ExperimentalPresenceDO,
+	type Latest,
+	type LatestData,
+	type LatestRaw,
 	type Presence,
 	type ProxiedValueAccessor,
 	type StateSchemaValidator,
+	type StatesWorkspace,
+	type ValueAccessor,
+	type WorkspaceAddress,
 } from "../index.js";
 
 import { createTinyliciousClient } from "./TinyliciousClientFactory.js";
 import { type ValidatorSpy, createSpiedValidator, createNullValidator } from "./testUtils.js";
-import type { Off } from "@fluidframework/core-interfaces";
+import type { Listenable, Off } from "@fluidframework/core-interfaces";
+import type {
+	DeepReadonly,
+	JsonDeserialized,
+	JsonSerializable,
+} from "@fluidframework/core-interfaces/internal";
 
 interface TestData {
 	num: number;
@@ -63,52 +74,98 @@ async function waitForAttendeeEvent(
 	);
 }
 
-const connectedContainers: IFluidContainer[] = [];
-const connectTimeoutMs = 10000;
-const user1: TinyliciousUser = {
-	id: "test-user-id-1",
-	name: "test-user-name-1",
-};
-const user2: TinyliciousUser = {
-	id: "test-user-id-2",
-	name: "test-user-name-2",
-};
-const user3: TinyliciousUser = {
-	id: "test-user-id-3",
-	name: "test-user-name-3",
-};
+async function waitForRemoteUpdated<T>(
+	latestData: Latest<T, ProxiedValueAccessor<T>>,
+	tag = "",
+) {
+	await timeoutPromise<LatestClientData<T, ProxiedValueAccessor<T>>>(
+		(resolve) =>
+			latestData.events.on("remoteUpdated", (data) => {
+				console.log(`${tag}remoteUpdated: ${JSON.stringify(data, undefined, 2)}`);
+				resolve(data);
+			}),
+		{
+			durationMs: 2000,
+			errorMsg: `${tag}remoteUpdated Timeout`,
+		},
+	);
+}
+
+async function waitForLocalUpdated<T>(
+	latestData: Latest<T, ProxiedValueAccessor<T>>,
+	tag = "",
+) {
+	await timeoutPromise<DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>>(
+		(resolve) =>
+			latestData.events.on("localUpdated", (data) => {
+				console.log(`${tag}localUpdated: ${JSON.stringify(data, undefined, 2)}`);
+				resolve(data.value);
+			}),
+		{
+			durationMs: 2000,
+			errorMsg: `${tag}localUpdated Timeout`,
+		},
+	);
+}
+async function waitForWorkspaceActivated(presence: Presence): Promise<WorkspaceAddress> {
+	const workspaceAddress = await timeoutPromise<WorkspaceAddress>(
+		(resolve) =>
+			presence.events.on("workspaceActivated", (data) => {
+				console.log(`workspaceActivated: ${JSON.stringify(data)}`);
+				resolve(data);
+			}),
+		{
+			durationMs: 2000,
+			errorMsg: `workspaceActivated Timeout`,
+		},
+	);
+	return workspaceAddress;
+}
 
 describe(`Presence with TinyliciousClient`, () => {
-	// let validatorFunction1: StateSchemaValidator<TestData>;
-	// let validatorFunction2: StateSchemaValidator<TestData>;
-	// let validatorSpy1: ValidatorSpy;
-	// let validatorSpy2: ValidatorSpy;
+	const connectedContainers: IFluidContainer[] = [];
+	const connectTimeoutMs = 10000;
+	const user1: TinyliciousUser = {
+		id: "test-user-id-1",
+		name: "test-user-name-1",
+	};
+	const user2: TinyliciousUser = {
+		id: "test-user-id-2",
+		name: "test-user-name-2",
+	};
+	const user3: TinyliciousUser = {
+		id: "test-user-id-3",
+		name: "test-user-name-3",
+	};
 
-	// beforeEach(() => {
-	// 	[validatorFunction1, validatorSpy1] = createSpiedValidator<TestData>(
-	// 		createNullValidator(),
-	// 	);
-	// 	[validatorFunction2, validatorSpy2] = createSpiedValidator<TestData>(
-	// 		createNullValidator(),
-	// 	);
-	// });
+	let presence1: Presence;
+	let presence2: Presence;
+	let presence3: Presence;
+	let validatorFunction1: StateSchemaValidator<TestData>;
+	let validatorFunction2: StateSchemaValidator<TestData>;
+	let validatorFunction3: StateSchemaValidator<TestData>;
+	let validatorSpy1: ValidatorSpy;
+	let validatorSpy2: ValidatorSpy;
+	let validatorSpy3: ValidatorSpy;
+
+	beforeEach(() => {
+		[validatorFunction1, validatorSpy1] = createSpiedValidator<TestData>(
+			createNullValidator(),
+		);
+		[validatorFunction2, validatorSpy2] = createSpiedValidator<TestData>(
+			createNullValidator(),
+		);
+		[validatorFunction3, validatorSpy3] = createSpiedValidator<TestData>(
+			createNullValidator(),
+		);
+	});
 
 	afterEach(() => {
-		console.log(`connected containers before cleanup: ${connectedContainers.length}`);
 		for (const container of connectedContainers) {
-			console.log(`cleanup called`);
 			container.disconnect();
 			container.dispose();
 		}
 		connectedContainers.splice(0, connectedContainers.length);
-		console.log(`connected containers after: ${connectedContainers.length}`);
-
-		console.log(`removing ${listeners.length} listeners`);
-		for (const removeListener of listeners) {
-			removeListener();
-		}
-		listeners.splice(0, listeners.length);
-		console.log(`listeners: ${listeners.length}`);
 	});
 
 	const getOrCreatePresenceContainer = async (
@@ -166,139 +223,102 @@ describe(`Presence with TinyliciousClient`, () => {
 		};
 	};
 
+	const initMultiClientSetup = async () => {
+		const res = await getOrCreatePresenceContainer(undefined, user1);
+		presence1 = res.presence;
+
+		const res2 = await getOrCreatePresenceContainer(res.containerId, user2);
+		presence2 = res2.presence;
+
+		const res3 = await getOrCreatePresenceContainer(res.containerId, user3);
+		presence3 = res3.presence;
+
+		assert.notEqual(presence1, undefined);
+		assert.notEqual(presence2, undefined);
+		assert.notEqual(presence3, undefined);
+
+		const returnedAttendees = await waitForAttendeeEvent(
+			"attendeeConnected",
+			presence1,
+			presence2,
+			presence3,
+		);
+
+		assert.equal(returnedAttendees.length, 3);
+	};
+
 	describe("LatestValueManager", () => {
-		it("getOrCreatePresenceContainer works", async () => {
-			// SETUP
-			const {
-				// container: container1,
-				presence: presence1,
-				containerId,
-			} = await getOrCreatePresenceContainer(undefined, user1);
-			// await waitForAttendeeEvent("attendeeConnected", presence1);
-			assert.notEqual(presence1, undefined);
+		describe("multiclient presence data validation", () => {
+			it("getOrCreatePresenceContainer creates and returns initialized containers", async () => {
+				await initMultiClientSetup();
+			});
 
-			const attendee = await timeoutPromise<Attendee>(
-				(resolve) => {
-					const off = presence1.attendees.events.on("attendeeConnected", (attendee) => {
-						off();
-						resolve(attendee);
-					});
-					listeners.push(off);
-				},
-				{
-					errorMsg: `Attendee[0] Timeout`,
-				},
-			);
-			assert.notEqual(attendee, undefined);
-		});
+			it("two clients with workspaces", async () => {
+				await initMultiClientSetup();
 
-		it.skip("multiclient presence data validation", async () => {
-			// SETUP
-			const {
-				// container: container1,
-				presence: presence1,
-				containerId,
-			} = await getOrCreatePresenceContainer(undefined, user1);
+				const [attendee1, attendee2] = [
+					presence1.attendees.getMyself(),
+					presence2.attendees.getMyself(),
+				];
 
-			await waitForAttendeeEvent("attendeeConnected", presence1);
-			assert.notEqual(presence1, undefined);
+				// Configure a state workspace on client 1
+				const stateWorkspace1 = presence1.states.getWorkspace("name:testStateWorkspace", {
+					count: StateFactory.latest({
+						local: { num: 0 } satisfies TestData,
+						validator: validatorFunction1,
+						settings: { allowableUpdateLatencyMs: 0 },
+					}),
+				});
 
-			// 	const { presence: presence2 } = await getOrCreatePresenceContainer(containerId, user2);
-			// 	const { presence: presence3 } = await getOrCreatePresenceContainer(containerId, user3);
+				// Wait for client 2 to receive the workspaceActivated event
+				const workspaceAddress = await waitForWorkspaceActivated(presence2);
 
-			// 	// Wait for attendees to join
-			// 	const attendees = await waitForAttendeeEvent(
-			// 		"attendeeConnected",
-			// 		// presence1,
-			// 		presence2,
-			// 		presence3,
-			// 	);
+				// Client 2 now gets a reference to the workspace and sets its initial local data
+				const stateWorkspace2 = presence2.states.getWorkspace(workspaceAddress, {
+					count: StateFactory.latest({
+						local: { num: 1 } satisfies TestData,
+						validator: validatorFunction2,
+						settings: { allowableUpdateLatencyMs: 0 },
+					}),
+				});
 
-			// 	const [_, attendee2] = [
-			// 		presence1.attendees.getMyself(),
-			// 		presence2.attendees.getMyself(),
-			// 		presence3.attendees.getMyself(),
-			// 	];
+				// Get references to the states
+				const { count: client1 } = stateWorkspace1.states;
+				const { count: client2 } = stateWorkspace2.states;
 
-			// 	// Configure a state workspace
-			// 	// const stateWorkspace1 = presence1.states.getWorkspace("name:testStateWorkspace", {
-			// 	// 	count: StateFactory.latest({
-			// 	// 		local: { num: 0 } satisfies TestData,
-			// 	// 		validator: validatorFunction1,
-			// 	// 		settings: { allowableUpdateLatencyMs: 0 },
-			// 	// 	}),
-			// 	// });
+				// Wait for the first client to receive the remote data from client 2's workspace init
+				await waitForRemoteUpdated(client1);
 
-			// 	// const stateWorkspace2 = presence2.states.getWorkspace("name:testStateWorkspace", {
-			// 	// 	count: StateFactory.latest({
-			// 	// 		local: { num: 1 } satisfies TestData,
-			// 	// 		validator: validatorFunction2,
-			// 	// 		settings: { allowableUpdateLatencyMs: 0 },
-			// 	// 	}),
-			// 	// });
+				// Reading the remote value should cause the validator to be called
+				let value = client1.getRemote(attendee2).value();
+				assert.equal(value?.num, 1, "getRemote(attendee2) count is wrong");
+				assert.equal(validatorSpy1.callCount, 1);
 
-			// 	assert.equal(attendees.length, 3, "attendees length is wrong");
-			// 	console.log(`Attendees: ${attendees.map((a) => a.attendeeId).join(", ")}`);
+				// Reading the value a second time should not cause the validator to be called again
+				value = client1.getRemote(attendee2).value();
+				assert.equal(value?.num, 1, "second getRemote(attendee2) count is wrong");
+				assert.equal(validatorSpy1.callCount, 1);
 
-			// 	// Act & Verify
-			// 	// const { count: count1 } = stateWorkspace1.states;
-			// 	// const { count: count2 } = stateWorkspace2.states;
+				// Client 2 sets a new local value
+				client2.local = { num: 22 };
+				assert.equal(client2.local.num, 22, "count2.local count is wrong");
 
-			// 	// await timeoutPromise<LatestClientData<TestData, ProxiedValueAccessor<TestData>>>(
-			// 	// 	(resolve) =>
-			// 	// 		count2.events.on("remoteUpdated", (data) => {
-			// 	// 			console.log(`remoteUpdated: ${JSON.stringify(data)}`);
-			// 	// 			resolve(data);
-			// 	// 		}),
-			// 	// 	{
-			// 	// 		durationMs: 2000,
-			// 	// 		errorMsg: `remoteUpdated Timeout`,
-			// 	// 	},
-			// 	// );
+				// Wait for the remote data to get to client 1
+				await waitForRemoteUpdated(client1, "TAGGED: ");
 
-			// 	// timeoutPromise<Attendee>(
-			// 	// 	(resolve) => presence.attendees.events.on(event, (attendee) => resolve(attendee)),
-			// 	// 	{
-			// 	// 		durationMs: 10000,
-			// 	// 		errorMsg: `Attendee[${index}] Timeout`,
-			// 	// 	},
-			// 	// ),
+				// Reading the remote value should cause the validator to be called a second time since the data has been
+				// changed.
+				value = client1.getRemote(attendee2).value();
+				assert.equal(value?.num, 22, "third getRemote(attendee2) count is wrong");
+				assert.equal(validatorSpy1.callCount, 2);
 
-			// 	// await timeoutPromise<{ value: TestData }>(
-			// 	// 	(resolve) =>
-			// 	// 		count2.events.on("localUpdated", (data) => {
-			// 	// 			console.log("localUpdated");
-			// 	// 			resolve(data);
-			// 	// 		}),
-			// 	// 	{
-			// 	// 		durationMs: 2000,
-			// 	// 		errorMsg: `localUpdated Timeout`,
-			// 	// 	},
-			// 	// );
+				// Second client should see the initial value for client 1
+				value = client2.getRemote(attendee1).value();
+				assert.equal(value?.num, 0, "getRemote(attendee1) count is wrong");
 
-			// 	// count2.local = { num: 22 };
-			// 	// assert.equal(count2.local.num, 22, "count2 count is wrong");
-
-			// 	// count1.local = { num: 11 };
-			// 	// assert.equal(count1.local.num, 11, "count1 count is wrong");
-
-			// 	// await timeoutPromise((resolve) => count1.events.on("remoteUpdated", () => resolve()), {
-			// 	// 	durationMs: 2000,
-			// 	// 	errorMsg: `Attendee Timeout`,
-			// 	// });
-
-			// 	// count2.local = { num: 22 };
-			// 	// assert.equal(count2.local.num, 22, "count2 count is wrong");
-
-			// 	// let remoteData = count1.getRemote(attendee2);
-			// 	// let attendee2Data = remoteData.value();
-			// 	// remoteData = count1.getRemote(attendee2);
-			// 	// attendee2Data = remoteData.value();
-
-			// 	// assert.deepEqual(attendee2Data, { num: 22 }, "attendee 2 has wrong data");
-			// 	// assert.deepEqual(value2, { num: 11 }, "attendee 1 has wrong data");
-			// 	// assert.equal(validatorSpy1.callCount, 1);
-			// 	// assert.equal(validatorSpy2.callCount, 0);
+				// Second client should have called the validator once for the read above
+				assert.equal(validatorSpy2.callCount, 1);
+			});
 		});
 	});
 });

@@ -13,6 +13,7 @@ import {
 	asDeeplyReadonlyFromJsonHandle,
 	brandJson,
 	unbrandJson,
+	type InternalUtilityTypes,
 } from "./exposedUtilityTypes.js";
 import type { Attendee } from "./presence.js";
 
@@ -81,9 +82,9 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
  * @alpha
  */
 export type Accessor<T> = T extends ProxiedValueAccessor<infer U>
-	? () => DeepReadonly<JsonDeserialized<U>> | undefined
+	? () => DeepReadonly<InternalUtilityTypes.OpaqueJsonDeserialized<U>> | undefined
 	: T extends RawValueAccessor<infer U>
-		? DeepReadonly<JsonDeserialized<U>>
+		? DeepReadonly<InternalUtilityTypes.OpaqueJsonDeserialized<U>>
 		: never;
 
 /**

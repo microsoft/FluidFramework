@@ -216,7 +216,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					value: asDeeplyReadonly(unbrandJson(value.value)),
+					value: createValidatedGetter(value, this.validator),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];
