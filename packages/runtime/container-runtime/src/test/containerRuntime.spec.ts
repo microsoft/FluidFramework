@@ -3990,7 +3990,7 @@ describe("Runtime", () => {
 
 			for (const runtimeOption of [
 				{ enableGroupedBatching: true },
-				{ compressionOptions: enabledCompressionConfig },
+				{ enableGroupedBatching: true, compressionOptions: enabledCompressionConfig },
 				{ explicitSchemaControl: true },
 				{ gcOptions: { enableGCSweep: true } },
 				// Adding in an arbitrary entry into the IGCRuntimeOptions object
