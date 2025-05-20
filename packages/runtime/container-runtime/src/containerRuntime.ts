@@ -2923,7 +2923,10 @@ export class ContainerRuntime
 		groupedBatch: boolean,
 	): void {
 		// This message could have been the last pending local message, in which case we need to update dirty state to "saved"
-		this.updateDocumentDirtyState();
+		// Only update if we're sure we're saved - to avoid saying we're dirty if the only pending messages are non-dirtyable
+		if (!this.hasPendingMessages()) {
+			this.updateDocumentDirtyState();
+		}
 
 		if (locationInBatch.batchStart) {
 			const firstMessage = messagesWithMetadata[0]?.message;
@@ -4326,13 +4329,15 @@ export class ContainerRuntime
 	 * Emit "dirty" or "saved" event based on the current dirty state of the document.
 	 * This must be called every time the states underlying the dirty state change.
 	 *
+	 * @remarks - This uses `!this.attachedAndFullySaved()` to compute the new dirty state,
+	 * which does not take into consideration isContainerMessageDirtyable.
+	 * This can result in false positives where we emit dirty when the only pending messages are non-dirtyable.
+	 *
 	 * @privateRemarks - It's helpful to think of this as an event handler registered
 	 * for hypothetical "changed" events for PendingStateManager, Outbox, and Container Attach machinery.
 	 * But those events don't exist so we manually call this wherever we know those changes happen.
 	 */
 	private updateDocumentDirtyState(): void {
-		// If the only pending messages are non-dirtyable, this will be incorrect.
-		// It's not ideal, but callers should avoid updating dirty state if they know that is the case.
 		const dirty: boolean = !this.attachedAndFullySaved();
 
 		if (this.lastEmittedDirty === dirty) {
@@ -4492,6 +4497,10 @@ export class ContainerRuntime
 			throw dpe;
 		}
 
+		// This is a best-effort attempt to keep this message from marking a saved container as dirty.
+		// It works in this moment, but after operations like rollback or resubmit or discarding staged changes,
+		// we won't re-check the pending messages to see that they're all dirtyable, which could result in
+		// false-positives saying the container is dirty when (according to isContainerMessageDirtyable) it's not.
 		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
 			this.updateDocumentDirtyState();
 		}
