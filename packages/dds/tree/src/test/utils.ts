@@ -96,6 +96,7 @@ import {
 	type MapTree,
 	aboveRootPlaceholder,
 	rootFieldKey,
+	SchemaVersion,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -114,7 +115,6 @@ import {
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
 	makeSchemaCodec,
-	SchemaCodecVersion,
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
@@ -633,16 +633,13 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 	assert.deepEqual(actual, expected);
 }
 
-const schemaCodec = makeSchemaCodec(
-	{ jsonValidator: typeboxValidator },
-	SchemaCodecVersion.v1,
-);
+const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v1);
 
 // If you are adding a new schema format, consider changing the encoding format used in the above codec, given
 // that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
 // Note we have to divide the length of the return value from `Object.keys` to get the number of enum entries.
 assert(
-	Object.keys(SchemaCodecVersion).length / 2 === 1,
+	Object.keys(SchemaVersion).length / 2 === 1,
 	"This code only handles a single schema codec version.",
 );
 
