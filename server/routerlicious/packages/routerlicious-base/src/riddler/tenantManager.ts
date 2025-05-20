@@ -70,6 +70,10 @@ export interface ITenantDocument {
 
 	// Optional private keys, used for keyless tenants
 	privateKeys?: ITenantPrivateKeys;
+
+	// Optional value for public network access
+	// Default to enabled if undefined
+	publicNetworkAccessEnabled?: boolean;
 }
 
 enum FetchTenantKeyMetric {
@@ -483,6 +487,7 @@ export class TenantManager {
 		customData: ITenantCustomData,
 		enableSharedKeyAccess = true,
 		enablePrivateKeyAccess = false,
+		publicNetworkAccessEnabled = true,
 	): Promise<ITenantConfig & { key: string | undefined }> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 		if (!enableSharedKeyAccess && !enablePrivateKeyAccess) {
@@ -529,6 +534,7 @@ export class TenantManager {
 				customData,
 				disabled: false,
 				privateKeys,
+				publicNetworkAccessEnabled,
 			}),
 		);
 
