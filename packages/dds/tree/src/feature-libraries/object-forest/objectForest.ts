@@ -151,6 +151,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 						? schema.rootFieldSchema
 						: // TODO: someday we should have schema for detached fields, and use that instead of generating one here.
 							{
+								// Some detached fields may have multiple nodes, so we must treat them as sequences:
 								kind: FieldKinds.sequence.identifier,
 								types: new Set(documentRoot.map((node) => node.type)),
 							};
