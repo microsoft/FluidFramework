@@ -47,7 +47,8 @@ import {
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { prepareForInsertion } from "./prepareForInsertion.js";
-import { type RestrictiveStringRecord, type FlattenKeys, brand } from "../util/index.js";
+import type { RestrictiveStringRecord, FlattenKeys } from "../util/index.js";
+import { brand } from "../util/index.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,

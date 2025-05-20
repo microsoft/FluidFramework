@@ -1072,8 +1072,8 @@ export class SchemaFactory<
 	 * - It is a UUID which will not collide with other generated UUIDs.
 	 *
 	 * - It is compressed to a space-efficient representation when stored in the document.
-	 * Reading the identifier before inserting the node into a tree reduces this compression.
-	 *
+	 * Reading the identifier before inserting the node into a tree prevents the identifier from being stored in its compressed form,
+	 * resulting in a larger storage footprint.
 	 * - A compressed form of the identifier can be accessed at runtime via the {@link TreeNodeApi.shortId|Tree.shortId()} API.
 	 *
 	 * - It will not be present in the object's iterable properties unless explicitly read or inserted into a tree first.
