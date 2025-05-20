@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
@@ -32,10 +29,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  *
  * @public
  */
-export class FencedCodeBlockNode
-	extends DocumentationParentNodeBase<PhrasingContent>
-	implements MultiLineDocumentationNode
-{
+export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */

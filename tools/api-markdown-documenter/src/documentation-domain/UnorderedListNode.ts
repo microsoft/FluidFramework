@@ -5,7 +5,6 @@
 
 import {
 	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
 	type SingleLineDocumentationNode,
 } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
@@ -37,10 +36,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  *
  * @public
  */
-export class UnorderedListNode
-	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements MultiLineDocumentationNode
-{
+export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> {
 	/**
 	 * Static singleton representing an empty Unordered List node.
 	 */

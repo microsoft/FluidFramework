@@ -27,7 +27,6 @@ export {
 	DocumentationLiteralNodeBase,
 	type DocumentationParentNode,
 	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
 	type SingleLineDocumentationNode,
 } from "./DocumentationNode.js";
 export { DocumentationNodeType } from "./DocumentationNodeType.js";

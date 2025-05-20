@@ -7,7 +7,6 @@ import type { Heading } from "../Heading.js";
 
 import {
 	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
 	type SingleLineDocumentationNode,
 } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
@@ -36,7 +35,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  */
 export class HeadingNode
 	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements Omit<Heading, "title">, MultiLineDocumentationNode
+	implements Omit<Heading, "title">
 {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}

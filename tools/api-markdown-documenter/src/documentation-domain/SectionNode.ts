@@ -4,10 +4,7 @@
  */
 
 import type { BlockContent } from "./BlockContent.js";
-import {
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { HeadingNode } from "./HeadingNode.js";
 
@@ -45,10 +42,7 @@ export type SectionContent = BlockContent | SectionNode;
  *
  * @public
  */
-export class SectionNode
-	extends DocumentationParentNodeBase<SectionContent>
-	implements MultiLineDocumentationNode
-{
+export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
