@@ -48,6 +48,7 @@ import { brand } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { isLazy, type LazyItem } from "../simple-tree/flexList.js";
+import { schemaStatics } from "../simple-tree/index.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -124,16 +125,16 @@ export function treeContentFromTestTree(testData: TestTree): TreeStoredContent {
 }
 
 const factory = new SchemaFactoryAlpha("test");
-export class Minimal extends factory.object("minimal", {}) {}
-export class Minimal2 extends factory.object("minimal2", {}) {}
-export class HasMinimalValueField extends factory.object("hasMinimalValueField", {
+export class Minimal extends factory.objectAlpha("minimal", {}) {}
+export class Minimal2 extends factory.objectAlpha("minimal2", {}) {}
+export class HasMinimalValueField extends factory.objectAlpha("hasMinimalValueField", {
 	field: Minimal,
 }) {}
-export class HasRenamedField extends factory.object("hasRenamedField", {
+export class HasRenamedField extends factory.objectAlpha("hasRenamedField", {
 	field: factory.required(Minimal, { key: "stored-name" }),
 }) {}
 
-export class HasDescriptions extends factory.object(
+export class HasDescriptions extends factory.objectAlpha(
 	"hasDescriptions",
 	{
 		field: factory.required(Minimal, { metadata: { description: "the field" } }),
@@ -141,7 +142,7 @@ export class HasDescriptions extends factory.object(
 	{ metadata: { description: "root object" } },
 ) {}
 
-export class HasAllMetadata extends factory.object(
+export class HasAllMetadata extends factory.objectAlpha(
 	"hasDescriptions",
 	{
 		field: factory.required(Minimal, {
@@ -155,19 +156,19 @@ export class HasAllMetadata extends factory.object(
 	},
 ) {}
 
-export class HasAmbiguousField extends factory.object("hasAmbiguousField", {
+export class HasAmbiguousField extends factory.objectAlpha("hasAmbiguousField", {
 	field: [Minimal, Minimal2],
 }) {}
-export class HasNumericValueField extends factory.object("hasNumericValueField", {
+export class HasNumericValueField extends factory.objectAlpha("hasNumericValueField", {
 	field: factory.number,
 }) {}
-export class HasPolymorphicValueField extends factory.object("hasPolymorphicValueField", {
+export class HasPolymorphicValueField extends factory.objectAlpha("hasPolymorphicValueField", {
 	field: [factory.number, Minimal],
 }) {}
-export class HasOptionalField extends factory.object("hasOptionalField", {
+export class HasOptionalField extends factory.objectAlpha("hasOptionalField", {
 	field: factory.optional(factory.number),
 }) {}
-export class HasIdentifierField extends factory.object("hasIdentifierField", {
+export class HasIdentifierField extends factory.objectAlpha("hasIdentifierField", {
 	field: factory.identifier,
 }) {}
 
@@ -213,7 +214,7 @@ const library = {
 	nodeSchema: new Map([
 		[brand(Minimal.identifier), getStoredSchema(Minimal)],
 		[allTheFieldsName, allTheFields],
-		[brand(factory.number.identifier), getStoredSchema(factory.number)],
+		[brand(factory.number.identifier), getStoredSchema(schemaStatics.number)],
 	]),
 } satisfies Partial<TreeStoredSchema>;
 

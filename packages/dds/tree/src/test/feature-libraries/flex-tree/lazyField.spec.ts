@@ -19,7 +19,6 @@ import {
 	type UpPath,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { isFreedSymbol } from "../../../feature-libraries/flex-tree/lazyEntity.js";
 import {
 	LazyField,
 	LazyOptionalField,
@@ -32,7 +31,7 @@ import {
 	MockNodeIdentifierManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
-	getTreeContext,
+	Context,
 	isFlexTreeNode,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
@@ -183,9 +182,9 @@ describe("LazyField", () => {
 			detachedFieldAnchor,
 		);
 
-		assert(!field[isFreedSymbol]());
+		assert(!field.isFreed());
 		context[disposeSymbol]();
-		assert(field[isFreedSymbol]());
+		assert(field.isFreed());
 	});
 
 	it("Disposes when parent is disposed", () => {
@@ -203,10 +202,10 @@ describe("LazyField", () => {
 		const field = holder.getBoxed(brand("f"));
 		assert(field instanceof LazyField);
 
-		assert(!field[isFreedSymbol]());
+		assert(!field.isFreed());
 		const v = forest.anchors.acquireVisitor();
 		v.destroy(rootFieldKey, 1);
-		assert(field[isFreedSymbol]());
+		assert(field.isFreed());
 
 		// Should not double free.
 		context[disposeSymbol]();
@@ -227,9 +226,9 @@ describe("LazyField", () => {
 		const field = holder.getBoxed(brand("f"));
 		assert(field instanceof LazyField);
 
-		assert(!field[isFreedSymbol]());
+		assert(!field.isFreed());
 		context[disposeSymbol]();
-		assert(field[isFreedSymbol]());
+		assert(field.isFreed());
 		// Should not double free.
 		const v = forest.anchors.acquireVisitor();
 		v.destroy(rootFieldKey, 1);
@@ -460,7 +459,7 @@ describe("LazyField", () => {
 				schema,
 				initialTree: content,
 			});
-			const context = getTreeContext(
+			const context = new Context(
 				defaultSchemaPolicy,
 				new MockTreeCheckout(forest, {
 					schema: new TreeStoredSchemaRepository(schema),

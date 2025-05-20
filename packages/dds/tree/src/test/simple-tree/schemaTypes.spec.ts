@@ -12,6 +12,7 @@ import {
 	SchemaFactory,
 	type booleanSchema,
 	type InsertableObjectFromSchemaRecord,
+	type LazyItem,
 	type numberSchema,
 	type stringSchema,
 	type TreeNode,
@@ -19,9 +20,14 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	type AllowedTypes,
-	type FieldKind,
+	type AllowedTypesMetadata,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	FieldKind,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
@@ -33,14 +39,28 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateAllowedTypeOrLazyItem,
+	type UnannotateAllowedTypes,
+	type UnannotateAllowedTypesList,
+	type UnannotateImplicitAllowedTypes,
+	type UnannotateImplicitFieldSchema,
+	type UnannotateSchemaRecord,
 	areImplicitFieldSchemaEqual,
+	createFieldSchema,
+	extractAnnotationsFromAllowedTypes,
 	normalizeAllowedTypes,
+	normalizeToAnnotatedAllowedType,
+	unannotateImplicitAllowedTypes,
+	unannotateSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import type {
 	areSafelyAssignable,
+	isAssignableTo,
 	requireAssignableTo,
+	requireFalse,
 	requireTrue,
+	RestrictiveStringRecord,
 	UnionToIntersection,
 } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -170,8 +190,29 @@ describe("schemaTypes", () => {
 			}
 
 			{
+				type T = InsertableTreeNodeFromAllowedTypes<[]>;
+				type _check = requireAssignableTo<T, never>;
+			}
+
+			{
 				type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B]>;
 				type _check = requireAssignableTo<A | B, T>;
+			}
+
+			{
+				type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B] | [typeof A]>;
+				type _check = requireAssignableTo<T, never>;
+			}
+
+			{
+				type T = InsertableTreeNodeFromAllowedTypes<[typeof B, typeof A] | [typeof A]>;
+				type _check = requireAssignableTo<T, never>;
+			}
+
+			{
+				type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B | typeof A]>;
+				type _check = requireAssignableTo<A, T>;
+				type _check2 = requireFalse<isAssignableTo<B, T>>;
 			}
 		}
 
@@ -707,6 +748,245 @@ describe("schemaTypes", () => {
 
 			// At least this case allows undefined, like recursive object fields, but unlike non recursive object fields.
 			type _check7 = requireAssignableTo<undefined, ArgFieldOptional>;
+		});
+	});
+
+	// Type tests for unannotate utilities
+	{
+		// UnannotateImplicitAllowedTypes
+		{
+			{
+				type _check = requireAssignableTo<
+					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>,
+					ImplicitAllowedTypes
+				>;
+			}
+
+			{
+				type T = TreeNodeSchema;
+				type _check = requireAssignableTo<
+					T,
+					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
+				>;
+			}
+
+			{
+				type T = AllowedTypes;
+				type _check = requireAssignableTo<
+					T,
+					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
+				>;
+			}
+		}
+
+		// UnannotateImplicitFieldSchema
+		{
+			type T = ImplicitAnnotatedFieldSchema;
+			type _check = requireAssignableTo<UnannotateImplicitFieldSchema<T>, ImplicitFieldSchema>;
+		}
+
+		// UnannotateSchemaRecord
+		{
+			type T = RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>;
+			type _check = requireAssignableTo<
+				UnannotateSchemaRecord<T>,
+				RestrictiveStringRecord<ImplicitFieldSchema>
+			>;
+		}
+
+		// UnannotateAllowedTypeOrLazyItem
+		{
+			type A = LazyItem<TreeNodeSchema>;
+			type B = AnnotatedAllowedType;
+
+			type _check1 = requireAssignableTo<A, UnannotateAllowedTypeOrLazyItem<A>>;
+
+			type _check2 = requireAssignableTo<UnannotateAllowedTypeOrLazyItem<A>, A>;
+
+			type _check3 = requireAssignableTo<UnannotateAllowedTypeOrLazyItem<B>, A>;
+		}
+
+		// UnannotateAllowedTypesList
+		{
+			type A1 = AnnotatedAllowedType;
+			type A2 = LazyItem<TreeNodeSchema>;
+			type Mixed = readonly [A1, A2];
+
+			type Empty = readonly [];
+			type _check1 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
+
+			type _check2 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
+		}
+
+		// UnannotateAllowedTypes
+		{
+			type AnnotatedList = readonly [AnnotatedAllowedType, LazyItem<TreeNodeSchema>];
+
+			type _check = requireAssignableTo<
+				UnannotateAllowedTypes<{
+					metadata: AllowedTypesMetadata;
+					types: AnnotatedList;
+				}>,
+				readonly [LazyItem<TreeNodeSchema>, LazyItem<TreeNodeSchema>]
+			>;
+		}
+	}
+
+	describe("unannotateImplicitAllowedTypes", () => {
+		const fakeSchema = schema.string;
+		const lazy = () => fakeSchema;
+
+		it("handles a raw TreeNodeSchema", () => {
+			assert.equal(unannotateImplicitAllowedTypes(fakeSchema), fakeSchema);
+		});
+
+		it("handles AnnotatedAllowedType", () => {
+			const input: AnnotatedAllowedType = { metadata: {}, type: lazy };
+			assert.equal(unannotateImplicitAllowedTypes(input), lazy);
+		});
+
+		it("handles array of mixed annotated/unannotated", () => {
+			const input: readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[] = [
+				{ metadata: {}, type: lazy },
+				lazy,
+			];
+			assert.deepEqual(unannotateImplicitAllowedTypes(input), [lazy, lazy]);
+		});
+
+		it("handles AnnotatedAllowedTypes object", () => {
+			const input: AnnotatedAllowedTypes = {
+				metadata: { custom: { something: true } },
+				types: [{ metadata: {}, type: lazy }],
+			};
+			assert.deepEqual(unannotateImplicitAllowedTypes(input), [lazy]);
+		});
+
+		it("handles single AnnotatedAllowedType nested directly", () => {
+			const input: AnnotatedAllowedType = {
+				metadata: { custom: { something: true } },
+				type: lazy,
+			};
+			assert.deepEqual(unannotateImplicitAllowedTypes(input), lazy);
+		});
+
+		it("handles empty array of allowed types", () => {
+			const input: readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[] = [];
+			assert.deepEqual(unannotateImplicitAllowedTypes(input), []);
+		});
+
+		it("handles empty array of allowed types in AnnotatedAllowedTypes", () => {
+			const input: AnnotatedAllowedTypes = {
+				metadata: { custom: { something: true } },
+				types: [],
+			};
+			assert.deepEqual(unannotateImplicitAllowedTypes(input), []);
+		});
+
+		it("handles array of mixed annotated/unannotated in AnnotatedAllowedTypes", () => {
+			const input: AnnotatedAllowedTypes = {
+				metadata: { custom: { something: true } },
+				types: [{ metadata: {}, type: lazy }, lazy],
+			};
+			assert.deepEqual(unannotateImplicitAllowedTypes(input), [lazy, lazy]);
+		});
+	});
+
+	describe("normalizeToAnnotatedAllowedType", () => {
+		const fakeSchema = schema.string;
+
+		it("wraps LazyItem<TreeNodeSchema> in an annotation", () => {
+			const result = normalizeToAnnotatedAllowedType(fakeSchema);
+			assert.deepStrictEqual(result, { metadata: {}, type: fakeSchema });
+		});
+
+		it("returns input unchanged if already AnnotatedAllowedType", () => {
+			const input: AnnotatedAllowedType = {
+				metadata: { custom: { something: true } },
+				type: fakeSchema,
+			};
+			const result = normalizeToAnnotatedAllowedType(input);
+			assert.strictEqual(result, input);
+		});
+	});
+
+	describe("unannotateSchemaRecord", () => {
+		const stringSchema = schema.string;
+		const numberSchema = schema.number;
+
+		it("returns the same FieldSchema if no annotations are present", () => {
+			const schemaRecord = {
+				foo: createFieldSchema(FieldKind.Optional, stringSchema),
+			};
+			const result = unannotateSchemaRecord(schemaRecord);
+			assert.deepStrictEqual(result, schemaRecord);
+		});
+
+		it("unannotates annotated allowed types", () => {
+			const schemaRecord = {
+				bar: {
+					metadata: {},
+					types: [{ metadata: {}, type: stringSchema }, numberSchema],
+				},
+			};
+			const result = unannotateSchemaRecord(schemaRecord);
+			assert.deepStrictEqual(result, {
+				bar: [stringSchema, numberSchema],
+			});
+		});
+
+		it("handles mixed FieldSchema and annotated types", () => {
+			const fieldSchema = createFieldSchema(FieldKind.Optional, stringSchema);
+			const schemaRecord = {
+				foo: fieldSchema,
+				bar: {
+					metadata: {},
+					types: [{ metadata: {}, type: stringSchema }],
+				},
+			};
+			const result = unannotateSchemaRecord(schemaRecord);
+			assert.deepStrictEqual(result, {
+				foo: fieldSchema,
+				bar: [stringSchema],
+			});
+		});
+
+		it("handles empty schema record", () => {
+			const result = unannotateSchemaRecord({});
+			assert.deepStrictEqual(result, {});
+		});
+	});
+
+	describe("extractAnnotationsFromAllowedTypes", () => {
+		const stringSchema = schema.string;
+		const numberSchema = schema.number;
+		const lazyString = () => stringSchema;
+		const lazyNumber = () => numberSchema;
+
+		it("extracts metadata from AnnotatedAllowedType array", () => {
+			const input = [lazyString, { metadata: { custom: true }, type: lazyNumber }];
+			const result = extractAnnotationsFromAllowedTypes(input);
+			assert.strictEqual(result.get(stringSchema)?.custom, undefined);
+			assert.deepStrictEqual(result.get(numberSchema), { custom: true });
+		});
+
+		it("handles AnnotatedAllowedTypes object", () => {
+			const input: AnnotatedAllowedTypes = {
+				metadata: {},
+				types: [{ metadata: { custom: 1 }, type: lazyString }],
+			};
+			const result = extractAnnotationsFromAllowedTypes(input);
+			assert.deepStrictEqual(result.get(stringSchema), { custom: 1 });
+		});
+
+		it("handles single AnnotatedAllowedType", () => {
+			const input: AnnotatedAllowedType = { metadata: { custom: 1 }, type: lazyString };
+			const result = extractAnnotationsFromAllowedTypes(input);
+			assert.deepStrictEqual(result.get(stringSchema), { custom: 1 });
+		});
+
+		it("handles single TreeNodeSchema", () => {
+			const result = extractAnnotationsFromAllowedTypes(stringSchema);
+			assert.deepStrictEqual(result.get(stringSchema), {});
 		});
 	});
 });

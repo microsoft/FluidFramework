@@ -24,7 +24,7 @@ import type {
 	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
-import { Tree, type ITreePrivate, type SharedTree } from "../../../shared-tree/index.js";
+import { Tree, type ITreePrivate } from "../../../shared-tree/index.js";
 import { getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
@@ -65,7 +65,8 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
-import type { TreeFactory } from "../../../treeFactory.js";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedTree } from "../../../treeFactory.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
@@ -95,14 +96,14 @@ export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSch
 	currentSchema: FuzzNodeSchema;
 };
 
-export interface FuzzTestState extends DDSFuzzTestState<TreeFactory> {
+export interface FuzzTestState extends DDSFuzzTestState<IChannelFactory<ISharedTree>> {
 	/**
 	 * Schematized view of clients and their nodeSchemas. Created lazily by viewFromState.
 	 *
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	clientViews?: Map<SharedTree, FuzzView>;
+	clientViews?: Map<ISharedTree, FuzzView>;
 	/**
 	 * Schematized view of clients undergoing transactions with their nodeSchemas.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
@@ -118,12 +119,12 @@ export interface FuzzTestState extends DDSFuzzTestState<TreeFactory> {
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	forkedViews?: Map<SharedTree, FuzzView[]>;
+	forkedViews?: Map<ISharedTree, FuzzView[]>;
 }
 
 export function viewFromState(
 	state: FuzzTestState,
-	client: Client<TreeFactory> = state.client,
+	client: Client<IChannelFactory<ISharedTree>> = state.client,
 	forkedBranchIndex?: number | undefined,
 ): FuzzView {
 	state.clientViews ??= new Map();
@@ -695,7 +696,7 @@ export const makeConstraintEditGenerator = (
 
 export function makeOpGenerator(
 	weightsArg: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
-): AsyncGenerator<Operation, DDSFuzzTestState<TreeFactory>> {
+): AsyncGenerator<Operation, DDSFuzzTestState<IChannelFactory<ISharedTree>>> {
 	const weights = {
 		...defaultEditGeneratorOpWeights,
 		...weightsArg,

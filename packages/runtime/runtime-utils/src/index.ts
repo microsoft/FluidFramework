@@ -6,21 +6,22 @@
 export { generateHandleContextPath } from "./dataStoreHandleContextUtils.js";
 export {
 	create404Response,
-	createDataStoreFactory,
 	createResponseError,
 	exceptionToResponse,
-	Factory,
 	responseToException,
 } from "./dataStoreHelpers.js";
 export {
+	compareFluidHandles,
 	encodeHandleForSerialization,
+	FluidHandleBase,
 	ISerializedHandle,
-	isSerializedHandle,
 	isFluidHandle,
+	isFluidHandleInternalPayloadPending,
+	isFluidHandlePayloadPending,
+	isLocalFluidHandle,
+	isSerializedHandle,
 	toFluidHandleErased,
 	toFluidHandleInternal,
-	FluidHandleBase,
-	compareFluidHandles,
 } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export {

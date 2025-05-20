@@ -151,7 +151,7 @@ export class MockDeltaManager
 		return undefined as any as IClientConfiguration;
 	}
 
-	public readonly active: boolean = true;
+	public active: boolean = true;
 
 	public close(): void {}
 
@@ -186,7 +186,7 @@ export class MockDeltaManager
 		this.emit("op", message);
 	}
 
-	constructor(private readonly getClientId?: () => string) {
+	constructor(private readonly getClientId?: () => string | undefined) {
 		super();
 
 		this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>();

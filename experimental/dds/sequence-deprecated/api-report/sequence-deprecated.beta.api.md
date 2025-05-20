@@ -4,12 +4,6 @@
 
 ```ts
 
-export { IJSONRunSegment }
-
-export { SharedSequence }
-
-export { SubSequence }
-
 // (No @packageDocumentation comment for this package)
 
 ```

@@ -17,24 +17,33 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import express from "express";
 import shajs from "sha.js";
 import { Provider } from "nconf";
-import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+import {
+	CallingServiceHeaderName,
+	DriverVersionHeaderName,
+	IAlfredTenant,
+} from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
 	bindTelemetryContext,
 	bindTimeoutContext,
 	jsonMorganLoggerMiddleware,
+	bindAbortControllerContext,
 } from "@fluidframework/server-services-utils";
 import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
-import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	CommonProperties,
+	HttpProperties,
+} from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
@@ -54,18 +63,20 @@ export function create(
 	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: RedisEmitter,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	enableClientIPLogging?: boolean,
 	readinessCheck?: IReadinessCheck,
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 	redisCacheForGetSession?: ICache,
+	denyList?: IDenyList,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
 	const enableLatencyMetric = config.get("alfred:enableLatencyMetric") ?? false;
 	const enableEventLoopLagMetric = config.get("alfred:enableEventLoopLagMetric") ?? false;
 	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
+	const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
 
 	// Express app configuration
 	const app: express.Express = express();
@@ -86,10 +97,13 @@ export function create(
 	app.set("trust proxy", 1);
 
 	app.use(compression());
-	app.use(bindTelemetryContext());
+	app.use(bindTelemetryContext("alfred"));
 	if (httpServerConfig?.connectionTimeoutMs) {
 		// If connectionTimeoutMs configured and not 0, bind timeout context.
 		app.use(bindTimeoutContext(httpServerConfig.connectionTimeoutMs));
+	}
+	if (axiosAbortSignalEnabled) {
+		app.use(bindAbortControllerContext());
 	}
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
@@ -105,6 +119,8 @@ export function create(
 						),
 						[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
 						[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+						[CommonProperties.callingServiceName]:
+							req.headers[CallingServiceHeaderName] ?? "",
 					};
 					if (enableClientIPLogging === true) {
 						const hashedClientIP = req.ip
@@ -181,6 +197,7 @@ export function create(
 		readinessCheck,
 		fluidAccessTokenGenerator,
 		redisCacheForGetSession,
+		denyList,
 	);
 
 	app.use(routes.api);

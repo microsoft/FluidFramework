@@ -9,6 +9,8 @@ export {
 	fluidEntryPoint,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
+	Factory,
+	createDataStoreFactory,
 } from "./localCodeLoader.js";
 export {
 	createAndAttachContainer,

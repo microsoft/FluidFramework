@@ -130,8 +130,12 @@ class AzCliKeyVaultClient {
 			if (error.message.includes("AADSTS530003")) {
 				console.log(
 					`\nAn error occurred running \`az ad signed-in-user show\` that suggests you might need to \`az logout\` and ` +
-						`\`az login\` again. One potential cause for this is having used \`az login --use-device-code\`. Error:\n\n` +
-						`${error.message}`,
+					`\`az login\` again. One potential cause for this is having used \`az login --use-device-code\`. ` +
+					`If you're using WSL, you might need to set the BROWSER environment variable to the path to a Windows-space ` +
+					`browser executable to run 'az login' in an interactive flow, e.g. ` +
+					`'BROWSER="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" az login'.\n\n` +
+					`Error:\n\n` +
+					`${error.message}`,
 				);
 				// eslint-disable-next-line unicorn/no-process-exit
 				process.exit(1);

@@ -203,14 +203,12 @@ Checks and applies policies to the files in the repository, such as ensuring a c
 
 ```
 USAGE
-  $ flub check policy [-v | --quiet] [-D <value>... | -d <value>] [-e <value>] [--listHandlers | --stdin | -p
-    <value> | -f | ]
+  $ flub check policy [-v | --quiet] [-D <value>... | -d <value>] [--listHandlers | --stdin | -p <value> | -f | ]
 
 FLAGS
   -D, --excludeHandler=<value>...  Exclude policy handler by name. Can be specified multiple times to exclude multiple
                                    handlers.
   -d, --handler=<value>            Filter policy handler names by <regex>.
-  -e, --exclusions=<value>         Path to the exclusions.json file.
   -f, --fix                        Fix errors if possible.
   -p, --path=<value>               Filter file paths by <regex>.
       --listHandlers               List all policy handlers by name.

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
-import type { Listenable } from "@fluidframework/core-interfaces";
 import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	type Anchor,
@@ -44,7 +45,6 @@ import {
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
 import { type IChunker, basicChunkTree, chunkFieldSingle, chunkTree } from "./chunkTree.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -183,6 +183,12 @@ export class ChunkedForest implements IEditableForest {
 			 * If not specified, the detached range is destroyed.
 			 */
 			detachEdit(source: Range, destination: FieldKey | undefined): void {
+				// TODO: optimize this to perform in-place replace in uniform chunks when attach edits bring the chunk back to its original shape.
+				// This should result in 3 cases:
+				// 1. In-place update of uniform chunk. No allocations, no ref count changes, no new TreeChunks.
+				// 2. Uniform chunk is shared: copy it (and parent path as needed), and update the copy.
+				// 3. Fallback to detach then attach (Which will copy parents and convert to basic chunks as needed).
+
 				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
@@ -208,24 +214,6 @@ export class ChunkedForest implements IEditableForest {
 				if (sourceField.length === 0) {
 					parent.mutableChunk.fields.delete(parent.key);
 				}
-			},
-			replace(
-				newContentSource: FieldKey,
-				range: Range,
-				oldContentDestination: FieldKey,
-				oldContentId: DeltaDetachedNodeId,
-			): void {
-				assert(
-					newContentSource !== oldContentDestination,
-					0x7b0 /* Replace detached source field and detached destination field must be different */,
-				);
-				// TODO: optimize this to: perform in-place replace in uniform chunks when possible.
-				// This should result in 3 cases:
-				// 1. In-place update of uniform chunk. No allocations, no ref count changes, no new TreeChunks.
-				// 2. Uniform chunk is shared: copy it (and parent path as needed), and update the copy.
-				// 3. Fallback to detach then attach (Which will copy parents and convert to basic chunks as needed).
-				this.detachEdit(range, oldContentDestination);
-				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},
 			enterNode(index: number): void {
 				assert(this.mutableChunk === undefined, 0x535 /* should be in field */);
@@ -289,10 +277,7 @@ export class ChunkedForest implements IEditableForest {
 
 		const announcedVisitors: AnnouncedVisitor[] = [];
 		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
-		const combinedVisitor = combineVisitors(
-			[forestVisitor, ...announcedVisitors],
-			announcedVisitors,
-		);
+		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;
 	}
