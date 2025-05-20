@@ -66,8 +66,25 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (message: PendingMessageResubmitData) => void;
+	readonly reSubmit: (message: PendingMessageResubmitData, squash: boolean) => void;
 	readonly opReentrancy: () => boolean;
+}
+
+/**
+ * Info needed to correctly resubmit a batch
+ */
+export interface BatchResubmitInfo {
+	/**
+	 * If defined, indicates the Batch ID of the batch being resubmitted.
+	 * This must be preserved on the new batch about to be submitted so they can be correlated/deduped in case both are sent.
+	 */
+	batchId?: string;
+	/**
+	 * Indicates whether or not this batch is "staged", meaning it should not be sent to the ordering service yet
+	 * This is important on resubmit because we may be in Staging Mode for new changes,
+	 * but resubmitting a non-staged change from before entering Staging Mode
+	 */
+	staged: boolean;
 }
 
 /**
@@ -335,37 +352,33 @@ export class Outbox {
 	 * This method is expected to be called at the end of a batch.
 	 *
 	 * @throws If called from a reentrant context, or if the batch being flushed is too large.
-	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
-	 * with the given Batch ID, which must be preserved
-	 * @param resubmittingStagedBatch - If defined, indicates this is a resubmission of a batch that is staged,
-	 * meaning it should not be sent to the ordering service yet.
+	 * @param resubmitInfo - Key information when flushing a resubmitted batch. Undefined means this is not resubmit.
 	 */
-	public flush(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
+	public flush(resubmitInfo?: BatchResubmitInfo): void {
 		assert(
 			!this.isContextReentrant(),
 			0xb7b /* Flushing must not happen while incoming changes are being processed */,
 		);
-
-		this.flushAll(resubmittingBatchId, resubmittingStagedBatch);
+		this.flushAll(resubmitInfo);
 	}
 
-	private flushAll(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
+	private flushAll(resubmitInfo?: BatchResubmitInfo): void {
 		const allBatchesEmpty =
 			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (allBatchesEmpty) {
-			// If we're resubmitting and all batches are empty, we need to flush an empty batch.
-			// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
+			// If we're resubmitting with a batchId and all batches are empty, we need to flush an empty batch.
+			// Note that we currently resubmit one batch at a time, so on resubmit, 1 of the 2 batches will *always* be empty.
 			// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
 			// by the rest of the system, including remote clients.
 			// In some cases we *must* resubmit the empty batch (to match up with a non-empty version tracked locally by a container fork), so we do it always.
-			if (resubmittingBatchId) {
-				this.flushEmptyBatch(resubmittingBatchId, resubmittingStagedBatch === true);
+			if (resubmitInfo?.batchId !== undefined) {
+				this.flushEmptyBatch(resubmitInfo.batchId, resubmitInfo.staged);
 			}
 			return;
 		}
 
 		// Don't use resubmittingBatchId for idAllocationBatch.
-		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
+		// ID Allocation messages are not directly resubmitted so don't pass the resubmitInfo
 		this.flushInternal({
 			batchManager: this.idAllocationBatch,
 			// Note: For now, we will never stage ID Allocation messages.
@@ -374,13 +387,11 @@ export class Outbox {
 		this.flushInternal({
 			batchManager: this.blobAttachBatch,
 			disableGroupedBatching: true,
-			resubmittingBatchId,
-			resubmittingStagedBatch,
+			resubmitInfo,
 		});
 		this.flushInternal({
 			batchManager: this.mainBatch,
-			resubmittingBatchId,
-			resubmittingStagedBatch,
+			resubmitInfo,
 		});
 	}
 
@@ -416,25 +427,21 @@ export class Outbox {
 	private flushInternal(params: {
 		batchManager: BatchManager;
 		disableGroupedBatching?: boolean;
-		resubmittingBatchId?: BatchId; // undefined if not resubmitting
-		resubmittingStagedBatch?: boolean; // undefined if not resubmitting
+		resubmitInfo?: BatchResubmitInfo; // undefined if not resubmitting
 	}): void {
-		const {
-			batchManager,
-			disableGroupedBatching = false,
-			resubmittingBatchId,
-			resubmittingStagedBatch,
-		} = params;
+		const { batchManager, disableGroupedBatching = false, resubmitInfo } = params;
 		if (batchManager.empty) {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch(resubmittingBatchId);
+		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId);
 
-		// When resubmitting, we respect the staged state of the original batch.
-		// In this case rawBatch.staged will match the state of inStagingMode when
-		// the resubmit occurred, which is not relevant.
-		const staged = resubmittingStagedBatch ?? rawBatch.staged === true;
+		// On resubmit we use the original batch's staged state, so these should match as well.
+		const staged = rawBatch.staged === true;
+		assert(
+			resubmitInfo === undefined || resubmitInfo.staged === staged,
+			"Mismatch in staged state tracking",
+		);
 
 		const groupingEnabled =
 			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
@@ -490,12 +497,16 @@ export class Outbox {
 		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
+		const squash = false;
 		for (const message of rawBatch.messages) {
-			this.params.reSubmit({
-				runtimeOp: message.runtimeOp,
-				localOpMetadata: message.localOpMetadata,
-				opMetadata: message.metadata,
-			});
+			this.params.reSubmit(
+				{
+					runtimeOp: message.runtimeOp,
+					localOpMetadata: message.localOpMetadata,
+					opMetadata: message.metadata,
+				},
+				squash,
+			);
 		}
 
 		if (this.batchRebasesToReport > 0) {

@@ -21,6 +21,8 @@ export {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	exportSimpleSchema,
+	type SharedTreeKernelView,
+	persistedToSimpleSchema,
 } from "./sharedTree.js";
 
 export {
@@ -45,13 +47,10 @@ export type {
 	SharedTreeEditBuilder,
 } from "./sharedTreeEditBuilder.js";
 
-export {
-	treeApi as Tree,
-	type TreeApi,
-	type RunTransaction,
-} from "./treeApi.js";
+export { Tree } from "./tree.js";
+export type { RunTransaction } from "./tree.js";
 
-export { TreeAlpha } from "./treeApiAlpha.js";
+export { TreeAlpha, type TreeIdentifierUtils } from "./treeAlpha.js";
 
 export {
 	independentInitializedView,

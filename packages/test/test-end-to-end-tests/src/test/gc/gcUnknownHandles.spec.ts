@@ -37,6 +37,9 @@ export class TestFluidHandle extends FluidHandleBase<unknown> {
 		throw new Error("Method not implemented.");
 	}
 
+	/**
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 */
 	public bind(handle: IFluidHandle): void {
 		throw new Error("Method not implemented.");
 	}
