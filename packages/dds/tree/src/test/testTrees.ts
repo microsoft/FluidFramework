@@ -270,10 +270,7 @@ export const testTrees: readonly TestTree[] = [
 		"numericSequence",
 		{
 			...toStoredSchema(factory.number),
-			rootFieldSchema: {
-				kind: FieldKinds.sequence.identifier,
-				types: numberSet,
-			},
+			rootFieldSchema: { kind: FieldKinds.sequence.identifier, types: numberSet },
 		},
 		jsonableTreesFromFieldCursor(fieldJsonCursor([1, 2, 3])),
 	),
