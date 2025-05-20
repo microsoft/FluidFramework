@@ -5,10 +5,7 @@
 
 import type { Heading } from "../Heading.js";
 
-import {
-	DocumentationParentNodeBase,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
+import type { DocumentationNode } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
@@ -33,32 +30,32 @@ import { PlainTextNode } from "./PlainTextNode.js";
  *
  * @public
  */
-export class HeadingNode
-	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements Omit<Heading, "title">
-{
+export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Heading, "title"> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.Heading;
 
 	/**
-	 * {@inheritDoc Heading.id}
-	 */
-	public readonly id?: string;
-
-	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
 	 */
-	public override get singleLine(): false {
-		return false;
+	public readonly singleLine = true;
+
+	public readonly isLiteral = false;
+	public readonly isParent = false;
+
+	public get isEmpty(): boolean {
+		return this.text.isEmpty;
 	}
 
-	public constructor(content: SingleLineDocumentationNode[], id?: string) {
-		super(content);
+	public constructor(
+		public readonly text: PlainTextNode,
 
-		this.id = id;
-	}
+		/**
+		 * {@inheritDoc Heading.id}
+		 */
+		public readonly id?: string,
+	) {}
 
 	/**
 	 * Generates a `HeadingNode` from the provided string.
@@ -67,7 +64,7 @@ export class HeadingNode
 	 * @param level - See {@link Heading.level}
 	 */
 	public static createFromPlainText(text: string, id?: string): HeadingNode {
-		return new HeadingNode([new PlainTextNode(text)], id);
+		return new HeadingNode(new PlainTextNode(text), id);
 	}
 
 	/**

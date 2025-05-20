@@ -487,12 +487,21 @@ export interface Heading {
 }
 
 // @public
-export class HeadingNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements Omit<Heading, "title"> {
-    constructor(content: SingleLineDocumentationNode[], id?: string);
+export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Heading, "title"> {
+    constructor(text: PlainTextNode,
+    id?: string | undefined);
     static createFromPlainText(text: string, id?: string): HeadingNode;
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
-    readonly id?: string;
-    get singleLine(): false;
+    readonly id?: string | undefined;
+    // (undocumented)
+    get isEmpty(): boolean;
+    // (undocumented)
+    readonly isLiteral = false;
+    // (undocumented)
+    readonly isParent = false;
+    readonly singleLine = true;
+    // (undocumented)
+    readonly text: PlainTextNode;
     readonly type = DocumentationNodeType.Heading;
 }
 
