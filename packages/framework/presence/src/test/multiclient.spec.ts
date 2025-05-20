@@ -48,7 +48,11 @@ async function waitForAttendeeEvent(
 		presences.map(async (presence, index) =>
 			timeoutPromise<Attendee>(
 				(resolve) => {
-					listeners.push(presence.attendees.events.on(event, (attendee) => resolve(attendee)));
+					const off = presence.attendees.events.on(event, (attendee) => {
+						off();
+						resolve(attendee);
+					});
+					listeners.push(off);
 				},
 				{
 					durationMs: 2000,
@@ -89,7 +93,7 @@ describe(`Presence with TinyliciousClient`, () => {
 	// 	);
 	// });
 
-	afterEach(async () => {
+	afterEach(() => {
 		console.log(`connected containers before cleanup: ${connectedContainers.length}`);
 		for (const container of connectedContainers) {
 			console.log(`cleanup called`);
@@ -103,6 +107,7 @@ describe(`Presence with TinyliciousClient`, () => {
 		for (const removeListener of listeners) {
 			removeListener();
 		}
+		listeners.splice(0, listeners.length);
 		console.log(`listeners: ${listeners.length}`);
 	});
 
@@ -169,7 +174,22 @@ describe(`Presence with TinyliciousClient`, () => {
 				presence: presence1,
 				containerId,
 			} = await getOrCreatePresenceContainer(undefined, user1);
+			// await waitForAttendeeEvent("attendeeConnected", presence1);
 			assert.notEqual(presence1, undefined);
+
+			const attendee = await timeoutPromise<Attendee>(
+				(resolve) => {
+					const off = presence1.attendees.events.on("attendeeConnected", (attendee) => {
+						off();
+						resolve(attendee);
+					});
+					listeners.push(off);
+				},
+				{
+					errorMsg: `Attendee[0] Timeout`,
+				},
+			);
+			assert.notEqual(attendee, undefined);
 		});
 
 		it.skip("multiclient presence data validation", async () => {
