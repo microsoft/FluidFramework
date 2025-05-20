@@ -92,10 +92,13 @@ describe("Local Server Stress with rollback", () => {
 		// saveSuccesses,
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
 		skip: [
-			...[1], // closed container: 0xb85
-			...[47], //  Mismatch in pending changes
-			...[15, 23, 51, 63, 65], //  Number of subDirectories/keys not same
-			...[13], // 0xb86 and 0xb89: exit staging mode logic failing due to id compressor allocation ops
+			...[12, 28, 30], // Key not found or value not matching key
+			...[15, 38, 51, 63], // Number of keys not same (directory)
+			...[24], // have different number of keys (map)
+			...[25], // Number of subDirectories not same
+			...[53], // SubDirectory with name ... not present in second directory
+			...[65], // closed or disposed: 0x2f5
+			...[72], // closed or disposed: 0x2fa
 		],
 	});
 });

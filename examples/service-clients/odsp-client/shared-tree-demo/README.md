@@ -10,7 +10,8 @@ All the code required to set up the Fluid Framework and SharedTree data structur
 
 You can run this example using the following steps:
 
-1. To kick off the example, update the credentials in the `clientProps.ts` file by replacing siteUrl, driveId, and clientId with your own.
+1. To kick off the example, first copy the `.env.template` file to `.env`, filling in the values with your own.
+	   See documentation in `.env.template` for details about each value.
 1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `pnpm run build:fast --nolint @fluid-example/shared-tree-demo`

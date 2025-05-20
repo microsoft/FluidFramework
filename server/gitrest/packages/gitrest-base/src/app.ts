@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import {
 	alternativeMorganLoggerMiddleware,
+	bindAbortControllerContext,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 	ResponseSizeMiddleware,
@@ -51,6 +52,10 @@ export function create(
 	const app: Express = express();
 
 	app.use(bindTelemetryContext("gitrest"));
+	const axiosAbortSignalEnabled = store.get("axiosAbortSignalEnabled") ?? false;
+	if (axiosAbortSignalEnabled) {
+		app.use(bindAbortControllerContext());
+	}
 	const loggerFormat = store.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		const enableResponseCloseLatencyMetric =

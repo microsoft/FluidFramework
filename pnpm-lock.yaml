@@ -42,7 +42,7 @@ importers:
         version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
         specifier: ^0.55.0
-        version: 0.55.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)
+        version: 0.55.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluid-tools/markdown-magic':
         specifier: workspace:~
         version: link:tools/markdown-magic
@@ -4621,6 +4621,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      dotenv-webpack:
+        specifier: ^7.0.3
+        version: 7.1.1(webpack@5.97.1)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -13768,6 +13771,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/id-compressor':
+        specifier: workspace:~
+        version: link:../../runtime/id-compressor
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../drivers/local-driver
@@ -37644,6 +37650,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  http-proxy-middleware@2.0.7(@types/express@4.17.21):
+    dependencies:
+      '@types/http-proxy': 1.17.15
+      http-proxy: 1.18.1
+      is-glob: 4.0.3
+      is-plain-obj: 3.0.0
+      micromatch: 4.0.8
+    optionalDependencies:
+      '@types/express': 4.17.21
+    transitivePeerDependencies:
+      - debug
+
   http-proxy-middleware@2.0.7(@types/express@4.17.21)(debug@4.4.0):
     dependencies:
       '@types/http-proxy': 1.17.15
@@ -37653,6 +37671,14 @@ snapshots:
       micromatch: 4.0.8
     optionalDependencies:
       '@types/express': 4.17.21
+    transitivePeerDependencies:
+      - debug
+
+  http-proxy@1.18.1:
+    dependencies:
+      eventemitter3: 4.0.7
+      follow-redirects: 1.15.9
+      requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
 
@@ -43827,7 +43853,7 @@ snapshots:
       express: 4.21.2
       graceful-fs: 4.2.11
       html-entities: 2.5.2
-      http-proxy-middleware: 2.0.7(@types/express@4.17.21)(debug@4.4.0)
+      http-proxy-middleware: 2.0.7(@types/express@4.17.21)
       ipaddr.js: 2.2.0
       launch-editor: 2.9.1
       open: 8.4.2
