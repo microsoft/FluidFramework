@@ -13,7 +13,7 @@ import {
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { makeSchemaCodec } from "../schema-index/index.js";
+import { makeSchemaCodec, type Format as FormatV1 } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
@@ -25,10 +25,7 @@ import { SchemaVersion } from "../../core/index.js";
  * @returns The composed codec family.
  */
 export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
-	return makeCodecFamily([
-		[SchemaVersion.v1, makeSchemaChangeCodecV1(options, SchemaVersion.v1)],
-		[SchemaVersion.v2, makeSchemaChangeCodecV1(options, SchemaVersion.v2)],
-	]);
+	return makeCodecFamily([[SchemaVersion.v1, makeSchemaChangeCodecV1(options)]]);
 }
 
 /**
@@ -48,14 +45,12 @@ export function makeSchemaChangeCodec(
 /**
  * Compose the v1 schema change codec.
  * @param options - The codec options.
- * @param schemaWriteVersion - The schema write version.
  * @returns The composed schema change codec.
  */
 function makeSchemaChangeCodecV1(
 	options: ICodecOptions,
-	schemaWriteVersion: SchemaVersion,
 ): IJsonCodec<SchemaChange, EncodedSchemaChange> {
-	const schemaCodec = makeSchemaCodec(options, schemaWriteVersion);
+	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 	const schemaChangeCodec: IJsonCodec<SchemaChange, EncodedSchemaChange> = {
 		encode: (schemaChange) => {
 			assert(
@@ -63,8 +58,8 @@ function makeSchemaChangeCodecV1(
 				0x933 /* Inverse schema changes should never be transmitted */,
 			);
 			return {
-				new: schemaCodec.encode(schemaChange.schema.new),
-				old: schemaCodec.encode(schemaChange.schema.old),
+				new: schemaCodec.encode(schemaChange.schema.new) as FormatV1,
+				old: schemaCodec.encode(schemaChange.schema.old) as FormatV1,
 			};
 		},
 		decode: (encoded) => {

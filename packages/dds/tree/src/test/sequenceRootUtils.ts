@@ -31,7 +31,6 @@ export const jsonSequenceRootSchema: TreeStoredSchema = {
 				brand<TreeNodeSchemaIdentifier>(s.identifier),
 			),
 		),
-		persistedMetadata: undefined,
 	},
 };
 
