@@ -39,6 +39,7 @@ export type JsonableTypeWith<T> =
  * @legacy
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- Use of mapped type required to prevent circular reference issue
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
 	[index: string | number]: JsonableTypeWith<T>;
 }

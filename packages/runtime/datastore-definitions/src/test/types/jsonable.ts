@@ -8,6 +8,7 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 
 import type { Jsonable } from "../../index.js";
 
@@ -62,6 +63,7 @@ declare const a2: IA2;
 foo(a2);
 
 // test complex indexed type
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- explicitly testing indexed type
 declare const a3: { [key: string]: string };
 foo(a3);
 
