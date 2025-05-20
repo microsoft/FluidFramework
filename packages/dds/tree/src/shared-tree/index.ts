@@ -50,7 +50,7 @@ export type {
 export { Tree } from "./tree.js";
 export type { RunTransaction } from "./tree.js";
 
-export { TreeAlpha } from "./treeAlpha.js";
+export { TreeAlpha, type TreeIdentifierUtils } from "./treeAlpha.js";
 
 export {
 	independentInitializedView,

@@ -112,7 +112,7 @@ const historicalSchema: {
 
 describe("schema", () => {
 	it("current schema matches latest historical schema", () => {
-		const current = extractPersistedSchema(config, FluidClientVersion.v2_3);
+		const current = extractPersistedSchema(config, FluidClientVersion.v2_0);
 
 		// For compatibility with deep equality and simple objects, round trip via JSON to erase prototypes.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -140,7 +140,6 @@ describe("schema", () => {
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						historicalSchema[viewIndex]!.viewSchema,
 						options,
-						false,
 					);
 
 					// We do not expect duplicates in historicalSchema.

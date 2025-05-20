@@ -107,6 +107,7 @@ function assertDeltasEqual(actual: DeltaRoot[], expected: DeltaRoot[]): void {
 }
 
 /**
+ * Initialize an editable forest.
  * @param data - The data to initialize the forest with.
  */
 function initializeEditableForest(data?: JsonableTree): {

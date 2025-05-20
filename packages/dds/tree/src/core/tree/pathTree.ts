@@ -4,8 +4,8 @@
  */
 
 import type { FieldKey } from "../schema-stored/index.js";
-import type { DetachedNodeId } from "./delta.js";
 
+import type { DetachedNodeId } from "./delta.js";
 import { type DetachedField, keyAsDetachedField } from "./types.js";
 
 /**
