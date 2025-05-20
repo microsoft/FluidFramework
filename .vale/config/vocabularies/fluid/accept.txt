@@ -6,3 +6,5 @@ JavaScript
 SharedTree
 TypeScript
 namespace
+UUID
+UUIDs
