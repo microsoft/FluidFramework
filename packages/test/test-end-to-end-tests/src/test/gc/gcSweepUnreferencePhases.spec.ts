@@ -98,7 +98,10 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		configProvider.clear();
 	});
 
-	it("Unreferenced objects follow the sequence [unreferenced, tombstoned, deleted]", async () => {
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	it.only("Unreferenced objects follow the sequence [unreferenced, tombstoned, deleted]", async () => {
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
 		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);

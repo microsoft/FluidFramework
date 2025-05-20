@@ -89,7 +89,6 @@ import type {
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	ISummarizeInternalResult,
-	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 	IInboundSignalMessage,
@@ -3457,50 +3456,13 @@ export class ContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
+		// We are NOT dirty if the only pending changes are "non-user" changes (e.g. GC, ID compressor, etc.),
+		// since these system messages can be lost without data loss.
 		return (
 			this.attachState !== AttachState.Attached ||
-			this.pendingStateManager.hasAnyMatchingFilter(
-				(message) =>
-					message.runtimeOp !== undefined && //* This doesn't work for initial messages.
-					this.isContainerMessageDirtyable(message.runtimeOp),
-			) ||
-			this.outbox.hasAnyMatchingFilter((message) =>
-				this.isContainerMessageDirtyable(message.runtimeOp),
-			)
+			this.pendingStateManager.hasPendingUserChanges() ||
+			this.outbox.containsUserChanges()
 		);
-	}
-
-	private isContainerMessageDirtyable({
-		type,
-		contents,
-	}: LocalContainerRuntimeMessage): boolean {
-		// Certain container runtime messages should not mark the container dirty such as the old built-in
-		// AgentScheduler and Garbage collector messages.
-		switch (type) {
-			case ContainerMessageType.Attach: {
-				const attachMessage = contents as InboundAttachMessage;
-				if (attachMessage.id === agentSchedulerId) {
-					return false;
-				}
-				break;
-			}
-			case ContainerMessageType.FluidDataStoreOp: {
-				const envelope = contents;
-				if (envelope.address === agentSchedulerId) {
-					return false;
-				}
-				break;
-			}
-			case ContainerMessageType.IdAllocation:
-			case ContainerMessageType.DocumentSchemaChange:
-			case ContainerMessageType.GC: {
-				return false;
-			}
-			default: {
-				break;
-			}
-		}
-		return true;
 	}
 
 	/**
@@ -4488,9 +4450,7 @@ export class ContainerRuntime
 			throw dpe;
 		}
 
-		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
-			this.updateDocumentDirtyState();
-		}
+		this.updateDocumentDirtyState();
 	}
 
 	private scheduleFlush(): void {

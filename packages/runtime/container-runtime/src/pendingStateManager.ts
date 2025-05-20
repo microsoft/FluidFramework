@@ -30,6 +30,7 @@ import {
 	type LocalEmptyBatchPlaceholder,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
+import { isContainerMessageDirtyable } from "./opProperties.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -283,26 +284,18 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Returns true as soon as it finds a message that matches the filter, false if it's empty or none match.
+	 * Checks the pending messages to see if any of them represent user changes (aka "dirtyable" messages)
 	 */
-	public hasAnyMatchingFilter(
-		filter: (message: IPendingMessage | IPendingMessageFromStash) => boolean,
-	): boolean {
+	public hasPendingUserChanges(): boolean {
 		for (let i = 0; i < this.pendingMessages.length; i++) {
 			const element = this.pendingMessages.get(i);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			if (filter(element!)) {
+			if (element?.runtimeOp !== undefined && isContainerMessageDirtyable(element.runtimeOp)) {
 				return true;
 			}
 		}
-		for (let i = 0; i < this.initialMessages.length; i++) {
-			const element = this.initialMessages.get(i);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			if (filter(element!)) {
-				return true;
-			}
-		}
-		return false;
+		// Consider any initial messages to be user changes
+		// (it's an approximation since we would have to parse them to know for sure)
+		return this.initialMessages.length > 0;
 	}
 
 	/**

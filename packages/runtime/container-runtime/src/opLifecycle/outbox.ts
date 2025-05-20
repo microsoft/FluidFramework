@@ -236,14 +236,10 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
-	/**
-	 * Returns true as soon as it finds a message that matches the filter, false if it's empty or none match.
-	 */
-	public hasAnyMatchingFilter(filter: (message: LocalBatchMessage) => boolean): boolean {
+	public containsUserChanges(): boolean {
 		return (
-			this.mainBatch.hasAnyMatchingFilter(filter) ||
-			this.blobAttachBatch.hasAnyMatchingFilter(filter) ||
-			this.idAllocationBatch.hasAnyMatchingFilter(filter) // In practice the filter passed will return false for this whole batch
+			this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges()
+			// ID Allocation ops are not user changes
 		);
 	}
 

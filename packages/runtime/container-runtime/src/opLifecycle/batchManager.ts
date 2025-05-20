@@ -12,6 +12,7 @@ import {
 
 import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
+import { isContainerMessageDirtyable } from "../opProperties.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
 import { LocalBatchMessage, IBatchCheckpoint, type LocalBatch } from "./definitions.js";
@@ -170,10 +171,10 @@ export class BatchManager {
 	}
 
 	/**
-	 * Returns true as soon as it finds a message that matches the filter, false if it's empty or none match.
+	 * Does this batch current contain user changes ("dirtyable" ops)?
 	 */
-	public hasAnyMatchingFilter(filter: (message: LocalBatchMessage) => boolean): boolean {
-		return this.pendingBatch.some((message) => filter(message));
+	public containsUserChanges(): boolean {
+		return this.pendingBatch.some((message) => isContainerMessageDirtyable(message.runtimeOp));
 	}
 }
 

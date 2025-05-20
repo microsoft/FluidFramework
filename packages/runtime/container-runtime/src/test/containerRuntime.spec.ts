@@ -986,6 +986,7 @@ describe("Runtime", () => {
 					},
 					onFlushBatch: (batch: LocalBatchMessage[], _csn?: number) =>
 						(pendingMessages += batch.length),
+					hasPendingUserChanges: (): boolean => pendingMessages > 0, // For the test assume all are dirtyable
 				} satisfies Partial<PendingStateManager> as unknown as PendingStateManager;
 			};
 			const getMockChannelCollection = (): ChannelCollection => {
