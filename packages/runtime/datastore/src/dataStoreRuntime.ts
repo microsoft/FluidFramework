@@ -785,9 +785,9 @@ export class FluidDataStoreRuntime
 		 */
 		let currentAddress: string | undefined;
 		let currentMessagesContent: IRuntimeMessagesContent[] = [];
-		const { messagesContent, local } = messageCollection;
+		const { messagesContent, local, envelope } = messageCollection;
 
-		const sendBunchedMessages = () => {
+		const sendBunchedMessages = (): void => {
 			// Current address will be undefined for the first message in the list.
 			if (currentAddress === undefined) {
 				return;
@@ -798,7 +798,7 @@ export class FluidDataStoreRuntime
 			assert(!!channelContext, 0xa6b /* Channel context not found */);
 
 			channelContext.processMessages({
-				envelope: messageCollection.envelope,
+				envelope,
 				messagesContent: currentMessagesContent,
 				local,
 			});
