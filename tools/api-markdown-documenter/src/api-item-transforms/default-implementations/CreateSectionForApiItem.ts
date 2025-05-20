@@ -20,7 +20,7 @@ import {
 	createRemarksSection,
 	createSeeAlsoSection,
 	createSignatureSection,
-	createSummaryParagraph,
+	createSummarySection,
 	createThrowsSection,
 	wrapInSection,
 } from "../helpers/index.js";
@@ -62,7 +62,7 @@ export function createSectionForApiItem(
 	const sections: SectionNode[] = [];
 
 	// Render summary comment (if any)
-	const summary = createSummaryParagraph(apiItem, config);
+	const summary = createSummarySection(apiItem, config);
 	if (summary !== undefined) {
 		sections.push(wrapInSection([summary]));
 	}

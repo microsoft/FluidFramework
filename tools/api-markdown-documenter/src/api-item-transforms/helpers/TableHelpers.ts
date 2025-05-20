@@ -18,7 +18,6 @@ import {
 
 import {
 	CodeSpanNode,
-	type DocumentationNode,
 	HeadingNode,
 	LinkNode,
 	type PhrasingContent,
@@ -616,7 +615,7 @@ export function createApiSummaryCell(
 				apiItem.tsdocComment.summarySection,
 				tsdocNodeTransformOptions,
 			);
-			return new TableBodyCellNode(summaryComment.children);
+			return new TableBodyCellNode(summaryComment);
 		}
 	}
 
@@ -671,7 +670,7 @@ export function createModifiersCell(
 ): TableBodyCellNode {
 	const modifiers = getModifiers(apiItem, modifiersToOmit);
 
-	const contents: DocumentationNode[] = [];
+	const contents: PhrasingContent[] = [];
 	let needsComma = false;
 	for (const modifier of modifiers) {
 		if (needsComma) {
@@ -704,9 +703,7 @@ export function createDefaultValueCell(
 
 	const contents = transformTsdocSection(defaultValueSection, tsdocNodeTransformOptions);
 
-	// Since we are sticking the contents into a table cell, we can remove the outer Paragraph node
-	// from the hierarchy to simplify things.
-	return new TableBodyCellNode(contents.children);
+	return new TableBodyCellNode(contents);
 }
 
 /**
@@ -775,9 +772,7 @@ export function createParameterSummaryCell(
 		tsdocNodeTransformOptions,
 	);
 
-	// Since we are putting the contents into a table cell anyways, omit the Paragraph
-	// node from the hierarchy to simplify it.
-	return new TableBodyCellNode(cellContent.children);
+	return new TableBodyCellNode(cellContent);
 }
 
 /**
@@ -805,9 +800,7 @@ export function createTypeParameterSummaryCell(
 		tsdocNodeTransformOptions,
 	);
 
-	// Since we are putting the contents into a table cell anyways, omit the Paragraph
-	// node from the hierarchy to simplify it.
-	return new TableBodyCellNode(cellContent.children);
+	return new TableBodyCellNode(cellContent);
 }
 
 /**

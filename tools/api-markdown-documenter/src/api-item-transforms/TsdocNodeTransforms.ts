@@ -23,6 +23,7 @@ import {
 import type { Link } from "../Link.js";
 import type { LoggingConfiguration } from "../LoggingConfiguration.js";
 import {
+	type BlockContent,
 	CodeSpanNode,
 	DocumentationNodeType,
 	FencedCodeBlockNode,
@@ -31,8 +32,6 @@ import {
 	ParagraphNode,
 	type PhrasingContent,
 	PlainTextNode,
-	type SectionContent,
-	SectionNode,
 	SingleLineSpanNode,
 	SpanNode,
 } from "../documentation-domain/index.js";
@@ -72,12 +71,12 @@ export interface TsdocNodeTransformOptions extends LoggingConfiguration {
 export function transformTsdocSection(
 	node: DocSection,
 	options: TsdocNodeTransformOptions,
-): SectionNode {
+): BlockContent[] {
 	// TODO: HTML contents come in as a start tag, followed by the content, followed by an end tag, rather than something with hierarchy.
 	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
 	// and map the subsequence to an "html" node.
 
-	let transformedChildren: SectionContent[] = [];
+	let transformedChildren: BlockContent[] = [];
 	for (const child of node.nodes) {
 		transformedChildren.push(...transformTsdocSectionContent(child, options));
 	}
@@ -85,7 +84,7 @@ export function transformTsdocSection(
 	// Remove line breaks adjacent to paragraphs, as they are redundant
 	transformedChildren = filterNewlinesAdjacentToParagraphs(transformedChildren);
 
-	return new SectionNode(transformedChildren);
+	return transformedChildren;
 }
 
 // Default TSDoc implementation only supports the following DocNode kinds under a section node:
@@ -96,7 +95,7 @@ export function transformTsdocSection(
 function transformTsdocSectionContent(
 	node: DocNode,
 	options: TsdocNodeTransformOptions,
-): SectionContent[] {
+): BlockContent[] {
 	switch (node.kind) {
 		case DocNodeKind.FencedCode: {
 			return [transformTsdocFencedCode(node as DocFencedCode, options)];
@@ -436,14 +435,12 @@ function trimLeadingAndTrailingLineBreaks(
  * Since paragraph nodes inherently create line breaks on either side, these nodes are redundant and
  * clutter the output tree.
  */
-function filterNewlinesAdjacentToParagraphs(
-	nodes: readonly SectionContent[],
-): SectionContent[] {
+function filterNewlinesAdjacentToParagraphs(nodes: readonly BlockContent[]): BlockContent[] {
 	if (nodes.length === 0) {
 		return [];
 	}
 
-	const result: SectionContent[] = [];
+	const result: BlockContent[] = [];
 	for (let i = 0; i < nodes.length; i++) {
 		if (nodes[i].type === DocumentationNodeType.LineBreak) {
 			const previousIsParagraph =

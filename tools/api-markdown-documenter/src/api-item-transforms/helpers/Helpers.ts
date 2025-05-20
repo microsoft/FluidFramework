@@ -32,6 +32,7 @@ import type { Heading } from "../../Heading.js";
 import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
 import {
+	type BlockContent,
 	type DocumentationNode,
 	DocumentationNodeType,
 	type DocumentationParentNode,
@@ -141,9 +142,10 @@ export function createSeeAlsoSection(
 
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
-	const contents = seeBlocks.map((seeBlock) =>
-		transformTsdocSection(seeBlock, tsdocNodeTransformOptions),
-	);
+	const contents: BlockContent[] = [];
+	for (const seeBlock of seeBlocks) {
+		contents.push(...transformTsdocSection(seeBlock, tsdocNodeTransformOptions));
+	}
 
 	return wrapInSection(contents, {
 		title: "See Also",
@@ -459,13 +461,15 @@ export const betaWarningSpan = SpanNode.createFromPlainText(betaWarningText, { b
  *
  * @public
  */
-export function createSummaryParagraph(
+export function createSummarySection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): SectionNode {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 	return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
-		? transformTsdocSection(apiItem.tsdocComment.summarySection, tsdocNodeTransformOptions)
+		? new SectionNode(
+				transformTsdocSection(apiItem.tsdocComment.summarySection, tsdocNodeTransformOptions),
+			)
 		: SectionNode.Empty;
 }
 
@@ -496,12 +500,10 @@ export function createRemarksSection(
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
 	return wrapInSection(
-		[
-			transformTsdocSection(
-				apiItem.tsdocComment.remarksBlock.content,
-				tsdocNodeTransformOptions,
-			),
-		],
+		transformTsdocSection(
+			apiItem.tsdocComment.remarksBlock.content,
+			tsdocNodeTransformOptions,
+		),
 		{ title: "Remarks", id: `${getFileSafeNameForApiItem(apiItem)}-remarks` },
 	);
 }
@@ -532,11 +534,12 @@ export function createThrowsSection(
 
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
-	const paragraphs = throwsBlocks.map((throwsBlock) =>
-		transformTsdocSection(throwsBlock, tsdocNodeTransformOptions),
-	);
+	const contents: BlockContent[] = [];
+	for (const throwsBlock of throwsBlocks) {
+		contents.push(...transformTsdocSection(throwsBlock, tsdocNodeTransformOptions));
+	}
 
-	return wrapInSection(paragraphs, {
+	return wrapInSection(contents, {
 		title: headingText,
 		id: `${getFileSafeNameForApiItem(apiItem)}-throws`,
 	});
@@ -572,7 +575,7 @@ export function createDeprecationNoticeSection(
 			{ bold: true },
 		),
 		LineBreakNode.Singleton,
-		new SpanNode([transformTsdocSection(deprecatedBlock, tsdocNodeTransformOptions)], {
+		new SpanNode(transformTsdocSection(deprecatedBlock, tsdocNodeTransformOptions), {
 			italic: true,
 		}),
 	]);
@@ -709,9 +712,8 @@ function createExampleSection(
 	const { logger } = config;
 
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(example.apiItem, config);
-	let exampleSection: SectionNode = transformTsdocSection(
-		example.content,
-		tsdocNodeTransformOptions,
+	let exampleSection: SectionNode = new SectionNode(
+		transformTsdocSection(example.content, tsdocNodeTransformOptions),
 	);
 
 	// Per TSDoc spec, if the `@example` comment has content on the same line as the tag,
@@ -928,7 +930,7 @@ export function createReturnsSection(
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const returnsBlock = getReturnsBlock(apiItem);
 		if (returnsBlock !== undefined) {
-			children.push(transformTsdocSection(returnsBlock, tsdocNodeTransformOptions));
+			children.push(...transformTsdocSection(returnsBlock, tsdocNodeTransformOptions));
 		}
 	}
 

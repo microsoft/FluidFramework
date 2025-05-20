@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { BlockContent } from "./BlockContent.js";
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
@@ -30,6 +31,13 @@ export enum TableCellKind {
 }
 
 /**
+ * The types of child nodes that can be contained within a table cell.
+ *
+ * @public
+ */
+export type TableCellContent = PhrasingContent | BlockContent;
+
+/**
  * A cell within a table.
  *
  * @example Markdown
@@ -52,7 +60,7 @@ export enum TableCellKind {
  *
  * @public
  */
-export abstract class TableCellNode extends DocumentationParentNodeBase<PhrasingContent> {
+export abstract class TableCellNode extends DocumentationParentNodeBase<TableCellContent> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -63,7 +71,7 @@ export abstract class TableCellNode extends DocumentationParentNodeBase<Phrasing
 	 */
 	public readonly cellKind: TableCellKind;
 
-	protected constructor(children: PhrasingContent[], cellKind: TableCellKind) {
+	protected constructor(children: TableCellContent[], cellKind: TableCellKind) {
 		super(children);
 		this.cellKind = cellKind;
 	}
@@ -80,7 +88,7 @@ export class TableHeaderCellNode extends TableCellNode {
 	 */
 	public static readonly Empty = new TableHeaderCellNode([]);
 
-	public constructor(children: PhrasingContent[]) {
+	public constructor(children: TableCellContent[]) {
 		super(children, TableCellKind.Header);
 	}
 
@@ -106,7 +114,7 @@ export class TableBodyCellNode extends TableCellNode {
 	 */
 	public static readonly Empty = new TableBodyCellNode([]);
 
-	public constructor(children: PhrasingContent[]) {
+	public constructor(children: TableCellContent[]) {
 		super(children, TableCellKind.Body);
 	}
 

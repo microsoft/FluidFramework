@@ -42,6 +42,7 @@ export { PlainTextNode } from "./PlainTextNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";
 export { SpanNode, SingleLineSpanNode } from "./SpanNode.js";
 export {
+	type TableCellContent,
 	TableCellNode,
 	TableBodyCellNode,
 	TableHeaderCellNode,
