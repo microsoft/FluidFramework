@@ -594,7 +594,7 @@ export class FluidDataStoreRuntime
 		return channel;
 	}
 
-	private createChannelContext(channel: IChannel) {
+	private createChannelContext(channel: IChannel): void {
 		this.notBoundedChannelContextSet.add(channel.id);
 		const context = new LocalChannelContext(
 			channel,
@@ -612,7 +612,7 @@ export class FluidDataStoreRuntime
 		id: string,
 		tree: ISnapshotTree,
 		flatBlobs?: Map<string, ArrayBufferLike>,
-	) {
+	): RehydratedLocalChannelContext {
 		return new RehydratedLocalChannelContext(
 			id,
 			this.sharedObjectRegistry,
@@ -674,7 +674,7 @@ export class FluidDataStoreRuntime
 	 * visible, it will mark us globally visible. Otherwise, it will mark us globally visible when it becomes
 	 * globally visible.
 	 */
-	public makeVisibleAndAttachGraph() {
+	public makeVisibleAndAttachGraph(): void {
 		if (this.visibilityState !== VisibilityState.NotVisible) {
 			return;
 		}
@@ -690,7 +690,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * This function is called when a handle to this data store is added to a visible DDS.
 	 */
-	public attachGraph() {
+	public attachGraph(): void {
 		this.makeVisibleAndAttachGraph();
 	}
 
@@ -703,7 +703,7 @@ export class FluidDataStoreRuntime
 		this.pendingHandlesToMakeVisible.add(toFluidHandleInternal(handle));
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string) {
+	public setConnectionState(connected: boolean, clientId?: string): void {
 		this.verifyNotClosed();
 
 		for (const [, object] of this.contexts) {
@@ -747,7 +747,7 @@ export class FluidDataStoreRuntime
 	private createRemoteChannelContext(
 		attachMessage: IAttachMessage,
 		summarizerNodeParams: CreateChildSummarizerNodeParam,
-	) {
+	): RemoteChannelContext {
 		const flatBlobs = new Map<string, ArrayBufferLike>();
 		const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
@@ -775,7 +775,7 @@ export class FluidDataStoreRuntime
 	 * store.
 	 * @param messageCollection - The collection of messages to process.
 	 */
-	private processChannelMessages(messageCollection: IRuntimeMessageCollection) {
+	private processChannelMessages(messageCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed();
 
 		/*
@@ -825,7 +825,7 @@ export class FluidDataStoreRuntime
 		sendBunchedMessages();
 	}
 
-	private processAttachMessages(messageCollection: IRuntimeMessageCollection) {
+	private processAttachMessages(messageCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent, local } = messageCollection;
 		for (const { contents } of messagesContent) {
 			const attachMessage = contents as IAttachMessage;
@@ -896,7 +896,7 @@ export class FluidDataStoreRuntime
 		}
 	}
 
-	public processSignal(message: IInboundSignalMessage, local: boolean) {
+	public processSignal(message: IInboundSignalMessage, local: boolean): void {
 		this.emit("signal", message, local);
 	}
 
@@ -933,7 +933,7 @@ export class FluidDataStoreRuntime
 	 * - Adds a node for this channel.
 	 * @param builder - The builder that contains the GC nodes for this channel's children.
 	 */
-	private updateGCNodes(builder: GCDataBuilder) {
+	private updateGCNodes(builder: GCDataBuilder): void {
 		// Add a back route to self in each child's GC nodes. If any child is referenced, then its parent should
 		// be considered referenced as well.
 		builder.addRouteToAllNodes(this.absolutePath);
@@ -997,7 +997,7 @@ export class FluidDataStoreRuntime
 	 * update their used routes.
 	 * @param usedRoutes - The routes that are used in all contexts in this channel.
 	 */
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: string[]): void {
 		// Get a map of channel ids to routes used in it.
 		const usedContextRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -1446,9 +1446,9 @@ export class FluidDataStoreRuntime
 export const mixinRequestHandler = (
 	requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
 	Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-) =>
+): typeof FluidDataStoreRuntime =>
 	class RuntimeWithRequestHandler extends Base {
-		public async request(request: IRequest) {
+		public async request(request: IRequest): Promise<IResponse> {
 			const response = await super.request(request);
 			if (response.status === 404) {
 				return requestHandler(request, this);
@@ -1496,6 +1496,7 @@ export const mixinSummaryHandler = (
 		}
 
 		async summarize(...args: any[]): Promise<ISummaryTreeWithStats> {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			const summary = await super.summarize(...args);
 
 			try {
