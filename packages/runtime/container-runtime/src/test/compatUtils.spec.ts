@@ -372,8 +372,6 @@ describe("compatUtils", () => {
 
 		for (const test of incompatibleCases) {
 			it(`throws for incompatible options: ${JSON.stringify(test)}`, () => {
-				// const expectedErrorKey = Object.keys(test.runtimeOptions)[0];
-				// const expectedErrorMessage = ;
 				assert.throws(
 					() => {
 						getValidationForRuntimeOptions(
