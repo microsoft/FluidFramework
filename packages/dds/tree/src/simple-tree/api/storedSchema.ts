@@ -4,11 +4,11 @@
  */
 
 import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
+import { SchemaVersion } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
 	makeSchemaCodec,
-	SchemaCodecVersion,
 } from "../../feature-libraries/index.js";
 import {
 	clientVersionToSchemaVersion,
@@ -98,7 +98,7 @@ export function comparePersistedSchema(
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	// Any version can be passed down to makeSchemaCodec here.
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
+	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new SchemaCompatibilityTester(
 		defaultSchemaPolicy,
