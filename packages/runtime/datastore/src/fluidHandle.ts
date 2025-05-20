@@ -91,13 +91,14 @@ export class FluidObjectHandle<
 		}
 
 		this.locallyVisible = true;
-		this.pendingHandlesToMakeVisible.forEach((handle) => {
+		for (const handle of this.pendingHandlesToMakeVisible) {
 			handle.attachGraph();
-		});
+		}
 		this.pendingHandlesToMakeVisible.clear();
 		this.routeContext.attachGraph();
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
 	 * @privateRemarks This implementation will be moved to SharedObjectHandle once this is removed.

@@ -43,7 +43,9 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;
-	/** Tracks the messages for this channel that are sent while it's not loaded */
+	/**
+	 * Tracks the messages for this channel that are sent while it's not loaded
+	 */
 	private pendingMessagesState: IPendingMessagesState | undefined = {
 		messageCollections: [],
 		pendingCount: 0,
@@ -189,7 +191,7 @@ export class RemoteChannelContext implements IChannelContext {
 			);
 			this.pendingMessagesState.messageCollections.push({
 				...messageCollection,
-				messagesContent: Array.from(messagesContent),
+				messagesContent: [...messagesContent],
 			});
 			this.pendingMessagesState.pendingCount += messagesContent.length;
 			this.thresholdOpsCounter.sendIfMultiple(

@@ -43,7 +43,7 @@ function processWithStashedOpMetadataHandling(
 	func: (contents: any, metadata: unknown) => void,
 ) {
 	if (isStashedOpMetadata(localOpMetaData)) {
-		localOpMetaData.forEach(({ contents, metadata }) => func(contents, metadata));
+		for (const { contents, metadata } of localOpMetaData) func(contents, metadata);
 	} else {
 		func(content, localOpMetaData);
 	}
@@ -55,13 +55,13 @@ function getContentsWithStashedOpHandling(
 	const newMessageContents: IRuntimeMessagesContent[] = [];
 	for (const messageContent of messagesContent) {
 		if (isStashedOpMetadata(messageContent.localOpMetadata)) {
-			messageContent.localOpMetadata.forEach(({ contents, metadata }) => {
+			for (const { contents, metadata } of messageContent.localOpMetadata) {
 				newMessageContents.push({
 					contents,
 					localOpMetadata: metadata,
 					clientSequenceNumber: messageContent.clientSequenceNumber,
 				});
-			});
+			}
 		} else {
 			newMessageContents.push(messageContent);
 		}
@@ -145,10 +145,10 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 	}
 
 	public submit(contents: any, metadata: unknown): void {
-		if (this.stashedOpMd !== undefined) {
-			this.stashedOpMd.push({ contents, metadata });
-		} else {
+		if (this.stashedOpMd === undefined) {
 			this.submitFn(contents, metadata);
+		} else {
+			this.stashedOpMd.push({ contents, metadata });
 		}
 	}
 }

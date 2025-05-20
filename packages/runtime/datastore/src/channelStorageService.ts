@@ -49,7 +49,7 @@ export class ChannelStorageService implements IChannelStorageService {
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
 		const id = await this.getIdForPath(path);
 		assert(id !== undefined, 0x9d7 /* id is undefined in ChannelStorageService.readBlob() */);
-		const blob = this.extraBlobs !== undefined ? this.extraBlobs.get(id) : undefined;
+		const blob = this.extraBlobs === undefined ? undefined : this.extraBlobs.get(id);
 
 		if (blob !== undefined) {
 			return blob;
@@ -70,7 +70,7 @@ export class ChannelStorageService implements IChannelStorageService {
 			const part = pathParts.shift()!;
 			tree = tree.trees[part];
 		}
-		if (tree === undefined || pathParts.length !== 0) {
+		if (tree === undefined || pathParts.length > 0) {
 			throw new Error("path does not exist");
 		}
 

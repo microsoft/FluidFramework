@@ -337,10 +337,10 @@ export class FluidDataStoreRuntime
 
 		// Must always receive the data store type inside of the attributes
 		if (tree?.trees !== undefined) {
-			Object.entries(tree.trees).forEach(([path, subtree]) => {
+			for (const [path, subtree] of Object.entries(tree.trees)) {
 				// Issue #4414
 				if (path === "_search") {
-					return;
+					continue;
 				}
 
 				let channelContext: RemoteChannelContext | RehydratedLocalChannelContext;
@@ -353,10 +353,10 @@ export class FluidDataStoreRuntime
 					// data store, if the data store is loaded after the container is attached, then we missed making
 					// the channel visible. So do it now. Otherwise, add it to local channel context queue, so
 					// that it can be make it visible later with the data store.
-					if (dataStoreContext.attachState !== AttachState.Detached) {
-						channelContext.makeVisible();
-					} else {
+					if (dataStoreContext.attachState === AttachState.Detached) {
 						this.localChannelContextQueue.set(path, channelContext);
+					} else {
+						channelContext.makeVisible();
 					}
 				} else {
 					channelContext = new RemoteChannelContext(
@@ -376,7 +376,7 @@ export class FluidDataStoreRuntime
 				}
 
 				this.contexts.set(path, channelContext);
-			});
+			}
 		}
 
 		this.entryPoint = new FluidObjectHandle<FluidObject>(
@@ -546,10 +546,7 @@ export class FluidDataStoreRuntime
 	public createChannel(idArg: string | undefined, type: string): IChannel {
 		let id: string;
 
-		if (idArg !== undefined) {
-			id = idArg;
-			this.validateChannelId(id);
-		} else {
+		if (idArg === undefined) {
 			/**
 			 * Return uuid if short-ids are explicitly disabled via feature flags.
 			 */
@@ -562,18 +559,21 @@ export class FluidDataStoreRuntime
 				// - uuids
 				// In first two cases we will encode result as strings in more compact form, with leading underscore,
 				// to ensure no overlap with user-provided DDS names (see validateChannelId())
-				if (this.visibilityState !== VisibilityState.GloballyVisible) {
-					// container is detached, only one client observes content, no way to hit collisions with other clients.
-					id = encodeCompactIdToString(2 * this.contexts.size, "_");
-				} else {
+				if (this.visibilityState === VisibilityState.GloballyVisible) {
 					// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
 					// We can remove the need to leverage uuid() as fall-back in couple releases.
 					const res =
 						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
+				} else {
+					// container is detached, only one client observes content, no way to hit collisions with other clients.
+					id = encodeCompactIdToString(2 * this.contexts.size, "_");
 				}
 			}
 			assert(!id.includes("/"), 0x8fc /* slash */);
+		} else {
+			id = idArg;
+			this.validateChannelId(id);
 		}
 
 		this.verifyNotClosed();
@@ -678,9 +678,9 @@ export class FluidDataStoreRuntime
 		}
 		this.visibilityState = VisibilityState.LocallyVisible;
 
-		this.pendingHandlesToMakeVisible.forEach((handle) => {
+		for (const handle of this.pendingHandlesToMakeVisible) {
 			handle.attachGraph();
-		});
+		}
 		this.pendingHandlesToMakeVisible.clear();
 		this.dataStoreContext.makeLocallyVisible();
 	}
@@ -871,12 +871,14 @@ export class FluidDataStoreRuntime
 		const { envelope, messagesContent } = messageCollection;
 		try {
 			switch (envelope.type) {
-				case DataStoreMessageType.ChannelOp:
+				case DataStoreMessageType.ChannelOp: {
 					this.processChannelMessages(messageCollection);
 					break;
-				case DataStoreMessageType.Attach:
+				}
+				case DataStoreMessageType.Attach: {
 					this.processAttachMessages(messageCollection);
 					break;
+				}
 				default:
 			}
 		} catch (error) {
@@ -1239,12 +1241,14 @@ export class FluidDataStoreRuntime
 				channelContext.reSubmit(envelope.contents, localOpMetadata, squash);
 				break;
 			}
-			case DataStoreMessageType.Attach:
+			case DataStoreMessageType.Attach: {
 				// For Attach messages, just submit them again.
 				this.submit(type, content, localOpMetadata);
 				break;
-			default:
+			}
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 
@@ -1265,8 +1269,9 @@ export class FluidDataStoreRuntime
 				channelContext.rollback(envelope.contents, localOpMetadata);
 				break;
 			}
-			default:
+			default: {
 				throw new LoggingError(`Can't rollback ${type} message`);
+			}
 		}
 	}
 
@@ -1301,8 +1306,9 @@ export class FluidDataStoreRuntime
 				await channelContext.getChannel();
 				return channelContext.applyStashedOp(envelope.contents);
 			}
-			default:
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 
@@ -1365,7 +1371,7 @@ export class FluidDataStoreRuntime
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		switch (attachState) {
-			case AttachState.Attaching:
+			case AttachState.Attaching: {
 				/**
 				 * back-compat 0.59.1000 - Ideally, attachGraph() should have already been called making the data store
 				 * locally visible. However, before visibility state was added, this may not have been the case and data
@@ -1386,16 +1392,17 @@ export class FluidDataStoreRuntime
 
 				// Mark the data store globally visible and make its child channels visible as well.
 				this.visibilityState = VisibilityState.GloballyVisible;
-				this.localChannelContextQueue.forEach((channel) => {
+				for (const [, channel] of this.localChannelContextQueue) {
 					channel.makeVisible();
-				});
+				}
 				this.localChannelContextQueue.clear();
 
 				// This promise resolution will be moved to attached event once we fix the scheduler.
 				this.deferredAttached.resolve();
 				this.emit("attaching");
 				break;
-			case AttachState.Attached:
+			}
+			case AttachState.Attached: {
 				assert(
 					this.visibilityState === VisibilityState.GloballyVisible,
 					0x2d2 /* "Data store should be globally visible when its attached." */,
@@ -1403,8 +1410,10 @@ export class FluidDataStoreRuntime
 				this._attachState = AttachState.Attached;
 				this.emit("attached");
 				break;
-			default:
+			}
+			default: {
 				unreachableCase(attachState, "unreached");
+			}
 		}
 	}
 }
@@ -1477,9 +1486,9 @@ export const mixinSummaryHandler = (
 				if (content !== undefined) {
 					this.addBlob(summary, content.path, content.content);
 				}
-			} catch (e) {
+			} catch (error) {
 				// Any error coming from app-provided handler should be marked as DataProcessingError
-				throw DataProcessingError.wrapIfUnrecognized(e, "mixinSummaryHandler");
+				throw DataProcessingError.wrapIfUnrecognized(error, "mixinSummaryHandler");
 			}
 
 			return summary;

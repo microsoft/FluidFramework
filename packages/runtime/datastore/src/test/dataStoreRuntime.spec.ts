@@ -57,8 +57,8 @@ describe("FluidDataStoreRuntime Tests", () => {
 							type,
 							attributes: { type, snapshotFormatVersion: "0" },
 							clientDetails: {},
-						}) as any as IChannel,
-					load: async () => Promise.resolve({} as any as IChannel),
+						}) as unknown as IChannel,
+					load: async () => Promise.resolve({} as unknown as IChannel),
 				};
 			},
 		};
@@ -89,7 +89,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 		let dataStoreRuntime: FluidDataStoreRuntime | undefined;
 		try {
 			dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
-		} catch (error) {
+		} catch {
 			failed = true;
 		}
 		assert.strictEqual(failed, false, "Data store runtime creation failed");

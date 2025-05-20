@@ -42,7 +42,9 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
 	private globallyVisible = false;
-	/** Tracks the messages for this channel that are sent while it's not loaded */
+	/**
+	 * Tracks the messages for this channel that are sent while it's not loaded
+	 */
 	protected pendingMessagesState: IPendingMessagesState = {
 		messageCollections: [],
 		pendingCount: 0,
@@ -101,7 +103,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			);
 			const propsCopy = {
 				...messageCollection,
-				messagesContent: Array.from(messageCollection.messagesContent),
+				messagesContent: [...messageCollection.messagesContent],
 			};
 			this.pendingMessagesState.messageCollections.push(propsCopy);
 		}
@@ -267,9 +269,9 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						this.services.value.deltaConnection.processMessages(messageCollection);
 					}
 					return channel;
-				} catch (err) {
+				} catch (error) {
 					throw DataProcessingError.wrapIfUnrecognized(
-						err,
+						error,
 						"rehydratedLocalChannelContextFailedToLoadChannel",
 						undefined,
 					);
@@ -293,12 +295,12 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		let sanitize = false;
 		const blobsContents = snapshotTree.blobsContents;
 		if (blobsContents !== undefined) {
-			Object.entries(blobsContents).forEach(([key, value]) => {
+			for (const [key, value] of Object.entries(blobsContents)) {
 				blobMap.set(key, value);
 				if (snapshotTree.blobs[key] !== undefined) {
 					sanitize = true;
 				}
-			});
+			}
 		}
 		for (const value of Object.values(snapshotTree.trees)) {
 			sanitize = sanitize || this.isSnapshotInOldFormatAndCollectBlobs(value, blobMap);
