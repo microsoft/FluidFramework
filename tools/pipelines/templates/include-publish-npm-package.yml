@@ -117,10 +117,13 @@ stages:
   - stage: upload_manifests
     displayName: Upload release manifests
     dependsOn:
-    - publish_npm_public
-    - publish_npm_internal_dev
-    - publish_npm_internal_build
-    - publish_npm_internal_test
+    - ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}:
+      - publish_npm_public
+    - ${{ if variables.testBuild }}:
+      - publish_npm_internal_test
+    - ${{ else }}:
+      - publish_npm_internal_build
+    # Note dev feed packages do not get manifests as we don't intend them to be consumed publicly
     variables:
     - group: ado-feeds
     jobs:
