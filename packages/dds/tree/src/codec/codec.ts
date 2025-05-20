@@ -349,6 +349,14 @@ export function withSchemaValidation<
  * Versions with no notable impact can be omitted.
  *
  * These use numeric values for easy threshold comparisons.
+ * Without zero padding, version 2.10 is treated as 2.1, which is numerically less than 2.2.
+ * Adding leading zeros to the minor version ensures correct comparisons.
+ * For example, version 2.20.0 is encoded as 2.020, and version 2.2.0 is encoded as 2.002.
+ * For example FF 2.20.0 is encoded as 2.020 and FF 2.2.0 is encoded as 2.002.
+ *
+ * Three digits was selected as that will likely be enough, while two digits could easily be too few.
+ * If three digits ends up being too few, minor releases of 1000 and higher
+ * could still be handled using something like 2.999_00001 without having to change the lower releases.
  *
  * This scheme assumes a single version will always be enough to communicate compatibility.
  * For this to work, compatibility has to be strictly increasing.
@@ -357,6 +365,8 @@ export function withSchemaValidation<
  * such a system can be added if/when its needed since it will be opt in and thus non-breaking.
  *
  * TODO: this should likely be defined higher in the stack and specified when creating the container, possibly as part of its schema.
+ * TODO: compatibility requirements for how this enum can and cannot be changed should be clarified when/if it's used across multiple layers in the stack.
+ * For example, if needed, would adding more leading zeros to the minor version break things.
  * @alpha
  */
 export enum FluidClientVersion {
@@ -367,7 +377,7 @@ export enum FluidClientVersion {
 	 * @privateRemarks
 	 * As long as this code is in Tree, there is no reason to have this option as SharedTree did not exist in 1.4.
 	 */
-	// v1_4 = 1.4,
+	// v1_4 = 1.004,
 
 	/** Fluid Framework Client 2.0 and newer. */
 	v2_0 = 2.0,
@@ -375,12 +385,12 @@ export enum FluidClientVersion {
 	/** Fluid Framework Client 2.1 and newer. */
 	// If we think we might want to start allowing opting into something that landed in 2.1 (without opting into something newer),
 	// we could add an entry like this to allow users to indicate that they can be opted in once we are ready,
-	// then update it to "v2_1" once we actually have the opt in working.
+	// then update it to "2.001" once we actually have the opt in working.
 	// v2_1 = v2_0,
 
 	/** Fluid Framework Client 2.41 and newer. */
 	// If we land some new formats in 2.41, we can enable selecting
-	// v2_41 = 2.41,
+	// v2_41 = 2.041,
 
 	/**
 	 * Enable unreleased and unfinished features.
