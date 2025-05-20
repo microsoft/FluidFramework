@@ -42,17 +42,17 @@ import type { UnorderedListNode } from "./UnorderedListNode.js";
  */
 export interface SectionContentMap {
 	blockquote: BlockQuoteNode;
-	lineBreak: LineBreakNode;
-	fencedCodeBlock: FencedCodeBlockNode;
-	section: SectionNode;
-	span: SpanNode;
 	codeSpan: CodeSpanNode;
+	fencedCodeBlock: FencedCodeBlockNode;
+	horizontalRule: HorizontalRuleNode;
+	lineBreak: LineBreakNode;
 	link: LinkNode;
 	orderedList: OrderedListNode;
-	unorderedList: UnorderedListNode;
 	paragraph: ParagraphNode;
+	section: SectionNode;
+	span: SpanNode;
 	table: TableNode;
-	horizontalRule: HorizontalRuleNode;
+	unorderedList: UnorderedListNode;
 }
 
 /**
@@ -90,7 +90,7 @@ export type SectionContent = SectionContentMap[keyof SectionContentMap];
  * @public
  */
 export class SectionNode
-	extends DocumentationParentNodeBase
+	extends DocumentationParentNodeBase<SectionContent>
 	implements MultiLineDocumentationNode
 {
 	/**
