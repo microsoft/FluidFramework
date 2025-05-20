@@ -462,14 +462,19 @@ export const betaWarningSpan = SpanNode.createFromPlainText(betaWarningText, { b
  *
  * @public
  */
-export function createSummaryParagraph(
+export function createSummarySection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): ParagraphNode | undefined {
+): SectionNode | undefined {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-	return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
-		? transformTsdocSection(apiItem.tsdocComment.summarySection, tsdocNodeTransformOptions)
-		: undefined;
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+		const paragraph = transformTsdocSection(
+			apiItem.tsdocComment.summarySection,
+			tsdocNodeTransformOptions,
+		);
+		return paragraph.isEmpty ? undefined : new SectionNode([paragraph]);
+	}
+	return undefined;
 }
 
 /**
@@ -561,7 +566,7 @@ export function createThrowsSection(
 export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): ParagraphNode | undefined {
+): SectionNode | undefined {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
 	const deprecatedBlock = getDeprecatedBlock(apiItem);
@@ -569,15 +574,17 @@ export function createDeprecationNoticeSection(
 		return undefined;
 	}
 
-	return new ParagraphNode([
-		SpanNode.createFromPlainText(
-			"WARNING: This API is deprecated and will be removed in a future release.",
-			{ bold: true },
-		),
-		LineBreakNode.Singleton,
-		new SpanNode([transformTsdocSection(deprecatedBlock, tsdocNodeTransformOptions)], {
-			italic: true,
-		}),
+	return new SectionNode([
+		new ParagraphNode([
+			SpanNode.createFromPlainText(
+				"WARNING: This API is deprecated and will be removed in a future release.",
+				{ bold: true },
+			),
+			LineBreakNode.Singleton,
+			new SpanNode([transformTsdocSection(deprecatedBlock, tsdocNodeTransformOptions)], {
+				italic: true,
+			}),
+		]),
 	]);
 }
 

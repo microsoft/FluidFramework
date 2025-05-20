@@ -179,7 +179,7 @@ export class CodeSpanNode extends DocumentationParentNodeBase<SingleLineDocument
 function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode;
 
 // @public
-function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode | undefined;
+function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
 function createExamplesSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): SectionNode | undefined;
@@ -203,7 +203,7 @@ function createSeeAlsoSection(apiItem: ApiItem, config: ApiItemTransformationCon
 function createSignatureSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
-function createSummaryParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode | undefined;
+function createSummarySection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
 function createThrowsSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): SectionNode | undefined;
@@ -551,7 +551,7 @@ declare namespace LayoutUtilities {
         createReturnsSection,
         createSeeAlsoSection,
         createSignatureSection,
-        createSummaryParagraph,
+        createSummarySection,
         createThrowsSection,
         createTypeParametersSection
     }
