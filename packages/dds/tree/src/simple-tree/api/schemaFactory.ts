@@ -1074,9 +1074,10 @@ export class SchemaFactory<
 	 * - It is compressed to a space-efficient representation when stored in the document.
 	 * Reading the identifier before inserting the node into a tree prevents the identifier from being stored in its compressed form,
 	 * resulting in a larger storage footprint.
+	 *
 	 * - A compressed form of the identifier can be accessed at runtime via the {@link TreeNodeApi.shortId|Tree.shortId()} API.
 	 *
-	 * - It will not be present in the object's iterable properties unless explicitly read or inserted into a tree first.
+	 * - It will not be present in the object's iterable properties until explicitly read or until having been inserted into a tree.
 	 *
 	 * However, a user may alternatively supply their own string as the identifier if desired (for example, if importing identifiers from another system).
 	 * In that case, if the user requires it to be unique, it is up to them to ensure uniqueness.
