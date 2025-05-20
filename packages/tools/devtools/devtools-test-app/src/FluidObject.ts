@@ -80,7 +80,6 @@ export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 	 * as we needed access to the runtime to create the `SharedString`.
 	 */
 	public async addTodoItem(props?: TodoItemProps): Promise<void> {
-		console.log("Adding a new todo item");
 		const title = SharedString.create(this.runtime);
 		const newItemText = props?.startingText ?? "New Item";
 		title.insertText(0, newItemText);

@@ -244,28 +244,28 @@ export class DataVisualizerGraph
 		const isDataObj = isDataObject(visualizableObject);
 		const isTreeDataObj = isTreeDataObject(visualizableObject);
 
-		// Get the root shared object and its ID based on the object type
-		const rootSharedObject = isDataObj
-			? (visualizableObject as unknown as { readonly root: ISharedDirectory }).root
-			: isTreeDataObj
-				? (visualizableObject.sharedTree as unknown as ISharedObject)
-				: visualizableObject;
+		let rootSharedObject: ISharedObject;
+		let fluidObjectId: string;
+		let visualizationFunction: VisualizeSharedObject;
 
-		// Generate the fluidObjectId based on the object type
-		const fluidObjectId =
-			isDataObj || isTreeDataObj
-				? `${visualizableObject.id}-${rootSharedObject.id}`
-				: visualizableObject.id;
+		if (isDataObj) {
+			rootSharedObject = (visualizableObject as unknown as { readonly root: ISharedDirectory })
+				.root;
+			fluidObjectId = `${visualizableObject.id}-${rootSharedObject.id}`;
+			visualizationFunction = createDataObjectVisualizer(visualizableObject.id);
+		} else if (isTreeDataObj) {
+			rootSharedObject = visualizableObject.sharedTree as unknown as ISharedObject;
+			fluidObjectId = `${visualizableObject.id}-${rootSharedObject.id}`;
+			visualizationFunction = createTreeDataObjectVisualizer(visualizableObject.id);
+		} else {
+			rootSharedObject = visualizableObject;
+			fluidObjectId = visualizableObject.id;
+			visualizationFunction =
+				(this.visualizers[visualizableObject.attributes.type] as VisualizeSharedObject) ??
+				visualizeUnknownSharedObject;
+		}
 
 		if (!this.visualizerNodes.has(fluidObjectId)) {
-			// Create visualizer node for the shared object
-			const visualizationFunction: VisualizeSharedObject = isDataObj
-				? createDataObjectVisualizer(visualizableObject.id)
-				: isTreeDataObj
-					? createTreeDataObjectVisualizer(visualizableObject.id)
-					: ((this.visualizers[visualizableObject.attributes.type] as VisualizeSharedObject) ??
-						visualizeUnknownSharedObject);
-
 			const visualizerNode = new VisualizerNode(
 				rootSharedObject,
 				visualizationFunction,
