@@ -77,7 +77,7 @@ export class FluidObjectHandle<
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.get}
 	 */
-	public async get(): Promise<any> {
+	public async get(): Promise<T> {
 		// Note that this return works whether we received a T or a Promise<T> for this.value in the constructor.
 		return this.value;
 	}
@@ -103,7 +103,7 @@ export class FluidObjectHandle<
 	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
 	 * @privateRemarks This implementation will be moved to SharedObjectHandle once this is removed.
 	 */
-	public bind(handle: IFluidHandleInternal) {
+	public bind(handle: IFluidHandleInternal): void {
 		// If this handle is visible, attach the graph of the incoming handle as well.
 		if (this.visible) {
 			handle.attachGraph();

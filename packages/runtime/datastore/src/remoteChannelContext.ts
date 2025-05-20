@@ -62,7 +62,7 @@ export class RemoteChannelContext implements IChannelContext {
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
-		submitFn: (content: any, localOpMetadata: unknown) => void,
+		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 		private readonly id: string,
 		baseSnapshot: ISnapshotTree,
@@ -168,7 +168,7 @@ export class RemoteChannelContext implements IChannelContext {
 		this.services.deltaConnection.setConnectionState(connected);
 	}
 
-	public applyStashedOp(content: any): unknown {
+	public applyStashedOp(content: unknown): unknown {
 		assert(this.isLoaded, 0x194 /* "Remote channel must be loaded when rebasing op" */);
 		return this.services.deltaConnection.applyStashedOp(content);
 	}
@@ -201,13 +201,13 @@ export class RemoteChannelContext implements IChannelContext {
 		}
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown, squash: boolean) {
+	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean) {
 		assert(this.isLoaded, 0x196 /* "Remote channel must be loaded when resubmitting op" */);
 
 		this.services.deltaConnection.reSubmit(content, localOpMetadata, squash);
 	}
 
-	public rollback(content: any, localOpMetadata: unknown) {
+	public rollback(content: unknown, localOpMetadata: unknown) {
 		assert(this.isLoaded, 0x2f0 /* "Remote channel must be loaded when rolling back op" */);
 
 		this.services.deltaConnection.rollback(content, localOpMetadata);
