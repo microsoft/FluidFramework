@@ -130,21 +130,19 @@ export class RemoteChannelContext implements IChannelContext {
 			return this.channel;
 		});
 
-		const thisSummarizeInternal = async (
-			fullTree: boolean,
-			trackState: boolean,
-			telemetryContext?: ITelemetryContext,
-			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-		): Promise<ISummarizeInternalResult> =>
-			this.summarizeInternal(
+		this.summarizerNode = createSummarizerNode(
+			async (
 				fullTree,
 				trackState,
 				telemetryContext,
 				incrementalSummaryContext,
-			);
-
-		this.summarizerNode = createSummarizerNode(
-			thisSummarizeInternal,
+			): Promise<ISummarizeInternalResult> =>
+				this.summarizeInternal(
+					fullTree,
+					trackState,
+					telemetryContext,
+					incrementalSummaryContext,
+				),
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
