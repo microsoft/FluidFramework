@@ -331,14 +331,9 @@ describe("treeNodeApi", () => {
 				const node = new HasIdentifier({ identifier: "x" });
 				assert.equal(Tree.shortId(node), "x");
 			});
-			it("errors accessing defaulted", () => {
+			it("accessing defaulted", () => {
 				const node = new HasIdentifier({});
-				assert.throws(
-					() => {
-						Tree.shortId(node);
-					},
-					validateUsageError(/default/),
-				);
+				assert(typeof Tree.shortId(node) === "string");
 			});
 
 			// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
@@ -440,17 +435,12 @@ describe("treeNodeApi", () => {
 		});
 
 		describe("unhydrated", () => {
-			it("errors accessing defaulted", () => {
+			it("accessing defaulted", () => {
 				class HasIdentifier extends schema.object("HasIdentifier", {
 					identifier: schema.identifier,
 				}) {}
 				const node = new HasIdentifier({});
-				assert.throws(
-					() => {
-						TreeAlpha.identifier(node);
-					},
-					validateUsageError(/default/),
-				);
+				assert(typeof TreeAlpha.identifier(node) === "string");
 			});
 		});
 
@@ -553,14 +543,9 @@ describe("treeNodeApi", () => {
 					const node = new HasIdentifier({ identifier: "x" });
 					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
 				});
-				it("errors accessing defaulted", () => {
+				it("returns undefined accessing defaulted for unhydrated nodes", () => {
 					const node = new HasIdentifier({});
-					assert.throws(
-						() => {
-							TreeAlpha.identifier.getShort(node);
-						},
-						validateUsageError(/default/),
-					);
+					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
 				});
 
 				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
