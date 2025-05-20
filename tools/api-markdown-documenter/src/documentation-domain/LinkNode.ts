@@ -5,10 +5,7 @@
 
 import type { Link, UrlTarget } from "../Link.js";
 
-import {
-	DocumentationParentNodeBase,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
+import type { DocumentationNode } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
@@ -29,31 +26,35 @@ import { PlainTextNode } from "./PlainTextNode.js";
  *
  * @public
  */
-export class LinkNode
-	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements SingleLineDocumentationNode, Omit<Link, "text">
-{
+export class LinkNode implements DocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.Link;
 
 	/**
-	 * {@inheritDoc Link.target}
-	 */
-	public readonly target: UrlTarget;
-
-	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
 	 */
-	public override get singleLine(): true {
-		return true;
+	public readonly singleLine = true;
+
+	public readonly isLiteral = false;
+	public readonly isParent = false;
+
+	public get isEmpty(): boolean {
+		return this.text.isEmpty && this.target.length === 0;
 	}
 
-	public constructor(content: SingleLineDocumentationNode[], target: UrlTarget) {
-		super(content);
-		this.target = target;
-	}
+	public constructor(
+		/**
+		 * Link display text.
+		 */
+		public readonly text: PlainTextNode,
+
+		/**
+		 * Link target URL.
+		 */
+		public readonly target: UrlTarget,
+	) {}
 
 	/**
 	 * Generates a {@link LinkNode} from the provided string.
@@ -62,7 +63,7 @@ export class LinkNode
 	 * @param target - See {@link LinkNode.target}.
 	 */
 	public static createFromPlainText(text: string, target: UrlTarget): LinkNode {
-		return new LinkNode([new PlainTextNode(text)], target);
+		return new LinkNode(new PlainTextNode(text), target);
 	}
 
 	/**

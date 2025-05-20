@@ -599,12 +599,21 @@ export interface Link {
 }
 
 // @public
-export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements SingleLineDocumentationNode, Omit<Link, "text"> {
-    constructor(content: SingleLineDocumentationNode[], target: UrlTarget);
+export class LinkNode implements DocumentationNode {
+    constructor(
+    text: PlainTextNode,
+    target: UrlTarget);
     static createFromPlainText(text: string, target: UrlTarget): LinkNode;
     static createFromPlainTextLink(link: Link): LinkNode;
-    get singleLine(): true;
+    // (undocumented)
+    get isEmpty(): boolean;
+    // (undocumented)
+    readonly isLiteral = false;
+    // (undocumented)
+    readonly isParent = false;
+    readonly singleLine = true;
     readonly target: UrlTarget;
+    readonly text: PlainTextNode;
     readonly type = DocumentationNodeType.Link;
 }
 
