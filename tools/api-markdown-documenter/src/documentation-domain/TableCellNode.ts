@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
@@ -51,7 +52,7 @@ export enum TableCellKind {
  *
  * @public
  */
-export abstract class TableCellNode extends DocumentationParentNodeBase {
+export abstract class TableCellNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -62,7 +63,7 @@ export abstract class TableCellNode extends DocumentationParentNodeBase {
 	 */
 	public readonly cellKind: TableCellKind;
 
-	protected constructor(children: DocumentationNode[], cellKind: TableCellKind) {
+	protected constructor(children: PhrasingContent[], cellKind: TableCellKind) {
 		super(children);
 		this.cellKind = cellKind;
 	}
@@ -79,7 +80,7 @@ export class TableHeaderCellNode extends TableCellNode {
 	 */
 	public static readonly Empty = new TableHeaderCellNode([]);
 
-	public constructor(children: DocumentationNode[]) {
+	public constructor(children: PhrasingContent[]) {
 		super(children, TableCellKind.Header);
 	}
 
@@ -105,7 +106,7 @@ export class TableBodyCellNode extends TableCellNode {
 	 */
 	public static readonly Empty = new TableBodyCellNode([]);
 
-	public constructor(children: DocumentationNode[]) {
+	public constructor(children: PhrasingContent[]) {
 		super(children, TableCellKind.Body);
 	}
 

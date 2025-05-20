@@ -4,11 +4,11 @@
  */
 
 import {
-	type DocumentationNode,
 	DocumentationParentNodeBase,
 	type MultiLineDocumentationNode,
 } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
@@ -33,7 +33,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * @public
  */
 export class FencedCodeBlockNode
-	extends DocumentationParentNodeBase
+	extends DocumentationParentNodeBase<PhrasingContent>
 	implements MultiLineDocumentationNode
 {
 	/**
@@ -53,7 +53,7 @@ export class FencedCodeBlockNode
 		return false;
 	}
 
-	public constructor(children: DocumentationNode[], language?: string) {
+	public constructor(children: PhrasingContent[], language?: string) {
 		super(children);
 		this.language = language;
 	}

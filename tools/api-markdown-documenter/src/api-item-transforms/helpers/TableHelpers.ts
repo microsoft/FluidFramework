@@ -21,6 +21,7 @@ import {
 	type DocumentationNode,
 	HeadingNode,
 	LinkNode,
+	type PhrasingContent,
 	PlainTextNode,
 	SectionNode,
 	TableBodyCellNode,
@@ -715,7 +716,7 @@ export function createDefaultValueCell(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createAlertsCell(alerts: string[]): TableBodyCellNode {
-	const alertNodes: DocumentationNode[] = alerts.map((alert) =>
+	const alertNodes: PhrasingContent[] = alerts.map((alert) =>
 		CodeSpanNode.createFromPlainText(alert),
 	);
 
