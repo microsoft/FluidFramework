@@ -710,8 +710,8 @@ export interface MarkdownRenderers {
 export { NewlineKind }
 
 // @public
-export class OrderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> {
-    constructor(children: SingleLineDocumentationNode[]);
+export class OrderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
+    constructor(children: PhrasingContent[]);
     static createFromPlainTextEntries(entries: string[]): OrderedListNode;
     static readonly Empty: OrderedListNode;
     get singleLine(): false;
@@ -952,8 +952,8 @@ export interface TsdocNodeTransformOptions extends LoggingConfiguration {
 }
 
 // @public
-export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> {
-    constructor(children: SingleLineDocumentationNode[]);
+export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
+    constructor(children: PhrasingContent[]);
     static createFromPlainTextEntries(entries: string[]): UnorderedListNode;
     static readonly Empty: UnorderedListNode;
     get singleLine(): false;
