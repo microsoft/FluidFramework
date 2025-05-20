@@ -466,11 +466,14 @@ export function createSummarySection(
 	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-	return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
-		? new SectionNode(
-				transformTsdocSection(apiItem.tsdocComment.summarySection, tsdocNodeTransformOptions),
-			)
-		: undefined;
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+		const sectionContents = transformTsdocSection(
+			apiItem.tsdocComment.summarySection,
+			tsdocNodeTransformOptions,
+		);
+		return sectionContents.length === 0 ? undefined : new SectionNode(sectionContents);
+	}
+	return undefined;
 }
 
 /**

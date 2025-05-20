@@ -105,7 +105,8 @@ function transformTsdocSectionContent(
 			return transformTsdocHtmlTag(node as DocHtmlStartTag | DocHtmlEndTag, options);
 		}
 		case DocNodeKind.Paragraph: {
-			return [transformTsdocParagraph(node as DocParagraph, options)];
+			const transformed = transformTsdocParagraph(node as DocParagraph, options);
+			return transformed === undefined ? [] : [transformed];
 		}
 		default: {
 			// TODO
@@ -138,7 +139,7 @@ function transformTsdocSectionContent(
 export function transformTsdocParagraph(
 	node: DocParagraph,
 	options: TsdocNodeTransformOptions,
-): ParagraphNode {
+): ParagraphNode | undefined {
 	// TODO: HTML contents come in as a start tag, followed by the content, followed by an end tag, rather than something with hierarchy.
 	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
 	// and map the subsequence to an "html" node.
@@ -182,6 +183,10 @@ export function transformTsdocParagraph(
 				plainTextNode.escaped,
 			);
 		}
+	}
+
+	if (transformedChildren.length === 0) {
+		return undefined;
 	}
 
 	return new ParagraphNode(transformedChildren);

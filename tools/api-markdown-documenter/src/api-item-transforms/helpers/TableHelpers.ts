@@ -15,9 +15,11 @@ import {
 	type TypeParameter,
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
+import type { DocSection } from "@microsoft/tsdoc";
 
 import {
 	CodeSpanNode,
+	DocumentationNodeType,
 	HeadingNode,
 	LinkNode,
 	type PhrasingContent,
@@ -25,6 +27,7 @@ import {
 	SectionNode,
 	TableBodyCellNode,
 	TableBodyRowNode,
+	type TableCellContent,
 	TableHeaderCellNode,
 	TableHeaderRowNode,
 	TableNode,
@@ -37,7 +40,10 @@ import {
 	injectSeparator,
 } from "../../utilities/index.js";
 import { getLinkForApiItem } from "../ApiItemTransformUtilities.js";
-import { transformTsdocSection } from "../TsdocNodeTransforms.js";
+import {
+	transformTsdocSection,
+	type TsdocNodeTransformOptions,
+} from "../TsdocNodeTransforms.js";
 import { getTsdocNodeTransformationOptions } from "../Utilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
@@ -611,7 +617,7 @@ export function createApiSummaryCell(
 	if (apiItem instanceof ApiDocumentedItem) {
 		const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 		if (apiItem.tsdocComment !== undefined) {
-			const summaryComment = transformTsdocSection(
+			const summaryComment = transformTsdocSectionForTableCell(
 				apiItem.tsdocComment.summarySection,
 				tsdocNodeTransformOptions,
 			);
@@ -701,7 +707,10 @@ export function createDefaultValueCell(
 		return TableBodyCellNode.Empty;
 	}
 
-	const contents = transformTsdocSection(defaultValueSection, tsdocNodeTransformOptions);
+	const contents = transformTsdocSectionForTableCell(
+		defaultValueSection,
+		tsdocNodeTransformOptions,
+	);
 
 	return new TableBodyCellNode(contents);
 }
@@ -767,7 +776,7 @@ export function createParameterSummaryCell(
 
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
 
-	const cellContent = transformTsdocSection(
+	const cellContent = transformTsdocSectionForTableCell(
 		apiParameter.tsdocParamBlock.content,
 		tsdocNodeTransformOptions,
 	);
@@ -795,7 +804,7 @@ export function createTypeParameterSummaryCell(
 
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
 
-	const cellContent = transformTsdocSection(
+	const cellContent = transformTsdocSectionForTableCell(
 		apiTypeParameter.tsdocTypeParamBlock.content,
 		tsdocNodeTransformOptions,
 	);
@@ -839,4 +848,26 @@ function getTableHeadingTitleForApiKind(itemKind: ApiItemKind): string {
 			return itemKind;
 		}
 	}
+}
+
+/**
+ * Transforms the contents of a TSDoc section node, and fine-tunes the output for use in a table cell.
+ *
+ * @remarks
+ * Notably, this optimizes away the generation of paragraph nodes around inner contents when there is only a
+ * single paragraph.
+ */
+function transformTsdocSectionForTableCell(
+	tsdocSection: DocSection,
+	options: TsdocNodeTransformOptions,
+): TableCellContent[] {
+	const transformed = transformTsdocSection(tsdocSection, options);
+
+	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
+	// directly in the cell.
+	if (transformed.length === 1 && transformed[0].type === DocumentationNodeType.Paragraph) {
+		return transformed[0].children;
+	}
+
+	return transformed;
 }

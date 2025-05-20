@@ -12,26 +12,24 @@
     </section>
     <section>
       <h1 id="test-suite-a-remarks">Remarks</h1>
-      <p>
-        <p>This remarks block includes a bulleted list!</p>
-        <p>- Bullet 1</p>
-        <p>- Bullet 2</p>
-        <p>And an ordered list for good measure!</p>
-        <p>1. List item 1</p>
-        <p>2. List item 2</p>
-        <p>3. List item 3</p>
-        <p>Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:</p>
-        <p>- Good link (no alias): <a href="docs/test-suite-a#testclass-class">TestClass</a></p>
-        <p>- Good link (with alias): <span><i>function alias text</i></span></p>
-        <p>- Bad link (no alias): <span><i>InvalidItem</i></span></p>
-        <p>- Bad link (with alias): <span><i>even though I link to an invalid item, I would still like this text to be rendered</i></span></p>
-      </p>
+      <p>This remarks block includes a bulleted list!</p>
+      <p>- Bullet 1</p>
+      <p>- Bullet 2</p>
+      <p>And an ordered list for good measure!</p>
+      <p>1. List item 1</p>
+      <p>2. List item 2</p>
+      <p>3. List item 3</p>
+      <p>Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:</p>
+      <p>- Good link (no alias): <a href="docs/test-suite-a#testclass-class">TestClass</a></p>
+      <p>- Good link (with alias): <span><i>function alias text</i></span></p>
+      <p>- Bad link (no alias): <span><i>InvalidItem</i></span></p>
+      <p>- Bad link (with alias): <span><i>even though I link to an invalid item, I would still like this text to be rendered</i></span></p>
     </section>
     <section>
       <h1 id="test-suite-a-example">Example</h1>
-      <p>
+      <section>
         <p>A test example</p><code>const foo = bar;</code>
-      </p>
+      </section>
     </section>
     <section>
       <h1>Interfaces</h1>
@@ -419,9 +417,6 @@
           <section>
             <h4 id="testinterface-propertywithbadinheritdoctarget-propertysignature">propertyWithBadInheritDocTarget</h4>
             <section>
-              <p></p>
-            </section>
-            <section>
               <h5 id="propertywithbadinheritdoctarget-signature">Signature</h5><code>propertyWithBadInheritDocTarget: boolean;</code>
               <p><span><span><b>Type: </b></span><span>boolean</span></span></p>
             </section>
@@ -588,11 +583,9 @@
         </section>
         <section>
           <h3 id="testinterfaceextendingotherinterfaces-see-also">See Also</h3>
-          <p>
-            <p>- <a href="docs/test-suite-a#testinterface-interface">TestInterface</a></p>
-            <p>- <a href="docs/test-suite-a#testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a></p>
-            <p>- <a href="docs/test-suite-a#testmappedtype-typealias">TestMappedType</a></p>
-          </p>
+          <p>- <a href="docs/test-suite-a#testinterface-interface">TestInterface</a></p>
+          <p>- <a href="docs/test-suite-a#testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a></p>
+          <p>- <a href="docs/test-suite-a#testmappedtype-typealias">TestMappedType</a></p>
         </section>
       </section>
       <section>
@@ -640,25 +633,23 @@
         </section>
         <section>
           <h3 id="testinterfacewithtypeparameter-signature">Signature</h3><code>export interface TestInterfaceWithTypeParameter&#x3C;T></code>
-          <p>
-            <section>
-              <h4>Type Parameters</h4>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Parameter</th>
-                    <th>Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>T</td>
-                    <td>A type parameter</td>
-                  </tr>
-                </tbody>
-              </table>
-            </section>
-          </p>
+          <section>
+            <h4>Type Parameters</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>T</td>
+                  <td>A type parameter</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
         </section>
         <section>
           <h3 id="testinterfacewithtypeparameter-remarks">Remarks</h3>
@@ -896,32 +887,28 @@
         </section>
         <section>
           <h3 id="testclass-signature">Signature</h3><code>export declare class TestClass&#x3C;TTypeParameterA, TTypeParameterB> extends TestAbstractClass</code>
-          <p>
-            <p><span><span><b>Extends: </b></span><span><a href="docs/test-suite-a#testabstractclass-class">TestAbstractClass</a></span></span></p>
-            <p>
-              <section>
-                <h4>Type Parameters</h4>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Parameter</th>
-                      <th>Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>TTypeParameterA</td>
-                      <td>A type parameter</td>
-                    </tr>
-                    <tr>
-                      <td>TTypeParameterB</td>
-                      <td>Another type parameter</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </section>
-            </p>
-          </p>
+          <p><span><span><b>Extends: </b></span><span><a href="docs/test-suite-a#testabstractclass-class">TestAbstractClass</a></span></span></p>
+          <section>
+            <h4>Type Parameters</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>TTypeParameterA</td>
+                  <td>A type parameter</td>
+                </tr>
+                <tr>
+                  <td>TTypeParameterB</td>
+                  <td>Another type parameter</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
         </section>
         <section>
           <h3 id="testclass-remarks">Remarks</h3>
@@ -1313,15 +1300,15 @@
           <h3 id="testenum-examples">Examples</h3>
           <section>
             <h4 id="testenum-example1">Example 1</h4>
-            <p>
+            <section>
               <p>Some example</p><code>const foo = TestEnum.TestEnumValue1</code>
-            </p>
+            </section>
           </section>
           <section>
             <h4 id="testenum-example2">Example 2</h4>
-            <p>
+            <section>
               <p>Another example</p><code>const bar = TestEnum.TestEnumValue2</code>
-            </p>
+            </section>
           </section>
         </section>
         <section>
@@ -1476,7 +1463,9 @@
         <section>
           <p>Test Constant</p>
         </section>
-        <section><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></section>
+        <section>
+          <p><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></p>
+        </section>
         <section>
           <h3 id="testconst-signature">Signature</h3><code>testConst = 42</code>
         </section>
@@ -1491,7 +1480,7 @@
           <p>I have a <code>@deprecated</code> tag with an empty comment block.</p>
         </section>
         <section>
-          <p><span><b>WARNING: This API is deprecated and will be removed in a future release.</b></span><br><span><p></p></span></p>
+          <p><span><b>WARNING: This API is deprecated and will be removed in a future release.</b></span><br><span></span></p>
         </section>
         <section>
           <h3 id="testconstwithemptydeprecatedblock-signature">Signature</h3><code>testConstWithEmptyDeprecatedBlock: string</code>
@@ -1506,7 +1495,9 @@
         <section>
           <p>A namespace tagged as <code>@beta</code>.</p>
         </section>
-        <section><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></section>
+        <section>
+          <p><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></p>
+        </section>
         <section>
           <h3 id="testbetanamespace-signature">Signature</h3><code>export declare namespace TestBetaNamespace</code>
         </section>
@@ -1549,9 +1540,8 @@
           <section>
             <h4 id="testbetanamespace-betamember-variable">betaMember</h4>
             <section>
-              <p></p>
+              <p><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></p>
             </section>
-            <section><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></section>
             <section>
               <h5 id="betamember-signature">Signature</h5><code>betaMember = "beta"</code>
             </section>
@@ -1559,9 +1549,8 @@
           <section>
             <h4 id="testbetanamespace-publicmember-variable">publicMember</h4>
             <section>
-              <p></p>
+              <p><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></p>
             </section>
-            <section><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></section>
             <section>
               <h5 id="publicmember-signature">Signature</h5><code>publicMember = "public"</code>
             </section>
@@ -1620,15 +1609,15 @@
           <h3 id="testnamespace-examples">Examples</h3>
           <section>
             <h4 id="testnamespace-example1">Example: TypeScript Example</h4>
-            <p>
+            <section>
               <p></p><code>const foo: Foo = {<br>bar: "Hello world!";<br>baz = 42;<br>};</code>
-            </p>
+            </section>
           </section>
           <section>
             <h4 id="testnamespace-example2">Example: JavaScript Example</h4>
-            <p>
+            <section>
               <p></p><code>const foo = {<br>bar: "Hello world!";<br>baz = 42;<br>};</code>
-            </p>
+            </section>
           </section>
         </section>
         <section>
@@ -1880,10 +1869,8 @@
                 </section>
                 <section><a id="testclassmethod-throws"></a><b>Throws</b>
                   <p>An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.</p>
-                  <p>
-                    <p>A different kind of error when a thing happens, but not when the first kind of error is thrown instead.</p>
-                    <p>😁</p>
-                  </p>
+                  <p>A different kind of error when a thing happens, but not when the first kind of error is thrown instead.</p>
+                  <p>😁</p>
                 </section>
               </section>
             </section>
@@ -1997,7 +1984,9 @@
             <section>
               <p>Test Constant</p>
             </section>
-            <section><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></section>
+            <section>
+              <p><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></p>
+            </section>
             <section>
               <h5 id="testconst-signature">Signature</h5><code>TestConst = "Hello world!"</code>
             </section>
