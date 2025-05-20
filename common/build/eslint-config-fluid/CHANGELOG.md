@@ -12,7 +12,8 @@ Specifically, removes the "VariableDeclaration" context, which would incorrectly
  * foo
  */
 export function foo(): void {
-	// Because the outer scope, `foo`, was exported, this would be incorrectly flagged as needing a JSDoc/TSDoc comment.
+	// Before the fix, because the outer scope, `foo`, was exported, this variable `bar` would be incorrectly flagged as needing a JSDoc/TSDoc comment.
+	// After the fix, variables inside exported functions, like `bar`, are no longer flagged.
 	const bar = "baz";
 	...
 }
