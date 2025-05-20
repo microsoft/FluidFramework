@@ -42,7 +42,15 @@ module.exports = {
 					// Will report for *any* methods on exported classes, regardless of whether or not they are public
 					MethodDefinition: false,
 				},
-				contexts: ["TSEnumDeclaration", "TSInterfaceDeclaration", "TSTypeAliasDeclaration"],
+				contexts: [
+					"TSEnumDeclaration",
+					"TSInterfaceDeclaration",
+					"TSTypeAliasDeclaration",
+
+					// Require JSDoc/TSDoc comments on variable declarations, but only those that are named exports.
+					// Specifying just "VariableDeclaration" results in eslint flagging all variable declarations scoped within something that is exported, including in the body of functions, which is not desired.
+					"ExportNamedDeclaration > VariableDeclaration",
+				],
 			},
 		],
 	},

@@ -764,7 +764,8 @@
                 "contexts": [
                     "TSEnumDeclaration",
                     "TSInterfaceDeclaration",
-                    "TSTypeAliasDeclaration"
+                    "TSTypeAliasDeclaration",
+                    "ExportNamedDeclaration > VariableDeclaration"
                 ],
                 "checkConstructors": true,
                 "checkGetters": true,
