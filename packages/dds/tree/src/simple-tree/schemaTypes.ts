@@ -164,8 +164,7 @@ export interface AllowedTypeMetadata {
 	readonly custom?: unknown;
 
 	/**
-	 * If defined, indicates that an allowed type is enablable. Before upgrade, this type can be loaded into the tree from a document
-	 * but not written to the tree.
+	 * If defined, indicates that an allowed type is enablable. Before upgrade, any attempt to insert or move a node to the location where this allowed type is declared will throw an error.
 	 */
 	readonly enabledUponSchemaUpgrade?: SchemaUpgradeToken;
 }
