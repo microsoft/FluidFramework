@@ -217,7 +217,7 @@ describe("DataStore Layer compatibility", () => {
 					type,
 					attributes: { type, snapshotFormatVersion: "0" },
 					create: () => ({}) as unknown as IChannel,
-					load: async () => Promise.resolve({} as unknown as IChannel),
+					load: async () => ({}) as unknown as IChannel,
 				};
 			},
 		};

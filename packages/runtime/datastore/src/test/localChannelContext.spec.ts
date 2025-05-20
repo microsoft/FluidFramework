@@ -19,7 +19,10 @@ import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChan
 describe("LocalChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;
 	let sharedObjectRegistry: ISharedObjectRegistry;
-	const loadRuntime = (context: IFluidDataStoreContext, registry: ISharedObjectRegistry) =>
+	const loadRuntime = (
+		context: IFluidDataStoreContext,
+		registry: ISharedObjectRegistry,
+	): FluidDataStoreRuntime =>
 		new FluidDataStoreRuntime(context, registry, /* existing */ false, async () => ({
 			myProp: "myValue",
 		}));
@@ -32,7 +35,7 @@ describe("LocalChannelContext Tests", () => {
 					type,
 					attributes: { type, snapshotFormatVersion: "0" },
 					create: () => ({}) as unknown as IChannel,
-					load: async () => Promise.resolve({} as unknown as IChannel),
+					load: async () => ({}) as unknown as IChannel,
 				};
 			},
 		};

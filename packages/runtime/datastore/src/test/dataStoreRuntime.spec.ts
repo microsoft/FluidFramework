@@ -58,7 +58,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 							attributes: { type, snapshotFormatVersion: "0" },
 							clientDetails: {},
 						}) as unknown as IChannel,
-					load: async (): Promise<IChannel> => Promise.resolve({} as unknown as IChannel),
+					load: async (): Promise<IChannel> => ({}) as unknown as IChannel,
 				};
 			},
 		};
