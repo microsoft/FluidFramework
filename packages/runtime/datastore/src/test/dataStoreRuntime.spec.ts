@@ -151,7 +151,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 			type,
 			attributes: { type, snapshotFormatVersion: "0" },
 			clientDetails: {},
-		} as any as IChannel;
+		} as unknown as IChannel;
 		dataStoreRuntime.addChannel(channel);
 		const channel1 = await dataStoreRuntime.getChannel(channel.id);
 		assert.deepStrictEqual(channel, channel1, "both channel should match");
@@ -166,7 +166,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 			type,
 			attributes: { type, snapshotFormatVersion: "0" },
 			clientDetails: {},
-		} as any as IChannel;
+		} as unknown as IChannel;
 		const codeBlock = () => dataStoreRuntime.addChannel(channel);
 		assert.throws(
 			codeBlock,

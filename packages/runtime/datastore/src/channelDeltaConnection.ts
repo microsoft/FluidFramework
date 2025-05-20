@@ -16,7 +16,7 @@ import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
 const stashedOpMetadataMark = Symbol();
 
-type StashedOpMetadata = { contents: any; metadata: unknown }[] &
+type StashedOpMetadata = { contents: unknown; metadata: unknown }[] &
 	Record<typeof stashedOpMetadataMark, typeof stashedOpMetadataMark>;
 
 function createStashedOpMetadata(): StashedOpMetadata {
@@ -26,7 +26,7 @@ function createStashedOpMetadata(): StashedOpMetadata {
 		writable: false,
 		enumerable: true,
 	});
-	return arr as any as StashedOpMetadata;
+	return arr as unknown as StashedOpMetadata;
 }
 
 function isStashedOpMetadata(md: unknown): md is StashedOpMetadata {
@@ -38,9 +38,9 @@ function isStashedOpMetadata(md: unknown): md is StashedOpMetadata {
 }
 
 function processWithStashedOpMetadataHandling(
-	content: any,
+	content: unknown,
 	localOpMetaData: unknown,
-	func: (contents: any, metadata: unknown) => void,
+	func: (contents: unknown, metadata: unknown) => void,
 ) {
 	if (isStashedOpMetadata(localOpMetaData)) {
 		for (const { contents, metadata } of localOpMetaData) func(contents, metadata);
@@ -83,7 +83,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	constructor(
 		private _connected: boolean,
-		private readonly submitFn: (content: any, localOpMetadata: unknown) => void,
+		private readonly submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		public readonly dirty: () => void,
 		private readonly isAttachedAndVisible: () => boolean,
 	) {}
@@ -117,13 +117,13 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		}
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown, squash: boolean) {
+	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean) {
 		processWithStashedOpMetadataHandling(content, localOpMetadata, (contents, metadata) =>
 			this.handler.reSubmit(contents, metadata, squash),
 		);
 	}
 
-	public rollback(content: any, localOpMetadata: unknown) {
+	public rollback(content: unknown, localOpMetadata: unknown) {
 		if (this.handler.rollback === undefined) {
 			throw new Error("Handler doesn't support rollback");
 		}
@@ -134,7 +134,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		);
 	}
 
-	public applyStashedOp(content: any): unknown {
+	public applyStashedOp(content: unknown): unknown {
 		try {
 			this.stashedOpMd = this.isAttachedAndVisible() ? createStashedOpMetadata() : undefined;
 			this.handler.applyStashedOp(content);
@@ -144,7 +144,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		}
 	}
 
-	public submit(contents: any, metadata: unknown): void {
+	public submit(contents: unknown, metadata: unknown): void {
 		if (this.stashedOpMd === undefined) {
 			this.submitFn(contents, metadata);
 		} else {

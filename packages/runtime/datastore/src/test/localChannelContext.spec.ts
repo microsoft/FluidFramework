@@ -31,8 +31,8 @@ describe("LocalChannelContext Tests", () => {
 				return {
 					type,
 					attributes: { type, snapshotFormatVersion: "0" },
-					create: () => ({}) as any as IChannel,
-					load: async () => Promise.resolve({} as any as IChannel),
+					create: () => ({}) as unknown as IChannel,
+					load: async () => Promise.resolve({} as unknown as IChannel),
 				};
 			},
 		};
@@ -43,7 +43,7 @@ describe("LocalChannelContext Tests", () => {
 		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
 		const codeBlock = () =>
 			new LocalChannelContext(
-				{ id: invalidId } as any as IChannel,
+				{ id: invalidId } as unknown as IChannel,
 				dataStoreRuntime,
 				dataStoreContext,
 				dataStoreContext.storage,
@@ -71,7 +71,7 @@ describe("LocalChannelContext Tests", () => {
 				dataStoreContext.baseLogger,
 				(content, localOpMetadata) => {},
 				(s: string) => {},
-				null as unknown as ISnapshotTree,
+				undefined as unknown as ISnapshotTree,
 			);
 		assert.throws(
 			codeBlock,
