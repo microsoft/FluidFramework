@@ -401,7 +401,7 @@ export class DocumentDeltaConnection
 	 * However the OdspDocumentDeltaConnection differ in dispose as in there we don't close the socket. There is no
 	 * multiplexing here, so we need to close the socket here.
 	 */
-	public dispose() {
+	public dispose(error?: Error) {
 		this.logger.sendTelemetryEvent({
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
@@ -409,7 +409,8 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
-		this.disconnect();
+		const disconnectError = error ? this.createErrorObject("dispose", error, false) : undefined;
+		this.disconnect(disconnectError);
 	}
 
 	protected disconnect(err?: IAnyDriverError) {
