@@ -63,6 +63,8 @@ export interface JsonValidator {
 
 /**
  * Options relating to handling of persisted data.
+ *
+ * @see {@link CodecWriteOptions} for options that are specific to encoding data.
  * @alpha
  */
 export interface ICodecOptions {
@@ -80,7 +82,15 @@ export interface ICodecOptions {
 	 * which reduces the risk of unrecoverable data corruption.
 	 */
 	readonly jsonValidator: JsonValidator;
+}
 
+/**
+ * Options relating to encoding of persisted data.
+ * @remarks
+ * Extends {@link ICodecOptions} with options that are specific to encoding data.
+ * @alpha
+ */
+export interface CodecWriteOptions extends ICodecOptions {
 	/**
 	 * The minimum version of the Fluid Framework client output must be encoded to be compatible with.
 	 * @remarks
@@ -88,9 +98,9 @@ export interface ICodecOptions {
 	 * This includes both concurrent collaboration, and an older version opening the document later.
 	 *
 	 * Note that versions older than this should not result in data corruption if they access the data:
-	 * if they can't handle the format they should error.
+	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
-	readonly minimumSupportedVersion: FluidClientVersion;
+	readonly oldestCompatibleClient: FluidClientVersion;
 }
 
 /**

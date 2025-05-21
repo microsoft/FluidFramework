@@ -53,6 +53,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
+import { FluidClientVersion } from "../../codec/index.js";
 
 const content: JsonCompatible = { x: 42 };
 
@@ -91,7 +92,7 @@ export function setupEnricher() {
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		testRevisionTagCodec,
 		testIdCompressor,
-		{ jsonValidator: typeboxValidator },
+		{ jsonValidator: typeboxValidator, oldestCompatibleClient: FluidClientVersion.v2_0 },
 	);
 	const forest = buildForest();
 	initializeForest(forest, fieldJsonCursor([content]), testRevisionTagCodec, testIdCompressor);

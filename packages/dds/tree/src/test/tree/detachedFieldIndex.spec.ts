@@ -24,6 +24,7 @@ import {
 } from "../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
 import { testIdCompressor, testRevisionTagCodec, createSnapshotCompressor } from "../utils.js";
+import { FluidClientVersion, type CodecWriteOptions } from "../../codec/index.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();
 const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
@@ -174,13 +175,18 @@ export function generateTestCases(
 }
 
 describe("DetachedFieldIndex", () => {
+	const options: CodecWriteOptions = {
+		jsonValidator: typeboxValidator,
+		oldestCompatibleClient: FluidClientVersion.v2_0,
+	};
+
 	it("encodes with a version stamp.", () => {
 		const detachedFieldIndex = new DetachedFieldIndex(
 			"test",
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 			testRevisionTagCodec,
 			testIdCompressor,
-			{ jsonValidator: typeboxValidator },
+			options,
 		);
 		const expected = {
 			version: 1,
@@ -192,9 +198,7 @@ describe("DetachedFieldIndex", () => {
 	describe("round-trip through JSON", () => {
 		const codec = makeDetachedNodeToFieldCodec(
 			testRevisionTagCodec,
-			{
-				jsonValidator: typeboxValidator,
-			},
+			options,
 			testIdCompressor,
 		);
 		for (const { name, data } of generateTestCases(testIdCompressor)) {
@@ -214,9 +218,7 @@ describe("DetachedFieldIndex", () => {
 						idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 						testRevisionTagCodec,
 						testIdCompressor,
-						{
-							jsonValidator: typeboxValidator,
-						},
+						options,
 					);
 					detachedFieldIndex.loadData(data as JsonCompatibleReadOnly);
 				});
@@ -231,9 +233,7 @@ describe("DetachedFieldIndex", () => {
 						id,
 						malformedRevisionTagCodec,
 						testIdCompressor,
-						{
-							jsonValidator: typeboxValidator,
-						},
+						options,
 					);
 					assert.throws(
 						() => detachedFieldIndex.loadData(data),
@@ -249,9 +249,7 @@ describe("DetachedFieldIndex", () => {
 		const snapshotRevisionTagCodec = new RevisionTagCodec(snapshotIdCompressor);
 		const codec = makeDetachedNodeToFieldCodec(
 			snapshotRevisionTagCodec,
-			{
-				jsonValidator: typeboxValidator,
-			},
+			options,
 			testIdCompressor,
 		);
 

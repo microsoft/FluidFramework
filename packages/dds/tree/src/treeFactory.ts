@@ -51,9 +51,9 @@ function treeKernelFactory(
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
 		const adjustedOptions = { ...options };
-		// TODO: get default from runtime once something like runtime.minimumSupportedVersion exists.
+		// TODO: get default from runtime once something like runtime.oldestCompatibleClient exists.
 		// Using default of 2.0 since that is the oldest version that supports SharedTree.
-		adjustedOptions.minimumSupportedVersion ??= FluidClientVersion.v2_0;
+		adjustedOptions.oldestCompatibleClient ??= FluidClientVersion.v2_0;
 		return new SharedTreeKernel(
 			new Breakable("SharedTree"),
 			args.sharedObject,

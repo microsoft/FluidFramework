@@ -12,7 +12,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
-import { type ICodecOptions, noopValidator } from "../../codec/index.js";
+import type { CodecWriteOptions } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeBuild,
 	type DeltaFieldChanges,
@@ -60,9 +60,10 @@ export class ForestSummarizer implements Summarizable {
 		private readonly revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
-		options: ICodecOptions = { jsonValidator: noopValidator },
+		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
 	) {
+		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
 	}
 

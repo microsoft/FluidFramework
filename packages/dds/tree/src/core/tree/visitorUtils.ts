@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ICodecOptions } from "../../codec/index.js";
+import type { CodecWriteOptions } from "../../codec/index.js";
 import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
@@ -20,7 +20,7 @@ export function makeDetachedFieldIndex(
 	prefix: string = "Temp",
 	revisionTagCodec: RevisionTagCodec,
 	idCompressor: IIdCompressor,
-	options?: ICodecOptions,
+	options?: CodecWriteOptions,
 ): DetachedFieldIndex {
 	return new DetachedFieldIndex(
 		prefix,

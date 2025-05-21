@@ -258,6 +258,7 @@ export { persistedToSimpleSchema } from "./shared-tree/index.js";
 
 export {
 	type ICodecOptions,
+	type CodecWriteOptions,
 	type JsonValidator,
 	type SchemaValidationFunction,
 	FluidClientVersion,

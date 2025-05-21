@@ -38,7 +38,7 @@ import {
 	TreeViewConfigurationAlpha,
 } from "../simple-tree/index.js";
 import type { JsonCompatible } from "../util/index.js";
-import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
+import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import type { ITreeCursorSynchronous } from "../core/index.js";
 import {
 	cursorForMapTreeField,
@@ -52,7 +52,7 @@ import {
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { currentVersion } from "../codec/index.js";
+import { currentVersion, noopValidator } from "../codec/index.js";
 
 /**
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
@@ -181,7 +181,10 @@ export interface TreeAlpha {
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,
-		options: { oldestCompatibleClient: FluidClientVersion; idCompressor?: IIdCompressor },
+		options: { idCompressor?: IIdCompressor } & Pick<
+			CodecWriteOptions,
+			"oldestCompatibleClient"
+		>,
 	): JsonCompatible<IFluidHandle>;
 
 	/**
@@ -285,10 +288,10 @@ export const TreeAlpha: TreeAlpha = {
 
 	exportCompressed(
 		node: TreeNode | TreeLeafValue,
-		options: {
-			oldestCompatibleClient: FluidClientVersion;
-			idCompressor?: IIdCompressor;
-		},
+		options: { idCompressor?: IIdCompressor } & Pick<
+			CodecWriteOptions,
+			"oldestCompatibleClient"
+		>,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
 		const format = versionToFormat[options.oldestCompatibleClient];

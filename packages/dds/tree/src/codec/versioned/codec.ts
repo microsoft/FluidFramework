@@ -13,6 +13,8 @@ import {
 	type IJsonCodec,
 	withSchemaValidation,
 	type FormatVersion,
+	type FluidClientVersion,
+	type CodecWriteOptions,
 } from "../codec.js";
 
 import { Versioned } from "./format.js";
@@ -74,7 +76,10 @@ export function makeVersionedValidatedCodec<
 /**
  * Creates a codec which dispatches to the appropriate member of a codec family based on the version of
  * data it encounters.
- * Each member of the codec family must write an explicit version number into the data it encodes.
+ * @remarks
+ * Each member of the codec family must write an explicit version number into the data it encodes (implementing {@link Versioned}).
+ *
+ * TODO: Users of this should migrate to {@link ClientVersionDispatchingCodecBuilder} so that the actual format version used can be encapsulated.
  */
 export function makeVersionDispatchingCodec<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
@@ -91,4 +96,32 @@ export function makeVersionDispatchingCodec<TDecoded, TContext>(
 			return codec.json.decode(data, context);
 		},
 	});
+}
+
+/**
+ * Creates a codec which dispatches to the appropriate member of a codec family based on the `oldestCompatibleClient` for encode and the
+ * version number in data it encounters for decode.
+ * @privateRemarks
+ * This is a two stage builder so the first stage can encapsulate all codec specific details and the second can bring in configuration.
+ */
+export class ClientVersionDispatchingCodecBuilder<TDecoded, TContext> {
+	public constructor(
+		/**
+		 * The codec family to dispatch to.
+		 */
+		private readonly family: ICodecFamily<TDecoded, TContext>,
+		/**
+		 * A function which maps a {@link FluidClientVersion} to a version number for the codec family which is supported by that version.
+		 * This can (and typically does) pick the newest version of the codec which is known to be compatible with the client version so that
+		 * any improvements in newer versions of the codec can be used when allowed.
+		 */
+		private readonly versionMapping: (oldestCompatibleClient: FluidClientVersion) => number,
+	) {}
+
+	public build(
+		options: CodecWriteOptions,
+	): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+		const writeVersion = this.versionMapping(options.oldestCompatibleClient);
+		return makeVersionDispatchingCodec(this.family, { ...options, writeVersion });
+	}
 }

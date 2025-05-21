@@ -21,7 +21,12 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, noopValidator } from "../codec/index.js";
+import {
+	type CodecWriteOptions,
+	FluidClientVersion,
+	type ICodecOptions,
+	noopValidator,
+} from "../codec/index.js";
 import {
 	type FieldKey,
 	type GraphCommit,
@@ -588,7 +593,7 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
  * Configuration options for SharedTree.
  * @alpha
  */
-export type SharedTreeOptions = Partial<ICodecOptions> &
+export type SharedTreeOptions = Partial<CodecWriteOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
@@ -695,6 +700,7 @@ export function buildConfiguredForest(
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: noopValidator,
+	oldestCompatibleClient: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
