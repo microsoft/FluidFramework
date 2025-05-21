@@ -170,7 +170,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	}
 
 	/**
-	 * @returns the commit at the head of this branch.
+	 * Gets the commit at the head of this branch.
 	 */
 	public getHead(): GraphCommit<TChange> {
 		return this.head;
