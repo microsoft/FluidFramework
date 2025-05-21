@@ -23,7 +23,6 @@ import {
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 import {
 	buildChunkedForest,
-	buildForest,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	cursorForMapTreeNode,
@@ -34,7 +33,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
 
-import { testIdCompressor, testRevisionTagCodec } from "../../utils.js";
+import { buildTestForest, testIdCompressor, testRevisionTagCodec } from "../../utils.js";
 import { averageValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
@@ -96,7 +95,7 @@ function bench(
 				[
 					"object-forest Cursor",
 					() => {
-						const forest = buildForest();
+						const forest = buildTestForest({ additionalAsserts: true });
 						initializeForest(
 							forest,
 							cursorForJsonableTreeField([encodedTree]),

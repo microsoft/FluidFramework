@@ -5,7 +5,13 @@
 
 import { done, isOperationType, takeAsync } from "@fluid-private/stochastic-test-utils";
 
-import { makeGenerator, reducer, saveFailures, type StressOperations } from "../baseModel.js";
+import {
+	ddsModelMinimizers,
+	makeGenerator,
+	reducer,
+	saveFailures,
+	type StressOperations,
+} from "../baseModel.js";
 import {
 	convertToRealHandles,
 	covertLocalServerStateToDdsState,
@@ -81,6 +87,7 @@ describe("Local Server Stress with rollback", () => {
 				? orderSequentiallyReducer(state, op)
 				: reducer(state, op),
 		validateConsistency: validateConsistencyOfAllDDS,
+		minimizationTransforms: ddsModelMinimizers,
 	};
 
 	createLocalServerStressSuite(model, {

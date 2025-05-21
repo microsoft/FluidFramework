@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
@@ -21,9 +23,6 @@ import {
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import type { Listenable } from "@fluidframework/core-interfaces";
-import { createEmitter } from "@fluid-internal/client-utils";
-
 import { hasSome, defineLazyCachedProperty } from "../util/index.js";
 
 /**
