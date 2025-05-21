@@ -574,7 +574,7 @@ export function createDeprecationNoticeSection(
 		return undefined;
 	}
 
-	return new SectionNode([
+	return wrapInSection([
 		new ParagraphNode([
 			SpanNode.createFromPlainText(
 				"WARNING: This API is deprecated and will be removed in a future release.",
