@@ -94,26 +94,13 @@ export function transformTsdoc(
 	config: ApiItemTransformationConfiguration,
 ): BlockContent[] {
 	const tsdocTransformConfig = getTsdocNodeTransformationOptions(contextApiItem, config);
-
-	// TODO: HTML contents come in as a start tag, followed by the content, followed by an end tag, rather than something with hierarchy.
-	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
-	// and map the subsequence to an "html" node.
-
-	let transformedChildren: BlockContent[] = [];
-	for (const child of node.nodes) {
-		transformedChildren.push(...transformTsdocSectionContent(child, tsdocTransformConfig));
-	}
-
-	// Remove line breaks adjacent to paragraphs, as they are redundant
-	transformedChildren = filterNewlinesAdjacentToParagraphs(transformedChildren);
-
-	return transformedChildren;
+	return transformTsdocSection(node, tsdocTransformConfig);
 }
 
 /**
  * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link SectionNode}.
  */
-export function transformTsdocSection(
+function transformTsdocSection(
 	node: DocSection,
 	options: TsdocNodeTransformOptions,
 ): BlockContent[] {
@@ -181,7 +168,7 @@ function transformTsdocSectionContent(
  * 4. Trim leading whitespace from first child if it is plain-text, and trim trailing whitespace from
  * last child if it is plain-text.
  */
-export function transformTsdocParagraph(
+function transformTsdocParagraph(
 	node: DocParagraph,
 	options: TsdocNodeTransformOptions,
 ): ParagraphNode | undefined {
@@ -237,18 +224,17 @@ export function transformTsdocParagraph(
 	return new ParagraphNode(transformedChildren);
 }
 
-/*
-DocNodeKind.BlockTag,
-DocNodeKind.CodeSpan,
-DocNodeKind.ErrorText,
-DocNodeKind.EscapedText,
-DocNodeKind.HtmlStartTag,
-DocNodeKind.HtmlEndTag,
-DocNodeKind.InlineTag,
-DocNodeKind.LinkTag,
-DocNodeKind.PlainText,
-DocNodeKind.SoftBreak
-*/
+// Default TSDoc implementation only supports the following DocNode kinds under a section node:
+// - DocNodeKind.BlockTag,
+// - DocNodeKind.CodeSpan,
+// - DocNodeKind.ErrorText,
+// - DocNodeKind.EscapedText,
+// - DocNodeKind.HtmlStartTag,
+// - DocNodeKind.HtmlEndTag,
+// - DocNodeKind.InlineTag,
+// - DocNodeKind.LinkTag,
+// - DocNodeKind.PlainText,
+// - DocNodeKind.SoftBreak
 function transformTsdocParagraphContent(
 	node: DocNode,
 	options: TsdocNodeTransformOptions,
@@ -298,7 +284,7 @@ function transformTsdocParagraphContent(
 /**
  * Converts a {@link @microsoft/tsdoc#DocCodeSpan} to a {@link CodeSpanNode}.
  */
-export function transformTsdocCodeSpan(
+function transformTsdocCodeSpan(
 	node: DocCodeSpan,
 	options: TsdocNodeTransformOptions,
 ): CodeSpanNode {
@@ -319,7 +305,7 @@ export function transformTsdocCodeSpan(
  *
  * We may revisit this in the future.
  */
-export function transformTsdocHtmlTag(
+function transformTsdocHtmlTag(
 	node: DocHtmlStartTag | DocHtmlEndTag,
 	options: TsdocNodeTransformOptions,
 ): [] {
@@ -333,7 +319,7 @@ export function transformTsdocHtmlTag(
 /**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
-export function transformTsdocPlainText(
+function transformTsdocPlainText(
 	node: DocPlainText,
 	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
@@ -343,7 +329,7 @@ export function transformTsdocPlainText(
 /**
  * Converts a {@link @microsoft/tsdoc#DocEscapedText} to a {@link PlainTextNode}.
  */
-export function transformTsdocEscapedText(
+function transformTsdocEscapedText(
 	node: DocEscapedText,
 	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
@@ -353,7 +339,7 @@ export function transformTsdocEscapedText(
 /**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
-export function transformTsdocFencedCode(
+function transformTsdocFencedCode(
 	node: DocFencedCode,
 	options: TsdocNodeTransformOptions,
 ): FencedCodeBlockNode {
@@ -363,7 +349,7 @@ export function transformTsdocFencedCode(
 /**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link SingleLineDocumentationNode}.
  */
-export function transformTsdocLinkTag(
+function transformTsdocLinkTag(
 	input: DocLinkTag,
 	options: TsdocNodeTransformOptions,
 ): LinkNode | SpanNode {
@@ -412,7 +398,7 @@ export function transformTsdocLinkTag(
  * for use in `{@link}` and `{@inheritDoc}` tags, so we will simply ignore them here. I.e. we
  * will return `undefined`.
  */
-export function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefined {
+function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefined {
 	if (node.tagName === "@label") {
 		return undefined;
 	}
