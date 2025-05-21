@@ -196,7 +196,7 @@ import {
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
 	ContainerMessageType,
-	type ContainerRuntimeDocumentSchemaMessage,
+	type OutboundContainerRuntimeDocumentSchemaMessage,
 	ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -234,7 +234,7 @@ import {
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import type {
-	IDocumentSchemaChangeMessage,
+	IDocumentSchemaChangeMessageIncoming,
 	IDocumentSchemaCurrent,
 	Summarizer,
 	IDocumentSchemaFeatures,
@@ -283,7 +283,6 @@ import {
 	DefaultSummaryConfiguration,
 	isSummariesDisabled,
 	summarizerClientType,
-	IDocumentSchemaIncoming,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -1050,7 +1049,7 @@ export class ContainerRuntime
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
-			metadata?.documentSchema as IDocumentSchemaIncoming | undefined,
+			metadata?.documentSchema,
 			{
 				explicitSchemaControl,
 				compressionLz4,
@@ -3138,7 +3137,7 @@ export class ContainerRuntime
 			}
 			case ContainerMessageType.DocumentSchemaChange: {
 				this.documentsSchemaController.processDocumentSchemaMessages(
-					contents as IDocumentSchemaChangeMessage[],
+					contents as IDocumentSchemaChangeMessageIncoming[],
 					local,
 					message.sequenceNumber,
 				);
@@ -4474,7 +4473,7 @@ export class ContainerRuntime
 					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
 					minVersionForCollab: schemaChangeMessage.info?.minVersionForCollab,
 				});
-				const msg: ContainerRuntimeDocumentSchemaMessage = {
+				const msg: OutboundContainerRuntimeDocumentSchemaMessage = {
 					type: ContainerMessageType.DocumentSchemaChange,
 					contents: schemaChangeMessage,
 				};

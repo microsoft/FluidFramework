@@ -64,19 +64,30 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  * @internal
  */
 export interface IDocumentSchema {
-	// version that describes how data is stored in this structure.
-	// If runtime sees a version it does not understand, it should immediately fail and not
-	// attempt to interpret any further data.
+	/**
+	 * Describes how data needed to understand the schema is stored in this structure.
+	 * If runtime sees a version it does not understand, it should immediately fail and not
+	 * attempt to interpret any further data.
+	 */
 	version: number;
 
-	// Sequence number when this schema became active.
+	/**
+	 * Sequence number when this schema became active.
+	 */
 	refSeq: number;
 
+	/**
+	 * Runtime configurations that affect the document schema. Other clients must understand these
+	 * properties to be able to open the document.
+	 */
 	runtime: Record<string, DocumentSchemaValueType>;
 
-	// Info about this document that can be updated via Document Schema change op, but isn't required
-	// to be understood by all clients (unlike the rest of IDocumentSchema properties).
-	info: IDocumentSchemaInfo;
+	/**
+	 * Info about this document that can be updated via Document Schema change op, but isn't required
+	 * to be understood by all clients (unlike the rest of IDocumentSchema properties). Because of this,
+	 * some older documents may not have this property, so it's an optional property.
+	 */
+	info?: IDocumentSchemaInfo;
 }
 
 /**
@@ -106,10 +117,17 @@ export interface IDocumentSchemaInfo {
  * The meaning of refSeq field is different in such messages (compared to other usages of IDocumentSchemaCurrent)
  * ContainerMessageType.DocumentSchemaChange messages use CAS (Compare-and-swap) semantics, and convey
  * regSeq of last known schema change (known to a client proposing schema change).
- * @see ContainerRuntimeDocumentSchemaMessage
+ * @see InboundContainerRuntimeDocumentSchemaMessage
  * @internal
  */
-export type IDocumentSchemaChangeMessage = IDocumentSchemaIncoming;
+export type IDocumentSchemaChangeMessageIncoming = IDocumentSchema;
+
+/**
+ * Similar to {@link IDocumentSchemaChangeMessageIncoming}, but used for outgoing schema messages.
+ * @see OutboundContainerRuntimeDocumentSchemaMessage
+ * @internal
+ */
+export type IDocumentSchemaChangeMessageOutgoing = IDocumentSchemaCurrent;
 
 /**
  * Settings that this session would like to have, based on options and feature gates.
@@ -160,28 +178,15 @@ export const currentDocumentVersionSchema = 1;
  * Current document schema.
  * @internal
  */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type IDocumentSchemaCurrent = {
-	version: 1;
-	refSeq: number;
-	info: IDocumentSchemaInfo;
+export interface IDocumentSchemaCurrent extends Required<IDocumentSchema> {
+	// This is the version of the schema that we currently understand.
+	version: typeof currentDocumentVersionSchema;
 	runtime: {
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
 			: IDocumentSchemaFeatures[P];
 	};
-};
-
-/**
- * Subset of {@link IDocumentSchemaCurrent} that represents the incoming schema from the document metadata.
- * Some properties are made optional since older schemas may not have all the latest properties that
- * IDocumentSchemaCurrent has.
- *
- * @internal
- */
-export type IDocumentSchemaIncoming = Omit<IDocumentSchemaCurrent, "info"> & {
-	info?: IDocumentSchemaInfo;
-};
+}
 
 interface IProperty<T = unknown> {
 	and: (currentDocSchema: T, desiredDocSchema: T) => T;
@@ -285,7 +290,7 @@ const documentSchemaSupportedConfigs = {
  * @param documentSchema - current schema
  */
 function checkRuntimeCompatibility(
-	documentSchema: IDocumentSchema | IDocumentSchemaIncoming | undefined,
+	documentSchema: IDocumentSchema | undefined,
 	schemaName: string,
 ): void {
 	// Back-compat - we can't do anything about legacy documents.
@@ -345,7 +350,7 @@ function checkRuntimeCompatibility(
 }
 
 function and(
-	currentDocSchema: IDocumentSchemaIncoming,
+	currentDocSchema: IDocumentSchema,
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -371,7 +376,7 @@ function and(
 }
 
 function or(
-	currentDocSchema: IDocumentSchemaIncoming,
+	currentDocSchema: IDocumentSchema,
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -405,7 +410,7 @@ function or(
 }
 
 function same(
-	currentDocSchema: IDocumentSchemaIncoming,
+	currentDocSchema: IDocumentSchema,
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): boolean {
 	if (
@@ -511,7 +516,7 @@ export class DocumentsSchemaController {
 	private sendOp = true;
 
 	// schema coming from document metadata (snapshot we loaded from)
-	private documentSchema: IDocumentSchemaIncoming;
+	private documentSchema: IDocumentSchema;
 
 	// desired schema, based on feature gates / runtime options.
 	// This includes requests to enable to disable functionality
@@ -539,7 +544,7 @@ export class DocumentsSchemaController {
 	constructor(
 		existing: boolean,
 		snapshotSequenceNumber: number,
-		documentMetadataSchema: IDocumentSchemaIncoming | undefined,
+		documentMetadataSchema: IDocumentSchema | undefined,
 		features: IDocumentSchemaFeatures,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 		info: IDocumentSchemaInfo,
@@ -587,13 +592,13 @@ export class DocumentsSchemaController {
 
 		// Schema coming from document metadata (snapshot we loaded from), or if no document exists
 		// (this is a new document) then this is the same as desiredSchema (same as session schema in such case).
-		// Latter is importnat sure that's what will go into summary.
+		// Latter is important sure that's what will go into summary.
 		// We also create a shallow copy of the documentMetadataSchema to avoid mutating the original object. This
 		// may not be not be necessary for production scenarios, but was causing issues in tests.
-		const documentMetadataSchemaShallowCopy: IDocumentSchemaIncoming | undefined =
+		const documentMetadataSchemaShallowCopy: IDocumentSchema | undefined =
 			documentMetadataSchema === undefined ? undefined : { ...documentMetadataSchema };
 		this.documentSchema = existing
-			? ((documentMetadataSchemaShallowCopy as IDocumentSchemaIncoming) ??
+			? ((documentMetadataSchemaShallowCopy as IDocumentSchema) ??
 				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
@@ -643,7 +648,7 @@ export class DocumentsSchemaController {
 		checkRuntimeCompatibility(this.futureSchema, "future");
 	}
 
-	public summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined {
+	public summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined {
 		// For legacy behavior, we could write nothing (return undefined).
 		// It does not buy us anything, as whatever written in summary does not actually impact clients operating in legacy mode.
 		// But writing current used config (and assuming most of the clients settle on same config over time) will help with transition
@@ -661,11 +666,7 @@ export class DocumentsSchemaController {
 			0x94d /* refSeq should be zero */,
 		);
 
-		// After processDocumentSchemaMessages() it should be guaranteed that this.documentSchema.info was defined.
-		// This makes schema's implied type (IDocumentSchemaIncoming) equivalent to IDocumentSchemaCurrent.
-		assert(schema.info !== undefined, "schema.info should be defined");
-
-		return schema as IDocumentSchemaCurrent;
+		return schema;
 	}
 
 	/**
@@ -674,7 +675,7 @@ export class DocumentsSchemaController {
 	 * Please consider note above constructor about race conditions - current design is to send op only once in a session lifetime.
 	 * @returns Optional message to send.
 	 */
-	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined {
+	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessageOutgoing | undefined {
 		if (this.sendOp && this.futureSchema !== undefined) {
 			this.sendOp = false;
 			assert(
@@ -716,7 +717,7 @@ export class DocumentsSchemaController {
 	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
 	public processDocumentSchemaMessages(
-		contents: IDocumentSchemaChangeMessage[],
+		contents: IDocumentSchemaChangeMessageIncoming[],
 		local: boolean,
 		sequenceNumber: number,
 	): boolean {
@@ -744,8 +745,11 @@ export class DocumentsSchemaController {
 			// Changes are in effect. Immediately check that this client understands these changes
 			checkRuntimeCompatibility(content, "change");
 
-			const schema: IDocumentSchemaIncoming = { ...content, refSeq: sequenceNumber };
-			this.documentSchema = schema as IDocumentSchemaCurrent;
+			const schema: IDocumentSchema = {
+				...content,
+				refSeq: sequenceNumber,
+			};
+			this.documentSchema = schema;
 			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
 

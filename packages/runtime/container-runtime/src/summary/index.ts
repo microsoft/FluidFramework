@@ -104,11 +104,11 @@ export {
 	IDocumentSchemaCurrent,
 	IDocumentSchema,
 	IDocumentSchemaInfo,
-	IDocumentSchemaIncoming,
 	currentDocumentVersionSchema,
 	DocumentSchemaValueType,
 	DocumentsSchemaController,
-	IDocumentSchemaChangeMessage,
+	IDocumentSchemaChangeMessageIncoming,
+	IDocumentSchemaChangeMessageOutgoing,
 	IDocumentSchemaFeatures,
 } from "./documentSchema.js";
 export {

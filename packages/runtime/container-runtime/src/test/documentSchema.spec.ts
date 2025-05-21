@@ -14,6 +14,7 @@ import { defaultMinVersionForCollab } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
 	DocumentsSchemaController,
+	type IDocumentSchema,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
 } from "../summary/index.js";
@@ -32,7 +33,7 @@ describe("Runtime", () => {
 	beforeEach(() => {
 		logger = createMockLoggerExt();
 	});
-	const validConfig: IDocumentSchemaCurrent = {
+	const validConfig: IDocumentSchema = {
 		version: 1,
 		refSeq: 0,
 		info: { minVersionForCollab: defaultMinVersionForCollab },
@@ -58,7 +59,7 @@ describe("Runtime", () => {
 		return new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
-			config as IDocumentSchemaCurrent, // old schema,
+			config as IDocumentSchema, // old schema,
 			features,
 			() => {}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
@@ -74,7 +75,7 @@ describe("Runtime", () => {
 		const controller = createController(validConfig);
 		assert.throws(() =>
 			controller.processDocumentSchemaMessages(
-				[config as IDocumentSchemaCurrent],
+				[config as IDocumentSchema],
 				false, // local
 				100,
 			),
@@ -372,14 +373,14 @@ describe("Runtime", () => {
 		);
 	});
 
-	function testExistingDocNoChangesInSchema(schema: IDocumentSchemaCurrent) {
+	function testExistingDocNoChangesInSchema(schema: IDocumentSchema) {
 		const controller = new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
 			schema, // old schema,
 			features,
 			() => {}, // onSchemaChange
-			schema.info, // info,
+			schema.info ?? { minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
 		);
 
@@ -398,6 +399,31 @@ describe("Runtime", () => {
 			// Should not change schema since it is lower than the existing minVersionForCollab
 			info: { minVersionForCollab: "1.0.0" },
 		});
+	});
+
+	it("Existing document with existing schema, no existing minVersionForCollab", () => {
+		const controller = new DocumentsSchemaController(
+			true, // existing,
+			0, // snapshotSequenceNumber
+			{ ...validConfig, info: undefined }, // old schema,
+			features, // features
+			() => {}, // onSchemaChange
+			{ minVersionForCollab: "2.20.0" }, // info
+			logger,
+		);
+		const message = controller.maybeSendSchemaMessage();
+		assert(message !== undefined);
+		assert.strictEqual(message.info?.minVersionForCollab, "2.20.0");
+		assert(
+			controller.processDocumentSchemaMessages(
+				[message],
+				true, // local
+				200,
+			) === true,
+		);
+		const schema = controller.summarizeDocumentSchema(300);
+		assert(schema !== undefined);
+		assert.strictEqual(schema.info?.minVersionForCollab, "2.20.0");
 	});
 
 	it("Existing document with existing schema, change to minVersionForCollab", () => {
@@ -422,7 +448,7 @@ describe("Runtime", () => {
 		);
 		const schema = controller.summarizeDocumentSchema(300);
 		assert(schema !== undefined);
-		assert.strictEqual(schema.info.minVersionForCollab, "2.20.0");
+		assert.strictEqual(schema.info?.minVersionForCollab, "2.20.0");
 	});
 
 	it("Existing document with existing schema, multiple changes to minVersionForCollab", () => {
@@ -447,7 +473,7 @@ describe("Runtime", () => {
 		);
 		const schema1 = controller1.summarizeDocumentSchema(300);
 		assert(schema1 !== undefined);
-		assert.strictEqual(schema1.info.minVersionForCollab, "2.20.0");
+		assert.strictEqual(schema1.info?.minVersionForCollab, "2.20.0");
 
 		// minVersionForCollab = 2.0.0 (no schema change)
 		const controller2 = new DocumentsSchemaController(
@@ -464,7 +490,7 @@ describe("Runtime", () => {
 		assert(message2 === undefined);
 		const schema2 = controller2.summarizeDocumentSchema(600);
 		assert(schema2 !== undefined);
-		assert.strictEqual(schema2.info.minVersionForCollab, "2.20.0");
+		assert.strictEqual(schema2.info?.minVersionForCollab, "2.20.0");
 
 		// minVersionForCollab = 2.30.0 (schema change)
 		const controller3 = new DocumentsSchemaController(
@@ -487,7 +513,7 @@ describe("Runtime", () => {
 		);
 		const schema3 = controller3.summarizeDocumentSchema(300);
 		assert(schema3 !== undefined);
-		assert.strictEqual(schema3.info.minVersionForCollab, "2.30.0");
+		assert.strictEqual(schema3.info?.minVersionForCollab, "2.30.0");
 	});
 
 	it("Existing document, changes required; race conditions", () => {
