@@ -77,8 +77,11 @@ describe("SchemaIndex", () => {
 			{
 				version: 2 as const,
 				nodes: {},
-				root: { kind: "x" as FieldKindIdentifier, types: [] },
-				metadata: { "ff-system": { "eDiscovery-exclude": "true" } },
+				root: {
+					kind: "x" as FieldKindIdentifier,
+					types: [],
+					metadata: { "ff-system": { "eDiscovery-exclude": "true" } },
+				},
 			} satisfies FormatV2,
 		];
 		for (const data of cases) {
