@@ -86,9 +86,9 @@ interface MapTreeFromNodeDataOptions {
 	 */
 	schemaValidationPolicy?: SchemaAndPolicy;
 	/**
-	 * A flag that determines if an enablable allowed type is permitted in the node data, defaults to false.
+	 * True iff the produced map tree will be used for initialization. defaults to false.
 	 */
-	allowNonEnabledTypes?: boolean;
+	isInitialization?: boolean;
 }
 
 /**
@@ -135,7 +135,7 @@ export function mapTreeFromNodeData(
 	allowedTypes: ImplicitAnnotatedFieldSchema,
 	options?: MapTreeFromNodeDataOptions,
 ): ExclusiveMapTree | undefined {
-	const { schemaValidationPolicy, context, allowNonEnabledTypes } = options ?? {};
+	const { schemaValidationPolicy, context, isInitialization } = options ?? {};
 	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
 
 	if (data === undefined) {
@@ -149,14 +149,14 @@ export function mapTreeFromNodeData(
 	const mapTree = nodeDataToMapTree(
 		data,
 		normalizedFieldSchema.annotatedAllowedTypeSet,
-		allowNonEnabledTypes ?? false,
+		isInitialization ?? false,
 	);
 	// Add what defaults can be provided. If no `context` is providing, some defaults may still be missing.
 	addDefaultsToMapTree(
 		mapTree,
 		normalizedFieldSchema.allowedTypes,
 		context,
-		allowNonEnabledTypes ?? false,
+		isInitialization ?? false,
 	);
 
 	if (schemaValidationPolicy?.policy.validateSchema === true) {
@@ -182,7 +182,7 @@ export function mapTreeFromNodeData(
 function nodeDataToMapTree(
 	data: InsertableContent,
 	annotatedAllowedTypes: ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>,
-	allowNonEnabledTypes: boolean,
+	isInitialization: boolean,
 ): ExclusiveMapTree {
 	const allowedTypes = new Set(annotatedAllowedTypes.keys());
 
@@ -210,7 +210,8 @@ function nodeDataToMapTree(
 
 	const schema = getType(data, allowedTypes);
 
-	if (allowNonEnabledTypes === false) {
+	// Enablable types are only tolerated during initialization
+	if (isInitialization === false) {
 		const annotations = annotatedAllowedTypes.get(schema);
 		if (annotations !== undefined) {
 			if (annotations.enablableSchemaUpgrade !== undefined) {
@@ -230,13 +231,13 @@ function nodeDataToMapTree(
 			result = leafToMapTree(data, schema, allowedTypes);
 			break;
 		case NodeKind.Array:
-			result = arrayToMapTree(data, schema, allowNonEnabledTypes);
+			result = arrayToMapTree(data, schema, isInitialization);
 			break;
 		case NodeKind.Map:
-			result = mapToMapTree(data, schema, allowNonEnabledTypes);
+			result = mapToMapTree(data, schema, isInitialization);
 			break;
 		case NodeKind.Object:
-			result = objectToMapTree(data, schema, allowNonEnabledTypes);
+			result = objectToMapTree(data, schema, isInitialization);
 			break;
 		default:
 			fail(0xae0 /* Unrecognized schema kind */);
@@ -362,15 +363,12 @@ function arrayChildToMapTree(
  * Transforms data under an Array schema.
  * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema associated with the value.
- * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
- * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
- * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
- * @param allowNonEnabledTypes -  A flag that determines if enablable allowed types being present in the data causes a runtime error.
+ * @param isInitialization -  True iff the map tree produced is used for initialization.
  */
 function arrayToMapTree(
 	data: FactoryContent,
 	schema: TreeNodeSchema,
-	allowNonEnabledTypes: boolean,
+	isInitialization: boolean,
 ): ExclusiveMapTree {
 	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
@@ -382,7 +380,7 @@ function arrayToMapTree(
 	);
 
 	const mappedData = Array.from(data, (child) =>
-		arrayChildToMapTree(child, allowedChildTypes, allowNonEnabledTypes),
+		arrayChildToMapTree(child, allowedChildTypes, isInitialization),
 	);
 
 	// Array nodes have a single `EmptyKey` field:
@@ -398,15 +396,12 @@ function arrayToMapTree(
  * Transforms data under a Map schema.
  * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema associated with the value.
- * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
- * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
- * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
- * @param allowNonEnabledTypes -  A flag that determines if enablable allowed types being present in the content causes a runtime error.
+ * @param isInitialization -  True iff the map tree produced is used for initialization.
  */
 function mapToMapTree(
 	data: FactoryContent,
 	schema: TreeNodeSchema,
-	allowNonEnabledTypes: boolean,
+	isInitialization: boolean,
 ): ExclusiveMapTree {
 	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
 	if (!(typeof data === "object" && data !== null)) {
@@ -438,7 +433,7 @@ function mapToMapTree(
 			const mappedField = nodeDataToMapTree(
 				value,
 				annotatedAllowedChildTypes,
-				allowNonEnabledTypes,
+				isInitialization,
 			);
 			transformedFields.set(brand(key), [mappedField]);
 		}
@@ -454,12 +449,12 @@ function mapToMapTree(
  * Transforms data under an Object schema.
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema associated with the value.
- * @param allowNonEnabledTypes -  A flag that determines if enablable allowed types being present in the data causes a runtime error.
+ * @param isInitialization -  isInitialization -  True iff the map tree produced is used for initialization.
  */
 function objectToMapTree(
 	data: FactoryContent,
 	schema: TreeNodeSchema,
-	allowNonEnabledTypes: boolean,
+	isInitialization: boolean,
 ): ExclusiveMapTree {
 	assert(isObjectNodeSchema(schema), 0x924 /* Expected an Object schema. */);
 	if (
@@ -483,7 +478,7 @@ function objectToMapTree(
 				value,
 				normalizeFieldSchema(fieldInfo.schema),
 				fieldInfo.storedKey,
-				allowNonEnabledTypes,
+				isInitialization,
 			);
 		}
 	}

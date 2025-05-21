@@ -45,14 +45,13 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
 	schema: ImplicitAnnotatedFieldSchema,
 	destinationContext: FlexTreeContext,
-	allowNonEnabledTypes = false,
 ): TIn extends undefined ? undefined : ExclusiveMapTree {
 	return prepareForInsertionContextless(
 		data,
 		schema,
 		getSchemaAndPolicy(destinationContext),
 		destinationContext.isHydrated() ? destinationContext : undefined,
-		allowNonEnabledTypes,
+		false,
 	);
 }
 
@@ -90,6 +89,9 @@ export function prepareArrayContentForInsertion(
 
 /**
  * Split out from {@link prepareForInsertion} as to allow use without a context.
+ *
+ * @param isInitialization - True iff the insertion is done as part of initialization.
+ *
  * @remarks
  * Adding this entry point is a workaround for initialize not currently having a context.
  */
@@ -98,12 +100,12 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	schema: ImplicitAnnotatedFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
-	allowNonEnabledTypes: boolean,
+	isInitialization: boolean,
 ): TIn extends undefined ? undefined : ExclusiveMapTree {
 	const mapTree = mapTreeFromNodeData(data, schema, {
 		context: hydratedData?.nodeKeyManager,
 		schemaValidationPolicy: schemaAndPolicy,
-		allowNonEnabledTypes,
+		isInitialization,
 	});
 
 	if (mapTree !== undefined && hydratedData !== undefined) {

@@ -1168,7 +1168,7 @@ describe("schemaFactory", () => {
 					foo: "test",
 				},
 				TestObject,
-				{ allowNonEnabledTypes: true },
+				{ isInitialization: true },
 			);
 		});
 	});

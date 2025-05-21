@@ -133,12 +133,7 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 		new HydratedContext(normalizeFieldSchema(schema).allowedTypeSet, checkout.context),
 	);
 	assert(field.context.isHydrated(), "Expected LazyField");
-	const mapTree = prepareForInsertion(
-		initialTree as InsertableContent,
-		schema,
-		field.context,
-		true,
-	);
+	const mapTree = prepareForInsertion(initialTree as InsertableContent, schema, field.context);
 	if (mapTree === undefined) return undefined as TreeFieldFromImplicitField<TSchema>;
 	const cursor = cursorForMapTreeField([mapTree]);
 	initializeForest(forest, cursor, testRevisionTagCodec, testIdCompressor, true);
