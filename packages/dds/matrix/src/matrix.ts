@@ -1066,8 +1066,8 @@ export class SharedMatrix<T = any>
 						const adjustedCol = this.cols.adjustPosition(col, msg);
 
 						if (adjustedCol !== undefined) {
-							const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
-							const colHandle = this.cols.getAllocatedHandle(adjustedCol);
+							const rowHandle = adjustedRow.handle;
+							const colHandle = adjustedCol.handle;
 
 							assert(
 								isHandleValid(rowHandle) && isHandleValid(colHandle),
@@ -1088,21 +1088,23 @@ export class SharedMatrix<T = any>
 									if (pending !== undefined) {
 										pending.consensus = value;
 									}
-									for (const consumer of this.consumers.values()) {
-										consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
-									}
-									// Check is there are any pending changes, which will be rejected. If so raise conflict.
-									if (pending !== undefined && pending.local.length > 0) {
-										// Don't reset the pending value yet, as there maybe more fww op from same client, so we want
-										// to raise conflict event for that op also.
-										this.emit(
-											"conflict",
-											row,
-											col,
-											value, // Current value
-											previousValue, // Ignored local value
-											this,
-										);
+									if (adjustedRow.pos !== undefined && adjustedCol.pos !== undefined) {
+										for (const consumer of this.consumers.values()) {
+											consumer.cellsChanged(adjustedRow.pos, adjustedCol.pos, 1, 1, this);
+										}
+										// Check is there are any pending changes, which will be rejected. If so raise conflict.
+										if (pending !== undefined && pending.local.length > 0) {
+											// Don't reset the pending value yet, as there maybe more fww op from same client, so we want
+											// to raise conflict event for that op also.
+											this.emit(
+												"conflict",
+												row,
+												col,
+												value, // Current value
+												previousValue, // Ignored local value
+												this,
+											);
+										}
 									}
 								}
 							} else {
@@ -1110,8 +1112,10 @@ export class SharedMatrix<T = any>
 									// If there is a pending (unACKed) local write to the same cell, skip the current op
 									// since it "happened before" the pending write.
 									this.cells.setCell(rowHandle, colHandle, value);
-									for (const consumer of this.consumers.values()) {
-										consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
+									if (adjustedRow.pos !== undefined && adjustedCol.pos !== undefined) {
+										for (const consumer of this.consumers.values()) {
+											consumer.cellsChanged(adjustedRow.pos, adjustedCol.pos, 1, 1, this);
+										}
 									}
 								} else {
 									pending.consensus = value;

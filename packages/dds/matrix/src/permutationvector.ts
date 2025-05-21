@@ -18,7 +18,6 @@ import {
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 	ISegment,
-	ISegmentInternal,
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
 	segmentIsRemoved,
@@ -199,23 +198,42 @@ export class PermutationVector extends Client {
 	}
 
 	public adjustPosition(
-		pos: number,
-		op: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
-	): number | undefined {
-		const { segment, offset } = this.getContainingSegment<ISegmentInternal>(pos, {
+		posToAdjust: number,
+		op: ISequencedDocumentMessage,
+	): { pos: number | undefined; handle: Handle } | undefined {
+		const { segment, offset } = this.getContainingSegment<PermutationSegment>(posToAdjust, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});
 
-		// Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
-		// a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles
-		// by checking for the presence of 'removedSeq'.
-		if (segment === undefined || segmentIsRemoved(segment)) {
-			return undefined;
-		}
+		assert(
+			segment !== undefined && offset !== undefined,
+			"segment must be available for operations in the collab window",
+		);
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.getPosition(segment) + offset!;
+		if (segmentIsRemoved(segment)) {
+			if (!isHandleValid(segment.start)) {
+				this.applyMsg({
+					...op,
+					contents: {
+						pos1: posToAdjust,
+						pos2: posToAdjust + 1,
+						props: {},
+						type: MergeTreeDeltaType.ANNOTATE,
+					},
+				});
+				assert(segment.cachedLength === 1, "must be length 1 to allocate handle");
+				segment.start = this.handleTable.allocate();
+			}
+
+			return { handle: segment.start, pos: undefined };
+		} else {
+			const pos = this.getPosition(segment) + offset;
+			return {
+				pos,
+				handle: this.getAllocatedHandle(pos),
+			};
+		}
 	}
 
 	public handleToPosition(handle: Handle, localSeq = this.getCollabWindow().localSeq): number {
@@ -387,7 +405,10 @@ export class PermutationVector extends Client {
 				}
 				break;
 			}
-
+			case MergeTreeDeltaType.ANNOTATE: {
+				// ignore
+				break;
+			}
 			default: {
 				throw new Error("Unhandled MergeTreeDeltaType");
 			}
