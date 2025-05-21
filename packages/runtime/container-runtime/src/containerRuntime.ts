@@ -2549,8 +2549,6 @@ export class ContainerRuntime
 			// We need to get the ID Compressor's slate clean before replaying the ops.
 			// We don't submit this op yet - we'll include it before generating any "next creation range" ops,
 			// right before submitting other runtime ops.
-			// We can regenerate this as many times as we need, as long as we submit this before any other ID allocation ops
-			// (and clear the field after submitting of course)
 			this.outstandingUnfinalizedIdCreationRangeOp = this.generateIdAllocationOpIfNeeded({
 				resubmitOutstandingRanges: true,
 				staged: false, // This won't be submitted while in staging mode so we can always set this to false
@@ -2564,6 +2562,9 @@ export class ContainerRuntime
 			this.dirtyContainer = oldState;
 			this.emitDirtyDocumentEvent = true;
 		}
+
+		// If somehow this wasn't submitted, we should clear it since its refseq will be out of date after this synchronous frame returns.
+		this.outstandingUnfinalizedIdCreationRangeOp = undefined;
 
 		// Officially transition from the old state to the new state.
 		this.updateDocumentDirtyState(newState);
