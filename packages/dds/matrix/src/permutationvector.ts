@@ -407,10 +407,6 @@ export class PermutationVector extends Client {
 				}
 				break;
 			}
-			case MergeTreeDeltaType.ANNOTATE: {
-				// ignore
-				break;
-			}
 			default: {
 				throw new Error("Unhandled MergeTreeDeltaType");
 			}
