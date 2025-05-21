@@ -13,6 +13,7 @@ import {
 	type ConfigMap,
 	type SemanticVersion,
 	type ConfigValidationMap,
+	configValueToMinVersionForCollab,
 } from "../compatUtils.js";
 
 describe("compatUtils", () => {
@@ -230,117 +231,60 @@ describe("compatUtils", () => {
 	});
 
 	describe("getValidationForRuntimeOptions", () => {
-		type FeatureTestType = string | boolean | object;
-		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigValidationMap processing
-		type ITestConfigValidationMap = {
-			featureA: FeatureTestType;
-			featureB: FeatureTestType;
-			featureC: FeatureTestType;
-			featureD: FeatureTestType;
-			featureE: FeatureTestType;
-			featureF: FeatureTestType;
+		type FeatureAType = "a1" | "a2" | "a3" | "a4";
+		type FeatureBType = boolean;
+		type FeatureCType = object;
+		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+		type TestConfigFeatures = {
+			featureA: FeatureAType;
+			featureB: FeatureBType;
+			featureC: FeatureCType;
 		};
-		const testConfigValidationMap: ConfigValidationMap<ITestConfigValidationMap> = {
-			featureA: {
-				"a1": "0.5.0",
-				"a2": "2.0.0",
-				"a3": "5.0.0",
-				"a4": "8.0.0",
-				"false": "2.0.0",
-				"true": "0.5.0",
-				foo: {
-					"1": "0.5.0",
-					"2": "2.0.0",
-				},
-				bar: {
-					"2": "5.0.0",
-					"3": "8.0.0",
-				},
-			},
-			featureB: {
-				"b1": "0.0.0-defaults",
-				"b2": "3.0.0",
-				"b3": "6.0.0",
-				"b4": "9.0.0",
-				"false": "0.0.0-defaults",
-				"true": "3.0.0",
-			},
-			featureC: {
-				"c1": "1.0.0",
-				"c2": "4.0.0",
-				"c3": "7.0.0",
-				"c4": "10.0.0",
-				"false": "1.0.0",
-				obj: {
-					"true": "4.0.0",
-					"false": "7.0.0",
-				},
-				"true": "10.0.0",
-			},
-			featureD: {
-				"d1": "0.1.0",
-				"d2": "2.5.0",
-				"d3": "5.5.0",
-				"d4": "8.5.0",
-				"true": "5.5.0",
-				"false": "2.5.0",
-				"delay": "8.0.0",
-			},
-			featureE: {
-				"e1": "0.9.0",
-				"e2": "3.5.0",
-				"e3": "6.5.0",
-				"e4": "9.5.0",
-				foo: {
-					"bar": "3.5.0",
-					"baz": "6.5.0",
-				},
-				"true": "3.5.0",
-				"false": "6.5.0",
-			},
-			featureF: {
-				"f1": "1.5.0",
-				"f2": "4.5.0",
-				"f3": "7.5.0",
-				"f4": "10.5.0",
-				obj: {
-					"42": "1.5.0",
-					"true": "10.5.0",
-				},
-				"true": "1.5.0",
-				"false": "4.5.0",
-			},
-		};
+		const testConfigValidationMap = {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+			featureA: configValueToMinVersionForCollab([
+				["a1", "0.5.0"],
+				["a2", "2.0.0"],
+				["a3", "5.0.0"],
+				["a4", "8.0.0"],
+			]),
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+			featureB: configValueToMinVersionForCollab([
+				[false, "0.0.0-defaults"],
+				[true, "3.0.0"],
+			]),
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+			featureC: configValueToMinVersionForCollab([
+				[{ obj: 1 }, "4.0.0"],
+				[{ obj: 2 }, "7.0.0"],
+			]),
+		} as const satisfies ConfigValidationMap<TestConfigFeatures>;
 
 		const compatibleCases: {
 			minVersionForCollab: SemanticVersion;
-			runtimeOptions: Partial<ITestConfigValidationMap>;
+			runtimeOptions: Partial<TestConfigFeatures>;
 		}[] = [
 			{
-				minVersionForCollab: "1.0.0",
-				runtimeOptions: { featureC: "c1", featureD: "d1" },
+				minVersionForCollab: "0.5.0",
+				runtimeOptions: { featureA: "a1", featureB: false },
 			},
 			{
-				minVersionForCollab: "2.5.0",
-				runtimeOptions: { featureA: "a2", featureD: "d2" },
+				minVersionForCollab: "2.0.0",
+				runtimeOptions: { featureA: "a2", featureB: false },
 			},
 			{
-				minVersionForCollab: "9.0.0",
-				runtimeOptions: { featureA: "a4", featureD: "d4" },
+				minVersionForCollab: "5.0.0",
+				runtimeOptions: { featureA: "a3", featureB: true, featureC: { obj: 1 } },
 			},
 			{
-				minVersionForCollab: "10.0.0",
-				runtimeOptions: { featureC: "c4", featureA: "a4", featureB: { baz: 3 } },
-			},
-			{
-				minVersionForCollab: "10.5.0",
-				runtimeOptions: { featureD: "d4", featureF: { obj: true, nonExistent: true } },
+				minVersionForCollab: "8.0.0",
+				runtimeOptions: { featureA: "a4", featureB: true, featureC: { obj: 2 } },
 			},
 		];
 
 		const incompatibleCases: {
 			minVersionForCollab: SemanticVersion;
-			runtimeOptions: Partial<ITestConfigValidationMap>;
+			runtimeOptions: Partial<TestConfigFeatures>;
 			expectedErrorMessage: string;
 		}[] = [
 			{
@@ -349,27 +293,38 @@ describe("compatUtils", () => {
 				expectedErrorMessage: `Runtime option featureA:"a2" is not compatible with minVersionForCollab: 0.5.0.`,
 			},
 			{
-				minVersionForCollab: "0.0.0-defaults",
-				runtimeOptions: { featureB: "b2" },
-				expectedErrorMessage: `Runtime option featureB:"b2" is not compatible with minVersionForCollab: 0.0.0-defaults.`,
+				minVersionForCollab: "2.0.0",
+				runtimeOptions: { featureB: true },
+				expectedErrorMessage: `Runtime option featureB:true is not compatible with minVersionForCollab: 2.0.0.`,
 			},
 			{
-				minVersionForCollab: "5.0.0",
-				runtimeOptions: { featureA: { foo: 2, bar: 3 } },
-				expectedErrorMessage: `Runtime option featureA:${JSON.stringify({ foo: 2, bar: 3 })} is not compatible with minVersionForCollab: 5.0.0.`,
+				minVersionForCollab: "2.0.0",
+				runtimeOptions: { featureA: "a1", featureB: true },
+				expectedErrorMessage: `Runtime option featureB:true is not compatible with minVersionForCollab: 2.0.0.`,
 			},
 			{
-				minVersionForCollab: "7.0.0",
-				runtimeOptions: { featureB: "b1", featureD: "delay" },
-				expectedErrorMessage: `Runtime option featureD:"delay" is not compatible with minVersionForCollab: 7.0.0.`,
+				minVersionForCollab: "6.0.0",
+				runtimeOptions: { featureC: { obj: 2 } },
+				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ obj: 2 })} is not compatible with minVersionForCollab: 6.0.0.`,
 			},
 			{
-				minVersionForCollab: "9.0.0",
-				runtimeOptions: { featureA: "a3", featureF: { obj: true } },
-				expectedErrorMessage: `Runtime option featureF:${JSON.stringify({ obj: true })} is not compatible with minVersionForCollab: 9.0.0.`,
+				minVersionForCollab: "3.0.0",
+				runtimeOptions: { featureA: "a1", featureC: { bar: 2, obj: 1 } },
+				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ bar: 2, obj: 1 })} is not compatible with minVersionForCollab: 3.0.0.`,
 			},
 		];
 
+		for (const test of compatibleCases) {
+			it(`does not throw for compatible options: ${JSON.stringify(test)}`, () => {
+				assert.doesNotThrow(() => {
+					getValidationForRuntimeOptions(
+						test.minVersionForCollab,
+						test.runtimeOptions,
+						testConfigValidationMap,
+					);
+				});
+			});
+		}
 		for (const test of incompatibleCases) {
 			it(`throws for incompatible options: ${JSON.stringify(test)}`, () => {
 				assert.throws(
@@ -385,17 +340,6 @@ describe("compatUtils", () => {
 						return error.message === test.expectedErrorMessage;
 					},
 				);
-			});
-		}
-		for (const test of compatibleCases) {
-			it(`does not throw for compatible options: ${JSON.stringify(test)}`, () => {
-				assert.doesNotThrow(() => {
-					getValidationForRuntimeOptions(
-						test.minVersionForCollab,
-						test.runtimeOptions,
-						testConfigValidationMap,
-					);
-				});
 			});
 		}
 	});

@@ -80,19 +80,10 @@ export type ConfigMap<T extends Record<string, unknown>> = {
 };
 
 /**
- * Generic nested property type for ConfigValidationMap
- */
-interface INestedProp {
-	[prop: string]: MinimumMinorSemanticVersion;
-}
-
-/**
  * Generic type for runtimeOptionsAffectingDocSchemaConfigValidationMap
  */
 export type ConfigValidationMap<T extends Record<string, unknown>> = {
-	[K in keyof T]-?: {
-		[value: string]: MinimumMinorSemanticVersion | INestedProp;
-	};
+	[K in keyof T]-?: (value: T[K]) => SemanticVersion | undefined;
 };
 
 /**
@@ -188,44 +179,35 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
 
 const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
-	enableGroupedBatching: {
-		"false": "1.0.0",
-		"true": "2.0.0-defaults",
-	},
-	compressionOptions: {
-		minimumBatchSizeInBytes: {
-			[String(Number.POSITIVE_INFINITY)]: "1.0.0",
-			"614400": "2.0.0-defaults",
-		},
-		compressionAlgorithm: {
-			"lz4": "1.0.0",
-		},
-	},
-	enableRuntimeIdCompressor: {
-		"undefined": "1.0.0",
-		"on": "2.0.0-defaults",
-		"delayed": "2.0.0-defaults",
-	},
-	explicitSchemaControl: {
-		"false": "1.0.0",
-		"true": "2.0.0-defaults",
-	},
-	flushMode: {
-		[FlushMode.Immediate]: "1.0.0",
-		[FlushMode.TurnBased]: "2.0.0-defaults",
-	},
-	gcOptions: {
-		enableGCSweep: {
-			"undefined": "1.0.0",
-			"false": "1.0.0",
-			"true": "2.0.0-defaults",
-		},
-	},
-	createBlobPayloadPending: {
-		"undefined": "1.0.0",
-		"false": "1.0.0",
-		"true": "2.40.0",
-	},
+	enableGroupedBatching: configValueToMinVersionForCollab([
+		[false, "1.0.0"],
+		[true, "2.0.0-defaults"],
+	]),
+	compressionOptions: configValueToMinVersionForCollab([
+		[{ ...disabledCompressionConfig }, "1.0.0"],
+		[{ ...enabledCompressionConfig }, "2.0.0-defaults"],
+	]),
+	enableRuntimeIdCompressor: configValueToMinVersionForCollab([
+		[undefined, "1.0.0"],
+		["on", "2.0.0-defaults"],
+		["delayed", "2.0.0-defaults"],
+	]),
+	explicitSchemaControl: configValueToMinVersionForCollab([
+		[false, "1.0.0"],
+		[true, "2.0.0-defaults"],
+	]),
+	flushMode: configValueToMinVersionForCollab([
+		[FlushMode.Immediate, "1.0.0"],
+		[FlushMode.TurnBased, "2.0.0-defaults"],
+	]),
+	gcOptions: configValueToMinVersionForCollab([
+		[{ enableGCSweep: undefined }, "1.0.0"],
+		[{ enableGCSweep: true }, "2.0.0-defaults"],
+	]),
+	createBlobPayloadPending: configValueToMinVersionForCollab([
+		[undefined, "1.0.0"],
+		[true, "2.40.0"],
+	]),
 } as const satisfies ConfigValidationMap<RuntimeOptionsAffectingDocSchema>;
 
 /**
@@ -294,9 +276,9 @@ export function validateRuntimeOptions(
 	minVersionForCollab: MinimumVersionForCollab,
 	runtimeOptions: Partial<ContainerRuntimeOptionsInternal>,
 ): void {
-	getValidationForRuntimeOptions(
+	getValidationForRuntimeOptions<RuntimeOptionsAffectingDocSchema>(
 		minVersionForCollab,
-		runtimeOptions,
+		runtimeOptions as Partial<RuntimeOptionsAffectingDocSchema>,
 		runtimeOptionsAffectingDocSchemaConfigValidationMap,
 	);
 }
@@ -304,7 +286,7 @@ export function validateRuntimeOptions(
 /**
  * Generic function to validate runtime options against the minVersionForCollab.
  */
-export function getValidationForRuntimeOptions<T extends Record<SemanticVersion, unknown[]>>(
+export function getValidationForRuntimeOptions<T extends Record<string, unknown>>(
 	minVersionForCollab: SemanticVersion,
 	runtimeOptions: Partial<T>,
 	validationMap: ConfigValidationMap<T>,
@@ -317,47 +299,52 @@ export function getValidationForRuntimeOptions<T extends Record<SemanticVersion,
 	// Iterate through each runtime option passed in by the user
 	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(
 		runtimeOptions,
-	) as [keyof T & string, T[keyof T]][]) {
+	) as [keyof T & string, T[keyof T & string]][]) {
 		// Skip if passedRuntimeOption is not in validation map
 		if (!(passedRuntimeOption in validationMap)) {
 			continue;
 		}
 
-		// We need to iterate through all the keys in the validationMap in case there is a nested object
-		for (const [propValidationConfig, propValidationConfigValue] of Object.entries(
-			validationMap[passedRuntimeOption],
-		)) {
-			if (typeof propValidationConfigValue === "object") {
-				// If the value is an object, then it's a INestedProp
-				// We now check value in the INestedProp object to see if it matches with what
-				// the user passed in. If so, we check if the version associated with that value is greater
-				// than the minVersionForCollab. If so, we throw a UsageError.
-				for (const [nestedConfig, nestedConfigVersion] of Object.entries(
-					propValidationConfigValue,
-				)) {
-					if (
-						String(passedRuntimeOptionValue[propValidationConfig]) === nestedConfig &&
-						gt(nestedConfigVersion, minVersionForCollab)
-					) {
-						throw new UsageError(
-							`Runtime option ${passedRuntimeOption}:${JSON.stringify(passedRuntimeOptionValue)} is not compatible with minVersionForCollab: ${minVersionForCollab}.`,
-						);
-					}
-				}
-			} else {
-				// If propValidationConfigValue is not an object, then we validate now if the value
-				// is the same as the one passed in by the user. If so, we check if the version associated
-				// with that value. If it's is greater than the minVersionForCollab we throw a UsageError.
-				const passedRuntimeOptionValueString = String(passedRuntimeOptionValue);
+		const requiredVersion = validationMap[passedRuntimeOption](passedRuntimeOptionValue);
+		if (requiredVersion !== undefined && gt(requiredVersion, minVersionForCollab)) {
+			throw new UsageError(
+				`Runtime option ${passedRuntimeOption}:${JSON.stringify(passedRuntimeOptionValue)} is not compatible with minVersionForCollab: ${minVersionForCollab}.`,
+			);
+		}
+	}
+}
+
+/**
+ * Helper function to map ContainerRuntimeOptionsInternal config values to
+ * minVersionForCollab in {@link runtimeOptionsAffectingDocSchemaConfigValidationMap}.
+ */
+export function configValueToMinVersionForCollab<
+	T,
+	Arr extends readonly [T, SemanticVersion][],
+>(configToMinVer: Arr): (value: T) => SemanticVersion | undefined {
+	const map = new Map(configToMinVer);
+	return (value: T) => {
+		// Try direct match first
+		if (map.has(value)) {
+			return map.get(value);
+		}
+		// If T is an object, check each key in the map
+		if (typeof value === "object") {
+			for (const [key, version] of map.entries()) {
 				if (
-					propValidationConfig === passedRuntimeOptionValueString &&
-					gt(propValidationConfigValue, minVersionForCollab)
+					typeof key === "object" &&
+					key !== undefined &&
+					// If one of the properties in the object matches the passed in value,
+					// then we return the version. This is to support partial matches, for
+					// example { foo: "bar" } should match { foo: "bar", baz: "qux" }
+					Object.entries(key as Record<string, unknown>).some(
+						([k, v]) => (value as Record<string, unknown>)[k] === v,
+					)
 				) {
-					throw new UsageError(
-						`Runtime option ${passedRuntimeOption}:"${passedRuntimeOptionValueString}" is not compatible with minVersionForCollab: ${minVersionForCollab}.`,
-					);
+					return version;
 				}
 			}
 		}
-	}
+		return undefined;
+	};
 }
