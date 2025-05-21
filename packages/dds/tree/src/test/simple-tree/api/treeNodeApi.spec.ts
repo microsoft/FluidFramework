@@ -1192,7 +1192,7 @@ describe("treeNodeApi", () => {
 			assert.equal(clonedMetadata, topLeftPoint.metadata, "String not cloned properly");
 		});
 
-		it("errors when cloning an enablable type that has not been upgraded", () => {
+		it("errors when assigning a cloned enablable to its original location", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			const enablableSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
 				schemaFactoryAlpha.number,
