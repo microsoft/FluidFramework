@@ -5,13 +5,14 @@
 
 import { makeStyles } from "@fluentui/react-components";
 import { CollaborativeInput } from "@fluid-example/example-utils";
+import { useTree } from "@fluid-experimental/tree-react-api";
 import type { SharedString, ISharedString } from "@fluidframework/sequence/internal";
 import { Tree } from "@fluidframework/tree/internal";
 import React from "react";
 
 import type { AppDataTree } from "../FluidObject.js";
 
-import { TodoItemView, useTree } from "./TodoItemView.js";
+import { TodoItemView } from "./TodoItemView.js";
 
 const useStyles = makeStyles({
 	todoView: {
