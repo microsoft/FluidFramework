@@ -215,7 +215,9 @@ function nodeDataToMapTree(
 		if (annotations !== undefined) {
 			if (annotations.enablableSchemaUpgrade !== undefined) {
 				// TODO:#38722 check if the upgrade to enablable has happened, once the upgrade mechanism is implemented
-				throw new UsageError(`Schema type ${schema.identifier} is not enabled for this context`);
+				throw new UsageError(
+					`Schema type ${schema.identifier} is not enabled for this context`,
+				);
 			}
 		} else {
 			throw new Error("Annotations should exist, at least as an empty object");

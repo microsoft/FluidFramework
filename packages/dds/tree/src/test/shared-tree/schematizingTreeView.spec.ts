@@ -101,6 +101,38 @@ describe("SchematizingSimpleTreeView", () => {
 			);
 		});
 
+		it("tolerates enablable allowed types", () => {
+			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
+			const enablableSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
+				schemaFactoryAlpha.number,
+				schemaFactoryAlpha.enablable(schemaFactoryAlpha.string),
+			]);
+
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			const checkout = checkoutWithContent(emptyContent);
+			const view = new SchematizingSimpleTreeView(
+				checkout,
+				new TreeViewConfiguration({ schema: enablableSchema }),
+				new MockNodeIdentifierManager(),
+			);
+
+			const { compatibility } = view;
+			assert.equal(compatibility.canView, false);
+			assert.equal(compatibility.canUpgrade, false);
+			assert.equal(compatibility.canInitialize, true);
+
+			view.initialize([5, "test"]);
+			assert.equal(view.root[1], "test");
+
+			assert.throws(
+				() => view.initialize([5, "test"]),
+				validateUsageError(/initialized more than once/),
+			);
+		});
+
 		for (const enableSchemaValidation of [true, false]) {
 			it(`Initialize invalid content: enableSchemaValidation: ${enableSchemaValidation}`, () => {
 				const emptyContent = {
