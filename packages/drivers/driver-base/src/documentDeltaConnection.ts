@@ -409,7 +409,9 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
-		const disconnectError = error ? this.createErrorObject("dispose", error, false) : undefined;
+		const disconnectError = error
+			? this.createErrorObject("dispose", error, false)
+			: undefined;
 		this.disconnect(disconnectError);
 	}
 
