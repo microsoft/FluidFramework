@@ -193,13 +193,13 @@ export function getDepth(path: UpPath): number {
 }
 
 /**
- * Creates deep copy of the provided path as simple javascript objects.
+ * Creates deep copy of the provided path as simple JavaScript object.
  * @remarks This is safe to hold onto and use deep object comparisons on.
  */
 export function clonePath(path: UpPath): UpPath;
 
 /**
- * Creates a deep copy of the provided path as simple javascript objects.
+ * Creates a deep copy of the provided path as simple JavaScript object.
  * @remarks This is safe to hold onto and use deep object comparisons on.
  */
 export function clonePath(path: UpPath | undefined): UpPath | undefined;
