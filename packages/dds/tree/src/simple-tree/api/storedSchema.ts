@@ -17,10 +17,11 @@ import {
 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
-import { simpleToStoredSchema } from "../toStoredSchema.js";
-import type { SchemaCompatibilityStatus } from "./tree.js";
-import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
+import { simpleToStoredSchema } from "../toStoredSchema.js";
+
+import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.

@@ -14,7 +14,29 @@ import {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 } from "../feature-libraries/index.js";
+import type { RestrictiveStringRecord, FlattenKeys } from "../util/index.js";
+
+import {
+	type TreeNodeSchema,
+	NodeKind,
+	type WithType,
+	// eslint-disable-next-line import/no-deprecated
+	typeNameSymbol,
+	typeSchemaSymbol,
+	type InternalTreeNode,
+	type TreeNode,
+	type Context,
+	UnhydratedFlexTreeNode,
+	getOrCreateInnerNode,
+} from "./core/index.js";
+import { getUnhydratedContext } from "./createContext.js";
 import { getTreeNodeForField } from "./getTreeNodeForField.js";
+import {
+	isObjectNodeSchema,
+	type ObjectNodeSchema,
+	type ObjectNodeSchemaInternalData,
+} from "./objectNodeTypes.js";
+import { prepareForInsertion } from "./prepareForInsertion.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
@@ -32,36 +54,9 @@ import {
 	unannotateSchemaRecord,
 	type UnannotateSchemaRecord,
 } from "./schemaTypes.js";
-import {
-	type TreeNodeSchema,
-	NodeKind,
-	type WithType,
-	// eslint-disable-next-line import/no-deprecated
-	typeNameSymbol,
-	typeSchemaSymbol,
-	type InternalTreeNode,
-	type TreeNode,
-	type Context,
-	UnhydratedFlexTreeNode,
-	getOrCreateInnerNode,
-} from "./core/index.js";
-import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-import { prepareForInsertion } from "./prepareForInsertion.js";
-import type { RestrictiveStringRecord, FlattenKeys } from "../util/index.js";
-import { brand } from "../util/index.js";
-import {
-	isObjectNodeSchema,
-	type ObjectNodeSchema,
-	type ObjectNodeSchemaInternalData,
-} from "./objectNodeTypes.js";
-import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
-import { getUnhydratedContext } from "./createContext.js";
 import type { SimpleObjectFieldSchema } from "./simpleSchema.js";
-import {
-	createIdCompressor,
-	type IIdCompressor,
-} from "@fluidframework/id-compressor/internal";
-import { stringSchema } from "./leafNodeSchema.js";
+import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
