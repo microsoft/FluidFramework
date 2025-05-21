@@ -212,21 +212,23 @@ export class PermutationVector extends Client {
 		);
 
 		if (segmentIsRemoved(segment)) {
-			if (!isHandleValid(segment.start)) {
-				this.applyMsg({
-					...op,
-					contents: {
-						pos1: posToAdjust,
-						pos2: posToAdjust + 1,
-						props: {},
-						type: MergeTreeDeltaType.ANNOTATE,
+			let handle = segment.start;
+			if (!isHandleValid(handle)) {
+				this.walkSegments(
+					(s) => {
+						const asPerm = s as PermutationSegment;
+						asPerm.start = handle = this.handleTable.allocate();
+						return true;
 					},
-				});
-				assert(segment.cachedLength === 1, "must be length 1 to allocate handle");
-				segment.start = this.handleTable.allocate();
+					posToAdjust,
+					posToAdjust + 1,
+					/* accum: */ undefined,
+					/* splitRange: */ true,
+					op,
+				);
 			}
 
-			return { handle: segment.start, pos: undefined };
+			return { handle, pos: undefined };
 		} else {
 			const pos = this.getPosition(segment) + offset;
 			return {
