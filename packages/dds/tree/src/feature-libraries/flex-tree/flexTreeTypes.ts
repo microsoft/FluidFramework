@@ -119,8 +119,9 @@ export enum TreeStatus {
 	 *
 	 * - Transactions do not work: transactions apply to a single {@link TreeView}, and `New` nodes are not part of one.
 	 *
-	 * - `Tree.shortId` (when the identifier was explicitly specified and thus works at all) will just return the full identifier as a string,
-	 * but might return a compressed form as a number once hydrated.
+	 * - Automatically generated {@link SchemaFactory.identifier | identifiers} will be less compressible if read.
+	 *
+	 * - {@link TreeIdentifierUtils.getShort} and {@link TreeNodeApi.shortId | Tree.shortId} cannot return their short identifiers.
 	 */
 	New = 3,
 }
