@@ -238,7 +238,7 @@ export class SharedTreeKernel
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
-		const forest = buildConfiguredForest(options.forest, schema, idCompressor);
+		const forest = buildConfiguredForest(breaker, options.forest, schema, idCompressor);
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
@@ -646,7 +646,10 @@ export interface ForestType extends ErasedType<"ForestType"> {}
  * The "ObjectForest" forest type.
  * @alpha
  */
-export const ForestTypeReference = toForestType(() => buildForest());
+export const ForestTypeReference = toForestType(
+	(breaker: Breakable, schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
+		buildForest(breaker, schema),
+);
 
 /**
  * Optimized implementation of forest.
@@ -658,7 +661,7 @@ export const ForestTypeReference = toForestType(() => buildForest());
  * @alpha
  */
 export const ForestTypeOptimized = toForestType(
-	(schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
+	(breaker: Breakable, schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
 		buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), undefined, idCompressor),
 );
 
@@ -671,9 +674,13 @@ export const ForestTypeOptimized = toForestType(
  * The "ObjectForest" forest type with expensive asserts for debugging.
  * @alpha
  */
-export const ForestTypeExpensiveDebug = toForestType(() => buildForest(undefined, true));
+export const ForestTypeExpensiveDebug = toForestType(
+	(breaker: Breakable, schema: TreeStoredSchemaSubscription) =>
+		buildForest(breaker, schema, undefined, true),
+);
 
 type ForestFactory = (
+	breaker: Breakable,
 	schema: TreeStoredSchemaSubscription,
 	idCompressor: IIdCompressor,
 ) => IEditableForest;
@@ -686,11 +693,12 @@ function toForestType(factory: ForestFactory): ForestType {
  * Build and return a forest of the requested type.
  */
 export function buildConfiguredForest(
+	breaker: Breakable,
 	factory: ForestType,
 	schema: TreeStoredSchemaSubscription,
 	idCompressor: IIdCompressor,
 ): IEditableForest {
-	return (factory as unknown as ForestFactory)(schema, idCompressor);
+	return (factory as unknown as ForestFactory)(breaker, schema, idCompressor);
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
