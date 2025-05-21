@@ -598,7 +598,7 @@ export class DocumentsSchemaController {
 		const documentMetadataSchemaShallowCopy: IDocumentSchema | undefined =
 			documentMetadataSchema === undefined ? undefined : { ...documentMetadataSchema };
 		this.documentSchema = existing
-			? ((documentMetadataSchemaShallowCopy as IDocumentSchema) ??
+			? (documentMetadataSchemaShallowCopy ??
 				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
