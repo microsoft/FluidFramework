@@ -10,7 +10,12 @@ import {
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type {
+	IEvent,
+	IEventProvider,
+	IFluidLoadable,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import type { ContainerAttachProps, ContainerSchema, IRootDataObject } from "./types.js";
@@ -228,6 +233,15 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * Dispose of the container instance, permanently disabling it.
 	 */
 	dispose(): void;
+
+	/**
+	 * Api to upload a blob of data.
+	 * @param blob - blob to be uploaded.
+	 */
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
@@ -362,5 +376,12 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.container.off("disconnected", this.disconnectedHandler);
 		this.container.off("saved", this.savedHandler);
 		this.container.off("dirty", this.dirtyHandler);
+	}
+
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.rootDataObject.getFluidDataStoreRuntime().uploadBlob(blob, signal);
 	}
 }
