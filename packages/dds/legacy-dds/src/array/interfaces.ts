@@ -11,8 +11,6 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedArrayOperation } from "./sharedArrayOperations.js";
-import type { IRevertible } from "./types.js";
-
 /**
  * Basic types for the SharedArray DDS
  * It can be used as a generic constraint (`extends SerializableTypeForSharedArray`) but is
@@ -154,4 +152,12 @@ export interface SnapshotFormat<T> {
 	 * Array of the data entries that represent the DDS in-memory representation
 	 */
 	dataArray: T[];
+}
+
+/**
+ * @internal
+ */
+export interface IRevertible {
+	revert(): void;
+	dispose(): void;
 }

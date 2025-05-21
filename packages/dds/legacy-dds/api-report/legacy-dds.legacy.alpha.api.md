@@ -4,14 +4,6 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
-export interface IRevertible {
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    revert(): void;
-}
-
 // (No @packageDocumentation comment for this package)
 
 ```

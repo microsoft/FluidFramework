@@ -12,6 +12,7 @@ export type {
 	ISharedArrayEvents,
 	ISharedArrayRevertible,
 	FullyReadonly,
+	IRevertible,
 } from "./interfaces.js";
 export type {
 	ISharedArrayOperation,
@@ -23,4 +24,3 @@ export type {
 	IToggleMoveOperation,
 	IToggleOperation,
 } from "./sharedArrayOperations.js";
-export type { IRevertible } from "./types.js";
