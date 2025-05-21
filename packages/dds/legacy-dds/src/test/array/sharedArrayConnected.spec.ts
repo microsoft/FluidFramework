@@ -13,19 +13,17 @@ import {
 	MockContainerRuntimeFactory,
 	MockStorage,
 	MockHandle,
-	// MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { IToggleOperation, IToggleMoveOperation, IRevertible } from "../index.js";
-import { SharedArray, SharedArrayRevertible } from "../index.js";
-
+import type { IToggleOperation, IToggleMoveOperation, IRevertible } from "../../index.js";
+import { SharedArray, SharedArrayRevertible } from "../../index.js";
 import {
 	verifyEventsEmitted,
 	verifyEntries,
 	getRandomInt,
 	fillEntries,
 	verifyIFluidHandleEntries,
-} from "./utilities.js";
+} from "../utilities.js";
 
 describe("SharedArray", () => {
 	let sharedArray: SharedArray<number>;

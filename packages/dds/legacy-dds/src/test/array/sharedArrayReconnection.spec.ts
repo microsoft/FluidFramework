@@ -13,9 +13,8 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedArray } from "../index.js";
-
-import { verifyEntries, fillEntries, getRandomInt } from "./utilities.js";
+import { SharedArray } from "../../index.js";
+import { verifyEntries, fillEntries, getRandomInt } from "../utilities.js";
 
 describe("SharedArray", () => {
 	let sharedArray: SharedArray<number>;
