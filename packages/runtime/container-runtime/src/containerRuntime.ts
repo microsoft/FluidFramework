@@ -4393,11 +4393,11 @@ export class ContainerRuntime
 	/**
 	 * Generate an ID allocation op to be submitted ahead of any runtime ops that might depend
 	 * on the outstanding changes to ID Compressor state.
-	 * The default behavior uses {@link takeNextCreationRange}, and the resulting op should be submitted
+	 * The default behavior uses takeNextCreationRange, and the resulting op should be submitted
 	 * before submitting other ops that may have generated a compressed ID.
 	 *
-	 * @param resubmitOutstandingRanges - if true, use {@link takeUnfinalizedCreationRange}
-	 * instead of {@link takeNextCreationRange}. This is needed before replaying pending state,
+	 * @param resubmitOutstandingRanges - if true, use takeUnfinalizedCreationRange
+	 * instead of takeNextCreationRange. This is needed before replaying pending state,
 	 * to get a "clean slate" for the ID compressor with regard to any outstanding state from the first time around.
 	 * @param staged - Indicates whether this ID Allocation op should be staged (not submitted yet).  Typically expected to be false.
 	 *
