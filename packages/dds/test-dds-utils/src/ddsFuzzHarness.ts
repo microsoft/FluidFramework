@@ -578,7 +578,6 @@ export function mixinNewClient<
 	const generatorFactory: () => AsyncGenerator<TOperation | AddClient, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state: TState): Promise<TOperation | AddClient | typeof done> => {
-			const baseOp = baseGenerator(state);
 			const { clients, random, isDetached } = state;
 			if (
 				options.clientJoinOptions !== undefined &&
@@ -594,7 +593,7 @@ export function mixinNewClient<
 						: false,
 				};
 			}
-			return baseOp;
+			return baseGenerator(state);
 		};
 	};
 
