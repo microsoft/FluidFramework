@@ -2541,6 +2541,7 @@ export class ContainerRuntime
 			// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
 			// before staging mode so we can simply say staged: false.
 			this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
+			this.scheduleFlush();
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
