@@ -303,6 +303,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 				latestClientJoinTime: latestSessionInformation.latestClientJoinTime,
 				numConnectedClients: connectedClientsAfterTimeout.length,
 			});
+			return;
 		}
 		// Session end timer expired and no clients are connected, so end the session.
 		const now = Date.now();

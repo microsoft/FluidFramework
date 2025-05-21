@@ -35,7 +35,9 @@ export class Lumber<T extends string = LumberEventName> {
 	private _logLevel?: LogLevel;
 	private _completed = false;
 	private _timestamp = Date.now();
-	public readonly timestamp = this._timestamp;
+	public get timestamp(): number {
+		return this._timestamp;
+	}
 	public readonly id = uuid();
 
 	public get properties(): Map<string, any> {
