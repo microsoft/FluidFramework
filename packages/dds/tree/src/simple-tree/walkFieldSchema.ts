@@ -4,7 +4,6 @@
  */
 
 import { type TreeNodeSchema, walkAllowedTypes, type SchemaVisitor } from "./core/index.js";
-
 import { type ImplicitFieldSchema, normalizeFieldSchema } from "./schemaTypes.js";
 
 /**

@@ -9,6 +9,7 @@ import {
 	type IIdCompressor,
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
+
 import type { ICodecOptions } from "../codec/index.js";
 import {
 	type RevisionTag,

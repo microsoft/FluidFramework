@@ -5,7 +5,13 @@
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 
-import { makeGenerator, reducer, saveFailures, type StressOperations } from "../baseModel.js";
+import {
+	ddsModelMinimizers,
+	makeGenerator,
+	reducer,
+	saveFailures,
+	type StressOperations,
+} from "../baseModel.js";
 import { validateConsistencyOfAllDDS } from "../ddsOperations";
 import {
 	createLocalServerStressSuite,
@@ -18,6 +24,7 @@ describe("Local Server Stress", () => {
 		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer,
 		validateConsistency: validateConsistencyOfAllDDS,
+		minimizationTransforms: ddsModelMinimizers,
 	};
 
 	createLocalServerStressSuite(model, {
