@@ -48,6 +48,24 @@ services:
       - ./routerlicious:/usr/src/server
       - /usr/src/server/node_modules
     restart: on-failure
+  nexus2:
+    platform: linux/amd64
+    build:
+      context: ./routerlicious
+      target: runner
+      additional_contexts:
+        root: ..
+    expose:
+      - "3000"
+    command: node packages/routerlicious/dist/nexus/www.js
+    environment:
+      - DEBUG=fluid:*
+      - NODE_ENV=development
+      - IS_FLUID_SERVER=true
+    volumes:
+      - ./routerlicious:/usr/src/server
+      - /usr/src/server/node_modules
+    restart: on-failure
   deli:
     platform: linux/amd64
     build:
