@@ -9,6 +9,7 @@ import {
 	type IIdCompressor,
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
+
 import type { ICodecOptions } from "../codec/index.js";
 import {
 	type RevisionTag,
@@ -33,13 +34,14 @@ import type {
 	TreeViewAlpha,
 } from "../simple-tree/index.js";
 import type { JsonCompatibleReadOnly, JsonCompatible } from "../util/index.js";
+
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	type ForestOptions,
 } from "./sharedTree.js";
 import { createTreeCheckout } from "./treeCheckout.js";
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
 /**
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.

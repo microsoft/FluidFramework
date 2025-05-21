@@ -6,13 +6,15 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import { assertIsStableId } from "@fluidframework/id-compressor/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { brand, extractFromOpaque } from "../../util/index.js";
+
 import type { LocalNodeIdentifier, StableNodeIdentifier } from "./nodeIdentifier.js";
 import {
 	isStableNodeIdentifier,
 	type NodeIdentifierManager,
 } from "./nodeIdentifierManager.js";
-import { brand, extractFromOpaque } from "../../util/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Mock {@link NodeIdentifierManager} that generates deterministic {@link StableNodeIdentifier}s and {@link LocalNodeIdentifier}s.

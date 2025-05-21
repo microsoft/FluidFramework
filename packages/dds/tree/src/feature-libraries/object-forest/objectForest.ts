@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type Anchor,
@@ -44,9 +44,9 @@ import {
 	assertValidRange,
 	brand,
 } from "../../util/index.js";
+import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
-import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {
