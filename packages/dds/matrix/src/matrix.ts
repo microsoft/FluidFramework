@@ -213,8 +213,19 @@ type FirstWriterWinsPolicy =
 			cellLastWriteTracker: SparseArray2D<CellLastWriteTrackerItem>;
 	  };
 
-interface PendingChanges<T> {
+/**
+ * Used to track pending local changes for a cell
+ */
+interface PendingCellChanges<T> {
+	/**
+	 * the local changes including the local seq, and the value set at that local seq
+	 */
 	local: { localSeq: number; value: MatrixItem<T> }[];
+	/**
+	 * the latest consensus value across all clients.
+	 * this will either be a remote value or ack'd local
+	 * value.
+	 */
 	consensus?: MatrixItem<T> | undefined;
 }
 
@@ -257,7 +268,7 @@ export class SharedMatrix<T = any>
 	private readonly cols: PermutationVector; // Map logical col to storage handle (if any)
 
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
-	private readonly pending = new SparseArray2D<PendingChanges<T>>(); // Tracks pending writes.
+	private readonly pending = new SparseArray2D<PendingCellChanges<T>>(); // Tracks pending writes.
 
 	private fwwPolicy: FirstWriterWinsPolicy = {
 		state: "off",
@@ -473,7 +484,7 @@ export class SharedMatrix<T = any>
 		rowHandle: Handle,
 		colHandle: Handle,
 		localSeq = this.nextLocalSeq(),
-	): PendingChanges<T> {
+	): PendingCellChanges<T> {
 		assert(
 			this.isAttached(),
 			0x1e2 /* "Caller must ensure 'isAttached()' before calling 'sendSetCellOp'." */,
@@ -499,12 +510,12 @@ export class SharedMatrix<T = any>
 		};
 
 		this.submitLocalMessage(op, metadata);
-		const pending: PendingChanges<T> = this.pending.getCell(rowHandle, colHandle) ?? {
+		const pendingCell: PendingCellChanges<T> = this.pending.getCell(rowHandle, colHandle) ?? {
 			local: [],
 		};
-		pending.local.push({ localSeq, value });
-		this.pending.setCell(rowHandle, colHandle, pending);
-		return pending;
+		pendingCell.local.push({ localSeq, value });
+		this.pending.setCell(rowHandle, colHandle, pendingCell);
+		return pendingCell;
 	}
 
 	/**
@@ -827,9 +838,9 @@ export class SharedMatrix<T = any>
 			this.rows.removeLocalReferencePosition(rowsRef);
 			this.cols.removeLocalReferencePosition(colsRef);
 
-			const pending = this.pending.getCell(rowHandle, colHandle);
-			assert(pending !== undefined, "local operation must have a pending array");
-			const { local } = pending;
+			const pendingCell = this.pending.getCell(rowHandle, colHandle);
+			assert(pendingCell !== undefined, "local operation must have a pending array");
+			const { local } = pendingCell;
 			assert(local !== undefined, "local operation must have a pending array");
 			const localSeqIndex = local.findIndex((p) => p.localSeq === localSeq);
 			assert(localSeqIndex >= 0, "local operation must have a pending entry");
@@ -885,16 +896,16 @@ export class SharedMatrix<T = any>
 				assert(contents.type === MatrixOp.set, "only sets supported");
 				const setMetadata = localOpMetadata as ISetOpMetadata;
 
-				const pending = this.pending.getCell(setMetadata.rowHandle, setMetadata.colHandle);
-				assert(pending !== undefined, "must have pending");
+				const pendingCell = this.pending.getCell(setMetadata.rowHandle, setMetadata.colHandle);
+				assert(pendingCell !== undefined, "must have pending");
 
-				const change = pending.local.pop();
+				const change = pendingCell.local.pop();
 				assert(change?.localSeq === setMetadata.localSeq, "must have change");
 
 				const previous =
-					pending.local.length > 0
-						? pending.local[pending.local.length - 1].value
-						: pending.consensus;
+					pendingCell.local.length > 0
+						? pendingCell.local[pendingCell.local.length - 1].value
+						: pendingCell.consensus;
 
 				this.setCellCore(
 					contents.row,
@@ -1040,10 +1051,10 @@ export class SharedMatrix<T = any>
 					this.rows.removeLocalReferencePosition(rowsRef);
 					this.cols.removeLocalReferencePosition(colsRef);
 
-					const pending = this.pending.getCell(rowHandle, colHandle);
-					const ackedChange = pending?.local.shift();
+					const pendingCell = this.pending.getCell(rowHandle, colHandle);
+					const ackedChange = pendingCell?.local.shift();
 					assert(ackedChange?.localSeq === localSeq, "must match");
-					if (pending?.local.length === 0) {
+					if (pendingCell?.local.length === 0) {
 						this.pending.setCell(rowHandle, colHandle, undefined);
 					}
 
@@ -1054,7 +1065,7 @@ export class SharedMatrix<T = any>
 						this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)
 					) {
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						pending!.consensus = ackedChange.value;
+						pendingCell!.consensus = ackedChange.value;
 						this.fwwPolicy.cellLastWriteTracker.setCell(rowHandle, colHandle, {
 							seqNum: msg.sequenceNumber,
 							clientId: msg.clientId,
@@ -1071,7 +1082,7 @@ export class SharedMatrix<T = any>
 						isHandleValid(rowHandle) && isHandleValid(colHandle),
 						0x022 /* "SharedMatrix row and/or col handles are invalid!" */,
 					);
-					const pending = this.pending.getCell(rowHandle, colHandle);
+					const pendingCell = this.pending.getCell(rowHandle, colHandle);
 					if (this.fwwPolicy.state === "on") {
 						// If someone tried to Overwrite the cell value or first write on this cell or
 						// same client tried to modify the cell or if the previous mode was LWW, then we need to still
@@ -1083,15 +1094,15 @@ export class SharedMatrix<T = any>
 								seqNum: msg.sequenceNumber,
 								clientId: msg.clientId,
 							});
-							if (pending !== undefined) {
-								pending.consensus = value;
+							if (pendingCell !== undefined) {
+								pendingCell.consensus = value;
 							}
 							if (adjustedRow.pos !== undefined && adjustedCol.pos !== undefined) {
 								for (const consumer of this.consumers.values()) {
 									consumer.cellsChanged(adjustedRow.pos, adjustedCol.pos, 1, 1, this);
 								}
 								// Check is there are any pending changes, which will be rejected. If so raise conflict.
-								if (pending !== undefined && pending.local.length > 0) {
+								if (pendingCell !== undefined && pendingCell.local.length > 0) {
 									// Don't reset the pending value yet, as there maybe more fww op from same client, so we want
 									// to raise conflict event for that op also.
 									this.emit(
@@ -1106,7 +1117,7 @@ export class SharedMatrix<T = any>
 							}
 						}
 					} else {
-						if (pending === undefined || pending.local.length === 0) {
+						if (pendingCell === undefined || pendingCell.local.length === 0) {
 							// If there is a pending (unACKed) local write to the same cell, skip the current op
 							// since it "happened before" the pending write.
 							this.cells.setCell(rowHandle, colHandle, value);
@@ -1116,7 +1127,7 @@ export class SharedMatrix<T = any>
 								}
 							}
 						} else {
-							pending.consensus = value;
+							pendingCell.consensus = value;
 						}
 					}
 				}

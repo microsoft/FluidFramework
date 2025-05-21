@@ -212,6 +212,12 @@ export class PermutationVector extends Client {
 		);
 
 		if (segmentIsRemoved(segment)) {
+			// this case is tricky. the segment which the row or column data is remove
+			// but an op before that remove references a cell. we still want to apply
+			// the op, as the row/col could become active again in the case where
+			// the remove was local and it get's rolled back. so we allocate a handle
+			// for the row/col if not allocated, but don't put it in the cache
+			// as the cache can only contain live positions.
 			let handle = segment.start;
 			if (!isHandleValid(handle)) {
 				this.walkSegments(
@@ -386,7 +392,6 @@ export class PermutationVector extends Client {
 				}
 				break;
 			}
-
 			case MergeTreeDeltaType.REMOVE: {
 				// Pass 1: Perform any internal maintenance first to avoid reentrancy.
 				for (const { segment, position } of ranges) {
