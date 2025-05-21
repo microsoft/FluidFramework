@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationParentNodeBase, type DocumentationNode } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
@@ -37,10 +33,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  *
  * @public
  */
-export class UnorderedListNode
-	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements MultiLineDocumentationNode
-{
+export class UnorderedListNode extends DocumentationParentNodeBase {
 	/**
 	 * Static singleton representing an empty Unordered List node.
 	 */
@@ -58,7 +51,7 @@ export class UnorderedListNode
 		return false;
 	}
 
-	public constructor(children: SingleLineDocumentationNode[]) {
+	public constructor(children: DocumentationNode[]) {
 		super(children);
 	}
 

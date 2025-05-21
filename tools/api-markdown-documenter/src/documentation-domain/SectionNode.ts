@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type DocumentationNode,
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { HeadingNode } from "./HeadingNode.js";
 
@@ -36,10 +32,7 @@ import type { HeadingNode } from "./HeadingNode.js";
  *
  * @public
  */
-export class SectionNode
-	extends DocumentationParentNodeBase
-	implements MultiLineDocumentationNode
-{
+export class SectionNode extends DocumentationParentNodeBase {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
