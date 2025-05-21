@@ -1192,6 +1192,22 @@ describe("treeNodeApi", () => {
 			assert.equal(clonedMetadata, topLeftPoint.metadata, "String not cloned properly");
 		});
 
+		it("errors when cloning an enablable type that has not been upgraded", () => {
+			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
+			const enablableSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
+				schemaFactoryAlpha.number,
+				schemaFactoryAlpha.enablable(schemaFactoryAlpha.string),
+			]);
+
+			const view = getView(new TreeViewConfiguration({ schema: enablableSchema }));
+			view.initialize([5, "test"]);
+
+			const { root } = view;
+			assert.throws(() => {
+				view.root = TreeBeta.clone<typeof enablableSchema>(root);
+			});
+		});
+
 		describe("test-trees", () => {
 			for (const testCase of testSimpleTrees) {
 				it(testCase.name, () => {
