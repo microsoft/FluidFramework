@@ -238,7 +238,6 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 				string | number
 			>,
 		) => void,
-		private readonly validator?: StateSchemaValidator<T>,
 	) {
 		// All initial items are expected to be defined.
 		// TODO assert all defined and/or update type.
@@ -292,17 +291,20 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 			}
 		}
 	}
+
+	// FIXME: This gets called when using mapState.local.get(), even though we only want to validate remote data.
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
 		const data = this.value.items[key]?.value;
-		if (this.validator === undefined) {
-			return this.value.items[key]?.value === undefined
-				? undefined
-				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
-					asDeeplyReadonlyFromJsonHandle(this.value.items[key]!.value!);
-		}
-		const maybeValid = this.validator(data, { key });
-		return asDeeplyReadonly(maybeValid);
-		return this.value.items[key]?.value === undefined
+		// if (this.validator === undefined) {
+		// 	return data === undefined
+		// 		? undefined
+		// 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
+		// 			asDeeplyReadonlyFromJsonHandle(this.value.items[key]!.value!);
+		// }
+		// const maybeValid = this.validator(data, { key });
+		// return asDeeplyReadonly(maybeValid);
+
+		return data === undefined
 			? undefined
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
 				asDeeplyReadonlyFromJsonHandle(this.value.items[key]!.value!);
@@ -431,7 +433,6 @@ class LatestMapValueManagerImpl<
 					allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 				});
 			},
-			validator,
 		);
 	}
 
@@ -530,9 +531,6 @@ class LatestMapValueManagerImpl<
 			};
 
 			if (item.value !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				const valueGetter = createValidatedGetter<T>(item, this.validator);
-
 				const updatedItem = {
 					attendee,
 					key,
@@ -541,7 +539,7 @@ class LatestMapValueManagerImpl<
 				} satisfies LatestMapItemUpdatedClientData<T, Keys, ValueAccessor<T>>;
 				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
 				allUpdates.items.set(key, {
-					value: valueGetter,
+					value: createValidatedGetter(item, this.validator),
 					metadata,
 				});
 			} else if (hadPriorValue !== undefined) {

@@ -426,8 +426,7 @@ describe(`Presence with TinyliciousClient`, () => {
 			// Reading the local value should not call the validator
 			assert.equal(
 				validatorSpy2.callCount,
-				// FIXME: This should be 0, but the validator is getting called when getting the local key
-				1,
+				0,
 				"client2 validator should not have been called",
 			);
 			assert.equal(localValue?.num, 22, "count2.local count is wrong");
@@ -451,24 +450,14 @@ describe(`Presence with TinyliciousClient`, () => {
 			assert.equal(key1?.num, 0, "getRemote(attendee1) count is wrong");
 			assert.equal(
 				validatorSpy2.callCount,
-				// FIXME
-				2,
+				1,
 				"client2 validator was called the wrong number of times",
 			);
 			key2 = remoteData.get("key2")?.value();
 			assert.equal(key2?.num, 0, "getRemote(attendee1) count is wrong");
 			assert.equal(
 				validatorSpy2.callCount,
-				// FIXME
-				3,
-				"client2 validator was called the wrong number of times",
-			);
-
-			// Second client should have called the validator twice for the reads above
-			assert.equal(
-				validatorSpy2.callCount,
-				// FIXME
-				3,
+				2,
 				"client2 validator was called the wrong number of times",
 			);
 		});
