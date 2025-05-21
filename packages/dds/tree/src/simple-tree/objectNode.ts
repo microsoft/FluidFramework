@@ -5,6 +5,8 @@
 
 import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import type { FieldKey, SchemaPolicy } from "../core/index.js";
 import {
@@ -14,7 +16,7 @@ import {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 } from "../feature-libraries/index.js";
-import type { RestrictiveStringRecord, FlattenKeys } from "../util/index.js";
+import { type RestrictiveStringRecord, type FlattenKeys, brand } from "../util/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -57,6 +59,7 @@ import {
 import type { SimpleObjectFieldSchema } from "./simpleSchema.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
+import { stringSchema } from "./leafNodeSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
