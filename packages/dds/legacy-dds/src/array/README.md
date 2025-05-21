@@ -2,6 +2,9 @@
 
 ## SharedArray
 
+A DDS created by Loop which we now take ownership. Following README content is provided by them. Last commit in the office bohemia repo before migrating:
+b148d32c796c79a4d934de89436aed0bdbba621f
+
 The SharedArray distributed data structure can be used to store ordered sequence of values. It provides APIs to insert, delete and move a specific entry.
 
 ### Creation
