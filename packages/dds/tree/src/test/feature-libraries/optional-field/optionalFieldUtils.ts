@@ -96,7 +96,7 @@ export const Change = {
 					childChanges: [],
 				},
 	/**
-	 * Creates a changeset that reserves an register.
+	 * Creates a changeset that reserves a register.
 	 * @param target - The register to reserve. The register must NOT be full in the input context of the changeset.
 	 * @param dst - The register that the contents of the target register should be moved to should it become populated.
 	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
