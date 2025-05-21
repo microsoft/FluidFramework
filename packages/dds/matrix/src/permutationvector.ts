@@ -200,7 +200,7 @@ export class PermutationVector extends Client {
 	public adjustPosition(
 		posToAdjust: number,
 		op: ISequencedDocumentMessage,
-	): { pos: number | undefined; handle: Handle } | undefined {
+	): { pos: number | undefined; handle: Handle } {
 		const { segment, offset } = this.getContainingSegment<PermutationSegment>(posToAdjust, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,

@@ -1062,65 +1062,61 @@ export class SharedMatrix<T = any>
 					}
 				} else {
 					const adjustedRow = this.rows.adjustPosition(row, msg);
-					if (adjustedRow !== undefined) {
-						const adjustedCol = this.cols.adjustPosition(col, msg);
+					const adjustedCol = this.cols.adjustPosition(col, msg);
 
-						if (adjustedCol !== undefined) {
-							const rowHandle = adjustedRow.handle;
-							const colHandle = adjustedCol.handle;
+					const rowHandle = adjustedRow.handle;
+					const colHandle = adjustedCol.handle;
 
-							assert(
-								isHandleValid(rowHandle) && isHandleValid(colHandle),
-								0x022 /* "SharedMatrix row and/or col handles are invalid!" */,
-							);
-							const pending = this.pending.getCell(rowHandle, colHandle);
-							if (this.fwwPolicy.state === "on") {
-								// If someone tried to Overwrite the cell value or first write on this cell or
-								// same client tried to modify the cell or if the previous mode was LWW, then we need to still
-								// overwrite the cell and raise conflict if we have pending changes as our change is going to be lost.
-								if (this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)) {
-									const previousValue = this.cells.getCell(rowHandle, colHandle);
-									this.cells.setCell(rowHandle, colHandle, value);
-									this.fwwPolicy.cellLastWriteTracker.setCell(rowHandle, colHandle, {
-										seqNum: msg.sequenceNumber,
-										clientId: msg.clientId,
-									});
-									if (pending !== undefined) {
-										pending.consensus = value;
-									}
-									if (adjustedRow.pos !== undefined && adjustedCol.pos !== undefined) {
-										for (const consumer of this.consumers.values()) {
-											consumer.cellsChanged(adjustedRow.pos, adjustedCol.pos, 1, 1, this);
-										}
-										// Check is there are any pending changes, which will be rejected. If so raise conflict.
-										if (pending !== undefined && pending.local.length > 0) {
-											// Don't reset the pending value yet, as there maybe more fww op from same client, so we want
-											// to raise conflict event for that op also.
-											this.emit(
-												"conflict",
-												row,
-												col,
-												value, // Current value
-												previousValue, // Ignored local value
-												this,
-											);
-										}
-									}
+					assert(
+						isHandleValid(rowHandle) && isHandleValid(colHandle),
+						0x022 /* "SharedMatrix row and/or col handles are invalid!" */,
+					);
+					const pending = this.pending.getCell(rowHandle, colHandle);
+					if (this.fwwPolicy.state === "on") {
+						// If someone tried to Overwrite the cell value or first write on this cell or
+						// same client tried to modify the cell or if the previous mode was LWW, then we need to still
+						// overwrite the cell and raise conflict if we have pending changes as our change is going to be lost.
+						if (this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)) {
+							const previousValue = this.cells.getCell(rowHandle, colHandle);
+							this.cells.setCell(rowHandle, colHandle, value);
+							this.fwwPolicy.cellLastWriteTracker.setCell(rowHandle, colHandle, {
+								seqNum: msg.sequenceNumber,
+								clientId: msg.clientId,
+							});
+							if (pending !== undefined) {
+								pending.consensus = value;
+							}
+							if (adjustedRow.pos !== undefined && adjustedCol.pos !== undefined) {
+								for (const consumer of this.consumers.values()) {
+									consumer.cellsChanged(adjustedRow.pos, adjustedCol.pos, 1, 1, this);
 								}
-							} else {
-								if (pending === undefined || pending.local.length === 0) {
-									// If there is a pending (unACKed) local write to the same cell, skip the current op
-									// since it "happened before" the pending write.
-									this.cells.setCell(rowHandle, colHandle, value);
-									if (adjustedRow.pos !== undefined && adjustedCol.pos !== undefined) {
-										for (const consumer of this.consumers.values()) {
-											consumer.cellsChanged(adjustedRow.pos, adjustedCol.pos, 1, 1, this);
-										}
-									}
-								} else {
-									pending.consensus = value;
+								// Check is there are any pending changes, which will be rejected. If so raise conflict.
+								if (pending !== undefined && pending.local.length > 0) {
+									// Don't reset the pending value yet, as there maybe more fww op from same client, so we want
+									// to raise conflict event for that op also.
+									this.emit(
+										"conflict",
+										row,
+										col,
+										value, // Current value
+										previousValue, // Ignored local value
+										this,
+									);
 								}
 							}
+						}
+					} else {
+						if (pending === undefined || pending.local.length === 0) {
+							// If there is a pending (unACKed) local write to the same cell, skip the current op
+							// since it "happened before" the pending write.
+							this.cells.setCell(rowHandle, colHandle, value);
+							if (adjustedRow.pos !== undefined && adjustedCol.pos !== undefined) {
+								for (const consumer of this.consumers.values()) {
+									consumer.cellsChanged(adjustedRow.pos, adjustedCol.pos, 1, 1, this);
+								}
+							}
+						} else {
+							pending.consensus = value;
 						}
 					}
 				}
