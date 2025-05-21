@@ -17,7 +17,7 @@ export {
 	createReturnsSection,
 	createSeeAlsoSection,
 	createSignatureSection,
-	createSummaryParagraph,
+	createSummarySection,
 	createThrowsSection,
 	createTypeParametersSection,
 } from "./api-item-transforms/index.js";
