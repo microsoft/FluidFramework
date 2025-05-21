@@ -36,6 +36,8 @@ import {
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
 	CheckoutFlexTreeView,
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
 	type TreeCheckout,
 	type TreeStoredContent,
 } from "../../shared-tree/index.js";
@@ -73,10 +75,6 @@ function checkoutWithInitialTree(
 // Schema for tree that must always be empty.
 const emptySchema = toStoredSchema(schema.optional([]));
 
-const storedSchema = toStoredSchema(config.schema);
-const storedSchema2 = toStoredSchema(configGeneralized.schema);
-const storedSchema3 = toStoredSchema(configGeneralized2.schema);
-
 describe("SchematizingSimpleTreeView", () => {
 	describe("initialize", () => {
 		it("Initialize document", () => {
@@ -108,12 +106,6 @@ describe("SchematizingSimpleTreeView", () => {
 		for (const additionalAsserts of [true, false]) {
 			for (const enableSchemaValidation of [true, false]) {
 				it(`Initialize invalid content: enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
-					const emptyContent = {
-						schema: emptySchema,
-						initialTree: undefined,
-					};
-					const checkout = checkoutWithContent(emptyContent, { additionalAsserts });
-
 					class Root extends schema.object("Root", {
 						content: schema.number,
 					}) {}
@@ -123,11 +115,9 @@ describe("SchematizingSimpleTreeView", () => {
 						enableSchemaValidation,
 					});
 
-					const view = new SchematizingSimpleTreeView(
-						checkout,
-						config2,
-						new MockNodeIdentifierManager(),
-					);
+					const view = getView(config2, {
+						forest: additionalAsserts ? ForestTypeExpensiveDebug : ForestTypeReference,
+					});
 
 					const root = new Root({ content: 5 });
 
