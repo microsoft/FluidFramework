@@ -77,7 +77,10 @@ export class FluidObjectHandle<
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.get}
 	 */
-	public async get(): Promise<T> {
+	// TODO: Return `Promise<T>` instead of `Promise<any>`.
+	// This was clearly the intended typing of this API, but fixing it would be a breaking change.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public async get(): Promise<any> {
 		// Note that this return works whether we received a T or a Promise<T> for this.value in the constructor.
 		return this.value;
 	}

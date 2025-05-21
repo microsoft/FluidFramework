@@ -112,7 +112,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> extends Flui
     attachGraph(): void;
     // @deprecated (undocumented)
     bind(handle: IFluidHandleInternal): void;
-    get(): Promise<T>;
+    get(): Promise<any>;
     get isAttached(): boolean;
     // (undocumented)
     readonly path: string;
