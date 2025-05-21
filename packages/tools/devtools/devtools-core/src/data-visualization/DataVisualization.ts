@@ -576,8 +576,6 @@ function isTreeDataObject(value: unknown): value is TreeDataObject<unknown> {
 		value instanceof TreeDataObject ||
 		(typeof (value as TreeDataObject<unknown>).initializeInternal === "function" &&
 			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "sharedTree")?.get !==
-				undefined &&
-			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "treeView")?.get !==
 				undefined)
 	) {
 		const tree = (value as TreeDataObject<unknown>).sharedTree;
