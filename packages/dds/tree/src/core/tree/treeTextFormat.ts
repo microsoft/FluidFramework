@@ -4,6 +4,7 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { NodeData } from "./types.js";

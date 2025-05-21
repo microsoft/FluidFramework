@@ -147,6 +147,7 @@ export {
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
+	SchemaVersion,
 } from "./schema-stored/index.js";
 
 export {
@@ -208,7 +209,6 @@ export {
 	type Adapters,
 	AdaptedViewSchema,
 	type TreeAdapter,
-	AllowedUpdateType,
 } from "./schema-view/index.js";
 
 export {

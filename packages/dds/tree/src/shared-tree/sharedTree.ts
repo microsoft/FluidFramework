@@ -13,6 +13,7 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 import type {
 	IChannelView,
 	IFluidSerializer,
+	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	UsageError,
@@ -31,6 +32,7 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	RevisionTagCodec,
+	SchemaVersion,
 	type TaggedChange,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
@@ -46,7 +48,6 @@ import {
 	DetachedFieldIndexSummarizer,
 	FieldKinds,
 	ForestSummarizer,
-	SchemaCodecVersion,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
 	buildChunkedForest,
@@ -165,7 +166,7 @@ export interface ITreePrivate extends ITreeInternal {
  */
 interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 	forest: number;
-	schema: SchemaCodecVersion;
+	schema: SchemaVersion;
 	detachedFieldIndex: number;
 	fieldBatch: number;
 }
@@ -196,16 +197,33 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 }
 
 /**
+ * The type SharedTree's kernel's view must implement so what when its merged with the underling SharedObject's API it fully implements the required tree API surface ({@link ITreePrivate }).
+ */
+export type SharedTreeKernelView = Omit<ITreePrivate, keyof (IChannelView & IFluidLoadable)>;
+
+/**
  * SharedTreeCore, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  *
  * TODO: detail compatibility requirements.
  */
 @breakingClass
-export class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange> {
+export class SharedTreeKernel
+	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
+	implements SharedKernel
+{
 	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
 	}
+
+	/**
+	 * The app-facing API for SharedTree implemented by this Kernel.
+	 * @remarks
+	 * This is the API grafted onto the ISharedObject which apps can access.
+	 * It includes both the APIs used for internal testing, and public facing APIs (both stable and unstable).
+	 * Different users will have access to different subsets of this API, see {@link ITree}, {@link ITreeAlpha} and {@link ITreeInternal} which this {@link ITreePrivate} extends.
+	 */
+	public readonly view: SharedTreeKernelView;
 
 	public constructor(
 		breaker: Breakable,
@@ -345,6 +363,14 @@ export class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, Shar
 				}
 			}
 		});
+
+		this.view = {
+			contentSnapshot: () => this.contentSnapshot(),
+			exportSimpleSchema: () => this.exportSimpleSchema(),
+			exportVerbose: () => this.exportVerbose(),
+			viewWith: this.viewWith.bind(this),
+			kernel: this,
+		};
 	}
 
 	public exportVerbose(): VerboseTree | undefined {
@@ -480,7 +506,7 @@ export function persistedToSimpleSchema(
 	persisted: JsonCompatible,
 	options: ICodecOptions,
 ): SimpleTreeSchema {
-	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
+	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
 	return exportSimpleSchema(stored);
 }

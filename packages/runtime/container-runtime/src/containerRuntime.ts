@@ -224,7 +224,7 @@ import {
 	PendingStateManager,
 	type PendingBatchResubmitMetadata,
 } from "./pendingStateManager.js";
-import { RunCounter } from "./runCounter.js";
+import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
 	runtimeCompatDetailsForLoader,
 	validateLoaderCompatibility,
@@ -1263,7 +1263,7 @@ export class ContainerRuntime
 
 	private readonly maxConsecutiveReconnects: number;
 
-	private readonly batchRunner = new RunCounter();
+	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
 	private readonly offlineEnabled: boolean;
 	private flushTaskExists = false;
@@ -3348,7 +3348,11 @@ export class ContainerRuntime
 
 			this.stageControls = undefined;
 
+			// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
+			// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
+			this.submitIdAllocationOpIfNeeded({ staged: false });
 			discardOrCommit();
+
 			this.channelCollection.notifyStagingMode(false);
 		};
 
@@ -4407,9 +4411,7 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: LocalBatchMessage = {
 					runtimeOp: idAllocationMessage,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					// Note: For now, we will never stage ID Allocation messages.
-					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
-					staged: false,
+					staged,
 				};
 				return idAllocationBatchMessage;
 			}
@@ -4481,7 +4483,7 @@ export class ContainerRuntime
 				this.outbox.submit({
 					runtimeOp: msg,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					staged: this.inStagingMode,
+					staged,
 				});
 			}
 
@@ -4492,7 +4494,7 @@ export class ContainerRuntime
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-				staged: this.inStagingMode,
+				staged,
 			};
 			if (type === ContainerMessageType.BlobAttach) {
 				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
@@ -4599,15 +4601,20 @@ export class ContainerRuntime
 		batch: PendingMessageResubmitData[],
 		{ batchId, staged, squash }: PendingBatchResubmitMetadata,
 	): void {
+		const resubmitInfo = {
+			// Only include Batch ID if "Offline Load" feature is enabled
+			// It's only needed to identify batches across container forks arising from misuse of offline load.
+			batchId: this.offlineEnabled ? batchId : undefined,
+			staged,
+		};
+
 		this.batchRunner.run(() => {
 			for (const message of batch) {
 				this.reSubmit(message, squash);
 			}
-		});
+		}, resubmitInfo);
 
-		// Only include Batch ID if "Offline Load" feature is enabled
-		// It's only needed to identify batches across container forks arising from misuse of offline load.
-		this.flush({ batchId: this.offlineEnabled ? batchId : undefined, staged });
+		this.flush(resubmitInfo);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData, squash: boolean): void {
