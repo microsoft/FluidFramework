@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import type { IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type {
 	ISharedObjectEvents,
@@ -20,7 +20,7 @@ import type { IRevertible } from "./types.js";
  *
  * @internal
  */
-export type SerializableTypeForSharedArray = boolean | number | string | object;
+export type SerializableTypeForSharedArray = boolean | number | string | object | IFluidHandle;
 
 /**
  *

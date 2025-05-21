@@ -5,15 +5,22 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockFluidDataStoreRuntime,
+	MockHandle,
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedArray } from "../index.js";
 
-import { verifyEventsEmitted, verifyEntries, getRandomInt } from "./utilities.js";
+import {
+	verifyEventsEmitted,
+	verifyEntries,
+	getRandomInt,
+	verifyIFluidHandleEntries,
+} from "./utilities.js";
 
 describe("SharedArray", () => {
 	let sharedArray: SharedArray<number>;
@@ -146,6 +153,51 @@ describe("SharedArray", () => {
 				// Verify that the new SharedArray has the correct values and length.
 				const actualSharedArray: readonly number[] = sharedArrayTwo.get();
 				verifyEntries(actualSharedArray, expectedSharedArray);
+			});
+		});
+
+		describe("SharedArray IFluidHandle as value", () => {
+			let sharedArrayIFluidHandle: SharedArray<IFluidHandle>;
+			let testDataIFluidHandle: IFluidHandle[];
+			let expectedSharedArrayIFluidHandle: IFluidHandle[];
+			const mockHandle = new MockHandle({});
+
+			beforeEach(() => {
+				sharedArrayIFluidHandle = factory.create(
+					dataStoreRuntime,
+					"sharedArrayIFluidHandle",
+				) as SharedArray<IFluidHandle>;
+				testDataIFluidHandle = [mockHandle];
+				expectedSharedArrayIFluidHandle = testDataIFluidHandle;
+				// Fill the sharedArray with a few entries
+				let index = 0;
+				for (const entry of testDataIFluidHandle) {
+					sharedArrayIFluidHandle.insert(index, entry);
+					index++;
+				}
+			});
+
+			it("Can insert new data and get sharedArray data", async () => {
+				// Verify that the SharedArray has the correct values and length.
+				const actualSharedArray = sharedArrayIFluidHandle.get();
+				verifyIFluidHandleEntries(actualSharedArray, expectedSharedArrayIFluidHandle);
+			});
+
+			it("Can load a SharedArray from snapshot", async () => {
+				// Load a new SharedArray from the snapshot of the first one.
+				const services = MockSharedObjectServices.createFromSummary(
+					sharedArrayIFluidHandle.getAttachSummary().summary,
+				);
+
+				const sharedArrayTwo = factory.create(
+					dataStoreRuntime,
+					"sharedArrayTwo",
+				) as SharedArray<IFluidHandle>;
+				await sharedArrayTwo.load(services);
+
+				// Verify that the new SharedArray has the correct values and length.
+				const actualSharedArray = sharedArrayTwo.get();
+				verifyIFluidHandleEntries(actualSharedArray, expectedSharedArrayIFluidHandle);
 			});
 		});
 	});

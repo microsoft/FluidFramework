@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { strict as assert } from "node:assert";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -11,13 +12,20 @@ import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockStorage,
+	MockHandle,
 	// MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import type { IToggleOperation, IToggleMoveOperation, IRevertible } from "../index.js";
 import { SharedArray, SharedArrayRevertible } from "../index.js";
 
-import { verifyEventsEmitted, verifyEntries, getRandomInt, fillEntries } from "./utilities.js";
+import {
+	verifyEventsEmitted,
+	verifyEntries,
+	getRandomInt,
+	fillEntries,
+	verifyIFluidHandleEntries,
+} from "./utilities.js";
 
 describe("SharedArray", () => {
 	let sharedArray: SharedArray<number>;
@@ -590,19 +598,18 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 		remoteSharedArray.connect(services2);
 	});
 
-	// it("Verify IfluidHandle remote", async () => {
-	// 	// Perform the actual operation
-	// 	// We insert a few entries in both the local and remote DDS
-	// 	const testDataIFluidHandle = [mockHandle];
+	it("Verify IfluidHandle remote", async () => {
+		// Perform the actual operation
+		// We insert a few entries in both the local and remote DDS
+		const mockHandle = new MockHandle({});
+		localSharedArray.insert(0, mockHandle);
 
-	// 	fillEntries(localSharedArray, testDataIFluidHandle);
+		containerRuntimeFactory.processAllMessages();
 
-	// 	containerRuntimeFactory.processAllMessages();
+		const localSharedArrayValues = localSharedArray.get();
+		const remoteSharedArrayValues = remoteSharedArray.get();
 
-	// 	const localSharedArrayValues = localSharedArray.get();
-	// 	const remoteSharedArrayValues = remoteSharedArray.get();
-
-	// 	// Verify that the first client and second client have converged.
-	// 	verifyIFluidHandleEntries(localSharedArrayValues, remoteSharedArrayValues);
-	// });
+		// Verify that the first client and second client have converged.
+		verifyIFluidHandleEntries(localSharedArrayValues, remoteSharedArrayValues);
+	});
 });

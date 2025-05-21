@@ -5,6 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+
 import type { SharedArray } from "../index.js";
 
 /**
@@ -48,8 +51,34 @@ export function getRandomInt(min: number, max: number): number {
 export function fillEntries(sharedArray: SharedArray<number>, entries: number[]): void {
 	let index = 0;
 	for (const entry of entries) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		sharedArray.insert(index, entry);
 		index++;
 	}
 }
+
+/**
+ * Creates a mock handle for the given value.
+ */
+export const verifyIFluidHandleEntries = (
+	actualEntries: readonly IFluidHandle[],
+	expectedEntries: readonly IFluidHandle[],
+	message?: string,
+): void => {
+	assert.equal(
+		actualEntries.length,
+		expectedEntries.length,
+		"length of array not as expected",
+	);
+	for (let i = 0; i < actualEntries.length; i = i + 1) {
+		const actual = actualEntries[i];
+		const expected = expectedEntries[i];
+		assert.ok(actual);
+		assert.ok(expected);
+		assert.ok(actualEntries[i]);
+		assert.equal(
+			toFluidHandleInternal(actual).absolutePath,
+			toFluidHandleInternal(expected).absolutePath,
+			`value not as expected at index ${i.toString()}`,
+		);
+	}
+};
