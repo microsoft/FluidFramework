@@ -106,8 +106,10 @@ export interface IFluidContainerEvents extends IEvent {
  * @sealed
  * @public
  */
-export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
-	extends IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer<
+	TContainerSchema extends ContainerSchema = ContainerSchema,
+	TAttachProps extends object = object,
+> extends IEventProvider<IFluidContainerEvents> {
 	/**
 	 * Provides the current connected state of the container
 	 */
@@ -170,7 +172,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 *
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
-	attach(props?: ContainerAttachProps): Promise<string>;
+	attach(props?: ContainerAttachProps<TAttachProps>): Promise<string>;
 
 	/**
 	 * Attempts to connect the container to the delta stream and process operations.
