@@ -110,9 +110,9 @@ stages:
       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
       pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
-# Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main, test and release branch, and
+# Only upload release manifest files for runs in the internal project (i.e. CI runs, not PR runs), for the main, test, and release branches, and
 # for the build of the client release group (we don't need manifests for anything else).
-# Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branch.
+# Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branches.
 - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/test/'))) }}:
   - stage: upload_manifests
     displayName: Upload release manifests
