@@ -423,7 +423,7 @@ export function getOutputLength(mark: Mark, ignorePairing: boolean = false): num
 }
 
 /**
- * Gets he number of nodes within the input context of the mark.
+ * Gets the number of nodes within the input context of the mark.
  * @param mark - The mark to get the length of.
  */
 export function getInputLength(mark: Mark): number {
