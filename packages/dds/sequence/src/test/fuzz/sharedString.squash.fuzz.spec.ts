@@ -72,23 +72,19 @@ function makeExitingStagingModeGenerator() {
 		} = state;
 		assert(isPoisonedSharedString(sharedString));
 		const { poisonedHandleLocations } = sharedString;
-		// Mutating in the generator like this is not great practice, but it avoids having to define a special op type for 'removing poisoned content'
-		// which also handles removing values from `poisonedHandleLocations`.
-		// If debugging a situation where this test has strange behavior, consider adding that separate op type instead.
-		while (poisonedHandleLocations.length > 0) {
-			// safe due to length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const lastPoisonedHandleLocation = poisonedHandleLocations.pop()!;
-			const pos = sharedString.localReferencePositionToPosition(lastPoisonedHandleLocation);
-			const segment = lastPoisonedHandleLocation.getSegment();
-			sharedString.removeLocalReferencePosition(lastPoisonedHandleLocation);
-			if (segment !== undefined && !segmentIsRemoved(segment)) {
-				return {
-					type: "removeRange",
-					start: pos,
-					end: pos + 1,
-				};
-			}
+		if (poisonedHandleLocations.length > 0) {
+			const ref = poisonedHandleLocations[0];
+			const segment = ref.getSegment();
+			assert(
+				segment !== undefined && !segmentIsRemoved(segment),
+				"Expected poisoned handle to be on valid segment",
+			);
+			const pos = sharedString.localReferencePositionToPosition(ref);
+			return {
+				type: "removeRange",
+				start: pos,
+				end: pos + 1,
+			};
 		}
 
 		return done;
@@ -145,6 +141,32 @@ function makeSquashReducer() {
 			client.channel.poisonedHandleLocations.push(ref);
 		} else {
 			baseFuzzReducer(state, op);
+		}
+
+		if (state.client.stagingModeStatus !== "off") {
+			// The above op may have removed content containing a poisoned handle. If so, remove local reference positions that track such content.
+			const { channel: sharedString } = state.client;
+			assert(isPoisonedSharedString(sharedString));
+			const { poisonedHandleLocations } = sharedString;
+			// A linked list may be better for the usage pattern for longer fuzz tests, but the one in merge-tree isn't exported currently and at
+			// the scale we run our fuzz tests, an array should be fine.
+			const removedPoisonedHandles = new Set<LocalReferencePosition>();
+			for (const ref of poisonedHandleLocations) {
+				const segment = ref.getSegment();
+				// Note: once we support squashing property changes, we should record additional information in `poisonedHandleLocations` to know where we put
+				// the handle, and check more than just if the segment has been removed (e.g. if we put the handle on the property "foo", we should read segment.properties.foo
+				// to see if it's still there)
+				if (segment !== undefined && segmentIsRemoved(segment)) {
+					sharedString.removeLocalReferencePosition(ref);
+					removedPoisonedHandles.add(ref);
+				}
+			}
+
+			if (removedPoisonedHandles.size > 0) {
+				sharedString.poisonedHandleLocations = sharedString.poisonedHandleLocations.filter(
+					(ref) => !removedPoisonedHandles.has(ref),
+				);
+			}
 		}
 	};
 }
