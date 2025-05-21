@@ -563,7 +563,7 @@ export function createThrowsSection(
 export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): ParagraphNode | undefined {
+): SectionNode | undefined {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
 	const deprecatedBlock = getDeprecatedBlock(apiItem);
@@ -571,15 +571,17 @@ export function createDeprecationNoticeSection(
 		return undefined;
 	}
 
-	return new ParagraphNode([
-		SpanNode.createFromPlainText(
-			"WARNING: This API is deprecated and will be removed in a future release.",
-			{ bold: true },
-		),
-		LineBreakNode.Singleton,
-		new SpanNode(transformTsdocSection(deprecatedBlock, tsdocNodeTransformOptions), {
-			italic: true,
-		}),
+	return wrapInSection([
+		new ParagraphNode([
+			SpanNode.createFromPlainText(
+				"WARNING: This API is deprecated and will be removed in a future release.",
+				{ bold: true },
+			),
+			LineBreakNode.Singleton,
+			new SpanNode(transformTsdocSection(deprecatedBlock, tsdocNodeTransformOptions), {
+				italic: true,
+			}),
+		]),
 	]);
 }
 

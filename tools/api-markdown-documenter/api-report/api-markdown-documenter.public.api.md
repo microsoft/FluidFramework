@@ -204,7 +204,7 @@ export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
 function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode;
 
 // @public
-function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode | undefined;
+function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
 function createExamplesSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): SectionNode | undefined;

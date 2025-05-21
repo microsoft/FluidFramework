@@ -70,7 +70,7 @@ export function createSectionForApiItem(
 	// Render deprecation notice (if any)
 	const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
 	if (deprecationNotice !== undefined) {
-		sections.push(wrapInSection([deprecationNotice]));
+		sections.push(deprecationNotice);
 	}
 
 	// Render alpha/beta notice if applicable
