@@ -4511,6 +4511,7 @@ export class ContainerRuntime
 				if (!this.batchRunner.running) {
 					this.doPendingFlush();
 				}
+				break;
 			}
 			case FlushMode.TurnBased: {
 				// When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
