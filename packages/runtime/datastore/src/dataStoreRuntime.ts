@@ -201,7 +201,6 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.idCompressor;
 	}
 
-
 	// TODO: the methods below should have more specific return typing, per the interfaces they are implementing.
 	// Doing so would be a breaking change.
 
