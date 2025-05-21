@@ -5,10 +5,7 @@
 
 import type { Link, UrlTarget } from "../Link.js";
 
-import {
-	DocumentationParentNodeBase,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationParentNodeBase, type DocumentationNode } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
@@ -29,10 +26,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  *
  * @public
  */
-export class LinkNode
-	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements SingleLineDocumentationNode, Omit<Link, "text">
-{
+export class LinkNode extends DocumentationParentNodeBase implements Omit<Link, "text"> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -50,7 +44,7 @@ export class LinkNode
 		return true;
 	}
 
-	public constructor(content: SingleLineDocumentationNode[], target: UrlTarget) {
+	public constructor(content: DocumentationNode[], target: UrlTarget) {
 		super(content);
 		this.target = target;
 	}
