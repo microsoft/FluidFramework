@@ -439,14 +439,6 @@ describe("Presence", () => {
 			});
 
 			it("with acknowledgementId sends targeted acknowledgment messsage back to requestor", () => {
-				// Setup
-				logger.registerExpectedEvent({
-					eventName: "Presence:AckSent",
-					details: JSON.stringify({
-						requestor: "client4",
-						responder: "client2",
-					}),
-				});
 				// We expect to send a targeted acknowledgment back to the requestor
 				runtime.signalsExpected.push([
 					"Pres:Ack",

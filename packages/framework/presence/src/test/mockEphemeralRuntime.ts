@@ -200,6 +200,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public get ILayerCompatDetails(): ILayerCompatDetails {
 		return {
 			supportedFeatures: this.supportedFeatures,
+			// arbitrary generation number and package version for testing
 			generation: 1,
 			pkgVersion: "2.33.0",
 		};
