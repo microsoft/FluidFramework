@@ -28,7 +28,6 @@ import type {
 	RevisionTag,
 } from "../../core/index.js";
 import {
-	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	type Mutable,
 	brand,
@@ -62,15 +61,18 @@ import {
 import {
 	newCrossFieldRangeTable,
 	type ChangeAtomIdBTree,
+	type CrossFieldKeyTable,
 	type FieldChangeMap,
 	type FieldChangeset,
 	type FieldId,
 	type ModularChangeset,
 	type NodeChangeset,
 	type NodeId,
+	type NodeLocation,
+	type RootNodeTable,
 } from "./modularChangeTypes.js";
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
-import { newRootTable } from "./modularChangeFamily.js";
+import { newRootTable, renameNodes, setInChangeAtomIdMap } from "./modularChangeFamily.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
 export function makeModularChangeCodecFamily(
@@ -248,9 +250,9 @@ function makeModularChangeCodec(
 	function decodeFieldChangesFromJson(
 		encodedChange: EncodedFieldChangeMap,
 		parentId: NodeId | undefined,
-		decoded: ModularChangeset,
+		decodedCrossFieldKeys: CrossFieldKeyTable,
 		context: ChangeEncodingContext,
-		idAllocator: IdAllocator,
+		decodeNode: NodeDecoder,
 	): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
@@ -270,22 +272,7 @@ function makeModularChangeCodec(
 				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
-					const nodeId: NodeId = {
-						revision: context.revision,
-						localId: brand(idAllocator.allocate()),
-					};
-
-					const node = decodeNodeChangesetFromJson(
-						encodedNode,
-						nodeId,
-						decoded,
-						context,
-						idAllocator,
-					);
-
-					decoded.nodeChanges.set([nodeId.revision, nodeId.localId], node);
-					decoded.nodeToParent.set([nodeId.revision, nodeId.localId], fieldId);
-					return nodeId;
+					return decodeNode(encodedNode, { field: fieldId });
 				},
 			};
 
@@ -296,7 +283,7 @@ function makeModularChangeCodec(
 			);
 
 			for (const { key, count } of crossFieldKeys) {
-				decoded.crossFieldKeys.set(key, count, fieldId);
+				decodedCrossFieldKeys.set(key, count, fieldId);
 			}
 
 			const fieldKey: FieldKey = brand<FieldKey>(field.fieldKey);
@@ -313,9 +300,9 @@ function makeModularChangeCodec(
 	function decodeNodeChangesetFromJson(
 		encodedChange: EncodedNodeChangeset,
 		id: NodeId,
-		decoded: ModularChangeset,
+		decodedCrossFieldKeys: CrossFieldKeyTable,
 		context: ChangeEncodingContext,
-		idAllocator: IdAllocator,
+		decodeNode: NodeDecoder,
 	): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = encodedChange;
@@ -324,9 +311,9 @@ function makeModularChangeCodec(
 			decodedChange.fieldChanges = decodeFieldChangesFromJson(
 				fieldChanges,
 				id,
-				decoded,
+				decodedCrossFieldKeys,
 				context,
-				idAllocator,
+				decodeNode,
 			);
 		}
 
@@ -426,6 +413,40 @@ function makeModularChangeCodec(
 		return map;
 	}
 
+	type NodeDecoder = (encoded: EncodedNodeChangeset, fieldId: NodeLocation) => NodeId;
+
+	function decodeRootTable(
+		encodedRoots: EncodedRootNodes | undefined,
+		encodedRenames: EncodedRenames | undefined,
+		context: ChangeEncodingContext,
+		decodeNode: NodeDecoder,
+	): RootNodeTable {
+		const roots = newRootTable();
+		if (encodedRoots !== undefined) {
+			for (const { detachId, nodeChangeset } of encodedRoots) {
+				const decodedId = changeAtomIdCodec.decode(detachId, context);
+				setInChangeAtomIdMap(
+					roots.nodeChanges,
+					decodedId,
+					decodeNode(nodeChangeset, { root: decodedId }),
+				);
+			}
+		}
+
+		if (encodedRenames !== undefined) {
+			for (const { oldId, newId, count } of encodedRenames) {
+				renameNodes(
+					roots,
+					changeAtomIdCodec.decode(oldId, context),
+					changeAtomIdCodec.decode(newId, context),
+					count,
+				);
+			}
+		}
+
+		return roots;
+	}
+
 	function encodeRevisionInfos(
 		revisions: readonly RevisionInfo[],
 		context: ChangeEncodingContext,
@@ -517,22 +538,56 @@ function makeModularChangeCodec(
 		},
 
 		decode: (encodedChange: EncodedModularChangeset, context) => {
-			const decoded: Mutable<ModularChangeset> = {
-				fieldChanges: new Map(),
-				nodeChanges: newTupleBTree(),
-				rootNodes: newRootTable(), // XXX
-				nodeToParent: newTupleBTree(),
-				nodeAliases: newTupleBTree(),
-				crossFieldKeys: newCrossFieldRangeTable(),
+			const idAllocator = idAllocatorFromMaxId(encodedChange.maxId);
+			const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
+			const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newTupleBTree();
+			const crossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
+
+			const decodeNode: NodeDecoder = (
+				encodedNode: EncodedNodeChangeset,
+				fieldId: NodeLocation,
+			): NodeId => {
+				const nodeId: NodeId = {
+					revision: context.revision,
+					localId: brand(idAllocator.allocate()),
+				};
+
+				const node = decodeNodeChangesetFromJson(
+					encodedNode,
+					nodeId,
+					crossFieldKeys,
+					context,
+					decodeNode,
+				);
+
+				nodeChanges.set([nodeId.revision, nodeId.localId], node);
+
+				if (fieldId !== undefined) {
+					nodeToParent.set([nodeId.revision, nodeId.localId], fieldId);
+				}
+
+				return nodeId;
 			};
 
-			decoded.fieldChanges = decodeFieldChangesFromJson(
-				encodedChange.fieldChanges,
-				undefined,
-				decoded,
-				context,
-				idAllocatorFromMaxId(encodedChange.maxId),
-			);
+			const decoded: Mutable<ModularChangeset> = {
+				fieldChanges: decodeFieldChangesFromJson(
+					encodedChange.fieldChanges,
+					undefined,
+					crossFieldKeys,
+					context,
+					decodeNode,
+				),
+				nodeChanges,
+				rootNodes: decodeRootTable(
+					encodedChange.rootNodes,
+					encodedChange.nodeRenames,
+					context,
+					decodeNode,
+				),
+				nodeToParent,
+				nodeAliases: newTupleBTree(),
+				crossFieldKeys,
+			};
 
 			if (encodedChange.builds !== undefined) {
 				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);

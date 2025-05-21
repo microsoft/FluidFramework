@@ -656,6 +656,109 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(rebased, expected);
 		});
 
+		it("node change over remove", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+			editor.sequenceField({ parent: undefined, field: fieldA }).remove(0, 1);
+			editor.sequenceField({ parent: fieldARootPath, field: fieldB }).remove(0, 1);
+
+			const [remove, childChange] = getChanges();
+
+			const rebased = family.rebase(
+				tagChangeInline(childChange, tag2),
+				tagChangeInline(remove, tag1),
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const expected = Change.build({
+				family,
+				maxId: 2,
+				revisions: [{ revision: tag2 }],
+				roots: [
+					{
+						detachId: { revision: tag1, localId: brand(0) },
+						change: Change.nodeWithId(
+							0,
+							{ revision: tag2, localId: brand(2) },
+							Change.field(fieldB, sequence.identifier, [
+								MarkMaker.remove(1, { revision: tag2, localId: brand(1) }),
+							]),
+						),
+					},
+				],
+			});
+
+			assertEqual(rebased, expected);
+		});
+
+		it("remove over move to detached tree", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+
+			// Remove node0 from fieldA
+			editor.sequenceField({ parent: undefined, field: fieldA }).remove(0, 1);
+
+			// Concurrently move node1 into fieldB in node0
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				1,
+				1,
+				{
+					parent: fieldARootPath,
+					field: fieldB,
+				},
+				0,
+			);
+
+			// Concurrent to the prior change, remove node1 (now at index 0) in fieldA
+			editor
+				.sequenceField({
+					parent: undefined,
+					field: fieldA,
+				})
+				.remove(0, 1);
+
+			const changes = getChanges();
+			const baseRemove = tagChangeInline(changes[0], tag1);
+			const move = tagChangeInline(changes[1], tag2);
+			const remove = tagChangeInline(changes[2], tag3);
+
+			const moveToDetached = tagChange(
+				family.rebase(
+					move,
+					baseRemove,
+					revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				),
+				tag2,
+			);
+
+			const rebased = family.rebase(
+				remove,
+				moveToDetached,
+				revisionMetadataSourceFromInfo([{ revision: tag2 }, { revision: tag3 }]),
+			);
+
+			const expected = Change.build({
+				family,
+				maxId: 4,
+				revisions: [{ revision: tag3 }],
+				roots: [
+					{
+						detachId: { revision: tag1, localId: brand(0) },
+						change: Change.nodeWithId(
+							0,
+							{ revision: tag2, localId: brand(3) },
+							Change.field(fieldB, sequence.identifier, [
+								MarkMaker.remove(1, { revision: tag3, localId: brand(4) }),
+							]),
+						),
+					},
+				],
+			});
+
+			assertEqual(rebased, expected);
+		});
+
 		it("prunes its output", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);

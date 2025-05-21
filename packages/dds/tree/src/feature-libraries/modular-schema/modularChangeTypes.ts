@@ -42,10 +42,11 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly rootNodes: RootNodeTable;
 
 	/**
-	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
+	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node,
+	 * or the detach ID, if this node is detached.
 	 */
 	// TODO: Should this be merged with `nodeChanges`?
-	readonly nodeToParent: ChangeAtomIdBTree<FieldId>;
+	readonly nodeToParent: ChangeAtomIdBTree<NodeLocation>;
 
 	/**
 	 * Maps from a node ID to another ID for the same node.
@@ -120,6 +121,18 @@ export interface FieldId {
 	readonly nodeId: NodeId | undefined;
 	readonly field: FieldKey;
 }
+
+export interface FieldParent {
+	readonly field: FieldId;
+	readonly root?: undefined;
+}
+
+export interface RootParent {
+	readonly field?: undefined;
+	readonly root: ChangeAtomId;
+}
+
+export type NodeLocation = FieldParent | RootParent;
 
 /**
  */

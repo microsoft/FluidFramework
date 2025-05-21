@@ -40,6 +40,7 @@ import {
 	type FieldChange,
 	type FieldId,
 	type NodeChangeset,
+	type NodeLocation,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
@@ -59,7 +60,7 @@ import {
 	contextualizeFieldChangeset,
 	getChangeHandler,
 	getFieldKind,
-	getParentFieldId,
+	getNodeParent,
 	newRootTable,
 	normalizeFieldId,
 	renameNodes,
@@ -125,7 +126,7 @@ function normalizeNodeIds(change: ModularChangeset): ModularChangeset {
 
 	const idRemappings: ChangeAtomIdMap<NodeId> = new Map();
 	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
+	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newTupleBTree();
 	const crossFieldKeyTable: CrossFieldKeyTable = newCrossFieldRangeTable();
 
 	const remapNodeId = (nodeId: NodeId): NodeId => {
@@ -140,6 +141,13 @@ function normalizeNodeIds(change: ModularChangeset): ModularChangeset {
 			: { ...fieldId, nodeId: remapNodeId(fieldId.nodeId) };
 	};
 
+	const remapNodeLocation = (location: NodeLocation): NodeLocation => {
+		const remapped: NodeLocation =
+			location.field !== undefined ? { field: remapFieldId(location.field) } : location;
+
+		return remapped;
+	};
+
 	const normalizeNodeChanges = (nodeId: NodeId): NodeId => {
 		const nodeChangeset = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
 		assert(nodeChangeset !== undefined, "Unknown node ID");
@@ -149,7 +157,7 @@ function normalizeNodeIds(change: ModularChangeset): ModularChangeset {
 
 		const parent = change.nodeToParent.get([nodeId.revision, nodeId.localId]);
 		assert(parent !== undefined, "Every node should have a parent");
-		const newParent = remapFieldId(parent);
+		const newParent = remapNodeLocation(parent);
 		nodeToParent.set([newId.revision, newId.localId], newParent);
 
 		const normalizedNodeChangeset: NodeChangeset = { ...nodeChangeset };
@@ -478,7 +486,7 @@ interface BuildArgs {
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
 	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
+	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newTupleBTree();
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
 
 	const idAllocator = idAllocatorFromMaxId();
@@ -501,7 +509,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 				addNodeToChangeset(
 					args.family,
 					change,
-					undefined,
+					{ root: detachId },
 					nodeChanges,
 					nodeToParent,
 					crossFieldKeys,
@@ -540,7 +548,7 @@ function fieldChangeMapFromDescription(
 	fields: FieldChangesetDescription[],
 	parent: NodeId | undefined,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
-	nodeToParent: ChangeAtomIdBTree<FieldId>,
+	nodeToParent: ChangeAtomIdBTree<NodeLocation>,
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator,
 ): FieldChangeMap {
@@ -590,7 +598,7 @@ function addNodeToField(
 	parentId: FieldId,
 	changeHandler: FieldChangeHandler<unknown>,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
-	nodeToParent: ChangeAtomIdBTree<FieldId>,
+	nodeToParent: ChangeAtomIdBTree<NodeLocation>,
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator,
 ): unknown {
@@ -600,7 +608,7 @@ function addNodeToField(
 			addNodeToChangeset(
 				family,
 				nodeDescription,
-				parentId,
+				{ field: parentId },
 				nodes,
 				nodeToParent,
 				crossFieldKeys,
@@ -622,9 +630,9 @@ function addNodeToField(
 function addNodeToChangeset(
 	family: ModularChangeFamily,
 	nodeDescription: NodeChangesetDescription,
-	parentId: FieldId | undefined,
+	location: NodeLocation,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
-	nodeToParent: ChangeAtomIdBTree<FieldId>,
+	nodeToParent: ChangeAtomIdBTree<NodeLocation>,
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator,
 ): NodeId {
@@ -645,10 +653,7 @@ function addNodeToChangeset(
 	};
 
 	nodes.set([nodeId.revision, nodeId.localId], nodeChangeset);
-
-	if (parentId !== undefined) {
-		nodeToParent.set([nodeId.revision, nodeId.localId], parentId);
-	}
+	nodeToParent.set([nodeId.revision, nodeId.localId], location);
 
 	return nodeId;
 }
@@ -676,7 +681,7 @@ const dummyRevisionMetadata: RevisionMetadataSource = {
 
 export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 	const updatedNodeToParent = changeset.nodeToParent.mapValues((_field, [revision, localId]) =>
-		getParentFieldId(changeset, { revision, localId }),
+		getNodeParent(changeset, { revision, localId }),
 	);
 
 	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
