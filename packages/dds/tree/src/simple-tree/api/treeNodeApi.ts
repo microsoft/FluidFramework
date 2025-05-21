@@ -40,6 +40,7 @@ import {
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
+import { lazilyAllocateIdentifier } from "../objectNode.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -302,12 +303,11 @@ export function getIdentifierFromNode(
 		case 0:
 			return undefined;
 		case 1: {
-			const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
+			const key = identifierFieldKeys[0] ?? oob();
+			const identifier = flexNode.tryGetField(key)?.boxedAt(0);
 			if (flexNode instanceof UnhydratedFlexTreeNode) {
 				if (identifier === undefined) {
-					throw new UsageError(
-						"Tree.shortId cannot access default identifiers on unhydrated nodes",
-					);
+					return lazilyAllocateIdentifier(flexNode, key);
 				}
 				return identifier.value as string;
 			}
