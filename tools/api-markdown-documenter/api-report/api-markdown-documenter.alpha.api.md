@@ -26,7 +26,6 @@ import { ApiPropertySignature } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
-import { DocDeclarationReference } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
 import type { Literal } from 'unist';
@@ -948,13 +947,7 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[];
 
 // @public
-export function transformTsdocSection(node: DocSection, options: TsdocNodeTransformOptions): BlockContent[];
-
-// @public
-export interface TsdocNodeTransformOptions extends LoggingConfiguration {
-    readonly contextApiItem: ApiItem;
-    readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
-}
+export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
 
 // @public
 export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingContent> {

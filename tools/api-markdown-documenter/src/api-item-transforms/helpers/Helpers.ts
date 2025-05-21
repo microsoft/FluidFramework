@@ -66,8 +66,7 @@ import {
 	doesItemKindRequireOwnDocument,
 	getLinkForApiItem,
 } from "../ApiItemTransformUtilities.js";
-import { transformTsdocSection } from "../TsdocNodeTransforms.js";
-import { getTsdocNodeTransformationOptions } from "../Utilities.js";
+import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import {
 	HierarchyKind,
 	type ApiItemTransformationConfiguration,
@@ -139,11 +138,9 @@ export function createSeeAlsoSection(
 		return undefined;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
 	const contents: BlockContent[] = [];
 	for (const seeBlock of seeBlocks) {
-		contents.push(...transformTsdocSection(seeBlock, tsdocNodeTransformOptions));
+		contents.push(...transformTsdoc(seeBlock, apiItem, config));
 	}
 
 	return wrapInSection(contents, {
@@ -464,11 +461,11 @@ export function createSummarySection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-		const sectionContents = transformTsdocSection(
+		const sectionContents = transformTsdoc(
 			apiItem.tsdocComment.summarySection,
-			tsdocNodeTransformOptions,
+			apiItem,
+			config,
 		);
 		return sectionContents.length === 0 ? undefined : new SectionNode(sectionContents);
 	}
@@ -499,13 +496,8 @@ export function createRemarksSection(
 		return undefined;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
 	return wrapInSection(
-		transformTsdocSection(
-			apiItem.tsdocComment.remarksBlock.content,
-			tsdocNodeTransformOptions,
-		),
+		transformTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
 		{ title: "Remarks", id: `${getFileSafeNameForApiItem(apiItem)}-remarks` },
 	);
 }
@@ -534,11 +526,9 @@ export function createThrowsSection(
 		return undefined;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
 	const contents: BlockContent[] = [];
 	for (const throwsBlock of throwsBlocks) {
-		contents.push(...transformTsdocSection(throwsBlock, tsdocNodeTransformOptions));
+		contents.push(...transformTsdoc(throwsBlock, apiItem, config));
 	}
 
 	return wrapInSection(contents, {
@@ -564,8 +554,6 @@ export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
 	const deprecatedBlock = getDeprecatedBlock(apiItem);
 	if (deprecatedBlock === undefined) {
 		return undefined;
@@ -578,7 +566,7 @@ export function createDeprecationNoticeSection(
 				{ bold: true },
 			),
 			LineBreakNode.Singleton,
-			new SpanNode(transformTsdocSection(deprecatedBlock, tsdocNodeTransformOptions), {
+			new SpanNode(transformTsdoc(deprecatedBlock, apiItem, config), {
 				italic: true,
 			}),
 		]),
@@ -715,9 +703,8 @@ function createExampleSection(
 ): SectionNode {
 	const { logger } = config;
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(example.apiItem, config);
 	let exampleSection: SectionNode = new SectionNode(
-		transformTsdocSection(example.content, tsdocNodeTransformOptions),
+		transformTsdoc(example.content, example.apiItem, config),
 	);
 
 	// Per TSDoc spec, if the `@example` comment has content on the same line as the tag,
@@ -926,15 +913,13 @@ export function createReturnsSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
 	const children: SectionContent[] = [];
 
 	// Generate span from `@returns` comment
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const returnsBlock = getReturnsBlock(apiItem);
 		if (returnsBlock !== undefined) {
-			children.push(...transformTsdocSection(returnsBlock, tsdocNodeTransformOptions));
+			children.push(...transformTsdoc(returnsBlock, apiItem, config));
 		}
 	}
 

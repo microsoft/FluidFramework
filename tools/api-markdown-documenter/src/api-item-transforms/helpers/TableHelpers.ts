@@ -40,11 +40,7 @@ import {
 	injectSeparator,
 } from "../../utilities/index.js";
 import { getLinkForApiItem } from "../ApiItemTransformUtilities.js";
-import {
-	transformTsdocSection,
-	type TsdocNodeTransformOptions,
-} from "../TsdocNodeTransforms.js";
-import { getTsdocNodeTransformationOptions } from "../Utilities.js";
+import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
@@ -614,15 +610,13 @@ export function createApiSummaryCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
-	if (apiItem instanceof ApiDocumentedItem) {
-		const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-		if (apiItem.tsdocComment !== undefined) {
-			const summaryComment = transformTsdocSectionForTableCell(
-				apiItem.tsdocComment.summarySection,
-				tsdocNodeTransformOptions,
-			);
-			return new TableBodyCellNode(summaryComment);
-		}
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+		const summaryComment = transformTsdocSectionForTableCell(
+			apiItem.tsdocComment.summarySection,
+			apiItem,
+			config,
+		);
+		return new TableBodyCellNode(summaryComment);
 	}
 
 	return TableBodyCellNode.Empty;
@@ -699,18 +693,13 @@ export function createDefaultValueCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
 	const defaultValueSection = getDefaultValueBlock(apiItem, config.logger);
 
 	if (defaultValueSection === undefined) {
 		return TableBodyCellNode.Empty;
 	}
 
-	const contents = transformTsdocSectionForTableCell(
-		defaultValueSection,
-		tsdocNodeTransformOptions,
-	);
+	const contents = transformTsdocSectionForTableCell(defaultValueSection, apiItem, config);
 
 	return new TableBodyCellNode(contents);
 }
@@ -774,11 +763,10 @@ export function createParameterSummaryCell(
 		return TableBodyCellNode.Empty;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
-
 	const cellContent = transformTsdocSectionForTableCell(
 		apiParameter.tsdocParamBlock.content,
-		tsdocNodeTransformOptions,
+		contextApiItem,
+		config,
 	);
 
 	return new TableBodyCellNode(cellContent);
@@ -802,11 +790,10 @@ export function createTypeParameterSummaryCell(
 		return TableBodyCellNode.Empty;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
-
 	const cellContent = transformTsdocSectionForTableCell(
 		apiTypeParameter.tsdocTypeParamBlock.content,
-		tsdocNodeTransformOptions,
+		contextApiItem,
+		config,
 	);
 
 	return new TableBodyCellNode(cellContent);
@@ -859,9 +846,10 @@ function getTableHeadingTitleForApiKind(itemKind: ApiItemKind): string {
  */
 function transformTsdocSectionForTableCell(
 	tsdocSection: DocSection,
-	options: TsdocNodeTransformOptions,
+	contextApiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
 ): TableCellContent[] {
-	const transformed = transformTsdocSection(tsdocSection, options);
+	const transformed = transformTsdoc(tsdocSection, contextApiItem, config);
 
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
 	// directly in the cell.

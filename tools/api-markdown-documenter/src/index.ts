@@ -35,8 +35,7 @@ export {
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 	transformApiModel,
-	transformTsdocSection,
-	type TsdocNodeTransformOptions,
+	transformTsdoc,
 } from "./api-item-transforms/index.js";
 
 // We want to make sure the entirety of this domain is accessible.

@@ -35,6 +35,9 @@ import {
 	SpanNode,
 } from "../documentation-domain/index.js";
 
+import { resolveSymbolicLink } from "./Utilities.js";
+import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
+
 /**
  * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s
  * to {@link DocumentationNode}s.
@@ -42,8 +45,6 @@ import {
 
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
- *
- * @public
  */
 export interface TsdocNodeTransformOptions extends LoggingConfiguration {
 	/**
@@ -63,9 +64,54 @@ export interface TsdocNodeTransformOptions extends LoggingConfiguration {
 }
 
 /**
+ * Create {@link TsdocNodeTransformOptions} for the provided context API item and the system config.
+ *
+ * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @returns An option for {@link @microsoft/tsdoc#DocNode} transformations
+ */
+function getTsdocNodeTransformationOptions(
+	contextApiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
+): TsdocNodeTransformOptions {
+	return {
+		contextApiItem,
+		resolveApiReference: (codeDestination): Link | undefined =>
+			resolveSymbolicLink(contextApiItem, codeDestination, config),
+		logger: config.logger,
+	};
+}
+
+/**
  * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link SectionNode}.
  *
  * @public
+ */
+export function transformTsdoc(
+	node: DocSection,
+	contextApiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
+): BlockContent[] {
+	const tsdocTransformConfig = getTsdocNodeTransformationOptions(contextApiItem, config);
+
+	// TODO: HTML contents come in as a start tag, followed by the content, followed by an end tag, rather than something with hierarchy.
+	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
+	// and map the subsequence to an "html" node.
+
+	let transformedChildren: BlockContent[] = [];
+	for (const child of node.nodes) {
+		transformedChildren.push(...transformTsdocSectionContent(child, tsdocTransformConfig));
+	}
+
+	// Remove line breaks adjacent to paragraphs, as they are redundant
+	transformedChildren = filterNewlinesAdjacentToParagraphs(transformedChildren);
+
+	return transformedChildren;
+}
+
+/**
+ * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link SectionNode}.
  */
 export function transformTsdocSection(
 	node: DocSection,
