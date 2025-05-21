@@ -15,6 +15,7 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
+import { ContainerRuntime } from "./containerRuntime.js";
 import {
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -280,6 +281,24 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public get pendingMessagesCount(): number {
 		return this.pendingMessages.length + this.initialMessages.length;
+	}
+
+	/**
+	 * Checks the pending messages to see if any of them represent user changes (aka "dirtyable" messages)
+	 */
+	public hasPendingUserChanges(): boolean {
+		for (let i = 0; i < this.pendingMessages.length; i++) {
+			const element = this.pendingMessages.get(i);
+			if (
+				element?.runtimeOp !== undefined &&
+				ContainerRuntime.isContainerMessageDirtyable(element.runtimeOp)
+			) {
+				return true;
+			}
+		}
+		// Consider any initial messages to be user changes
+		// (it's an approximation since we would have to parse them to know for sure)
+		return this.initialMessages.length > 0;
 	}
 
 	/**

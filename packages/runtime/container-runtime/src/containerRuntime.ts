@@ -1898,7 +1898,7 @@ export class ContainerRuntime
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
-		this.lastEmittedDirty = !this.attachedAndFullySaved();
+		this.lastEmittedDirty = !this.notDirty();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
 
 		if (!this.skipSafetyFlushDuringProcessStack) {
@@ -3465,17 +3465,21 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Returns true if the container is attached and fully saved.
-	 * @remarks Returns false even if the only pending messages are "non-dirtyable".
+	 * Returns true if the container is not dirty (attached, and no pending messages besides "non-dirtyable" ones)
 	 */
-	private attachedAndFullySaved(): boolean {
-		return this.attachState === AttachState.Attached && !this.hasPendingMessages();
+	private notDirty(): boolean {
+		// We are NOT dirty if the only pending changes are "non-user" changes (e.g. GC, ID compressor, etc.),
+		// since these system messages can be lost without data loss.
+		return (
+			this.attachState === AttachState.Attached &&
+			!(this.pendingStateManager.hasPendingUserChanges() || this.outbox.containsUserChanges())
+		);
 	}
 
-	private isContainerMessageDirtyable({
-		type,
-		contents,
-	}: LocalContainerRuntimeMessage): boolean {
+	//* Move to free fn
+	public static isContainerMessageDirtyable(message: unknown): boolean {
+		//* Undo
+		const { type, contents } = message as LocalContainerRuntimeMessage;
 		// Certain container runtime messages should not mark the container dirty such as the old built-in
 		// AgentScheduler and Garbage collector messages.
 		switch (type) {
@@ -4339,7 +4343,7 @@ export class ContainerRuntime
 	 * But those events don't exist so we manually call this wherever we know those changes happen.
 	 */
 	private updateDocumentDirtyState(): void {
-		const dirty: boolean = !this.attachedAndFullySaved();
+		const dirty: boolean = !this.notDirty();
 
 		if (this.lastEmittedDirty === dirty) {
 			return;
@@ -4502,7 +4506,7 @@ export class ContainerRuntime
 		// It works in this moment, but after operations like rollback or resubmit or discarding staged changes,
 		// we won't re-check the pending messages to see that they're all dirtyable, which could result in
 		// false-positives saying the container is dirty when (according to isContainerMessageDirtyable) it's not.
-		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
+		if (ContainerRuntime.isContainerMessageDirtyable(containerRuntimeMessage)) {
 			this.updateDocumentDirtyState();
 		}
 	}

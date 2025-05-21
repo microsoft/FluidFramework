@@ -236,6 +236,13 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
+	public containsUserChanges(): boolean {
+		return (
+			this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges()
+			//* (maybe include anyway) ID Allocation ops are not user changes
+		);
+	}
+
 	/**
 	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that (if allowed) and create a new batch with the new
