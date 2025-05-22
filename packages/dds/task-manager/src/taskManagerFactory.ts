@@ -27,11 +27,11 @@ export class TaskManagerFactory implements IChannelFactory<ITaskManager> {
 		packageVersion: pkgVersion,
 	};
 
-	public get type() {
+	public get type(): typeof TaskManagerFactory.Type {
 		return TaskManagerFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): typeof TaskManagerFactory.Attributes {
 		return TaskManagerFactory.Attributes;
 	}
 

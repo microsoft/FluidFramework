@@ -242,7 +242,7 @@ export class TaskManagerClass
 		});
 	}
 
-	private submitVolunteerOp(taskId: string) {
+	private submitVolunteerOp(taskId: string): void {
 		const op: ITaskManagerVolunteerOperation = {
 			type: "volunteer",
 			taskId,
@@ -255,7 +255,7 @@ export class TaskManagerClass
 		this.latestPendingOps.set(taskId, pendingOp);
 	}
 
-	private submitAbandonOp(taskId: string) {
+	private submitAbandonOp(taskId: string): void {
 		const op: ITaskManagerAbandonOperation = {
 			type: "abandon",
 			taskId,
@@ -268,7 +268,7 @@ export class TaskManagerClass
 		this.latestPendingOps.set(taskId, pendingOp);
 	}
 
-	private submitCompleteOp(taskId: string) {
+	private submitCompleteOp(taskId: string): void {
 		const op: ITaskManagerCompletedOperation = {
 			type: "complete",
 			taskId,
@@ -291,7 +291,7 @@ export class TaskManagerClass
 	/**
 	 * {@inheritDoc ITaskManager.volunteerForTask}
 	 */
-	public async volunteerForTask(taskId: string) {
+	public async volunteerForTask(taskId: string): Promise<boolean> {
 		// If we have the lock, resolve immediately
 		if (this.assigned(taskId)) {
 			return true;
@@ -318,7 +318,7 @@ export class TaskManagerClass
 
 		// This promise works even if we already have an outstanding volunteer op.
 		const lockAcquireP = new Promise<boolean>((resolve, reject) => {
-			const checkIfAcquiredLock = (eventTaskId: string) => {
+			const checkIfAcquiredLock = (eventTaskId: string): void => {
 				if (eventTaskId !== taskId) {
 					return;
 				}
@@ -335,7 +335,7 @@ export class TaskManagerClass
 				}
 			};
 
-			const checkIfAbandoned = (eventTaskId: string) => {
+			const checkIfAbandoned = (eventTaskId: string): void => {
 				if (eventTaskId !== taskId) {
 					return;
 				}
@@ -347,7 +347,7 @@ export class TaskManagerClass
 				reject(new Error("Abandoned before acquiring task assignment"));
 			};
 
-			const rejectOnDisconnect = () => {
+			const rejectOnDisconnect = (): void => {
 				this.queueWatcher.off("queueChange", checkIfAcquiredLock);
 				this.abandonWatcher.off("abandon", checkIfAbandoned);
 				this.connectionWatcher.off("disconnect", rejectOnDisconnect);
@@ -355,7 +355,7 @@ export class TaskManagerClass
 				reject(new Error("Disconnected before acquiring task assignment"));
 			};
 
-			const checkIfCompleted = (eventTaskId: string) => {
+			const checkIfCompleted = (eventTaskId: string): void => {
 				if (eventTaskId !== taskId) {
 					return;
 				}
@@ -382,7 +382,7 @@ export class TaskManagerClass
 	/**
 	 * {@inheritDoc ITaskManager.subscribeToTask}
 	 */
-	public subscribeToTask(taskId: string) {
+	public subscribeToTask(taskId: string): void {
 		if (this.subscribed(taskId)) {
 			return;
 		}
@@ -391,16 +391,16 @@ export class TaskManagerClass
 			throw new Error("Attempted to subscribe with read-only permissions");
 		}
 
-		const submitVolunteerOp = () => {
+		const submitVolunteerOp = (): void => {
 			this.submitVolunteerOp(taskId);
 		};
 
-		const disconnectHandler = () => {
+		const disconnectHandler = (): void => {
 			// Wait to be connected again and then re-submit volunteer op
 			this.connectionWatcher.once("connect", submitVolunteerOp);
 		};
 
-		const checkIfAbandoned = (eventTaskId: string) => {
+		const checkIfAbandoned = (eventTaskId: string): void => {
 			if (eventTaskId !== taskId) {
 				return;
 			}
@@ -413,7 +413,7 @@ export class TaskManagerClass
 			this.subscribedTasks.delete(taskId);
 		};
 
-		const checkIfCompleted = (eventTaskId: string) => {
+		const checkIfCompleted = (eventTaskId: string): void => {
 			if (eventTaskId !== taskId) {
 				return;
 			}
@@ -462,7 +462,7 @@ export class TaskManagerClass
 	/**
 	 * {@inheritDoc ITaskManager.abandon}
 	 */
-	public abandon(taskId: string) {
+	public abandon(taskId: string): void {
 		// Always allow abandon if the client is subscribed to allow clients to unsubscribe while disconnected.
 		// Otherwise, we should check to make sure the client is both connected queued for the task before sending an
 		// abandon op.
@@ -489,7 +489,7 @@ export class TaskManagerClass
 	/**
 	 * {@inheritDoc ITaskManager.assigned}
 	 */
-	public assigned(taskId: string) {
+	public assigned(taskId: string): boolean {
 		if (this.isAttached() && !this.connected) {
 			return false;
 		}
@@ -505,7 +505,7 @@ export class TaskManagerClass
 	/**
 	 * {@inheritDoc ITaskManager.queued}
 	 */
-	public queued(taskId: string) {
+	public queued(taskId: string): boolean {
 		if (this.isAttached() && !this.connected) {
 			return false;
 		}
@@ -567,24 +567,24 @@ export class TaskManagerClass
 	 * @returns the summary of the current state of the task manager
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		if (this.runtime.clientId !== undefined) {
-			// If the runtime has been assigned an actual clientId by now, we can replace the placeholder clientIds
-			// and maintain the task assignment.
-			this.replacePlaceholderInAllQueues();
-		} else {
+		if (this.runtime.clientId === undefined) {
 			// If the runtime has still not been assigned a clientId, we should not summarize with the placeholder
 			// clientIds and instead remove them from the queues and require the client to re-volunteer when assigned
 			// a new clientId.
 			this.removeClientFromAllQueues(placeholderClientId);
+		} else {
+			// If the runtime has been assigned an actual clientId by now, we can replace the placeholder clientIds
+			// and maintain the task assignment.
+			this.replacePlaceholderInAllQueues();
 		}
 
 		// Only include tasks if there are clients in the queue.
 		const filteredMap = new Map<string, string[]>();
-		this.taskQueues.forEach((queue: string[], taskId: string) => {
+		for (const [taskId, queue] of this.taskQueues) {
 			if (queue.length > 0) {
 				filteredMap.set(taskId, queue);
 			}
-		});
+		}
 		const content = [...filteredMap.entries()];
 		return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
 	}
@@ -594,26 +594,26 @@ export class TaskManagerClass
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName);
-		content.forEach(([taskId, clientIdQueue]) => {
+		for (const [taskId, clientIdQueue] of content) {
 			this.taskQueues.set(taskId, clientIdQueue);
-		});
+		}
 		this.scrubClientsNotInQuorum();
 	}
 
 	/***/
-	protected initializeLocalCore() {}
+	protected initializeLocalCore(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
 	 */
-	protected onDisconnect() {
+	protected onDisconnect(): void {
 		this.connectionWatcher.emit("disconnect");
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
 	 */
-	protected onConnect() {
+	protected onConnect(): void {
 		this.connectionWatcher.emit("connect");
 	}
 
@@ -622,7 +622,7 @@ export class TaskManagerClass
 	 * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
 	 * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
 	 */
-	protected reSubmitCore() {}
+	protected reSubmitCore(): void {}
 
 	/**
 	 * Process a task manager operation
@@ -636,31 +636,35 @@ export class TaskManagerClass
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		if (message.type === MessageType.Operation) {
 			const op = message.contents as ITaskManagerOperation;
 			const messageId = localOpMetadata as number;
 
 			switch (op.type) {
-				case "volunteer":
+				case "volunteer": {
 					this.opWatcher.emit("volunteer", op.taskId, message.clientId, local, messageId);
 					break;
+				}
 
-				case "abandon":
+				case "abandon": {
 					this.opWatcher.emit("abandon", op.taskId, message.clientId, local, messageId);
 					break;
+				}
 
-				case "complete":
+				case "complete": {
 					this.opWatcher.emit("complete", op.taskId, message.clientId, local, messageId);
 					break;
+				}
 
-				default:
+				default: {
 					throw new Error("Unknown operation");
+				}
 			}
 		}
 	}
 
-	private addClientToQueue(taskId: string, clientId: string) {
+	private addClientToQueue(taskId: string, clientId: string): void {
 		const pendingIds = this.pendingCompletedTasks.get(taskId);
 		if (pendingIds !== undefined && pendingIds.length > 0) {
 			// Ignore the volunteer op if we know this task is about to be completed
@@ -688,7 +692,7 @@ export class TaskManagerClass
 		}
 	}
 
-	private removeClientFromQueue(taskId: string, clientId: string) {
+	private removeClientFromQueue(taskId: string, clientId: string): void {
 		const clientQueue = this.taskQueues.get(taskId);
 		if (clientQueue === undefined) {
 			return;
@@ -710,7 +714,7 @@ export class TaskManagerClass
 		}
 	}
 
-	private removeClientFromAllQueues(clientId: string) {
+	private removeClientFromAllQueues(clientId: string): void {
 		for (const taskId of this.taskQueues.keys()) {
 			this.removeClientFromQueue(taskId, clientId);
 		}
@@ -720,7 +724,7 @@ export class TaskManagerClass
 	 * Will replace all instances of the placeholderClientId with the current clientId. This should only be called when
 	 * transitioning from detached to attached and this.runtime.clientId is defined.
 	 */
-	private replacePlaceholderInAllQueues() {
+	private replacePlaceholderInAllQueues(): void {
 		assert(
 			this.runtime.clientId !== undefined,
 			0x475 /* this.runtime.clientId should be defined */,
@@ -735,7 +739,7 @@ export class TaskManagerClass
 
 	// This seems like it should be unnecessary if we can trust to receive the join/leave messages and
 	// also have an accurate snapshot.
-	private scrubClientsNotInQuorum() {
+	private scrubClientsNotInQuorum(): void {
 		const quorum = this.runtime.getQuorum();
 		for (const [taskId, clientQueue] of this.taskQueues) {
 			const filteredClientQueue = clientQueue.filter(
@@ -752,8 +756,8 @@ export class TaskManagerClass
 		}
 	}
 
-	protected applyStashedOp(content: any): void {
-		const taskOp: ITaskManagerOperation = content;
+	protected applyStashedOp(content: unknown): void {
+		const taskOp: ITaskManagerOperation = content as ITaskManagerOperation;
 		switch (taskOp.type) {
 			case "abandon": {
 				this.abandon(taskOp.taskId);
@@ -767,8 +771,9 @@ export class TaskManagerClass
 				this.subscribeToTask(taskOp.taskId);
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(taskOp);
+			}
 		}
 	}
 }
