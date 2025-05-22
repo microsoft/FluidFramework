@@ -2522,6 +2522,11 @@ export class ContainerRuntime
 		this.consecutiveReconnects = 0;
 	}
 
+	/**
+	 * ID Allocation op generated before replaying pending states, to be submitted before the next op
+	 */
+	private outstandingUnfinalizedIdCreationRangeOp: LocalBatchMessage | undefined = undefined;
+
 	private replayPendingStates(): void {
 		// We need to be able to send ops to replay states
 		if (!this.canSendOps()) {
@@ -2541,11 +2546,13 @@ export class ContainerRuntime
 		let newState: boolean;
 
 		try {
-			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
-			// the corresponding ranges resubmitted (note this call replaces the typical resubmit flow).
-			// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
-			// before staging mode so we can simply say staged: false.
-			this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
+			// We need to get the ID Compressor's slate clean before replaying the ops.
+			// We don't submit this op yet - we'll include it before generating any "next creation range" ops,
+			// right before submitting other runtime ops.
+			this.outstandingUnfinalizedIdCreationRangeOp = this.generateIdAllocationOpIfNeeded({
+				resubmitOutstandingRanges: true,
+				staged: false, // This won't be submitted while in staging mode so we can always set this to false
+			});
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
@@ -2555,6 +2562,9 @@ export class ContainerRuntime
 			this.dirtyContainer = oldState;
 			this.emitDirtyDocumentEvent = true;
 		}
+
+		// If somehow this wasn't submitted, we should clear it since its refseq will be out of date after this synchronous frame returns.
+		this.outstandingUnfinalizedIdCreationRangeOp = undefined;
 
 		// Officially transition from the old state to the new state.
 		this.updateDocumentDirtyState(newState);
@@ -3343,7 +3353,11 @@ export class ContainerRuntime
 
 			// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
 			// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
-			this.submitIdAllocationOpIfNeeded({ staged: false });
+			const idAllocationOp = this.generateIdAllocationOpIfNeeded({ staged: false });
+			if (idAllocationOp !== undefined) {
+				this.outbox.submitIdAllocation(idAllocationOp);
+				this.scheduleFlush();
+			}
 			discardOrCommit();
 
 			this.channelCollection.notifyStagingMode(false);
@@ -4376,13 +4390,26 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private submitIdAllocationOpIfNeeded({
+	/**
+	 * Generate an ID allocation op to be submitted ahead of any runtime ops that might depend
+	 * on the outstanding changes to ID Compressor state.
+	 * The default behavior uses takeNextCreationRange, and the resulting op should be submitted
+	 * before submitting other ops that may have generated a compressed ID.
+	 *
+	 * @param resubmitOutstandingRanges - if true, use takeUnfinalizedCreationRange
+	 * instead of takeNextCreationRange. This is needed before replaying pending state,
+	 * to get a "clean slate" for the ID compressor with regard to any outstanding state from the first time around.
+	 * @param staged - Indicates whether this ID Allocation op should be staged (not submitted yet).  Typically expected to be false.
+	 *
+	 * @returns - The generated ID allocation operation or undefined.
+	 */
+	private generateIdAllocationOpIfNeeded({
 		resubmitOutstandingRanges = false,
 		staged,
 	}: {
 		resubmitOutstandingRanges?: boolean;
 		staged: boolean;
-	}): void {
+	}): LocalBatchMessage | undefined {
 		if (this._idCompressor) {
 			const idRange = resubmitOutstandingRanges
 				? this._idCompressor.takeUnfinalizedCreationRange()
@@ -4398,9 +4425,10 @@ export class ContainerRuntime
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 					staged,
 				};
-				this.outbox.submitIdAllocation(idAllocationBatchMessage);
+				return idAllocationBatchMessage;
 			}
 		}
+		return undefined;
 	}
 
 	private submit(
@@ -4441,11 +4469,17 @@ export class ContainerRuntime
 			// If we're resubmitting a batch, keep the same "staged" value as before.  Otherwise, use the current "global" state.
 			const staged = this.batchRunner.resubmitInfo?.staged ?? this.inStagingMode;
 
-			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
+			// Before submitting any non-staged change, submit the ID Allocation op(s) to cover any recently compressed IDs.
 			if (!staged) {
-				this.submitIdAllocationOpIfNeeded({ staged: false });
+				if (this.outstandingUnfinalizedIdCreationRangeOp) {
+					this.outbox.submitIdAllocation(this.outstandingUnfinalizedIdCreationRangeOp);
+					this.outstandingUnfinalizedIdCreationRangeOp = undefined;
+				}
+				const idAllocationOp = this.generateIdAllocationOpIfNeeded({ staged: false });
+				if (idAllocationOp) {
+					this.outbox.submitIdAllocation(idAllocationOp);
+				}
 			}
-
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
 			// on this callback to do actual sending.
