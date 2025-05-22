@@ -83,7 +83,7 @@ async function getWebsocketToken(
  * These values will only be used if the feature gate is not already set by the supplied config provider.
  */
 const odspClientFeatureGates = {
-	// None yet
+	"Fluid.Driver.Odsp.enableLargeBlobUpload": true,
 };
 
 /**

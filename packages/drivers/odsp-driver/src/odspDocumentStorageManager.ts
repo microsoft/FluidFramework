@@ -138,6 +138,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			);
 			const headers = getHeadersWithAuth(authHeader);
 			headers["Content-Type"] = "application/octet-stream";
+			if (this.config.getBoolean("Fluid.Driver.Odsp.enableLargeBlobUpload")) {
+				console.log("Fluid.Driver.Odsp.enableLargeBlobUpload is enabled");
+				headers.Prefer = "Increase-Attachment-Size-Limit";
+			}
 
 			return PerformanceEvent.timedExecAsync(
 				this.logger,
