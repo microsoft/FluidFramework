@@ -184,18 +184,12 @@ export abstract class TreeNodeStoredSchema {
 	protected _typeCheck!: MakeNominal;
 
 	/**
-	 * @privateRemarks
-	 * Returns TreeNodeSchemaDataFormat.
-	 * This is uses an opaque type to avoid leaking these types out of the package,
-	 * and is runtime validated by the codec.
+	 * Encode in the v1 schema format.
 	 */
 	public abstract encodeV1(): TreeNodeSchemaDataFormatV1;
 
 	/**
-	 * @privateRemarks
-	 * Returns TreeNodeSchemaDataFormat.
-	 * This is uses an opaque type to avoid leaking these types out of the package,
-	 * and is runtime validated by the codec.
+	 * Encode in the v2 schema format.
 	 */
 	public abstract encodeV2(): TreeNodeSchemaDataFormatV2;
 
