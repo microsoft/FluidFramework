@@ -10,6 +10,7 @@ import {
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { ContainerExtensionStore } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
@@ -235,7 +236,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
  *
  * @internal
  */
-export interface IFluidContainerInternal {
+export interface IFluidContainerInternal extends ContainerExtensionStore {
 	/**
 	 * The underlying {@link @fluidframework/container-definitions#IContainer}.
 	 *
@@ -254,8 +255,13 @@ export function createFluidContainer<
 >(props: {
 	container: IContainer;
 	rootDataObject: IRootDataObject;
+	placeholder: () => void;
 }): IFluidContainer<TContainerSchema> {
-	return new FluidContainer<TContainerSchema>(props.container, props.rootDataObject);
+	return new FluidContainer<TContainerSchema>(
+		props.container,
+		props.rootDataObject,
+		props.placeholder,
+	);
 }
 
 /**
@@ -291,12 +297,15 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.emit("disposed", error);
 	private readonly savedHandler = (): boolean => this.emit("saved");
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
+	public readonly acquireExtension: ContainerExtensionStore["acquireExtension"];
 
 	public constructor(
 		public readonly container: IContainer,
 		private readonly rootDataObject: IRootDataObject,
+		extensionStore: ContainerExtensionStore,
 	) {
 		super();
+		this.acquireExtension = extensionStore.acquireExtension.bind(extensionStore);
 		container.on("connected", this.connectedHandler);
 		container.on("closed", this.disposedHandler);
 		container.on("disconnected", this.disconnectedHandler);

@@ -34,6 +34,7 @@ import type {
 } from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
+	type IStaticEntryPoint,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
@@ -340,18 +341,19 @@ export class AzureClient {
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
 			rootDataObject,
+			placeholder: (): void => {},
 		});
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
 
 	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+		const entryPoint: FluidObject<IStaticEntryPoint> = await container.getEntryPoint();
 		assert(
-			rootDataObject.IRootDataObject !== undefined,
-			0x90a /* entryPoint must be of type IRootDataObject */,
+			entryPoint.IStaticEntryPoint !== undefined,
+			"entryPoint must be of type IStaticEntryPoint",
 		);
-		return rootDataObject.IRootDataObject;
+		return entryPoint.IStaticEntryPoint.rootDataObject;
 	}
 	// #endregion
 }

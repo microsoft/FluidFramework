@@ -27,7 +27,10 @@ import type {
 	ContainerSchema,
 	IFluidContainer,
 } from "@fluidframework/fluid-static";
-import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
+import type {
+	IRootDataObject,
+	IStaticEntryPoint,
+} from "@fluidframework/fluid-static/internal";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
@@ -237,7 +240,7 @@ export class OdspClient {
 			 */
 			return resolvedUrl.itemId;
 		};
-		const fluidContainer = createFluidContainer({ container, rootDataObject });
+		const fluidContainer = createFluidContainer({ container, rootDataObject, placeholder: (): void => {}) });
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
@@ -252,11 +255,11 @@ export class OdspClient {
 	}
 
 	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+		const entryPoint: FluidObject<IStaticEntryPoint> = await container.getEntryPoint();
 		assert(
-			rootDataObject.IRootDataObject !== undefined,
-			0x878 /* entryPoint must be of type IRootDataObject */,
+			entryPoint.IStaticEntryPoint !== undefined,
+			"entryPoint must be of type IStaticEntryPoint",
 		);
-		return rootDataObject.IRootDataObject;
+		return entryPoint.IStaticEntryPoint.rootDataObject;
 	}
 }

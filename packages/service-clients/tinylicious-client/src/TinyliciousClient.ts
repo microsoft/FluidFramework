@@ -31,6 +31,7 @@ import type {
 } from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
+	type IStaticEntryPoint,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
@@ -121,6 +122,7 @@ export class TinyliciousClient {
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
 			rootDataObject,
+			placeholder: (): void => {},
 		});
 		fluidContainer.attach = attach;
 
@@ -207,12 +209,12 @@ export class TinyliciousClient {
 	}
 
 	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+		const entryPoint: FluidObject<IStaticEntryPoint> = await container.getEntryPoint();
 		assert(
-			rootDataObject.IRootDataObject !== undefined,
-			0x875 /* entryPoint must be of type IRootDataObject */,
+			entryPoint.IStaticEntryPoint !== undefined,
+			"entryPoint must be of type IStaticEntryPoint",
 		);
-		return rootDataObject.IRootDataObject;
+		return entryPoint.IStaticEntryPoint.rootDataObject;
 	}
 	// #endregion
 }
