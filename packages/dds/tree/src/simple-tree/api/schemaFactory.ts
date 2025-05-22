@@ -17,7 +17,6 @@ import {
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
-import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
 import type {
 	NodeKind,
 	WithType,
@@ -35,12 +34,16 @@ import {
 	stringSchema,
 	type LeafSchema,
 } from "../leafNodeSchema.js";
-import { type MapNodeInsertableData, type TreeMapNode, mapSchema } from "../mapNode.js";
 import {
-	type InsertableObjectFromSchemaRecord,
-	type TreeObjectNode,
+	arraySchema,
+	type MapNodeInsertableData,
+	mapSchema,
 	objectSchema,
-} from "../objectNode.js";
+	type TreeArrayNode,
+	type InsertableObjectFromSchemaRecord,
+	type TreeMapNode,
+	type TreeObjectNode,
+} from "../node-kinds/index.js";
 import {
 	FieldKind,
 	type FieldSchema,
