@@ -199,17 +199,15 @@ export {
 	isMapNodeSchema,
 	type TreeMapNode,
 	type MapNodeInsertableData,
-} from "./node-kinds/index.js";
-export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
+	ObjectNodeSchema,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,
 	createUnknownOptionalFieldPolicy,
-} from "./objectNode.js";
-export { ObjectNodeSchema } from "./objectNodeTypes.js";
+} from "./node-kinds/index.js";
 export {
 	mapTreeFromNodeData,
 	type InsertableContent,

@@ -46,7 +46,8 @@ import {
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import { isObjectNodeSchema } from "./objectNodeTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import { isObjectNodeSchema } from "./node-kinds/object/objectNodeTypes.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**

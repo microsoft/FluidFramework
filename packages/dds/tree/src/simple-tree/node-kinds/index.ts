@@ -24,3 +24,17 @@ export {
 	mapSchema,
 	type TreeMapNode,
 } from "./map/index.js";
+
+export {
+	createUnknownOptionalFieldPolicy,
+	type FieldHasDefault,
+	type InsertableObjectFromAnnotatedSchemaRecord,
+	type InsertableObjectFromSchemaRecord,
+	isObjectNodeSchema,
+	lazilyAllocateIdentifier,
+	type ObjectFromSchemaRecord,
+	ObjectNodeSchema,
+	objectSchema,
+	setField,
+	type TreeObjectNode,
+} from "./object/index.js";

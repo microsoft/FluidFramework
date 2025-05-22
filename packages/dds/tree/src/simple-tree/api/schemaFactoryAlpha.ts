@@ -4,6 +4,14 @@
  */
 
 import {
+	type ArrayNodeCustomizableSchema,
+	arraySchema,
+	type MapNodeCustomizableSchema,
+	mapSchema,
+	type ObjectNodeSchema,
+	objectSchema,
+} from "../node-kinds/index.js";
+import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
 	schemaStatics,
@@ -17,7 +25,6 @@ import type {
 	ImplicitFieldSchema,
 	NodeSchemaOptions,
 } from "../schemaTypes.js";
-import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
 import type {
@@ -25,13 +32,6 @@ import type {
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 } from "./typesUnsafe.js";
-import {
-	type ArrayNodeCustomizableSchema,
-	arraySchema,
-	type MapNodeCustomizableSchema,
-	mapSchema,
-} from "../node-kinds/index.js";
-import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 
 /**

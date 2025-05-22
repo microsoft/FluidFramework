@@ -45,7 +45,7 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeObjectNode,
 	objectSchema,
-} from "../objectNode.js";
+} from "../node-kinds/object/objectNode.js";
 import {
 	FieldKind,
 	type FieldSchema,
