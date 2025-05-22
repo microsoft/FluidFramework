@@ -52,6 +52,7 @@ import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 } from "./arrayNodeTypes.js";
+import { brand } from "../util/index.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -1056,6 +1057,21 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes
 			}
 			if (sourceField.context !== destinationField.context) {
 				throw new UsageError("Cannot move elements between two different TreeViews.");
+			}
+
+			// add schema validation
+			// TODO test this
+			const storedSchema =
+				destinationField.context.schema.nodeSchema.get(
+					brand(this[typeSchemaSymbol].identifier),
+				) ?? fail("Schema should exist for a hydrated node");
+			const fieldSchema = storedSchema.getFieldSchema(EmptyKey);
+			for (let i = sourceStart; i < sourceEnd; i++) {
+				const sourceNode = sourceField.boxedAt(i) ?? oob();
+				const sourceSchema = getSimpleNodeSchemaFromInnerNode(sourceNode);
+				if (!fieldSchema.types.has(brand(sourceSchema.identifier))) {
+					throw new UsageError("Type in source sequence is not allowed in destination.");
+				}
 			}
 
 			destinationField.context.checkout.editor.move(
