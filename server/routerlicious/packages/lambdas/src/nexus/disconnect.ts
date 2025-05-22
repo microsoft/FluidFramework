@@ -125,13 +125,11 @@ function removeClientAndSendNotifications(
 		// Update session tracker upon disconnection
 		if (collaborationSessionTracker) {
 			const client = clientMap.get(clientId);
-			const connectionTimestamp = connectionTimeMap.get(clientId);
 			if (client) {
 				collaborationSessionTracker
 					.endClientSession(
 						{
 							clientId,
-							joinedTime: connectionTimestamp ?? 0,
 							isSummarizerClient: isSummarizer(client.details),
 							isWriteClient: isWriter(client.scopes, client.mode),
 						},

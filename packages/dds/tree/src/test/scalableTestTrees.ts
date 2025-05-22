@@ -94,10 +94,9 @@ export function makeDeepStoredContent(
 }
 
 /**
- *
+ * Returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
  * @param numberOfNodes - number of nodes of the tree
  * @param endLeafValue - the value of the end leaf of the tree. If not provided its index is used.
- * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
  */
 export function makeWideContentWithEndValueSimple(
 	numberOfNodes: number,
@@ -112,9 +111,9 @@ export function makeWideContentWithEndValueSimple(
 }
 
 /**
+ * Returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue.
  * @param numberOfNodes - number of nodes of the tree
  * @param endLeafValue - the value of the end leaf of the tree. If not provided its index is used.
- * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
  */
 export function makeWideStoredContentWithEndValue(
 	numberOfNodes: number,
@@ -128,10 +127,9 @@ export function makeWideStoredContentWithEndValue(
 }
 
 /**
- *
+ * Returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue.
  * @param numberOfNodes - number of nodes of the tree
  * @param endLeafValue - the value of the end leaf of the tree. If not provided its index is used.
- * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
  */
 export function makeJsWideTreeWithEndValue(
 	numberOfNodes: number,

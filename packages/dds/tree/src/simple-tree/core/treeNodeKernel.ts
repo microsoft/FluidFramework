@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
-import type { InternalTreeNode, Unhydrated } from "./types.js";
+import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	anchorSlot,
 	type AnchorEvents,
@@ -16,6 +16,9 @@ import {
 	type TreeValue,
 	type UpPath,
 } from "../../core/index.js";
+// TODO: decide how to deal with dependencies on flex-tree implementation.
+// eslint-disable-next-line import/no-internal-modules
+import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
 import {
 	assertFlexTreeEntityNotFreed,
 	ContextSlot,
@@ -25,13 +28,12 @@ import {
 	treeStatusFromAnchorCache,
 	type FlexTreeNode,
 } from "../../feature-libraries/index.js";
-import type { TreeNodeSchema } from "./treeNodeSchema.js";
-// TODO: decide how to deal with dependencies on flex-tree implementation.
-// eslint-disable-next-line import/no-internal-modules
-import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
+
 import { SimpleContextSlot, type Context, type HydratedContext } from "./context.js";
-import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 import type { TreeNode } from "./treeNode.js";
+import type { TreeNodeSchema } from "./treeNodeSchema.js";
+import type { InternalTreeNode, Unhydrated } from "./types.js";
+import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 
