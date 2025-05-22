@@ -48,7 +48,6 @@ import {
 	ISegmentAction,
 	ISegmentPrivate,
 	Marker,
-	MergeBlock,
 	SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
@@ -85,6 +84,7 @@ import {
 } from "./ops.js";
 import {
 	LocalReconnectingPerspective,
+	LocalSquashPerspective,
 	PriorPerspective,
 	type Perspective,
 } from "./perspective.js";
@@ -900,16 +900,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return { segment: newSegment, offset: newOffset, side: newSide };
 	}
 
-	private computeNewObliterateEndpoints(obliterateInfo: ObliterateInfo): {
+	private computeNewObliterateEndpoints(
+		obliterateInfo: ObliterateInfo,
+		squash: boolean,
+	): {
 		start: RebasedObliterateEndpoint;
 		end: RebasedObliterateEndpoint;
 	} {
 		const { currentSeq, clientId } = this.getCollabWindow();
-		const reconnectingPerspective = new LocalReconnectingPerspective(
-			currentSeq,
-			clientId,
-			obliterateInfo.stamp.localSeq! - 1,
-		);
+		const reconnectingPerspective = new (
+			squash ? LocalSquashPerspective : LocalReconnectingPerspective
+		)(currentSeq, clientId, obliterateInfo.stamp.localSeq! - 1);
 
 		const newStart = this.rebaseSidedLocalReference(
 			obliterateInfo.start,
@@ -1180,8 +1181,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					const removeInfo = toRemovalInfo(segment);
 
 					const unusedStamp: OperationStamp = { seq: 0, clientId: 0 };
-					// Logic here needs to be updated as well as for subsequent removal when the removal was local
-					if (removeInfo !== undefined && opstampUtils.isAcked(removeInfo.removes[0])) {
+					if (removeInfo !== undefined && squash) {
+						assert(
+							removeInfo.removes.length === 1 ||
+								opstampUtils.isAcked(removeInfo.removes[removeInfo.removes.length - 2]),
+							"Expected only one local remove",
+						);
+						this.squashInsertion(segment);
+						break;
+					} else if (removeInfo !== undefined && opstampUtils.isAcked(removeInfo.removes[0])) {
 						assert(
 							removeInfo.removes[0].type === "sliceRemove",
 							0xb5c /* Remove on insertion must be caused by obliterate. */,
@@ -1203,31 +1211,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							},
 						});
 						this._mergeTree.blockUpdatePathLengths(segment.parent, unusedStamp, true);
-						break;
-					} else if (squash && removeInfo !== undefined) {
-						assert(
-							removeInfo.removes.length === 1,
-							"Expected only single remove for segment only ever defined locally that was not remotely obliterated",
-						);
-
-						// overwriteInfo<IHasInsertionInfo & IHasRemovalInfo>(segment, {
-						// 	insert: {
-						// 		type: "insert",
-						// 		seq: UniversalSequenceNumber,
-						// 		localSeq: undefined,
-						// 		clientId: NonCollabClient,
-						// 	},
-						// 	removes: [
-						// 		{
-						// 			type: "setRemove",
-						// 			seq: UniversalSequenceNumber,
-						// 			localSeq: undefined,
-						// 			clientId: NonCollabClient,
-						// 		},
-						// 	],
-						// });
-						// this._mergeTree.blockUpdatePathLengths(segment.parent, unusedStamp, true);
-
 						break;
 					}
 
@@ -1407,71 +1390,25 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		{ start: RebasedObliterateEndpoint; end: RebasedObliterateEndpoint }
 	> = new Map();
 
-	private squashEdits(allPendingSegments: ListNode<SegmentGroup>[]): void {
-		// TODO:AB#36172: Add analogous support for squashing annotations
-		const squashedSegmentToTrackingGroups = new Map<
-			ISegmentLeaf,
-			{ insert?: SegmentGroup; remove?: SegmentGroup }
-		>();
-		for (const { data: group } of allPendingSegments) {
-			for (const segment of group.segments) {
-				if (opstampUtils.isLocal(segment.insert) && isRemoved(segment)) {
-					// No need to resubmit the insertion of this segment...
-					const lastRemove = segment.removes[segment.removes.length - 1];
-					if (opstampUtils.isLocal(lastRemove)) {
-						assert(
-							segment.removes.length === 1 ||
-								opstampUtils.isAcked(segment.removes[segment.removes.length - 2]),
-							"should only be one local remove",
-						);
-					}
-
-					const existingEntry = squashedSegmentToTrackingGroups.get(segment);
-					const groupEntry: { insert?: SegmentGroup; remove?: SegmentGroup } =
-						existingEntry ?? {};
-					if (!existingEntry) {
-						squashedSegmentToTrackingGroups.set(segment, groupEntry);
-					}
-
-					if (segment.insert.localSeq === group.localSeq) {
-						groupEntry.insert = group;
-					} else if (lastRemove.localSeq === group.localSeq) {
-						groupEntry.remove = group;
-					}
-				}
-			}
-		}
-
-		const blocksToUpdate = new Set<MergeBlock>();
-
-		for (const [segment] of squashedSegmentToTrackingGroups) {
-			overwriteInfo<IHasInsertionInfo & IHasRemovalInfo>(segment, {
-				insert: {
-					type: "insert",
+	private squashInsertion(segment: ISegmentLeaf): void {
+		overwriteInfo<IHasInsertionInfo & IHasRemovalInfo>(segment, {
+			insert: {
+				type: "insert",
+				seq: UniversalSequenceNumber,
+				localSeq: undefined,
+				clientId: SquashClient,
+			},
+			removes: [
+				{
+					type: "setRemove",
 					seq: UniversalSequenceNumber,
 					localSeq: undefined,
 					clientId: SquashClient,
 				},
-				removes: [
-					{
-						type: "setRemove",
-						seq: UniversalSequenceNumber,
-						localSeq: undefined,
-						clientId: SquashClient,
-					},
-				],
-			});
+			],
+		});
 
-			// if (remove?.obliterateInfo !== undefined) {
-			// 	segment.segmentGroups?.remove(remove);
-			// }
-
-			blocksToUpdate.add(segment.parent);
-		}
-
-		for (const block of blocksToUpdate) {
-			this._mergeTree.blockUpdatePathLengths(block, { seq: 0, clientId: 0 }, true);
-		}
+		this._mergeTree.blockUpdatePathLengths(segment.parent, { seq: 0, clientId: 0 }, true);
 	}
 
 	/**
@@ -1517,16 +1454,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			collabWindow.localSeq !== this.lastNormalization.localRefSeq
 		) {
 			const allPendingSegments = [...this._mergeTree.pendingSegments, ...this.pendingRebase];
-			if (squash) {
-				this.squashEdits(allPendingSegments);
-			}
 			// Compute obliterate endpoint destinations before segments are normalized.
 			// Segment normalization can affect what should be the semantically correct segments for the endpoints to be placed on.
 			this.cachedObliterateRebases.clear();
 			for (const group of allPendingSegments) {
 				const { obliterateInfo } = group.data;
 				if (obliterateInfo !== undefined) {
-					const { start, end } = this.computeNewObliterateEndpoints(obliterateInfo);
+					const { start, end } = this.computeNewObliterateEndpoints(obliterateInfo, squash);
 					const { localSeq } = obliterateInfo.stamp;
 					assert(localSeq !== undefined, 0xb6d /* Local seq must be defined */);
 					this.cachedObliterateRebases.set(localSeq, { start, end });
