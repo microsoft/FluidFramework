@@ -93,6 +93,15 @@ export interface IFluidContainerEvents extends IEvent {
 	 * {@link IFluidContainer.dispose}), this will contain details about the error that caused it.
 	 */
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
+
+	/**
+	 * Emitted when {@link IFluidContainer}'s read only state is changed.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `readonly`: If the container is read-only, this will be true. Otherwise, it will be false.
+	 */
+	(event: "readonlyChanged", listener: (readonly: boolean) => void): void;
 }
 
 /**
@@ -156,6 +165,16 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * When loading an existing container, it will already be attached.
 	 */
 	readonly attachState: AttachState;
+
+	/**
+	 * Get the read-only information about the container.
+	 *
+	 * @remarks
+	 *
+	 * This is used to determine if the container is read-only or not.
+	 * Read-only is true on disconnected contaienrs.
+	 */
+	isReadOnly(): boolean;
 
 	/**
 	 * A newly created container starts detached from the collaborative service.
@@ -291,6 +310,8 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.emit("disposed", error);
 	private readonly savedHandler = (): boolean => this.emit("saved");
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
+	private readonly readonlyHandler = (readonly: boolean): boolean =>
+		this.emit("readonlyChanged", readonly);
 
 	public constructor(
 		public readonly container: IContainer,
@@ -302,6 +323,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		container.on("disconnected", this.disconnectedHandler);
 		container.on("saved", this.savedHandler);
 		container.on("dirty", this.dirtyHandler);
+		container.on("readonly", this.readonlyHandler);
 	}
 
 	public get isDirty(): boolean {
@@ -322,6 +344,10 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 
 	public get initialObjects(): InitialObjects<TContainerSchema> {
 		return this.rootDataObject.initialObjects as InitialObjects<TContainerSchema>;
+	}
+
+	public isReadOnly(): boolean {
+		return this.container.readOnlyInfo.readonly ?? true;
 	}
 
 	/**
