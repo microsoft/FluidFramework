@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-private/legacy-dds",
+	"name": "@fluidframework/legacy-dds",
 	"version": "2.41.0",
 	"private": true,
 	"description": "Legacy DDSs for the Fluid Framework. These are not intended for use in new code.",
