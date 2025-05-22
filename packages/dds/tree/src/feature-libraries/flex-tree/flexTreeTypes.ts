@@ -158,7 +158,7 @@ export interface FlexTreeNode extends FlexTreeEntity {
 	 * @remarks
 	 * All fields implicitly exist, so `getBoxed` can be called with any key and will always return a field.
 	 * Even if the field is empty, it will still be returned, and can be edited to insert content if allowed by the field kind.
-	 * See {@link FlexTreeNode.tryGetField} for a variant that does not allocate afield in the empty case.
+	 * See {@link FlexTreeNode.tryGetField} for a variant that does not allocate a field in the empty case.
 	 */
 	getBoxed(key: FieldKey): FlexTreeField;
 
