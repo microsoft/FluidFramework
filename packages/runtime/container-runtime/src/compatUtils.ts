@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { compare, gt, gte, lte, valid } from "semver-ts";
@@ -83,7 +84,7 @@ export type ConfigMap<T extends Record<string, unknown>> = {
  * Generic type for runtimeOptionsAffectingDocSchemaConfigValidationMap
  */
 export type ConfigValidationMap<T extends Record<string, unknown>> = {
-	[K in keyof T]-?: (value: T[K]) => SemanticVersion | undefined;
+	[K in keyof T]-?: (configValue: T[K]) => SemanticVersion | undefined;
 };
 
 /**
@@ -323,30 +324,41 @@ export function getValidationForRuntimeOptions<T extends Record<string, unknown>
 export function configValueToMinVersionForCollab<
 	T extends string | number | boolean | undefined | object,
 	Arr extends readonly [T, SemanticVersion][],
->(configToMinVer: Arr): (value: T) => SemanticVersion | undefined {
-	const map = new Map(configToMinVer);
-	return (value: T) => {
-		// If the value is not an object, we can use the map directly to get the version
-		if (typeof value !== "object") {
-			return map.get(value);
+>(configToMinVer: Arr): (configValue: T) => SemanticVersion | undefined {
+	const configValueToRequiredVersionMap = new Map(configToMinVer);
+	return (configValue: T) => {
+		// If the configValue is not an object then we can get the version required directly from the map.
+		if (typeof configValue !== "object") {
+			return configValueToRequiredVersionMap.get(configValue);
 		}
-		// If the value is an object, we need to check if it matches any of the keys in the map
-		// Collect all versions for which the config entry is a subset of the value object
+		// If the configValue is an object then we need to check if it matches any of the possible config values
+		// in configValueToVersionMap. We will loop through each entry in configValueToRequiredVersionMap and if
+		// any of the possible config values match the configValue passed in by the user, then the version associated
+		// with that possible config value will be added to the `matchingVersions` array. Once the loop is complete
+		// `matchingVersions` will contain versions that are required for the configValue passed in. We can then take
+		// the latest version from the array and return it, as that represents the minVersionForCollab that is required
+		// to ensure the configValue passed in valid.
 		const matchingVersions: SemanticVersion[] = [];
-		for (const [key, version] of map.entries()) {
-			if (
-				typeof key === "object" &&
-				key !== undefined &&
-				Object.entries(key).every(([k, v]) => value[k] === v)
-			) {
-				matchingVersions.push(version);
+		for (const [
+			possibleConfigValue,
+			versionRequired,
+		] of configValueToRequiredVersionMap.entries()) {
+			assert(
+				typeof possibleConfigValue == "object",
+				"possibleConfigValue should be an object",
+			);
+			// Checks if the key/value pair in the configValue the user passed in matches one of the
+			// key value pairs in possibleConfigValue.
+			if (Object.entries(possibleConfigValue).some(([k, v]) => configValue[k] === v)) {
+				matchingVersions.push(versionRequired);
 			}
 		}
 		if (matchingVersions.length > 0) {
-			// Return the latest minVersionForCollab among all matches
-			return matchingVersions.sort((a, b) => (gt(a, b) ? -1 : 1))[0];
+			// Return the latest minVersionForCollab among all matches.
+			return matchingVersions.sort((a, b) => compare(b, a))[0];
 		}
-		// If no matches, return undefined
+		// If no matches then we return undefined. This means that the config value passed in
+		// does not require a specific minVersionForCollab to be valid.
 		return undefined;
 	};
 }
