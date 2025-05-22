@@ -134,10 +134,9 @@ function validateAndPrepare(
 	mapTrees: ExclusiveMapTree[],
 ): void {
 	if (hydratedData !== undefined) {
-		if (schemaAndPolicy.policy.validateSchema === true) {
-			const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
-			inSchemaOrThrow(maybeError);
-		}
+		// The schema is always validated here
+		const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
+		inSchemaOrThrow(maybeError);
 		prepareContentForHydration(mapTrees, hydratedData.checkout.forest);
 	}
 }
