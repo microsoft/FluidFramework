@@ -39,6 +39,37 @@ const supportDocsLinkSpan = new SpanNode([
 ]);
 
 /**
+ * A special use notice for the "@system" tag.
+ */
+const systemNotice = new AdmonitionNode(
+	[supportDocsLinkSpan],
+	/* admonitionKind: */ "warning",
+	"This API is reserved for internal system use and should not be imported directly. It may change at any time without notice.",
+);
+
+/**
+ * A special use notice for the "@sealed" tag.
+ */
+const sealedNotice = new AdmonitionNode(
+	[new SpanNode([
+	new PlainTextNode('This type is "sealed" meaning that code outside of the library defining it should not implement or extend it. Future versions of this type may add members, or make typing of readonly members more specific.'),
+])],
+	/* admonitionKind: */ "info",
+	"Sealed",
+);
+
+/**
+ * A special use notice for the "@input" tag.
+ */
+const inputNotice = new AdmonitionNode(
+	[new SpanNode([
+	new PlainTextNode('This type is "input" meaning that code outside of the library defining it should not read from it. Future versions of this type may add optional members, or make typing of members more general.'),
+])],
+	/* admonitionKind: */ "info",
+	"Input",
+);
+
+/**
  * Creates a special support notice for the provided API item, if one is appropriate.
  *
  * If the item is tagged as "@legacy", displays a legacy notice.
@@ -115,17 +146,13 @@ function createSupportNotice(apiItem, isImportable) {
 /**
  * Creates a special use notice for the provided API item, if one is appropriate.
  *
- * If the item is tagged as "@system", displays an internal notice with use notes.
+ * If the item is tagged as with `tag`, displays an notice.
  *
- * @param {ApiItem} apiItem - The API item for which the system notice is being created.
+ * @param {ApiItem} apiItem - The API item for which the notice might be created.
  */
-function createSystemNotice(apiItem) {
-	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
-		return new AdmonitionNode(
-			[supportDocsLinkSpan],
-			/* admonitionKind: */ "warning",
-			"This API is reserved for internal system use and should not be imported directly. It may change at any time without notice.",
-		);
+function createTagNotice(apiItem, tag, notice) {
+	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, tag)) {
+		return notice;
 	}
 
 	return undefined;
@@ -180,73 +207,65 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 
 	const sections = [];
 
-	// Render summary comment (if any)
-	const summary = LayoutUtilities.createSummaryParagraph(apiItem, config);
-	if (summary !== undefined) {
-		sections.push(new SectionNode([summary]));
-	}
-
-	// Render system notice (if any) that supersedes deprecation and import notices
-	const systemNotice = createSystemNotice(apiItem);
-	if (systemNotice !== undefined) {
-		sections.push(new SectionNode([systemNotice]));
-	} else {
-		// Render deprecation notice (if any)
-		const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
-		if (deprecationNotice !== undefined) {
-			sections.push(new SectionNode([deprecationNotice]));
+	/**
+	 * Adds node (if not undefined) to `sections`, wrapping in a `SectionNode` if not already a `SectionNode`.
+	 * @param {DocumentationNode | undefined} node - The node to add to `sections`.
+	 * @returns true if the node was added, false otherwise.
+	 */
+	function addSection(node) {
+		if (node !== undefined) {
+			sections.push(node instanceof SectionNode ? new SectionNode([node]) : node);
+			return true;
 		}
-
-		// Render the appropriate API notice (with import instructions), if applicable.
-		const importNotice = createSupportNotice(apiItem, isImportable);
-		if (importNotice !== undefined) {
-			sections.push(new SectionNode([importNotice]));
-		}
+		return false;
 	}
 
-	// Render signature (if any)
-	const signature = LayoutUtilities.createSignatureSection(apiItem, config);
-	if (signature !== undefined) {
-		sections.push(signature);
+	// Add summary comment (if any)
+	addSection(LayoutUtilities.createSummaryParagraph(apiItem, config));
+
+	// Add system notice (if any) that supersedes deprecation and import notices
+	if (!addSection(createTagNotice(apiItem, "@system", systemNotice))) {
+		// If no system notice:
+
+		// Add deprecation notice (if any)
+		addSection(createDeprecationNoticeSection(apiItem, config));
+
+		// Add the appropriate API notice (with import instructions), if applicable.
+		addSection(createSupportNotice(apiItem, isImportable));
 	}
 
-	// Render @remarks content (if any)
-	const renderedRemarks = LayoutUtilities.createRemarksSection(apiItem, config);
-	if (renderedRemarks !== undefined) {
-		sections.push(renderedRemarks);
-	}
+	// Add the API notice for `sealed` if present.
+	addSection(createTagNotice(apiItem, "@sealed", sealedNotice));
 
-	// Render examples (if any)
-	const renderedExamples = LayoutUtilities.createExamplesSection(
+	// Add the API notice for `input` if present.
+	addSection(createTagNotice(apiItem, "@input", inputNotice));
+
+	// Add signature (if any)
+	addSection(LayoutUtilities.createSignatureSection(apiItem, config));
+
+	// Add @remarks content (if any)
+	addSection(LayoutUtilities.createRemarksSection(apiItem, config));
+
+	// Add examples (if any)
+	addSection(LayoutUtilities.createExamplesSection(
 		apiItem,
 		config,
 		customExamplesSectionTitle,
-	);
-	if (renderedExamples !== undefined) {
-		sections.push(renderedExamples);
-	}
+	))
 
-	// Render provided contents
-	if (itemSpecificContent !== undefined) {
-		// Flatten contents into this section
-		sections.push(...itemSpecificContent);
-	}
+	// Add provided contents
+	// Flatten contents into this section
+	sections.push(...(itemSpecificContent ?? []));
 
-	// Render @throws content (if any)
-	const renderedThrows = LayoutUtilities.createThrowsSection(
+	// Add @throws content (if any)
+	addSection(LayoutUtilities.createThrowsSection(
 		apiItem,
 		config,
 		customThrowsSectionTitle,
-	);
-	if (renderedThrows !== undefined) {
-		sections.push(renderedThrows);
-	}
+	))
 
-	// Render @see content (if any)
-	const renderedSeeAlso = LayoutUtilities.createSeeAlsoSection(apiItem, config);
-	if (renderedSeeAlso !== undefined) {
-		sections.push(renderedSeeAlso);
-	}
+	// Add @see content (if any)
+	addSection(LayoutUtilities.createSeeAlsoSection(apiItem, config));
 
 	// Add heading to top of section only if this is being rendered to a parent item.
 	// Document items have their headings handled specially.
