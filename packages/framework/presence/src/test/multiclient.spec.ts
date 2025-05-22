@@ -17,35 +17,31 @@ import type {
 	TinyliciousContainerServices,
 	TinyliciousUser,
 } from "@fluidframework/tinylicious-client";
-
-import {
-	ExperimentalPresenceManager,
-	getPresenceViaDataObject,
-	LatestClientData,
-	StateFactory,
-	type Attendee,
-	type AttendeeId,
-	type ExperimentalPresenceDO,
-	type Latest,
-	type LatestMap,
-	type LatestMapClientData,
-	type LatestRaw,
-	type Presence,
-	type ProxiedValueAccessor,
-	type StateSchemaValidator,
-	type StatesWorkspace,
-	type ValueAccessor,
-	type WorkspaceAddress,
-} from "../index.js";
-
-import { createTinyliciousClient } from "./TinyliciousClientFactory.js";
-import { type ValidatorSpy, createSpiedValidator, createNullValidator } from "./testUtils.js";
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
 import type {
 	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal";
+
+import { createTinyliciousClient } from "./TinyliciousClientFactory.js";
+import { type ValidatorSpy, createSpiedValidator, createNullValidator } from "./testUtils.js";
+import type { Attendee, AttendeeId, Presence } from "../presence.js";
+import type {
+	LatestClientData,
+	ProxiedValueAccessor,
+	StateSchemaValidator,
+} from "../latestValueTypes.js";
+import type { StatesWorkspace, WorkspaceAddress } from "../types.js";
+import type { LatestMap, LatestMapClientData } from "../latestMapValueManager.js";
+import {
+	ExperimentalPresenceManager,
+	getPresenceViaDataObject,
+	type ExperimentalPresenceDO,
+} from "../datastorePresenceManagerFactory.js";
+import type { InternalTypes } from "../exposedInternalTypes.js";
+import type { Latest } from "../latestValueManager.js";
+import { StateFactory } from "../stateFactory.js";
 
 interface TestData {
 	num: number;
@@ -374,6 +370,11 @@ describe(`Presence with TinyliciousClient`, () => {
 		assert.equal(returnedAttendees.length, 3);
 	};
 
+	/**
+	 * If this is called, it must be called after initMultiClient.
+	 */
+	const initWorkspaces = async () => {};
+
 	describe("multiclient presence data validation", () => {
 		it("getOrCreatePresenceContainer creates and returns initialized containers", async () => {
 			await initMultiClientSetup();
@@ -387,7 +388,46 @@ describe(`Presence with TinyliciousClient`, () => {
 			let validatorSpy2: ValidatorSpy;
 			let validatorSpy3: ValidatorSpy;
 
-			beforeEach(() => {
+			let attendee1: Attendee;
+			let attendee2: Attendee;
+
+			let stateWorkspace1: StatesWorkspace<
+				{
+					testData: InternalTypes.ManagerFactory<
+						string,
+						InternalTypes.ValueRequiredState<{
+							num: number;
+						}>,
+						Latest<
+							{
+								num: number;
+							},
+							"proxied"
+						>
+					>;
+				},
+				unknown
+			>;
+
+			let stateWorkspace2: StatesWorkspace<
+				{
+					testData: InternalTypes.ManagerFactory<
+						string,
+						InternalTypes.ValueRequiredState<{
+							num: number;
+						}>,
+						Latest<
+							{
+								num: number;
+							},
+							"proxied"
+						>
+					>;
+				},
+				unknown
+			>;
+
+			beforeEach(async () => {
 				[validatorFunction1, validatorSpy1] = createSpiedValidator<TestData>(
 					createNullValidator(),
 				);
@@ -397,19 +437,17 @@ describe(`Presence with TinyliciousClient`, () => {
 				[validatorFunction3, validatorSpy3] = createSpiedValidator<TestData>(
 					createNullValidator(),
 				);
-			});
 
-			it("standalone megatest", async () => {
 				await initMultiClientSetup();
 
-				const [attendee1, attendee2] = [
+				[attendee1, attendee2] = [
 					presence1.attendees.getMyself(),
 					presence2.attendees.getMyself(),
 				];
 
 				// Configure a state workspace on client 1
-				const stateWorkspace1 = presence1.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({
+				stateWorkspace1 = presence1.states.getWorkspace("name:testStateWorkspace", {
+					testData: StateFactory.latest({
 						local: { num: 0 } satisfies TestData,
 						validator: validatorFunction1,
 						settings: { allowableUpdateLatencyMs: 0 },
@@ -420,17 +458,33 @@ describe(`Presence with TinyliciousClient`, () => {
 				const workspaceAddress = await waitForWorkspaceActivated(presence2);
 
 				// Client 2 now gets a reference to the workspace and sets its initial local data
-				const stateWorkspace2 = presence2.states.getWorkspace(workspaceAddress, {
-					count: StateFactory.latest({
+				stateWorkspace2 = presence2.states.getWorkspace(workspaceAddress, {
+					testData: StateFactory.latest({
 						local: { num: 1 } satisfies TestData,
 						validator: validatorFunction2,
 						settings: { allowableUpdateLatencyMs: 0 },
 					}),
 				});
+			});
 
+			it("getRemote does not call validator", async () => {
 				// Get references to the states
-				const { count: client1 } = stateWorkspace1.states;
-				const { count: client2 } = stateWorkspace2.states;
+				const { testData: client1 } = stateWorkspace1.states;
+				const { testData: client2 } = stateWorkspace2.states;
+
+				// Wait for client 1 to receive client 2's initial data
+				await waitForRemoteUpdated(client1);
+
+				// Reading the remote value should cause the validator to be called
+				let value = client1.getRemote(attendee2).value();
+				assert.equal(value?.num, 1, "getRemote(attendee2) count is wrong");
+				assert.equal(validatorSpy1.callCount, 1);
+			});
+
+			it("standalone megatest", async () => {
+				// Get references to the states
+				const { testData: client1 } = stateWorkspace1.states;
+				const { testData: client2 } = stateWorkspace2.states;
 
 				// Wait for client 1 to receive client 2's initial data
 				await waitForRemoteUpdated(client1);
