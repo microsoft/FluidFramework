@@ -331,14 +331,9 @@ describe("treeNodeApi", () => {
 				const node = new HasIdentifier({ identifier: "x" });
 				assert.equal(Tree.shortId(node), "x");
 			});
-			it("errors accessing defaulted", () => {
+			it("accessing defaulted", () => {
 				const node = new HasIdentifier({});
-				assert.throws(
-					() => {
-						Tree.shortId(node);
-					},
-					validateUsageError(/default/),
-				);
+				assert(typeof Tree.shortId(node) === "string");
 			});
 
 			// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
@@ -440,17 +435,12 @@ describe("treeNodeApi", () => {
 		});
 
 		describe("unhydrated", () => {
-			it("errors accessing defaulted", () => {
+			it("accessing defaulted", () => {
 				class HasIdentifier extends schema.object("HasIdentifier", {
 					identifier: schema.identifier,
 				}) {}
 				const node = new HasIdentifier({});
-				assert.throws(
-					() => {
-						TreeAlpha.identifier(node);
-					},
-					validateUsageError(/default/),
-				);
+				assert(typeof TreeAlpha.identifier(node) === "string");
 			});
 		});
 
@@ -553,14 +543,9 @@ describe("treeNodeApi", () => {
 					const node = new HasIdentifier({ identifier: "x" });
 					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
 				});
-				it("errors accessing defaulted", () => {
+				it("returns undefined accessing defaulted for unhydrated nodes", () => {
 					const node = new HasIdentifier({});
-					assert.throws(
-						() => {
-							TreeAlpha.identifier.getShort(node);
-						},
-						validateUsageError(/default/),
-					);
+					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
 				});
 
 				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
@@ -1615,20 +1600,32 @@ describe("treeNodeApi", () => {
 			assert.deepEqual(a, { x: 1 });
 		});
 
-		it("object with defaulted identifier field", () => {
+		it("unhydrated object with defaulted read identifier field", () => {
 			const A = schema.object("A", { x: schema.identifier });
 			const node = TreeAlpha.create(A, { x: undefined });
 
 			// TODO: make this work instead of error:
-			// assert(isStableId(node.x));
-			// // Since no id compressor is associated with the node, Tree.shortId should give back a UUID string.
-			// assert.equal(Tree.shortId(node), node.x)
+			const id = node.x;
+			// Check allocated id is saved on node, and thus not regenerated on second access.
+			assert.equal(id, node.x);
+			// Id should be a valid UUID.
+			assert(isStableId(id));
+			// Since no id compressor is associated with the node, Tree.shortId should give back a UUID string.
+			assert.equal(Tree.shortId(node), node.x);
 
-			// For now validate the error is the correct one:
-			assert.throws(
-				() => node.x,
-				validateUsageError(/identifier may not be queried until the node is inserted/),
-			);
+			hydrate(A, node);
+
+			assert.equal(Tree.shortId(node), node.x);
+		});
+
+		it("hydrated object with defaulted unread identifier field", () => {
+			const A = schema.object("A", { x: schema.identifier });
+			const node = TreeAlpha.create(A, { x: undefined });
+
+			hydrate(A, node);
+			assert(isStableId(node.x));
+			const short = Tree.shortId(node);
+			assert.equal(typeof short, "number");
 		});
 
 		it("object with explicit identifier field", () => {

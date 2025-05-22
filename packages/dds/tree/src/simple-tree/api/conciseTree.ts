@@ -6,15 +6,16 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { ITreeCursor } from "../../core/index.js";
-import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
 import type { TreeNodeSchema } from "../core/index.js";
+import { getUnhydratedContext } from "../createContext.js";
+import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
+
 import {
 	customFromCursor,
 	replaceHandles,
 	type TreeEncodingOptions,
 	type HandleConverter,
 } from "./customTree.js";
-import { getUnhydratedContext } from "../createContext.js";
 
 /**
  * Concise encoding of a {@link TreeNode} or {@link TreeLeafValue}.
