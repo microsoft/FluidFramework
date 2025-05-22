@@ -5,7 +5,6 @@
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
 import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
-import { Tree } from "@fluidframework/tree/legacy";
 import React, { useEffect, useRef, useState } from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
@@ -35,8 +34,6 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 				setTitleString(title as ISharedString);
 			})
 			.catch((error) => {
-				console.log("todomodel");
-				console.log(todoModel);
 				console.error(error);
 			});
 		return () => {};
@@ -80,7 +77,6 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 					className="action-button"
 					onClick={() => {
 						todoModel.treeView.root.items.delete(id);
-						Tree.on(todoModel.treeView.root.items, "treeChanged", () => {});
 					}}
 				>
 					X

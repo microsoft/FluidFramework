@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	type IContainer,
@@ -15,13 +16,17 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import {
+	IContainerRuntimeOptions,
+	loadContainerRuntime,
+} from "@fluidframework/container-runtime/internal";
 import {
 	type ConfigTypes,
 	type FluidObject,
 	type IConfigProviderBase,
 	type IErrorBase,
 } from "@fluidframework/core-interfaces/internal";
+import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -33,7 +38,9 @@ import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
+import sinon from "sinon";
 
 import { createLoader } from "../utils.js";
 
@@ -50,12 +57,23 @@ class DataObjectWithStagingMode extends DataObject {
 
 	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
 		this.context.containerRuntime;
-	get ParentDataObject() {
+	get DataObjectWithStagingMode() {
 		return this;
 	}
 
+	private generateCompressedId(): SessionSpaceCompressedId {
+		const idCompressor = this.runtime.idCompressor;
+		assert(idCompressor !== undefined, "IdCompressor must be enabled for these tests.");
+		return idCompressor.generateCompressedId();
+	}
+
+	/** Add to the root map including prefix in the key name, and a compressed ID in the value (for ID Compressor test coverage) */
 	public makeEdit(prefix: string) {
-		this.root.set(`${prefix}-${this.instanceNumber}`, this.root.size);
+		const compressedId = this.generateCompressedId();
+		this.root.set(`${prefix}-${this.instanceNumber}`, {
+			n: this.root.size,
+			someId: compressedId,
+		});
 	}
 
 	public addDDS(prefix: string): void {
@@ -105,6 +123,9 @@ class DataObjectWithStagingMode extends DataObject {
 const dataObjectFactory = new DataObjectFactory({
 	type: "TheDataObject",
 	ctor: DataObjectWithStagingMode,
+	policies: {
+		readonlyInStagingMode: false,
+	},
 });
 
 // a simple container runtime factory with a single datastore aliased as default.
@@ -114,10 +135,14 @@ const runtimeFactory: IRuntimeFactory = {
 		return this;
 	},
 	instantiateRuntime: async (context, existing) => {
+		const runtimeOptions: IContainerRuntimeOptions = {
+			enableRuntimeIdCompressor: "on",
+		};
 		return loadContainerRuntime({
 			context,
 			existing,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			runtimeOptions,
 			provideEntryPoint: async (rt) => {
 				const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
 				if (maybeRoot === undefined) {
@@ -134,7 +159,7 @@ const runtimeFactory: IRuntimeFactory = {
 
 async function getDataObject(container: IContainer): Promise<DataObjectWithStagingMode> {
 	const entrypoint: FluidObject<DataObjectWithStagingMode> = await container.getEntryPoint();
-	const dataObject = entrypoint.ParentDataObject;
+	const dataObject = entrypoint.DataObjectWithStagingMode;
 	assert(dataObject !== undefined, "dataObject must be defined");
 	return dataObject;
 }
@@ -144,11 +169,12 @@ interface Client {
 	dataObject: DataObjectWithStagingMode;
 }
 
-const waitForSave = async (clients: Client[] | Record<string, Client>) =>
+/** Returns the max sequence number from the clients once each has had its local state saved */
+const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<number> =>
 	Promise.all(
 		Object.entries(clients).map(
 			async ([key, { container }]) =>
-				new Promise<void>((resolve, reject) => {
+				new Promise<number>((resolve, reject) => {
 					if (container.closed || container.disposed) {
 						reject(
 							new Error(
@@ -159,7 +185,7 @@ const waitForSave = async (clients: Client[] | Record<string, Client>) =>
 					}
 
 					if (!container.isDirty) {
-						resolve();
+						resolve(container.deltaManager.lastSequenceNumber);
 						return;
 					}
 
@@ -175,7 +201,7 @@ const waitForSave = async (clients: Client[] | Record<string, Client>) =>
 					};
 
 					const resolveHandler = () => {
-						resolve();
+						resolve(container.deltaManager.lastSequenceNumber);
 						off();
 					};
 
@@ -190,7 +216,59 @@ const waitForSave = async (clients: Client[] | Record<string, Client>) =>
 					container.on("disposed", rejectHandler);
 				}),
 		),
+	).then((sequenceNumbers) => Math.max(...sequenceNumbers));
+
+/** Wait for all clients to process the given sequenceNumber */
+const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumber: number) => {
+	return Promise.all(
+		Object.entries(clients).map(
+			async ([key, { container }]) =>
+				new Promise<void>((resolve, reject) => {
+					if (container.closed || container.disposed) {
+						reject(
+							new Error(
+								`Container ${key} already closed or disposed when waitForCaughtUp was called`,
+							),
+						);
+						return;
+					}
+
+					if (container.deltaManager.lastSequenceNumber >= sequenceNumber) {
+						resolve();
+						return;
+					}
+
+					const rejectHandler = (error?: IErrorBase | undefined) => {
+						reject(
+							wrapError(
+								error,
+								(message) =>
+									new LoggingError(`Container "${key}" closed or disposed: ${message}`),
+							),
+						);
+						off();
+					};
+
+					const opHandler = (message) => {
+						if (message.sequenceNumber >= sequenceNumber) {
+							resolve();
+							off();
+						}
+					};
+
+					const off = () => {
+						container.off("op", opHandler);
+						container.off("closed", rejectHandler);
+						container.off("disposed", rejectHandler);
+					};
+
+					container.on("op", opHandler);
+					container.on("closed", rejectHandler);
+					container.on("disposed", rejectHandler);
+				}),
+		),
 	);
+};
 
 const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
 	const {
@@ -259,14 +337,12 @@ const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer)
 	return clients;
 };
 
-type Await<T> = T extends PromiseLike<infer U> ? Await<U> : T;
-
 /**
  * Verify clients are consistent via their data representation from `enumerateDataWithHandlesResolved`, which
  * loads DDSes created by `addDDS`.
  */
 async function assertDeepConsistent(
-	clients: Await<ReturnType<typeof createClients>>,
+	clients: Awaited<ReturnType<typeof createClients>>,
 	message: string,
 ): Promise<void> {
 	const { original, loaded } = clients;
@@ -281,7 +357,7 @@ async function assertDeepConsistent(
  * Verify clients are consistent via their data representation from `enumerateDataSynchronous`.
  */
 function assertConsistent(
-	clients: Await<ReturnType<typeof createClients>>,
+	clients: Awaited<ReturnType<typeof createClients>>,
 	message: string,
 ): void {
 	const { original, loaded } = clients;
@@ -296,7 +372,7 @@ function assertConsistent(
  * Verify clients are not consistent via their data representation from `enumerateDataSynchronous`.
  */
 function assertNotConsistent(
-	clients: Await<ReturnType<typeof createClients>>,
+	clients: Awaited<ReturnType<typeof createClients>>,
 	message: string,
 ): void {
 	const { original, loaded } = clients;
@@ -354,9 +430,8 @@ describe("Staging Mode", () => {
 
 		assertNotConsistent(clients, "should not match before save");
 
-		await waitForSave([clients.loaded]);
-		// Wait for the mainline changes to propagate
-		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+		const seq = await waitForSave([clients.loaded]);
+		await catchUp(clients, seq);
 
 		assertNotConsistent(clients, "should not match after save");
 		assert.equal(
@@ -378,9 +453,8 @@ describe("Staging Mode", () => {
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
-		await waitForSave([clients.loaded]);
-		// Wait for the mainline changes to propagate
-		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+		const seq = await waitForSave([clients.loaded]);
+		await catchUp(clients, seq);
 
 		assert.equal(
 			hasEdit(clients.original, "after-branch"),
@@ -392,13 +466,16 @@ describe("Staging Mode", () => {
 	it("commitChanges sends changes applied to other clients", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
+
 		const stagingControls = clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
-		await waitForSave([clients.loaded]);
-		// Wait for the mainline changes to propagate
-		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+		const seq = await waitForSave([clients.loaded]);
+		await catchUp(clients, seq);
+
+		// Make another change in before exiting staging mode
+		clients.original.dataObject.makeEdit("branch-second-batch");
 
 		stagingControls.commitChanges();
 
@@ -406,7 +483,8 @@ describe("Staging Mode", () => {
 
 		assertConsistent(clients, "states should match after save");
 		assert.equal(
-			hasEdit(clients.original, "branch-only"),
+			hasEdit(clients.original, "branch-only") &&
+				hasEdit(clients.original, "branch-second-batch"),
 			true,
 			"Edit submitted while in staging mode should be committed.",
 		);
@@ -415,13 +493,16 @@ describe("Staging Mode", () => {
 	it("discardChanges rolls back all changes applied in staging mode", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
+
 		const stagingControls = clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
-		await waitForSave([clients.loaded]);
-		// Wait for the mainline changes to propagate
-		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+		const seq = await waitForSave([clients.loaded]);
+		await catchUp(clients, seq);
+
+		// Make another change in before exiting staging mode
+		clients.original.dataObject.makeEdit("branch-second-batch");
 
 		stagingControls.discardChanges();
 
@@ -429,7 +510,7 @@ describe("Staging Mode", () => {
 
 		assertConsistent(clients, "states should match after save");
 		assert.equal(
-			hasEdit(clients.original, "branch-only"),
+			hasEdit(clients.original, "branch-"), // branch-only or branch-second-batch
 			false,
 			"Edit submitted while in staging mode should be rolled back.",
 		);
@@ -449,9 +530,8 @@ describe("Staging Mode", () => {
 
 		assertNotConsistent(clients, "should not match before save");
 
-		await waitForSave([clients.loaded]);
-		// Wait for the mainline changes to propagate
-		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+		const seq = await waitForSave([clients.loaded]);
+		await catchUp(clients, seq);
 
 		assertNotConsistent(clients, "should not match after save");
 
@@ -519,4 +599,62 @@ describe("Staging Mode", () => {
 			"Edit submitted while in staging mode should be committed.",
 		);
 	});
+
+	for (const { disconnectBeforeCommit, squash } of generatePairwiseOptions({
+		disconnectBeforeCommit: [false, true],
+		squash: [undefined, false, true],
+	})) {
+		it(`respects squash=${squash} when exiting staging mode ${disconnectBeforeCommit ? "while disconnected" : ""}`, async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			// Use Sinon to spy on the methods
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			const rootMap = clients.original.dataObject["root"] as unknown as SharedObject;
+			const reSubmitSquashedSpy = sinon.spy(rootMap, "reSubmitSquashed" as keyof SharedObject);
+			const reSubmitCoreSpy = sinon.spy(rootMap, "reSubmitCore" as keyof SharedObject);
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.makeEdit("branch-only");
+
+			if (disconnectBeforeCommit) {
+				await ensureDisconnected(clients.original);
+			}
+			stagingControls.commitChanges({ squash });
+			if (disconnectBeforeCommit) {
+				await ensureConnected(clients.original);
+			}
+
+			await waitForSave(clients);
+
+			assertConsistent(clients, "States should match after save");
+			assert.equal(
+				reSubmitSquashedSpy.callCount,
+				squash === true ? 1 : 0,
+				"Squashed resubmit should be called iff squash = true.",
+			);
+			if (squash === true) {
+				assert(
+					JSON.stringify(reSubmitSquashedSpy.args[0][0]).includes("branch-only"),
+					"Squashed op should contain the edit prefix.",
+				);
+			} else {
+				assert.equal(
+					reSubmitCoreSpy.callCount,
+					// 2 resubmits when disconnected happens because there is one resubmit upon exiting staging mode (to clear staging flags),
+					// then another when we eventually reconnect.
+					disconnectBeforeCommit ? 2 : 1,
+					"Normal resubmit should be called when squash = false.",
+				);
+				assert(
+					JSON.stringify(reSubmitCoreSpy.args[0][0]).includes("branch-only"),
+					"Normal resubmit op should contain the edit prefix.",
+				);
+			}
+
+			// Restore the spied methods
+			reSubmitSquashedSpy.restore();
+			reSubmitCoreSpy.restore();
+		});
+	}
 });

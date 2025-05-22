@@ -1530,7 +1530,6 @@ export const shortCodeMap = {
 	"0xa47": "extra simple tree context",
 	"0xa49": "Revision tag must be provided",
 	"0xa4a": "invalid kind",
-	"0xa4b": "invalid kind",
 	"0xa4c": "missing anchor",
 	"0xa4d": "Node table contains unparented nodes",
 	"0xa4e": "Inconsistent node parentage",
@@ -1828,5 +1827,10 @@ export const shortCodeMap = {
 	"0xb87": "viableOp is only undefined for empty batches",
 	"0xb88": "viableOp is only undefined for empty batches",
 	"0xb89": "Shouldn't be any more staged messages",
-	"0xb8a": "expected non-empty batch"
+	"0xb8a": "expected non-empty batch",
+	"0xb8b": "PRECONDITION: Expected binder to look like an ISharedObjectHandle",
+	"0xb8c": "bind must be an ISharedObjectHandle",
+	"0xb8d": "bind must be an ISharedObjectHandle",
+	"0xb8e": "detached blob storage should always exist when detached",
+	"0xb8f": "we don't support the layer boundary here today"
 };

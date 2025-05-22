@@ -1145,7 +1145,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public notifyReadOnlyState(readonly: boolean): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
-				context.notifyReadOnlyState(readonly);
+				context.notifyReadOnlyState();
 			} catch (error) {
 				this.mc.logger.sendErrorEvent(
 					{
@@ -1156,6 +1156,32 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						details: {
 							runtimeReadonly: this.parentContext.isReadOnly(),
 							readonly,
+						},
+					},
+					error,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Notifies all data store contexts about the current staging mode state.
+	 *
+	 * @param staging - A boolean indicating whether the container is in staging mode.
+	 */
+	public notifyStagingMode(staging: boolean): void {
+		for (const [fluidDataStoreId, context] of this.contexts) {
+			try {
+				context.notifyStagingMode(staging);
+			} catch (error) {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "notifyStagingModeError",
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
+						details: {
+							staging,
 						},
 					},
 					error,
@@ -1677,7 +1703,7 @@ export class ChannelCollectionFactory implements IFluidDataStoreFactory {
 		// from the same package.
 		assert(
 			context instanceof FluidDataStoreContext,
-			"we don't support the layer boundary here today",
+			0xb8f /* we don't support the layer boundary here today */,
 		);
 
 		const runtime = new ChannelCollection(

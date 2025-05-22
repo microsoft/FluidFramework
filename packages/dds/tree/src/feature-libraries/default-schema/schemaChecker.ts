@@ -4,6 +4,8 @@
  */
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	type MapTree,
 	type TreeFieldStoredSchema,
@@ -15,17 +17,28 @@ import {
 } from "../../core/index.js";
 import { allowsValue } from "../valueUtilities.js";
 
-export const enum SchemaValidationErrors {
-	NoError,
+export enum SchemaValidationError {
 	Field_KindNotInSchemaPolicy,
-	Field_IncorrectMultiplicity,
+	Field_MissingRequiredChild,
+	Field_MultipleChildrenNotAllowed,
+	Field_ChildInForbiddenField,
 	Field_NodeTypeNotAllowed,
 	LeafNode_InvalidValue,
 	LeafNode_FieldsNotAllowed,
 	ObjectNode_FieldNotInSchema,
 	NonLeafNode_ValueNotAllowed,
 	Node_MissingSchema,
-	UnknownError,
+}
+
+/**
+ * Throws a UsageError if maybeError indicates a tree is out of schema.
+ */
+export function inSchemaOrThrow(maybeError: SchemaValidationError | undefined): void {
+	if (maybeError !== undefined) {
+		throw new UsageError(
+			`Tree does not conform to schema: ${SchemaValidationError[maybeError]}`,
+		);
+	}
 }
 
 /**
@@ -34,65 +47,57 @@ export const enum SchemaValidationErrors {
 export function isNodeInSchema(
 	node: MapTree,
 	schemaAndPolicy: SchemaAndPolicy,
-): SchemaValidationErrors {
-	// If the stored schema is completely empty it _probably_ (in almost all cases?) means the tree is brand new and we
-	// shouldn't validate the data.
-	// TODO: AB#8197
-	// See https://github.com/microsoft/FluidFramework/pull/21305#discussion_r1626595991 for further discussion.
-	if (schemaAndPolicy.schema.nodeSchema.size === 0) {
-		return SchemaValidationErrors.NoError;
-	}
-
+): SchemaValidationError | undefined {
 	// Validate the schema declared by the node exists
 	const schema = schemaAndPolicy.schema.nodeSchema.get(node.type);
 	if (schema === undefined) {
-		return SchemaValidationErrors.Node_MissingSchema;
+		return SchemaValidationError.Node_MissingSchema;
 	}
 
 	// Validate the node is well formed according to its schema
 
 	if (schema instanceof LeafNodeStoredSchema) {
 		if (node.fields.size !== 0) {
-			return SchemaValidationErrors.LeafNode_FieldsNotAllowed;
+			return SchemaValidationError.LeafNode_FieldsNotAllowed;
 		}
 		if (!allowsValue(schema.leafValue, node.value)) {
-			return SchemaValidationErrors.LeafNode_InvalidValue;
-		}
-	} else if (schema instanceof ObjectNodeStoredSchema) {
-		if (node.value !== undefined) {
-			return SchemaValidationErrors.NonLeafNode_ValueNotAllowed;
-		}
-		const uncheckedFieldsFromNode = new Set(node.fields.keys());
-		for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
-			const nodeField = node.fields.get(fieldKey) ?? [];
-			const fieldInSchemaResult = isFieldInSchema(nodeField, fieldSchema, schemaAndPolicy);
-			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
-				return fieldInSchemaResult;
-			}
-			uncheckedFieldsFromNode.delete(fieldKey);
-		}
-		// The node has fields that we did not check as part of looking at every field defined in the node's schema
-		if (
-			uncheckedFieldsFromNode.size !== 0 &&
-			!schemaAndPolicy.policy.allowUnknownOptionalFields(node.type)
-		) {
-			return SchemaValidationErrors.ObjectNode_FieldNotInSchema;
-		}
-	} else if (schema instanceof MapNodeStoredSchema) {
-		if (node.value !== undefined) {
-			return SchemaValidationErrors.NonLeafNode_ValueNotAllowed;
-		}
-		for (const field of node.fields.values()) {
-			const fieldInSchemaResult = isFieldInSchema(field, schema.mapFields, schemaAndPolicy);
-			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
-				return fieldInSchemaResult;
-			}
+			return SchemaValidationError.LeafNode_InvalidValue;
 		}
 	} else {
-		fail(0xb0e /* Unknown TreeNodeStoredSchema type */);
+		if (node.value !== undefined) {
+			return SchemaValidationError.NonLeafNode_ValueNotAllowed;
+		}
+
+		if (schema instanceof ObjectNodeStoredSchema) {
+			const uncheckedFieldsFromNode = new Set(node.fields.keys());
+			for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
+				const nodeField = node.fields.get(fieldKey) ?? [];
+				const fieldInSchemaResult = isFieldInSchema(nodeField, fieldSchema, schemaAndPolicy);
+				if (fieldInSchemaResult !== undefined) {
+					return fieldInSchemaResult;
+				}
+				uncheckedFieldsFromNode.delete(fieldKey);
+			}
+			// The node has fields that we did not check as part of looking at every field defined in the node's schema
+			if (
+				uncheckedFieldsFromNode.size !== 0 &&
+				!schemaAndPolicy.policy.allowUnknownOptionalFields(node.type)
+			) {
+				return SchemaValidationError.ObjectNode_FieldNotInSchema;
+			}
+		} else if (schema instanceof MapNodeStoredSchema) {
+			for (const field of node.fields.values()) {
+				const fieldInSchemaResult = isFieldInSchema(field, schema.mapFields, schemaAndPolicy);
+				if (fieldInSchemaResult !== undefined) {
+					return fieldInSchemaResult;
+				}
+			}
+		} else {
+			fail(0xb0e /* Unknown TreeNodeStoredSchema type */);
+		}
 	}
 
-	return SchemaValidationErrors.NoError;
+	return undefined;
 }
 
 /**
@@ -102,32 +107,35 @@ export function isFieldInSchema(
 	childNodes: readonly MapTree[],
 	schema: TreeFieldStoredSchema,
 	schemaAndPolicy: SchemaAndPolicy,
-): SchemaValidationErrors {
+): SchemaValidationError | undefined {
 	// Validate that the field kind is handled by the schema policy
 	const kind = schemaAndPolicy.policy.fieldKinds.get(schema.kind);
 	if (kind === undefined) {
-		return SchemaValidationErrors.Field_KindNotInSchemaPolicy;
+		return SchemaValidationError.Field_KindNotInSchemaPolicy;
 	}
 
 	// Validate that the field doesn't contain more nodes than its type supports
-	if (!compliesWithMultiplicity(childNodes.length, kind.multiplicity)) {
-		return SchemaValidationErrors.Field_IncorrectMultiplicity;
+	{
+		const multiplicityCheck = compliesWithMultiplicity(childNodes.length, kind.multiplicity);
+		if (multiplicityCheck !== undefined) {
+			return multiplicityCheck;
+		}
 	}
 
 	for (const node of childNodes) {
 		// Validate the type declared by the node is allowed in this field
 		if (schema.types !== undefined && !schema.types.has(node.type)) {
-			return SchemaValidationErrors.Field_NodeTypeNotAllowed;
+			return SchemaValidationError.Field_NodeTypeNotAllowed;
 		}
 
 		// Validate the node complies with the type it declares to be.
 		const nodeInSchemaResult = isNodeInSchema(node, schemaAndPolicy);
-		if (nodeInSchemaResult !== SchemaValidationErrors.NoError) {
+		if (nodeInSchemaResult !== undefined) {
 			return nodeInSchemaResult;
 		}
 	}
 
-	return SchemaValidationErrors.NoError;
+	return undefined;
 }
 
 /**
@@ -139,16 +147,26 @@ export function isFieldInSchema(
 export function compliesWithMultiplicity(
 	numberOfItems: number,
 	multiplicity: Multiplicity,
-): boolean {
+): SchemaValidationError | undefined {
 	switch (multiplicity) {
 		case Multiplicity.Single:
-			return numberOfItems === 1;
+			if (numberOfItems < 1) {
+				return SchemaValidationError.Field_MissingRequiredChild;
+			} else if (numberOfItems > 1) {
+				return SchemaValidationError.Field_MultipleChildrenNotAllowed;
+			} else {
+				return undefined;
+			}
 		case Multiplicity.Optional:
-			return numberOfItems <= 1;
+			return numberOfItems > 1
+				? SchemaValidationError.Field_MultipleChildrenNotAllowed
+				: undefined;
 		case Multiplicity.Sequence:
-			return true;
+			return undefined;
 		case Multiplicity.Forbidden:
-			return numberOfItems === 0;
+			return numberOfItems === 0
+				? undefined
+				: SchemaValidationError.Field_ChildInForbiddenField;
 		default:
 			unreachableCase(multiplicity);
 	}

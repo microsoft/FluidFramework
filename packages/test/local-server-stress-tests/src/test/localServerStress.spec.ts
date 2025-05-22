@@ -5,7 +5,13 @@
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 
-import { makeGenerator, reducer, saveFailures, type StressOperations } from "../baseModel.js";
+import {
+	ddsModelMinimizers,
+	makeGenerator,
+	reducer,
+	saveFailures,
+	type StressOperations,
+} from "../baseModel.js";
 import { validateConsistencyOfAllDDS } from "../ddsOperations";
 import {
 	createLocalServerStressSuite,
@@ -18,6 +24,7 @@ describe("Local Server Stress", () => {
 		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer,
 		validateConsistency: validateConsistencyOfAllDDS,
+		minimizationTransforms: ddsModelMinimizers,
 	};
 
 	createLocalServerStressSuite(model, {
@@ -29,10 +36,9 @@ describe("Local Server Stress", () => {
 		saveFailures,
 		// saveSuccesses,
 		skip: [
-			...[0, 13, 45, 56], // Number of keys not same
-			...[30], // Number of subDirectories not same,
-			...[99], // Rollback op does not match last pending
-			...[8, 67], // Client closes due to id compressor related asserts in a fatal codepath
+			...[18, 65, 98], // Number of keys not same
+			...[5, 49, 57], // Number of subDirectories not same,
+			...[11, 39], // Rollback op does not match last pending
 		],
 	});
 });

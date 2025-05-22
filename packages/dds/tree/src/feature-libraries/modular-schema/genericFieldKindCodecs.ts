@@ -4,6 +4,7 @@
  */
 
 import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+
 import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
 import { EncodedGenericChangeset } from "./genericFieldKindFormat.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";

@@ -31,7 +31,7 @@ import {
 	MockNodeIdentifierManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
-	getTreeContext,
+	Context,
 	isFlexTreeNode,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
@@ -101,7 +101,7 @@ describe("LazyField", () => {
 		// #region Tree and schema initialization
 
 		const builder = new SchemaFactory("test");
-		const rootSchema = builder.optional([builder.object("object", {})]);
+		const rootSchema = builder.optional(JsonAsTree.JsonObject);
 
 		// Note: this tree initialization is strictly to enable construction of the lazy field.
 		// The test cases below are strictly in terms of the schema of the created fields.
@@ -250,7 +250,7 @@ describe("LazyField", () => {
 
 		it("null-Leaf", () => {
 			const { context, cursor } = readonlyTreeWithContent({
-				schema: stringSchema,
+				schema: JsonAsTree.Tree,
 				initialTree: singleJsonCursor(null),
 			});
 			cursor.enterNode(0); // Root node field has 1 node; move into it
@@ -362,7 +362,7 @@ describe("LazyField", () => {
 
 		it("content", () => {
 			const view = flexTreeViewWithContent({
-				schema,
+				schema: SchemaFactory.optional(JsonAsTree.Tree),
 				initialTree: singleJsonCursor(5),
 			});
 			assert(view.flexTree.is(FieldKinds.optional));
@@ -377,7 +377,7 @@ describe("LazyField", () => {
 			view.flexTree.editor.set(
 				mapTreeFromCursor(
 					cursorForJsonableTreeNode({
-						type: brand(stringSchema.identifier),
+						type: brand(numberSchema.identifier),
 						value: 7,
 					}),
 				),
@@ -459,7 +459,7 @@ describe("LazyField", () => {
 				schema,
 				initialTree: content,
 			});
-			const context = getTreeContext(
+			const context = new Context(
 				defaultSchemaPolicy,
 				new MockTreeCheckout(forest, {
 					schema: new TreeStoredSchemaRepository(schema),

@@ -37,6 +37,7 @@ import {
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
 import type { OptionalChangeset } from "../optional-field/index.js";
+import type { CellId } from "../sequence-field/index.js";
 
 import {
 	fieldKinds,
@@ -44,7 +45,6 @@ import {
 	sequence,
 	required as valueFieldKind,
 } from "./defaultFieldKinds.js";
-import type { CellId } from "../sequence-field/index.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -452,7 +452,7 @@ export interface SequenceFieldEditBuilder<TContent> {
 }
 
 /**
- * @returns The number of path elements that both paths share, starting at index 0.
+ * Gets the number of path elements that both paths share, starting at index 0.
  */
 function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[]): number {
 	const minDepth = Math.min(pathA.length, pathB.length);
