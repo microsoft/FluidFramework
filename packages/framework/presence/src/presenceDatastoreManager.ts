@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IEmitter } from "@fluidframework/core-interfaces/internal";
+import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
+import type { FluidObject, IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -75,6 +76,7 @@ interface DatastoreUpdateMessage extends IInboundSignalMessage {
 		sendTimestamp: number;
 		avgLatency: number;
 		isComplete?: true;
+		acknowledgementId?: number;
 		data: DatastoreMessageContent;
 	};
 }
@@ -90,11 +92,25 @@ interface ClientJoinMessage extends IInboundSignalMessage {
 	};
 }
 
+// Message type identifier for presence acknowledgment messages.
+const acknowledgementMessageType = "Pres:Ack";
+
+/**
+ * Message type used to acknowledge receipt of remote update messages.
+ */
+interface AcknowledgementMessage extends IInboundSignalMessage {
+	type: typeof acknowledgementMessageType;
+	content: {
+		id: number;
+	};
+}
+
 function isPresenceMessage(
 	message: IInboundSignalMessage,
 ): message is DatastoreUpdateMessage | ClientJoinMessage {
 	return message.type.startsWith("Pres:");
 }
+
 /**
  * @internal
  */
@@ -157,6 +173,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private refreshBroadcastRequested = false;
 	private readonly timer = new TimerManager();
 	private readonly workspaces = new Map<string, AnyWorkspaceEntry<StatesWorkspaceSchema>>();
+	private readonly supportsTargetedSignals: boolean;
 
 	public constructor(
 		private readonly attendeeId: AttendeeId,
@@ -171,6 +188,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
 		this.workspaces.set("system:presence", systemWorkspace);
+		// Determine if the runtime supports targeted signals
+		const maybeLayerCompatDetails = this.runtime as FluidObject<ILayerCompatDetails>;
+		this.supportsTargetedSignals =
+			maybeLayerCompatDetails.ILayerCompatDetails?.supportedFeatures.has(
+				"submit_signals_v2",
+			) ?? false;
 	}
 
 	public joinSession(clientId: ClientConnectionId): void {
@@ -364,6 +387,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (!isPresenceMessage(message)) {
 			return;
 		}
+
 		if (local) {
 			const deliveryDelta = received - message.content.sendTimestamp;
 			// Limit returnedMessages count to 256 such that newest message
@@ -394,6 +418,17 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);
 			if (message.content.isComplete) {
 				this.refreshBroadcastRequested = false;
+			}
+			// If the message requests an acknowledgement, we will send a targeted acknowledgement message back to just the requestor.
+			if (message.content.acknowledgementId !== undefined) {
+				assert(this.supportsTargetedSignals, "Targeted signals not supported");
+				this.runtime.submitSignal(
+					acknowledgementMessageType,
+					{
+						id: message.content.acknowledgementId,
+					} satisfies AcknowledgementMessage["content"],
+					message.clientId,
+				);
 			}
 		}
 
