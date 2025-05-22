@@ -46,6 +46,10 @@ import {
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
+// Required to prevent the introduction of new circular dependencies
+// TODO: Having the schema provide their own policy functions for compatibility which
+// toMapTree invokes instead of manually handling each kind would remove this bad
+// dependency, and reduce coupling.
 // eslint-disable-next-line import/no-internal-modules
 import { isObjectNodeSchema } from "./node-kinds/object/objectNodeTypes.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
