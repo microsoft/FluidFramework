@@ -183,7 +183,7 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 		[false, "1.0.0"],
 		[true, "2.0.0-defaults"],
 	]),
-	compressionOptions: configObjectToMinVersionForCollab([
+	compressionOptions: configValueToMinVersionForCollab([
 		[{ ...disabledCompressionConfig }, "1.0.0"],
 		[{ ...enabledCompressionConfig }, "2.0.0-defaults"],
 	]),
@@ -200,7 +200,7 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 		[FlushMode.Immediate, "1.0.0"],
 		[FlushMode.TurnBased, "2.0.0-defaults"],
 	]),
-	gcOptions: configObjectToMinVersionForCollab([
+	gcOptions: configValueToMinVersionForCollab([
 		[{ enableGCSweep: undefined }, "1.0.0"],
 		[{ enableGCSweep: true }, "2.0.0-defaults"],
 	]),
@@ -317,48 +317,34 @@ export function getValidationForRuntimeOptions<T extends Record<string, unknown>
 /**
  * Helper function to map ContainerRuntimeOptionsInternal config values to
  * minVersionForCollab in {@link runtimeOptionsAffectingDocSchemaConfigValidationMap}.
- * Used for configs values that are not objects.
  */
 export function configValueToMinVersionForCollab<
-	T extends string | number | boolean | undefined,
-	Arr extends readonly [T, SemanticVersion][],
->(configToMinVer: Arr): (value: T) => SemanticVersion | undefined {
-	const map = new Map(configToMinVer);
-	return (value: T) => map.get(value);
-}
-
-/**
- * Helper function to map ContainerRuntimeOptionsInternal config values to
- * minVersionForCollab in {@link runtimeOptionsAffectingDocSchemaConfigValidationMap}.
- * Used for configs values that are objects.
- */
-export function configObjectToMinVersionForCollab<
-	T extends object,
+	T extends string | number | boolean | undefined | object,
 	Arr extends readonly [T, SemanticVersion][],
 >(configToMinVer: Arr): (value: T) => SemanticVersion | undefined {
 	const map = new Map(configToMinVer);
 	return (value: T) => {
-		if (typeof value === "object" && value !== null) {
-			// Collect all versions for which the config entry is a subset of the value
-			const matchingVersions: SemanticVersion[] = [];
-			for (const [key, version] of map.entries()) {
-				if (
-					typeof key === "object" &&
-					key !== undefined &&
-					Object.entries(key as Record<string, unknown>).every(
-						([k, v]) => (value as Record<string, unknown>)[k] === v,
-					)
-				) {
-					matchingVersions.push(version);
-				}
-			}
-			if (matchingVersions.length > 0) {
-				// Return the maximum (latest) version among all matches
-				return matchingVersions.sort((a, b) => (compare(a, b) > 0 ? 1 : -1))[
-					matchingVersions.length - 1
-				];
+		// If the value is not an object, we can use the map directly to get the version
+		if (typeof value !== "object") {
+			return map.get(value);
+		}
+		// If the value is an object, we need to check if it matches any of the keys in the map
+		// Collect all versions for which the config entry is a subset of the value object
+		const matchingVersions: SemanticVersion[] = [];
+		for (const [key, version] of map.entries()) {
+			if (
+				typeof key === "object" &&
+				key !== undefined &&
+				Object.entries(key).every(([k, v]) => value[k] === v)
+			) {
+				matchingVersions.push(version);
 			}
 		}
+		if (matchingVersions.length > 0) {
+			// Return the latest minVersionForCollab among all matches
+			return matchingVersions.sort((a, b) => (gt(a, b) ? -1 : 1))[0];
+		}
+		// If no matches, return undefined
 		return undefined;
 	};
 }

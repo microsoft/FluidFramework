@@ -14,7 +14,6 @@ import {
 	type SemanticVersion,
 	type ConfigValidationMap,
 	configValueToMinVersionForCollab,
-	configObjectToMinVersionForCollab,
 } from "../compatUtils.js";
 
 describe("compatUtils", () => {
@@ -252,8 +251,7 @@ describe("compatUtils", () => {
 				[false, "0.0.0-defaults"],
 				[true, "3.0.0"],
 			]),
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-			featureC: configObjectToMinVersionForCollab([
+			featureC: configValueToMinVersionForCollab([
 				[{ foo: 1 }, "4.0.0"],
 				[{ foo: 2 }, "7.0.0"],
 				[{ bar: "baz" }, "3.0.0"],
@@ -285,6 +283,10 @@ describe("compatUtils", () => {
 			{
 				minVersionForCollab: "9.0.0",
 				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true }, featureA: "a4" },
+			},
+			{
+				minVersionForCollab: "1.0.0",
+				runtimeOptions: { featureC: { notDocSchemaAffecting: true }, featureA: "a1" },
 			},
 		];
 
@@ -331,7 +333,7 @@ describe("compatUtils", () => {
 		];
 
 		for (const test of compatibleCases) {
-			it(`does not throw for compatible options: ${JSON.stringify({ minVersionForCollab: test.minVersionForCollab, runtimeOptions: test.runtimeOptions })}`, () => {
+			it(`does not throw for compatible options: ${JSON.stringify(test)}`, () => {
 				assert.doesNotThrow(() => {
 					getValidationForRuntimeOptions(
 						test.minVersionForCollab,
@@ -342,7 +344,7 @@ describe("compatUtils", () => {
 			});
 		}
 		for (const test of incompatibleCases) {
-			it(`throws for incompatible options: ${JSON.stringify(test)}`, () => {
+			it(`throws for incompatible options: ${JSON.stringify({ minVersionForCollab: test.minVersionForCollab, runtimeOptions: test.runtimeOptions })}`, () => {
 				assert.throws(
 					() => {
 						getValidationForRuntimeOptions(
