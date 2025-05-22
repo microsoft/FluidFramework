@@ -31,7 +31,7 @@ import type {
 	TreeSimpleContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "./feature-libraries/flex-tree/utils.js";
-import { cursorFromInsertable } from "./utils.js";
+import { fieldCursorFromInsertable } from "./utils.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -91,7 +91,7 @@ export function makeDeepStoredContent(
 ): TreeStoredContent {
 	const content = makeDeepContentSimple(depth, leafValue);
 	return {
-		initialTree: cursorFromInsertable<UnsafeUnknownSchema>(
+		initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
 			content.schema,
 			content.initialTree,
 		),
@@ -126,7 +126,7 @@ export function makeWideStoredContentWithEndValue(
 ): TreeStoredContent {
 	const content = makeWideContentWithEndValueSimple(numberOfNodes, endLeafValue);
 	return {
-		initialTree: cursorFromInsertable<UnsafeUnknownSchema>(
+		initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
 			content.schema,
 			content.initialTree,
 		),

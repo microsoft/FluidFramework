@@ -19,7 +19,11 @@ import {
 	defaultSchemaPolicy,
 	MockNodeIdentifierManager,
 } from "../../../feature-libraries/index.js";
-import { MockTreeCheckout, cursorFromInsertable, forestWithContent } from "../../utils.js";
+import {
+	MockTreeCheckout,
+	fieldCursorFromInsertable,
+	forestWithContent,
+} from "../../utils.js";
 import {
 	toStoredSchema,
 	type ImplicitFieldSchema,
@@ -49,7 +53,7 @@ export function getReadonlyContext(
  * @returns The created context.
  */
 export function contextWithContentReadonly(content: TreeSimpleContent): Context {
-	const cursor = cursorFromInsertable<UnsafeUnknownSchema>(
+	const cursor = fieldCursorFromInsertable<UnsafeUnknownSchema>(
 		content.schema,
 		content.initialTree,
 	);

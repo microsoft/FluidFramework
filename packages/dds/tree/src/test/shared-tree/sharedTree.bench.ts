@@ -18,7 +18,7 @@ import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
 	TreeCompressionStrategy,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 } from "../../feature-libraries/index.js";
 import { Tree, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
@@ -50,7 +50,7 @@ import {
 	flexTreeViewWithContent,
 	toJsonableTree,
 	type SharedTreeWithContainerRuntime,
-	cursorFromInsertable,
+	fieldCursorFromInsertable,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
@@ -261,14 +261,14 @@ describe("SharedTree benchmarks", () => {
 						duration = state.timer.toSeconds(before, after);
 
 						// Cleanup + validation
-						const expected = jsonableTreeFromCursor(
-							cursorFromInsertable(
+						const expected = jsonableTreeFromFieldCursor(
+							fieldCursorFromInsertable(
 								LinkedList,
 								makeJsDeepTree(numberOfNodes, setCount) as LinkedList,
 							),
 						);
 						const actual = toJsonableTree(tree);
-						assert.deepEqual(actual, [expected]);
+						assert.deepEqual(actual, expected);
 
 						// Collect data
 					} while (state.recordBatch(duration));
@@ -312,14 +312,14 @@ describe("SharedTree benchmarks", () => {
 						duration = state.timer.toSeconds(before, after);
 
 						// Cleanup + validation
-						const expected = jsonableTreeFromCursor(
-							cursorFromInsertable(
+						const expected = jsonableTreeFromFieldCursor(
+							fieldCursorFromInsertable(
 								WideRoot,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
 							),
 						);
 						const actual = toJsonableTree(tree);
-						assert.deepEqual(actual, [expected]);
+						assert.deepEqual(actual, expected);
 
 						// Collect data
 					} while (state.recordBatch(duration));
