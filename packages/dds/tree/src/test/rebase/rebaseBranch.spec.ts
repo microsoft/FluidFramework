@@ -333,7 +333,7 @@ describe("rebaseBranch", () => {
 });
 
 /**
- * @returns the path from the base of a branch to its head
+ * Returns the path from the base of a branch to its head.
  */
 function getPath<TChange>(
 	fromAncestor: GraphCommit<TChange> | undefined,

@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import {
+	configureWebSocketServices,
+	ICollaborationSessionEvents,
+} from "@fluidframework/server-lambdas";
 import {
 	IDocumentStorage,
 	IOrdererManager,
@@ -13,16 +19,11 @@ import {
 	DefaultMetricClient,
 	IRunner,
 } from "@fluidframework/server-services-core";
-// eslint-disable-next-line import/no-deprecated
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
-import { Provider } from "nconf";
-import * as winston from "winston";
-import {
-	configureWebSocketServices,
-	ICollaborationSessionEvents,
-} from "@fluidframework/server-lambdas";
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
+import { Provider } from "nconf";
+import * as winston from "winston";
+
 import * as app from "./app";
 
 export class TinyliciousRunner implements IRunner {

@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
 	SchemaFactory,
@@ -815,28 +816,20 @@ describeHydration(
 			});
 		});
 
-		it("unhydrated default identifier access errors", () => {
+		it("unhydrated default identifier access works", () => {
 			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
 			const newNode = new HasId({});
-			assert.throws(
-				() => {
-					const id = newNode.id;
-				},
-				validateUsageError(/identifier/),
-			);
+			const id = newNode.id;
+			const id2 = new HasId({}).id;
+			assert.notEqual(id, id2);
 		});
 
-		it("unhydrated default identifier access via shortId errors", () => {
+		it("unhydrated default identifier access via shortId returns UUID", () => {
 			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
 			const newNode = new HasId({});
-			assert.throws(
-				() => {
-					const id = Tree.shortId(newNode);
-				},
-				validateUsageError(
-					/Tree.shortId cannot access default identifiers on unhydrated nodes/,
-				),
-			);
+			const id = Tree.shortId(newNode);
+			assert(typeof id === "string");
+			assert(isStableId(id));
 		});
 
 		it("unhydrated custom identifier access works", () => {
