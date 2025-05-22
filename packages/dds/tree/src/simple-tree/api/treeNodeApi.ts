@@ -88,27 +88,6 @@ export interface TreeNodeApi {
 	key(node: TreeNode): string | number;
 
 	/**
-	 * Gets the child of the given node with the given key if a child exists under that key.
-	 *
-	 * @param node - The parent node whose child is being requested.
-	 * @param key - The key under the node under which the child is being requested.
-	 *
-	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
-	 */
-	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
-
-	/**
-	 * Gets the children of the provided node, paired with their key under the node.
-	 *
-	 * @param node - The node whose children are being requested.
-	 *
-	 * @returns
-	 * An iterable of pairs of the form `[key, child]`, where `key` is the key under the node, and `child`
-	 * is the child node or leaf value under that key.
-	 */
-	children(node: TreeNode): Iterable<[string | number, TreeNode | TreeLeafValue]>;
-
-	/**
 	 * Register an event listener on the given node.
 	 * @param node - The node whose events should be subscribed to.
 	 * @param eventName - Which event to subscribe to.
