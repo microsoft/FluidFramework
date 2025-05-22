@@ -123,7 +123,8 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/shared-object-base": "workspace:~"
+		"@fluidframework/shared-object-base": "workspace:~",
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -139,6 +140,7 @@
 		"@types/jest": "29.5.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",

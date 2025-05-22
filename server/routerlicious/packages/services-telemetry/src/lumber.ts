@@ -35,7 +35,10 @@ export class Lumber<T extends string = LumberEventName> {
 	private _exception?: Error;
 	private _logLevel?: LogLevel;
 	private _completed = false;
-	public readonly timestamp = Date.now();
+	private _timestamp = Date.now();
+	public get timestamp(): number {
+		return this._timestamp;
+	}
 	public readonly id = uuid();
 
 	public get properties(): Map<string, any> {
@@ -102,6 +105,17 @@ export class Lumber<T extends string = LumberEventName> {
 			});
 		}
 		return this;
+	}
+
+	/**
+	 * Overrides the timestamp of the telemetry event.
+	 * @param msSinceEpoch - The timestamp in milliseconds since the epoch (1970-01-01T00:00:00Z), i.e. `Date.now()`
+	 * @remarks
+	 * This is useful when a Metric's start time needs to be set retroactively, such as when an event's duration is
+	 * tracked across several service instances, then logged in a single instance where the event may not have started.
+	 */
+	public overrideTimestamp(msSinceEpoch: number): void {
+		this._timestamp = msSinceEpoch;
 	}
 
 	public success(message: string, logLevel: LogLevel = LogLevel.Info) {
