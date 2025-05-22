@@ -14,3 +14,13 @@ export {
 	TreeArrayNode,
 	type ReadonlyArrayNode,
 } from "./array/index.js";
+
+export {
+	isMapNodeSchema,
+	type MapNodeCustomizableSchema,
+	type MapNodeInsertableData,
+	type MapNodePojoEmulationSchema,
+	MapNodeSchema,
+	mapSchema,
+	type TreeMapNode,
+} from "./map/index.js";

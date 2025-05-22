@@ -18,9 +18,8 @@ import type {
 import { ObjectNodeSchema } from "../objectNodeTypes.js";
 import { NodeKind } from "../core/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import { ArrayNodeSchema } from "../node-kinds/index.js";
+import { ArrayNodeSchema, MapNodeSchema } from "../node-kinds/index.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { MapNodeSchema } from "../mapNodeTypes.js";
 
 /**
  * Converts an {@link ImplicitFieldSchema} to a "simple" schema representation.

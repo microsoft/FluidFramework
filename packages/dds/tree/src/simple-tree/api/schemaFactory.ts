@@ -17,7 +17,13 @@ import {
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
-import { type TreeArrayNode, arraySchema } from "../node-kinds/index.js";
+import {
+	arraySchema,
+	type MapNodeInsertableData,
+	mapSchema,
+	type TreeArrayNode,
+	type TreeMapNode,
+} from "../node-kinds/index.js";
 import type {
 	NodeKind,
 	WithType,
@@ -35,7 +41,6 @@ import {
 	stringSchema,
 	type LeafSchema,
 } from "../leafNodeSchema.js";
-import { type MapNodeInsertableData, type TreeMapNode, mapSchema } from "../mapNode.js";
 import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeObjectNode,

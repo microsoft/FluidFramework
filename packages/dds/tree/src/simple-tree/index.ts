@@ -193,12 +193,13 @@ export {
 	IterableTreeArrayContent,
 	type ReadonlyArrayNode,
 	TreeArrayNode,
+	type MapNodeCustomizableSchema,
+	type MapNodePojoEmulationSchema,
+	MapNodeSchema,
+	isMapNodeSchema,
+	type TreeMapNode,
+	type MapNodeInsertableData,
 } from "./node-kinds/index.js";
-export type {
-	MapNodeCustomizableSchema,
-	MapNodePojoEmulationSchema,
-} from "./mapNodeTypes.js";
-export { MapNodeSchema, isMapNodeSchema } from "./mapNodeTypes.js";
 export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
@@ -209,7 +210,6 @@ export {
 	createUnknownOptionalFieldPolicy,
 } from "./objectNode.js";
 export { ObjectNodeSchema } from "./objectNodeTypes.js";
-export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export {
 	mapTreeFromNodeData,
 	type InsertableContent,
