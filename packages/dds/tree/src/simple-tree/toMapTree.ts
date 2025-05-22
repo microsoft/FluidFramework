@@ -83,37 +83,13 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
- *
- * TODO:BUG: AB#9131
- * This schema validation is done before defaults are provided.
- * This can not easily be fixed by reordering things within this implementation since even at the end of this function defaults requiring a context may not have been filled.
- * This means schema validation reject required fields getting their value from a default like identifier fields.
- *
  * @remarks The resulting tree will be populated with any defaults from {@link FieldProvider}s in the schema.
- *
- * @privateRemarks
- * TODO: AB#9126 AB#9131
- * When an app wants schema validation, we should ensure data is validated. Doing the validation here is not robust (since many callers to this don't have a context and thus can't opt into validation).
- * Additionally the validation here does not correctly handle default values, and introduces a second schema representation which is a bit odd API wise as its typically derivable from the view schema.
- * It may make more sense to validate when hydrating the MapTreeNode when the context is known and the defaults are available.
- * Applying the "parse don't validate" idiom here could help ensuring we capture when the validation optionally happens in the type system to avoid missing or redundant validation,
- * as well as ensuring validation happens after defaulting (or can handle validating data missing defaults)
  */
-export function mapTreeFromNodeData(
-	data: InsertableContent,
-	allowedTypes: ImplicitAllowedTypes,
-	context?: NodeIdentifierManager,
-): ExclusiveMapTree;
-export function mapTreeFromNodeData(
-	data: InsertableContent | undefined,
+export function mapTreeFromNodeData<TIn extends InsertableContent | undefined>(
+	data: TIn,
 	allowedTypes: ImplicitFieldSchema,
 	context?: NodeIdentifierManager,
-): ExclusiveMapTree | undefined;
-export function mapTreeFromNodeData(
-	data: InsertableContent | undefined,
-	allowedTypes: ImplicitFieldSchema,
-	context?: NodeIdentifierManager,
-): ExclusiveMapTree | undefined {
+): TIn extends undefined ? undefined : ExclusiveMapTree {
 	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
 
 	if (data === undefined) {
@@ -121,14 +97,14 @@ export function mapTreeFromNodeData(
 		if (normalizedFieldSchema.kind !== FieldKind.Optional) {
 			throw new UsageError("Got undefined for non-optional field.");
 		}
-		return undefined;
+		return undefined as TIn extends undefined ? undefined : ExclusiveMapTree;
 	}
 
 	const mapTree = nodeDataToMapTree(data, normalizedFieldSchema.allowedTypeSet);
 	// Add what defaults can be provided. If no `context` is providing, some defaults may still be missing.
 	addDefaultsToMapTree(mapTree, normalizedFieldSchema.allowedTypes, context);
 
-	return mapTree;
+	return mapTree as TIn extends undefined ? undefined : ExclusiveMapTree;
 }
 
 /**
