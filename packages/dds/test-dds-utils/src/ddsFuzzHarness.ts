@@ -692,7 +692,7 @@ export function mixinReconnect<
 			}
 			return state;
 		} else {
-			return model.reducer(state, operation as TOperation);
+			return model.reducer(state, operation);
 		}
 	};
 	return {

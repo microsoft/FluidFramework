@@ -1074,7 +1074,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					assert(
 						(lastRemove.type === "sliceRemove" &&
 							lastRemove.localSeq === segmentGroup.localSeq) ||
-							opstampUtils.isSquashedOp(lastRemove), // squash case -- TBD we almost certainly want more clear state here.
+							opstampUtils.isSquashedOp(lastRemove),
 						"Last remove should be the obliterate that is being resubmitted.",
 					);
 
