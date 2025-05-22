@@ -4,7 +4,12 @@
  */
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
-import type { IEvent, IEventProvider, IFluidLoadable, IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	IEvent,
+	IEventProvider,
+	IFluidLoadable,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 

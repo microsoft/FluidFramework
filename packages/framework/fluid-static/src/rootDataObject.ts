@@ -15,12 +15,12 @@ import {
 	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject, IFluidLoadable, IFluidHandle } from "@fluidframework/core-interfaces";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
-	IFluidDataStoreRuntime,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/datastore-definitions/legacy";
+	FluidObject,
+	IFluidLoadable,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { IDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
 import type {
@@ -76,10 +76,6 @@ class RootDataObject
 
 	public get IRootDataObject(): IRootDataObject {
 		return this;
-	}
-
-	public getFluidDataStoreRuntime(): IFluidDataStoreRuntime {
-		return this.runtime;
 	}
 
 	private get initialObjectsDir(): IDirectory {
@@ -159,11 +155,11 @@ class RootDataObject
 	}
 
 	public async uploadBlob(
-			blob: ArrayBufferLike,
-			signal?: AbortSignal,
-		): Promise<IFluidHandle<ArrayBufferLike>> {
-			return this.runtime.uploadBlob(blob, signal);
-		}
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.runtime.uploadBlob(blob, signal);
+	}
 
 	private async createDataObject<T extends IFluidLoadable>(
 		dataObjectClass: DataObjectKind<T>,
