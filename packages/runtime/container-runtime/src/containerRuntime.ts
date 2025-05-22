@@ -859,8 +859,8 @@ export class ContainerRuntime
 		IContainerRuntimeInternal,
 		// eslint-disable-next-line import/no-deprecated
 		IContainerRuntimeBaseExperimental,
-		IGarbageCollectionRuntime,
 		IRuntime,
+		IGarbageCollectionRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
 		IFluidParentContext,
