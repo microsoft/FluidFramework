@@ -93,6 +93,7 @@ class PresenceManagerFactory {
  * @remarks
  * See {@link getPresenceViaDataObject} for example usage.
  *
+ * @deprecated Use {@link getPresence} instead.
  * @sealed
  * @alpha
  */
@@ -104,6 +105,7 @@ export declare class ExperimentalPresenceDO {
  * DataStore based Presence Manager that is used as fallback for preferred Container
  * Extension based version requires registration. Export SharedObjectKind for registration.
  *
+ * @deprecated Use {@link getPresence} instead.
  * @alpha
  */
 export const ExperimentalPresenceManager =
@@ -129,6 +131,7 @@ export const ExperimentalPresenceManager =
  * 	);
  * ```
  *
+ * @deprecated Use {@link getPresence} instead.
  * @alpha
  */
 export function getPresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence {

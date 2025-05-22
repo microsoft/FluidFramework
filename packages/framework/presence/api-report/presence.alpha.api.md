@@ -46,17 +46,17 @@ export interface BroadcastControlSettings {
 // @alpha
 export type ClientConnectionId = string;
 
-// @alpha @sealed
+// @alpha @sealed @deprecated
 export class ExperimentalPresenceDO {
 }
 
-// @alpha
+// @alpha @deprecated
 export const ExperimentalPresenceManager: SharedObjectKind<IFluidLoadable & ExperimentalPresenceDO>;
 
 // @alpha
 export function getPresence(fluidContainer: IFluidContainer): Presence;
 
-// @alpha
+// @alpha @deprecated
 export function getPresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence;
 
 // @alpha @system
