@@ -113,7 +113,7 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 			return new MapNodeStoredSchema({
 				kind: FieldKinds.optional.identifier,
 				types,
-				persistedMetadata: undefined,
+				persistedMetadata: schema.metadata,
 			});
 		}
 		case NodeKind.Array: {
@@ -121,7 +121,7 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 			const field = {
 				kind: FieldKinds.sequence.identifier,
 				types,
-				persistedMetadata: undefined,
+				persistedMetadata: schema.metadata,
 			};
 			const fields = new Map([[EmptyKey, field]]);
 			return new ObjectNodeStoredSchema(fields);
