@@ -18,7 +18,7 @@ import type {
 import { ObjectNodeSchema } from "../objectNodeTypes.js";
 import { NodeKind } from "../core/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import { ArrayNodeSchema } from "../arrayNodeTypes.js";
+import { ArrayNodeSchema } from "../node-kinds/index.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { MapNodeSchema } from "../mapNodeTypes.js";
 

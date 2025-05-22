@@ -29,7 +29,7 @@ import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import type { TreeSchema } from "./configuration.js";
 import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 import { ObjectNodeSchema } from "../objectNodeTypes.js";
-import { ArrayNodeSchema } from "../arrayNodeTypes.js";
+import { ArrayNodeSchema } from "../node-kinds/index.js";
 import { MapNodeSchema } from "../mapNodeTypes.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 

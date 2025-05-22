@@ -186,15 +186,14 @@ export {
 } from "./schemaTypes.js";
 export { getTreeNodeForField } from "./getTreeNodeForField.js";
 export {
-	TreeArrayNode,
+	type ArrayNodeCustomizableSchema,
+	type ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
+	isArrayNodeSchema,
 	IterableTreeArrayContent,
 	type ReadonlyArrayNode,
-} from "./arrayNode.js";
-export type {
-	ArrayNodeCustomizableSchema,
-	ArrayNodePojoEmulationSchema,
-} from "./arrayNodeTypes.js";
-export { ArrayNodeSchema, isArrayNodeSchema } from "./arrayNodeTypes.js";
+	TreeArrayNode,
+} from "./node-kinds/index.js";
 export type {
 	MapNodeCustomizableSchema,
 	MapNodePojoEmulationSchema,

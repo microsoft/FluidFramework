@@ -17,7 +17,7 @@ import {
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
-import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
+import { type TreeArrayNode, arraySchema } from "../node-kinds/index.js";
 import type {
 	NodeKind,
 	WithType,
