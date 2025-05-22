@@ -4,9 +4,11 @@
  */
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { ConnectionNotAvailableMode } from "../mongodb";
-import { DefaultExceptionRule } from "./defaultExceptionRule";
+
 import { IMongoExceptionRetryRule } from "./IMongoExceptionRetryRule";
+import { DefaultExceptionRule } from "./defaultExceptionRule";
 import { createMongoErrorRetryRuleset } from "./mongoError";
 import { createMongoNetworkErrorRetryRuleset } from "./mongoNetworkError";
 

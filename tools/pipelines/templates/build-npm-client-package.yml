@@ -175,8 +175,7 @@ extends:
           serviceConnection: ff-internal-arrow-sc
           # This will make sure that the artifacts are published to the Arrow Service Connection if they are release or pre-release
           # Note: using `variables` in a compile-time condition is easy to get wrong; here we know that the 'release' variable does exist at compile time
-          ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}:
-            isShipped: true
+          isShipped: ${{ or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022

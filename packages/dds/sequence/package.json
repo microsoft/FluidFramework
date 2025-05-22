@@ -105,10 +105,10 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"pack:tests": "tar -cf ./sequence.test-files.tar ./src/test ./dist/test ./lib/test",
-		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"lib/**/*.spec.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
+		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"lib/**/*.spec.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
 		"perf:measure": "npm run perf -- --fgrep @Measurement",
 		"test": "npm run test:mocha",
-		"test:benchmark:report": "mocha \"lib/test/*.perf.spec.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark -r @fluid-internal/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
+		"test:benchmark:report": "mocha \"lib/test/*.perf.spec.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark --fgrep @ExecutionTime -r @fluid-internal/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
 		"test:memory": "mocha --config src/test/memory/.mocharc.cjs",
 		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.cjs",
@@ -169,8 +169,8 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.33.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.40.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.8",
 		"@types/diff": "^3.5.1",
@@ -199,28 +199,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IIntervalCollection": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"Interface_IIntervalCollectionEvent": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"Interface_IntervalIndex": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"Interface_IOverlappingIntervalsIndex": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"Interface_ISharedIntervalCollection": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

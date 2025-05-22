@@ -106,11 +106,11 @@
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-tools/build-cli": "^0.55.0",
-		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.33.0",
+		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.40.0",
 		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.8",
@@ -130,20 +130,7 @@
 		"uuid": "^9.0.0"
 	},
 	"typeValidation": {
-		"broken": {
-			"TypeAlias_ITokenClaims": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"TypeAlias_ScopeType": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"Variable_ScopeType": {
-				"backCompat": false,
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

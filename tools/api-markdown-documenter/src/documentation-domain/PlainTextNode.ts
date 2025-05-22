@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DocumentationLiteralNodeBase,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
@@ -21,10 +18,7 @@ import { DocumentationNodeType } from "./DocumentationNodeType.js";
  *
  * @public
  */
-export class PlainTextNode
-	extends DocumentationLiteralNodeBase<string>
-	implements SingleLineDocumentationNode
-{
+export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 	/**
 	 * Static singleton representing an empty Plain Text node.
 	 */

@@ -114,13 +114,13 @@ import {
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
-import { proxySlot } from "../../simple-tree/core/treeNodeKernel.js";
+import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 
 const enableSchemaValidation = true;
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
-	forest: ForestTypeReference,
+	forest: ForestTypeExpensiveDebug,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
@@ -203,9 +203,9 @@ describe("SharedTree", () => {
 						assert(node.context.isDisposed() === false);
 						assert(allowNodes);
 					}
-					const proxy = anchor.slots.get(proxySlot);
-					if (proxy !== undefined) {
-						assert.equal(Tree.status(proxy), TreeStatus.InDocument);
+					const treeNode = anchor.slots.get(simpleTreeNodeSlot);
+					if (treeNode !== undefined) {
+						assert.equal(Tree.status(treeNode), TreeStatus.InDocument);
 						assert(allowNodes);
 					}
 				}
@@ -286,7 +286,25 @@ describe("SharedTree", () => {
 			view2.upgradeSchema();
 		});
 
-		it("unhydrated tree input", () => {
+		it("unhydrated optional tree input", () => {
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
+			const sb = new SchemaFactory("test-factory");
+			class Foo extends sb.object("Foo", {}) {}
+
+			const view = tree.viewWith(
+				new TreeViewConfiguration({ schema: SchemaFactory.optional(Foo) }),
+			);
+			const unhydratedInitialTree = new Foo({});
+			view.initialize(unhydratedInitialTree);
+
+			assert(view.root === unhydratedInitialTree);
+		});
+
+		it("unhydrated required tree input", () => {
+			// Initializing to a schema with a required root goes through a three-phase initialization.
+			// First an optional version of the schema is set, then the content is set, and finally the required schema is set.
+			// This is more likely to break hydration than the optional case above.
+
 			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
@@ -2063,7 +2081,7 @@ describe("SharedTree", () => {
 			assert.equal(trees[0].kernel.checkout.forest instanceof ObjectForest, true);
 		});
 
-		it("ForestType.Reference uses ObjectForest with additionalAsserts flag set to false", () => {
+		it("ForestTypeReference uses ObjectForest with additionalAsserts flag set to false", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2076,7 +2094,7 @@ describe("SharedTree", () => {
 			assert.equal(forest.additionalAsserts, false);
 		});
 
-		it("ForestType.Optimized uses ChunkedForest", () => {
+		it("ForestTypeOptimized uses ChunkedForest", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2087,7 +2105,7 @@ describe("SharedTree", () => {
 			assert.equal(trees[0].kernel.checkout.forest instanceof ChunkedForest, true);
 		});
 
-		it("ForestType.Expensive uses ObjectForest with additionalAsserts flag set to true", () => {
+		it("ForestTypeExpensive uses ObjectForest with additionalAsserts flag set to true", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({

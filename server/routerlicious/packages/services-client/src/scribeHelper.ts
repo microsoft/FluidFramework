@@ -4,13 +4,13 @@
  */
 
 import { ICreateTreeEntry, ITree } from "@fluidframework/gitresources";
+import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IDocumentAttributes,
 	ITreeEntry,
 	FileMode,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 
 /**
  * @internal

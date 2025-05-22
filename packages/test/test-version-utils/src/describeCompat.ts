@@ -60,6 +60,7 @@ function createCompatSuite(
 		if (compatFilter !== undefined) {
 			configs = configs.filter((value) => compatFilter.includes(value.kind));
 		}
+
 		for (const config of configs) {
 			if (minVersion && isCompatVersionBelowMinVersion(minVersion, config)) {
 				// skip current config if compat version is below min version supported for test suite
@@ -69,14 +70,14 @@ function createCompatSuite(
 				continue;
 			}
 			describe(config.name, function () {
-				let provider: ITestObjectProvider;
+				let provider: ITestObjectProvider | undefined;
 				let resetAfterEach: boolean;
 				const apis: CompatApis = getVersionedApis(config);
 
-				before(async function () {
+				before("Create TestObjectProvider", async function () {
 					try {
 						provider =
-							config.kind === CompatKind.CrossVersion
+							config.kind === CompatKind.CrossClient
 								? await getCompatVersionedTestObjectProviderFromApis(apis, {
 										type: driver,
 										config: {
@@ -106,11 +107,17 @@ function createCompatSuite(
 						throw error;
 					}
 
-					Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
+					Object.defineProperty(this, "__fluidTestProvider", {
+						get: () => provider,
+						configurable: true,
+					});
 				});
 
 				tests.bind(this)((options?: ITestObjectProviderOptions) => {
 					resetAfterEach = options?.resetAfterEach ?? true;
+					if (provider === undefined) {
+						throw new Error("Expected provider to be set up by before hook");
+					}
 					if (options?.syncSummarizer === true) {
 						provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 					}
@@ -120,19 +127,59 @@ function createCompatSuite(
 					return provider;
 				}, apis);
 
-				afterEach(function (done: Mocha.Done) {
+				afterEach("Verify container telemetry", function (done: Mocha.Done) {
+					if (provider === undefined) {
+						throw new Error("Expected provider to be set up by before hook");
+					}
 					const logErrors = getUnexpectedLogErrorException(provider.tracker);
 					// if the test failed for another reason
 					// then we don't need to check errors
-					// and fail the after each as well
+					// and fail the after each as well.
+					// This also avoids failing tests that are skipped from inside the test body, which is
+					// a pattern we use to only run tests on certain drivers.
 					if (this.currentTest?.state === "passed") {
 						done(logErrors);
 					} else {
 						done();
 					}
+				});
+
+				afterEach("Reset TestObjectProvider", () => {
+					if (provider === undefined) {
+						throw new Error("Expected provider to be set up by before hook");
+					}
 					if (resetAfterEach) {
 						provider.reset();
 					}
+				});
+
+				// Mocha contexts are long-lived, and leaking the testObjectProvider on them severely eats into
+				// memory over the course of our e2e tests. This is especially bad for local server, where the
+				// server ends up retaining direct references to containers. This hook resolves that issue by explicitly
+				// removing retainers for the test object provider from the context.
+				// A good way to test memory impact of changes here is by doing one of:
+				// - Put an existing e2e test's `it` block in a loop to create many copies of it and run only this test
+				// - Put a single test in a `describeCompat` block and put the `describeCompat` block in a loop
+				// then taking heap snapshots over the course of various runs.
+				// Because of things like the summarizer process, containers may not be GC'd as soon as tests are done executing,
+				// but you should see the total number of retained containers as well as server objects stabilize over time rather than grow.
+				// Heap snapshots for a large number of tests within a single suite help detect bugs with leaking objects while a suite executes,
+				// which is problematic for suites that run a large number of test cases (usually combintorially generated).
+				// Heap snapshots for a large number of suites help detect bugs with leaking objects across suites,
+				// which is problematic for issues that tend to get hit "later in the overall test run".
+				after("Cleanup TestObjectProvider", function () {
+					if (provider === undefined) {
+						throw new Error("Expected provider to be set up by before hook");
+					}
+					provider.driver.dispose?.();
+					provider = undefined;
+					Object.defineProperty(this, "__fluidTestProvider", {
+						get: () => {
+							throw new Error(
+								"Attempted to use __fluidTestProvider after test suite disposed.",
+							);
+						},
+					});
 				});
 			});
 		}
@@ -143,15 +190,15 @@ function createCompatSuite(
  * Get versioned APIs for the given config.
  */
 function getVersionedApis(config: CompatConfig): CompatApis {
-	// If this is cross version compat scenario, make sure we use the correct versions
-	if (config.kind === CompatKind.CrossVersion) {
+	// If this is cross-clients compat scenario, make sure we use the correct versions
+	if (config.kind === CompatKind.CrossClient) {
 		assert(
 			config.createVersion !== undefined,
-			"createVersion must be defined for cross version tests",
+			"createVersion must be defined for cross-client tests",
 		);
 		assert(
 			config.loadVersion !== undefined,
-			"loadVersion must be defined for cross version tests",
+			"loadVersion must be defined for cross-client tests",
 		);
 
 		const dataRuntime = getDataRuntimeApi(config.createVersion);
