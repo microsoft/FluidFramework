@@ -531,7 +531,7 @@ function borrowCursorFromTreeNodeOrValue(
  * @remarks
  * The cursor must be put back to its original location before the node is used again.
  */
-export function borrowFieldCursorFromTreeNodeOrValue(
+function borrowFieldCursorFromTreeNodeOrValue(
 	node: TreeNode | TreeLeafValue | undefined,
 ): ITreeCursorSynchronous {
 	if (node === undefined) {

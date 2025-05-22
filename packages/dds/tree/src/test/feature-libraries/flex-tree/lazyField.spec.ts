@@ -36,7 +36,12 @@ import {
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
-import { flexTreeViewWithContent, forestWithContent, MockTreeCheckout } from "../../utils.js";
+import {
+	fieldCursorFromInsertable,
+	flexTreeViewWithContent,
+	forestWithContent,
+	MockTreeCheckout,
+} from "../../utils.js";
 
 import {
 	getReadonlyContext,
@@ -44,11 +49,15 @@ import {
 	readonlyTreeWithContent,
 	rootFieldAnchor,
 } from "./utils.js";
-import { numberSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
+import {
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+	type UnsafeUnknownSchema,
+} from "../../../simple-tree/index.js";
 import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { borrowFieldCursorFromTreeNodeOrValue } from "../../../shared-tree/index.js";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
@@ -166,7 +175,7 @@ describe("LazyField", () => {
 		const schema = toStoredSchema(factory.number);
 		const forest = forestWithContent({
 			schema,
-			initialTree: borrowFieldCursorFromTreeNodeOrValue(5),
+			initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(SchemaFactory.number, 5),
 		});
 		const context = getReadonlyContext(forest, SchemaFactory.number);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
@@ -189,7 +198,7 @@ describe("LazyField", () => {
 		const schema = toStoredSchema(Holder);
 		const forest = forestWithContent({
 			schema,
-			initialTree: borrowFieldCursorFromTreeNodeOrValue(new Holder({ f: 5 })),
+			initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(Holder, { f: 5 }),
 		});
 		const context = getReadonlyContext(forest, Holder);
 
@@ -213,7 +222,7 @@ describe("LazyField", () => {
 		const schema = toStoredSchema(Holder);
 		const forest = forestWithContent({
 			schema,
-			initialTree: borrowFieldCursorFromTreeNodeOrValue(new Holder({ f: 5 })),
+			initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(Holder, { f: 5 }),
 		});
 		const context = getReadonlyContext(forest, Holder);
 

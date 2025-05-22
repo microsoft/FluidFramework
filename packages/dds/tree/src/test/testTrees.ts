@@ -47,7 +47,7 @@ import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { isLazy, type LazyItem } from "../simple-tree/flexList.js";
 import { schemaStatics } from "../simple-tree/index.js";
-import { borrowFieldCursorFromTreeNodeOrValue, TreeAlpha } from "../shared-tree/index.js";
+import { fieldCursorFromInsertable } from "./utils.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -82,11 +82,12 @@ function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 }
 
 function convertSimpleTreeTest(data: TestSimpleTree): TestTree {
-	const initialTree = TreeAlpha.create<UnsafeUnknownSchema>(data.schema, data.root());
 	return test(
 		data.name,
 		toStoredSchema(data.schema),
-		jsonableTreesFromFieldCursor(borrowFieldCursorFromTreeNodeOrValue(initialTree)),
+		jsonableTreesFromFieldCursor(
+			fieldCursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root()),
+		),
 	);
 }
 
@@ -280,7 +281,7 @@ export const testTrees: readonly TestTree[] = [
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
 			return jsonableTreesFromFieldCursor(
-				borrowFieldCursorFromTreeNodeOrValue(new HasIdentifierField({ field: id })),
+				fieldCursorFromInsertable<UnsafeUnknownSchema>(HasIdentifierField, { field: id }),
 			);
 		},
 		policy: defaultSchemaPolicy,

@@ -53,7 +53,6 @@ export type { RunTransaction } from "./tree.js";
 export {
 	TreeAlpha,
 	type TreeIdentifierUtils,
-	borrowFieldCursorFromTreeNodeOrValue,
 } from "./treeAlpha.js";
 
 export {
