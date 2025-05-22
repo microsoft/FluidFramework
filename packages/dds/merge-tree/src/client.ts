@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTreeTextHelper, type IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";
-import { DoublyLinkedList, RedBlackTree, type ListNode } from "./collections/index.js";
+import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { NonCollabClient, SquashClient, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {

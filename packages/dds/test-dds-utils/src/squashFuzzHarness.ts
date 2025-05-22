@@ -14,7 +14,6 @@ import type {
 	Reducer,
 } from "@fluid-private/stochastic-test-utils";
 import { done } from "@fluid-private/stochastic-test-utils";
-import type { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
@@ -43,7 +42,7 @@ import {
 	ReducerPreconditionError,
 	normalizeSeedOption,
 } from "./ddsFuzzHarness.js";
-import { makeUnreachableCodePathProxy } from "./utils.js";
+import { makeUnreachableCodePathProxy, reconnectAndSquash } from "./utils.js";
 
 /**
  * @internal
@@ -220,31 +219,7 @@ export function mixinStagingMode<
 			}
 			if (newStatus === "off") {
 				model.validatePoisonedContentRemoved(state.client);
-				// The mocks don't fully plumb squashing and/or APIs for staging mode yet. To still exercise the squashing code path,
-				// we patch data store runtime's resubmit to always squash while we transition to "off".
-				const patchReSubmit = (
-					runtime: MockFluidDataStoreRuntime,
-					options: { squash: boolean },
-				): (() => void) => {
-					const originalReSubmit = runtime.reSubmit;
-					runtime.reSubmit = async (
-						content: any,
-						localOpMetadata: unknown,
-						squash?: boolean,
-					) => originalReSubmit.call(runtime, content, localOpMetadata, options.squash);
-					return () => {
-						runtime.reSubmit = originalReSubmit;
-					};
-				};
-				const cleanup = patchReSubmit(
-					state.client.dataStoreRuntime as MockFluidDataStoreRuntime,
-					{ squash: true },
-				);
-				try {
-					state.client.containerRuntime.connected = true;
-				} finally {
-					cleanup();
-				}
+				reconnectAndSquash(state.client.containerRuntime, state.client.dataStoreRuntime);
 			} else if (newStatus === "staging") {
 				state.client.containerRuntime.connected = false;
 			}
