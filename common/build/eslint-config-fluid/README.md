@@ -48,7 +48,9 @@ Imported via `@fluidframework/eslint-config-fluid/v9/strict-biome`.
 
 ## Migrating to ESLint v9
 
-To migrate to ESLint v9, update your ESLint configuration to use the v9 configurations:
+To migrate to ESLint v9, update your ESLint configuration to use the v9 configurations.
+
+### For ESLint v8-style Configuration
 
 ```js
 // .eslintrc.js or .eslintrc.cjs
@@ -59,6 +61,36 @@ module.exports = {
   ],
   // ...rest of your configuration
 };
+```
+
+### For ESLint v9-style Flat Configuration
+
+ESLint v9 introduces a new flat configuration format. To use the v9 configurations with the new format:
+
+```js
+// eslint.config.js (ESLint v9-style configuration)
+import fluidConfig from "@fluidframework/eslint-config-fluid/v9";
+import prettierConfig from "eslint-config-prettier";
+
+export default [
+  ...fluidConfig,
+  ...prettierConfig,
+  // ...your other configuration
+];
+```
+
+You can also use the strict configuration:
+
+```js
+// eslint.config.js (ESLint v9-style configuration)
+import fluidStrictConfig from "@fluidframework/eslint-config-fluid/v9/strict";
+import prettierConfig from "eslint-config-prettier";
+
+export default [
+  ...fluidStrictConfig,
+  ...prettierConfig,
+  // ...your other configuration
+];
 ```
 
 ## Changing the lint config

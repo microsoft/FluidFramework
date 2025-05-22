@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import recommendedConfig from "./recommended.js";
+
 /**
  * "Strict" eslint configuration for ESLint v9.
  *
@@ -13,135 +15,135 @@
  *
  * * Publicized examples - any libraries, sample applications, etc. we expect external consumers to use for reference.
  */
-module.exports = {
-	extends: ["./recommended.js"],
-	rules: {
-		/**
-		 * Require jsdoc/tsdoc comments on public/exported API items.
-		 */
-		"jsdoc/require-jsdoc": [
-			"error",
-			{
-				// Indicates that only module exports should be flagged for lacking jsdoc comments
-				publicOnly: true,
-				// Prevents eslint from adding empty comment blocks when run with `--fix`
-				enableFixer: false,
-				require: {
-					ArrowFunctionExpression: true,
-					ClassDeclaration: true,
-					ClassExpression: true,
-					FunctionDeclaration: true,
-					FunctionExpression: true,
+export default [
+    ...recommendedConfig,
+    {
+        rules: {
+            /**
+             * Require jsdoc/tsdoc comments on public/exported API items.
+             */
+            "jsdoc/require-jsdoc": [
+                "error",
+                {
+                    // Indicates that only module exports should be flagged for lacking jsdoc comments
+                    publicOnly: true,
+                    // Prevents eslint from adding empty comment blocks when run with `--fix`
+                    enableFixer: false,
+                    require: {
+                        ArrowFunctionExpression: true,
+                        ClassDeclaration: true,
+                        ClassExpression: true,
+                        FunctionDeclaration: true,
+                        FunctionExpression: true,
 
-					// Will report for *any* methods on exported classes, regardless of whether or not they are public
-					MethodDefinition: false,
-				},
-				contexts: [
-					"TSEnumDeclaration",
-					"TSInterfaceDeclaration",
-					"TSTypeAliasDeclaration",
+                        // Will report for *any* methods on exported classes, regardless of whether or not they are public
+                        MethodDefinition: false,
+                    },
+                    contexts: [
+                        "TSEnumDeclaration",
+                        "TSInterfaceDeclaration",
+                        "TSTypeAliasDeclaration",
 
-					// Require JSDoc/TSDoc comments on variable declarations, but only those that are named exports.
-					// Specifying just "VariableDeclaration" results in eslint flagging all variable declarations scoped within something that is exported, including in the body of functions, which is not desired.
-					"ExportNamedDeclaration > VariableDeclaration",
-				],
-			},
-		],
-	},
-	overrides: [
-		{
-			// Rules only for TypeScript files
-			files: ["*.ts", "*.tsx"],
-			rules: {
-				"@typescript-eslint/explicit-member-accessibility": [
-					"error",
-					{
-						accessibility: "explicit",
-						overrides: {
-							accessors: "explicit",
-							constructors: "explicit",
-							methods: "explicit",
-							properties: "explicit",
-							parameterProperties: "explicit",
-						},
-					},
-				],
+                        // Require JSDoc/TSDoc comments on variable declarations, but only those that are named exports.
+                        // Specifying just "VariableDeclaration" results in eslint flagging all variable declarations scoped within something that is exported, including in the body of functions, which is not desired.
+                        "ExportNamedDeclaration > VariableDeclaration",
+                    ],
+                },
+            ],
+        },
+    },
+    // TypeScript files
+    {
+        files: ["**/*.ts", "**/*.tsx"],
+        rules: {
+            "@typescript-eslint/explicit-member-accessibility": [
+                "error",
+                {
+                    accessibility: "explicit",
+                    overrides: {
+                        accessors: "explicit",
+                        constructors: "explicit",
+                        methods: "explicit",
+                        properties: "explicit",
+                        parameterProperties: "explicit",
+                    },
+                },
+            ],
 
-				/**
-				 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
-				 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
-				 *
-				 * @see {@link https://typescript-eslint.io/rules/consistent-type-exports/}
-				 */
-				"@typescript-eslint/consistent-type-exports": [
-					"error",
-					{
-						// Makes it easier to tell, at a glance, the impact of a change to individual exports.
-						fixMixedExportsWithInlineTypeSpecifier: true,
-					},
-				],
+            /**
+             * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
+             * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
+             *
+             * @see {@link https://typescript-eslint.io/rules/consistent-type-exports/}
+             */
+            "@typescript-eslint/consistent-type-exports": [
+                "error",
+                {
+                    // Makes it easier to tell, at a glance, the impact of a change to individual exports.
+                    fixMixedExportsWithInlineTypeSpecifier: true,
+                },
+            ],
 
-				/**
-				 * Requires that type-only imports be done using `import type`. Being explicit allows the TypeScript
-				 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
-				 *
-				 * @see {@link https://typescript-eslint.io/rules/consistent-type-imports/}
-				 */
-				"@typescript-eslint/consistent-type-imports": [
-					"error",
-					{ fixStyle: "separate-type-imports" },
-				],
+            /**
+             * Requires that type-only imports be done using `import type`. Being explicit allows the TypeScript
+             * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
+             *
+             * @see {@link https://typescript-eslint.io/rules/consistent-type-imports/}
+             */
+            "@typescript-eslint/consistent-type-imports": [
+                "error",
+                { fixStyle: "separate-type-imports" },
+            ],
 
-				/**
-				 * Ensures that type-only import statements do not result in runtime side-effects.
-				 *
-				 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
-				 */
-				"@typescript-eslint/no-import-type-side-effects": "error",
+            /**
+             * Ensures that type-only import statements do not result in runtime side-effects.
+             *
+             * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
+             */
+            "@typescript-eslint/no-import-type-side-effects": "error",
 
-				/**
-				 * Prefer Record to index-signature object style. That is, prefer:
-				 *
-				 * ```ts
-				 * type Foo = Record<string, unknown>;
-				 * ```
-				 *
-				 * to
-				 *
-				 * ```ts
-				 * type Foo = {
-				 *   [key: string]: unknown;
-				 * }
-				 * ```
-				 */
-				"@typescript-eslint/consistent-indexed-object-style": "error",
+            /**
+             * Prefer Record to index-signature object style. That is, prefer:
+             *
+             * ```ts
+             * type Foo = Record<string, unknown>;
+             * ```
+             *
+             * to
+             *
+             * ```ts
+             * type Foo = {
+             *   [key: string]: unknown;
+             * }
+             * ```
+             */
+            "@typescript-eslint/consistent-indexed-object-style": "error",
 
-				/**
-				 * Flags when an enum-typed value is compared to a non-enum number.
-				 */
-				"@typescript-eslint/no-unsafe-enum-comparison": "error",
+            /**
+             * Flags when an enum-typed value is compared to a non-enum number.
+             */
+            "@typescript-eslint/no-unsafe-enum-comparison": "error",
 
-				/**
-				 * Prefer generic type annotations on the constructor.
-				 *
-				 * @example
-				 *
-				 * This:
-				 *
-				 * ```ts
-				 * const map = new Map<string, number>();
-				 * ```
-				 *
-				 * instead of:
-				 *
-				 * ```ts
-				 * const map: Map<string, number> = new Map();
-				 * ```
-				 */
-				"@typescript-eslint/consistent-generic-constructors": "error",
+            /**
+             * Prefer generic type annotations on the constructor.
+             *
+             * @example
+             *
+             * This:
+             *
+             * ```ts
+             * const map = new Map<string, number>();
+             * ```
+             *
+             * instead of:
+             *
+             * ```ts
+             * const map: Map<string, number> = new Map();
+             * ```
+             */
+            "@typescript-eslint/consistent-generic-constructors": "error",
 
-				"@typescript-eslint/no-redundant-type-constituents": "error",
-			},
-		},
-	],
-};
+            "@typescript-eslint/no-redundant-type-constituents": "error",
+        },
+    },
+];

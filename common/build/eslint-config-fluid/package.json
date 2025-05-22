@@ -18,12 +18,30 @@
 		"./recommended": "./recommended.js",
 		"./strict": "./strict.js",
 		"./strict-biome": "./strict-biome.js",
-		"./v9": "./v9/index.js",
-		"./v9/base": "./v9/base.js",
-		"./v9/minimal-deprecated": "./v9/minimal-deprecated.js",
-		"./v9/recommended": "./v9/recommended.js", 
-		"./v9/strict": "./v9/strict.js",
-		"./v9/strict-biome": "./v9/strict-biome.js"
+		"./v9": {
+			"import": "./v9/index.js",
+			"require": "./v9/index.js"
+		},
+		"./v9/base": {
+			"import": "./v9/base.js",
+			"require": "./v9/base.js"
+		},
+		"./v9/minimal-deprecated": {
+			"import": "./v9/minimal-deprecated.js",
+			"require": "./v9/minimal-deprecated.js"
+		},
+		"./v9/recommended": {
+			"import": "./v9/recommended.js",
+			"require": "./v9/recommended.js"
+		},
+		"./v9/strict": {
+			"import": "./v9/strict.js",
+			"require": "./v9/strict.js"
+		},
+		"./v9/strict-biome": {
+			"import": "./v9/strict-biome.js",
+			"require": "./v9/strict-biome.js"
+		}
 	},
 	"scripts": {
 		"build": "npm run print-config && npm run build:readme && npm run prettier",
@@ -70,6 +88,7 @@
 		"eslint-plugin-unused-imports": "~3.0.0"
 	},
 	"devDependencies": {
+		"@eslint/js": "^9.27.0",
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"concurrently": "^8.2.2",
@@ -77,7 +96,8 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"sort-json": "^2.0.1",
-		"typescript": "~5.1.6"
+		"typescript": "~5.1.6",
+		"typescript-eslint": "^8.32.1"
 	},
 	"peerDependencies": {
 		"eslint": "^8.0.0 || ^9.0.0"

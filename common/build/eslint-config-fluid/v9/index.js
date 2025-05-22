@@ -4,4 +4,6 @@
  */
 
 // ESLint v9 compatible configuration
-module.exports = require("./recommended.js");
+import recommendedConfig from "./recommended.js";
+
+export default recommendedConfig;

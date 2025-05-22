@@ -8,7 +8,6 @@
 
 const fs = require("fs");
 const path = require("path");
-const { ESLint } = require("eslint");
 
 async function printConfig() {
   const baseDir = path.resolve(__dirname, "..");
@@ -20,27 +19,32 @@ async function printConfig() {
   
   // List of configurations to print
   const configs = [
-    { name: "v9-default", configFile: path.join(baseDir, "v9", "index.js") },
-    { name: "v9-minimal", configFile: path.join(baseDir, "v9", "minimal-deprecated.js") },
-    { name: "v9-recommended", configFile: path.join(baseDir, "v9", "recommended.js") },
-    { name: "v9-strict", configFile: path.join(baseDir, "v9", "strict.js") },
-    { name: "v9-strict-biome", configFile: path.join(baseDir, "v9", "strict-biome.js") },
-    { name: "v9-react", configFile: path.join(baseDir, "v9", "index.js"), filePath: "src/file.tsx" },
-    { name: "v9-test", configFile: path.join(baseDir, "v9", "index.js"), filePath: "src/test/file.ts" },
+    { name: "v9-default", configFile: "index.js" },
+    { name: "v9-minimal", configFile: "minimal-deprecated.js" },
+    { name: "v9-recommended", configFile: "recommended.js" },
+    { name: "v9-strict", configFile: "strict.js" },
+    { name: "v9-strict-biome", configFile: "strict-biome.js" },
+    { name: "v9-react", configFile: "index.js", fileExtension: ".tsx" },
+    { name: "v9-test", configFile: "index.js", filePath: "test/file.ts" },
   ];
 
-  // Write a placeholder for each config
-  // Since ESLint v9 uses a different configuration format, we can't directly use the existing print-config scripts.
-  // This is a temporary solution until we update the print-config scripts to use ESLint v9 API fully.
+  // Write an improved placeholder for each config
+  // Since ESLint v9 uses a different configuration format, we need a different approach
   for (const config of configs) {
     const outputFile = path.join(outputDir, `${config.name}.json`);
     const configContent = {
       info: `ESLint v9 configuration - ${config.name}`,
-      note: "This is a placeholder for ESLint v9 configuration which uses a different format than v8."
+      configType: "flat-config",
+      description: "ESLint v9 uses a flat configuration format exported as an array of configuration objects",
+      configFile: `v9/${config.configFile}`,
+      usage: {
+        legacyFormat: `// .eslintrc.js\nmodule.exports = {\n  extends: [\"@fluidframework/eslint-config-fluid/v9/${path.basename(config.configFile, '.js')}\"],\n  // ...rest of your config\n}`,
+        flatFormat: `// eslint.config.js\nimport fluidConfig from \"@fluidframework/eslint-config-fluid/v9/${path.basename(config.configFile, '.js')}\";\n\nexport default [\n  ...fluidConfig,\n  // ...your other configs\n];`
+      }
     };
     
     fs.writeFileSync(outputFile, JSON.stringify(configContent, null, 2));
-    console.log(`Generated placeholder for ${config.name}`);
+    console.log(`Generated improved placeholder for ${config.name}`);
   }
 }
 

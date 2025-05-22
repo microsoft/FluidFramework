@@ -1,4 +1,10 @@
 {
   "info": "ESLint v9 configuration - v9-strict",
-  "note": "This is a placeholder for ESLint v9 configuration which uses a different format than v8."
+  "configType": "flat-config",
+  "description": "ESLint v9 uses a flat configuration format exported as an array of configuration objects",
+  "configFile": "v9/strict.js",
+  "usage": {
+    "legacyFormat": "// .eslintrc.js\nmodule.exports = {\n  extends: [\"@fluidframework/eslint-config-fluid/v9/strict\"],\n  // ...rest of your config\n}",
+    "flatFormat": "// eslint.config.js\nimport fluidConfig from \"@fluidframework/eslint-config-fluid/v9/strict\";\n\nexport default [\n  ...fluidConfig,\n  // ...your other configs\n];"
+  }
 }
