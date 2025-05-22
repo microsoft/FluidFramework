@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { pkgVersion } from "../packageVersion.js";
 import {
 	DocumentsSchemaController,
+	type IDocumentSchema,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
 } from "../summary/index.js";
@@ -21,7 +22,7 @@ function arrayToProp(arr: string[]) {
 }
 
 describe("Runtime", () => {
-	const validConfig: IDocumentSchemaCurrent = {
+	const validConfig: IDocumentSchema = {
 		version: 1,
 		refSeq: 0,
 		runtime: {
@@ -46,7 +47,7 @@ describe("Runtime", () => {
 		return new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
-			config as IDocumentSchemaCurrent, // old schema,
+			config as IDocumentSchema, // old schema,
 			features,
 			() => {}, // onSchemaChange
 		);
@@ -60,7 +61,7 @@ describe("Runtime", () => {
 		const controller = createController(validConfig);
 		assert.throws(() =>
 			controller.processDocumentSchemaMessages(
-				[config as IDocumentSchemaCurrent],
+				[config as IDocumentSchema],
 				false, // local
 				100,
 			),
@@ -346,7 +347,7 @@ describe("Runtime", () => {
 		);
 	});
 
-	function testExistingDocNoChangesInSchema(schema: IDocumentSchemaCurrent) {
+	function testExistingDocNoChangesInSchema(schema: IDocumentSchema) {
 		const controller = new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
