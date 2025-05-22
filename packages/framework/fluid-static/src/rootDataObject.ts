@@ -12,6 +12,7 @@ import {
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
+	type IContainerRuntimeOptions,
 	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -192,6 +193,11 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 * If not provided, one will be created based on the schema.
 	 */
 	rootDataStoreRegistry?: IFluidDataStoreRegistry;
+	/**
+	 * Optional overrides for the container runtime options.
+	 * If not provided, only the default options for the given compatibilityMode will be used.
+	 */
+	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory {
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
 	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
@@ -200,6 +206,7 @@ export function createDOProviderContainerRuntimeFactory(props: {
 		props.schema,
 		props.compatibilityMode,
 		new RootDataObjectFactory(sharedObjects, registry),
+		props.runtimeOptionOverrides,
 	);
 }
 
@@ -238,6 +245,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			RootDataObject,
 			{ InitialState: RootDataObjectProps }
 		>,
+		runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>,
 	) {
 		const provideEntryPoint = async (
 			containerRuntime: IContainerRuntime,
@@ -251,7 +259,10 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		};
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
-			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
+			runtimeOptions: {
+				...compatibilityModeRuntimeOptions[compatibilityMode],
+				...runtimeOptionOverrides,
+			},
 			provideEntryPoint,
 			minVersionForCollab: compatibilityModeToMinVersionForCollab[compatibilityMode],
 		});
