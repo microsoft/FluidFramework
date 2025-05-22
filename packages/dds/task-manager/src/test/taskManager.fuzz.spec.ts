@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import * as path from "path";
+import { strict as assert } from "node:assert";
+import * as path from "node:path";
 
 import {
 	AsyncGenerator as Generator,
@@ -29,7 +29,9 @@ import { _dirname } from "./dirname.cjs";
 type FuzzTestState = DDSFuzzTestState<TaskManagerFactory>;
 
 interface TaskOperation {
-	/** The Id of the task that the operation applies to. */
+	/**
+	 * The Id of the task that the operation applies to.
+	 */
 	taskId: string;
 }
 
@@ -85,13 +87,13 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 ): Generator<Operation, FuzzTestState> {
-	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
+	const options = { ...defaultOptions, ...optionsParam };
 	type OpSelectionState = FuzzTestState & {
 		taskId: string;
 	};
 
 	const taskIdPoolRandom = makeRandom(0);
-	const dedupe = <T>(arr: T[]): T[] => Array.from(new Set(arr));
+	const dedupe = <T>(arr: T[]): T[] => [...new Set(arr)];
 	const taskIdPool = dedupe(
 		Array.from({ length: options.taskPoolSize }, () =>
 			taskIdPoolRandom.string(defaultOptions.taskStringLength),
@@ -148,9 +150,13 @@ function makeOperationGenerator(
 }
 
 interface LoggingInfo {
-	/** ids of the Task Managers to track over time */
+	/**
+	 * ids of the Task Managers to track over time
+	 */
 	taskManagerNames: string[];
-	/** ids of tasks to track over time */
+	/**
+	 * ids of tasks to track over time
+	 */
 	taskId: string;
 }
 
@@ -162,6 +168,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 			console.log(
 				`TaskManager ${taskManager.id} (CanVolunteer: ${taskManager.canVolunteer()}):`,
 			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 			console.log((taskManager as any).taskQueues.get(loggingInfo.taskId));
 			console.log("\n");
 		}
@@ -172,6 +179,7 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 	const withLogging =
 		<T>(baseReducer: Reducer<T, FuzzTestState>): Reducer<T, FuzzTestState> =>
 		(state, operation) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			if (loggingInfo !== undefined && (operation as any).taskId === loggingInfo.taskId) {
 				logCurrentState(state, loggingInfo);
 				console.log("-".repeat(20));
@@ -185,14 +193,14 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 			// Note: this is fire-and-forget as `volunteerForTask` resolves/rejects its returned
 			// promise based on server responses, which will occur on later operations (and
 			// processing those operations will raise the error directly)
-			client.channel.volunteerForTask(taskId).catch((e: Error) => {
+			client.channel.volunteerForTask(taskId).catch((error: Error) => {
 				// We expect an error to be thrown if we are disconnected while volunteering
 				const expectedErrors = [
 					"Disconnected before acquiring task assignment",
 					"Abandoned before acquiring task assignment",
 				];
-				if (!expectedErrors.includes(e.message)) {
-					throw e;
+				if (!expectedErrors.includes(error.message)) {
+					throw error;
 				}
 			});
 		},
@@ -210,11 +218,13 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 	return withLogging(reducer);
 }
 
-function assertEqualTaskManagers(a: ITaskManager, b: ITaskManager) {
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+function assertEqualTaskManagers(a: ITaskManager, b: ITaskManager): void {
 	const queue1 = (a as any).taskQueues;
 	const queue2 = (b as any).taskQueues;
 	assert.strictEqual(queue1.size, queue2.size, "The number of tasks queues are not the same");
 	for (const [key, val] of queue1) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		const testVal = queue2.get(key);
 		if (testVal === undefined) {
 			assert(val === undefined, "Task queues are not both undefined");
@@ -222,12 +232,16 @@ function assertEqualTaskManagers(a: ITaskManager, b: ITaskManager) {
 		}
 		assert.strictEqual(testVal.length, val.length, "Task queues are not the same size");
 		if (testVal.length > 0) {
-			testVal.forEach((task: string, index: number) => {
-				assert.strictEqual(task, val[index], `Task queues are not identical`);
-			});
+			const testValArr = testVal as string[];
+			const valArr = val as string[];
+			for (let index = 0; index < testValArr.length; index++) {
+				const task = testValArr[index];
+				assert.strictEqual(task, valArr[index], `Task queues are not identical`);
+			}
 		}
 	}
 }
+/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
 describe("TaskManager fuzz testing", () => {
 	const model: DDSFuzzModel<TaskManagerFactory, Operation, FuzzTestState> = {

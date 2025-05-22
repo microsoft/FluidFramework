@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
@@ -19,7 +19,10 @@ import { ITaskManager } from "../interfaces.js";
 import { TaskManagerClass } from "../taskManager.js";
 import { TaskManagerFactory } from "../taskManagerFactory.js";
 
-function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedTaskManager(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+): TaskManagerClass {
 	// Create and connect a TaskManager.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -53,7 +56,7 @@ function createDetachedTaskManager(
 		dataStoreRuntime,
 		TaskManagerFactory.Attributes,
 	);
-	const attach = async () => {
+	const attach = async (): Promise<void> => {
 		const services = {
 			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -348,6 +351,7 @@ describe("TaskManager", () => {
 			it("Rejects the promise if you try to complete without being assigned", async () => {
 				const taskId = "taskId";
 				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
+				// eslint-disable-next-line no-void
 				void taskManager2.volunteerForTask(taskId);
 
 				containerRuntimeFactory.processAllMessages();
@@ -492,8 +496,10 @@ describe("TaskManager", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 
-		const setReadOnlyInfo = (readOnlyInfo: ReadOnlyInfo) => {
+		const setReadOnlyInfo = (readOnlyInfo: ReadOnlyInfo): void => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			(taskManager1 as any).runtime.deltaManager.readOnlyInfo = readOnlyInfo;
+
 			// Force connection to simulate read mode (TaskManager considered the client disconnected in read mode)
 			containerRuntime1.connected = readOnlyInfo.readonly === false;
 		};
@@ -722,6 +728,7 @@ describe("TaskManager", () => {
 				});
 
 				it("Will lose task assignment after attaching if clientId is undefined", async () => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					(taskManager1 as any).runtime.clientId = undefined;
 					const taskId = "taskId";
 					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
@@ -730,6 +737,7 @@ describe("TaskManager", () => {
 					assert.ok(taskManager1.queued(taskId), "Should be queued");
 					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
 					assert.strictEqual(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 						(taskManager1 as any).taskQueues.get(taskId)?.[0],
 						placeholderClientId,
 						"taskQueue should have placeholder clientId",
@@ -749,6 +757,7 @@ describe("TaskManager", () => {
 					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 					assert.ok(taskManager1EventFired, "Should have raised lost event on taskManager1");
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					assert.ok((taskManager1 as any).taskQueues.size === 0, "taskQueue should be empty");
 				});
 			});
@@ -766,6 +775,7 @@ describe("TaskManager", () => {
 				});
 
 				it("Can subscribe to a task and stay subscribed after attach if clientId was undefined", async () => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					(taskManager1 as any).runtime.clientId = undefined;
 					const taskId = "taskId";
 					taskManager1.subscribeToTask(taskId);
@@ -790,10 +800,12 @@ describe("TaskManager", () => {
 					assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
 
 					assert.ok(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 						(taskManager1 as any).taskQueues.get(taskId)?.length !== 0,
 						"taskQueue should not be empty",
 					);
 					assert.notStrictEqual(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 						(taskManager1 as any).taskQueues.get(taskId)?.[0],
 						placeholderClientId,
 						"taskQueue should not have placeholder clientId",
@@ -952,6 +964,7 @@ describe("TaskManager", () => {
 					const clientId2 = containerRuntime2.clientId;
 
 					assert.deepEqual(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 						(taskManager1 as any).taskQueues.get(taskId),
 						[clientId1, clientId2],
 						"Task queue should have both clients",
@@ -961,6 +974,7 @@ describe("TaskManager", () => {
 					containerRuntimeFactory.processAllMessages();
 
 					assert.deepEqual(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 						(taskManager1 as any).taskQueues.get(taskId),
 						[clientId1],
 						"Task queue should only have client 1",
