@@ -5,7 +5,7 @@
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchema, WithType, TreeNode } from "../core/index.js";
-import type { InsertableObjectFromSchemaRecord } from "../node-kinds/object/objectNode.js";
+import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
 import {
 	type FieldKind,
 	type FieldProps,
