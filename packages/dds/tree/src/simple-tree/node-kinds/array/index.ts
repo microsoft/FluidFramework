@@ -4,13 +4,15 @@
  */
 
 export {
-	type ArrayNodeCustomizableSchema,
-	type ArrayNodePojoEmulationSchema,
-	ArrayNodeSchema,
 	arraySchema,
 	asIndex,
-	isArrayNodeSchema,
 	IterableTreeArrayContent,
 	TreeArrayNode,
 	type ReadonlyArrayNode,
-} from "./array/index.js";
+} from "./arrayNode.js";
+export {
+	type ArrayNodeCustomizableSchema,
+	type ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
+	isArrayNodeSchema,
+} from "./arrayNodeTypes.js";
