@@ -19,6 +19,7 @@ import {
 	tagChange,
 	TreeStoredSchemaRepository,
 	type GraphCommit,
+	type RevisionTag,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
@@ -38,9 +39,11 @@ import {
 	type SharedTreeBranch,
 	SharedTreeCore,
 	type Summarizable,
+	type ChangeEnricherMutableCheckout,
+	NoOpChangeEnricher,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 import {
 	SharedObject,
 	type IChannelView,
@@ -51,6 +54,7 @@ import type {
 	ISummaryTreeWithStats,
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	createIdCompressor,
@@ -63,6 +67,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
+import { TestChange } from "../testChange.js";
 
 const codecOptions: ICodecOptions = {
 	jsonValidator: typeboxValidator,
@@ -273,9 +278,12 @@ export class TestSharedTreeCore extends SharedObject {
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		this.kernel.processCore(message, local, localOpMetadata);
+		fail("processCore should not be called on SharedTree");
 	}
 
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		this.kernel.processMessagesCore(messagesCollection);
+	}
 	protected onDisconnect(): void {}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
@@ -304,5 +312,21 @@ export class TestSharedTreeCore extends SharedObject {
 
 	public get editor(): DefaultEditBuilder {
 		return this.kernel.getEditor();
+	}
+}
+
+export class TestChangeEnricher implements ChangeEnricherReadonlyCheckout<TestChange> {
+	public updateChangeEnrichments(change: TestChange, revision: RevisionTag): TestChange {
+		if (TestChange.isNonEmptyChange(change)) {
+			return {
+				inputContext: change.inputContext.map((i) => i * 1000),
+				intentions: change.intentions.map((i) => i * 1000),
+				outputContext: change.outputContext.map((i) => i * 1000),
+			};
+		}
+		return change;
+	}
+	public fork(): ChangeEnricherMutableCheckout<TestChange> {
+		return new NoOpChangeEnricher();
 	}
 }

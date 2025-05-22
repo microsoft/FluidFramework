@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import CircuitBreaker from "opossum";
-import { serializeError } from "serialize-error";
 import { IContext } from "@fluidframework/server-services-core";
 import { Lumberjack, Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
+import CircuitBreaker from "opossum";
+import { serializeError } from "serialize-error";
 
 export interface circuitBreakerOptions {
 	errorThresholdPercentage: number; // Percentage of errors before opening the circuit
@@ -109,9 +109,9 @@ export class LambdaCircuitBreaker {
 			openCount: this.circuitBreakerOpenCount,
 			state: this.circuitBreaker.toJSON()?.state,
 		};
-		if (this.circuitBreakerMetric) {
-			this.circuitBreakerMetric?.setProperties(metricProperties);
-			this.circuitBreakerMetric?.success("Circuit breaker shutdown"); // could be due to rebalancing
+		if (this.circuitBreakerMetric && !this.circuitBreakerMetric.isCompleted()) {
+			this.circuitBreakerMetric.setProperties(metricProperties);
+			this.circuitBreakerMetric.success("Circuit breaker shutdown"); // could be due to rebalancing
 		} else {
 			Lumberjack.info("Circuit breaker shutdown", metricProperties);
 		}

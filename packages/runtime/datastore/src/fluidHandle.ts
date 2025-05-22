@@ -77,6 +77,9 @@ export class FluidObjectHandle<
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.get}
 	 */
+	// TODO: Return `Promise<T>` instead of `Promise<any>`.
+	// This was clearly the intended typing of this API, but fixing it would be a breaking change.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public async get(): Promise<any> {
 		// Note that this return works whether we received a T or a Promise<T> for this.value in the constructor.
 		return this.value;
@@ -91,17 +94,19 @@ export class FluidObjectHandle<
 		}
 
 		this.locallyVisible = true;
-		this.pendingHandlesToMakeVisible.forEach((handle) => {
+		for (const handle of this.pendingHandlesToMakeVisible) {
 			handle.attachGraph();
-		});
+		}
 		this.pendingHandlesToMakeVisible.clear();
 		this.routeContext.attachGraph();
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.bind}
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 * @privateRemarks This implementation will be moved to SharedObjectHandle once this is removed.
 	 */
-	public bind(handle: IFluidHandleInternal) {
+	public bind(handle: IFluidHandleInternal): void {
 		// If this handle is visible, attach the graph of the incoming handle as well.
 		if (this.visible) {
 			handle.attachGraph();

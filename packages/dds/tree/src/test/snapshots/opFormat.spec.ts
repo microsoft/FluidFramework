@@ -13,10 +13,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { type ISharedTree, SharedTreeFormatVersion } from "../../shared-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration, type ITree } from "../../simple-tree/index.js";
+import { SharedTreeFormatVersion } from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import { TreeFactory } from "../../treeFactory.js";
+import { configuredSharedTree } from "../../treeFactory.js";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
 /**
  * This suite provides some e2e snapshot coverage for how SharedTree ops look.
@@ -40,16 +41,16 @@ describe("SharedTree op format snapshots", () => {
 	}) {}
 
 	let containerRuntime: MockContainerRuntime;
-	let tree: ISharedTree;
+	let tree: ITree & IChannel;
 
 	for (const versionKey of Object.keys(SharedTreeFormatVersion)) {
 		describe(`using SharedTreeFormatVersion.${versionKey}`, () => {
 			useSnapshotDirectory(`op-format/${versionKey}`);
 			beforeEach(() => {
-				const factory = new TreeFactory({
+				const factory = configuredSharedTree({
 					formatVersion:
 						SharedTreeFormatVersion[versionKey as keyof typeof SharedTreeFormatVersion],
-				});
+				}).getFactory();
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const sessionId = "00000000-0000-4000-b000-000000000000" as SessionId;
 				const runtime = new MockFluidDataStoreRuntime({

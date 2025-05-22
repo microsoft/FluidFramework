@@ -49,7 +49,10 @@ import {
 	// // eslint-disable-next-line unused-imports/no-unused-imports
 	// InternalTypes,
 } from "@fluidframework/tree";
-import type { FixRecursiveArraySchema } from "@fluidframework/tree/alpha";
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
+// eslint-disable-next-line import/no-internal-modules
+import type { requireAssignableTo } from "@fluidframework/tree/internal";
 
 // Due to limitation of the TypeScript compiler, errors like the following can be produced when exporting types from another package:
 // error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
@@ -57,6 +60,7 @@ import type { FixRecursiveArraySchema } from "@fluidframework/tree/alpha";
 // Thus tests for this case are included here, in a package which uses tree.
 
 export const schema = new SchemaFactory("com.example");
+export const schemaAlpha = new SchemaFactoryAlpha("com.example");
 
 export const leafAlias = schema.number;
 
@@ -76,6 +80,11 @@ export class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList]
 
 export const POJO = schema.object("POJO", { stuff: [NodeMap, NodeList] });
 export type POJO = NodeFromSchema<typeof POJO>;
+
+export const POJOAlpha = schemaAlpha.objectAlpha("POJO", { stuff: [NodeMap, NodeList] });
+{
+	type _check = requireAssignableTo<typeof POJOAlpha, ObjectNodeSchema>;
+}
 
 export const config = new TreeViewConfiguration({ schema: Canvas });
 

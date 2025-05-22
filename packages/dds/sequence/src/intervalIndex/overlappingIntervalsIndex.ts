@@ -12,41 +12,10 @@ import {
 } from "@fluidframework/merge-tree/internal";
 
 import { IntervalNode, IntervalTree } from "../intervalTree.js";
-import {
-	ISerializableInterval,
-	IntervalType,
-	SequenceInterval,
-	createSequenceInterval,
-} from "../intervals/index.js";
+import { SequenceInterval, createTransientInterval } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
-import { IntervalIndex, type SequenceIntervalIndex } from "./intervalIndex.js";
-
-/**
- * The generic version of this interface is deprecated and will be removed in a future release.
- * Use {@link ISequenceOverlappingIntervalsIndex} instead.
- * @legacy
- * @alpha
- * @remarks The generic version of this interface is no longer used and will be removed. Use {@link ISequenceOverlappingIntervalsIndex} instead.
- */
-export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
-	extends IntervalIndex<TInterval> {
-	/**
-	 * @returns an array of all intervals contained in this collection that overlap the range
-	 * `[start end]`.
-	 */
-	findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[];
-
-	/**
-	 * Gathers the interval results based on specified parameters.
-	 */
-	gatherIterationResults(
-		results: TInterval[],
-		iteratesForward: boolean,
-		start?: SequencePlace,
-		end?: SequencePlace,
-	): void;
-}
+import { type SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @legacy
@@ -108,12 +77,10 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				});
 			}
 		} else {
-			const transientInterval: SequenceInterval = createSequenceInterval(
-				"transient",
+			const transientInterval: SequenceInterval = createTransientInterval(
 				start ?? "start",
 				end ?? "end",
 				this.client,
-				IntervalType.Transient,
 			);
 
 			if (start === undefined) {
@@ -184,13 +151,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		) {
 			return [];
 		}
-		const transientInterval = createSequenceInterval(
-			"transient",
-			start,
-			end,
-			this.client,
-			IntervalType.Transient,
-		);
+		const transientInterval = createTransientInterval(start, end, this.client);
 
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
 		return overlappingIntervalNodes.map((node) => node.key);

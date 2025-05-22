@@ -5,10 +5,10 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/core-utils/internal";
-
-import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+
 import {
 	type Brand,
 	type BrandedKey,
@@ -17,13 +17,14 @@ import {
 	ReferenceCountedBase,
 	brand,
 	brandedSlot,
-	fail,
 	getOrAddEmptyToMap,
 	getOrCreate,
 } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
+import type { ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
+import { offsetDetachId } from "./deltaUtil.js";
 import {
 	isDetachedUpPathRoot,
 	type INormalizedUpPath,
@@ -34,8 +35,6 @@ import {
 } from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
-import { offsetDetachId } from "./deltaUtil.js";
-import type { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -731,25 +730,32 @@ export class AnchorSet implements AnchorLocator {
 			 */
 			bufferedEvents: [] as BufferedEvent[],
 
-			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
-			// subtreeChangedAfterBatch events.
-			// The algorithm works as follows:
-			// - Initialize both to 0.
-			// - As we walk the tree from the root towards the leaves, when we enter a node increment currentDepth by 1.
-			// - When we edit a node, set depthThresholdForSubtreeChanged = currentDepth.
-			//   Intuitively, depthThresholdForSubtreeChanged means "as you walk the tree towards the root, when you exit a
-			//   node at this depth you should emit a subtreeChangedAfterBatch event".
-			// - When we exit a node, if d === currentDepth then emit a subtreeChangedAfterBatch and decrement d by 1.
-			//   Then decrement currentDepth unconditionally.
-			// Note that the event will be emitted when exiting a node that was edited (depthThresholdForSubtreeChanged will
-			// have been set to the current depth when the edit happened), it will be emitted when exiting a node that is the
-			// parent of a node that already emitted the event (because both depthThresholdForSubtreeChanged and currentDepth
-			// get decremented when exiting a node so they stay in sync), and if we're already emitting the event but start
-			// walking the tree back towards the leaves in a path where no edits happen, currentDepth will be increased again
-			// as we walk that path, depthThresholdForSubtreeChanged will not, and thus no event will be emitted when walking
-			// back up that path, until we get back to the depth where we were already emitting the event, and will continue
-			// emitting it on the way to the root.
+			/**
+			 * 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
+			 * subtreeChangedAfterBatch events.
+			 * The algorithm works as follows:
+			 *
+			 * - Initialize both to 0.
+			 * - As we walk the tree from the root towards the leaves, when we enter a node increment currentDepth by 1.
+			 * - When we edit a node, set depthThresholdForSubtreeChanged = currentDepth.
+			 * Intuitively, depthThresholdForSubtreeChanged means "as you walk the tree towards the root, when you exit a
+			 * node at this depth you should emit a subtreeChangedAfterBatch event".
+			 * - When we exit a node, if d === currentDepth then emit a subtreeChangedAfterBatch and decrement d by 1.
+			 * Then decrement currentDepth unconditionally.
+			 *
+			 * Note that the event will be emitted when exiting a node that was edited (depthThresholdForSubtreeChanged will
+			 * have been set to the current depth when the edit happened), it will be emitted when exiting a node that is the
+			 * parent of a node that already emitted the event (because both depthThresholdForSubtreeChanged and currentDepth
+			 * get decremented when exiting a node so they stay in sync), and if we're already emitting the event but start
+			 * walking the tree back towards the leaves in a path where no edits happen, currentDepth will be increased again
+			 * as we walk that path, depthThresholdForSubtreeChanged will not, and thus no event will be emitted when walking
+			 * back up that path, until we get back to the depth where we were already emitting the event, and will continue
+			 * emitting it on the way to the root.
+			 */
 			currentDepth: 0,
+			/**
+			 * See {@link visitor.currentDepth}.
+			 */
 			depthThresholdForSubtreeChanged: 0,
 
 			free() {
@@ -910,16 +916,17 @@ export class AnchorSet implements AnchorLocator {
 			},
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
-				this.maybeWithNode((p) => {
-					p.events.emit("subtreeChanged", p);
-					if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
+				if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
+					this.maybeWithNode((p) => {
+						p.events.emit("subtreeChanged", p);
+
 						this.bufferedEvents.push({
 							node: p,
 							event: "subtreeChangedAfterBatch",
 						});
-						this.depthThresholdForSubtreeChanged--;
-					}
-				});
+					});
+					this.depthThresholdForSubtreeChanged--;
+				}
 				const parent = this.parent;
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;
@@ -1068,7 +1075,8 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 	}
 
 	/**
-	 * @returns true iff this PathNode is the special root node that sits above all the detached fields.
+	 * Whether or not this `PathNode` is the special root node that sits above all the detached fields.
+	 * @remarks
 	 * In this case, the fields are detached sequences.
 	 * Note that the special root node should never appear in an UpPath
 	 * since UpPaths represent this root as `undefined`.

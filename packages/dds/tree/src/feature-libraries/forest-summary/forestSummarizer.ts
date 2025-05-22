@@ -6,6 +6,7 @@
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -38,7 +39,6 @@ import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-fore
 
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import type { Format } from "./format.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 /**
  * The storage key for the blob in the summary containing tree data
  */

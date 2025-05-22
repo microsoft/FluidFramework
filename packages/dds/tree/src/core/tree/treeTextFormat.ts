@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../util/index.js";
+import { fail } from "@fluidframework/core-utils/internal";
+
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { NodeData } from "./types.js";
@@ -139,7 +140,7 @@ export function setGenericTreeField<T>(
 }
 
 /**
- * @returns keys for fields of `tree`.
+ * Returns keys for fields of `tree`.
  */
 export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[] {
 	const fields = tree.fields;

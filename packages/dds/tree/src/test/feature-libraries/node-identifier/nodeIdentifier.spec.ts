@@ -17,7 +17,7 @@ import {
 	MockNodeIdentifierManager,
 } from "../../../feature-libraries/index.js";
 import type { ITreePrivate } from "../../../shared-tree/index.js";
-import { TestTreeProvider } from "../../utils.js";
+import { TestTreeProvider, validateUsageError } from "../../utils.js";
 
 /**
  * Acquire an {@link IIdCompressor} via unsavory means.
@@ -97,5 +97,16 @@ describe("Node Identifier", () => {
 		for (let i = 1; i < sorts.length; i++) {
 			assert.deepEqual(sorts[i - 1], sorts[i]);
 		}
+	});
+
+	it("throws if provided an unknown local id", () => {
+		const manager = new MockNodeIdentifierManager();
+		const manager2 = new MockNodeIdentifierManager();
+		const id = manager2.generateLocalNodeIdentifier();
+
+		assert.throws(
+			() => manager.stabilizeNodeIdentifier(id),
+			validateUsageError(/Local ID offset out of bounds/),
+		);
 	});
 });

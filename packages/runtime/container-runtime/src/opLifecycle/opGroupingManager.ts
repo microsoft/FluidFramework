@@ -11,7 +11,11 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IBatch, type BatchMessage } from "./definitions.js";
+import {
+	type LocalEmptyBatchPlaceholder,
+	type OutboundBatch,
+	type OutboundSingletonBatch,
+} from "./definitions.js";
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -58,44 +62,53 @@ export class OpGroupingManager {
 	 * This is needed as a placeholder if a batch becomes empty on resubmit, but we are tracking batch IDs.
 	 * @param resubmittingBatchId - batch ID of the resubmitting batch
 	 * @param referenceSequenceNumber - reference sequence number
-	 * @returns - IBatch containing a single empty Grouped Batch op
+	 * @returns - The outbound batch as well as the interior placeholder message
 	 */
 	public createEmptyGroupedBatch(
 		resubmittingBatchId: string,
 		referenceSequenceNumber: number,
-	): IBatch<[BatchMessage]> {
+	): {
+		outboundBatch: OutboundSingletonBatch;
+		placeholderMessage: LocalEmptyBatchPlaceholder;
+	} {
 		assert(
 			this.config.groupedBatchingEnabled,
 			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
 		);
-		const serializedContent = JSON.stringify({
+		const serializedOp = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: [],
 		});
 
-		return {
-			contentSizeInBytes: 0,
-			messages: [
-				{
-					metadata: { batchId: resubmittingBatchId },
-					localOpMetadata: { emptyBatch: true },
-					referenceSequenceNumber,
-					contents: serializedContent,
-				},
-			],
+		const placeholderMessage: LocalEmptyBatchPlaceholder = {
+			metadata: { batchId: resubmittingBatchId },
+			localOpMetadata: { emptyBatch: true },
 			referenceSequenceNumber,
 		};
+		const outboundBatch: OutboundSingletonBatch = {
+			contentSizeInBytes: 0,
+			messages: [{ ...placeholderMessage, contents: serializedOp }],
+			referenceSequenceNumber,
+		};
+		return { outboundBatch, placeholderMessage };
 	}
 
 	/**
 	 * Converts the given batch into a "grouped batch" - a batch with a single message of type "groupedBatch",
 	 * with contents being an array of the original batch's messages.
 	 *
+	 * If the batch already has only 1 message, it is returned as-is.
+	 *
 	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
-	public groupBatch(batch: IBatch): IBatch<[BatchMessage]> {
-		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
+	public groupBatch(batch: OutboundBatch): OutboundSingletonBatch {
+		assert(this.groupedBatchingEnabled(), 0xb79 /* grouping disabled! */);
+		assert(batch.messages.length > 0, 0xb7a /* Unexpected attempt to group an empty batch */);
+
+		if (batch.messages.length === 1) {
+			return batch as OutboundSingletonBatch;
+		}
 
 		if (batch.messages.length >= 1000) {
 			this.logger.sendTelemetryEvent({
@@ -126,7 +139,7 @@ export class OpGroupingManager {
 			})),
 		});
 
-		const groupedBatch: IBatch<[BatchMessage]> = {
+		const groupedBatch: OutboundSingletonBatch = {
 			...batch,
 			messages: [
 				{
@@ -153,16 +166,6 @@ export class OpGroupingManager {
 		}));
 	}
 
-	public shouldGroup(batch: IBatch): boolean {
-		return (
-			// Grouped batching must be enabled
-			this.config.groupedBatchingEnabled &&
-			// The number of ops in the batch must be 2 or more
-			// or be empty (to allow for empty batches to be grouped)
-			batch.messages.length !== 1
-			// Support for reentrant batches will be on by default
-		);
-	}
 	public groupedBatchingEnabled(): boolean {
 		return this.config.groupedBatchingEnabled;
 	}

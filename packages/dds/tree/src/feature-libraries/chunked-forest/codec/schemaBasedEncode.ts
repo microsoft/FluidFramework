@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	LeafNodeStoredSchema,
@@ -16,7 +17,6 @@ import {
 	Multiplicity,
 	identifierFieldKindIdentifier,
 } from "../../../core/index.js";
-import { fail } from "../../../util/index.js";
 import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
 import {
@@ -32,7 +32,6 @@ import {
 import type { FieldBatch } from "./fieldBatch.js";
 import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
 import { NodeShape } from "./nodeShape.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -123,7 +122,7 @@ export function treeShaper(
 
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
-			objectNodeFields.push({ key, shape: fieldHandler.shapeFromField(field) });
+			objectNodeFields.push({ key, encoder: fieldHandler.shapeFromField(field) });
 		}
 
 		const shape = new NodeShape(schemaName, false, objectNodeFields, undefined);

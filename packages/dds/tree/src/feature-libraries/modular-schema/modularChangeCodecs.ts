@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import {
@@ -30,7 +30,6 @@ import {
 	type JsonCompatibleReadOnly,
 	type Mutable,
 	brand,
-	fail,
 	idAllocatorFromMaxId,
 	newTupleBTree,
 } from "../../util/index.js";
@@ -42,6 +41,7 @@ import {
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
+import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 import type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
@@ -66,7 +66,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,

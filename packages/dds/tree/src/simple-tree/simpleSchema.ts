@@ -4,6 +4,7 @@
  */
 
 import type { ValueSchema } from "../core/index.js";
+
 import type { NodeKind } from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "./schemaTypes.js";
 
@@ -180,22 +181,14 @@ export interface SimpleFieldSchema {
  * @alpha
  * @sealed
  */
-export interface SimpleTreeSchema extends SimpleFieldSchema {
+export interface SimpleTreeSchema {
 	/**
-	 * The kind of tree field representing the root of the tree.
+	 * The tree field representing the root of the tree.
 	 */
-	readonly kind: FieldKind;
+	readonly root: SimpleFieldSchema;
 
 	/**
-	 * The types allowed under the tree root.
-	 *
-	 * @remarks Refers to the types by identifier.
-	 * Can be resolved via {@link SimpleTreeSchema.definitions}.
-	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
-
-	/**
-	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.allowedTypesIdentifiers}.
+	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.root}.
 	 *
 	 * @remarks the keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
 	 */

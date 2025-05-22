@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
@@ -31,7 +32,6 @@ import {
 	type Mutable,
 	type NestedSet,
 	addToNestedSet,
-	fail,
 	hasSingle,
 	nestedSetContains,
 } from "../util/index.js";
@@ -39,7 +39,6 @@ import {
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.

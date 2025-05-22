@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, debugAssert } from "@fluidframework/core-utils/internal";
+import { assert, oob, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	CursorLocationType,
@@ -19,8 +20,6 @@ import {
 	detachedFieldAsKey,
 	rootField,
 } from "../core/index.js";
-import { fail } from "../util/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.
@@ -373,14 +372,14 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	/**
-	 * @returns the value of the current node
+	 * The value of the current node
 	 */
 	public get value(): Value {
 		return this.adapter.value(this.getNode());
 	}
 
 	/**
-	 * @returns the type of the current node
+	 * The type of the current node
 	 */
 	public get type(): TreeType {
 		return this.adapter.type(this.getNode());

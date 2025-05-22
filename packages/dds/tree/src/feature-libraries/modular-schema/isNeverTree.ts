@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	LeafNodeStoredSchema,
@@ -14,12 +14,9 @@ import {
 	type TreeStoredSchema,
 	Multiplicity,
 } from "../../core/index.js";
-import { fail } from "../../util/index.js";
 
 import type { FullSchemaPolicy } from "./fieldKind.js";
 
-/**
- */
 export function isNeverField(
 	policy: FullSchemaPolicy,
 	originalData: TreeStoredSchema,

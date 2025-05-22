@@ -5,7 +5,13 @@
 
 import { done, isOperationType, takeAsync } from "@fluid-private/stochastic-test-utils";
 
-import { makeGenerator, reducer, saveFailures, type StressOperations } from "../baseModel.js";
+import {
+	ddsModelMinimizers,
+	makeGenerator,
+	reducer,
+	saveFailures,
+	type StressOperations,
+} from "../baseModel.js";
 import {
 	convertToRealHandles,
 	covertLocalServerStateToDdsState,
@@ -81,6 +87,7 @@ describe("Local Server Stress with rollback", () => {
 				? orderSequentiallyReducer(state, op)
 				: reducer(state, op),
 		validateConsistency: validateConsistencyOfAllDDS,
+		minimizationTransforms: ddsModelMinimizers,
 	};
 
 	createLocalServerStressSuite(model, {
@@ -92,8 +99,13 @@ describe("Local Server Stress with rollback", () => {
 		// saveSuccesses,
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
 		skip: [
-			3, 4, 9, 10, 13, 16, 21, 23, 27, 28, 33, 35, 37, 38, 39, 40, 47, 48, 49, 52, 56, 63, 68,
-			71, 74, 87, 90, 92, 96, 98,
+			...[12, 28, 30], // Key not found or value not matching key
+			...[15, 38, 51, 63], // Number of keys not same (directory)
+			...[24], // have different number of keys (map)
+			...[25], // Number of subDirectories not same
+			...[53], // SubDirectory with name ... not present in second directory
+			...[65], // closed or disposed: 0x2f5
+			...[72], // closed or disposed: 0x2fa
 		],
 	});
 });

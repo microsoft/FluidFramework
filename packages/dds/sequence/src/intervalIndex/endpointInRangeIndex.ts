@@ -7,15 +7,10 @@
 
 import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import {
-	ISerializableInterval,
-	IntervalType,
-	SequenceInterval,
-	createSequenceInterval,
-} from "../intervals/index.js";
+import { SequenceInterval, createTransientInterval } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
-import { IntervalIndex } from "./intervalIndex.js";
+import { type SequenceIntervalIndex } from "./intervalIndex.js";
 import {
 	HasComparisonOverride,
 	compareOverrideables,
@@ -28,15 +23,14 @@ import {
  * Provide additional APIs to support efficiently querying a collection of intervals whose endpoints fall within a specified range.
  * @internal
  */
-export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
-	extends IntervalIndex<TInterval> {
+export interface IEndpointInRangeIndex extends SequenceIntervalIndex {
 	/**
 	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (includes both ends)
 	 */
-	findIntervalsWithEndpointInRange(start: number, end: number): TInterval[];
+	findIntervalsWithEndpointInRange(start: number, end: number): SequenceInterval[];
 }
 
-export class EndpointInRangeIndex implements IEndpointInRangeIndex<SequenceInterval> {
+export class EndpointInRangeIndex implements IEndpointInRangeIndex {
 	private readonly intervalTree;
 
 	constructor(private readonly client: Client) {
@@ -83,21 +77,9 @@ export class EndpointInRangeIndex implements IEndpointInRangeIndex<SequenceInter
 			return true;
 		};
 
-		const transientStartInterval = createSequenceInterval(
-			"transient",
-			start,
-			start,
-			this.client,
-			IntervalType.Transient,
-		);
+		const transientStartInterval = createTransientInterval(start, start, this.client);
 
-		const transientEndInterval = createSequenceInterval(
-			"transient",
-			end,
-			end,
-			this.client,
-			IntervalType.Transient,
-		);
+		const transientEndInterval = createTransientInterval(end, end, this.client);
 
 		// Add comparison overrides to the transient intervals
 		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
@@ -113,7 +95,7 @@ export class EndpointInRangeIndex implements IEndpointInRangeIndex<SequenceInter
  */
 export function createEndpointInRangeIndex(
 	sharedString: ISharedString,
-): IEndpointInRangeIndex<SequenceInterval> {
+): IEndpointInRangeIndex {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new EndpointInRangeIndex(client);
 }

@@ -5,7 +5,7 @@
 
 import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
-import { performance } from "@fluidframework/common-utils";
+
 import { LumberEventName } from "./lumberEventNames";
 import {
 	LogLevel,
@@ -16,6 +16,8 @@ import {
 	ILumberFormatter,
 } from "./resources";
 
+const performanceNow = () => globalThis.performance.now();
+
 // Lumber represents the telemetry data being captured, and it uses a list of
 // ILumberjackEngine to emit the data according to the engine implementation.
 // Lumber should be created through Lumberjack. Additional properties can be set through
@@ -25,7 +27,7 @@ import {
  * @internal
  */
 export class Lumber<T extends string = LumberEventName> {
-	private readonly _startTime = performance.now();
+	private readonly _startTime = performanceNow();
 	private _properties = new Map<string, any>();
 	private _durationInMs?: number;
 	private _successful?: boolean;
@@ -33,7 +35,10 @@ export class Lumber<T extends string = LumberEventName> {
 	private _exception?: Error;
 	private _logLevel?: LogLevel;
 	private _completed = false;
-	public readonly timestamp = Date.now();
+	private _timestamp = Date.now();
+	public get timestamp(): number {
+		return this._timestamp;
+	}
 	public readonly id = uuid();
 
 	public get properties(): Map<string, any> {
@@ -102,6 +107,17 @@ export class Lumber<T extends string = LumberEventName> {
 		return this;
 	}
 
+	/**
+	 * Overrides the timestamp of the telemetry event.
+	 * @param msSinceEpoch - The timestamp in milliseconds since the epoch (1970-01-01T00:00:00Z), i.e. `Date.now()`
+	 * @remarks
+	 * This is useful when a Metric's start time needs to be set retroactively, such as when an event's duration is
+	 * tracked across several service instances, then logged in a single instance where the event may not have started.
+	 */
+	public overrideTimestamp(msSinceEpoch: number): void {
+		this._timestamp = msSinceEpoch;
+	}
+
 	public success(message: string, logLevel: LogLevel = LogLevel.Info) {
 		this.emit(message, logLevel, true, undefined);
 	}
@@ -157,7 +173,7 @@ export class Lumber<T extends string = LumberEventName> {
 
 		const durationOverwrite = parseFloat(this.properties.get("durationInMs"));
 		this._durationInMs = isNaN(durationOverwrite)
-			? performance.now() - this._startTime
+			? performanceNow() - this._startTime
 			: durationOverwrite;
 
 		if (this._formatters) {

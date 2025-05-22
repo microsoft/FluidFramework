@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver",
-	"version": "2.31.0",
+	"version": "2.41.0",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -131,12 +131,12 @@
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.54.0",
+		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.54.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.30.0",
-		"@microsoft/api-extractor": "7.50.1",
+		"@fluidframework/build-tools": "^0.55.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
+		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.40.0",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
@@ -148,7 +148,6 @@
 		"eslint": "~8.55.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
 		"rimraf": "^4.4.0",
 		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"

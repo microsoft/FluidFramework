@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import {
@@ -17,10 +17,13 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import { type JsonCompatibleReadOnly, type Mutable, brand, fail } from "../../util/index.js";
+import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
+import type { FieldChangeEncodingContext } from "../index.js";
+import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV2.js";
+import type { SequenceCodecHelpers } from "./helperTypes.js";
 import {
 	type Attach,
 	type AttachAndDetach,
@@ -36,9 +39,6 @@ import {
 	type Rename,
 } from "./types.js";
 import { isNoopMark, normalizeCellRename } from "./utils.js";
-import type { FieldChangeEncodingContext } from "../index.js";
-import { EncodedNodeChangeset } from "../modular-schema/index.js";
-import type { SequenceCodecHelpers } from "./helperTypes.js";
 
 export function makeV2CodecHelpers(
 	revisionTagCodec: IJsonCodec<

@@ -4,11 +4,11 @@
  */
 
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
 import type { ChangeEncodingContext } from "../core/index.js";
-import { type JsonCompatibleReadOnly, fail } from "../util/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * Translates decoded data to encoded data.
@@ -333,7 +333,31 @@ export function withSchemaValidation<
  * Versions of Fluid Framework client packages.
  * @remarks
  * Used to express compatibility requirements by indicating the oldest version with which compatibility must be maintained.
+ *
+ * When no compatibility-impacting change is made in a given version, the value associated with its enum entry may point to the older version which it's fully compatible with.
+ * Note that this can change if a future version of the framework introduces an option to use something which is only supported at a particular version. In which case, the values of the enum may shift,
+ * but the semantics of keys in this enum will not change.
+ *
+ * Do not depend on the value of this enums's entries: only depend on the keys (enum members) themselves.
+ *
+ * Some release may also be omitted if there is currently no need to express that specific version.
+ * If the need arises, they might be added in the future.
+ *
  * @privateRemarks
+ * Entries in these enums should document the user facing impact of opting into a particular version.
+ * For example, document if there is an encoding efficiency improvement of oping into that version or newer.
+ * Versions with no notable impact can be omitted.
+ *
+ * These use numeric values for easy threshold comparisons.
+ * Without zero padding, version 2.10 is treated as 2.1, which is numerically less than 2.2.
+ * Adding leading zeros to the minor version ensures correct comparisons.
+ * For example, version 2.20.0 is encoded as 2.020, and version 2.2.0 is encoded as 2.002.
+ * For example FF 2.20.0 is encoded as 2.020 and FF 2.2.0 is encoded as 2.002.
+ *
+ * Three digits was selected as that will likely be enough, while two digits could easily be too few.
+ * If three digits ends up being too few, minor releases of 1000 and higher
+ * could still be handled using something like 2.999_00001 without having to change the lower releases.
+ *
  * This scheme assumes a single version will always be enough to communicate compatibility.
  * For this to work, compatibility has to be strictly increasing.
  * If this is violated (for example a subset of incompatible features from 3.x that are not in 3.0 are back ported to 2.x),
@@ -341,15 +365,52 @@ export function withSchemaValidation<
  * such a system can be added if/when its needed since it will be opt in and thus non-breaking.
  *
  * TODO: this should likely be defined higher in the stack and specified when creating the container, possibly as part of its schema.
+ * TODO: compatibility requirements for how this enum can and cannot be changed should be clarified when/if it's used across multiple layers in the stack.
+ * For example, if needed, would adding more leading zeros to the minor version break things.
  * @alpha
  */
 export enum FluidClientVersion {
+	/**
+	 * Fluid Framework Client 1.4 and newer.
+	 * @remarks
+	 * This opts into support for the 1.4 LTS branch.
+	 * @privateRemarks
+	 * As long as this code is in Tree, there is no reason to have this option as SharedTree did not exist in 1.4.
+	 */
+	// v1_4 = 1.004,
+
 	/** Fluid Framework Client 2.0 and newer. */
-	v2_0 = "v2_0",
+	v2_0 = 2.0,
+
 	/** Fluid Framework Client 2.1 and newer. */
-	v2_1 = "v2_1",
-	/** Fluid Framework Client 2.2 and newer. */
-	v2_2 = "v2_2",
-	/** Fluid Framework Client 2.4 and newer. */
-	v2_3 = "v2_3",
+	// If we think we might want to start allowing opting into something that landed in 2.1 (without opting into something newer),
+	// we could add an entry like this to allow users to indicate that they can be opted in once we are ready,
+	// then update it to "2.001" once we actually have the opt in working.
+	// v2_1 = v2_0,
+
+	/** Fluid Framework Client 2.41 and newer. */
+	// If we land some new formats in 2.41, we can enable selecting
+	// v2_41 = 2.041,
+
+	/**
+	 * Enable unreleased and unfinished features.
+	 * @remarks
+	 * Using this value can result in documents which can not be opened in future versions of the framework.
+	 * It can also result in data corruption by enabling unfinished features which may not handle all cases correctly.
+	 *
+	 * This can be used with specific APIs when the caller has knowledge of what specific features those APIs will be opted into with it.
+	 * This is useful for testing features before they are released, but should not be used in production code.
+	 */
+	EnableUnstableFeatures = Number.POSITIVE_INFINITY,
 }
+
+/**
+ * An up to date version which includes all the important stable features.
+ * @remarks
+ * Use for cases when data is not persisted and thus would only ever be read by the current version of the framework.
+ *
+ * @privateRemarks
+ * Update as needed.
+ * TODO: Consider using packageVersion.ts to keep this current.
+ */
+export const currentVersion: FluidClientVersion = FluidClientVersion.v2_0;

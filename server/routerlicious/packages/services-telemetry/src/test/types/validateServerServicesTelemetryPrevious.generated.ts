@@ -94,6 +94,7 @@ declare type current_as_old_for_Class_LambdaSchemaValidator = requireAssignableT
  * typeValidation.broken:
  * "Class_Lumber": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_Lumber = requireAssignableTo<TypeOnly<old.Lumber>, TypeOnly<current.Lumber>>
 
 /*
@@ -375,6 +376,7 @@ declare type old_as_current_for_Enum_CommonProperties = requireAssignableTo<Type
  * typeValidation.broken:
  * "Enum_CommonProperties": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_CommonProperties = requireAssignableTo<TypeOnly<current.CommonProperties>, TypeOnly<old.CommonProperties>>
 
 /*

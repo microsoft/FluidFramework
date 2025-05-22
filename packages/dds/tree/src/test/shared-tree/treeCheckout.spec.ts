@@ -19,8 +19,9 @@ import {
 	EmptyKey,
 	type RevertibleFactory,
 	type NormalizedFieldUpPath,
+	TreeStoredSchemaRepository,
 } from "../../core/index.js";
-import { FieldKinds } from "../../feature-libraries/index.js";
+import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
 	getBranch,
 	Tree,
@@ -28,17 +29,22 @@ import {
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
 	type BranchableTree,
+	createTreeCheckout,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
+	buildTestForest,
 	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
+	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
 	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -96,11 +102,13 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree",
+				"change",
 				"subtree",
 				"change",
 				"after",
 				"editStart",
 				"subtree",
+				"change",
 				"subtree",
 				"change",
 				"after",
@@ -138,11 +146,13 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree-rootFieldKey-0",
+				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
 				"editStart",
 				"subtree-rootFieldKey-0",
+				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
@@ -485,7 +495,7 @@ describe("sharedTreeView", () => {
 						? "schemaA"
 						: t.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier
 							? "schemaB"
-							: fail("Unexpected schema");
+							: assert.fail("Unexpected schema");
 				}
 
 				assert.equal(getSchema(parentView.checkout), "schemaA");
@@ -1450,7 +1460,24 @@ function itView<
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
-		const view = getView(config, undefined, logger);
+
+		const schema = new TreeStoredSchemaRepository();
+		const checkout = createTreeCheckout(
+			testIdCompressor,
+			mintRevisionTag,
+			testRevisionTagCodec,
+			{
+				forest: buildTestForest({ additionalAsserts: true, schema }),
+				schema,
+				logger,
+			},
+		);
+		const view = new SchematizingSimpleTreeView<TRootSchema>(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+
 		if (fork) {
 			const treeBranch = getBranch(view).branch();
 			const viewBranch = treeBranch.viewWith(view.config);

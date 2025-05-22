@@ -6,19 +6,25 @@
 import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	TreeViewConfiguration,
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type LeafSchema,
 	type NodeBuilderData,
 	type ObjectNodeSchema,
+	type SimpleObjectNodeSchema,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import type {
+	FieldHasDefault,
 	InsertableObjectFromSchemaRecord,
+	InsertableObjectFromAnnotatedSchemaRecord,
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/objectNode.js";
@@ -31,10 +37,14 @@ import type {
 	requireTrue,
 	RestrictiveStringRecord,
 } from "../../util/index.js";
-import { validateUsageError } from "../utils.js";
+import { getView, validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
 import type {
+	FieldKind,
+	FieldSchema,
+	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
+	ImplicitAnnotatedFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
 	InsertableTypedNode,
@@ -77,6 +87,109 @@ const schemaFactory = new SchemaFactory("Test");
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		type result = InsertableObjectFromSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
+	}
+}
+
+// InsertableObjectFromAnnotatedSchemaRecord
+{
+	const schemaFactoryAlpha = new SchemaFactoryAlpha("Test");
+	class Note extends schemaFactoryAlpha.objectAlpha("Note", {}) {}
+
+	// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+	type Info = {
+		readonly stuff: readonly [typeof Note];
+	};
+
+	type Desired = InsertableTypedNode<typeof Note>;
+
+	{
+		type result = InsertableObjectFromAnnotatedSchemaRecord<Info>["stuff"];
+		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	}
+
+	// Generic case
+	{
+		type result = InsertableObjectFromAnnotatedSchemaRecord<
+			RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>
+		>;
+		type _check = requireAssignableTo<result, never>;
+	}
+
+	// Empty case
+	{
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		type result = InsertableObjectFromAnnotatedSchemaRecord<{}>;
+		type _check = requireAssignableTo<result, Record<string, never>>;
+	}
+}
+
+// FieldHasDefault
+{
+	class Note extends schemaFactory.object("Note", {}) {}
+
+	{
+		type _check = requireFalse<FieldHasDefault<ImplicitAllowedTypes>>;
+		type _check2 = requireFalse<FieldHasDefault<ImplicitFieldSchema>>;
+	}
+
+	// Node schema via ImplicitAllowedTypes
+	{
+		// Implicitly required field does not have a default value.
+		type _check = requireFalse<FieldHasDefault<typeof Note>>;
+	}
+
+	// Required field
+	{
+		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
+
+		// Required field does not have a default value.
+		type _check = requireFalse<FieldHasDefault<RequiredNoteField>>;
+	}
+
+	// Optional field
+	{
+		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
+
+		// Optional field has default.
+		type _check = requireTrue<FieldHasDefault<OptionalNoteField>>;
+	}
+
+	// Identifier field
+	{
+		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+
+		// Identifier fields have default.
+		type _check = requireTrue<FieldHasDefault<IdentifierField>>;
+	}
+
+	// Union of required fields
+	{
+		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
+		type ImplicitlyRequiredStringField = typeof SchemaFactory.string;
+		type Union = RequiredNoteField | ImplicitlyRequiredStringField;
+
+		// Field definitively does not have a default value.
+		type _check = requireFalse<FieldHasDefault<Union>>;
+	}
+
+	// Union of optional fields
+	{
+		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
+		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+		type Union = OptionalNoteField | IdentifierField;
+
+		// Field definitively has a default value.
+		type _check = requireTrue<FieldHasDefault<Union>>;
+	}
+
+	// Union of required and optional fields
+	{
+		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
+		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+		type Union = RequiredNoteField | IdentifierField;
+
+		// Field may or may not have a default value.
+		type _check = requireFalse<FieldHasDefault<Union>>;
 	}
 }
 
@@ -296,7 +409,7 @@ describeHydration(
 			assert.equal(node.x, null);
 		});
 
-		describe("supports setting", () => {
+		describe("supports setting fields", () => {
 			describe("primitives", () => {
 				it("required", () => {
 					class Root extends schemaFactory.object("", {
@@ -348,7 +461,7 @@ describeHydration(
 				});
 			});
 
-			describe("required object", () => {
+			describe("required TreeNode", () => {
 				const Child = schemaFactory.object("child", {
 					objId: schemaFactory.number,
 				});
@@ -367,7 +480,7 @@ describeHydration(
 				});
 			});
 
-			describe("optional object", () => {
+			describe("optional TreeNode", () => {
 				const Child = schemaFactory.object("child", {
 					objId: schemaFactory.number,
 				});
@@ -388,48 +501,16 @@ describeHydration(
 				});
 			});
 
-			describe.skip("required list", () => {
-				// const _ = new SchemaFactory("test");
-				// const list = _.fieldNode("List<string>", _.sequence(_.string));
-				// const parent = _.struct("parent", {
-				// 	list,
-				// });
-				// const schema = _.intoSchema(parent);
-				// const before: string[] = [];
-				// const after = ["A"];
-				// it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-				// 	const root = getRoot(schema, { list: before });
-				// 	assert.deepEqual(root.list, before);
-				// 	root.list = after;
-				// 	assert.deepEqual(root.list, after);
-				// });
-			});
-
-			describe.skip("optional list", () => {
-				// const _ = new SchemaFactory("test");
-				// const list = _.fieldNode("List<string>", _.sequence(_.string));
-				// const parent = _.struct("parent", {
-				// 	list: _.optional(list),
-				// });
-				// const schema = _.intoSchema(parent);
-				// const before: string[] = [];
-				// const after = ["A"];
-				// it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-				// 	const root = getRoot(schema, { list: undefined });
-				// 	assert.equal(root.list, undefined);
-				// 	root.list = before;
-				// 	assert.deepEqual(root.list, before);
-				// 	root.list = after;
-				// 	assert.deepEqual(root.list, after);
-				// });
-			});
-
-			describe.skip("required map", () => {
-				// TODO
-			});
-
-			describe.skip("optional map", () => {
-				// TODO
+			it("identifier", () => {
+				class Schema extends schemaFactory.object("parent", {
+					id: schemaFactory.identifier,
+				}) {}
+				const root = init(Schema, { id: "a" });
+				assert.throws(() => {
+					// TODO: AB#35799 this should not compile!
+					// If it does compile, it must be a UsageError.
+					root.id = "b";
+				});
 			});
 		});
 
@@ -462,8 +543,8 @@ describeHydration(
 
 		it("ObjectNodeSchema", () => {
 			const sf = new SchemaFactoryAlpha("Test");
-			class Note extends sf.object("Note", { f: SchemaFactory.null }) {}
-			class EmptyObject extends sf.object("Note", {}) {}
+			class Note extends sf.objectAlpha("Note", { f: SchemaFactory.null }) {}
+			class EmptyObject extends sf.objectAlpha("Note", {}) {}
 
 			const schema: ObjectNodeSchema = Note;
 			const schemaEmpty: ObjectNodeSchema = EmptyObject;
@@ -480,20 +561,20 @@ describeHydration(
 
 			// Explicit field
 			{
-				class RecursiveTest extends sf.object("RecursiveTest", {
+				class ExplicitField extends sf.objectAlpha("WithField", {
 					f: sf.optional([() => SchemaFactory.null]),
 				}) {}
 
-				type Info = (typeof RecursiveTest)["info"];
-				const _check1: TreeNodeSchema = RecursiveTest;
-				const _check2: ObjectNodeSchema = RecursiveTest;
+				type Info = (typeof ExplicitField)["info"];
+				const _check1: TreeNodeSchema = ExplicitField;
+				const _check2: ObjectNodeSchema = ExplicitField;
 			}
 
 			// Non implicitly constructable
 			{
 				type TestObject = ObjectNodeSchema<
 					"x",
-					RestrictiveStringRecord<ImplicitFieldSchema>,
+					RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 					false
 				>;
 				type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;
@@ -514,6 +595,63 @@ describeHydration(
 				type _check2 = requireAssignableTo<Info, Info2>;
 				const _check1: TreeNodeSchema = RecursiveTest;
 				const _check2: ObjectNodeSchema = RecursiveTest;
+			}
+
+			// Empty POJO mode
+			{
+				const Empty = sf.objectAlpha("Empty", {});
+
+				type Info = (typeof Empty)["info"];
+				const _check1: TreeNodeSchema = Empty;
+				const _check2: ObjectNodeSchema = Empty;
+			}
+
+			// POJO mode with field
+			{
+				const ExplicitField = sf.objectAlpha("WithField", {
+					f: SchemaFactory.null,
+				});
+
+				type Info = (typeof ExplicitField)["info"];
+				const _check1: TreeNodeSchema = ExplicitField;
+				// This tests the workaround in SchemaFactoryAlpha.object.
+				// This line fails to compile without the workaround.
+				const _check2: ObjectNodeSchema = ExplicitField;
+			}
+
+			// Explicit field POJO mode typing unit tests
+			{
+				type SchemaType = ObjectNodeSchema<string, { readonly f: LeafSchema<"null", null> }>;
+				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
+				type _check4 = requireAssignableTo<SchemaType, ObjectNodeSchema>;
+				// It does work for the different types that make up ObjectNodeSchema however:
+				type _check5 = requireAssignableTo<SchemaType, SimpleObjectNodeSchema>;
+			}
+
+			// ObjectNodeSchema assignability bug minimization
+			{
+				type RecordX = Record<string, unknown>;
+
+				// A type with complicated variance.
+				type Create<T extends RecordX> = (data: RecordX extends T ? never : T) => unknown;
+
+				// Two identical interfaces
+				interface X1<T extends RecordX = RecordX> extends Create<T> {}
+				interface X2<T extends RecordX = RecordX> extends Create<T> {}
+
+				// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+				type Input = { f: object };
+				// Compute two identical types using X1 and X2
+				type Result1 = X1<Input>;
+				type Result2 = X2<Input>;
+
+				// The identical types are not equal, nor are the identical interfaces.
+				type _check12 = requireAssignableTo<Result1, X2>;
+				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
+				type _check11 = requireAssignableTo<Result1, X1>; // Result from X1 is not assignable to X1, only X2
+				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
+				type _check22 = requireAssignableTo<Result2, X2>; // Result from X2 is not assignable to X2, only X1
+				type _check21 = requireAssignableTo<Result2, X1>;
 			}
 		});
 
@@ -602,30 +740,96 @@ describeHydration(
 				assert.equal(n.y, 3);
 				assert.deepEqual(thisList, [n, n]);
 			});
+
+			describe("hydrated field property access allocation tests", () => {
+				it("accessing leaf on object node does not allocate flex nodes", () => {
+					class TreeWithLeaves extends schemaFactory.object("TreeWithLeaves", {
+						leaf: SchemaFactory.number,
+					}) {}
+					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
+					const view = getView(config);
+					view.initialize({ leaf: 1 });
+					const context = view.getView().context;
+					// Note: access the root before trying to access just the leaf, to not count any object allocations that result from
+					// accessing the root as part of the allocations from the leaf access. Also, store it to avoid additional computation
+					// from any intermediate getters when accessing the leaf.
+					const root = view.root;
+					const countBefore = context.withAnchors.size;
+					const _accessLeaf = root.leaf;
+					const countAfter = context.withAnchors.size;
+
+					// As of 2024-07-01 we still allocate flex fields when accessing leaves, so the after-count is expected to be one higher
+					// than the before count.
+					// TODO: if/when we stop allocating flex fields when accessing leaves, this test will fail and should be updated so
+					// the two counts match, plus its title updated accordingly.
+					assert.equal(countAfter, countBefore + 1);
+				});
+
+				it("accessing leaf on map node does not allocate flex nodes", () => {
+					class TreeWithLeaves extends schemaFactory.map(
+						"MapOfLeaves",
+						SchemaFactory.number,
+					) {}
+					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
+					const view = getView(config);
+					view.initialize(new Map([["1", 1]]));
+					const context = view.getView().context;
+					// Note: access the map that contains leaves before trying to access just the leaf at one of the keys, to not
+					// count any object allocations that result from accessing the root/map as part of the allocations from the leaf
+					// access. Also, store it to avoid additional computation from any intermediate getters when accessing the leaf.
+					const root = view.root;
+					const countBefore = context.withAnchors.size;
+					const _accessLeaf = root.get("1");
+					const countAfter = context.withAnchors.size;
+
+					// As of 2024-07-01 we still allocate flex fields when accessing leaves, so the after-count is expected to be one higher
+					// than the before count.
+					// TODO: if/when we stop allocating flex fields when accessing leaves, this test will fail and should be updated so
+					// the two counts match, plus its title updated accordingly.
+					assert.equal(countAfter, countBefore + 1);
+				});
+
+				it("accessing leaf on array node does not allocate flex nodes", () => {
+					class TreeWithLeaves extends schemaFactory.array(
+						"ArrayOfLeaves",
+						SchemaFactory.number,
+					) {}
+					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
+					const view = getView(config);
+					view.initialize([1, 2]);
+					const context = view.getView().context;
+					// Note: prior to taking the "before count", access the array that contains leaves *and the first leaf in it*,
+					// to ensure that the sequence field for the array is allocated and accounted for. We expect the sequence field
+					// to be required anyway (vs the field for a leaf property on an object node, for example, where we might be able
+					// to optimize away its allocation) so might as well count it up front. The subsequent access to the second leaf
+					// should then not allocate anything new.
+					// Also, store the array/root to avoid additional computation from any intermediate getters when accessing leaves.
+					const root = view.root;
+					const _accessLeaf0 = root[0];
+					const countBefore = context.withAnchors.size;
+					const _accessLeaf1 = root[1];
+					const countAfter = context.withAnchors.size;
+
+					// The array test is deliberately distinct from the object and map ones, see the comment above for the rationale.
+					assert.equal(countAfter, countBefore);
+				});
+			});
 		});
 
-		it("unhydrated default identifier access errors", () => {
+		it("unhydrated default identifier access works", () => {
 			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
 			const newNode = new HasId({});
-			assert.throws(
-				() => {
-					const id = newNode.id;
-				},
-				validateUsageError(/identifier/),
-			);
+			const id = newNode.id;
+			const id2 = new HasId({}).id;
+			assert.notEqual(id, id2);
 		});
 
-		it("unhydrated default identifier access via shortId errors", () => {
+		it("unhydrated default identifier access via shortId returns UUID", () => {
 			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
 			const newNode = new HasId({});
-			assert.throws(
-				() => {
-					const id = Tree.shortId(newNode);
-				},
-				validateUsageError(
-					/Tree.shortId cannot access default identifiers on unhydrated nodes/,
-				),
-			);
+			const id = Tree.shortId(newNode);
+			assert(typeof id === "string");
+			assert(isStableId(id));
 		});
 
 		it("unhydrated custom identifier access works", () => {

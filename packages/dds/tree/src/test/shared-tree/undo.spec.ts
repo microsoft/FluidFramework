@@ -16,7 +16,9 @@ import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	chunkFromJsonTrees,
 	createTestUndoRedoStacks,
+	DefaultTestSharedTreeKind,
 	expectJsonTree,
+	getView,
 	moveWithin,
 	TestTreeProviderLite,
 } from "../utils.js";
@@ -35,7 +37,6 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
-import { TreeFactory } from "../../treeFactory.js";
 
 const rootPath: NormalizedUpPath = {
 	detachedNodeId: undefined,
@@ -488,12 +489,27 @@ describe("Undo and redo", () => {
 	it("can undo while detached", () => {
 		const sf = new SchemaFactory(undefined);
 		class Schema extends sf.object("Object", { foo: sf.number }) {}
-		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
-		const tree = sharedTreeFactory.create(runtime, "tree");
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: Schema }));
+		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
+		const view = asTreeViewAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Schema })));
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
+		let revertible: Revertible | undefined;
+		view.events.on("changed", (_, getRevertible) => {
+			revertible = getRevertible?.();
+		});
+		view.root.foo = 2;
+		assert.equal(view.root.foo, 2);
+		assert(revertible !== undefined);
+		revertible.revert();
+		assert.equal(view.root.foo, 1);
+	});
+
+	it("can undo while independent", () => {
+		const sf = new SchemaFactory(undefined);
+		class Schema extends sf.object("Object", { foo: sf.number }) {}
+		const view = getView(new TreeViewConfiguration({ schema: Schema }));
+		view.initialize({ foo: 1 });
 		let revertible: Revertible | undefined;
 		view.events.on("changed", (_, getRevertible) => {
 			revertible = getRevertible?.();
@@ -686,7 +702,7 @@ describe("Undo and redo", () => {
  * @param attachTree - whether or not the SharedTree should be attached to the Fluid runtime
  */
 export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITreeCheckout {
-	const sharedTreeFactory = new TreeFactory({});
+	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 	const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 	const tree = sharedTreeFactory.create(runtime, "tree");
 	const runtimeFactory = new MockContainerRuntimeFactory();

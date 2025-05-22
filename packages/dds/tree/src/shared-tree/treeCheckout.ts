@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -60,13 +60,7 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import {
-	Breakable,
-	disposeSymbol,
-	fail,
-	getOrCreate,
-	type WithBreakable,
-} from "../util/index.js";
+import { Breakable, disposeSymbol, getOrCreate, type WithBreakable } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -282,8 +276,9 @@ export function createTreeCheckout(
 		disposeForksAfterTransaction?: boolean;
 	},
 ): TreeCheckout {
-	const forest = args?.forest ?? buildForest();
+	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
+	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions = { jsonValidator: noopValidator };
 	const defaultFieldBatchVersion = 1;
 	const changeFamily =
@@ -318,7 +313,7 @@ export function createTreeCheckout(
 		idCompressor,
 		args?.removedRoots,
 		args?.logger,
-		args?.breaker,
+		breaker,
 		args?.disposeForksAfterTransaction,
 	);
 }

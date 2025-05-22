@@ -4,6 +4,7 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
+
 import { ITicketedMessage } from "./messages";
 
 /**
