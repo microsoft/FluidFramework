@@ -29,8 +29,8 @@ import type {
 	IFluidContainer,
 	CompatibilityMode,
 } from "@fluidframework/fluid-static";
+import type { IStaticEntryPoint } from "@fluidframework/fluid-static/internal";
 import {
-	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
@@ -101,7 +101,7 @@ export class TinyliciousClient {
 			},
 		});
 
-		const rootDataObject = await this.getContainerEntryPoint(container);
+		const staticEntryPoint = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -120,7 +120,7 @@ export class TinyliciousClient {
 
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
-			rootDataObject,
+			staticEntryPoint,
 		});
 		fluidContainer.attach = attach;
 
@@ -145,10 +145,10 @@ export class TinyliciousClient {
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 		const container = await loadExistingContainer({ ...loaderProps, request: { url: id } });
-		const rootDataObject = await this.getContainerEntryPoint(container);
+		const staticEntryPoint = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
-			rootDataObject,
+			staticEntryPoint,
 		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
@@ -206,13 +206,13 @@ export class TinyliciousClient {
 		return loaderProps;
 	}
 
-	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+	private async getContainerEntryPoint(container: IContainer): Promise<IStaticEntryPoint> {
+		const entryPoint: FluidObject<IStaticEntryPoint> = await container.getEntryPoint();
 		assert(
-			rootDataObject.IRootDataObject !== undefined,
-			0x875 /* entryPoint must be of type IRootDataObject */,
+			entryPoint.IStaticEntryPoint !== undefined,
+			"entryPoint must be of type IStaticEntryPoint",
 		);
-		return rootDataObject.IRootDataObject;
+		return entryPoint.IStaticEntryPoint;
 	}
 	// #endregion
 }

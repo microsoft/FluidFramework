@@ -27,7 +27,7 @@ import type {
 	ContainerSchema,
 	IFluidContainer,
 } from "@fluidframework/fluid-static";
-import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
+import type { IStaticEntryPoint } from "@fluidframework/fluid-static/internal";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
@@ -160,7 +160,7 @@ export class OdspClient {
 
 		const fluidContainer = createFluidContainer({
 			container,
-			rootDataObject: await this.getContainerEntryPoint(container),
+			staticEntryPoint: await this.getContainerEntryPoint(container),
 		});
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer as IFluidContainer<T>, services };
@@ -203,7 +203,7 @@ export class OdspClient {
 		container: IContainer,
 		connection: OdspConnectionConfig,
 	): Promise<IFluidContainer> {
-		const rootDataObject = await this.getContainerEntryPoint(container);
+		const staticEntryPoint = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -237,7 +237,7 @@ export class OdspClient {
 			 */
 			return resolvedUrl.itemId;
 		};
-		const fluidContainer = createFluidContainer({ container, rootDataObject });
+		const fluidContainer = createFluidContainer({ container, staticEntryPoint });
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
@@ -251,12 +251,12 @@ export class OdspClient {
 		};
 	}
 
-	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+	private async getContainerEntryPoint(container: IContainer): Promise<IStaticEntryPoint> {
+		const entryPoint: FluidObject<IStaticEntryPoint> = await container.getEntryPoint();
 		assert(
-			rootDataObject.IRootDataObject !== undefined,
-			0x878 /* entryPoint must be of type IRootDataObject */,
+			entryPoint.IStaticEntryPoint !== undefined,
+			"entryPoint must be of type IStaticEntryPoint",
 		);
-		return rootDataObject.IRootDataObject;
+		return entryPoint.IStaticEntryPoint;
 	}
 }

@@ -32,8 +32,8 @@ import type {
 	IFluidContainer,
 	CompatibilityMode,
 } from "@fluidframework/fluid-static";
+import type { IStaticEntryPoint } from "@fluidframework/fluid-static/internal";
 import {
-	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
@@ -185,10 +185,10 @@ export class AzureClient {
 			...loaderProps,
 			request: { url: url.href },
 		});
-		const rootDataObject = await this.getContainerEntryPoint(container);
+		const staticEntryPoint = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
-			rootDataObject,
+			staticEntryPoint,
 		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
@@ -224,10 +224,10 @@ export class AzureClient {
 			url: url.href,
 			headers: { [LoaderHeader.version]: version.id },
 		});
-		const rootDataObject = await this.getContainerEntryPoint(container);
+		const staticEntryPoint = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
-			rootDataObject,
+			staticEntryPoint,
 		});
 		return { container: fluidContainer };
 	}
@@ -322,7 +322,7 @@ export class AzureClient {
 			getTenantId(connection),
 		);
 
-		const rootDataObject = await this.getContainerEntryPoint(container);
+		const staticEntryPoint = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -339,19 +339,19 @@ export class AzureClient {
 		};
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
-			rootDataObject,
+			staticEntryPoint,
 		});
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
 
-	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+	private async getContainerEntryPoint(container: IContainer): Promise<IStaticEntryPoint> {
+		const entryPoint: FluidObject<IStaticEntryPoint> = await container.getEntryPoint();
 		assert(
-			rootDataObject.IRootDataObject !== undefined,
-			0x90a /* entryPoint must be of type IRootDataObject */,
+			entryPoint.IStaticEntryPoint !== undefined,
+			"entryPoint must be of type IStaticEntryPoint",
 		);
-		return rootDataObject.IRootDataObject;
+		return entryPoint.IStaticEntryPoint;
 	}
 	// #endregion
 }
