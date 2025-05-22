@@ -331,13 +331,11 @@ export function configValueToMinVersionForCollab<
 		if (typeof configValue !== "object") {
 			return configValueToRequiredVersionMap.get(configValue);
 		}
-		// If the configValue is an object then we need to check if it matches any of the possible config values
-		// in configValueToVersionMap. We will loop through each entry in configValueToRequiredVersionMap and if
-		// any of the possible config values match the configValue passed in by the user, then the version associated
-		// with that possible config value will be added to the `matchingVersions` array. Once the loop is complete
-		// `matchingVersions` will contain versions that are required for the configValue passed in. We can then take
-		// the latest version from the array and return it, as that represents the minVersionForCollab that is required
-		// to ensure the configValue passed in valid.
+		// When the input `configValue` is an object, this logic determines the minimum runtime version it requires.
+		// It iterates through each entry in `configValueToRequiredVersionMap`. If `possibleConfigValue` shares at
+		// least one key-value pair with the input `configValue`, its associated `versionRequired` is collected into
+		// `matchingVersions`. After checking all entries, the highest among the collected versions is returned.
+		// This represents the overall minimum version required to support the features implied by the input `configValue`.
 		const matchingVersions: SemanticVersion[] = [];
 		for (const [
 			possibleConfigValue,
@@ -347,9 +345,9 @@ export function configValueToMinVersionForCollab<
 				typeof possibleConfigValue == "object",
 				"possibleConfigValue should be an object",
 			);
-			// Checks if the key/value pair in the configValue the user passed in matches one of the
-			// key value pairs in possibleConfigValue. If so, then we can add the required version associated
-			// with that possibleConfigValue to the matchingVersions array.
+			// Check if `possibleConfigValue` and the input `configValue` share at least one
+			// common key-value pair. If they do, the `versionRequired` for this `possibleConfigValue`
+			// is added to `matchingVersions`.
 			if (Object.entries(possibleConfigValue).some(([k, v]) => configValue[k] === v)) {
 				matchingVersions.push(versionRequired);
 			}
