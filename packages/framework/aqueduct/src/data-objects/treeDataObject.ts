@@ -54,12 +54,12 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 	 * Implementation of SharedTree which is used to generate the view.
 	 * @remarks Created once during initialization.
 	 */
-	#sharedTree: ITree | undefined;
+	#sharedTree: (ITree & ISharedObject) | undefined;
 
 	/**
 	 * Gets the underlying {@link @fluidframework/tree#ITree | tree}.
 	 */
-	public get sharedTree(): ITree {
+	public get sharedTree(): ITree & ISharedObject {
 		if (this.#sharedTree === undefined) {
 			throw new UsageError(uninitializedErrorString);
 		}
@@ -97,13 +97,14 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
 				);
 			}
-			const sharedTree: ITree = channel;
+			const sharedTree = channel as ITree & ISharedObject;
 
 			this.#sharedTree = sharedTree;
 			this.#view = this.generateView(sharedTree);
 		} else {
-			const sharedTree = SharedTree.create(this.runtime, treeChannelId);
-			(sharedTree as unknown as ISharedObject).bindToContext();
+			const sharedTree = SharedTree.create(this.runtime, treeChannelId) as ITree &
+				ISharedObject;
+			sharedTree.bindToContext();
 
 			this.#sharedTree = sharedTree;
 			this.#view = this.generateView(sharedTree);
