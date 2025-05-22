@@ -584,6 +584,7 @@ export class ScribeLambda implements IPartitionLambda {
 					typeof message.contents === "string" &&
 					message.type !== MessageType.ClientLeave
 				) {
+					// eslint-disable-next-line import/namespace
 					const clonedMessage = _.cloneDeep(message);
 					clonedMessage.contents = JSON.parse(clonedMessage.contents as string);
 					this.protocolHandler.processMessage(clonedMessage, false);
