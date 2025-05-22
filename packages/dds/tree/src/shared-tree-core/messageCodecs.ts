@@ -52,7 +52,7 @@ export function makeMessageCodec<TChangeset>(
 }
 
 /**
- * @privateRemarks - Exported for testing.
+ * @privateRemarks Exported for testing.
  */
 export function makeMessageCodecs<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
