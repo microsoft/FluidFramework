@@ -6,7 +6,7 @@
 import type {
 	OutboundExtensionMessage,
 	VerifiedInboundExtensionMessage,
-} from "@fluidframework/container-definitions/internal";
+} from "@fluidframework/container-runtime-definitions/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { AttendeeId } from "./presence.js";

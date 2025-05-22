@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { InboundExtensionMessage } from "@fluidframework/container-definitions/internal";
+import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";

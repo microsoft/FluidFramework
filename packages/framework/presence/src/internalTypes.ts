@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ExtensionRuntime as ContainerExtensionRuntime } from "@fluidframework/container-definitions/internal";
+import type { ExtensionRuntime as ContainerExtensionRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { AttendeeId, Attendee } from "./presence.js";
@@ -35,8 +35,8 @@ export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState
 }
 
 /**
- * This interface is a subset of (IContainerRuntime & IRuntimeInternal) and
- * (IFluidDataStoreRuntime) that is needed by the Presence States.
+ * This interface is a subset of ExtensionRuntime (and mostly of
+ * FluidDataStoreRuntime) that is needed by the Presence States.
  *
  * @privateRemarks
  * Replace with non-DataStore based interface.

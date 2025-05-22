@@ -7,7 +7,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import type {
 	ContainerExtension,
 	InboundExtensionMessage,
-} from "@fluidframework/container-definitions/internal";
+} from "@fluidframework/container-runtime-definitions/internal";
 import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {

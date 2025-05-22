@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IAudience } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- BrandedType is a class declaration only
 import type {
 	BrandedType,
@@ -14,8 +15,6 @@ import type {
 	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
-
-import type { IAudience } from "./audience.js";
 
 /**
  * While connected, the id of a client within a session.

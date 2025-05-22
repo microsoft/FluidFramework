@@ -11,7 +11,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import type {
 	ExtensionRuntimeEvents,
 	RawInboundExtensionMessage,
-} from "@fluidframework/container-definitions/internal";
+} from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
