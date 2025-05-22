@@ -173,7 +173,7 @@ function applyMovedChanges(
 				mark2,
 				revision,
 				manager,
-				offsetChangeAtomId(newDetachId, mark.count - entry.length),
+				offsetChangeAtomId(newDetachId, entry.length),
 			),
 		];
 	}
