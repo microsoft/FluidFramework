@@ -298,37 +298,37 @@ describe("compatUtils", () => {
 			{
 				minVersionForCollab: "0.5.0",
 				runtimeOptions: { featureA: "a2" },
-				expectedErrorMessage: `Runtime option featureA:"a2" is not compatible with minVersionForCollab: 0.5.0.`,
+				expectedErrorMessage: `Runtime option featureA:"a2" requires runtime version 2.0.0. Please update minVersionForCollab (currently 0.5.0) to 2.0.0 or later to proceed.`,
 			},
 			{
 				minVersionForCollab: "2.0.0",
 				runtimeOptions: { featureB: true },
-				expectedErrorMessage: `Runtime option featureB:true is not compatible with minVersionForCollab: 2.0.0.`,
+				expectedErrorMessage: `Runtime option featureB:true requires runtime version 3.0.0. Please update minVersionForCollab (currently 2.0.0) to 3.0.0 or later to proceed.`,
 			},
 			{
 				minVersionForCollab: "2.0.0",
 				runtimeOptions: { featureA: "a1", featureB: true },
-				expectedErrorMessage: `Runtime option featureB:true is not compatible with minVersionForCollab: 2.0.0.`,
+				expectedErrorMessage: `Runtime option featureB:true requires runtime version 3.0.0. Please update minVersionForCollab (currently 2.0.0) to 3.0.0 or later to proceed.`,
 			},
 			{
 				minVersionForCollab: "6.0.0",
 				runtimeOptions: { featureC: { foo: 2 } },
-				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ foo: 2 })} is not compatible with minVersionForCollab: 6.0.0.`,
+				expectedErrorMessage: `Runtime option featureC:{"foo":2} requires runtime version 7.0.0. Please update minVersionForCollab (currently 6.0.0) to 7.0.0 or later to proceed.`,
 			},
 			{
 				minVersionForCollab: "3.0.0",
 				runtimeOptions: { featureA: "a1", featureC: { bar: "baz", foo: 2 } },
-				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ bar: "baz", foo: 2 })} is not compatible with minVersionForCollab: 3.0.0.`,
+				expectedErrorMessage: `Runtime option featureC:{"bar":"baz","foo":2} requires runtime version 7.0.0. Please update minVersionForCollab (currently 3.0.0) to 7.0.0 or later to proceed.`,
 			},
 			{
 				minVersionForCollab: "7.0.0",
 				runtimeOptions: { featureC: { foo: 2, bar: "bax" } },
-				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ foo: 2, bar: "bax" })} is not compatible with minVersionForCollab: 7.0.0.`,
+				expectedErrorMessage: `Runtime option featureC:{"foo":2,"bar":"bax"} requires runtime version 8.0.0. Please update minVersionForCollab (currently 7.0.0) to 8.0.0 or later to proceed.`,
 			},
 			{
 				minVersionForCollab: "8.5.0",
 				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true } },
-				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ foo: 2, bar: "bax", qaz: true })} is not compatible with minVersionForCollab: 8.5.0.`,
+				expectedErrorMessage: `Runtime option featureC:{"foo":2,"bar":"bax","qaz":true} requires runtime version 9.0.0. Please update minVersionForCollab (currently 8.5.0) to 9.0.0 or later to proceed.`,
 			},
 		];
 

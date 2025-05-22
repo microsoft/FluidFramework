@@ -308,7 +308,9 @@ export function getValidationForRuntimeOptions<T extends Record<string, unknown>
 		const requiredVersion = validationMap[passedRuntimeOption](passedRuntimeOptionValue);
 		if (requiredVersion !== undefined && gt(requiredVersion, minVersionForCollab)) {
 			throw new UsageError(
-				`Runtime option ${passedRuntimeOption}:${JSON.stringify(passedRuntimeOptionValue)} is not compatible with minVersionForCollab: ${minVersionForCollab}.`,
+				`Runtime option ${passedRuntimeOption}:${JSON.stringify(passedRuntimeOptionValue)} requires ` +
+					`runtime version ${requiredVersion}. Please update minVersionForCollab ` +
+					`(currently ${minVersionForCollab}) to ${requiredVersion} or later to proceed.`,
 			);
 		}
 	}
