@@ -6,7 +6,6 @@
 import { strict as assert, fail } from "node:assert";
 
 import {
-	cursorFromInsertable,
 	getStoredSchema,
 	SchemaFactoryAlpha,
 	schemaStatics,
@@ -25,11 +24,11 @@ import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { cursorFromInsertable } from "../../utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("Test");
 
 describe("simple-tree customTree", () => {
-	const handle = new MockHandle(1);
 	describe("customFromCursor", () => {
 		it("leaf", () => {
 			const schema = getUnhydratedContext(JsonAsTree.Tree).schema;

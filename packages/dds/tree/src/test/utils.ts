@@ -115,6 +115,7 @@ import {
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
 	makeSchemaCodec,
+	cursorForMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
@@ -147,6 +148,11 @@ import {
 	type TreeView,
 	type TreeBranchEvents,
 	type ITree,
+	type UnsafeUnknownSchema,
+	type InsertableField,
+	type FieldSchema,
+	type FieldKind,
+	mapTreeFromNodeData,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -677,14 +683,15 @@ export function validateFuzzTreeConsistency(
 	);
 }
 
-function contentToJsonableTree(
-	content: TreeSimpleContent | TreeStoredContent,
-): JsonableTree[] {
+function contentToJsonableTree(content: TreeStoredContent): JsonableTree[] {
 	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
 }
 
 export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleContent): void {
-	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
+	const contentReference = jsonableTreeFromFieldCursor(
+		cursorFromInsertable<UnsafeUnknownSchema>(content.schema, content.initialTree),
+	);
+	assert.deepEqual(toJsonableTree(tree), contentReference);
 	expectSchemaEqual(tree.storedSchema, toStoredSchema(content.schema));
 }
 export function validateTreeStoredContent(
@@ -853,7 +860,13 @@ export function flexTreeViewWithContent(
 	},
 ): CheckoutFlexTreeView {
 	const view = checkoutWithContent(
-		{ initialTree: content.initialTree, schema: toStoredSchema(content.schema) },
+		{
+			initialTree: cursorFromInsertable<UnsafeUnknownSchema>(
+				content.schema,
+				content.initialTree,
+			),
+			schema: toStoredSchema(content.schema),
+		},
 		args,
 	);
 	return new CheckoutFlexTreeView(
@@ -1441,4 +1454,35 @@ export function chunkToMapTreeField(chunk: TreeChunk): ExclusiveMapTree[] {
 
 export function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
 	return mapCursorField(trees.cursor(), (c) => c.fork());
+}
+
+/**
+ * Construct tree content that is compatible with the field defined by the provided `schema`.
+ * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+ * @param data - The data used to construct the field content.
+ * @remarks
+ * When providing a {@link TreeNodeSchemaClass},
+ * this is the same as invoking its constructor except that an unhydrated node can also be provided and the returned value is a cursor.
+ * When `undefined` is provided (for an optional field), `undefined` is returned.
+ */
+export function cursorFromInsertable<
+	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+>(
+	schema: UnsafeUnknownSchema extends TSchema
+		? ImplicitFieldSchema
+		: TSchema & ImplicitFieldSchema,
+	data: InsertableField<TSchema>,
+	context?: NodeIdentifierManager | undefined,
+):
+	| ITreeCursorSynchronous
+	| (TSchema extends FieldSchema<FieldKind.Optional> ? undefined : never) {
+	const mapTree = mapTreeFromNodeData(
+		data as InsertableField<UnsafeUnknownSchema>,
+		schema,
+		context,
+	);
+	if (mapTree === undefined) {
+		return undefined as TSchema extends FieldSchema<FieldKind.Optional> ? undefined : never;
+	}
+	return cursorForMapTreeNode(mapTree);
 }

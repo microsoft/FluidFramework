@@ -13,7 +13,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import {
-	cursorFromInsertable,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -29,6 +28,7 @@ import {
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
+	cursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
 	validateUsageError,

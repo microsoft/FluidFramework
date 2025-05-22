@@ -50,9 +50,10 @@ import {
 	flexTreeViewWithContent,
 	toJsonableTree,
 	type SharedTreeWithContainerRuntime,
+	cursorFromInsertable,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
-import { cursorFromInsertable, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { makeArray } from "../../util/index.js";
 

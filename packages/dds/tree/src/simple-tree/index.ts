@@ -45,8 +45,6 @@ export {
 	singletonSchema,
 	treeNodeApi,
 	type TreeNodeApi,
-	cursorFromInsertable,
-	createFromInsertable,
 	type NodeChangedData,
 	TreeBeta,
 	type TreeChangeEventsBeta,

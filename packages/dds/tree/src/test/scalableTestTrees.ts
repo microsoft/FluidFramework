@@ -17,16 +17,21 @@ import { FieldKinds, isFlexTreeNode, type FlexTreeNode } from "../feature-librar
 import type { CheckoutFlexTreeView } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
 import {
-	cursorFromInsertable,
 	SchemaFactory,
+	type InsertableContent,
+	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../simple-tree/toStoredSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
+
+import type {
+	TreeSimpleContent,
+	// eslint-disable-next-line import/no-internal-modules
+} from "./feature-libraries/flex-tree/utils.js";
+import { cursorFromInsertable } from "./utils.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -72,12 +77,10 @@ export function makeDeepContentSimple(
 	depth: number,
 	leafValue: number = 1,
 ): TreeSimpleContent {
-	// Implicit type conversion is needed here to make this compile.
-	const initialTree = makeJsDeepTree(depth, leafValue);
+	// Type conversion is needed here to make this compile.
+	const initialTree = makeJsDeepTree(depth, leafValue) as InsertableContent;
 	return {
-		// Types do not allow implicitly constructing recursive types, so cast is required.
-		// TODO: Find a better alternative.
-		initialTree: cursorFromInsertable(LinkedList, initialTree as LinkedList),
+		initialTree,
 		schema: LinkedList,
 	};
 }
@@ -88,7 +91,10 @@ export function makeDeepStoredContent(
 ): TreeStoredContent {
 	const content = makeDeepContentSimple(depth, leafValue);
 	return {
-		...content,
+		initialTree: cursorFromInsertable<UnsafeUnknownSchema>(
+			content.schema,
+			content.initialTree,
+		),
 		schema: toStoredSchema(content.schema),
 	};
 }
@@ -102,10 +108,9 @@ export function makeWideContentWithEndValueSimple(
 	numberOfNodes: number,
 	endLeafValue?: number,
 ): TreeSimpleContent {
-	// Implicit type conversion is needed here to make this compile.
 	const initialTree = makeJsWideTreeWithEndValue(numberOfNodes, endLeafValue);
 	return {
-		initialTree: cursorFromInsertable(WideRoot, initialTree),
+		initialTree,
 		schema: WideRoot,
 	};
 }
@@ -121,7 +126,10 @@ export function makeWideStoredContentWithEndValue(
 ): TreeStoredContent {
 	const content = makeWideContentWithEndValueSimple(numberOfNodes, endLeafValue);
 	return {
-		...content,
+		initialTree: cursorFromInsertable<UnsafeUnknownSchema>(
+			content.schema,
+			content.initialTree,
+		),
 		schema: toStoredSchema(content.schema),
 	};
 }
