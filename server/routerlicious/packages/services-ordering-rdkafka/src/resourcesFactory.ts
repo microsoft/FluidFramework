@@ -11,8 +11,8 @@ import {
 	IResourcesFactory,
 	ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
-import sillyname from "sillyname";
 import { Provider } from "nconf";
+import sillyname from "sillyname";
 
 import { RdkafkaConsumer } from "./rdkafkaConsumer";
 

@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import type { IWebSocket } from "@fluidframework/server-services-core";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+
 import { createRoomLeaveMessage } from "../utils";
+
 import type {
 	INexusLambdaConnectionStateTrackers,
 	INexusLambdaDependencies,
 	INexusLambdaSettings,
 } from "./interfaces";
-import { getMessageMetadata, getRoomId, isSummarizer, isWriter } from "./utils";
 import { storeClientConnectivityTime } from "./throttleAndUsage";
+import { getMessageMetadata, getRoomId, isSummarizer, isWriter } from "./utils";
 
 /**
  * Disconnect all orderer connections and store connectivity time for each.
