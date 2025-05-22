@@ -471,8 +471,8 @@ export class ModularChangeFamily
 		affectedFields.clear();
 
 		for (const fieldIdKey of fieldsToProcess.keys()) {
-			const fieldId = normalizeFieldId(fieldIdFromFieldIdKey(fieldIdKey), change.nodeAliases);
-			const fieldChange = fieldChangeFromId(change.fieldChanges, change.nodeChanges, fieldId);
+			const fieldId = fieldIdFromFieldIdKey(fieldIdKey);
+			const fieldChange = fieldChangeFromId(change, fieldId);
 
 			if (
 				table.fieldToContext.has(fieldChange) ||
@@ -1231,8 +1231,7 @@ export class ModularChangeFamily
 		crossFieldTable.affectedBaseFields.clear();
 		for (const baseFieldId of baseFields.keys()) {
 			const baseFieldChange = fieldChangeFromId(
-				crossFieldTable.baseChange.fieldChanges,
-				crossFieldTable.baseChange.nodeChanges,
+				crossFieldTable.baseChange,
 				fieldIdFromFieldIdKey(baseFieldId),
 			);
 
@@ -1367,12 +1366,7 @@ export class ModularChangeFamily
 		}
 
 		const parentFieldIdBase = parentBase.field;
-
-		const baseFieldChange = fieldChangeFromId(
-			table.baseChange.fieldChanges,
-			table.baseChange.nodeChanges,
-			parentFieldIdBase,
-		);
+		const baseFieldChange = fieldChangeFromId(table.baseChange, parentFieldIdBase);
 
 		const rebasedFieldId = rebasedFieldIdFromBaseId(table, parentFieldIdBase);
 		setInChangeAtomIdMap(table.rebasedNodeToParent, baseNodeId, { field: rebasedFieldId });
@@ -2588,11 +2582,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 			if (attachFieldEntry.value !== undefined) {
 				setInCrossFieldMap(this.table.entries, attachEntry.value, count, nodeChange);
 				this.table.invalidatedFields.add(
-					fieldChangeFromId(
-						this.table.change.fieldChanges,
-						this.table.change.nodeChanges,
-						attachFieldEntry.value,
-					),
+					fieldChangeFromId(this.table.change, attachFieldEntry.value),
 				);
 			} else {
 				setInChangeAtomIdMap(
@@ -3472,12 +3462,9 @@ function revisionInfoFromTaggedChange(
 	return revInfos;
 }
 
-function fieldChangeFromId(
-	fields: FieldChangeMap,
-	nodes: ChangeAtomIdBTree<NodeChangeset>,
-	id: FieldId,
-): FieldChange {
-	const fieldMap = fieldMapFromNodeId(fields, nodes, id.nodeId);
+function fieldChangeFromId(change: ModularChangeset, id: FieldId): FieldChange {
+	const fieldId = normalizeFieldId(id, change.nodeAliases);
+	const fieldMap = fieldMapFromNodeId(change.fieldChanges, change.nodeChanges, fieldId.nodeId);
 	return fieldMap.get(id.field) ?? fail(0xb25 /* No field exists for the given ID */);
 }
 
