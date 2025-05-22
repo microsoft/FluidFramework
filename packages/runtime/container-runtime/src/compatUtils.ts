@@ -348,7 +348,8 @@ export function configValueToMinVersionForCollab<
 				"possibleConfigValue should be an object",
 			);
 			// Checks if the key/value pair in the configValue the user passed in matches one of the
-			// key value pairs in possibleConfigValue.
+			// key value pairs in possibleConfigValue. If so, then we can add the required version associated
+			// with that possibleConfigValue to the matchingVersions array.
 			if (Object.entries(possibleConfigValue).some(([k, v]) => configValue[k] === v)) {
 				matchingVersions.push(versionRequired);
 			}
