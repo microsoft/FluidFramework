@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { default as Axios, RawAxiosRequestHeaders } from "axios";
-import nconf from "nconf";
-import * as uuid from "uuid";
 import {
 	BaseTelemetryProperties,
 	getLumberBaseProperties,
 	Lumberjack,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
+import { default as Axios, RawAxiosRequestHeaders } from "axios";
+import nconf from "nconf";
+import * as uuid from "uuid";
+
 import { BaseGitRestTelemetryProperties } from "./utils";
 
 export interface IExternalStorageManager {
