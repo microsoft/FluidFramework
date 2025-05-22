@@ -24,13 +24,15 @@ function getChild(
 	const view = tree.currentView;
 	const node = view.getViewNode(nodeId);
 	switch (node.definition) {
-		case NodeKind.scalar:
+		case NodeKind.scalar: {
 			return node.payload;
+		}
 		case NodeKind.array: {
 			return new TreeArrayProxy(tree, nodeId, update);
 		}
-		default:
+		default: {
 			return TreeObjectProxy(tree, nodeId, update);
+		}
 	}
 }
 
@@ -89,7 +91,7 @@ export class TreeArrayProxy<T> {
 			get(target, key) {
 				if (typeof key !== "symbol" && !isNaN(key as unknown as number)) {
 					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					const index = parseInt(key as string, 10);
+					const index = Number.parseInt(key as string, 10);
 					const view = tree.currentView;
 					const childrenIds = view.getTrait({
 						parent: nodeId,
@@ -104,7 +106,7 @@ export class TreeArrayProxy<T> {
 			set(target, key, value) {
 				if (typeof key !== "symbol" && !isNaN(key as unknown as number)) {
 					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					const index = parseInt(key as string, 10);
+					const index = Number.parseInt(key as string, 10);
 					const view = tree.currentView;
 					const childrenIds = view.getTrait({
 						parent: nodeId,
