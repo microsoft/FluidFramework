@@ -999,10 +999,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							opstampUtils.isSquashedOp(lastRemove),
 						"Last remove should be the obliterate that is being resubmitted.",
 					);
-					// TODO: update below comment, it's wrong with squashing
-					// The original obliterate affected this segment, but it has since been removed and overlapping removes
-					// are only possible when they are concurrent. We adjust the metadata on that segment now to reflect
-					// the fact that the obliterate no longer affects it.
+
+					// The original obliterate affected this segment, but it has since been removed.
+					// This can happen when a concurrent obliterate also removed the segment, as well as when the segment was
+					// only locally inserted and its insertion was squashed upon reconnecting.
+					// In the concurrent removal case (where we didn't avoid sending the segment's insertion in the first place due
+					// to squashing), we adjust the metadata on that segment to reflect the fact that this obliterate no longer removes it.
 					if (!opstampUtils.isSquashedOp(lastRemove)) {
 						segment.removes.pop();
 					}
@@ -1203,29 +1205,28 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						this._mergeTree.blockUpdatePathLengths(segment.parent, unusedStamp, true);
 						break;
 					} else if (squash && removeInfo !== undefined) {
-						// TODO: I think this block is redundant with squashOps.
 						assert(
 							removeInfo.removes.length === 1,
 							"Expected only single remove for segment only ever defined locally that was not remotely obliterated",
 						);
 
-						overwriteInfo<IHasInsertionInfo & IHasRemovalInfo>(segment, {
-							insert: {
-								type: "insert",
-								seq: UniversalSequenceNumber,
-								localSeq: undefined,
-								clientId: NonCollabClient,
-							},
-							removes: [
-								{
-									type: "setRemove",
-									seq: UniversalSequenceNumber,
-									localSeq: undefined,
-									clientId: NonCollabClient,
-								},
-							],
-						});
-						this._mergeTree.blockUpdatePathLengths(segment.parent, unusedStamp, true);
+						// overwriteInfo<IHasInsertionInfo & IHasRemovalInfo>(segment, {
+						// 	insert: {
+						// 		type: "insert",
+						// 		seq: UniversalSequenceNumber,
+						// 		localSeq: undefined,
+						// 		clientId: NonCollabClient,
+						// 	},
+						// 	removes: [
+						// 		{
+						// 			type: "setRemove",
+						// 			seq: UniversalSequenceNumber,
+						// 			localSeq: undefined,
+						// 			clientId: NonCollabClient,
+						// 		},
+						// 	],
+						// });
+						// this._mergeTree.blockUpdatePathLengths(segment.parent, unusedStamp, true);
 
 						break;
 					}
@@ -1407,7 +1408,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	> = new Map();
 
 	private squashEdits(allPendingSegments: ListNode<SegmentGroup>[]): void {
-		// TODO: Add support for annotate
+		// TODO:AB#36172: Add analogous support for squashing annotations
 		const squashedSegmentToTrackingGroups = new Map<
 			ISegmentLeaf,
 			{ insert?: SegmentGroup; remove?: SegmentGroup }
@@ -1423,8 +1424,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 								opstampUtils.isAcked(segment.removes[segment.removes.length - 2]),
 							"should only be one local remove",
 						);
-
-						//
 					}
 
 					const existingEntry = squashedSegmentToTrackingGroups.get(segment);
