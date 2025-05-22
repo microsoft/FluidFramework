@@ -4,6 +4,7 @@
  */
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { ConnectionNotAvailableMode } from "../../mongodb";
 import { BaseMongoExceptionRetryRule, IMongoExceptionRetryRule } from "../IMongoExceptionRetryRule";
 class InternalErrorRule extends BaseMongoExceptionRetryRule {

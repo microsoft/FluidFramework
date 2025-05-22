@@ -4,10 +4,11 @@
  */
 
 import { EventEmitter } from "events";
+
 import { ITaskMessage, ITaskMessageReceiver } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as amqp from "amqplib";
 import * as winston from "winston";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * @deprecated This was functionality related to RabbitMq which is not used anymore,
