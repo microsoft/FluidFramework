@@ -216,6 +216,7 @@ export interface FieldSchemaAlphaUnsafe<out Kind extends FieldKind, out Types ex
 export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
     readonly custom?: TCustomMetadata;
     readonly description?: string | undefined;
+    readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 // @alpha
@@ -443,6 +444,14 @@ export type JsonCompatibleObject<TExtra = never> = {
     [P in string]?: JsonCompatible<TExtra>;
 };
 
+// @public
+export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | JsonCompatibleReadOnlyObject;
+
+// @public
+export type JsonCompatibleReadOnlyObject = {
+    readonly [P in string]?: JsonCompatibleReadOnly;
+};
+
 // @alpha @sealed
 export type JsonFieldSchema = {
     readonly description?: string | undefined;
@@ -584,6 +593,7 @@ export enum NodeKind {
 export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly custom?: TCustomMetadata | undefined;
     readonly description?: string | undefined;
+    readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 // @public @sealed

@@ -19,6 +19,7 @@ import {
 	getOrCreate,
 	type RestrictiveStringRecord,
 	type IsUnion,
+	type JsonCompatibleReadOnlyObject,
 } from "../util/index.js";
 import type {
 	Unhydrated,
@@ -357,6 +358,11 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 	 * used as the `description` field.
 	 */
 	readonly description?: string | undefined;
+
+	/**
+	 * The persisted metadata for this schema element.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**
@@ -777,13 +783,19 @@ function areMetadataEqual(
 	b: FieldSchemaMetadata | undefined,
 ): boolean {
 	// If any new fields are added to FieldSchemaMetadata, this check will stop compiling as a reminder that this function needs to be updated.
-	type _keys = requireTrue<areOnlyKeys<FieldSchemaMetadata, "custom" | "description">>;
+	type _keys = requireTrue<
+		areOnlyKeys<FieldSchemaMetadata, "custom" | "description" | "persistedMetadata">
+	>;
 
 	if (a === b) {
 		return true;
 	}
 
-	return a?.custom === b?.custom && a?.description === b?.description;
+	return (
+		a?.custom === b?.custom &&
+		a?.description === b?.description &&
+		a?.persistedMetadata === b?.persistedMetadata
+	);
 }
 
 const cachedLazyItem = new WeakMap<() => unknown, unknown>();
@@ -1335,4 +1347,9 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
 	 * used as the `description` property.
 	 */
 	readonly description?: string | undefined;
+
+	/**
+	 * The persisted metadata for this schema element.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }

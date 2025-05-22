@@ -77,6 +77,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
 export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
     readonly custom?: TCustomMetadata;
     readonly description?: string | undefined;
+    readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 // @public @system
@@ -177,6 +178,14 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 }
 
 // @public
+export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | JsonCompatibleReadOnlyObject;
+
+// @public
+export type JsonCompatibleReadOnlyObject = {
+    readonly [P in string]?: JsonCompatibleReadOnly;
+};
+
+// @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public @sealed @system
@@ -227,6 +236,7 @@ export enum NodeKind {
 export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly custom?: TCustomMetadata | undefined;
     readonly description?: string | undefined;
+    readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 // @public @sealed

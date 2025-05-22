@@ -285,6 +285,8 @@ export type {
 	PopUnion,
 	JsonCompatible,
 	JsonCompatibleObject,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
 } from "./util/index.js";
 export { cloneWithReplacements } from "./util/index.js";
 
