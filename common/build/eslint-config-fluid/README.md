@@ -30,6 +30,37 @@ A version of the "strict" config that disables rules that are supported by Biome
 This config is intended to be used in projects that use both eslint and Biome for linting.
 This config is considered experimental.
 
+## ESLint v9 Support
+
+This package also provides ESLint v9 compatible configurations. The v9 configurations are accessible through the `/v9` path segment.
+
+### ESLint v9 Recommended
+
+Imported via `@fluidframework/eslint-config-fluid/v9` (or `@fluidframework/eslint-config-fluid/v9/recommended`).
+
+### ESLint v9 Strict
+
+Imported via `@fluidframework/eslint-config-fluid/v9/strict`.
+
+### ESLint v9 Strict-Biome
+
+Imported via `@fluidframework/eslint-config-fluid/v9/strict-biome`.
+
+## Migrating to ESLint v9
+
+To migrate to ESLint v9, update your ESLint configuration to use the v9 configurations:
+
+```js
+// .eslintrc.js or .eslintrc.cjs
+module.exports = {
+  extends: [
+    require.resolve("@fluidframework/eslint-config-fluid/v9"),
+    "prettier"
+  ],
+  // ...rest of your configuration
+};
+```
+
 ## Changing the lint config
 
 If you want to change the shared lint config (that is, this package), you need to do the following:

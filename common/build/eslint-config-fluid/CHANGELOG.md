@@ -1,5 +1,33 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [6.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0.0)
+
+### ESLint v9 support
+
+Added support for ESLint v9 through dedicated v9-compatible configurations. ESLint v8 configurations remain available with their current paths.
+
+Access the v9-compatible configurations with the `/v9` path segment:
+
+```js
+// For ESLint v9 with recommended configuration:
+module.exports = {
+  extends: [
+    require.resolve("@fluidframework/eslint-config-fluid/v9"),
+    "prettier"
+  ],
+  // ...
+};
+
+// For ESLint v9 with strict configuration:
+module.exports = {
+  extends: [
+    require.resolve("@fluidframework/eslint-config-fluid/v9/strict"),
+    "prettier"
+  ],
+  // ...
+};
+```
+
 ## [5.7.4](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.4)
 
 Updates the contexts in which `jsdoc/require-jsdoc` is applied to make it less overzealous.
