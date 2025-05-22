@@ -183,8 +183,6 @@ export class SchematizingSimpleTreeView<
 					policy: this.schemaPolicy,
 				},
 				this,
-				// this allows enablable allowed types to be loaded into a tree
-				true,
 			);
 
 			initialize(this.checkout, {

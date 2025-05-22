@@ -821,7 +821,7 @@ describe("toMapTree", () => {
 
 			const tree = {};
 
-			const actual = mapTreeFromNodeData(tree, schema, { context: nodeKeyManager });
+			const actual = mapTreeFromNodeData(tree, schema, nodeKeyManager);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -928,7 +928,7 @@ describe("toMapTree", () => {
 			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), undefined);
 
 			// This time, pass the context in
-			mapTree = mapTreeFromNodeData(nodeData, RootObject, { context: nodeKeyManager });
+			mapTree = mapTreeFromNodeData(nodeData, RootObject, nodeKeyManager);
 
 			// Assert that all defaults are populated
 			assert.equal(getConstantValue(getObject()), defaultValue);
@@ -1342,7 +1342,7 @@ describe("toMapTree", () => {
 				}),
 			}) {}
 			const m: ExclusiveMapTree = { type: brand(Test.identifier), fields: new Map() };
-			addDefaultsToMapTree(m, Test, undefined, false);
+			addDefaultsToMapTree(m, Test, undefined);
 			assert.deepEqual(
 				m.fields,
 				new Map([["stored", [{ type: f.number.identifier, fields: new Map(), value: 5 }]]]),

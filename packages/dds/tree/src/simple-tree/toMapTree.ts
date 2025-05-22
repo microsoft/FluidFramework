@@ -117,18 +117,9 @@ export function mapTreeFromNodeData(
 		return undefined;
 	}
 
-	const mapTree = nodeDataToMapTree(
-		data,
-		normalizedFieldSchema.annotatedAllowedTypeSet,
-		false,
-	);
+	const mapTree = nodeDataToMapTree(data, normalizedFieldSchema.annotatedAllowedTypeSet);
 	// Add what defaults can be provided. If no `context` is providing, some defaults may still be missing.
-	addDefaultsToMapTree(
-		mapTree,
-		normalizedFieldSchema.allowedTypes,
-		context,
-		false,
-	);
+	addDefaultsToMapTree(mapTree, normalizedFieldSchema.allowedTypes, context);
 
 	return mapTree;
 }
@@ -143,7 +134,6 @@ export function mapTreeFromNodeData(
 function nodeDataToMapTree(
 	data: InsertableContent,
 	annotatedAllowedTypes: ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>,
-	isInitialization: boolean,
 ): ExclusiveMapTree {
 	const allowedTypes = new Set(annotatedAllowedTypes.keys());
 
@@ -171,34 +161,19 @@ function nodeDataToMapTree(
 
 	const schema = getType(data, allowedTypes);
 
-	// Enablable types are only tolerated during initialization
-	if (isInitialization === false) {
-		const annotations = annotatedAllowedTypes.get(schema);
-		if (annotations !== undefined) {
-			if (annotations.enablableSchemaUpgrade !== undefined) {
-				// TODO:#38722 check if the upgrade to enablable has happened, once the upgrade mechanism is implemented
-				throw new UsageError(
-					`Schema type ${schema.identifier} is not enabled for this context`,
-				);
-			}
-		} else {
-			throw new Error("Annotations should exist, at least as an empty object");
-		}
-	}
-
 	let result: ExclusiveMapTree;
 	switch (schema.kind) {
 		case NodeKind.Leaf:
 			result = leafToMapTree(data, schema, allowedTypes);
 			break;
 		case NodeKind.Array:
-			result = arrayToMapTree(data, schema, isInitialization);
+			result = arrayToMapTree(data, schema);
 			break;
 		case NodeKind.Map:
-			result = mapToMapTree(data, schema, isInitialization);
+			result = mapToMapTree(data, schema);
 			break;
 		case NodeKind.Object:
-			result = objectToMapTree(data, schema, isInitialization);
+			result = objectToMapTree(data, schema);
 			break;
 		default:
 			unreachableCase(schema.kind);
@@ -291,12 +266,10 @@ function mapValueWithFallbacks(
  * Transforms data under an Array schema.
  * @param data - The tree data to be transformed.
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
- * @param allowNonEnabledTypes -  A flag that determines if enablable allowed types being present in the content causes a runtime error.
  */
 function arrayChildToMapTree(
 	child: InsertableContent,
 	allowedTypes: ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>,
-	allowNonEnabledTypes: boolean,
 ): ExclusiveMapTree {
 	// We do not support undefined sequence entries.
 	// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
@@ -308,20 +281,15 @@ function arrayChildToMapTree(
 			throw new TypeError(`Received unsupported array entry value: ${child}.`);
 		}
 	}
-	return nodeDataToMapTree(childWithFallback, allowedTypes, allowNonEnabledTypes);
+	return nodeDataToMapTree(childWithFallback, allowedTypes);
 }
 
 /**
  * Transforms data under an Array schema.
  * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema associated with the value.
- * @param isInitialization -  True iff the map tree produced is used for initialization.
  */
-function arrayToMapTree(
-	data: FactoryContent,
-	schema: TreeNodeSchema,
-	isInitialization: boolean,
-): ExclusiveMapTree {
+function arrayToMapTree(data: FactoryContent, schema: TreeNodeSchema): ExclusiveMapTree {
 	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
@@ -332,7 +300,7 @@ function arrayToMapTree(
 	);
 
 	const mappedData = Array.from(data, (child) =>
-		arrayChildToMapTree(child, allowedChildTypes, isInitialization),
+		arrayChildToMapTree(child, allowedChildTypes),
 	);
 
 	// Array nodes have a single `EmptyKey` field:
@@ -348,13 +316,8 @@ function arrayToMapTree(
  * Transforms data under a Map schema.
  * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema associated with the value.
- * @param isInitialization -  True iff the map tree produced is used for initialization.
  */
-function mapToMapTree(
-	data: FactoryContent,
-	schema: TreeNodeSchema,
-	isInitialization: boolean,
-): ExclusiveMapTree {
+function mapToMapTree(data: FactoryContent, schema: TreeNodeSchema): ExclusiveMapTree {
 	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
 	if (!(typeof data === "object" && data !== null)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
@@ -382,11 +345,7 @@ function mapToMapTree(
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const mappedField = nodeDataToMapTree(
-				value,
-				annotatedAllowedChildTypes,
-				isInitialization,
-			);
+			const mappedField = nodeDataToMapTree(value, annotatedAllowedChildTypes);
 			transformedFields.set(brand(key), [mappedField]);
 		}
 	}
@@ -401,13 +360,8 @@ function mapToMapTree(
  * Transforms data under an Object schema.
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema associated with the value.
- * @param isInitialization -  isInitialization -  True iff the map tree produced is used for initialization.
  */
-function objectToMapTree(
-	data: FactoryContent,
-	schema: TreeNodeSchema,
-	isInitialization: boolean,
-): ExclusiveMapTree {
+function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): ExclusiveMapTree {
 	assert(isObjectNodeSchema(schema), 0x924 /* Expected an Object schema. */);
 	if (
 		typeof data !== "object" ||
@@ -430,7 +384,6 @@ function objectToMapTree(
 				value,
 				normalizeFieldSchema(fieldInfo.schema),
 				fieldInfo.storedKey,
-				isInitialization,
 			);
 		}
 	}
@@ -464,14 +417,9 @@ function setFieldValue(
 	fieldValue: InsertableContent | undefined,
 	fieldSchema: FieldSchemaAlpha,
 	flexKey: FieldKey,
-	allowNonEnabledTypes: boolean,
 ): void {
 	if (fieldValue !== undefined) {
-		const mappedChildTree = nodeDataToMapTree(
-			fieldValue,
-			fieldSchema.annotatedAllowedTypeSet,
-			allowNonEnabledTypes,
-		);
+		const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.annotatedAllowedTypeSet);
 
 		assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
 		fields.set(flexKey, [mappedChildTree]);
@@ -659,14 +607,12 @@ function allowsValue(schema: TreeNodeSchema, value: TreeValue): boolean {
  * @param context - An optional context for generating defaults.
  * If present, all applicable defaults will be provided.
  * If absent, only defaults produced by a {@link ConstantFieldProvider} will be provided, and defaults produced by a {@link ContextualFieldProvider} will be ignored.
- * @param allowNonEnabledTypes - A flag that determines if enablable allowed types being present in the defaults causes a runtime error.
  * @remarks This function mutates the input tree by deeply adding new fields to the field maps where applicable.
  */
 export function addDefaultsToMapTree(
 	mapTree: ExclusiveMapTree,
 	allowedTypes: ImplicitAllowedTypes,
 	context: NodeIdentifierManager | undefined,
-	allowNonEnabledTypes: boolean,
 ): void {
 	const schema =
 		find(normalizeAllowedTypes(allowedTypes), (s) => s.identifier === mapTree.type) ??
@@ -677,12 +623,7 @@ export function addDefaultsToMapTree(
 			const field = mapTree.fields.get(fieldInfo.storedKey);
 			if (field !== undefined) {
 				for (const child of field) {
-					addDefaultsToMapTree(
-						child,
-						fieldInfo.schema.allowedTypes,
-						context,
-						allowNonEnabledTypes,
-					);
+					addDefaultsToMapTree(child, fieldInfo.schema.allowedTypes, context);
 				}
 			} else {
 				const defaultProvider = fieldInfo.schema.props?.defaultProvider;
@@ -695,17 +636,11 @@ export function addDefaultsToMapTree(
 							data,
 							normalizeFieldSchema(fieldInfo.schema),
 							fieldInfo.storedKey,
-							allowNonEnabledTypes,
 						);
 						// call addDefaultsToMapTree on newly inserted default values
 						for (const child of mapTree.fields.get(fieldInfo.storedKey) ??
 							fail(0xae2 /* Expected field to be populated */)) {
-							addDefaultsToMapTree(
-								child,
-								fieldInfo.schema.allowedTypes,
-								context,
-								allowNonEnabledTypes,
-							);
+							addDefaultsToMapTree(child, fieldInfo.schema.allowedTypes, context);
 						}
 					}
 				}
@@ -720,12 +655,7 @@ export function addDefaultsToMapTree(
 			{
 				for (const field of mapTree.fields.values()) {
 					for (const child of field) {
-						addDefaultsToMapTree(
-							child,
-							schema.info as ImplicitAllowedTypes,
-							context,
-							allowNonEnabledTypes,
-						);
+						addDefaultsToMapTree(child, schema.info as ImplicitAllowedTypes, context);
 					}
 				}
 			}

@@ -20,12 +20,10 @@ import {
 	type FlexTreeHydratedContext,
 	FieldKinds,
 } from "../feature-libraries/index.js";
-import type {
-	ImplicitAnnotatedAllowedTypes,
-	ImplicitAnnotatedFieldSchema,
+import {
+	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAnnotatedFieldSchema,
 	normalizeFieldSchema,
-	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
 } from "./schemaTypes.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -58,7 +56,6 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 		schema,
 		getSchemaAndPolicy(destinationContext),
 		destinationContext.isHydrated() ? destinationContext : undefined,
-		false,
 	);
 }
 
@@ -103,7 +100,6 @@ export function prepareArrayContentForInsertion(
 /**
  * Split out from {@link prepareForInsertion} as to allow use without a context.
  *
- * @param isInitialization - True iff the insertion is done as part of initialization.
  * @param hydratedData - If specified, the `mapTrees` will be prepared for hydration into this context.
  * `undefined` when `mapTrees` are being inserted into an {@link Unhydrated} tree.
  *
@@ -115,7 +111,6 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	schema: ImplicitAnnotatedFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
-	isInitialization: boolean,
 ): TIn extends undefined ? undefined : ExclusiveMapTree {
 	const mapTree = mapTreeFromNodeData(data, schema, hydratedData?.nodeKeyManager);
 

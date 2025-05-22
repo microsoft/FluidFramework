@@ -1168,7 +1168,6 @@ describe("schemaFactory", () => {
 					foo: "test",
 				},
 				TestObject,
-				{ isInitialization: true },
 			);
 		});
 	});
