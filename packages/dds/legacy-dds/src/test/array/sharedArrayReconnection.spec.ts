@@ -13,11 +13,11 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedArray } from "../../index.js";
+import { SharedArray, type ISharedArray } from "../../index.js";
 import { verifyEntries, fillEntries, getRandomInt } from "../utilities.js";
 
 describe("SharedArray", () => {
-	let sharedArray: SharedArray<number>;
+	let sharedArray: ISharedArray<number>;
 	let factory: IChannelFactory;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let testDataOne: number[];
@@ -28,7 +28,7 @@ describe("SharedArray", () => {
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		factory = SharedArray.getFactory();
-		sharedArray = factory.create(dataStoreRuntime, "sharedArray") as SharedArray<number>;
+		sharedArray = factory.create(dataStoreRuntime, "sharedArray") as ISharedArray<number>;
 		testDataOne = [1, 2];
 		testDataTwo = [3, 4];
 		expectedSharedArrayAfterFirstConverge = testDataOne;
@@ -39,7 +39,7 @@ describe("SharedArray", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let remoteSharedArray: SharedArray<number>;
+		let remoteSharedArray: ISharedArray<number>;
 
 		beforeEach(() => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
@@ -64,7 +64,7 @@ describe("SharedArray", () => {
 			remoteSharedArray = factory.create(
 				dataStoreRuntime2,
 				"remoteSharedArray",
-			) as SharedArray<number>;
+			) as ISharedArray<number>;
 			remoteSharedArray.connect(services2);
 		});
 

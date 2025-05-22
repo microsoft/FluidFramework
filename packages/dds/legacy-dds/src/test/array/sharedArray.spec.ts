@@ -13,7 +13,7 @@ import {
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedArray } from "../../index.js";
+import { SharedArray, type ISharedArray } from "../../index.js";
 import {
 	verifyEventsEmitted,
 	verifyEntries,
@@ -22,7 +22,7 @@ import {
 } from "../utilities.js";
 
 describe("SharedArray", () => {
-	let sharedArray: SharedArray<number>;
+	let sharedArray: ISharedArray<number>;
 	let factory: IChannelFactory;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let testData: number[];
@@ -31,8 +31,8 @@ describe("SharedArray", () => {
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		factory = SharedArray.getFactory<number>();
-		sharedArray = factory.create(dataStoreRuntime, "sharedArray") as SharedArray<number>;
+		factory = SharedArray.getFactory();
+		sharedArray = factory.create(dataStoreRuntime, "sharedArray") as ISharedArray<number>;
 		testData = [1, 2, 3, 4];
 		expectedSharedArray = testData;
 		let index = 0;
@@ -146,7 +146,7 @@ describe("SharedArray", () => {
 				const sharedArrayTwo = factory.create(
 					dataStoreRuntime,
 					"sharedArray2",
-				) as SharedArray<number>;
+				) as ISharedArray<number>;
 				await sharedArrayTwo.load(services);
 
 				// Verify that the new SharedArray has the correct values and length.
@@ -156,7 +156,7 @@ describe("SharedArray", () => {
 		});
 
 		describe("SharedArray IFluidHandle as value", () => {
-			let sharedArrayIFluidHandle: SharedArray<IFluidHandle>;
+			let sharedArrayIFluidHandle: ISharedArray<IFluidHandle>;
 			let testDataIFluidHandle: IFluidHandle[];
 			let expectedSharedArrayIFluidHandle: IFluidHandle[];
 			const mockHandle = new MockHandle({});
@@ -165,7 +165,7 @@ describe("SharedArray", () => {
 				sharedArrayIFluidHandle = factory.create(
 					dataStoreRuntime,
 					"sharedArrayIFluidHandle",
-				) as SharedArray<IFluidHandle>;
+				) as ISharedArray<IFluidHandle>;
 				testDataIFluidHandle = [mockHandle];
 				expectedSharedArrayIFluidHandle = testDataIFluidHandle;
 				// Fill the sharedArray with a few entries
@@ -191,7 +191,7 @@ describe("SharedArray", () => {
 				const sharedArrayTwo = factory.create(
 					dataStoreRuntime,
 					"sharedArrayTwo",
-				) as SharedArray<IFluidHandle>;
+				) as ISharedArray<IFluidHandle>;
 				await sharedArrayTwo.load(services);
 
 				// Verify that the new SharedArray has the correct values and length.

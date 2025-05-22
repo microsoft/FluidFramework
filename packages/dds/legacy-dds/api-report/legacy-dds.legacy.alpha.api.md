@@ -4,6 +4,27 @@
 
 ```ts
 
+// @alpha @legacy (undocumented)
+export interface ISharedSignal<T extends SerializableTypeForSharedSignal = any> extends ISharedObject<ISharedSignalEvents<T>> {
+    // (undocumented)
+    notify(metadata?: T): void;
+}
+
+// @alpha @legacy (undocumented)
+export interface ISharedSignalEvents<T extends SerializableTypeForSharedSignal> extends ISharedObjectEvents {
+    // (undocumented)
+    (event: "notify", listener: (value: T) => void): any;
+}
+
+// @alpha @legacy
+export type SerializableTypeForSharedSignal = boolean | number | string | IFluidHandle | object;
+
+// @alpha @legacy
+export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> & SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>;
+
+// @alpha @legacy
+export const SharedSignal: ISharedObjectKind<ISharedSignal<any>> & SharedObjectKind<ISharedSignal<any>>;
+
 // (No @packageDocumentation comment for this package)
 
 ```
