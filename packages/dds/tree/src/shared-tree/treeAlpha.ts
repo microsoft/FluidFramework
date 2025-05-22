@@ -508,6 +508,14 @@ export const TreeAlpha: TreeAlpha = {
 		const parentSchema = treeNodeApi.schema(parent);
 		return getPropertyKeyFromStoredKey(parentSchema, storedKey);
 	},
+
+	child: (node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined => {
+		throw new Error("Not implemented");
+	},
+
+	children: (node: TreeNode): Iterable<[string | number, TreeNode | TreeLeafValue]> => {
+		throw new Error("Not implemented");
+	},
 };
 
 function exportConcise(
