@@ -115,8 +115,7 @@
         "kind",
         "types"
       ]
-    },
-    "metadata": {}
+    }
   },
   "required": [
     "version",
