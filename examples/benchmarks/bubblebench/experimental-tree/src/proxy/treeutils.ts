@@ -34,6 +34,7 @@ export function fromJson<T>(idContext: NodeIdContext, value: Serializable<T>): C
 				},
 			};
 		} else if (value === null) {
+			// eslint-disable-next-line unicorn/no-null
 			return makeScalar(idContext, null);
 		} else {
 			const traits: PropertyDescriptorMap = {};
