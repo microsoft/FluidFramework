@@ -239,7 +239,7 @@ export class Outbox {
 	public containsUserChanges(): boolean {
 		return (
 			this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges()
-			//* (maybe include anyway) ID Allocation ops are not user changes
+			// ID Allocation ops are not user changes
 		);
 	}
 
