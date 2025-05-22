@@ -15,7 +15,7 @@ import {
 	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { FluidObject, IFluidLoadable, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IFluidDataStoreRuntime,
@@ -157,6 +157,13 @@ class RootDataObject
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
+
+	public async uploadBlob(
+			blob: ArrayBufferLike,
+			signal?: AbortSignal,
+		): Promise<IFluidHandle<ArrayBufferLike>> {
+			return this.runtime.uploadBlob(blob, signal);
+		}
 
 	private async createDataObject<T extends IFluidLoadable>(
 		dataObjectClass: DataObjectKind<T>,

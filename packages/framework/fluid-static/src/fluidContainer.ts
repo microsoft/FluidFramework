@@ -382,6 +382,6 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandle<ArrayBufferLike>> {
-		return this.rootDataObject.getFluidDataStoreRuntime().uploadBlob(blob, signal);
+		return this.rootDataObject.uploadBlob(blob, signal);
 	}
 }

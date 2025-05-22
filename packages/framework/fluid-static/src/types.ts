@@ -4,11 +4,7 @@
  */
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
-import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type {
-	IFluidDataStoreRuntime,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/datastore-definitions/legacy";
+import type { IEvent, IEventProvider, IFluidLoadable, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -125,7 +121,13 @@ export interface IRootDataObject extends IProvideRootDataObject {
 	 */
 	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
 
-	getFluidDataStoreRuntime(): IFluidDataStoreRuntime;
+	/**
+	 * Export uploadBlob to outer interface
+	 */
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
