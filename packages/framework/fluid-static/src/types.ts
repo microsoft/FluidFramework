@@ -5,6 +5,10 @@
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
 import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type {
+	IFluidDataStoreRuntime,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/datastore-definitions/legacy";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -120,6 +124,8 @@ export interface IRootDataObject extends IProvideRootDataObject {
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
 	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
+
+	getFluidDataStoreRuntime(): IFluidDataStoreRuntime;
 }
 
 /**

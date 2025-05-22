@@ -17,6 +17,10 @@ import {
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IFluidDataStoreRuntime,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/datastore-definitions/legacy";
 import type { IDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
 import type {
@@ -72,6 +76,10 @@ class RootDataObject
 
 	public get IRootDataObject(): IRootDataObject {
 		return this;
+	}
+
+	public getFluidDataStoreRuntime(): IFluidDataStoreRuntime {
+		return this.runtime;
 	}
 
 	private get initialObjectsDir(): IDirectory {
