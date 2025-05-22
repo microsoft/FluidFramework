@@ -50,7 +50,7 @@ export class AppState implements IAppState {
 		return client;
 	}
 
-	public get clients() {
+	public get clients(): Iterable<IClient> {
 		return this.tree.root.clients;
 	}
 

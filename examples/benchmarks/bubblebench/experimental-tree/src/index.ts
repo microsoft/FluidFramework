@@ -3,16 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { AppView, type IAppProps } from "@fluid-example/bubblebench-common";
+import { AppView } from "@fluid-example/bubblebench-common";
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import React from "react";
 
 import { Bubblebench, BubblebenchInstantiationFactory } from "./main.js";
 export { Bubblebench, BubblebenchInstantiationFactory } from "./main.js";
 
-const bubblebenchViewCallback = (
-	model: Bubblebench,
-): React.FunctionComponentElement<IAppProps> =>
+const bubblebenchViewCallback = (model: Bubblebench): React.ReactElement =>
 	React.createElement(AppView, { app: model.appState });
 
 /**
