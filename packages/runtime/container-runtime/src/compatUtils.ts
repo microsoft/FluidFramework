@@ -183,7 +183,7 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 		[false, "1.0.0"],
 		[true, "2.0.0-defaults"],
 	]),
-	compressionOptions: configValueToMinVersionForCollab([
+	compressionOptions: configObjectToMinVersionForCollab([
 		[{ ...disabledCompressionConfig }, "1.0.0"],
 		[{ ...enabledCompressionConfig }, "2.0.0-defaults"],
 	]),
@@ -200,7 +200,7 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 		[FlushMode.Immediate, "1.0.0"],
 		[FlushMode.TurnBased, "2.0.0-defaults"],
 	]),
-	gcOptions: configValueToMinVersionForCollab([
+	gcOptions: configObjectToMinVersionForCollab([
 		[{ enableGCSweep: undefined }, "1.0.0"],
 		[{ enableGCSweep: true }, "2.0.0-defaults"],
 	]),
@@ -317,32 +317,46 @@ export function getValidationForRuntimeOptions<T extends Record<string, unknown>
 /**
  * Helper function to map ContainerRuntimeOptionsInternal config values to
  * minVersionForCollab in {@link runtimeOptionsAffectingDocSchemaConfigValidationMap}.
+ * Used for configs values that are not objects.
  */
 export function configValueToMinVersionForCollab<
-	T,
+	T extends string | number | boolean | undefined,
+	Arr extends readonly [T, SemanticVersion][],
+>(configToMinVer: Arr): (value: T) => SemanticVersion | undefined {
+	const map = new Map(configToMinVer);
+	return (value: T) => map.get(value);
+}
+
+/**
+ * Helper function to map ContainerRuntimeOptionsInternal config values to
+ * minVersionForCollab in {@link runtimeOptionsAffectingDocSchemaConfigValidationMap}.
+ * Used for configs values that are objects.
+ */
+export function configObjectToMinVersionForCollab<
+	T extends object,
 	Arr extends readonly [T, SemanticVersion][],
 >(configToMinVer: Arr): (value: T) => SemanticVersion | undefined {
 	const map = new Map(configToMinVer);
 	return (value: T) => {
-		// Try direct match first
-		if (map.has(value)) {
-			return map.get(value);
-		}
-		// If T is an object, check each key in the map
-		if (typeof value === "object") {
+		if (typeof value === "object" && value !== null) {
+			// Collect all versions for which the config entry is a subset of the value
+			const matchingVersions: SemanticVersion[] = [];
 			for (const [key, version] of map.entries()) {
 				if (
 					typeof key === "object" &&
 					key !== undefined &&
-					// If one of the properties in the object matches the passed in value,
-					// then we return the version. This is to support partial matches, for
-					// example { foo: "bar" } should match { foo: "bar", baz: "qux" }
-					Object.entries(key as Record<string, unknown>).some(
+					Object.entries(key as Record<string, unknown>).every(
 						([k, v]) => (value as Record<string, unknown>)[k] === v,
 					)
 				) {
-					return version;
+					matchingVersions.push(version);
 				}
+			}
+			if (matchingVersions.length > 0) {
+				// Return the maximum (latest) version among all matches
+				return matchingVersions.sort((a, b) => (compare(a, b) > 0 ? 1 : -1))[
+					matchingVersions.length - 1
+				];
 			}
 		}
 		return undefined;

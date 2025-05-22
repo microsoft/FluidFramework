@@ -14,6 +14,7 @@ import {
 	type SemanticVersion,
 	type ConfigValidationMap,
 	configValueToMinVersionForCollab,
+	configObjectToMinVersionForCollab,
 } from "../compatUtils.js";
 
 describe("compatUtils", () => {
@@ -231,7 +232,7 @@ describe("compatUtils", () => {
 	});
 
 	describe("getValidationForRuntimeOptions", () => {
-		type FeatureAType = "a1" | "a2" | "a3" | "a4";
+		type FeatureAType = string;
 		type FeatureBType = boolean;
 		type FeatureCType = object;
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -241,22 +242,23 @@ describe("compatUtils", () => {
 			featureC: FeatureCType;
 		};
 		const testConfigValidationMap = {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 			featureA: configValueToMinVersionForCollab([
 				["a1", "0.5.0"],
 				["a2", "2.0.0"],
 				["a3", "5.0.0"],
 				["a4", "8.0.0"],
 			]),
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 			featureB: configValueToMinVersionForCollab([
 				[false, "0.0.0-defaults"],
 				[true, "3.0.0"],
 			]),
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-			featureC: configValueToMinVersionForCollab([
-				[{ obj: 1 }, "4.0.0"],
-				[{ obj: 2 }, "7.0.0"],
+			featureC: configObjectToMinVersionForCollab([
+				[{ foo: 1 }, "4.0.0"],
+				[{ foo: 2 }, "7.0.0"],
+				[{ bar: "baz" }, "3.0.0"],
+				[{ bar: "bax" }, "8.0.0"],
+				[{ qaz: true }, "9.0.0"],
 			]),
 		} as const satisfies ConfigValidationMap<TestConfigFeatures>;
 
@@ -270,15 +272,19 @@ describe("compatUtils", () => {
 			},
 			{
 				minVersionForCollab: "2.0.0",
-				runtimeOptions: { featureA: "a2", featureB: false },
+				runtimeOptions: { featureB: false, featureA: "a2" },
 			},
 			{
 				minVersionForCollab: "5.0.0",
-				runtimeOptions: { featureA: "a3", featureB: true, featureC: { obj: 1 } },
+				runtimeOptions: { featureA: "a3", featureB: true, featureC: { foo: 1, bax: 10 } },
 			},
 			{
 				minVersionForCollab: "8.0.0",
-				runtimeOptions: { featureA: "a4", featureB: true, featureC: { obj: 2 } },
+				runtimeOptions: { featureA: "a1", featureC: { foo: 1, qaz: 10 } },
+			},
+			{
+				minVersionForCollab: "9.0.0",
+				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true }, featureA: "a4" },
 			},
 		];
 
@@ -304,18 +310,28 @@ describe("compatUtils", () => {
 			},
 			{
 				minVersionForCollab: "6.0.0",
-				runtimeOptions: { featureC: { obj: 2 } },
-				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ obj: 2 })} is not compatible with minVersionForCollab: 6.0.0.`,
+				runtimeOptions: { featureC: { foo: 2 } },
+				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ foo: 2 })} is not compatible with minVersionForCollab: 6.0.0.`,
 			},
 			{
 				minVersionForCollab: "3.0.0",
-				runtimeOptions: { featureA: "a1", featureC: { bar: 2, obj: 1 } },
-				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ bar: 2, obj: 1 })} is not compatible with minVersionForCollab: 3.0.0.`,
+				runtimeOptions: { featureA: "a1", featureC: { bar: "baz", foo: 2 } },
+				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ bar: "baz", foo: 2 })} is not compatible with minVersionForCollab: 3.0.0.`,
+			},
+			{
+				minVersionForCollab: "7.0.0",
+				runtimeOptions: { featureC: { foo: 2, bar: "bax" } },
+				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ foo: 2, bar: "bax" })} is not compatible with minVersionForCollab: 7.0.0.`,
+			},
+			{
+				minVersionForCollab: "8.5.0",
+				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true } },
+				expectedErrorMessage: `Runtime option featureC:${JSON.stringify({ foo: 2, bar: "bax", qaz: true })} is not compatible with minVersionForCollab: 8.5.0.`,
 			},
 		];
 
 		for (const test of compatibleCases) {
-			it(`does not throw for compatible options: ${JSON.stringify(test)}`, () => {
+			it(`does not throw for compatible options: ${JSON.stringify({ minVersionForCollab: test.minVersionForCollab, runtimeOptions: test.runtimeOptions })}`, () => {
 				assert.doesNotThrow(() => {
 					getValidationForRuntimeOptions(
 						test.minVersionForCollab,
