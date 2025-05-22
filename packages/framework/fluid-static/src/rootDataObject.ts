@@ -198,6 +198,13 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 * If not provided, only the default options for the given compatibilityMode will be used.
 	 */
 	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+	/**
+	 * Optional override for minimum version for collab.
+	 * If not provided, the default for the given compatibilityMode will be used.
+	 * @remarks
+	 * This is useful when runtime options are overridden and change the minimum version for collab.
+	 */
+	minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
 	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
@@ -206,7 +213,10 @@ export function createDOProviderContainerRuntimeFactory(props: {
 		props.schema,
 		props.compatibilityMode,
 		new RootDataObjectFactory(sharedObjects, registry),
-		props.runtimeOptionOverrides,
+		{
+			runtimeOptions: props.runtimeOptionOverrides,
+			minVersionForCollab: props.minVersionForCollabOverride,
+		},
 	);
 }
 
@@ -245,7 +255,10 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			RootDataObject,
 			{ InitialState: RootDataObjectProps }
 		>,
-		runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>,
+		overrides?: Partial<{
+			runtimeOptions: Partial<IContainerRuntimeOptions>;
+			minVersionForCollab: MinimumVersionForCollab;
+		}>,
 	) {
 		const provideEntryPoint = async (
 			containerRuntime: IContainerRuntime,
@@ -261,10 +274,12 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			runtimeOptions: {
 				...compatibilityModeRuntimeOptions[compatibilityMode],
-				...runtimeOptionOverrides,
+				...overrides?.runtimeOptions,
 			},
 			provideEntryPoint,
-			minVersionForCollab: compatibilityModeToMinVersionForCollab[compatibilityMode],
+			minVersionForCollab:
+				overrides?.minVersionForCollab ??
+				compatibilityModeToMinVersionForCollab[compatibilityMode],
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;
