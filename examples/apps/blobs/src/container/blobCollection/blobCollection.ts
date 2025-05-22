@@ -37,14 +37,10 @@ class BlobCollection implements IBlobCollection {
 		return this._events;
 	}
 
-	public constructor(
-		private readonly sharedMap: ISharedMap,
-		// We can take a partially applied function for uploading blobs rather than the whole IFluidDataStoreRuntime.
-		private readonly uploadArrayBuffer: UploadArrayBufferFn,
-	) {
-		const trackBlob = (key: string) => {
-			const handle = this.sharedMap.get(key);
-			handle.get().then((arrayBuffer: ArrayBufferLike) => {
+	private readonly trackBlob = (key: string): void => {
+		const handle = this.sharedMap.get(key) as IFluidHandle<ArrayBufferLike>;
+		handle.get().then(
+			(arrayBuffer: ArrayBufferLike) => {
 				const newBlob: IBlobRecord = {
 					id: key,
 					// Blobs in Fluid are retrieved as ArrayBuffers, this translates it back to a Blob
@@ -54,23 +50,33 @@ class BlobCollection implements IBlobCollection {
 				// Sort in case timestamps disagree with map insertion order
 				this.blobs.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }));
 				this._events.emit("blobAdded", newBlob);
-			});
-		};
+			},
+			(error) => {
+				throw error;
+			},
+		);
+	};
+
+	public constructor(
+		private readonly sharedMap: ISharedMap,
+		// We can take a partially applied function for uploading blobs rather than the whole IFluidDataStoreRuntime.
+		private readonly uploadArrayBuffer: UploadArrayBufferFn,
+	) {
 		// Watch for incoming new blobs
 		this.sharedMap.on("valueChanged", (changed: IValueChanged) => {
-			trackBlob(changed.key);
+			this.trackBlob(changed.key);
 		});
 		// Track the blobs that are already in the map
 		for (const key of this.sharedMap.keys()) {
-			trackBlob(key);
+			this.trackBlob(key);
 		}
 	}
 
-	public readonly getBlobs = () => {
+	public readonly getBlobs = (): IBlobRecord[] => {
 		return this.blobs;
 	};
 
-	public readonly addBlob = (blob: Blob) => {
+	public readonly addBlob = (blob: Blob): void => {
 		// IFluidDataStoreRuntime.uploadBlob takes an ArrayBufferLike, but this data store wants
 		// to expose an interface that uses Blob (because that is convenient to use with Canvas).
 		// This function translates from Blob to ArrayBuffer before uploading.
@@ -102,7 +108,9 @@ export class BlobCollectionFactory implements IFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const provideEntryPoint = async (entryPointRuntime: IFluidDataStoreRuntime) => {
+		const provideEntryPoint = async (
+			entryPointRuntime: IFluidDataStoreRuntime,
+		): Promise<BlobCollection> => {
 			const map = (await entryPointRuntime.getChannel(mapId)) as ISharedMap;
 			return new BlobCollection(map, async (arrayBuffer: ArrayBufferLike) =>
 				entryPointRuntime.uploadBlob(arrayBuffer),
