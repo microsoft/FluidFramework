@@ -100,9 +100,6 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 	| "maxBatchSizeInBytes"
 	| "loadSequenceNumberVerification"
 	| "summaryOptions"
-	// This feature will eventually impact but it does not yet impact ops and should
-	// should never be enabled outside of experimentation.
-	| "pathBasedAddressing"
 >;
 
 /**

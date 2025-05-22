@@ -483,15 +483,6 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	 * In that case, batched messages will be sent individually (but still all at the same time).
 	 */
 	readonly enableGroupedBatching: boolean;
-
-	/**
-	 * When this property is enabled, runtime will use flexible address encoding
-	 * pattern to route messages to the correct channel or extensible location.
-	 * Minimum client runtime version is 2.33.
-	 * Client runtimes older than 2.33 will log errors receiving a signal with
-	 * path-based address and ultimately ignore the signal.
-	 */
-	readonly pathBasedAddressing: true | undefined;
 }
 
 /**
@@ -729,7 +720,7 @@ interface PathedAddressInfo {
 /**
  * Mostly undefined address parts extracted from an address not using pathed address format.
  */
-interface LegacyAddressInfo {
+interface SingleAddressInfo {
 	top: undefined;
 	critical: undefined;
 	subaddress: undefined;
@@ -739,39 +730,9 @@ interface LegacyAddressInfo {
 /**
  * Union of the two address info types.
  */
-type NonContainerAddressInfo = PathedAddressInfo | LegacyAddressInfo;
+type NonContainerAddressInfo = PathedAddressInfo | SingleAddressInfo;
 
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
-
-function submitWithPathBasedSignalAddress(
-	submitUnsequencedSignalFn: (
-		contents: UnsequencedSignalEnvelope,
-		targetClientId?: string,
-	) => void,
-): (contents: UnsequencedSignalEnvelope, targetClientId?: string) => void {
-	return (envelope: UnsequencedSignalEnvelope, targetClientId?: string) => {
-		if (envelope.address === undefined) {
-			envelope.address = "/runtime";
-		} else if (!envelope.address.startsWith("/")) {
-			envelope.address = `/channels/${envelope.address}`;
-		}
-		submitUnsequencedSignalFn(envelope, targetClientId);
-	};
-}
-
-function submitAssertingLegacySignalAddressing(
-	submitUnsequencedSignalFn: (
-		contents: UnsequencedSignalEnvelope,
-		targetClientId?: string,
-	) => void,
-): (envelope: UnsequencedSignalEnvelope, targetClientId?: string) => void {
-	return (envelope: UnsequencedSignalEnvelope, targetClientId?: string) => {
-		if (envelope.address?.startsWith("/")) {
-			throw new Error("Path based addressing is not enabled");
-		}
-		submitUnsequencedSignalFn(envelope, targetClientId);
-	};
-}
 
 /**
  * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
@@ -948,7 +909,6 @@ export class ContainerRuntime
 			loadSequenceNumberVerification: "close",
 			maxBatchSizeInBytes: defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes: defaultChunkSizeInBytes,
-			pathBasedAddressing: undefined,
 		};
 
 		const defaultConfigs = {
@@ -974,7 +934,6 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
-			pathBasedAddressing = defaultConfigs.pathBasedAddressing,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
@@ -1181,7 +1140,6 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
-			pathBasedAddressing,
 		};
 
 		const runtime = new containerRuntimeCtor(
@@ -1612,11 +1570,12 @@ export class ContainerRuntime
 			}
 			submitSignalFn(envelope, targetClientId);
 		};
-		const submitPathAddressedSignal =
-			submitWithPathBasedSignalAddress(sequenceAndSubmitSignal);
-		this.submitSignalFn = runtimeOptions.pathBasedAddressing
-			? submitPathAddressedSignal
-			: submitAssertingLegacySignalAddressing(sequenceAndSubmitSignal);
+		this.submitSignalFn = (envelope: UnsequencedSignalEnvelope, targetClientId?: string) => {
+			if (envelope.address?.startsWith("/")) {
+				throw new Error("General path based addressing is not implemented");
+			}
+			sequenceAndSubmitSignal(envelope, targetClientId);
+		};
 		this.submitExtensionSignal = <TMessage extends TypedMessage>(
 			id: string,
 			subaddress: string,
@@ -1628,7 +1587,7 @@ export class ContainerRuntime
 				message.type,
 				message.content,
 			);
-			submitPathAddressedSignal(envelope, message.targetClientId);
+			sequenceAndSubmitSignal(envelope, message.targetClientId);
 		};
 
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.

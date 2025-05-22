@@ -118,7 +118,6 @@ export function generateRuntimeOptions(
 		enableGroupedBatching: [true, false],
 		createBlobPayloadPending: [true, undefined],
 		explicitSchemaControl: [true, false],
-		pathBasedAddressing: [true, undefined],
 	};
 
 	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
