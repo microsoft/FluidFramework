@@ -52,7 +52,7 @@ const systemNotice = new AdmonitionNode(
  */
 const sealedNotice = new AdmonitionNode(
 	[new SpanNode([
-	new PlainTextNode('This type is "sealed" meaning that code outside of the library defining it should not implement or extend it. Future versions of this type may add members, or make typing of readonly members more specific.'),
+	new PlainTextNode('This type is "sealed," meaning that code outside of the library defining it should not implement or extend it. Future versions of this type may add members or make typing of readonly members more specific.'),
 ])],
 	/* admonitionKind: */ "info",
 	"Sealed",
@@ -63,7 +63,7 @@ const sealedNotice = new AdmonitionNode(
  */
 const inputNotice = new AdmonitionNode(
 	[new SpanNode([
-	new PlainTextNode('This type is "input" meaning that code outside of the library defining it should not read from it. Future versions of this type may add optional members, or make typing of members more general.'),
+	new PlainTextNode('This type is "input," meaning that code outside of the library defining it should not read from it. Future versions of this type may add optional members or make typing of members more general.'),
 ])],
 	/* admonitionKind: */ "info",
 	"Input",
