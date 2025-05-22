@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { toUtf8 } from "@fluidframework/common-utils";
 import { ICommit, ICommitDetails, ICreateCommitParams } from "@fluidframework/gitresources";
 import {
 	IDocumentAttributes,
@@ -31,8 +32,6 @@ import {
 	ITenantManager,
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";
-import * as winston from "winston";
-import { toUtf8 } from "@fluidframework/common-utils";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
@@ -40,6 +39,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import * as winston from "winston";
 
 /**
  * @internal

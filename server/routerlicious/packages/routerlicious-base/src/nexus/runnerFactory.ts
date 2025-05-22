@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as os from "os";
 import cluster from "cluster";
+import * as os from "os";
+
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import {
 	LocalNodeFactory,
 	LocalOrderManager,
@@ -16,20 +17,22 @@ import {
 } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
+import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as ws from "ws";
-import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { NexusRunner } from "./runner";
-import { StorageNameAllocator } from "./services";
+
+import { Constants } from "../utils";
+
 import { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
-import { Constants } from "../utils";
+import { NexusRunner } from "./runner";
+import { StorageNameAllocator } from "./services";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
