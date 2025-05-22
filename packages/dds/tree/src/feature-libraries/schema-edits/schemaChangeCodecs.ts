@@ -13,14 +13,11 @@ import {
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import {
-	makeSchemaCodec,
-	SchemaCodecVersion,
-	type Format as FormatV1,
-} from "../schema-index/index.js";
+import { makeSchemaCodec, type Format as FormatV1 } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
+import { SchemaVersion } from "../../core/index.js";
 
 /**
  * Create a family of schema change codecs.
@@ -28,7 +25,7 @@ import type { SchemaChange } from "./schemaChangeTypes.js";
  * @returns The composed codec family.
  */
 export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
-	return makeCodecFamily([[SchemaCodecVersion.v1, makeSchemaChangeCodecV1(options)]]);
+	return makeCodecFamily([[SchemaVersion.v1, makeSchemaChangeCodecV1(options)]]);
 }
 
 /**
@@ -39,7 +36,7 @@ export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<Sch
  */
 export function makeSchemaChangeCodec(
 	options: ICodecOptions,
-	writeVersion: SchemaCodecVersion,
+	writeVersion: SchemaVersion,
 ): IJsonCodec<SchemaChange> {
 	const family = makeSchemaChangeCodecs(options);
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
@@ -53,7 +50,7 @@ export function makeSchemaChangeCodec(
 function makeSchemaChangeCodecV1(
 	options: ICodecOptions,
 ): IJsonCodec<SchemaChange, EncodedSchemaChange> {
-	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
+	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 	const schemaChangeCodec: IJsonCodec<SchemaChange, EncodedSchemaChange> = {
 		encode: (schemaChange) => {
 			assert(

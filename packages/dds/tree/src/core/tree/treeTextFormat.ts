@@ -140,7 +140,7 @@ export function setGenericTreeField<T>(
 }
 
 /**
- * @returns keys for fields of `tree`.
+ * Returns keys for fields of `tree`.
  */
 export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[] {
 	const fields = tree.fields;
