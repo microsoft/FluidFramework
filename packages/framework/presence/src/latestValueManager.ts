@@ -286,27 +286,60 @@ export function latest<T extends object | null, Key extends string = string>(
 		timestamp: Date.now(),
 		value: internalValue,
 	};
-	const factory = (
-		key: Key,
-		datastoreHandle: InternalTypes.StateDatastoreHandle<
-			Key,
-			InternalTypes.ValueRequiredState<T>
-		>,
-	): {
-		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<LatestRaw<T>>;
-	} => ({
-		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
-		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(
-				key,
-				datastoreFromHandle(datastoreHandle),
-				value,
-				validator,
-				settings,
-			),
-		),
-	});
+
+	// FIXME There has to be a better way than duplicating the function...
+	const factory =
+		validator === undefined
+			? (
+					key: Key,
+					datastoreHandle: InternalTypes.StateDatastoreHandle<
+						Key,
+						InternalTypes.ValueRequiredState<T>
+					>,
+				): {
+					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
+					manager: InternalTypes.StateValue<LatestRaw<T>>;
+				} => ({
+					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+					manager: brandIVM<
+						LatestValueManagerImpl<T, Key>,
+						T,
+						InternalTypes.ValueRequiredState<T>
+					>(
+						new LatestValueManagerImpl(
+							key,
+							datastoreFromHandle(datastoreHandle),
+							value,
+							validator,
+							settings,
+						),
+					),
+				})
+			: (
+					key: Key,
+					datastoreHandle: InternalTypes.StateDatastoreHandle<
+						Key,
+						InternalTypes.ValueRequiredState<T>
+					>,
+				): {
+					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
+					manager: InternalTypes.StateValue<Latest<T>>;
+				} => ({
+					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+					manager: brandIVM<
+						LatestValueManagerImpl<T, Key>,
+						T,
+						InternalTypes.ValueRequiredState<T>
+					>(
+						new LatestValueManagerImpl(
+							key,
+							datastoreFromHandle(datastoreHandle),
+							value,
+							validator,
+							settings,
+						),
+					),
+				});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
 }
 /* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */

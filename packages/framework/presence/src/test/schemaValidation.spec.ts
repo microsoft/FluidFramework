@@ -239,7 +239,7 @@ describe("Presence", () => {
 			});
 
 			// FIXME: skipped test
-			it.skip("invalidates data on update", () => {
+			it("invalidates data on update", () => {
 				// Setup
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
@@ -359,7 +359,7 @@ describe("Presence", () => {
 				assert.equal(keyData?.num, 11);
 			});
 
-			it.skip("invalidates data when key is set", () => {
+			it("invalidates data when key is set", () => {
 				// Setup
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {

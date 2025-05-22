@@ -584,7 +584,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 }
 
 /**
- * Factory for creating a {@link LatestMap} State object.
+ * Factory for creating a {@link LatestMapRaw} State object with no arguments.
  *
  * @alpha
  */
@@ -592,12 +592,10 @@ export function latestMap<
 	T,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
->(
-	args?: LatestMapArguments<T, Keys> & { validator: StateSchemaValidator<T> },
-): InternalTypes.ManagerFactory<
+>(): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
-	LatestMap<T, Keys>
+	LatestMapRaw<T, Keys>
 >;
 
 /**
@@ -610,11 +608,28 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	args?: LatestMapArguments<T, Keys>,
+	args: LatestMapArguments<T, Keys> & { validator?: undefined },
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMapRaw<T, Keys>
+>;
+
+/**
+ * Factory for creating a {@link LatestMap} State object.
+ *
+ * @alpha
+ */
+export function latestMap<
+	T,
+	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
+>(
+	args: LatestMapArguments<T, Keys> & { validator: StateSchemaValidator<T> },
+): InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMap<T, Keys>
 >;
 
 /* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
@@ -622,19 +637,8 @@ export function latestMap<
 	T,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
->(
-	args?: LatestMapArguments<T, Keys>,
-):
-	| InternalTypes.ManagerFactory<
-			RegistrationKey,
-			InternalTypes.MapValueState<T, Keys>,
-			LatestMapRaw<T, Keys>
-	  >
-	| InternalTypes.ManagerFactory<
-			RegistrationKey,
-			InternalTypes.MapValueState<T, Keys>,
-			LatestMap<T, Keys>
-	  > {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- implementations of overloaded functions should use broad types so that TypeScript infers the types from the overloads.
+>(args?: any): any {
 	const settings = args?.settings;
 	const initialValues = args?.local;
 	const validator = args?.validator;
@@ -655,31 +659,67 @@ export function latestMap<
 			};
 		}
 	}
-	const factory = (
-		key: RegistrationKey,
-		datastoreHandle: InternalTypes.StateDatastoreHandle<
-			RegistrationKey,
-			InternalTypes.MapValueState<T, Keys>
-		>,
-	): {
-		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<LatestMapRaw<T, Keys>>;
-	} => ({
-		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
-		manager: brandIVM<
-			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
-			T,
-			InternalTypes.MapValueState<T, Keys>
-		>(
-			new LatestMapValueManagerImpl(
-				key,
-				datastoreFromHandle(datastoreHandle),
-				value,
-				settings,
-				validator,
-			),
-		),
-	});
+
+	// FIXME There has to be a better way than duplicating the function...
+	const factory =
+		validator === undefined
+			? (
+					key: RegistrationKey,
+					datastoreHandle: InternalTypes.StateDatastoreHandle<
+						RegistrationKey,
+						InternalTypes.MapValueState<T, Keys>
+					>,
+				): {
+					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
+					manager: InternalTypes.StateValue<LatestMapRaw<T, Keys>>;
+				} => ({
+					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+					manager: brandIVM<
+						LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
+						T,
+						InternalTypes.MapValueState<T, Keys>
+					>(
+						new LatestMapValueManagerImpl(
+							key,
+							datastoreFromHandle(datastoreHandle),
+							value,
+							settings,
+							validator,
+						),
+					),
+				})
+			: (
+					key: RegistrationKey,
+					datastoreHandle: InternalTypes.StateDatastoreHandle<
+						RegistrationKey,
+						InternalTypes.MapValueState<T, Keys>
+					>,
+				): {
+					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
+					// manager: TValueAccessor extends ProxiedValueAccessor<T>
+					// 		? () => DeepReadonly<JsonDeserialized<T>> | undefined
+					// 		: TValueAccessor extends RawValueAccessor<T>
+					// 			? DeepReadonly<JsonDeserialized<T>>
+					// 			: never;
+
+					manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
+				} => ({
+					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+					manager: brandIVM<
+						LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
+						T,
+						InternalTypes.MapValueState<T, Keys>
+					>(
+						new LatestMapValueManagerImpl(
+							key,
+							datastoreFromHandle(datastoreHandle),
+							value,
+							settings,
+							validator,
+						),
+					),
+				});
+
 	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
 }
 /* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
