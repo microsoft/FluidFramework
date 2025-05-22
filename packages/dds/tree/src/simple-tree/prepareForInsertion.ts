@@ -12,15 +12,20 @@ import type {
 	NodeIndex,
 	FieldKey,
 	DetachedField,
+	TreeFieldStoredSchema,
 } from "../core/index.js";
 import {
 	type FlexTreeContext,
 	getSchemaAndPolicy,
 	type FlexTreeHydratedContext,
+	FieldKinds,
 } from "../feature-libraries/index.js";
 import type {
 	ImplicitAnnotatedAllowedTypes,
 	ImplicitAnnotatedFieldSchema,
+	normalizeFieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
 } from "./schemaTypes.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -32,6 +37,8 @@ import {
 	unhydratedFlexTreeNodeToTreeNode,
 } from "./core/index.js";
 import { debugAssert, oob } from "@fluidframework/core-utils/internal";
+import { inSchemaOrThrow, isFieldInSchema } from "../feature-libraries/index.js";
+import { convertField } from "./toStoredSchema.js";
 
 /**
  * Prepare content from a user for insertion into a tree.
@@ -74,15 +81,21 @@ export function prepareArrayContentForInsertion(
 	destinationContext: FlexTreeContext,
 ): ExclusiveMapTree[] {
 	const mapTrees: ExclusiveMapTree[] = data.map((item) =>
-		mapTreeFromNodeData(item, schema, {
-			context: destinationContext.isHydrated() ? destinationContext.nodeKeyManager : undefined,
-			schemaValidationPolicy: getSchemaAndPolicy(destinationContext),
-		}),
+		mapTreeFromNodeData(
+			item,
+			schema,
+			destinationContext.isHydrated() ? destinationContext.nodeKeyManager : undefined,
+		),
 	);
 
-	if (destinationContext.isHydrated()) {
-		prepareContentForHydration(mapTrees, destinationContext.checkout.forest);
-	}
+	const fieldSchema = convertField(normalizeFieldSchema(schema));
+
+	validateAndPrepare(
+		getSchemaAndPolicy(destinationContext),
+		destinationContext.isHydrated() ? destinationContext : undefined,
+		{ kind: FieldKinds.sequence.identifier, types: fieldSchema.types },
+		mapTrees,
+	);
 
 	return mapTrees;
 }
@@ -91,6 +104,8 @@ export function prepareArrayContentForInsertion(
  * Split out from {@link prepareForInsertion} as to allow use without a context.
  *
  * @param isInitialization - True iff the insertion is done as part of initialization.
+ * @param hydratedData - If specified, the `mapTrees` will be prepared for hydration into this context.
+ * `undefined` when `mapTrees` are being inserted into an {@link Unhydrated} tree.
  *
  * @remarks
  * Adding this entry point is a workaround for initialize not currently having a context.
@@ -102,17 +117,34 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
 	isInitialization: boolean,
 ): TIn extends undefined ? undefined : ExclusiveMapTree {
-	const mapTree = mapTreeFromNodeData(data, schema, {
-		context: hydratedData?.nodeKeyManager,
-		schemaValidationPolicy: schemaAndPolicy,
-		isInitialization,
-	});
+	const mapTree = mapTreeFromNodeData(data, schema, hydratedData?.nodeKeyManager);
 
-	if (mapTree !== undefined && hydratedData !== undefined) {
-		prepareContentForHydration([mapTree], hydratedData.checkout.forest);
-	}
+	const contentArray = mapTree === undefined ? [] : [mapTree];
+	const fieldSchema = convertField(normalizeFieldSchema(schema));
+	validateAndPrepare(schemaAndPolicy, hydratedData, fieldSchema, contentArray);
 
 	return mapTree as TIn extends undefined ? undefined : ExclusiveMapTree;
+}
+
+/**
+ * If hydrating, do a final validation against the schema and prepare the content for hydration.
+ *
+ * @param hydratedData - If specified, the `mapTrees` will be prepared for hydration into this context.
+ * `undefined` when `mapTrees` are being inserted into an {@link Unhydrated} tree.
+ */
+function validateAndPrepare(
+	schemaAndPolicy: SchemaAndPolicy,
+	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
+	fieldSchema: TreeFieldStoredSchema,
+	mapTrees: ExclusiveMapTree[],
+): void {
+	if (hydratedData !== undefined) {
+		if (schemaAndPolicy.policy.validateSchema === true) {
+			const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
+			inSchemaOrThrow(maybeError);
+		}
+		prepareContentForHydration(mapTrees, hydratedData.checkout.forest);
+	}
 }
 
 /**

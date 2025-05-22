@@ -14,9 +14,8 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState, type DDSFuzzModel } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { isObject } from "@fluidframework/core-utils/internal";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory, SharedMatrix } from "../runtime.js";
@@ -54,7 +53,17 @@ interface SetCell {
 	value: MatrixItem<Value>;
 }
 
-export type Operation = InsertRows | InsertColumns | RemoveRows | RemoveColumns | SetCell;
+interface SwitchSetCellPolicy {
+	type: "switchSetCellPolicy";
+}
+
+export type Operation =
+	| InsertRows
+	| InsertColumns
+	| RemoveRows
+	| RemoveColumns
+	| SetCell
+	| SwitchSetCellPolicy;
 
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<SharedMatrixFactory>;
@@ -73,27 +82,15 @@ async function assertMatricesAreEquivalent<T>(
 		for (let col = 0; col < a.colCount; col++) {
 			const aVal = a.getCell(row, col);
 			const bVal = b.getCell(row, col);
-			if (isObject(aVal) === true) {
-				assert(
-					isObject(bVal),
-					`${a.id} and ${b.id} differ at (${row}, ${col}): a is an object, b is not`,
-				);
-				const aHandle = isFluidHandle(aVal) ? await aVal.get() : aVal;
-				const bHandle = isFluidHandle(bVal) ? await bVal.get() : bVal;
-				assert.deepEqual(
+			const aHandle = isFluidHandle(aVal) ? toFluidHandleInternal(aVal).absolutePath : aVal;
+			const bHandle = isFluidHandle(bVal) ? toFluidHandleInternal(bVal).absolutePath : bVal;
+			assert.deepEqual(
+				aHandle,
+				bHandle,
+				`${a.id} and ${b.id} differ at (${row}, ${col}): ${JSON.stringify(
 					aHandle,
-					bHandle,
-					`${a.id} and ${b.id} differ at (${row}, ${col}): ${JSON.stringify(
-						aHandle,
-					)} vs ${JSON.stringify(bHandle)}`,
-				);
-			} else {
-				assert.equal(
-					aVal,
-					bVal,
-					`${a.id} and ${b.id} differ at (${row}, ${col}): ${aVal} vs ${bVal}`,
-				);
-			}
+				)} vs ${JSON.stringify(bHandle)}`,
+			);
 		}
 	}
 }
@@ -114,28 +111,33 @@ const reducer = combineReducers<Operation, State>({
 	set: ({ client }, { row, col, value }) => {
 		client.channel.setCell(row, col, value);
 	},
+	switchSetCellPolicy: ({ client }) => {
+		client.channel.switchSetCellPolicy();
+	},
 });
 
-interface GeneratorOptions {
-	insertRowWeight: number;
-	insertColWeight: number;
-	removeRowWeight: number;
-	removeColWeight: number;
-	setWeight: number;
-}
+type GeneratorOptions = Record<`${Operation["type"]}Weight`, number>;
 
 const defaultOptions: GeneratorOptions = {
-	insertRowWeight: 1,
-	insertColWeight: 1,
-	removeRowWeight: 1,
-	removeColWeight: 1,
-	setWeight: 20,
+	insertRowsWeight: 10,
+	insertColsWeight: 10,
+	removeRowsWeight: 10,
+	removeColsWeight: 10,
+	setWeight: 200,
+	switchSetCellPolicyWeight: 1,
 };
 
 function makeGenerator(
 	optionsParam?: Partial<GeneratorOptions>,
 ): AsyncGenerator<Operation, State> {
-	const { setWeight, insertColWeight, insertRowWeight, removeRowWeight, removeColWeight } = {
+	const {
+		setWeight,
+		insertColsWeight,
+		insertRowsWeight,
+		removeRowsWeight,
+		removeColsWeight,
+		switchSetCellPolicyWeight,
+	} = {
 		...defaultOptions,
 		...optionsParam,
 	};
@@ -191,6 +193,10 @@ function makeGenerator(
 		])(),
 	});
 
+	const switchSetCellPolicy: Generator<SwitchSetCellPolicy, State> = () => ({
+		type: "switchSetCellPolicy",
+	});
+
 	const syncGenerator = createWeightedGenerator<Operation, State>([
 		[
 			setKey,
@@ -198,10 +204,16 @@ function makeGenerator(
 			(state): boolean =>
 				state.client.channel.rowCount > 0 && state.client.channel.colCount > 0,
 		],
-		[insertRows, insertRowWeight],
-		[insertCols, insertColWeight],
-		[removeRows, removeRowWeight, (state): boolean => state.client.channel.rowCount > 0],
-		[removeCols, removeColWeight, (state): boolean => state.client.channel.colCount > 0],
+		[insertRows, insertRowsWeight],
+		[insertCols, insertColsWeight],
+		[removeRows, removeRowsWeight, (state): boolean => state.client.channel.rowCount > 0],
+		[removeCols, removeColsWeight, (state): boolean => state.client.channel.colCount > 0],
+		[
+			switchSetCellPolicy,
+			switchSetCellPolicyWeight,
+			(state): boolean =>
+				state.client.channel.isSetCellConflictResolutionPolicyFWW() === false,
+		],
 	]);
 
 	return async (state) => syncGenerator(state);

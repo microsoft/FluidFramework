@@ -69,6 +69,7 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
+	type TreeIdentifierUtils,
 	independentView,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
@@ -167,10 +168,6 @@ export {
 	type UnannotateAllowedTypeOrLazyItem,
 	type UnannotateImplicitFieldSchema,
 	type UnannotateSchemaRecord,
-	// test recursive schema for checking that d.ts files handles schema correctly
-	test_RecursiveObject,
-	test_RecursiveObject_base,
-	test_RecursiveObjectPojoMode,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,

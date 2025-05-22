@@ -7,6 +7,7 @@ import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import type { FieldKey } from "../core/index.js";
 import type { NodeIdentifierManager } from "../feature-libraries/index.js";
 import {
 	type MakeNominal,
@@ -20,6 +21,7 @@ import {
 	type RestrictiveStringRecord,
 	type IsUnion,
 } from "../util/index.js";
+
 import type {
 	Unhydrated,
 	NodeKind,
@@ -30,12 +32,11 @@ import type {
 	TreeNodeSchemaNonClass,
 } from "./core/index.js";
 import { inPrototypeChain } from "./core/index.js";
-import type { FieldKey } from "../core/index.js";
-import type { InsertableContent } from "./toMapTree.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
-import { TreeNodeValid } from "./treeNodeValid.js";
 import type { SimpleFieldSchema, SimpleObjectFieldSchema } from "./simpleSchema.js";
+import type { InsertableContent } from "./toMapTree.js";
+import { TreeNodeValid } from "./treeNodeValid.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.

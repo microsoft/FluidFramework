@@ -21,6 +21,7 @@ import {
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate } from "../util/index.js";
+
 import { NodeKind } from "./core/index.js";
 import {
 	FieldKind,
