@@ -32,6 +32,7 @@ import type { Heading } from "../../Heading.js";
 import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
 import {
+	type BlockContent,
 	type DocumentationNode,
 	DocumentationNodeType,
 	type DocumentationParentNode,
@@ -40,8 +41,11 @@ import {
 	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
+	type PhrasingContent,
 	PlainTextNode,
+	type SectionContent,
 	SectionNode,
+	type SpanContent,
 	SpanNode,
 	UnorderedListNode,
 } from "../../documentation-domain/index.js";
@@ -62,8 +66,7 @@ import {
 	doesItemKindRequireOwnDocument,
 	getLinkForApiItem,
 } from "../ApiItemTransformUtilities.js";
-import { transformTsdocSection } from "../TsdocNodeTransforms.js";
-import { getTsdocNodeTransformationOptions } from "../Utilities.js";
+import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import {
 	HierarchyKind,
 	type ApiItemTransformationConfiguration,
@@ -93,7 +96,7 @@ export function createSignatureSection(
 	if (apiItem instanceof ApiDeclaredItem) {
 		const signatureExcerpt = apiItem.getExcerptWithModifiers();
 		if (signatureExcerpt !== "") {
-			const contents: DocumentationNode[] = [];
+			const contents: SectionContent[] = [];
 
 			contents.push(
 				FencedCodeBlockNode.createFromPlainText(signatureExcerpt.trim(), "typescript"),
@@ -101,7 +104,7 @@ export function createSignatureSection(
 
 			const renderedHeritageTypes = createHeritageTypesParagraph(apiItem, config);
 			if (renderedHeritageTypes !== undefined) {
-				contents.push(renderedHeritageTypes);
+				contents.push(...renderedHeritageTypes);
 			}
 
 			return wrapInSection(contents, {
@@ -135,11 +138,10 @@ export function createSeeAlsoSection(
 		return undefined;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
-	const contents = seeBlocks.map((seeBlock) =>
-		transformTsdocSection(seeBlock, tsdocNodeTransformOptions),
-	);
+	const contents: BlockContent[] = [];
+	for (const seeBlock of seeBlocks) {
+		contents.push(...transformTsdoc(seeBlock, apiItem, config));
+	}
 
 	return wrapInSection(contents, {
 		title: "See Also",
@@ -150,7 +152,7 @@ export function createSeeAlsoSection(
 /**
  * Renders a section listing types extended / implemented by the API item, if any.
  *
- * @remarks Displayed as a heading with a comma-separated list of heritage types by catagory under it.
+ * @remarks Displayed as a heading with a comma-separated list of heritage types by category under it.
  *
  * @param apiItem - The API item whose heritage types will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
@@ -160,10 +162,10 @@ export function createSeeAlsoSection(
 export function createHeritageTypesParagraph(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): ParagraphNode | undefined {
+): SectionContent[] | undefined {
 	const { logger } = config;
 
-	const contents: ParagraphNode[] = [];
+	const contents: SectionContent[] = [];
 
 	if (apiItem instanceof ApiClass) {
 		// Render `extends` type if there is one.
@@ -224,19 +226,14 @@ export function createHeritageTypesParagraph(
 			apiItem,
 			config,
 		);
-		contents.push(new ParagraphNode([renderedTypeParameters]));
+		contents.push(renderedTypeParameters);
 	}
 
 	if (contents.length === 0) {
 		return undefined;
 	}
 
-	// If only 1 child paragraph, prevent creating unecessary hierarchy here by not wrapping it.
-	if (contents.length === 1) {
-		return contents[0];
-	}
-
-	return new ParagraphNode(contents);
+	return contents;
 }
 
 /**
@@ -287,7 +284,7 @@ function createHeritageTypeListSpan(
 			}
 		}
 
-		const renderedList = injectSeparator<DocumentationNode>(
+		const renderedList = injectSeparator<SpanContent>(
 			renderedHeritageTypes,
 			new PlainTextNode(", "),
 		);
@@ -348,7 +345,7 @@ export function createExcerptSpanWithHyperlinks(
 		return undefined;
 	}
 
-	const children: DocumentationNode[] = [];
+	const children: SpanContent[] = [];
 	for (const token of excerpt.spannedTokens) {
 		// Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
 		// the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
@@ -422,7 +419,7 @@ export function createBreadcrumbParagraph(
 	const breadcrumbSeparator = new PlainTextNode(" > ");
 
 	// Inject breadcrumb separator between each link
-	const contents: DocumentationNode[] = injectSeparator<DocumentationNode>(
+	const contents: PhrasingContent[] = injectSeparator<PhrasingContent>(
 		renderedLinks,
 		breadcrumbSeparator,
 	);
@@ -464,13 +461,13 @@ export function createSummarySection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-		const paragraph = transformTsdocSection(
+		const sectionContents = transformTsdoc(
 			apiItem.tsdocComment.summarySection,
-			tsdocNodeTransformOptions,
+			apiItem,
+			config,
 		);
-		return paragraph.isEmpty ? undefined : new SectionNode([paragraph]);
+		return sectionContents.length === 0 ? undefined : new SectionNode(sectionContents);
 	}
 	return undefined;
 }
@@ -499,15 +496,8 @@ export function createRemarksSection(
 		return undefined;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
 	return wrapInSection(
-		[
-			transformTsdocSection(
-				apiItem.tsdocComment.remarksBlock.content,
-				tsdocNodeTransformOptions,
-			),
-		],
+		transformTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
 		{ title: "Remarks", id: `${getFileSafeNameForApiItem(apiItem)}-remarks` },
 	);
 }
@@ -536,13 +526,12 @@ export function createThrowsSection(
 		return undefined;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
+	const contents: BlockContent[] = [];
+	for (const throwsBlock of throwsBlocks) {
+		contents.push(...transformTsdoc(throwsBlock, apiItem, config));
+	}
 
-	const paragraphs = throwsBlocks.map((throwsBlock) =>
-		transformTsdocSection(throwsBlock, tsdocNodeTransformOptions),
-	);
-
-	return wrapInSection(paragraphs, {
+	return wrapInSection(contents, {
 		title: headingText,
 		id: `${getFileSafeNameForApiItem(apiItem)}-throws`,
 	});
@@ -565,8 +554,6 @@ export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
 	const deprecatedBlock = getDeprecatedBlock(apiItem);
 	if (deprecatedBlock === undefined) {
 		return undefined;
@@ -579,7 +566,7 @@ export function createDeprecationNoticeSection(
 				{ bold: true },
 			),
 			LineBreakNode.Singleton,
-			new SpanNode([transformTsdocSection(deprecatedBlock, tsdocNodeTransformOptions)], {
+			new SpanNode(transformTsdoc(deprecatedBlock, apiItem, config), {
 				italic: true,
 			}),
 		]),
@@ -716,10 +703,8 @@ function createExampleSection(
 ): SectionNode {
 	const { logger } = config;
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(example.apiItem, config);
-	let exampleParagraph: DocumentationParentNode = transformTsdocSection(
-		example.content,
-		tsdocNodeTransformOptions,
+	let exampleSection: SectionNode = new SectionNode(
+		transformTsdoc(example.content, example.apiItem, config),
 	);
 
 	// Per TSDoc spec, if the `@example` comment has content on the same line as the tag,
@@ -745,14 +730,14 @@ function createExampleSection(
 		logger?.verbose(
 			`Found example comment with title "${exampleTitle}". Adjusting output to adhere to TSDoc spec...`,
 		);
-		exampleParagraph = stripTitleFromParagraph(exampleParagraph, exampleTitle, logger);
+		exampleSection = stripTitleFromParagraph(exampleSection, exampleTitle, logger);
 	}
 
 	const headingId = `${getFileSafeNameForApiItem(example.apiItem)}-example${
 		example.exampleNumber ?? ""
 	}`;
 
-	return wrapInSection([exampleParagraph], {
+	return wrapInSection([exampleSection], {
 		title: headingTitle,
 		id: headingId,
 	});
@@ -808,11 +793,11 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
  * In the case where the output is not in a form we expect, we will log an error and return the node we were given,
  * rather than making a copy.
  */
-function stripTitleFromParagraph(
-	node: DocumentationParentNode,
+function stripTitleFromParagraph<TNode extends DocumentationParentNode>(
+	node: TNode,
 	title: string,
 	logger: Logger | undefined,
-): DocumentationParentNode {
+): TNode {
 	// Verify title matches text of first plain text in output.
 	// This is an expected invariant. If this is not the case, then something has gone wrong.
 	// Note: if we ever allow consumers to provide custom DocNode transformations, this invariant will likely
@@ -928,15 +913,13 @@ export function createReturnsSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
-	const children: DocumentationNode[] = [];
+	const children: SectionContent[] = [];
 
 	// Generate span from `@returns` comment
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const returnsBlock = getReturnsBlock(apiItem);
 		if (returnsBlock !== undefined) {
-			children.push(transformTsdocSection(returnsBlock, tsdocNodeTransformOptions));
+			children.push(...transformTsdoc(returnsBlock, apiItem, config));
 		}
 	}
 
@@ -1012,7 +995,7 @@ export interface ChildSectionProperties {
 export function createChildDetailsSection(
 	childItems: readonly ChildSectionProperties[],
 	config: ApiItemTransformationConfiguration,
-	createChildContent: (apiItem) => DocumentationNode[],
+	createChildContent: (apiItem) => SectionContent[],
 ): SectionNode[] | undefined {
 	const sections: SectionNode[] = [];
 
@@ -1024,7 +1007,7 @@ export function createChildDetailsSection(
 			!doesItemKindRequireOwnDocument(childItem.itemKind, config.hierarchy) &&
 			childItem.items.length > 0
 		) {
-			const childContents: DocumentationNode[] = [];
+			const childContents: SectionContent[] = [];
 			for (const item of childItem.items) {
 				childContents.push(...createChildContent(item));
 			}
@@ -1041,7 +1024,7 @@ export function createChildDetailsSection(
  * @param nodes - The section's child contents.
  * @param heading - Optional heading to associate with the section.
  */
-export function wrapInSection(nodes: DocumentationNode[], heading?: Heading): SectionNode {
+export function wrapInSection(nodes: SectionContent[], heading?: Heading): SectionNode {
 	return new SectionNode(
 		nodes,
 		heading ? HeadingNode.createFromPlainTextHeading(heading) : undefined,

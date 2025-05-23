@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentationParentNodeBase, type DocumentationNode } from "./DocumentationNode.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
 // TODOs:
@@ -31,9 +32,10 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * </ul>
  * ```
  *
+ * @sealed
  * @public
  */
-export class UnorderedListNode extends DocumentationParentNodeBase {
+export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * Static singleton representing an empty Unordered List node.
 	 */
@@ -51,7 +53,7 @@ export class UnorderedListNode extends DocumentationParentNodeBase {
 		return false;
 	}
 
-	public constructor(children: DocumentationNode[]) {
+	public constructor(children: PhrasingContent[]) {
 		super(children);
 	}
 
