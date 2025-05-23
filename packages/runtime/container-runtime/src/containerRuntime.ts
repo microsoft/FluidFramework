@@ -48,6 +48,7 @@ import {
 	LazyPromise,
 	PromiseCache,
 	delay,
+	fail,
 } from "@fluidframework/core-utils/internal";
 import type {
 	IClientDetails,
@@ -1266,7 +1267,7 @@ export class ContainerRuntime
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
 	private readonly offlineEnabled: boolean;
-	private flushTaskExists = false;
+	private flushScheduled = false;
 
 	private _connected: boolean;
 
@@ -2541,6 +2542,7 @@ export class ContainerRuntime
 			// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
 			// before staging mode so we can simply say staged: false.
 			this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
+			this.scheduleFlush();
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
@@ -3200,6 +3202,8 @@ export class ContainerRuntime
 	 * @param resubmitInfo - If defined, indicates this is a resubmission of a batch with the given Batch info needed for resubmit.
 	 */
 	private flush(resubmitInfo?: BatchResubmitInfo): void {
+		this.flushScheduled = false;
+
 		try {
 			assert(
 				!this.batchRunner.running,
@@ -3429,13 +3433,6 @@ export class ContainerRuntime
 		return (
 			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
 		);
-	}
-
-	/**
-	 * Typically ops are batched and later flushed together, but in some cases we want to flush immediately.
-	 */
-	private currentlyBatching(): boolean {
-		return this.flushMode !== FlushMode.Immediate || this.batchRunner.running;
 	}
 
 	private readonly _quorum: IQuorumClients;
@@ -4443,13 +4440,7 @@ export class ContainerRuntime
 				this.outbox.submit(message);
 			}
 
-			// Note: Technically, the system "always" batches - if this case is true we'll just have a single-message batch.
-			const flushImmediatelyOnSubmit = !this.currentlyBatching();
-			if (flushImmediatelyOnSubmit) {
-				this.flush();
-			} else {
-				this.scheduleFlush();
-			}
+			this.scheduleFlush();
 		} catch (error) {
 			const dpe = DataProcessingError.wrapIfUnrecognized(error, "ContainerRuntime.submit", {
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -4462,25 +4453,24 @@ export class ContainerRuntime
 	}
 
 	private scheduleFlush(): void {
-		if (this.flushTaskExists) {
+		if (this.flushScheduled) {
 			return;
 		}
-
-		this.flushTaskExists = true;
-
-		// TODO: hoist this out of the function scope to save unnecessary allocations
-		// eslint-disable-next-line unicorn/consistent-function-scoping -- Separate `flush` method already exists in outer scope
-		const flush = (): void => {
-			this.flushTaskExists = false;
-			this.flush();
-		};
+		this.flushScheduled = true;
 
 		switch (this.flushMode) {
+			case FlushMode.Immediate: {
+				// When in Immediate flush mode, flush immediately unless we are intentionally batching multiple ops (e.g. via orderSequentially)
+				if (!this.batchRunner.running) {
+					this.flush();
+				}
+				break;
+			}
 			case FlushMode.TurnBased: {
 				// When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
 				// batch at the end of the turn
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				Promise.resolve().then(flush);
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises -- Container will close if flush throws
+				Promise.resolve().then(() => this.flush());
 				break;
 			}
 
@@ -4489,16 +4479,12 @@ export class ContainerRuntime
 				// When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
 				// batch when all micro-tasks are complete.
 				// Compared to TurnBased, this flush mode will capture more ops into the same batch.
-				setTimeout(flush, 0);
+				setTimeout(() => this.flush(), 0);
 				break;
 			}
 
 			default: {
-				assert(
-					this.batchRunner.running,
-					0x587 /* Unreachable unless manually accumulating a batch */,
-				);
-				break;
+				fail(0x587 /* Unreachable unless manually accumulating a batch */);
 			}
 		}
 	}

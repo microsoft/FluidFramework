@@ -221,6 +221,7 @@ describe("Runtime", () => {
 			mockStorage?: Partial<IDocumentStorageService>;
 			loadedFromVersion?: IVersion;
 			baseSnapshot?: ISnapshotTree;
+			connected?: boolean;
 		} = {},
 		clientId: string = mockClientId,
 	): Partial<IContainerContext> => {
@@ -230,6 +231,7 @@ describe("Runtime", () => {
 			mockStorage = defaultMockStorage,
 			loadedFromVersion,
 			baseSnapshot,
+			connected = true,
 		} = params;
 
 		const mockContext = {
@@ -260,7 +262,7 @@ describe("Runtime", () => {
 				}); // Note: this object shape is for testing only. Not representative of real signals.
 			},
 			clientId,
-			connected: true,
+			connected,
 			storage: mockStorage as IDocumentStorageService,
 			baseSnapshot,
 		} satisfies Partial<IContainerContext>;
@@ -536,6 +538,49 @@ describe("Runtime", () => {
 					);
 				});
 			}
+
+			it("IdAllocation op from replayPendingStates is flushed, preventing outboxSequenceNumberCoherencyCheck error", async () => {
+				// Start out disconnected since step 1 is to trigger ID Allocation op on reconnect
+				const connected = false;
+				const mockContext = getMockContext({ connected }) as IContainerContext;
+				const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
+
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: mockContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: { enableRuntimeIdCompressor: "on" },
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// 1st compressed id – queued while disconnected (goes to idAllocationBatch).
+				containerRuntime.idCompressor?.generateCompressedId();
+
+				// Re-connect – replayPendingStates will submit only an idAllocation op.
+				// It's now in the Outbox and a flush is scheduled (including this flush was a bug fix)
+				changeConnectionState(containerRuntime, true, mockClientId);
+
+				// Simulate a remote op arriving before we submit anything else.
+				// Bump refSeq and continue execution at the end of the microtask queue.
+				// This is how Inbound Queue works, and this is necessary to simulate here to allow scheduled flush to happen
+				++mockDeltaManager.lastSequenceNumber;
+				await Promise.resolve();
+
+				// 2nd compressed id – its idAllocation op will enter Outbox *after* the ref seq# bumped.
+				const id2 = containerRuntime.idCompressor?.generateCompressedId();
+
+				// This would throw a DataProcessingError from codepath "outboxSequenceNumberCoherencyCheck"
+				// if we didn't schedule a flush after the idAllocation op submitted during the reconnect.
+				// (On account of the two ID Allocation ops having different refSeqs but being in the same batch)
+				submitDataStoreOp(containerRuntime, "someDS", { id: id2 });
+
+				// Let the Outbox flush so we can check submittedOps length
+				await Promise.resolve();
+				assert(
+					submittedOps.length === 3,
+					"Expected 3 ops to be submitted (2 ID Allocation, 1 data)",
+				);
+			});
 		});
 
 		describe("orderSequentially", () => {
