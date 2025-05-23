@@ -123,7 +123,11 @@ export class TaskManagerClass
 	 * @param runtime - data store runtime the task queue belongs to
 	 * @param id - optional name of the task queue
 	 */
-	constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+	public constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+	) {
 		super(id, runtime, attributes, "fluid_taskManager_");
 
 		this.opWatcher.on(
@@ -635,6 +639,7 @@ export class TaskManagerClass
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			const op = message.contents as ITaskManagerOperation;
 			const messageId = localOpMetadata as number;
