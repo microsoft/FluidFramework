@@ -174,22 +174,6 @@ describe("SharedTree", () => {
 			assert.equal(view.root, 10);
 		});
 
-		it("can initialize tree with an enablable allowed", () => {
-			const tree = treeTestFactory();
-			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
-			const schemaFactory = new SchemaFactoryAlpha("shared tree tests");
-
-			const config = new TreeViewConfiguration({
-				schema: schemaFactory.arrayAlpha("TestArray", [
-					schemaFactory.number,
-					schemaFactory.enablable(schemaFactory.string),
-				]),
-			});
-			const view = tree.viewWith(config);
-			view.initialize(["test", 10]);
-			assert.equal(view.root[0], "test");
-		});
-
 		it("initialize-dispose-view with primitive schema", () => {
 			const tree = treeTestFactory();
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);

@@ -53,7 +53,7 @@ import type {
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
-import { getView, validateUsageError } from "../../utils.js";
+import { getView, TestTreeProviderLite, validateUsageError } from "../../utils.js";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -1082,31 +1082,35 @@ describe("schemaFactory", () => {
 		assert.deepEqual(getKeys(mapNode), ["x"]);
 	});
 
-	describe("enablable", () => {
-		const schemaFactory = new SchemaFactoryAlpha("Enablable");
+	describe("enablables", () => {
+		const schemaFactory = new SchemaFactoryAlpha("enablable tests");
 
 		class TestObject extends schemaFactory.objectAlpha("TestObject", {
 			foo: [schemaFactory.number, schemaFactory.enablable(schemaFactory.string)],
-			fo1: schemaFactory.optional(schemaFactory.string),
 		}) {}
 
 		describe("in objects", () => {
-			it("can't be initialized", () => {
-				assert.throws(() => {
-					const _ = new TestObject({ foo: "test" });
-				});
+			it("are permitted when unhydrated", () => {
+				const testObject = new TestObject({ foo: "test" });
+				assert.equal(testObject.foo, "test");
+				testObject.foo = 42;
+				assert.equal(testObject.foo, 42);
+				testObject.foo = "test";
+				assert.equal(testObject.foo, "test");
 			});
 
 			it("can't be set", () => {
-				const testObject = new TestObject({ foo: 3 });
-				assert.throws(() => {
-					testObject.foo = "test";
-				});
-			});
+				const provider = new TestTreeProviderLite(1);
 
-			it("does not prevent normal allowed types from being set", () => {
-				const testObject = new TestObject({ foo: 3 });
-				testObject.foo = 42;
+				const config = new TreeViewConfiguration({
+					schema: TestObject,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.foo = "test";
+				});
 			});
 		});
 
@@ -1116,23 +1120,27 @@ describe("schemaFactory", () => {
 				schemaFactory.enablable(schemaFactory.string),
 			]) {}
 
-			it("can't be initialized", () => {
-				assert.throws(() => {
-					const _ = new TestMap({ foo: "test" });
-				});
+			it("are permitted when unhydrated", () => {
+				const testMap = new TestMap({ foo: "test" });
+				assert.equal(testMap.get("foo"), "test");
+				testMap.set("foo", 42);
+				assert.equal(testMap.get("foo"), 42);
+				testMap.set("foo", "test");
+				assert.equal(testMap.get("foo"), "test");
 			});
 
 			it("can't be set", () => {
-				const testMap = new TestMap({ foo: 3 });
-				assert.throws(() => {
-					testMap.set("foo", "test");
-				});
-			});
+				const provider = new TestTreeProviderLite(1);
 
-			it("does not prevent normal allowed types from being set", () => {
-				const testMap = new TestMap();
-				testMap.set("foo", 42);
-				assert.equal(testMap.get("foo"), 42);
+				const config = new TreeViewConfiguration({
+					schema: TestMap,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({});
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.set("foo", "test");
+				});
 			});
 		});
 
@@ -1142,33 +1150,47 @@ describe("schemaFactory", () => {
 				schemaFactory.enablable(schemaFactory.string),
 			]) {}
 
-			it("can't be initialized", () => {
-				assert.throws(() => {
-					const _ = new TestArray(["test"]);
-				});
-			});
-
-			it("can't be set", () => {
-				const testArray = new TestArray([3]);
-				assert.throws(() => {
-					testArray.insertAtEnd("test");
-				});
-			});
-
-			it("does not prevent normal allowed types from being inserted", () => {
-				const testArray = new TestArray([3]);
+			it("are permitted when unhydrated", () => {
+				const testArray = new TestArray(["test"]);
+				testArray.insertAtEnd("test");
+				assert.deepEqual(Array.from(testArray.values()), ["test", "test"]);
 				testArray.insertAtEnd(5);
-				assert.deepEqual(Array.from(testArray.values()), [3, 5]);
+				assert.deepEqual(Array.from(testArray.values()), ["test", "test", 5]);
 			});
-		});
 
-		it("can be permitted by mapTreeFromNodeData", () => {
-			const _ = mapTreeFromNodeData(
-				{
-					foo: "test",
-				},
-				TestObject,
-			);
+			it("can't be inserted", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestArray,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize([]);
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.insertAtEnd("test");
+				});
+			});
+
+			it("can't be moved in from another field", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: schemaFactory.objectAlpha("TestObject", {
+						foo: TestArray,
+						bar: schemaFactory.arrayAlpha("StringArray", schemaFactory.string),
+					}),
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({
+					foo: [],
+					bar: ["test"],
+				});
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.foo.insertAtEnd("test", view.root.bar[0]);
+				});
+			});
 		});
 	});
 });

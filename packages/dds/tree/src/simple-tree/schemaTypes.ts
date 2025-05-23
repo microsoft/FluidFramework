@@ -4,7 +4,7 @@
  */
 
 import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
-import { Lazy } from "@fluidframework/core-utils/internal";
+import { fail, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey } from "../core/index.js";
@@ -570,7 +570,20 @@ export class FieldSchemaAlpha<
 			extractAnnotationsFromAllowedTypes(this.annotatedAllowedTypes),
 		);
 		this.lazyIdentifiers = new Lazy(
-			() => new Set([...this.allowedTypeSet].map((t) => t.identifier)),
+			() =>
+				new Set(
+					[...this.allowedTypeSet]
+						// The allowed types identifiers filter out any that are enablable
+						// TODO:#38722 this should not filter out any that have been upgraded once the runtime schema upgrade
+						// mechanism is implemented
+						.filter((t) => {
+							const annotations =
+								this.annotatedAllowedTypeSet.get(t) ??
+								fail("annotations should exist even if empty");
+							return annotations.enablableSchemaUpgrade === undefined;
+						})
+						.map((t) => t.identifier),
+				),
 		);
 	}
 
