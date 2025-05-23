@@ -8,6 +8,7 @@
  * implementations for our DDSs.
  */
 
+import { objectIdNumber } from "@fluid-experimental/tree-react-api";
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -52,6 +53,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 ): Promise<FluidObjectNode> => {
 	const sharedCell = sharedObject as ISharedCell<unknown>;
 	const data = sharedCell.get();
+	const objectId = objectIdNumber(sharedCell);
 
 	const renderedData = await visualizeChildData(data);
 
@@ -66,7 +68,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 				children: {
 					data: renderedData,
 				},
-				fluidObjectId: sharedCell.id,
+				fluidObjectId: objectId,
 				typeMetadata: "SharedCell",
 				nodeKind: VisualNodeKind.FluidTreeNode,
 				editProps,
@@ -75,7 +77,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 		case VisualNodeKind.ValueNode: {
 			return {
 				...renderedData,
-				fluidObjectId: sharedCell.id,
+				fluidObjectId: objectId,
 				typeMetadata: "SharedCell",
 				nodeKind: VisualNodeKind.FluidValueNode,
 				editProps,
@@ -84,7 +86,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 		case VisualNodeKind.TreeNode: {
 			return {
 				...renderedData,
-				fluidObjectId: sharedCell.id,
+				fluidObjectId: objectId,
 				typeMetadata: "SharedCell",
 				nodeKind: VisualNodeKind.FluidTreeNode,
 				editProps,
@@ -92,7 +94,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 		}
 		case VisualNodeKind.UnknownObjectNode: {
 			return {
-				fluidObjectId: sharedCell.id,
+				fluidObjectId: objectId,
 				typeMetadata: "SharedCell",
 				nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 			};
@@ -117,7 +119,7 @@ export const visualizeDataObject: VisualizeSharedObject = async (
 	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
 
 	return {
-		fluidObjectId: dataObjectRoot.id,
+		fluidObjectId: objectIdNumber(dataObjectRoot),
 		children: renderedChildData.children,
 		metadata: renderedChildData.metadata,
 		typeMetadata: "DataObject",
@@ -133,7 +135,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 ): Promise<FluidObjectValueNode> => {
 	const sharedCounter = sharedObject as SharedCounter;
 	return {
-		fluidObjectId: sharedCounter.id,
+		fluidObjectId: objectIdNumber(sharedCounter),
 		value: sharedCounter.value,
 		typeMetadata: "SharedCounter",
 		nodeKind: VisualNodeKind.FluidValueNode,
@@ -151,7 +153,7 @@ export const visualizeSharedDirectory: VisualizeSharedObject = async (
 	const sharedDirectory = sharedObject as ISharedDirectory;
 	const renderedChildData = await visualizeDirectory(sharedDirectory, visualizeChildData);
 	return {
-		fluidObjectId: sharedDirectory.id,
+		fluidObjectId: objectIdNumber(sharedDirectory),
 		children: renderedChildData.children,
 		metadata: renderedChildData.metadata,
 		typeMetadata: "SharedDirectory",
@@ -211,7 +213,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 	}
 
 	return {
-		fluidObjectId: sharedMap.id,
+		fluidObjectId: objectIdNumber(sharedMap),
 		children,
 		metadata: {
 			size: sharedMap.size,
@@ -230,7 +232,8 @@ export const visualizeSharedMatrix: VisualizeSharedObject = async (
 ): Promise<FluidObjectTreeNode> => {
 	const sharedMatrix = sharedObject as unknown as SharedMatrix;
 
-	const { rowCount, colCount: columnCount, id: fluidObjectId } = sharedMatrix;
+	const { rowCount, colCount: columnCount } = sharedMatrix;
+	const objectId = objectIdNumber(sharedMatrix);
 
 	// Output will list cells as a flat list, keyed by their row,column indices (e.g. `[0,1]`)
 	const cells: Record<string, VisualChildNode> = {};
@@ -243,7 +246,7 @@ export const visualizeSharedMatrix: VisualizeSharedObject = async (
 	}
 
 	return {
-		fluidObjectId,
+		fluidObjectId: objectId,
 		children: cells,
 		metadata: {
 			rows: rowCount,
@@ -264,7 +267,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 	const text = sharedString.getText();
 
 	return {
-		fluidObjectId: sharedString.id,
+		fluidObjectId: objectIdNumber(sharedString),
 		value: text,
 		typeMetadata: "SharedString",
 		nodeKind: VisualNodeKind.FluidValueNode,
@@ -282,6 +285,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectNode> => {
 	const sharedTree = sharedObject as IChannelView as ITreeInternal;
+	const objectId = objectIdNumber(sharedTree);
 
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();
@@ -299,7 +303,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 
 	if (treeView === undefined) {
 		return {
-			fluidObjectId: sharedTree.id,
+			fluidObjectId: objectId,
 			typeMetadata: "SharedTree",
 			nodeKind: VisualNodeKind.FluidTreeNode,
 			tooltipContents: {
@@ -335,7 +339,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	// TODO: Validate the type casting.
 	const visualTreeResult: FluidObjectNode = {
 		...visualTree,
-		fluidObjectId: sharedTree.id,
+		fluidObjectId: objectId,
 		typeMetadata: "SharedTree",
 		nodeKind: determineNodeKind(visualTree.nodeKind),
 	} as unknown as FluidObjectNode;
@@ -350,7 +354,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 ): Promise<FluidUnknownObjectNode> => {
 	return {
-		fluidObjectId: sharedObject.id,
+		fluidObjectId: objectIdNumber(sharedObject),
 		typeMetadata: sharedObject.attributes.type,
 		nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 	};
