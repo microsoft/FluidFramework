@@ -11527,9 +11527,6 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
-      '@fluidframework/container-loader':
-        specifier: workspace:~
-        version: link:../../loader/container-loader
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/container-runtime-definitions
