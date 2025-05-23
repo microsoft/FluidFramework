@@ -237,7 +237,7 @@ So long as you provide a corresponding [rendering handler](#markdown-renderer), 
 
 The Documentation Domain is extensible!
 To add a custom node type, first add a custom implementation of the `DocumentationNode` base class.
-Then, if you need the new node to be compatible in specific contexts (e.g., `PhrasingContent` or `BlockContent`), you may extend the appropriate type map.
+Then, if you need the new node to be usable in specific contexts (e.g., `PhrasingContent` or `BlockContent`), you may extend the appropriate type-map.
 
 ##### Example
 
