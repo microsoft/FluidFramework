@@ -1282,7 +1282,7 @@ export class ContainerRuntime
 
 	/**
 	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
+	 * until execution finishes. If an op is submitted, it will be marked as reentrant.
 	 *
 	 * @param callback - the callback to be invoked
 	 */
@@ -1532,8 +1532,8 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "Attached",
 				details: {
-					dirtyContainer: this.lastEmittedDirty,
-					hasPendingMessages: this.hasPendingMessages(),
+					lastEmittedDirty: this.lastEmittedDirty,
+					currentDirtyState: this.currentDirtyState(),
 				},
 			});
 		});
@@ -1898,7 +1898,7 @@ export class ContainerRuntime
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
-		this.lastEmittedDirty = !this.notDirty();
+		this.lastEmittedDirty = this.currentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
 
 		if (!this.skipSafetyFlushDuringProcessStack) {
@@ -3464,14 +3464,13 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Returns true if the container is not dirty (attached, and no pending messages besides "non-dirtyable" ones)
+	 * Returns true if the container is dirty (not attached, or no pending user messages (could be some "non-dirtyable" ones)
 	 */
-	private notDirty(): boolean {
-		// We are NOT dirty if the only pending changes are "non-user" changes (e.g. GC, ID compressor, etc.),
-		// since these system messages can be lost without data loss.
+	private currentDirtyState(): boolean {
 		return (
-			this.attachState === AttachState.Attached &&
-			!(this.pendingStateManager.hasPendingUserChanges() || this.outbox.containsUserChanges())
+			this.attachState !== AttachState.Attached ||
+			this.pendingStateManager.hasPendingUserChanges() ||
+			this.outbox.containsUserChanges()
 		);
 	}
 
@@ -4342,7 +4341,7 @@ export class ContainerRuntime
 	 * But those events don't exist so we manually call this wherever we know those changes happen.
 	 */
 	private updateDocumentDirtyState(): void {
-		const dirty: boolean = !this.notDirty();
+		const dirty: boolean = this.currentDirtyState();
 
 		if (this.lastEmittedDirty === dirty) {
 			return;
