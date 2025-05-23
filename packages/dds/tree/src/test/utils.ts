@@ -1455,7 +1455,7 @@ export function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[]
 
 /**
  * Construct field cursor from content that is compatible with the field defined by the provided `schema`.
- * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+ * @param schema - The schema for what to construct.
  * @param data - The data used to construct the field content.
  * @remarks
  * When providing a {@link TreeNodeSchemaClass},
