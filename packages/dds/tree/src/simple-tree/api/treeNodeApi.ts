@@ -34,12 +34,11 @@ import {
 	type TreeNode,
 	tryGetTreeNodeSchema,
 	getOrCreateNodeFromInnerNode,
-	UnhydratedFlexTreeNode,
 	typeSchemaSymbol,
 	getOrCreateInnerNode,
 } from "../core/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { lazilyAllocateIdentifier, isObjectNodeSchema } from "../node-kinds/index.js";
+import { isObjectNodeSchema } from "../node-kinds/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -304,12 +303,6 @@ export function getIdentifierFromNode(
 		case 1: {
 			const key = identifierFieldKeys[0] ?? oob();
 			const identifier = flexNode.tryGetField(key)?.boxedAt(0);
-			if (flexNode instanceof UnhydratedFlexTreeNode) {
-				if (identifier === undefined) {
-					return lazilyAllocateIdentifier(flexNode, key);
-				}
-				return identifier.value as string;
-			}
 			assert(
 				identifier?.context.isHydrated() === true,
 				0xa27 /* Expected hydrated identifier */,

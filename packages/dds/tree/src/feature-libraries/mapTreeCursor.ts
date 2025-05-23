@@ -12,6 +12,7 @@ import {
 	type FieldKey,
 	type ITreeCursor,
 	type MapTree,
+	type NodeData,
 	aboveRootPlaceholder,
 	detachedFieldAsKey,
 	mapCursorField,
@@ -21,40 +22,76 @@ import {
 import {
 	type CursorAdapter,
 	type CursorWithNode,
+	type Field,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "./treeCursorUtils.js";
+import type { requireAssignableTo } from "../util/index.js";
+
+export interface MapTreeNodeViewGeneric<TNode> extends NodeData {
+	readonly fields: Pick<
+		ReadonlyMap<FieldKey, MapTreeFieldViewGeneric<TNode>>,
+		typeof Symbol.iterator | "get" | "size" | "keys"
+	>;
+}
+
+export type MapTreeFieldViewGeneric<TNode> = Pick<
+	readonly TNode[],
+	typeof Symbol.iterator | "length"
+>;
+
+export interface MinimalMapTreeNodeView
+	extends MapTreeNodeViewGeneric<MinimalMapTreeNodeView> {}
+
+{
+	type _check1 = requireAssignableTo<MapTree, MinimalMapTreeNodeView>;
+	type _check2 = requireAssignableTo<MapTree, MapTreeNodeViewGeneric<MapTree>>;
+}
 
 /**
  * Returns an {@link ITreeCursorSynchronous} in nodes mode for a single {@link MapTree}.
  */
-export function cursorForMapTreeNode(root: MapTree): CursorWithNode<MapTree> {
-	return stackTreeNodeCursor(adapter, root);
+export function cursorForMapTreeNode<T extends MapTreeNodeViewGeneric<T>>(
+	root: T,
+): CursorWithNode<T> {
+	const adapterTyped = adapter as unknown as CursorAdapter<T>;
+	return stackTreeNodeCursor(adapterTyped, root);
 }
 
 /**
  * Returns an {@link ITreeCursorSynchronous} in fields mode for a MapTree field.
  */
-export function cursorForMapTreeField(
-	root: readonly MapTree[],
+export function cursorForMapTreeField<T extends MapTreeNodeViewGeneric<T>>(
+	root: readonly T[],
 	detachedField: DetachedField = rootField,
-): CursorWithNode<MapTree> {
+): CursorWithNode<T> {
 	const key = detachedFieldAsKey(detachedField);
-	return stackTreeFieldCursor(
-		adapter,
-		{
-			type: aboveRootPlaceholder,
-			fields: new Map([[key, root]]),
-		},
-		detachedField,
-	);
+	const adapterTyped = adapter as unknown as CursorAdapter<T>;
+	const dummyRoot: MapTreeNodeViewGeneric<T> = {
+		type: aboveRootPlaceholder,
+		fields: new Map([[key, root]]),
+	};
+	return stackTreeFieldCursor(adapterTyped, dummyRoot as T, detachedField);
 }
 
-const adapter: CursorAdapter<MapTree> = {
+const adapter: CursorAdapter<MinimalMapTreeNodeView> = {
 	value: (node) => node.value,
 	type: (node) => node.type,
 	keysFromNode: (node) => [...node.fields.keys()], // TODO: don't convert this to array here.
-	getFieldFromNode: (node, key) => node.fields.get(key) ?? [],
+	getFieldFromNode: (node, key): Field<MinimalMapTreeNodeView> => {
+		const field = node.fields.get(key) as
+			| MinimalMapTreeNodeView[]
+			| Iterable<MinimalMapTreeNodeView>
+			| undefined;
+		if (field === undefined) {
+			return [];
+		}
+		if (Array.isArray(field)) {
+			return field as readonly MinimalMapTreeNodeView[];
+		}
+		// TODO: this copy could be avoided by using Array.at instead of indexing in `Field`, but that requires ES2022.
+		return [...field] as readonly MinimalMapTreeNodeView[];
+	},
 };
 
 /**

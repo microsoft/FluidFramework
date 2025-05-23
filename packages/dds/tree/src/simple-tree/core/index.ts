@@ -39,6 +39,5 @@ export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
 export {
 	UnhydratedFlexTreeNode,
 	UnhydratedTreeSequenceField,
-	tryUnhydratedFlexTreeNode,
 	UnhydratedContext,
 } from "./unhydratedFlexTree.js";

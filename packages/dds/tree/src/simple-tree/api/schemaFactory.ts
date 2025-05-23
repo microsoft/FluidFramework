@@ -8,7 +8,6 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-import type { NodeIdentifierManager } from "../../feature-libraries/index.js";
 // This import is required for intellisense in @link doc comments on mouseover in VSCode.
 // eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 import type { TreeAlpha } from "../../shared-tree/index.js";
@@ -24,6 +23,7 @@ import type {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaBoth,
+	UnhydratedFlexTreeNode,
 } from "../core/index.js";
 import { isLazy } from "../flexList.js";
 import {
@@ -64,6 +64,10 @@ import {
 
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
+import { mapTreeFromNodeData } from "../toMapTree.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -1080,8 +1084,6 @@ export class SchemaFactory<
 	 *
 	 * - A compressed form of the identifier can be accessed at runtime via the {@link TreeNodeApi.shortId|Tree.shortId()} API.
 	 *
-	 * - It will not be present in the object's iterable properties until explicitly read or until having been inserted into a tree.
-	 *
 	 * However, a user may alternatively supply their own string as the identifier if desired (for example, if importing identifiers from another system).
 	 * In that case, if the user requires it to be unique, it is up to them to ensure uniqueness.
 	 * User-supplied identifiers may be read immediately, even before insertion into the tree.
@@ -1090,10 +1092,19 @@ export class SchemaFactory<
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
-			(nodeKeyManager: NodeIdentifierManager) => {
-				return nodeKeyManager.stabilizeNodeIdentifier(
-					nodeKeyManager.generateLocalNodeIdentifier(),
-				);
+			(
+				context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
+			): UnhydratedFlexTreeNode => {
+				const id =
+					context === "UseGlobalContext"
+						? globalIdentifierAllocator.decompress(
+								globalIdentifierAllocator.generateCompressedId(),
+							)
+						: context.nodeKeyManager.stabilizeNodeIdentifier(
+								context.nodeKeyManager.generateLocalNodeIdentifier(),
+							);
+
+				return mapTreeFromNodeData(id, this.string);
 			},
 		);
 		return createFieldSchema(FieldKind.Identifier, this.string, {
@@ -1266,3 +1277,5 @@ export function structuralName<const T extends string>(
 	}
 	return `${collectionName}<${inner}>`;
 }
+
+const globalIdentifierAllocator: IIdCompressor = createIdCompressor();

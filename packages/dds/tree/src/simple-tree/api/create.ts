@@ -3,19 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
-import type {
-	ExclusiveMapTree,
-	ITreeCursorSynchronous,
-	SchemaAndPolicy,
-} from "../../core/index.js";
+import type { ITreeCursorSynchronous, SchemaAndPolicy } from "../../core/index.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
-import {
-	getOrCreateNodeFromInnerNode,
-	UnhydratedFlexTreeNode,
-	type Unhydrated,
-} from "../core/index.js";
+import type { Unhydrated } from "../core/index.js";
 import {
 	defaultSchemaPolicy,
 	inSchemaOrThrow,
@@ -57,22 +49,7 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	assert(mapTrees.length === 1, 0xa11 /* unexpected field length */);
 	// Length asserted above, so this is safe. This assert is done instead of checking for undefined after indexing to ensure a length greater than 1 also errors.
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const mapTree = mapTrees[0]!;
-	return createFromMapTree(schema, mapTree);
-}
+	const _mapTree = mapTrees[0]!;
 
-/**
- * Creates an unhydrated simple-tree field from an ExclusiveMapTree.
- */
-export function createFromMapTree<const TSchema extends ImplicitFieldSchema>(
-	schema: TSchema,
-	mapTree: ExclusiveMapTree,
-): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-	const mapTreeNode = UnhydratedFlexTreeNode.getOrCreate(
-		getUnhydratedContext(schema),
-		mapTree,
-	);
-
-	const result = getOrCreateNodeFromInnerNode(mapTreeNode);
-	return result as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	return fail("TODO");
 }

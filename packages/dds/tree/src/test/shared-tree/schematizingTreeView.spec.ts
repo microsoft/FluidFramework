@@ -131,7 +131,7 @@ describe("SchematizingSimpleTreeView", () => {
 					// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
 					// In production cases this extra validation exists to help prevent corruption when bugs
 					// allow invalid data through the public API.
-					(child.mapTree as Mutable<typeof child.mapTree>).value = "invalid value";
+					(child.data as Mutable<typeof child.data>).value = "invalid value";
 
 					// Attempt to initialize with invalid content
 					if (enableSchemaValidation || additionalAsserts) {

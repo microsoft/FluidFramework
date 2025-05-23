@@ -8,7 +8,6 @@ export {
 	type FieldHasDefault,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableObjectFromSchemaRecord,
-	lazilyAllocateIdentifier,
 	type ObjectFromSchemaRecord,
 	objectSchema,
 	setField,

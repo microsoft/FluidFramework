@@ -8,7 +8,7 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey } from "../core/index.js";
-import type { NodeIdentifierManager } from "../feature-libraries/index.js";
+import type { FlexTreeHydratedContextMinimal } from "../feature-libraries/index.js";
 import {
 	type MakeNominal,
 	brand,
@@ -30,6 +30,7 @@ import type {
 	TreeNode,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
+	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { inPrototypeChain } from "./core/index.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
@@ -296,17 +297,17 @@ export interface FieldProps<TCustomMetadata = unknown> {
 }
 
 /**
- * A {@link FieldProvider} which requires additional context in order to produce its content
+ * A {@link FieldProvider} which prefers to have additional context in order to produce its content.
  */
 export type ContextualFieldProvider = (
-	context: NodeIdentifierManager,
-) => InsertableContent | undefined;
+	context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
+) => UnhydratedFlexTreeNode | undefined;
 /**
- * A {@link FieldProvider} which can produce its content in a vacuum
+ * A {@link FieldProvider} which can produce its content in a vacuum.
  */
-export type ConstantFieldProvider = () => InsertableContent | undefined;
+export type ConstantFieldProvider = () => UnhydratedFlexTreeNode[];
 /**
- * A function which produces content for a field every time that it is called
+ * A function which produces content for a field every time that it is called.
  */
 export type FieldProvider = ContextualFieldProvider | ConstantFieldProvider;
 /**
