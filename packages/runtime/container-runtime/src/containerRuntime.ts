@@ -3437,6 +3437,10 @@ export class ContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
+		assert(
+			this.lastEmittedDirty === this.computeCurrentDirtyState(),
+			"dirty state should be up to date",
+		);
 		// Rather than recomputing the dirty state in this moment,
 		// just regurgitate the last emitted dirty state.
 		return this.lastEmittedDirty;
