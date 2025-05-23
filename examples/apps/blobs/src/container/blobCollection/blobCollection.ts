@@ -39,8 +39,9 @@ class BlobCollection implements IBlobCollection {
 
 	private readonly trackBlob = (key: string): void => {
 		const handle = this.sharedMap.get(key) as IFluidHandle<ArrayBufferLike>;
-		handle.get().then(
-			(arrayBuffer: ArrayBufferLike) => {
+		handle
+			.get()
+			.then((arrayBuffer: ArrayBufferLike) => {
 				const newBlob: IBlobRecord = {
 					id: key,
 					// Blobs in Fluid are retrieved as ArrayBuffers, this translates it back to a Blob
@@ -50,11 +51,8 @@ class BlobCollection implements IBlobCollection {
 				// Sort in case timestamps disagree with map insertion order
 				this.blobs.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }));
 				this._events.emit("blobAdded", newBlob);
-			},
-			(error) => {
-				throw error;
-			},
-		);
+			})
+			.catch(console.error);
 	};
 
 	public constructor(
