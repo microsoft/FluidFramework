@@ -59,7 +59,6 @@ import {
 } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
-	cursorFromInsertable,
 	SchemaFactory,
 	toStoredSchema,
 	type TreeFieldFromImplicitField,
@@ -102,7 +101,6 @@ import type {
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { singleJsonCursor } from "../json/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
@@ -115,6 +113,8 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 
 const enableSchemaValidation = true;
 
@@ -432,7 +432,7 @@ describe("SharedTree", () => {
 		const loadingTree = await provider.createTree();
 		validateTreeContent(loadingTree.kernel.checkout, {
 			schema: JsonAsTree.Array,
-			initialTree: singleJsonCursor([value]),
+			initialTree: [value],
 		});
 	});
 
@@ -727,7 +727,7 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 		validateTreeContent(loadingTree.kernel.checkout, {
 			schema: StringArray,
-			initialTree: singleJsonCursor(["b", "c"]),
+			initialTree: ["b", "c"],
 		});
 	});
 
@@ -778,7 +778,7 @@ describe("SharedTree", () => {
 
 		validateTreeContent(tree2.kernel.checkout, {
 			schema: StringArray,
-			initialTree: singleJsonCursor(["a", "b", "c"]),
+			initialTree: ["a", "b", "c"],
 		});
 	});
 
@@ -801,7 +801,7 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.kernel.checkout, {
 			schema: StringArray,
-			initialTree: singleJsonCursor(["b", "c"]),
+			initialTree: ["b", "c"],
 		});
 
 		await provider.ensureSynchronized();
@@ -815,14 +815,14 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.kernel.checkout, {
 			schema: StringArray,
-			initialTree: singleJsonCursor(["a", "b", "c"]),
+			initialTree: ["a", "b", "c"],
 		});
 
 		await provider.ensureSynchronized();
 
 		validateTreeContent(loadingTree.kernel.checkout, {
 			schema: StringArray,
-			initialTree: singleJsonCursor(["a", "b", "c"]),
+			initialTree: ["a", "b", "c"],
 		});
 		unsubscribe();
 	});
@@ -1233,9 +1233,9 @@ describe("SharedTree", () => {
 				unsubscribe: unsubscribe2,
 			} = createTestUndoRedoStacks(tree2.kernel.checkout.events);
 
-			const initialState = {
+			const initialState: TreeSimpleContent = {
 				schema: StringArray,
-				initialTree: singleJsonCursor(["A", "B", "C", "D"]),
+				initialTree: ["A", "B", "C", "D"],
 			};
 
 			// Validate insertion
@@ -1389,7 +1389,7 @@ describe("SharedTree", () => {
 					// Validate insertion
 					validateTreeContent(tree2.kernel.checkout, {
 						schema,
-						initialTree: cursorFromInsertable(schema, [["a"]]),
+						initialTree: [["a"]],
 					});
 
 					// edit subtree
