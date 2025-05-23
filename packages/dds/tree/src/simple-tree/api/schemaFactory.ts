@@ -1000,6 +1000,7 @@ export class SchemaFactory<
 		const outputTypes = new Set(
 			normalizeAllowedTypes(structural.info as TreeNodeSchema | readonly TreeNodeSchema[]),
 		);
+		// If our cached value had a different set of types then were requested, the user must have caused a collision.
 		const same = compareSets({ a: inputTypes, b: outputTypes });
 		if (!same) {
 			throw new UsageError(
