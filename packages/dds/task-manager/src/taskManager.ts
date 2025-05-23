@@ -4,26 +4,24 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import type { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	IFluidSerializer,
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
-import { ITaskManager, ITaskManagerEvents } from "./interfaces.js";
+import type { ITaskManager, ITaskManagerEvents } from "./interfaces.js";
 
 /**
  * Description of a task manager operation
@@ -75,7 +73,7 @@ export class TaskManagerClass
 	 * Mapping of taskId to a queue of clientIds that are waiting on the task.  Maintains the consensus state of the
 	 * queue, even if we know we've submitted an op that should eventually modify the queue.
 	 */
-	private readonly taskQueues: Map<string, string[]> = new Map();
+	private readonly taskQueues = new Map<string, string[]>();
 
 	// opWatcher emits for every op on this data store.  This is just a repackaging of processCore into events.
 	private readonly opWatcher: EventEmitter = new EventEmitter();
@@ -92,17 +90,17 @@ export class TaskManagerClass
 	/**
 	 * Tracks the most recent pending op for a given task
 	 */
-	private readonly latestPendingOps: Map<string, IPendingOp> = new Map();
+	private readonly latestPendingOps = new Map<string, IPendingOp>();
 
 	/**
 	 * Tracks tasks that are this client is currently subscribed to.
 	 */
-	private readonly subscribedTasks: Set<string> = new Set();
+	private readonly subscribedTasks = new Set<string>();
 
 	/**
 	 * Map to track tasks that have pending complete ops.
 	 */
-	private readonly pendingCompletedTasks: Map<string, number[]> = new Map();
+	private readonly pendingCompletedTasks = new Map<string, number[]>();
 
 	/**
 	 * Returns the clientId. Will return a placeholder if the runtime is detached and not yet assigned a clientId.

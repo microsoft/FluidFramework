@@ -6,22 +6,21 @@
 import { strict as assert } from "node:assert";
 import * as path from "node:path";
 
-import {
+import type {
 	AsyncGenerator as Generator,
 	Reducer,
+} from "@fluid-private/stochastic-test-utils";
+import {
 	combineReducers,
 	createWeightedAsyncGenerator as createWeightedGenerator,
 	makeRandom,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
-import {
-	DDSFuzzModel,
-	DDSFuzzTestState,
-	createDDSFuzzSuite,
-} from "@fluid-private/test-dds-utils";
+import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { ITaskManager } from "../interfaces.js";
+import type { ITaskManager } from "../interfaces.js";
 import { TaskManagerFactory } from "../taskManagerFactory.js";
 
 import { _dirname } from "./dirname.cjs";
