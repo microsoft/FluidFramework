@@ -27,7 +27,6 @@ export type {
 	IMember,
 	IServiceAudience,
 	IServiceAudienceEvents,
-	IStaticEntryPoint,
 	LoadableObjectRecord,
 	MemberChangedListener,
 	Myself,

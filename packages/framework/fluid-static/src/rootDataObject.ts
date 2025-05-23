@@ -186,7 +186,7 @@ const rootDataStoreId = "rootDOId";
 
 /**
  * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} which constructs containers
- * with a {@link IStaticEntryPoint} (containing single {@link IRootDataObject}) as their entry point,
+ * with an entry point containing single IRootDataObject (entry point is opaque to caller),
  * where the root data object's registry and initial objects are configured based on the provided
  * schema (and optionally, data store registry).
  *
