@@ -28,13 +28,14 @@ import {
 import {
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
+	inSchemaOrThrow,
 	mapTreeFromCursor,
 	type NodeIdentifierManager,
 } from "../../feature-libraries/index.js";
 import { isFieldInSchema } from "../../feature-libraries/index.js";
-import { inSchemaOrThrow, mapTreeFromNodeData } from "../toMapTree.js";
+import { mapTreeFromNodeData } from "../toMapTree.js";
 import { getUnhydratedContext } from "../createContext.js";
-import { createUnknownOptionalFieldPolicy } from "../objectNode.js";
+import { createUnknownOptionalFieldPolicy } from "../node-kinds/index.js";
 
 /**
  * Construct tree content that is compatible with the field defined by the provided `schema`.

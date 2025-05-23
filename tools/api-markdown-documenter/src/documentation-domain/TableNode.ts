@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode.js";
 
@@ -65,10 +62,7 @@ import type { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode.js";
  *
  * @public
  */
-export class TableNode
-	extends DocumentationParentNodeBase<TableBodyRowNode>
-	implements MultiLineDocumentationNode
-{
+export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> {
 	/**
 	 * Static singleton representing an empty Table node.
 	 */

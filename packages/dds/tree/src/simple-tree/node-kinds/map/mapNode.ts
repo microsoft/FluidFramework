@@ -8,8 +8,8 @@ import type {
 	FlexTreeNode,
 	FlexTreeOptionalField,
 	OptionalFieldEditBuilder,
-} from "../feature-libraries/index.js";
-import { getTreeNodeForField } from "./proxies.js";
+} from "../../../feature-libraries/index.js";
+import { getTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	createFieldSchema,
 	FieldKind,
@@ -21,7 +21,7 @@ import {
 	type NodeSchemaMetadata,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateImplicitAllowedTypes,
-} from "./schemaTypes.js";
+} from "../../schemaTypes.js";
 import {
 	getKernel,
 	type InnerNode,
@@ -35,17 +35,17 @@ import {
 	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
-} from "./core/index.js";
+} from "../../core/index.js";
 import {
 	mapTreeFromNodeData,
 	type FactoryContent,
 	type InsertableContent,
-} from "./toMapTree.js";
-import { prepareForInsertion } from "./prepareForInsertion.js";
-import { brand, count, type RestrictiveStringRecord } from "../util/index.js";
-import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
-import type { ExclusiveMapTree } from "../core/index.js";
-import { getUnhydratedContext } from "./createContext.js";
+} from "../../toMapTree.js";
+import { prepareForInsertion } from "../../prepareForInsertion.js";
+import { brand, count, type RestrictiveStringRecord } from "../../../util/index.js";
+import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
+import type { ExclusiveMapTree } from "../../../core/index.js";
+import { getUnhydratedContext } from "../../createContext.js";
 import type { MapNodeCustomizableSchema, MapNodePojoEmulationSchema } from "./mapNodeTypes.js";
 
 /**

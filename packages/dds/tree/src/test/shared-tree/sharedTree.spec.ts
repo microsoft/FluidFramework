@@ -114,13 +114,13 @@ import {
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
-import { proxySlot } from "../../simple-tree/core/treeNodeKernel.js";
+import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 
 const enableSchemaValidation = true;
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
-	forest: ForestTypeReference,
+	forest: ForestTypeExpensiveDebug,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
@@ -203,9 +203,9 @@ describe("SharedTree", () => {
 						assert(node.context.isDisposed() === false);
 						assert(allowNodes);
 					}
-					const proxy = anchor.slots.get(proxySlot);
-					if (proxy !== undefined) {
-						assert.equal(Tree.status(proxy), TreeStatus.InDocument);
+					const treeNode = anchor.slots.get(simpleTreeNodeSlot);
+					if (treeNode !== undefined) {
+						assert.equal(Tree.status(treeNode), TreeStatus.InDocument);
 						assert(allowNodes);
 					}
 				}
@@ -2081,7 +2081,7 @@ describe("SharedTree", () => {
 			assert.equal(trees[0].kernel.checkout.forest instanceof ObjectForest, true);
 		});
 
-		it("ForestType.Reference uses ObjectForest with additionalAsserts flag set to false", () => {
+		it("ForestTypeReference uses ObjectForest with additionalAsserts flag set to false", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2094,7 +2094,7 @@ describe("SharedTree", () => {
 			assert.equal(forest.additionalAsserts, false);
 		});
 
-		it("ForestType.Optimized uses ChunkedForest", () => {
+		it("ForestTypeOptimized uses ChunkedForest", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2105,7 +2105,7 @@ describe("SharedTree", () => {
 			assert.equal(trees[0].kernel.checkout.forest instanceof ChunkedForest, true);
 		});
 
-		it("ForestType.Expensive uses ObjectForest with additionalAsserts flag set to true", () => {
+		it("ForestTypeExpensive uses ObjectForest with additionalAsserts flag set to true", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({

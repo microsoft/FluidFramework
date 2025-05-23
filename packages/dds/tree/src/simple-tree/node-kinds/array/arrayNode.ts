@@ -6,12 +6,12 @@
 import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
+import { EmptyKey, type ExclusiveMapTree } from "../../../core/index.js";
 import {
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
 	isFlexTreeNode,
-} from "../feature-libraries/index.js";
+} from "../../../feature-libraries/index.js";
 import {
 	normalizeAllowedTypes,
 	unannotateImplicitAllowedTypes,
@@ -22,7 +22,7 @@ import {
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateImplicitAllowedTypes,
-} from "./schemaTypes.js";
+} from "../../schemaTypes.js";
 import {
 	type WithType,
 	// eslint-disable-next-line import/no-deprecated
@@ -37,17 +37,17 @@ import {
 	getSimpleNodeSchemaFromInnerNode,
 	getOrCreateInnerNode,
 	type TreeNodeSchemaClass,
-} from "./core/index.js";
-import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
-import { prepareArrayForInsertion } from "./prepareForInsertion.js";
+} from "../../core/index.js";
+import { type InsertableContent, mapTreeFromNodeData } from "../../toMapTree.js";
+import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
 import {
 	getKernel,
 	UnhydratedFlexTreeNode,
 	UnhydratedTreeSequenceField,
-} from "./core/index.js";
-import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
-import { getUnhydratedContext } from "./createContext.js";
-import type { System_Unsafe } from "./api/index.js";
+} from "../../core/index.js";
+import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
+import { getUnhydratedContext } from "../../createContext.js";
+import type { System_Unsafe } from "../../api/index.js";
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
@@ -862,7 +862,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const contentArray = content.flatMap((c): InsertableContent[] =>
 			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
 		);
-		const mapTrees = prepareArrayForInsertion(
+		const mapTrees = prepareArrayContentForInsertion(
 			contentArray,
 			this.simpleSchema,
 			sequenceField.context,

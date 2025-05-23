@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { RestrictiveStringRecord } from "../util/index.js";
+import type { RestrictiveStringRecord } from "../../../util/index.js";
 import type {
 	TreeObjectNode,
 	SimpleKeyMap,
@@ -13,10 +13,10 @@ import type {
 	FieldSchemaAlpha,
 	ImplicitAnnotatedFieldSchema,
 	UnannotateSchemaRecord,
-} from "./schemaTypes.js";
-import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
-import type { FieldKey } from "../core/index.js";
-import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "./simpleSchema.js";
+} from "../../schemaTypes.js";
+import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "../../core/index.js";
+import type { FieldKey } from "../../../core/index.js";
+import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simpleSchema.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.
