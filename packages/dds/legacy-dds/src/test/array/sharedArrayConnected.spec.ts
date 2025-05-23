@@ -15,7 +15,13 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { IToggleOperation, IToggleMoveOperation, IRevertible } from "../../index.js";
+import type {
+	IToggleOperation,
+	IToggleMoveOperation,
+	IRevertible,
+	ISharedArray,
+	ISharedArrayRevertible,
+} from "../../index.js";
 import { SharedArray, SharedArrayRevertible } from "../../index.js";
 import {
 	verifyEventsEmitted,
@@ -26,7 +32,7 @@ import {
 } from "../utilities.js";
 
 describe("SharedArray", () => {
-	let sharedArray: SharedArray<number>;
+	let sharedArray: ISharedArray<number>;
 	let factory: IChannelFactory;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let testData: number[];
@@ -35,13 +41,13 @@ describe("SharedArray", () => {
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		factory = SharedArray.getFactory();
-		sharedArray = factory.create(dataStoreRuntime, "sharedArray") as SharedArray<number>;
+		sharedArray = factory.create(dataStoreRuntime, "sharedArray") as ISharedArray<number>;
 		testData = [1, 2, 3, 4];
 		expectedSharedArray = testData;
 	});
 
 	describe("SharedArray in connected state with a remote SharedArray", () => {
-		let remoteSharedArray: SharedArray<number>;
+		let remoteSharedArray: ISharedArray<number>;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		beforeEach(async () => {
@@ -69,7 +75,7 @@ describe("SharedArray", () => {
 			remoteSharedArray = factory.create(
 				dataStoreRuntime2,
 				"remoteSharedArray",
-			) as SharedArray<number>;
+			) as ISharedArray<number>;
 			remoteSharedArray.connect(services2);
 		});
 
@@ -123,11 +129,14 @@ describe("SharedArray", () => {
 					// Choose a random insertion index.
 					const insertIndex = getRandomInt(0, sharedArray.get().length + 1);
 
-					let revertible: IRevertible = new SharedArrayRevertible(sharedArray, {
-						entryId: "dummy",
-						type: 3,
-						isDeleted: false,
-					} satisfies IToggleOperation);
+					let revertible: IRevertible = new SharedArrayRevertible(
+						sharedArray as ISharedArrayRevertible,
+						{
+							entryId: "dummy",
+							type: 3,
+							isDeleted: false,
+						} satisfies IToggleOperation,
+					);
 
 					// Attach the revertible event listener.
 					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
