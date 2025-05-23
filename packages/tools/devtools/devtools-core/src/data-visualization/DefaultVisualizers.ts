@@ -113,13 +113,14 @@ export function createDataObjectVisualizer(parentId: string): VisualizeSharedObj
 		dataObjectRoot: ISharedObject,
 		visualizeChildData: VisualizeChildData,
 	): Promise<FluidObjectTreeNode> => {
+		const fluidObjectId = `${parentId}-${dataObjectRoot.id}`;
 		const renderedChildData = (await visualizeSharedDirectory(
 			dataObjectRoot,
 			visualizeChildData,
 		)) as FluidObjectTreeNode;
 
 		return {
-			fluidObjectId: `${parentId}-${dataObjectRoot.id}`,
+			fluidObjectId,
 			children: renderedChildData.children,
 			metadata: renderedChildData.metadata,
 			typeMetadata: "DataObject",
