@@ -40,6 +40,7 @@ export type SectionContent = BlockContent | SectionNode;
  * </section>
  * ```
  *
+ * @sealed
  * @public
  */
 export class SectionNode extends DocumentationParentNodeBase<SectionContent> {

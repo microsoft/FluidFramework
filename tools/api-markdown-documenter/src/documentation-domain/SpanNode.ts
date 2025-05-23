@@ -18,6 +18,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
 /**
  * The types of child nodes that can be contained within a {@link SpanNode}.
  *
+ * @sealed
  * @public
  */
 export type SpanContent = PhrasingContent | BlockContent;

@@ -159,7 +159,7 @@ export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 // @public
 export type BlockContent = BlockContentMap[keyof BlockContentMap];
 
-// @public
+// @public @sealed
 export interface BlockContentMap {
     // (undocumented)
     blockquote: BlockQuoteNode;
@@ -179,7 +179,7 @@ export interface BlockContentMap {
     unorderedList: UnorderedListNode;
 }
 
-// @public
+// @public @sealed
 export class BlockQuoteNode extends DocumentationParentNodeBase<PhrasingContent> {
     constructor(children: PhrasingContent[]);
     static createFromPlainText(text: string): BlockQuoteNode;
@@ -188,7 +188,7 @@ export class BlockQuoteNode extends DocumentationParentNodeBase<PhrasingContent>
     readonly type = DocumentationNodeType.BlockQuote;
 }
 
-// @public
+// @public @sealed
 export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
     constructor(value: PlainTextNode);
     static createFromPlainText(text: string): CodeSpanNode;
@@ -359,7 +359,7 @@ export interface DocumentHierarchyConfiguration extends DocumentationHierarchyCo
     readonly kind: HierarchyKind.Document;
 }
 
-// @public
+// @public @sealed
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(properties: DocumentNodeProps);
     readonly apiItem?: ApiItem;
@@ -396,7 +396,7 @@ export namespace DocumentWriter {
     export function create(): DocumentWriter;
 }
 
-// @public
+// @public @sealed
 export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingContent> {
     constructor(children: PhrasingContent[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
@@ -484,7 +484,7 @@ export interface Heading {
     readonly title: string;
 }
 
-// @public
+// @public @sealed
 export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Heading, "title"> {
     constructor(
     title: PlainTextNode,
@@ -535,7 +535,7 @@ export type HierarchyOptions = {
     readonly getFolderName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
 
-// @public
+// @public @sealed
 export class HorizontalRuleNode implements DocumentationNode {
     constructor();
     readonly isEmpty = false;
@@ -587,7 +587,7 @@ declare namespace LayoutUtilities {
 }
 export { LayoutUtilities }
 
-// @public
+// @public @sealed
 export class LineBreakNode implements DocumentationNode {
     constructor();
     readonly isEmpty = false;
@@ -604,7 +604,7 @@ export interface Link {
     readonly text: string;
 }
 
-// @public
+// @public @sealed
 export class LinkNode implements DocumentationNode {
     constructor(
     text: PlainTextNode,
@@ -679,7 +679,7 @@ export interface MarkdownRenderers {
 
 export { NewlineKind }
 
-// @public
+// @public @sealed
 export class OrderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
     constructor(children: PhrasingContent[]);
     static createFromPlainTextEntries(entries: string[]): OrderedListNode;
@@ -688,7 +688,7 @@ export class OrderedListNode extends DocumentationParentNodeBase<PhrasingContent
     readonly type = DocumentationNodeType.OrderedList;
 }
 
-// @public
+// @public @sealed
 export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> {
     constructor(children: PhrasingContent[]);
     static createFromPlainText(text: string): ParagraphNode;
@@ -700,7 +700,7 @@ export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> 
 // @public
 export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
 
-// @public
+// @public @sealed
 export interface PhrasingContentMap {
     // (undocumented)
     codeSpan: CodeSpanNode;
@@ -714,7 +714,7 @@ export interface PhrasingContentMap {
     text: PlainTextNode;
 }
 
-// @public
+// @public @sealed
 export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
     constructor(text: string, escaped?: boolean);
     static readonly Empty: PlainTextNode;
@@ -776,7 +776,7 @@ export interface SectionHierarchyConfiguration extends DocumentationHierarchyCon
     readonly kind: HierarchyKind.Section;
 }
 
-// @public
+// @public @sealed
 export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
     constructor(children: SectionContent[], heading?: HeadingNode);
     static readonly Empty: SectionNode;
@@ -788,7 +788,7 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 // @public
 function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationConfiguration): boolean;
 
-// @public
+// @public @sealed
 export type SpanContent = PhrasingContent | BlockContent;
 
 // @public
@@ -800,14 +800,14 @@ export class SpanNode extends DocumentationParentNodeBase<SpanContent> {
     readonly type = DocumentationNodeType.Span;
 }
 
-// @public
+// @public @sealed
 export class TableBodyCellNode extends TableCellNode {
     constructor(children: TableCellContent[]);
     static createFromPlainText(text: string): TableBodyCellNode;
     static readonly Empty: TableBodyCellNode;
 }
 
-// @public
+// @public @sealed
 export class TableBodyRowNode extends TableRowNode {
     constructor(cells: TableCellNode[]);
     static readonly Empty: TableBodyRowNode;
@@ -822,27 +822,27 @@ export enum TableCellKind {
     Header = "Header"
 }
 
-// @public
+// @public @sealed
 export abstract class TableCellNode extends DocumentationParentNodeBase<TableCellContent> {
     protected constructor(children: TableCellContent[], cellKind: TableCellKind);
     readonly cellKind: TableCellKind;
     readonly type = DocumentationNodeType.TableCell;
 }
 
-// @public
+// @public @sealed
 export class TableHeaderCellNode extends TableCellNode {
     constructor(children: TableCellContent[]);
     static createFromPlainText(text: string): TableHeaderCellNode;
     static readonly Empty: TableHeaderCellNode;
 }
 
-// @public
+// @public @sealed
 export class TableHeaderRowNode extends TableRowNode {
     constructor(cells: TableHeaderCellNode[]);
     static readonly Empty: TableHeaderRowNode;
 }
 
-// @public
+// @public @sealed
 export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> {
     constructor(bodyRows: TableBodyRowNode[], headingRow?: TableHeaderRowNode);
     static readonly Empty: TableNode;
@@ -857,14 +857,14 @@ export enum TableRowKind {
     Header = "Header"
 }
 
-// @public
+// @public @sealed
 export abstract class TableRowNode extends DocumentationParentNodeBase<TableCellNode> {
     protected constructor(cells: TableCellNode[], rowKind: TableRowKind);
     readonly rowKind: TableRowKind;
     readonly type = DocumentationNodeType.TableRow;
 }
 
-// @public
+// @public @sealed
 export interface TextFormatting {
     readonly bold?: boolean;
     readonly italic?: boolean;
@@ -906,7 +906,7 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
 // @public
 export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
 
-// @public
+// @public @sealed
 export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
     constructor(children: PhrasingContent[]);
     static createFromPlainTextEntries(entries: string[]): UnorderedListNode;

@@ -32,6 +32,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * </p>
  * ```
  *
+ * @sealed
  * @public
  */
 export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> {

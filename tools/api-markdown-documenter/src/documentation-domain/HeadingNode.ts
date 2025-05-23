@@ -28,6 +28,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * <h1>Documentation 101</h1>
  * ```
  *
+ * @sealed
  * @public
  */
 export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Heading, "title"> {

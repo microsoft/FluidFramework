@@ -24,6 +24,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * <a href="https://fluidframework.com/">Fluid Framework</a>
  * ```
  *
+ * @sealed
  * @public
  */
 export class LinkNode implements DocumentationNode {

@@ -29,6 +29,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * </blockquote>
  * ```
  *
+ * @sealed
  * @public
  */
 export class BlockQuoteNode extends DocumentationParentNodeBase<PhrasingContent> {

@@ -58,6 +58,7 @@ export type TableCellContent = PhrasingContent | BlockContent;
  *
  * - {@link TableRowNode}
  *
+ * @sealed
  * @public
  */
 export abstract class TableCellNode extends DocumentationParentNodeBase<TableCellContent> {
@@ -80,6 +81,7 @@ export abstract class TableCellNode extends DocumentationParentNodeBase<TableCel
 /**
  * A {@link TableCellNode} that lives in the heading row of a {@link TableNode}.
  *
+ * @sealed
  * @public
  */
 export class TableHeaderCellNode extends TableCellNode {
@@ -106,6 +108,7 @@ export class TableHeaderCellNode extends TableCellNode {
 /**
  * A {@link TableCellNode} that lives in the body of a {@link TableNode}.
  *
+ * @sealed
  * @public
  */
 export class TableBodyCellNode extends TableCellNode {

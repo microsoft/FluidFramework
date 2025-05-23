@@ -27,6 +27,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * </code>
  * ```
  *
+ * @sealed
  * @public
  */
 export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingContent> {

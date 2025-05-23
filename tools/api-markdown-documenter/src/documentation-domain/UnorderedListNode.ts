@@ -32,6 +32,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * </ul>
  * ```
  *
+ * @sealed
  * @public
  */
 export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingContent> {

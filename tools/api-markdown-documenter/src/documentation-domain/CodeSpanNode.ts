@@ -22,6 +22,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * <code>Foo</code>
  * ```
  *
+ * @sealed
  * @public
  */
 export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {

@@ -7,6 +7,9 @@
 The Documentation Domain has been updated to be more restrictive about what kinds of content can appear under specific kinds of nodes.
 Most node kinds in the domain have been updated to better align with Markdown.
 
+System node implementations have also been marked as `@sealed` - we do not support user derivations of these types.
+If something similar to one of these types is required, a custom `DocumentationNode` implementation may be created instead.
+
 #### New extensibility model
 
 A new extensibility model has been added to the Documentation Domain to ensure users can continue to specify custom node kinds.
