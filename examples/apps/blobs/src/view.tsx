@@ -27,11 +27,10 @@ const drawAPrettyPictureIntoBlob = async (): Promise<Blob> => {
 	// Annoyingly, canvas.toBlob is a callback-based API rather than returning a Promise.
 	return new Promise<Blob>((resolve, reject) => {
 		canvasElm.toBlob((blob) => {
-			// eslint-disable-next-line unicorn/no-negated-condition
-			if (blob !== null) {
-				resolve(blob);
-			} else {
+			if (blob === null) {
 				reject(new Error("Couldn't get a blob for the pretty picture"));
+			} else {
+				resolve(blob);
 			}
 		});
 	});
