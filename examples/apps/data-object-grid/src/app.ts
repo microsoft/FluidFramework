@@ -43,7 +43,7 @@ async function start(): Promise<void> {
 	location.hash = id;
 	document.title = id;
 
-	const contentDiv = document.querySelector("#content") as HTMLDivElement;
+	const contentDiv = document.querySelector("#content");
 
 	const parsedUrl = new URL(window.location.href);
 	const requestedItemId = parsedUrl.searchParams.get("item") ?? undefined;
