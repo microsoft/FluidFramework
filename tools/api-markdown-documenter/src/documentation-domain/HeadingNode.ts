@@ -55,11 +55,14 @@ export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Headi
 	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
 	public get isEmpty(): boolean {
-		return this.text.isEmpty;
+		return this.title.isEmpty;
 	}
 
 	public constructor(
-		public readonly text: PlainTextNode,
+		/**
+		 * {@inheritDoc Heading.title}
+		 */
+		public readonly title: PlainTextNode,
 
 		/**
 		 * {@inheritDoc Heading.id}
@@ -69,12 +72,11 @@ export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Headi
 
 	/**
 	 * Generates a `HeadingNode` from the provided string.
-	 * @param text - The node contents. Note: this must not contain newline characters.
+	 * @param title - See {@link Heading.title}
 	 * @param id - See {@link Heading.id}
-	 * @param level - See {@link Heading.level}
 	 */
-	public static createFromPlainText(text: string, id?: string): HeadingNode {
-		return new HeadingNode(new PlainTextNode(text), id);
+	public static createFromPlainText(title: string, id?: string): HeadingNode {
+		return new HeadingNode(new PlainTextNode(title), id);
 	}
 
 	/**

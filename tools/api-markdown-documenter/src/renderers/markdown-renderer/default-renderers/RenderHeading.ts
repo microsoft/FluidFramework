@@ -60,7 +60,7 @@ function renderHeadingWithMarkdownSyntax(
 	if (renderAsHeading) {
 		const headingPreamble = "#".repeat(headingLevel);
 		writer.write(`${headingPreamble} `);
-		renderNode(headingNode.text, writer, context);
+		renderNode(headingNode.title, writer, context);
 
 		if (headingNode.id !== undefined) {
 			const escapedId = escapeTextForMarkdown(headingNode.id);
@@ -70,7 +70,7 @@ function renderHeadingWithMarkdownSyntax(
 		if (headingNode.id !== undefined) {
 			renderAnchor(headingNode.id, writer);
 		}
-		renderNode(headingNode.text, writer, { ...context, bold: true });
+		renderNode(headingNode.title, writer, { ...context, bold: true });
 	}
 
 	writer.ensureSkippedLine(); // Headings require trailing blank line

@@ -193,7 +193,6 @@ export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
     constructor(value: PlainTextNode);
     static createFromPlainText(text: string): CodeSpanNode;
     static readonly Empty: CodeSpanNode;
-    // (undocumented)
     get isEmpty(): boolean;
     readonly singleLine = true;
     readonly type = DocumentationNodeType.CodeSpan;
@@ -487,17 +486,17 @@ export interface Heading {
 
 // @public
 export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Heading, "title"> {
-    constructor(text: PlainTextNode,
+    constructor(
+    title: PlainTextNode,
     id?: string | undefined);
-    static createFromPlainText(text: string, id?: string): HeadingNode;
+    static createFromPlainText(title: string, id?: string): HeadingNode;
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
     readonly id?: string | undefined;
     get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = false;
     readonly singleLine = true;
-    // (undocumented)
-    readonly text: PlainTextNode;
+    readonly title: PlainTextNode;
     readonly type = DocumentationNodeType.Heading;
 }
 

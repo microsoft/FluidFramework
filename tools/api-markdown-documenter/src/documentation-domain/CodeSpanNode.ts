@@ -40,6 +40,9 @@ export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
 	 */
 	public readonly singleLine = true;
 
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
 	public get isEmpty(): boolean {
 		return this.value.isEmpty;
 	}
