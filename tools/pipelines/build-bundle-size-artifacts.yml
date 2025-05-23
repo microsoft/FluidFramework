@@ -22,12 +22,21 @@ extends:
   parameters:
     publish: false
     taskLint: false
-    taskTest: [] # No need to run tests in this pipeline
+    # Note: this pipeline runs tests because it's part of our Code Coverage processes
+    taskTest:
+      - ci:test:mocha
+      - ci:test:jest
+      - ci:test:realsvc:local
+      - test:copyresults
+    testResultDirs:
+      - nyc/examples
+      - nyc/experimental
+      - nyc/packages
     taskPack: false
     taskBundleAnalysis: true
     taskPublishBundleSizeArtifacts: true
     taskBuildDocs: false
-    testCoverage: false
+    testCoverage: true
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     buildDirectory: .
