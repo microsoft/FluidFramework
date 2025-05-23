@@ -12,7 +12,12 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { AttendeeId, Attendee, Presence, PresenceEvents } from "./presence.js";
+import type {
+	AttendeeId,
+	Attendee,
+	PresenceWithNotifications as Presence,
+	PresenceEvents,
+} from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	RuntimeLocalUpdateOptions,
