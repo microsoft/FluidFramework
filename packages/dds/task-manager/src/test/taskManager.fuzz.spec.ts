@@ -217,13 +217,14 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 	return withLogging(reducer);
 }
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 function assertEqualTaskManagers(a: ITaskManager, b: ITaskManager): void {
-	const queue1 = (a as any).taskQueues;
-	const queue2 = (b as any).taskQueues;
+	/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+	const queue1: Map<string, string[]> = (a as any).taskQueues;
+	const queue2: Map<string, string[]> = (b as any).taskQueues;
+	/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+
 	assert.strictEqual(queue1.size, queue2.size, "The number of tasks queues are not the same");
 	for (const [key, val] of queue1) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		const testVal = queue2.get(key);
 		if (testVal === undefined) {
 			assert(val === undefined, "Task queues are not both undefined");
@@ -231,15 +232,14 @@ function assertEqualTaskManagers(a: ITaskManager, b: ITaskManager): void {
 		}
 		assert.strictEqual(testVal.length, val.length, "Task queues are not the same size");
 		if (testVal.length > 0) {
-			const testValArr = testVal as string[];
-			const valArr = val as string[];
+			const testValArr = testVal;
+			const valArr = val;
 			for (const [index, task] of testValArr.entries()) {
 				assert.strictEqual(task, valArr[index], `Task queues are not identical`);
 			}
 		}
 	}
 }
-/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
 describe("TaskManager fuzz testing", () => {
 	const model: DDSFuzzModel<TaskManagerFactory, Operation, FuzzTestState> = {
