@@ -5,6 +5,7 @@
 
 import type {
 	ContainerExtension,
+	ContainerExtensionFactory,
 	InboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -21,10 +22,14 @@ import type { SignalMessages } from "./protocol.js";
  * Common Presence manager for a container
  */
 class ContainerPresenceManager
-	implements ContainerExtension<never, ExtensionRuntimeProperties>
+	implements
+		ContainerExtension<ExtensionRuntimeProperties>,
+		InstanceType<ContainerExtensionFactory<Presence, ExtensionRuntimeProperties>>
 {
+	// ContainerExtensionFactory return elements
 	public readonly interface: Presence;
 	public readonly extension = this;
+
 	private readonly manager: PresenceExtensionInterface;
 
 	public constructor(host: ExtensionHost) {

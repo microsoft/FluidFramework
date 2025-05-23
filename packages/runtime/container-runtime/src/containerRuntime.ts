@@ -299,7 +299,7 @@ import { Throttler, formExponentialFn } from "./throttler.js";
  * A {@link ContainerExtension}'s factory function as stored in extension map.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` required to allow typed factory to be assignable per ContainerExtension.processSignal
-type ExtensionEntry = ContainerExtensionFactory<unknown, unknown[], any> extends new (
+type ExtensionEntry = ContainerExtensionFactory<unknown, any, unknown[]> extends new (
 	...args: any[]
 ) => infer T
 	? T
@@ -5088,11 +5088,11 @@ export class ContainerRuntime
 
 	public acquireExtension<
 		T,
-		TUseContext extends unknown[],
 		TRuntimeProperties extends ExtensionRuntimeProperties,
+		TUseContext extends unknown[],
 	>(
 		id: ContainerExtensionId,
-		factory: ContainerExtensionFactory<T, TUseContext, TRuntimeProperties>,
+		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
 		...useContext: TUseContext
 	): T {
 		let entry = this.extensions.get(id);

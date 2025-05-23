@@ -148,8 +148,8 @@ export interface ExtensionRuntimeProperties {
  * @internal
  */
 export interface ContainerExtension<
-	TUseContext extends unknown[],
 	TRuntimeProperties extends ExtensionRuntimeProperties,
+	TUseContext extends unknown[] = [],
 > {
 	/**
 	 * Notifies the extension of a new use context.
@@ -249,14 +249,14 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
  */
 export type ContainerExtensionFactory<
 	T,
-	TUseContext extends unknown[],
 	TRuntimeProperties extends ExtensionRuntimeProperties,
+	TUseContext extends unknown[] = [],
 > = new (
 	host: ExtensionHost<TRuntimeProperties>,
 	...useContext: TUseContext
 ) => {
 	readonly interface: T;
-	readonly extension: ContainerExtension<TUseContext, TRuntimeProperties>;
+	readonly extension: ContainerExtension<TRuntimeProperties, TUseContext>;
 };
 
 /**
@@ -291,11 +291,11 @@ export interface ContainerExtensionStore {
 	 */
 	acquireExtension<
 		T,
-		TUseContext extends unknown[],
 		TRuntimeProperties extends ExtensionRuntimeProperties,
+		TUseContext extends unknown[] = [],
 	>(
 		id: ContainerExtensionId,
-		factory: ContainerExtensionFactory<T, TUseContext, TRuntimeProperties>,
+		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
 		...context: TUseContext
 	): T;
 }

@@ -39,7 +39,7 @@ import type {
  * @internal
  */
 export type PresenceExtensionInterface = Required<
-	Pick<ContainerExtension<never, ExtensionRuntimeProperties>, "processSignal">
+	Pick<ContainerExtension<ExtensionRuntimeProperties>, "processSignal">
 >;
 
 /**
