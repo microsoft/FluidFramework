@@ -27,7 +27,7 @@ import type { UnorderedListNode } from "./UnorderedListNode.js";
  * }
  * ```
  *
- * For a union of all phrasing content types, see {@link BlockContent}.
+ * For a union of all block content types, see {@link BlockContent}.
  *
  * @public
  */
