@@ -175,7 +175,7 @@ describe("LazyField", () => {
 		const schema = toStoredSchema(factory.number);
 		const forest = forestWithContent({
 			schema,
-			initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(SchemaFactory.number, 5),
+			initialTree: fieldCursorFromInsertable(SchemaFactory.number, 5),
 		});
 		const context = getReadonlyContext(forest, SchemaFactory.number);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
@@ -198,7 +198,7 @@ describe("LazyField", () => {
 		const schema = toStoredSchema(Holder);
 		const forest = forestWithContent({
 			schema,
-			initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(Holder, { f: 5 }),
+			initialTree: fieldCursorFromInsertable(Holder, { f: 5 }),
 		});
 		const context = getReadonlyContext(forest, Holder);
 
@@ -222,7 +222,7 @@ describe("LazyField", () => {
 		const schema = toStoredSchema(Holder);
 		const forest = forestWithContent({
 			schema,
-			initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(Holder, { f: 5 }),
+			initialTree: fieldCursorFromInsertable(Holder, { f: 5 }),
 		});
 		const context = getReadonlyContext(forest, Holder);
 

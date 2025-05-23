@@ -281,7 +281,7 @@ export const testTrees: readonly TestTree[] = [
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
 			return jsonableTreesFromFieldCursor(
-				fieldCursorFromInsertable<UnsafeUnknownSchema>(HasIdentifierField, { field: id }),
+				fieldCursorFromInsertable(HasIdentifierField, { field: id }),
 			);
 		},
 		policy: defaultSchemaPolicy,
