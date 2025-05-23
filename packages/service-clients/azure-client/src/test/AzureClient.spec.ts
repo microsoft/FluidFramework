@@ -6,11 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IContainer, IRuntime } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
+import type { ContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
+import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
-import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import type { IFluidContainer } from "@fluidframework/fluid-static";
+import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, SharedTree, TreeViewConfiguration } from "fluid-framework";
@@ -45,15 +49,45 @@ function createAzureClient(
 	});
 }
 
-const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-	(container as any).container.connectionMode as ConnectionMode;
+// Collection of helper functions to probe into internal properties.
+// There isn't a lot of safety if the internal types change, but
+// this is better than `any`.
+
+function getRuntimeOptions(
+	runtime: IRuntime | { runtimeOptions: Readonly<ContainerRuntimeOptionsInternal> },
+): Readonly<ContainerRuntimeOptionsInternal> {
+	assert("runtimeOptions" in runtime);
+	return runtime.runtimeOptions;
+}
+
+function getContainerRuntime(
+	container: IContainer | { readonly runtime: IRuntime },
+): IRuntime {
+	assert("runtime" in container);
+	return container.runtime;
+}
+
+function getContainerConnectionMode(
+	container: IContainer | { readonly connectionMode: ConnectionMode },
+): ConnectionMode {
+	assert("connectionMode" in container);
+	return container.connectionMode;
+}
+
+const connectionModeOf = (container: IFluidContainer): ConnectionMode => {
+	assert(isInternalFluidContainer(container));
+	return getContainerConnectionMode(container.container);
+};
 
 for (const compatibilityMode of ["1", "2"] as const) {
 	describe(`AzureClient (compatibilityMode: ${compatibilityMode})`, function () {
 		const connectTimeoutMs = 1000;
 		let client: AzureClient;
-		let schema: ContainerSchema;
+		let schema: {
+			initialObjects: {
+				map1: typeof SharedMap;
+			};
+		};
 
 		beforeEach("createAzureClient", function () {
 			client = createAzureClient();
@@ -373,7 +407,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					flushMode: 0,
 					compressionOptions: {
 						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: "lz4",
+						compressionAlgorithm: CompressionAlgorithms.lz4,
 					},
 					maxBatchSizeInBytes: 716800,
 					chunkSizeInBytes: 204800,
@@ -381,26 +415,30 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
 					createBlobPayloadPending: undefined,
-				};
+				} as const satisfies ContainerRuntimeOptionsInternal;
 				const expectedRuntimeOptions2 = {
 					summaryOptions: {},
 					gcOptions: {},
 					loadSequenceNumberVerification: "close",
 					flushMode: 1,
-					compressionOptions: { minimumBatchSizeInBytes: 614400, compressionAlgorithm: "lz4" },
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
 					maxBatchSizeInBytes: 716800,
 					chunkSizeInBytes: 204800,
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
 					createBlobPayloadPending: undefined,
-				};
+				} as const satisfies ContainerRuntimeOptionsInternal;
 
 				const expectedRuntimeOptions =
 					compatibilityMode === "1" ? expectedRuntimeOptions1 : expectedRuntimeOptions2;
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-				const actualRuntimeOptions = (container_defaultConfig as any).container._runtime
-					.runtimeOptions;
+				assert(isInternalFluidContainer(container_defaultConfig));
+				const actualRuntimeOptions = getRuntimeOptions(
+					getContainerRuntime(container_defaultConfig.container),
+				);
 
 				assert.deepStrictEqual(
 					actualRuntimeOptions,

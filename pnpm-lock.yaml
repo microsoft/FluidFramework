@@ -12938,6 +12938,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.55.0
         version: 0.55.0(@types/node@18.19.67)
+      '@fluidframework/container-runtime':
+        specifier: workspace:~
+        version: link:../../runtime/container-runtime
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.4
         version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)
