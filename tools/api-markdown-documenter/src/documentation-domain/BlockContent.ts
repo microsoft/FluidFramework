@@ -35,7 +35,7 @@ export interface BlockContentMap {
 	blockquote: BlockQuoteNode;
 	fencedCodeBlock: FencedCodeBlockNode;
 	horizontalRule: HorizontalRuleNode;
-	lineBreak: LineBreakNode; // TODO: do we need this here?
+	lineBreak: LineBreakNode;
 	orderedList: OrderedListNode;
 	paragraph: ParagraphNode;
 	table: TableNode;
