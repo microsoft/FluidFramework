@@ -245,6 +245,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param timeoutMs - time limit on making the connection
 	 * @param epochTracker - track epoch changes
 	 * @param socketReferenceKeyPrefix - (optional) prefix to isolate socket reuse cache
+	 * @param connectionId - connection ID for the connection
 	 */
 	public static async create(
 		tenantId: string,
@@ -257,6 +258,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		timeoutMs: number,
 		epochTracker: EpochTracker,
 		socketReferenceKeyPrefix: string | undefined,
+		connectionId: string = uuid(),
 	): Promise<OdspDocumentDeltaConnection> {
 		const mc = loggerToMonitoringContext(telemetryLogger);
 
@@ -281,7 +283,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		);
 
 		const socket = socketReference.socket;
-		const connectionId = uuid();
 		const connectMessage: IConnect = {
 			client,
 			id: documentId,
