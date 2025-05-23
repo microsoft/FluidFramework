@@ -13,7 +13,6 @@ import {
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
-	mapTreeFromNodeData,
 	SchemaFactoryAlpha,
 	treeNodeApi as Tree,
 	TreeViewConfiguration,

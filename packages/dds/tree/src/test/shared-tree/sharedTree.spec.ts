@@ -107,7 +107,6 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
 	asTreeViewAlpha,
-	SchemaFactoryAlpha,
 	toSimpleTreeSchema,
 	type ITree,
 	// eslint-disable-next-line import/no-internal-modules

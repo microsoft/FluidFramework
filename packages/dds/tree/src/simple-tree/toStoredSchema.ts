@@ -28,6 +28,7 @@ import {
 	normalizeAllowedTypes,
 	normalizeFieldSchema,
 	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 } from "./schemaTypes.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
@@ -42,9 +43,9 @@ import type {
 const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
 
 /**
- * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ * Converts a {@link ImplicitAnnotatedFieldSchema} into a {@link TreeStoredSchema}.
  */
-export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
+export function toStoredSchema(root: ImplicitAnnotatedFieldSchema): TreeStoredSchema {
 	return getOrCreate(viewToStoredCache, root, () => {
 		const normalized = normalizeFieldSchema(root);
 		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
@@ -58,10 +59,18 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 						)}. Remove or rename them to avoid the collision.`,
 					);
 				}
-				nodeSchema.set(
-					brand(schema.identifier),
-					getStoredSchema(schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema),
-				);
+
+				const annotations =
+					normalized.annotatedAllowedTypeSet.get(schema);
+
+				// Enablables are stripped from the stored schema
+				// TODO:#38722 The schema upgrade mechanism will store information on the schema if an upgrade has happened
+				if (annotations !== undefined && annotations.enablableSchemaUpgrade === undefined) {
+					nodeSchema.set(
+						brand(schema.identifier),
+						getStoredSchema(schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema),
+					);
+				}
 			},
 		});
 
