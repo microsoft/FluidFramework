@@ -15,9 +15,23 @@ import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import {
+	unbrandJson,
+	brandJson,
+	asDeeplyReadonlyFromJsonHandle,
+} from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries } from "./internalUtils.js";
-import type { LatestClientData, LatestData } from "./latestValueTypes.js";
+import {
+	createValidatedGetter,
+	type LatestClientData,
+	type LatestData,
+	type ProxiedValueAccessor,
+	type RawValueAccessor,
+	type StateSchemaValidator,
+	type ValueAccessor,
+} from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -26,13 +40,13 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @alpha
  */
-export interface LatestRawEvents<T> {
+export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> {
 	/**
 	 * Raised when remote client's value is updated, which may be the same value.
 	 *
 	 * @eventProperty
 	 */
-	remoteUpdated: (update: LatestClientData<T>) => void;
+	remoteUpdated: (update: LatestClientData<T, TRemoteValueAccessor>) => void;
 
 	/**
 	 * Raised when local client's value is updated, which may be the same value.
@@ -53,7 +67,21 @@ export interface LatestRawEvents<T> {
  * @sealed
  * @alpha
  */
-export interface LatestRaw<T> {
+export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
+
+/**
+ * State that provides the latest known value from this client to others and read access to their values.
+ * All participant clients must provide a value.
+ *
+ * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface Latest<
+	T,
+	TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
+> {
 	/**
 	 * Containing {@link Presence}
 	 */
@@ -62,7 +90,7 @@ export interface LatestRaw<T> {
 	/**
 	 * Events for LatestRaw.
 	 */
-	readonly events: Listenable<LatestRawEvents<T>>;
+	readonly events: Listenable<LatestEvents<T, TRemoteAccessor>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -79,29 +107,35 @@ export interface LatestRaw<T> {
 	set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 
 	/**
-	 * Iterable access to remote clients' values.
-	 */
-	getRemotes(): IterableIterator<LatestClientData<T>>;
-	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
 	getStateAttendees(): Attendee[];
+
+	/**
+	 * Iterable access to remote clients' values.
+	 */
+	getRemotes(): IterableIterator<LatestClientData<T, TRemoteAccessor>>;
+
 	/**
 	 * Access to a specific attendee's value.
 	 */
-	getRemote(attendee: Attendee): LatestData<T>;
+	getRemote(attendee: Attendee): LatestData<T, TRemoteAccessor>;
 }
 
 class LatestValueManagerImpl<T, Key extends string>
-	implements LatestRaw<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
+	implements
+		LatestRaw<T>,
+		Latest<T>,
+		Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
-	public readonly events = createEmitter<LatestRawEvents<T>>();
+	public readonly events = createEmitter<LatestEvents<T, ValueAccessor<T>>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
+		private readonly validator: StateSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -112,13 +146,13 @@ class LatestValueManagerImpl<T, Key extends string>
 	}
 
 	public get local(): DeepReadonly<JsonDeserialized<T>> {
-		return asDeeplyReadonly(this.value.value);
+		return asDeeplyReadonly(unbrandJson(this.value.value));
 	}
 
 	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
-		this.value.value = value;
+		this.value.value = brandJson(value);
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
@@ -126,18 +160,23 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.events.emit("localUpdated", { value: asDeeplyReadonly(value) });
 	}
 
-	public *getRemotes(): IterableIterator<LatestClientData<T>> {
-		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
-			if (attendeeId !== allKnownStates.self) {
+	public getRemotes: () => IterableIterator<LatestClientData<T, ValueAccessor<T>>> =
+		function* (this: LatestValueManagerImpl<T, Key>) {
+			const allKnownStates = this.datastore.knownValues(this.key);
+			for (const [attendeeId, clientState] of objectEntries(allKnownStates.states)) {
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: asDeeplyReadonly(value.value),
-					metadata: { revision: value.rev, timestamp: value.timestamp },
+					value:
+						this.validator === undefined
+							? asDeeplyReadonlyFromJsonHandle(clientState.value)
+							: createValidatedGetter(clientState, this.validator),
+					metadata: {
+						revision: clientState.rev,
+						timestamp: clientState.timestamp,
+					},
 				};
 			}
-		}
-	}
+		};
 
 	public getStateAttendees(): Attendee[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
@@ -146,17 +185,20 @@ class LatestValueManagerImpl<T, Key extends string>
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public getRemote(attendee: Attendee): LatestData<T> {
+	public getRemote = (attendee: Attendee): LatestData<T, ValueAccessor<T>> => {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
-			throw new Error("No entry for clientId");
+			throw new Error(`No entry for attendeeId: ${attendee.attendeeId}`);
 		}
 		return {
-			value: asDeeplyReadonly(clientState.value),
+			value:
+				this.validator === undefined
+					? asDeeplyReadonlyFromJsonHandle(clientState.value)
+					: createValidatedGetter(clientState, this.validator),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
-	}
+	};
 
 	public update(
 		attendee: Attendee,
@@ -174,7 +216,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					value: asDeeplyReadonly(value.value),
+					value: createValidatedGetter(value, this.validator),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];
@@ -197,7 +239,21 @@ export interface LatestArguments<T extends object | null> {
 	 * See {@link BroadcastControlSettings}.
 	 */
 	settings?: BroadcastControlSettings | undefined;
+
+	/**
+	 * See {@link StateSchemaValidator}.
+	 */
+	validator?: StateSchemaValidator<T> | undefined;
 }
+
+/**
+ * Factory for creating a {@link Latest} State object.
+ *
+ * @alpha
+ */
+export function latest<T extends object | null, Key extends string = string>(
+	args: LatestArguments<T> & { validator: StateSchemaValidator<T> },
+): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 /**
  * Factory for creating a {@link LatestRaw} State object.
@@ -205,31 +261,85 @@ export interface LatestArguments<T extends object | null> {
  * @alpha
  */
 export function latest<T extends object | null, Key extends string = string>(
+	args: Omit<LatestArguments<T>, "validator">,
+): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+
+/* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
+export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,
-): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
-	const { local, settings } = args;
+):
+	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>
+	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
+	const { local, settings, validator } = args;
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
+	const internalValue =
+		local === null
+			? (local as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<T>)
+			: // FIXME: Why isn't this directly castable?
+				(shallowCloneObject(
+					local,
+				) as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<T>);
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: local === null ? local : shallowCloneObject(local),
+		value: internalValue,
 	};
-	const factory = (
-		key: Key,
-		datastoreHandle: InternalTypes.StateDatastoreHandle<
-			Key,
-			InternalTypes.ValueRequiredState<T>
-		>,
-	): {
-		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<LatestRaw<T>>;
-	} => ({
-		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
-		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings),
-		),
-	});
+
+	// FIXME There has to be a better way than duplicating the function...
+	const factory =
+		validator === undefined
+			? (
+					key: Key,
+					datastoreHandle: InternalTypes.StateDatastoreHandle<
+						Key,
+						InternalTypes.ValueRequiredState<T>
+					>,
+				): {
+					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
+					manager: InternalTypes.StateValue<LatestRaw<T>>;
+				} => ({
+					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+					manager: brandIVM<
+						LatestValueManagerImpl<T, Key>,
+						T,
+						InternalTypes.ValueRequiredState<T>
+					>(
+						new LatestValueManagerImpl(
+							key,
+							datastoreFromHandle(datastoreHandle),
+							value,
+							validator,
+							settings,
+						),
+					),
+				})
+			: (
+					key: Key,
+					datastoreHandle: InternalTypes.StateDatastoreHandle<
+						Key,
+						InternalTypes.ValueRequiredState<T>
+					>,
+				): {
+					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
+					manager: InternalTypes.StateValue<Latest<T>>;
+				} => ({
+					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+					manager: brandIVM<
+						LatestValueManagerImpl<T, Key>,
+						T,
+						InternalTypes.ValueRequiredState<T>
+					>(
+						new LatestValueManagerImpl(
+							key,
+							datastoreFromHandle(datastoreHandle),
+							value,
+							validator,
+							settings,
+						),
+					),
+				});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
 }
+/* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
