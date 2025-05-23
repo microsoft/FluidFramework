@@ -19,4 +19,4 @@ export const iconMap = {
 	FabricTextHighlight: <DrawTextRegular />,
 	NumberSymbol: <NumberSymbolRegular />,
 	Touch: <CursorClickRegular />,
-};
+} as const;

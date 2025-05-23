@@ -8,7 +8,7 @@ import { ChevronDownFilled, ChevronUpFilled, TargetEditFilled } from "@fluentui/
 import React from "react";
 
 import { Collapsible } from "./collapsible.cjs";
-import { IDataObjectGridItemEntry } from "./dataObjectRegistry.js";
+import { IDataObjectGridItemEntry, type ISingleHandleItem } from "./dataObjectRegistry.js";
 import { iconMap } from "./icons.js";
 import "./toolbar.css";
 
@@ -41,19 +41,22 @@ const DataObjectGridToolbarAddItemPicker: React.FC<
 			{"Add Items"}
 		</Button>
 	);
-	const itemButtonList = toolbarOptions.map((toolbarOption) => (
-		<Button
-			className="data-grid-toolbar-option-button"
-			key={`toolbarButton-${toolbarOption.key}`}
-			icon={iconMap[toolbarOption.fabricIconName]}
-			onClick={() => {
-				toolbarOption.create();
-				setOpen(false);
-			}}
-		>
-			{toolbarOption.friendlyName}
-		</Button>
-	));
+	const itemButtonList = toolbarOptions.map((toolbarOption: IToolbarOption) => {
+		const icon = iconMap[toolbarOption.fabricIconName] as React.ReactElement;
+		return (
+			<Button
+				key={toolbarOption.key}
+				className="data-grid-toolbar-tool"
+				icon={icon}
+				onClick={() => {
+					setOpen(false);
+					toolbarOption.create();
+				}}
+			>
+				{toolbarOption.friendlyName}
+			</Button>
+		);
+	});
 
 	return (
 		<Collapsible
@@ -71,7 +74,7 @@ interface IDataObjectGridToolbarProps {
 	editable: boolean;
 	setEditable: (editable: boolean) => void;
 	addItem: (type: string) => void;
-	registry: Map<string, IDataObjectGridItemEntry>;
+	registry: Map<string, IDataObjectGridItemEntry<ISingleHandleItem>>;
 }
 
 export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> = (
