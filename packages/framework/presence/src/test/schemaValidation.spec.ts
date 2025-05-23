@@ -185,7 +185,7 @@ describe("Presence", () => {
 				assert.equal(validatorSpy.callCount, 1);
 			});
 
-			it("calls validator only once for the same data", () => {
+			it("calls validator only once if data is unchanged", () => {
 				// Setup
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
@@ -236,36 +236,6 @@ describe("Presence", () => {
 				// Subsequent reads should not call the validator when there is no new data.
 				assert.equal(remoteData.value(), undefined);
 				assert.equal(spy.callCount, 1);
-			});
-
-			// FIXME: skipped test
-			it("invalidates data on update", () => {
-				// Setup
-				// Configure a state workspace
-				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({
-						local: { num: 0 },
-						validator: validatorFunction,
-						settings: { allowableUpdateLatencyMs: 0 },
-					}),
-				});
-
-				const { count } = stateWorkspace.states;
-				count.local = { num: 22 };
-
-				// Act & Verify
-				// Call getRemote instead of .local so that the validator is called.
-				const remoteData = count.getRemote(presence.attendees.getMyself());
-
-				// Reading the data should cause the validator to get called once.
-				assert.equal(remoteData.value()?.num, 22);
-				assert.equal(validatorSpy.callCount, 1);
-
-				count.local = { num: 33 };
-
-				// Validator will be called again because the value changed.
-				assert.equal(remoteData.value()?.num, 33, "Second value read failed");
-				assert.equal(validatorSpy.callCount, 2);
 			});
 		});
 
@@ -357,41 +327,6 @@ describe("Presence", () => {
 				keyData = remoteData.get("key1")?.value();
 				assert.equal(validatorSpy.callCount, 1);
 				assert.equal(keyData?.num, 11);
-			});
-
-			it("invalidates data when key is set", () => {
-				// Setup
-				// Configure a state workspace
-				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latestMap({
-						local: { "key1": { num: 0 } satisfies TestData },
-						validator: validatorFunction,
-						settings: { allowableUpdateLatencyMs: 0 },
-					}),
-				});
-
-				const { count } = stateWorkspace.states;
-				count.local.set("key1", { num: 11 });
-
-				// Act & Verify
-				// Reading the data should cause the validator to get called once. Since this is a map, we need to read a key
-				// value to call the validator.
-				const remoteData = count.getRemote(presence.attendees.getMyself());
-
-				let keyData = remoteData.get("key1")?.value();
-
-				// Subsequent reads should not call the validator when there is no new data.
-				keyData = remoteData.get("key1")?.value();
-				keyData = remoteData.get("key1")?.value();
-				assert.equal(validatorSpy.callCount, 1);
-				assert.equal(keyData?.num, 11);
-
-				count.local.set("key1", { num: 22 });
-
-				keyData = remoteData.get("key1")?.value();
-				keyData = remoteData.get("key1")?.value();
-				assert.equal(validatorSpy.callCount, 2);
-				assert.equal(keyData?.num, 22);
 			});
 		});
 	});

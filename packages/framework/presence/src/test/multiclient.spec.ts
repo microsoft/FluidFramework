@@ -9,6 +9,12 @@ import { AttachState } from "@fluidframework/container-definitions";
 // import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 // import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { Off } from "@fluidframework/core-interfaces";
+import type {
+	DeepReadonly,
+	JsonDeserialized,
+	JsonSerializable,
+} from "@fluidframework/core-interfaces/internal";
 import type { ScopeType } from "@fluidframework/driver-definitions/internal";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
@@ -17,31 +23,27 @@ import type {
 	TinyliciousContainerServices,
 	TinyliciousUser,
 } from "@fluidframework/tinylicious-client";
-import type { Listenable, Off } from "@fluidframework/core-interfaces";
-import type {
-	DeepReadonly,
-	JsonDeserialized,
-	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal";
 
-import { createTinyliciousClient } from "./TinyliciousClientFactory.js";
-import { type ValidatorSpy, createSpiedValidator, createNullValidator } from "./testUtils.js";
-import type { Attendee, AttendeeId, Presence } from "../presence.js";
-import type {
-	LatestClientData,
-	ProxiedValueAccessor,
-	StateSchemaValidator,
-} from "../latestValueTypes.js";
-import type { StatesWorkspace, WorkspaceAddress } from "../types.js";
-import type { LatestMap, LatestMapClientData } from "../latestMapValueManager.js";
 import {
 	ExperimentalPresenceManager,
 	getPresenceViaDataObject,
 	type ExperimentalPresenceDO,
 } from "../datastorePresenceManagerFactory.js";
 import type { InternalTypes } from "../exposedInternalTypes.js";
+import type { LatestMap, LatestMapClientData } from "../latestMapValueManager.js";
 import type { Latest } from "../latestValueManager.js";
+import type {
+	LatestClientData,
+	LatestData,
+	ProxiedValueAccessor,
+	StateSchemaValidator,
+} from "../latestValueTypes.js";
+import type { Attendee, Presence } from "../presence.js";
 import { StateFactory } from "../stateFactory.js";
+import type { StatesWorkspace, WorkspaceAddress } from "../types.js";
+
+import { createTinyliciousClient } from "./TinyliciousClientFactory.js";
+import { type ValidatorSpy, createSpiedValidator, createNullValidator } from "./testUtils.js";
 
 interface TestData {
 	num: number;
@@ -54,214 +56,86 @@ interface TestMapData {
 
 const listeners: Off[] = [];
 
-async function waitForAttendeeEvent(
-	event: "attendeeDisconnected" | "attendeeConnected",
-	...presences: Presence[]
-): Promise<Attendee[]> {
-	return Promise.all(
-		presences.map(async (presence, index) =>
-			timeoutPromise<Attendee>(
-				(resolve) => {
-					const off = presence.attendees.events.on(event, (attendee) => {
-						off();
-						resolve(attendee);
-					});
-					listeners.push(off);
-				},
-				{
-					durationMs: 2000,
-					errorMsg: `Attendee[${index}] Timeout`,
-				},
+/**
+ * Used as a namespace for functions that wait for client events.
+ */
+const event = {
+	async AttendeeEvent(
+		evt: "attendeeDisconnected" | "attendeeConnected",
+		...presences: Presence[]
+	): Promise<Attendee[]> {
+		return Promise.all(
+			presences.map(async (presence, index) =>
+				timeoutPromise<Attendee>(
+					(resolve) => {
+						const off = presence.attendees.events.on(evt, (attendee) => {
+							off();
+							resolve(attendee);
+						});
+						listeners.push(off);
+					},
+					{
+						durationMs: 2000,
+						errorMsg: `Attendee[${index}] Timeout`,
+					},
+				),
 			),
-		),
-	);
-}
-
-async function waitForRemoteUpdated<T>(
-	latestData: Latest<T, ProxiedValueAccessor<T>>,
-	tag = "",
-) {
-	await timeoutPromise<LatestClientData<T, ProxiedValueAccessor<T>>>(
-		(resolve) =>
-			latestData.events.on("remoteUpdated", (data) => {
-				// console.log(`${tag}remoteUpdated: ${JSON.stringify(data, undefined, 2)}`);
-				resolve(data);
-			}),
-		{
-			durationMs: 2000,
-			errorMsg: `${tag}remoteUpdated Timeout`,
-		},
-	);
-}
-
-async function waitForRemoteMapUpdated<T>(
-	latestData: LatestMap<T, any, ProxiedValueAccessor<T>>,
-	tag = "",
-) {
-	await timeoutPromise<LatestMapClientData<T, any, ProxiedValueAccessor<T>, AttendeeId>>(
-		(resolve) =>
-			latestData.events.on("remoteUpdated", (data) => {
-				// console.log(`${tag}remoteUpdated: ${JSON.stringify(data, undefined, 2)}`);
-				resolve(data);
-			}),
-		{
-			durationMs: 2000,
-			errorMsg: `${tag}remoteUpdated Timeout`,
-		},
-	);
-}
-
-async function waitForLocalUpdated<T>(
-	latestData: Latest<T, ProxiedValueAccessor<T>>,
-	tag = "",
-) {
-	await timeoutPromise<DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>>(
-		(resolve) =>
-			latestData.events.on("localUpdated", (data) => {
-				// console.log(`${tag}localUpdated: ${JSON.stringify(data, undefined, 2)}`);
-				resolve(data.value);
-			}),
-		{
-			durationMs: 2000,
-			errorMsg: `${tag}localUpdated Timeout`,
-		},
-	);
-}
-
-async function waitForWorkspaceActivated(presence: Presence): Promise<WorkspaceAddress> {
-	const workspaceAddress = await timeoutPromise<WorkspaceAddress>(
-		(resolve) =>
-			presence.events.on("workspaceActivated", (data) => {
-				// console.log(`workspaceActivated: ${JSON.stringify(data)}`);
-				resolve(data);
-			}),
-		{
-			durationMs: 2000,
-			errorMsg: `workspaceActivated Timeout`,
-		},
-	);
-	return workspaceAddress;
-}
-
-async function initTestWorkspaces(
-	p1: Presence,
-	p2: Presence,
-): Promise<{
-	client1: {
-		attendee: Attendee;
-		latest: {
-			stateManager: Latest<TestData>;
-			validatorFunction: StateSchemaValidator<TestData>;
-			validatorSpy: ValidatorSpy;
-		};
-		latestMap: {
-			stateManager: LatestMap<TestData>;
-			validatorFunction: StateSchemaValidator<TestData>;
-			validatorSpy: ValidatorSpy;
-		};
-	};
-	client2: {
-		attendee: Attendee;
-		latest: {
-			stateManager: Latest<TestData>;
-			validatorFunction: StateSchemaValidator<TestData>;
-			validatorSpy: ValidatorSpy;
-		};
-		latestMap: {
-			stateManager: LatestMap<TestData>;
-			validatorFunction: StateSchemaValidator<TestData>;
-			validatorSpy: ValidatorSpy;
-		};
-	};
-}> {
-	const [validatorFunction1, validatorSpy1] = createSpiedValidator<TestData>(
-		createNullValidator(),
-	);
-	const [validatorFunction2, validatorSpy2] = createSpiedValidator<TestData>(
-		createNullValidator(),
-	);
-
-	const [mapValidatorFunction1, mapValidatorSpy1] = createSpiedValidator<TestData>(
-		createNullValidator(),
-	);
-	const [mapValidatorFunction2, mapValidatorSpy2] = createSpiedValidator<TestData>(
-		createNullValidator(),
-	);
-
-	// return {
-	// 	// attendees: [p1.attendees.getMyself(), p2.attendees.getMyself()],
-	// 	// workspaces: [stateWorkspace1, stateWorkspace2],
-	// 	validatorFunctions: [validatorFunction1, validatorFunction2],
-	// 	validatorSpies: [validatorSpy1, validatorSpy2],
-	// };
-
-	// Configure a state workspace on client 1
-	const stateWorkspace1 = p1.states.getWorkspace("name:testStateWorkspace", {
-		latestState: StateFactory.latest({
-			local: { num: 0 } satisfies TestData,
-			validator: validatorFunction1,
-			settings: { allowableUpdateLatencyMs: 0 },
-		}),
-		latestMap: StateFactory.latestMap({
-			local: { key1: { num: 3 }, key2: { num: 2 } } satisfies TestMapData,
-			validator: validatorFunction2,
-			settings: { allowableUpdateLatencyMs: 0 },
-		}),
-	});
-
-	// Wait for client 2 to receive the workspaceActivated event
-	const workspaceAddress = await waitForWorkspaceActivated(p2);
-
-	// Client 2 now gets a reference to the workspace and sets its initial local data
-	const stateWorkspace2 = p2.states.getWorkspace(workspaceAddress, {
-		latestState: StateFactory.latest({
-			local: { num: 0 } satisfies TestData,
-			validator: validatorFunction1,
-			settings: { allowableUpdateLatencyMs: 0 },
-		}),
-		latestMap: StateFactory.latestMap({
-			local: { key1: { num: 3 }, key2: { num: 2 } } satisfies TestMapData,
-			validator: validatorFunction2,
-			settings: { allowableUpdateLatencyMs: 0 },
-		}),
-	});
-
-	// Get references to the states
-	const { latestState: latestState1, latestMap: latestMap1 } = stateWorkspace1.states;
-	const { latestState: latestState2, latestMap: latestMap2 } = stateWorkspace2.states;
-
-	// Wait for the first client to receive the remote data from client 2's workspace init
-	await waitForRemoteUpdated(latestState1);
-
-	return {
-		client1: {
-			attendee: p1.attendees.getMyself(),
-			latest: {
-				stateManager: latestState1,
-				validatorFunction: validatorFunction1,
-				validatorSpy: validatorSpy1,
+		);
+	},
+	async RemoteUpdated<T>(latestData: Latest<T>, tag = ""): Promise<void> {
+		await timeoutPromise<LatestClientData<T, ProxiedValueAccessor<T>>>(
+			(resolve) =>
+				latestData.events.on("remoteUpdated", (data) => {
+					// console.log(`${tag}remoteUpdated: ${JSON.stringify(data, undefined, 2)}`);
+					resolve(data);
+				}),
+			{
+				durationMs: 2000,
+				errorMsg: `${tag}remoteUpdated Timeout`,
 			},
-			latestMap: {
-				stateManager: latestMap1,
-				validatorFunction: mapValidatorFunction1,
-				validatorSpy: mapValidatorSpy1,
+		);
+	},
+	async RemoteMapUpdated<T>(latestData: LatestMap<T, string>, tag = ""): Promise<void> {
+		await timeoutPromise<LatestMapClientData<T, string, ProxiedValueAccessor<T>>>(
+			(resolve) =>
+				latestData.events.on("remoteUpdated", (data) => {
+					// console.log(`${tag}remoteUpdated: ${JSON.stringify(data, undefined, 2)}`);
+					resolve(data);
+				}),
+			{
+				durationMs: 2000,
+				errorMsg: `${tag}remoteUpdated Timeout`,
 			},
-		},
-		client2: {
-			attendee: p1.attendees.getMyself(),
-			latest: {
-				stateManager: latestState2,
-				validatorFunction: validatorFunction2,
-				validatorSpy: validatorSpy2,
+		);
+	},
+	async LocalUpdated<T>(latestData: Latest<T>, tag = ""): Promise<void> {
+		await timeoutPromise<DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>>(
+			(resolve) =>
+				latestData.events.on("localUpdated", (data) => {
+					// console.log(`${tag}localUpdated: ${JSON.stringify(data, undefined, 2)}`);
+					resolve(data.value);
+				}),
+			{
+				durationMs: 2000,
+				errorMsg: `${tag}localUpdated Timeout`,
 			},
-			latestMap: {
-				stateManager: latestMap2,
-				validatorFunction: mapValidatorFunction2,
-				validatorSpy: mapValidatorSpy2,
+		);
+	},
+	async WorkspaceActivated(presence: Presence): Promise<WorkspaceAddress> {
+		const workspaceAddress = await timeoutPromise<WorkspaceAddress>(
+			(resolve) =>
+				presence.events.on("workspaceActivated", (data) => {
+					// console.log(`workspaceActivated: ${JSON.stringify(data)}`);
+					resolve(data);
+				}),
+			{
+				durationMs: 2000,
+				errorMsg: `workspaceActivated Timeout`,
 			},
-		},
-	};
-}
+		);
+		return workspaceAddress;
+	},
+};
 
 describe(`Presence with TinyliciousClient`, () => {
 	const connectedContainers: IFluidContainer[] = [];
@@ -282,6 +156,29 @@ describe(`Presence with TinyliciousClient`, () => {
 	let presence1: Presence;
 	let presence2: Presence;
 	let presence3: Presence;
+
+	let validatorFunction1: StateSchemaValidator<TestData>;
+	let validatorFunction2: StateSchemaValidator<TestData>;
+	let validatorFunction3: StateSchemaValidator<TestData>;
+
+	let validatorSpy1: ValidatorSpy;
+	let validatorSpy2: ValidatorSpy;
+	let validatorSpy3: ValidatorSpy;
+
+	let attendee1: Attendee;
+	let attendee2: Attendee;
+
+	beforeEach(() => {
+		[validatorFunction1, validatorSpy1] = createSpiedValidator<TestData>(
+			createNullValidator(),
+		);
+		[validatorFunction2, validatorSpy2] = createSpiedValidator<TestData>(
+			createNullValidator(),
+		);
+		[validatorFunction3, validatorSpy3] = createSpiedValidator<TestData>(
+			createNullValidator(),
+		);
+	});
 
 	afterEach(() => {
 		for (const container of connectedContainers) {
@@ -346,7 +243,7 @@ describe(`Presence with TinyliciousClient`, () => {
 		};
 	};
 
-	const initMultiClientSetup = async () => {
+	const initMultiClientSetup = async (): Promise<void> => {
 		const res = await getOrCreatePresenceContainer(undefined, user1);
 		presence1 = res.presence;
 
@@ -360,7 +257,7 @@ describe(`Presence with TinyliciousClient`, () => {
 		assert.notEqual(presence2, undefined);
 		assert.notEqual(presence3, undefined);
 
-		const returnedAttendees = await waitForAttendeeEvent(
+		const returnedAttendees = await event.AttendeeEvent(
 			"attendeeConnected",
 			presence1,
 			presence2,
@@ -370,74 +267,40 @@ describe(`Presence with TinyliciousClient`, () => {
 		assert.equal(returnedAttendees.length, 3);
 	};
 
-	/**
-	 * If this is called, it must be called after initMultiClient.
-	 */
-	const initWorkspaces = async () => {};
-
 	describe("multiclient presence data validation", () => {
 		it("getOrCreatePresenceContainer creates and returns initialized containers", async () => {
 			await initMultiClientSetup();
 		});
 
-		describe("LatestValueManager", () => {
-			let validatorFunction1: StateSchemaValidator<TestData>;
-			let validatorFunction2: StateSchemaValidator<TestData>;
-			let validatorFunction3: StateSchemaValidator<TestData>;
-			let validatorSpy1: ValidatorSpy;
-			let validatorSpy2: ValidatorSpy;
-			let validatorSpy3: ValidatorSpy;
+		describe("Latest", () => {
+			let stateWorkspace1: StatesWorkspace<{
+				testData: InternalTypes.ManagerFactory<
+					string,
+					InternalTypes.ValueRequiredState<{
+						num: number;
+					}>,
+					Latest<{
+						num: number;
+					}>
+				>;
+			}>;
 
-			let attendee1: Attendee;
-			let attendee2: Attendee;
+			let stateWorkspace2: StatesWorkspace<{
+				testData: InternalTypes.ManagerFactory<
+					string,
+					InternalTypes.ValueRequiredState<{
+						num: number;
+					}>,
+					Latest<{
+						num: number;
+					}>
+				>;
+			}>;
 
-			let stateWorkspace1: StatesWorkspace<
-				{
-					testData: InternalTypes.ManagerFactory<
-						string,
-						InternalTypes.ValueRequiredState<{
-							num: number;
-						}>,
-						Latest<
-							{
-								num: number;
-							},
-							"proxied"
-						>
-					>;
-				},
-				unknown
-			>;
-
-			let stateWorkspace2: StatesWorkspace<
-				{
-					testData: InternalTypes.ManagerFactory<
-						string,
-						InternalTypes.ValueRequiredState<{
-							num: number;
-						}>,
-						Latest<
-							{
-								num: number;
-							},
-							"proxied"
-						>
-					>;
-				},
-				unknown
-			>;
+			let client1: Latest<TestData>;
+			let client2: Latest<TestData>;
 
 			beforeEach(async () => {
-				[validatorFunction1, validatorSpy1] = createSpiedValidator<TestData>(
-					createNullValidator(),
-				);
-				[validatorFunction2, validatorSpy2] = createSpiedValidator<TestData>(
-					createNullValidator(),
-				);
-				[validatorFunction3, validatorSpy3] = createSpiedValidator<TestData>(
-					createNullValidator(),
-				);
-
 				await initMultiClientSetup();
 
 				[attendee1, attendee2] = [
@@ -455,7 +318,7 @@ describe(`Presence with TinyliciousClient`, () => {
 				});
 
 				// Wait for client 2 to receive the workspaceActivated event
-				const workspaceAddress = await waitForWorkspaceActivated(presence2);
+				const workspaceAddress = await event.WorkspaceActivated(presence2);
 
 				// Client 2 now gets a reference to the workspace and sets its initial local data
 				stateWorkspace2 = presence2.states.getWorkspace(workspaceAddress, {
@@ -465,246 +328,234 @@ describe(`Presence with TinyliciousClient`, () => {
 						settings: { allowableUpdateLatencyMs: 0 },
 					}),
 				});
+
+				// Get references to the states
+				client1 = stateWorkspace1.states.testData;
+				client2 = stateWorkspace2.states.testData;
+
+				// Wait for client 1 to receive client 2's initial data
+				await event.RemoteUpdated(client1);
 			});
 
 			it("getRemote does not call validator", async () => {
-				// Get references to the states
-				const { testData: client1 } = stateWorkspace1.states;
-				const { testData: client2 } = stateWorkspace2.states;
-
-				// Wait for client 1 to receive client 2's initial data
-				await waitForRemoteUpdated(client1);
-
-				// Reading the remote value should cause the validator to be called
-				let value = client1.getRemote(attendee2).value();
-				assert.equal(value?.num, 1, "getRemote(attendee2) count is wrong");
-				assert.equal(validatorSpy1.callCount, 1);
+				client1.getRemote(attendee2);
+				assert.equal(validatorSpy1.callCount, 0);
 			});
 
-			it("standalone megatest", async () => {
-				// Get references to the states
-				const { testData: client1 } = stateWorkspace1.states;
-				const { testData: client2 } = stateWorkspace2.states;
-
-				// Wait for client 1 to receive client 2's initial data
-				await waitForRemoteUpdated(client1);
-
+			it("calls validator on value read", async () => {
+				const data = client1.getRemote(attendee2);
 				// Reading the remote value should cause the validator to be called
-				let value = client1.getRemote(attendee2).value();
-				assert.equal(value?.num, 1, "getRemote(attendee2) count is wrong");
-				assert.equal(validatorSpy1.callCount, 1);
-
-				// Reading the value a second time should not cause the validator to be called again
-				value = client1.getRemote(attendee2).value();
-				assert.equal(value?.num, 1, "second getRemote(attendee2) count is wrong");
-				assert.equal(validatorSpy1.callCount, 1);
-
-				// Client 2 sets a new local value
-				client2.local = { num: 22 };
-				assert.equal(client2.local.num, 22, "count2.local count is wrong");
-
-				// Wait for the remote data to get to client 1
-				await waitForRemoteUpdated(client1, "TAGGED: ");
-
-				// Reading the remote value should cause the validator to be called a second time since the data has been
-				// changed.
-				value = client1.getRemote(attendee2).value();
-				assert.equal(value?.num, 22, "third getRemote(attendee2) count is wrong");
-				assert.equal(validatorSpy1.callCount, 2);
-
-				// Second client should see the initial value for client 1
-				value = client2.getRemote(attendee1).value();
-				assert.equal(value?.num, 0, "getRemote(attendee1) count is wrong");
-
-				// Second client should have called the validator once for the read above
-				assert.equal(validatorSpy2.callCount, 1);
+				assert.equal(data?.value()?.num, 1);
+				assert.equal(validatorSpy1.callCount, 1, "call count is wrong");
 			});
 
-			describe.skip("with shared test setup", () => {
-				beforeEach(async () => {
-					await initMultiClientSetup();
+			describe("remote data tests", () => {
+				let data: LatestData<TestData, ProxiedValueAccessor<TestData>>;
+
+				beforeEach(() => {
+					data = client1.getRemote(attendee2);
 				});
 
-				it.skip("invalidates data on update", async () => {
-					const { client1, client2 } = await initTestWorkspaces(presence1, presence2);
+				it("calls validator only once if data is unchanged", async () => {
+					// Reading the remote value should cause the validator to be called the first time,
+					// but subsequent reads should not
+					assert.equal(data?.value()?.num, 1);
+					assert.equal(validatorSpy1.callCount, 1, "first call count is wrong");
 
-					// Act & Verify
-					let remoteData = client1.latest.stateManager.getRemote(client2.attendee);
-
-					// Reading the data should cause the validator to get called once.
-					assert.equal(remoteData.value()?.num, 0, "First value read failed");
-					assert.equal(client1.latest.validatorSpy.callCount, 1);
-
-					// Client 2 sets a value
-					client2.latest.stateManager.local = { num: 22 };
-					// Wait for the first client to receive the remote data from client 2
-					await waitForRemoteUpdated(client1.latest.stateManager);
-					remoteData = client1.latest.stateManager.getRemote(client2.attendee);
-					assert.equal(remoteData.value()?.num, 22, "Second value read failed");
-
-					client2.latest.stateManager.local = { num: 33 };
-					// Wait for the first client to receive the remote data from client 2
-					await waitForRemoteUpdated(client1.latest.stateManager);
-
-					// Validator will be called again because the value changed.
-					assert.equal(remoteData.value()?.num, 33, "Third value read failed");
-					assert.equal(client1.latest.validatorSpy.callCount, 3);
+					assert.equal(data?.value()?.num, 1);
+					assert.equal(data?.value()?.num, 1);
+					assert.equal(validatorSpy1.callCount, 1, "subsequent call count is wrong");
 				});
 
-				it("two clients with workspaces", async () => {
-					const { client1, client2 } = await initTestWorkspaces(presence1, presence2);
-
-					// Reading the remote value should cause the validator to be called
-					let value = client1.latest.stateManager.getRemote(client2.attendee).value();
-					assert.equal(value?.num, 1, "getRemote(attendee2) count is wrong");
-					assert.equal(client1.latest.validatorSpy.callCount, 1);
-
-					// Reading the value a second time should not cause the validator to be called again
-					value = client1.latest.stateManager.getRemote(client2.attendee).value();
-					assert.equal(value?.num, 1, "second getRemote(attendee2) count is wrong");
-					assert.equal(client1.latest.validatorSpy.callCount, 1);
+				it("calls validator when remote data has changed", async () => {
+					// Get the remote data and read it, verify that the validator is called once.
+					data = client1.getRemote(attendee2);
+					assert.equal(data?.value()?.num, 1);
+					assert.equal(validatorSpy1.callCount, 1, "first call count is wrong");
 
 					// Client 2 sets a new local value
-					client2.latest.stateManager.local = { num: 22 };
-					assert.equal(
-						client2.latest.stateManager.local.num,
-						22,
-						"count2.local count is wrong",
-					);
+					client2.local = { num: 22 };
+					assert.equal(client2.local.num, 22, "client2.local value is wrong");
 
 					// Wait for the remote data to get to client 1
-					await waitForRemoteUpdated(client1.latest.stateManager, "TAGGED: ");
+					await event.RemoteUpdated(client1, "client1");
 
 					// Reading the remote value should cause the validator to be called a second time since the data has been
 					// changed.
-					value = client1.latest.stateManager.getRemote(client2.attendee).value();
-					assert.equal(value?.num, 22, "third getRemote(attendee2) count is wrong");
-					assert.equal(client1.latest.validatorSpy.callCount, 2);
+					const data2 = client1.getRemote(attendee2);
+					assert.equal(data2?.value()?.num, 22, "third getRemote(attendee2) count is wrong");
+					assert.equal(validatorSpy1.callCount, 2);
+				});
 
+				it("client2 sees initial data from client1", async () => {
 					// Second client should see the initial value for client 1
-					value = client2.latest.stateManager.getRemote(client1.attendee).value();
-					assert.equal(value?.num, 0, "getRemote(attendee1) count is wrong");
+					data = client2.getRemote(attendee1);
+					assert.equal(data?.value()?.num, 0);
 
 					// Second client should have called the validator once for the read above
-					assert.equal(client2.latest.validatorSpy.callCount, 1);
+					assert.equal(validatorSpy2.callCount, 1);
 				});
 			});
 		});
-	});
 
-	describe("LatestMapValueManager", () => {
-		let validatorFunction1: StateSchemaValidator<TestData>;
-		let validatorFunction2: StateSchemaValidator<TestData>;
-		let validatorFunction3: StateSchemaValidator<TestData>;
-		let validatorSpy1: ValidatorSpy;
-		let validatorSpy2: ValidatorSpy;
-		let validatorSpy3: ValidatorSpy;
+		describe("LatestMap", () => {
+			let stateWorkspace1: StatesWorkspace<{
+				testData: InternalTypes.ManagerFactory<
+					string,
+					InternalTypes.MapValueState<TestData, "key1" | "key2">,
+					LatestMap<TestData, "key1" | "key2">
+				>;
+			}>;
 
-		beforeEach(() => {
-			[validatorFunction1, validatorSpy1] = createSpiedValidator<TestData>(
-				createNullValidator(),
-			);
-			[validatorFunction2, validatorSpy2] = createSpiedValidator<TestData>(
-				createNullValidator(),
-			);
-			[validatorFunction3, validatorSpy3] = createSpiedValidator<TestData>(
-				createNullValidator(),
-			);
-		});
+			let stateWorkspace2: StatesWorkspace<{
+				testData: InternalTypes.ManagerFactory<
+					string,
+					InternalTypes.MapValueState<TestData, "key1" | "key2">,
+					LatestMap<TestData, "key1" | "key2">
+				>;
+			}>;
 
-		it("two clients with workspaces", async () => {
-			await initMultiClientSetup();
+			let client1: LatestMap<TestData, string>;
+			let client2: LatestMap<TestData, string>;
 
-			const [attendee1, attendee2] = [
-				presence1.attendees.getMyself(),
-				presence2.attendees.getMyself(),
-			];
+			beforeEach(async () => {
+				await initMultiClientSetup();
 
-			// Configure a state workspace on client 1
-			const stateWorkspace1 = presence1.states.getWorkspace("name:testStateWorkspace", {
-				count: StateFactory.latestMap({
-					local: { key1: { num: 0 }, key2: { num: 0 } } satisfies TestMapData,
-					validator: validatorFunction1,
-					settings: { allowableUpdateLatencyMs: 0 },
-				}),
+				[attendee1, attendee2] = [
+					presence1.attendees.getMyself(),
+					presence2.attendees.getMyself(),
+				];
+
+				// Configure a state workspace on client 1
+				stateWorkspace1 = presence1.states.getWorkspace("name:testStateWorkspace", {
+					testData: StateFactory.latestMap({
+						local: { key1: { num: 0 }, key2: { num: 0 } } satisfies TestMapData,
+						validator: validatorFunction1,
+						settings: { allowableUpdateLatencyMs: 0 },
+					}),
+				});
+
+				// Wait for client 2 to receive the workspaceActivated event
+				const workspaceAddress = await event.WorkspaceActivated(presence2);
+
+				// Client 2 now gets a reference to the workspace and sets its initial local data
+				stateWorkspace2 = presence2.states.getWorkspace(workspaceAddress, {
+					testData: StateFactory.latestMap({
+						local: { key1: { num: 3 }, key2: { num: 2 } } satisfies TestMapData,
+						validator: validatorFunction2,
+						settings: { allowableUpdateLatencyMs: 0 },
+					}),
+				});
+
+				// Get references to the states
+				client1 = stateWorkspace1.states.testData;
+				client2 = stateWorkspace2.states.testData;
+
+				// Wait for client 1 to receive client 2's initial data
+				await event.RemoteMapUpdated(client1);
 			});
 
-			// Wait for client 2 to receive the workspaceActivated event
-			const workspaceAddress = await waitForWorkspaceActivated(presence2);
-
-			// Client 2 now gets a reference to the workspace and sets its initial local data
-			const stateWorkspace2 = presence2.states.getWorkspace(workspaceAddress, {
-				count: StateFactory.latestMap({
-					local: { key1: { num: 3 }, key2: { num: 2 } } satisfies TestMapData,
-					validator: validatorFunction2,
-					settings: { allowableUpdateLatencyMs: 0 },
-				}),
+			it("getRemote does not call validator", async () => {
+				client1.getRemote(attendee2);
+				assert.equal(validatorSpy1.callCount, 0);
 			});
 
-			// Get references to the states
-			const { count: client1 } = stateWorkspace1.states;
-			const { count: client2 } = stateWorkspace2.states;
+			it(".get does not call validator", async () => {
+				const mapData = client1.getRemote(attendee2);
+				assert.equal(validatorSpy1.callCount, 0);
 
-			// Wait for the first client to receive the remote data from client 2's workspace init
-			await waitForRemoteMapUpdated(client1);
+				mapData.get("key1");
+				assert.equal(validatorSpy1.callCount, 0);
+			});
 
-			// Reading the remote value should cause the validator to be called
-			let remoteData = client1.getRemote(attendee2);
-			let key1 = remoteData.get("key1")?.value();
-			assert.equal(key1?.num, 3, "getRemote(attendee2) count is wrong");
-			assert.equal(validatorSpy1.callCount, 1);
+			it("calls validator on key value read", async () => {
+				const mapData = client1.getRemote(attendee2);
+				const key = mapData.get("key1");
+				assert.equal(validatorSpy1.callCount, 0);
 
-			// Reading the value a second time should not cause the validator to be called again
-			remoteData = client1.getRemote(attendee2);
-			key1 = remoteData.get("key1")?.value();
-			assert.equal(key1?.num, 3, "second getRemote(attendee2) count is wrong");
-			assert.equal(validatorSpy1.callCount, 1);
+				assert.equal(key?.value()?.num, 3);
+				assert.equal(validatorSpy1.callCount, 1, "call count is wrong");
+			});
 
-			// Reading a second key should cause the validator to be called again
-			let key2 = remoteData.get("key2")?.value();
-			assert.equal(key2?.num, 2, "third getRemote(attendee2) count is wrong");
-			assert.equal(validatorSpy1.callCount, 2);
+			describe("remote data tests", () => {
+				let mapData: ReadonlyMap<string, LatestData<TestData, ProxiedValueAccessor<TestData>>>;
 
-			// Client 2 sets a new local value for a key
-			client2.local.set("key1", { num: 22 });
-			const localValue = client2.local.get("key1");
-			// Reading the local value should not call the validator
-			assert.equal(
-				validatorSpy2.callCount,
-				0,
-				"client2 validator should not have been called",
-			);
-			assert.equal(localValue?.num, 22, "count2.local count is wrong");
+				beforeEach(() => {
+					mapData = client1.getRemote(attendee2);
+				});
 
-			// Wait for the remote data to get to client 1
-			await waitForRemoteMapUpdated(client1, "TAGGED: ");
+				it("calls validator only once if data is unchanged", async () => {
+					// Reading the remote value should cause the validator to be called the first time,
+					// but subsequent reads should not
+					assert.equal(mapData.get("key1")?.value()?.num, 3);
+					assert.equal(validatorSpy1.callCount, 1, "first call count is wrong");
 
-			// Reading the remote value should cause the validator to be called again since the data has been changed.
-			remoteData = client1.getRemote(attendee2);
-			key1 = remoteData.get("key1")?.value();
-			assert.equal(key1?.num, 22, "third getRemote(attendee2) count is wrong");
-			assert.equal(
-				validatorSpy1.callCount,
-				3,
-				"client1 validator was called the wrong number of times",
-			);
+					assert.equal(mapData.get("key1")?.value()?.num, 3);
+					assert.equal(mapData.get("key1")?.value()?.num, 3);
+					assert.equal(validatorSpy1.callCount, 1, "subsequent call count is wrong");
+				});
 
-			// Second client should see the initial value for client 1
-			remoteData = client2.getRemote(attendee1);
-			key1 = remoteData.get("key1")?.value();
-			assert.equal(key1?.num, 0, "getRemote(attendee1) count is wrong");
-			assert.equal(
-				validatorSpy2.callCount,
-				1,
-				"client2 validator was called the wrong number of times",
-			);
-			key2 = remoteData.get("key2")?.value();
-			assert.equal(key2?.num, 0, "getRemote(attendee1) count is wrong");
-			assert.equal(
-				validatorSpy2.callCount,
-				2,
-				"client2 validator was called the wrong number of times",
-			);
+				it("calls validator when remote key data has changed", async () => {
+					// Get the remote data and read it, verify that the validator is called once.
+					mapData = client1.getRemote(attendee2);
+					assert.equal(mapData.get("key1")?.value()?.num, 3);
+					assert.equal(validatorSpy1.callCount, 1, "first call count is wrong");
+
+					// Client 2 sets a new local value
+					client2.local.set("key1", { num: 22 });
+					assert.equal(client2.local.get("key1")?.num, 22, "client2.local value is wrong");
+
+					// Wait for the remote data to get to client 1
+					await event.RemoteMapUpdated(client1, "client1");
+
+					// Reading the remote value should cause the validator to be called a second time since the data has been
+					// changed.
+					const mapData2 = client1.getRemote(attendee2);
+					assert.equal(
+						mapData2.get("key1")?.value()?.num,
+						22,
+						"third getRemote(attendee2) count is wrong",
+					);
+					assert.equal(validatorSpy1.callCount, 2);
+				});
+
+				// FIXME: Should this test pass?
+				it.skip("does not call validator when a different key is changed", async () => {
+					// Get the remote data and read it, verify that the validator is called once.
+					mapData = client1.getRemote(attendee2);
+					assert.equal(mapData.get("key1")?.value()?.num, 3);
+					assert.equal(validatorSpy1.callCount, 1, "first call count is wrong");
+
+					// Client 2 sets a new local value for a different key
+					client2.local.set("key2", { num: 22 });
+					assert.equal(client2.local.get("key2")?.num, 22, "client2.local value is wrong");
+
+					// Wait for the remote data to get to client 1
+					await event.RemoteMapUpdated(client1, "client1");
+
+					// Reading the remote value for key 1should not cause the validator to be called a second time.
+					const mapData2 = client1.getRemote(attendee2);
+					assert.equal(
+						mapData.get("key1")?.value()?.num,
+						3,
+						"third getRemote(attendee2) count is wrong",
+					);
+					assert.equal(validatorSpy1.callCount, 1, "call count is wrong");
+
+					// Reading key2's value will call the validator
+					assert.equal(mapData.get("key2")?.value()?.num, 22);
+					assert.equal(validatorSpy1.callCount, 2, "call count is wrong");
+				});
+
+				it("client2 sees initial data from client1", async () => {
+					// Second client should see the initial value for client 1
+					mapData = client2.getRemote(attendee1);
+					assert.equal(mapData.get("key1")?.value()?.num, 0);
+
+					// Second client should have called the validator once for the read above
+					assert.equal(validatorSpy2.callCount, 1, "call count is wrong");
+				});
+			});
 		});
 	});
 });
