@@ -386,7 +386,7 @@ export const TreeAlpha: TreeAlpha = {
 			? TreeFieldFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	> {
-		// Import concise does not need to support all the formats that `create` does.
+		// `importConcise` does not need to support all the formats that `create` does.
 		// Perhaps it should error instead of hydrating nodes for example.
 		// For now however, it is a simple wrapper around `create`.
 		return this.create(schema, data as InsertableField<TSchema>);
