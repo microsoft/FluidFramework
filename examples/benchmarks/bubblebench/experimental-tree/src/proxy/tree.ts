@@ -199,7 +199,12 @@ export class TreeArrayProxy<T> {
 
 	map<U>(
 		callbackfn: (value: Serializable<T>, index: number, array: Serializable<T>[]) => U,
+		thisArg?: unknown,
 	): U[] {
-		return this.items.map<U>((value, index, array) => callbackfn(value, index, array));
+		return this.items.map<U>(
+			(value, index, array) => callbackfn(value, index, array),
+			// eslint-disable-next-line unicorn/no-array-method-this-argument
+			thisArg,
+		);
 	}
 }
