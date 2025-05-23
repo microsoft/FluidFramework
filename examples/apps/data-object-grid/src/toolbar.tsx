@@ -45,12 +45,12 @@ const DataObjectGridToolbarAddItemPicker: React.FC<
 		const icon = iconMap[toolbarOption.fabricIconName] as React.ReactElement;
 		return (
 			<Button
-				key={toolbarOption.key}
-				className="data-grid-toolbar-tool"
+				className="data-grid-toolbar-option-button"
+				key={`toolbarButton-${toolbarOption.key}`}
 				icon={icon}
 				onClick={() => {
-					setOpen(false);
 					toolbarOption.create();
+					setOpen(false);
 				}}
 			>
 				{toolbarOption.friendlyName}
