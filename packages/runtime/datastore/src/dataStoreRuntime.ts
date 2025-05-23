@@ -27,6 +27,8 @@ import {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	type IDeltaManagerErased,
+	// eslint-disable-next-line import/no-deprecated
+	type IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	IClientDetails,
@@ -421,17 +423,23 @@ export class FluidDataStoreRuntime
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
-		// eslint-disable-next-line import/no-deprecated
-		const base: IContainerRuntimeBaseExperimental | undefined =
+		// Reference these properties to avoid unused private member errors.
+		// They're accessed via IFluidDataStoreRuntimeExperimental interface.
+		((...experimental) => {})([this.inStagingMode, this.isDirty]);
+	}
+
+	// eslint-disable-next-line import/no-deprecated
+	private get inStagingMode(): IFluidDataStoreRuntimeExperimental["inStagingMode"] {
+		return (
 			// eslint-disable-next-line import/no-deprecated
-			this.dataStoreContext.containerRuntime satisfies IContainerRuntimeBaseExperimental;
-		if (base !== undefined && "inStagingMode" in base) {
-			Object.defineProperty(this, "inStagingMode", {
-				get: () => {
-					return base.inStagingMode;
-				},
-			});
-		}
+			(this.dataStoreContext.containerRuntime as IContainerRuntimeBaseExperimental)
+				.inStagingMode
+		);
+	}
+
+	// eslint-disable-next-line import/no-deprecated
+	private get isDirty(): IFluidDataStoreRuntimeExperimental["isDirty"] {
+		return this.pendingOpCount > 0;
 	}
 
 	get deltaManager(): IDeltaManagerErased {
@@ -874,6 +882,7 @@ export class FluidDataStoreRuntime
 		this.verifyNotClosed();
 
 		const { envelope, messagesContent } = messageCollection;
+		this.pendingOpCount -= messagesContent.length;
 		try {
 			switch (envelope.type) {
 				case DataStoreMessageType.ChannelOp: {
@@ -1219,6 +1228,8 @@ export class FluidDataStoreRuntime
 		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
 	}
 
+	private pendingOpCount = 0;
+
 	private submit(
 		type: DataStoreMessageType,
 		content: unknown,
@@ -1226,6 +1237,7 @@ export class FluidDataStoreRuntime
 	): void {
 		this.verifyNotClosed();
 		this.dataStoreContext.submitMessage(type, content, localOpMetadata);
+		++this.pendingOpCount;
 	}
 
 	/**
@@ -1251,6 +1263,8 @@ export class FluidDataStoreRuntime
 				const envelope = content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
+
+				--this.pendingOpCount;
 				channelContext.reSubmit(envelope.contents, localOpMetadata, squash);
 				break;
 			}
@@ -1285,6 +1299,8 @@ export class FluidDataStoreRuntime
 				const envelope = content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
+
+				--this.pendingOpCount;
 				channelContext.rollback(envelope.contents, localOpMetadata);
 				break;
 			}
@@ -1297,6 +1313,7 @@ export class FluidDataStoreRuntime
 	// TODO: use something other than `any` here
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async applyStashedOp(content: any): Promise<unknown> {
+		++this.pendingOpCount;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const type = content?.type as DataStoreMessageType;
 		switch (type) {
@@ -1336,6 +1353,13 @@ export class FluidDataStoreRuntime
 		}
 	}
 
+	/**
+	 * Indicates the given channel is dirty from Summarizer's point of view,
+	 * i.e. it has local changes that need to be included in the summary.
+	 *
+	 * @remarks - If a channel's changes are rolled back or rebased away, we won't
+	 * clear the dirty flag set here.
+	 */
 	private setChannelDirty(address: string): void {
 		this.verifyNotClosed();
 		this.dataStoreContext.setChannelDirty(address);
