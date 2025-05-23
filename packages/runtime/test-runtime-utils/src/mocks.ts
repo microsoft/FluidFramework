@@ -114,8 +114,8 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.processMessages?.(messageCollection);
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
-		this.handler?.reSubmit(content, localOpMetadata);
+	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
+		this.handler?.reSubmit(content, localOpMetadata, squash);
 	}
 
 	public applyStashedOp(content: any): unknown {
@@ -1142,9 +1142,9 @@ export class MockFluidDataStoreRuntime
 		return null as any as IResponse;
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
 		this.deltaConnections.forEach((dc) => {
-			dc.reSubmit(content, localOpMetadata);
+			dc.reSubmit(content, localOpMetadata, squash);
 		});
 	}
 
