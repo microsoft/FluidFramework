@@ -781,9 +781,7 @@ export class PendingStateManager implements IDisposable {
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			const batchId = pendingMessage.batchInfo.ignoreBatchId
-				? undefined
-				: getEffectiveBatchId(pendingMessage);
+			const batchId = getEffectiveBatchId(pendingMessage);
 
 			const staged = pendingMessage.batchInfo.staged;
 
