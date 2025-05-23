@@ -22,6 +22,7 @@ import { makeUnreachableCodePathProxy } from "./utils.js";
 export interface DDSModelOp {
 	type: "DDSModelOp";
 	op: unknown;
+	channelType: string;
 }
 
 export interface OrderSequentially {
@@ -87,19 +88,21 @@ export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressSt
 	state,
 ) => {
 	const channel = state.channel;
-	const model = ddsModelMap.get(channel.attributes.type);
+	const channelType = channel.attributes.type;
+	const model = ddsModelMap.get(channelType);
 	assert(model !== undefined, "must have model");
 
 	const op = await timeoutAwait(
 		model.generator(await covertLocalServerStateToDdsState(state)),
 		{
-			errorMsg: `Timed out waiting for dds generator: ${state.channel.attributes.type}`,
+			errorMsg: `Timed out waiting for dds generator: ${channelType}`,
 		},
 	);
 
 	return {
 		type: "DDSModelOp",
 		op,
+		channelType,
 	} satisfies DDSModelOp;
 };
 

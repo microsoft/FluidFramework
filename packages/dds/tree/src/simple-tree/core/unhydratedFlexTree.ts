@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -25,7 +25,6 @@ import {
 	type TreeStoredSchema,
 	type Value,
 } from "../../core/index.js";
-import { brand, getOrCreate, mapIterable } from "../../util/index.js";
 import {
 	type FlexTreeContext,
 	FlexTreeEntityKind,
@@ -44,6 +43,8 @@ import {
 	type SequenceFieldEditBuilder,
 	cursorForMapTreeNode,
 } from "../../feature-libraries/index.js";
+import { brand, getOrCreate, mapIterable } from "../../util/index.js";
+
 import type { Context } from "./context.js";
 
 interface UnhydratedTreeSequenceFieldEditBuilder

@@ -25,8 +25,6 @@ export type {
 	ContainerAttachProps,
 	IConnection,
 	IMember,
-	IProvideStaticEntryPoint,
-	IRootDataObject,
 	IServiceAudience,
 	IServiceAudienceEvents,
 	IStaticEntryPoint,

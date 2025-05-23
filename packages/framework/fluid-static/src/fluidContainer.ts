@@ -11,7 +11,13 @@ import {
 } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { ContainerExtensionStore } from "@fluidframework/container-runtime-definitions/internal";
-import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IEvent,
+	IEventProvider,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import type {
@@ -255,16 +261,20 @@ export interface IFluidContainerInternal extends ContainerExtensionStore {
  *
  * @internal
  */
-export function createFluidContainer<
+export async function createFluidContainer<
 	TContainerSchema extends ContainerSchema = ContainerSchema,
 >(props: {
 	container: IContainer;
-	staticEntryPoint: IStaticEntryPoint;
-}): IFluidContainer<TContainerSchema> {
+}): Promise<IFluidContainer<TContainerSchema>> {
+	const entryPoint: FluidObject<IStaticEntryPoint> = await props.container.getEntryPoint();
+	assert(
+		entryPoint.IStaticEntryPoint !== undefined,
+		"entryPoint must be of type IStaticEntryPoint",
+	);
 	return new FluidContainer<TContainerSchema>(
 		props.container,
-		props.staticEntryPoint.rootDataObject,
-		props.staticEntryPoint.extensionStore,
+		entryPoint.IStaticEntryPoint.rootDataObject,
+		entryPoint.IStaticEntryPoint.extensionStore,
 	);
 }
 

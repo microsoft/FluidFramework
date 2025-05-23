@@ -4,8 +4,10 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+
 import type { GraphCommit, TaggedChange } from "../core/index.js";
 import { disposeSymbol, hasSome } from "../util/index.js";
+
 import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
 
 /**

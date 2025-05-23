@@ -13,6 +13,7 @@ import {
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
+	type ObjectNodeSchema,
 	SchemaFactoryAlpha,
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
@@ -30,8 +31,6 @@ import {
 	typeSchemaSymbol,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,

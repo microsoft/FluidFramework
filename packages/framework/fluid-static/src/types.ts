@@ -116,10 +116,7 @@ export interface IRootDataObject {
 	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
 }
 
-/**
- * @internal
- */
-export interface IProvideStaticEntryPoint {
+interface IProvideStaticEntryPoint {
 	readonly IStaticEntryPoint: IStaticEntryPoint;
 }
 

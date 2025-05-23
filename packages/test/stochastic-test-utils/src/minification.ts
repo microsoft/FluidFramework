@@ -86,18 +86,22 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	}
 
 	private async tryDeleteEachOp(): Promise<void> {
-		let idx = this.operations.length - 1;
+		let previousLength = 0;
+		do {
+			previousLength = this.operations.length;
+			let idx = previousLength - 1;
 
-		while (idx > 0) {
-			const deletedOp = this.operations.splice(idx, 1)[0];
+			while (idx > 0) {
+				const deletedOp = this.operations.splice(idx, 1)[0];
 
-			// don't remove attach ops, as it creates invalid scenarios
-			if (deletedOp.type === "attach" || !(await this.assertFails())) {
-				this.operations.splice(idx, 0, deletedOp);
+				// don't remove attach ops, as it creates invalid scenarios
+				if (deletedOp.type === "attach" || !(await this.assertFails())) {
+					this.operations.splice(idx, 0, deletedOp);
+				}
+
+				idx -= 1;
 			}
-
-			idx -= 1;
-		}
+		} while (this.operations.length !== previousLength);
 	}
 
 	/**
