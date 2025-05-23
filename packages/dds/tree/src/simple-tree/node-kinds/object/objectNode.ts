@@ -8,15 +8,15 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import type { FieldKey, SchemaPolicy } from "../core/index.js";
+import type { FieldKey, SchemaPolicy } from "../../../core/index.js";
 import {
 	FieldKinds,
 	type FlexTreeField,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
-} from "../feature-libraries/index.js";
-import { type RestrictiveStringRecord, type FlattenKeys, brand } from "../util/index.js";
+} from "../../../feature-libraries/index.js";
+import { type RestrictiveStringRecord, type FlattenKeys, brand } from "../../../util/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -30,15 +30,15 @@ import {
 	type Context,
 	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
-} from "./core/index.js";
-import { getUnhydratedContext } from "./createContext.js";
-import { getTreeNodeForField } from "./getTreeNodeForField.js";
+} from "../../core/index.js";
+import { getUnhydratedContext } from "../../createContext.js";
+import { getTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
 	type ObjectNodeSchemaInternalData,
 } from "./objectNodeTypes.js";
-import { prepareForInsertion } from "./prepareForInsertion.js";
+import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
@@ -55,11 +55,11 @@ import {
 	type ImplicitAnnotatedFieldSchema,
 	unannotateSchemaRecord,
 	type UnannotateSchemaRecord,
-} from "./schemaTypes.js";
-import type { SimpleObjectFieldSchema } from "./simpleSchema.js";
-import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
-import { stringSchema } from "./leafNodeSchema.js";
+} from "../../schemaTypes.js";
+import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
+import { mapTreeFromNodeData, type InsertableContent } from "../../toMapTree.js";
+import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
+import { stringSchema } from "../../leafNodeSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.

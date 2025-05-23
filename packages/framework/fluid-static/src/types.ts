@@ -94,10 +94,7 @@ export interface ContainerSchema {
 	readonly dynamicObjectTypes?: readonly SharedObjectKind[];
 }
 
-/**
- * @internal
- */
-export interface IProvideRootDataObject {
+interface IProvideRootDataObject {
 	readonly IRootDataObject: IRootDataObject;
 }
 

@@ -23,7 +23,7 @@ import {
 	isFieldInSchema,
 } from "../../feature-libraries/index.js";
 import { getUnhydratedContext } from "../createContext.js";
-import { createUnknownOptionalFieldPolicy } from "../objectNode.js";
+import { createUnknownOptionalFieldPolicy } from "../node-kinds/index.js";
 
 /**
  * Creates an unhydrated simple-tree field from a cursor in nodes mode.
