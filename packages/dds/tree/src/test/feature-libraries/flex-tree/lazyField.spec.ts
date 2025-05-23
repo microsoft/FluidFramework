@@ -49,12 +49,7 @@ import {
 	readonlyTreeWithContent,
 	rootFieldAnchor,
 } from "./utils.js";
-import {
-	numberSchema,
-	SchemaFactory,
-	stringSchema,
-	type UnsafeUnknownSchema,
-} from "../../../simple-tree/index.js";
+import { numberSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
