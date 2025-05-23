@@ -3,18 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable, Listenable } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	findAncestor,
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	type TaggedChange,
 } from "../core/index.js";
-import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 import { getOrCreate } from "../util/index.js";
+
+import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
 /**
  * Describes the result of a transaction.

@@ -8,8 +8,9 @@
 import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";
-import * as winston from "winston";
+
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import * as winston from "winston";
 
 const asyncExec = promisify(exec);
 

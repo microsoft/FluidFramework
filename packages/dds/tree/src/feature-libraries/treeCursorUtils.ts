@@ -372,14 +372,14 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	/**
-	 * @returns the value of the current node
+	 * The value of the current node
 	 */
 	public get value(): Value {
 		return this.adapter.value(this.getNode());
 	}
 
 	/**
-	 * @returns the type of the current node
+	 * The type of the current node
 	 */
 	public get type(): TreeType {
 		return this.adapter.type(this.getNode());

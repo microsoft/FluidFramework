@@ -11,6 +11,8 @@ import {
 	type BaseOperation,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
+	isOperationType,
+	type MinimizationTransform,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
 
@@ -97,3 +99,18 @@ export function makeGenerator<T extends BaseOperation>(
 }
 export const saveFailures = { directory: path.join(_dirname, "../src/test/results") };
 export const saveSuccesses = { directory: path.join(_dirname, "../src/test/results") };
+
+export const ddsModelMinimizers: MinimizationTransform<BaseOperation>[] = [
+	...ddsModelMap.entries(),
+]
+	.flatMap(([channelType, model]) =>
+		model.minimizationTransforms?.map((mt) => ({ channelType, mt })),
+	)
+	.filter((v): v is Exclude<typeof v, undefined> => v !== undefined)
+	.map(({ channelType, mt }) => {
+		return (op: BaseOperation) => {
+			if (isOperationType<DDSModelOp>("DDSModelOp", op) && op.channelType === channelType) {
+				mt(op.op);
+			}
+		};
+	});

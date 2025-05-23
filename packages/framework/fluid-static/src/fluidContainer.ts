@@ -10,7 +10,13 @@ import {
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IEvent,
+	IEventProvider,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import type { ContainerAttachProps, ContainerSchema, IRootDataObject } from "./types.js";
@@ -249,13 +255,17 @@ export interface IFluidContainerInternal {
  *
  * @internal
  */
-export function createFluidContainer<
+export async function createFluidContainer<
 	TContainerSchema extends ContainerSchema = ContainerSchema,
 >(props: {
 	container: IContainer;
-	rootDataObject: IRootDataObject;
-}): IFluidContainer<TContainerSchema> {
-	return new FluidContainer<TContainerSchema>(props.container, props.rootDataObject);
+}): Promise<IFluidContainer<TContainerSchema>> {
+	const entryPoint: FluidObject<IRootDataObject> = await props.container.getEntryPoint();
+	assert(
+		entryPoint.IRootDataObject !== undefined,
+		0x875 /* entryPoint must be of type IRootDataObject */,
+	);
+	return new FluidContainer<TContainerSchema>(props.container, entryPoint.IRootDataObject);
 }
 
 /**
