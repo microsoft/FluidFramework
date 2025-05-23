@@ -9,7 +9,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type {
-	ExtensionRuntimeEvents,
+	ExtensionHostEvents,
 	RawInboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
@@ -50,7 +50,7 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 			// TODO: investigate if ContainerExtensionStore (path-based address routing for
 			// Signals) is readily detectable here and use that presence manager directly.
 			const runtime = this.runtime;
-			const events = createEmitter<ExtensionRuntimeEvents>();
+			const events = createEmitter<ExtensionHostEvents>();
 			runtime.on("connected", (clientId) => events.emit("connected", clientId));
 			runtime.on("disconnected", () => events.emit("disconnected"));
 

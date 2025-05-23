@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ExtensionRuntime as ContainerExtensionRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { ExtensionHost as ContainerExtensionHost } from "@fluidframework/container-runtime-definitions/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { AttendeeId, Attendee } from "./presence.js";
@@ -20,9 +20,10 @@ export interface ExtensionRuntimeProperties {
 	SignalMessages: SignalMessages;
 }
 /**
+ * Presence specific ExtensionHost
  * @internal
  */
-export type ExtensionRuntime = ContainerExtensionRuntime<ExtensionRuntimeProperties>;
+export type ExtensionHost = ContainerExtensionHost<ExtensionRuntimeProperties>;
 
 /**
  * @internal
@@ -35,7 +36,7 @@ export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState
 }
 
 /**
- * This interface is a subset of ExtensionRuntime (and mostly of
+ * This interface is a subset of ExtensionHost (and mostly of
  * FluidDataStoreRuntime) that is needed by the Presence States.
  *
  * @privateRemarks
@@ -43,9 +44,9 @@ export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState
  *
  * @internal
  */
-export type IEphemeralRuntime = Omit<ExtensionRuntime, "logger" | "submitAddressedSignal"> &
+export type IEphemeralRuntime = Omit<ExtensionHost, "logger" | "submitAddressedSignal"> &
 	// Apart from tests, there is always a logger. So this could be promoted to required.
-	Partial<Pick<ExtensionRuntime, "logger">> & {
+	Partial<Pick<ExtensionHost, "logger">> & {
 		/**
 		 * Submits the signal to be sent to other clients.
 		 * @param type - Type of the signal.

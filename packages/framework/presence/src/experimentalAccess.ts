@@ -11,7 +11,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
 
-import type { ExtensionRuntime, ExtensionRuntimeProperties } from "./internalTypes.js";
+import type { ExtensionHost, ExtensionRuntimeProperties } from "./internalTypes.js";
 import type { Presence } from "./presence.js";
 import type { PresenceExtensionInterface } from "./presenceManager.js";
 import { createPresenceManager } from "./presenceManager.js";
@@ -27,16 +27,16 @@ class ContainerPresenceManager
 	public readonly extension = this;
 	private readonly manager: PresenceExtensionInterface;
 
-	public constructor(runtime: ExtensionRuntime) {
+	public constructor(host: ExtensionHost) {
 		this.interface = this.manager = createPresenceManager({
-			...runtime,
+			...host,
 			submitSignal: (message) => {
-				runtime.submitAddressedSignal("", message);
+				host.submitAddressedSignal("", message);
 			},
 		});
 	}
 
-	public onNewContext(): void {
+	public onNewUse(): void {
 		// No-op
 	}
 

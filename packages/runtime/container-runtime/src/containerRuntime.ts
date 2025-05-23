@@ -27,8 +27,8 @@ import { isIDeltaManagerFull } from "@fluidframework/container-definitions/inter
 import type {
 	ContainerExtensionFactory,
 	ContainerExtensionId,
-	ExtensionRuntime,
-	ExtensionRuntimeEvents,
+	ExtensionHost,
+	ExtensionHostEvents,
 	ExtensionRuntimeProperties,
 	IContainerRuntime,
 	IContainerRuntimeEvents,
@@ -5073,14 +5073,12 @@ export class ContainerRuntime
 	// While internal, ContainerRuntime has not been converted to use the new events support.
 	// Recreate the required events (new pattern) with injected, wrapper new emitter.
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
-	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionRuntimeEvents>>(
-		() => {
-			const eventEmitter = createEmitter<ExtensionRuntimeEvents>();
-			this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
-			this.on("disconnected", () => eventEmitter.emit("disconnected"));
-			return eventEmitter;
-		},
-	);
+	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
+		const eventEmitter = createEmitter<ExtensionHostEvents>();
+		this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
+		this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		return eventEmitter;
+	});
 
 	private readonly submitExtensionSignal: <TMessage extends TypedMessage>(
 		id: string,
@@ -5095,7 +5093,7 @@ export class ContainerRuntime
 	>(
 		id: ContainerExtensionId,
 		factory: ContainerExtensionFactory<T, TUseContext, TRuntimeProperties>,
-		...context: TUseContext
+		...useContext: TUseContext
 	): T {
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
@@ -5112,12 +5110,12 @@ export class ContainerRuntime
 				},
 				getQuorum: this.getQuorum.bind(this),
 				getAudience: this.getAudience.bind(this),
-			} satisfies ExtensionRuntime<TRuntimeProperties>;
-			entry = new factory(runtime, ...context);
+			} satisfies ExtensionHost<TRuntimeProperties>;
+			entry = new factory(runtime, ...useContext);
 			this.extensions.set(id, entry);
 		} else {
 			assert(entry instanceof factory, "Extension entry is not of the expected type");
-			entry.extension.onNewContext(...context);
+			entry.extension.onNewUse(...useContext);
 		}
 		return entry.interface as T;
 	}

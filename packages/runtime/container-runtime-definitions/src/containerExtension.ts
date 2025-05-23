@@ -154,9 +154,14 @@ export interface ContainerExtension<
 	/**
 	 * Notifies the extension of a new use context.
 	 *
-	 * @param context - Context new reference to extension is acquired within
+	 * @param useContext - Context new reference to extension is acquired within.
+	 *
+	 * @remarks
+	 * This is called when a secondary reference to the extension is acquired.
+	 * useContext is the array of arguments that would otherwise be passed to
+	 * the factory during first acquisition request.
 	 */
-	onNewContext(...context: TUseContext): void;
+	onNewUse(...useContext: TUseContext): void;
 
 	/**
 	 * Callback for signal sent by this extension.
@@ -174,27 +179,29 @@ export interface ContainerExtension<
 }
 
 /**
- * Events emitted by the {@link ExtensionRuntime}.
+ * Events emitted by the {@link ExtensionHost}.
  *
  * @internal
  */
-export interface ExtensionRuntimeEvents {
+export interface ExtensionHostEvents {
 	"disconnected": () => void;
 	"connected": (clientId: ClientConnectionId) => void;
 }
 
 /**
- * Defines the runtime interface an extension may access.
+ * Defines the runtime aspects an extension may access.
+ *
+ * @remarks
  * In most cases this is a logical subset of {@link @fluidframework/container-runtime-definitions#IContainerRuntime}.
  *
  * @sealed
  * @internal
  */
-export interface ExtensionRuntime<TRuntimeProperties extends ExtensionRuntimeProperties> {
+export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProperties> {
 	readonly isConnected: () => boolean;
 	readonly getClientId: () => ClientConnectionId | undefined;
 
-	readonly events: Listenable<ExtensionRuntimeEvents>;
+	readonly events: Listenable<ExtensionHostEvents>;
 
 	readonly logger: ITelemetryBaseLogger;
 
@@ -216,6 +223,7 @@ export interface ExtensionRuntime<TRuntimeProperties extends ExtensionRuntimePro
 	 * Also contains a map of key-value pairs that must be agreed upon by all clients before being accepted.
 	 */
 	getQuorum: () => IQuorumClients;
+
 	getAudience: () => IAudience;
 }
 
@@ -227,10 +235,11 @@ export interface ExtensionRuntime<TRuntimeProperties extends ExtensionRuntimePro
  * `instanceof` check may be performed at runtime.
  *
  * @typeParam T - Type of extension to create
- * @typeParam TContext - Array of optional custom context
+ * @typeParam TRuntimeProperties - Extension runtime properties
+ * @typeParam TUseContext - Array of custom use context passed to factory or onNewUse
  *
- * @param runtime - Runtime for extension to work against
- * @param context - Custom context for extension.
+ * @param host - Host runtime for extension to work against
+ * @param useContext - Custom use context for extension.
  * @returns Record providing:
  * `interface` instance (type `T`) that is provided to caller of
  * {@link ContainerExtensionStore.acquireExtension} and
@@ -243,8 +252,8 @@ export type ContainerExtensionFactory<
 	TUseContext extends unknown[],
 	TRuntimeProperties extends ExtensionRuntimeProperties,
 > = new (
-	runtime: ExtensionRuntime<TRuntimeProperties>,
-	...context: TUseContext
+	host: ExtensionHost<TRuntimeProperties>,
+	...useContext: TUseContext
 ) => {
 	readonly interface: T;
 	readonly extension: ContainerExtension<TUseContext, TRuntimeProperties>;
