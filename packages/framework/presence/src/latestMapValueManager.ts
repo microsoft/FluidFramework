@@ -608,7 +608,7 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	args: LatestMapArguments<T, Keys> & { validator?: undefined },
+	args: Omit<LatestMapArguments<T, Keys>, "validator">,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
@@ -637,8 +637,20 @@ export function latestMap<
 	T,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- implementations of overloaded functions should use broad types so that TypeScript infers the types from the overloads.
->(args?: any): any {
+>(
+	inputArgs?: LatestMapArguments<T, Keys>,
+):
+	| InternalTypes.ManagerFactory<
+			RegistrationKey,
+			InternalTypes.MapValueState<T, Keys>,
+			LatestMap<T, Keys>
+	  >
+	| InternalTypes.ManagerFactory<
+			RegistrationKey,
+			InternalTypes.MapValueState<T, Keys>,
+			LatestMapRaw<T, Keys>
+	  > {
+	const args = inputArgs as LatestMapArguments<T, Keys>;
 	const settings = args?.settings;
 	const initialValues = args?.local;
 	const validator = args?.validator;
@@ -696,12 +708,6 @@ export function latestMap<
 					>,
 				): {
 					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-					// manager: TValueAccessor extends ProxiedValueAccessor<T>
-					// 		? () => DeepReadonly<JsonDeserialized<T>> | undefined
-					// 		: TValueAccessor extends RawValueAccessor<T>
-					// 			? DeepReadonly<JsonDeserialized<T>>
-					// 			: never;
-
 					manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
 				} => ({
 					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },

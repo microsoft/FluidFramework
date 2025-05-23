@@ -45,9 +45,7 @@ export namespace InternalTypes {
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
 		value: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
-		// eslint-disable-next-line @rushstack/no-new-null -- FIXME investigate whether this is truly needed
 		validatedValue?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue> | undefined;
-		// | null
 	}
 
 	/**
