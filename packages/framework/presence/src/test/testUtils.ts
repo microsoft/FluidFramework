@@ -169,7 +169,7 @@ export function prepareConnectedPresence(
 	clock.tick(10);
 
 	// Return the join signal
-	presence.processSignal("", { ...expectedClientJoin, clientId: clientConnectionId }, true);
+	presence.processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
 
 	return presence;
 }

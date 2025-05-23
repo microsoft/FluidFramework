@@ -118,7 +118,7 @@ describe("Presence", () => {
 
 				// Act
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:ClientJoin",
 						content: {
@@ -142,7 +142,7 @@ describe("Presence", () => {
 				// #region Part 1 (no response)
 				// Act
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:ClientJoin",
 						content: {
@@ -256,7 +256,7 @@ describe("Presence", () => {
 
 				// Act
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {
@@ -284,7 +284,7 @@ describe("Presence", () => {
 
 				// Act
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {
@@ -315,7 +315,7 @@ describe("Presence", () => {
 
 				// Act
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {
@@ -353,7 +353,7 @@ describe("Presence", () => {
 
 				// Act
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {
@@ -381,7 +381,7 @@ describe("Presence", () => {
 
 				// Act
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {
@@ -409,7 +409,7 @@ describe("Presence", () => {
 
 				// Act
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {
@@ -437,7 +437,7 @@ describe("Presence", () => {
 
 				// Act
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {
@@ -453,7 +453,7 @@ describe("Presence", () => {
 					false,
 				);
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {

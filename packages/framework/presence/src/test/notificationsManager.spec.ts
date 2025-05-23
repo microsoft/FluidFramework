@@ -250,7 +250,7 @@ describe("Presence", () => {
 
 			// Processing this signal should trigger the testEvents.newId event listeners
 			presence.processSignal(
-				"",
+				[],
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {
@@ -328,7 +328,7 @@ describe("Presence", () => {
 
 			// Processing this signal should trigger the testEvents.newId event listeners
 			presence.processSignal(
-				"",
+				[],
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {
@@ -394,7 +394,7 @@ describe("Presence", () => {
 
 			// Processing this signal should trigger the testEvents.newId event listeners
 			presence.processSignal(
-				"",
+				[],
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {
@@ -466,7 +466,7 @@ describe("Presence", () => {
 
 			// Act
 			presence.processSignal(
-				"",
+				[],
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {

@@ -116,7 +116,7 @@ describe("Presence", () => {
 					);
 
 					for (const signal of signals) {
-						presence.processSignal("", signal, false);
+						presence.processSignal([], signal, false);
 					}
 
 					cleanUpListener();
@@ -578,7 +578,7 @@ describe("Presence", () => {
 							runtime.connect("client6");
 							clock.tick(15_000);
 							presence.processSignal(
-								"",
+								[],
 								{
 									type: "Pres:DatastoreUpdate",
 									content: {

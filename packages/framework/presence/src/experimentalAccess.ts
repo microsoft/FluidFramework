@@ -36,7 +36,7 @@ class ContainerPresenceManager
 		this.interface = this.manager = createPresenceManager({
 			...host,
 			submitSignal: (message) => {
-				host.submitAddressedSignal("", message);
+				host.submitAddressedSignal([], message);
 			},
 		});
 	}
@@ -48,11 +48,11 @@ class ContainerPresenceManager
 	public static readonly extensionId = "dis:bb89f4c0-80fd-4f0c-8469-4f2848ee7f4a";
 
 	public processSignal(
-		address: string,
+		addressChain: string[],
 		message: InboundExtensionMessage<SignalMessages>,
 		local: boolean,
 	): void {
-		this.manager.processSignal(address, message, local);
+		this.manager.processSignal(addressChain, message, local);
 	}
 }
 

@@ -695,43 +695,6 @@ export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: s
 	};
 };
 
-/**
- * Address parts extracted from an address using the pathed address format.
- */
-interface PathedAddressInfo {
-	/**
-	 * First address in path - extracted from {@link PathedAddressInfo.fullAddress}
-	 */
-	top: string;
-	/**
-	 * When true, it is considered an error if {@link PathedAddressInfo.top} is not found as a destination
-	 */
-	critical: boolean;
-	/**
-	 * Address after {@link PathedAddressInfo.top} - extracted from {@link PathedAddressInfo.fullAddress}
-	 */
-	subaddress: string;
-	/**
-	 * Full original address
-	 */
-	fullAddress: string;
-}
-
-/**
- * Mostly undefined address parts extracted from an address not using pathed address format.
- */
-interface SingleAddressInfo {
-	top: undefined;
-	critical: undefined;
-	subaddress: undefined;
-	fullAddress: string;
-}
-
-/**
- * Union of the two address info types.
- */
-type NonContainerAddressInfo = PathedAddressInfo | SingleAddressInfo;
-
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
 
 /**
@@ -1578,12 +1541,12 @@ export class ContainerRuntime
 		};
 		this.submitExtensionSignal = <TMessage extends TypedMessage>(
 			id: string,
-			subaddress: string,
+			addressChain: string[],
 			message: OutboundExtensionMessage<TMessage>,
 		): void => {
 			this.verifyNotClosed();
 			const envelope = createNewSignalEnvelope(
-				`/ext/${id}/${subaddress}`,
+				`/ext/${id}/${addressChain.join("/")}`,
 				message.type,
 				message.content,
 			);
@@ -3283,49 +3246,27 @@ export class ContainerRuntime
 		}
 
 		const fullAddress = envelope.address;
-		if (fullAddress === undefined || fullAddress === "/runtime/") {
+		if (fullAddress === undefined) {
 			// No address indicates a container signal message.
 			this.emit("signal", transformed, local);
 			return;
 		}
 
-		// Note that this pattern allows for ! prefix in top-address but
-		// does not give it any more special treatment than without it.
-		const topAddressAndSubaddress = fullAddress.match(
-			/^\/(?<optional>[!?]?)(?<top>[^/]*)\/(?<subaddress>.*)$/,
-		);
-		const { optional, top, subaddress } = topAddressAndSubaddress?.groups ?? {
-			optional: undefined,
-			top: undefined,
-			subaddress: undefined,
-		};
-		this.routeNonContainerSignal(
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- cast required
-			{
-				top,
-				// Could just check !== "?", but would not correctly meet strict typing.
-				critical: optional === undefined ? undefined : optional !== "?",
-				subaddress,
-				fullAddress,
-			} as NonContainerAddressInfo,
-			transformed,
-			local,
-		);
+		this.routeNonContainerSignal(fullAddress, transformed, local);
 	}
 
 	private routeNonContainerSignal(
-		address: NonContainerAddressInfo,
+		address: string,
 		signalMessage: IInboundSignalMessage<{ type: string; content: JsonDeserialized<unknown> }>,
 		local: boolean,
 	): void {
-		// channelCollection signals are identified by no top address (use full address) or by the top address of "channels".
-		const isChannelAddress = address.top === undefined || address.top === "channels";
-		if (isChannelAddress) {
+		// channelCollection signals are identified by no starting `/` in address.
+		if (!address.startsWith("/")) {
 			// Due to a mismatch between different layers in terms of
 			// what is the interface of passing signals, we need to adjust
 			// the signal envelope before sending it to the datastores to be processed
 			const envelope = {
-				address: address.subaddress ?? address.fullAddress,
+				address,
 				contents: signalMessage.content,
 			};
 			signalMessage.content = envelope;
@@ -3334,29 +3275,23 @@ export class ContainerRuntime
 			return;
 		}
 
-		if (address.top === "ext") {
-			const idAndSubaddress = address.subaddress.match(
-				/^(?<id>[^/]*:[^/]*)\/(?<subaddress>.*)$/,
-			);
-			const { id, subaddress } = idAndSubaddress?.groups ?? {};
-			if (id !== undefined && subaddress !== undefined) {
-				const entry = this.extensions.get(id as ContainerExtensionId);
-				if (entry !== undefined) {
-					entry.extension.processSignal?.(subaddress, signalMessage, local);
-					return;
-				}
+		const addresses = address.split("/");
+		if (addresses.length > 2 && addresses[1] === "ext") {
+			const id = addresses[2] as ContainerExtensionId;
+			const entry = this.extensions.get(id);
+			if (entry !== undefined) {
+				entry.extension.processSignal?.(addresses.slice(3), signalMessage, local);
+				return;
 			}
 		}
 
-		if (address.critical) {
-			assert(!local, "No recipient found for critical local signal");
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "SignalCriticalAddressNotFound",
-				...tagCodeArtifacts({
-					address: address.top,
-				}),
-			});
-		}
+		assert(!local, "No recipient found for local signal");
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "SignalAddressNotFound",
+			...tagCodeArtifacts({
+				address,
+			}),
+		});
 	}
 
 	/**
@@ -5082,7 +5017,7 @@ export class ContainerRuntime
 
 	private readonly submitExtensionSignal: <TMessage extends TypedMessage>(
 		id: string,
-		subaddress: string,
+		addressChain: string[],
 		message: OutboundExtensionMessage<TMessage>,
 	) => void;
 
@@ -5103,10 +5038,10 @@ export class ContainerRuntime
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
 				submitAddressedSignal: (
-					address: string,
+					addressChain: string[],
 					message: OutboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
 				) => {
-					this.submitExtensionSignal(id, address, message);
+					this.submitExtensionSignal(id, addressChain, message);
 				},
 				getQuorum: this.getQuorum.bind(this),
 				getAudience: this.getAudience.bind(this),

@@ -298,7 +298,7 @@ describe("Presence", () => {
 			const updates = { "system:presence": attendeeUpdate, ...valueManagerUpdates };
 
 			presence.processSignal(
-				"",
+				[],
 				{
 					type: datastoreUpdateType,
 					content: {

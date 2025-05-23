@@ -65,7 +65,7 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 			});
 			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assertSignalMessageIsValid(message);
-				manager.processSignal("", message, local);
+				manager.processSignal([], message, local);
 			});
 			this._presenceManager = manager;
 		}

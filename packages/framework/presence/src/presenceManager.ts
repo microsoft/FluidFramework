@@ -121,19 +121,19 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	/**
 	 * Check for Presence message and process it.
 	 *
-	 * @param address - Address of the message
+	 * @param addressChain - Address chain of the message
 	 * @param message - Unverified message to be processed
 	 * @param local - Whether the message originated locally (`true`) or remotely (`false`)
 	 */
 	public processSignal(
-		address: string,
+		addressChain: string[],
 		message: InboundExtensionMessage<SignalMessages>,
 		local: boolean,
 	): void {
 		this.datastoreManager.processSignal(
 			message,
 			local,
-			/* optional */ address.startsWith("?"),
+			/* optional */ addressChain[0] === "?",
 		);
 	}
 }

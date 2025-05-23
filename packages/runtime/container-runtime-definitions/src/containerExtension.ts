@@ -166,13 +166,13 @@ export interface ContainerExtension<
 	/**
 	 * Callback for signal sent by this extension.
 	 *
-	 * @param address - Address of the signal
+	 * @param addressChain - Address chain of the signal
 	 * @param signalMessage - Signal unverified content and metadata
 	 * @param local - True if signal was sent by this client
 	 *
 	 */
 	processSignal?: (
-		address: string,
+		addressChain: string[],
 		signalMessage: InboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
 		local: boolean,
 	) => void;
@@ -207,14 +207,14 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 
 	/**
 	 * Submits a signal to be sent to other clients.
-	 * @param address - Custom address for the signal.
+	 * @param addressChain - Custom address sequence for the signal.
 	 * @param message - Custom message content of the signal.
 	 *
 	 * Upon receipt of signal, {@link ContainerExtension.processSignal} will be called with the same
 	 * address and message (less any non-{@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}-able data).
 	 */
 	submitAddressedSignal: (
-		address: string,
+		addressChain: string[],
 		message: OutboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
 	) => void;
 
