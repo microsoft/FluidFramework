@@ -692,9 +692,11 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 				// reduce the client id
 				if (hasSelectedClientSpec(op)) {
 					const dashIndex = op.clientTag.lastIndexOf("-");
-					const id = Number.parseInt(op.clientTag.slice(dashIndex + 1), 10);
-					if (id > 1) {
-						op.clientTag = `client-${id - 1}`;
+					if (dashIndex !== -1) {
+						const id = Number.parseInt(op.clientTag.slice(dashIndex + 1), 10);
+						if (id > 1) {
+							op.clientTag = `client-${id - 1}`;
+						}
 					}
 				}
 			},
