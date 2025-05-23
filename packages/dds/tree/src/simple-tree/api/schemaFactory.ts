@@ -981,6 +981,15 @@ export class SchemaFactory<
 		return out;
 	}
 
+	/**
+	 * Retrieves or creates a structural {@link TreeNodeSchema} with the specified name and types.
+	 *
+	 * @param fullName - The unique name for the structural schema.
+	 * @param types - The input schema(s) used to define the structural schema.
+	 * @param builder - A function that builds the schema if it does not already exist.
+	 * @returns The structural {@link TreeNodeSchema} associated with the given name and types.
+	 * @throws {@link UsageError} If a schema with the same name exists but has different input types.
+	 */
 	private getStructuralType(
 		fullName: string,
 		types: TreeNodeSchema | readonly TreeNodeSchema[],
