@@ -215,7 +215,7 @@ export interface FluidHandleNode extends VisualNodeBase {
 	 *
 	 * @remarks Consumers will need to request a {@link FluidObjectTreeNode | visual tree} for this item separately.
 	 */
-	fluidObjectId: string;
+	fluidObjectId: number;
 
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}

@@ -7,6 +7,7 @@
 
 /* eslint-disable unicorn/no-null */
 
+import { objectIdNumber } from "@fluid-experimental/tree-react-api";
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
@@ -44,7 +45,7 @@ import {
 async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
 	async function resolveHandle(handle: IFluidHandle): Promise<FluidObjectId> {
 		const resolvedObject = await handle.get();
-		return (resolvedObject as ISharedObject)?.id;
+		return objectIdNumber(resolvedObject as ISharedObject);
 	}
 
 	return visualizeChildDataBase(data, resolveHandle);
@@ -54,11 +55,12 @@ describe("DefaultVisualizers unit tests", () => {
 	it("SharedCell (Primitive data)", async () => {
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCell.getFactory()] });
 		const sharedCell = SharedCell.create(runtime, "test-cell") as ISharedCell<string>;
+		const cellId = objectIdNumber(sharedCell);
 
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
 		const expected: FluidObjectValueNode = {
-			fluidObjectId: sharedCell.id,
+			fluidObjectId: cellId,
 			value: undefined,
 			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidValueNode,
@@ -73,13 +75,14 @@ describe("DefaultVisualizers unit tests", () => {
 	it("SharedCell (JSON data)", async () => {
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCell.getFactory()] });
 		const sharedCell = SharedCell.create(runtime, "test-cell") as ISharedCell<object>;
+		const cellId = objectIdNumber(sharedCell);
 
 		sharedCell.set({ test: undefined });
 
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
-			fluidObjectId: sharedCell.id,
+			fluidObjectId: cellId,
 			children: {
 				test: {
 					nodeKind: VisualNodeKind.ValueNode,
@@ -100,12 +103,13 @@ describe("DefaultVisualizers unit tests", () => {
 	it("SharedCounter", async () => {
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
+		const counterId = objectIdNumber(sharedCounter);
 		sharedCounter.increment(37);
 
 		const result = await visualizeSharedCounter(sharedCounter, visualizeChildData);
 
 		const expected: FluidObjectValueNode = {
-			fluidObjectId: sharedCounter.id,
+			fluidObjectId: counterId,
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
@@ -120,6 +124,7 @@ describe("DefaultVisualizers unit tests", () => {
 			registry: [SharedDirectory.getFactory()],
 		});
 		const sharedDirectory = SharedDirectory.create(runtime, "test-directory");
+		const directoryId = objectIdNumber(sharedDirectory);
 
 		sharedDirectory.set("foo", 37);
 		sharedDirectory.set("bar", false);
@@ -138,7 +143,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const result = await visualizeSharedDirectory(sharedDirectory, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
-			fluidObjectId: sharedDirectory.id,
+			fluidObjectId: directoryId,
 			children: {
 				a: {
 					children: {
@@ -230,6 +235,7 @@ describe("DefaultVisualizers unit tests", () => {
 	it("SharedMap", async () => {
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] });
 		const sharedMap = SharedMap.create(runtime, "test-map");
+		const mapId = objectIdNumber(sharedMap);
 		sharedMap.set("foo", 42);
 		sharedMap.set("bar", true);
 		sharedMap.set("baz", {
@@ -241,7 +247,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const result = await visualizeSharedMap(sharedMap, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
-			fluidObjectId: sharedMap.id,
+			fluidObjectId: mapId,
 			children: {
 				foo: {
 					value: 42,
@@ -288,6 +294,7 @@ describe("DefaultVisualizers unit tests", () => {
 	it("SharedMatrix", async () => {
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedMatrix.getFactory()] });
 		const sharedMatrix = SharedMatrix.create(runtime, "test-matrix");
+		const matrixId = objectIdNumber(sharedMatrix);
 		sharedMatrix.insertRows(0, 2);
 		sharedMatrix.insertCols(0, 3);
 		sharedMatrix.setCell(0, 0, "Hello");
@@ -307,7 +314,7 @@ describe("DefaultVisualizers unit tests", () => {
 		);
 
 		const expected: FluidObjectTreeNode = {
-			fluidObjectId: "test-matrix",
+			fluidObjectId: matrixId,
 			children: {
 				"[0,0]": {
 					value: "Hello",
@@ -370,12 +377,13 @@ describe("DefaultVisualizers unit tests", () => {
 	it("SharedString", async () => {
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
 		const sharedString = SharedString.create(runtime, "test-string");
+		const stringId = objectIdNumber(sharedString);
 		sharedString.insertText(0, "Hello World!");
 
 		const result = await visualizeSharedString(sharedString, visualizeChildData);
 
 		const expected: FluidObjectValueNode = {
-			fluidObjectId: sharedString.id,
+			fluidObjectId: stringId,
 			value: "Hello World!",
 			typeMetadata: "SharedString",
 			nodeKind: VisualNodeKind.FluidValueNode,
@@ -1390,6 +1398,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
+		const treeId = objectIdNumber(sharedTree);
 
 		const view = sharedTree.viewWith(
 			new TreeViewConfiguration({
@@ -1404,7 +1413,7 @@ describe("DefaultVisualizers unit tests", () => {
 		);
 
 		const expected = {
-			fluidObjectId: sharedTree.id,
+			fluidObjectId: treeId,
 			typeMetadata: "SharedTree",
 			nodeKind: VisualNodeKind.FluidTreeNode,
 			tooltipContents: {
@@ -1436,11 +1445,12 @@ describe("DefaultVisualizers unit tests", () => {
 				type: "UnknownSharedObjectType",
 			},
 		} as ISharedObject;
+		const unknownId = objectIdNumber(unknownObject);
 
 		const result = await visualizeUnknownSharedObject(unknownObject, visualizeChildData);
 
 		const expected: FluidUnknownObjectNode = {
-			fluidObjectId: "test-object-id",
+			fluidObjectId: unknownId,
 			typeMetadata: "UnknownSharedObjectType",
 			nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 		};

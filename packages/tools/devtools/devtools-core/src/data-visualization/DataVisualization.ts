@@ -6,6 +6,7 @@
 // Indexed-object style is used to ease documentation.
 /* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 
+import { objectIdNumber } from "@fluid-experimental/tree-react-api";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { DataObject } from "@fluidframework/aqueduct/internal";
 import type {
@@ -249,7 +250,8 @@ export class DataVisualizerGraph
 	private registerVisualizerForVisualizableObject(
 		visualizableObject: VisualizableFluidObject,
 	): FluidObjectId {
-		if (!this.visualizerNodes.has(visualizableObject.id)) {
+		const objectId = objectIdNumber(visualizableObject);
+		if (!this.visualizerNodes.has(objectId)) {
 			// Create visualizer node for the shared object
 			const visualizationFunction = isDataObject(visualizableObject)
 				? visualizeDataObject
@@ -269,9 +271,9 @@ export class DataVisualizerGraph
 			visualizerNode.on("update", this.onVisualUpdateHandler);
 
 			// Add the visualizer node to our collection
-			this.visualizerNodes.set(visualizableObject.id, visualizerNode);
+			this.visualizerNodes.set(objectId, visualizerNode);
 		}
-		return visualizableObject.id;
+		return objectId;
 	}
 
 	/**

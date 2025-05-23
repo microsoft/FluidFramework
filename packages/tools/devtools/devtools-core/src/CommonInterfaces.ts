@@ -33,7 +33,7 @@ export interface HasContainerKey {
  *
  * @internal
  */
-export type FluidObjectId = string;
+export type FluidObjectId = number;
 
 /**
  * Base interface used in message data for events targeting a particular Fluid object (DDS) via
