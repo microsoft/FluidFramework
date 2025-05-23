@@ -72,9 +72,6 @@ export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 	/**
 	 * Adds a new todo item to the list.
 	 *
-	 * @param props
-	 * -`startingText`: The text to prefill into the item's title.
-	 *
 	 * @privateRemarks
 	 * This method was placed in the data object (instead of the TodoList schema class),
 	 * as we needed access to the runtime to create the `SharedString`.
