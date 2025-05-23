@@ -15,6 +15,11 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import {
+	asDeeplyReadonlyFromJsonHandle,
+	brandJson,
+	// type InternalUtilityTypes,
+} from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
 import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
@@ -266,12 +271,15 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	): void {
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(asDeeplyReadonly(item.value), key, this);
+				callbackfn(asDeeplyReadonlyFromJsonHandle(item.value), key, this);
 			}
 		}
 	}
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
-		return asDeeplyReadonly(this.value.items[key]?.value);
+		return this.value.items[key]?.value === undefined
+			? undefined
+			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
+				asDeeplyReadonlyFromJsonHandle(this.value.items[key]!.value!);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -279,9 +287,9 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value };
+			this.value.items[key] = { rev: 0, timestamp: 0, value: brandJson(value) };
 		}
-		this.updateItem(key, value);
+		this.updateItem(key, brandJson(value));
 		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
 		return this;
 	}
@@ -413,7 +421,7 @@ class LatestMapRawValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
-					value: asDeeplyReadonly(value),
+					value: asDeeplyReadonlyFromJsonHandle(value),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -464,13 +472,13 @@ class LatestMapRawValueManagerImpl<
 			currentState.items[key] = item;
 			const metadata = { revision: item.rev, timestamp: item.timestamp };
 			if (item.value !== undefined) {
-				const itemValue = asDeeplyReadonly(item.value);
+				const itemValue = asDeeplyReadonlyFromJsonHandle(item.value);
 				const updatedItem = {
 					attendee,
 					key,
 					value: itemValue,
 					metadata,
-				};
+				} satisfies LatestMapItemUpdatedClientData<T, Keys>;
 				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
 				allUpdates.items.set(key, { value: itemValue, metadata });
 			} else if (hadPriorValue !== undefined) {
@@ -539,7 +547,7 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				value: initialValues[key],
+				value: brandJson(initialValues[key]),
 			};
 		}
 	}
