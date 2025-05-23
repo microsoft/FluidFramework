@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
-import { ContainerRuntime } from "../containerRuntime.js";
+import { isContainerMessageDirtyable } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
@@ -174,9 +174,7 @@ export class BatchManager {
 	 * Does this batch current contain user changes ("dirtyable" ops)?
 	 */
 	public containsUserChanges(): boolean {
-		return this.pendingBatch.some((message) =>
-			ContainerRuntime.isContainerMessageDirtyable(message.runtimeOp),
-		);
+		return this.pendingBatch.some((message) => isContainerMessageDirtyable(message.runtimeOp));
 	}
 }
 

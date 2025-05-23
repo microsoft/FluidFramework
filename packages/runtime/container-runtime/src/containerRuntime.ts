@@ -1533,7 +1533,7 @@ export class ContainerRuntime
 				eventName: "Attached",
 				details: {
 					lastEmittedDirty: this.lastEmittedDirty,
-					currentDirtyState: this.currentDirtyState(),
+					currentDirtyState: this.computeCurrentDirtyState(),
 				},
 			});
 		});
@@ -1898,7 +1898,7 @@ export class ContainerRuntime
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
-		this.lastEmittedDirty = this.currentDirtyState();
+		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
 
 		if (!this.skipSafetyFlushDuringProcessStack) {
@@ -2922,11 +2922,8 @@ export class ContainerRuntime
 		runtimeBatch: boolean,
 		groupedBatch: boolean,
 	): void {
-		// This message could have been the last pending local message, in which case we need to update dirty state to "saved"
-		// Only update if we're sure we're saved - to avoid saying we're dirty if the only pending messages are non-dirtyable
-		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState();
-		}
+		// This message could have been the last pending local (dirtyable) message, in which case we need to update dirty state to "saved"
+		this.updateDocumentDirtyState();
 
 		if (locationInBatch.batchStart) {
 			const firstMessage = messagesWithMetadata[0]?.message;
@@ -3458,53 +3455,18 @@ export class ContainerRuntime
 	public get isDirty(): boolean {
 		// Rather than recomputing the dirty state in this moment,
 		// just regurgitate the last emitted dirty state.
-		// Note that this may be "wrong" in cases -
-		// e.g. the only remaining pending local op is non-dirtyable, we will still report as dirty
 		return this.lastEmittedDirty;
 	}
 
 	/**
-	 * Returns true if the container is dirty (not attached, or no pending user messages (could be some "non-dirtyable" ones)
+	 * Returns true if the container is dirty: not attached, or no pending user messages (could be some "non-dirtyable" ones though)
 	 */
-	private currentDirtyState(): boolean {
+	private computeCurrentDirtyState(): boolean {
 		return (
 			this.attachState !== AttachState.Attached ||
 			this.pendingStateManager.hasPendingUserChanges() ||
 			this.outbox.containsUserChanges()
 		);
-	}
-
-	//* Move to free fn
-	public static isContainerMessageDirtyable(message: unknown): boolean {
-		//* Undo
-		const { type, contents } = message as LocalContainerRuntimeMessage;
-		// Certain container runtime messages should not mark the container dirty such as the old built-in
-		// AgentScheduler and Garbage collector messages.
-		switch (type) {
-			case ContainerMessageType.Attach: {
-				const attachMessage = contents as InboundAttachMessage;
-				if (attachMessage.id === agentSchedulerId) {
-					return false;
-				}
-				break;
-			}
-			case ContainerMessageType.FluidDataStoreOp: {
-				const envelope = contents;
-				if (envelope.address === agentSchedulerId) {
-					return false;
-				}
-				break;
-			}
-			case ContainerMessageType.IdAllocation:
-			case ContainerMessageType.DocumentSchemaChange:
-			case ContainerMessageType.GC: {
-				return false;
-			}
-			default: {
-				break;
-			}
-		}
-		return true;
 	}
 
 	/**
@@ -4332,16 +4294,12 @@ export class ContainerRuntime
 	 * Emit "dirty" or "saved" event based on the current dirty state of the document.
 	 * This must be called every time the states underlying the dirty state change.
 	 *
-	 * @remarks - This uses `!this.attachedAndFullySaved()` to compute the new dirty state,
-	 * which does not take into consideration isContainerMessageDirtyable.
-	 * This can result in false positives where we emit dirty when the only pending messages are non-dirtyable.
-	 *
 	 * @privateRemarks - It's helpful to think of this as an event handler registered
 	 * for hypothetical "changed" events for PendingStateManager, Outbox, and Container Attach machinery.
 	 * But those events don't exist so we manually call this wherever we know those changes happen.
 	 */
 	private updateDocumentDirtyState(): void {
-		const dirty: boolean = this.currentDirtyState();
+		const dirty: boolean = this.computeCurrentDirtyState();
 
 		if (this.lastEmittedDirty === dirty) {
 			return;
@@ -4500,13 +4458,7 @@ export class ContainerRuntime
 			throw dpe;
 		}
 
-		// This is a best-effort attempt to keep this message from marking a saved container as dirty.
-		// It works in this moment, but after operations like rollback or resubmit or discarding staged changes,
-		// we won't re-check the pending messages to see that they're all dirtyable, which could result in
-		// false-positives saying the container is dirty when (according to isContainerMessageDirtyable) it's not.
-		if (ContainerRuntime.isContainerMessageDirtyable(containerRuntimeMessage)) {
-			this.updateDocumentDirtyState();
-		}
+		this.updateDocumentDirtyState();
 	}
 
 	private scheduleFlush(): void {
@@ -4940,4 +4892,37 @@ export function createNewSignalEnvelope(
 	};
 
 	return newEnvelope;
+}
+
+export function isContainerMessageDirtyable({
+	type,
+	contents,
+}: LocalContainerRuntimeMessage): boolean {
+	// Certain container runtime messages should not mark the container dirty such as the old built-in
+	// AgentScheduler and Garbage collector messages.
+	switch (type) {
+		case ContainerMessageType.Attach: {
+			const attachMessage = contents as InboundAttachMessage;
+			if (attachMessage.id === agentSchedulerId) {
+				return false;
+			}
+			break;
+		}
+		case ContainerMessageType.FluidDataStoreOp: {
+			const envelope = contents;
+			if (envelope.address === agentSchedulerId) {
+				return false;
+			}
+			break;
+		}
+		case ContainerMessageType.IdAllocation:
+		case ContainerMessageType.DocumentSchemaChange:
+		case ContainerMessageType.GC: {
+			return false;
+		}
+		default: {
+			break;
+		}
+	}
+	return true;
 }

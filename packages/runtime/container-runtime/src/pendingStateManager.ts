@@ -15,7 +15,7 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
-import { ContainerRuntime } from "./containerRuntime.js";
+import { isContainerMessageDirtyable } from "./containerRuntime.js";
 import {
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -289,10 +289,8 @@ export class PendingStateManager implements IDisposable {
 	public hasPendingUserChanges(): boolean {
 		for (let i = 0; i < this.pendingMessages.length; i++) {
 			const element = this.pendingMessages.get(i);
-			if (
-				element?.runtimeOp !== undefined &&
-				ContainerRuntime.isContainerMessageDirtyable(element.runtimeOp)
-			) {
+			// Missing runtimeOp implies not dirtyable: This only happens for empty batches
+			if (element?.runtimeOp !== undefined && isContainerMessageDirtyable(element.runtimeOp)) {
 				return true;
 			}
 		}
