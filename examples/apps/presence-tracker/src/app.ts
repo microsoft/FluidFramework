@@ -5,7 +5,9 @@
 
 import {
 	getPresence,
+	// eslint-disable-next-line import/no-deprecated
 	getPresenceViaDataObject,
+	// eslint-disable-next-line import/no-deprecated
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
@@ -21,11 +23,11 @@ import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./
 // But the old experimental presence data object is used to check that old path still works.
 // Besides initialObjects is not currently allowed to be empty.
 // That version of presence is compatible with all 2.x runtimes. Long-term support without
-// data object requires 2.32 or later.
+// data object requires 2.41 or later.
 const containerSchema = {
 	initialObjects: {
-		// A Presence Manager object placed within container schema for experimental presence access
-		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
+		// Optional Presence Manager object placed within container schema for experimental presence access
+		// eslint-disable-next-line import/no-deprecated
 		presence: ExperimentalPresenceManager,
 	},
 } satisfies ContainerSchema;
@@ -64,6 +66,7 @@ async function start() {
 	const useDataObject = new URLSearchParams(location.search).has("useDataObject");
 	const presence = useDataObject
 		? // Retrieve a reference to the presence APIs via the data object.
+			// eslint-disable-next-line import/no-deprecated
 			getPresenceViaDataObject(container.initialObjects.presence)
 		: getPresence(container);
 

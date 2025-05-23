@@ -5,7 +5,7 @@
 
 "use client";
 
-import { getPresenceViaDataObject } from "@fluidframework/presence/alpha";
+import { getPresence } from "@fluidframework/presence/alpha";
 import {
 	Box,
 	Button,
@@ -63,7 +63,7 @@ export default function TasksListPage(): JSX.Element {
 			const _treeView = fluidContainer.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 			setTreeView(_treeView);
 
-			const presence = getPresenceViaDataObject(fluidContainer.initialObjects.presence);
+			const presence = getPresence(fluidContainer);
 			setPresenceManagerContext(new PresenceManager(presence));
 			return { sharedTree: _treeView };
 		},
