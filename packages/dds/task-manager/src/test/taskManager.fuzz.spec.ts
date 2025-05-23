@@ -233,8 +233,7 @@ function assertEqualTaskManagers(a: ITaskManager, b: ITaskManager): void {
 		if (testVal.length > 0) {
 			const testValArr = testVal as string[];
 			const valArr = val as string[];
-			for (let index = 0; index < testValArr.length; index++) {
-				const task = testValArr[index];
+			for (const [index, task] of testValArr.entries()) {
 				assert.strictEqual(task, valArr[index], `Task queues are not identical`);
 			}
 		}
