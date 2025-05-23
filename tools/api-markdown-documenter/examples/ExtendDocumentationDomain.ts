@@ -20,7 +20,7 @@ export class CustomDocumentationNode extends DocumentationParentNodeBase<Phrasin
 	}
 }
 
-// Extend the BlockContentMap interface to include CustomDocumentationNode
+// Extend the `BlockContentMap` interface to include our custom node kind, so it can be used in `SectionNode`s.
 declare module "@fluid-tools/api-markdown-documenter" {
 	interface BlockContentMap {
 		"custom-node": CustomDocumentationNode;
