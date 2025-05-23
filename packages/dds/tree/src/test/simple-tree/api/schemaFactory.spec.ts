@@ -1115,7 +1115,7 @@ describe("schemaFactory", () => {
 		assert.equal(factory.map([SchemaFactory.null, Child1]), a);
 		assert.throws(
 			() => {
-				factory.array([Child2, SchemaFactory.null]);
+				factory.map([Child2, SchemaFactory.null]);
 			},
 			validateUsageError(/collision/),
 		);
