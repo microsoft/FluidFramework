@@ -37,9 +37,19 @@ export class LinkNode implements DocumentationNode {
 	 */
 	public readonly singleLine = true;
 
+	/**
+	 * {@inheritDoc DocumentationNode.isLiteral}
+	 */
 	public readonly isLiteral = false;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isParent}
+	 */
 	public readonly isParent = false;
 
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
 	public get isEmpty(): boolean {
 		return this.text.isEmpty && this.target.length === 0;
 	}

@@ -492,11 +492,8 @@ export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Headi
     static createFromPlainText(text: string, id?: string): HeadingNode;
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
     readonly id?: string | undefined;
-    // (undocumented)
     get isEmpty(): boolean;
-    // (undocumented)
     readonly isLiteral = false;
-    // (undocumented)
     readonly isParent = false;
     readonly singleLine = true;
     // (undocumented)
@@ -615,11 +612,8 @@ export class LinkNode implements DocumentationNode {
     target: UrlTarget);
     static createFromPlainText(text: string, target: UrlTarget): LinkNode;
     static createFromPlainTextLink(link: Link): LinkNode;
-    // (undocumented)
     get isEmpty(): boolean;
-    // (undocumented)
     readonly isLiteral = false;
-    // (undocumented)
     readonly isParent = false;
     readonly singleLine = true;
     readonly target: UrlTarget;
