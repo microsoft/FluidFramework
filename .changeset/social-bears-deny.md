@@ -18,6 +18,6 @@ class Child2 extends factory.object("Child", {}) {}
 const a = factory.map(Child1);
 
 // Throws a UsageError with the message:
-// "Structurally named schema collision: two schema named Array<["Child"]> were defined with different input schema."
+// "Structurally named schema collision: two schema named "Array<["Child"]>" were defined with different input schema."
 const b = factory.array(Child2);
 ```
