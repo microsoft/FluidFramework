@@ -15432,6 +15432,9 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../../examples/utils/example-utils
+      '@fluid-experimental/tree-react-api':
+        specifier: workspace:~
+        version: link:../../../../experimental/framework/tree-react-api
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../common/client-utils
@@ -15504,6 +15507,9 @@ importers:
       scheduler:
         specifier: ^0.20.0
         version: 0.20.2
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -15547,6 +15553,9 @@ importers:
       '@types/testing-library__jest-dom':
         specifier: ^5.14.5
         version: 5.14.9
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
