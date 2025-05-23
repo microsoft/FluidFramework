@@ -684,6 +684,23 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 	};
 	return {
 		...model,
+		minimizationTransforms: [
+			...(model.minimizationTransforms ?? []),
+			(op) => {
+				// the clients are somewhat interchangeable, and the fewer clients
+				// involved in a repro the easier it is to debug, so try to
+				// reduce the client id
+				if (hasSelectedClientSpec(op)) {
+					const dashIndex = op.clientTag.lastIndexOf("-");
+					if (dashIndex !== -1) {
+						const id = Number.parseInt(op.clientTag.slice(dashIndex + 1), 10);
+						if (id > 1) {
+							op.clientTag = `client-${id - 1}`;
+						}
+					}
+				}
+			},
+		],
 		generatorFactory,
 		reducer,
 	};
