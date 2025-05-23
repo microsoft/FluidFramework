@@ -1267,11 +1267,7 @@ export class ContainerRuntime
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
 	private readonly offlineEnabled: boolean;
-	private flushPending = false;
-	private readonly doPendingFlush = (): void => {
-		this.flushPending = false;
-		this.flush();
-	};
+	private flushScheduled = false;
 
 	private _connected: boolean;
 
@@ -3221,6 +3217,8 @@ export class ContainerRuntime
 	 * @param resubmitInfo - If defined, indicates this is a resubmission of a batch with the given Batch info needed for resubmit.
 	 */
 	private flush(resubmitInfo?: BatchResubmitInfo): void {
+		this.flushScheduled = false;
+
 		try {
 			assert(
 				!this.batchRunner.running,
@@ -4500,16 +4498,16 @@ export class ContainerRuntime
 	}
 
 	private scheduleFlush(): void {
-		if (this.flushPending) {
+		if (this.flushScheduled) {
 			return;
 		}
-		this.flushPending = true;
+		this.flushScheduled = true;
 
 		switch (this.flushMode) {
 			case FlushMode.Immediate: {
 				// When in Immediate flush mode, flush immediately unless we are intentionally batching multiple ops (e.g. via orderSequentially)
 				if (!this.batchRunner.running) {
-					this.doPendingFlush();
+					this.flush();
 				}
 				break;
 			}
@@ -4517,7 +4515,7 @@ export class ContainerRuntime
 				// When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
 				// batch at the end of the turn
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises -- Container will close if flush throws
-				Promise.resolve().then(() => this.doPendingFlush());
+				Promise.resolve().then(() => this.flush());
 				break;
 			}
 
@@ -4526,7 +4524,7 @@ export class ContainerRuntime
 				// When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
 				// batch when all micro-tasks are complete.
 				// Compared to TurnBased, this flush mode will capture more ops into the same batch.
-				setTimeout(() => this.doPendingFlush(), 0);
+				setTimeout(() => this.flush(), 0);
 				break;
 			}
 
