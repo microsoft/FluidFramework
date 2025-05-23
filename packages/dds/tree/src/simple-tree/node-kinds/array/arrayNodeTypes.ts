@@ -8,16 +8,16 @@ import type {
 	ImplicitAnnotatedAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	UnannotateImplicitAllowedTypes,
-} from "./schemaTypes.js";
+} from "../../schemaTypes.js";
 import {
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchema,
 	type TreeNodeSchemaNonClass,
 	type WithType,
-} from "./core/index.js";
+} from "../../core/index.js";
 
-import type { SimpleArrayNodeSchema } from "./simpleSchema.js";
+import type { SimpleArrayNodeSchema } from "../../simpleSchema.js";
 
 /**
  * A schema for customizable {@link (TreeArrayNode:interface)}s.
