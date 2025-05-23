@@ -1305,7 +1305,7 @@ export class ContainerRuntime
 
 	/**
 	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
+	 * until execution finishes. If an op is submitted, it will be marked as reentrant.
 	 *
 	 * @param callback - the callback to be invoked
 	 */
@@ -1329,7 +1329,7 @@ export class ContainerRuntime
 		return this._disposed;
 	}
 
-	private dirtyContainer: boolean;
+	private lastEmittedDirty: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
@@ -1585,8 +1585,8 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "Attached",
 				details: {
-					dirtyContainer: this.dirtyContainer,
-					hasPendingMessages: this.hasPendingMessages(),
+					lastEmittedDirty: this.lastEmittedDirty,
+					currentDirtyState: this.computeCurrentDirtyState(),
 				},
 			});
 		});
@@ -1947,9 +1947,9 @@ export class ContainerRuntime
 		this.closeSummarizerDelayMs =
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
-		this.dirtyContainer =
-			this.attachState !== AttachState.Attached || this.hasPendingMessages();
-		context.updateDirtyContainerState(this.dirtyContainer);
+		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
+		this.lastEmittedDirty = this.computeCurrentDirtyState();
+		context.updateDirtyContainerState(this.lastEmittedDirty);
 
 		if (!this.skipSafetyFlushDuringProcessStack) {
 			// Reference Sequence Number may have just changed, and it must be consistent across a batch,
@@ -2578,17 +2578,12 @@ export class ContainerRuntime
 			return;
 		}
 
-		// We need to temporary clear the dirty flags and disable
-		// dirty state change events to detect whether replaying ops
-		// has any effect.
-
-		// Save the old state, reset to false, disable event emit
-		const oldState = this.dirtyContainer;
-		this.dirtyContainer = false;
-
+		// Replaying is an internal operation and we don't want to generate noise while doing it.
+		// So temporarily disable dirty state change events, and save the old state.
+		// When we're done, we'll emit the event if the state changed.
+		const oldState = this.lastEmittedDirty;
 		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
 		this.emitDirtyDocumentEvent = false;
-		let newState: boolean;
 
 		try {
 			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
@@ -2600,14 +2595,13 @@ export class ContainerRuntime
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
 		} finally {
-			// Save the new start and restore the old state, re-enable event emit
-			newState = this.dirtyContainer;
-			this.dirtyContainer = oldState;
+			// Restore the old state, re-enable event emit
+			this.lastEmittedDirty = oldState;
 			this.emitDirtyDocumentEvent = true;
 		}
 
-		// Officially transition from the old state to the new state.
-		this.updateDocumentDirtyState(newState);
+		// This will emit an event if the state changed relative to before replay
+		this.updateDocumentDirtyState();
 	}
 
 	/**
@@ -2978,6 +2972,9 @@ export class ContainerRuntime
 		runtimeBatch: boolean,
 		groupedBatch: boolean,
 	): void {
+		// This message could have been the last pending local (dirtyable) message, in which case we need to update dirty state to "saved"
+		this.updateDocumentDirtyState();
+
 		if (locationInBatch.batchStart) {
 			const firstMessage = messagesWithMetadata[0]?.message;
 			assert(firstMessage !== undefined, 0xa31 /* Batch must have at least one message */);
@@ -3093,12 +3090,6 @@ export class ContainerRuntime
 
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
-		// If there are no more pending messages after processing a local message,
-		// the document is no longer dirty.
-		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
-		}
-
 		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
 		// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
 		if (
@@ -3129,12 +3120,6 @@ export class ContainerRuntime
 		local: boolean,
 		savedOp?: boolean,
 	): void {
-		// If there are no more pending messages after processing a local message,
-		// the document is no longer dirty.
-		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
-		}
-
 		// Get the contents without the localOpMetadata because not all message types know about localOpMetadata.
 		const contents = messagesContent.map((c) => c.contents);
 
@@ -3326,7 +3311,6 @@ export class ContainerRuntime
 	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
-		const checkpointDirtyState = this.dirtyContainer;
 		// eslint-disable-next-line import/no-deprecated
 		let stageControls: StageControlsExperimental | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
@@ -3348,10 +3332,7 @@ export class ContainerRuntime
 						checkpoint.rollback((message: LocalBatchMessage) =>
 							this.rollback(message.runtimeOp, message.localOpMetadata),
 						);
-						// reset the dirty state after rollback to what it was before to keep it consistent
-						if (this.dirtyContainer !== checkpointDirtyState) {
-							this.updateDocumentDirtyState(checkpointDirtyState);
-						}
+						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
 						stageControls = undefined;
 					} catch (error_) {
@@ -3447,9 +3428,7 @@ export class ContainerRuntime
 					);
 					this.rollback(runtimeOp, localOpMetadata);
 				});
-				if (this.attachState === AttachState.Attached) {
-					this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
-				}
+				this.updateDocumentDirtyState();
 			}),
 			commitChanges: (optionsParam) => {
 				const options = { ...defaultStagingCommitOptions, ...optionsParam };
@@ -3561,40 +3540,20 @@ export class ContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
-		return this.dirtyContainer;
+		// Rather than recomputing the dirty state in this moment,
+		// just regurgitate the last emitted dirty state.
+		return this.lastEmittedDirty;
 	}
 
-	private isContainerMessageDirtyable({
-		type,
-		contents,
-	}: LocalContainerRuntimeMessage): boolean {
-		// Certain container runtime messages should not mark the container dirty such as the old built-in
-		// AgentScheduler and Garbage collector messages.
-		switch (type) {
-			case ContainerMessageType.Attach: {
-				const attachMessage = contents as InboundAttachMessage;
-				if (attachMessage.id === agentSchedulerId) {
-					return false;
-				}
-				break;
-			}
-			case ContainerMessageType.FluidDataStoreOp: {
-				const envelope = contents;
-				if (envelope.address === agentSchedulerId) {
-					return false;
-				}
-				break;
-			}
-			case ContainerMessageType.IdAllocation:
-			case ContainerMessageType.DocumentSchemaChange:
-			case ContainerMessageType.GC: {
-				return false;
-			}
-			default: {
-				break;
-			}
-		}
-		return true;
+	/**
+	 * Returns true if the container is dirty: not attached, or no pending user messages (could be some "non-dirtyable" ones though)
+	 */
+	private computeCurrentDirtyState(): boolean {
+		return (
+			this.attachState !== AttachState.Attached ||
+			this.pendingStateManager.hasPendingUserChanges() ||
+			this.outbox.containsUserChanges()
+		);
 	}
 
 	/**
@@ -3629,9 +3588,7 @@ export class ContainerRuntime
 			this.emit("attached");
 		}
 
-		if (attachState === AttachState.Attached && !this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
-		}
+		this.updateDocumentDirtyState();
 		this.channelCollection.setAttachState(attachState);
 	}
 
@@ -4417,22 +4374,22 @@ export class ContainerRuntime
 		return this.pendingMessagesCount !== 0;
 	}
 
-	private updateDocumentDirtyState(dirty: boolean): void {
-		if (this.attachState === AttachState.Attached) {
-			// Other way is not true = see this.isContainerMessageDirtyable()
-			assert(
-				!dirty || this.hasPendingMessages(),
-				0x3d3 /* if doc is dirty, there has to be pending ops */,
-			);
-		} else {
-			assert(dirty, 0x3d2 /* Non-attached container is dirty */);
-		}
+	/**
+	 * Emit "dirty" or "saved" event based on the current dirty state of the document.
+	 * This must be called every time the states underlying the dirty state change.
+	 *
+	 * @privateRemarks - It's helpful to think of this as an event handler registered
+	 * for hypothetical "changed" events for PendingStateManager, Outbox, and Container Attach machinery.
+	 * But those events don't exist so we manually call this wherever we know those changes happen.
+	 */
+	private updateDocumentDirtyState(): void {
+		const dirty: boolean = this.computeCurrentDirtyState();
 
-		if (this.dirtyContainer === dirty) {
+		if (this.lastEmittedDirty === dirty) {
 			return;
 		}
 
-		this.dirtyContainer = dirty;
+		this.lastEmittedDirty = dirty;
 		if (this.emitDirtyDocumentEvent) {
 			this.emit(dirty ? "dirty" : "saved");
 		}
@@ -4585,9 +4542,7 @@ export class ContainerRuntime
 			throw dpe;
 		}
 
-		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
-			this.updateDocumentDirtyState(true);
-		}
+		this.updateDocumentDirtyState();
 	}
 
 	private scheduleFlush(): void {
@@ -5071,4 +5026,37 @@ export function createNewSignalEnvelope(
 	};
 
 	return newEnvelope;
+}
+
+export function isContainerMessageDirtyable({
+	type,
+	contents,
+}: LocalContainerRuntimeMessage): boolean {
+	// Certain container runtime messages should not mark the container dirty such as the old built-in
+	// AgentScheduler and Garbage collector messages.
+	switch (type) {
+		case ContainerMessageType.Attach: {
+			const attachMessage = contents as InboundAttachMessage;
+			if (attachMessage.id === agentSchedulerId) {
+				return false;
+			}
+			break;
+		}
+		case ContainerMessageType.FluidDataStoreOp: {
+			const envelope = contents;
+			if (envelope.address === agentSchedulerId) {
+				return false;
+			}
+			break;
+		}
+		case ContainerMessageType.IdAllocation:
+		case ContainerMessageType.DocumentSchemaChange:
+		case ContainerMessageType.GC: {
+			return false;
+		}
+		default: {
+			break;
+		}
+	}
+	return true;
 }
