@@ -994,7 +994,7 @@ export class SchemaFactory<
 		const same = compareSets({ a: inputTypes, b: outputTypes });
 		if (!same) {
 			throw new UsageError(
-				`Structurally named schema collision: two schema named ${fullName} were defined with different input schema.`,
+				`Structurally named schema collision: two schema named "${fullName}" were defined with different input schema.`,
 			);
 		}
 		return structural;
