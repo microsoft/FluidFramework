@@ -35,7 +35,7 @@ import {
 	TestTreeProviderLite,
 	validateUsageError,
 } from "../../utils.js";
-import { getViewForForkedBranch, hydrate } from "../utils.js";
+import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
 import {
@@ -165,39 +165,59 @@ describe("treeNodeApi", () => {
 		});
 	});
 
-	it("key", () => {
-		class Child extends schema.object("Child", {
-			x: Point,
-			y: schema.optional(Point, { key: "stable-y" }),
-		}) {}
-		const Root = schema.array(Child);
-		const config = new TreeViewConfiguration({ schema: Root });
-		const view = getView(config);
-		view.initialize([
-			{ x: {}, y: undefined },
-			{ x: {}, y: {} },
-		]);
-		const { root } = view;
-		assert.equal(Tree.key(root), rootFieldKey);
-		assert.equal(Tree.key(root[0]), 0);
-		assert.equal(Tree.key(root[0].x), "x");
-		assert.equal(Tree.key(root[1]), 1);
-		assert.equal(Tree.key(root[1].x), "x");
-		assert(root[1].y !== undefined);
-		assert.equal(Tree.key(root[1].y), "y");
-	});
+	describeHydration("upward path", (init) => {
+		it("key", () => {
+			class Child extends schema.object("Child", {
+				x: Point,
+				y: schema.optional(Point, { key: "stable-y" }),
+			}) {}
+			class Root extends schema.array("Root", Child) {}
+			const root = init(Root, [
+				{ x: {}, y: undefined },
+				{ x: {}, y: {} },
+			]);
+			assert.equal(Tree.key(root), rootFieldKey);
+			assert.equal(Tree.key(root[0]), 0);
+			assert.equal(Tree.key(root[0].x), "x");
+			assert.equal(Tree.key(root[1]), 1);
+			assert.equal(Tree.key(root[1].x), "x");
+			assert(root[1].y !== undefined);
+			assert.equal(Tree.key(root[1].y), "y");
 
-	it("parent", () => {
-		class Child extends schema.object("Child", { x: Point }) {}
-		const Root = schema.array(Child);
-		const config = new TreeViewConfiguration({ schema: Root });
-		const view = getView(config);
-		view.initialize([{ x: {} }, { x: {} }]);
-		const { root } = view;
-		assert.equal(Tree.parent(root), undefined);
-		assert.equal(Tree.parent(root[0]), root);
-		assert.equal(Tree.parent(root[1]), root);
-		assert.equal(Tree.parent(root[1].x), root[1]);
+			const added = new Child({ x: {}, y: {} });
+
+			// TODO: is this how we want to handle root keys?
+			assert.equal(Tree.key(added), rootFieldKey);
+
+			// Check index is updated after insert.
+			root.insertAtStart(added);
+			assert.equal(Tree.key(root[2]), 2);
+			assert.equal(Tree.key(added), 0);
+
+			// Check index is updated after removal.
+			root.removeRange(0, 1);
+			assert.equal(Tree.key(root[1]), 1);
+			assert.equal(Tree.key(added), rootFieldKey);
+		});
+
+		it("parent", () => {
+			class Child extends schema.object("Child", { x: Point }) {}
+			class Root extends schema.array("Root", Child) {}
+			const root = init(Root, [{ x: {} }, { x: {} }]);
+
+			assert.equal(Tree.parent(root), undefined);
+			assert.equal(Tree.parent(root[0]), root);
+			assert.equal(Tree.parent(root[1]), root);
+			assert.equal(Tree.parent(root[1].x), root[1]);
+
+			const added = new Child({ x: {} });
+
+			assert.equal(Tree.parent(added), undefined);
+			root.insertAtStart(added);
+			assert.equal(Tree.parent(added), root);
+			root.removeRange(0, 1);
+			assert.equal(Tree.parent(added), undefined);
+		});
 	});
 
 	it("treeStatus", () => {
