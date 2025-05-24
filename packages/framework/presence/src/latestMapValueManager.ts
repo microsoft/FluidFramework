@@ -26,7 +26,7 @@ import { brandIVM } from "./valueManager.js";
  * Collection of latest known values for a specific client.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapClientData<
 	T,
@@ -49,7 +49,7 @@ export interface LatestMapClientData<
  * State of a single item value, its key, and its metadata.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapItemUpdatedClientData<T, K extends string | number>
 	extends LatestClientData<T> {
@@ -60,7 +60,7 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number>
  * Identifier and metadata for a removed item.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapItemRemovedClientData<K extends string | number> {
 	attendee: Attendee;
@@ -70,7 +70,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 
 /**
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapRawEvents<T, K extends string | number> {
 	/**
@@ -125,7 +125,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
  * Map of local client's values. Modifications are transmitted to all other connected clients.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface StateMap<K extends string | number, V> {
 	/**
@@ -308,7 +308,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  * @remarks Create using {@link StateFactory.latestMap} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapRaw<T, Keys extends string | number = string | number> {
 	/**
@@ -492,7 +492,7 @@ class LatestMapRawValueManagerImpl<
 /**
  * Arguments that are passed to the {@link StateFactory.latestMap} function.
  *
- * @alpha
+ * @beta
  */
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
 	/**
@@ -511,7 +511,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 /**
  * Factory for creating a {@link LatestMapRaw} State object.
  *
- * @alpha
+ * @beta
  */
 export function latestMap<
 	T,

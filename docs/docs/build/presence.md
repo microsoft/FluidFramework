@@ -59,7 +59,7 @@ Notifications are special case where no data is retained during a session and al
 To access Presence APIs, use `getPresence()` with any `IFluidContainer`.
 
 ```typescript
-import { getPresence } from "@fluidframework/presence/alpha";
+import { getPresence } from "@fluidframework/presence/beta";
 
 function usePresence(container: IFluidContainer): void {
    const presence = await getPresence(container);
