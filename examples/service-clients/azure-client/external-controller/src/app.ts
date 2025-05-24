@@ -11,10 +11,7 @@ import {
 } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/legacy";
-import {
-	getPresenceViaDataObject,
-	ExperimentalPresenceManager,
-} from "@fluidframework/presence/alpha";
+import { getPresence } from "@fluidframework/presence/alpha";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 // eslint-disable-next-line import/no-internal-modules -- #26985: `test-runtime-utils` internal used in example
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -76,9 +73,6 @@ const containerSchema = {
 		/* [id]: DataObject */
 		map1: SharedMap,
 		map2: SharedMap,
-		// A Presence Manager object temporarily needs to be placed within container schema
-		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
-		presence: ExperimentalPresenceManager,
 	},
 } satisfies ContainerSchema;
 type DiceRollerContainerSchema = typeof containerSchema;
@@ -182,7 +176,7 @@ async function start(): Promise<void> {
 
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	const lastRoll: { die1?: DieValue; die2?: DieValue } = {};
-	const presence = getPresenceViaDataObject(container.initialObjects.presence);
+	const presence = getPresence(container);
 	const states = buildDicePresence(presence).states;
 
 	// Initialize Devtools

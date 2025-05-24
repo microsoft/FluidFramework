@@ -10,6 +10,7 @@ import {
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { ContainerExtensionStore } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
 	IEvent,
@@ -19,7 +20,12 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
-import type { ContainerAttachProps, ContainerSchema, IRootDataObject } from "./types.js";
+import type {
+	ContainerAttachProps,
+	ContainerSchema,
+	IRootDataObject,
+	IStaticEntryPoint,
+} from "./types.js";
 
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.
@@ -241,7 +247,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
  *
  * @internal
  */
-export interface IFluidContainerInternal {
+export interface IFluidContainerInternal extends ContainerExtensionStore {
 	/**
 	 * The underlying {@link @fluidframework/container-definitions#IContainer}.
 	 *
@@ -260,12 +266,16 @@ export async function createFluidContainer<
 >(props: {
 	container: IContainer;
 }): Promise<IFluidContainer<TContainerSchema>> {
-	const entryPoint: FluidObject<IRootDataObject> = await props.container.getEntryPoint();
+	const entryPoint: FluidObject<IStaticEntryPoint> = await props.container.getEntryPoint();
 	assert(
-		entryPoint.IRootDataObject !== undefined,
-		0x875 /* entryPoint must be of type IRootDataObject */,
+		entryPoint.IStaticEntryPoint !== undefined,
+		"entryPoint must be of type IStaticEntryPoint",
 	);
-	return new FluidContainer<TContainerSchema>(props.container, entryPoint.IRootDataObject);
+	return new FluidContainer<TContainerSchema>(
+		props.container,
+		entryPoint.IStaticEntryPoint.rootDataObject,
+		entryPoint.IStaticEntryPoint.extensionStore,
+	);
 }
 
 /**
@@ -301,12 +311,15 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.emit("disposed", error);
 	private readonly savedHandler = (): boolean => this.emit("saved");
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
+	public readonly acquireExtension: ContainerExtensionStore["acquireExtension"];
 
 	public constructor(
 		public readonly container: IContainer,
 		private readonly rootDataObject: IRootDataObject,
+		extensionStore: ContainerExtensionStore,
 	) {
 		super();
+		this.acquireExtension = extensionStore.acquireExtension.bind(extensionStore);
 		container.on("connected", this.connectedHandler);
 		container.on("closed", this.disposedHandler);
 		container.on("disconnected", this.disconnectedHandler);
