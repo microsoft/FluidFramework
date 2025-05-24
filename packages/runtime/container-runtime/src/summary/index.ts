@@ -106,7 +106,8 @@ export {
 	currentDocumentVersionSchema,
 	DocumentSchemaValueType,
 	DocumentsSchemaController,
-	IDocumentSchemaChangeMessage,
+	IDocumentSchemaChangeMessageIncoming,
+	IDocumentSchemaChangeMessageOutgoing,
 	IDocumentSchemaFeatures,
 } from "./documentSchema.js";
 export {
