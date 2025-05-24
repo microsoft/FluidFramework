@@ -230,6 +230,73 @@ describe("Schema Evolution Examples", () => {
 		}
 	});
 
+	it("upgrading an enablable", () => {
+		const factory = new SchemaFactoryAlpha("upgrade");
+
+		// Schema A: Only number allowed
+		const schemaA = factory.required([factory.number]);
+
+		// Schema B: Number or string (string is enablable)
+		const schemaB = factory.required([
+			factory.number,
+			factory.enablable(factory.string),
+		]);
+
+		// Schema C: Number or string, both fully allowed
+		const schemaC = factory.required([factory.number, factory.string]);
+
+		const stored = new TestSchemaRepository(defaultSchemaPolicy);
+		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaA).rootFieldSchema));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
+
+		// A: View schema is A
+		let view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaA);
+		assert.deepEqual(view.checkCompatibility(stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+
+		// B: View schema is B (includes enablable string)
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaB);
+		assert.deepEqual(view.checkCompatibility(stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: false,
+		});
+
+		// Upgrade to schema B
+		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
+		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaB).rootFieldSchema));
+
+		// Schema is upgraded to support enablable type
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaB);
+		assert.deepEqual(view.checkCompatibility(stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+
+		// C: View schema now wants full support for string (not just enablable)
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaC);
+		assert.deepEqual(view.checkCompatibility(stored), {
+			canView: false,
+			canUpgrade: true,
+			isEquivalent: false,
+		});
+
+		// Upgrade to full schema C
+		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaC).rootFieldSchema));
+
+		// Validate C is now fully supported
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaC);
+		assert.deepEqual(view.checkCompatibility(stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+	});
+
 	// TODO: support adapters.
 
 	// function makeTolerantRootAdapter(view: TreeStoredSchema): FieldAdapter {
