@@ -1079,6 +1079,47 @@ describe("schemaFactory", () => {
 		assert.deepEqual(getKeys(arr), [0]);
 		assert.deepEqual(getKeys(mapNode), ["x"]);
 	});
+
+	it("structural type collision: single type", () => {
+		const factory = new SchemaFactory("");
+		class Child1 extends factory.object("Child", {}) {}
+		class Child2 extends factory.object("Child", {}) {}
+
+		const a = factory.array(Child1);
+		// No error: this type is the same as the one above.
+		assert.equal(factory.array(Child1), a);
+
+		// Error: this type is different from the one above.
+		assert.throws(
+			() => {
+				factory.array(Child2);
+			},
+			validateUsageError(/collision/),
+		);
+
+		assert.equal(factory.array([Child1]), a);
+		assert.throws(
+			() => {
+				factory.array([Child2]);
+			},
+			validateUsageError(/collision/),
+		);
+	});
+
+	it("structural type collision: multi type", () => {
+		const factory = new SchemaFactory("");
+		class Child1 extends factory.object("Child", {}) {}
+		class Child2 extends factory.object("Child", {}) {}
+
+		const a = factory.map([Child1, SchemaFactory.null]);
+		assert.equal(factory.map([SchemaFactory.null, Child1]), a);
+		assert.throws(
+			() => {
+				factory.map([Child2, SchemaFactory.null]);
+			},
+			validateUsageError(/collision/),
+		);
+	});
 });
 
 // kind based narrowing example
