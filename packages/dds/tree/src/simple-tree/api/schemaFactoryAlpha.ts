@@ -58,15 +58,19 @@ export class SchemaFactoryAlpha<
 	 * Declares a type enablable in a set of {@link AllowedTypes}.
 	 *
 	 * @remarks
-	 * An allowed type that is enablable can be read from the document but cannot be written.
+	 *
 	 * Enablables add support for reading a type which can be used for schema evolution to add members to
 	 * an {@link AllowedTypes} while supporting cross version collaboration.
 	 *
 	 * Once enough clients supporting reading the type, support for writing can be added by removing the use of
-	 * `enablable` from the schema definition.
+	 * `enablable` from the schema definition and upgrading the schema.
 	 *
 	 * A future change will allow writing the type using a runtime schema upgrade so that the type can be enabled
 	 * using a configuration flag change rather than a code change.
+	 *
+	 * @privateremarks
+	 * TODO enablables rely on schema validation of stored schema to output errors, these errors are not very
+	 * user friendly and should be improved, particularly in the case of enablables
 	 *
 	 */
 	public enablable<const T extends TreeNodeSchema>(
