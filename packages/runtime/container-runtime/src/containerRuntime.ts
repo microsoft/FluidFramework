@@ -60,6 +60,7 @@ import {
 	PromiseCache,
 	delay,
 	fail,
+	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type {
 	IClientDetails,
@@ -3334,7 +3335,8 @@ export class ContainerRuntime
 					// This will throw and close the container if rollback fails
 					try {
 						checkpoint.rollback((message: LocalBatchMessage) =>
-							this.rollback(message.runtimeOp, message.localOpMetadata),
+							// These changes are staged since we entered staging mode above
+							this.rollbackStagedChanges(message.runtimeOp, message.localOpMetadata),
 						);
 						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
@@ -3417,6 +3419,7 @@ export class ContainerRuntime
 			// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
 			this.submitIdAllocationOpIfNeeded({ staged: false });
 			discardOrCommit();
+			//* Why isn't an error thrown from in discardOrCommit being propagated to caller of discard?
 
 			this.channelCollection.notifyStagingMode(false);
 		};
@@ -3430,7 +3433,7 @@ export class ContainerRuntime
 						runtimeOp !== undefined,
 						0xb82 /* Staged batches expected to have runtimeOp defined */,
 					);
-					this.rollback(runtimeOp, localOpMetadata);
+					this.rollbackStagedChanges(runtimeOp, localOpMetadata);
 				});
 				this.updateDocumentDirtyState();
 			}),
@@ -4696,8 +4699,14 @@ export class ContainerRuntime
 		}
 	}
 
-	private rollback(runtimeOp: LocalContainerRuntimeMessage, localOpMetadata: unknown): void {
-		const { type, contents } = runtimeOp;
+	private rollbackStagedChanges(
+		runtimeOp: LocalContainerRuntimeMessage,
+		localOpMetadata: unknown,
+	): void {
+		const { type, contents } = runtimeOp as Exclude<
+			LocalContainerRuntimeMessage,
+			UnknownContainerRuntimeMessage // This is impossible - all these ops came from this current session, not stashed state
+		>;
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store
@@ -4705,8 +4714,21 @@ export class ContainerRuntime
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			}
-			default: {
+			case ContainerMessageType.GC:
+			case ContainerMessageType.DocumentSchemaChange: {
+				// FUTURE: These ops should probably just be requeued post-rollback
+				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
+			}
+			case ContainerMessageType.Attach: // Attach ops won't be generated in Staging Mode
+			case ContainerMessageType.Alias: // BUG: Alias ops shouldn't be supported in Staging Mode
+			case ContainerMessageType.BlobAttach: // Attach ops won't be generated in Staging Mode
+			case ContainerMessageType.IdAllocation: // ID Allocation ops won't be generated in Staging Mode
+			// Rejoin ops are unused
+			case ContainerMessageType.Rejoin: {
 				throw new Error(`Can't rollback ${type}`);
+			}
+			default: {
+				unreachableCase(type, `Can't rollback unknown message type: ${type}`);
 			}
 		}
 	}
