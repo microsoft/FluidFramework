@@ -22,10 +22,6 @@
 				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./internal/container-definitions/internal": {
-			"import": "./lib/container-definitions/index.js",
-			"require": "./dist/container-definitions/index.js"
 		}
 	},
 	"files": [
@@ -100,7 +96,6 @@
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
@@ -120,7 +115,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.8",

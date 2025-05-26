@@ -25,8 +25,6 @@ export type {
 	ContainerAttachProps,
 	IConnection,
 	IMember,
-	IProvideRootDataObject,
-	IRootDataObject,
 	IServiceAudience,
 	IServiceAudienceEvents,
 	LoadableObjectRecord,

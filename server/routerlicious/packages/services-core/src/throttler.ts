@@ -4,6 +4,7 @@
  */
 
 import { INackContent, NackErrorType } from "@fluidframework/protocol-definitions";
+
 import { IUsageData } from ".";
 
 /**
