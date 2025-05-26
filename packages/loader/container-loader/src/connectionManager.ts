@@ -1003,8 +1003,8 @@ export class ConnectionManager implements IConnectionManager {
 	 * @param error - Error reconnect information including whether or not to reconnect
 	 * @returns A promise that resolves when the connection is reestablished or we stop trying
 	 */
-	private reconnectOnError(requestedMode: ConnectionMode, error: IAnyDriverError): void {
-		this.reconnect(requestedMode, { text: error.message, error }).catch(
+	private reconnectOnError(requestedMode: ConnectionMode, error?: IAnyDriverError): void {
+		this.reconnect(requestedMode, { text: error?.message ?? "Clean disconnect", error }).catch(
 			this.props.closeHandler,
 		);
 	}
@@ -1241,7 +1241,7 @@ export class ConnectionManager implements IConnectionManager {
 	};
 
 	// Connection mode is always read on disconnect/error unless the system mode was write.
-	private readonly disconnectHandlerInternal = (disconnectReason: IAnyDriverError): void => {
+	private readonly disconnectHandlerInternal = (disconnectReason?: IAnyDriverError): void => {
 		// Note: we might get multiple disconnect calls on same socket, as early disconnect notification
 		// ("server_disconnect", ODSP-specific) is mapped to "disconnect"
 		this.reconnectOnError(this.defaultReconnectionMode, disconnectReason);

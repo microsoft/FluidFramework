@@ -114,7 +114,7 @@ describe("R11s Socket Tests", () => {
 			documentService.connectToDeltaStream(client),
 		);
 		let error: IAnyDriverError | undefined;
-		connection.on("disconnect", (reason: IAnyDriverError) => {
+		connection.on("disconnect", (reason?: IAnyDriverError) => {
 			error = reason;
 		});
 
@@ -177,7 +177,7 @@ describe("R11s Socket Tests", () => {
 			documentService.connectToDeltaStream(client),
 		);
 		let error: IAnyDriverError | undefined;
-		connection.on("disconnect", (reason: IAnyDriverError) => {
+		connection.on("disconnect", (reason?: IAnyDriverError) => {
 			error = reason;
 		});
 
