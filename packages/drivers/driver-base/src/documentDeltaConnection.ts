@@ -418,7 +418,7 @@ export class DocumentDeltaConnection
 		this.disconnect(disconnectError);
 	}
 
-	protected disconnect(err?: IAnyDriverError) {
+	protected disconnect = (err?: IAnyDriverError) => {
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
@@ -448,15 +448,15 @@ export class DocumentDeltaConnection
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
-	}
+	};
 
 	/**
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	protected disconnectCore(err?: IAnyDriverError) {
+	protected disconnectCore = (err?: IAnyDriverError) => {
 		this.socket.disconnect();
-	}
+	};
 
 	protected async initialize(connectMessage: IConnect, timeout: number) {
 		this.socket.on("op", this.earlyOpHandler);
