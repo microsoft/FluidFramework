@@ -4476,7 +4476,6 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,
-				canSendOps: this.canSendOps,
 			});
 		}
 
