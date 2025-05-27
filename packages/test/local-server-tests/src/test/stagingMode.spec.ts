@@ -273,7 +273,10 @@ const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumbe
 	);
 };
 
-const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
+const createClients = async (
+	deltaConnectionServer: ILocalDeltaConnectionServer,
+	done?: Mocha.Done,
+) => {
 	const {
 		loaderProps: baseLoaderProps,
 		codeDetails,
@@ -336,6 +339,22 @@ const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer)
 		loaded.dataObject.enumerateDataSynchronous(),
 		"initial states should match after save",
 	);
+
+	Object.values(clients).forEach((client: Client) => {
+		if (done === undefined) {
+			return;
+		}
+		assert(
+			client.container.closed === false,
+			"PRECONDITION: Container should not be closed yet",
+		);
+		client.container.on("closed", () => {
+			done(new Error("Container closure unexpected for this test"));
+		});
+		client.container.on("disposed", () => {
+			done(new Error("Container disposal unexpected for this test"));
+		});
+	});
 
 	return clients;
 };
@@ -665,9 +684,9 @@ describe("Staging Mode", () => {
 		//* ONLY
 		//* ONLY
 		//* ONLY
-		it.only("Aliasing a datastore while in staging mode doesn't go well", async () => {
+		it.only("Aliasing a datastore while in staging mode doesn't go well", async (done) => {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
-			const clients = await createClients(deltaConnectionServer);
+			const clients = await createClients(deltaConnectionServer, done);
 
 			const stagingControls = clients.original.dataObject.enterStagingMode();
 
@@ -680,14 +699,8 @@ describe("Staging Mode", () => {
 			// FUTURE: Block this API in Staging Mode, until we hear a compelling use case that warrants sorting out this Promise difficulty
 			newDataStore.trySetAlias("staged-alias").catch(() => {});
 
-			//* The error handling goes sideways here, not sure why.
-			//* May not be worth the trouble - just block trySetAlias in Staging Mode and move on.
 			// And by the way for now we haven't implemented rollback.
-			assert.throws(
-				stagingControls.discardChanges,
-				/RollbackError: Can't rollback alias/,
-				"Discarding changes expected to throw an error if trySetAlias was called in staging mode",
-			);
+			stagingControls.discardChanges();
 		});
 
 		// it("discarding staging mode removes aliased datastores created in staging mode", async () => {
