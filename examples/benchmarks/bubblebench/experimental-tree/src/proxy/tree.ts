@@ -91,7 +91,6 @@ export class TreeArrayProxy<T> {
 			get(target, key) {
 				if (typeof key !== "symbol") {
 					const index = Number.parseInt(key, 10);
-
 					if (!Number.isNaN(index)) {
 						const view = tree.currentView;
 						const childrenIds = view.getTrait({
