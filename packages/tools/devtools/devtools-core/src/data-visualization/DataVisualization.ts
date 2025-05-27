@@ -6,7 +6,6 @@
 // Indexed-object style is used to ease documentation.
 /* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 
-import { objectIdNumber } from "@fluid-experimental/tree-react-api";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { DataObject, TreeDataObject } from "@fluidframework/aqueduct/internal";
 import type {
@@ -21,6 +20,7 @@ import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
+import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
 import {
 	createDataObjectVisualizer,
@@ -238,52 +238,40 @@ export class DataVisualizerGraph
 	 * Adds a visualizer node to the collection for the specified
 	 * {@link VisualizableFluidObject} if one does not already exist.
 	 */
-private registerVisualizerForVisualizableObject(
-    visualizableObject: VisualizableFluidObject,
-): FluidObjectId {
-    const objectId = objectIdNumber(visualizableObject);
-    if (!this.visualizerNodes.has(objectId)) {
-        // Store type check results to avoid recomputing
-        const isDataObj = isDataObject(visualizableObject);
-        const isTreeDataObj = isTreeDataObject(visualizableObject);
+	private registerVisualizerForVisualizableObject(
+		visualizableObject: VisualizableFluidObject,
+	): FluidObjectId {
+		// Store type check results to avoid recomputing
+		const isDataObj = isDataObject(visualizableObject);
+		const isTreeDataObj = isTreeDataObject(visualizableObject);
 
-        let visualizationFunction: VisualizeSharedObject;
-        let rootSharedObject: ISharedObject;
+		let visualizationFunction: VisualizeSharedObject;
+		let rootSharedObject: ISharedObject;
+		let objectId: FluidObjectId;
 
-        if (isDataObj) {
-            rootSharedObject = (visualizableObject as unknown as { readonly root: ISharedDirectory }).root;
-            visualizationFunction = createDataObjectVisualizer(visualizableObject.id);
-        } else if (isTreeDataObj) {
-            rootSharedObject = visualizableObject.sharedTree as unknown as ISharedObject;
-            visualizationFunction = createTreeDataObjectVisualizer(visualizableObject.id);
-        } else {
-            rootSharedObject = visualizableObject;
-            visualizationFunction =
-                (this.visualizers[visualizableObject.attributes.type] as VisualizeSharedObject) ??
-                visualizeUnknownSharedObject;
-        }
+		if (isDataObj) {
+			rootSharedObject = (visualizableObject as unknown as { readonly root: ISharedDirectory })
+				.root;
+			objectId = getKeyForFluidObject(rootSharedObject);
+			visualizationFunction = createDataObjectVisualizer(visualizableObject.id);
+		} else if (isTreeDataObj) {
+			rootSharedObject = visualizableObject.sharedTree as unknown as ISharedObject;
+			objectId = getKeyForFluidObject(rootSharedObject);
+			visualizationFunction = createTreeDataObjectVisualizer(visualizableObject.id);
+		} else {
+			rootSharedObject = visualizableObject;
+			objectId = getKeyForFluidObject(visualizableObject);
+			visualizationFunction =
+				(this.visualizers[visualizableObject.attributes.type] as VisualizeSharedObject) ??
+				visualizeUnknownSharedObject;
+		}
 
-        const visualizerNode = new VisualizerNode(
-            rootSharedObject,
-            visualizationFunction,
-            async (handle) => this.registerVisualizerForHandle(handle),
-        );
-
-        // Register event handler so we can bubble up update events
-        visualizerNode.on("update", this.onVisualUpdateHandler);
-
-        // Add the visualizer node to our collection
-        this.visualizerNodes.set(objectId, visualizerNode);
-    }
-    return objectId;
-}
-  
-		if (!this.visualizerNodes.has(fluidObjectId)) {
+		if (!this.visualizerNodes.has(objectId)) {
 			const visualizerNode = new VisualizerNode(
 				rootSharedObject,
 				visualizationFunction,
 				async (handle) => this.registerVisualizerForHandle(handle),
-			);D
+			);
 
 			// Register event handler so we can bubble up update events
 			visualizerNode.on("update", this.onVisualUpdateHandler);
@@ -291,6 +279,7 @@ private registerVisualizerForVisualizableObject(
 			// Add the visualizer node to our collection
 			this.visualizerNodes.set(objectId, visualizerNode);
 		}
+
 		return objectId;
 	}
 

@@ -15302,9 +15302,6 @@ importers:
 
   packages/tools/devtools/devtools-core:
     dependencies:
-      '@fluid-experimental/tree-react-api':
-        specifier: workspace:~
-        version: link:../../../../experimental/framework/tree-react-api
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../common/client-utils

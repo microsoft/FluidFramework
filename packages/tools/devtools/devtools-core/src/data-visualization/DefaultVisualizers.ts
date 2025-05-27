@@ -8,7 +8,6 @@
  * implementations for our DDSs.
  */
 
-import { objectIdNumber } from "@fluid-experimental/tree-react-api";
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -25,6 +24,7 @@ import type { ITreeInternal } from "@fluidframework/tree/internal";
 import { FieldKind, SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
+import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
 import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
 import {
@@ -53,7 +53,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 ): Promise<FluidObjectNode> => {
 	const sharedCell = sharedObject as ISharedCell<unknown>;
 	const data = sharedCell.get();
-	const objectId = objectIdNumber(sharedCell);
+	const objectId = getKeyForFluidObject(sharedCell);
 
 	const renderedData = await visualizeChildData(data);
 
@@ -106,48 +106,47 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 };
 
 /**
- * Creates a visualizer function that captures the parent object's ID for use in generating the fluidObjectId.
- * @param parentId - The ID of the parent DataObject to use in generating unique fluidObjectIds
- * @returns A VisualizeSharedObject function that will use the parentId in its fluidObjectId generation
+ * Creates a visualizer function for a DataObject.
+ * @param parentId - The ID of the parent DataObject (used for debugging/logging purposes)
+ * @returns A VisualizeSharedObject function that generates a visual representation of a DataObject
  */
 export function createDataObjectVisualizer(parentId: string): VisualizeSharedObject {
 	return async (
 		dataObjectRoot: ISharedObject,
 		visualizeChildData: VisualizeChildData,
 	): Promise<FluidObjectTreeNode> => {
-		const fluidObjectId = `${parentId}-${dataObjectRoot.id}`;
 		const renderedChildData = (await visualizeSharedDirectory(
 			dataObjectRoot,
 			visualizeChildData,
 		)) as FluidObjectTreeNode;
 
-	return {
-		fluidObjectId: objectIdNumber(dataObjectRoot),
-		children: renderedChildData.children,
-		metadata: renderedChildData.metadata,
-		typeMetadata: "DataObject",
-		nodeKind: VisualNodeKind.FluidTreeNode,
+		return {
+			fluidObjectId: getKeyForFluidObject(dataObjectRoot),
+			children: renderedChildData.children,
+			metadata: renderedChildData.metadata,
+			typeMetadata: "DataObject",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+		};
 	};
 }
 
 /**
- * Creates a visualizer function that captures the parent object's ID for use in generating the fluidObjectId.
- * @param parentId - The ID of the parent TreeDataObject to use in generating unique fluidObjectIds
- * @returns A VisualizeSharedObject function that will use the parentId in its fluidObjectId generation
+ * Creates a visualizer function for a TreeDataObject.
+ * @param parentId - The ID of the parent TreeDataObject (used for debugging/logging purposes)
+ * @returns A VisualizeSharedObject function that generates a visual representation of a TreeDataObject
  */
 export function createTreeDataObjectVisualizer(parentId: string): VisualizeSharedObject {
 	return async (
 		rootTree: ISharedObject,
 		visualizeChildData: VisualizeChildData,
 	): Promise<FluidObjectTreeNode> => {
-		const fluidObjectId = `${parentId}-${rootTree.id}`;
 		const renderedChildData = (await visualizeSharedTree(
 			rootTree,
 			visualizeChildData,
 		)) as FluidObjectTreeNode;
 
 		return {
-			objectIdNumber(rootTree),
+			fluidObjectId: getKeyForFluidObject(rootTree),
 			children: renderedChildData.children,
 			metadata: renderedChildData.metadata,
 			typeMetadata: "TreeDataObject",
@@ -164,7 +163,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 ): Promise<FluidObjectValueNode> => {
 	const sharedCounter = sharedObject as SharedCounter;
 	return {
-		fluidObjectId: objectIdNumber(sharedCounter),
+		fluidObjectId: getKeyForFluidObject(sharedCounter),
 		value: sharedCounter.value,
 		typeMetadata: "SharedCounter",
 		nodeKind: VisualNodeKind.FluidValueNode,
@@ -182,7 +181,7 @@ export const visualizeSharedDirectory: VisualizeSharedObject = async (
 	const sharedDirectory = sharedObject as ISharedDirectory;
 	const renderedChildData = await visualizeDirectory(sharedDirectory, visualizeChildData);
 	return {
-		fluidObjectId: objectIdNumber(sharedDirectory),
+		fluidObjectId: getKeyForFluidObject(sharedDirectory),
 		children: renderedChildData.children,
 		metadata: renderedChildData.metadata,
 		typeMetadata: "SharedDirectory",
@@ -242,7 +241,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 	}
 
 	return {
-		fluidObjectId: objectIdNumber(sharedMap),
+		fluidObjectId: getKeyForFluidObject(sharedMap),
 		children,
 		metadata: {
 			size: sharedMap.size,
@@ -262,7 +261,7 @@ export const visualizeSharedMatrix: VisualizeSharedObject = async (
 	const sharedMatrix = sharedObject as unknown as SharedMatrix;
 
 	const { rowCount, colCount: columnCount } = sharedMatrix;
-	const objectId = objectIdNumber(sharedMatrix);
+	const objectId = getKeyForFluidObject(sharedMatrix);
 
 	// Output will list cells as a flat list, keyed by their row,column indices (e.g. `[0,1]`)
 	const cells: Record<string, VisualChildNode> = {};
@@ -296,7 +295,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 	const text = sharedString.getText();
 
 	return {
-		fluidObjectId: objectIdNumber(sharedString),
+		fluidObjectId: getKeyForFluidObject(sharedString),
 		value: text,
 		typeMetadata: "SharedString",
 		nodeKind: VisualNodeKind.FluidValueNode,
@@ -314,7 +313,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectNode> => {
 	const sharedTree = sharedObject as IChannelView as ITreeInternal;
-	const objectId = objectIdNumber(sharedTree);
+	const objectId = getKeyForFluidObject(sharedTree);
 
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();
@@ -383,7 +382,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 ): Promise<FluidUnknownObjectNode> => {
 	return {
-		fluidObjectId: objectIdNumber(sharedObject),
+		fluidObjectId: getKeyForFluidObject(sharedObject),
 		typeMetadata: sharedObject.attributes.type,
 		nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 	};

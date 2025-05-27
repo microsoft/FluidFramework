@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { objectIdNumber } from "@fluid-experimental/tree-react-api";
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
@@ -12,6 +11,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { expect } from "chai";
 
 import { EditType } from "../CommonInterfaces.js";
+import { getKeyForFluidObject } from "../FluidObjectKey.js";
 import {
 	DataVisualizerGraph,
 	type FluidObjectTreeNode,
@@ -25,7 +25,7 @@ describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
-		const counterId = objectIdNumber(sharedCounter);
+		const counterId = getKeyForFluidObject(sharedCounter);
 
 		const visualizer = new DataVisualizerGraph(
 			{
@@ -70,7 +70,7 @@ describe("DataVisualizerGraph unit tests", () => {
 		});
 		// Create SharedMap
 		const sharedMap = SharedMap.create(runtime, "test-map");
-		const mapId = objectIdNumber(sharedMap);
+		const mapId = getKeyForFluidObject(sharedMap);
 
 		const visualizer = new DataVisualizerGraph(
 			{
@@ -102,7 +102,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			c: true,
 		});
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
-		const counterId = objectIdNumber(sharedCounter);
+		const counterId = getKeyForFluidObject(sharedCounter);
 		sharedMap.set("test-handle", sharedCounter.handle);
 
 		const childTreeAfterEdit = await visualizer.render(mapId);
@@ -154,10 +154,10 @@ describe("DataVisualizerGraph unit tests", () => {
 		});
 
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
-		const counterId = objectIdNumber(sharedCounter);
+		const counterId = getKeyForFluidObject(sharedCounter);
 		sharedCounter.increment(42);
 		const sharedCell = SharedCell.create(runtime, "test-cell") as ISharedCell<string>;
-		const cellId = objectIdNumber(sharedCell);
+		const cellId = getKeyForFluidObject(sharedCell);
 		sharedCell.set("Hello world");
 
 		const visualizer = new DataVisualizerGraph(
