@@ -1628,10 +1628,9 @@ export class ContainerRuntime
 
 		this.messageAtLastSummary = lastMessageFromMetadata(metadata);
 
-		// We use the initial connected state from the container context
-		// as well as the readonly info to determine if container can send ops.
-		// Later updates to canSendOps come through calls to setConnectionState.
-		this.canSendOps = connected && !this.innerDeltaManager.readOnlyInfo.readonly;
+		// Note that we only need to pull the *initial* connected state from the context.
+		// Later updates come through calls to setConnectionState.
+		this.canSendOps = connected;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
