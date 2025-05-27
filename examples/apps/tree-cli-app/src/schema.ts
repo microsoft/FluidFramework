@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SchemaFactory } from "@fluidframework/tree";
+import { TreeViewConfigurationAlpha } from "@fluidframework/tree/alpha";
 
 /**
  * The SchemaFactory.
@@ -31,7 +32,7 @@ export class List extends schemaBuilder.array("List", [schemaBuilder.string, Ite
 /**
  * Tree configuration.
  */
-export const config = new TreeViewConfiguration({
+export const config = new TreeViewConfigurationAlpha({
 	schema: List,
 	enableSchemaValidation: true,
 	preventAmbiguity: true,

@@ -29,12 +29,11 @@ describe("TreeBranch", () => {
 		return view;
 	}
 
-	{
-		// Test that branching from a TreeView returns a typed view (as opposed to an untyped context).
+	it("Test that branching from a TreeView returns a typed view (as opposed to an untyped context)", () => {
 		const view = init([]);
 		const branch = view.fork();
 		type _check = requireAssignableTo<typeof branch, typeof view>;
-	}
+	});
 
 	it("can downcast to a view", () => {
 		const view = init(["a", "b", "c"]);

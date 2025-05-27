@@ -1,5 +1,122 @@
 # @fluidframework/tree
 
+## 2.40.0
+
+### Minor Changes
+
+- SchemaFactoryAlpha.object has been renamed to SchemaFactoryAlpha.objectAlpha ([#24478](https://github.com/microsoft/FluidFramework/pull/24478)) [12e5ab3b33](https://github.com/microsoft/FluidFramework/commit/12e5ab3b335a8af263e1cc84f8951cf02db79b8b)
+
+  This rename was done so that changes can be made to the signature of the class.
+  This is a breaking change and uses of `SchemaFactoryAlpha.object` may need to be changed to `SchemaFactoryAlpha.objectAlpha`.
+
+- AllowedTypes array handling has been updated ([#24484](https://github.com/microsoft/FluidFramework/pull/24484)) [f0a71ccce7](https://github.com/microsoft/FluidFramework/commit/f0a71ccce7a055e99ce9f4ba15e1cede529bbc9c)
+
+  As an optimization, how [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) arrays are processed has changed.
+  Now much larger arrays can be provided without hitting:
+
+  > "Type instantiation is excessively deep and possibly infinite.ts"
+
+  Previously, arrays of around 43 schema would start having this issue, but now arrays of hundreds work correctly.
+
+  This optimization has resulted in a small change in behavior for how [input types](https://fluidframework.com/docs/api/fluid-framework/input-typealias) are computed.
+  When the `AllowedTypes` array has a type that is a union of two arrays, and the two arrays start with the same subsequence of types,
+  previously this would allow the types from the common prefix of the arrays.
+  For example `[typeof A] | [typeof A, typeof B]` would permit inserting content compatible with `A`.
+  Now all such unions produce `never` for their insertable node types (just like this example would if the order of the second array were reversed).
+  This case was not intentionally supported, and as documented in [input types](https://fluidframework.com/docs/api/fluid-framework/input-typealias), non-exact types, like these unions,
+  are not guaranteed to produce anything other than `never`.
+
+  If providing exact schema is impractical and the previous behavior is required, convert the union of arrays to an array of unions.
+  The above example can be turned into `[typeof A, typeof B | typeof A]`.
+
+  This is also fix for a case where
+  [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias)
+  was order dependent, which violates its documented order independence.
+
+- A SharedTree document corruption bug has been fixed ([#24565](https://github.com/microsoft/FluidFramework/pull/24565)) [6b3e150395](https://github.com/microsoft/FluidFramework/commit/6b3e15039543a2bab4de5b2e969301f0e7f1f3db)
+
+  There was a bug where local changes were not correctly sent to peers.
+  This could lead to a permanent loss of consistency and ultimately document corruption.
+  See [PR24561](https://github.com/microsoft/FluidFramework/pull/24561) for details.
+
+- The extractPersistedSchema (alpha) API has had its arguments adjusted ([#24562](https://github.com/microsoft/FluidFramework/pull/24562)) [2e6b0cfd74](https://github.com/microsoft/FluidFramework/commit/2e6b0cfd74f3c3db5ce3b6b3f8ff8decbfc24ab6)
+
+  The [extractPersistedSchema](https://fluidframework.com/docs/api/tree/#extractpersistedschema-function) function has been updated to take in [SimpleTreeSchema](https://fluidframework.com/docs/api/fluid-framework/simpletreeschema-interface).
+  This makes it possible to use with simple schema derived from stored schema, like those returned from [ITreeAlpha.exportSimpleSchema](https://fluidframework.com/docs/api/fluid-framework/itreealpha-interface#exportsimpleschema-methodsignature).
+  Like [TreeAlpha.exportCompressed](https://fluidframework.com/docs/api/tree#treealpha-variable), `extractPersistedSchema` now takes in [FluidClientVersion](https://fluidframework.com/docs/api/fluid-framework/fluidclientversion-enum) to make it possible to opt into newer formats when they become available.
+
+  Additionally, `persistedToSimpleSchema` has been added to fill in a gap in the API.
+  Without `persistedToSimpleSchema` it would be impossible to parse the persisted format without a valid compressed tree to provide to [independentInitializedView](https://fluidframework.com/docs/api/tree/#independentinitializedview-functionc).
+
+- SchemaFactoryAlpha supports adding metadata to AllowedTypes ([#24478](https://github.com/microsoft/FluidFramework/pull/24478)) [12e5ab3b33](https://github.com/microsoft/FluidFramework/commit/12e5ab3b335a8af263e1cc84f8951cf02db79b8b)
+
+  This change allows metadata to be added to [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) as well as individual types in a set of `AllowedTypes`.
+  Users can define custom metadata by putting their `AllowedTypes` in an object with `metadata` and `types` properties:
+
+  ```typescript
+  schemaFactoryAlpha.arrayAlpha({
+    metadata: {
+      custom: "these allowed types are annotated",
+    },
+    types: [SchemaFactory.string, SchemaFactory.number],
+  });
+  ```
+
+  This annotation system will also be used to implement future schema features.
+
+## 2.33.0
+
+### Minor Changes
+
+- Remote edits to nodes which have never been accessed locally correctly trigger "treeChanged" events ([#24421](https://github.com/microsoft/FluidFramework/pull/24421)) [916ad0546f7](https://github.com/microsoft/FluidFramework/commit/916ad0546f772b744e1c150c6e833199c2f713ef)
+
+  There was a bug where "treeChanged" events would not always trigger if the node that was edited had never been accessed in the current view.
+  This has been fixed.
+
+- Typing derived from unions of AllowedTypes arrays is fixed ([#24441](https://github.com/microsoft/FluidFramework/pull/24441)) [a27ef0a0939](https://github.com/microsoft/FluidFramework/commit/a27ef0a0939a0983be85362d1aa34df7735977ed)
+
+  Unions of array types provided as an [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) used to result in incorrectly computed insertable content types.
+  This happened because [InsertableTreeNodeFromAllowedTypes](https://fluidframework.com/docs/api/fluid-framework/insertabletreenodefromallowedtypes-typealias) distributed over the union, violating the policy documented in [Input](https://fluidframework.com/docs/api/fluid-framework/input-typealias) for how schema-derived input types should be computed.
+  This has been fixed.
+  To get usable Input types, SharedTree schema's types should always capture the exact schema provided at runtime and not unions of possible different schema.
+  Any code impacted by this change should be updated to replace any such unions with more specific types.
+
+- "Unsafe" @system types moved to System_Unsafe namespace ([#24443](https://github.com/microsoft/FluidFramework/pull/24443)) [dd4abfc4570](https://github.com/microsoft/FluidFramework/commit/dd4abfc4570aff9ce37c3e6bcee23cf4c7eb6e7e)
+
+  Working code conforming to the [rules regarding API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags#api-support-levels) should be unaffected, but this resolves an issue which required violating these rules and directly referencing `@system` types.
+
+  Sometimes packages exporting SharedTree schema related types for recursive schema could yield errors like:
+
+  > error TS2742: The inferred type of 'YourSchema' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'.
+  > This is likely not portable.
+  > A type annotation is necessary.
+
+  Mitigating this error could require explicitly referencing these `@system` types from `internalTypes`.
+  Any such references to the moved types should be able to be deleted, as TypeScript will now be able to find them in the new namespace without assistance.
+
+  This does not migrate all types out of `internalTypes`, so some occurrences of this issue may remain.
+
+- allowUnused utility function ([#24076](https://github.com/microsoft/FluidFramework/pull/24076)) [13c62b613e8](https://github.com/microsoft/FluidFramework/commit/13c62b613e8a3f919c0e41d0ffc582c984504f0d)
+
+  A new `allowUnused` utility function has been added, which discards its type or runtime argument.
+  When TypeScript is configured to reject code with unused locals, this function can be used to suppress that error, enabling use of [ValidateRecursiveSchema](https://fluidframework.com/docs/api/fluid-framework/validaterecursiveschema-typealias) to compile.
+
+  ```typescript
+  class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+  allowUnused<ValidateRecursiveSchema<typeof Test>>(); // Reports compile error due to invalid schema above.
+  ```
+
+- Improve handling of deleted nodes ([#24345](https://github.com/microsoft/FluidFramework/pull/24345)) [0ab3e510db5](https://github.com/microsoft/FluidFramework/commit/0ab3e510db5371e40c7f6b0fec3eef40695bcc94)
+
+  [TreeNodes](https://fluidframework.com/docs/api/fluid-framework/treenode-class) which are [deleted](https://fluidframework.com/docs/api/fluid-framework/treestatus-enum#deleted-enummember) were not handled correctly.
+  This has been improved in two ways:
+
+  1. Accessing fields of deleted nodes now consistently throws a usage error indicating that doing so is invalid.
+     Previously, this would throw an assertion error, which was a bug.
+  2. When a `TreeNode` is deleted, but that node still exists within the [`ITree`](https://fluidframework.com/docs/api/driver-definitions/itree-interface), then becomes accessible again later, a new `TreeNode` is now allocated instead of trying to reuse the deleted one.
+     Note that this can only happen when the entire view of the `ITree` is disposed then recreated.
+     This happens when disposing and recreating a [TreeView](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) or when the contents of the view are disposed due to being out of schema (another client did a schema upgrade), then brought back into schema (the schema upgrade was undone).
+
 ## 2.32.0
 
 ### Minor Changes

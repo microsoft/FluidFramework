@@ -13,6 +13,7 @@ import {
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
+	type ObjectNodeSchema,
 	SchemaFactoryAlpha,
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
@@ -30,8 +31,6 @@ import {
 	typeSchemaSymbol,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
@@ -182,6 +181,31 @@ describe("schemaFactory", () => {
 		const _check1 = new Foo({});
 		const _check2 = new Foo({ x: undefined });
 		const _check3 = new Foo({ x: 1 });
+	});
+
+	it("empty field", () => {
+		// A field with no allowed types and thus must always be empty.
+		const config = new TreeViewConfiguration({ schema: SchemaFactory.optional([]) });
+		const view = getView(config);
+		view.initialize(undefined);
+		assert.equal(view.root, undefined);
+		type Field = typeof view.root;
+		type _check = requireTrue<areSafelyAssignable<Field, undefined>>;
+	});
+
+	it("empty object field", () => {
+		const factory = new SchemaFactory("test-scope");
+		class Foo extends factory.object("foo", {
+			// A field with no allowed types and thus must always be empty.
+			x: SchemaFactory.optional([]),
+		}) {}
+
+		const config = new TreeViewConfiguration({ schema: Foo });
+		const view = getView(config);
+		view.initialize({});
+		assert.equal(view.root.x, undefined);
+		type Field = typeof view.root.x;
+		type _check = requireTrue<areSafelyAssignable<Field, undefined>>;
 	});
 
 	it("Required fields", () => {
@@ -358,7 +382,7 @@ describe("schemaFactory", () => {
 				},
 			};
 
-			class Foo extends factory.object(
+			class Foo extends factory.objectAlpha(
 				"Foo",
 				{ bar: factory.number },
 				{ metadata: fooMetadata },

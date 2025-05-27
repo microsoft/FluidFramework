@@ -7,10 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 
-import type { IDetachedBlobStorage } from "../loader.js";
 import {
 	createMemoryDetachedBlobStorage,
-	serializeMemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
 } from "../memoryBlobStorage.js";
 
@@ -69,7 +67,7 @@ describe("MemoryBlobStorage", () => {
 		const blobResponse = await storage.createBlob(blobContent);
 
 		// Serialize the storage
-		const serializedStorage = serializeMemoryDetachedBlobStorage(storage);
+		const serializedStorage = storage.serialize();
 		assert(serializedStorage !== undefined, "Serialized storage is undefined");
 
 		const newStorage = createMemoryDetachedBlobStorage();
@@ -102,7 +100,7 @@ describe("MemoryBlobStorage", () => {
 		await storage.createBlob(blobContent);
 
 		// Serialize the storage
-		const serializedStorage = serializeMemoryDetachedBlobStorage(storage);
+		const serializedStorage = storage.serialize();
 
 		assert(serializedStorage !== undefined, "Serialized storage is undefined");
 
@@ -113,32 +111,9 @@ describe("MemoryBlobStorage", () => {
 			tryInitializeMemoryDetachedBlobStorage(newStorage, serializedStorage);
 		}, "Expected an error when initializing storage that already has blobs");
 	});
-
-	it("Throws error when tryInitializeMemoryDetachedBlobStorage is called on non-MemoryBlobStorage", () => {
-		const notMemoryBlobStorage: IDetachedBlobStorage = {
-			size: 0,
-			createBlob: async () => {
-				throw new Error("createBlob not implemented");
-			},
-			readBlob: async () => {
-				throw new Error("readBlob not implemented");
-			},
-			getBlobIds: () => {
-				throw new Error("getBlobIds not implemented");
-			},
-			dispose: () => {
-				throw new Error("dispose not implemented");
-			},
-		};
-
-		assert.throws(() => {
-			tryInitializeMemoryDetachedBlobStorage(notMemoryBlobStorage, "");
-		}, "Expected an error when initializing non-MemoryBlobStorage");
-	});
-
 	it("Returns undefined when serializing empty storage", () => {
 		const storage = createMemoryDetachedBlobStorage();
-		const serializedStorage = serializeMemoryDetachedBlobStorage(storage);
+		const serializedStorage = storage.serialize();
 		assert.strictEqual(
 			serializedStorage,
 			undefined,

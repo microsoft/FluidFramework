@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
 
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
@@ -18,7 +15,10 @@ module.exports = {
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				// Test files are run in node only so additional node libraries can be used.
-				"import/no-nodejs-modules": ["error", { allow: ["assert", "fs", "path"] }],
+				"import/no-nodejs-modules": [
+					"error",
+					{ allow: ["node:assert", "node:fs", "node:path"] },
+				],
 			},
 		},
 	],

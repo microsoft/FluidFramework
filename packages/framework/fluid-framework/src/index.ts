@@ -114,7 +114,7 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
  * 	typeboxValidator,
  * } from "@fluid-framework/alpha";
  * const SharedTree = configuredSharedTree({
- * 	forest: ForestType.Reference,
+ * 	forest: ForestTypeReference,
  * 	jsonValidator: typeboxValidator,
  * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
  * });
@@ -148,14 +148,10 @@ export type {
 	DeserializeCallback,
 	InteriorSequencePlace,
 	IInterval,
-	IIntervalCollectionEvent,
-	IIntervalCollection,
-	IntervalIndex,
 	IntervalStickiness,
 	ISequenceDeltaRange,
 	ISerializableInterval,
 	ISerializedInterval,
-	ISharedIntervalCollection,
 	ISharedSegmentSequenceEvents,
 	ISharedString,
 	SequencePlace,

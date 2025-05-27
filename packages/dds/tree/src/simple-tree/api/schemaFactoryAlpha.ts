@@ -3,37 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ScopedSchemaName,
-	TreeObjectNodeUnsafe,
-	InsertableObjectFromSchemaRecordUnsafe,
-} from "../../internalTypes.js";
+import {
+	type ArrayNodeCustomizableSchema,
+	arraySchema,
+	type MapNodeCustomizableSchema,
+	mapSchema,
+	type ObjectNodeSchema,
+	objectSchema,
+} from "../node-kinds/index.js";
 import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
 	schemaStatics,
 	type SchemaFactoryObjectOptions,
+	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import type {
 	ImplicitAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
+	ImplicitAnnotatedFieldSchema,
 	ImplicitFieldSchema,
 	NodeSchemaOptions,
 } from "../schemaTypes.js";
-import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
 import type {
-	ImplicitAllowedTypesUnsafe,
-	ImplicitFieldSchemaUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
+	System_Unsafe,
 } from "./typesUnsafe.js";
-import { mapSchema } from "../mapNode.js";
-import { arraySchema } from "../arrayNode.js";
-import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
-import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
-import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -61,9 +60,9 @@ export class SchemaFactoryAlpha<
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
 	 * @param options - Additional options for the schema.
 	 */
-	public override object<
+	public objectAlpha<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -97,7 +96,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public override objectRecursive<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
+		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -106,8 +105,8 @@ export class SchemaFactoryAlpha<
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
-		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
-		object & InsertableObjectFromSchemaRecordUnsafe<T>,
+		System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 		false,
 		T,
 		never,
@@ -126,15 +125,15 @@ export class SchemaFactoryAlpha<
 		Pick<ObjectNodeSchema, "fields"> {
 		// TODO: syntax highting is vs code is broken here. Don't trust it. Use the compiler instead.
 		type TScopedName = ScopedSchemaName<TScope, Name>;
-		return this.object(
+		return this.objectAlpha(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 			options,
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
-			TreeObjectNodeUnsafe<T, TScopedName>,
-			object & InsertableObjectFromSchemaRecordUnsafe<T>,
+			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
+			object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
 			T,
 			never,
@@ -189,7 +188,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public mapAlpha<
 		Name extends TName,
-		const T extends ImplicitAllowedTypes,
+		const T extends ImplicitAnnotatedAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -205,7 +204,7 @@ export class SchemaFactoryAlpha<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override mapRecursive<
 		Name extends TName,
-		const T extends ImplicitAllowedTypesUnsafe,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		return this.mapAlpha(
@@ -233,7 +232,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public arrayAlpha<
 		const Name extends TName,
-		const T extends ImplicitAllowedTypes,
+		const T extends ImplicitAnnotatedAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -249,7 +248,7 @@ export class SchemaFactoryAlpha<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override arrayRecursive<
 		const Name extends TName,
-		const T extends ImplicitAllowedTypesUnsafe,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		return this.arrayAlpha(

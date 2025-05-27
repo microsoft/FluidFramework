@@ -3,55 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IChannelAttributes,
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-	IChannelServices,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
-import type {
-	ITelemetryContext,
-	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
-	IRuntimeMessageCollection,
-} from "@fluidframework/runtime-definitions/internal";
-
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
-	type IFluidSerializer,
 	type ISharedObject,
 	type ISharedObjectKind,
-	SharedObject,
-	createSharedObjectKind,
+	makeSharedObjectKind,
+	type KernelArgs,
+	type SharedKernelFactory,
+	type SharedObjectOptions,
+	type FactoryOut,
 } from "@fluidframework/shared-object-base/internal";
-
-import type {
-	SchematizingSimpleTreeView,
-	SharedTreeContentSnapshot,
-	SharedTreeOptions,
-	SharedTreeOptionsInternal,
-	SharedTreeEditBuilder,
-	SharedTreeChange,
-	ITreePrivate,
-} from "./shared-tree/index.js";
-import type {
-	ImplicitFieldSchema,
-	ITree,
-	ReadSchema,
-	SimpleTreeSchema,
-	TreeView,
-	TreeViewConfiguration,
-	UnsafeUnknownSchema,
-	VerboseTree,
-} from "./simple-tree/index.js";
-import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
-import { Breakable } from "./util/index.js";
-import { SharedTreeKernel } from "./shared-tree/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { fail } from "@fluidframework/core-utils/internal";
-import type { SharedTreeCore } from "./shared-tree-core/index.js";
+
+import {
+	SharedTreeKernel,
+	type ITreePrivate,
+	type SharedTreeOptions,
+	type SharedTreeOptionsInternal,
+	type SharedTreeKernelView,
+} from "./shared-tree/index.js";
+import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+import type { ITree } from "./simple-tree/index.js";
+import { Breakable } from "./util/index.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -61,140 +35,45 @@ import type { SharedTreeCore } from "./shared-tree-core/index.js";
 export interface ISharedTree extends ISharedObject, ITreePrivate {}
 
 /**
- * Shared object wrapping {@link SharedTreeKernel}.
+ * Creates a factory for shared tree kernels with the given options.
+ * @remarks
+ * Exposes {@link ITreePrivate} to allow access to internals in tests without a cast.
+ * Code exposing this beyond this package will need to update to a more public type.
  */
-class SharedTreeImpl extends SharedObject implements ISharedTree {
-	private readonly breaker: Breakable = new Breakable("Shared Tree");
-
-	public readonly kernel: SharedTreeKernel;
-
-	public constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-		optionsParam: SharedTreeOptionsInternal,
-		telemetryContextPrefix: string = "fluid_sharedTree_",
-	) {
-		super(id, runtime, attributes, telemetryContextPrefix);
-		if (runtime.idCompressor === undefined) {
+function treeKernelFactory(
+	options: SharedTreeOptionsInternal,
+): SharedKernelFactory<SharedTreeKernelView> {
+	function treeFromKernelArgs(args: KernelArgs): SharedTreeKernel {
+		if (args.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
-		this.kernel = new SharedTreeKernel(
-			this.breaker,
-			this,
-			this.serializer,
-			(content, localOpMetadata) => this.submitLocalMessage(content, localOpMetadata),
-			() => this.deltaManager.lastSequenceNumber,
-			this.logger,
-			runtime.idCompressor,
-			optionsParam,
+		return new SharedTreeKernel(
+			new Breakable("SharedTree"),
+			args.sharedObject,
+			args.serializer,
+			args.submitLocalMessage,
+			args.lastSequenceNumber,
+			args.logger,
+			args.idCompressor,
+			options,
 		);
 	}
 
-	public summarizeCore(
-		serializer: IFluidSerializer,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): ISummaryTreeWithStats {
-		return this.kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
-	}
+	return {
+		create: (args: KernelArgs): FactoryOut<SharedTreeKernelView> => {
+			const k = treeFromKernelArgs(args);
+			return { kernel: k, view: k.view };
+		},
 
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		fail(0xb75 /* processCore should not be called on SharedTree */);
-	}
-
-	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
-		this.kernel.processMessagesCore(messagesCollection);
-	}
-
-	protected onDisconnect(): void {
-		this.kernel.onDisconnect();
-	}
-
-	public exportVerbose(): VerboseTree | undefined {
-		return this.kernel.exportVerbose();
-	}
-
-	public exportSimpleSchema(): SimpleTreeSchema {
-		return this.kernel.exportSimpleSchema();
-	}
-
-	public contentSnapshot(): SharedTreeContentSnapshot {
-		return this.kernel.contentSnapshot();
-	}
-
-	// For the new TreeViewAlpha API
-	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-		config: TreeViewConfiguration<ReadSchema<TRoot>>,
-	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
-
-	// For the old TreeView API
-	public viewWith<TRoot extends ImplicitFieldSchema>(
-		config: TreeViewConfiguration<TRoot>,
-	): SchematizingSimpleTreeView<TRoot> & TreeView<TRoot>;
-
-	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-		config: TreeViewConfiguration<ReadSchema<TRoot>>,
-	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
-		return this.kernel.viewWith(config);
-	}
-
-	protected override async loadCore(services: IChannelStorageService): Promise<void> {
-		await this.kernel.loadCore(services);
-	}
-
-	protected override didAttach(): void {
-		this.kernel.didAttach();
-	}
-
-	protected override applyStashedOp(
-		...args: Parameters<
-			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
-		>
-	): void {
-		this.kernel.applyStashedOp(...args);
-	}
-
-	protected override reSubmitCore(
-		...args: Parameters<
-			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["reSubmitCore"]
-		>
-	): void {
-		this.kernel.reSubmitCore(...args);
-	}
-}
-
-/**
- * A channel factory that creates an {@link ITree}.
- */
-class TreeFactory implements IChannelFactory<ISharedTree> {
-	public static Type: string = SharedTreeFactoryType;
-	public readonly type: string = SharedTreeFactoryType;
-
-	public readonly attributes: IChannelAttributes = SharedTreeAttributes;
-
-	public constructor(private readonly options: SharedTreeOptionsInternal) {}
-
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ISharedTree> {
-		const tree = new SharedTreeImpl(id, runtime, channelAttributes, this.options);
-		await tree.load(services);
-		return tree;
-	}
-
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
-		const tree = new SharedTreeImpl(id, runtime, this.attributes, this.options);
-		tree.initializeLocal();
-		return tree;
-	}
+		async loadCore(
+			args: KernelArgs,
+			storage: IChannelStorageService,
+		): Promise<FactoryOut<SharedTreeKernelView>> {
+			const k = treeFromKernelArgs(args);
+			await k.loadCore(storage);
+			return { kernel: k, view: k.view };
+		},
+	};
 }
 
 /**
@@ -219,7 +98,7 @@ export const SharedTree = configuredSharedTree({});
  * 	// eslint-disable-next-line import/no-internal-modules
  * } from "@fluidframework/tree/internal";
  * const SharedTree = configuredSharedTree({
- * 	forest: ForestType.Reference,
+ * 	forest: ForestTypeReference,
  * 	jsonValidator: typeboxValidator,
  * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
  * });
@@ -234,10 +113,12 @@ export const SharedTree = configuredSharedTree({});
 export function configuredSharedTree(
 	options: SharedTreeOptions,
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
-	class ConfiguredFactory extends TreeFactory {
-		public constructor() {
-			super(options);
-		}
-	}
-	return createSharedObjectKind<ITree>(ConfiguredFactory);
+	const sharedObjectOptions: SharedObjectOptions<ITree> = {
+		type: SharedTreeFactoryType,
+		attributes: SharedTreeAttributes,
+		telemetryContextPrefix: "fluid_sharedTree_",
+		factory: treeKernelFactory(options),
+	};
+
+	return makeSharedObjectKind<ITree>(sharedObjectOptions);
 }

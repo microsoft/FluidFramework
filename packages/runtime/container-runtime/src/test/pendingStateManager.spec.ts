@@ -34,9 +34,15 @@ import {
 	PendingStateManager,
 } from "../pendingStateManager.js";
 
-type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
-	initialMessages: Deque<IPendingMessage>;
-};
+type Patch<T, U> = Omit<T, keyof U> & U;
+
+type PendingStateManager_WithPrivates = Patch<
+	PendingStateManager,
+	{
+		pendingMessages: Deque<IPendingMessage>;
+		initialMessages: Deque<IPendingMessage>;
+	}
+>;
 
 // Make a mock op with distinguishable contents
 function op(data: string = ""): LocalContainerRuntimeMessage {
@@ -180,6 +186,7 @@ describe("Pending State Manager", () => {
 					localOpMetadata,
 				})),
 				clientSequenceNumber ?? messages[0]?.clientSequenceNumber,
+				false /* staged */,
 			);
 		};
 
@@ -292,7 +299,7 @@ describe("Pending State Manager", () => {
 		});
 
 		it("empty batch is processed correctly", () => {
-			// Empty batch is reflected in the pending state manager as a single message
+			// Empty batch is reflected in the pending state psm as a single message
 			// with the following metadata:
 			submitBatch(
 				[
@@ -473,6 +480,7 @@ describe("Pending State Manager", () => {
 						},
 					],
 					0 /* clientSequenceNumber */,
+					false /* staged */,
 				);
 
 				assert.throws(
@@ -521,6 +529,7 @@ describe("Pending State Manager", () => {
 						},
 					],
 					0 /* clientSequenceNumber */,
+					false /* staged */,
 				);
 
 				assert.throws(
@@ -691,7 +700,7 @@ describe("Pending State Manager", () => {
 
 	describe("replayPendingStates", () => {
 		let pendingStateManager: PendingStateManager;
-		const resubmittedBatchIds: string[] = [];
+		const resubmittedBatchIds: (string | undefined)[] = [];
 		const clientId = "clientId";
 
 		beforeEach(async () => {
@@ -701,7 +710,7 @@ describe("Pending State Manager", () => {
 					applyStashedOp: async () => undefined,
 					clientId: () => clientId,
 					connected: () => true,
-					reSubmitBatch: (batch, batchId) => {
+					reSubmitBatch: (batch, { batchId }) => {
 						resubmittedBatchIds.push(batchId);
 					},
 					isActiveConnection: () => false,
@@ -736,6 +745,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				})),
 				0,
+				false /* staged */,
 			);
 			pendingStateManager.replayPendingStates();
 			assert.strictEqual(resubmittedBatchIds[0], `${clientId}_[0]`);
@@ -750,6 +760,7 @@ describe("Pending State Manager", () => {
 					metadata: { batchId: "batchId" },
 				},
 				0,
+				false /* staged */,
 			);
 			pendingStateManager.replayPendingStates();
 			assert.strictEqual(resubmittedBatchIds[0], "batchId");
@@ -766,7 +777,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 10,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
 				},
 				{
 					type: "message",
@@ -774,7 +785,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 11,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
 				},
 			];
 
@@ -804,7 +815,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 10,
 					opMetadata: undefined,
 					localOpMetadata: { emptyBatch: true },
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
 				},
 			];
 
@@ -889,6 +900,7 @@ describe("Pending State Manager", () => {
 						},
 					],
 					0,
+					false /* staged */,
 				);
 			}
 			assert.strictEqual(
@@ -929,6 +941,7 @@ describe("Pending State Manager", () => {
 						},
 					],
 					0,
+					false /* staged */,
 				);
 			}
 			assert.strictEqual(
@@ -952,7 +965,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
 			},
 			{
 				type: "message",
@@ -960,7 +973,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
 			},
 			{
 				type: "message",
@@ -968,7 +981,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 3, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 3, length: 1, staged: false },
 			},
 			{
 				type: "message",
@@ -976,7 +989,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 4, length: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 4, length: 1, staged: false },
 			},
 		];
 		const forFlushedMessages = forInitialMessages.map<LocalBatchMessage>(
@@ -1039,6 +1052,7 @@ describe("Pending State Manager", () => {
 						},
 					],
 					0,
+					false /* staged */,
 				);
 			}
 
@@ -1053,6 +1067,105 @@ describe("Pending State Manager", () => {
 				pendingStateManager.minimumPendingMessageSequenceNumber,
 				undefined,
 				"Should no minimum sequence number as there are no messages",
+			);
+		});
+	});
+
+	describe("hasPendingUserChanges", () => {
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		function createPendingStateManager(
+			pendingMessages: IPendingMessage[] = [],
+			initialMessages: IPendingMessage[] = [],
+		): PendingStateManager_WithPrivates {
+			const psm: PendingStateManager_WithPrivates = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => "CLIENT_ID",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				{ pendingStates: initialMessages },
+				logger,
+			) as unknown as PendingStateManager_WithPrivates;
+
+			psm.pendingMessages.push(...pendingMessages);
+			return psm;
+		}
+		const dirtyableOp = {
+			type: ContainerMessageType.Alias,
+		} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage;
+		const nonDirtyableOp = {
+			type: ContainerMessageType.GC,
+		} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage;
+
+		it("returns false when there are no pending or initial messages", () => {
+			const psm = createPendingStateManager();
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				false,
+				"Should be false with no messages",
+			);
+		});
+
+		it("returns true if any pending message is dirtyable", () => {
+			const pendingMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: dirtyableOp,
+				},
+			];
+			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				true,
+				"Should be true with dirtyable op",
+			);
+		});
+
+		it("returns false if all pending messages are not dirtyable", () => {
+			const pendingMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: nonDirtyableOp,
+				},
+			];
+			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				false,
+				"Should be false with non-dirtyable op",
+			);
+		});
+
+		it("returns false if all pending messages are empty batches (runtimeOp undefined)", () => {
+			const psm = createPendingStateManager();
+			psm.onFlushEmptyBatch(
+				{
+					localOpMetadata: { emptyBatch: true },
+					referenceSequenceNumber: 1,
+					metadata: { batchId: "batchId" },
+				},
+				0,
+				false,
+			);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				false,
+				"Should be false for empty batch",
+			);
+		});
+
+		it("returns true if there are any initial messages, even if non-dirtyable", () => {
+			const initialMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: nonDirtyableOp,
+				},
+			];
+			const psm = createPendingStateManager([], initialMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				true,
+				"Should be true with initial messages",
 			);
 		});
 	});

@@ -76,7 +76,7 @@
 		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.56.0",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/server-services-client-previous": "npm:@fluidframework/server-services-client@5.0.0",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/debug": "^4.1.5",
@@ -106,6 +106,9 @@
 			},
 			"Interface_INetworkErrorDetails": {
 				"backCompat": false
+			},
+			"Interface_ITimeoutContext": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"

@@ -11,6 +11,8 @@ import {
 	type BaseOperation,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
+	isOperationType,
+	type MinimizationTransform,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
 
@@ -23,6 +25,8 @@ import type { StressDataObjectOperations } from "./stressDataObject.js";
 export type StressOperations = StressDataObjectOperations | DDSModelOp;
 
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
+	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
+	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
 	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
@@ -57,7 +61,7 @@ export function makeGenerator<T extends BaseOperation>(
 				type: "uploadBlob",
 				tag: state.tag("blob"),
 			}),
-			10,
+			5,
 			// local server doesn't support detached blobs
 			(state) => state.client.container.attachState !== AttachState.Detached,
 		],
@@ -69,6 +73,25 @@ export function makeGenerator<T extends BaseOperation>(
 			}),
 			5,
 		],
+		[
+			async () => ({
+				type: "enterStagingMode",
+			}),
+			5,
+			(state) =>
+				!state.client.entryPoint.inStagingMode() &&
+				state.client.container.attachState !== AttachState.Detached,
+		],
+		[
+			async ({ random }) => ({
+				type: "exitStagingMode",
+				commit: random.bool(),
+			}),
+			25,
+			(state) =>
+				state.client.entryPoint.inStagingMode() &&
+				state.client.container.attachState !== AttachState.Detached,
+		],
 		[DDSModelOpGenerator, 100],
 	]);
 
@@ -76,3 +99,18 @@ export function makeGenerator<T extends BaseOperation>(
 }
 export const saveFailures = { directory: path.join(_dirname, "../src/test/results") };
 export const saveSuccesses = { directory: path.join(_dirname, "../src/test/results") };
+
+export const ddsModelMinimizers: MinimizationTransform<BaseOperation>[] = [
+	...ddsModelMap.entries(),
+]
+	.flatMap(([channelType, model]) =>
+		model.minimizationTransforms?.map((mt) => ({ channelType, mt })),
+	)
+	.filter((v): v is Exclude<typeof v, undefined> => v !== undefined)
+	.map(({ channelType, mt }) => {
+		return (op: BaseOperation) => {
+			if (isOperationType<DDSModelOp>("DDSModelOp", op) && op.channelType === channelType) {
+				mt(op.op);
+			}
+		};
+	});

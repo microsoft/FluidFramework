@@ -20,7 +20,7 @@ export class Bubblebench extends DataObject {
 	private view: TreeView<typeof App> | undefined;
 	private _appState: AppState | undefined;
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		const tree = SharedTree.create(this.runtime);
 
 		this.view = tree.viewWith(appTreeConfiguration);
@@ -28,13 +28,24 @@ export class Bubblebench extends DataObject {
 		this.root.set(treeKey, tree.handle);
 	}
 
-	protected async initializingFromExisting() {
+	protected async initializingFromExisting(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const tree = await this.root.get<IFluidHandle<ITree>>(treeKey)!.get();
 		this.view = tree.viewWith(appTreeConfiguration);
 	}
 
-	protected async hasInitialized() {
+	private readonly onConnected = (): void => {
+		// Out of paranoia, we periodically check to see if your client Id has changed and
+		// update the tree if it has.
+		setInterval(() => {
+			const clientId = this.runtime.clientId;
+			if (clientId !== undefined && clientId !== this.appState.localClient.clientId) {
+				this.appState.localClient.clientId = clientId;
+			}
+		}, 1000);
+	};
+
+	protected async hasInitialized(): Promise<void> {
 		this._appState = new AppState(
 			this.tree,
 			/* stageWidth: */ 640,
@@ -42,22 +53,11 @@ export class Bubblebench extends DataObject {
 			/* numBubbles: */ 1,
 		);
 
-		const onConnected = () => {
-			// Out of paranoia, we periodically check to see if your client Id has changed and
-			// update the tree if it has.
-			setInterval(() => {
-				const clientId = this.runtime.clientId;
-				if (clientId !== undefined && clientId !== this.appState.localClient.clientId) {
-					this.appState.localClient.clientId = clientId;
-				}
-			}, 1000);
-		};
-
 		// Wait for connection to begin checking client Id.
 		if (this.runtime.connected) {
-			onConnected();
+			this.onConnected();
 		} else {
-			this.runtime.once("connected", onConnected);
+			this.runtime.once("connected", this.onConnected);
 		}
 	}
 
@@ -85,9 +85,8 @@ export class Bubblebench extends DataObject {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  * @internal
  */
-export const BubblebenchInstantiationFactory = new DataObjectFactory(
-	Bubblebench.Name,
-	Bubblebench,
-	[SharedTree.getFactory()], // This is fine for now  but we will have to adjust this API later to allow control of write format
-	{},
-);
+export const BubblebenchInstantiationFactory = new DataObjectFactory({
+	type: Bubblebench.Name,
+	ctor: Bubblebench,
+	sharedObjects: [SharedTree.getFactory()],
+});

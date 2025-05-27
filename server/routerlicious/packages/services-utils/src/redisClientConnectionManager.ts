@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as Redis from "ioredis";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import * as Redis from "ioredis";
+
 import { getRedisClusterRetryStrategy } from "./redisUtils";
 
 /**
