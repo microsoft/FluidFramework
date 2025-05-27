@@ -273,10 +273,7 @@ const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumbe
 	);
 };
 
-const createClients = async (
-	deltaConnectionServer: ILocalDeltaConnectionServer,
-	done?: Mocha.Done,
-) => {
+const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
 	const {
 		loaderProps: baseLoaderProps,
 		codeDetails,
@@ -339,22 +336,6 @@ const createClients = async (
 		loaded.dataObject.enumerateDataSynchronous(),
 		"initial states should match after save",
 	);
-
-	Object.values(clients).forEach((client: Client) => {
-		if (done === undefined) {
-			return;
-		}
-		assert(
-			client.container.closed === false,
-			"PRECONDITION: Container should not be closed yet",
-		);
-		client.container.on("closed", () => {
-			done(new Error("Container closure unexpected for this test"));
-		});
-		client.container.on("disposed", () => {
-			done(new Error("Container disposal unexpected for this test"));
-		});
-	});
 
 	return clients;
 };
@@ -681,102 +662,22 @@ describe("Staging Mode", () => {
 	}
 
 	describe("other operations", () => {
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		it.only("Aliasing a datastore while in staging mode doesn't go well", async (done) => {
+		it("Aliasing a datastore not supported in staging mode", async () => {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
-			const clients = await createClients(deltaConnectionServer, done);
+			const clients = await createClients(deltaConnectionServer);
 
-			const stagingControls = clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.enterStagingMode();
 
 			// Create and alias a new datastore in staging mode
 			const newDataStore = await clients.original.dataObject.containerRuntime.createDataStore(
 				dataObjectFactory.type,
 			);
 
-			// This promise will not resolve during Staging Mode
-			// FUTURE: Block this API in Staging Mode, until we hear a compelling use case that warrants sorting out this Promise difficulty
-			newDataStore.trySetAlias("staged-alias").catch(() => {});
-
-			// And by the way for now we haven't implemented rollback.
-			stagingControls.discardChanges();
+			await assert.rejects(
+				async () => newDataStore.trySetAlias("staged-alias"),
+				/Cannot set aliases while in staging mode/,
+				"Should not be able to set an alias in staging mode",
+			);
 		});
-
-		// it("discarding staging mode removes aliased datastores created in staging mode", async () => {
-		// 	const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		// 	const clients = await createClients(deltaConnectionServer);
-
-		// 	const stagingControls = clients.original.dataObject.enterStagingMode();
-
-		// 	// Create and alias a new datastore in staging mode
-		// 	const newDataStore = await clients.original.dataObject.runtime.createDataStore(
-		// 		dataObjectFactory.type,
-		// 	);
-		// 	const aliasResult = await newDataStore.trySetAlias("staged-alias");
-		// 	assert.equal(aliasResult, "Success", "Alias should succeed in staging mode");
-
-		// 	// The alias should be visible in the staging client
-		// 	const stagedEntrypoint =
-		// 		await clients.original.dataObject.runtime.getAliasedDataStoreEntryPoint(
-		// 			"staged-alias",
-		// 		);
-		// 	assert.notEqual(
-		// 		stagedEntrypoint,
-		// 		undefined,
-		// 		"Aliased datastore should be visible in staging client",
-		// 	);
-
-		// 	// Discard changes
-		// 	stagingControls.discardChanges();
-		// 	await waitForSave(clients);
-
-		// 	// The alias should NOT be visible in either client
-		// 	const stagedEntrypointAfter =
-		// 		await clients.original.dataObject.runtime.getAliasedDataStoreEntryPoint(
-		// 			"staged-alias",
-		// 		);
-		// 	const loadedEntrypointAfter =
-		// 		await clients.loaded.dataObject.runtime.getAliasedDataStoreEntryPoint("staged-alias");
-		// 	assert.equal(
-		// 		stagedEntrypointAfter,
-		// 		undefined,
-		// 		"Aliased datastore should not be visible in staging client after discard",
-		// 	);
-		// 	assert.equal(
-		// 		loadedEntrypointAfter,
-		// 		undefined,
-		// 		"Aliased datastore should not be visible in loaded client after discard",
-		// 	);
-		// });
-
-		// it("aliasing a datastore with an existing alias in staging mode fails", async () => {
-		// 	const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		// 	const clients = await createClients(deltaConnectionServer);
-
-		// 	// Alias a datastore in mainline
-		// 	const ds = await clients.original.dataObject.runtime.createDataStore(
-		// 		dataObjectFactory.type,
-		// 	);
-		// 	const aliasResult = await ds.trySetAlias("shared-alias");
-		// 	assert.equal(aliasResult, "Success", "Alias should succeed in mainline");
-		// 	await waitForSave(clients);
-
-		// 	const stagingControls = clients.original.dataObject.enterStagingMode();
-
-		// 	// Try to alias another datastore with the same alias in staging mode
-		// 	const stagedDs = await clients.original.dataObject.runtime.createDataStore(
-		// 		dataObjectFactory.type,
-		// 	);
-		// 	const stagedAliasResult = await stagedDs.trySetAlias("shared-alias");
-		// 	assert.equal(
-		// 		stagedAliasResult,
-		// 		"AlreadyAliased",
-		// 		"Aliasing with an existing alias should fail in staging mode",
-		// 	);
-
-		// 	stagingControls.discardChanges();
-		// 	await waitForSave(clients);
-		// });
 	});
 });

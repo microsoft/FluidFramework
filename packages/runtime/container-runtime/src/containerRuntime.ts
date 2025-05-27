@@ -4720,7 +4720,7 @@ export class ContainerRuntime
 				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
 			}
 			case ContainerMessageType.Attach: // Attach ops won't be generated in Staging Mode
-			case ContainerMessageType.Alias: // BUG: Alias ops shouldn't be supported in Staging Mode
+			case ContainerMessageType.Alias: // Alias ops won't be generated in Staging Mode
 			case ContainerMessageType.BlobAttach: // Attach ops won't be generated in Staging Mode
 			case ContainerMessageType.IdAllocation: // ID Allocation ops won't be generated in Staging Mode
 			// Rejoin ops are unused
