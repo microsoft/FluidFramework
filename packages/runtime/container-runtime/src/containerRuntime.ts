@@ -1097,17 +1097,6 @@ export class ContainerRuntime
 
 	private readonly _getClientId: () => string | undefined;
 
-	/**
-	 * Gets whether the Container is truly connected to the service.
-	 *
-	 * @remarks
-	 * This returns the raw connected state from the Container's connection,
-	 * irrespective of the readonly state. This differs from the public `connected`
-	 * getter which returns false if the Container is readonly, even if actually connected.
-	 *
-	 * @returns true if connected to server, false otherwise
-	 */
-	private readonly _getTrueConnectedState: () => boolean;
 	public get clientId(): string | undefined {
 		return this._getClientId();
 	}
@@ -1449,9 +1438,6 @@ export class ContainerRuntime
 			supportedFeatures,
 			snapshotWithContents,
 		} = context;
-
-		// eslint-disable-next-line unicorn/consistent-destructuring
-		this._getTrueConnectedState = () => context.connected;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
@@ -2678,7 +2664,7 @@ export class ContainerRuntime
 	/**
 	 * Raises and propagates connected events.
 	 * @param canSendOps - Indicates whether the container can send ops or not (connected and not readonly).
-	 * @remarks - The connection state from container context used here when raising connected events.
+	 * @remarks The connection state from container context used here when raising connected events.
 	 */
 	private setConnectionStateCore(canSendOps: boolean, clientId?: string): void {
 		assert(
@@ -2738,7 +2724,7 @@ export class ContainerRuntime
 		this.channelCollection.setConnectionState(canSendOps, clientId);
 		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
-		raiseConnectedEvent(this.mc.logger, this, this._getTrueConnectedState(), clientId);
+		raiseConnectedEvent(this.mc.logger, this, canSendOps, clientId);
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
@@ -4334,7 +4320,7 @@ export class ContainerRuntime
 		if (this.innerDeltaManager.readOnlyInfo.readonly) {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
-				connected: this._getTrueConnectedState(),
+				connected: this.connected,
 				canSendOps: this.canSendOps,
 			});
 		}

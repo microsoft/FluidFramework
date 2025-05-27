@@ -63,7 +63,7 @@ export interface IRuntime extends IDisposable {
 	/**
 	 * Notifies the runtime of a change in the connection state
 	 * @param canSendOps - true if the runtime is allowed to send ops
-	 * @param clientId - the id of the client that is connecting or disconnecting
+	 * @param clientId - the ID of the client that is connecting or disconnecting
 	 */
 	setConnectionState(canSendOps: boolean, clientId?: string);
 
