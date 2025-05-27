@@ -10,6 +10,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
+	asIndex,
 	getKernel,
 	type TreeNode,
 	type Unhydrated,
@@ -40,13 +41,14 @@ import {
 	getIdentifierFromNode,
 	mapTreeFromNodeData,
 	getOrCreateInnerNode,
+	getOrCreateNodeFromInnerNode,
 	tryGetStoredKeyFromPropertyKey,
-	NodeKind,
 	getTreeNodeForField,
+	isArrayNodeSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
-import type { ITreeCursorSynchronous } from "../core/index.js";
+import { EmptyKey, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
@@ -517,8 +519,27 @@ export const TreeAlpha: TreeAlpha = {
 			return undefined;
 		}
 
-		if (schema.kind === NodeKind.Array) {
-			throw new Error("TODO");
+		if (isArrayNodeSchema(schema)) {
+			const sequence = flexNode.tryGetField(EmptyKey);
+			if (sequence === undefined) {
+				return undefined;
+			}
+
+			const index =
+				typeof storedKey === "number"
+					? storedKey
+					: asIndex(storedKey, Number.POSITIVE_INFINITY);
+
+			if (index === undefined) {
+				return undefined;
+			}
+
+			const child = sequence.boxedAt(index);
+			if (child === undefined) {
+				return undefined;
+			}
+
+			return getOrCreateNodeFromInnerNode(child);
 		}
 
 		const field = flexNode.tryGetField(brand(String(storedKey)));

@@ -319,7 +319,7 @@ describe("treeNodeApi", () => {
 
 		describe("map", () => {
 			function getMapSchema() {
-				return schema.mapAlpha("TestObject", schema.string);
+				return schema.map("TestObject", schema.string);
 			}
 
 			function initializeMapTree(
@@ -357,18 +357,45 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		describe.skip("array", () => {
-			it("index in bounds", () => {
-				throw new Error("TODO");
+		describe("array", () => {
+			function getArraySchema() {
+				return schema.array("TestObject", schema.string);
+			}
+
+			function initializeArrayTree(
+				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getArraySchema>>,
+			) {
+				class TestArray extends getArraySchema() {}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(input);
+
+				return { TestArray, tree: view.root };
+			}
+
+			it("simple", () => {
+				const { tree } = initializeArrayTree(["Hello", "World"]);
+
+				const child0 = TreeAlpha.child(tree, 0);
+				assert.equal(child0, "Hello");
+
+				const child1 = TreeAlpha.child(tree, 1);
+				assert.equal(child1, "World");
+
+				const child2 = TreeAlpha.child(tree, 2);
+				assert.equal(child2, undefined);
+
+				const childFoo = TreeAlpha.child(tree, "foo");
+				assert.equal(childFoo, undefined);
+
+				const childEmptyKey = TreeAlpha.child(tree, "");
+				assert.equal(childEmptyKey, undefined);
+
+				const childIntegerString = TreeAlpha.child(tree, "1");
+				assert.equal(childIntegerString, "World");
 			});
 
-			it("index out of bounds", () => {
-				throw new Error("TODO");
-			});
-
-			it("string key errors", () => {
-				throw new Error("TODO");
-			});
+			// TODO: recursive schema tests
 		});
 	});
 

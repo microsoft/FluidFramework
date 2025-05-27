@@ -22,6 +22,7 @@ export {
 	HydratedContext,
 	SimpleContextSlot,
 	getOrCreateInnerNode,
+	getOrCreateNodeFromInnerNode,
 	getKernel,
 } from "./core/index.js";
 export {
@@ -189,6 +190,7 @@ export {
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
+	asIndex,
 	isArrayNodeSchema,
 	IterableTreeArrayContent,
 	type ReadonlyArrayNode,
