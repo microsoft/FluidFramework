@@ -538,7 +538,7 @@ export class DocumentsSchemaController {
 	 * @param documentMetadataSchema - current document's schema, if present.
 	 * @param features - features of the document schema that current session wants to see enabled.
 	 * @param onSchemaChange - callback that is called whenever schema is changed (not called on creation / load, only when processing document schema change ops)
-	 * @param info - top-level properties of the document that do not relate to the schema itself
+	 * @param info - Informational properties of the document that are not subject to strict schema enforcement
 	 * @param logger - telemetry logger from the runtime
 	 */
 	constructor(
