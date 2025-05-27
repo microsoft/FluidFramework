@@ -17,6 +17,7 @@ import {
 	type StableNodeIdentifier,
 } from "../../../feature-libraries/index.js";
 import {
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	isTreeNode,
 	type NodeFromSchema,
 	SchemaFactory,
@@ -53,7 +54,7 @@ import { FluidClientVersion } from "../../../codec/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { TreeAlpha } from "../../../shared-tree/index.js";
 
-const schema = new SchemaFactory("com.example");
+const schema = new SchemaFactoryAlpha("com.example");
 
 class Point extends schema.object("Point", {}) {}
 
@@ -240,22 +241,83 @@ describe("treeNodeApi", () => {
 		assert.equal(TreeAlpha.key2(root[1].y), "y");
 	});
 
+	// TODO: recursive schema tests
 	describe("child", () => {
 		describe("object", () => {
+			function getObjectSchema() {
+				return schema.objectAlpha(
+					"TestObject",
+					{
+						foo: schema.optional(schema.string),
+						"0": SchemaFactory.optional(schema.number),
+					},
+					{
+						allowUnknownOptionalFields: true,
+					},
+				);
+			}
+
+			function initializeObjectTree(
+				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getObjectSchema>>,
+			) {
+				class TestObject extends getObjectSchema() {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize(input);
+
+				return { TestObject, tree: view.root };
+			}
+
 			it("key exists", () => {
-				throw new Error("TODO");
+				const { tree } = initializeObjectTree({
+					foo: "test",
+					0: 42,
+				});
+
+				const childFoo = TreeAlpha.child(tree, "foo");
+				assert.equal(childFoo, "test");
+
+				const child0 = TreeAlpha.child(tree, 0);
+				assert.equal(child0, 42);
+			});
+
+			it("key corresponds to optional, unset field", () => {
+				const { tree } = initializeObjectTree({});
+
+				const childFoo = TreeAlpha.child(tree, "foo");
+				assert.equal(childFoo, undefined);
+
+				const child0 = TreeAlpha.child(tree, 0);
+				assert.equal(child0, undefined);
 			});
 
 			it("key does not exist", () => {
-				throw new Error("TODO");
+				const { tree } = initializeObjectTree({
+					foo: "test",
+					0: 42,
+				});
+
+				const childBar = TreeAlpha.child(tree, "bar");
+				assert.equal(childBar, undefined);
+
+				const child1 = TreeAlpha.child(tree, 1);
+				assert.equal(child1, undefined);
 			});
 
 			it("extra optional properties not considered", () => {
-				throw new Error("TODO");
+				const { tree } = initializeObjectTree({
+					foo: "test",
+					0: 42,
+					bar: "extra", // extra optional property
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				} as any);
+
+				const childBaz = TreeAlpha.child(tree, "bar");
+				assert.equal(childBaz, undefined);
 			});
 		});
 
-		describe("map", () => {
+		describe.skip("map", () => {
 			it("entry exists under key", () => {
 				throw new Error("TODO");
 			});
@@ -265,7 +327,7 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		describe("array", () => {
+		describe.skip("array", () => {
 			it("index in bounds", () => {
 				throw new Error("TODO");
 			});
@@ -278,12 +340,10 @@ describe("treeNodeApi", () => {
 				throw new Error("TODO");
 			});
 		});
-
-		it("numeric key errors for non-array node", () => {
-			throw new Error("TODO");
-		});
 	});
-	describe("children", () => {
+
+	// TODO: recursive schema tests
+	describe.skip("children", () => {
 		describe("object", () => {
 			it("empty", () => {
 				throw new Error("TODO");
