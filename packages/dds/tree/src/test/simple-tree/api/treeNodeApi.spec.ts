@@ -317,13 +317,43 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		describe.skip("map", () => {
+		describe("map", () => {
+			function getMapSchema() {
+				return schema.mapAlpha("TestObject", schema.string);
+			}
+
+			function initializeMapTree(
+				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getMapSchema>>,
+			) {
+				class TestMap extends getMapSchema() {}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize(input);
+
+				return { TestMap, tree: view.root };
+			}
+
 			it("entry exists under key", () => {
-				throw new Error("TODO");
+				const { tree } = initializeMapTree({
+					foo: "Hello",
+					0: "World",
+				});
+
+				const childFoo = TreeAlpha.child(tree, "foo");
+				assert.equal(childFoo, "Hello");
+
+				const child0 = TreeAlpha.child(tree, 0);
+				assert.equal(child0, "World");
 			});
 
 			it("no entry exists under key", () => {
-				throw new Error("TODO");
+				const { tree } = initializeMapTree({});
+
+				const childFoo = TreeAlpha.child(tree, "foo");
+				assert.equal(childFoo, undefined);
+
+				const child0 = TreeAlpha.child(tree, 0);
+				assert.equal(child0, undefined);
 			});
 		});
 
