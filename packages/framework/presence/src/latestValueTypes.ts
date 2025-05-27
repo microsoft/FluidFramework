@@ -14,7 +14,7 @@ import type { Attendee } from "./presence.js";
  * Metadata for the value state.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMetadata {
 	/**
@@ -32,7 +32,7 @@ export interface LatestMetadata {
  * State of a value and its metadata.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestData<T> {
 	value: DeepReadonly<JsonDeserialized<T>>;
@@ -43,7 +43,7 @@ export interface LatestData<T> {
  * State of a specific attendee's value and its metadata.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestClientData<T> extends LatestData<T> {
 	attendee: Attendee;

@@ -14,6 +14,7 @@ import type {
 } from "./protocol.js";
 
 /**
+ * Presence {@link ContainerExtension} version of {@link @fluidframework/container-runtime-definitions#ExtensionRuntimeProperties}
  * @internal
  */
 export interface ExtensionRuntimeProperties {

@@ -18,7 +18,7 @@ import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
-import type { Presence } from "./presence.js";
+import type { PresenceWithNotifications as Presence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
 import type {
 	OutboundClientJoinMessage,
