@@ -535,10 +535,6 @@ export const TreeAlpha: TreeAlpha = {
 
 		const schema = treeNodeApi.schema(node);
 
-		if (schema.kind === NodeKind.Array) {
-			throw new Error("TODO");
-		}
-
 		const result: [string | number, TreeNode | TreeLeafValue][] = [];
 		for (const field of flexNode.boxedIterator()) {
 			const propertyKey = getPropertyKeyFromStoredKey(schema, field.key);
