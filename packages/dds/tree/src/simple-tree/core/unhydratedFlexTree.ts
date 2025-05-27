@@ -603,7 +603,7 @@ function getOrCreateField(
 		return new UnhydratedFlexTreeField(parent.simpleContext, schema, key, parent, onEdit);
 	}
 
-	return fail("unsupported field kind");
+	return fail(0xb9d /* unsupported field kind */);
 }
 
 // #endregion Caching and unboxing utilities

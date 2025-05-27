@@ -106,17 +106,20 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 };
 
 /**
- * Default {@link VisualizeSharedObject} for {@link DataObject}.
- * @remarks This takes in a `root` of type {@link ISharedDirectory} from {@link DataObject} and visualizes its children.
+ * Creates a visualizer function that captures the parent object's ID for use in generating the fluidObjectId.
+ * @param parentId - The ID of the parent DataObject to use in generating unique fluidObjectIds
+ * @returns A VisualizeSharedObject function that will use the parentId in its fluidObjectId generation
  */
-export const visualizeDataObject: VisualizeSharedObject = async (
-	dataObjectRoot: ISharedObject,
-	visualizeChildData: VisualizeChildData,
-): Promise<FluidObjectTreeNode> => {
-	const renderedChildData = (await visualizeSharedDirectory(
-		dataObjectRoot,
-		visualizeChildData,
-	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
+export function createDataObjectVisualizer(parentId: string): VisualizeSharedObject {
+	return async (
+		dataObjectRoot: ISharedObject,
+		visualizeChildData: VisualizeChildData,
+	): Promise<FluidObjectTreeNode> => {
+		const fluidObjectId = `${parentId}-${dataObjectRoot.id}`;
+		const renderedChildData = (await visualizeSharedDirectory(
+			dataObjectRoot,
+			visualizeChildData,
+		)) as FluidObjectTreeNode;
 
 	return {
 		fluidObjectId: objectIdNumber(dataObjectRoot),
@@ -125,7 +128,33 @@ export const visualizeDataObject: VisualizeSharedObject = async (
 		typeMetadata: "DataObject",
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
-};
+}
+
+/**
+ * Creates a visualizer function that captures the parent object's ID for use in generating the fluidObjectId.
+ * @param parentId - The ID of the parent TreeDataObject to use in generating unique fluidObjectIds
+ * @returns A VisualizeSharedObject function that will use the parentId in its fluidObjectId generation
+ */
+export function createTreeDataObjectVisualizer(parentId: string): VisualizeSharedObject {
+	return async (
+		rootTree: ISharedObject,
+		visualizeChildData: VisualizeChildData,
+	): Promise<FluidObjectTreeNode> => {
+		const fluidObjectId = `${parentId}-${rootTree.id}`;
+		const renderedChildData = (await visualizeSharedTree(
+			rootTree,
+			visualizeChildData,
+		)) as FluidObjectTreeNode;
+
+		return {
+			objectIdNumber(rootTree),
+			children: renderedChildData.children,
+			metadata: renderedChildData.metadata,
+			typeMetadata: "TreeDataObject",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+		};
+	};
+}
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
@@ -362,7 +391,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 
 /**
  * List of default visualizers included in the library.
- * @remarks {@link @fluidframework/aqueduct#DataObject} does not have type information, thus not included in the list.
+ * @remarks {@link @fluidframework/aqueduct#DataObject} & {@link @fluidframework/aqueduct#TreeDataObject} do not have type information and thus are not included in the list.
  */
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCell.getFactory().type]: visualizeSharedCell,

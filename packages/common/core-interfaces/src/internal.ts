@@ -76,12 +76,14 @@ export type ReadonlyNonNullJsonObjectWith<T> = ExposedReadonlyNonNullJsonObjectW
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace InternalUtilityTypes {
-	// TODO: Add documentation
-	// eslint-disable-next-line jsdoc/require-jsdoc
+	/* eslint-disable jsdoc/require-jsdoc */
+	export type FlattenIntersection<T extends ExposedInternalUtilityTypes.AnyRecord> =
+		ExposedInternalUtilityTypes.FlattenIntersection<T>;
 	export type IfSameType<
 		X,
 		Y,
 		IfSame = unknown,
 		IfDifferent = never,
 	> = ExposedInternalUtilityTypes.IfSameType<X, Y, IfSame, IfDifferent>;
+	/* eslint-enable jsdoc/require-jsdoc */
 }
