@@ -4,11 +4,10 @@
  */
 
 /**
- * Mocha configuration file to run memory-profiling tests
+ * Mocha configuration file to run execution time tests
  */
 
 module.exports = {
-	"exit": true,
 	"fgrep": ["@Benchmark", "@ExecutionTime"],
 	"node-option": ["expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
 	"recursive": true,
