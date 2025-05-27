@@ -19,7 +19,8 @@ import {
 } from "./definitions";
 import { FsPromisesBase } from "./fileSystemBase";
 import { RedisParams, RedisFsManager, RedisFsConfig } from "./redisFs";
-
+import type { Queue } from "bullmq";
+import { HybridFsManager } from "./hybridFs";
 class SimpleFsPromisesWrapper extends FsPromisesBase {
 	constructor(
 		private readonly innerFsPromises: IFileSystemPromises,
@@ -149,5 +150,25 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 
 	public async dispose(): Promise<void> {
 		await closeRedisClientConnections([this.redisClientConnectionManager]);
+	}
+}
+
+export class HybridFsManagerFactory implements IFileSystemManagerFactory {
+	constructor(
+		private readonly l1FileSystemManagerFactory: IFileSystemManagerFactory,
+		private readonly l2FileSystemManagerFactory: IFileSystemManagerFactory,
+		private readonly l2AsyncQueue: Queue,
+	) {}
+
+	public create(params?: IFileSystemManagerParams): IFileSystemManager {
+		const l1FileSystem = this.l1FileSystemManagerFactory.create(params);
+		const l2FileSystem = this.l2FileSystemManagerFactory.create(params);
+		return new HybridFsManager(l1FileSystem, l2FileSystem, this.l2AsyncQueue, params);
+	}
+
+	public async dispose(): Promise<void> {
+		await this.l1FileSystemManagerFactory?.dispose?.();
+		await this.l2FileSystemManagerFactory?.dispose?.();
+		await this.l2AsyncQueue.close();
 	}
 }

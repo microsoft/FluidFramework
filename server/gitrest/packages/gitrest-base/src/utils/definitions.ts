@@ -104,6 +104,7 @@ export interface IFileSystemManagerFactory {
 export interface IFileSystemManagerFactories {
 	defaultFileSystemManagerFactory: IFileSystemManagerFactory;
 	ephemeralFileSystemManagerFactory?: IFileSystemManagerFactory;
+	hybridFileSystemManagerFactory?: IFileSystemManagerFactory;
 }
 
 export interface IFileSystemMakeDirectoryOptions extends MakeDirectoryOptions {

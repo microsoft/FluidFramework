@@ -20,13 +20,20 @@ import { IGitrestResourcesCustomizations } from "./customizations";
 import { ExternalStorageManager } from "./externalStorageManager";
 import { GitrestRunner } from "./runner";
 import {
+	HybridFsManagerFactory,
 	IFileSystemManagerFactories,
 	IRepositoryManagerFactory,
 	IsomorphicGitManagerFactory,
 	IStorageDirectoryConfig,
 	NodeFsManagerFactory,
 	RedisFsManagerFactory,
+	type IFileSystemManagerFactory,
+	type IFileSystemManagerParams,
 } from "./utils";
+import { Queue, Worker } from "bullmq";
+import type Redis from "ioredis";
+import type { Cluster } from "ioredis";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class GitrestResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -103,50 +110,100 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 
 		// Creating two customizations for redisClientConnectionManager for now.
 		// This may be changed to a single customization in the future.
+		const redisConfig = config.get("redis");
+		const redisClientConnectionManager =
+			customizations?.redisClientConnectionManagerForEphemeralFileSystem ??
+			new RedisClientConnectionManager(
+				undefined,
+				redisConfig,
+				redisConfig.enableClustering,
+				redisConfig.slotsRefreshTimeout,
+				undefined /* retryDelays */,
+				redisConfig.enableVerboseErrorLogging,
+			);
 		const defaultFileSystemManagerFactory = this.getFileSystemManagerFactoryByName(
 			defaultFileSystemName,
 			config,
-			customizations?.redisClientConnectionManagerForDefaultFileSystem,
+			redisClientConnectionManager,
 			defaultFileSystemMaxFileSizeBytes,
 		);
 		const ephemeralFileSystemManagerFactory = this.getFileSystemManagerFactoryByName(
 			ephemeralFileSystemName,
 			config,
-			customizations?.redisClientConnectionManagerForEphemeralFileSystem,
+			redisClientConnectionManager,
 			ephemeralFileSystemMaxFileSizeBytes,
 			ephemeralDocumentTTLSec,
 		);
 
+		const redisClient = redisClientConnectionManager.getRedisClient();
+
+		// Cast the Redis client to a compatible type for BullMQ
+		const queue = new Queue("hybridFsQueue", {
+			connection: redisClient,
+		});
+
+		const hybridFileSystemManagerFactory = new HybridFsManagerFactory(
+			defaultFileSystemManagerFactory,
+			ephemeralFileSystemManagerFactory,
+			queue,
+		);
+
+		this.setupHybridFsHandler(defaultFileSystemManagerFactory, redisClient);
+
 		return {
 			defaultFileSystemManagerFactory,
 			ephemeralFileSystemManagerFactory,
+			hybridFileSystemManagerFactory,
 		};
+	}
+
+	private setupHybridFsHandler(
+		l2FileSystem: IFileSystemManagerFactory,
+		redisClient: Redis | Cluster,
+	) {
+		const l2AsyncWorker = new Worker(
+			"l2FsWorker",
+			async (job) => {
+				const { args, fsParams }: { args: unknown; fsParams: IFileSystemManagerParams } =
+					job.data;
+				const operation = job.name;
+				const l2Fs = l2FileSystem.create(fsParams).promises;
+				switch (operation) {
+					case "writeFile": {
+						await l2Fs.writeFile(...(args as Parameters<typeof l2Fs.writeFile>));
+						break;
+					}
+
+					case "mkdir": {
+						await l2Fs.mkdir(...(args as Parameters<typeof l2Fs.mkdir>));
+						break;
+					}
+					default: {
+						throw new Error(`Unsupported operation: ${operation}`);
+					}
+				}
+			},
+			{ connection: redisClient },
+		);
+
+		l2AsyncWorker.on("error", (error) => {
+			Lumberjack.error("HybridFs: Error in l2AsyncWorker", undefined, error);
+		});
 	}
 
 	private getFileSystemManagerFactoryByName(
 		fileSystemName: string,
 		config: Provider,
-		redisClientConnectionManagerCustomization?: IRedisClientConnectionManager,
+		redisClientConnectionManagerCustomization: IRedisClientConnectionManager,
 		maxFileSizeBytes?: number,
 		documentTtlSec?: number,
 	) {
 		if (!fileSystemName || fileSystemName === "nodeFs") {
 			return new NodeFsManagerFactory(maxFileSizeBytes);
 		} else if (fileSystemName === "redisFs") {
-			const redisConfig = config.get("redis");
-			const redisClientConnectionManager =
-				redisClientConnectionManagerCustomization ??
-				new RedisClientConnectionManager(
-					undefined,
-					redisConfig,
-					redisConfig.enableClustering,
-					redisConfig.slotsRefreshTimeout,
-					undefined /* retryDelays */,
-					redisConfig.enableVerboseErrorLogging,
-				);
 			return new RedisFsManagerFactory(
 				config,
-				redisClientConnectionManager,
+				redisClientConnectionManagerCustomization,
 				maxFileSizeBytes,
 				documentTtlSec,
 			);
