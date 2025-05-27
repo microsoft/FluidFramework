@@ -64,6 +64,7 @@
 		"async-mutex": "^0.3.2",
 		"axios": "^1.8.4",
 		"body-parser": "^1.20.3",
+		"bullmq": "^5.53.2",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
 		"debug": "^4.3.4",
