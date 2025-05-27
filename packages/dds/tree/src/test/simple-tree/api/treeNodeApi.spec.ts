@@ -186,7 +186,10 @@ describe("treeNodeApi", () => {
 
 			const added = new Child({ x: {}, y: {} });
 
-			// TODO: is this how we want to handle root keys?
+			// This is this how we handle root keys.
+			// Seems odd for detached fields other than root to have this key though.
+			// As exactly which key is given in this case is undocumented, it could change in the future.
+			// See also TreeAlpha.key2 which handles them differently.
 			assert.equal(Tree.key(added), rootFieldKey);
 
 			// Check index is updated after insert.
