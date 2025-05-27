@@ -3272,7 +3272,7 @@ export class ContainerRuntime
 			}
 		}
 
-		assert(!local, "No recipient found for local signal");
+		assert(!local, 0xba0 /* No recipient found for local signal */);
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "SignalAddressNotFound",
 			...tagCodeArtifacts({
@@ -4990,7 +4990,10 @@ export class ContainerRuntime
 			entry = new factory(runtime, ...useContext);
 			this.extensions.set(id, entry);
 		} else {
-			assert(entry instanceof factory, "Extension entry is not of the expected type");
+			assert(
+				entry instanceof factory,
+				0xba1 /* Extension entry is not of the expected type */,
+			);
 			entry.extension.onNewUse(...useContext);
 		}
 		return entry.interface as T;
