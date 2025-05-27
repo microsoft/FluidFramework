@@ -34,3 +34,9 @@ export const LocalClientId = -1;
  * @internal
  */
 export const NonCollabClient = -2;
+
+/**
+ * Used as the client id for operations that were squashed upon resubmission and should therefore
+ * never be seen by other clients.
+ */
+export const SquashClient = -3;
