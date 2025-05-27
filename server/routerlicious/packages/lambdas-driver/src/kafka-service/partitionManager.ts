@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+
 import {
 	IConsumer,
 	IQueuedMessage,
@@ -15,6 +16,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
+
 import { Partition } from "./partition";
 
 /**

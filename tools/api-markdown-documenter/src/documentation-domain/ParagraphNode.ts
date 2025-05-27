@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type DocumentationNode,
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
@@ -37,10 +33,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  *
  * @public
  */
-export class ParagraphNode
-	extends DocumentationParentNodeBase
-	implements MultiLineDocumentationNode
-{
+export class ParagraphNode extends DocumentationParentNodeBase {
 	/**
 	 * Static singleton representing an empty Paragraph node.
 	 */

@@ -49,14 +49,14 @@ export interface CompatConfig {
 	containerRuntime?: string | number;
 	dataRuntime?: string | number;
 	/**
-	 * Cross Version Compat Only
+	 * Cross-Client Compat Only
 	 * Version that the `TestObjectProviderWithVersionedLoad` will use to create the container with.
 	 * (Same version will be used across all layers).
 	 * This is same as compatVersion, but it's easier to use createVersion in the code as compatVersion type is number | string.
 	 */
 	createVersion?: string;
 	/**
-	 * Cross Version Compat Only
+	 * Cross-Client Compat Only
 	 * Version that the `TestObjectProviderWithVersionedLoad` will use to load the container with.
 	 * (Same version will be used across all layers).
 	 */
@@ -245,8 +245,8 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
  */
 export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
 	let lowerVersion: string | number = config.compatVersion;
-	// For CrossVersion there are 2 versions being tested. Get the lower one.
-	if (config.kind === CompatKind.CrossVersion) {
+	// For cross-client there are 2 versions being tested. Get the lower one.
+	if (config.kind === CompatKind.CrossClient) {
 		lowerVersion =
 			semver.compare(config.compatVersion as string, config.loadVersion as string) > 0
 				? (config.loadVersion as string)
@@ -280,11 +280,11 @@ export function isOdspCompatCompliant(config: CompatConfig): boolean {
 	);
 }
 
-// Helper function for genCrossVersionCompatConfig().
+// Helper function for genCrossClientCompatConfig().
 function genCompatConfig(createVersion: string, loadVersion: string): CompatConfig {
 	return {
-		name: `compat cross version - create with ${createVersion} + load with ${loadVersion}`,
-		kind: CompatKind.CrossVersion,
+		name: `compat cross-client - create with ${createVersion} + load with ${loadVersion}`,
+		kind: CompatKind.CrossClient,
 		// Note: `compatVersion` is used to determine what versions need to be installed.
 		// By setting it to `resolvedCreateVersion` we ensure both versions will eventually be
 		// installed, since we switch the create/load versions in the test permutations.
@@ -294,7 +294,7 @@ function genCompatConfig(createVersion: string, loadVersion: string): CompatConf
 	};
 }
 /**
- * Generates the cross version compat config permutations.
+ * Generates the cross-client compat config permutations.
  * This will resolve to one permutation where `CompatConfig.createVersion` is set to the current version and
  * `CompatConfig.loadVersion` is set to the delta (N-1) version. Then, a second permutation where `CompatConfig.createVersion`
  * is set to the delta (N-1) version and `CompatConfig.loadVersion` is set to the current version.
@@ -304,7 +304,7 @@ function genCompatConfig(createVersion: string, loadVersion: string): CompatConf
  *
  * @internal
  */
-export const genCrossVersionCompatConfig = (): CompatConfig[] => {
+export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	const currentVersion = getRequestedVersion(pkgVersion, 0);
 
 	// Build a list of all the versions we want to test, except current version.
@@ -345,14 +345,14 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 
 	// CompatVersions is set via pipeline flags. If not set, use default scenarios.
 	if (!compatVersions || compatVersions.length === 0) {
-		// By default run currentVersionDeltas (N/N-1), LTS, and cross version compat tests
+		// By default run currentVersionDeltas (N/N-1), LTS, and cross-client compat tests
 		defaultCompatVersions.currentVersionDeltas.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
 		defaultCompatVersions.ltsVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
-		_configList.push(...genCrossVersionCompatConfig());
+		_configList.push(...genCrossClientCompatConfig());
 		// If fluid__test__backCompat=FULL is enabled, run full back compat tests
 		if (process.env.fluid__test__backCompat === "FULL") {
 			_configList.push(...genFullBackCompatConfig());
@@ -378,7 +378,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 					break;
 				}
 				case "CROSS_VERSION": {
-					_configList.push(...genCrossVersionCompatConfig());
+					_configList.push(...genCrossClientCompatConfig());
 					break;
 				}
 				default: {

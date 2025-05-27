@@ -44,8 +44,18 @@ export {
 	enumFromStrings,
 	singletonSchema,
 } from "./schemaCreationUtilities.js";
-export { treeNodeApi, type TreeNodeApi, tryGetSchema } from "./treeNodeApi.js";
-export { createFromInsertable, cursorFromInsertable, createFromCursor } from "./create.js";
+export {
+	treeNodeApi,
+	type TreeNodeApi,
+	tryGetSchema,
+	getStoredKey,
+	getPropertyKeyFromStoredKey,
+	getIdentifierFromNode,
+} from "./treeNodeApi.js";
+export {
+	createFromCursor,
+	createFromMapTree,
+} from "./create.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -126,11 +136,3 @@ export {
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
-
-// Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
-// These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
-export {
-	RecursiveObject as test_RecursiveObject,
-	base as test_RecursiveObject_base,
-	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
-} from "./testRecursiveDomain.js";
