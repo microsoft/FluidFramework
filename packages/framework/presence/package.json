@@ -22,10 +22,6 @@
 				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./internal/container-definitions/internal": {
-			"import": "./lib/container-definitions/index.js",
-			"require": "./dist/container-definitions/index.js"
 		}
 	},
 	"files": [
@@ -100,7 +96,6 @@
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",

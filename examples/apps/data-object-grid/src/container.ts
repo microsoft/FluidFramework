@@ -11,6 +11,7 @@ import { IContainer } from "@fluidframework/container-definitions/legacy";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
 import { DataObjectGrid, IDataObjectGrid } from "./dataObjectGrid.js";
+import type { ISingleHandleItem } from "./dataObjectRegistry.js";
 
 /**
  * The data model for our application.
@@ -19,11 +20,11 @@ import { DataObjectGrid, IDataObjectGrid } from "./dataObjectGrid.js";
  * complex models.
  */
 export interface IDataObjectGridAppModel {
-	readonly dataObjectGrid: IDataObjectGrid;
+	readonly dataObjectGrid: IDataObjectGrid<ISingleHandleItem>;
 }
 
 class DataObjectGridAppModel implements IDataObjectGridAppModel {
-	public constructor(public readonly dataObjectGrid: IDataObjectGrid) {}
+	public constructor(public readonly dataObjectGrid: IDataObjectGrid<ISingleHandleItem>) {}
 }
 
 const dataObjectGridId = "data-object-grid";
@@ -41,7 +42,7 @@ export class DataObjectGridContainerRuntimeFactory extends ModelContainerRuntime
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataObjectGrid = await runtime.createDataStore(DataObjectGrid.getFactory().type);
 		await dataObjectGrid.trySetAlias(dataObjectGridId);
 	}
@@ -49,9 +50,15 @@ export class DataObjectGridContainerRuntimeFactory extends ModelContainerRuntime
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<DataObjectGridAppModel> {
 		return new DataObjectGridAppModel(
-			await getDataStoreEntryPoint<IDataObjectGrid>(runtime, dataObjectGridId),
+			await getDataStoreEntryPoint<IDataObjectGrid<ISingleHandleItem>>(
+				runtime,
+				dataObjectGridId,
+			),
 		);
 	}
 }

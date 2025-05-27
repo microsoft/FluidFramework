@@ -38,9 +38,8 @@ import {
 	typeSchemaSymbol,
 	getOrCreateInnerNode,
 } from "../core/index.js";
-import { isObjectNodeSchema } from "../objectNodeTypes.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { lazilyAllocateIdentifier } from "../objectNode.js";
+import { lazilyAllocateIdentifier, isObjectNodeSchema } from "../node-kinds/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
