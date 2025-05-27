@@ -2066,13 +2066,10 @@ export function* relevantRemovedRoots(
 ): Iterable<DeltaDetachedNodeId> {
 	const rootIds: ChangeAtomIdRangeMap<boolean> = newChangeAtomIdRangeMap();
 	addAttachesToSet(change, rootIds);
+	addRenamesToSet(change, rootIds);
 
 	for (const [[revision, localId]] of change.rootNodes.nodeChanges.entries()) {
 		rootIds.set({ revision, localId }, 1, true);
-	}
-
-	for (const entry of change.rootNodes.oldToNewId.entries()) {
-		rootIds.set(entry.start, entry.length, true);
 	}
 
 	for (const entry of rootIds.entries()) {
@@ -2105,6 +2102,24 @@ function addAttachesToSet(
 				if (detachEntry.value === undefined) {
 					rootIds.set(detachEntry.start, detachEntry.length, true);
 				}
+			}
+		}
+	}
+}
+
+function addRenamesToSet(
+	change: ModularChangeset,
+	rootIds: ChangeAtomIdRangeMap<boolean>,
+): void {
+	for (const renameEntry of change.rootNodes.oldToNewId.entries()) {
+		for (const detachEntry of change.crossFieldKeys.getAll2(
+			{ ...renameEntry.start, target: CrossFieldTarget.Source },
+			renameEntry.length,
+		)) {
+			// We only want to include renames of nodes which are detached in the input context of the changeset.
+			// So if there is a detach for the node, the rename is not relevant.
+			if (detachEntry.value === undefined) {
+				rootIds.set(renameEntry.start, renameEntry.length, true);
 			}
 		}
 	}
