@@ -434,6 +434,9 @@ export class FluidDataStoreRuntime
 		((...experimental) => {})([this.inStagingMode, this.isDirty]);
 	}
 
+	/**
+	 * Implementation of IFluidDataStoreRuntimeExperimental.inStagingMode
+	 */
 	// eslint-disable-next-line import/no-deprecated
 	private get inStagingMode(): IFluidDataStoreRuntimeExperimental["inStagingMode"] {
 		return (
@@ -443,6 +446,9 @@ export class FluidDataStoreRuntime
 		);
 	}
 
+	/**
+	 * Implementation of IFluidDataStoreRuntimeExperimental.isDirty
+	 */
 	// eslint-disable-next-line import/no-deprecated
 	private get isDirty(): IFluidDataStoreRuntimeExperimental["isDirty"] {
 		const dirty = this.pendingOpCount > 0;
@@ -1246,7 +1252,7 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * @remarks Implementation detail for {@link pendingOpCount} property
+	 * @remarks Implementation detail for the {@link FluidDataStoreRuntime.pendingOpCount} property
 	 */
 	// eslint-disable-next-line unicorn/consistent-function-scoping -- It's an IIFE, only invoked once
 	private readonly _pendingOpCountState = (() => {
