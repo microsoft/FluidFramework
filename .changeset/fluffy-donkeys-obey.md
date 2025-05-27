@@ -1,9 +1,10 @@
 ---
 "@fluidframework/presence": minor
 "__section": feature
+__highlight: true
 ---
-Presence now available at beta support
+Presence APIs promoted to beta
 
-Importing via `@fluidframework/presence/beta` is now supported.
+[Presence APIs](https://fluidframework.com/docs/build/presence) are now beta and can be imported via `@fluidframework/presence/beta`.
 
-Note: `Notifications` support remains only supported via `/alpha` imports. Cast `Presence` to `PresenceWithNotifications` to access notifications only workspace support.
+Note: `Notifications` are only supported via `/alpha` imports. To access notifications-only workspace support, cast `Presence` to `PresenceWithNotifications`.
