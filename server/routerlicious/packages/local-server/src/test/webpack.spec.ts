@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import path from "path";
+
 import webpack from "webpack";
 
 // This config exists in order to test that webpack can pack local server.

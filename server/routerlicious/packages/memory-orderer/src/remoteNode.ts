@@ -5,6 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
+
 import { Deferred } from "@fluidframework/common-utils";
 import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
@@ -16,6 +17,7 @@ import {
 	MongoManager,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { debug } from "./debug";
 import {
 	IConcreteNode,

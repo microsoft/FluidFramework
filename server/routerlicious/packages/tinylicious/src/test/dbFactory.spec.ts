@@ -7,9 +7,11 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { rimraf } from "rimraf";
+
 import { getDbFactory } from "../services";
 
 /**

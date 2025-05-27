@@ -9,7 +9,7 @@ import React from "react";
 
 import { Bubblebench, BubblebenchInstantiationFactory } from "./bubblebench.js";
 
-const bubblebenchViewCallback = (model: Bubblebench) =>
+const bubblebenchViewCallback = (model: Bubblebench): React.ReactElement =>
 	React.createElement(AppView, { app: model.appState });
 
 /**

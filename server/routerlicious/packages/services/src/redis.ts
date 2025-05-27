@@ -4,11 +4,11 @@
  */
 
 import { ICache } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Redis based cache redisClientConnectionManager.getRedisClient()

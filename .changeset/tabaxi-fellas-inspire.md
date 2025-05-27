@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-TableSchema (alpha) APIs have been added
+New TableSchema (alpha) APIs
 
 A `TableSchema` utility has been added to Shared Tree for managing dynamic, tabular data.
 This new `TableSchema` namespace contains APIs for creating column, row, and table [node schema](https://fluidframework.com/docs/api/fluid-framework/treenodeschema-typealias).

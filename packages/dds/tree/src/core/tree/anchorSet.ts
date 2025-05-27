@@ -1075,7 +1075,8 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 	}
 
 	/**
-	 * @returns true iff this PathNode is the special root node that sits above all the detached fields.
+	 * Whether or not this `PathNode` is the special root node that sits above all the detached fields.
+	 * @remarks
 	 * In this case, the fields are detached sequences.
 	 * Note that the special root node should never appear in an UpPath
 	 * since UpPaths represent this root as `undefined`.
