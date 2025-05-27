@@ -7,16 +7,16 @@ import type { MapNodeInsertableData, TreeMapNode } from "./mapNode.js";
 import type {
 	ImplicitAnnotatedAllowedTypes,
 	UnannotateImplicitAllowedTypes,
-} from "./schemaTypes.js";
+} from "../../schemaTypes.js";
 import {
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchema,
 	type TreeNodeSchemaNonClass,
 	type WithType,
-} from "./core/index.js";
+} from "../../core/index.js";
 
-import type { SimpleMapNodeSchema } from "./simpleSchema.js";
+import type { SimpleMapNodeSchema } from "../../simpleSchema.js";
 
 /**
  * A schema for customizable {@link (TreeMapNode:interface)}s.
