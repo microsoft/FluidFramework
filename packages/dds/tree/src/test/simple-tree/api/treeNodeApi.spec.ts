@@ -240,6 +240,46 @@ describe("treeNodeApi", () => {
 		assert.equal(TreeAlpha.key2(root[1].y), "y");
 	});
 
+	describe("child", () => {
+		describe("object", () => {
+			it("key exists", () => {
+				throw new Error("TODO");
+			});
+
+			it("key does not exist", () => {
+				throw new Error("TODO");
+			});
+		});
+
+		describe("map", () => {
+			it("entry exists under key", () => {
+				throw new Error("TODO");
+			});
+
+			it("no entry exists under key", () => {
+				throw new Error("TODO");
+			});
+		});
+
+		describe("array", () => {
+			it("index in bounds", () => {
+				throw new Error("TODO");
+			});
+
+			it("index out of bounds", () => {
+				throw new Error("TODO");
+			});
+
+			it("string key errors", () => {
+				throw new Error("TODO");
+			});
+		});
+
+		it("numeric key errors for non-array node", () => {
+			throw new Error("TODO");
+		});
+	});
+
 	describe("shortID", () => {
 		it("returns local id when an identifier fieldkind exists.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
