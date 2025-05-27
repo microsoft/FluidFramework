@@ -206,6 +206,16 @@ export class SchemaFactoryAlpha<
 	public static readonly identifier = schemaStatics.identifier;
 
 	/**
+	 * {@inheritDoc SchemaStatics.optional}
+	 */
+	public override readonly optional = schemaStatics.optional;
+
+	/**
+	 * {@inheritDoc SchemaStatics.required}
+	 */
+	public override readonly required = schemaStatics.required;
+
+	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.

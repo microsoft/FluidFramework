@@ -237,10 +237,7 @@ describe("Schema Evolution Examples", () => {
 		const schemaA = factory.required([factory.number]);
 
 		// Schema B: Number or string (string is enablable)
-		const schemaB = factory.required([
-			factory.number,
-			factory.enablable(factory.string),
-		]);
+		const schemaB = factory.required([factory.number, factory.enablable(factory.string)]);
 
 		// Schema C: Number or string, both fully allowed
 		const schemaC = factory.required([factory.number, factory.string]);

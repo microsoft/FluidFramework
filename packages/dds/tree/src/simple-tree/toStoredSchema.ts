@@ -60,8 +60,7 @@ export function toStoredSchema(root: ImplicitAnnotatedFieldSchema): TreeStoredSc
 					);
 				}
 
-				const annotations =
-					normalized.annotatedAllowedTypeSet.get(schema);
+				const annotations = normalized.annotatedAllowedTypeSet.get(schema);
 
 				// Enablables are stripped from the stored schema
 				// TODO:#38722 The schema upgrade mechanism will store information on the schema if an upgrade has happened
