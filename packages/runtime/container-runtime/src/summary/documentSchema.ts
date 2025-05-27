@@ -77,11 +77,9 @@ export interface IDocumentSchema {
 	 */
 	runtime: Record<string, DocumentSchemaValueType>;
 }
+
 /**
  * Content of the type=ContainerMessageType.DocumentSchemaChange ops.
- * The meaning of refSeq field is different in such messages (compared to other usages of IDocumentSchemaCurrent)
- * ContainerMessageType.DocumentSchemaChange messages use CAS (Compare-and-swap) semantics, and convey
- * regSeq of last known schema change (known to a client proposing schema change).
  * @see InboundContainerRuntimeDocumentSchemaMessage
  * @internal
  */
@@ -451,7 +449,7 @@ function arrayToProp(arr: string[]): string[] | undefined {
  */
 export class DocumentsSchemaController {
 	private explicitSchemaControl: boolean;
-	private sendOp = true;
+	private generateOp = true;
 
 	// schema coming from document metadata (snapshot we loaded from)
 	private documentSchema: IDocumentSchema;
@@ -509,7 +507,7 @@ export class DocumentsSchemaController {
 		// Latter is important sure that's what will go into summary.
 		// We also create a shallow copy of the documentMetadataSchema to avoid mutating the original object. This
 		// may not be not be necessary for production scenarios, but was causing issues in tests.
-		const documentMetadataSchemaShallowCopy: IDocumentSchema | undefined =
+		const documentMetadataSchemaShallowCopy =
 			documentMetadataSchema === undefined ? undefined : { ...documentMetadataSchema };
 		this.documentSchema = existing
 			? (documentMetadataSchemaShallowCopy ??
@@ -585,20 +583,17 @@ export class DocumentsSchemaController {
 	/**
 	 * Called by Container runtime whenever it is about to send some op.
 	 * It gives opportunity for controller to issue its own ops - we do not want to send ops if there are no local changes in document.
-	 * Please consider note above constructor about race conditions - current design is to send op only once in a session lifetime.
+	 * Please consider note above constructor about race conditions - current design is to generate op only once in a session lifetime.
 	 * @returns Optional message to send.
 	 */
-	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessageOutgoing | undefined {
-		if (this.sendOp && this.futureSchema !== undefined) {
-			this.sendOp = false;
+	public maybeGenerateSchemaMessage(): IDocumentSchemaChangeMessageOutgoing | undefined {
+		if (this.generateOp && this.futureSchema !== undefined) {
+			this.generateOp = false;
 			assert(
 				this.explicitSchemaControl && this.futureSchema.runtime.explicitSchemaControl === true,
 				0x94e /* not legacy */,
 			);
-			return {
-				...this.futureSchema,
-				refSeq: this.documentSchema.refSeq,
-			};
+			return this.futureSchema;
 		}
 	}
 
@@ -685,7 +680,7 @@ export class DocumentsSchemaController {
 	}
 
 	public onDisconnect(): void {
-		this.sendOp = true;
+		this.generateOp = true;
 	}
 }
 

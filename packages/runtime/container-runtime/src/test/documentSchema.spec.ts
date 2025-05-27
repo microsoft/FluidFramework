@@ -22,7 +22,7 @@ function arrayToProp(arr: string[]) {
 }
 
 describe("Runtime", () => {
-	const validConfig: IDocumentSchema = {
+	const validConfig = {
 		version: 1,
 		refSeq: 0,
 		runtime: {
@@ -32,7 +32,7 @@ describe("Runtime", () => {
 			// opGroupingEnabled: undefined,
 			// createBlobPayloadPending: true,
 		},
-	};
+	} as const satisfies IDocumentSchema;
 
 	const features = {
 		explicitSchemaControl: true,
@@ -118,7 +118,7 @@ describe("Runtime", () => {
 		);
 
 		assert(controller.sessionSchema.runtime.disallowedVersions === undefined);
-		assert(controller.maybeSendSchemaMessage() === undefined);
+		assert(controller.maybeGenerateSchemaMessage() === undefined);
 
 		createController({
 			...validConfig,
@@ -152,7 +152,7 @@ describe("Runtime", () => {
 			() => {},
 		);
 		assert.deepEqual(controller.sessionSchema.runtime.disallowedVersions, ["aaa", "bbb"]);
-		let message = controller.maybeSendSchemaMessage();
+		let message = controller.maybeGenerateSchemaMessage();
 		assert(message !== undefined);
 		controller.processDocumentSchemaMessages(
 			[message],
@@ -180,7 +180,7 @@ describe("Runtime", () => {
 			"bbb",
 			"ccc",
 		]);
-		message = controller2.maybeSendSchemaMessage();
+		message = controller2.maybeGenerateSchemaMessage();
 		assert(message !== undefined);
 		controller2.processDocumentSchemaMessages(
 			[message],
@@ -272,7 +272,10 @@ describe("Runtime", () => {
 
 		if (!existing || !explicitSchemaControl) {
 			controller.onDisconnect();
-			assert(controller.maybeSendSchemaMessage() === undefined, "no messages should be sent!");
+			assert(
+				controller.maybeGenerateSchemaMessage() === undefined,
+				"no messages should be sent!",
+			);
 		}
 
 		// get rid of all properties with undefined values.
@@ -357,7 +360,10 @@ describe("Runtime", () => {
 		);
 
 		controller.onDisconnect();
-		assert(controller.maybeSendSchemaMessage() === undefined, "no messages should be sent!");
+		assert(
+			controller.maybeGenerateSchemaMessage() === undefined,
+			"no messages should be sent!",
+		);
 	}
 
 	it("Existing document with existing schema, no changes", () => {
@@ -377,7 +383,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 		);
 
-		const message = controller.maybeSendSchemaMessage();
+		const message = controller.maybeGenerateSchemaMessage();
 
 		assert(message !== undefined);
 		assert(message.runtime.opGroupingEnabled === true);
@@ -385,7 +391,7 @@ describe("Runtime", () => {
 		// Validate that client will attempt to send only one such message.
 		// This is important, as otherwise we will keep sending them forever. Not only this is useless,
 		// but it will also trip asserts as we will have two messages with same sequence number (due to op grouping)
-		assert(controller.maybeSendSchemaMessage() === undefined);
+		assert(controller.maybeGenerateSchemaMessage() === undefined);
 
 		assert(
 			controller.processDocumentSchemaMessages(
@@ -467,7 +473,7 @@ describe("Runtime", () => {
 			}, // onSchemaChange
 		);
 
-		assert(controller.maybeSendSchemaMessage() === undefined);
+		assert(controller.maybeGenerateSchemaMessage() === undefined);
 
 		/**
 		 * validate that we can summarize, load new client from that summary and it also will not send any ops
@@ -483,7 +489,7 @@ describe("Runtime", () => {
 			}, // onSchemaChange
 		);
 
-		assert(controller2.maybeSendSchemaMessage() === undefined);
+		assert(controller2.maybeGenerateSchemaMessage() === undefined);
 
 		/**
 		 * Summarize from that new client and ensure we are getting exactly same summary, thus getting to same state.
@@ -508,7 +514,7 @@ describe("Runtime", () => {
 		// setting is not on yet
 		assert(controller3.sessionSchema.runtime.idCompressorMode === undefined);
 
-		const message = controller3.maybeSendSchemaMessage();
+		const message = controller3.maybeGenerateSchemaMessage();
 		assert(message !== undefined, "message sent");
 		assert(message.runtime.idCompressorMode === "on");
 
@@ -522,7 +528,7 @@ describe("Runtime", () => {
 		const schema = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
 		assert(schema.runtime.idCompressorMode === "on", "now on");
 
-		assert(controller3.maybeSendSchemaMessage() === undefined);
+		assert(controller3.maybeGenerateSchemaMessage() === undefined);
 
 		/**
 		 * Validate now that another client that was observing schema changes (not initiating them) will arrive to same state
@@ -549,7 +555,7 @@ describe("Runtime", () => {
 		assert(schemaChanged, "schema changed");
 		assert(controller4.sessionSchema.runtime.idCompressorMode === "on");
 		assert(
-			controller4.maybeSendSchemaMessage() === undefined,
+			controller4.maybeGenerateSchemaMessage() === undefined,
 			"no messages should be sent - it lost a race and will not attempt to change file format.",
 		);
 
