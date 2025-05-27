@@ -146,7 +146,7 @@ export interface TreeFieldStoredSchema {
 	 * @remarks
 	 * Discarded when encoding to {@link SchemaFormatVersion.V1}.
 	 */
-	readonly persistedMetadata: PersistedMetadataFormat | undefined;
+	readonly metadata: PersistedMetadataFormat | undefined;
 }
 
 /**
@@ -170,7 +170,7 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 	kind: brand(forbiddenFieldKindIdentifier),
 	// This type set also forces the field to be empty not not allowing any types as all.
 	types: new Set(),
-	persistedMetadata: undefined,
+	metadata: undefined,
 };
 
 /**
@@ -363,7 +363,7 @@ export function encodeFieldSchemaV1(schema: TreeFieldStoredSchema): FieldSchemaF
 export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaFormatV2 {
 	return {
 		...encodeFieldSchemaV1(schema),
-		metadata: schema.persistedMetadata,
+		metadata: schema.metadata,
 	};
 }
 
@@ -372,7 +372,7 @@ export function decodeFieldSchema(schema: FieldSchemaFormatV2): TreeFieldStoredS
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: schema.kind,
 		types: new Set(schema.types),
-		persistedMetadata: schema.metadata,
+		metadata: schema.metadata,
 	};
 	return out;
 }

@@ -63,7 +63,7 @@ function getFieldSchema(
 	return {
 		kind: kind.identifier,
 		types: new Set(allowedTypes),
-		persistedMetadata: undefined,
+		metadata: undefined,
 	};
 }
 

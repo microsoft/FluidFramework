@@ -273,7 +273,7 @@ export class SchemaCompatibilityTester {
 				}
 			}
 
-			return { kind: original.kind, types, persistedMetadata: undefined };
+			return { kind: original.kind, types, metadata: undefined };
 		}
 		return original;
 	}

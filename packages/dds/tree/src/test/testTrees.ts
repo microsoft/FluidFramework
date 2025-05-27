@@ -180,7 +180,7 @@ export const allTheFields = new ObjectNodeStoredSchema(
 			{
 				kind: FieldKinds.optional.identifier,
 				types: numberSet,
-				persistedMetadata: undefined,
+				metadata: undefined,
 			},
 		],
 		[
@@ -188,7 +188,7 @@ export const allTheFields = new ObjectNodeStoredSchema(
 			{
 				kind: FieldKinds.required.identifier,
 				types: numberSet,
-				persistedMetadata: undefined,
+				metadata: undefined,
 			},
 		],
 		[
@@ -196,7 +196,7 @@ export const allTheFields = new ObjectNodeStoredSchema(
 			{
 				kind: FieldKinds.sequence.identifier,
 				types: numberSet,
-				persistedMetadata: undefined,
+				metadata: undefined,
 			},
 		],
 	]),
@@ -276,7 +276,7 @@ export const testTrees: readonly TestTree[] = [
 			rootFieldSchema: {
 				kind: FieldKinds.sequence.identifier,
 				types: numberSet,
-				persistedMetadata: undefined,
+				metadata: undefined,
 			},
 		},
 		jsonableTreesFromFieldCursor(fieldJsonCursor([1, 2, 3])),
@@ -309,7 +309,7 @@ export const testTrees: readonly TestTree[] = [
 			rootFieldSchema: {
 				kind: FieldKinds.required.identifier,
 				types: new Set([allTheFieldsName]),
-				persistedMetadata: undefined,
+				metadata: undefined,
 			},
 		},
 		[
@@ -326,7 +326,7 @@ export const testTrees: readonly TestTree[] = [
 			rootFieldSchema: {
 				kind: FieldKinds.required.identifier,
 				types: new Set([allTheFieldsName]),
-				persistedMetadata: undefined,
+				metadata: undefined,
 			},
 		},
 		[

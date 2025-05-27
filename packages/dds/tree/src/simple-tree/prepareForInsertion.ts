@@ -93,7 +93,7 @@ export function prepareArrayContentForInsertion(
 		{
 			kind: FieldKinds.sequence.identifier,
 			types: fieldSchema.types,
-			persistedMetadata: undefined,
+			metadata: undefined,
 		},
 		mapTrees,
 	);

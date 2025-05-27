@@ -80,7 +80,7 @@ export class FieldKindWithEditor<
 				kind: this.identifier,
 				types: originalTypes,
 				// Metadata is not used for this check.
-				persistedMetadata: undefined,
+				metadata: undefined,
 			})
 		) {
 			return true;
