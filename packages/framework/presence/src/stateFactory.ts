@@ -9,7 +9,7 @@ import { latest } from "./latestValueManager.js";
 /**
  * Factory for creating presence State objects.
  *
- * @alpha
+ * @beta
  */
 export const StateFactory = {
 	/**

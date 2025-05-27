@@ -447,7 +447,7 @@ export class Outbox {
 		const staged = rawBatch.staged === true;
 		assert(
 			resubmitInfo === undefined || resubmitInfo.staged === staged,
-			"Mismatch in staged state tracking",
+			0xba3 /* Mismatch in staged state tracking */,
 		);
 
 		const groupingEnabled =

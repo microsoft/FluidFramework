@@ -7,7 +7,7 @@ import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter, Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IAudience,
 	ISelf,
@@ -25,8 +25,15 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
+	ContainerExtensionFactory,
+	ContainerExtensionId,
+	ExtensionHost,
+	ExtensionHostEvents,
+	ExtensionRuntimeProperties,
 	IContainerRuntime,
 	IContainerRuntimeEvents,
+	IContainerRuntimeInternal,
+	OutboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
@@ -34,6 +41,7 @@ import type {
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+	Listenable,
 } from "@fluidframework/core-interfaces";
 import type {
 	IErrorBase,
@@ -41,10 +49,13 @@ import type {
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	ISignalEnvelope,
+	JsonDeserialized,
+	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
+	Lazy,
 	LazyPromise,
 	PromiseCache,
 	delay,
@@ -284,6 +295,16 @@ import {
 	summarizerClientType,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
+
+/**
+ * A {@link ContainerExtension}'s factory function as stored in extension map.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` required to allow typed factory to be assignable per ContainerExtension.processSignal
+type ExtensionEntry = ContainerExtensionFactory<unknown, any, unknown[]> extends new (
+	...args: any[]
+) => infer T
+	? T
+	: never;
 
 /**
  * Creates an error object to be thrown / passed to Container's close fn in case of an unknown message type.
@@ -675,6 +696,8 @@ export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: s
 	};
 };
 
+type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
+
 /**
  * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
  * @legacy
@@ -758,7 +781,7 @@ const defaultMaxConsecutiveReconnects = 7;
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements
-		IContainerRuntime,
+		IContainerRuntimeInternal,
 		// eslint-disable-next-line import/no-deprecated
 		IContainerRuntimeBaseExperimental,
 		IRuntime,
@@ -1149,10 +1172,10 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	/**
-	 * Do not call directly - use submitAddressesSignal
-	 */
-	private readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void;
+	private readonly submitSignalFn: (
+		content: UnsequencedSignalEnvelope,
+		targetClientId?: string,
+	) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
@@ -1406,6 +1429,8 @@ export class ContainerRuntime
 	 */
 	private readonly skipSafetyFlushDuringProcessStack: boolean;
 
+	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1499,7 +1524,35 @@ export class ContainerRuntime
 		this.submitSummaryFn =
 			submitSummaryFn ??
 			((summaryOp, refseq) => submitFn(MessageType.Summarize, summaryOp, false));
-		this.submitSignalFn = submitSignalFn;
+
+		const sequenceAndSubmitSignal = (
+			envelope: UnsequencedSignalEnvelope,
+			targetClientId?: string,
+		): void => {
+			if (targetClientId === undefined) {
+				this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope);
+			}
+			submitSignalFn(envelope, targetClientId);
+		};
+		this.submitSignalFn = (envelope: UnsequencedSignalEnvelope, targetClientId?: string) => {
+			if (envelope.address?.startsWith("/")) {
+				throw new Error("General path based addressing is not implemented");
+			}
+			sequenceAndSubmitSignal(envelope, targetClientId);
+		};
+		this.submitExtensionSignal = <TMessage extends TypedMessage>(
+			id: string,
+			addressChain: string[],
+			message: OutboundExtensionMessage<TMessage>,
+		): void => {
+			this.verifyNotClosed();
+			const envelope = createNewSignalEnvelope(
+				`/ext/${id}/${addressChain.join("/")}`,
+				message.type,
+				message.content,
+			);
+			sequenceAndSubmitSignal(envelope, message.targetClientId);
+		};
 
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
@@ -1758,9 +1811,6 @@ export class ContainerRuntime
 			// verifyNotClosed is called in FluidDataStoreContext, which is *the* expected caller.
 			const envelope1 = content as IEnvelope;
 			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
-			if (targetClientId === undefined) {
-				this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope2);
-			}
 			this.submitSignalFn(envelope2, targetClientId);
 		};
 
@@ -3158,9 +3208,15 @@ export class ContainerRuntime
 		}
 	}
 
-	public processSignal(message: ISignalMessage, local: boolean): void {
-		const envelope = message.content as ISignalEnvelope;
-		const transformed: IInboundSignalMessage = {
+	public processSignal(
+		message: ISignalMessage<{
+			type: string;
+			content: ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }>;
+		}>,
+		local: boolean,
+	): void {
+		const envelope = message.content;
+		const transformed = {
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
@@ -3176,22 +3232,53 @@ export class ContainerRuntime
 			);
 		}
 
-		if (envelope.address === undefined) {
+		const fullAddress = envelope.address;
+		if (fullAddress === undefined) {
 			// No address indicates a container signal message.
 			this.emit("signal", transformed, local);
 			return;
 		}
 
-		// Due to a mismatch between different layers in terms of
-		// what is the interface of passing signals, we need to adjust
-		// the signal envelope before sending it to the datastores to be processed
-		const envelope2: IEnvelope = {
-			address: envelope.address,
-			contents: transformed.content,
-		};
-		transformed.content = envelope2;
+		this.routeNonContainerSignal(fullAddress, transformed, local);
+	}
 
-		this.channelCollection.processSignal(transformed, local);
+	private routeNonContainerSignal(
+		address: string,
+		signalMessage: IInboundSignalMessage<{ type: string; content: JsonDeserialized<unknown> }>,
+		local: boolean,
+	): void {
+		// channelCollection signals are identified by no starting `/` in address.
+		if (!address.startsWith("/")) {
+			// Due to a mismatch between different layers in terms of
+			// what is the interface of passing signals, we need to adjust
+			// the signal envelope before sending it to the datastores to be processed
+			const envelope = {
+				address,
+				contents: signalMessage.content,
+			};
+			signalMessage.content = envelope;
+
+			this.channelCollection.processSignal(signalMessage, local);
+			return;
+		}
+
+		const addresses = address.split("/");
+		if (addresses.length > 2 && addresses[1] === "ext") {
+			const id = addresses[2] as ContainerExtensionId;
+			const entry = this.extensions.get(id);
+			if (entry !== undefined) {
+				entry.extension.processSignal?.(addresses.slice(3), signalMessage, local);
+				return;
+			}
+		}
+
+		assert(!local, 0xba0 /* No recipient found for local signal */);
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "SignalAddressNotFound",
+			...tagCodeArtifacts({
+				address,
+			}),
+		});
 	}
 
 	/**
@@ -3481,9 +3568,6 @@ export class ContainerRuntime
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
 		const envelope = createNewSignalEnvelope(undefined /* address */, type, content);
-		if (targetClientId === undefined) {
-			this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope);
-		}
 		this.submitSignalFn(envelope, targetClientId);
 	}
 
@@ -4862,6 +4946,59 @@ export class ContainerRuntime
 		}
 	}
 
+	// While internal, ContainerRuntime has not been converted to use the new events support.
+	// Recreate the required events (new pattern) with injected, wrapper new emitter.
+	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
+	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
+		const eventEmitter = createEmitter<ExtensionHostEvents>();
+		this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
+		this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		return eventEmitter;
+	});
+
+	private readonly submitExtensionSignal: <TMessage extends TypedMessage>(
+		id: string,
+		addressChain: string[],
+		message: OutboundExtensionMessage<TMessage>,
+	) => void;
+
+	public acquireExtension<
+		T,
+		TRuntimeProperties extends ExtensionRuntimeProperties,
+		TUseContext extends unknown[],
+	>(
+		id: ContainerExtensionId,
+		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
+		...useContext: TUseContext
+	): T {
+		let entry = this.extensions.get(id);
+		if (entry === undefined) {
+			const runtime = {
+				isConnected: () => this.connected,
+				getClientId: () => this.clientId,
+				events: this.lazyEventsForExtensions.value,
+				logger: this.baseLogger,
+				submitAddressedSignal: (
+					addressChain: string[],
+					message: OutboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
+				) => {
+					this.submitExtensionSignal(id, addressChain, message);
+				},
+				getQuorum: this.getQuorum.bind(this),
+				getAudience: this.getAudience.bind(this),
+			} satisfies ExtensionHost<TRuntimeProperties>;
+			entry = new factory(runtime, ...useContext);
+			this.extensions.set(id, entry);
+		} else {
+			assert(
+				entry instanceof factory,
+				0xba1 /* Extension entry is not of the expected type */,
+			);
+			entry.extension.onNewUse(...useContext);
+		}
+		return entry.interface as T;
+	}
+
 	private get groupedBatchingEnabled(): boolean {
 		return this.sessionSchema.opGroupingEnabled === true;
 	}
@@ -4871,8 +5008,8 @@ export function createNewSignalEnvelope(
 	address: string | undefined,
 	type: string,
 	content: unknown,
-): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
-	const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
+): UnsequencedSignalEnvelope {
+	const newEnvelope: UnsequencedSignalEnvelope = {
 		address,
 		contents: { type, content },
 	};
