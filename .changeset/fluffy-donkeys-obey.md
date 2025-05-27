@@ -1,8 +1,9 @@
 ---
 "@fluidframework/presence": minor
 "__section": feature
+__highlight: true
 ---
-Presence now available at beta support
+Presence APIs promoted to beta
 
 [Presence APIs](https://fluidframework.com/docs/build/presence) are now beta and can be imported via `@fluidframework/presence/beta`.
 
