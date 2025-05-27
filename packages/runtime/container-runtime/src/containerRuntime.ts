@@ -2701,7 +2701,6 @@ export class ContainerRuntime
 		);
 
 		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
-
 			this.loadIdCompressor();
 		}
 		if (canSendOps === false && this.delayConnectClientId !== undefined) {
