@@ -48,6 +48,7 @@
 		"build:readme": "markdown-magic --files \"**/*.md\"",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
 		"format": "npm run prettier:fix",
+		"lint:v9": "eslint --no-error-on-unmatched-pattern .",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"print-config": "concurrently \"npm:print-config:*\" && npm run cleanup-printed-configs",
@@ -64,7 +65,7 @@
 		"print-config:v9-recommended": "eslint --config ./v9/recommended.js --print-config ./src/file.ts > ./printed-configs/v9-recommended.json",
 		"print-config:v9-strict": "eslint --config ./v9/strict.js --print-config ./src/file.ts > ./printed-configs/v9-strict.json",
 		"print-config:v9-strict-biome": "eslint --config ./v9/strict-biome.js --print-config ./src/file.ts > ./printed-configs/v9-strict-biome.json",
-		"test": "echo TODO: add tests"
+		"test": "node ./test-v9.js"
 	},
 	"dependencies": {
 		"@fluid-internal/eslint-plugin-fluid": "^0.1.5",
