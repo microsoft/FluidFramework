@@ -3528,7 +3528,7 @@ export class ContainerRuntime
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
 		return (
-			this.canSendOps && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
+			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
 		);
 	}
 
