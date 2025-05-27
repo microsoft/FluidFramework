@@ -89,37 +89,40 @@ export class TreeArrayProxy<T> {
 	) {
 		const handler: ProxyHandler<TreeArrayProxy<T>> = {
 			get(target, key) {
-				if (typeof key !== "symbol" && !Number.isNaN(key as unknown as number)) {
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					const index = Number.parseInt(key as string, 10);
-					const view = tree.currentView;
-					const childrenIds = view.getTrait({
-						parent: nodeId,
-						label: "items" as TraitLabel,
-					});
-					return getChild(tree, childrenIds[index], update);
+				if (typeof key !== "symbol") {
+					const index = Number.parseInt(key, 10);
+
+					if (!Number.isNaN(index)) {
+						const view = tree.currentView;
+						const childrenIds = view.getTrait({
+							parent: nodeId,
+							label: "items" as TraitLabel,
+						});
+						return getChild(tree, childrenIds[index], update);
+					}
 				}
 
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return target[key];
 			},
 			set(target, key, value) {
-				if (typeof key !== "symbol" && !Number.isNaN(key as unknown as number)) {
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					const index = Number.parseInt(key as string, 10);
-					const view = tree.currentView;
-					const childrenIds = view.getTrait({
-						parent: nodeId,
-						label: "items" as TraitLabel,
-					});
-					update(
-						...Change.insertTree(
-							[fromJson(tree, value)],
-							StablePlace.after(view.getViewNode(childrenIds[index])),
-						),
-						Change.delete(StableRange.only(view.getViewNode(childrenIds[index]))),
-					);
-					return true;
+				if (typeof key !== "symbol") {
+					const index = Number.parseInt(key, 10);
+					if (!Number.isNaN(index)) {
+						const view = tree.currentView;
+						const childrenIds = view.getTrait({
+							parent: nodeId,
+							label: "items" as TraitLabel,
+						});
+						update(
+							...Change.insertTree(
+								[fromJson(tree, value)],
+								StablePlace.after(view.getViewNode(childrenIds[index])),
+							),
+							Change.delete(StableRange.only(view.getViewNode(childrenIds[index]))),
+						);
+						return true;
+					}
 				}
 
 				return false;
