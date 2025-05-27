@@ -1229,15 +1229,27 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Please use setter {@link pendingOpCount} to update this value.
+	 * @remarks Implementation detail for {@link pendingOpCount} property
 	 */
-	private _pendingOpCount = 0;
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- It's an IIFE, only invoked once
+	private readonly _pendingOpCountState = (() => {
+		let value = 0;
+		return {
+			get() {
+				return value;
+			},
+			set(newValue: number) {
+				assert(newValue >= 0, "pendingOpCount must be non-negative");
+				value = newValue;
+			},
+		};
+	})();
+
 	private set pendingOpCount(value: number) {
-		assert(value >= 0, "pendingOpCount must be non-negative");
-		this._pendingOpCount = value;
+		this._pendingOpCountState.set(value);
 	}
 	private get pendingOpCount(): number {
-		return this._pendingOpCount;
+		return this._pendingOpCountState.get();
 	}
 
 	private submit(
