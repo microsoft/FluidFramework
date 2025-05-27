@@ -3979,6 +3979,6 @@ function offsetDetachedNodeEntry(entry: DetachedNodeEntry, count: number): Detac
 	);
 
 	return entry.detachId !== undefined
-		? { detachId: offsetChangeAtomId(entry.detachId, count) }
+		? { ...entry, detachId: offsetChangeAtomId(entry.detachId, count) }
 		: entry;
 }
