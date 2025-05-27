@@ -1228,7 +1228,17 @@ export class FluidDataStoreRuntime
 		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
 	}
 
-	private pendingOpCount = 0;
+	/**
+	 * Please use setter {@link pendingOpCount} to update this value.
+	 */
+	private _pendingOpCount = 0;
+	private set pendingOpCount(value: number) {
+		assert(value >= 0, "pendingOpCount must be non-negative");
+		this._pendingOpCount = value;
+	}
+	private get pendingOpCount(): number {
+		return this._pendingOpCount;
+	}
 
 	private submit(
 		type: DataStoreMessageType,
