@@ -40,7 +40,7 @@ import {
 	getIdentifierFromNode,
 	mapTreeFromNodeData,
 	getOrCreateInnerNode,
-	getStoredKeyFromPropertyKey,
+	tryGetStoredKeyFromPropertyKey,
 	NodeKind,
 	getTreeNodeForField,
 } from "../simple-tree/index.js";
@@ -512,18 +512,16 @@ export const TreeAlpha: TreeAlpha = {
 		debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 
 		const schema = treeNodeApi.schema(node);
-		const storedKey = getStoredKeyFromPropertyKey(schema, key);
+		const storedKey = tryGetStoredKeyFromPropertyKey(schema, key);
+		if (storedKey === undefined) {
+			return undefined;
+		}
 
 		if (schema.kind === NodeKind.Array) {
 			throw new Error("TODO");
 		}
 
-		assert(
-			typeof storedKey === "string",
-			"Expected storedKey to be a string for non-array nodes",
-		);
-
-		const field = flexNode.tryGetField(brand(storedKey));
+		const field = flexNode.tryGetField(brand(String(storedKey)));
 		if (field !== undefined) {
 			return getTreeNodeForField(field);
 		}

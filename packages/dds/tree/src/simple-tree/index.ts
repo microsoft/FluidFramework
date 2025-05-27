@@ -86,6 +86,7 @@ export {
 	getStoredKey,
 	getStoredKeyFromPropertyKey,
 	tryGetSchema,
+	tryGetStoredKeyFromPropertyKey,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
