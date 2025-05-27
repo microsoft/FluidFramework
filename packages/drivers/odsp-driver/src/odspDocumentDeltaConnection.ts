@@ -245,7 +245,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param timeoutMs - time limit on making the connection
 	 * @param epochTracker - track epoch changes
 	 * @param socketReferenceKeyPrefix - (optional) prefix to isolate socket reuse cache
-	 * @param connectionId - connection ID for the connection
+	 * @param connectionId - (optional) connection ID for the connection
 	 */
 	public static async create(
 		tenantId: string,
