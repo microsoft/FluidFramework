@@ -150,18 +150,18 @@ export interface IDocumentSchemaCurrent extends Required<IDocumentSchema> {
 }
 
 interface IProperty<T = unknown> {
-	and: (currentDocSchema: T, desiredDocSchema: T) => T;
-	or: (currentDocSchema: T, desiredDocSchema: T) => T;
+	and: (persistedSchema: T, providedSchema: T) => T;
+	or: (persistedSchema: T, providedSchema: T) => T;
 	validate(t: unknown): boolean;
 }
 
 class TrueOrUndefined implements IProperty<true | undefined> {
-	public and(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
-		return currentDocSchema === true && desiredDocSchema === true ? true : undefined;
+	public and(persistedSchema?: true, providedSchema?: true): true | undefined {
+		return persistedSchema === true && providedSchema === true ? true : undefined;
 	}
 
-	public or(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
-		return currentDocSchema === true || desiredDocSchema === true ? true : undefined;
+	public or(persistedSchema?: true, providedSchema?: true): true | undefined {
+		return persistedSchema === true || providedSchema === true ? true : undefined;
 	}
 
 	public validate(t: unknown): t is true | undefined {
@@ -170,32 +170,32 @@ class TrueOrUndefined implements IProperty<true | undefined> {
 }
 
 class TrueOrUndefinedMax extends TrueOrUndefined {
-	public and(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
-		return this.or(currentDocSchema, desiredDocSchema);
+	public and(persistedSchema?: true, providedSchema?: true): true | undefined {
+		return this.or(persistedSchema, providedSchema);
 	}
 }
 
 class MultiChoice implements IProperty<string | undefined> {
 	constructor(private readonly choices: string[]) {}
 
-	public and(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
-		if (currentDocSchema === undefined || desiredDocSchema === undefined) {
+	public and(persistedSchema?: string, providedSchema?: string): string | undefined {
+		if (persistedSchema === undefined || providedSchema === undefined) {
 			return undefined;
 		}
 		return this.choices[
-			Math.min(this.choices.indexOf(currentDocSchema), this.choices.indexOf(desiredDocSchema))
+			Math.min(this.choices.indexOf(persistedSchema), this.choices.indexOf(providedSchema))
 		];
 	}
 
-	public or(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
-		if (currentDocSchema === undefined) {
-			return desiredDocSchema;
+	public or(persistedSchema?: string, providedSchema?: string): string | undefined {
+		if (persistedSchema === undefined) {
+			return providedSchema;
 		}
-		if (desiredDocSchema === undefined) {
-			return currentDocSchema;
+		if (providedSchema === undefined) {
+			return persistedSchema;
 		}
 		return this.choices[
-			Math.max(this.choices.indexOf(currentDocSchema), this.choices.indexOf(desiredDocSchema))
+			Math.max(this.choices.indexOf(persistedSchema), this.choices.indexOf(providedSchema))
 		];
 	}
 
@@ -206,26 +206,26 @@ class MultiChoice implements IProperty<string | undefined> {
 
 class IdCompressorProperty extends MultiChoice {
 	// document schema always wins!
-	public and(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
-		return currentDocSchema;
+	public and(persistedSchema?: string, providedSchema?: string): string | undefined {
+		return persistedSchema;
 	}
 }
 
 class CheckVersions implements IProperty<string[] | undefined> {
 	public or(
-		currentDocSchema: string[] = [],
-		desiredDocSchema: string[] = [],
+		persistedSchema: string[] = [],
+		providedSchema: string[] = [],
 	): string[] | undefined {
-		const set = new Set<string>([...currentDocSchema, ...desiredDocSchema]);
+		const set = new Set<string>([...persistedSchema, ...providedSchema]);
 		return arrayToProp([...set.values()]);
 	}
 
 	// Once version is there, it stays there forever.
 	public and(
-		currentDocSchema: string[] = [],
-		desiredDocSchema: string[] = [],
+		persistedSchema: string[] = [],
+		providedSchema: string[] = [],
 	): string[] | undefined {
-		return this.or(currentDocSchema, desiredDocSchema);
+		return this.or(persistedSchema, providedSchema);
 	}
 
 	public validate(t: unknown): boolean {
@@ -311,59 +311,59 @@ function checkRuntimeCompatibility(
 }
 
 function and(
-	currentDocSchema: IDocumentSchema,
-	desiredDocSchema: IDocumentSchemaCurrent,
+	persistedSchema: IDocumentSchema,
+	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
 	for (const key of new Set([
-		...Object.keys(currentDocSchema.runtime),
-		...Object.keys(desiredDocSchema.runtime),
+		...Object.keys(persistedSchema.runtime),
+		...Object.keys(providedSchema.runtime),
 	])) {
 		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).and(
-			currentDocSchema.runtime[key],
-			desiredDocSchema.runtime[key],
+			persistedSchema.runtime[key],
+			providedSchema.runtime[key],
 		);
 	}
 	return {
 		version: currentDocumentVersionSchema,
-		refSeq: currentDocSchema.refSeq,
+		refSeq: persistedSchema.refSeq,
 		runtime,
 	};
 }
 
 function or(
-	currentDocSchema: IDocumentSchema,
-	desiredDocSchema: IDocumentSchemaCurrent,
+	persistedSchema: IDocumentSchema,
+	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
 	for (const key of new Set([
-		...Object.keys(currentDocSchema.runtime),
-		...Object.keys(desiredDocSchema.runtime),
+		...Object.keys(persistedSchema.runtime),
+		...Object.keys(providedSchema.runtime),
 	])) {
 		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).or(
-			currentDocSchema.runtime[key],
-			desiredDocSchema.runtime[key],
+			persistedSchema.runtime[key],
+			providedSchema.runtime[key],
 		);
 	}
 	return {
 		version: currentDocumentVersionSchema,
-		refSeq: currentDocSchema.refSeq,
+		refSeq: persistedSchema.refSeq,
 		runtime,
 	};
 }
 
 function same(
-	currentDocSchema: IDocumentSchema,
-	desiredDocSchema: IDocumentSchemaCurrent,
+	persistedSchema: IDocumentSchema,
+	providedSchema: IDocumentSchemaCurrent,
 ): boolean {
 	for (const key of new Set([
-		...Object.keys(currentDocSchema.runtime),
-		...Object.keys(desiredDocSchema.runtime),
+		...Object.keys(persistedSchema.runtime),
+		...Object.keys(providedSchema.runtime),
 	])) {
 		// If schemas differ only by type of behavior, then we should not send schema change ops!
 		if (
 			key !== "explicitSchemaControl" &&
-			currentDocSchema.runtime[key] !== desiredDocSchema.runtime[key]
+			persistedSchema.runtime[key] !== providedSchema.runtime[key]
 		) {
 			return false;
 		}
