@@ -45,12 +45,13 @@ export {
 	singletonSchema,
 } from "./schemaCreationUtilities.js";
 export {
+	getIdentifierFromNode,
+	getPropertyKeyFromStoredKey,
+	getStoredKey,
+	getStoredKeyFromPropertyKey,
 	treeNodeApi,
 	type TreeNodeApi,
 	tryGetSchema,
-	getStoredKey,
-	getPropertyKeyFromStoredKey,
-	getIdentifierFromNode,
 } from "./treeNodeApi.js";
 export {
 	createFromCursor,

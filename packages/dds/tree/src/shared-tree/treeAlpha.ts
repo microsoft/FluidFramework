@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -39,8 +39,12 @@ import {
 	treeNodeApi,
 	getIdentifierFromNode,
 	mapTreeFromNodeData,
+	getOrCreateInnerNode,
+	getStoredKeyFromPropertyKey,
+	NodeKind,
+	getTreeNodeForField,
 } from "../simple-tree/index.js";
-import { extractFromOpaque, type JsonCompatible } from "../util/index.js";
+import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
 import type { ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -504,11 +508,48 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	child: (node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined => {
-		throw new Error("Not implemented");
+		const flexNode = getOrCreateInnerNode(node);
+		debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
+
+		const schema = treeNodeApi.schema(node);
+		const storedKey = getStoredKeyFromPropertyKey(schema, key);
+
+		if (schema.kind === NodeKind.Array) {
+			throw new Error("TODO");
+		}
+
+		assert(
+			typeof storedKey === "string",
+			"Expected storedKey to be a string for non-array nodes",
+		);
+
+		const field = flexNode.tryGetField(brand(storedKey));
+		if (field !== undefined) {
+			return getTreeNodeForField(field);
+		}
+
+		return undefined;
 	},
 
 	children: (node: TreeNode): Iterable<[string | number, TreeNode | TreeLeafValue]> => {
-		throw new Error("Not implemented");
+		const flexNode = getOrCreateInnerNode(node);
+		debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
+
+		const schema = treeNodeApi.schema(node);
+
+		if (schema.kind === NodeKind.Array) {
+			throw new Error("TODO");
+		}
+
+		const result: [string | number, TreeNode | TreeLeafValue][] = [];
+		for (const field of flexNode.boxedIterator()) {
+			const propertyKey = getPropertyKeyFromStoredKey(schema, field.key);
+			const childNode = getTreeNodeForField(field);
+			if (childNode !== undefined) {
+				result.push([propertyKey, childNode]);
+			}
+		}
+		return result;
 	},
 };
 
