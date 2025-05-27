@@ -366,6 +366,7 @@ export interface StageControlsExperimental {
 export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
 	enterStagingMode?(): StageControlsExperimental;
 	readonly inStagingMode?: boolean;
+	readonly isDirty?: boolean;
 }
 /**
  * These policies can be set by the author of the data store via its data store runtime to influence behaviors.

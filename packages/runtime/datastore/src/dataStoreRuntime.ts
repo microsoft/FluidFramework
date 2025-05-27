@@ -151,6 +151,12 @@ const defaultPolicies: IFluidDataStorePolicies = {
 };
 
 /**
+ * Matches const agentSchedulerId in container-runtime package
+ * Needed to accomodate special legacy behavior of the agent scheduler
+ */
+const agentSchedulerId = "_scheduler";
+
+/**
  * Base data store class
  * @legacy
  * @alpha
@@ -439,7 +445,18 @@ export class FluidDataStoreRuntime
 
 	// eslint-disable-next-line import/no-deprecated
 	private get isDirty(): IFluidDataStoreRuntimeExperimental["isDirty"] {
-		return this.pendingOpCount > 0;
+		const dirty = this.pendingOpCount > 0;
+
+		const containerIsDirty =
+			// eslint-disable-next-line import/no-deprecated
+			(this.dataStoreContext.containerRuntime as IContainerRuntimeBaseExperimental).isDirty;
+		if (containerIsDirty === false && this.id !== agentSchedulerId) {
+			assert(
+				!dirty,
+				"DataStoreRuntime isDirty should not be true if ContainerRuntime isDirty is false (with the exception of the agent scheduler)",
+			);
+		}
+		return dirty;
 	}
 
 	get deltaManager(): IDeltaManagerErased {
