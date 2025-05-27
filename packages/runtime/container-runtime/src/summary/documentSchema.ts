@@ -415,7 +415,7 @@ function same(
 ): boolean {
 	if (
 		currentDocSchema.info === undefined ||
-		!eq(currentDocSchema.info?.minVersionForCollab, desiredDocSchema.info.minVersionForCollab)
+		!eq(currentDocSchema.info.minVersionForCollab, desiredDocSchema.info.minVersionForCollab)
 	) {
 		// If the current/desired minVersionForCollab are not equal, then we need a schema change
 		return false;
