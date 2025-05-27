@@ -249,6 +249,10 @@ describe("treeNodeApi", () => {
 			it("key does not exist", () => {
 				throw new Error("TODO");
 			});
+
+			it("extra optional properties not considered", () => {
+				throw new Error("TODO");
+			});
 		});
 
 		describe("map", () => {
@@ -277,6 +281,41 @@ describe("treeNodeApi", () => {
 
 		it("numeric key errors for non-array node", () => {
 			throw new Error("TODO");
+		});
+	});
+	describe("children", () => {
+		describe("object", () => {
+			it("empty", () => {
+				throw new Error("TODO");
+			});
+
+			it("non-empty", () => {
+				throw new Error("TODO");
+			});
+
+			it("extra optional properties not included", () => {
+				throw new Error("TODO");
+			});
+		});
+
+		describe("map", () => {
+			it("empty", () => {
+				throw new Error("TODO");
+			});
+
+			it("non-empty", () => {
+				throw new Error("TODO");
+			});
+		});
+
+		describe("array", () => {
+			it("empty", () => {
+				throw new Error("TODO");
+			});
+
+			it("non-empty", () => {
+				throw new Error("TODO");
+			});
 		});
 	});
 
