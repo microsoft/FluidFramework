@@ -233,7 +233,7 @@ async function provideEntryPoint(
 	}
 	const rootDataObject = ((await entryPoint.get()) as FluidObject<RootDataObject>)
 		.RootDataObject;
-	assert(rootDataObject !== undefined, "entryPoint must be of type RootDataObject");
+	assert(rootDataObject !== undefined, 0xb9f /* entryPoint must be of type RootDataObject */);
 	return makeFluidObject<IStaticEntryPoint>(
 		{
 			rootDataObject,

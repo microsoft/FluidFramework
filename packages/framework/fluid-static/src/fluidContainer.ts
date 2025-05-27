@@ -269,7 +269,7 @@ export async function createFluidContainer<
 	const entryPoint: FluidObject<IStaticEntryPoint> = await props.container.getEntryPoint();
 	assert(
 		entryPoint.IStaticEntryPoint !== undefined,
-		"entryPoint must be of type IStaticEntryPoint",
+		0xb9e /* entryPoint must be of type IStaticEntryPoint */,
 	);
 	return new FluidContainer<TContainerSchema>(
 		props.container,
