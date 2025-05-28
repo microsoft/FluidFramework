@@ -1503,6 +1503,11 @@ export class ContainerRuntime
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
+			properties: {
+				all: {
+					inStagingMode: this.inStagingMode,
+				},
+			},
 		});
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
@@ -1765,7 +1770,8 @@ export class ContainerRuntime
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
-			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
+			submitMessage: (message: ContainerRuntimeGCMessage) =>
+				this.holdSystemMessageForSubmission(message),
 			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
 		});
 
@@ -4521,11 +4527,7 @@ export class ContainerRuntime
 					type: ContainerMessageType.DocumentSchemaChange,
 					contents: schemaChangeMessage,
 				};
-				this.outbox.submit({
-					runtimeOp: msg,
-					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					staged,
-				});
+				this.holdSystemMessageForSubmission(msg);
 			}
 
 			const message: LocalBatchMessage = {
@@ -4731,11 +4733,8 @@ export class ContainerRuntime
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			}
-			case ContainerMessageType.GC:
-			case ContainerMessageType.DocumentSchemaChange: {
-				//* Instead of submitting these right away, put them in a "system queue" on CR class and include them on flush of the main batch
-				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
-			}
+			case ContainerMessageType.GC: // GC ops won't be generated in Staging Mode
+			case ContainerMessageType.DocumentSchemaChange: // Document schema ops won't be generated in Staging Mode
 			case ContainerMessageType.Attach: // Attach ops won't be generated in Staging Mode
 			case ContainerMessageType.Alias: // Alias ops won't be generated in Staging Mode
 			case ContainerMessageType.BlobAttach: // Attach ops won't be generated in Staging Mode
