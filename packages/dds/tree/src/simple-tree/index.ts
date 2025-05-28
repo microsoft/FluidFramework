@@ -169,6 +169,7 @@ export {
 	type NodeBuilderData,
 	type DefaultProvider,
 	type FieldProps,
+	type FieldPropsAlpha,
 	normalizeFieldSchema,
 	areFieldSchemaEqual,
 	areImplicitFieldSchemaEqual,
@@ -184,6 +185,7 @@ export {
 	type ReadableField,
 	type ReadSchema,
 	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";

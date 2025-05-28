@@ -424,7 +424,7 @@ describe("schemaFactory", () => {
 			class Foo extends factory.objectAlpha(
 				"Foo",
 				{ bar: factory.number },
-				{ metadata: fooMetadata },
+				{ persistedMetadata: fooMetadata },
 			) {}
 
 			assert.deepEqual(Foo.metadata, fooMetadata);
@@ -435,16 +435,34 @@ describe("schemaFactory", () => {
 		});
 
 		it("Field schema persisted metadata", () => {
-			const schemaFactory = new SchemaFactory("com.example");
+			const schemaFactory = new SchemaFactoryAlpha("com.example");
 			const fooMetadata = {
 				persistedMetadata: { "a": 2 },
 			};
 
-			class Foo extends schemaFactory.object("Foo", {
-				bar: schemaFactory.required(schemaFactory.number, { metadata: fooMetadata }),
+			class Foo extends schemaFactory.objectAlpha("Foo", {
+				bar: schemaFactory.requiredAlpha(schemaFactory.number, {
+					persistedMetadata: fooMetadata,
+				}),
+				baz: schemaFactory.optionalAlpha(schemaFactory.string, {
+					persistedMetadata: fooMetadata,
+				}),
+				buzz: schemaFactory.requiredRecursiveAlpha(
+					schemaFactory.objectAlpha("Buzz", { qux: schemaFactory.number }),
+					{ persistedMetadata: fooMetadata },
+				),
+				qux: schemaFactory.optionalRecursiveAlpha(
+					schemaFactory.objectAlpha("Qux", { quux: schemaFactory.string }),
+					{ persistedMetadata: fooMetadata },
+				),
 			}) {}
 
-			const foo = hydrate(Foo, { bar: 37 });
+			const foo = hydrate(Foo, {
+				bar: 37,
+				baz: "test",
+				buzz: { qux: 42 },
+				qux: { quux: "test" },
+			});
 
 			const schema = Tree.schema(foo) as ObjectNodeSchema;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

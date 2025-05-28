@@ -46,7 +46,7 @@ export function makeSchemaChangeCodec(
 }
 
 /**
- * Compose the v1 schema change codec.
+ * Compose the change codec using mostly v1 logic.
  * @param options - The codec options.
  * @param schemaWriteVersion - The schema write version.
  * @returns The composed schema change codec.

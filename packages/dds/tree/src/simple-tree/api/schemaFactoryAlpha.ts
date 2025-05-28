@@ -4,24 +4,31 @@
  */
 
 import {
+	defaultOptionalProvider,
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
 	schemaStatics,
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
-import type {
-	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
-	ImplicitAnnotatedFieldSchema,
-	ImplicitFieldSchema,
-	NodeSchemaOptions,
+import {
+	createFieldSchema,
+	FieldKind,
+	type FieldPropsAlpha,
+	type FieldSchemaAlpha,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAnnotatedFieldSchema,
+	type ImplicitFieldSchema,
+	type NodeSchemaOptions,
+	type UnannotateImplicitAllowedTypes,
 } from "../schemaTypes.js";
 import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
+	FieldSchemaAlphaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 } from "./typesUnsafe.js";
@@ -31,6 +38,7 @@ import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
 import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
+import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -155,15 +163,66 @@ export class SchemaFactoryAlpha<
 	 */
 	public static override readonly optional = schemaStatics.optional;
 
+	public optionalAlpha<
+		const T extends ImplicitAnnotatedAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlpha<FieldKind.Optional, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
+		return createFieldSchema(FieldKind.Optional, t, {
+			defaultProvider: defaultOptionalProvider,
+			...props,
+		});
+	}
+
 	/**
 	 * {@inheritDoc SchemaStatics.required}
 	 */
 	public static override readonly required = schemaStatics.required;
 
+	public requiredAlpha<
+		const T extends ImplicitAnnotatedAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlpha<FieldKind.Required, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
+		return createFieldSchema(FieldKind.Required, t, props);
+	}
+
 	/**
 	 * {@inheritDoc SchemaStatics.optionalRecursive}
 	 */
 	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
+
+	public optionalRecursiveAlpha<
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata> {
+		return createFieldSchemaUnsafe(FieldKind.Optional, t, {
+			defaultProvider: defaultOptionalProvider,
+			...props,
+		});
+	}
+
+	/**
+	 * {@inheritDoc SchemaStatics.optionalRecursive}
+	 */
+	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
+
+	public requiredRecursiveAlpha<
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata> {
+		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
+	}
 
 	/**
 	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.

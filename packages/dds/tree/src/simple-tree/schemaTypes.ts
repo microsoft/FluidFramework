@@ -296,6 +296,22 @@ export interface FieldProps<TCustomMetadata = unknown> {
 }
 
 /**
+ * Additional information to provide to a {@link FieldSchema}. Includes fields for alpha features.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldSchemaMetadata.custom}.
+ *
+ * @alpha
+ */
+export interface FieldPropsAlpha<TCustomMetadata = unknown>
+	extends FieldProps<TCustomMetadata> {
+	/**
+	 * The persisted metadata for this schema element.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+}
+
+/**
  * A {@link FieldProvider} which requires additional context in order to produce its content
  */
 export type ContextualFieldProvider = (
@@ -358,7 +374,18 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 	 * used as the `description` field.
 	 */
 	readonly description?: string | undefined;
+}
 
+/**
+ * Metadata associated with a {@link FieldSchema}. Includes fields used by alpha features.
+ *
+ * @remarks Specified via {@link FieldProps.metadata}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface FieldSchemaMetadataAlpha<TCustomMetadata = unknown>
+	extends FieldSchemaMetadata<TCustomMetadata> {
 	/**
 	 * The persisted metadata for this schema element.
 	 */
@@ -779,12 +806,12 @@ function areFieldPropsEqual(a: FieldProps | undefined, b: FieldProps | undefined
  * @remarks FieldSchemaMetadata are considered equivalent if their custom data and descriptions are (respectively) reference equal.
  */
 function areMetadataEqual(
-	a: FieldSchemaMetadata | undefined,
-	b: FieldSchemaMetadata | undefined,
+	a: FieldSchemaMetadataAlpha | undefined,
+	b: FieldSchemaMetadataAlpha | undefined,
 ): boolean {
 	// If any new fields are added to FieldSchemaMetadata, this check will stop compiling as a reminder that this function needs to be updated.
 	type _keys = requireTrue<
-		areOnlyKeys<FieldSchemaMetadata, "custom" | "description" | "persistedMetadata">
+		areOnlyKeys<FieldSchemaMetadataAlpha, "custom" | "description" | "persistedMetadata">
 	>;
 
 	if (a === b) {
@@ -1324,6 +1351,23 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 }
 
 /**
+ * Additional information to provide to Node Schema creation. Includes fields for alpha features.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
+	/**
+	 * The persisted metadata for this schema element.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+}
+
+/**
  * Metadata associated with a Node Schema.
  *
  * @remarks Specified via {@link NodeSchemaOptions.metadata}.
@@ -1347,9 +1391,4 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
 	 * used as the `description` property.
 	 */
 	readonly description?: string | undefined;
-
-	/**
-	 * The persisted metadata for this schema element.
-	 */
-	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }

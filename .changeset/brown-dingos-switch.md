@@ -3,6 +3,6 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Added a v2 Shared Tree schema with support for persisted metadata
+Add APIs for declaring "persisted" schema metadata
 
-This change adds support for persisted metadata, but does not enable it by default.
+Add alpha APIs for declaring node and field schema metadata which future versions of the Fluid Framework will provide a way to opt into persisting in the document.

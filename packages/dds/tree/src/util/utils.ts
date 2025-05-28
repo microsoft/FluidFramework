@@ -310,7 +310,7 @@ export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompati
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @public
+ * @alpha
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -326,7 +326,7 @@ export type JsonCompatibleReadOnly =
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @public
+ * @alpha
  */
 export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };
 

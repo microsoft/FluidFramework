@@ -782,6 +782,14 @@ export type JsonCompatibleObject<TExtra = never> = {
     [P in string]?: JsonCompatible<TExtra>;
 };
 
+// @alpha
+export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | JsonCompatibleReadOnlyObject;
+
+// @alpha
+export type JsonCompatibleReadOnlyObject = {
+    readonly [P in string]?: JsonCompatibleReadOnly;
+};
+
 // @alpha @sealed
 export type JsonFieldSchema = {
     readonly description?: string | undefined;

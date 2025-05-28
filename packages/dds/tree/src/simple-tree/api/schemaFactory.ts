@@ -36,12 +36,12 @@ import {
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
-	type NodeSchemaOptions,
 	markSchemaMostDerived,
 	type FieldSchemaAlpha,
 	type ImplicitAnnotatedAllowedTypes,
 	type UnannotateImplicitAllowedTypes,
 	type UnannotateSchemaRecord,
+	type NodeSchemaOptionsAlpha,
 } from "../schemaTypes.js";
 import type {
 	NodeKind,
@@ -91,7 +91,7 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
  * @alpha
  */
 export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
-	extends NodeSchemaOptions<TCustomMetadata> {
+	extends NodeSchemaOptionsAlpha<TCustomMetadata> {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
@@ -137,8 +137,11 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	allowUnknownOptionalFields?: boolean;
 }
 
+/**
+ * Omit parameters that are not relevant for common use cases.
+ */
 export const defaultSchemaFactoryObjectOptions: Required<
-	Omit<SchemaFactoryObjectOptions, "metadata">
+	Omit<SchemaFactoryObjectOptions, "metadata" | "persistedMetadata">
 > = {
 	allowUnknownOptionalFields: false,
 };
@@ -290,7 +293,7 @@ export interface SchemaStatics {
 	) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
 }
 
-const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
+export const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 	return undefined;
 });
 
