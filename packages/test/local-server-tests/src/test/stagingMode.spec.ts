@@ -16,13 +16,17 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import {
+	IContainerRuntimeOptions,
+	loadContainerRuntime,
+} from "@fluidframework/container-runtime/internal";
 import {
 	type ConfigTypes,
 	type FluidObject,
 	type IConfigProviderBase,
 	type IErrorBase,
 } from "@fluidframework/core-interfaces/internal";
+import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -57,8 +61,19 @@ class DataObjectWithStagingMode extends DataObject {
 		return this;
 	}
 
+	private generateCompressedId(): SessionSpaceCompressedId {
+		const idCompressor = this.runtime.idCompressor;
+		assert(idCompressor !== undefined, "IdCompressor must be enabled for these tests.");
+		return idCompressor.generateCompressedId();
+	}
+
+	/** Add to the root map including prefix in the key name, and a compressed ID in the value (for ID Compressor test coverage) */
 	public makeEdit(prefix: string) {
-		this.root.set(`${prefix}-${this.instanceNumber}`, this.root.size);
+		const compressedId = this.generateCompressedId();
+		this.root.set(`${prefix}-${this.instanceNumber}`, {
+			n: this.root.size,
+			someId: compressedId,
+		});
 	}
 
 	public addDDS(prefix: string): void {
@@ -120,10 +135,14 @@ const runtimeFactory: IRuntimeFactory = {
 		return this;
 	},
 	instantiateRuntime: async (context, existing) => {
+		const runtimeOptions: IContainerRuntimeOptions = {
+			enableRuntimeIdCompressor: "on",
+		};
 		return loadContainerRuntime({
 			context,
 			existing,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			runtimeOptions,
 			provideEntryPoint: async (rt) => {
 				const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
 				if (maybeRoot === undefined) {
@@ -455,13 +474,17 @@ describe("Staging Mode", () => {
 		const seq = await waitForSave([clients.loaded]);
 		await catchUp(clients, seq);
 
+		// Make another change in before exiting staging mode
+		clients.original.dataObject.makeEdit("branch-second-batch");
+
 		stagingControls.commitChanges();
 
 		await waitForSave(clients);
 
 		assertConsistent(clients, "states should match after save");
 		assert.equal(
-			hasEdit(clients.original, "branch-only"),
+			hasEdit(clients.original, "branch-only") &&
+				hasEdit(clients.original, "branch-second-batch"),
 			true,
 			"Edit submitted while in staging mode should be committed.",
 		);
@@ -478,13 +501,16 @@ describe("Staging Mode", () => {
 		const seq = await waitForSave([clients.loaded]);
 		await catchUp(clients, seq);
 
+		// Make another change in before exiting staging mode
+		clients.original.dataObject.makeEdit("branch-second-batch");
+
 		stagingControls.discardChanges();
 
 		await waitForSave(clients);
 
 		assertConsistent(clients, "states should match after save");
 		assert.equal(
-			hasEdit(clients.original, "branch-only"),
+			hasEdit(clients.original, "branch-"), // branch-only or branch-second-batch
 			false,
 			"Edit submitted while in staging mode should be rolled back.",
 		);

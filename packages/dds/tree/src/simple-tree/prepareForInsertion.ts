@@ -12,13 +12,19 @@ import type {
 	NodeIndex,
 	FieldKey,
 	DetachedField,
+	TreeFieldStoredSchema,
 } from "../core/index.js";
 import {
 	type FlexTreeContext,
 	getSchemaAndPolicy,
 	type FlexTreeHydratedContext,
+	FieldKinds,
 } from "../feature-libraries/index.js";
-import type { ImplicitAllowedTypes, ImplicitFieldSchema } from "./schemaTypes.js";
+import {
+	normalizeFieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+} from "./schemaTypes.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
@@ -28,12 +34,17 @@ import {
 	tryUnhydratedFlexTreeNode,
 	unhydratedFlexTreeNodeToTreeNode,
 } from "./core/index.js";
-import { debugAssert } from "@fluidframework/core-utils/internal";
+import { debugAssert, oob } from "@fluidframework/core-utils/internal";
+import { inSchemaOrThrow, isFieldInSchema } from "../feature-libraries/index.js";
+import { convertField } from "./toStoredSchema.js";
 
 /**
  * Prepare content from a user for insertion into a tree.
  * @remarks
  * This validates and converts the input, and if necessary invokes {@link prepareContentForHydration}.
+ *
+ * The next edit made to `destinationContext`'s forest must be the creation of a detached field containing this content,
+ * (Triggering {@link ForestEvents.afterRootFieldCreated}) otherwise hydration will break.
  */
 export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
@@ -50,13 +61,18 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 
 /**
  * {@link prepareForInsertion} but batched for array content.
+ * @remarks
+ * This is for inserting items into an array, not a inserting a {@link TreeArrayNode} (that would use {@link prepareForInsertion}).
+ *
+ * The next edits made to `destinationContext`'s forest must be the creation of a detached field.
+ * One edit for each item in `data`, in order.
+ *
  * @privateRemarks
- * TODO:
- * Experimentally it was determined that making separate calls to prepareContentForHydration for each array item did not work.
- * This should be understood and fixed or have the factors that cause it clearly documented.
- * If fixed, this function should be removed, and arrays can just map over prepareForInsertion.
+ * This has to be done as a single operation for all items in data
+ * (as opposed to mapping {@link prepareForInsertion} over the array)
+ * due to how the eventing in prepareContentForHydration works.
  */
-export function prepareArrayForInsertion(
+export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
 	schema: ImplicitAllowedTypes,
 	destinationContext: FlexTreeContext,
@@ -66,19 +82,27 @@ export function prepareArrayForInsertion(
 			item,
 			schema,
 			destinationContext.isHydrated() ? destinationContext.nodeKeyManager : undefined,
-			getSchemaAndPolicy(destinationContext),
 		),
 	);
 
-	if (destinationContext.isHydrated()) {
-		prepareContentForHydration(mapTrees, destinationContext.checkout.forest);
-	}
+	const fieldSchema = convertField(normalizeFieldSchema(schema));
+
+	validateAndPrepare(
+		getSchemaAndPolicy(destinationContext),
+		destinationContext.isHydrated() ? destinationContext : undefined,
+		{ kind: FieldKinds.sequence.identifier, types: fieldSchema.types },
+		mapTrees,
+	);
 
 	return mapTrees;
 }
 
 /**
  * Split out from {@link prepareForInsertion} as to allow use without a context.
+ *
+ * @param hydratedData - If specified, the `mapTrees` will be prepared for hydration into this context.
+ * `undefined` when `mapTrees` are being inserted into an {@link Unhydrated} tree.
+ *
  * @remarks
  * Adding this entry point is a workaround for initialize not currently having a context.
  */
@@ -88,18 +112,34 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
 ): TIn extends undefined ? undefined : ExclusiveMapTree {
-	const mapTree = mapTreeFromNodeData(
-		data,
-		schema,
-		hydratedData?.nodeKeyManager,
-		schemaAndPolicy,
-	);
+	const mapTree = mapTreeFromNodeData(data, schema, hydratedData?.nodeKeyManager);
 
-	if (mapTree !== undefined && hydratedData !== undefined) {
-		prepareContentForHydration([mapTree], hydratedData.checkout.forest);
+	const contentArray = mapTree === undefined ? [] : [mapTree];
+	const fieldSchema = convertField(normalizeFieldSchema(schema));
+	validateAndPrepare(schemaAndPolicy, hydratedData, fieldSchema, contentArray);
+
+	return mapTree;
+}
+
+/**
+ * If hydrating, do a final validation against the schema and prepare the content for hydration.
+ *
+ * @param hydratedData - If specified, the `mapTrees` will be prepared for hydration into this context.
+ * `undefined` when `mapTrees` are being inserted into an {@link Unhydrated} tree.
+ */
+function validateAndPrepare(
+	schemaAndPolicy: SchemaAndPolicy,
+	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
+	fieldSchema: TreeFieldStoredSchema,
+	mapTrees: ExclusiveMapTree[],
+): void {
+	if (hydratedData !== undefined) {
+		if (schemaAndPolicy.policy.validateSchema === true) {
+			const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
+			inSchemaOrThrow(maybeError);
+		}
+		prepareContentForHydration(mapTrees, hydratedData.checkout.forest);
 	}
-
-	return mapTree as TIn extends undefined ? undefined : ExclusiveMapTree;
 }
 
 /**
@@ -164,7 +204,7 @@ function prepareContentForHydration(
 		});
 	}
 
-	bindTreeNodes(batches, forest);
+	scheduleHydration(batches, forest);
 }
 
 function walkMapTree(
@@ -206,12 +246,13 @@ function walkMapTree(
 }
 
 /**
- * Register a collection of nodes with the forest so that they can be hydrated.
+ * Register events which will hydrate batches of nodes when they are inserted.
+ * The next edits to forest must be their insertions, in order, or data corruption can occur.
  * @param locatedNodes - the nodes to register with the forest.
  * Each index in this array expects its content to be added and produce its own `afterRootFieldCreated` event.
  * If array subsequence insertion is optimized to produce a single event, this will not work correctly as is, and will need to be modified to take in a single {@link LocatedNodesBatch}.
  */
-function bindTreeNodes(
+function scheduleHydration(
 	locatedNodes: readonly LocatedNodesBatch[],
 	forest: IForestSubscription,
 ): void {
@@ -220,13 +261,12 @@ function bindTreeNodes(
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
 		const off = forest.events.on("afterRootFieldCreated", (fieldKey) => {
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const batch = locatedNodes[i]!;
+			// Indexing is safe here because of the length check above. This assumes the array has not been modified which should be the case.
+			const batch = locatedNodes[i] ?? oob();
 			debugAssert(() => batch.rootPath.parentField === placeholderKey);
 			batch.rootPath.parentField = brand(fieldKey);
 			for (const { path, node } of batch.paths) {
-				getKernel(node).anchorProxy(forest.anchors, path);
+				getKernel(node).hydrate(forest.anchors, path);
 			}
 			if (++i === locatedNodes.length) {
 				off();

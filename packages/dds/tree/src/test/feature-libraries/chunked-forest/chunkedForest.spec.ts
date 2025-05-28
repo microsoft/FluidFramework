@@ -81,7 +81,6 @@ describe("ChunkedForest", () => {
 	for (const [name, chunker] of chunkers) {
 		describe(name, () => {
 			testForest({
-				suiteName: "ChunkedForest forest suite",
 				factory: (schema) => buildChunkedForest(chunker(schema)),
 				skipCursorErrorCheck: true,
 			});

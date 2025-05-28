@@ -25,10 +25,10 @@ import type {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
+import type { JsonCompatible } from "../../util/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
 import { encodeRepo } from "./codec.js";
-import type { JsonCompatible } from "../../util/index.js";
 
 const schemaStringKey = "SchemaString";
 /**

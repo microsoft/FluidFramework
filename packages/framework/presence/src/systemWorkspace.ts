@@ -67,7 +67,7 @@ class SessionClient implements Attendee {
  */
 export interface SystemWorkspace
 	// Portion of Presence that is handled by SystemWorkspace along with
-	// responsiblity for emitting "attendeeConnected" events.
+	// responsibility for emitting "attendeeConnected" events.
 	extends Exclude<Presence["attendees"], never> {
 	/**
 	 * Must be called when the current client acquires a new connection.
