@@ -8,8 +8,11 @@ import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelFactory,
+	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+import { pkgVersion } from "../packageVersion.js";
 
 import type { ISharedArray, SerializableTypeForSharedArray } from "./interfaces.js";
 import { SharedArray as SharedArrayClass } from "./sharedArray.js";
@@ -25,7 +28,7 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 	public static readonly Attributes: IChannelAttributes = {
 		type: SharedArrayFactory.Type,
 		snapshotFormatVersion: "0.1",
-		packageVersion: "0.25",
+		packageVersion: pkgVersion,
 	};
 
 	public get type(): string {
@@ -50,7 +53,7 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 		return sharedArray;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): ISharedArray<T> {
+	public create(document: IFluidDataStoreRuntime, id: string): ISharedArray<T> & IChannel {
 		/**
 		 * * The SharedArray
 		 */

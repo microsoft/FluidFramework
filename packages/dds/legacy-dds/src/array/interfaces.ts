@@ -71,11 +71,6 @@ export interface ISharedArray<T extends SerializableTypeForSharedArray>
 }
 
 /**
- * Interface defining the SharedArray DDS with revertible operations
- * It is a generic interface that can be used to create a SharedArray of any type
- * The type of the SharedArray is defined by the type parameter T
- *
- * @typeParam T - The type of the SharedArray
  *
  * @internal
  */
