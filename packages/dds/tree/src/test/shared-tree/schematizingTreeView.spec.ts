@@ -165,19 +165,18 @@ describe("SchematizingSimpleTreeView", () => {
 					// allow invalid data through the public API.
 					(child.mapTree as Mutable<typeof child.mapTree>).value = "invalid value";
 
-					// Attempt to initialize with invalid content
-					if (enableSchemaValidation || additionalAsserts) {
-						assert.throws(
+					assert.throws(
 							() => view.initialize(root),
 							validateUsageError(/Tree does not conform to schema./),
 						);
 
+					// Attempt to initialize with invalid content
+					if (additionalAsserts) {
 						assert.throws(
 							() => view.root,
 							validateUsageError(/invalid state by another error/),
 						);
 					} else {
-						view.initialize(root);
 						assert.equal(view.root.content, "invalid value");
 					}
 				});
