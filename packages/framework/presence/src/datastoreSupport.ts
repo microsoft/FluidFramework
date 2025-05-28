@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Collection of minimal (slim) helpers to support DataObject creation
+ * for temporary {@link ExperimentalPresenceManager}
+ */
+
 import type {
 	FluidObject,
 	IFluidLoadable,
@@ -47,7 +52,7 @@ class BasicFluidDataStoreRuntime extends FluidDataStoreRuntime {
 }
 
 /**
- * @internal
+ * Factory for creating a {@link BasicFluidDataStoreRuntime}
  */
 export class BasicDataStoreFactory<Type extends string> implements IFluidDataStoreFactory {
 	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
@@ -82,7 +87,7 @@ export class BasicDataStoreFactory<Type extends string> implements IFluidDataSto
 }
 
 /**
- * @internal
+ * Helper to build a DataObject handling the {@link FluidObject} and {@link IFluidLoadable} requirements
  */
 export abstract class LoadableFluidObject implements FluidObject, IFluidLoadable {
 	public constructor(protected readonly runtime: FluidDataStoreRuntime) {}

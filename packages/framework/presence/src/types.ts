@@ -178,8 +178,6 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 
 /**
  * `AnyWorkspace` is a superset of {@link StatesWorkspace} and {@link NotificationsWorkspace}.
- *
- * @internal
  */
 export interface AnyWorkspace<
 	TSchema extends StatesWorkspaceSchema,

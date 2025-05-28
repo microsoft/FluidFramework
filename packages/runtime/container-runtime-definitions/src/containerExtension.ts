@@ -62,6 +62,7 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
 /**
  * Brand for value that has not been verified.
  *
+ * @remarks
  * Usage:
  *
  * - Cast to with `as unknown as UnverifiedBrand<T>` when value of or containing expected type `T` is yet unknown.
@@ -136,6 +137,12 @@ export type InboundExtensionMessage<TMessage extends TypedMessage = TypedMessage
 	| VerifiedInboundExtensionMessage<TMessage>;
 
 /**
+ * Runtime properties of an extension.
+ *
+ * @remarks
+ * This is used to coordinate select types that are known only to the extension, but
+ * that host will respect where it calls back or provides extension specific data.
+ *
  * @internal
  */
 export interface ExtensionRuntimeProperties {
