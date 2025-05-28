@@ -525,10 +525,7 @@ export const TreeAlpha: TreeAlpha = {
 		}
 
 		if (isArrayNodeSchema(schema)) {
-			const sequence = flexNode.tryGetField(EmptyKey);
-			if (sequence === undefined) {
-				return undefined;
-			}
+			const sequence = flexNode.getBoxed(EmptyKey);
 
 			const index =
 				typeof storedKey === "number"
