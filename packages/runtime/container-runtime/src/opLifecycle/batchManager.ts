@@ -128,7 +128,7 @@ export class BatchManager {
 	/**
 	 * Gets the pending batch and clears state for the next batch.
 	 */
-	public popBatch(batchId?: BatchId): LocalBatch {
+	public popBatch(): LocalBatch {
 		assert(this.pendingBatch[0] !== undefined, 0xb8a /* expected non-empty batch */);
 		const batch: LocalBatch = {
 			messages: this.pendingBatch,
@@ -141,7 +141,8 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		return addBatchMetadata(batch, batchId);
+		// Do NOT add batch metadata here anymore. This is now handled in Outbox before virtualizeBatch.
+		return batch;
 	}
 
 	/**
@@ -178,7 +179,7 @@ export class BatchManager {
 	}
 }
 
-const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
+export const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): void => {
 	const batchEnd = batch.messages.length - 1;
 
 	const firstMsg = batch.messages[0];
@@ -204,8 +205,6 @@ const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
 		firstMetadata.batchId = batchId;
 		firstMsg.metadata = firstMetadata;
 	}
-
-	return batch;
 };
 
 export const sequenceNumbersMatch = (

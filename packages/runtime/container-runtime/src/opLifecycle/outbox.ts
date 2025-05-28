@@ -25,6 +25,7 @@ import {
 	BatchSequenceNumbers,
 	sequenceNumbersMatch,
 	type BatchId,
+	addBatchMetadata,
 } from "./batchManager.js";
 import {
 	LocalBatchMessage,
@@ -68,6 +69,7 @@ export interface IOutboxParameters {
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: PendingMessageResubmitData, squash: boolean) => void;
 	readonly opReentrancy: () => boolean;
+	readonly getPrerequisiteSystemMessages: () => LocalBatchMessage[];
 }
 
 /**
@@ -441,7 +443,7 @@ export class Outbox {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId);
+		const rawBatch = batchManager.popBatch();
 
 		// On resubmit we use the original batch's staged state, so these should match as well.
 		const staged = rawBatch.staged === true;
@@ -476,6 +478,10 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend() && !staged) {
+			// Prepend prerequisite system messages before adding batch metadata and virtualizing
+			const prerequisiteMessages = this.params.getPrerequisiteSystemMessages();
+			rawBatch.messages.unshift(...prerequisiteMessages);
+			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);
@@ -483,6 +489,8 @@ export class Outbox {
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
 				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
 			);
+		} else {
+			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 		}
 
 		this.params.pendingStateManager.onFlushBatch(
