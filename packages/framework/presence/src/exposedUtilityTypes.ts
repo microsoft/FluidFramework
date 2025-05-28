@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { BrandedType } from "@fluidframework/core-interfaces/internal";
 import type {
 	DeepReadonly,
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import { asDeeplyReadonly } from "./internalUtils.js";
 
 /**
  * Collection of utility types that are not intended to be used/imported
@@ -79,17 +81,6 @@ export namespace InternalUtilityTypes {
 		: never;
 
 	/**
-	 * Base branded type
-	 *
-	 * @system
-	 */
-	export declare class BrandedType<Brand> {
-		protected readonly brand: (dummy: never) => Brand;
-		protected constructor();
-		public static [Symbol.hasInstance](value: never): value is never;
-	}
-
-	/**
 	 * @system
 	 */
 	declare class JsonDeserializedBrand<T> extends BrandedType<T> {
@@ -101,13 +92,16 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
+	// export type OpaqueJsonDeserialized<T> = UnverifiedBrand<T>;
 	export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
+	// export type OpaqueJsonDeserialized<T extends JsonDeserialized<U>, U> = JsonDeserializedBrand<T, U>;
 
 	/**
 	 * @system
 	 */
-	export declare class JsonSerializableBrand<T> {
+	export declare class JsonSerializableBrand<T> extends BrandedType<T> {
 		private readonly JsonSerializable: JsonSerializable<T>;
+		private constructor();
 	}
 
 	/**

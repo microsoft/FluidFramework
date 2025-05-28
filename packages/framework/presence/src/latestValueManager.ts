@@ -16,7 +16,7 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
-import { unbrandJson, brandJson } from "./exposedUtilityTypes.js";
+import { unbrandJson, brandJson, asDeeplyReadonlyFromJsonHandle } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries } from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
@@ -114,7 +114,7 @@ class LatestValueManagerImpl<T, Key extends string>
 	}
 
 	public get local(): DeepReadonly<JsonDeserialized<T>> {
-		return asDeeplyReadonly(unbrandJson(this.value.value));
+		return asDeeplyReadonlyFromJsonHandle(this.value.value);
 	}
 
 	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
