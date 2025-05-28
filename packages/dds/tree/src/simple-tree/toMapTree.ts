@@ -7,7 +7,13 @@ import { assert, fail, unreachableCase } from "@fluidframework/core-utils/intern
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import { EmptyKey, type FieldKey, type TreeValue, type ValueSchema } from "../core/index.js";
+import {
+	EmptyKey,
+	type FieldKey,
+	type NodeData,
+	type TreeValue,
+	type ValueSchema,
+} from "../core/index.js";
 import { FieldKinds, isTreeValue, valueSchemaAllows } from "../feature-libraries/index.js";
 import { brand, isReadonlyArray, hasSome, hasSingle } from "../util/index.js";
 
@@ -136,7 +142,7 @@ function nodeDataToMapTree(
 
 	const schema = getType(data, allowedTypes);
 
-	let result: UnhydratedFlexTreeNode;
+	let result: FlexContent;
 	switch (schema.kind) {
 		case NodeKind.Leaf:
 			result = leafToMapTree(data, schema, allowedTypes);
@@ -154,8 +160,10 @@ function nodeDataToMapTree(
 			unreachableCase(schema.kind);
 	}
 
-	return result;
+	return new UnhydratedFlexTreeNode(...result, contextFromSchema(schema));
 }
+
+type FlexContent = [NodeData, Map<FieldKey, UnhydratedFlexTreeField>];
 
 /**
  * Transforms data under a Leaf schema.
@@ -168,7 +176,7 @@ function leafToMapTree(
 	data: FactoryContent,
 	schema: TreeNodeSchema,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
-): UnhydratedFlexTreeNode {
+): FlexContent {
 	assert(schema.kind === NodeKind.Leaf, 0x921 /* Expected a leaf schema. */);
 	if (!isTreeValue(data)) {
 		// This rule exists to protect against useless `toString` output like `[object Object]`.
@@ -185,14 +193,13 @@ function leafToMapTree(
 		0x84a /* Unsupported schema for provided primitive. */,
 	);
 
-	return new UnhydratedFlexTreeNode(
+	return [
 		{
 			value: mappedValue,
 			type: brand(mappedSchema.identifier),
 		},
-		new Map(),
-		contextFromSchema(schema),
-	);
+		new Map<FieldKey, UnhydratedFlexTreeField>(),
+	];
 }
 
 function contextFromSchema(schema: TreeNodeSchema): Context {
@@ -276,7 +283,7 @@ function arrayChildToMapTree(
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
-function arrayToMapTree(data: FactoryContent, schema: TreeNodeSchema): UnhydratedFlexTreeNode {
+function arrayToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
 	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
@@ -306,13 +313,12 @@ function arrayToMapTree(data: FactoryContent, schema: TreeNodeSchema): Unhydrate
 					],
 				] as const);
 
-	return new UnhydratedFlexTreeNode(
+	return [
 		{
 			type: brand(schema.identifier),
 		},
 		new Map(fieldsEntries),
-		contextFromSchema(schema),
-	);
+	];
 }
 
 /**
@@ -323,7 +329,7 @@ function arrayToMapTree(data: FactoryContent, schema: TreeNodeSchema): Unhydrate
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
-function mapToMapTree(data: FactoryContent, schema: TreeNodeSchema): UnhydratedFlexTreeNode {
+function mapToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
 	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
 	if (!(typeof data === "object" && data !== null)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
@@ -357,13 +363,12 @@ function mapToMapTree(data: FactoryContent, schema: TreeNodeSchema): UnhydratedF
 		}
 	}
 
-	return new UnhydratedFlexTreeNode(
+	return [
 		{
 			type: brand(schema.identifier),
 		},
 		transformedFields,
-		context,
-	);
+	];
 }
 
 /**
@@ -371,10 +376,7 @@ function mapToMapTree(data: FactoryContent, schema: TreeNodeSchema): UnhydratedF
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema associated with the value.
  */
-function objectToMapTree(
-	data: FactoryContent,
-	schema: TreeNodeSchema,
-): UnhydratedFlexTreeNode {
+function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
 	assert(isObjectNodeSchema(schema), 0x924 /* Expected an Object schema. */);
 	if (
 		typeof data !== "object" ||
@@ -414,7 +416,7 @@ function objectToMapTree(
 		);
 	}
 
-	return new UnhydratedFlexTreeNode({ type: brand(schema.identifier) }, fields, context);
+	return [{ type: brand(schema.identifier) }, fields];
 }
 
 /**

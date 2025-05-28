@@ -45,6 +45,7 @@ import {
 	type FlexibleNodeContent,
 	type FlexTreeHydratedContextMinimal,
 	cursorForMapTreeNode,
+	type FlexibleFieldContent,
 } from "../../feature-libraries/index.js";
 import { brand, getOrCreate } from "../../util/index.js";
 
@@ -57,15 +58,7 @@ import type {
 } from "../../feature-libraries/mapTreeCursor.js";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
-	extends SequenceFieldEditBuilder<UnhydratedFlexTreeNode[]> {
-	/**
-	 * Issues a change which removes `count` elements starting at the given `index`.
-	 * @param index - The index of the first removed element.
-	 * @param count - The number of elements to remove.
-	 * @returns the MapTrees that were removed
-	 */
-	remove(index: number, count: number): UnhydratedFlexTreeNode[];
-}
+	extends SequenceFieldEditBuilder<FlexibleFieldContent, UnhydratedFlexTreeNode[]> {}
 
 type UnhydratedFlexTreeNodeEvents = Pick<AnchorEvents, "childrenChangedAfterBatch">;
 
@@ -86,6 +79,8 @@ interface LocationInField {
 export class UnhydratedFlexTreeNode
 	implements FlexTreeNode, MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>
 {
+	private location = unparentedLocation;
+
 	public get storedSchema(): TreeNodeStoredSchema {
 		return (
 			this.context.schema.nodeSchema.get(this.data.type) ?? fail(0xb46 /* missing schema */)
@@ -115,7 +110,6 @@ export class UnhydratedFlexTreeNode
 		public readonly data: NodeData,
 		public readonly fields: Map<FieldKey, UnhydratedFlexTreeField>,
 		public readonly simpleContext: Context,
-		private location = unparentedLocation,
 	) {
 		for (const [_key, field] of this.fields) {
 			field.parent = this;
@@ -432,7 +426,7 @@ export class EagerMapTreeOptionalField
 	}
 }
 
-export class EagerMapTreeRequiredField
+class EagerMapTreeRequiredField
 	extends EagerMapTreeOptionalField
 	implements FlexTreeRequiredField
 {
@@ -450,7 +444,7 @@ export class UnhydratedTreeSequenceField
 	extends UnhydratedFlexTreeField
 	implements FlexTreeSequenceField
 {
-	public readonly editor: UnhydratedTreeSequenceFieldEditBuilder = {
+	public readonly editor = {
 		insert: (index, newContent): void => {
 			for (let i = 0; i < newContent.length; i++) {
 				const c = newContent[i];
@@ -480,7 +474,7 @@ export class UnhydratedTreeSequenceField
 			});
 			return removed ?? fail(0xb4a /* Expected removed to be set by edit */);
 		},
-	};
+	} satisfies UnhydratedTreeSequenceFieldEditBuilder;
 
 	public at(index: number): FlexTreeUnknownUnboxed | undefined {
 		const i = indexForAt(index, this.length);
@@ -509,10 +503,8 @@ export function createField(
 		case FieldKinds.required.identifier:
 		case FieldKinds.identifier.identifier:
 			return new EagerMapTreeRequiredField(...args);
-
 		case FieldKinds.optional.identifier:
 			return new EagerMapTreeOptionalField(...args);
-
 		case FieldKinds.sequence.identifier:
 			return new UnhydratedTreeSequenceField(...args);
 		case FieldKinds.forbidden.identifier:
