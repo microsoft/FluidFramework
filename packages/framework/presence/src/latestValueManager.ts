@@ -16,7 +16,11 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
-import { unbrandJson, brandJson, asDeeplyReadonlyFromJsonHandle } from "./exposedUtilityTypes.js";
+import {
+	unbrandJson,
+	brandJson,
+	asDeeplyReadonlyFromJsonHandle,
+} from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries } from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
