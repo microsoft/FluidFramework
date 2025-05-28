@@ -257,7 +257,6 @@ describe("treeNodeApi", () => {
 	});
 
 	// TODO: recursive schema tests
-	// TODO: tests for schema with shadowed properties
 	describe("child", () => {
 		describe("object", () => {
 			it("Simple", () => {
@@ -321,6 +320,20 @@ describe("treeNodeApi", () => {
 				const tree = view.root;
 
 				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+			});
+
+			it("Shadowed properties", () => {
+				class TestObject extends schema.object("TestObject", {
+					toString: schema.string,
+				}) {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
+					toString: "test",
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "toString"), "test");
 			});
 		});
 
