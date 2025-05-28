@@ -1966,7 +1966,7 @@ Dependency updates only.
   SharedTree now supports garbage collection so that removed content is not retained forever.
   This is an internal change and users of SharedTree won't need to adapt any existing code.
 
-  This change could cause errors with cross-client collaboration where an older client does not send data that a newer
+  This change could cause errors with cross-version collaboration where an older client does not send data that a newer
   version may need. In this case, a "refresher data not found" error will be thrown.
 
 - Improved error reporting ([#21940](https://github.com/microsoft/FluidFramework/pull/21940)) [3b8a366dd1](https://github.com/microsoft/FluidFramework/commit/3b8a366dd15660f9c916832040faf772534c0755)
