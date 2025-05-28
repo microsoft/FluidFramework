@@ -34,7 +34,7 @@ export function fromJson<T>(idContext: NodeIdContext, value: Serializable<T>): C
 				},
 			};
 		} else if (value === null) {
-			return makeScalar(idContext, null);
+			return makeScalar(idContext, value);
 		} else {
 			const traits: PropertyDescriptorMap = {};
 
