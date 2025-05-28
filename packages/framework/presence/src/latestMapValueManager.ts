@@ -387,7 +387,7 @@ class LatestMapRawValueManagerImpl<
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const attendeeId of objectKeys(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
-				const attendee = this.datastore.lookupClient(attendeeId);
+				const attendee = this.presence.attendees.getAttendee(attendeeId);
 				const items = this.getRemote(attendee);
 				yield { attendee, items };
 			}
@@ -398,7 +398,7 @@ class LatestMapRawValueManagerImpl<
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return objectKeys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)
-			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
+			.map((attendeeId) => this.presence.attendees.getAttendee(attendeeId));
 	}
 
 	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>> {

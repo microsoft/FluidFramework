@@ -12,11 +12,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord, PostUpdateAction } from "./internalTypes.js";
 import type { RecordEntryTypes } from "./internalUtils.js";
 import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
-import type {
-	AttendeeId,
-	Attendee,
-	PresenceWithNotifications as Presence,
-} from "./presence.js";
+import type { AttendeeId, PresenceWithNotifications as Presence } from "./presence.js";
 import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
 import { handleFromDatastore } from "./stateDatastore.js";
 import type { AnyWorkspace, StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
@@ -57,7 +53,6 @@ export interface RuntimeLocalUpdateOptions {
 export interface PresenceRuntime {
 	readonly presence: Presence;
 	readonly attendeeId: AttendeeId;
-	lookupClient(clientId: ClientConnectionId): Attendee;
 	localUpdate(
 		states: { [key: string]: ClientUpdateEntry },
 		options: RuntimeLocalUpdateOptions,
@@ -360,10 +355,6 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 		allKnownState[clientId] = mergeValueDirectory(allKnownState[clientId], value, 0);
 	}
 
-	public lookupClient(clientId: ClientConnectionId): Attendee {
-		return this.runtime.lookupClient(clientId);
-	}
-
 	public add<
 		TKey extends string,
 		TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
@@ -432,7 +423,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 			} else {
 				const node = unbrandIVM(brandedIVM);
 				for (const [attendeeId, value] of objectEntries(remoteAllKnownState)) {
-					const client = this.runtime.lookupClient(attendeeId);
+					const client = this.presence.attendees.getAttendee(attendeeId);
 					postUpdateActions.push(...node.update(client, received, value));
 				}
 			}
