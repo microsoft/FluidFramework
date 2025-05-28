@@ -401,6 +401,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
+		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		const view = sharedTree.viewWith(
 			new TreeViewConfiguration({ schema: [builder.number, builder.string] }),
@@ -434,7 +435,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: "test",
+			fluidObjectId: shareedTreeId,
 			typeMetadata: "SharedTree",
 		};
 
@@ -449,6 +450,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
+		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		class RootNodeSchema extends builder.object("root-item", {
 			foo: builder.optional(builder.array([builder.number, builder.string])),
@@ -553,7 +555,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: "test",
+			fluidObjectId: shareedTreeId,
 			typeMetadata: "SharedTree",
 		};
 		expect(result).to.deep.equal(expected);
@@ -567,6 +569,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
+		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		class RootNodeSchema extends builder.object("root-item", {
 			foo: builder.map([builder.number, builder.handle]),
@@ -674,7 +677,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: "test",
+			fluidObjectId: shareedTreeId,
 			typeMetadata: "SharedTree",
 		};
 		expect(result).to.deep.equal(expected);
@@ -688,6 +691,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
+		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		class RootNodeSchema extends builder.object("root-item", {
 			foo: builder.object("bar-item", {
@@ -805,7 +809,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: "test",
+			fluidObjectId: shareedTreeId,
 			typeMetadata: "SharedTree",
 		};
 		expect(result).to.deep.equal(expected);
@@ -820,6 +824,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
+		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
@@ -833,7 +838,7 @@ describe("DefaultVisualizers unit tests", () => {
 		);
 
 		const expected = {
-			fluidObjectId: "test",
+			fluidObjectId: shareedTreeId,
 			nodeKind: "FluidTreeNode",
 			tooltipContents: {
 				schema: {
@@ -868,9 +873,11 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
+		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
+		const sharedStringId = getKeyForFluidObject(sharedString);
 
 		class RootNodeSchema extends builder.object("root-item", {
 			foo: builder.object("bar-item", {
@@ -897,7 +904,7 @@ describe("DefaultVisualizers unit tests", () => {
 				foo: {
 					children: {
 						apple: {
-							fluidObjectId: "test-string",
+							fluidObjectId: sharedStringId,
 							nodeKind: "FluidHandleNode",
 							tooltipContents: {
 								schema: {
@@ -962,7 +969,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: "test",
+			fluidObjectId: shareedTreeId,
 			typeMetadata: "SharedTree",
 		};
 		expect(result).to.deep.equal(expected);
@@ -976,6 +983,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
+		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		class WorkItem extends builder.object("work-item", {
 			title: builder.string,
@@ -1383,7 +1391,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: "test",
+			fluidObjectId: shareedTreeId,
 			typeMetadata: "SharedTree",
 		};
 
@@ -1398,7 +1406,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
-		const treeId = getKeyForFluidObject(sharedTree);
+		const sharedTreeId = getKeyForFluidObject(sharedTree);
 
 		const view = sharedTree.viewWith(
 			new TreeViewConfiguration({
@@ -1413,7 +1421,7 @@ describe("DefaultVisualizers unit tests", () => {
 		);
 
 		const expected = {
-			fluidObjectId: treeId,
+			fluidObjectId: sharedTreeId,
 			typeMetadata: "SharedTree",
 			nodeKind: VisualNodeKind.FluidTreeNode,
 			tooltipContents: {
