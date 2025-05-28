@@ -32,9 +32,7 @@ import {
 	normalizeFieldSchema,
 	FieldKind,
 	type TreeLeafValue,
-	type AllowedTypeMetadata,
 	type FieldSchemaAlpha,
-	extractAnnotationsFromAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
 	type ImplicitAnnotatedFieldSchema,
 } from "./schemaTypes.js";
@@ -81,6 +79,13 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
  * If `context` is not provided, defaults which require a context will be left empty which can be out of schema.
  *
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
+ * @param context - An optional context which, if present, will allow defaults to be created by {@link ContextualFieldProvider}s.
+ * If absent, only defaults from {@link ConstantFieldProvider}s will be created.
+ *
+ * TODO:BUG: AB#9131
+ * This schema validation is done before defaults are provided.
+ * This can not easily be fixed by reordering things within this implementation since even at the end of this function defaults requiring a context may not have been filled.
+ * This means schema validation reject required fields getting their value from a default like identifier fields.
  *
  * @remarks The resulting tree will be populated with any defaults from {@link FieldProvider}s in the schema.
  *
@@ -117,7 +122,7 @@ export function mapTreeFromNodeData(
 		return undefined;
 	}
 
-	const mapTree = nodeDataToMapTree(data, normalizedFieldSchema.annotatedAllowedTypeSet);
+	const mapTree = nodeDataToMapTree(data, normalizedFieldSchema.allowedTypeSet);
 	// Add what defaults can be provided. If no `context` is providing, some defaults may still be missing.
 	addDefaultsToMapTree(mapTree, normalizedFieldSchema.allowedTypes, context);
 
@@ -133,16 +138,14 @@ export function mapTreeFromNodeData(
  */
 function nodeDataToMapTree(
 	data: InsertableContent,
-	annotatedAllowedTypes: ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
 ): ExclusiveMapTree {
-	const allowedTypes = new Set(annotatedAllowedTypes.keys());
-
 	// A special cache path for processing unhydrated nodes.
 	// They already have the mapTree, so there is no need to recompute it.
 	const innerNode = tryGetInnerNode(data);
 	if (innerNode !== undefined) {
 		if (innerNode instanceof UnhydratedFlexTreeNode) {
-			if (!annotatedAllowedTypes.has(getSimpleNodeSchemaFromInnerNode(innerNode))) {
+			if (!allowedTypes.has(getSimpleNodeSchemaFromInnerNode(innerNode))) {
 				throw new UsageError("Invalid schema for this context.");
 			}
 			// TODO: mapTreeFromNodeData modifies the trees it gets to add defaults.
@@ -269,7 +272,7 @@ function mapValueWithFallbacks(
  */
 function arrayChildToMapTree(
 	child: InsertableContent,
-	allowedTypes: ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
 ): ExclusiveMapTree {
 	// We do not support undefined sequence entries.
 	// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
@@ -295,9 +298,7 @@ function arrayToMapTree(data: FactoryContent, schema: TreeNodeSchema): Exclusive
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
 
-	const allowedChildTypes = extractAnnotationsFromAllowedTypes(
-		schema.info as ImplicitAnnotatedAllowedTypes,
-	);
+	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const mappedData = Array.from(data, (child) =>
 		arrayChildToMapTree(child, allowedChildTypes),
@@ -323,9 +324,7 @@ function mapToMapTree(data: FactoryContent, schema: TreeNodeSchema): ExclusiveMa
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
 
-	const annotatedAllowedChildTypes = extractAnnotationsFromAllowedTypes(
-		schema.info as ImplicitAllowedTypes,
-	);
+	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const fieldsIterator = (
 		Symbol.iterator in data
@@ -345,7 +344,7 @@ function mapToMapTree(data: FactoryContent, schema: TreeNodeSchema): ExclusiveMa
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const mappedField = nodeDataToMapTree(value, annotatedAllowedChildTypes);
+			const mappedField = nodeDataToMapTree(value, allowedChildTypes);
 			transformedFields.set(brand(key), [mappedField]);
 		}
 	}
@@ -419,7 +418,7 @@ function setFieldValue(
 	flexKey: FieldKey,
 ): void {
 	if (fieldValue !== undefined) {
-		const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.annotatedAllowedTypeSet);
+		const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
 
 		assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
 		fields.set(flexKey, [mappedChildTree]);
