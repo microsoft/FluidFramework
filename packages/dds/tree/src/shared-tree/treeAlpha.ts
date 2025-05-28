@@ -16,8 +16,6 @@ import {
 	TreeBeta,
 	tryGetSchema,
 	createFromCursor,
-	createFromInsertable,
-	cursorFromInsertable,
 	FieldKind,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
@@ -388,14 +386,10 @@ export const TreeAlpha: TreeAlpha = {
 			? TreeFieldFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	> {
-		return createFromInsertable<UnsafeUnknownSchema>(
-			schema,
-			data as InsertableField<UnsafeUnknownSchema>,
-		) as Unhydrated<
-			TSchema extends ImplicitFieldSchema
-				? TreeFieldFromImplicitField<TSchema>
-				: TreeNode | TreeLeafValue | undefined
-		>;
+		// `importConcise` does not need to support all the formats that `create` does.
+		// Perhaps it should error instead of hydrating nodes for example.
+		// For now however, it is a simple wrapper around `create`.
+		return this.create(schema, data as InsertableField<TSchema>);
 	},
 
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
@@ -516,25 +510,35 @@ function exportConcise(
 	);
 }
 
+/**
+ * Borrow a cursor from a node.
+ * @remarks
+ * The cursor must be put back to its original location before the node is used again.
+ */
 function borrowCursorFromTreeNodeOrValue(
 	node: TreeNode | TreeLeafValue,
 ): ITreeCursorSynchronous {
 	if (isTreeValue(node)) {
-		return cursorFromInsertable<UnsafeUnknownSchema>(
-			tryGetSchema(node) ?? fail(0xad0 /* missing schema */),
-			node,
-		);
+		return cursorFromVerbose(node, {});
 	}
 	const kernel = getKernel(node);
 	const cursor = kernel.getOrCreateInnerNode().borrowCursor();
 	return cursor;
 }
 
+/**
+ * Borrow a cursor from a field.
+ * @remarks
+ * The cursor must be put back to its original location before the node is used again.
+ */
 function borrowFieldCursorFromTreeNodeOrValue(
-	node: TreeNode | TreeLeafValue,
+	node: TreeNode | TreeLeafValue | undefined,
 ): ITreeCursorSynchronous {
+	if (node === undefined) {
+		return cursorForMapTreeField([]);
+	}
 	const cursor = borrowCursorFromTreeNodeOrValue(node);
-	// TODO: avoid copy
+	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
 }

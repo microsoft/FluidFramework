@@ -4,7 +4,10 @@
  */
 
 import {
+	getPresence,
+	// eslint-disable-next-line import/no-deprecated
 	getPresenceViaDataObject,
+	// eslint-disable-next-line import/no-deprecated
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
@@ -16,11 +19,15 @@ import { initializeReactions } from "./reactions.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
 // Define the schema of the Fluid container.
-// This example uses the presence features only, so only that data object is added.
+// This example uses the presence features only, so no data object is required.
+// But the old experimental presence data object is used to check that old path still works.
+// Besides initialObjects is not currently allowed to be empty.
+// That version of presence is compatible with all 2.x runtimes. Long-term support without
+// data object requires 2.41 or later.
 const containerSchema = {
 	initialObjects: {
-		// A Presence Manager object temporarily needs to be placed within container schema
-		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
+		// Optional Presence Manager object placed within container schema for experimental presence access
+		// eslint-disable-next-line import/no-deprecated
 		presence: ExperimentalPresenceManager,
 	},
 } satisfies ContainerSchema;
@@ -56,8 +63,12 @@ async function start() {
 		({ container } = await client.getContainer(id, containerSchema, "2"));
 	}
 
-	// Retrieve a reference to the presence APIs via the data object.
-	const presence = getPresenceViaDataObject(container.initialObjects.presence);
+	const useDataObject = new URLSearchParams(location.search).has("useDataObject");
+	const presence = useDataObject
+		? // Retrieve a reference to the presence APIs via the data object.
+			// eslint-disable-next-line import/no-deprecated
+			getPresenceViaDataObject(container.initialObjects.presence)
+		: getPresence(container);
 
 	// Get the states workspace for the tracker data. This workspace will be created if it doesn't exist.
 	// We create it with no states; we will pass the workspace to the Mouse and Focus trackers, and they will create value

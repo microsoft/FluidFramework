@@ -5,14 +5,16 @@
 
 import cluster, { Worker } from "cluster";
 // Note: `availableParallelism` Node 18 is required for this functionality
-import { availableParallelism } from "os";
 import * as http from "http";
 import { AddressInfo } from "net";
+import { availableParallelism } from "os";
 import * as util from "util";
+
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { setupMaster, setupWorker } from "@socket.io/sticky";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { setupMaster, setupWorker } from "@socket.io/sticky";
+
 import * as socketIo from "./socketIoServer";
 
 /**

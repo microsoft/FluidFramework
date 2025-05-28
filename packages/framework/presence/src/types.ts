@@ -6,7 +6,7 @@
 import type { BroadcastControls } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { NotificationsManager } from "./notificationsManager.js";
-import type { Presence } from "./presence.js";
+import type { Presence, PresenceWithNotifications } from "./presence.js";
 
 /**
  * Unique address within a session.
@@ -22,14 +22,14 @@ import type { Presence } from "./presence.js";
  *   "address:object0/sub-object2:pointers"
  * ```
  *
- * @alpha
+ * @beta
  */
 export type WorkspaceAddress = `${string}:${string}`;
 
 /**
  * Single entry in {@link StatesWorkspaceSchema} or  {@link NotificationsWorkspaceSchema}.
  *
- * @alpha
+ * @beta
  */
 export type StatesWorkspaceEntry<
 	TKey extends string,
@@ -44,7 +44,7 @@ export type StatesWorkspaceEntry<
  *
  * Keys of schema are the keys of the {@link StatesWorkspace} providing access to State objects.
  *
- * @alpha
+ * @beta
  */
 export interface StatesWorkspaceSchema {
 	[key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
@@ -54,7 +54,7 @@ export interface StatesWorkspaceSchema {
  * Map of State objects registered with {@link StatesWorkspace}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
 	/**
@@ -75,7 +75,7 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
  * each client's state is independent and may only be updated by originating client.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface StatesWorkspace<
 	TSchema extends StatesWorkspaceSchema,
@@ -169,9 +169,9 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	readonly notifications: StatesWorkspaceEntries<TSchema>;
 
 	/**
-	 * Containing {@link Presence}
+	 * Containing {@link PresenceWithNotifications}
 	 */
-	readonly presence: Presence;
+	readonly presence: PresenceWithNotifications;
 }
 
 // #endregion NotificationsWorkspace
@@ -186,4 +186,6 @@ export interface AnyWorkspace<
 	TManagerConstraints = unknown,
 > extends StatesWorkspace<TSchema, TManagerConstraints> {
 	readonly notifications: StatesWorkspaceEntries<TSchema>;
+	// TO be removed if/when notifications are fully supported
+	readonly presence: PresenceWithNotifications;
 }

@@ -22,6 +22,7 @@ import {
 	RawOperationType,
 } from "@fluidframework/server-services-core";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+
 import { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {

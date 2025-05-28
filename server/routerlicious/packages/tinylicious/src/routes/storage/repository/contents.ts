@@ -5,10 +5,11 @@
 
 import { Router } from "express";
 import nconf from "nconf";
+
 import { queryParamToString } from "../../../utils";
-import * as utils from "../utils";
 import { getBlob } from "../git/blobs";
 import { getTree } from "../git/trees";
+import * as utils from "../utils";
 
 export async function getContent(
 	store: nconf.Provider,
