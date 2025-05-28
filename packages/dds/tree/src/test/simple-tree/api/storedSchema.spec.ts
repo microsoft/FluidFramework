@@ -13,8 +13,8 @@ import {
 import { testSimpleTrees } from "../../testTrees.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
-import { TreeViewConfigurationAlpha } from "../../../simple-tree/index.js";
 import { FluidClientVersion } from "../../../codec/index.js";
+import { TreeViewConfigurationAlpha } from "../../../simple-tree/index.js";
 
 describe("simple-tree storedSchema", () => {
 	describe("test-schema", () => {
