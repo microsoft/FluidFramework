@@ -226,7 +226,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		if (apis.containerRuntime.version !== pkgVersion) {
 			// Only verify latest version of runtime - this functionality did not exist prior to RC3.
 			// Given that every version (from now on) tests this functionality, there is no reason to test old versions.
-			// This test does not use second container, so there is no need for cross-version tests.
+			// This test does not use second container, so there is no need for cross-client tests.
 			this.skip();
 			return;
 		}
