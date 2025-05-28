@@ -364,6 +364,8 @@ function and(
 		);
 	}
 
+	// We keep the persisted minVersionForCollab if present, even if the provided minVersionForCollab
+	// is higher.
 	const minVersionForCollab =
 		currentDocSchema.info?.minVersionForCollab ?? desiredDocSchema.info.minVersionForCollab;
 
@@ -390,7 +392,7 @@ function or(
 		);
 	}
 
-	// We take the greater of the current/desired minVersionForCollab
+	// We take the greater of the persisted/provided minVersionForCollab
 	const minVersionForCollab =
 		currentDocSchema.info === undefined
 			? desiredDocSchema.info.minVersionForCollab
