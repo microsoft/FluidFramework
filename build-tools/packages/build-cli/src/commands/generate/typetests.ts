@@ -474,6 +474,8 @@ export function generateCompatibilityTestCases(
 /**
  * Internals of {@link generateCompatibilityTestCases} for a single type.
  *
+ * @param typeData - The type to test.
+ * @param brokenData - Expected broken compatibilities, if any.
  * @returns - string array representing generated compatibility test cases
  */
 export function generateCompatibilityTestCase(
