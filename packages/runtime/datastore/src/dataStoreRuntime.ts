@@ -151,12 +151,6 @@ const defaultPolicies: IFluidDataStorePolicies = {
 };
 
 /**
- * Matches const agentSchedulerId in container-runtime package
- * Needed to accomodate special legacy behavior of the agent scheduler
- */
-const agentSchedulerId = "_scheduler";
-
-/**
  * Base data store class
  * @legacy
  * @alpha
@@ -431,7 +425,8 @@ export class FluidDataStoreRuntime
 
 		// Reference these properties to avoid unused private member errors.
 		// They're accessed via IFluidDataStoreRuntimeExperimental interface.
-		((...experimental) => {})([this.inStagingMode, this.isDirty]);
+		// eslint-disable-next-line no-void
+		void [this.inStagingMode, this.isDirty];
 	}
 
 	/**
@@ -451,18 +446,7 @@ export class FluidDataStoreRuntime
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	private get isDirty(): IFluidDataStoreRuntimeExperimental["isDirty"] {
-		const dirty = this.pendingOpCount > 0;
-
-		const containerIsDirty =
-			// eslint-disable-next-line import/no-deprecated
-			(this.dataStoreContext.containerRuntime as IContainerRuntimeBaseExperimental).isDirty;
-		if (containerIsDirty === false && this.id !== agentSchedulerId) {
-			assert(
-				!dirty,
-				"DataStoreRuntime isDirty should not be true if ContainerRuntime isDirty is false (with the exception of the agent scheduler)",
-			);
-		}
-		return dirty;
+		return this.pendingOpCount > 0;
 	}
 
 	get deltaManager(): IDeltaManagerErased {
@@ -904,8 +888,12 @@ export class FluidDataStoreRuntime
 	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed();
 
-		const { envelope, messagesContent } = messageCollection;
-		this.pendingOpCount -= messagesContent.length;
+		const { envelope, local, messagesContent } = messageCollection;
+
+		if (local) {
+			this.pendingOpCount -= messagesContent.length;
+		}
+
 		try {
 			switch (envelope.type) {
 				case DataStoreMessageType.ChannelOp: {
@@ -1302,6 +1290,8 @@ export class FluidDataStoreRuntime
 	): void {
 		this.verifyNotClosed();
 
+		--this.pendingOpCount;
+
 		switch (type) {
 			case DataStoreMessageType.ChannelOp: {
 				// For Operations, find the right channel and trigger resubmission on it.
@@ -1309,7 +1299,6 @@ export class FluidDataStoreRuntime
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
 
-				--this.pendingOpCount;
 				channelContext.reSubmit(envelope.contents, localOpMetadata, squash);
 				break;
 			}
