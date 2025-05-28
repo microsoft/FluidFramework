@@ -304,8 +304,23 @@ describe("treeNodeApi", () => {
 				} as any);
 				const tree = view.root;
 
-				const childBaz = TreeAlpha.child(tree, "bar");
-				assert.equal(childBaz, undefined);
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+			});
+
+			it("Subclass properties are not considered", () => {
+				class TestObject extends schema.object("TestObject", {
+					foo: schema.string,
+				}) {
+					public readonly bar: string = "Bar";
+				}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
+					foo: "test",
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
 			});
 		});
 
@@ -326,6 +341,21 @@ describe("treeNodeApi", () => {
 				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
 				assert.equal(TreeAlpha.child(tree, 1), undefined);
 			});
+
+			it("Subclass properties are not considered", () => {
+				class TestMap extends schema.map("TestObject", schema.string) {
+					public readonly bar: string = "Bar";
+				}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize({
+					foo: "Hello",
+					0: "World",
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+			});
 		});
 
 		describe("array", () => {
@@ -336,23 +366,12 @@ describe("treeNodeApi", () => {
 				view.initialize(["Hello", "World"]);
 				const tree = view.root;
 
-				const child0 = TreeAlpha.child(tree, 0);
-				assert.equal(child0, "Hello");
-
-				const child1 = TreeAlpha.child(tree, 1);
-				assert.equal(child1, "World");
-
-				const child2 = TreeAlpha.child(tree, 2);
-				assert.equal(child2, undefined);
-
-				const childFoo = TreeAlpha.child(tree, "foo");
-				assert.equal(childFoo, undefined);
-
-				const childEmptyKey = TreeAlpha.child(tree, "");
-				assert.equal(childEmptyKey, undefined);
-
-				const childIntegerString = TreeAlpha.child(tree, "1");
-				assert.equal(childIntegerString, "World");
+				assert.equal(TreeAlpha.child(tree, 0), "Hello");
+				assert.equal(TreeAlpha.child(tree, 1), "World");
+				assert.equal(TreeAlpha.child(tree, 2), undefined);
+				assert.equal(TreeAlpha.child(tree, "foo"), undefined);
+				assert.equal(TreeAlpha.child(tree, ""), undefined);
+				assert.equal(TreeAlpha.child(tree, "1"), "World");
 			});
 		});
 	});
