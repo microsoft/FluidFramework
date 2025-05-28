@@ -139,5 +139,5 @@ export function unbrandJson<T>(
 export function asDeeplyReadonlyFromJsonHandle<T>(
 	value: InternalUtilityTypes.OpaqueJsonDeserialized<T>,
 ): DeepReadonly<JsonDeserialized<T>> {
-	return asDeeplyReadonlyFromJsonHandle<T>(value);
+	return asDeeplyReadonly(unbrandJson(value));
 }
