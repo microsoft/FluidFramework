@@ -310,63 +310,31 @@ describe("treeNodeApi", () => {
 		});
 
 		describe("map", () => {
-			function getMapSchema() {
-				return schema.map("TestObject", schema.string);
-			}
-
-			function initializeMapTree(
-				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getMapSchema>>,
-			) {
-				class TestMap extends getMapSchema() {}
+			it("Simple", () => {
+				class TestMap extends schema.map("TestObject", schema.string) {}
 				const config = new TreeViewConfiguration({ schema: TestMap });
 				const view = getView(config);
-				view.initialize(input);
-
-				return { TestMap, tree: view.root };
-			}
-
-			it("entry exists under key", () => {
-				const { tree } = initializeMapTree({
+				view.initialize({
 					foo: "Hello",
 					0: "World",
 				});
+				const tree = view.root;
 
-				const childFoo = TreeAlpha.child(tree, "foo");
-				assert.equal(childFoo, "Hello");
+				assert.equal(TreeAlpha.child(tree, "foo"), "Hello");
+				assert.equal(TreeAlpha.child(tree, 0), "World");
 
-				const child0 = TreeAlpha.child(tree, 0);
-				assert.equal(child0, "World");
-			});
-
-			it("no entry exists under key", () => {
-				const { tree } = initializeMapTree({});
-
-				const childFoo = TreeAlpha.child(tree, "foo");
-				assert.equal(childFoo, undefined);
-
-				const child0 = TreeAlpha.child(tree, 0);
-				assert.equal(child0, undefined);
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+				assert.equal(TreeAlpha.child(tree, 1), undefined);
 			});
 		});
 
 		describe("array", () => {
-			function getArraySchema() {
-				return schema.array("TestObject", schema.string);
-			}
-
-			function initializeArrayTree(
-				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getArraySchema>>,
-			) {
-				class TestArray extends getArraySchema() {}
+			it("Simple", () => {
+				class TestArray extends schema.array("TestObject", schema.string) {}
 				const config = new TreeViewConfiguration({ schema: TestArray });
 				const view = getView(config);
-				view.initialize(input);
-
-				return { TestArray, tree: view.root };
-			}
-
-			it("simple", () => {
-				const { tree } = initializeArrayTree(["Hello", "World"]);
+				view.initialize(["Hello", "World"]);
+				const tree = view.root;
 
 				const child0 = TreeAlpha.child(tree, 0);
 				assert.equal(child0, "Hello");
