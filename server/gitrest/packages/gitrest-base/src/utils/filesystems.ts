@@ -8,6 +8,7 @@ import fsPromises from "node:fs/promises";
 
 import { closeRedisClientConnections } from "@fluidframework/server-services-shared";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { Queue } from "bullmq";
 import { Volume } from "memfs";
 import { Provider } from "nconf";
 
@@ -18,9 +19,8 @@ import {
 	type IFileSystemPromises,
 } from "./definitions";
 import { FsPromisesBase } from "./fileSystemBase";
-import { RedisParams, RedisFsManager, RedisFsConfig } from "./redisFs";
-import type { Queue } from "bullmq";
 import { HybridFsManager } from "./hybridFs";
+import { RedisParams, RedisFsManager, RedisFsConfig } from "./redisFs";
 class SimpleFsPromisesWrapper extends FsPromisesBase {
 	constructor(
 		private readonly innerFsPromises: IFileSystemPromises,
