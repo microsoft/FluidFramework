@@ -9,7 +9,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import { unbrandJson, brandJson } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
 import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
@@ -134,7 +133,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
-			const attendeeId = unbrandJson(value.value);
+			const attendeeId = value.value;
 			const { attendee, isJoining } = this.ensureAttendee(
 				attendeeId,
 				clientConnectionId,
@@ -170,7 +169,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		this.datastore.clientToSessionId[clientConnectionId] = {
 			rev: this.selfAttendee.order++,
 			timestamp: Date.now(),
-			value: brandJson(this.selfAttendee.attendeeId),
+			value: this.selfAttendee.attendeeId,
 		};
 
 		// Mark 'Connected' remote attendees connections as stale

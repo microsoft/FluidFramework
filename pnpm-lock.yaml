@@ -11585,6 +11585,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.55.0
         version: 0.55.0(@types/node@18.19.67)
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions

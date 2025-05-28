@@ -15,7 +15,6 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import { asDeeplyReadonlyFromJsonHandle, brandJson } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
 import {
@@ -287,7 +286,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		// TODO: This is a data read, so we need to validate.
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(asDeeplyReadonlyFromJsonHandle(item.value), key, this);
+				callbackfn(asDeeplyReadonly(item.value), key, this);
 			}
 		}
 	}
@@ -307,7 +306,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		return data === undefined
 			? undefined
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
-				asDeeplyReadonlyFromJsonHandle(this.value.items[key]!.value!);
+				this.value.items[key]!.value!;
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -475,7 +474,7 @@ class LatestMapValueManagerImpl<
 				items.set(key, {
 					value:
 						validator === undefined
-							? asDeeplyReadonlyFromJsonHandle(value)
+							? asDeeplyReadonly(value)
 							: createValidatedGetter(item, validator),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});

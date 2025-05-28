@@ -9,13 +9,8 @@ import type {
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import {
-	asDeeplyReadonlyFromJsonHandle,
-	brandJson,
-	unbrandJson,
-	type InternalUtilityTypes,
-} from "./exposedUtilityTypes.js";
 import type { Attendee } from "./presence.js";
+import { asDeeplyReadonly } from "./internalUtils.js";
 
 /**
  * Metadata for the value state.
@@ -82,9 +77,9 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
  * @beta
  */
 export type Accessor<T> = T extends ProxiedValueAccessor<infer U>
-	? () => DeepReadonly<InternalUtilityTypes.OpaqueJsonDeserialized<U>> | undefined
+	? () => DeepReadonly<JsonDeserialized<U>> | undefined
 	: T extends RawValueAccessor<infer U>
-		? DeepReadonly<InternalUtilityTypes.OpaqueJsonDeserialized<U>>
+		? DeepReadonly<JsonDeserialized<U>>
 		: never;
 
 /**
@@ -183,7 +178,7 @@ export function createValidatedGetter<T>(
 		if (valueToCheck !== false) {
 			return valueToCheck === undefined
 				? undefined
-				: asDeeplyReadonlyFromJsonHandle(valueToCheck);
+				: asDeeplyReadonly(valueToCheck);
 		}
 		// if (validator === undefined) {
 		// 	// No validator, so return the raw value

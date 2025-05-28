@@ -11,14 +11,13 @@ import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/int
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 
+import type { ClientConnectionId } from "../baseTypes.js";
+import type { AttendeeId } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
-import type { AttendeeId } from "../presence.js";
-import type { ClientConnectionId} from "../baseTypes.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-
 
 /**
  * Use to compile-time assert types of two variables are identical.

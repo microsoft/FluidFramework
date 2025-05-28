@@ -8,8 +8,6 @@ import type {
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
-
 /**
  * Collection of value types that are not intended to be used/imported
  * directly outside of this package.
@@ -36,16 +34,16 @@ export namespace InternalTypes {
 	 * @system
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-		value?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
-		validatedValue?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue> | undefined;
+		value?: JsonDeserialized<TValue>;
+		validatedValue?: JsonDeserialized<TValue> | undefined;
 	}
 
 	/**
 	 * @system
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-		value: InternalUtilityTypes.OpaqueJsonDeserialized<TValue>;
-		validatedValue?: InternalUtilityTypes.OpaqueJsonDeserialized<TValue> | undefined;
+		value: JsonDeserialized<TValue>;
+		validatedValue?: JsonDeserialized<TValue> | undefined;
 	}
 
 	/**
