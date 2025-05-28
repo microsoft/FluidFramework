@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert, debugAssert } from "@fluidframework/core-utils/internal";
 
 import {
@@ -15,14 +16,13 @@ import {
 	moveToDetachedField,
 	rootField,
 } from "../../core/index.js";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
 import type { NodeIdentifierManager } from "../node-identifier/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
 import type { LazyEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
-import type { ITreeCheckout } from "../../shared-tree/index.js";
 
 /**
  * Context for FlexTrees.
@@ -198,7 +198,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	 * Additionally if the detached field's content is deleted, the field will become out of schema if it is required: it must not be used after that point.
 	 */
 	public detachedField(key: DetachedField, schema: FieldKindIdentifier): FlexTreeField {
-		assert(this.disposed === false, "use after dispose");
+		assert(this.disposed === false, 0xb9c /* use after dispose */);
 
 		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor, key);

@@ -7,6 +7,7 @@ import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definit
 import { KJUR as jsrsasign } from "jsrsasign";
 import { jwtDecode } from "jwt-decode";
 import { v4 as uuid } from "uuid";
+
 import { NetworkError } from "./error";
 
 /**

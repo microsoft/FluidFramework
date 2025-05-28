@@ -21,8 +21,7 @@ import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import type { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
 
 import { readonlyTreeWithContent } from "./utils.js";
-import { cursorFromInsertable, SchemaFactory } from "../../../simple-tree/index.js";
-import { singleJsonCursor } from "../../json/index.js";
+import { SchemaFactory } from "../../../simple-tree/index.js";
 import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 import { brand } from "../../../util/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
@@ -53,7 +52,7 @@ describe("LazyNode", () => {
 
 			const { context, cursor } = readonlyTreeWithContent({
 				schema: ParentNode,
-				initialTree: cursorFromInsertable(ParentNode, { [EmptyKey]: "test" }),
+				initialTree: { [EmptyKey]: "test" },
 			});
 			cursor.enterNode(0);
 
@@ -75,7 +74,7 @@ describe("LazyNode", () => {
 			{
 				const { context, cursor } = readonlyTreeWithContent({
 					schema: JsonAsTree.JsonObject,
-					initialTree: singleJsonCursor({}),
+					initialTree: {},
 				});
 				cursor.enterNode(0);
 				const { anchor, anchorNode } = createAnchors(context, cursor);
@@ -91,7 +90,7 @@ describe("LazyNode", () => {
 			{
 				const { context, cursor } = readonlyTreeWithContent({
 					schema: JsonAsTree.JsonObject,
-					initialTree: singleJsonCursor({ x: 5 }),
+					initialTree: { x: 5 },
 				});
 				cursor.enterNode(0);
 				const { anchor, anchorNode } = createAnchors(context, cursor);
@@ -109,7 +108,7 @@ describe("LazyNode", () => {
 		it("leaf", () => {
 			const { context, cursor } = readonlyTreeWithContent({
 				schema: stringSchema,
-				initialTree: singleJsonCursor("Hello world"),
+				initialTree: "Hello world",
 			});
 			cursor.enterNode(0);
 

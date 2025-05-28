@@ -12,7 +12,11 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord, PostUpdateAction } from "./internalTypes.js";
 import type { RecordEntryTypes } from "./internalUtils.js";
 import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
-import type { AttendeeId, Attendee, Presence } from "./presence.js";
+import type {
+	AttendeeId,
+	Attendee,
+	PresenceWithNotifications as Presence,
+} from "./presence.js";
 import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
 import { handleFromDatastore } from "./stateDatastore.js";
 import type { AnyWorkspace, StatesWorkspace, StatesWorkspaceSchema } from "./types.js";

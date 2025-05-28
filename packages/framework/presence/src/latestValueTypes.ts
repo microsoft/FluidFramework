@@ -14,7 +14,7 @@ import type { Attendee } from "./presence.js";
  * Metadata for the value state.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMetadata {
 	/**
@@ -32,7 +32,7 @@ export interface LatestMetadata {
  * Represents a value that is accessed directly.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 // export type RawValueAccessor<_T> = "raw";
 export interface RawValueAccessor<T> {
@@ -109,7 +109,7 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
  * State of a specific attendee's value and its metadata.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>>
 	extends LatestData<T, TValueAccessor> {
