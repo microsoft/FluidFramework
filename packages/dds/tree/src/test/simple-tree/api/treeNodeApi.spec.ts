@@ -386,6 +386,18 @@ describe("treeNodeApi", () => {
 				assert.equal(TreeAlpha.child(tree, ""), undefined);
 				assert.equal(TreeAlpha.child(tree, "1"), "World");
 			});
+
+			it("Subclass properties are not considered", () => {
+				class TestArray extends schema.array("TestObject", schema.string) {
+					public readonly bar: string = "Bar";
+				}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(["Hello", "World"]);
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+			});
 		});
 	});
 
