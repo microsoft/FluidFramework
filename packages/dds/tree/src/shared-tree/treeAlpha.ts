@@ -60,6 +60,8 @@ import {
 	type FieldBatchEncodingContext,
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type LocalNodeIdentifier,
+	type FlexTreeNode,
+	type FlexTreeField,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
@@ -354,15 +356,18 @@ export interface TreeAlpha {
 	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
 
 	/**
-	 * Gets the children of the provided node, paired with their key under the node.
+	 * Gets the children of the provided node, paired with their property key under the node.
+	 *
+	 * @remarks
+	 * No guarantees are made regarding the order of the children in the returned array.
 	 *
 	 * @param node - The node whose children are being requested.
 	 *
 	 * @returns
-	 * An iterable of pairs of the form `[key, child]`, where `key` is the key under the node, and `child`
-	 * is the child node or leaf value under that key.
+	 * An array of pairs of the form `[key, child]`, where `key` is the property name of the node's field, and `child`
+	 * is the child node or leaf value under that field.
 	 */
-	children(node: TreeNode): Iterable<[string | number, TreeNode | TreeLeafValue]>;
+	children(node: TreeNode): [string | number, TreeNode | TreeLeafValue][];
 }
 
 /**
@@ -550,20 +555,31 @@ export const TreeAlpha: TreeAlpha = {
 		return undefined;
 	},
 
-	children: (node: TreeNode): Iterable<[string | number, TreeNode | TreeLeafValue]> => {
+	children: (node: TreeNode): [string | number, TreeNode | TreeLeafValue][] => {
 		const flexNode = getOrCreateInnerNode(node);
 		debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 
 		const schema = treeNodeApi.schema(node);
 
 		const result: [string | number, TreeNode | TreeLeafValue][] = [];
-		for (const field of flexNode.boxedIterator()) {
-			const propertyKey = getPropertyKeyFromStoredKey(schema, field.key);
-			const childNode = getTreeNodeForField(field);
-			if (childNode !== undefined) {
-				result.push([propertyKey, childNode]);
+
+		if (isArrayNodeSchema(schema)) {
+			const sequence = flexNode.getBoxed(EmptyKey);
+
+			for (const childFlexNode of sequence.boxedIterator()) {
+				const childTreeNode = getOrCreateNodeFromInnerNode(childFlexNode);
+				result.push([childFlexNode.parentField.index, childTreeNode]);
+			}
+		} else {
+			for (const childFlexField of flexNode.boxedIterator()) {
+				const propertyKey = getPropertyKeyFromStoredKey(schema, childFlexField.key);
+				const childTreeNode = getTreeNodeForField(childFlexField);
+				if (childTreeNode !== undefined) {
+					result.push([propertyKey, childTreeNode]);
+				}
 			}
 		}
+
 		return result;
 	},
 };
