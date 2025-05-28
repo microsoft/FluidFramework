@@ -108,11 +108,11 @@ export namespace InternalUtilityTypes {
 		private constructor();
 	}
 
-	/**
-	 * @system
-	 */
+	// /**
+	//  * @system
+	//  */
 	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
-	export type OpaqueJsonSerializable<T> = JsonSerializableBrand<T>;
+	// export type OpaqueJsonSerializable<T> = JsonSerializableBrand<T>;
 }
 
 /**

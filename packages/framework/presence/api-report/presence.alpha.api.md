@@ -140,8 +140,6 @@ export namespace InternalUtilityTypes {
     export type NotificationListeners<E> = {
         [P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
     };
-    // @system (undocumented)
-    export type OpaqueJsonSerializable<T> = JsonSerializableBrand<T>;
 }
 
 // @beta

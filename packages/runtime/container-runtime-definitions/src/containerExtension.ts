@@ -317,4 +317,12 @@ export declare class JsonDeserializedBrand<T> extends BrandedType<T> {
 /**
  * @internal
  */
-export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
+export declare class JsonSerializableBrand<T> extends BrandedType<T> {
+	private readonly EncodedValue: T;
+	private constructor();
+}
+
+/**
+ * @internal
+ */
+export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T> | JsonSerializableBrand<T>;

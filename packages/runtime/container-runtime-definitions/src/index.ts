@@ -15,6 +15,7 @@ export type {
 	ExtensionRuntimeProperties,
 	InboundExtensionMessage,
 	JsonDeserializedBrand,
+	JsonSerializableBrand,
 	OutboundExtensionMessage,
 	OpaqueJsonDeserialized,
 	RawInboundExtensionMessage,
