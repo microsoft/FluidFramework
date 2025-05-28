@@ -23,8 +23,8 @@ import type { FluidObjectId } from "../CommonInterfaces.js";
 import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
 import {
-	createDataObjectVisualizer,
-	createTreeDataObjectVisualizer,
+	visualizeDataObject,
+	visualizeTreeDataObject,
 	visualizeUnknownSharedObject,
 } from "./DefaultVisualizers.js";
 import {
@@ -253,11 +253,11 @@ export class DataVisualizerGraph
 			rootSharedObject = (visualizableObject as unknown as { readonly root: ISharedDirectory })
 				.root;
 			objectId = getKeyForFluidObject(rootSharedObject);
-			visualizationFunction = createDataObjectVisualizer(visualizableObject.id);
+			visualizationFunction = visualizeDataObject;
 		} else if (isTreeDataObj) {
 			rootSharedObject = visualizableObject.sharedTree as unknown as ISharedObject;
 			objectId = getKeyForFluidObject(rootSharedObject);
-			visualizationFunction = createTreeDataObjectVisualizer(visualizableObject.id);
+			visualizationFunction = visualizeTreeDataObject;
 		} else {
 			rootSharedObject = visualizableObject;
 			objectId = getKeyForFluidObject(visualizableObject);
