@@ -151,6 +151,22 @@ const defaultPolicies: IFluidDataStorePolicies = {
 };
 
 /**
+ * Set up the boxed pendingOpCount value.
+ */
+function initializePendingOpCount(): { value: number } {
+	let value = 0;
+	return {
+		get value() {
+			return value;
+		},
+		set value(newValue: number) {
+			assert(newValue >= 0, "pendingOpCount must be non-negative");
+			value = newValue;
+		},
+	};
+}
+
+/**
  * Base data store class
  * @legacy
  * @alpha
@@ -446,7 +462,7 @@ export class FluidDataStoreRuntime
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	private get isDirty(): IFluidDataStoreRuntimeExperimental["isDirty"] {
-		return this.pendingOpCount > 0;
+		return this.pendingOpCount.value > 0;
 	}
 
 	get deltaManager(): IDeltaManagerErased {
@@ -891,7 +907,7 @@ export class FluidDataStoreRuntime
 		const { envelope, local, messagesContent } = messageCollection;
 
 		if (local) {
-			this.pendingOpCount -= messagesContent.length;
+			this.pendingOpCount.value -= messagesContent.length;
 		}
 
 		try {
@@ -1240,28 +1256,10 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * @remarks Implementation detail for the {@link FluidDataStoreRuntime.pendingOpCount} property
+	 * Count of pending ops that have been submitted but not yet ack'd.
+	 * Used to compute {@link FluidDataStoreRuntime.isDirty}
 	 */
-	// eslint-disable-next-line unicorn/consistent-function-scoping -- It's an IIFE, only invoked once
-	private readonly _pendingOpCountState = (() => {
-		let value = 0;
-		return {
-			get() {
-				return value;
-			},
-			set(newValue: number) {
-				assert(newValue >= 0, "pendingOpCount must be non-negative");
-				value = newValue;
-			},
-		};
-	})();
-
-	private set pendingOpCount(value: number) {
-		this._pendingOpCountState.set(value);
-	}
-	private get pendingOpCount(): number {
-		return this._pendingOpCountState.get();
-	}
+	private readonly pendingOpCount: { value: number } = initializePendingOpCount();
 
 	private submit(
 		type: DataStoreMessageType,
@@ -1270,7 +1268,7 @@ export class FluidDataStoreRuntime
 	): void {
 		this.verifyNotClosed();
 		this.dataStoreContext.submitMessage(type, content, localOpMetadata);
-		++this.pendingOpCount;
+		++this.pendingOpCount.value;
 	}
 
 	/**
@@ -1292,7 +1290,7 @@ export class FluidDataStoreRuntime
 
 		// The op being resubmitted was not / will not be submitted, so decrement the count.
 		// The calls below may result in one or more ops submitted again, which will increment the count (or not if nothing needs to be submitted anymore).
-		--this.pendingOpCount;
+		--this.pendingOpCount.value;
 
 		switch (type) {
 			case DataStoreMessageType.ChannelOp: {
@@ -1330,7 +1328,7 @@ export class FluidDataStoreRuntime
 		this.verifyNotClosed();
 
 		// The op being rolled back was not/will not be submitted, so decrement the count.
-		--this.pendingOpCount;
+		--this.pendingOpCount.value;
 
 		switch (type) {
 			case DataStoreMessageType.ChannelOp: {
@@ -1353,7 +1351,7 @@ export class FluidDataStoreRuntime
 	public async applyStashedOp(content: any): Promise<unknown> {
 		// The op being applied may have been submitted in a previous session, so we increment the count here.
 		// Either the ack will arrive and be processed, or that previous session's connection will end, at which point the op will be resubmitted.
-		++this.pendingOpCount;
+		++this.pendingOpCount.value;
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const type = content?.type as DataStoreMessageType;
