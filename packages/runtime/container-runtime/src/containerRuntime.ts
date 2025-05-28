@@ -3419,7 +3419,6 @@ export class ContainerRuntime
 			// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
 			this.submitIdAllocationOpIfNeeded({ staged: false });
 			discardOrCommit();
-			//* Why isn't an error thrown from in discardOrCommit being propagated to caller of discard?
 
 			this.channelCollection.notifyStagingMode(false);
 		};
@@ -4716,7 +4715,7 @@ export class ContainerRuntime
 			}
 			case ContainerMessageType.GC:
 			case ContainerMessageType.DocumentSchemaChange: {
-				// FUTURE: These ops should probably just be requeued post-rollback
+				//* Instead of submitting these right away, put them in a "system queue" on CR class and include them on flush of the main batch
 				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
 			}
 			case ContainerMessageType.Attach: // Attach ops won't be generated in Staging Mode
