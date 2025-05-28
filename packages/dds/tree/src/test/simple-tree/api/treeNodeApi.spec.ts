@@ -399,6 +399,26 @@ describe("treeNodeApi", () => {
 				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
 			});
 		});
+
+		it("Throws if provided a disposed node", () => {
+			class TestObject extends schema.object("TestObject", {
+				foo: schema.string,
+			}) {}
+			const config = new TreeViewConfiguration({ schema: TestObject });
+			const view = getView(config);
+			view.initialize({
+				foo: "test",
+			});
+			const tree = view.root;
+
+			// Dispose the tree view
+			view.dispose();
+
+			assert.throws(
+				() => TreeAlpha.child(tree, "foo"),
+				(error: Error) => validateAssertionError(error, /TODO/),
+			);
+		});
 	});
 
 	// TODO: recursive schema tests
@@ -615,6 +635,26 @@ describe("treeNodeApi", () => {
 				assert.equal(children.size, 2);
 				assert.equal(children.get("bar"), undefined);
 			});
+		});
+
+		it("Throws if provided a disposed node", () => {
+			class TestObject extends schema.object("TestObject", {
+				foo: schema.string,
+			}) {}
+			const config = new TreeViewConfiguration({ schema: TestObject });
+			const view = getView(config);
+			view.initialize({
+				foo: "test",
+			});
+			const tree = view.root;
+
+			// Dispose the tree view
+			view.dispose();
+
+			assert.throws(
+				() => TreeAlpha.children(tree),
+				(error: Error) => validateAssertionError(error, /TODO/),
+			);
 		});
 	});
 
