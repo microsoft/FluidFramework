@@ -10,19 +10,27 @@ import { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import {
 	IChannel,
 	IFluidDataStoreRuntime,
+	type IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
+	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
+	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
+import {
+	DataStoreMessageType,
+	FluidDataStoreRuntime,
+	ISharedObjectRegistry,
+} from "../dataStoreRuntime.js";
 
 describe("FluidDataStoreRuntime Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;
@@ -186,6 +194,92 @@ describe("FluidDataStoreRuntime Tests", () => {
 		assert(
 			(await dataStoreRuntime.entryPoint?.get()) === myObj,
 			"entryPoint was not initialized",
+		);
+	});
+});
+
+type Patch<T, U> = Omit<T, keyof U> & U;
+
+//* ONLY
+//* ONLY
+//* ONLY
+describe.only("FluidDataStoreRuntime.isDirty tracking", () => {
+	let dataStoreContext: MockFluidDataStoreContext;
+	let sharedObjectRegistry: ISharedObjectRegistry;
+
+	function createRuntimeWithContainerDirtyFlag(
+		id: string,
+	): Patch<FluidDataStoreRuntime, IFluidDataStoreRuntimeExperimental> {
+		dataStoreContext = new MockFluidDataStoreContext(id);
+
+		sharedObjectRegistry = {
+			get(type: string) {
+				return {
+					type,
+					attributes: { type, snapshotFormatVersion: "0" },
+					create: (rt, channelId: string) =>
+						({
+							id: channelId,
+							type,
+							attributes: { type, snapshotFormatVersion: "0" },
+							clientDetails: {},
+						}) as unknown as IChannel,
+					load: async () => ({}) as unknown as IChannel,
+				};
+			},
+		};
+
+		return new FluidDataStoreRuntime(
+			dataStoreContext,
+			sharedObjectRegistry,
+			/* existing */ false,
+			async (rt) => rt,
+		) as unknown as Patch<FluidDataStoreRuntime, IFluidDataStoreRuntimeExperimental>;
+	}
+
+	// Dummy content
+	const content: IRuntimeMessagesContent = {
+		contents: {},
+		clientSequenceNumber: 1,
+		localOpMetadata: {},
+	};
+
+	it("reflects pending op count while ContainerRuntime is dirty", () => {
+		const runtime = createRuntimeWithContainerDirtyFlag("runtime1");
+
+		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
+
+		runtime.submitMessage(DataStoreMessageType.ChannelOp, {}, undefined);
+		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after local op");
+
+		// Non-local ops should not affect isDirty
+		const nonLocalOps: IRuntimeMessageCollection = {
+			envelope: {
+				type: "other", // allows us to test top-level logic of runtime.processMessages without actually providing a legit message
+			} satisfies Partial<ISequencedMessageEnvelope> as ISequencedMessageEnvelope,
+			local: false,
+			messagesContent: [content, content, content],
+		};
+		runtime.processMessages(nonLocalOps);
+		assert.strictEqual(
+			runtime.isDirty,
+			true,
+			"Runtime should still be dirty after non-local ops",
+		);
+
+		// Non-local ops should not affect isDirty
+		const localOp: IRuntimeMessageCollection = {
+			envelope: {
+				type: "other", // allows us to test top-level logic of runtime.processMessages without actually providing a legit message
+			} satisfies Partial<ISequencedMessageEnvelope> as ISequencedMessageEnvelope,
+			local: true,
+			messagesContent: [content], // Just one, corresponding to the op submitted above
+		};
+		runtime.processMessages(localOp);
+		assert.strictEqual(
+			runtime.isDirty,
+			false,
+			"Runtime should not be dirty after processing ack of local op",
 		);
 	});
 });
