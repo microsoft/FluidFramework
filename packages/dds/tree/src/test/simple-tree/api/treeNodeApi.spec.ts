@@ -260,73 +260,49 @@ describe("treeNodeApi", () => {
 	// TODO: tests for schema with shadowed properties
 	describe("child", () => {
 		describe("object", () => {
-			function getObjectSchema() {
-				return schema.objectAlpha(
+			it("Simple", () => {
+				class TestObject extends schema.object("TestObject", {
+					foo: schema.string,
+					bar: schema.optional(schema.string),
+					"0": schema.number,
+					"1": SchemaFactory.optional(schema.number),
+				}) {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
+					foo: "test",
+					0: 42,
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "foo"), "test");
+				assert.equal(TreeAlpha.child(tree, 0), 42);
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+				assert.equal(TreeAlpha.child(tree, 1), undefined);
+
+				assert.equal(TreeAlpha.child(tree, "baz"), undefined);
+				assert.equal(TreeAlpha.child(tree, 2), undefined);
+			});
+
+			it("Extra optional properties not considered", () => {
+				class TestObject extends schema.objectAlpha(
 					"TestObject",
 					{
-						foo: schema.optional(schema.string),
-						"0": SchemaFactory.optional(schema.number),
+						foo: schema.string,
 					},
 					{
 						allowUnknownOptionalFields: true,
 					},
-				);
-			}
-
-			function initializeObjectTree(
-				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getObjectSchema>>,
-			) {
-				class TestObject extends getObjectSchema() {}
+				) {}
 				const config = new TreeViewConfiguration({ schema: TestObject });
 				const view = getView(config);
-				view.initialize(input);
-
-				return { TestObject, tree: view.root };
-			}
-
-			it("key exists", () => {
-				const { tree } = initializeObjectTree({
+				view.initialize({
 					foo: "test",
-					0: 42,
-				});
-
-				const childFoo = TreeAlpha.child(tree, "foo");
-				assert.equal(childFoo, "test");
-
-				const child0 = TreeAlpha.child(tree, 0);
-				assert.equal(child0, 42);
-			});
-
-			it("key corresponds to optional, unset field", () => {
-				const { tree } = initializeObjectTree({});
-
-				const childFoo = TreeAlpha.child(tree, "foo");
-				assert.equal(childFoo, undefined);
-
-				const child0 = TreeAlpha.child(tree, 0);
-				assert.equal(child0, undefined);
-			});
-
-			it("key does not exist", () => {
-				const { tree } = initializeObjectTree({
-					foo: "test",
-					0: 42,
-				});
-
-				const childBar = TreeAlpha.child(tree, "bar");
-				assert.equal(childBar, undefined);
-
-				const child1 = TreeAlpha.child(tree, 1);
-				assert.equal(child1, undefined);
-			});
-
-			it("extra optional properties not considered", () => {
-				const { tree } = initializeObjectTree({
-					foo: "test",
-					0: 42,
 					bar: "extra", // extra optional property
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				} as any);
+				const tree = view.root;
 
 				const childBaz = TreeAlpha.child(tree, "bar");
 				assert.equal(childBaz, undefined);
