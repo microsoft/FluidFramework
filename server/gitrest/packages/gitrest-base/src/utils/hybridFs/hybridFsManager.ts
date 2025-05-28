@@ -4,15 +4,17 @@
  */
 
 import type { PathLike } from "fs";
+import fsPromises from "node:fs/promises";
+
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Queue } from "bullmq";
+
 import type {
 	IFileSystemManager,
 	IFileSystemManagerParams,
 	IFileSystemPromises,
 } from "../definitions";
-import fsPromises from "node:fs/promises";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { FilesystemError, SystemErrors } from "../fileSystemHelper";
-import { Queue } from "bullmq";
 
 export class HybridFsManager implements IFileSystemManager {
 	// isomorphic-git assumes promise-style APIs from the file system implementation

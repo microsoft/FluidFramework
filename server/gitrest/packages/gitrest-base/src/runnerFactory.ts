@@ -9,11 +9,15 @@ import {
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import * as services from "@fluidframework/server-services-shared";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	normalizePort,
 	IRedisClientConnectionManager,
 	RedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
+import { Queue, Worker } from "bullmq";
+import type Redis from "ioredis";
+import type { Cluster } from "ioredis";
 import { Provider } from "nconf";
 
 import { IGitrestResourcesCustomizations } from "./customizations";
@@ -30,10 +34,6 @@ import {
 	type IFileSystemManagerFactory,
 	type IFileSystemManagerParams,
 } from "./utils";
-import { Queue, Worker } from "bullmq";
-import type Redis from "ioredis";
-import type { Cluster } from "ioredis";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class GitrestResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
