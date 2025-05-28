@@ -7,7 +7,7 @@ import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter, Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IAudience,
 	ISelf,
@@ -25,8 +25,15 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
+	ContainerExtensionFactory,
+	ContainerExtensionId,
+	ExtensionHost,
+	ExtensionHostEvents,
+	ExtensionRuntimeProperties,
 	IContainerRuntime,
 	IContainerRuntimeEvents,
+	IContainerRuntimeInternal,
+	OutboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
@@ -34,6 +41,7 @@ import type {
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+	Listenable,
 } from "@fluidframework/core-interfaces";
 import type {
 	IErrorBase,
@@ -41,13 +49,17 @@ import type {
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	ISignalEnvelope,
+	JsonDeserialized,
+	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
+	Lazy,
 	LazyPromise,
 	PromiseCache,
 	delay,
+	fail,
 } from "@fluidframework/core-utils/internal";
 import type {
 	IClientDetails,
@@ -284,6 +296,16 @@ import {
 	summarizerClientType,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
+
+/**
+ * A {@link ContainerExtension}'s factory function as stored in extension map.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` required to allow typed factory to be assignable per ContainerExtension.processSignal
+type ExtensionEntry = ContainerExtensionFactory<unknown, any, unknown[]> extends new (
+	...args: any[]
+) => infer T
+	? T
+	: never;
 
 /**
  * Creates an error object to be thrown / passed to Container's close fn in case of an unknown message type.
@@ -675,6 +697,8 @@ export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: s
 	};
 };
 
+type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
+
 /**
  * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
  * @legacy
@@ -758,7 +782,7 @@ const defaultMaxConsecutiveReconnects = 7;
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements
-		IContainerRuntime,
+		IContainerRuntimeInternal,
 		// eslint-disable-next-line import/no-deprecated
 		IContainerRuntimeBaseExperimental,
 		IRuntime,
@@ -1153,10 +1177,10 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	/**
-	 * Do not call directly - use submitAddressesSignal
-	 */
-	private readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void;
+	private readonly submitSignalFn: (
+		content: UnsequencedSignalEnvelope,
+		targetClientId?: string,
+	) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
@@ -1271,7 +1295,7 @@ export class ContainerRuntime
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
 	private readonly offlineEnabled: boolean;
-	private flushTaskExists = false;
+	private flushScheduled = false;
 
 	private _connected: boolean;
 
@@ -1287,7 +1311,7 @@ export class ContainerRuntime
 
 	/**
 	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
+	 * until execution finishes. If an op is submitted, it will be marked as reentrant.
 	 *
 	 * @param callback - the callback to be invoked
 	 */
@@ -1311,7 +1335,7 @@ export class ContainerRuntime
 		return this._disposed;
 	}
 
-	private dirtyContainer: boolean;
+	private lastEmittedDirty: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
@@ -1410,6 +1434,8 @@ export class ContainerRuntime
 	 */
 	private readonly skipSafetyFlushDuringProcessStack: boolean;
 
+	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1503,7 +1529,35 @@ export class ContainerRuntime
 		this.submitSummaryFn =
 			submitSummaryFn ??
 			((summaryOp, refseq) => submitFn(MessageType.Summarize, summaryOp, false));
-		this.submitSignalFn = submitSignalFn;
+
+		const sequenceAndSubmitSignal = (
+			envelope: UnsequencedSignalEnvelope,
+			targetClientId?: string,
+		): void => {
+			if (targetClientId === undefined) {
+				this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope);
+			}
+			submitSignalFn(envelope, targetClientId);
+		};
+		this.submitSignalFn = (envelope: UnsequencedSignalEnvelope, targetClientId?: string) => {
+			if (envelope.address?.startsWith("/")) {
+				throw new Error("General path based addressing is not implemented");
+			}
+			sequenceAndSubmitSignal(envelope, targetClientId);
+		};
+		this.submitExtensionSignal = <TMessage extends TypedMessage>(
+			id: string,
+			addressChain: string[],
+			message: OutboundExtensionMessage<TMessage>,
+		): void => {
+			this.verifyNotClosed();
+			const envelope = createNewSignalEnvelope(
+				`/ext/${id}/${addressChain.join("/")}`,
+				message.type,
+				message.content,
+			);
+			sequenceAndSubmitSignal(envelope, message.targetClientId);
+		};
 
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
@@ -1537,8 +1591,8 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "Attached",
 				details: {
-					dirtyContainer: this.dirtyContainer,
-					hasPendingMessages: this.hasPendingMessages(),
+					lastEmittedDirty: this.lastEmittedDirty,
+					currentDirtyState: this.computeCurrentDirtyState(),
 				},
 			});
 		});
@@ -1762,9 +1816,6 @@ export class ContainerRuntime
 			// verifyNotClosed is called in FluidDataStoreContext, which is *the* expected caller.
 			const envelope1 = content as IEnvelope;
 			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
-			if (targetClientId === undefined) {
-				this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope2);
-			}
 			this.submitSignalFn(envelope2, targetClientId);
 		};
 
@@ -1902,9 +1953,9 @@ export class ContainerRuntime
 		this.closeSummarizerDelayMs =
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
-		this.dirtyContainer =
-			this.attachState !== AttachState.Attached || this.hasPendingMessages();
-		context.updateDirtyContainerState(this.dirtyContainer);
+		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
+		this.lastEmittedDirty = this.computeCurrentDirtyState();
+		context.updateDirtyContainerState(this.lastEmittedDirty);
 
 		if (!this.skipSafetyFlushDuringProcessStack) {
 			// Reference Sequence Number may have just changed, and it must be consistent across a batch,
@@ -2533,17 +2584,12 @@ export class ContainerRuntime
 			return;
 		}
 
-		// We need to temporary clear the dirty flags and disable
-		// dirty state change events to detect whether replaying ops
-		// has any effect.
-
-		// Save the old state, reset to false, disable event emit
-		const oldState = this.dirtyContainer;
-		this.dirtyContainer = false;
-
+		// Replaying is an internal operation and we don't want to generate noise while doing it.
+		// So temporarily disable dirty state change events, and save the old state.
+		// When we're done, we'll emit the event if the state changed.
+		const oldState = this.lastEmittedDirty;
 		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
 		this.emitDirtyDocumentEvent = false;
-		let newState: boolean;
 
 		try {
 			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
@@ -2551,18 +2597,18 @@ export class ContainerRuntime
 			// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
 			// before staging mode so we can simply say staged: false.
 			this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
+			this.scheduleFlush();
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
 		} finally {
-			// Save the new start and restore the old state, re-enable event emit
-			newState = this.dirtyContainer;
-			this.dirtyContainer = oldState;
+			// Restore the old state, re-enable event emit
+			this.lastEmittedDirty = oldState;
 			this.emitDirtyDocumentEvent = true;
 		}
 
-		// Officially transition from the old state to the new state.
-		this.updateDocumentDirtyState(newState);
+		// This will emit an event if the state changed relative to before replay
+		this.updateDocumentDirtyState();
 	}
 
 	/**
@@ -2933,6 +2979,9 @@ export class ContainerRuntime
 		runtimeBatch: boolean,
 		groupedBatch: boolean,
 	): void {
+		// This message could have been the last pending local (dirtyable) message, in which case we need to update dirty state to "saved"
+		this.updateDocumentDirtyState();
+
 		if (locationInBatch.batchStart) {
 			const firstMessage = messagesWithMetadata[0]?.message;
 			assert(firstMessage !== undefined, 0xa31 /* Batch must have at least one message */);
@@ -3048,12 +3097,6 @@ export class ContainerRuntime
 
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
-		// If there are no more pending messages after processing a local message,
-		// the document is no longer dirty.
-		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
-		}
-
 		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
 		// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
 		if (
@@ -3084,12 +3127,6 @@ export class ContainerRuntime
 		local: boolean,
 		savedOp?: boolean,
 	): void {
-		// If there are no more pending messages after processing a local message,
-		// the document is no longer dirty.
-		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
-		}
-
 		// Get the contents without the localOpMetadata because not all message types know about localOpMetadata.
 		const contents = messagesContent.map((c) => c.contents);
 
@@ -3176,9 +3213,15 @@ export class ContainerRuntime
 		}
 	}
 
-	public processSignal(message: ISignalMessage, local: boolean): void {
-		const envelope = message.content as ISignalEnvelope;
-		const transformed: IInboundSignalMessage = {
+	public processSignal(
+		message: ISignalMessage<{
+			type: string;
+			content: ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }>;
+		}>,
+		local: boolean,
+	): void {
+		const envelope = message.content;
+		const transformed = {
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
@@ -3194,22 +3237,53 @@ export class ContainerRuntime
 			);
 		}
 
-		if (envelope.address === undefined) {
+		const fullAddress = envelope.address;
+		if (fullAddress === undefined) {
 			// No address indicates a container signal message.
 			this.emit("signal", transformed, local);
 			return;
 		}
 
-		// Due to a mismatch between different layers in terms of
-		// what is the interface of passing signals, we need to adjust
-		// the signal envelope before sending it to the datastores to be processed
-		const envelope2: IEnvelope = {
-			address: envelope.address,
-			contents: transformed.content,
-		};
-		transformed.content = envelope2;
+		this.routeNonContainerSignal(fullAddress, transformed, local);
+	}
 
-		this.channelCollection.processSignal(transformed, local);
+	private routeNonContainerSignal(
+		address: string,
+		signalMessage: IInboundSignalMessage<{ type: string; content: JsonDeserialized<unknown> }>,
+		local: boolean,
+	): void {
+		// channelCollection signals are identified by no starting `/` in address.
+		if (!address.startsWith("/")) {
+			// Due to a mismatch between different layers in terms of
+			// what is the interface of passing signals, we need to adjust
+			// the signal envelope before sending it to the datastores to be processed
+			const envelope = {
+				address,
+				contents: signalMessage.content,
+			};
+			signalMessage.content = envelope;
+
+			this.channelCollection.processSignal(signalMessage, local);
+			return;
+		}
+
+		const addresses = address.split("/");
+		if (addresses.length > 2 && addresses[1] === "ext") {
+			const id = addresses[2] as ContainerExtensionId;
+			const entry = this.extensions.get(id);
+			if (entry !== undefined) {
+				entry.extension.processSignal?.(addresses.slice(3), signalMessage, local);
+				return;
+			}
+		}
+
+		assert(!local, 0xba0 /* No recipient found for local signal */);
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "SignalAddressNotFound",
+			...tagCodeArtifacts({
+				address,
+			}),
+		});
 	}
 
 	/**
@@ -3220,6 +3294,8 @@ export class ContainerRuntime
 	 * @param resubmitInfo - If defined, indicates this is a resubmission of a batch with the given Batch info needed for resubmit.
 	 */
 	private flush(resubmitInfo?: BatchResubmitInfo): void {
+		this.flushScheduled = false;
+
 		try {
 			assert(
 				!this.batchRunner.running,
@@ -3244,7 +3320,6 @@ export class ContainerRuntime
 	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
-		const checkpointDirtyState = this.dirtyContainer;
 		// eslint-disable-next-line import/no-deprecated
 		let stageControls: StageControlsExperimental | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
@@ -3266,10 +3341,7 @@ export class ContainerRuntime
 						checkpoint.rollback((message: LocalBatchMessage) =>
 							this.rollback(message.runtimeOp, message.localOpMetadata),
 						);
-						// reset the dirty state after rollback to what it was before to keep it consistent
-						if (this.dirtyContainer !== checkpointDirtyState) {
-							this.updateDocumentDirtyState(checkpointDirtyState);
-						}
+						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
 						stageControls = undefined;
 					} catch (error_) {
@@ -3365,9 +3437,7 @@ export class ContainerRuntime
 					);
 					this.rollback(runtimeOp, localOpMetadata);
 				});
-				if (this.attachState === AttachState.Attached) {
-					this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
-				}
+				this.updateDocumentDirtyState();
 			}),
 			commitChanges: (optionsParam) => {
 				const options = { ...defaultStagingCommitOptions, ...optionsParam };
@@ -3457,13 +3527,6 @@ export class ContainerRuntime
 		);
 	}
 
-	/**
-	 * Typically ops are batched and later flushed together, but in some cases we want to flush immediately.
-	 */
-	private currentlyBatching(): boolean {
-		return this.flushMode !== FlushMode.Immediate || this.batchRunner.running;
-	}
-
 	private readonly _quorum: IQuorumClients;
 	public getQuorum(): IQuorumClients {
 		return this._quorum;
@@ -3479,40 +3542,20 @@ export class ContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	public get isDirty(): boolean {
-		return this.dirtyContainer;
+		// Rather than recomputing the dirty state in this moment,
+		// just regurgitate the last emitted dirty state.
+		return this.lastEmittedDirty;
 	}
 
-	private isContainerMessageDirtyable({
-		type,
-		contents,
-	}: LocalContainerRuntimeMessage): boolean {
-		// Certain container runtime messages should not mark the container dirty such as the old built-in
-		// AgentScheduler and Garbage collector messages.
-		switch (type) {
-			case ContainerMessageType.Attach: {
-				const attachMessage = contents as InboundAttachMessage;
-				if (attachMessage.id === agentSchedulerId) {
-					return false;
-				}
-				break;
-			}
-			case ContainerMessageType.FluidDataStoreOp: {
-				const envelope = contents;
-				if (envelope.address === agentSchedulerId) {
-					return false;
-				}
-				break;
-			}
-			case ContainerMessageType.IdAllocation:
-			case ContainerMessageType.DocumentSchemaChange:
-			case ContainerMessageType.GC: {
-				return false;
-			}
-			default: {
-				break;
-			}
-		}
-		return true;
+	/**
+	 * Returns true if the container is dirty: not attached, or no pending user messages (could be some "non-dirtyable" ones though)
+	 */
+	private computeCurrentDirtyState(): boolean {
+		return (
+			this.attachState !== AttachState.Attached ||
+			this.pendingStateManager.hasPendingUserChanges() ||
+			this.outbox.containsUserChanges()
+		);
 	}
 
 	/**
@@ -3530,9 +3573,6 @@ export class ContainerRuntime
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
 		const envelope = createNewSignalEnvelope(undefined /* address */, type, content);
-		if (targetClientId === undefined) {
-			this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope);
-		}
 		this.submitSignalFn(envelope, targetClientId);
 	}
 
@@ -3550,9 +3590,7 @@ export class ContainerRuntime
 			this.emit("attached");
 		}
 
-		if (attachState === AttachState.Attached && !this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
-		}
+		this.updateDocumentDirtyState();
 		this.channelCollection.setAttachState(attachState);
 	}
 
@@ -4338,22 +4376,22 @@ export class ContainerRuntime
 		return this.pendingMessagesCount !== 0;
 	}
 
-	private updateDocumentDirtyState(dirty: boolean): void {
-		if (this.attachState === AttachState.Attached) {
-			// Other way is not true = see this.isContainerMessageDirtyable()
-			assert(
-				!dirty || this.hasPendingMessages(),
-				0x3d3 /* if doc is dirty, there has to be pending ops */,
-			);
-		} else {
-			assert(dirty, 0x3d2 /* Non-attached container is dirty */);
-		}
+	/**
+	 * Emit "dirty" or "saved" event based on the current dirty state of the document.
+	 * This must be called every time the states underlying the dirty state change.
+	 *
+	 * @privateRemarks - It's helpful to think of this as an event handler registered
+	 * for hypothetical "changed" events for PendingStateManager, Outbox, and Container Attach machinery.
+	 * But those events don't exist so we manually call this wherever we know those changes happen.
+	 */
+	private updateDocumentDirtyState(): void {
+		const dirty: boolean = this.computeCurrentDirtyState();
 
-		if (this.dirtyContainer === dirty) {
+		if (this.lastEmittedDirty === dirty) {
 			return;
 		}
 
-		this.dirtyContainer = dirty;
+		this.lastEmittedDirty = dirty;
 		if (this.emitDirtyDocumentEvent) {
 			this.emit(dirty ? "dirty" : "saved");
 		}
@@ -4491,13 +4529,7 @@ export class ContainerRuntime
 				this.outbox.submit(message);
 			}
 
-			// Note: Technically, the system "always" batches - if this case is true we'll just have a single-message batch.
-			const flushImmediatelyOnSubmit = !this.currentlyBatching();
-			if (flushImmediatelyOnSubmit) {
-				this.flush();
-			} else {
-				this.scheduleFlush();
-			}
+			this.scheduleFlush();
 		} catch (error) {
 			const dpe = DataProcessingError.wrapIfUnrecognized(error, "ContainerRuntime.submit", {
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -4506,31 +4538,28 @@ export class ContainerRuntime
 			throw dpe;
 		}
 
-		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
-			this.updateDocumentDirtyState(true);
-		}
+		this.updateDocumentDirtyState();
 	}
 
 	private scheduleFlush(): void {
-		if (this.flushTaskExists) {
+		if (this.flushScheduled) {
 			return;
 		}
-
-		this.flushTaskExists = true;
-
-		// TODO: hoist this out of the function scope to save unnecessary allocations
-		// eslint-disable-next-line unicorn/consistent-function-scoping -- Separate `flush` method already exists in outer scope
-		const flush = (): void => {
-			this.flushTaskExists = false;
-			this.flush();
-		};
+		this.flushScheduled = true;
 
 		switch (this.flushMode) {
+			case FlushMode.Immediate: {
+				// When in Immediate flush mode, flush immediately unless we are intentionally batching multiple ops (e.g. via orderSequentially)
+				if (!this.batchRunner.running) {
+					this.flush();
+				}
+				break;
+			}
 			case FlushMode.TurnBased: {
 				// When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
 				// batch at the end of the turn
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				Promise.resolve().then(flush);
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises -- Container will close if flush throws
+				Promise.resolve().then(() => this.flush());
 				break;
 			}
 
@@ -4539,16 +4568,12 @@ export class ContainerRuntime
 				// When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
 				// batch when all micro-tasks are complete.
 				// Compared to TurnBased, this flush mode will capture more ops into the same batch.
-				setTimeout(flush, 0);
+				setTimeout(() => this.flush(), 0);
 				break;
 			}
 
 			default: {
-				assert(
-					this.batchRunner.running,
-					0x587 /* Unreachable unless manually accumulating a batch */,
-				);
-				break;
+				fail(0x587 /* Unreachable unless manually accumulating a batch */);
 			}
 		}
 	}
@@ -4926,6 +4951,59 @@ export class ContainerRuntime
 		}
 	}
 
+	// While internal, ContainerRuntime has not been converted to use the new events support.
+	// Recreate the required events (new pattern) with injected, wrapper new emitter.
+	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
+	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
+		const eventEmitter = createEmitter<ExtensionHostEvents>();
+		this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
+		this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		return eventEmitter;
+	});
+
+	private readonly submitExtensionSignal: <TMessage extends TypedMessage>(
+		id: string,
+		addressChain: string[],
+		message: OutboundExtensionMessage<TMessage>,
+	) => void;
+
+	public acquireExtension<
+		T,
+		TRuntimeProperties extends ExtensionRuntimeProperties,
+		TUseContext extends unknown[],
+	>(
+		id: ContainerExtensionId,
+		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
+		...useContext: TUseContext
+	): T {
+		let entry = this.extensions.get(id);
+		if (entry === undefined) {
+			const runtime = {
+				isConnected: () => this.connected,
+				getClientId: () => this.clientId,
+				events: this.lazyEventsForExtensions.value,
+				logger: this.baseLogger,
+				submitAddressedSignal: (
+					addressChain: string[],
+					message: OutboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
+				) => {
+					this.submitExtensionSignal(id, addressChain, message);
+				},
+				getQuorum: this.getQuorum.bind(this),
+				getAudience: this.getAudience.bind(this),
+			} satisfies ExtensionHost<TRuntimeProperties>;
+			entry = new factory(runtime, ...useContext);
+			this.extensions.set(id, entry);
+		} else {
+			assert(
+				entry instanceof factory,
+				0xba1 /* Extension entry is not of the expected type */,
+			);
+			entry.extension.onNewUse(...useContext);
+		}
+		return entry.interface as T;
+	}
+
 	private get groupedBatchingEnabled(): boolean {
 		return this.sessionSchema.opGroupingEnabled === true;
 	}
@@ -4935,11 +5013,44 @@ export function createNewSignalEnvelope(
 	address: string | undefined,
 	type: string,
 	content: unknown,
-): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
-	const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
+): UnsequencedSignalEnvelope {
+	const newEnvelope: UnsequencedSignalEnvelope = {
 		address,
 		contents: { type, content },
 	};
 
 	return newEnvelope;
+}
+
+export function isContainerMessageDirtyable({
+	type,
+	contents,
+}: LocalContainerRuntimeMessage): boolean {
+	// Certain container runtime messages should not mark the container dirty such as the old built-in
+	// AgentScheduler and Garbage collector messages.
+	switch (type) {
+		case ContainerMessageType.Attach: {
+			const attachMessage = contents as InboundAttachMessage;
+			if (attachMessage.id === agentSchedulerId) {
+				return false;
+			}
+			break;
+		}
+		case ContainerMessageType.FluidDataStoreOp: {
+			const envelope = contents;
+			if (envelope.address === agentSchedulerId) {
+				return false;
+			}
+			break;
+		}
+		case ContainerMessageType.IdAllocation:
+		case ContainerMessageType.DocumentSchemaChange:
+		case ContainerMessageType.GC: {
+			return false;
+		}
+		default: {
+			break;
+		}
+	}
+	return true;
 }

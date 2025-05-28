@@ -81,7 +81,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerKey, setVisualTree, fluidObjectId, messageRelay]);
+	}, [containerKey, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
 		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;

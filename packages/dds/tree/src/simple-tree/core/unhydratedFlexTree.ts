@@ -402,11 +402,22 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 	 */
 	protected edit(edit: (mapTrees: ExclusiveMapTree[]) => void | ExclusiveMapTree[]): void {
 		const oldMapTrees = this.parent.mapTree.fields.get(this.key) ?? [];
+
+		// Clear parents for all old map trees.
+		for (const tree of oldMapTrees) {
+			tryUnhydratedFlexTreeNode(tree)?.adoptBy(undefined);
+		}
+
 		const newMapTrees = edit(oldMapTrees) ?? oldMapTrees;
 		if (newMapTrees.length > 0) {
 			this.parent.mapTree.fields.set(this.key, newMapTrees);
 		} else {
 			this.parent.mapTree.fields.delete(this.key);
+		}
+
+		// Set parents for all new map trees.
+		for (const [index, tree] of newMapTrees.entries()) {
+			tryUnhydratedFlexTreeNode(tree)?.adoptBy(this, index);
 		}
 
 		this.onEdit?.();
@@ -434,16 +445,6 @@ class EagerMapTreeOptionalField
 {
 	public readonly editor = {
 		set: (newContent: ExclusiveMapTree | undefined): void => {
-			// If the new content is a UnhydratedFlexTreeNode, it needs to have its parent pointer updated
-			if (newContent !== undefined) {
-				nodeCache.get(newContent)?.adoptBy(this, 0);
-			}
-			// If the old content is a UnhydratedFlexTreeNode, it needs to have its parent pointer unset
-			const oldContent = this.mapTrees[0];
-			if (oldContent !== undefined) {
-				nodeCache.get(oldContent)?.adoptBy(undefined);
-			}
-
 			this.edit((mapTrees) => {
 				if (newContent !== undefined) {
 					mapTrees[0] = newContent;
@@ -484,10 +485,8 @@ export class UnhydratedTreeSequenceField
 {
 	public readonly editor: UnhydratedTreeSequenceFieldEditBuilder = {
 		insert: (index, newContent): void => {
-			for (let i = 0; i < newContent.length; i++) {
-				const c = newContent[i];
+			for (const c of newContent) {
 				assert(c !== undefined, 0xa0a /* Unexpected sparse array content */);
-				nodeCache.get(c)?.adoptBy(this, index + i);
 			}
 			this.edit((mapTrees) => {
 				if (newContent.length < 1000) {
@@ -503,7 +502,6 @@ export class UnhydratedTreeSequenceField
 			for (let i = index; i < index + count; i++) {
 				const c = this.mapTrees[i];
 				assert(c !== undefined, 0xa0b /* Unexpected sparse array */);
-				nodeCache.get(c)?.adoptBy(undefined);
 			}
 			let removed: ExclusiveMapTree[] | undefined;
 			this.edit((mapTrees) => {
@@ -603,7 +601,7 @@ function getOrCreateField(
 		return new UnhydratedFlexTreeField(parent.simpleContext, schema, key, parent, onEdit);
 	}
 
-	return fail("unsupported field kind");
+	return fail(0xb9d /* unsupported field kind */);
 }
 
 // #endregion Caching and unboxing utilities
