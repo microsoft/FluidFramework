@@ -16,11 +16,17 @@
 			// change version to version.
 			"tagName": "@system",
 			"syntaxKind": "modifier"
+		},
+		{
+			// This tag indicates API is an input type, and thus can be made more general as a non breaking change.
+			"tagName": "@input",
+			"syntaxKind": "modifier"
 		}
 	],
 
 	"supportForTags": {
 		"@legacy": true,
-		"@system": true
+		"@system": true,
+		"@input": true
 	}
 }
