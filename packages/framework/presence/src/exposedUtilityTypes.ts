@@ -17,7 +17,7 @@ import { asDeeplyReadonly } from "./internalUtils.js";
  * Collection of utility types that are not intended to be used/imported
  * directly outside of this package.
  *
- * @alpha
+ * @beta
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -82,6 +82,7 @@ export namespace InternalUtilityTypes {
 		: never;
 
 	/**
+	 * @internal
 	 * @system
 	 */
 	declare class JsonDeserializedBrand<T> extends BrandedType<T> {
@@ -98,11 +99,12 @@ export namespace InternalUtilityTypes {
 	// export type OpaqueJsonDeserialized<T extends JsonDeserialized<U>, U> = JsonDeserializedBrand<T, U>;
 
 	/**
+	 * @internal
 	 * @system
 	 */
 	export declare class JsonSerializableBrand<T> extends BrandedType<T> {
-		private readonly JsonSerializable: JsonSerializable<T>;
-		private constructor();
+		// private readonly JsonSerializable: JsonSerializable<T>;
+		// private constructor();
 	}
 
 	/**

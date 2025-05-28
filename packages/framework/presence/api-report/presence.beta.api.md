@@ -115,6 +115,25 @@ export namespace InternalTypes {
     }
 }
 
+// @beta @system
+export namespace InternalUtilityTypes {
+    // @system
+    export type IsNotificationListener<Event> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, true, false> : false;
+    // @system
+    export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
+    // @system
+    export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
+    // @system
+    export type NotificationListeners<E> = {
+        [P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
+    };
+    // @system (undocumented)
+    export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
+    // @system (undocumented)
+    export type OpaqueJsonSerializable<T> = JsonSerializableBrand<T>;
+        {};
+}
+
 // @beta
 export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 

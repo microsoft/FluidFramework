@@ -128,18 +128,12 @@ export namespace InternalTypes {
     }
 }
 
-// @alpha @system
+// @beta @system
 export namespace InternalUtilityTypes {
     // @system
     export type IsNotificationListener<Event> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, true, false> : false;
-    // @system (undocumented)
-    export class JsonDeserializedBrand<T> extends BrandedType<T> {
-    }
     // @system
     export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
-    // @system (undocumented)
-    export class JsonSerializableBrand<T> extends BrandedType<T> {
-    }
     // @system
     export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
     // @system
