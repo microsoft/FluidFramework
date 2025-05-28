@@ -36,7 +36,7 @@ import {
 	TestTreeProviderLite,
 	validateUsageError,
 } from "../../utils.js";
-import { getViewForForkedBranch, hydrate } from "../utils.js";
+import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
 import {
@@ -166,39 +166,70 @@ describe("treeNodeApi", () => {
 		});
 	});
 
-	it("key", () => {
-		class Child extends schema.object("Child", {
-			x: Point,
-			y: schema.optional(Point, { key: "stable-y" }),
-		}) {}
-		const Root = schema.array(Child);
-		const config = new TreeViewConfiguration({ schema: Root });
-		const view = getView(config);
-		view.initialize([
-			{ x: {}, y: undefined },
-			{ x: {}, y: {} },
-		]);
-		const { root } = view;
-		assert.equal(Tree.key(root), rootFieldKey);
-		assert.equal(Tree.key(root[0]), 0);
-		assert.equal(Tree.key(root[0].x), "x");
-		assert.equal(Tree.key(root[1]), 1);
-		assert.equal(Tree.key(root[1].x), "x");
-		assert(root[1].y !== undefined);
-		assert.equal(Tree.key(root[1].y), "y");
-	});
+	describeHydration("upward path", (init) => {
+		for (const [name, keyApi] of [
+			["key", (n: TreeNode): string | undefined | number => Tree.key(n)],
+			["key2", (n: TreeNode): string | undefined | number => TreeAlpha.key2(n)],
+		] as const) {
+			it(name, () => {
+				class Child extends schema.object("Child", {
+					x: Point,
+					y: schema.optional(Point, { key: "stable-y" }),
+				}) {}
+				class Root extends schema.array("Root", Child) {}
+				const root = init(Root, [
+					{ x: {}, y: undefined },
+					{ x: {}, y: {} },
+				]);
 
-	it("parent", () => {
-		class Child extends schema.object("Child", { x: Point }) {}
-		const Root = schema.array(Child);
-		const config = new TreeViewConfiguration({ schema: Root });
-		const view = getView(config);
-		view.initialize([{ x: {} }, { x: {} }]);
-		const { root } = view;
-		assert.equal(Tree.parent(root), undefined);
-		assert.equal(Tree.parent(root[0]), root);
-		assert.equal(Tree.parent(root[1]), root);
-		assert.equal(Tree.parent(root[1].x), root[1]);
+				// This is this how we handle root keys.
+				// Seems odd for detached fields other than root to have `rootFieldKey` key though.
+				// Exactly which key is given in this case is undocumented, it could change in the future.
+				// TreeAlpha.key2 just gives undefined, which is documented.
+				const rootKey = name === "key" ? rootFieldKey : undefined;
+
+				assert.equal(keyApi(root), rootKey);
+				assert.equal(keyApi(root[0]), 0);
+				assert.equal(keyApi(root[0].x), "x");
+				assert.equal(keyApi(root[1]), 1);
+				assert.equal(keyApi(root[1].x), "x");
+				assert(root[1].y !== undefined);
+				assert.equal(keyApi(root[1].y), "y");
+
+				const added = new Child({ x: {}, y: {} });
+
+				assert.equal(keyApi(added), rootKey);
+
+				// Check index is updated after insert.
+				root.insertAtStart(added);
+				assert.equal(keyApi(root[2]), 2);
+				assert.equal(keyApi(added), 0);
+
+				// Check index is updated after removal.
+				root.removeRange(0, 1);
+				assert.equal(keyApi(root[1]), 1);
+				assert.equal(keyApi(added), rootKey);
+			});
+		}
+
+		it("parent", () => {
+			class Child extends schema.object("Child", { x: Point }) {}
+			class Root extends schema.array("Root", Child) {}
+			const root = init(Root, [{ x: {} }, { x: {} }]);
+
+			assert.equal(Tree.parent(root), undefined);
+			assert.equal(Tree.parent(root[0]), root);
+			assert.equal(Tree.parent(root[1]), root);
+			assert.equal(Tree.parent(root[1].x), root[1]);
+
+			const added = new Child({ x: {} });
+
+			assert.equal(Tree.parent(added), undefined);
+			root.insertAtStart(added);
+			assert.equal(Tree.parent(added), root);
+			root.removeRange(0, 1);
+			assert.equal(Tree.parent(added), undefined);
+		});
 	});
 
 	it("treeStatus", () => {
@@ -216,29 +247,13 @@ describe("treeNodeApi", () => {
 		assert.equal(Tree.status(root), TreeStatus.InDocument);
 		assert.equal(Tree.status(child), TreeStatus.Removed);
 		assert.equal(Tree.status(newChild), TreeStatus.InDocument);
-		// TODO: test Deleted status.
-	});
 
-	it("key2", () => {
-		class Child extends schema.object("Child", {
-			x: Point,
-			y: schema.optional(Point, { key: "stable-y" }),
-		}) {}
-		const Root = schema.array(Child);
-		const config = new TreeViewConfiguration({ schema: Root });
-		const view = getView(config);
-		view.initialize([
-			{ x: {}, y: undefined },
-			{ x: {}, y: {} },
-		]);
-		const { root } = view;
-		assert.equal(TreeAlpha.key2(root), undefined);
-		assert.equal(TreeAlpha.key2(root[0]), 0);
-		assert.equal(TreeAlpha.key2(root[0].x), "x");
-		assert.equal(TreeAlpha.key2(root[1]), 1);
-		assert.equal(TreeAlpha.key2(root[1].x), "x");
-		assert(root[1].y !== undefined);
-		assert.equal(TreeAlpha.key2(root[1].y), "y");
+		view.dispose();
+		assert.equal(Tree.status(root), TreeStatus.Deleted);
+		assert.equal(Tree.status(child), TreeStatus.Deleted);
+		assert.equal(Tree.status(newChild), TreeStatus.Deleted);
+
+		// TODO: test Deleted status when caused by removal from the tree + expiring from removed status.
 	});
 
 	// TODO: recursive schema tests

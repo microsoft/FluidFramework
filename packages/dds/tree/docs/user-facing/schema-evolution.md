@@ -123,7 +123,7 @@ For example, the application authors may have foreseen "shape type" as a point o
 In this scenario, `Old` would be able to continue collaboration, albeit with a degraded experience.
 Whether or not a particular schema change breaks scenarios where two clients on different code versions collaborate is not something that `SharedTree` can determine.
 In lieu of this, `SharedTree` exposes several APIs which give applications visibility into differences between the view schema and stored schema.
-Application authors should use these APIs to develop a policy which makes sense for their ecosystem around the limits of cross-version compatibility they want to support.
+Application authors should use these APIs to develop a policy which makes sense for their ecosystem around the limits of cross-client compatibility they want to support.
 
 ## Compatibility APIs
 
