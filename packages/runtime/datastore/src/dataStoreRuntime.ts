@@ -1290,6 +1290,8 @@ export class FluidDataStoreRuntime
 	): void {
 		this.verifyNotClosed();
 
+		// The op being resubmitted was not / will not be submitted, so decrement the count.
+		// The calls below may result in one or more ops submitted again, which will increment the count (or not if nothing needs to be submitted anymore).
 		--this.pendingOpCount;
 
 		switch (type) {
@@ -1327,6 +1329,9 @@ export class FluidDataStoreRuntime
 	): void {
 		this.verifyNotClosed();
 
+		// The op being rolled back was not/will not be submitted, so decrement the count.
+		--this.pendingOpCount;
+
 		switch (type) {
 			case DataStoreMessageType.ChannelOp: {
 				// For Operations, find the right channel and trigger resubmission on it.
@@ -1334,7 +1339,6 @@ export class FluidDataStoreRuntime
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
 
-				--this.pendingOpCount;
 				channelContext.rollback(envelope.contents, localOpMetadata);
 				break;
 			}
@@ -1347,7 +1351,10 @@ export class FluidDataStoreRuntime
 	// TODO: use something other than `any` here
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async applyStashedOp(content: any): Promise<unknown> {
+		// The op being applied may have been submitted in a previous session, so we increment the count here.
+		// Either the ack will arrive and be processed, or that previous session's connection will end, at which point the op will be resubmitted.
 		++this.pendingOpCount;
+
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const type = content?.type as DataStoreMessageType;
 		switch (type) {

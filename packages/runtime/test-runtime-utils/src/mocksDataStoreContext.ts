@@ -113,7 +113,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	}
 
 	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
-		throw new Error("Method not implemented.");
+		// No-op for mock context
 	}
 
 	public submitSignal(type: string, content: any): void {
