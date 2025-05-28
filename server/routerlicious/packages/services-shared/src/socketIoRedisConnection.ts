@@ -4,6 +4,7 @@
  */
 
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+
 import {
 	ISocketIoRedisConnection,
 	ISocketIoRedisSubscriptionConnection,

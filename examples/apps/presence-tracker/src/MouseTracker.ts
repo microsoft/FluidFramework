@@ -10,8 +10,8 @@ import type {
 	Attendee,
 	StatesWorkspace,
 	Latest,
-} from "@fluidframework/presence/alpha";
-import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
+import { AttendeeStatus, StateFactory } from "@fluidframework/presence/beta";
 
 import { IMousePositionValidator, type IMousePosition } from "./types.js";
 

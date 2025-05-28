@@ -36,7 +36,7 @@ import { brandIVM } from "./valueManager.js";
  * Collection of latest known values for a specific client.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapClientData<
 	T,
@@ -60,7 +60,7 @@ export interface LatestMapClientData<
  * State of a single item value, its key, and its metadata.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapItemUpdatedClientData<
 	T,
@@ -74,7 +74,7 @@ export interface LatestMapItemUpdatedClientData<
  * Identifier and metadata for a removed item.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapItemRemovedClientData<K extends string | number> {
 	attendee: Attendee;
@@ -84,7 +84,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 
 /**
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapEvents<
 	T,
@@ -145,7 +145,7 @@ export interface LatestMapEvents<
  * Map of local client's values. Modifications are transmitted to all other connected clients.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface StateMap<K extends string | number, V> {
 	/**
@@ -344,7 +344,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  * @remarks Create using {@link StateFactory.latestMap} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMap<
 	T,
@@ -393,7 +393,7 @@ export interface LatestMap<
  * @remarks Create using {@link StateFactory.latestMap} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<
 	T,
@@ -561,7 +561,7 @@ class LatestMapValueManagerImpl<
 /**
  * Arguments that are passed to the {@link StateFactory.latestMap} function.
  *
- * @alpha
+ * @beta
  */
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
 	/**
@@ -586,7 +586,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 /**
  * Factory for creating a {@link LatestMapRaw} State object with no arguments.
  *
- * @alpha
+ * @beta
  */
 export function latestMap<
 	T,
@@ -601,7 +601,7 @@ export function latestMap<
 /**
  * Factory for creating a {@link LatestMapRaw} State object.
  *
- * @alpha
+ * @beta
  */
 export function latestMap<
 	T,

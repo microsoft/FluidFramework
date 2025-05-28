@@ -4,7 +4,11 @@
  */
 
 import { Notifications } from "@fluidframework/presence/alpha";
-import type { Attendee, Presence } from "@fluidframework/presence/alpha";
+import type {
+	Attendee,
+	Presence,
+	PresenceWithNotifications,
+} from "@fluidframework/presence/alpha";
 
 import type { MouseTracker } from "./MouseTracker.js";
 import type { IMousePosition } from "./types.js";
@@ -18,7 +22,9 @@ export function initializeReactions(presence: Presence, mouseTracker: MouseTrack
 	// Create a notifications workspace to send reactions-related notifications. This workspace will be created if it
 	// doesn't exist. We also create a NotificationsManager. You can also
 	// add presence objects to the workspace later.
-	const notificationsWorkspace = presence.notifications.getWorkspace(
+	const notificationsWorkspace = (
+		presence as PresenceWithNotifications
+	).notifications.getWorkspace(
 		// A unique key identifying this workspace.
 		"name:reactions",
 		{

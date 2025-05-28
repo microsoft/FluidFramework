@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import fsPromises from "fs/promises";
 import type { MakeDirectoryOptions } from "fs";
+import fsPromises from "fs/promises";
+
 import * as git from "@fluidframework/gitresources";
 
 export enum Constants {

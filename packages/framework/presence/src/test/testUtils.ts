@@ -12,15 +12,13 @@ import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/inter
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
+import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
+import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
+import type { AttendeeId } from "../presence.js";
+import type { ClientConnectionId} from "../baseTypes.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import type {
-	ClientConnectionId,
-	AttendeeId,
-	StateSchemaValidator,
-} from "@fluidframework/presence/alpha";
-import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 /**
  * Use to compile-time assert types of two variables are identical.
@@ -39,15 +37,51 @@ export function createInstanceOf<T>(): T {
 	return undefined as T;
 }
 
+type SpecificAttendeeId<T extends string> = string extends T
+	? never
+	: Exclude<T & AttendeeId, never>;
+
 /**
- * Generates expected join signal for a client that was initialized while connected.
+ * Forms {@link AttendeeId} for a specific attendee
  */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
+export function createSpecificAttendeeId<const T extends string>(
+	id: T,
+): SpecificAttendeeId<T> {
+	return id as SpecificAttendeeId<T>;
+}
+
+/**
+ * Mock {@link AttendeeId}.
+ */
+export const attendeeId1 = createSpecificAttendeeId("attendeeId-1");
+/**
+ * Mock {@link AttendeeId}.
+ */
+export const attendeeId2 = createSpecificAttendeeId("attendeeId-2");
+/**
+ * Mock {@link ClientConnectionId}.
+ *
+ * @remarks
+ * This is an {@link AttendeeId} as a workaround to TypeScript expectation
+ * that specific properties overriding an indexed property still conform
+ * to the index signature. This makes cases where it is used as
+ * `clientConnectionId` key in {@link SystemWorkspaceDatastore} also
+ * satisfy {@link GeneralDatastoreMessageContent}'s `AttendeeId` key.
+ *
+ * The only known alternative is to use
+ * `satisfies SystemWorkspaceDatastore as SystemWorkspaceDatastore`
+ * wherever "system:presence" is defined.
+ */
+export const connectionId2 = createSpecificAttendeeId("client2");
+
+/**
+ * Generates expected inbound join signal for a client that was initialized while connected.
+ */
 export function generateBasicClientJoin(
 	fixedTime: number,
 	{
-		attendeeId = "attendeeId-2",
-		clientConnectionId = "client2",
+		attendeeId = attendeeId2,
+		clientConnectionId = connectionId2,
 		updateProviders = ["client0", "client1", "client3"],
 		connectionOrder = 0,
 		averageLatency = 0,
@@ -58,12 +92,9 @@ export function generateBasicClientJoin(
 		updateProviders?: string[];
 		connectionOrder?: number;
 		averageLatency?: number;
-		priorClientToSessionId?: Record<
-			ClientConnectionId,
-			{ rev: number; timestamp: number; value: string }
-		>;
+		priorClientToSessionId?: SystemWorkspaceDatastore["clientToSessionId"];
 	},
-) {
+): InboundClientJoinMessage {
 	return {
 		type: "Pres:ClientJoin",
 		content: {
@@ -75,7 +106,7 @@ export function generateBasicClientJoin(
 						[clientConnectionId]: {
 							"rev": connectionOrder,
 							"timestamp": fixedTime,
-							"value": attendeeId,
+							"value": attendeeId as AttendeeId,
 						},
 					},
 				},
@@ -84,7 +115,7 @@ export function generateBasicClientJoin(
 			updateProviders,
 		},
 		clientId: clientConnectionId,
-	} satisfies IExtensionMessage<"Pres:ClientJoin">;
+	};
 }
 
 /**
@@ -119,12 +150,14 @@ export function prepareConnectedPresence(
 		quorumClientIds.length = 3;
 	}
 
-	const expectedClientJoin = generateBasicClientJoin(clock.now, {
+	const expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
 		attendeeId,
 		clientConnectionId,
 		updateProviders: quorumClientIds,
 	});
-	runtime.signalsExpected.push([expectedClientJoin.type, expectedClientJoin.content]);
+	delete expectedClientJoin.clientId;
+	runtime.signalsExpected.push([expectedClientJoin]);
 
 	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
 
@@ -140,7 +173,7 @@ export function prepareConnectedPresence(
 	clock.tick(10);
 
 	// Return the join signal
-	presence.processSignal("", { ...expectedClientJoin, clientId: clientConnectionId }, true);
+	presence.processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
 
 	return presence;
 }

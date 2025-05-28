@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import type { Abortable } from "node:events";
 import { type Mode, type ObjectEncodingOptions, type OpenMode, type PathLike } from "node:fs";
 import fsPromises from "node:fs/promises";
 import type { Stream } from "node:stream";
-import type { Abortable } from "node:events";
+
 import sizeof from "object-sizeof";
+
 import { type IFileSystemPromises } from "./definitions";
 import { filepathToString, FilesystemError, SystemErrors } from "./fileSystemHelper";
 
