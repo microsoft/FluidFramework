@@ -402,7 +402,6 @@ describe("treeNodeApi", () => {
 	});
 
 	// TODO: recursive schema tests
-	// TODO: tests for schema with shadowed properties
 	describe("children", () => {
 		describe("object", () => {
 			function getObjectSchema() {
@@ -513,7 +512,7 @@ describe("treeNodeApi", () => {
 
 		describe("map", () => {
 			function getMapSchema() {
-				return schema.map("TestObject", schema.string);
+				return schema.map("TestMap", schema.string);
 			}
 
 			function initializeMapTree(
@@ -547,11 +546,29 @@ describe("treeNodeApi", () => {
 				assert.equal(children.get("foo"), "Hello");
 				assert.equal(children.get("bar"), "World");
 			});
+
+			it("Subclass properties are not included", () => {
+				class TestMap extends schema.map("TestMap", schema.string) {
+					public readonly bar: string = "Bar"; // Subclass property
+				}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize({
+					foo: "test",
+				});
+				const tree = view.root;
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 1);
+				assert.equal(children.get("bar"), undefined);
+			});
 		});
 
 		describe("array", () => {
 			function getArraySchema() {
-				return schema.array("TestObject", schema.string);
+				return schema.array("TestArray", schema.string);
 			}
 
 			function initializeArrayTree(
@@ -581,6 +598,22 @@ describe("treeNodeApi", () => {
 				assert.equal(children.size, 2);
 				assert.equal(children.get(0), "Hello");
 				assert.equal(children.get(1), "World");
+			});
+
+			it("Subclass properties are not included", () => {
+				class TestArray extends schema.array("TestArray", schema.string) {
+					public readonly bar: string = "Bar"; // Subclass property
+				}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(["Hello", "World"]);
+				const tree = view.root;
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 2);
+				assert.equal(children.get("bar"), undefined);
 			});
 		});
 	});
