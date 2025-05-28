@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
@@ -81,7 +80,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		connected: [],
 		disconnected: [],
 	};
-	private readonly supportedFeatures = new Set(["submit_signals_v2"]);
+
 	private isSupportedEvent(event: string): event is keyof typeof this.listeners {
 		return event in this.listeners;
 	}
@@ -145,14 +144,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		);
 	}
 
-	public setTargetSignalSupport(supported: boolean): void {
-		if (supported) {
-			this.supportedFeatures.add("submit_signals_v2");
-		} else {
-			this.supportedFeatures.delete("submit_signals_v2");
-		}
-	}
-
 	public removeMember(clientId: ClientConnectionId): void {
 		const client = this.audience.getMember(clientId);
 		assert(client !== undefined, `Attempting to remove unknown connection: ${clientId}`);
@@ -194,15 +185,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		const expected = this.signalsExpected.shift();
 		assert.deepStrictEqual(args, expected, "Unexpected signal");
 	};
-
-	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return {
-			supportedFeatures: this.supportedFeatures,
-			// arbitrary generation number and package version for testing
-			generation: 1,
-			pkgVersion: "2.33.0",
-		};
-	}
 
 	// #endregion
 }

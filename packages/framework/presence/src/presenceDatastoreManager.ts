@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject, IEmitter } from "@fluidframework/core-interfaces/internal";
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -147,7 +146,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private refreshBroadcastRequested = false;
 	private readonly timer = new TimerManager();
 	private readonly workspaces = new Map<string, AnyWorkspaceEntry<StatesWorkspaceSchema>>();
-	private readonly supportsTargetedSignals: boolean;
 
 	public constructor(
 		private readonly attendeeId: AttendeeId,
@@ -158,16 +156,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly presence: Presence,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: AnyWorkspaceEntry<StatesWorkspaceSchema>,
+		private readonly targetedSignalSupport: boolean,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
 		this.workspaces.set("system:presence", systemWorkspace);
-		// Determine if the runtime supports targeted signals
-		const maybeLayerCompatDetails = this.runtime as FluidObject<ILayerCompatDetails>;
-		this.supportsTargetedSignals =
-			maybeLayerCompatDetails.ILayerCompatDetails?.supportedFeatures.has(
-				"submit_signals_v2",
-			) ?? false;
 	}
 
 	public joinSession(clientId: ClientConnectionId): void {
@@ -396,7 +389,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 			// If the message requests an acknowledgement, we will send a targeted acknowledgement message back to just the requestor.
 			if (message.content.acknowledgementId !== undefined) {
-				assert(this.supportsTargetedSignals, "Targeted signals not supported");
+				assert(this.targetedSignalSupport, "Targeted signals not supported");
 				this.runtime.submitSignal({
 					type: acknowledgementMessageType,
 					content: { id: message.content.acknowledgementId },
