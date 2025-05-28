@@ -353,20 +353,10 @@ export interface PresenceWithNotifications extends Presence {
 }
 
 // @beta @sealed
-export interface ProxiedValueAccessor<T> {
-    // (undocumented)
-    accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
-    // (undocumented)
-    kind: "proxied";
-}
+export type ProxiedValueAccessor<_T> = "proxied";
 
 // @beta @sealed
-export interface RawValueAccessor<T> {
-    // (undocumented)
-    accessor: DeepReadonly<JsonDeserialized<T>>;
-    // (undocumented)
-    kind: "raw";
-}
+export type RawValueAccessor<_T> = "raw";
 
 // @beta
 export const StateFactory: {
