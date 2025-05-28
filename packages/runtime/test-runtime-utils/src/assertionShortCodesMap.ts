@@ -1808,7 +1808,7 @@ export const shortCodeMap = {
 	"0xb82": "Staged batches expected to have runtimeOp defined",
 	"0xb83": "Invalid delta manager",
 	"0xb84": "Staged batches should not have been submitted",
-	"0xb85": "Pending state mismatch, ack came in but next message is staged",
+	"0xb85": "Pending state mismatch, ack came in but next pending message is staged",
 	"0xb86": "Staged batch was followed by non-staged batch",
 	"0xb87": "viableOp is only undefined for empty batches",
 	"0xb88": "viableOp is only undefined for empty batches",

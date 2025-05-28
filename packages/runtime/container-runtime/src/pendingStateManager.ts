@@ -678,7 +678,7 @@ export class PendingStateManager implements IDisposable {
 		);
 		assert(
 			!pendingMessage.batchInfo.staged,
-			0xb85 /* Pending state mismatch, ack came in but next message is staged */,
+			0xb85 /* Pending state mismatch, ack came in but next pending message is staged */,
 		);
 
 		// If this batch became empty on resubmit, batch.messages will be empty (but keyMessage is always set)

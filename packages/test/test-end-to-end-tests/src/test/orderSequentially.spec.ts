@@ -5,17 +5,18 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, TestDataObjectType } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	itExpects,
+	TestDataObjectType,
+} from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type { SharedDirectory, ISharedMap, IValueChanged } from "@fluidframework/map/internal";
-import type {
-	AliasResult,
-	IContainerRuntimeBaseExperimental,
-} from "@fluidframework/runtime-definitions/internal";
+import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISharedString,
 	SequenceDeltaEvent,
@@ -27,8 +28,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	TestFluidObject,
-	TestFluidObjectFactory,
 } from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
@@ -173,27 +172,38 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 	//* ONLY
 	//* ONLY
 	//* ONLY
-	it.only("Rollback should throw if <PICK SOME UNSUPPORTED CASE THAT'S TESTABLE> op is rolled back", async () => {
-		let aliasP: Promise<AliasResult>;
-		const detachedDataStore = await containerRuntime.createDataStore(TestDataObjectType);
-		try {
-			containerRuntime.orderSequentially(() => {
-				// This should generate an attach op, but rollback isn't supported for attach ops.
-				aliasP = detachedDataStore.trySetAlias("alias");
-				throw new Error(errorMessage); // Will trigger rollback which will throw a different error
-			});
-		} catch (err) {
-			error = err as Error;
-		}
+	itExpects.only(
+		"Rollback should throw if unsupported op (e.g. rejoin) is rolled back",
+		[
+			{
+				category: "error",
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "RollbackError: Can't rollback rejoin",
+			},
+		],
+		async () => {
+			const detachedDataStore = await containerRuntime.createDataStore(TestDataObjectType);
+			try {
+				containerRuntime.orderSequentially(() => {
+					// This should generate a rejoin op, but rollback isn't supported for rejoin ops.
+					(containerRuntime as unknown as { submit(msg: { type: string }): void }).submit({
+						type: "rejoin",
+					});
+					throw new Error(errorMessage); // Will trigger rollback which will throw a different error
+				});
+			} catch (err) {
+				error = err as Error;
+			}
 
-		assert.notEqual(error, undefined, "No error");
-		assert.equal(
-			error?.message,
-			"RollbackError: Can't rollback alias",
-			"Unexpected error message",
-		);
-		assert.equal(changedEventData.length, 0);
-	});
+			assert.notEqual(error, undefined, "No error");
+			assert.equal(
+				error?.message,
+				"RollbackError: Can't rollback rejoin",
+				"Unexpected error message",
+			);
+			assert.equal(changedEventData.length, 0);
+		},
+	);
 
 	it("Should rollback complex edits on multiple DDS types", () => {
 		sharedString.insertText(0, "abcde");
