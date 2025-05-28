@@ -15,7 +15,7 @@ import {
 	type ValueSchema,
 } from "../core/index.js";
 import { FieldKinds, isTreeValue, valueSchemaAllows } from "../feature-libraries/index.js";
-import { brand, isReadonlyArray, hasSome, hasSingle } from "../util/index.js";
+import { brand, isReadonlyArray, hasSingle } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import {
@@ -384,7 +384,7 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexCont
 	const context = getUnhydratedContext(schema).flexContext;
 
 	for (const [key, fieldInfo] of schema.flexKeyMap) {
-		const value = checkFieldProperty(data, key);
+		const value = getFieldProperty(data, key);
 
 		let children: UnhydratedFlexTreeNode[] | ContextualFieldProvider;
 		if (value === undefined) {
@@ -414,20 +414,27 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexCont
 
 /**
  * Check {@link FactoryContentObject} for a property which could be store a field.
+ *
+ * If the property exists, return its value, otherwise returns undefined.
  * @remarks
  * The currently policy is to only consider own properties.
  * See {@link InsertableObjectFromSchemaRecord} for where this policy is documented in the public API.
  *
- * Explicit undefined members are considered to exist, as long as they are own properties.
+ * Explicit undefined values are treated the same as missing properties to allow explicit use of undefined with defaulted identifiers.
+ *
+ * @privateRemarks
+ * If we ever want to have an optional field which defaults to something other than undefined, this will need changes.
+ * It would need to adjusting the handling of explicit undefined in contexts where undefined is allowed, and a default provider also exists.
  */
-function checkFieldProperty(
+function getFieldProperty(
 	data: FactoryContentObject,
 	key: string | symbol,
-): data is {
-	readonly [P in string]: InsertableContent | undefined;
-} {
+): InsertableContent | undefined {
 	// This policy only allows own properties.
-	return Object.hasOwnProperty.call(data, key);
+	if (Object.hasOwnProperty.call(data, key)) {
+		return (data as Record<string, InsertableContent>)[key as string];
+	}
+	return undefined;
 }
 
 function getType(
@@ -442,10 +449,6 @@ function getType(
 			)}.`,
 		);
 	}
-	assert(
-		hasSome(possibleTypes),
-		0x84e /* data is incompatible with all types allowed by the schema */,
-	);
 	if (!hasSingle(possibleTypes)) {
 		throw new UsageError(
 			`The provided data is compatible with more than one type allowed by the schema.
@@ -584,11 +587,7 @@ function shallowCompatibilityTest(
 	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of schema.fields) {
 		if (fieldSchema.requiresValue) {
-			if (checkFieldProperty(data, fieldKey)) {
-				if (data[fieldKey] === undefined) {
-					return CompatibilityLevel.None;
-				}
-			} else {
+			if (getFieldProperty(data, fieldKey) === undefined) {
 				return CompatibilityLevel.None;
 			}
 		}
