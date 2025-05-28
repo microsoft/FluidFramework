@@ -17,7 +17,11 @@ import {
 	generateBatchId,
 	localBatchToOutboundBatch,
 } from "../../opLifecycle/index.js";
-import type { IBatchManagerOptions, LocalBatchMessage } from "../../opLifecycle/index.js";
+import {
+	addBatchMetadata,
+	type IBatchManagerOptions,
+	type LocalBatchMessage,
+} from "../../opLifecycle/index.js";
 
 // Make a mock op with distinguishable contents
 function op(data: string = "Some Data"): LocalContainerRuntimeMessage {
@@ -68,7 +72,8 @@ describe("BatchManager", () => {
 				/* reentrant */ false,
 			);
 
-			const batch = batchManager.popBatch(batchId);
+			const batch = batchManager.popBatch();
+			addBatchMetadata(batch, batchId);
 			assert.deepEqual(
 				batch.messages.map((m) => m.metadata as IBatchMetadata),
 				[
@@ -82,7 +87,8 @@ describe("BatchManager", () => {
 				{ runtimeOp: op(), referenceSequenceNumber: 0 },
 				/* reentrant */ false,
 			);
-			const singleOpBatch = batchManager.popBatch(batchId);
+			const singleOpBatch = batchManager.popBatch();
+			addBatchMetadata(singleOpBatch, batchId);
 			assert.deepEqual(
 				singleOpBatch.messages.map((m) => m.metadata as IBatchMetadata),
 				[
