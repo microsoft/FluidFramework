@@ -423,7 +423,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 			} else {
 				const node = unbrandIVM(brandedIVM);
 				for (const [attendeeId, value] of objectEntries(remoteAllKnownState)) {
-					const client = this.presence.attendees.getAttendee(attendeeId);
+					const client = this.runtime.presence.attendees.getAttendee(attendeeId);
 					postUpdateActions.push(...node.update(client, received, value));
 				}
 			}
