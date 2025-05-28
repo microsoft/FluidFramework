@@ -142,7 +142,7 @@ export namespace InternalUtilityTypes {
     };
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestEvents<T, TRemoteAccessor>>;
@@ -154,7 +154,7 @@ export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedVal
     readonly presence: Presence;
 }
 
-// @alpha
+// @beta
 export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T> & {
     validator: StateSchemaValidator<T>;
 }): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
@@ -175,7 +175,7 @@ export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> ex
     attendee: Attendee;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     // (undocumented)
     metadata: LatestMetadata;
@@ -204,7 +204,7 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
     readonly presence: Presence;
 }
 
-// @alpha
+// @beta
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys> & {
     validator: StateSchemaValidator<T>;
 }): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
@@ -264,7 +264,7 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number, TV
     key: K;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<T, Keys, RawValueAccessor<T>>;
 
 // @beta @sealed
@@ -352,7 +352,7 @@ export interface PresenceWithNotifications extends Presence {
     };
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface ProxiedValueAccessor<T> {
     // (undocumented)
     accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
@@ -389,12 +389,12 @@ export interface StateMap<K extends string | number, V> {
     readonly size: number;
 }
 
-// @alpha
+// @beta
 export type StateSchemaValidator<T> = (
 unvalidatedData: unknown,
 metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
 
-// @alpha
+// @beta
 export interface StateSchemaValidatorMetadata {
     key?: string | number;
 }
@@ -424,7 +424,7 @@ export interface StatesWorkspaceSchema {
     [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
 // @beta

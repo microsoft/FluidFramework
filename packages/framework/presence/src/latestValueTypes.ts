@@ -44,7 +44,7 @@ export interface RawValueAccessor<T> {
  * Represents a value that is accessed via a function call, which may result in no value.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 // export type ProxiedValueAccessor<_T> = "proxied";
 export interface ProxiedValueAccessor<T> {
@@ -56,12 +56,12 @@ export interface ProxiedValueAccessor<T> {
  * Union of possible accessor types for a value.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
 /**
- * @alpha
+ * @beta
  */
 export type AccessorNonDist<T> = [T] extends [ProxiedValueAccessor<T>]
 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
@@ -70,9 +70,8 @@ export type AccessorNonDist<T> = [T] extends [ProxiedValueAccessor<T>]
 		: never;
 
 /**
- * @alpha
+ * @beta
  */
-
 export type Accessor<T> = T extends ProxiedValueAccessor<infer U>
 	? () => DeepReadonly<JsonDeserialized<U>> | undefined
 	: T extends RawValueAccessor<infer U>
@@ -86,7 +85,7 @@ export type Accessor<T> = T extends ProxiedValueAccessor<infer U>
  * Set `value` to just `TValueAccessor` with above `*ValueAccessor` changes to break tsc.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 	value: TValueAccessor extends ProxiedValueAccessor<T>
@@ -125,7 +124,7 @@ export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>>
  *
  * @returns The validated data, or `undefined` if the data is invalid.
  *
- * @alpha
+ * @beta
  */
 export type StateSchemaValidator<T> = (
 	/**
@@ -141,7 +140,7 @@ export type StateSchemaValidator<T> = (
 /**
  * Optional metadata that is passed to a {@link StateSchemaValidator}.
  *
- * @alpha
+ * @beta
  *
  * TODO: What else needs to be in the metadata?
  */

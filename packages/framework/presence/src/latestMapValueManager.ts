@@ -375,7 +375,7 @@ export interface LatestMap<
  * @remarks Create using {@link StateFactory.latestMap} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<
 	T,
@@ -555,7 +555,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 /**
  * Factory for creating a {@link LatestMap} State object.
  *
- * @alpha
+ * @beta
  */
 export function latestMap<
 	T,

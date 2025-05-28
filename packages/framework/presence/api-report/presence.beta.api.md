@@ -115,6 +115,23 @@ export namespace InternalTypes {
     }
 }
 
+// @beta @sealed
+export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestEvents<T, TRemoteAccessor>>;
+    getRemote(attendee: Attendee): LatestData<T, TRemoteAccessor>;
+    getRemotes(): IterableIterator<LatestClientData<T, TRemoteAccessor>>;
+    getStateAttendees(): Attendee[];
+    get local(): DeepReadonly<JsonDeserialized<T>>;
+    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+    readonly presence: Presence;
+}
+
+// @beta
+export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T> & {
+    validator: StateSchemaValidator<T>;
+}): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
 // @beta
 export function latest<T extends object | null, Key extends string = string>(args: Omit<LatestArguments<T>, "validator">): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
@@ -129,6 +146,14 @@ export interface LatestArguments<T extends object | null> {
 export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> extends LatestData<T, TValueAccessor> {
     // (undocumented)
     attendee: Attendee;
+}
+
+// @beta @sealed
+export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
+    // (undocumented)
+    metadata: LatestMetadata;
+    // (undocumented)
+    value: TValueAccessor extends ProxiedValueAccessor<T> ? () => DeepReadonly<JsonDeserialized<T>> | undefined : TValueAccessor extends RawValueAccessor<T> ? DeepReadonly<JsonDeserialized<T>> : never;
 }
 
 // @beta @sealed (undocumented)
@@ -151,6 +176,11 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
     readonly local: StateMap<Keys, T>;
     readonly presence: Presence;
 }
+
+// @beta
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys> & {
+    validator: StateSchemaValidator<T>;
+}): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
 // @beta
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
@@ -208,6 +238,9 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number, TV
 }
 
 // @beta @sealed
+export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<T, Keys, RawValueAccessor<T>>;
+
+// @beta @sealed
 export interface LatestMetadata {
     revision: number;
     timestamp: number;
@@ -238,6 +271,14 @@ export interface PresenceEvents {
 }
 
 // @beta @sealed
+export interface ProxiedValueAccessor<T> {
+    // (undocumented)
+    accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
+    // (undocumented)
+    kind: "proxied";
+}
+
+// @beta @sealed
 export interface RawValueAccessor<T> {
     // (undocumented)
     accessor: DeepReadonly<JsonDeserialized<T>>;
@@ -264,6 +305,16 @@ export interface StateMap<K extends string | number, V> {
     readonly size: number;
 }
 
+// @beta
+export type StateSchemaValidator<T> = (
+unvalidatedData: unknown,
+metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
+
+// @beta
+export interface StateSchemaValidatorMetadata {
+    key?: string | number;
+}
+
 // @beta @sealed
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
@@ -288,6 +339,9 @@ export interface StatesWorkspaceSchema {
     // (undocumented)
     [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
+
+// @beta @sealed
+export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
 // @beta
 export type WorkspaceAddress = `${string}:${string}`;

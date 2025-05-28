@@ -69,7 +69,7 @@ export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
  * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface Latest<
 	T,
@@ -234,7 +234,7 @@ export interface LatestArguments<T extends object | null> {
 /**
  * Factory for creating a {@link Latest} State object.
  *
- * @alpha
+ * @beta
  */
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T> & { validator: StateSchemaValidator<T> },
