@@ -388,6 +388,9 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.container.off("dirty", this.dirtyHandler);
 	}
 
+	/**
+	 * {@inheritDoc IRootDataObject.uploadBlob}
+	 */
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,

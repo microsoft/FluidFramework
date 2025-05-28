@@ -121,7 +121,7 @@ export interface IRootDataObject {
 	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
 
 	/**
-	 * Export uploadBlob to outer interface
+	 * {@inheritDoc IFluidDataStoreRuntime.uploadBlob}
 	 */
 	uploadBlob(
 		blob: ArrayBufferLike,
