@@ -374,9 +374,21 @@ export class UnhydratedFlexTreeField
 	 * This function ensures that the parent MapTree has no empty fields (which is an invariant of `MapTree`) after the mutation.
 	 */
 	protected edit(
-		edit: (field: UnhydratedFlexTreeNode[]) => void | UnhydratedFlexTreeNode[],
+		edit: (mapTrees: UnhydratedFlexTreeNode[]) => void | UnhydratedFlexTreeNode[],
 	): void {
+		// Clear parents for all old map trees.
+		for (const tree of this.children) {
+			tree.adoptBy(undefined);
+		}
+
 		this.lazyChildren = edit(this.children) ?? this.children;
+		this.parent?.emitChangedEvent(this.key);
+
+		// Set parents for all new map trees.
+		for (const [index, tree] of this.children.entries()) {
+			tree.adoptBy(this, index);
+		}
+
 		this.parent?.emitChangedEvent(this.key);
 	}
 
@@ -396,14 +408,9 @@ export class EagerMapTreeOptionalField
 {
 	public readonly editor = {
 		set: (newContent: FlexibleNodeContent | undefined): void => {
-			// If the new content is a UnhydratedFlexTreeNode, it needs to have its parent pointer updated
 			if (newContent !== undefined) {
 				assert(newContent instanceof UnhydratedFlexTreeNode, "Expected unhydrated node");
-				newContent.adoptBy(this, 0);
 			}
-			// If the old content is a UnhydratedFlexTreeNode, it needs to have its parent pointer unset
-			const oldContent = this.children[0];
-			oldContent?.adoptBy(undefined);
 
 			this.edit((mapTrees) => {
 				if (newContent !== undefined) {
@@ -446,11 +453,8 @@ export class UnhydratedTreeSequenceField
 {
 	public readonly editor = {
 		insert: (index, newContent): void => {
-			for (let i = 0; i < newContent.length; i++) {
-				const c = newContent[i];
+			for (const c of newContent) {
 				assert(c !== undefined, 0xa0a /* Unexpected sparse array content */);
-				c.adoptBy(this, index + i);
-				// TODO: don't the indexes of existing children after the insert (or remove) need to be updated?
 			}
 			this.edit((mapTrees) => {
 				if (newContent.length < 1000) {
@@ -466,7 +470,6 @@ export class UnhydratedTreeSequenceField
 			for (let i = index; i < index + count; i++) {
 				const c = this.children[i];
 				assert(c !== undefined, 0xa0b /* Unexpected sparse array */);
-				c.adoptBy(undefined);
 			}
 			let removed: UnhydratedFlexTreeNode[] | undefined;
 			this.edit((mapTrees) => {
@@ -511,7 +514,7 @@ export function createField(
 			// TODO: this seems to used by unknown optional fields. They should probably use "optional" not "Forbidden" schema.
 			return new UnhydratedFlexTreeField(...args);
 		default:
-			return fail("unsupported field kind");
+			return fail(0xb9d /* unsupported field kind */);
 	}
 }
 

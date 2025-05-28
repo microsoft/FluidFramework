@@ -202,7 +202,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	 * Additionally if the detached field's content is deleted, the field will become out of schema if it is required: it must not be used after that point.
 	 */
 	public detachedField(key: DetachedField, schema: FieldKindIdentifier): FlexTreeField {
-		assert(this.disposed === false, "use after dispose");
+		assert(this.disposed === false, 0xb9c /* use after dispose */);
 
 		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor, key);

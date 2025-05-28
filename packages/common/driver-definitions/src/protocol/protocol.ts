@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { TypedMessage } from "@fluidframework/core-interfaces/internal";
+
 /**
  * @legacy
  * @alpha
@@ -341,16 +343,16 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
  * @legacy
  * @alpha
  */
-export interface ISignalMessageBase {
+export interface ISignalMessageBase<TMessage extends TypedMessage = TypedMessage> {
 	/**
 	 * Signal content
 	 */
-	content: unknown;
+	content: TMessage["content"];
 
 	/**
 	 * Signal type
 	 */
-	type?: string;
+	type?: TMessage["type"];
 
 	/**
 	 * Counts the number of signals sent by the sending client.
@@ -374,7 +376,8 @@ export interface ISignalMessageBase {
  * @legacy
  * @alpha
  */
-export interface ISignalMessage extends ISignalMessageBase {
+export interface ISignalMessage<TMessage extends TypedMessage = TypedMessage>
+	extends ISignalMessageBase<TMessage> {
 	/**
 	 * The client ID that submitted the message.
 	 * For server generated messages the clientId will be null.
@@ -387,7 +390,8 @@ export interface ISignalMessage extends ISignalMessageBase {
  * Interface for signals sent by clients to the server.
  * @internal
  */
-export type ISentSignalMessage = ISignalMessageBase;
+export type ISentSignalMessage<TMessage extends TypedMessage = TypedMessage> =
+	ISignalMessageBase<TMessage>;
 
 /**
  * @legacy

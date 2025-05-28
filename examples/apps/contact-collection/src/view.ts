@@ -40,7 +40,7 @@ const profilePictures = [
  * @param contact - the IContact to render details for
  * @param div - The div to render into
  */
-export function renderContact(contact: IContact, div: HTMLDivElement) {
+export function renderContact(contact: IContact, div: HTMLDivElement): void {
 	const contactDiv = makeContactDiv(contact);
 	const profilePic = document.createElement("div");
 	profilePic.style.fontSize = "50px";
@@ -60,12 +60,12 @@ export function renderContactCollection(
 	contactCollection: IContactCollection,
 	getContactUrl: (contactId: string) => string,
 	div: HTMLDivElement,
-) {
+): void {
 	const contactListDiv = document.createElement("div");
 
 	// Render the contact list.  Since we'll want to re-render every time the contacts change, we'll
 	// use a function that we can register to listen to the event.
-	const renderContactList = () => {
+	const renderContactList = (): void => {
 		contactListDiv.innerHTML = "";
 		const contacts = contactCollection.getContacts();
 		for (const contact of contacts) {

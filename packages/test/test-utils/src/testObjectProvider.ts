@@ -146,7 +146,7 @@ export interface ITestObjectProvider {
 	 *
 	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
 	 * @param loaderProps - Optional loader properties
-	 * @param forceUseCreateVersion - For Cross-Version compat testing, create a loader based on the create version
+	 * @param forceUseCreateVersion - For Cross-Client compat testing, create a loader based on the create version
 	 */
 	createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
@@ -263,7 +263,7 @@ export interface ITestContainerConfig {
 	/** Whether this runtime should be instantiated using a mixed-in attributor class */
 	enableAttribution?: boolean;
 
-	/** For Cross-Version compat testing, load using the create version (e.g. use this to get a Summarizer on the create version) */
+	/** For Cross-Client compat testing, load using the create version (e.g. use this to get a Summarizer on the create version) */
 	forceUseCreateVersion?: true;
 
 	/** Loader options for the loader used to create containers */
