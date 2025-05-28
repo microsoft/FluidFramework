@@ -4715,7 +4715,6 @@ export class ContainerRuntime
 			}
 			case ContainerMessageType.GC:
 			case ContainerMessageType.DocumentSchemaChange: {
-				//* Instead of submitting these right away, put them in a "system queue" on CR class and include them on flush of the main batch
 				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
 			}
 			case ContainerMessageType.Attach: // Attach ops won't be generated in Staging Mode

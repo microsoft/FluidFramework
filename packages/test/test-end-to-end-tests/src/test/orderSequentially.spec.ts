@@ -169,10 +169,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		);
 	});
 
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	itExpects.only(
+	itExpects(
 		"Rollback should throw if unsupported op (e.g. rejoin) is rolled back",
 		[
 			{
