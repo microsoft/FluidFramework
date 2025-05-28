@@ -476,7 +476,7 @@ export function generateCompatibilityTestCases(
  *
  * @param typeData - The type to test.
  * @param brokenData - Expected broken compatibilities, if any.
- * @returns - string array representing generated compatibility test cases
+ * @returns Lines of TypeScript code that make up the compatibility test.
  */
 export function generateCompatibilityTestCase(
 	typeData: TypeData,
