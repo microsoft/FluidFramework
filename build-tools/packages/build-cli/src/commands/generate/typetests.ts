@@ -528,7 +528,7 @@ export function generateCompatibilityTestCase(
 			);
 		}
 		if (typeData.tags.has("input")) {
-			// If the type was `@sealed` then only the code declaring it is allowed to read from it.
+			// If the type was `@input` then only the code declaring it is allowed to read from it.
 			// This means that as long as the old value of the type is assignable to the new (current) version, it is allowed.
 			// That case is covered above: skip this case where new type is assigned to the old.
 		} else {
