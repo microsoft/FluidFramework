@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { default as Axios, RawAxiosRequestHeaders } from "axios";
-import nconf from "nconf";
-import * as uuid from "uuid";
 import {
 	BaseTelemetryProperties,
 	getLumberBaseProperties,
 	Lumberjack,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
+import { default as Axios, RawAxiosRequestHeaders } from "axios";
+import nconf from "nconf";
+import * as uuid from "uuid";
+
 import { BaseGitRestTelemetryProperties } from "./utils";
 
 export interface IExternalStorageManager {
@@ -35,6 +36,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
 			"Accept": "application/json",
 			"Content-Type": "application/json",
 			"x-correlation-id":
+				// eslint-disable-next-line import/namespace
 				getGlobalTelemetryContext().getProperties().correlationId ?? uuid.v4(),
 		};
 	}

@@ -6,13 +6,7 @@
 import { globals } from "../jest.config.cjs";
 
 describe("Bubblebench", () => {
-	/**
-	 * Bubble bench is currently at a state where it fails to run in a normal state with
-	 * 2 clients due to the inability of the front end application to observe and react
-	 * accordingly to backpressure on the server. Once the backpressure feature has been
-	 * added to sharedtree and implemented in bubble bench, these tests should pass.
-	 */
-	describe.skip("SimpleTree", () => {
+	describe("SimpleTree", () => {
 		beforeAll(async () => {
 			// Wait for the page to load first before running any tests
 			// so this time isn't attributed to the first test
