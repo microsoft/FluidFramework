@@ -731,9 +731,19 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 				}
 
-				consumer.assign(assignments);
+				if (consumer.rebalanceProtocol() === "COOPERATIVE") {
+					Lumberjack.warning("cooperative rebalance reassign: ", assignments);
+					consumer.incrementalAssign(assignments);
+				} else {
+					Lumberjack.warning("cooperative rebalance revoke: ", assignments);
+					consumer.assign(assignments);
+				}
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
-				consumer.unassign();
+				if (consumer.rebalanceProtocol() === "COOPERATIVE") {
+					consumer.incrementalUnassign(assignments);
+				} else {
+					consumer.unassign();
+				}
 			}
 		} catch (ex) {
 			if (consumer.isConnected()) {
