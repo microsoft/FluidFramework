@@ -240,3 +240,4 @@ extends:
         targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
         artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
         publishLocation: 'pipeline'
+    shouldShip: ${{ or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}
