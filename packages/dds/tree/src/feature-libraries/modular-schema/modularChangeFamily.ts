@@ -2807,11 +2807,11 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 			const nextDetachId =
 				newDetachId !== undefined
-					? offsetChangeAtomId(newDetachId, remainingCount)
+					? offsetChangeAtomId(newDetachId, countToProcess)
 					: undefined;
 
 			this.rebaseOverDetach(
-				offsetChangeAtomId(baseDetachId, remainingCount),
+				offsetChangeAtomId(baseDetachId, countToProcess),
 				remainingCount,
 				nextDetachId,
 				nodeChange,
