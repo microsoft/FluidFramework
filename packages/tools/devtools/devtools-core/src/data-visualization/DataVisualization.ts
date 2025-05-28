@@ -19,7 +19,7 @@ import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/intern
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
 
-import type { FluidObjectId } from "../CommonInterfaces.js";
+import type { FluidObjectKey } from "../CommonInterfaces.js";
 import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
 import {
@@ -142,11 +142,11 @@ export class DataVisualizerGraph
 	implements IDisposable
 {
 	/**
-	 * Map of registered {@link VisualizerNode}s, keyed by their corresponding {@link FluidObjectId}.
+	 * Map of registered {@link VisualizerNode}s, keyed by their corresponding {@link FluidObjectKey}.
 	 *
 	 * @privateRemarks TODO: Dependency tracking so we don't leak memory.
 	 */
-	private readonly visualizerNodes: Map<FluidObjectId, VisualizerNode>;
+	private readonly visualizerNodes: Map<FluidObjectKey, VisualizerNode>;
 
 	/**
 	 * Private {@link VisualizerNode.disposed} tracking.
@@ -175,7 +175,7 @@ export class DataVisualizerGraph
 	) {
 		super();
 
-		this.visualizerNodes = new Map<FluidObjectId, VisualizerNode>();
+		this.visualizerNodes = new Map<FluidObjectKey, VisualizerNode>();
 
 		this._disposed = false;
 	}
@@ -214,9 +214,11 @@ export class DataVisualizerGraph
 					);
 					result[key] = unknownObjectNode;
 				} else {
-					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
+					const fluidObjectKey = await this.registerVisualizerForHandle(value.handle);
 					result[key] =
-						fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);
+						fluidObjectKey === undefined
+							? unknownObjectNode
+							: createHandleNode(fluidObjectKey);
 				}
 			}),
 		);
@@ -227,11 +229,11 @@ export class DataVisualizerGraph
 	 * Generates and returns a visual description of the specified Fluid object if it exists in the graph.
 	 * If no such object exists in the graph, returns `undefined`.
 	 */
-	public async render(fluidObjectId: FluidObjectId): Promise<FluidObjectNode | undefined> {
+	public async render(fluidObjectKey: FluidObjectKey): Promise<FluidObjectNode | undefined> {
 		// If we don't have anything registered for the requested Fluid object, return `undefined`.
 		// This could indicate a stale data request from an external consumer, or could indicate a bug,
 		// but this library isn't capable of telling the difference.
-		return this.visualizerNodes.get(fluidObjectId)?.render() ?? undefined;
+		return this.visualizerNodes.get(fluidObjectKey)?.render() ?? undefined;
 	}
 
 	/**
@@ -240,14 +242,14 @@ export class DataVisualizerGraph
 	 */
 	private registerVisualizerForVisualizableObject(
 		visualizableObject: VisualizableFluidObject,
-	): FluidObjectId {
+	): FluidObjectKey {
 		// Store type check results to avoid recomputing
 		const isDataObj = isDataObject(visualizableObject);
 		const isTreeDataObj = isTreeDataObject(visualizableObject);
 
-		let visualizationFunction: VisualizeSharedObject;
 		let rootSharedObject: ISharedObject;
-		let objectId: FluidObjectId;
+		let objectId: FluidObjectKey;
+		let visualizationFunction: VisualizeSharedObject;
 
 		if (isDataObj) {
 			rootSharedObject = (visualizableObject as unknown as { readonly root: ISharedDirectory })
@@ -296,7 +298,7 @@ export class DataVisualizerGraph
 	 */
 	private async registerVisualizerForHandle(
 		handle: IFluidHandle,
-	): Promise<FluidObjectId | undefined> {
+	): Promise<FluidObjectKey | undefined> {
 		const resolvedObject = await handle.get();
 
 		if (isDataObject(resolvedObject) || isTreeDataObject(resolvedObject)) {
@@ -397,7 +399,7 @@ export class VisualizerNode
 		 */
 		private readonly registerHandle: (
 			handle: IFluidHandle,
-		) => Promise<FluidObjectId | undefined>,
+		) => Promise<FluidObjectKey | undefined>,
 	) {
 		super();
 
@@ -473,7 +475,7 @@ export class VisualizerNode
  */
 export async function visualizeChildData(
 	data: unknown,
-	resolveHandle: (handle: IFluidHandle) => Promise<FluidObjectId | undefined>,
+	resolveHandle: (handle: IFluidHandle) => Promise<FluidObjectKey | undefined>,
 ): Promise<VisualChildNode> {
 	// Special case for `null` because `typeof null === "object"`.
 	if (data === null) {
@@ -497,10 +499,10 @@ export async function visualizeChildData(
 	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
 		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 		const handle = data as IFluidHandle;
-		const fluidObjectId = await resolveHandle(handle);
+		const fluidObjectKey = await resolveHandle(handle);
 		// If no ID was found, then the data is not a SharedObject.
 		// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
-		return fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);
+		return fluidObjectKey === undefined ? unknownObjectNode : createHandleNode(fluidObjectKey);
 	}
 
 	// Assume any other data must be a record of some kind (since DDS contents must be serializable)

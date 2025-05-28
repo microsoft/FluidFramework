@@ -27,7 +27,7 @@ import {
 import { MockMessageRelay } from "./utils/index.js";
 
 const testContainerKey = "test-container-key";
-const testFluidObjectId = 1;
+const testFluidObjectKey = "test-fluid-object-id";
 const testLabel = "test-node-key";
 
 describe("VisualTreeView component tests", () => {
@@ -43,7 +43,7 @@ describe("VisualTreeView component tests", () => {
 
 	it("UnknownFluidObjectView", async (): Promise<void> => {
 		const input: FluidUnknownObjectNode = {
-			fluidObjectId: testFluidObjectId,
+			fluidObjectKey: testFluidObjectKey,
 			typeMetadata: "test-fluid-object-type",
 			nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 		};
@@ -59,8 +59,8 @@ describe("VisualTreeView component tests", () => {
 				case GetDataVisualization.MessageType: {
 					const message = untypedMessage as GetDataVisualization.Message;
 					const visualization: FluidObjectValueNode = {
-						fluidObjectId: message.data.fluidObjectId,
-						value: `test-value: ${message.data.fluidObjectId}`,
+						fluidObjectKey: message.data.fluidObjectKey,
+						value: `test-value: ${message.data.fluidObjectKey}`,
 						nodeKind: VisualNodeKind.FluidValueNode,
 					};
 					return {
@@ -78,7 +78,7 @@ describe("VisualTreeView component tests", () => {
 		});
 
 		const treeData: FluidObjectTreeNode = {
-			fluidObjectId: testFluidObjectId,
+			fluidObjectKey: testFluidObjectKey,
 			children: {
 				"test-string": {
 					value: "Hello world",

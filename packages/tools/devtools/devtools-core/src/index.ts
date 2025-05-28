@@ -25,9 +25,9 @@ export type { AudienceClientMetadata } from "./AudienceMetadata.js";
 export { MemberChangeKind } from "./AudienceMetadata.js";
 export type {
 	ContainerKey,
-	FluidObjectId,
+	FluidObjectKey,
 	HasContainerKey,
-	HasFluidObjectId,
+	HasFluidObjectKey,
 } from "./CommonInterfaces.js";
 export { EditType } from "./CommonInterfaces.js";
 export { ContainerStateChangeKind } from "./Container.js";

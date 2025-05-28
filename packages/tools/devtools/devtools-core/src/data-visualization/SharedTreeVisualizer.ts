@@ -118,7 +118,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 			}
 			case VisualNodeKind.FluidHandleNode: {
 				const result: FluidHandleNode = {
-					fluidObjectId: tree.value.fluidObjectId,
+					fluidObjectKey: tree.value.fluidObjectKey,
 					nodeKind: VisualNodeKind.FluidHandleNode,
 					tooltipContents: {
 						schema: createToolTipContents(tree.schema),

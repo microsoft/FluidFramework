@@ -20,7 +20,7 @@ import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 import { expect } from "chai";
 
-import { EditType, type FluidObjectId } from "../CommonInterfaces.js";
+import { EditType, type FluidObjectKey } from "../CommonInterfaces.js";
 import { getKeyForFluidObject } from "../FluidObjectKey.js";
 import {
 	type FluidObjectTreeNode,
@@ -43,7 +43,7 @@ import {
  * Mock {@link VisualizeChildData} for use in tests
  */
 async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
-	async function resolveHandle(handle: IFluidHandle): Promise<FluidObjectId> {
+	async function resolveHandle(handle: IFluidHandle): Promise<FluidObjectKey> {
 		const resolvedObject = await handle.get();
 		return getKeyForFluidObject(resolvedObject as ISharedObject);
 	}
@@ -60,7 +60,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
 		const expected: FluidObjectValueNode = {
-			fluidObjectId: cellId,
+			fluidObjectKey: cellId,
 			value: undefined,
 			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidValueNode,
@@ -82,7 +82,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
-			fluidObjectId: cellId,
+			fluidObjectKey: cellId,
 			children: {
 				test: {
 					nodeKind: VisualNodeKind.ValueNode,
@@ -109,7 +109,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const result = await visualizeSharedCounter(sharedCounter, visualizeChildData);
 
 		const expected: FluidObjectValueNode = {
-			fluidObjectId: counterId,
+			fluidObjectKey: counterId,
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
@@ -143,7 +143,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const result = await visualizeSharedDirectory(sharedDirectory, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
-			fluidObjectId: directoryId,
+			fluidObjectKey: directoryId,
 			children: {
 				a: {
 					children: {
@@ -247,7 +247,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const result = await visualizeSharedMap(sharedMap, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
-			fluidObjectId: mapId,
+			fluidObjectKey: mapId,
 			children: {
 				foo: {
 					value: 42,
@@ -314,7 +314,7 @@ describe("DefaultVisualizers unit tests", () => {
 		);
 
 		const expected: FluidObjectTreeNode = {
-			fluidObjectId: matrixId,
+			fluidObjectKey: matrixId,
 			children: {
 				"[0,0]": {
 					value: "Hello",
@@ -383,7 +383,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const result = await visualizeSharedString(sharedString, visualizeChildData);
 
 		const expected: FluidObjectValueNode = {
-			fluidObjectId: stringId,
+			fluidObjectKey: stringId,
 			value: "Hello World!",
 			typeMetadata: "SharedString",
 			nodeKind: VisualNodeKind.FluidValueNode,
@@ -435,7 +435,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: shareedTreeId,
+			fluidObjectKey: shareedTreeId,
 			typeMetadata: "SharedTree",
 		};
 
@@ -555,7 +555,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: shareedTreeId,
+			fluidObjectKey: shareedTreeId,
 			typeMetadata: "SharedTree",
 		};
 		expect(result).to.deep.equal(expected);
@@ -677,7 +677,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: shareedTreeId,
+			fluidObjectKey: shareedTreeId,
 			typeMetadata: "SharedTree",
 		};
 		expect(result).to.deep.equal(expected);
@@ -809,7 +809,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: shareedTreeId,
+			fluidObjectKey: shareedTreeId,
 			typeMetadata: "SharedTree",
 		};
 		expect(result).to.deep.equal(expected);
@@ -824,7 +824,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
-		const shareedTreeId = getKeyForFluidObject(sharedTree);
+		const shareedTreeKey = getKeyForFluidObject(sharedTree);
 
 		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
@@ -838,7 +838,7 @@ describe("DefaultVisualizers unit tests", () => {
 		);
 
 		const expected = {
-			fluidObjectId: shareedTreeId,
+			fluidObjectKey: shareedTreeKey,
 			nodeKind: "FluidTreeNode",
 			tooltipContents: {
 				schema: {
@@ -873,11 +873,11 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
-		const shareedTreeId = getKeyForFluidObject(sharedTree);
+		const shareedTreeKey = getKeyForFluidObject(sharedTree);
 
 		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
-		const sharedStringId = getKeyForFluidObject(sharedString);
+		const sharedStringKey = getKeyForFluidObject(sharedString);
 
 		class RootNodeSchema extends builder.object("root-item", {
 			foo: builder.object("bar-item", {
@@ -904,7 +904,7 @@ describe("DefaultVisualizers unit tests", () => {
 				foo: {
 					children: {
 						apple: {
-							fluidObjectId: sharedStringId,
+							fluidObjectKey: sharedStringKey,
 							nodeKind: "FluidHandleNode",
 							tooltipContents: {
 								schema: {
@@ -969,7 +969,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: shareedTreeId,
+			fluidObjectKey: shareedTreeKey,
 			typeMetadata: "SharedTree",
 		};
 		expect(result).to.deep.equal(expected);
@@ -983,7 +983,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
-		const shareedTreeId = getKeyForFluidObject(sharedTree);
+		const shareedTreeKey = getKeyForFluidObject(sharedTree);
 
 		class WorkItem extends builder.object("work-item", {
 			title: builder.string,
@@ -1391,7 +1391,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 			},
-			fluidObjectId: shareedTreeId,
+			fluidObjectKey: shareedTreeKey,
 			typeMetadata: "SharedTree",
 		};
 
@@ -1406,7 +1406,7 @@ describe("DefaultVisualizers unit tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
-		const sharedTreeId = getKeyForFluidObject(sharedTree);
+		const sharedTreeKey = getKeyForFluidObject(sharedTree);
 
 		const view = sharedTree.viewWith(
 			new TreeViewConfiguration({
@@ -1421,7 +1421,7 @@ describe("DefaultVisualizers unit tests", () => {
 		);
 
 		const expected = {
-			fluidObjectId: sharedTreeId,
+			fluidObjectKey: sharedTreeKey,
 			typeMetadata: "SharedTree",
 			nodeKind: VisualNodeKind.FluidTreeNode,
 			tooltipContents: {
@@ -1453,12 +1453,12 @@ describe("DefaultVisualizers unit tests", () => {
 				type: "UnknownSharedObjectType",
 			},
 		} as ISharedObject;
-		const unknownId = getKeyForFluidObject(unknownObject);
+		const unknownKey = getKeyForFluidObject(unknownObject);
 
 		const result = await visualizeUnknownSharedObject(unknownObject, visualizeChildData);
 
 		const expected: FluidUnknownObjectNode = {
-			fluidObjectId: unknownId,
+			fluidObjectKey: unknownKey,
 			typeMetadata: "UnknownSharedObjectType",
 			nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 		};

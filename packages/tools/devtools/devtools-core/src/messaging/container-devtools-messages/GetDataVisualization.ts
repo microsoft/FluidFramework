@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { HasContainerKey, HasFluidObjectId } from "../../CommonInterfaces.js";
+import type { HasContainerKey, HasFluidObjectKey } from "../../CommonInterfaces.js";
 import type { IDevtoolsMessage } from "../Messages.js";
 
 /**
@@ -24,10 +24,10 @@ export namespace GetDataVisualization {
 	 *
 	 * @internal
 	 */
-	export type MessageData = HasContainerKey & HasFluidObjectId;
+	export type MessageData = HasContainerKey & HasFluidObjectKey;
 
 	/**
-	 * Inbound message requesting a visualization for a specific DDS via its associated {@link HasFluidObjectId.fluidObjectId}.
+	 * Inbound message requesting a visualization for a specific DDS via its associated {@link HasFluidObjectKey.fluidObjectKey}.
 	 *
 	 * Will result in the {@link DataVisualization.Message} message being posted.
 	 *

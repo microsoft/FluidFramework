@@ -9,7 +9,7 @@ import {
 	type FluidObjectNode,
 	GetDataVisualization,
 	type HasContainerKey,
-	type HasFluidObjectId,
+	type HasFluidObjectKey,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
@@ -28,13 +28,13 @@ const loggingContext = "EXTENSION(HandleView)";
 /**
  * {@link FluidHandleView} input props.
  */
-export interface FluidHandleViewProps extends HasContainerKey, HasFluidObjectId, HasLabel {}
+export interface FluidHandleViewProps extends HasContainerKey, HasFluidObjectKey, HasLabel {}
 
 /**
  * Render data with type VisualNodeKind.FluidHandleNode and render its children.
  */
 export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
-	const { containerKey, fluidObjectId, label } = props;
+	const { containerKey, fluidObjectKey, label } = props;
 	const messageRelay = useMessageRelay();
 
 	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
@@ -48,7 +48,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 				const message = untypedMessage as DataVisualization.Message;
 				if (
 					message.data.containerKey === containerKey &&
-					message.data.fluidObjectId === fluidObjectId
+					message.data.fluidObjectKey === fluidObjectKey
 				) {
 					setVisualTree(message.data.visualization);
 					return true;
@@ -73,7 +73,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		messageRelay.postMessage(
 			GetDataVisualization.createMessage({
 				containerKey,
-				fluidObjectId,
+				fluidObjectKey,
 			}),
 		);
 
@@ -81,7 +81,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerKey, fluidObjectId, messageRelay]);
+	}, [containerKey, fluidObjectKey, messageRelay]);
 
 	if (visualTree === undefined) {
 		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;
