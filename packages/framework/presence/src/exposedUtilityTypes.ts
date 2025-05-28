@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { BrandedType } from "@fluidframework/core-interfaces/internal";
+import { BrandedType } from "@fluidframework/core-interfaces/internal";
 import type {
 	DeepReadonly,
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
 import { asDeeplyReadonly } from "./internalUtils.js";
 
 /**
