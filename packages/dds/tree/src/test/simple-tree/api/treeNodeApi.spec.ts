@@ -257,6 +257,7 @@ describe("treeNodeApi", () => {
 	});
 
 	// TODO: recursive schema tests
+	// TODO: tests for schema with shadowed properties
 	describe("child", () => {
 		describe("object", () => {
 			function getObjectSchema() {
@@ -409,44 +410,145 @@ describe("treeNodeApi", () => {
 				const childIntegerString = TreeAlpha.child(tree, "1");
 				assert.equal(childIntegerString, "World");
 			});
-
-			// TODO: recursive schema tests
 		});
 	});
 
 	// TODO: recursive schema tests
-	describe.skip("children", () => {
+	// TODO: tests for schema with shadowed properties
+	describe("children", () => {
 		describe("object", () => {
+			function getObjectSchema() {
+				return schema.objectAlpha(
+					"TestObject",
+					{
+						foo: schema.optional(schema.string),
+						"0": SchemaFactory.optional(schema.number),
+					},
+					{
+						allowUnknownOptionalFields: true,
+					},
+				);
+			}
+
+			function initializeObjectTree(
+				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getObjectSchema>>,
+			) {
+				class TestObject extends getObjectSchema() {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize(input);
+
+				return { TestObject, tree: view.root };
+			}
+
 			it("empty", () => {
-				throw new Error("TODO");
+				const { tree } = initializeObjectTree({});
+
+				const children = TreeAlpha.children(tree);
+				assert.equal(children.length, 0);
 			});
 
 			it("non-empty", () => {
-				throw new Error("TODO");
+				const { tree } = initializeObjectTree({
+					foo: "test",
+					0: 42,
+				});
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 2);
+				assert.equal(children.get("foo"), "test");
+				assert.equal(children.get("0"), 42);
 			});
 
 			it("extra optional properties not included", () => {
-				throw new Error("TODO");
+				const { tree } = initializeObjectTree({
+					foo: "test",
+					0: 42,
+					bar: "extra", // extra optional property
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				} as any);
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 2); // The extra property should not be included
+				assert.equal(children.get("foo"), "test");
+				assert.equal(children.get("0"), 42);
 			});
 		});
 
 		describe("map", () => {
+			function getMapSchema() {
+				return schema.map("TestObject", schema.string);
+			}
+
+			function initializeMapTree(
+				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getMapSchema>>,
+			) {
+				class TestMap extends getMapSchema() {}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize(input);
+
+				return { TestMap, tree: view.root };
+			}
+
 			it("empty", () => {
-				throw new Error("TODO");
+				const { tree } = initializeMapTree({});
+
+				const children = TreeAlpha.children(tree);
+				assert.equal(children.length, 0);
 			});
 
 			it("non-empty", () => {
-				throw new Error("TODO");
+				const { tree } = initializeMapTree({
+					foo: "Hello",
+					bar: "World",
+				});
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 2);
+				assert.equal(children.get("foo"), "Hello");
+				assert.equal(children.get("bar"), "World");
 			});
 		});
 
 		describe("array", () => {
+			function getArraySchema() {
+				return schema.array("TestObject", schema.string);
+			}
+
+			function initializeArrayTree(
+				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getArraySchema>>,
+			) {
+				class TestArray extends getArraySchema() {}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(input);
+
+				return { TestArray, tree: view.root };
+			}
+
 			it("empty", () => {
-				throw new Error("TODO");
+				const { tree } = initializeArrayTree([]);
+
+				const children = TreeAlpha.children(tree);
+				assert.equal(children.length, 0);
 			});
 
 			it("non-empty", () => {
-				throw new Error("TODO");
+				const { tree } = initializeArrayTree(["Hello", "World"]);
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 2);
+				assert.equal(children.get(0), "Hello");
+				assert.equal(children.get(1), "World");
 			});
 		});
 	});
