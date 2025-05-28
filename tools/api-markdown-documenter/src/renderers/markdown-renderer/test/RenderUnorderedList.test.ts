@@ -5,7 +5,12 @@
 
 import { expect } from "chai";
 
-import { UnorderedListNode } from "../../../documentation-domain/index.js";
+import {
+	LineBreakNode,
+	PlainTextNode,
+	SpanNode,
+	UnorderedListNode,
+} from "../../../documentation-domain/index.js";
 
 import { testRender } from "./Utilities.js";
 
@@ -24,6 +29,21 @@ describe("UnorderedListNode Markdown rendering tests", () => {
 			const result = testRender(input);
 
 			const expected = ["", `- ${text1}`, `- ${text2}`, `- ${text3}`, "", ""].join("\n");
+
+			expect(result).to.equal(expected);
+		});
+
+		it("Multi-line list item", () => {
+			const item = new SpanNode([
+				new PlainTextNode("Hello"),
+				LineBreakNode.Singleton,
+				new PlainTextNode("world"),
+			]);
+
+			const input = new UnorderedListNode([item]);
+			const result = testRender(input);
+
+			const expected = ["", `- <span>Hello<br>world</span>`, "", ""].join("\n");
 
 			expect(result).to.equal(expected);
 		});

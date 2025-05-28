@@ -4,6 +4,7 @@
  */
 
 import { serializeError } from "serialize-error";
+
 import { Lumber } from "./lumber";
 import { LumberEventName } from "./lumberEventNames";
 
@@ -125,6 +126,7 @@ export enum CommonProperties {
 	errorLabel = "errorLabel",
 	isGlobalDb = "isGlobalDb",
 	internalErrorCode = "internalErrorCode",
+	callingServiceName = "callingServiceName",
 }
 
 /**

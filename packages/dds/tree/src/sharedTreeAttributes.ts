@@ -4,6 +4,7 @@
  */
 
 import type { IChannelAttributes } from "@fluidframework/datastore-definitions/internal";
+
 import { pkgVersion } from "./packageVersion.js";
 
 /**

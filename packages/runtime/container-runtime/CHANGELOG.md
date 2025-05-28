@@ -1,5 +1,27 @@
 # @fluidframework/container-runtime
 
+## 2.41.0
+
+Dependency updates only.
+
+## 2.40.0
+
+### Minor Changes
+
+- IFluidHandleInternal.bind has been deprecated ([#24553](https://github.com/microsoft/FluidFramework/pull/24553)) [8a4362a7ed](https://github.com/microsoft/FluidFramework/commit/8a4362a7edef3a97fee13c9d23bea49448ba2a6a)
+
+  Handle binding is an internal concept used to make sure objects attach to the Container graph when their handle is stored in a DDS which is itself attached.
+  The source of the "bind" operation has been assumed to be any handle, but only one implementation is actually supported (`SharedObjectHandle`, not exported itself).
+
+  So the `bind` function is now deprecated on the `IFluidHandleInterface`, moving instead to internal types supporting the one valid implementation.
+  It's also deprecated on the various exported handle implementations that don't support it (each is either no-op, pass-through, or throwing).
+
+  No replacement is offered, this API was never meant to be called from outside of the Fluid Framework.
+
+## 2.33.0
+
+Dependency updates only.
+
 ## 2.32.0
 
 ### Minor Changes

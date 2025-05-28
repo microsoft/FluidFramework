@@ -4,16 +4,21 @@
  */
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
+import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { AttendeeId, Attendee, Presence, PresenceEvents } from "./presence.js";
+import type {
+	AttendeeId,
+	Attendee,
+	PresenceWithNotifications as Presence,
+	PresenceEvents,
+} from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	RuntimeLocalUpdateOptions,
@@ -25,6 +30,15 @@ import {
 	mergeUntrackedDatastore,
 	mergeValueDirectory,
 } from "./presenceStates.js";
+import type {
+	GeneralDatastoreMessageContent,
+	InboundClientJoinMessage,
+	InboundDatastoreUpdateMessage,
+	OutboundDatastoreUpdateMessage,
+	SignalMessages,
+	SystemDatastore,
+} from "./protocol.js";
+import { datastoreUpdateMessageType, joinMessageType } from "./protocol.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
@@ -36,79 +50,27 @@ import type {
 	WorkspaceAddress,
 } from "./types.js";
 
-import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
-
 interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 	public: AnyWorkspace<TSchema>;
 	internal: PresenceStatesInternal;
 }
 
-interface SystemDatastore {
-	"system:presence": SystemWorkspaceDatastore;
-}
-
-type InternalWorkspaceAddress = `${"s" | "n"}:${WorkspaceAddress}`;
-
 type PresenceDatastore = SystemDatastore & {
 	[WorkspaceAddress: string]: ValueElementMap<StatesWorkspaceSchema>;
 };
 
-interface GeneralDatastoreMessageContent {
-	[WorkspaceAddress: string]: {
-		[StateValueManagerKey: string]: {
-			[AttendeeId: AttendeeId]: ClientUpdateEntry;
-		};
-	};
-}
-
-type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
-
-const datastoreUpdateMessageType = "Pres:DatastoreUpdate";
+type InternalWorkspaceAddress = `${"s" | "n"}:${WorkspaceAddress}`;
 
 const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications">> = {
 	s: "States",
 	n: "Notifications",
 } as const;
 
-interface DatastoreUpdateMessage extends IInboundSignalMessage {
-	type: typeof datastoreUpdateMessageType;
-	content: {
-		sendTimestamp: number;
-		avgLatency: number;
-		isComplete?: true;
-		acknowledgementId?: number;
-		data: DatastoreMessageContent;
-	};
-}
-
-const joinMessageType = "Pres:ClientJoin";
-interface ClientJoinMessage extends IInboundSignalMessage {
-	type: typeof joinMessageType;
-	content: {
-		updateProviders: ClientConnectionId[];
-		sendTimestamp: number;
-		avgLatency: number;
-		data: DatastoreMessageContent;
-	};
-}
-
-// Message type identifier for presence acknowledgment messages.
-const acknowledgementMessageType = "Pres:Ack";
-
-/**
- * Message type used to acknowledge receipt of remote update messages.
- */
-interface AcknowledgementMessage extends IInboundSignalMessage {
-	type: typeof acknowledgementMessageType;
-	content: {
-		id: number;
-	};
-}
-
+const knownMessageTypes = new Set([joinMessageType, datastoreUpdateMessageType]);
 function isPresenceMessage(
-	message: IInboundSignalMessage,
-): message is DatastoreUpdateMessage | ClientJoinMessage {
-	return message.type.startsWith("Pres:");
+	message: InboundExtensionMessage<SignalMessages>,
+): message is InboundDatastoreUpdateMessage | InboundClientJoinMessage {
+	return knownMessageTypes.has(message.type);
 }
 
 /**
@@ -125,7 +87,11 @@ export interface PresenceDatastoreManager {
 		internalWorkspaceAddress: `n:${WorkspaceAddress}`,
 		requestedContent: TSchema,
 	): NotificationsWorkspace<TSchema>;
-	processSignal(message: IExtensionMessage, local: boolean): void;
+	processSignal(
+		message: InboundExtensionMessage<SignalMessages>,
+		local: boolean,
+		optional: boolean,
+	): void;
 }
 
 function mergeGeneralDatastoreMessageContent(
@@ -206,12 +172,15 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (updateProviders.length > 3) {
 			updateProviders.length = 3;
 		}
-		this.runtime.submitSignal(joinMessageType, {
-			sendTimestamp: Date.now(),
-			avgLatency: this.averageLatency,
-			data: this.datastore,
-			updateProviders,
-		} satisfies ClientJoinMessage["content"]);
+		this.runtime.submitSignal({
+			type: joinMessageType,
+			content: {
+				sendTimestamp: Date.now(),
+				avgLatency: this.averageLatency,
+				data: this.datastore,
+				updateProviders,
+			},
+		});
 	}
 
 	public getWorkspace<TSchema extends StatesWorkspaceSchema>(
@@ -235,7 +204,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			options: RuntimeLocalUpdateOptions,
 		): void => {
 			// Check for connectivity before sending updates.
-			if (!this.runtime.connected) {
+			if (!this.runtime.isConnected()) {
 				return;
 			}
 
@@ -327,14 +296,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 
 		// Check for connectivity before sending updates.
-		if (!this.runtime.connected) {
+		if (!this.runtime.isConnected()) {
 			// Clear the queued data since we're disconnected. We don't want messages
 			// to queue infinitely while disconnected.
 			this.queuedData = undefined;
 			return;
 		}
 
-		const clientConnectionId = this.runtime.clientId;
+		const clientConnectionId = this.runtime.getClientId();
 		assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
 		const currentClientToSessionValueState =
 			// When connected, `clientToSessionId` must always have current connection entry.
@@ -357,34 +326,33 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				},
 				...this.queuedData,
 			},
-		} satisfies DatastoreUpdateMessage["content"];
+		} satisfies OutboundDatastoreUpdateMessage["content"];
 		this.queuedData = undefined;
-		this.runtime.submitSignal(datastoreUpdateMessageType, newMessage);
+		this.runtime.submitSignal({ type: datastoreUpdateMessageType, content: newMessage });
 	}
 
 	private broadcastAllKnownState(): void {
-		this.runtime.submitSignal(datastoreUpdateMessageType, {
-			sendTimestamp: Date.now(),
-			avgLatency: this.averageLatency,
-			isComplete: true,
-			data: this.datastore,
-		} satisfies DatastoreUpdateMessage["content"]);
+		this.runtime.submitSignal({
+			type: datastoreUpdateMessageType,
+			content: {
+				sendTimestamp: Date.now(),
+				avgLatency: this.averageLatency,
+				isComplete: true,
+				data: this.datastore,
+			},
+		});
 		this.refreshBroadcastRequested = false;
 	}
 
 	public processSignal(
-		// Note: IInboundSignalMessage is used here in place of IExtensionMessage
-		// as IExtensionMessage's strictly JSON `content` creates type compatibility
-		// issues with `AttendeeId` keys and really unknown value content.
-		// IExtensionMessage is a subset of IInboundSignalMessage so this is safe.
-		// Change types of DatastoreUpdateMessage | ClientJoinMessage to
-		// IExtensionMessage<> derivatives to see the issues.
-		message: IInboundSignalMessage | DatastoreUpdateMessage | ClientJoinMessage,
+		message: InboundExtensionMessage<SignalMessages>,
 		local: boolean,
+		optional: boolean,
 	): void {
 		const received = Date.now();
 		assert(message.clientId !== null, 0xa3a /* Map received signal without clientId */);
 		if (!isPresenceMessage(message)) {
+			assert(optional, "Unrecognized message type in critical message");
 			return;
 		}
 
@@ -409,13 +377,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// It is possible for some signals to come in while client is not connected due
 			// to how work is scheduled. If we are not connected, we can't respond to the
 			// join request. We will make our own Join request once we are connected.
-			if (this.runtime.connected) {
+			if (this.runtime.isConnected()) {
 				this.prepareJoinResponse(message.content.updateProviders, message.clientId);
 			}
 			// It is okay to continue processing the contained updates even if we are not
 			// connected.
 		} else {
-			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);
 			if (message.content.isComplete) {
 				this.refreshBroadcastRequested = false;
 			}
@@ -459,7 +426,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 
 		const postUpdateActions: PostUpdateAction[] = [];
-		for (const [workspaceAddress, remoteDatastore] of Object.entries(message.content.data)) {
+		// While the system workspace is processed here too, it is declared as
+		// conforming to the general schema. So drop its override.
+		const data = message.content.data as Omit<typeof message.content.data, "system:presence">;
+		for (const [workspaceAddress, remoteDatastore] of Object.entries(data)) {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {
@@ -507,7 +477,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// We must be connected to receive this message, so clientId should be defined.
 		// If it isn't then, not really a problem; just won't be in provider or quorum list.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const clientId = this.runtime.clientId!;
+		const clientId = this.runtime.getClientId()!;
 		// const requestor = message.clientId;
 		if (updateProviders.includes(clientId)) {
 			// Send all current state to the new client
@@ -548,7 +518,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			setTimeout(() => {
 				// Make sure a broadcast is still needed and we are currently connected.
 				// If not connected, nothing we can do.
-				if (this.refreshBroadcastRequested && this.runtime.connected) {
+				if (this.refreshBroadcastRequested && this.runtime.isConnected()) {
 					this.broadcastAllKnownState();
 					this.logger?.sendTelemetryEvent({
 						eventName: "JoinResponse",

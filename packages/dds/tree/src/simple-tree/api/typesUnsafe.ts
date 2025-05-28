@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { RestrictiveStringRecord, UnionToIntersection } from "../../util/index.js";
+import type {
+	IsUnion,
+	RestrictiveStringRecord,
+	UnionToIntersection,
+} from "../../util/index.js";
 
 import type {
 	ApplyKind,
@@ -24,7 +28,7 @@ import type {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaClass,
 } from "../core/index.js";
-import type { TreeArrayNode } from "../arrayNode.js";
+import type { TreeArrayNode } from "../node-kinds/index.js";
 import type { FlexListToUnion, LazyItem } from "../flexList.js";
 import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
 
@@ -239,16 +243,16 @@ export namespace System_Unsafe {
 	 * of the JsonAsTree schema.
 	 * @system @public
 	 */
-	export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = [
-		TList,
-	] extends [
-		readonly [
-			LazyItem<infer TSchema extends TreeNodeSchemaUnsafe>,
-			...infer Rest extends AllowedTypesUnsafe,
-		],
-	]
-		? InsertableTypedNodeUnsafe<TSchema> | InsertableTreeNodeFromAllowedTypesUnsafe<Rest>
-		: never;
+	export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> =
+		IsUnion<TList> extends true
+			? never
+			: {
+					readonly [Property in keyof TList]: TList[Property] extends LazyItem<
+						infer TSchema extends TreeNodeSchemaUnsafe
+					>
+						? InsertableTypedNodeUnsafe<TSchema>
+						: never;
+				}[number];
 
 	/**
 	 * {@link Unenforced} version of {@link InsertableTypedNode}.

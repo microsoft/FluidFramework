@@ -68,6 +68,8 @@ function makeMockAudience(clients: ClientData[]): MockAudience {
  * Mock ephemeral runtime for testing
  */
 export class MockEphemeralRuntime implements IEphemeralRuntime {
+	public clientId: string | undefined;
+	public connected: boolean = false;
 	public logger?: ITelemetryBaseLogger;
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
@@ -97,31 +99,36 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			/* count of write clients (in quorum) */ 6,
 		);
 		this.quorum = makeMockQuorum(clientsData);
-		this.getQuorum = () => this.quorum;
 		this.audience = makeMockAudience(clientsData);
-		this.getAudience = () => this.audience;
-		this.on = (
-			event: string,
-			listener: (...args: any[]) => void,
-			// Events style eventing does not lend itself to union that
-			// IEphemeralRuntime is derived from, so we are using `any` here
-			// but meet the intent of the interface.
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		): any => {
-			if (!this.isSupportedEvent(event)) {
-				throw new Error(`Event ${event} is not supported`);
-			}
-			// Switch to allowing a single listener as commented when
-			// implementation uses a single "connected" listener.
-			// if (this.listeners[event]) {
-			// 	throw new Error(`Event ${event} already has a listener`);
-			// }
-			// this.listeners[event] = listener;
-			if (this.listeners[event].length > 1) {
-				throw new Error(`Event ${event} already has multiple listeners`);
-			}
-			this.listeners[event].push(listener);
-			return this;
+		this.events = {
+			on: (
+				event: string,
+				listener: (...args: any[]) => void,
+				// Events style eventing does not lend itself to union that
+				// IEphemeralRuntime is derived from, so we are using `any` here
+				// but meet the intent of the interface.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			): any => {
+				if (!this.isSupportedEvent(event)) {
+					throw new Error(`Event ${event} is not supported`);
+				}
+				// Switch to allowing a single listener as commented when
+				// implementation uses a single "connected" listener.
+				// if (this.listeners[event]) {
+				// 	throw new Error(`Event ${event} already has a listener`);
+				// }
+				// this.listeners[event] = listener;
+				if (this.listeners[event].length > 1) {
+					throw new Error(`Event ${event} already has multiple listeners`);
+				}
+				this.listeners[event].push(listener);
+				return this;
+			},
+			off: (
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			): any => {
+				throw new Error("IEphemeralRuntime.off method not implemented.");
+			},
 		};
 	}
 
@@ -131,8 +138,8 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			0,
 			`Missing signals [\n${this.signalsExpected
 				.map(
-					(a) =>
-						`\t{ type: ${a[0]}, content: ${JSON.stringify(a[1], undefined, "\t")}, targetClientId: ${a[2]} }`,
+					([m]) =>
+						`\t{ type: ${m.type}, content: ${JSON.stringify(m.content, undefined, "\t")}, targetClientId: ${m.targetClientId} }`,
 				)
 				.join(",\n\t")}\n]`,
 		);
@@ -172,24 +179,15 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	// #region IEphemeralRuntime
 
-	public clientId: string | undefined;
-	public connected: boolean = false;
+	public isConnected = (): ReturnType<IEphemeralRuntime["isConnected"]> => this.connected;
+	public getClientId = (): ReturnType<IEphemeralRuntime["getClientId"]> => this.clientId;
 
-	public on: IEphemeralRuntime["on"];
+	public events: IEphemeralRuntime["events"];
 
-	public off: IEphemeralRuntime["off"] = (
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	): any => {
-		throw new Error("IEphemeralRuntime.off method not implemented.");
-	};
+	public getQuorum: () => ReturnType<IEphemeralRuntime["getQuorum"]> = () => this.quorum;
+	public getAudience: () => ReturnType<IEphemeralRuntime["getAudience"]> = () => this.audience;
 
-	public getAudience: () => ReturnType<IEphemeralRuntime["getAudience"]>;
-
-	public getQuorum: () => ReturnType<IEphemeralRuntime["getQuorum"]>;
-
-	public submitSignal: IEphemeralRuntime["submitSignal"] = (
-		...args: Parameters<IEphemeralRuntime["submitSignal"]>
-	) => {
+	public submitSignal: IEphemeralRuntime["submitSignal"] = (...args: unknown[]) => {
 		if (this.signalsExpected.length === 0) {
 			throw new Error(`Unexpected signal: ${JSON.stringify(args)}`);
 		}

@@ -30,6 +30,7 @@ import {
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
+import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 
 import type { Context } from "./context.js";
@@ -49,7 +50,6 @@ import {
 import { LazyEntity } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
-import { cursorForMapTreeField } from "../mapTreeCursor.js";
 
 /**
  * Reuse fields.
@@ -278,20 +278,8 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 	}
 }
 
-export class ReadonlyLazyValueField extends LazyField implements FlexTreeRequiredField {
+export class LazyValueField extends LazyField implements FlexTreeRequiredField {
 	public editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
-		set: (newContent) => {
-			assert(false, 0xa0c /* Unexpected set of readonly field */);
-		},
-	};
-
-	public get content(): FlexTreeUnknownUnboxed {
-		return this.atIndex(0);
-	}
-}
-
-export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRequiredField {
-	public override editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent) => {
 			this.valueFieldEditor().set(cursorForMapTreeField([newContent]));
 		},
@@ -303,7 +291,7 @@ export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRe
 		return fieldEditor;
 	}
 
-	public override get content(): FlexTreeUnknownUnboxed {
+	public get content(): FlexTreeUnknownUnboxed {
 		return this.atIndex(0);
 	}
 }

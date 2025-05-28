@@ -15,6 +15,7 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
+import { isContainerMessageDirtyable } from "./containerRuntime.js";
 import {
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -22,13 +23,13 @@ import {
 } from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import {
-	BatchId,
 	LocalBatchMessage,
 	getEffectiveBatchId,
 	BatchStartInfo,
 	InboundMessageResult,
 	serializeOp,
 	type LocalEmptyBatchPlaceholder,
+	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
 
 /**
@@ -114,11 +115,21 @@ export type PendingMessageResubmitData = Pick<
 	runtimeOp: LocalContainerRuntimeMessage;
 };
 
+export interface PendingBatchResubmitMetadata extends BatchResubmitInfo {
+	/**
+	 * Whether changes in this batch should be squashed when resubmitting.
+	 */
+	squash: boolean;
+}
+
 export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	applyStashedOp(serializedOp: string): Promise<unknown>;
-	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId, staged: boolean): void;
+	reSubmitBatch(
+		batch: PendingMessageResubmitData[],
+		metadata: PendingBatchResubmitMetadata,
+	): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -211,6 +222,24 @@ function toSerializableForm(
 	};
 }
 
+interface ReplayPendingStateOptions {
+	/**
+	 * If true, only replay staged batches. This is used when we are exiting staging mode and want to rebase and submit the staged batches.
+	 * Default: false
+	 */
+	onlyStagedBatches: boolean;
+	/**
+	 * @param squash - If true, edits should be squashed when resubmitting.
+	 * Default: false
+	 */
+	squash: boolean;
+}
+
+const defaultReplayPendingStatesOptions: ReplayPendingStateOptions = {
+	onlyStagedBatches: false,
+	squash: false,
+};
+
 /**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
  * acknowledged by the server. It also maintains the batch information for both automatically and manually flushed
@@ -252,6 +281,22 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public get pendingMessagesCount(): number {
 		return this.pendingMessages.length + this.initialMessages.length;
+	}
+
+	/**
+	 * Checks the pending messages to see if any of them represent user changes (aka "dirtyable" messages)
+	 */
+	public hasPendingUserChanges(): boolean {
+		for (let i = 0; i < this.pendingMessages.length; i++) {
+			const element = this.pendingMessages.get(i);
+			// Missing runtimeOp implies not dirtyable: This only happens for empty batches
+			if (element?.runtimeOp !== undefined && isContainerMessageDirtyable(element.runtimeOp)) {
+				return true;
+			}
+		}
+		// Consider any initial messages to be user changes
+		// (it's an approximation since we would have to parse them to know for sure)
+		return this.initialMessages.length > 0;
 	}
 
 	/**
@@ -683,11 +728,12 @@ export class PendingStateManager implements IDisposable {
 	 * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
-	 * @param onlyStagedBatches - If true, only replay staged batches. This is used when we are exiting staging mode and want to rebase and submit the staged batches.
 	 */
-	public replayPendingStates(onlyStagedBatches?: boolean): void {
+	public replayPendingStates(optionsParam?: ReplayPendingStateOptions): void {
+		const options = { ...defaultReplayPendingStatesOptions, ...optionsParam };
+		const { onlyStagedBatches, squash } = options;
 		assert(
-			this.stateHandler.connected(),
+			this.stateHandler.connected() || onlyStagedBatches === true,
 			0x172 /* "The connection state is not consistent with the runtime" */,
 		);
 
@@ -741,7 +787,7 @@ export class PendingStateManager implements IDisposable {
 
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				// Resubmit no messages, with the batchId. Will result in another empty batch marker.
-				this.stateHandler.reSubmitBatch([], batchId, staged);
+				this.stateHandler.reSubmitBatch([], { batchId, staged, squash });
 				continue;
 			}
 
@@ -766,8 +812,7 @@ export class PendingStateManager implements IDisposable {
 							opMetadata: pendingMessage.opMetadata,
 						},
 					],
-					batchId,
-					staged,
+					{ batchId, staged, squash },
 				);
 				continue;
 			}
@@ -807,7 +852,7 @@ export class PendingStateManager implements IDisposable {
 				);
 			}
 
-			this.stateHandler.reSubmitBatch(batch, batchId, staged);
+			this.stateHandler.reSubmitBatch(batch, { batchId, staged, squash });
 		}
 
 		// pending ops should no longer depend on previous sequenced local ops after resubmit
@@ -822,17 +867,6 @@ export class PendingStateManager implements IDisposable {
 				count: initialPendingMessagesCount,
 				clientId: this.stateHandler.clientId(),
 			});
-		}
-	}
-
-	/**
-	 * Clears the 'staged' flag off all pending messages.
-	 */
-	public clearStagingFlags(): void {
-		for (const message of this.pendingMessages.toArray()) {
-			if (message.batchInfo.staged) {
-				message.batchInfo.staged = false;
-			}
 		}
 	}
 

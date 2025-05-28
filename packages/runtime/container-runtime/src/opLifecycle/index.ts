@@ -27,6 +27,7 @@ export {
 	ensureContentsDeserialized,
 } from "./opSerialization.js";
 export {
+	BatchResubmitInfo,
 	estimateSocketSize,
 	localBatchToOutboundBatch,
 	Outbox,

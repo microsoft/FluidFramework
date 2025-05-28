@@ -5,6 +5,7 @@
 
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
+
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 /**

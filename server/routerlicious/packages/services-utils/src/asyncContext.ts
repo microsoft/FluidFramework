@@ -4,12 +4,17 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
+
+import {
+	NetworkError,
+	ITimeoutContext,
+	type IAbortControllerContext,
+} from "@fluidframework/server-services-client";
 import {
 	ITelemetryContextProperties,
 	ITelemetryContext,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { NetworkError, ITimeoutContext } from "@fluidframework/server-services-client";
 
 /**
  * @internal
@@ -128,5 +133,64 @@ export class AsyncLocalStorageTimeoutContext implements ITimeoutContext {
 			);
 			throw error;
 		}
+	}
+
+	public getTimeRemainingMs(): number | undefined {
+		// Check if there is any time still remaining. Throw an error if the timeout has been exceeded.
+		this.checkTimeout();
+		const timeoutInfo = this.contextProvider.getContext();
+		if (!timeoutInfo) {
+			return undefined;
+		}
+		const timeElapsedMs = Date.now() - timeoutInfo.startTime;
+		const timeRemainingMs = timeoutInfo.maxDurationMs - timeElapsedMs;
+		Lumberjack.debug("[TimeoutContext]: Time remaining.", {
+			timeRemainingMs,
+			startTime: timeoutInfo.startTime,
+			maxDurationMs: timeoutInfo.maxDurationMs,
+			timeElapsedMs,
+		});
+		return timeRemainingMs;
+	}
+}
+
+interface IAbortControllerProperties {
+	/**
+	 * The abort controller to be used for aborting the action.
+	 */
+	abortController: AbortController;
+}
+
+export class AsyncLocalStorageAbortControllerContext implements IAbortControllerContext {
+	private readonly contextProvider =
+		new AsyncLocalStorageContextProvider<IAbortControllerProperties>();
+
+	public bindAbortController(abortController: AbortController, callback: () => void): void {
+		const abortControllerProperties: IAbortControllerProperties = {
+			abortController,
+		};
+		this.contextProvider.bindContext(abortControllerProperties, () => callback());
+	}
+
+	public async bindAbortControllerAsync<T>(
+		abortController: AbortController,
+		callback: () => Promise<T>,
+	): Promise<T> {
+		const abortControllerProperties: IAbortControllerProperties = {
+			abortController,
+		};
+		return new Promise<T>((resolve, reject) => {
+			this.contextProvider.bindContext(abortControllerProperties, () => {
+				callback().then(resolve).catch(reject);
+			});
+		});
+	}
+
+	public getAbortController(): AbortController | undefined {
+		const abortControllerProperties = this.contextProvider.getContext();
+		if (!abortControllerProperties) {
+			return undefined;
+		}
+		return abortControllerProperties.abortController;
 	}
 }

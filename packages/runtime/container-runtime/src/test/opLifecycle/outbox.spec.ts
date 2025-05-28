@@ -405,7 +405,7 @@ describe("Outbox", () => {
 		assert.equal(state.pendingOpContents.length, 0);
 		const batchId = "batchId";
 		// ...But if batchId is provided, it's resubmit, and we need to send an empty batch with the batchId
-		outbox.flush(batchId);
+		outbox.flush({ batchId, staged: false });
 		assert.equal(state.opsSubmitted, 1);
 		assert.equal(state.batchesSubmitted.length, 1);
 		assert.equal(
@@ -430,17 +430,17 @@ describe("Outbox", () => {
 		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0")); // Separate batch, batch ID not used
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "2"));
-		outbox.flush("batchId-A");
+		outbox.flush({ batchId: "batchId-A", staged: false });
 
 		// Flush 2 - resubmit single-message batch
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "3"));
-		outbox.flush("batchId-B");
+		outbox.flush({ batchId: "batchId-B", staged: false });
 
 		// Flush 3 - resubmit blob attach batch
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "4"));
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "5"));
 		currentSeqNumbers.referenceSequenceNumber = 0;
-		outbox.flush("batchId-C");
+		outbox.flush({ batchId: "batchId-C", staged: false });
 
 		// Flush 4 - no batch ID given
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "6"));
@@ -1215,6 +1215,90 @@ describe("Outbox", () => {
 			outbox.flush();
 
 			validateCounts(2, 1, 0);
+		});
+	});
+
+	describe("containsUserChanges", () => {
+		it("returns false when all batches are empty", () => {
+			const outbox = getOutbox({ context: getMockContext() });
+			assert.equal(
+				outbox.containsUserChanges(),
+				false,
+				"Should be false when all batches are empty",
+			);
+		});
+
+		it("returns true when mainBatch has user changes", () => {
+			const outbox = getOutbox({ context: getMockContext() });
+			const dirtyableMessage: LocalBatchMessage = {
+				runtimeOp: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: { address: "", contents: {} },
+				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: 1,
+				metadata: undefined,
+				localOpMetadata: {},
+			};
+			outbox.submit(dirtyableMessage);
+			assert.equal(
+				outbox.containsUserChanges(),
+				true,
+				"Should be true when mainBatch has user changes",
+			);
+		});
+
+		it("returns false when mainBatch has only non-user changes", () => {
+			const outbox = getOutbox({ context: getMockContext() });
+			const dirtyableMessage: LocalBatchMessage = {
+				runtimeOp: {
+					type: ContainerMessageType.GC,
+				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: 1,
+				metadata: undefined,
+				localOpMetadata: {},
+			};
+			outbox.submit(dirtyableMessage);
+			assert.equal(
+				outbox.containsUserChanges(),
+				false,
+				"Should be false when mainBatch has only non-user changes",
+			);
+		});
+
+		it("returns true when blobAttachBatch has user changes", () => {
+			const outbox = getOutbox({ context: getMockContext() });
+			const blobAttachOp: LocalBatchMessage = {
+				runtimeOp: {
+					type: ContainerMessageType.BlobAttach,
+				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: 1,
+				metadata: undefined,
+				localOpMetadata: {},
+			};
+			outbox.submitBlobAttach(blobAttachOp);
+			assert.equal(
+				outbox.containsUserChanges(),
+				true,
+				"Should be true when blobAttachBatch has user changes",
+			);
+		});
+
+		it("returns false when only idAllocationBatch has ops", () => {
+			const outbox = getOutbox({ context: getMockContext() });
+			const idAllocationOp: LocalBatchMessage = {
+				runtimeOp: {
+					type: ContainerMessageType.IdAllocation,
+				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: 1,
+				metadata: undefined,
+				localOpMetadata: {},
+			};
+			outbox.submitIdAllocation(idAllocationOp);
+			assert.equal(
+				outbox.containsUserChanges(),
+				false,
+				"Should be false when only idAllocationBatch has ops",
+			);
 		});
 	});
 });

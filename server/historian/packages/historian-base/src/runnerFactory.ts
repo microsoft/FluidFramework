@@ -15,6 +15,10 @@ import { HistorianRunner } from "./runner";
 import { IHistorianResourcesCustomizations } from "./customizations";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 import type { IDenyList } from "@fluidframework/server-services-core";
+import {
+	setupAxiosInterceptorsForAbortSignals,
+	getGlobalAbortControllerContext,
+} from "@fluidframework/server-services-client";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -251,6 +255,12 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			documentsDenyListConfig,
 		);
 		const startupCheck = new StartupCheck();
+		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
+		if (axiosAbortSignalEnabled) {
+			setupAxiosInterceptorsForAbortSignals(() =>
+				getGlobalAbortControllerContext().getAbortController(),
+			);
+		}
 
 		return new HistorianResources(
 			config,
