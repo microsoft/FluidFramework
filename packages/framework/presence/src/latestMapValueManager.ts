@@ -176,7 +176,7 @@ export interface StateMap<K extends string | number, V> {
 	): void;
 
 	/**
-	 * Returns the element with the specified key from the StateMap.
+	 * Returns the element with the specified key from the StateMap, if it exists.
 	 *
 	 * @returns Returns the element associated with the specified key. If no element is associated with the specified key, undefined is returned.
 	 */
@@ -200,8 +200,6 @@ export interface StateMap<K extends string | number, V> {
 
 	/**
 	 * The number of elements in the StateMap.
-	 *
-	 * @returns the number of elements in the StateMap.
 	 */
 	readonly size: number;
 
