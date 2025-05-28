@@ -585,7 +585,7 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 /**
  * Configuration options for SharedTree.
- * @alpha
+ * @alpha @input
  */
 export type SharedTreeOptions = Partial<ICodecOptions> &
 	Partial<SharedTreeFormatOptions> &
