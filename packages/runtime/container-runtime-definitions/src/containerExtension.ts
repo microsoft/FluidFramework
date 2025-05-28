@@ -22,7 +22,6 @@ import type { IQuorumClients } from "@fluidframework/driver-definitions/internal
  * @internal
  */
 export type ClientConnectionId = string;
-
 /**
  * Common structure between incoming and outgoing extension signals.
  *
@@ -204,6 +203,8 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 	readonly events: Listenable<ExtensionHostEvents>;
 
 	readonly logger: ITelemetryBaseLogger;
+
+	readonly supportedFeatures: ReadonlySet<string>;
 
 	/**
 	 * Submits a signal to be sent to other clients.

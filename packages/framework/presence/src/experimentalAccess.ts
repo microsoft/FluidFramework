@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type {
 	ContainerExtension,
 	ContainerExtensionFactory,
 	InboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
@@ -37,11 +35,6 @@ class ContainerPresenceManager
 	private readonly manager: PresenceExtensionInterface;
 
 	public constructor(host: ExtensionHost) {
-		const maybeLayerCompatDetails = host as FluidObject<ILayerCompatDetails>;
-		const targetedSignalSupport =
-			maybeLayerCompatDetails.ILayerCompatDetails?.supportedFeatures.has(
-				"submit_signals_v2",
-			) ?? false;
 		this.interface = this.manager = createPresenceManager(
 			{
 				...host,
@@ -49,7 +42,7 @@ class ContainerPresenceManager
 					host.submitAddressedSignal([], message);
 				},
 			},
-			targetedSignalSupport,
+			host.supportedFeatures.has("submit_signals_v2"),
 		);
 	}
 

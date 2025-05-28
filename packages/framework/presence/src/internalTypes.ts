@@ -57,9 +57,9 @@ export type IEphemeralRuntime = Omit<ExtensionHost, "logger" | "submitAddressedS
 		 */
 		submitSignal: (
 			message:
+				| OutboundAcknowledgementMessage
 				| OutboundClientJoinMessage
-				| OutboundDatastoreUpdateMessage
-				| OutboundAcknowledgementMessage,
+				| OutboundDatastoreUpdateMessage,
 		) => void;
 	};
 

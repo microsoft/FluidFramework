@@ -186,5 +186,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		assert.deepStrictEqual(args, expected, "Unexpected signal");
 	};
 
+	public supportedFeatures: ReadonlySet<string> = new Set(["submit_signals_v2"]);
+
 	// #endregion
 }
