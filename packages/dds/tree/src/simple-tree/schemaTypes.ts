@@ -301,7 +301,7 @@ export interface FieldProps<TCustomMetadata = unknown> {
  */
 export type ContextualFieldProvider = (
 	context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
-) => UnhydratedFlexTreeNode | undefined;
+) => UnhydratedFlexTreeNode[];
 /**
  * A {@link FieldProvider} which can produce its content in a vacuum.
  */

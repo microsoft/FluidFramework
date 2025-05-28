@@ -127,7 +127,7 @@ export class UnhydratedFlexTreeNode
 	private getOrCreateField(key: FieldKey): UnhydratedFlexTreeField {
 		return getOrCreate(this.fields, key, () => {
 			const stored = this.storedSchema.getFieldSchema(key).kind;
-			const field = createField(this.simpleContext, stored, key, []);
+			const field = createField(this.context, stored, key, []);
 			field.parent = this;
 			return field;
 		});
@@ -289,14 +289,10 @@ export class UnhydratedFlexTreeField
 {
 	public [flexTreeMarker] = FlexTreeEntityKind.Field as const;
 
-	public get context(): FlexTreeContext {
-		return this.simpleContext.flexContext;
-	}
-
 	public parent: UnhydratedFlexTreeNode | undefined = undefined;
 
 	public constructor(
-		public readonly simpleContext: Context,
+		public readonly context: FlexTreeContext,
 		public readonly schema: FieldKindIdentifier,
 		public readonly key: FieldKey,
 		private lazyChildren: UnhydratedFlexTreeNode[] | ContextualFieldProvider,
@@ -323,7 +319,7 @@ export class UnhydratedFlexTreeField
 		const provider = this.getPendingDefault();
 		if (provider) {
 			const content = provider(context);
-			this.lazyChildren = content === undefined ? [] : [content];
+			this.lazyChildren = content;
 		}
 	}
 
@@ -335,7 +331,7 @@ export class UnhydratedFlexTreeField
 		const provider = this.getPendingDefault();
 		if (provider) {
 			const content = provider("UseGlobalContext");
-			this.lazyChildren = content === undefined ? [] : [content];
+			this.lazyChildren = content;
 		}
 		return this.lazyChildren as UnhydratedFlexTreeNode[];
 	}
@@ -402,7 +398,7 @@ export class UnhydratedFlexTreeField
 	}
 }
 
-export class EagerMapTreeOptionalField
+export class UnhydratedOptionalField
 	extends UnhydratedFlexTreeField
 	implements FlexTreeOptionalField
 {
@@ -433,8 +429,8 @@ export class EagerMapTreeOptionalField
 	}
 }
 
-class EagerMapTreeRequiredField
-	extends EagerMapTreeOptionalField
+class UnhydratedRequiredField
+	extends UnhydratedOptionalField
 	implements FlexTreeRequiredField
 {
 	public override get content(): FlexTreeUnknownUnboxed {
@@ -447,7 +443,7 @@ class EagerMapTreeRequiredField
 	}
 }
 
-export class UnhydratedTreeSequenceField
+export class UnhydratedSequenceField
 	extends UnhydratedFlexTreeField
 	implements FlexTreeSequenceField
 {
@@ -455,14 +451,16 @@ export class UnhydratedTreeSequenceField
 		insert: (index, newContent): void => {
 			for (const c of newContent) {
 				assert(c !== undefined, 0xa0a /* Unexpected sparse array content */);
+				assert(c instanceof UnhydratedFlexTreeNode, "Expected unhydrated node");
 			}
+			const newContentChecked = newContent as readonly UnhydratedFlexTreeNode[];
 			this.edit((mapTrees) => {
 				if (newContent.length < 1000) {
 					// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
-					mapTrees.splice(index, 0, ...newContent);
+					mapTrees.splice(index, 0, ...newContentChecked);
 				} else {
 					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
-					return mapTrees.slice(0, index).concat(newContent, mapTrees.slice(index));
+					return mapTrees.slice(0, index).concat(newContentChecked, mapTrees.slice(index));
 				}
 			});
 		},
@@ -496,7 +494,7 @@ export class UnhydratedTreeSequenceField
 /** Creates a field with the given attributes */
 export function createField(
 	...args: [
-		Context,
+		FlexTreeContext,
 		FieldKindIdentifier,
 		FieldKey,
 		UnhydratedFlexTreeNode[] | ContextualFieldProvider,
@@ -505,11 +503,11 @@ export function createField(
 	switch (args[1]) {
 		case FieldKinds.required.identifier:
 		case FieldKinds.identifier.identifier:
-			return new EagerMapTreeRequiredField(...args);
+			return new UnhydratedRequiredField(...args);
 		case FieldKinds.optional.identifier:
-			return new EagerMapTreeOptionalField(...args);
+			return new UnhydratedOptionalField(...args);
 		case FieldKinds.sequence.identifier:
-			return new UnhydratedTreeSequenceField(...args);
+			return new UnhydratedSequenceField(...args);
 		case FieldKinds.forbidden.identifier:
 			// TODO: this seems to used by unknown optional fields. They should probably use "optional" not "Forbidden" schema.
 			return new UnhydratedFlexTreeField(...args);

@@ -27,6 +27,11 @@ import { TreeStatus } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+import { singleJsonCursor } from "../json/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { flexTreeFromCursor } from "../../simple-tree/api/create.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactory("undefined");
@@ -281,8 +286,13 @@ describe("Unhydrated nodes", () => {
 
 	it("read constant defaulted properties", () => {
 		const defaultValue = 3;
-		const constantProvider: ConstantFieldProvider = () => {
-			return defaultValue;
+		const constantProvider: ConstantFieldProvider = (): UnhydratedFlexTreeNode[] => {
+			return [
+				flexTreeFromCursor(
+					getUnhydratedContext(SchemaFactory.number),
+					singleJsonCursor(defaultValue),
+				),
+			];
 		};
 		class HasDefault extends schemaFactory.object("DefaultingLeaf", {
 			value: schemaFactory.optional(
@@ -299,7 +309,12 @@ describe("Unhydrated nodes", () => {
 		const defaultValue = 3;
 		const contextualProvider: ContextualFieldProvider = (context: unknown) => {
 			assert.notEqual(context, undefined);
-			return defaultValue;
+			return [
+				flexTreeFromCursor(
+					getUnhydratedContext(SchemaFactory.number),
+					singleJsonCursor(defaultValue),
+				),
+			];
 		};
 		class HasDefault extends schemaFactory.object("DefaultingLeaf", {
 			value: schemaFactory.optional(

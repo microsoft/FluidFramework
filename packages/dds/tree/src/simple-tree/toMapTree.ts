@@ -39,8 +39,7 @@ import {
 	type TreeNodeSchema,
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
-	type Context,
-	UnhydratedTreeSequenceField,
+	UnhydratedSequenceField,
 } from "./core/index.js";
 // Required to prevent the introduction of new circular dependencies
 // TODO: Having the schema provide their own policy functions for compatibility which
@@ -49,10 +48,10 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { isObjectNodeSchema } from "./node-kinds/object/objectNodeTypes.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { TreeNodeValid } from "./treeNodeValid.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createField, type UnhydratedFlexTreeField } from "./core/unhydratedFlexTree.js";
 import { convertFieldKind } from "./toStoredSchema.js";
+import { getUnhydratedContext } from "./createContext.js";
 
 /**
  * Module notes:
@@ -160,7 +159,7 @@ function nodeDataToMapTree(
 			unreachableCase(schema.kind);
 	}
 
-	return new UnhydratedFlexTreeNode(...result, contextFromSchema(schema));
+	return new UnhydratedFlexTreeNode(...result, getUnhydratedContext(schema));
 }
 
 type FlexContent = [NodeData, Map<FieldKey, UnhydratedFlexTreeField>];
@@ -200,12 +199,6 @@ function leafToMapTree(
 		},
 		new Map<FieldKey, UnhydratedFlexTreeField>(),
 	];
-}
-
-function contextFromSchema(schema: TreeNodeSchema): Context {
-	const s = schema as typeof TreeNodeValid & TreeNodeSchema;
-	const context = s.oneTimeInitialize().oneTimeInitialized;
-	return context;
 }
 
 /**
@@ -295,7 +288,7 @@ function arrayToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexConte
 		arrayChildToMapTree(child, allowedChildTypes),
 	);
 
-	const context = contextFromSchema(schema);
+	const context = getUnhydratedContext(schema).flexContext;
 
 	// Array nodes have a single `EmptyKey` field:
 	const fieldsEntries =
@@ -304,7 +297,7 @@ function arrayToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexConte
 			: ([
 					[
 						EmptyKey,
-						new UnhydratedTreeSequenceField(
+						new UnhydratedSequenceField(
 							context,
 							FieldKinds.sequence.identifier,
 							EmptyKey,
@@ -345,7 +338,7 @@ function mapToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexContent
 				Object.entries(data)
 	) as Iterable<readonly [string, InsertableContent]>;
 
-	const context = contextFromSchema(schema);
+	const context = getUnhydratedContext(schema).flexContext;
 
 	const transformedFields = new Map<FieldKey, UnhydratedFlexTreeField>();
 	for (const item of fieldsIterator) {
@@ -388,7 +381,7 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexCont
 	}
 
 	const fields = new Map<FieldKey, UnhydratedFlexTreeField>();
-	const context = contextFromSchema(schema);
+	const context = getUnhydratedContext(schema).flexContext;
 
 	for (const [key, fieldInfo] of schema.flexKeyMap) {
 		const value = checkFieldProperty(data, key);

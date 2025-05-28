@@ -1469,12 +1469,7 @@ export function fieldCursorFromInsertable<
 		? ImplicitFieldSchema
 		: TSchema & ImplicitFieldSchema,
 	data: InsertableField<TSchema>,
-	context?: NodeIdentifierManager | undefined,
 ): ITreeCursorSynchronous {
-	const mapTree = mapTreeFromNodeData(
-		data as InsertableField<UnsafeUnknownSchema>,
-		schema,
-		context,
-	);
+	const mapTree = mapTreeFromNodeData(data as InsertableField<UnsafeUnknownSchema>, schema);
 	return cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]);
 }

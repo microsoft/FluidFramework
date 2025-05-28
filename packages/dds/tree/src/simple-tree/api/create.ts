@@ -5,27 +5,46 @@
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
-import type { ITreeCursorSynchronous, SchemaAndPolicy } from "../../core/index.js";
+import {
+	CursorLocationType,
+	mapCursorField,
+	mapCursorFields,
+	type ITreeCursorSynchronous,
+	type SchemaAndPolicy,
+} from "../../core/index.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
-import type { Unhydrated } from "../core/index.js";
+import {
+	type Context,
+	getOrCreateNodeFromInnerNode,
+	type NodeKind,
+	type Unhydrated,
+	UnhydratedFlexTreeNode,
+} from "../core/index.js";
 import {
 	defaultSchemaPolicy,
 	inSchemaOrThrow,
-	mapTreeFromCursor,
 	isFieldInSchema,
 } from "../../feature-libraries/index.js";
 import { getUnhydratedContext } from "../createContext.js";
 import { createUnknownOptionalFieldPolicy } from "../node-kinds/index.js";
+import type { SimpleNodeSchema, SimpleNodeSchemaBase } from "../simpleSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { createField } from "../core/unhydratedFlexTree.js";
+import { getStoredSchema } from "../toStoredSchema.js";
 
 /**
  * Creates an unhydrated simple-tree field from a cursor in nodes mode.
+ * @remarks
+ * Does not support defaults.
+ * Validates the field is in schema.
  */
 export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	cursor: ITreeCursorSynchronous | undefined,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-	const mapTrees = cursor === undefined ? [] : [mapTreeFromCursor(cursor)];
 	const context = getUnhydratedContext(schema);
+	const mapTrees = cursor === undefined ? [] : [flexTreeFromCursor(context, cursor)];
+
 	const flexSchema = context.flexContext.schema;
 
 	const schemaValidationPolicy: SchemaAndPolicy = {
@@ -49,7 +68,37 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	assert(mapTrees.length === 1, 0xa11 /* unexpected field length */);
 	// Length asserted above, so this is safe. This assert is done instead of checking for undefined after indexing to ensure a length greater than 1 also errors.
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const _mapTree = mapTrees[0]!;
+	const mapTree = mapTrees[0]!;
 
-	return fail("TODO");
+	return getOrCreateNodeFromInnerNode(mapTree) as Unhydrated<
+		TreeFieldFromImplicitField<TSchema>
+	>;
+}
+
+/**
+ * Construct an {@link UnhydratedFlexTreeNode} from a cursor in Nodes mode.
+ * @remarks
+ * This does not validate the node is in schema.
+ */
+export function flexTreeFromCursor(
+	context: Context,
+	cursor: ITreeCursorSynchronous,
+): UnhydratedFlexTreeNode {
+	assert(cursor.mode === CursorLocationType.Nodes, "Expected nodes cursor");
+	const schema = context.schema.get(cursor.type) ?? fail("missing schema");
+	const storedSchema = getStoredSchema(
+		schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema,
+	);
+	const fields = new Map(
+		mapCursorFields(cursor, () => [
+			cursor.getFieldKey(),
+			createField(
+				context.flexContext,
+				storedSchema.getFieldSchema(cursor.getFieldKey()).kind,
+				cursor.getFieldKey(),
+				mapCursorField(cursor, () => flexTreeFromCursor(context, cursor)),
+			),
+		]),
+	);
+	return new UnhydratedFlexTreeNode({ type: cursor.type }, fields, context);
 }

@@ -37,7 +37,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
-	addDefaultsToMapTree,
 	getPossibleTypes,
 	mapTreeFromNodeData,
 	type InsertableContent,
@@ -46,9 +45,13 @@ import {
 import { brand } from "../../util/index.js";
 import {
 	MockNodeIdentifierManager,
-	type NodeIdentifierManager,
+	type FlexTreeHydratedContextMinimal,
 } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 
 describe("toMapTree", () => {
 	let nodeKeyManager: MockNodeIdentifierManager;
@@ -821,7 +824,7 @@ describe("toMapTree", () => {
 
 			const tree = {};
 
-			const actual = mapTreeFromNodeData(tree, schema, nodeKeyManager);
+			const actual = mapTreeFromNodeData(tree, schema);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -861,13 +864,38 @@ describe("toMapTree", () => {
 		});
 
 		it("Populates a tree with defaults", () => {
+			const log: string[] = [];
 			const defaultValue = 3;
 			const constantProvider: ConstantFieldProvider = () => {
-				return defaultValue;
+				log.push("constant");
+				return [
+					new UnhydratedFlexTreeNode(
+						{
+							type: brand(numberSchema.identifier),
+							value: defaultValue,
+						},
+						new Map(),
+						getUnhydratedContext(SchemaFactory.number),
+					),
+				];
 			};
-			const contextualProvider: ContextualFieldProvider = (context: NodeIdentifierManager) => {
-				assert.equal(context, nodeKeyManager);
-				return defaultValue;
+			const contextualProvider: ContextualFieldProvider = (
+				context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
+			) => {
+				log.push(typeof context === "string" ? context : `contextual`);
+				if (typeof context !== "string") {
+					assert.equal(context.nodeKeyManager, nodeKeyManager);
+				}
+				return [
+					new UnhydratedFlexTreeNode(
+						{
+							type: brand(numberSchema.identifier),
+							value: defaultValue,
+						},
+						new Map(),
+						getUnhydratedContext(SchemaFactory.number),
+					),
+				];
 			};
 			function createDefaultFieldProps(provider: FieldProvider): FieldProps {
 				return {
@@ -906,41 +934,65 @@ describe("toMapTree", () => {
 			// Don't pass in a context
 			let mapTree = mapTreeFromNodeData(nodeData, RootObject);
 
-			const getObject = () => mapTree.fields.get(brand("object"))?.[0];
-			const getArray = () => mapTree.fields.get(brand("array"))?.[0].fields.get(EmptyKey);
-			const getMap = () => mapTree.fields.get(brand("map"))?.[0];
-			const getConstantValue = (leafObject: MapTree | undefined) =>
-				leafObject?.fields.get(brand("constantValue"))?.[0].value;
-			const getContextualValue = (leafObject: MapTree | undefined) =>
-				leafObject?.fields.get(brand("contextualValue"))?.[0].value;
+			const getObject = () => mapTree.getBoxed("object").children[0];
+			const getArray = () => mapTree.getBoxed("array").children[0].fields.get(EmptyKey);
+			const getMap = () => mapTree.getBoxed("map").children[0];
+			const getConstantValue = (leafObject: UnhydratedFlexTreeNode | undefined) =>
+				leafObject?.getBoxed("constantValue").children[0].value;
+			const getContextualValue = (leafObject: UnhydratedFlexTreeNode | undefined) =>
+				leafObject?.getBoxed("contextualValue").children[0].value;
 
 			// Assert that we've populated the constant defaults...
 			assert.equal(getConstantValue(getObject()), defaultValue);
-			assert.equal(getConstantValue(getArray()?.[0]), defaultValue);
-			assert.equal(getConstantValue(getArray()?.[1]), defaultValue);
-			assert.equal(getConstantValue(getMap()?.fields.get(brand("a"))?.[0]), defaultValue);
-			assert.equal(getConstantValue(getMap()?.fields.get(brand("b"))?.[0]), defaultValue);
+			assert.equal(getConstantValue(getArray()?.children[0]), defaultValue);
+			assert.equal(getConstantValue(getArray()?.children[1]), defaultValue);
+			assert.equal(
+				getConstantValue(getMap()?.fields.get(brand("a"))?.children[0]),
+				defaultValue,
+			);
+			assert.equal(
+				getConstantValue(getMap()?.fields.get(brand("b"))?.children[0]),
+				defaultValue,
+			);
 			// ...but not the contextual ones
 			assert.equal(getContextualValue(getObject()), undefined);
-			assert.equal(getContextualValue(getArray()?.[0]), undefined);
-			assert.equal(getContextualValue(getArray()?.[1]), undefined);
-			assert.equal(getContextualValue(getMap()?.fields.get(brand("a"))?.[0]), undefined);
-			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), undefined);
+			assert.equal(getContextualValue(getArray()?.children[0]), undefined);
+			assert.equal(getContextualValue(getArray()?.children[1]), undefined);
+			assert.equal(
+				getContextualValue(getMap()?.fields.get(brand("a"))?.children[0]),
+				undefined,
+			);
+			assert.equal(
+				getContextualValue(getMap()?.fields.get(brand("b"))?.children[0]),
+				undefined,
+			);
 
 			// This time, pass the context in
-			mapTree = mapTreeFromNodeData(nodeData, RootObject, nodeKeyManager);
+			mapTree = mapTreeFromNodeData(nodeData, RootObject);
 
 			// Assert that all defaults are populated
 			assert.equal(getConstantValue(getObject()), defaultValue);
-			assert.equal(getConstantValue(getArray()?.[0]), defaultValue);
-			assert.equal(getConstantValue(getArray()?.[1]), defaultValue);
-			assert.equal(getConstantValue(getMap()?.fields.get(brand("a"))?.[0]), defaultValue);
-			assert.equal(getConstantValue(getMap()?.fields.get(brand("b"))?.[0]), defaultValue);
+			assert.equal(getConstantValue(getArray()?.children[0]), defaultValue);
+			assert.equal(getConstantValue(getArray()?.children[1]), defaultValue);
+			assert.equal(
+				getConstantValue(getMap()?.fields.get(brand("a"))?.children[0]),
+				defaultValue,
+			);
+			assert.equal(
+				getConstantValue(getMap()?.fields.get(brand("b"))?.children[0]),
+				defaultValue,
+			);
 			assert.equal(getContextualValue(getObject()), defaultValue);
-			assert.equal(getContextualValue(getArray()?.[0]), defaultValue);
-			assert.equal(getContextualValue(getArray()?.[1]), defaultValue);
-			assert.equal(getContextualValue(getMap()?.fields.get(brand("a"))?.[0]), defaultValue);
-			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), defaultValue);
+			assert.equal(getContextualValue(getArray()?.children[0]), defaultValue);
+			assert.equal(getContextualValue(getArray()?.children[1]), defaultValue);
+			assert.equal(
+				getContextualValue(getMap()?.fields.get(brand("a"))?.children[0]),
+				defaultValue,
+			);
+			assert.equal(
+				getContextualValue(getMap()?.fields.get(brand("b"))?.children[0]),
+				defaultValue,
+			);
 		});
 	});
 
@@ -1338,11 +1390,19 @@ describe("toMapTree", () => {
 			class Test extends f.object("test", {
 				api: createFieldSchema(FieldKind.Required, [f.number], {
 					key: "stored",
-					defaultProvider: getDefaultProvider(() => 5),
+					defaultProvider: getDefaultProvider(() => [
+						new UnhydratedFlexTreeNode(
+							{
+								type: brand(numberSchema.identifier),
+								value: 5,
+							},
+							new Map(),
+							getUnhydratedContext(SchemaFactory.number),
+						),
+					]),
 				}),
 			}) {}
 			const m: ExclusiveMapTree = { type: brand(Test.identifier), fields: new Map() };
-			addDefaultsToMapTree(m, Test, undefined);
 			assert.deepEqual(
 				m.fields,
 				new Map([["stored", [{ type: f.number.identifier, fields: new Map(), value: 5 }]]]),

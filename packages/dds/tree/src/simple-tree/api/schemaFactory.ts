@@ -300,9 +300,7 @@ export interface SchemaStatics {
 	) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
 }
 
-const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
-	return undefined;
-});
+const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => []);
 
 // The following overloads for optional and required are used to get around the fact that
 // the compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T when T is known to extend ImplicitAllowedTypes
@@ -1126,7 +1124,7 @@ export class SchemaFactory<
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
 			(
 				context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
-			): UnhydratedFlexTreeNode => {
+			): UnhydratedFlexTreeNode[] => {
 				const id =
 					context === "UseGlobalContext"
 						? globalIdentifierAllocator.decompress(
@@ -1136,7 +1134,7 @@ export class SchemaFactory<
 								context.nodeKeyManager.generateLocalNodeIdentifier(),
 							);
 
-				return mapTreeFromNodeData(id, this.string);
+				return [mapTreeFromNodeData(id, this.string)];
 			},
 		);
 		return createFieldSchema(FieldKind.Identifier, this.string, {

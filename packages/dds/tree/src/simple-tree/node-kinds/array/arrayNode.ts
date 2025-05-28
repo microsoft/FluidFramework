@@ -40,7 +40,7 @@ import {
 	type TreeNodeSchemaClass,
 	getKernel,
 	type UnhydratedFlexTreeNode,
-	UnhydratedTreeSequenceField,
+	UnhydratedSequenceField,
 } from "../../core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "../../toMapTree.js";
 import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
@@ -1013,7 +1013,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		const movedCount = sourceEnd - sourceStart;
 		if (!destinationField.context.isHydrated()) {
-			if (!(sourceField instanceof UnhydratedTreeSequenceField)) {
+			if (!(sourceField instanceof UnhydratedSequenceField)) {
 				throw new UsageError(
 					"Cannot move elements from a hydrated array to an unhydrated array.",
 				);

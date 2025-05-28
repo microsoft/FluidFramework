@@ -38,6 +38,6 @@ export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
 export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
 export {
 	UnhydratedFlexTreeNode,
-	UnhydratedTreeSequenceField,
+	UnhydratedSequenceField,
 	UnhydratedContext,
 } from "./unhydratedFlexTree.js";
