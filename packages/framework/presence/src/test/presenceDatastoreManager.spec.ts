@@ -475,16 +475,16 @@ describe("Presence", () => {
 			it("with acknowledgementId sends targeted acknowledgment messsage back to requestor", () => {
 				// We expect to send a targeted acknowledgment back to the requestor
 				runtime.signalsExpected.push([
-					"Pres:Ack",
 					{
-						"id": 1,
+						type: "Pres:Ack",
+						content: { id: 1 },
+						targetClientId: "client4",
 					},
-					"client4" /* targetClientId */,
 				]);
 
 				// Act - send generic datastore update with acknowledgement id specified
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {

@@ -38,7 +38,11 @@ import type {
 	SignalMessages,
 	SystemDatastore,
 } from "./protocol.js";
-import { datastoreUpdateMessageType, joinMessageType } from "./protocol.js";
+import {
+	acknowledgementMessageType,
+	datastoreUpdateMessageType,
+	joinMessageType,
+} from "./protocol.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
@@ -66,7 +70,11 @@ const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications"
 	n: "Notifications",
 } as const;
 
-const knownMessageTypes = new Set([joinMessageType, datastoreUpdateMessageType]);
+const knownMessageTypes = new Set([
+	joinMessageType,
+	datastoreUpdateMessageType,
+	acknowledgementMessageType,
+]);
 function isPresenceMessage(
 	message: InboundExtensionMessage<SignalMessages>,
 ): message is InboundDatastoreUpdateMessage | InboundClientJoinMessage {
@@ -389,13 +397,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// If the message requests an acknowledgement, we will send a targeted acknowledgement message back to just the requestor.
 			if (message.content.acknowledgementId !== undefined) {
 				assert(this.supportsTargetedSignals, "Targeted signals not supported");
-				this.runtime.submitSignal(
-					acknowledgementMessageType,
-					{
-						id: message.content.acknowledgementId,
-					} satisfies AcknowledgementMessage["content"],
-					message.clientId,
-				);
+				this.runtime.submitSignal({
+					type: acknowledgementMessageType,
+					content: { id: message.content.acknowledgementId },
+					targetClientId: message.clientId,
+				});
 			}
 		}
 
