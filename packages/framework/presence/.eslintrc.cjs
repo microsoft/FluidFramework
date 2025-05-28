@@ -22,6 +22,7 @@ module.exports = {
 					"@fluidframework/*/internal{,/**}",
 					"*/index.js",
 					"@fluidframework/presence/alpha",
+					"@fluidframework/presence/beta",
 				],
 			},
 		],

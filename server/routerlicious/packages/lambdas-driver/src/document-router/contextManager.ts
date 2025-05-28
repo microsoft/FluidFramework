@@ -5,6 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
+
 import {
 	IContext,
 	IContextErrorData,
@@ -12,6 +13,7 @@ import {
 	IRoutingKey,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { DocumentContext } from "./documentContext";
 
 const LastCheckpointedOffset: IQueuedMessage = {

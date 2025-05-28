@@ -17,7 +17,7 @@ import { createPresenceManager } from "../presenceManager.js";
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import { StateFactory } from "@fluidframework/presence/alpha";
+import { StateFactory } from "@fluidframework/presence/beta";
 
 const testWorkspaceName = "name:testWorkspaceA";
 

@@ -35,7 +35,19 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import safeStringify from "json-stringify-safe";
+
 import { createRoomJoinMessage, generateClientId } from "../utils";
+
+import type {
+	IConnectedClient,
+	INexusLambdaConnectionStateTrackers,
+	INexusLambdaDependencies,
+	INexusLambdaSettings,
+	IRoom,
+} from "./interfaces";
+import { ProtocolVersions, checkProtocolVersion } from "./protocol";
+import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
+import { StageTrace, sampleMessages } from "./trace";
 import {
 	getMessageMetadata,
 	handleServerErrorAndConvertToNetworkError,
@@ -44,16 +56,6 @@ import {
 	isWriter,
 	isSummarizer,
 } from "./utils";
-import { StageTrace, sampleMessages } from "./trace";
-import { ProtocolVersions, checkProtocolVersion } from "./protocol";
-import type {
-	IConnectedClient,
-	INexusLambdaConnectionStateTrackers,
-	INexusLambdaDependencies,
-	INexusLambdaSettings,
-	IRoom,
-} from "./interfaces";
-import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
 
 /**
  * Trace stages for the connect flow.
