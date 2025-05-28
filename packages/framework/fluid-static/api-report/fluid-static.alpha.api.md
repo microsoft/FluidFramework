@@ -34,7 +34,6 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
     readonly disposed: boolean;
     readonly initialObjects: InitialObjects<TContainerSchema>;
     readonly isDirty: boolean;
-    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @public @sealed

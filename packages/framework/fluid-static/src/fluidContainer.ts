@@ -233,15 +233,6 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * Dispose of the container instance, permanently disabling it.
 	 */
 	dispose(): void;
-
-	/**
-	 * Api to upload a blob of data.
-	 * @param blob - blob to be uploaded.
-	 */
-	uploadBlob(
-		blob: ArrayBufferLike,
-		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
