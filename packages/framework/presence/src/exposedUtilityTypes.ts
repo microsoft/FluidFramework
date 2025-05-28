@@ -12,6 +12,7 @@ import type {
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import { asDeeplyReadonly } from "./internalUtils.js";
+import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 
 /**
  * Collection of utility types that are not intended to be used/imported
@@ -95,7 +96,7 @@ export namespace InternalUtilityTypes {
 	 */
 	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
 	// export type OpaqueJsonDeserialized<T> = UnverifiedBrand<T>;
-	export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
+	// export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
 	// export type OpaqueJsonDeserialized<T extends JsonDeserialized<U>, U> = JsonDeserializedBrand<T, U>;
 
 	/**
@@ -103,8 +104,8 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	export declare class JsonSerializableBrand<T> extends BrandedType<T> {
-		// private readonly JsonSerializable: JsonSerializable<T>;
-		// private constructor();
+		private readonly JsonSerializable: JsonSerializable<T>;
+		private constructor();
 	}
 
 	/**
@@ -119,10 +120,8 @@ export namespace InternalUtilityTypes {
  *
  * @system
  */
-export function brandJson<T>(
-	value: JsonDeserialized<T>,
-): InternalUtilityTypes.OpaqueJsonDeserialized<T> {
-	return value as InternalUtilityTypes.OpaqueJsonDeserialized<T>;
+export function brandJson<T>(value: JsonDeserialized<T>): OpaqueJsonDeserialized<T> {
+	return value as OpaqueJsonDeserialized<T>;
 }
 
 /**
@@ -130,9 +129,7 @@ export function brandJson<T>(
  *
  * @system
  */
-export function unbrandJson<T>(
-	value: InternalUtilityTypes.OpaqueJsonDeserialized<T>,
-): JsonDeserialized<T> {
+export function unbrandJson<T>(value: OpaqueJsonDeserialized<T>): JsonDeserialized<T> {
 	return value as JsonDeserialized<T>;
 }
 
@@ -140,7 +137,7 @@ export function unbrandJson<T>(
  * Converts a JsonDeserializedHandle to a deeply readonly JsonDeserialized value.
  */
 export function asDeeplyReadonlyFromJsonHandle<T>(
-	value: InternalUtilityTypes.OpaqueJsonDeserialized<T>,
+	value: OpaqueJsonDeserialized<T>,
 ): DeepReadonly<JsonDeserialized<T>> {
 	return asDeeplyReadonly(unbrandJson(value));
 }

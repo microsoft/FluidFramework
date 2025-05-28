@@ -13,6 +13,7 @@ import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
+import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 
 /**
  * @sealed
@@ -181,7 +182,7 @@ class NotificationsManagerImpl<
 						name,
 						args: [...(args as JsonTypeWith<never>[])],
 						// FIXME: Why doesn't as cast work?
-					} as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<InternalTypes.NotificationType>,
+					} as unknown as OpaqueJsonDeserialized<InternalTypes.NotificationType>,
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.
@@ -198,7 +199,7 @@ class NotificationsManagerImpl<
 						name,
 						args: [...(args as JsonTypeWith<never>[])],
 						// FIXME: Why doesn't as cast work?
-					} as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<InternalTypes.NotificationType>,
+					} as unknown as OpaqueJsonDeserialized<InternalTypes.NotificationType>,
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.

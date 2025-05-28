@@ -15,7 +15,6 @@ import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import {
 	unbrandJson,
 	brandJson,
@@ -27,6 +26,7 @@ import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
+import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 
 /**
  * @sealed
@@ -219,11 +219,9 @@ export function latest<T extends object | null, Key extends string = string>(
 	// copy for basic protection.
 	const internalValue =
 		local === null
-			? (local as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<T>)
+			? (local as unknown as OpaqueJsonDeserialized<T>)
 			: // FIXME: Why isn't this directly castable?
-				(shallowCloneObject(
-					local,
-				) as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<T>);
+				(shallowCloneObject(local) as unknown as OpaqueJsonDeserialized<T>);
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),

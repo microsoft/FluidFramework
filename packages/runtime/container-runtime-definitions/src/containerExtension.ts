@@ -57,7 +57,13 @@ export type ExtensionMessage<
  * @internal
  */
 export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
-	ExtensionMessage<{ type: TMessage["type"]; content: JsonSerializable<TMessage["content"]> }>;
+	ExtensionMessage<{
+		type: TMessage["type"];
+		content: JsonSerializable<
+			TMessage["content"],
+			{ AllowExtensionOf: OpaqueJsonDeserialized<TMessage["content"]> }
+		>;
+	}>;
 
 /**
  * Brand for value that has not been verified.
@@ -299,3 +305,16 @@ export interface ContainerExtensionStore {
 		...context: TUseContext
 	): T;
 }
+
+/**
+ * @internal
+ */
+export declare class JsonDeserializedBrand<T> extends BrandedType<T> {
+	private readonly EncodedValue: T;
+	private constructor();
+}
+
+/**
+ * @internal
+ */
+export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
