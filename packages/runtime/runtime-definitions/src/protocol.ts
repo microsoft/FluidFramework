@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { TypedMessage } from "@fluidframework/core-interfaces/internal";
 import type {
 	ITree,
 	ISignalMessage,
@@ -32,8 +33,9 @@ export interface IEnvelope {
  * @legacy
  * @alpha
  */
-export interface IInboundSignalMessage extends ISignalMessage {
-	readonly type: string;
+export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage>
+	extends ISignalMessage<TMessage> {
+	readonly type: TMessage["type"];
 }
 
 /**

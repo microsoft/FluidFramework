@@ -4,6 +4,7 @@
  */
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
+import type { ContainerExtensionStore } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -94,16 +95,12 @@ export interface ContainerSchema {
 	readonly dynamicObjectTypes?: readonly SharedObjectKind[];
 }
 
-interface IProvideRootDataObject {
-	readonly IRootDataObject: IRootDataObject;
-}
-
 /**
  * Holds the collection of objects that the container was initially created with, as well as provides the ability
  * to dynamically create further objects during usage.
  * @internal
  */
-export interface IRootDataObject extends IProvideRootDataObject {
+export interface IRootDataObject {
 	/**
 	 * Provides a record of the initial objects defined on creation.
 	 */
@@ -117,6 +114,18 @@ export interface IRootDataObject extends IProvideRootDataObject {
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
 	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
+}
+
+interface IProvideStaticEntryPoint {
+	readonly IStaticEntryPoint: IStaticEntryPoint;
+}
+
+/**
+ * @internal
+ */
+export interface IStaticEntryPoint extends IProvideStaticEntryPoint {
+	readonly rootDataObject: IRootDataObject;
+	readonly extensionStore: ContainerExtensionStore;
 }
 
 /**

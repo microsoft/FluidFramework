@@ -3,13 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { ExtensionHost as ContainerExtensionHost } from "@fluidframework/container-runtime-definitions/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { AttendeeId, Attendee } from "./presence.js";
+import type {
+	OutboundClientJoinMessage,
+	OutboundDatastoreUpdateMessage,
+	SignalMessages,
+} from "./protocol.js";
 
-import type { IRuntimeInternal } from "@fluidframework/presence/internal/container-definitions/internal";
+/**
+ * Presence {@link ContainerExtension} version of {@link @fluidframework/container-runtime-definitions#ExtensionRuntimeProperties}
+ * @internal
+ */
+export interface ExtensionRuntimeProperties {
+	SignalMessages: SignalMessages;
+}
+/**
+ * Presence specific ExtensionHost
+ * @internal
+ */
+export type ExtensionHost = ContainerExtensionHost<ExtensionRuntimeProperties>;
 
 /**
  * @internal
@@ -22,19 +37,27 @@ export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState
 }
 
 /**
- * This interface is a subset of (IContainerRuntime & IRuntimeInternal) and
- * (IFluidDataStoreRuntime) that is needed by the Presence States.
+ * This interface is a subset of ExtensionHost (and mostly of
+ * FluidDataStoreRuntime) that is needed by the Presence States.
  *
  * @privateRemarks
  * Replace with non-DataStore based interface.
  *
  * @internal
  */
-export type IEphemeralRuntime = Pick<
-	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
-	"clientId" | "connected" | "getAudience" | "getQuorum" | "off" | "on" | "submitSignal"
-> &
-	Partial<Pick<IFluidDataStoreRuntime, "logger">>;
+export type IEphemeralRuntime = Omit<ExtensionHost, "logger" | "submitAddressedSignal"> &
+	// Apart from tests, there is always a logger. So this could be promoted to required.
+	Partial<Pick<ExtensionHost, "logger">> & {
+		/**
+		 * Submits the signal to be sent to other clients.
+		 * @param type - Type of the signal.
+		 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
+		 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+		 */
+		submitSignal: (
+			message: OutboundClientJoinMessage | OutboundDatastoreUpdateMessage,
+		) => void;
+	};
 
 /**
  * @internal
