@@ -43,17 +43,17 @@ describe("Runtime", () => {
 		disallowedVersions: [],
 	} as const satisfies IDocumentSchemaFeatures;
 
-	function createController(config: unknown) {
+	function createController(config: IDocumentSchema) {
 		return new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
-			config as IDocumentSchema, // old schema,
+			config, // old schema,
 			features,
 			() => {}, // onSchemaChange
 		);
 	}
 
-	function testWrongConfig(config: unknown) {
+	function testWrongConfig(config: IDocumentSchema) {
 		assert.throws(() => {
 			createController(config);
 		}, "should throw on unknown property");
@@ -61,7 +61,7 @@ describe("Runtime", () => {
 		const controller = createController(validConfig);
 		assert.throws(() =>
 			controller.processDocumentSchemaMessages(
-				[config as IDocumentSchema],
+				[config],
 				false, // local
 				100,
 			),
@@ -79,29 +79,32 @@ describe("Runtime", () => {
 	// If if such configs will be backward compatible (similar to runtime options we are listing that were in use for very long time),
 	// then maybe ability to add them in such back-compat way is a plus
 	it("extra global property ois Ok", () => {
-		createController({ ...validConfig, appProperty: { foo: 5 } });
+		createController({
+			...validConfig,
+			appProperty: { foo: 5 },
+		} as unknown as IDocumentSchema);
 	});
 
 	it("empty object", () => {
-		testWrongConfig({});
+		testWrongConfig({} as unknown as IDocumentSchema);
 	});
 
 	it("wrong version", () => {
 		testWrongConfig({ ...validConfig, version: 4 });
-		testWrongConfig({ ...validConfig, version: "1" });
-		testWrongConfig({ ...validConfig, version: "2.0" });
+		testWrongConfig({ ...validConfig, version: "1" } as unknown as IDocumentSchema);
+		testWrongConfig({ ...validConfig, version: "2.0" } as unknown as IDocumentSchema);
 	});
 
 	it("wrong refSeq", () => {
-		testWrongConfig({ ...validConfig, refSeq: "aaa" });
+		testWrongConfig({ ...validConfig, refSeq: "aaa" } as unknown as IDocumentSchema);
 	});
 
 	it("no refSeq", () => {
-		testWrongConfig({ ...validConfig, refSeq: undefined });
+		testWrongConfig({ ...validConfig, refSeq: undefined } as unknown as IDocumentSchema);
 	});
 
 	it("no runtime", () => {
-		testWrongConfig({ ...validConfig, runtime: undefined });
+		testWrongConfig({ ...validConfig, runtime: undefined } as unknown as IDocumentSchema);
 	});
 
 	it("unknown runtime property", () => {
@@ -227,7 +230,7 @@ describe("Runtime", () => {
 		testWrongConfig({
 			...validConfig,
 			runtime: { ...validConfig.runtime, opGroupingEnabled: false },
-		});
+		} as unknown as IDocumentSchema);
 		testWrongConfig({
 			...validConfig,
 			runtime: { ...validConfig.runtime, opGroupingEnabled: "aa" },
@@ -525,7 +528,8 @@ describe("Runtime", () => {
 		); // sequenceNumber
 		assert(schemaChanged, "schema changed");
 		assert(controller3.sessionSchema.runtime.idCompressorMode === "on");
-		const schema = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
+		const schema = controller3.summarizeDocumentSchema(200);
+		assert(schema !== undefined, "schema should be defined");
 		assert(schema.runtime.idCompressorMode === "on", "now on");
 
 		assert(controller3.maybeGenerateSchemaMessage() === undefined);
@@ -560,7 +564,7 @@ describe("Runtime", () => {
 		);
 
 		// Validate same summaries by two clients.
-		const schema2 = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
+		const schema2 = controller3.summarizeDocumentSchema(200);
 		assert.deepEqual(schema, schema2, "same summaries");
 	});
 });
