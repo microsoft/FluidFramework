@@ -406,16 +406,10 @@ describe("treeNodeApi", () => {
 	describe("children", () => {
 		describe("object", () => {
 			function getObjectSchema() {
-				return schema.objectAlpha(
-					"TestObject",
-					{
-						foo: schema.optional(schema.string),
-						"0": SchemaFactory.optional(schema.number),
-					},
-					{
-						allowUnknownOptionalFields: true,
-					},
-				);
+				return schema.object("TestObject", {
+					foo: schema.optional(schema.string),
+					"0": SchemaFactory.optional(schema.number),
+				});
 			}
 
 			function initializeObjectTree(
@@ -429,14 +423,14 @@ describe("treeNodeApi", () => {
 				return { TestObject, tree: view.root };
 			}
 
-			it("empty", () => {
+			it("Empty", () => {
 				const { tree } = initializeObjectTree({});
 
 				const children = TreeAlpha.children(tree);
 				assert.equal(children.length, 0);
 			});
 
-			it("non-empty", () => {
+			it("Non-empty", () => {
 				const { tree } = initializeObjectTree({
 					foo: "test",
 					0: 42,
@@ -450,20 +444,70 @@ describe("treeNodeApi", () => {
 				assert.equal(children.get("0"), 42);
 			});
 
-			it("extra optional properties not included", () => {
-				const { tree } = initializeObjectTree({
+			it("Extra optional properties not included", () => {
+				class TestObject extends schema.objectAlpha(
+					"TestObject",
+					{
+						foo: schema.optional(schema.string),
+						"0": SchemaFactory.optional(schema.number),
+					},
+					{
+						allowUnknownOptionalFields: true,
+					},
+				) {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
 					foo: "test",
 					0: 42,
 					bar: "extra", // extra optional property
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				} as any);
+				const tree = view.root;
 
 				const children = new Map<string | number, TreeNode | TreeLeafValue>(
 					TreeAlpha.children(tree),
 				);
-				assert.equal(children.size, 2); // The extra property should not be included
-				assert.equal(children.get("foo"), "test");
-				assert.equal(children.get("0"), 42);
+				assert.equal(children.size, 2);
+				assert.equal(children.get("bar"), undefined); // The extra property should not be included
+			});
+
+			it("Subclass properties are not included", () => {
+				class TestObject extends schema.object("TestObject", {
+					foo: schema.optional(schema.string),
+				}) {
+					public readonly bar: string = "Bar"; // Subclass property
+				}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
+					foo: "test",
+				});
+				const tree = view.root;
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 1);
+				assert.equal(children.get("bar"), undefined);
+			});
+
+			it("Shadowed properties are included", () => {
+				class TestObject extends schema.object("TestObject", {
+					toString: schema.string,
+				}) {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
+					toString: "test",
+				});
+				const tree = view.root;
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 1);
+				assert.equal(children.get("toString"), "test");
 			});
 		});
 
