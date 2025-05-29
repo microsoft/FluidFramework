@@ -1154,7 +1154,6 @@ export class ContainerRuntime
 	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
-
 	public get clientId(): string | undefined {
 		return this._getClientId();
 	}
