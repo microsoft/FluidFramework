@@ -545,10 +545,19 @@ export const TreeAlpha: TreeAlpha = {
 			return nodeFromInnerUnboxedNode(childFlexTree);
 		}
 
-		// TODO: simplify
-		const storedKey = tryGetStoredKeyFromPropertyKey(schema, key);
-		if (storedKey === undefined) {
-			return undefined;
+		let storedKey: string | number = key;
+		if (schema.kind === NodeKind.Object) {
+			const fields = schema.info as Record<string, ImplicitFieldSchema>;
+
+			const fieldSchema = fields[key];
+			if (fieldSchema === undefined) {
+				return undefined;
+			}
+
+			storedKey =
+				fieldSchema instanceof FieldSchema && fieldSchema.props?.key !== undefined
+					? fieldSchema.props.key
+					: key;
 		}
 
 		const field = flexNode.tryGetField(brand(String(storedKey)));
@@ -655,33 +664,4 @@ function borrowFieldCursorFromTreeNodeOrValue(
 	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
-}
-
-// TODO: simplify and potentially inline
-/**
- * Given a node schema, gets the {@link FieldProps.key | stored key} corresponding with the provided property key.
- * @returns The stored key if the property key exists in the schema. Otherwise, returns `undefined`.
- */
-function tryGetStoredKeyFromPropertyKey(
-	schema: TreeNodeSchema,
-	propertyKey: string | number,
-): string | number | undefined {
-	// Only object nodes have the concept of a "stored key", differentiated from the developer-facing "property key".
-	// For any other kind of node, the stored key and the property key are the same.
-	if (schema.kind !== NodeKind.Object) {
-		// TODO: this is incorrect.
-		// Need to verify that the property key exists in the schema.
-		return propertyKey;
-	}
-
-	const fields = schema.info as Record<string, ImplicitFieldSchema>;
-
-	const fieldSchema = fields[propertyKey];
-	if (fieldSchema === undefined) {
-		return undefined;
-	}
-
-	return fieldSchema instanceof FieldSchema && fieldSchema.props?.key !== undefined
-		? fieldSchema.props.key
-		: propertyKey;
 }
