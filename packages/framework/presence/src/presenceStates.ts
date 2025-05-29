@@ -43,7 +43,7 @@ export type MapSchemaElement<
 export interface RuntimeLocalUpdateOptions {
 	/**
 	 * The maximum time in milliseconds that this update is allowed to be
-	 * delayed before it must be sent to service.
+	 * delayed before it must be sent to the service.
 	 */
 	allowableUpdateLatencyMs: number;
 
