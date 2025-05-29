@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+} from "@fluidframework/core-interfaces/internal";
 
 /**
  * Collection of value types that are not intended to be used/imported
@@ -29,14 +30,14 @@ export namespace InternalTypes {
 	 * @system
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-		value?: JsonDeserialized<TValue>;
+		value?: OpaqueJsonDeserialized<TValue>;
 	}
 
 	/**
 	 * @system
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-		value: JsonDeserialized<TValue>;
+		value: OpaqueJsonDeserialized<TValue>;
 	}
 
 	/**

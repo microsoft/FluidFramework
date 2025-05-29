@@ -3,17 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
+import { BrandedType } from "@fluidframework/core-interfaces/internal";
 import type {
+	DeepReadonly,
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
+import { asDeeplyReadonly } from "./internalUtils.js";
+
 /**
  * Collection of utility types that are not intended to be used/imported
  * directly outside of this package.
  *
- * @alpha
+ * @beta
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -76,4 +81,63 @@ export namespace InternalUtilityTypes {
 	) => any
 		? JsonSerializable<P>
 		: never;
+
+	/**
+	 * @internal
+	 * @system
+	 */
+	declare class JsonDeserializedBrand<T> extends BrandedType<T> {
+		private readonly EncodedValue: T;
+		private constructor();
+	}
+
+	/**
+	 * @system
+	 */
+	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
+	// export type OpaqueJsonDeserialized<T> = UnverifiedBrand<T>;
+	// export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
+	// export type OpaqueJsonDeserialized<T extends JsonDeserialized<U>, U> = JsonDeserializedBrand<T, U>;
+
+	/**
+	 * @internal
+	 * @system
+	 */
+	export declare class JsonSerializableBrand<T> extends BrandedType<T> {
+		private readonly JsonSerializable: JsonSerializable<T>;
+		private constructor();
+	}
+
+	// /**
+	//  * @system
+	//  */
+	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
+	// export type OpaqueJsonSerializable<T> = JsonSerializableBrand<T>;
+}
+
+/**
+ * Cast a JsonDeserialized value to its branded version.
+ *
+ * @system
+ */
+export function brandJson<T>(value: JsonDeserialized<T>): OpaqueJsonDeserialized<T> {
+	return value as OpaqueJsonDeserialized<T>;
+}
+
+/**
+ * Cast a branded JsonDeserialized value back to its unbranded version.
+ *
+ * @system
+ */
+export function unbrandJson<T>(value: OpaqueJsonDeserialized<T>): JsonDeserialized<T> {
+	return value as JsonDeserialized<T>;
+}
+
+/**
+ * Converts a JsonDeserializedHandle to a deeply readonly JsonDeserialized value.
+ */
+export function asDeeplyReadonlyFromJsonHandle<T>(
+	value: OpaqueJsonDeserialized<T>,
+): DeepReadonly<JsonDeserialized<T>> {
+	return asDeeplyReadonly(unbrandJson(value));
 }
