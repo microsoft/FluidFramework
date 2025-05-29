@@ -523,10 +523,6 @@ export const TreeAlpha: TreeAlpha = {
 		);
 
 		const schema = treeNodeApi.schema(node);
-		const storedKey = tryGetStoredKeyFromPropertyKey(schema, key);
-		if (storedKey === undefined) {
-			return undefined;
-		}
 
 		if (isArrayNodeSchema(schema)) {
 			const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
@@ -534,10 +530,7 @@ export const TreeAlpha: TreeAlpha = {
 				return undefined;
 			}
 
-			const index =
-				typeof storedKey === "number"
-					? storedKey
-					: asIndex(storedKey, Number.POSITIVE_INFINITY);
+			const index = typeof key === "number" ? key : asIndex(key, Number.POSITIVE_INFINITY);
 
 			if (index === undefined) {
 				return undefined;
@@ -549,6 +542,12 @@ export const TreeAlpha: TreeAlpha = {
 			}
 
 			return getOrCreateNodeFromInnerNode(child);
+		}
+
+		// TODO: simplify
+		const storedKey = tryGetStoredKeyFromPropertyKey(schema, key);
+		if (storedKey === undefined) {
+			return undefined;
 		}
 
 		const field = flexNode.tryGetField(brand(String(storedKey)));
