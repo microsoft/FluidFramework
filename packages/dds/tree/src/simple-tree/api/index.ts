@@ -51,7 +51,6 @@ export {
 	treeNodeApi,
 	type TreeNodeApi,
 	tryGetSchema,
-	tryGetStoredKeyFromPropertyKey,
 } from "./treeNodeApi.js";
 export {
 	createFromCursor,

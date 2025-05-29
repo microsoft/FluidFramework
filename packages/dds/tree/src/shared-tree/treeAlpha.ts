@@ -42,9 +42,11 @@ import {
 	mapTreeFromNodeData,
 	getOrCreateInnerNode,
 	getOrCreateNodeFromInnerNode,
-	tryGetStoredKeyFromPropertyKey,
 	getTreeNodeForField,
 	isArrayNodeSchema,
+	type TreeNodeSchema,
+	FieldSchema,
+	NodeKind,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
@@ -639,4 +641,31 @@ function borrowFieldCursorFromTreeNodeOrValue(
 	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
+}
+
+// TODO: simplify and potentially inline
+/**
+ * Given a node schema, gets the {@link FieldProps.key | stored key} corresponding with the provided property key.
+ * @returns The stored key if the property key exists in the schema. Otherwise, returns `undefined`.
+ */
+function tryGetStoredKeyFromPropertyKey(
+	schema: TreeNodeSchema,
+	propertyKey: string | number,
+): string | number | undefined {
+	// Only object nodes have the concept of a "stored key", differentiated from the developer-facing "property key".
+	// For any other kind of node, the stored key and the property key are the same.
+	if (schema.kind !== NodeKind.Object) {
+		return propertyKey;
+	}
+
+	const fields = schema.info as Record<string, ImplicitFieldSchema>;
+
+	const fieldSchema = fields[propertyKey];
+	if (fieldSchema === undefined) {
+		return undefined;
+	}
+
+	return fieldSchema instanceof FieldSchema && fieldSchema.props?.key !== undefined
+		? fieldSchema.props.key
+		: propertyKey;
 }

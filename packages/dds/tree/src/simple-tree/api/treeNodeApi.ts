@@ -356,32 +356,6 @@ export function getStoredKey(node: TreeNode): string | number {
 }
 
 /**
- * Given a node schema, gets the {@link FieldProps.key | stored key} corresponding with the provided property key.
- * @returns The stored key if the property key exists in the schema. Otherwise, returns `undefined`.
- */
-export function tryGetStoredKeyFromPropertyKey(
-	schema: TreeNodeSchema,
-	propertyKey: string | number,
-): string | number | undefined {
-	// Only object nodes have the concept of a "stored key", differentiated from the developer-facing "property key".
-	// For any other kind of node, the stored key and the property key are the same.
-	if (schema.kind !== NodeKind.Object) {
-		return propertyKey;
-	}
-
-	const fields = schema.info as Record<string, ImplicitFieldSchema>;
-
-	const fieldSchema = fields[propertyKey];
-	if (fieldSchema === undefined) {
-		return undefined;
-	}
-
-	return fieldSchema instanceof FieldSchema && fieldSchema.props?.key !== undefined
-		? fieldSchema.props.key
-		: propertyKey;
-}
-
-/**
  * Given a node schema, gets the property key corresponding with the provided {@link FieldProps.key | stored key}.
  */
 export function getPropertyKeyFromStoredKey(
