@@ -70,7 +70,7 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 			return (
 				<FluidHandleView
 					containerKey={containerKey}
-					fluidObjectKey={node.fluidObjectKey}
+					fluidObjectId={node.fluidObjectId}
 					label={label}
 				/>
 			);

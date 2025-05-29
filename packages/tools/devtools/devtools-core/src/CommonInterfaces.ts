@@ -29,11 +29,11 @@ export interface HasContainerKey {
 }
 
 /**
- * A unique key for identifying a Fluid object associated with a Container registered with Devtools.
+ * A unique ID for a Fluid object
  *
  * @internal
  */
-export type FluidObjectKey = string;
+export type FluidObjectId = number;
 
 /**
  * Base interface used in message data for events targeting a particular Fluid object (DDS) via
@@ -41,11 +41,11 @@ export type FluidObjectKey = string;
  *
  * @internal
  */
-export interface HasFluidObjectKey {
+export interface HasFluidObjectId {
 	/**
 	 * The ID of the Fluid object (DDS) associated with data or a request.
 	 */
-	readonly fluidObjectKey: FluidObjectKey;
+	readonly fluidObjectId: FluidObjectId;
 }
 
 /**

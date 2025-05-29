@@ -25,7 +25,7 @@ describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
-		const counterKey = getKeyForFluidObject(sharedCounter);
+		const counterId = getKeyForFluidObject(sharedCounter);
 
 		const visualizer = new DataVisualizerGraph(
 			{
@@ -36,12 +36,12 @@ describe("DataVisualizerGraph unit tests", () => {
 
 		const rootTrees = await visualizer.renderRootHandles();
 
-		const expectedTree = createHandleNode(counterKey);
+		const expectedTree = createHandleNode(counterId);
 		expect(rootTrees.counter).to.deep.equal(expectedTree);
 
-		const childTree = await visualizer.render(counterKey);
+		const childTree = await visualizer.render(counterId);
 		const expectedChildTree: FluidObjectValueNode = {
-			fluidObjectKey: counterKey,
+			fluidObjectId: counterId,
 			value: 0,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
@@ -53,9 +53,9 @@ describe("DataVisualizerGraph unit tests", () => {
 		const delta = 37;
 		sharedCounter.increment(delta);
 
-		const childTreeAfterEdit = await visualizer.render(counterKey);
+		const childTreeAfterEdit = await visualizer.render(counterId);
 		const expectedChildTreeAfterEdit: FluidObjectValueNode = {
-			fluidObjectKey: counterKey,
+			fluidObjectId: counterId,
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
@@ -70,7 +70,7 @@ describe("DataVisualizerGraph unit tests", () => {
 		});
 		// Create SharedMap
 		const sharedMap = SharedMap.create(runtime, "test-map");
-		const mapKey = getKeyForFluidObject(sharedMap);
+		const mapId = getKeyForFluidObject(sharedMap);
 
 		const visualizer = new DataVisualizerGraph(
 			{
@@ -81,12 +81,12 @@ describe("DataVisualizerGraph unit tests", () => {
 
 		const rootTrees = await visualizer.renderRootHandles();
 
-		const expectedTree = createHandleNode(mapKey);
+		const expectedTree = createHandleNode(mapId);
 		expect(rootTrees.map).to.deep.equal(expectedTree);
 
-		const childTree = await visualizer.render(mapKey);
+		const childTree = await visualizer.render(mapId);
 		const expectedChildTree: FluidObjectTreeNode = {
-			fluidObjectKey: mapKey,
+			fluidObjectId: mapId,
 			children: {},
 			metadata: { size: 0 },
 			typeMetadata: "SharedMap",
@@ -105,9 +105,9 @@ describe("DataVisualizerGraph unit tests", () => {
 		const counterId = getKeyForFluidObject(sharedCounter);
 		sharedMap.set("test-handle", sharedCounter.handle);
 
-		const childTreeAfterEdit = await visualizer.render(mapKey);
+		const childTreeAfterEdit = await visualizer.render(mapId);
 		const expectedChildTreeAfterEdit: FluidObjectTreeNode = {
-			fluidObjectKey: mapKey,
+			fluidObjectId: mapId,
 			children: {
 				"test-string": {
 					value: "Hello world",
@@ -136,7 +136,7 @@ describe("DataVisualizerGraph unit tests", () => {
 					nodeKind: VisualNodeKind.TreeNode,
 				},
 				"test-handle": {
-					fluidObjectKey: counterId,
+					fluidObjectId: counterId,
 					typeMetadata: "Fluid Handle",
 					nodeKind: VisualNodeKind.FluidHandleNode,
 				},
@@ -178,7 +178,7 @@ describe("DataVisualizerGraph unit tests", () => {
 
 		const childCounterTree = await visualizer.render(counterId);
 		const expectedChildCounterTree: FluidObjectValueNode = {
-			fluidObjectKey: counterId,
+			fluidObjectId: counterId,
 			value: 42,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
@@ -188,7 +188,7 @@ describe("DataVisualizerGraph unit tests", () => {
 
 		const childCellTree = await visualizer.render(cellId);
 		const expectedChildCellTree: FluidObjectValueNode = {
-			fluidObjectKey: cellId,
+			fluidObjectId: cellId,
 			value: "Hello world",
 			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidValueNode,

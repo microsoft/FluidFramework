@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { EditType, FluidObjectKey } from "../CommonInterfaces.js";
+import type { EditType, FluidObjectId } from "../CommonInterfaces.js";
 
 /**
  * This module contains a type system for describing visual descriptors of data objects in a serializable
@@ -153,7 +153,7 @@ export interface FluidObjectNodeBase extends VisualNodeBase {
 	/**
 	 * A unique ID for the Fluid object being displayed.
 	 */
-	fluidObjectKey: FluidObjectKey;
+	fluidObjectId: FluidObjectId;
 }
 
 /**
@@ -211,11 +211,11 @@ export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
  */
 export interface FluidHandleNode extends VisualNodeBase {
 	/**
-	 * A unique key for the Fluid object being referenced.
+	 * A unique ID for the Fluid object being referenced.
 	 *
 	 * @remarks Consumers will need to request a {@link FluidObjectTreeNode | visual tree} for this item separately.
 	 */
-	fluidObjectKey: string;
+	fluidObjectId: number;
 
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
@@ -268,9 +268,9 @@ export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 /**
  * Creates a {@link FluidHandleNode} from the provided ID and label.
  */
-export function createHandleNode(id: FluidObjectKey): FluidHandleNode {
+export function createHandleNode(id: FluidObjectId): FluidHandleNode {
 	return {
-		fluidObjectKey: id,
+		fluidObjectId: id,
 		typeMetadata: "Fluid Handle",
 		nodeKind: VisualNodeKind.FluidHandleNode,
 	};

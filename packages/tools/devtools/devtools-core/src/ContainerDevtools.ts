@@ -9,7 +9,7 @@ import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 
 import type { AudienceClientMetadata } from "./AudienceMetadata.js";
-import type { ContainerKey, FluidObjectKey, HasContainerKey } from "./CommonInterfaces.js";
+import type { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInterfaces.js";
 import { ContainerStateChangeKind } from "./Container.js";
 import type { ContainerStateMetadata } from "./ContainerMetadata.js";
 import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
@@ -251,7 +251,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	// #region Data-related event handlers
 
 	private readonly dataUpdateHandler = (visualization: FluidObjectNode): void => {
-		this.postDataVisualization(visualization.fluidObjectKey, visualization);
+		this.postDataVisualization(visualization.fluidObjectId, visualization);
 	};
 
 	// #endregion
@@ -324,8 +324,8 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[GetDataVisualization.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as GetDataVisualization.Message;
 			if (message.data.containerKey === this.containerKey) {
-				const visualization = await this.getDataVisualization(message.data.fluidObjectKey);
-				this.postDataVisualization(message.data.fluidObjectKey, visualization);
+				const visualization = await this.getDataVisualization(message.data.fluidObjectId);
+				this.postDataVisualization(message.data.fluidObjectId, visualization);
 				return true;
 			}
 			return false;
@@ -413,14 +413,14 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	};
 
 	private readonly postDataVisualization = (
-		fluidObjectKey: FluidObjectKey,
+		fluidObjectId: FluidObjectId,
 		visualization: FluidObjectNode | undefined,
 	): void => {
 		postMessagesToWindow(
 			this.messageLoggingOptions,
 			DataVisualization.createMessage({
 				containerKey: this.containerKey,
-				fluidObjectKey,
+				fluidObjectId,
 				visualization,
 			}),
 		);
@@ -558,8 +558,8 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	}
 
 	private async getDataVisualization(
-		fluidObjectKey: FluidObjectKey,
+		fluidObjectId: FluidObjectId,
 	): Promise<FluidObjectNode | undefined> {
-		return this.dataVisualizer?.render(fluidObjectKey) ?? undefined;
+		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
 	}
 }
