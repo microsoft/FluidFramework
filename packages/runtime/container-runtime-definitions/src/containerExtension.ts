@@ -68,7 +68,7 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  * - Cast any value to `UnverifiedBrand` using `as unknown as UnverifiedBrand<T>`
  * when it is not yet confirmed that value if of type `T`.
  *
- * - When `T` value is needed use narrowing type guards to check (preferred)
+ * - When `T` value is needed, use narrowing type guards to check (preferred)
  * or cast from `UnverifiedBrand` using `as unknown` when "instance" must
  * be parsed to `T`.
  *
