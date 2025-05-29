@@ -2794,7 +2794,7 @@ export class ContainerRuntime
 		this.channelCollection.setConnectionState(canSendOps, clientId);
 		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
-		raiseConnectedEvent(this.mc.logger, this, canSendOps, clientId);
+		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
