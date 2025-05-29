@@ -6,14 +6,14 @@
 import { strict as assert } from "node:assert";
 
 import {
-	FluidClientVersion,
+	type FluidClientVersion,
 	type ICodecFamily,
 	type IJsonCodec,
 	makeCodecFamily,
 } from "../../../codec/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { ClientVersionDispatchingCodecBuilder } from "../../../codec/versioned/codec.js";
-import type { JsonCompatibleReadOnly } from "../../../util/utils.js";
 import { validateUsageError } from "../../utils.js";
 import { pkgVersion } from "../../../packageVersion.js";
 
@@ -27,11 +27,11 @@ describe("versioned Codecs", () => {
 			version: 2;
 			value2: number;
 		}
-		const codecV1: IJsonCodec<number, JsonCompatibleReadOnly> = {
+		const codecV1: IJsonCodec<number> = {
 			encode: (x) => ({ version: 1, value1: x }),
 			decode: (x) => (x as unknown as V1).value1,
 		};
-		const codecV2: IJsonCodec<number, JsonCompatibleReadOnly> = {
+		const codecV2: IJsonCodec<number> = {
 			encode: (x) => ({ version: 2, value2: x }),
 			decode: (x) => (x as unknown as V2).value2,
 		};
