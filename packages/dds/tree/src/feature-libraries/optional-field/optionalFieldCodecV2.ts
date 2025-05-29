@@ -22,6 +22,7 @@ import {
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV2.js";
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
+import { assert } from "@fluidframework/core-utils/internal";
 
 type RegisterId = ChangeAtomId | "self";
 
@@ -79,7 +80,10 @@ export function makeOptionalFieldCodec(
 				}
 			}
 
-			// XXX
+			if (change.childChange !== undefined) {
+				encoded.c = [[null, context.encodeNode(change.childChange)]];
+			}
+
 			return encoded;
 		},
 
@@ -87,9 +91,7 @@ export function makeOptionalFieldCodec(
 			encoded: EncodedOptionalChangeset<TAnySchema>,
 			context: FieldChangeEncodingContext,
 		) => {
-			const decoded: Mutable<OptionalChangeset> = {
-				// XXX
-			};
+			const decoded: Mutable<OptionalChangeset> = {};
 
 			if (encoded.r !== undefined) {
 				const replace: Mutable<Replace> = {
@@ -102,6 +104,16 @@ export function makeOptionalFieldCodec(
 				}
 				decoded.valueReplace = replace;
 			}
+
+			if (encoded.c !== undefined) {
+				const firstNode = encoded.c[0];
+				assert(
+					firstNode !== undefined && encoded.c.length === 1,
+					"Expected exactly one child change",
+				);
+				decoded.childChange = context.decodeNode(firstNode[1]);
+			}
+
 			return decoded;
 		},
 		encodedSchema: EncodedOptionalChangeset(EncodedNodeChangeset),
