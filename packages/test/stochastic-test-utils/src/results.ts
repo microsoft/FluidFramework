@@ -32,6 +32,7 @@ function getSavePath(directory: string, model: HasWorkloadName, seed: number): s
 export interface SaveOptions {
 	saveFailures?: undefined | false | { directory: string };
 	saveSuccesses?: undefined | false | { directory: string };
+	includeFluidSequencedOps?: true;
 }
 
 /**
@@ -51,5 +52,6 @@ export function getSaveInfo(
 			options.saveSuccesses !== undefined && options.saveSuccesses !== false
 				? { path: getSavePath(options.saveSuccesses.directory, model, seed) }
 				: false,
+		includeFluidSequencedOps: options.includeFluidSequencedOps ?? true,
 	};
 }

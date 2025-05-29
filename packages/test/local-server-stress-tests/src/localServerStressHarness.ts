@@ -328,7 +328,7 @@ export interface LocalServerStressOptions {
 	 *
 	 * Turning on this feature is encouraged for quick minimization.
 	 */
-	saveFailures: undefined | { directory: string };
+	saveFailures: undefined | { directory: string; includeFluidSequencedOps?: true };
 
 	/**
 	 * Whether successful runs should be saved to disk and where.
@@ -879,7 +879,11 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
 	seed: number,
 	options: LocalServerStressOptions,
-	saveInfo: SaveInfo | undefined,
+	saveInfo: SaveInfo = {
+		saveOnFailure: false,
+		saveOnSuccess: false,
+		includeFluidSequencedOps: false,
+	},
 ): Promise<void> {
 	const random = makeRandom(seed);
 
@@ -970,19 +974,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 				client.container.dispose();
 			}
 
-			//* TODO: Pull this out, test it(?), write to file
-			const f = new LocalDocumentServiceFactory(finalState.localDeltaConnectionServer);
-			const s = await f.createDocumentService(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				finalState.validationClient.container.resolvedUrl!,
-			);
-			const deltaStorage = await s.connectToDeltaStorage();
-			const ops = deltaStorage.fetchMessages(0, undefined);
-			const allOps: any[] = [];
-			for (let op = await ops.read(); !op?.done; op = await ops.read()) {
-				const nextBatch = op.value ?? [];
-				allOps.push(...nextBatch);
-			}
+			await maybeSaveFluidOpsTofile(finalState, saveInfo);
 
 			finalState.validationClient.container.dispose();
 			await finalState.localDeltaConnectionServer.close();
@@ -992,6 +984,30 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	// Sanity-check that the generator produced at least one operation. If it failed to do so,
 	// this usually indicates an error on the part of the test author.
 	assert(operationCount > 0, "Generator should have produced at least one operation.");
+}
+
+async function maybeSaveFluidOpsTofile(
+	finalState: LocalServerStressState,
+	saveInfo: SaveInfo,
+): Promise<void> {
+	if (saveInfo.includeFluidSequencedOps !== true || saveInfo.saveOnFailure === false) {
+		return;
+	}
+
+	const f = new LocalDocumentServiceFactory(finalState.localDeltaConnectionServer);
+	const s = await f.createDocumentService(
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		finalState.validationClient.container.resolvedUrl!,
+	);
+	const deltaStorage = await s.connectToDeltaStorage();
+	const ops = deltaStorage.fetchMessages(0, undefined);
+	const allOps: any[] = [];
+	for (let op = await ops.read(); !op?.done; op = await ops.read()) {
+		const nextBatch = op.value ?? [];
+		allOps.push(...nextBatch);
+	}
+
+	await saveOpsToFile(`${saveInfo.saveOnFailure.path}-ops.json`, allOps);
 }
 
 function runTest<TOperation extends BaseOperation>(
@@ -1009,7 +1025,7 @@ function runTest<TOperation extends BaseOperation>(
 			saveInfo.saveOnFailure !== false &&
 			!inCi;
 
-		// 10 seconds per test should be quite a bit more than is necessary, but
+		// 2 seconds per test should be quite a bit more than is necessary, but
 		// a timeout during minimization can cause bad UX because it obfuscates
 		// the actual error
 		//
@@ -1039,8 +1055,9 @@ function runTest<TOperation extends BaseOperation>(
 			const minimizer = new FuzzTestMinimizer<TOperation>(
 				model.minimizationTransforms,
 				operations,
-				saveInfo,
-				async (generator) => replayTest<TOperation>(model, seed, generator, saveInfo, options),
+				{ ...saveInfo, includeFluidSequencedOps: false },
+				async (generator, saveInfoForReplay) =>
+					replayTest<TOperation>(model, seed, generator, saveInfoForReplay, options),
 				3,
 			);
 

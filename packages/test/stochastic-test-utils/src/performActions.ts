@@ -118,7 +118,7 @@ export async function performFuzzActionsAsync<
 		| AsyncReducer<TOperation, TState>
 		| { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
-	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false },
+	saveInfo?: SaveInfo,
 	forceGlobalSeed?: boolean,
 ): Promise<TState> {
 	const operations: TOperation[] = [];
@@ -160,6 +160,12 @@ export async function performFuzzActionsAsync<
 		return { seed, ...op };
 	};
 
+	const saveInfoDefined: SaveInfo = saveInfo ?? {
+		saveOnFailure: false,
+		saveOnSuccess: false,
+		includeFluidSequencedOps: false,
+	};
+
 	try {
 		for (
 			let operation = await runGenerator();
@@ -173,14 +179,14 @@ export async function performFuzzActionsAsync<
 			state = (await applyOperation(operation)) ?? state;
 		}
 	} catch (err) {
-		if (saveInfo.saveOnFailure !== false) {
-			await saveOpsToFile(saveInfo.saveOnFailure.path, operations);
+		if (saveInfoDefined.saveOnFailure !== false) {
+			await saveOpsToFile(saveInfoDefined.saveOnFailure.path, operations);
 		}
 		throw err;
 	}
 
-	if (saveInfo.saveOnSuccess !== false) {
-		await saveOpsToFile(saveInfo.saveOnSuccess.path, operations);
+	if (saveInfoDefined.saveOnSuccess !== false) {
+		await saveOpsToFile(saveInfoDefined.saveOnSuccess.path, operations);
 	}
 
 	return state;
@@ -194,10 +200,7 @@ export async function performFuzzActionsAsync<
  *
  * @internal
  */
-export async function saveOpsToFile(
-	filepath: string,
-	operations: { type: string | number }[],
-) {
+export async function saveOpsToFile(filepath: string, operations: unknown[]) {
 	await fs.mkdir(path.dirname(filepath), { recursive: true });
 	await fs.writeFile(filepath, JSON.stringify(operations, undefined, 4));
 }
@@ -280,7 +283,11 @@ export function performFuzzActions<
 		| Reducer<TOperation, TState>
 		| { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
-	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false },
+	saveInfo: SaveInfo = {
+		saveOnFailure: false,
+		saveOnSuccess: false,
+		includeFluidSequencedOps: false,
+	},
 ): TState {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;

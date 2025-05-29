@@ -201,6 +201,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 						? {
 								saveOnFailure: { path: join(directory, `test-history-${seed}.json`) },
 								saveOnSuccess: false,
+								includeFluidSequencedOps: false,
 							}
 						: undefined;
 				if (saveInfo !== undefined && !existsSync(directory)) {
