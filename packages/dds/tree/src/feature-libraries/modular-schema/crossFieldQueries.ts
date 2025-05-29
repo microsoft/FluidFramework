@@ -4,7 +4,7 @@
  */
 
 import type { ChangeAtomId, ChangeAtomIdRangeMap } from "../../core/index.js";
-import type { RangeQueryResult } from "../../util/index.js";
+import type { RangeQueryEntry, RangeQueryResult } from "../../util/index.js";
 import type { NodeId } from "./modularChangeTypes.js";
 
 export type CrossFieldMap<T> = ChangeAtomIdRangeMap<T>;
@@ -96,14 +96,9 @@ export interface ComposeNodeManager {
 	 */
 	sendNewChangesToBaseSourceLocation(baseAttachId: ChangeAtomId, newChanges: NodeId): void;
 
-	/**
-	 * This should be called whenever the detach of a range of nodes is being composed with an attach potentially corresponding to the same nodes.
-	 * Returns whether the node being attached is the same node being detached.
-	 */
-	// XXX: This should return a range result, since only some of the nodes might be the same?
 	// XXX: It doesn't seem like it should be mandatory to call this if you don't want the rename to be removed (e.g., optional field pin).
 	/**
-	 * Must be called by a field kind when composing a detach in the base changeset with an attach in the new changeset.
+	 * Must be called by a field kind when composing a detach in the base changeset with an attach of the same nodes in the new changeset.
 	 * @param baseDetachId - The ID of the detach in the base changeset.
 	 * @param newAttachId - The ID of the attach in the new changeset.
 	 * @param count - The number of nodes being detached then attached.
@@ -115,7 +110,13 @@ export interface ComposeNodeManager {
 		newAttachId: ChangeAtomId,
 		count: number,
 		preserveRename: boolean,
-	): boolean;
+	): void;
+
+	areSameNodes(
+		baseDetachId: ChangeAtomId,
+		newAttachId: ChangeAtomId,
+		count: number,
+	): RangeQueryEntry<ChangeAtomId, boolean>;
 }
 
 export interface RebaseNodeManager {

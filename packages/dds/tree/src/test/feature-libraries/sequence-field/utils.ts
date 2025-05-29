@@ -65,6 +65,7 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
+	type RangeQueryEntry,
 	type RangeQueryResult,
 	brand,
 	fakeIdAllocator,
@@ -847,8 +848,9 @@ function newComposeManager(): TestComposeManager {
 			this.isInvalidated = true;
 		},
 
-		composeDetachAttach(baseDetachId, newAttachId, count, preserveRename): boolean {
-			return true;
+		composeDetachAttach(baseDetachId, newAttachId, count, preserveRename): void {},
+		areSameNodes(baseDetachId, newAttachId, count): RangeQueryEntry<ChangeAtomId, boolean> {
+			return { start: baseDetachId, value: true, length: count };
 		},
 	};
 

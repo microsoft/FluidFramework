@@ -671,6 +671,7 @@ const dummyComposeManager: ComposeNodeManager = {
 	composeAttachDetach: unsupportedFunc,
 	composeDetachAttach: unsupportedFunc,
 	sendNewChangesToBaseSourceLocation: unsupportedFunc,
+	areSameNodes: unsupportedFunc,
 };
 
 const dummyRevisionMetadata: RevisionMetadataSource = {

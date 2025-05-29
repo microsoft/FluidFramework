@@ -3005,29 +3005,48 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		this.invalidateBaseFields(detachFields);
 	}
 
-	// XXX: Consider merging this with `getNewChangesForBaseDetach`
-	public composeDetachAttach(
+	public areSameNodes(
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
-		preserveRename: boolean,
-	): boolean {
+	): RangeQueryEntry<ChangeAtomId, boolean> {
 		const renamedDetachEntry = firstAttachIdFromDetachId(
 			this.table.composedRootNodes,
 			baseDetachId,
 			count,
 		);
 
-		assert(renamedDetachEntry.length === count, "TODO: Handle splitting");
 		const isReattachOfSameNodes = areEqualChangeAtomIds(renamedDetachEntry.value, newAttachId);
-		if (isReattachOfSameNodes && !preserveRename) {
+		return { ...renamedDetachEntry, value: isReattachOfSameNodes };
+	}
+
+	public composeDetachAttach(
+		baseDetachId: ChangeAtomId,
+		newAttachId: ChangeAtomId,
+		count: number,
+		preserveRename: boolean,
+	): void {
+		if (preserveRename) {
+			return;
+		}
+
+		const areSameEntry = this.areSameNodes(baseDetachId, newAttachId, count);
+
+		const countToProcess = areSameEntry.length;
+		if (areSameEntry.value) {
 			// These nodes have been moved back to their original location, so the composed changeset should not have any renames for them.
 			// Note that deleting the rename from `this.table.composedRootNodes` would change the result of this method
 			// if it were rerun due to the field being invalidated, so we instead record that the rename should be deleted later.
-			this.table.renamesToDelete.set(baseDetachId, count, true);
+			this.table.renamesToDelete.set(baseDetachId, countToProcess, true);
 		}
 
-		return isReattachOfSameNodes;
+		if (countToProcess < count) {
+			this.composeAttachDetach(
+				offsetChangeAtomId(baseDetachId, countToProcess),
+				offsetChangeAtomId(newAttachId, countToProcess),
+				count - countToProcess,
+			);
+		}
 	}
 
 	private invalidateBaseFields(fields: FieldId[]): void {
