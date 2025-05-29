@@ -315,7 +315,7 @@ function checkRuntimeCompatibility(
 }
 
 function and(
-	persistedSchema: IDocumentSchema,
+	persistedSchema: IDocumentSchemaCurrent,
 	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -336,7 +336,7 @@ function and(
 }
 
 function or(
-	persistedSchema: IDocumentSchema,
+	persistedSchema: IDocumentSchemaCurrent,
 	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -357,7 +357,7 @@ function or(
 }
 
 function same(
-	persistedSchema: IDocumentSchema,
+	persistedSchema: IDocumentSchemaCurrent,
 	providedSchema: IDocumentSchemaCurrent,
 ): boolean {
 	for (const key of new Set([
@@ -544,11 +544,21 @@ export class DocumentsSchemaController {
 			);
 			this.futureSchema = undefined;
 		} else {
-			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
-			this.futureSchema = or(this.documentSchema, this.desiredSchema);
+			// checkRuntimeCompatibility() would have thrown if this.documentSchema.version !== currentDocumentVersionSchema
+			assert(
+				this.documentSchema.version === currentDocumentVersionSchema,
+				"this.documentSchema.version should be currentDocumentVersionSchema",
+			);
+			const incomingDocumentSchema = {
+				...this.documentSchema,
+				// We explicity set version to satisfy IDocumentSchemaCurrent
+				version: currentDocumentVersionSchema,
+			} satisfies IDocumentSchemaCurrent;
+			this.sessionSchema = and(incomingDocumentSchema, this.desiredSchema);
+			this.futureSchema = or(incomingDocumentSchema, this.desiredSchema);
 			assert(this.sessionSchema.runtime.explicitSchemaControl === true, 0x94b /* legacy */);
 			assert(this.futureSchema.runtime.explicitSchemaControl === true, 0x94c /* legacy */);
-			if (same(this.documentSchema, this.futureSchema)) {
+			if (same(incomingDocumentSchema, this.futureSchema)) {
 				this.futureSchema = undefined;
 			}
 		}
@@ -652,13 +662,18 @@ export class DocumentsSchemaController {
 
 			// Changes are in effect. Immediately check that this client understands these changes
 			checkRuntimeCompatibility(content, "change");
-
-			const schema: IDocumentSchema = {
+			// checkRuntimeCompatibility() would have thrown if content.version !== currentDocumentVersionSchema
+			assert(
+				content.version === currentDocumentVersionSchema,
+				"content.version must be currentDocumentVersionSchema",
+			);
+			const schema = {
 				...content,
 				refSeq: sequenceNumber,
-			};
+				version: currentDocumentVersionSchema,
+			} satisfies IDocumentSchemaCurrent;
 			this.documentSchema = schema;
-			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
+			this.sessionSchema = and(schema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
 
 			// legacy behavior is automatically off for the document once someone sends a schema op -
