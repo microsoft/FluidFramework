@@ -529,7 +529,10 @@ export const TreeAlpha: TreeAlpha = {
 		}
 
 		if (isArrayNodeSchema(schema)) {
-			const sequence = flexNode.getBoxed(EmptyKey);
+			const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+			if (sequence === undefined) {
+				return undefined;
+			}
 
 			const index =
 				typeof storedKey === "number"
@@ -565,7 +568,10 @@ export const TreeAlpha: TreeAlpha = {
 		const result: [string | number, TreeNode | TreeLeafValue][] = [];
 
 		if (isArrayNodeSchema(schema)) {
-			const sequence = flexNode.getBoxed(EmptyKey) as FlexTreeSequenceField;
+			const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+			if (sequence === undefined) {
+				return [];
+			}
 
 			sequence.map((childFlexTree, index) => {
 				// TODO: extract into shared helper?
