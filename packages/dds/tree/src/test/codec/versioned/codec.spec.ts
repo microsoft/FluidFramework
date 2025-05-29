@@ -47,7 +47,7 @@ describe("versioned Codecs", () => {
 
 		it("round trip", () => {
 			const codec1 = builder.build({
-				oldestCompatibleClient: FluidClientVersion.v2_0,
+				oldestCompatibleClient: 2 as FluidClientVersion,
 				jsonValidator: typeboxValidator,
 			});
 			const codec2 = builder.build({
