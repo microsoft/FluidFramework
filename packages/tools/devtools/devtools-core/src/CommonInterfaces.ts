@@ -29,7 +29,7 @@ export interface HasContainerKey {
 }
 
 /**
- * A unique key for a Fluid object
+ * A unique key for identifying a Fluid object associated with a Container registered with Devtools.
  *
  * @internal
  */
