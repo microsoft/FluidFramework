@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { pkgVersion } from "../packageVersion.js";
 import {
 	DocumentsSchemaController,
+	type DocumentSchemaValueType,
 	type IDocumentSchema,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
@@ -91,20 +92,23 @@ describe("Runtime", () => {
 
 	it("wrong version", () => {
 		testWrongConfig({ ...validConfig, version: 4 });
-		testWrongConfig({ ...validConfig, version: "1" } as unknown as IDocumentSchema);
-		testWrongConfig({ ...validConfig, version: "2.0" } as unknown as IDocumentSchema);
+		testWrongConfig({ ...validConfig, version: "1" as unknown as number });
+		testWrongConfig({ ...validConfig, version: "2.0" as unknown as number });
 	});
 
 	it("wrong refSeq", () => {
-		testWrongConfig({ ...validConfig, refSeq: "aaa" } as unknown as IDocumentSchema);
+		testWrongConfig({ ...validConfig, refSeq: "aaa" as unknown as number });
 	});
 
 	it("no refSeq", () => {
-		testWrongConfig({ ...validConfig, refSeq: undefined } as unknown as IDocumentSchema);
+		testWrongConfig({ ...validConfig, refSeq: undefined as unknown as number });
 	});
 
 	it("no runtime", () => {
-		testWrongConfig({ ...validConfig, runtime: undefined } as unknown as IDocumentSchema);
+		testWrongConfig({
+			...validConfig,
+			runtime: undefined as unknown as Record<string, DocumentSchemaValueType>,
+		});
 	});
 
 	it("unknown runtime property", () => {
@@ -229,8 +233,11 @@ describe("Runtime", () => {
 		});
 		testWrongConfig({
 			...validConfig,
-			runtime: { ...validConfig.runtime, opGroupingEnabled: false },
-		} as unknown as IDocumentSchema);
+			runtime: { ...validConfig.runtime, opGroupingEnabled: false } as unknown as Record<
+				string,
+				DocumentSchemaValueType
+			>,
+		});
 		testWrongConfig({
 			...validConfig,
 			runtime: { ...validConfig.runtime, opGroupingEnabled: "aa" },
