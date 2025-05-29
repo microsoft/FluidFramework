@@ -9,15 +9,12 @@ import {
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import * as services from "@fluidframework/server-services-shared";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	normalizePort,
 	IRedisClientConnectionManager,
 	RedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import { Queue, Worker } from "bullmq";
-import type Redis from "ioredis";
-import type { Cluster } from "ioredis";
+import { Queue } from "bullmq";
 import { Provider } from "nconf";
 
 import { IGitrestResourcesCustomizations } from "./customizations";
@@ -31,8 +28,7 @@ import {
 	IStorageDirectoryConfig,
 	NodeFsManagerFactory,
 	RedisFsManagerFactory,
-	type IFileSystemManagerFactory,
-	type IFileSystemManagerParams,
+	setupHybridFsHandler,
 } from "./utils";
 
 export class GitrestResources implements core.IResources {
@@ -148,47 +144,13 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			queue,
 		);
 
-		this.setupHybridFsHandler(defaultFileSystemManagerFactory, redisClient);
+		setupHybridFsHandler(defaultFileSystemManagerFactory, redisClient);
 
 		return {
 			defaultFileSystemManagerFactory,
 			ephemeralFileSystemManagerFactory,
 			hybridFileSystemManagerFactory,
 		};
-	}
-
-	private setupHybridFsHandler(
-		l2FileSystem: IFileSystemManagerFactory,
-		redisClient: Redis | Cluster,
-	) {
-		const l2AsyncWorker = new Worker(
-			"l2FsWorker",
-			async (job) => {
-				const { args, fsParams }: { args: unknown; fsParams: IFileSystemManagerParams } =
-					job.data;
-				const operation = job.name;
-				const l2Fs = l2FileSystem.create(fsParams).promises;
-				switch (operation) {
-					case "writeFile": {
-						await l2Fs.writeFile(...(args as Parameters<typeof l2Fs.writeFile>));
-						break;
-					}
-
-					case "mkdir": {
-						await l2Fs.mkdir(...(args as Parameters<typeof l2Fs.mkdir>));
-						break;
-					}
-					default: {
-						throw new Error(`Unsupported operation: ${operation}`);
-					}
-				}
-			},
-			{ connection: redisClient },
-		);
-
-		l2AsyncWorker.on("error", (error) => {
-			Lumberjack.error("HybridFs: Error in l2AsyncWorker", undefined, error);
-		});
 	}
 
 	private getFileSystemManagerFactoryByName(

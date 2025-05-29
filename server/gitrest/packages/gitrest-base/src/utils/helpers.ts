@@ -54,10 +54,21 @@ export function validateBlobContent(content: string): boolean {
 export function getFilesystemManagerFactory(
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	isEphemeralContainer: boolean,
+	useHybridFs: boolean = false,
 ) {
-	return isEphemeralContainer && fileSystemManagerFactories.ephemeralFileSystemManagerFactory
-		? fileSystemManagerFactories.ephemeralFileSystemManagerFactory
-		: fileSystemManagerFactories.defaultFileSystemManagerFactory;
+	if (isEphemeralContainer && fileSystemManagerFactories.ephemeralFileSystemManagerFactory) {
+		return fileSystemManagerFactories.ephemeralFileSystemManagerFactory;
+	}
+
+	if (
+		!isEphemeralContainer &&
+		useHybridFs &&
+		fileSystemManagerFactories.hybridFileSystemManagerFactory
+	) {
+		return fileSystemManagerFactories.hybridFileSystemManagerFactory;
+	}
+
+	return fileSystemManagerFactories.defaultFileSystemManagerFactory;
 }
 
 /**

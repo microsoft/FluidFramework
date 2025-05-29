@@ -67,3 +67,4 @@ export {
 	IsomorphicGitRepositoryManager,
 } from "./isomorphicgitManager";
 export { RedisFsConfig, RedisFsManager } from "./redisFs";
+export { HybridFsManager, setupHybridFsHandler } from "./hybridFs";

@@ -26,6 +26,7 @@ import {
 	GitRestRepositoryApiCategory,
 } from "./gitrestTelemetryDefinitions";
 import * as helpers from "./helpers";
+import { getFilesystemManagerFactory } from "./helpers";
 
 type RepoOperationType = "create" | "open";
 
@@ -217,11 +218,11 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		const lumberjackBaseProperties =
 			helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
 
-		const fileSystemManagerFactory =
-			!params.isEphemeralContainer ||
-			!this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory
-				? this.fileSystemManagerFactories.defaultFileSystemManagerFactory
-				: this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory;
+		const fileSystemManagerFactory = getFilesystemManagerFactory(
+			this.fileSystemManagerFactories,
+			params.isEphemeralContainer ?? false,
+			params.useHybridFs,
+		);
 
 		const fileSystemManager = fileSystemManagerFactory.create({
 			...params.fileSystemManagerParams,

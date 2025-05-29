@@ -4,3 +4,4 @@
  */
 
 export { HybridFsManager } from "./hybridFsManager";
+export { setupHybridFsHandler } from "./hybridFsL2Worker";

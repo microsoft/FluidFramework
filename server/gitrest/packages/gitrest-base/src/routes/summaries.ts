@@ -267,6 +267,7 @@ export function create(
 	const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 	const enforceStrictPersistedFullSummaryReads: boolean =
 		store.get("git:enforceStrictPersistedFullSummaryReads") ?? false;
+	const useHybridFs: boolean = store.get("git:useHybridFs") ?? false;
 
 	/**
 	 * Retrieves a summary.
@@ -334,6 +335,10 @@ export function create(
 				: typeof request.query.initial === "boolean"
 				? request.query.initial
 				: request.query.initial === "true";
+
+		if (isInitialSummary && useHybridFs) {
+			repoManagerParams.useHybridFs = true;
+		}
 
 		const lumberjackProperties = {
 			...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),

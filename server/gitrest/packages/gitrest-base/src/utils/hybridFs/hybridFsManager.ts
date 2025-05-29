@@ -104,6 +104,7 @@ export class HybridFs implements IFileSystemPromises {
 	): ReturnType<typeof fsPromises.mkdir> {
 		this.validFilePath(args[0]);
 		const l1Result = await this.l1FileSystem.mkdir(...args);
+		Lumberjack.info("HybridFs: l1Result for mkdir", { l1Result });
 		await this.l2AsyncQueue.add("mkdir", { args, fileSystemParams: this.params });
 		return l1Result;
 	}
