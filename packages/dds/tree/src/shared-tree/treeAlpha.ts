@@ -655,6 +655,8 @@ function tryGetStoredKeyFromPropertyKey(
 	// Only object nodes have the concept of a "stored key", differentiated from the developer-facing "property key".
 	// For any other kind of node, the stored key and the property key are the same.
 	if (schema.kind !== NodeKind.Object) {
+		// TODO: this is incorrect.
+		// Need to verify that the property key exists in the schema.
 		return propertyKey;
 	}
 
