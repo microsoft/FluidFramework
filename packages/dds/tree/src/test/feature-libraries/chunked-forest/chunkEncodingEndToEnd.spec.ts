@@ -48,21 +48,20 @@ import {
 	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
 import {
-	type TreeStoredContent,
 	type ISharedTreeEditor,
 	Tree,
 	ForestTypeOptimized,
-	type ISharedTree,
+	type ITreePrivate,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
 	forestWithContent,
+	getView,
 	mintRevisionTag,
 	testIdCompressor,
 } from "../../utils.js";
 import {
-	cursorFromInsertable,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
@@ -82,6 +81,7 @@ import { brand } from "../../../util/index.js";
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { configuredSharedTree } from "../../../treeFactory.js";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -107,17 +107,10 @@ class HasIdentifier extends schemaFactory.object("parent", {
 }) {}
 
 function getIdentifierEncodingContext(id: string) {
-	const initialTree = cursorFromInsertable(
-		HasIdentifier,
-		new HasIdentifier({ identifier: id }),
-		new MockNodeIdentifierManager(),
-	);
+	const view = getView(new TreeViewConfiguration({ schema: HasIdentifier }));
+	view.initialize({ identifier: id });
 	const flexSchema = toStoredSchema(HasIdentifier);
-	const flexConfig: TreeStoredContent = {
-		schema: flexSchema,
-		initialTree,
-	};
-	const checkout = checkoutWithContent(flexConfig);
+	const checkout = view.checkout;
 
 	const encoderContext = {
 		encodeType: options.summaryEncodeType,
@@ -402,7 +395,7 @@ describe("End to end chunked encoding", () => {
 				id: "test",
 				idCompressor: testIdCompressor,
 			});
-			const tree = factory.create(runtime, "TestSharedTree") as ISharedTree;
+			const tree = factory.create(runtime, "TestSharedTree") as ITreePrivate & IChannel;
 
 			const stableId = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 

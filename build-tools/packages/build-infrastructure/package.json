@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-infrastructure",
-	"version": "0.56.0",
+	"version": "0.57.0",
 	"description": "Fluid build infrastructure",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -86,7 +86,7 @@
 		"@fluid-tools/api-markdown-documenter": "^0.17.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.49.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@microsoft/api-extractor": "^7.50.1",
 		"@types/chai": "^4.3.20",
 		"@types/chai-arrays": "^2.0.3",

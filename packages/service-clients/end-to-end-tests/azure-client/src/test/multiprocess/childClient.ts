@@ -15,11 +15,10 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import {
-	acquirePresenceViaDataObject,
+	getPresence,
+	type Attendee,
 	ExperimentalPresenceManager,
-	type ExperimentalPresenceDO,
-	type IPresence,
-	type ISessionClient,
+	type Presence,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/alpha";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -61,7 +60,7 @@ const getOrCreatePresenceContainer = async (
 	scopes?: ScopeType[],
 ): Promise<{
 	container: IFluidContainer;
-	presence: IPresence;
+	presence: Presence;
 	services: AzureContainerServices;
 	client: AzureClient;
 	containerId: string;
@@ -83,7 +82,8 @@ const getOrCreatePresenceContainer = async (
 	const client = new AzureClient({ connection: connectionProps });
 	const schema: ContainerSchema = {
 		initialObjects: {
-			presence: ExperimentalPresenceManager,
+			// A DataObject is added as otherwise fluid-static complains "Container cannot be initialized without any DataTypes"
+			_unused: ExperimentalPresenceManager,
 		},
 	};
 	let services: AzureContainerServices;
@@ -107,9 +107,7 @@ const getOrCreatePresenceContainer = async (
 		"Container is not attached after attach is called",
 	);
 
-	const presence = acquirePresenceViaDataObject(
-		container.initialObjects.presence as ExperimentalPresenceDO,
-	);
+	const presence = getPresence(container);
 	return {
 		client,
 		container,
@@ -132,7 +130,7 @@ function isConnected(container: IFluidContainer | undefined): boolean {
 }
 
 class MessageHandler {
-	public presence: IPresence | undefined;
+	public presence: Presence | undefined;
 	public container: IFluidContainer | undefined;
 	public containerId: string | undefined;
 
@@ -159,21 +157,25 @@ class MessageHandler {
 				this.containerId = containerId;
 
 				// Listen for presence events to notify parent/orchestrator when a new attendee joins or leaves the session.
-				presence.events.on("attendeeJoined", (attendee: ISessionClient) => {
+				presence.attendees.events.on("attendeeConnected", (attendee: Attendee) => {
 					const m: MessageToParent = {
-						event: "attendeeJoined",
-						sessionId: attendee.sessionId,
+						event: "attendeeConnected",
+						attendeeId: attendee.attendeeId,
 					};
 					send(m);
 				});
-				presence.events.on("attendeeDisconnected", (attendee: ISessionClient) => {
+				presence.attendees.events.on("attendeeDisconnected", (attendee: Attendee) => {
 					const m: MessageToParent = {
 						event: "attendeeDisconnected",
-						sessionId: attendee.sessionId,
+						attendeeId: attendee.attendeeId,
 					};
 					send(m);
 				});
-				send({ event: "ready", containerId, sessionId: presence.getMyself().sessionId });
+				send({
+					event: "ready",
+					containerId,
+					attendeeId: presence.attendees.getMyself().attendeeId,
+				});
 
 				break;
 			}
@@ -192,7 +194,7 @@ class MessageHandler {
 				this.container.disconnect();
 				send({
 					event: "disconnectedSelf",
-					sessionId: this.presence.getMyself().sessionId,
+					attendeeId: this.presence.attendees.getMyself().attendeeId,
 				});
 
 				break;

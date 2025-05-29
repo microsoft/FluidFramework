@@ -31,8 +31,6 @@ import {
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
-	type SingleLineDocumentationNode,
-	SingleLineSpanNode,
 	SpanNode,
 } from "../documentation-domain/index.js";
 
@@ -245,14 +243,14 @@ export function transformTsdocFencedCode(
 export function transformTsdocLinkTag(
 	input: DocLinkTag,
 	options: TsdocNodeTransformOptions,
-): SingleLineDocumentationNode {
+): LinkNode | SpanNode {
 	if (input.codeDestination !== undefined) {
 		const link = options.resolveApiReference(input.codeDestination);
 
 		if (link === undefined) {
 			// If the code link could not be resolved, print the unresolved text in italics.
 			const linkText = input.linkText?.trim() ?? input.codeDestination.emitAsTsdoc().trim();
-			return SingleLineSpanNode.createFromPlainText(linkText, { italic: true });
+			return SpanNode.createFromPlainText(linkText, { italic: true });
 		} else {
 			const linkText = input.linkText?.trim() ?? link.text;
 			const linkTarget = link.target;

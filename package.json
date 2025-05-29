@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.33.0",
+	"version": "2.42.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -78,6 +78,7 @@
 		"generate:packageList:internal-dev": "flub list client --no-private --feed internal-dev --outFile feeds/internal-dev.txt",
 		"generate:packageList:internal-test": "flub list client --no-private --feed internal-test --outFile feeds/internal-test.txt",
 		"generate:packageList:public": "flub list client --no-private --feed public --outFile feeds/public.txt",
+		"generate:packagesMd": "flub check layers --info layerInfo.json --md .",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "flub check layers --info layerInfo.json",
 		"lint": "fluid-build --task lint",
@@ -169,10 +170,10 @@
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
-		"@microsoft/api-extractor": "7.50.1",
+		"@microsoft/api-extractor": "7.52.8",
 		"@vvago/vale": "^3.11.2",
 		"auto-changelog": "^2.4.0",
 		"c8": "^8.0.1",
@@ -202,6 +203,7 @@
 					"^build",
 					"build:docs",
 					"build:gendocs:client",
+					"generate:packagesMd",
 					"checks"
 				],
 				"script": false
@@ -289,7 +291,8 @@
 			"ci:build": {
 				"dependsOn": [
 					"^ci:build",
-					"ci:build:docs"
+					"ci:build:docs",
+					"generate:packagesMd"
 				],
 				"script": false
 			},
@@ -397,7 +400,7 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.50.1": "patches/@microsoft__api-extractor@7.50.1.patch"
+			"@microsoft/api-extractor@7.52.8": "patches/@microsoft__api-extractor@7.52.8.patch"
 		}
 	}
 }

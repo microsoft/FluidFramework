@@ -45,12 +45,12 @@ import {
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type {
-	ISharedTree,
 	SharedTreeOptionsInternal,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../shared-tree/sharedTree.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import type { FuzzView } from "./fuzzEditGenerators.js";
+import type { ISharedTree } from "../../../treeFactory.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {
@@ -99,10 +99,9 @@ export const initialFuzzSchema = createTreeViewSchema([]);
 export const fuzzFieldSchema = FuzzNode.info.optionalChild;
 
 /**
- *
+ * Returns the {@link FuzzNodeSchema} with the {@link initialAllowedTypes}, as well as the additional nodeTypes passed in.
  * @param nodeTypes - The additional node types outside of the {@link initialAllowedTypes} that the fuzzNode is allowed to contain
  * @param schemaFactory - The schemaFactory used to build the {@link FuzzNodeSchema}. The scope prefix must be "treeFuzz".
- * @returns the {@link FuzzNodeSchema} with the {@link initialAllowedTypes}, as well as the additional nodeTypes passed in.
  */
 function createFuzzNodeSchema(
 	nodeTypes: TreeNodeSchema[],

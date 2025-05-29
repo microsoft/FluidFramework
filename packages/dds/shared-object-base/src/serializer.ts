@@ -19,6 +19,8 @@ import {
 	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
 
+import { isISharedObjectHandle, type ISharedObjectHandle } from "./handle.js";
+
 /**
  * @legacy
  * @alpha
@@ -84,11 +86,12 @@ export class FluidSerializer implements IFluidSerializer {
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
 	public encode(input: unknown, bind: IFluidHandleInternal): unknown {
+		assert(isISharedObjectHandle(bind), 0xb8c /* bind must be an ISharedObjectHandle */);
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		return !!input && typeof input === "object"
-			? this.recursivelyReplace(input, this.encodeValue, bind)
+			? this.recursivelyReplace(input, this.encodeValue.bind(this), bind)
 			: input;
 	}
 
@@ -106,7 +109,7 @@ export class FluidSerializer implements IFluidSerializer {
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		return !!input && typeof input === "object"
-			? this.recursivelyReplace(input, this.decodeValue)
+			? this.recursivelyReplace(input, this.decodeValue.bind(this))
 			: input;
 	}
 
@@ -116,8 +119,8 @@ export class FluidSerializer implements IFluidSerializer {
 	 * being bound to the given bind context in the process.
 	 */
 	public stringify(input: unknown, bind: IFluidHandle): string {
-		const bindInternal = toFluidHandleInternal(bind);
-		return JSON.stringify(input, (key, value) => this.encodeValue(value, bindInternal));
+		assert(isISharedObjectHandle(bind), 0xb8d /* bind must be an ISharedObjectHandle */);
+		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
 	}
 
 	/**
@@ -131,20 +134,20 @@ export class FluidSerializer implements IFluidSerializer {
 	 * If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	 * Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
 	 */
-	private readonly encodeValue = (value: unknown, bind?: IFluidHandleInternal): unknown => {
+	protected encodeValue(value: unknown, bind?: ISharedObjectHandle): unknown {
 		// If 'value' is an IFluidHandle return its encoded form.
 		if (isFluidHandle(value)) {
 			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
 			return this.bindAndEncodeHandle(toFluidHandleInternal(value), bind);
 		}
 		return value;
-	};
+	}
 
 	/**
 	 * If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
 	 * Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
 	 */
-	private readonly decodeValue = (value: unknown): unknown => {
+	protected decodeValue(value: unknown): unknown {
 		// If 'value' is a serialized IFluidHandle return the deserialized result.
 		if (isSerializedHandle(value)) {
 			// Old documents may have handles with relative path in their summaries. Convert these to absolute
@@ -153,11 +156,15 @@ export class FluidSerializer implements IFluidSerializer {
 				? value.url
 				: generateHandleContextPath(value.url, this.context);
 
-			return new RemoteFluidObjectHandle(absolutePath, this.root);
+			return new RemoteFluidObjectHandle(
+				absolutePath,
+				this.root,
+				value.payloadPending === true,
+			);
 		} else {
 			return value;
 		}
-	};
+	}
 
 	/**
 	 * Invoked for non-null objects to recursively replace references to IFluidHandles.
@@ -217,7 +224,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 */
 	protected bindAndEncodeHandle(
 		handle: IFluidHandleInternal,
-		bind: IFluidHandleInternal,
+		bind: ISharedObjectHandle,
 	): ISerializedHandle {
 		bind.bind(handle);
 		return encodeHandleForSerialization(handle);

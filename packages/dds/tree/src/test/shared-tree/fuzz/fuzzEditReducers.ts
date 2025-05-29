@@ -12,7 +12,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
-import { Tree, type ISharedTree } from "../../../shared-tree/index.js";
+import { Tree } from "../../../shared-tree/index.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
@@ -54,7 +54,7 @@ import {
 
 import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
+import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
 import {
 	SchemaFactory,
 	TreeArrayNode,
@@ -63,6 +63,7 @@ import {
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedTree } from "../../../treeFactory.js";
 
 const syncFuzzReducer = combineReducers<
 	Operation,

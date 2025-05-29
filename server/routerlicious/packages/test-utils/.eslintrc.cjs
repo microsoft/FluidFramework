@@ -22,5 +22,8 @@ module.exports = {
 
 		// TODO: remove usages of deprecated APIs and remove this override
 		"import/no-deprecated": "warn",
+
+		// TODO: fix violations and remove this override
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };

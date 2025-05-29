@@ -12,7 +12,6 @@ export {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
-	type TreeChangeEvents,
 	// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
 	// See docs on TreeNode for more details.
 	type TreeNode,
@@ -44,13 +43,8 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	test_RecursiveObject,
-	test_RecursiveObject_base,
-	test_RecursiveObjectPojoMode,
 	treeNodeApi,
 	type TreeNodeApi,
-	cursorFromInsertable,
-	createFromInsertable,
 	type NodeChangedData,
 	TreeBeta,
 	type TreeChangeEventsBeta,
@@ -80,37 +74,17 @@ export {
 	extractPersistedSchema,
 	comparePersistedSchema,
 	type ConciseTree,
-	comparePersistedSchemaInternal,
-	ViewSchema,
+	SchemaCompatibilityTester,
 	type Unenforced,
-	type FieldHasDefaultUnsafe,
-	type ObjectFromSchemaRecordUnsafe,
-	type TreeObjectNodeUnsafe,
-	type TreeFieldFromImplicitFieldUnsafe,
-	type TreeNodeFromImplicitAllowedTypesUnsafe,
-	type FieldSchemaUnsafe,
-	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	type TreeArrayNodeUnsafe,
-	type TreeMapNodeUnsafe,
-	type InsertableObjectFromSchemaRecordUnsafe,
-	type InsertableTreeFieldFromImplicitFieldUnsafe,
-	type InsertableTypedNodeUnsafe,
-	type NodeBuilderDataUnsafe,
-	type NodeFromSchemaUnsafe,
-	type ReadonlyMapInlined,
-	type TreeNodeSchemaClassUnsafe,
-	type TreeNodeSchemaUnsafe,
-	type AllowedTypesUnsafe,
-	type ImplicitAllowedTypesUnsafe,
-	type ImplicitFieldSchemaUnsafe,
-	type TreeNodeSchemaNonClassUnsafe,
-	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
 	type TreeViewAlpha,
 	type TreeBranch,
 	type TreeBranchEvents,
 	tryGetSchema,
+	getStoredKey,
+	getPropertyKeyFromStoredKey,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
@@ -138,8 +112,15 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	allowUnused,
 	type FieldSchemaAlphaUnsafe,
+	getIdentifierFromNode,
 	type TreeSchema,
+	type ValidateRecursiveSchemaTemplate,
+	type FixRecursiveRecursionLimit,
+	schemaStatics,
+	type TreeChangeEvents,
+	createFromMapTree,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -155,13 +136,26 @@ export type {
 export {
 	type NodeFromSchema,
 	isTreeNodeSchemaClass,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
 	type ImplicitFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
+	type UnannotateAllowedTypes,
+	type UnannotateAllowedType,
+	type UnannotateAllowedTypesList,
+	type UnannotateAllowedTypeOrLazyItem,
+	type UnannotateImplicitFieldSchema,
+	type UnannotateSchemaRecord,
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
 	type AllowedTypes,
+	type AllowedTypeMetadata,
+	type AllowedTypesMetadata,
 	FieldKind,
 	FieldSchema,
 	type FieldSchemaAlpha,
@@ -188,41 +182,40 @@ export {
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";
+export { getTreeNodeForField } from "./getTreeNodeForField.js";
 export {
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
-export {
-	TreeArrayNode,
+	type ArrayNodeCustomizableSchema,
+	type ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
+	isArrayNodeSchema,
 	IterableTreeArrayContent,
 	type ReadonlyArrayNode,
-} from "./arrayNode.js";
-export type {
-	ArrayNodeCustomizableSchema,
-	ArrayNodePojoEmulationSchema,
-} from "./arrayNodeTypes.js";
-export { ArrayNodeSchema, isArrayNodeSchema } from "./arrayNodeTypes.js";
-export type {
-	MapNodeCustomizableSchema,
-	MapNodePojoEmulationSchema,
-} from "./mapNodeTypes.js";
-export { MapNodeSchema, isMapNodeSchema } from "./mapNodeTypes.js";
-export {
+	TreeArrayNode,
+	type MapNodeCustomizableSchema,
+	type MapNodePojoEmulationSchema,
+	MapNodeSchema,
+	isMapNodeSchema,
+	type TreeMapNode,
+	type MapNodeInsertableData,
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
+	ObjectNodeSchema,
+	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,
 	createUnknownOptionalFieldPolicy,
-} from "./objectNode.js";
-export { ObjectNodeSchema } from "./objectNodeTypes.js";
-export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
+} from "./node-kinds/index.js";
 export {
 	mapTreeFromNodeData,
 	type InsertableContent,
 	type FactoryContent,
 	type FactoryContentObject,
 } from "./toMapTree.js";
+export {
+	prepareForInsertion,
+	prepareForInsertionContextless,
+} from "./prepareForInsertion.js";
 export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
 export {
 	numberSchema,

@@ -35,7 +35,19 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import safeStringify from "json-stringify-safe";
-import { createRoomJoinMessage, createRuntimeMessage, generateClientId } from "../utils";
+
+import { createRoomJoinMessage, generateClientId } from "../utils";
+
+import type {
+	IConnectedClient,
+	INexusLambdaConnectionStateTrackers,
+	INexusLambdaDependencies,
+	INexusLambdaSettings,
+	IRoom,
+} from "./interfaces";
+import { ProtocolVersions, checkProtocolVersion } from "./protocol";
+import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
+import { StageTrace, sampleMessages } from "./trace";
 import {
 	getMessageMetadata,
 	handleServerErrorAndConvertToNetworkError,
@@ -44,17 +56,6 @@ import {
 	isWriter,
 	isSummarizer,
 } from "./utils";
-import { StageTrace, sampleMessages } from "./trace";
-import { ProtocolVersions, checkProtocolVersion } from "./protocol";
-import type {
-	IBroadcastSignalEventPayload,
-	IConnectedClient,
-	INexusLambdaConnectionStateTrackers,
-	INexusLambdaDependencies,
-	INexusLambdaSettings,
-	IRoom,
-} from "./interfaces";
-import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
 
 /**
  * Trace stages for the connect flow.
@@ -303,13 +304,14 @@ function trackCollaborationSession(
 	tenantId: string,
 	documentId: string,
 	connectedClients: ISignalClient[],
+	connectedTimestamp: number,
 	{ collaborationSessionTracker }: INexusLambdaDependencies,
 ): void {
 	// Track the collaboration session for this connection
 	if (collaborationSessionTracker) {
 		const sessionClient: ICollaborationSessionClient = {
 			clientId,
-			joinedTime: clientDetails.timestamp ?? Date.now(),
+			joinedTime: connectedTimestamp,
 			isWriteClient,
 			isSummarizerClient: isSummarizer(clientDetails.details),
 		};
@@ -591,58 +593,6 @@ async function addMessageClientToClientManager(
 	}
 }
 
-/**
- * Sets up a listener for broadcast signals from external API and broadcasts them to the room.
- *
- * @param socket - Websocket instance
- * @param room - Current room
- * @param lambdaDependencies - Lambda dependencies including collaborationSessionEventEmitter and logger
- * @returns Dispose function to remove the added listener
- */
-function setUpSignalListenerForRoomBroadcasting(
-	socket: IWebSocket,
-	room: IRoom,
-	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
-): () => void {
-	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
-		const { signalRoom, signalContent } = broadcastSignal;
-
-		// No-op if the room (collab session) that signal came in from is different
-		// than the current room. We reuse websockets so there could be multiple rooms
-		// that we are sending the signal to, and we don't want to do that.
-		if (signalRoom.documentId === room.documentId && signalRoom.tenantId === room.tenantId) {
-			try {
-				const runtimeMessage = createRuntimeMessage(signalContent);
-
-				try {
-					socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
-				} catch (error) {
-					const errorMsg = `Failed to broadcast signal from external API.`;
-					Lumberjack.error(
-						errorMsg,
-						getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
-						error,
-					);
-				}
-			} catch (error) {
-				const errorMsg = `broadcast-signal content body is malformed`;
-				throw handleServerErrorAndConvertToNetworkError(
-					logger,
-					errorMsg,
-					room.documentId,
-					room.tenantId,
-					error,
-				);
-			}
-		}
-	};
-	collaborationSessionEventEmitter?.on("broadcastSignal", broadCastSignalListener);
-	const disposeBroadcastSignalListener = (): void => {
-		collaborationSessionEventEmitter?.off("broadcastSignal", broadCastSignalListener);
-	};
-	return disposeBroadcastSignalListener;
-}
-
 export async function connectDocument(
 	socket: IWebSocket,
 	lambdaDependencies: INexusLambdaDependencies,
@@ -791,15 +741,9 @@ export async function connectDocument(
 			tenantId,
 			documentId,
 			clients,
+			connectedTimestamp,
 			lambdaDependencies,
 		);
-
-		const disposeSignalListenerForRoomBroadcasting = setUpSignalListenerForRoomBroadcasting(
-			socket,
-			room,
-			lambdaDependencies,
-		);
-		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
 
 		const result = {
 			connection: connectedMessage,
@@ -825,7 +769,6 @@ export async function connectDocument(
 			connectVersions,
 			details: messageClient,
 			dispose: (): void => {
-				disposeSignalListenerForRoomBroadcasting();
 				disposeOrdererConnectionListener();
 			},
 		};

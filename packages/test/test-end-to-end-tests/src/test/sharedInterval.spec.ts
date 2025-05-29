@@ -14,7 +14,7 @@ import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tr
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISequenceIntervalCollection,
-	IOverlappingIntervalsIndex,
+	ISequenceOverlappingIntervalsIndex,
 	SequenceInterval,
 	SharedString,
 } from "@fluidframework/sequence/internal";
@@ -32,7 +32,7 @@ import {
 const assertSequenceIntervals = (
 	sharedString: SharedString,
 	intervalCollection: ISequenceIntervalCollection,
-	overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>,
+	overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
@@ -259,7 +259,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 		let sharedString: SharedString;
 		let intervals: ISequenceIntervalCollection;
-		let overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>;
+		let overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
 		let dataObject: ITestFluidObject & IFluidLoadable;
 
 		const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
@@ -571,8 +571,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 		});
 
-		// ! Disabled due to flakiness (see AB#29397)
-		it.skip("Conflicting ops", async () => {
+		it("Conflicting ops", async () => {
 			const stringId = "stringKey";
 			const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 			const testContainerConfig: ITestContainerConfig = {

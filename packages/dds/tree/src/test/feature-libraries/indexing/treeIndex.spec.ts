@@ -27,10 +27,9 @@ import {
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
+import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { treeApi } from "../../../shared-tree/treeApi.js";
-// eslint-disable-next-line import/no-internal-modules
-import { proxySlot } from "../../../simple-tree/core/treeNodeKernel.js";
+import { simpleTreeNodeSlot } from "../../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../../feature-libraries/flex-tree/lazyNode.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -111,9 +110,9 @@ describe("tree indexes", () => {
 			},
 			(anchorNode: AnchorNode) => {
 				const simpleTree =
-					anchorNode.slots.get(proxySlot) ?? makeTreeNode(anchorNode, forest, root);
+					anchorNode.slots.get(simpleTreeNodeSlot) ?? makeTreeNode(anchorNode, forest, root);
 				if (!isTreeValue(simpleTree)) {
-					return treeApi.status(simpleTree);
+					return Tree.status(simpleTree);
 				}
 			},
 		);
@@ -206,12 +205,12 @@ describe("tree indexes", () => {
 			bird: sf.required(Bird),
 		}) {}
 
-		const Tree = sf.object("Tree", {
+		class Root extends sf.object("Tree", {
 			nests: sf.array(Nest),
-		});
+		}) {}
 
 		// creates an index that indexes all nests on the most common color of eggs they hold
-		function createNestIndex(root: SchematizingSimpleTreeView<typeof Tree>) {
+		function createNestIndex(root: SchematizingSimpleTreeView<typeof Root>) {
 			const anchorIds = new Map<AnchorNode, number>();
 			const { forest } = root.checkout;
 			let indexedAnchorNodeCount = 0;
@@ -280,7 +279,7 @@ describe("tree indexes", () => {
 					cursor.free();
 					const simpleTree = getOrCreateNodeFromInnerNode(flexNode);
 					if (!isTreeValue(simpleTree)) {
-						return treeApi.status(simpleTree);
+						return Tree.status(simpleTree);
 					}
 				},
 			);
@@ -345,7 +344,7 @@ describe("tree indexes", () => {
 		}
 
 		it("when a node is replaced", () => {
-			const config = new TreeViewConfiguration({ schema: Tree });
+			const config = new TreeViewConfiguration({ schema: Root });
 			const view = getView(config);
 			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
 			view.initialize({ nests: [nest] });
@@ -359,7 +358,7 @@ describe("tree indexes", () => {
 		});
 
 		it("when a node is added", () => {
-			const config = new TreeViewConfiguration({ schema: Tree });
+			const config = new TreeViewConfiguration({ schema: Root });
 			const view = getView(config);
 			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
 			view.initialize({ nests: [nest] });
@@ -373,7 +372,7 @@ describe("tree indexes", () => {
 		});
 
 		it("when a node is detached", () => {
-			const config = new TreeViewConfiguration({ schema: Tree });
+			const config = new TreeViewConfiguration({ schema: Root });
 			const view = getView(config);
 			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
 			view.initialize({ nests: [nest] });
@@ -434,9 +433,10 @@ describe("tree indexes", () => {
 					() => 3,
 					(anchorNode: AnchorNode) => {
 						const simpleTree =
-							anchorNode.slots.get(proxySlot) ?? makeTreeNode(anchorNode, forest, view);
+							anchorNode.slots.get(simpleTreeNodeSlot) ??
+							makeTreeNode(anchorNode, forest, view);
 						if (!isTreeValue(simpleTree)) {
-							return treeApi.status(simpleTree);
+							return Tree.status(simpleTree);
 						}
 					},
 				),

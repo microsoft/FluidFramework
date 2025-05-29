@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { DeepReadonly } from "@fluidframework/core-interfaces/internal";
+
 /**
  * Returns union of types of values in a record.
  */
@@ -23,9 +25,14 @@ type RequiredAndNotUndefined<T> = {
 /**
  * Object.entries retyped to preserve known keys and their types.
  *
+ * @privateRemarks
+ * The is a defect in this utility when a string index appears in the object.
+ * In such a case, the only result is `[string, T]`, where `T` is the type
+ * of the string index entry.
+ *
  * @internal
  */
-export const objectEntries = Object.entries as <T>(o: T) => KeyValuePairs<T>;
+export const objectEntries = Object.entries as <const T>(o: T) => KeyValuePairs<T>;
 
 /**
  * Object.entries retyped to preserve known keys and their types.
@@ -37,7 +44,7 @@ export const objectEntries = Object.entries as <T>(o: T) => KeyValuePairs<T>;
  *
  * @internal
  */
-export const objectEntriesWithoutUndefined = Object.entries as <T>(
+export const objectEntriesWithoutUndefined = Object.entries as <const T>(
 	o: T,
 ) => KeyValuePairs<RequiredAndNotUndefined<T>>;
 
@@ -46,7 +53,9 @@ export const objectEntriesWithoutUndefined = Object.entries as <T>(
  *
  * @internal
  */
-export const objectKeys = Object.keys as <T>(o: T) => (keyof MapNumberIndicesToStrings<T>)[];
+export const objectKeys = Object.keys as <const T>(
+	o: T,
+) => (keyof MapNumberIndicesToStrings<T>)[];
 
 /**
  * Retrieve a value from a record with the given key, or create a new entry if
@@ -60,7 +69,7 @@ export const objectKeys = Object.keys as <T>(o: T) => (keyof MapNumberIndicesToS
  * @returns either the existing value for the given key, or the newly-created
  * value (the result of `defaultValue`)
  */
-export function getOrCreateRecord<K extends string | number | symbol, V>(
+export function getOrCreateRecord<const K extends string | number | symbol, const V>(
 	record: Record<K, V>,
 	key: K,
 	defaultValue: (key: K) => V,
@@ -69,4 +78,11 @@ export function getOrCreateRecord<K extends string | number | symbol, V>(
 		record[key] = defaultValue(key);
 	}
 	return record[key];
+}
+
+/**
+ * Do nothing helper to apply deep immutability to a value's type.
+ */
+export function asDeeplyReadonly<T>(value: T): DeepReadonly<T> {
+	return value as DeepReadonly<T>;
 }

@@ -7,23 +7,34 @@
  * Hacky support for internal datastore based usages.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type {
+	ExtensionHostEvents,
+	RawInboundExtensionMessage,
+} from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
-import type { IPresence } from "./presence.js";
+import type { PresenceWithNotifications as Presence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
+import type {
+	OutboundClientJoinMessage,
+	OutboundDatastoreUpdateMessage,
+	SignalMessages,
+} from "./protocol.js";
 
-import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
-
+/**
+ * This provides faux validation of the signal message.
+ */
 function assertSignalMessageIsValid(
-	message: IInboundSignalMessage | IExtensionMessage,
-): asserts message is IExtensionMessage {
+	message: IInboundSignalMessage | RawInboundExtensionMessage<SignalMessages>,
+): asserts message is RawInboundExtensionMessage<SignalMessages> {
 	assert(message.clientId !== null, 0xa58 /* Signal must have a client ID */);
 	// The other difference between messages is that `content` for
-	// IExtensionMessage is JsonDeserialized and we are fine assuming that.
+	// RawInboundExtensionMessage is JsonDeserialized and we are fine assuming that.
 }
 
 /**
@@ -32,16 +43,29 @@ function assertSignalMessageIsValid(
 class PresenceManagerDataObject extends LoadableFluidObject {
 	// Creation of presence manager is deferred until first acquisition to avoid
 	// instantiations and stand-up by Summarizer that has no actual use.
-	private _presenceManager: IPresence | undefined;
+	private _presenceManager: Presence | undefined;
 
-	public presenceManager(): IPresence {
+	public presenceManager(): Presence {
 		if (!this._presenceManager) {
 			// TODO: investigate if ContainerExtensionStore (path-based address routing for
 			// Signals) is readily detectable here and use that presence manager directly.
-			const manager = createPresenceManager(this.runtime);
+			const runtime = this.runtime;
+			const events = createEmitter<ExtensionHostEvents>();
+			runtime.on("connected", (clientId) => events.emit("connected", clientId));
+			runtime.on("disconnected", () => events.emit("disconnected"));
+
+			const manager = createPresenceManager({
+				isConnected: () => runtime.connected,
+				getClientId: () => runtime.clientId,
+				events,
+				getQuorum: runtime.getQuorum.bind(runtime),
+				getAudience: runtime.getAudience.bind(runtime),
+				submitSignal: (message: OutboundClientJoinMessage | OutboundDatastoreUpdateMessage) =>
+					runtime.submitSignal(message.type, message.content, message.targetClientId),
+			});
 			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assertSignalMessageIsValid(message);
-				manager.processSignal("", message, local);
+				manager.processSignal([], message, local);
 			});
 			this._presenceManager = manager;
 		}
@@ -50,7 +74,7 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 }
 
 /**
- * Factory class to create {@link IPresence} in own data store.
+ * Factory class to create {@link Presence} in own data store.
  */
 class PresenceManagerFactory {
 	public is(value: IFluidLoadable | ExperimentalPresenceDO): value is ExperimentalPresenceDO {
@@ -67,8 +91,9 @@ class PresenceManagerFactory {
  * Brand for Experimental Presence Data Object.
  *
  * @remarks
- * See {@link acquirePresenceViaDataObject} for example usage.
+ * See {@link getPresenceViaDataObject} for example usage.
  *
+ * @deprecated Use {@link getPresence} instead.
  * @sealed
  * @alpha
  */
@@ -80,6 +105,7 @@ export declare class ExperimentalPresenceDO {
  * DataStore based Presence Manager that is used as fallback for preferred Container
  * Extension based version requires registration. Export SharedObjectKind for registration.
  *
+ * @deprecated Use {@link getPresence} instead.
  * @alpha
  */
 export const ExperimentalPresenceManager =
@@ -88,7 +114,7 @@ export const ExperimentalPresenceManager =
 	>;
 
 /**
- * Acquire IPresence from a DataStore based Presence Manager
+ * Acquire Presence from a DataStore based Presence Manager
  *
  * @example
  * ```typescript
@@ -100,16 +126,15 @@ export const ExperimentalPresenceManager =
  * ```
  * then
  * ```typescript
- * const presence = acquirePresenceViaDataObject(
+ * const presence = getPresenceViaDataObject(
  * 	container.initialObjects.experimentalPresence,
  * 	);
  * ```
  *
+ * @deprecated Use {@link getPresence} instead.
  * @alpha
  */
-export function acquirePresenceViaDataObject(
-	fluidLoadable: ExperimentalPresenceDO,
-): IPresence {
+export function getPresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence {
 	if (fluidLoadable instanceof PresenceManagerDataObject) {
 		return fluidLoadable.presenceManager();
 	}

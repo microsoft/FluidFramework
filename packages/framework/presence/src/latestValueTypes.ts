@@ -3,18 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type {
+	DeepReadonly,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
-import type { ISessionClient } from "./presence.js";
+import type { Attendee } from "./presence.js";
 
 /**
  * Metadata for the value state.
  *
  * @sealed
- * @alpha
+ * @beta
  */
-export interface LatestValueMetadata {
+export interface LatestMetadata {
 	/**
 	 * The revision number for value that increases as value is changed.
 	 */
@@ -30,19 +32,19 @@ export interface LatestValueMetadata {
  * State of a value and its metadata.
  *
  * @sealed
- * @alpha
+ * @beta
  */
-export interface LatestValueData<T> {
-	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-	metadata: LatestValueMetadata;
+export interface LatestData<T> {
+	value: DeepReadonly<JsonDeserialized<T>>;
+	metadata: LatestMetadata;
 }
 
 /**
- * State of a specific client's value and its metadata.
+ * State of a specific attendee's value and its metadata.
  *
  * @sealed
- * @alpha
+ * @beta
  */
-export interface LatestValueClientData<T> extends LatestValueData<T> {
-	client: ISessionClient;
+export interface LatestClientData<T> extends LatestData<T> {
+	attendee: Attendee;
 }

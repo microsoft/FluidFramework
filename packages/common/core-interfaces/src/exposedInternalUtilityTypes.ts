@@ -5,16 +5,50 @@
 
 /* eslint-disable @rushstack/no-new-null */
 
+import type { ErasedType } from "./erasedType.js";
+import type { IFluidHandle } from "./handles.js";
 import type {
 	SerializationErrorPerNonPublicProperties,
 	SerializationErrorPerUndefinedArrayElement,
 } from "./jsonSerializationErrors.js";
-import type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
+import type { JsonTypeWith, NonNullJsonObjectWith, ReadonlyJsonTypeWith } from "./jsonType.js";
 
 /**
  * Unique symbol for recursion meta-typing.
  */
 const RecursionMarkerSymbol: unique symbol = Symbol("recursion here");
+
+/**
+ * Union of types that {@link DeepReadonly} and {@link ShallowReadonly}
+ * recognize to generate immutable form and optionally can alter their
+ * type parameters.
+ *
+ * @privateRemarks
+ * WeakRef should be added when lib is updated to ES2021 or later.
+ *
+ * @beta
+ */
+export type ReadonlySupportedGenerics =
+	| IFluidHandle
+	| Map<unknown, unknown>
+	| Promise<unknown>
+	| Set<unknown>
+	| WeakMap<object, unknown>
+	| WeakSet<object>;
+
+/**
+ * Limit on processing recursive types.
+ * Use of `"NoLimit"` may result in error:
+ * "ts(2589): Type instantiation is excessively deep and possibly infinite".
+ * In such cases, use string literal with some prefix series of `+`
+ * characters. The length of `+` character sequence indicates the recursion
+ * depth limit when a recursive type is found. Use of `0` will stop applying
+ * `DeepReadonly` at the first point recursion is detected.
+ *
+ * @beta
+ * @system
+ */
+export type DeepReadonlyRecursionLimit = "NoLimit" | 0 | `+${string}`;
 
 /**
  * Collection of utility types that are not intended to be used/imported
@@ -502,19 +536,26 @@ export namespace InternalUtilityTypes {
 	export type IsExactlyObject<T extends object> = IsSameType<T, object>;
 
 	/**
+	 * Any Record type.
+	 *
+	 * @system
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` for property types is required to avoid "Index signature for type 'string' is missing in type" in some outside `FlattenIntersection` uses.
+	export type AnyRecord = Record<keyof any, any>;
+
+	/**
 	 * Creates a simple object type from an intersection of multiple.
 	 * @privateRemarks
-	 * `T extends Record` within the implementation encourages tsc to process
+	 * `T extends AnyRecord` within the implementation encourages tsc to process
 	 * intersections within unions.
 	 *
 	 * @system
 	 */
-	export type FlattenIntersection<T extends Record<string | number | symbol, unknown>> =
-		T extends Record<string | number | symbol, unknown>
-			? {
-					[K in keyof T]: T[K];
-				}
-			: T;
+	export type FlattenIntersection<T extends AnyRecord> = T extends AnyRecord
+		? {
+				[K in keyof T]: T[K];
+			}
+		: T;
 
 	/**
 	 * Extracts Function portion from an intersection (&) type returning
@@ -936,8 +977,6 @@ export namespace InternalUtilityTypes {
 
 	// #endregion
 
-	// #region JsonDeserialized implementation
-
 	/**
 	 * Sentinel type for use when marking points of recursion (in a recursive type).
 	 * Type is expected to be unique, though no lengths are taken to ensure that.
@@ -955,12 +994,14 @@ export namespace InternalUtilityTypes {
 	 */
 	export type RecursionLimit = `+${string}` | 0;
 
+	// #region JsonDeserialized implementation
+
 	/**
 	 * Outer implementation of {@link JsonDeserialized} handling meta cases
 	 * like recursive types.
 	 *
 	 * @privateRemarks
-	 * This utility is reentrant and will process a type `T` up to RecurseLimit.
+	 * This utility is reentrant and will process a type `T` up to `RecurseLimit`.
 	 *
 	 * @system
 	 */
@@ -1046,7 +1087,7 @@ export namespace InternalUtilityTypes {
 		: never /* unreachable else for infer */;
 
 	/**
-	 * Recurses T applying {@link InternalUtilityTypes.JsonDeserializedFilter} up to RecurseLimit times.
+	 * Recurses `T` applying {@link InternalUtilityTypes.JsonDeserializedFilter} up to `RecurseLimit` times.
 	 *
 	 * @system
 	 */
@@ -1148,5 +1189,418 @@ export namespace InternalUtilityTypes {
 											>
 						: /* not an object => */ never;
 
+	// #endregion
+
+	// #region *Readonly implementations
+
+	/**
+	 * If `T` is a `Map<K,V>` or `ReadonlyMap<K,V>`, returns `ReadonlyMap` and,
+	 * if `T` extends `DeepenedGenerics`, {@link DeepReadonly} is applied to
+	 * `K` and `V` generics. `Else` is returned if not a generic map.
+	 *
+	 * @system
+	 */
+	export type DeepenReadonlyInMapIfEnabled<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
+		Else,
+	> = T extends ReadonlyMap<infer K, infer V>
+		? Map<K, V> extends DeepenedGenerics
+			? ReadonlyMap<
+					ReadonlyImpl<K, DeepenedGenerics, NoDepthOrRecurseLimit>,
+					ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>
+				>
+			: ReadonlyMap<K, V>
+		: Else;
+
+	/**
+	 * If `T` is a `Set<TSet>` or `ReadonlySet<TSet>`, returns `ReadonlySet` and,
+	 * if `T` extends `DeepenedGenerics`, {@link DeepReadonly} is applied to
+	 * `TSet` generic. `Else` is returned if not a generic set.
+	 *
+	 * @system
+	 */
+	export type DeepenReadonlyInSetIfEnabled<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
+		Else,
+	> = T extends ReadonlySet<infer V>
+		? Set<V> extends DeepenedGenerics
+			? ReadonlySet<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>
+			: ReadonlySet<V>
+		: Else;
+
+	/**
+	 * If `T` is a `IFluidHandle<THandle>` and if `T` extends `DeepenedGenerics`,
+	 * {@link DeepReadonly} is applied to `THandle` generic.
+	 * `Else` is returned if not an `IFluidHandle`.
+	 *
+	 * @system
+	 */
+	export type DeepenReadonlyInFluidHandleIfEnabled<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
+		Else,
+	> = T extends Readonly<IFluidHandle<infer V>>
+		? IFluidHandle<V> extends DeepenedGenerics
+			? Readonly<IFluidHandle<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>>
+			: Readonly<T>
+		: Else;
+
+	/**
+	 * If `T` is a `Promise<TPromise>` and if `T` extends `DeepenedGenerics`,
+	 * {@link DeepReadonly} is applied to `TPromise` generic.
+	 * `Else` is returned if not a `Promise`.
+	 *
+	 * @system
+	 */
+	export type DeepenReadonlyInPromiseIfEnabled<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
+		Else,
+	> = T extends Promise<infer V>
+		? Promise<V> extends DeepenedGenerics
+			? Promise<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>
+			: T
+		: Else;
+
+	/**
+	 * If `T` is a `WeakMap<K,V>`, returns immutable `WeakMap` and,
+	 * if `T` extends `DeepenedGenerics`, {@link DeepReadonly} is applied to
+	 * `K` and `V` generics. `Else` is returned if not a generic map.
+	 *
+	 * @system
+	 */
+	export type DeepenReadonlyInWeakMapIfEnabled<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
+		Else,
+	> = T extends Omit<WeakMap<infer K, infer V>, "delete" | "set">
+		? WeakMap<K, V> extends DeepenedGenerics
+			? Omit<
+					WeakMap<
+						ReadonlyImpl<K, DeepenedGenerics, NoDepthOrRecurseLimit>,
+						ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>
+					>,
+					"delete" | "set"
+				>
+			: Omit<WeakMap<K, V>, "delete" | "set">
+		: Else;
+
+	/**
+	 * If `T` is a `WeakSet<TSet>`, returns immutable `WeakSet` and,
+	 * if `T` extends `DeepenedGenerics`, {@link DeepReadonly} is applied to
+	 * `TSet` generic. `Else` is returned if not a generic weak set.
+	 *
+	 * @system
+	 */
+	export type DeepenReadonlyInWeakSetIfEnabled<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
+		Else,
+	> = T extends Omit<WeakSet<infer V>, "add" | "delete">
+		? WeakSet<V> extends DeepenedGenerics
+			? Omit<
+					WeakSet<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>,
+					"add" | "delete"
+				>
+			: Omit<WeakSet<V>, "add" | "delete">
+		: Else;
+
+	/**
+	 * If `T` is a {@link ReadonlySupportedGenerics}, `T` is returned as
+	 * its immutable version, and if `T` extends `DeepenedGenerics`,
+	 * {@link DeepReadonly} is applied to `T`s generics.
+	 *
+	 * @system
+	 */
+	export type DeepenReadonlyInGenerics<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
+		Else,
+	> = DeepenReadonlyInMapIfEnabled<
+		T,
+		DeepenedGenerics,
+		NoDepthOrRecurseLimit,
+		DeepenReadonlyInSetIfEnabled<
+			T,
+			DeepenedGenerics,
+			NoDepthOrRecurseLimit,
+			DeepenReadonlyInWeakMapIfEnabled<
+				T,
+				DeepenedGenerics,
+				NoDepthOrRecurseLimit,
+				DeepenReadonlyInWeakSetIfEnabled<
+					T,
+					DeepenedGenerics,
+					NoDepthOrRecurseLimit,
+					DeepenReadonlyInPromiseIfEnabled<
+						T,
+						DeepenedGenerics,
+						NoDepthOrRecurseLimit,
+						DeepenReadonlyInFluidHandleIfEnabled<
+							T,
+							DeepenedGenerics,
+							NoDepthOrRecurseLimit,
+							Else
+						>
+					>
+				>
+			>
+		>
+	>;
+
+	/**
+	 * Returns an `ErasedType` or "branded" primitive type as-is, or `Else` if not.
+	 * @typeParam T - Type to test.
+	 * @typeParam Else - Type to return if not `ErasedType` or "branded" primitive.
+	 *
+	 * @system
+	 */
+	export type PreserveErasedTypeOrBrandedPrimitive<
+		T extends object,
+		Else,
+	> = /* Test for erased type */ T extends ErasedType<infer _>
+		? /* erased type => keep as-is */ T
+		: /* Test for branded primitive */ T extends infer Brand &
+					(boolean | number | string | symbol | bigint)
+			? // Should just return T here, but TypeScript appears to produce `never` when doing so.
+				// Workaround by inferring the Primitive type and returning intersection with B.
+				T extends Brand & infer Primitive
+				? /* [potentially] branded type => "as-is" */ Primitive & Brand
+				: /* Should never be reached */ T
+			: Else;
+
+	/**
+	 * De-multiplexing implementation of {@link DeepReadonly} and {@link ShallowReadonly}
+	 * selecting behavior based on `NoDepthOrRecurseLimit`.
+	 *
+	 * @privateRemarks
+	 * This utility is reentrant. Its importance is that other utilities common to
+	 * readonly transformation may use `NoDepthOrRecurseLimit` to return the the
+	 * same processing algorithm.
+	 *
+	 * @system
+	 */
+	export type ReadonlyImpl<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
+	> = /* test for no depth */ NoDepthOrRecurseLimit extends "Shallow"
+		? /* no depth => */ ShallowReadonlyImpl<T, DeepenedGenerics>
+		: /* test for no limit */ NoDepthOrRecurseLimit extends "NoLimit"
+			? /* no limit => */ DeepReadonlyRecursingInfinitely<T, DeepenedGenerics>
+			: /* limited */ DeepReadonlyLimitingRecursion<
+					T,
+					DeepenedGenerics,
+					Extract<NoDepthOrRecurseLimit, RecursionLimit>
+				>;
+
+	// #region ShallowReadonly implementation
+
+	/**
+	 * Outer implementation of {@link ShallowReadonly}.
+	 *
+	 * @privateRemarks
+	 * This utility can be reentrant when generics are deepened.
+	 *
+	 * @system
+	 */
+	export type ShallowReadonlyImpl<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+	> = T extends object
+		? /* object => */ FilterPreservingFunction<
+				T,
+				DeepenReadonlyInGenerics<
+					T,
+					DeepenedGenerics,
+					"Shallow",
+					PreserveErasedTypeOrBrandedPrimitive<T, /* basic type => */ Readonly<T>>
+				>
+			>
+		: /* not an object => */ T;
+
+	// #endregion
+
+	/**
+	 * Outer implementation of {@link DeepReadonly}.
+	 *
+	 * @privateRemarks
+	 * This utility is reentrant and will process a type `T` up to `RecurseLimit`.
+	 *
+	 * @system
+	 */
+	export type DeepReadonlyImpl<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		RecurseLimit extends DeepReadonlyRecursionLimit,
+	> = ReadonlyImpl<T, DeepenedGenerics, RecurseLimit>;
+
+	// #region DeepReadonly infinite recursion implementation
+
+	/**
+	 * Simple implementation of {@link DeepReadonly} that may handle limited recursive types.
+	 * In unhandled cases, TypeScript will produce:
+	 * ts(2589): Type instantiation is excessively deep and possibly infinite.
+	 *
+	 * @system
+	 */
+	export type DeepReadonlyRecursingInfinitely<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+	> = T extends object
+		? /* object => */ FilterPreservingFunction<
+				T,
+				// test for array of known recursive type: JsonTypeWith
+				T extends readonly ReadonlyJsonTypeWith<infer Alternates>[]
+					? // Make sure this is exactly that case (many arrays will extend JsonTypeWith)
+						// Note that `true extends IfExactTypeInTuple` is used over
+						// if-else form as the else branch would be evaluated as input to
+						// `IfExactTypeInTuple` and that could lead to infinite recursion.
+						true extends IfExactTypeInTuple<
+							T,
+							[JsonTypeWith<Alternates>[], readonly ReadonlyJsonTypeWith<Alternates>[]]
+						>
+						? readonly ReadonlyJsonTypeWith<
+								DeepReadonlyRecursingInfinitely<Alternates, DeepenedGenerics>
+							>[]
+						: {
+								readonly [K in keyof T]: DeepReadonlyRecursingInfinitely<
+									T[K],
+									DeepenedGenerics
+								>;
+							}
+					: /* not JSON array => */ DeepenReadonlyInGenerics<
+							T,
+							DeepenedGenerics,
+							"NoLimit",
+							PreserveErasedTypeOrBrandedPrimitive<
+								T,
+								/* basic type => */ {
+									readonly [K in keyof T]: DeepReadonlyRecursingInfinitely<
+										T[K],
+										DeepenedGenerics
+									>;
+								}
+							>
+						>
+			>
+		: /* not an object => */ T;
+
+	// #endregion
+	// #region DeepReadonly limited recursion implementation
+
+	/**
+	 * Core implementation of {@link DeepReadonly} handling meta cases
+	 * like recursive types a limited number of times.
+	 *
+	 * @privateRemarks
+	 * This utility is reentrant and will process a type `T` up to `NoDepthOrRecurseLimit`.
+	 *
+	 * @system
+	 */
+	export type DeepReadonlyLimitingRecursion<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		NoDepthOrRecurseLimit extends RecursionLimit,
+	> = /* infer non-recursive version of T */ ReplaceRecursionWithMarkerAndPreserveAllowances<
+		T,
+		RecursionMarker,
+		{ AllowExactly: []; AllowExtensionOf: never }
+	> extends infer TNoRecursionAndOnlyPublics
+		? /* test for no change from altered type (excluding non-publics) */ IsSameType<
+				TNoRecursionAndOnlyPublics,
+				DeepReadonlyWorker<TNoRecursionAndOnlyPublics, DeepenedGenerics, 0>
+			> extends true
+			? /* same (no filtering needed) => test for non-public properties (class instance type) */
+				IfNonPublicProperties<
+					T,
+					// Note: no extra allowance is made here for possible branded
+					// primitives as DeepReadonlyWorker will allow them as
+					// extensions of the primitives. Should there need a need to
+					// explicit allow them here, see JsonSerializableImpl's use.
+					{ AllowExactly: []; AllowExtensionOf: never },
+					"found non-publics",
+					"only publics"
+				> extends "found non-publics"
+				? /* hidden props => apply filtering => */
+					DeepReadonlyWorker<
+						T,
+						DeepenedGenerics,
+						Extract<NoDepthOrRecurseLimit, RecursionLimit>
+					>
+				: /* no hidden properties => readonly T is just T */
+					T
+			: /* filtering is needed => */ DeepReadonlyWorker<
+					T,
+					DeepenedGenerics,
+					Extract<NoDepthOrRecurseLimit, RecursionLimit>
+				>
+		: /* unreachable else for infer */ never;
+
+	/**
+	 * Recurses `T` applying {@link InternalUtilityTypes.DeepReadonlyWorker} up to `RecurseLimit` times.
+	 *
+	 * @system
+	 */
+	export type DeepReadonlyRecursion<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		RecurseLimit extends RecursionLimit,
+		TAncestorTypes = T /* Always start with self as ancestor; otherwise recursion limit appears one greater */,
+	> = T extends TAncestorTypes
+		? RecurseLimit extends `+${infer RecursionRemainder}`
+			? /* Now that specific recursion is found, process that recursive type
+			     directly to avoid any collateral damage from ancestor type that
+			     required modification. */
+				DeepReadonlyLimitingRecursion<
+					T,
+					DeepenedGenerics,
+					RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0
+				>
+			: T
+		: DeepReadonlyWorker<T, DeepenedGenerics, RecurseLimit, TAncestorTypes | T>;
+
+	/**
+	 * Core implementation of {@link InternalUtilityTypes.DeepReadonlyLimitingRecursion}.
+	 *
+	 * @system
+	 */
+	export type DeepReadonlyWorker<
+		T,
+		DeepenedGenerics extends ReadonlySupportedGenerics,
+		RecurseLimit extends RecursionLimit,
+		TAncestorTypes = T /* Always start with self as ancestor; otherwise recursion limit appears one greater */,
+	> = /* test for object */ T extends object
+		? /* object => */ FilterPreservingFunction<
+				T,
+				DeepenReadonlyInGenerics<
+					T,
+					DeepenedGenerics,
+					RecurseLimit,
+					PreserveErasedTypeOrBrandedPrimitive<
+						T,
+						/* basic type => */ {
+							readonly [K in keyof T]: DeepReadonlyRecursion<
+								T[K],
+								DeepenedGenerics,
+								RecurseLimit,
+								TAncestorTypes
+							>;
+						}
+					>
+				>
+			>
+		: /* not an object => */ T;
+
+	// #endregion
 	// #endregion
 }

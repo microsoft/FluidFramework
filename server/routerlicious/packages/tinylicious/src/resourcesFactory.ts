@@ -7,7 +7,6 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
-import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { Historian } from "@fluidframework/server-services-client";
 import {
 	MongoDatabaseManager,
@@ -15,11 +14,12 @@ import {
 	IResourcesFactory,
 	MongoDocumentRepository,
 } from "@fluidframework/server-services-core";
+import { DocumentStorage } from "@fluidframework/server-services-shared";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import { Server } from "socket.io";
-
 import winston from "winston";
+
 import { TinyliciousResources } from "./resources";
 import {
 	PubSubPublisher,

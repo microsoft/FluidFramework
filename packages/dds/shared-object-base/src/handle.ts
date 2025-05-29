@@ -3,10 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+// eslint-disable-next-line import/no-deprecated
+import type { IFluidDataStoreRuntimeExperimental } from "@fluidframework/datastore-definitions/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
 
 import { ISharedObject } from "./types.js";
+
+/**
+ * Handle for a shared object. See also `SharedObjectHandle`.
+ * Supports binding other handles to the underlying Shared Object (see {@link ISharedObjectHandle.bind}).
+ *
+ * @internal
+ */
+export interface ISharedObjectHandle extends IFluidHandleInternal<ISharedObject> {
+	/**
+	 * Binds the given handle to this DDS or attach the given handle if this DDS is attached.
+	 * A bound handle will also be attached once this DDS is attached.
+	 *
+	 * @param handle - The target handle to bind to this DDS
+	 */
+	bind(handle: IFluidHandleInternal): void;
+}
+
+/**
+ * Type guard for {@link ISharedObjectHandle}.
+ * @internal
+ */
+export function isISharedObjectHandle(handle: unknown): handle is ISharedObjectHandle {
+	return isFluidHandle(handle) && typeof (handle as ISharedObjectHandle).bind === "function";
+}
 
 /**
  * Handle for a shared object.
@@ -19,7 +46,10 @@ import { ISharedObject } from "./types.js";
  * {@link @fluidframework/datastore#FluidDataStoreRuntime.request} recognizes requests in the form of
  * '/\<shared object id\>' and loads shared object.
  */
-export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
+export class SharedObjectHandle
+	extends FluidObjectHandle<ISharedObject>
+	implements ISharedObjectHandle
+{
 	/**
 	 * Whether services have been attached for the associated shared object.
 	 */
@@ -37,9 +67,10 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
 	constructor(
 		protected readonly value: ISharedObject,
 		path: string,
-		routeContext: IFluidHandleContext,
+		// eslint-disable-next-line import/no-deprecated
+		private readonly runtime: IFluidDataStoreRuntimeExperimental,
 	) {
-		super(value, path, routeContext);
+		super(value, path, runtime.IFluidHandleContext);
 	}
 
 	/**
@@ -49,5 +80,14 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
 	public attachGraph(): void {
 		this.value.bindToContext();
 		super.attachGraph();
+	}
+
+	public bind(handle: IFluidHandleInternal): void {
+		// We don't bind handles in staging mode to defer the attachment of any new objects
+		// until we've exited staging mode. This way if we discard changes or a new handle is not present in the final
+		// committed state, we will never end up attaching the discarded object.
+		if (this.runtime.inStagingMode !== true) {
+			super.bind(handle);
+		}
 	}
 }

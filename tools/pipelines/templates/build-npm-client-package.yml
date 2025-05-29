@@ -140,6 +140,11 @@ parameters:
   type: boolean
   default: false
 
+# Indicates if this is a release build that should be shipped to arrow.
+- name: shouldShip
+  type: boolean
+  default: false
+
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -173,6 +178,8 @@ extends:
         arrow:
           # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
           serviceConnection: ff-internal-arrow-sc
+          # This will make sure that the artifacts are published to the Arrow Service Connection if they are release or pre-release
+          isShipped: ${{ parameters.shouldShip }}
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
@@ -576,6 +583,10 @@ extends:
                 value: 'false'
               - name: COMMIT_SHA
                 value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+              # The build job above already runs component governance tasks.
+              # We don't need them again during jobs that run tests even if we're checking out the repo.
+              - name: skipComponentGovernanceDetection
+                value: true
 
             steps:
               # Setup
@@ -736,6 +747,10 @@ extends:
                   value: 'false'
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                # The build job above already runs component governance tasks.
+                # We don't need them again during jobs that run tests even if we're checking out the repo.
+                - name: skipComponentGovernanceDetection
+                  value: true
               steps:
                 # Setup
                 - checkout: self

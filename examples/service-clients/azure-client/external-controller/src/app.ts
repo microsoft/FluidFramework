@@ -11,10 +11,7 @@ import {
 } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/legacy";
-import {
-	acquirePresenceViaDataObject,
-	ExperimentalPresenceManager,
-} from "@fluidframework/presence/alpha";
+import { getPresence } from "@fluidframework/presence/beta";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 // eslint-disable-next-line import/no-internal-modules -- #26985: `test-runtime-utils` internal used in example
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -76,9 +73,6 @@ const containerSchema = {
 		/* [id]: DataObject */
 		map1: SharedMap,
 		map2: SharedMap,
-		// A Presence Manager object temporarily needs to be placed within container schema
-		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
-		presence: ExperimentalPresenceManager,
 	},
 } satisfies ContainerSchema;
 type DiceRollerContainerSchema = typeof containerSchema;
@@ -182,8 +176,8 @@ async function start(): Promise<void> {
 
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	const lastRoll: { die1?: DieValue; die2?: DieValue } = {};
-	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
-	const states = buildDicePresence(presence).props;
+	const presence = getPresence(container);
+	const states = buildDicePresence(presence).states;
 
 	// Initialize Devtools
 	initializeDevtools({
@@ -216,9 +210,9 @@ async function start(): Promise<void> {
 
 	// lastDiceRolls is here just to demonstrate an example of LatestMap
 	// Its updates are only logged to the console.
-	states.lastDiceRolls.events.on("itemUpdated", (update) => {
+	states.lastDiceRolls.events.on("remoteItemUpdated", (update) => {
 		console.log(
-			`Client ${update.client.sessionId.slice(0, 8)}'s ${update.key} rolled to ${update.value.value}`,
+			`Client ${update.attendee.attendeeId.slice(0, 8)}'s ${update.key} rolled to ${update.value.value}`,
 		);
 	});
 

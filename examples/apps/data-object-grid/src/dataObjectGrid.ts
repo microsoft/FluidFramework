@@ -6,10 +6,15 @@
 import type { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { Serializable } from "@fluidframework/datastore-definitions/legacy";
+import type React from "react";
 import { Layout } from "react-grid-layout";
 import { v4 as uuid } from "uuid";
 
-import { dataObjectRegistry, registryEntries } from "./dataObjectRegistry.js";
+import {
+	dataObjectRegistry,
+	registryEntries,
+	type ISingleHandleItem,
+} from "./dataObjectRegistry.js";
 
 /**
  * Interface for the data object grid data object.
@@ -17,15 +22,15 @@ import { dataObjectRegistry, registryEntries } from "./dataObjectRegistry.js";
  * Generally acts like a collection (get/add/remove) but additionally permits modifying the associated layout
  * for a given member of the collection as well as retrieving an appropriate view for a given item.
  */
-export interface IDataObjectGrid extends EventEmitter {
+export interface IDataObjectGrid<T = unknown> extends EventEmitter {
 	/**
 	 * Retrieve all stored items in the grid.
 	 */
-	readonly getItems: () => IDataObjectGridItem[];
+	readonly getItems: () => IDataObjectGridItem<T>[];
 	/**
 	 * Retrive a specific stored item in the grid.
 	 */
-	readonly getItem: (id: string) => IDataObjectGridItem | undefined;
+	readonly getItem: (id: string) => IDataObjectGridItem<T> | undefined;
 	/**
 	 * Add an item of the given type to the grid.
 	 */
@@ -41,13 +46,13 @@ export interface IDataObjectGrid extends EventEmitter {
 	/**
 	 * Get a React element view of the specified item.
 	 */
-	readonly getViewForItem: (item: IDataObjectGridItem) => Promise<JSX.Element>;
+	readonly getViewForItem: (item: IDataObjectGridItem<T>) => Promise<JSX.Element>;
 }
 
 /**
  * The serializable format of items that DataObjectGrid can store along with grid-based layout information.
  */
-export interface IDataObjectGridItem {
+export interface IDataObjectGridItem<T = unknown> {
 	/**
 	 * A unique id for the item.
 	 */
@@ -60,7 +65,7 @@ export interface IDataObjectGridItem {
 	/**
 	 * The unknown blob of data that backs the instance of the item.  Probably contains handles, etc.
 	 */
-	readonly serializableData: Serializable<unknown>;
+	readonly serializableData: Serializable<T>;
 	/**
 	 * The react grid layout of the item.
 	 */
@@ -70,30 +75,30 @@ export interface IDataObjectGridItem {
 /**
  * DataObjectGrid manages multiple subcomponents and their layouts.
  */
-export class DataObjectGrid extends DataObject implements IDataObjectGrid {
+export class DataObjectGrid extends DataObject implements IDataObjectGrid<ISingleHandleItem> {
 	public static readonly ComponentName = "@fluid-example/data-object-grid";
 
-	private static readonly factory = new DataObjectFactory(
-		DataObjectGrid.ComponentName,
-		DataObjectGrid,
-		[],
-		{},
-		[...registryEntries],
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: DataObjectGrid.ComponentName,
+		ctor: DataObjectGrid,
+		registryEntries: [...registryEntries],
+	});
 
-	public static getFactory() {
+	public static getFactory(): DataObjectFactory<DataObjectGrid> {
 		return DataObjectGrid.factory;
 	}
 
-	public readonly getItems = (): IDataObjectGridItem[] => {
-		return [...this.root.values()] as IDataObjectGridItem[];
+	public readonly getItems = (): IDataObjectGridItem<ISingleHandleItem>[] => {
+		return [...this.root.values()] as IDataObjectGridItem<ISingleHandleItem>[];
 	};
 
-	public readonly getItem = (id: string): IDataObjectGridItem | undefined => {
+	public readonly getItem = (
+		id: string,
+	): IDataObjectGridItem<ISingleHandleItem> | undefined => {
 		return this.root.get(id);
 	};
 
-	public readonly addItem = async (type: string) => {
+	public readonly addItem = async (type: string): Promise<string> => {
 		const itemMapEntry = dataObjectRegistry.get(type);
 		if (itemMapEntry === undefined) {
 			throw new Error("Unknown item, can't add");
@@ -101,17 +106,17 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
 
 		const serializableData = await itemMapEntry.create(this.context);
 		const id = uuid();
-		const newItem: IDataObjectGridItem = {
+		const newItem: IDataObjectGridItem<ISingleHandleItem> = {
 			id,
 			type,
 			serializableData,
-			layout: { x: 0, y: 0, w: 6, h: 2 },
+			layout: { x: 0, y: 0, w: 6, h: 2, i: id },
 		};
 		this.root.set(id, newItem);
 		return id;
 	};
 
-	public readonly removeItem = (id: string) => {
+	public readonly removeItem = (id: string): void => {
 		this.root.delete(id);
 	};
 
@@ -124,12 +129,20 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
 			id: currentItem.id,
 			type: currentItem.type,
 			serializableData: currentItem.serializableData,
-			layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
+			layout: {
+				x: newLayout.x,
+				y: newLayout.y,
+				w: newLayout.w,
+				h: newLayout.h,
+				i: currentItem.id,
+			},
 		};
 		this.root.set(id, updatedItem);
 	};
 
-	public readonly getViewForItem = async (item: IDataObjectGridItem) => {
+	public readonly getViewForItem = async (
+		item: IDataObjectGridItem<ISingleHandleItem>,
+	): Promise<React.ReactElement> => {
 		const registryEntry = dataObjectRegistry.get(item.type);
 
 		if (registryEntry === undefined) {
@@ -140,7 +153,7 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
 		return registryEntry.getView(item.serializableData);
 	};
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		this.root.on("valueChanged", () => {
 			this.emit("itemListChanged", this.getItems());
 		});

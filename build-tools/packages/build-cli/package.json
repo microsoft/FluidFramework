@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.56.0",
+	"version": "0.57.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -145,7 +145,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@oclif/test": "^4.1.0",
 		"@types/async": "^3.2.24",
 		"@types/chai": "^4.3.20",

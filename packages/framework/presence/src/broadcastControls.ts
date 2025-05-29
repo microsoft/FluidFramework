@@ -4,10 +4,10 @@
  */
 
 /**
- * Common controls for Value Managers.
+ * Common controls for States objects.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface BroadcastControls {
 	/**
@@ -40,7 +40,7 @@ export interface BroadcastControls {
 /**
  * Value set to configure {@link BroadcastControls}.
  *
- * @alpha
+ * @beta
  */
 export interface BroadcastControlSettings {
 	/**

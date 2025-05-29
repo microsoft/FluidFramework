@@ -39,10 +39,10 @@
 		"sillyname": "^0.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.52.0",
+		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.52.0",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/build-tools": "^0.56.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/server-services-ordering-rdkafka-previous": "npm:@fluidframework/server-services-ordering-rdkafka@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/amqplib": "^0.5.17",

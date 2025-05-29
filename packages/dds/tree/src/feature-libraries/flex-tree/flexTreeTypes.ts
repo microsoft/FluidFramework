@@ -94,6 +94,14 @@ export enum TreeStatus {
 
 	/**
 	 * Is removed and cannot be added back to the original document tree.
+	 * @remarks
+	 * Nodes can enter this state for multiple reasons:
+	 * - The node was removed and nothing (e.g. undo/redo history) kept it from being cleaned up.
+	 * - The {@link TreeView} was disposed or had a schema change which made the tree incompatible.
+	 * @privateRemarks
+	 * There was planned work (AB#17948) to make the first reason a node could become "Deleted" impossible,
+	 * at least as an opt in feature,
+	 * by lifetime extending all nodes which are still possible to reach automatically.
 	 */
 	Deleted = 2,
 
@@ -111,8 +119,9 @@ export enum TreeStatus {
 	 *
 	 * - Transactions do not work: transactions apply to a single {@link TreeView}, and `New` nodes are not part of one.
 	 *
-	 * - `Tree.shortId` (when the identifier was explicitly specified and thus works at all) will just return the full identifier as a string,
-	 * but might return a compressed form as a number once hydrated.
+	 * - Automatically generated {@link SchemaFactory.identifier | identifiers} will be less compressible if read.
+	 *
+	 * - {@link TreeIdentifierUtils.getShort} and {@link TreeNodeApi.shortId | Tree.shortId} cannot return their short identifiers.
 	 */
 	New = 3,
 }

@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/datastore";
-export const pkgVersion = "2.33.0";
+export const pkgVersion = "2.42.0";

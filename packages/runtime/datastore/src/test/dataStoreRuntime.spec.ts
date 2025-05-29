@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
@@ -31,7 +31,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 		context: IFluidDataStoreContext,
 		registry: ISharedObjectRegistry,
 		entrypointInitializationFn?: (rt: IFluidDataStoreRuntime) => Promise<FluidObject>,
-	) {
+	): FluidDataStoreRuntime {
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			registry,
@@ -57,8 +57,8 @@ describe("FluidDataStoreRuntime Tests", () => {
 							type,
 							attributes: { type, snapshotFormatVersion: "0" },
 							clientDetails: {},
-						}) as any as IChannel,
-					load: async () => Promise.resolve({} as any as IChannel),
+						}) as unknown as IChannel,
+					load: async (): Promise<IChannel> => ({}) as unknown as IChannel,
 				};
 			},
 		};
@@ -67,7 +67,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 	it("constructor rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		dataStoreContext = new MockFluidDataStoreContext(invalidId);
-		const codeBlock = () =>
+		const codeBlock = (): FluidDataStoreRuntime =>
 			new FluidDataStoreRuntime(
 				dataStoreContext,
 				sharedObjectRegistry,
@@ -89,7 +89,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 		let dataStoreRuntime: FluidDataStoreRuntime | undefined;
 		try {
 			dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
-		} catch (error) {
+		} catch {
 			failed = true;
 		}
 		assert.strictEqual(failed, false, "Data store runtime creation failed");
@@ -126,7 +126,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 	it("createChannel rejects ids with slashes", async () => {
 		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		const invalidId = "beforeSlash/afterSlash";
-		const codeBlock = () => dataStoreRuntime.createChannel(invalidId, "SomeType");
+		const codeBlock = (): IChannel => dataStoreRuntime.createChannel(invalidId, "SomeType");
 		assert.throws(
 			codeBlock,
 			(e: IErrorBase) =>
@@ -151,7 +151,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 			type,
 			attributes: { type, snapshotFormatVersion: "0" },
 			clientDetails: {},
-		} as any as IChannel;
+		} as unknown as IChannel;
 		dataStoreRuntime.addChannel(channel);
 		const channel1 = await dataStoreRuntime.getChannel(channel.id);
 		assert.deepStrictEqual(channel, channel1, "both channel should match");
@@ -166,8 +166,8 @@ describe("FluidDataStoreRuntime Tests", () => {
 			type,
 			attributes: { type, snapshotFormatVersion: "0" },
 			clientDetails: {},
-		} as any as IChannel;
-		const codeBlock = () => dataStoreRuntime.addChannel(channel);
+		} as unknown as IChannel;
+		const codeBlock = (): void => dataStoreRuntime.addChannel(channel);
 		assert.throws(
 			codeBlock,
 			(e: IErrorBase) =>

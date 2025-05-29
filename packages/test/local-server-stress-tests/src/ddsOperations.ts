@@ -22,6 +22,7 @@ import { makeUnreachableCodePathProxy } from "./utils.js";
 export interface DDSModelOp {
 	type: "DDSModelOp";
 	op: unknown;
+	channelType: string;
 }
 
 export interface OrderSequentially {
@@ -87,19 +88,21 @@ export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressSt
 	state,
 ) => {
 	const channel = state.channel;
-	const model = ddsModelMap.get(channel.attributes.type);
+	const channelType = channel.attributes.type;
+	const model = ddsModelMap.get(channelType);
 	assert(model !== undefined, "must have model");
 
 	const op = await timeoutAwait(
 		model.generator(await covertLocalServerStateToDdsState(state)),
 		{
-			errorMsg: `Timed out waiting for dds generator: ${state.channel.attributes.type}`,
+			errorMsg: `Timed out waiting for dds generator: ${channelType}`,
 		},
 	);
 
 	return {
 		type: "DDSModelOp",
 		op,
+		channelType,
 	} satisfies DDSModelOp;
 };
 
@@ -180,6 +183,13 @@ export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Clie
 		assert(aChannel.attributes.type === bChannel?.attributes.type, "channel types must match");
 		const model = ddsModelMap.get(aChannel.attributes.type);
 		assert(model !== undefined, "model must exist");
-		await model.validateConsistency(createDDSClient(aChannel), createDDSClient(bChannel));
+		try {
+			await model.validateConsistency(createDDSClient(aChannel), createDDSClient(bChannel));
+		} catch (error) {
+			if (error instanceof Error) {
+				error.message = `comparing ${clientA.tag} and ${clientB.tag}: ${error.message}`;
+			}
+			throw error;
+		}
 	}
 };

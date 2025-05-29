@@ -6,7 +6,11 @@
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
-import type { ClientSessionId, ISessionClient } from "./presence.js";
+import type {
+	Attendee,
+	AttendeeId,
+	PresenceWithNotifications as Presence,
+} from "./presence.js";
 
 // type StateDatastoreSchemaNode<
 // 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,
@@ -17,7 +21,7 @@ import type { ClientSessionId, ISessionClient } from "./presence.js";
 //  */
 // export interface StateDatastoreSchema {
 // 	// This type is not precise. It may
-// 	// need to be replaced with PresenceStates schema pattern
+// 	// need to be replaced with StatesWorkspace schema pattern
 // 	// similar to what is commented out.
 // 	[key: string]: InternalTypes.ValueDirectoryOrState<unknown>;
 // 	// [key: string]: StateDatastoreSchemaNode;
@@ -42,6 +46,7 @@ export interface StateDatastore<
 	TKey extends string,
 	TValue extends InternalTypes.ValueDirectoryOrState<any>,
 > {
+	readonly presence: Presence;
 	localUpdate(
 		key: TKey,
 		value: TValue & {
@@ -49,12 +54,12 @@ export interface StateDatastore<
 		},
 		options: LocalStateUpdateOptions,
 	): void;
-	update(key: TKey, clientSessionId: ClientSessionId, value: TValue): void;
+	update(key: TKey, attendeeId: AttendeeId, value: TValue): void;
 	knownValues(key: TKey): {
-		self: ClientSessionId | undefined;
+		self: AttendeeId | undefined;
 		states: ClientRecord<TValue>;
 	};
-	lookupClient(clientId: ClientConnectionId): ISessionClient;
+	lookupClient(clientId: ClientConnectionId): Attendee;
 }
 
 /**
