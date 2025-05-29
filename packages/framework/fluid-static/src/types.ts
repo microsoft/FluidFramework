@@ -121,7 +121,10 @@ export interface IRootDataObject {
 	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
 
 	/**
-	 * {@inheritDoc IFluidDataStoreRuntime.uploadBlob}
+	 * Api to upload a blob of data.
+	 * @param blob - blob to be uploaded.
+	 *
+	 * @remarks This method is used to expose uploadBlob functionality to out layers (like FluidContainer).
 	 */
 	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
