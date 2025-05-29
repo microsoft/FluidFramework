@@ -214,15 +214,15 @@ type FirstWriterWinsPolicy =
 	  };
 
 /**
- * Used to track pending local changes for a cell
+ * Tracks pending local changes for a cell.
  */
 interface PendingCellChanges<T> {
 	/**
-	 * the local changes including the local seq, and the value set at that local seq
+	 * The local changes including the local seq, and the value set at that local seq.
 	 */
 	local: { localSeq: number; value: MatrixItem<T> }[];
 	/**
-	 * the latest consensus value across all clients.
+	 * The latest consensus value across all clients.
 	 * this will either be a remote value or ack'd local
 	 * value.
 	 */
