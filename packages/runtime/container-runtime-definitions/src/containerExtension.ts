@@ -61,7 +61,7 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
 		type: TMessage["type"];
 		content: JsonSerializable<
 			TMessage["content"],
-			{ AllowExtensionOf: OpaqueJsonDeserialized<TMessage["content"]> }
+			{ AllowExtensionOf: OpaqueJsonSerializable<TMessage["content"]> | OpaqueJsonDeserialized<TMessage["content"]> }
 		>;
 	}>;
 
@@ -326,3 +326,8 @@ export declare class JsonSerializableBrand<T> extends BrandedType<T> {
  * @internal
  */
 export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
+
+/**
+ * @internal
+ */
+export type OpaqueJsonSerializable<T> = JsonSerializableBrand<T>

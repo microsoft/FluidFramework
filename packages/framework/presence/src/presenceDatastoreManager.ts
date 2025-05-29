@@ -169,7 +169,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content: {
 				// FIXME: error TS2353: Object literal may only specify known properties, and 'sendTimestamp' does not exist in
 				// type 'SerializationErrorPerNonPublicProperties'.
-				// @ts-ignore
+				//// @ts-ignore
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				data: this.datastore,
@@ -308,7 +308,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const newMessage = {
 			// FIXME: error TS2353: Object literal may only specify known properties, and 'sendTimestamp' does not exist in
 			// type 'SerializationErrorPerNonPublicProperties'.
-			// @ts-ignore
+			//// @ts-ignore
 			sendTimestamp: Date.now(),
 			avgLatency: this.averageLatency,
 			// isComplete: false,
@@ -332,7 +332,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// avgLatency: number; data: { "system:presence": { clientToSessionId: { [x: string]: { value:
 			// InternalUtilityTypes.OpaqueJsonDeserialized<AttendeeId>; rev: number; timestamp: number; }; }; }; }; }' but
 			// required in type 'SerializationErrorPerNonPublicProperties'.
-			// @ts-ignore
+			//// @ts-ignore
 			content: newMessage,
 		});
 	}
@@ -343,7 +343,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content: {
 				// FIXME: error TS2353: Object literal may only specify known properties, and 'sendTimestamp' does not exist in
 				// type 'SerializationErrorPerNonPublicProperties'.
-				// @ts-ignore
+				//// @ts-ignore
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
@@ -438,7 +438,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 						// "53172b0d-a3d5-41ea-bd75-b43839c97f5a"; } & { readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
 						// } & { readonly AttendeeId: "AttendeeId"; }]: { ...; } | { ...; }; }; } | { ...; }' is not assignable to
 						// parameter of type 'ValueUpdateRecord'.
-						// @ts-ignore
+						//// @ts-ignore
 						remoteDatastore,
 						message.clientId,
 					),
@@ -457,7 +457,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					// 'string & {readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a"; } & { readonly SessionId:
 					// "4498f850-e14e-4be9-8db0-89ec00997e58"; } & { readonly AttendeeId: "AttendeeId"; }' and 'AttendeeId' index
 					// signatures are incompatible.
-					// @ts-ignore
+					//// @ts-ignore
 					mergeUntrackedDatastore(key, remoteAllKnownState, workspaceDatastore, timeModifier);
 				}
 			}

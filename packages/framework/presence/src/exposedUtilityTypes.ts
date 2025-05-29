@@ -4,7 +4,6 @@
  */
 
 import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
-import { BrandedType } from "@fluidframework/core-interfaces/internal";
 import type {
 	DeepReadonly,
 	InternalUtilityTypes as CoreInternalUtilityTypes,
@@ -82,14 +81,14 @@ export namespace InternalUtilityTypes {
 		? JsonSerializable<P>
 		: never;
 
-	/**
-	 * @internal
-	 * @system
-	 */
-	declare class JsonDeserializedBrand<T> extends BrandedType<T> {
-		private readonly EncodedValue: T;
-		private constructor();
-	}
+	// /**
+	//  * @internal
+	//  * @system
+	//  */
+	// declare class JsonDeserializedBrand<T> extends BrandedType<T> {
+	// 	private readonly EncodedValue: T;
+	// 	private constructor();
+	// }
 
 	/**
 	 * @system
@@ -99,14 +98,14 @@ export namespace InternalUtilityTypes {
 	// export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
 	// export type OpaqueJsonDeserialized<T extends JsonDeserialized<U>, U> = JsonDeserializedBrand<T, U>;
 
-	/**
-	 * @internal
-	 * @system
-	 */
-	export declare class JsonSerializableBrand<T> extends BrandedType<T> {
-		private readonly JsonSerializable: JsonSerializable<T>;
-		private constructor();
-	}
+	// /**
+	//  * @internal
+	//  * @system
+	//  */
+	// export declare class JsonSerializableBrand<T> extends BrandedType<T> {
+	// 	private readonly JsonSerializable: JsonSerializable<T>;
+	// 	private constructor();
+	// }
 
 	// /**
 	//  * @system
