@@ -226,7 +226,7 @@ interface PendingCellChanges<T> {
 	 * this will either be a remote value or ack'd local
 	 * value.
 	 */
-	consensus?: MatrixItem<T> | undefined;
+	consensus?: MatrixItem<T>;
 }
 
 /**
