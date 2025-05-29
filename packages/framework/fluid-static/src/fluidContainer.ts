@@ -255,6 +255,14 @@ export interface IFluidContainerInternal extends ContainerExtensionStore {
 	 * @remarks Used to power debug tooling and experimental features.
 	 */
 	readonly container: IContainer;
+
+	/**
+	 * Api to upload a blob of data.
+	 * @param blob - blob to be uploaded.
+	 *
+	 * @remarks This method is used to expose uploadBlob functionality to the IFluidContainer level.
+	 */
+	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**

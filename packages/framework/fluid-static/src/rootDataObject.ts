@@ -21,8 +21,8 @@ import type {
 import type {
 	FluidObject,
 	FluidObjectKeys,
-	IFluidLoadable,
 	IFluidHandle,
+	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
