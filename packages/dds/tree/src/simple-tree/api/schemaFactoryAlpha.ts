@@ -208,22 +208,7 @@ export class SchemaFactoryAlpha<
 			...props,
 		});
 	}
-
-	/**
-	 * {@inheritDoc SchemaStatics.optionalRecursive}
-	 */
-	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
-
-	public requiredRecursiveAlpha<
-		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-		const TCustomMetadata = unknown,
-	>(
-		t: T,
-		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata> {
-		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
-	}
-
+	
 	/**
 	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
 	 */
