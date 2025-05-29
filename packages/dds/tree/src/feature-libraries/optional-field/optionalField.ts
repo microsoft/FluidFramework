@@ -64,7 +64,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 							dst: isRollback ? replace.src : makeChangeAtomId(genId.allocate(), revision),
 						};
 			if (!replace.isEmpty) {
-				invertedReplace.src = makeChangeAtomId(genId.allocate(), revision);
+				invertedReplace.src = isRollback
+					? replace.dst
+					: makeChangeAtomId(genId.allocate(), revision);
+
 				nodeManager.invertDetach(replace.dst, 1, change.childChange, invertedReplace.src);
 				childChange = undefined;
 			}
