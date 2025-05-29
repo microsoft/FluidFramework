@@ -8,20 +8,18 @@ import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelFactory,
-	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
-import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "../packageVersion.js";
 
 import type { ISharedArray, SerializableTypeForSharedArray } from "./interfaces.js";
-import { SharedArray as SharedArrayClass } from "./sharedArray.js";
+import { SharedArray } from "./sharedArray.js";
 
 /**
  * @internal
  */
 export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
-	implements IChannelFactory<ISharedArray<T>>
+	implements IChannelFactory
 {
 	public static readonly Type = "https://graph.microsoft.com/types/SharedArray";
 
@@ -48,26 +46,17 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 		/**
 		 * * The SharedArray
 		 */
-		const sharedArray = new SharedArrayClass<T>(id, runtime, attributes);
+		const sharedArray = new SharedArray<T>(id, runtime, attributes);
 		await sharedArray.load(services);
 		return sharedArray;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): ISharedArray<T> & IChannel {
+	public create(document: IFluidDataStoreRuntime, id: string): ISharedArray<T> {
 		/**
 		 * * The SharedArray
 		 */
-		const sharedArray = new SharedArrayClass<T>(id, document, this.attributes);
+		const sharedArray = new SharedArray<T>(id, document, this.attributes);
 		sharedArray.initializeLocal();
 		return sharedArray;
 	}
 }
-
-/**
- * Entrypoint for {@link ISharedArray} creation.
- * @legacy
- * @alpha
- */
-export const SharedArray = createSharedObjectKind<
-	ISharedArray<SerializableTypeForSharedArray>
->(SharedArrayFactory<SerializableTypeForSharedArray>);

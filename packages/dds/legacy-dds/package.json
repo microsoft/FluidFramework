@@ -1,6 +1,7 @@
 {
-	"name": "@fluidframework/legacy-dds",
+	"name": "@fluid-private/legacy-dds",
 	"version": "2.42.0",
+	"private": true,
 	"description": "Legacy DDSs for the Fluid Framework. These are not intended for use in new code.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
