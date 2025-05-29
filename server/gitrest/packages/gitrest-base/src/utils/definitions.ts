@@ -134,6 +134,7 @@ export interface IRepoManagerParams {
 	fileSystemManagerParams?: IFileSystemManagerParams;
 	optimizeForInitialSummary?: boolean;
 	isEphemeralContainer?: boolean;
+	useHybridFs?: boolean;
 }
 
 export interface IRepositoryManagerFactory {
