@@ -87,7 +87,7 @@ export class BasicDataStoreFactory<Type extends string> implements IFluidDataSto
 }
 
 /**
- * Helper to build a DataObject handling the {@link FluidObject} and {@link IFluidLoadable} requirements
+ * Helper to build a DataObject handling the {@link FluidObject} and {@link IFluidLoadable} requirements.
  */
 export abstract class LoadableFluidObject implements FluidObject, IFluidLoadable {
 	public constructor(protected readonly runtime: FluidDataStoreRuntime) {}
