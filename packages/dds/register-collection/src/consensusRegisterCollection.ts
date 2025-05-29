@@ -395,6 +395,9 @@ export class ConsensusRegisterCollection<T>
 		return serializer.parse(content);
 	}
 
+	/**
+	 * @sealed
+	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
 		// We don't need to do anything to roll back CRC, it's safe to just drop
 		// the op on the floor since we don't modify the DDS until the ack.
