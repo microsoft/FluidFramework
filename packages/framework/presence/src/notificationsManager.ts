@@ -4,6 +4,7 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
+import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 import type { Listeners, Listenable, Off } from "@fluidframework/core-interfaces";
 import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 
@@ -13,7 +14,6 @@ import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
-import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 
 /**
  * @sealed

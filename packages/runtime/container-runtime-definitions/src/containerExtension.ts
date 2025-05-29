@@ -325,4 +325,4 @@ export declare class JsonSerializableBrand<T> extends BrandedType<T> {
 /**
  * @internal
  */
-export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T> | JsonSerializableBrand<T>;
+export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;

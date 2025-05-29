@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 import { BrandedType } from "@fluidframework/core-interfaces/internal";
 import type {
 	DeepReadonly,
@@ -12,7 +13,6 @@ import type {
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import { asDeeplyReadonly } from "./internalUtils.js";
-import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 
 /**
  * Collection of utility types that are not intended to be used/imported

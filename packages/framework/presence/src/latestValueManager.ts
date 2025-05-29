@@ -4,6 +4,7 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
+import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import type {
 	DeepReadonly,
@@ -26,7 +27,6 @@ import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
-import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 
 /**
  * @sealed
