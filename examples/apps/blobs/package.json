@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/blobs",
-	"version": "2.41.0",
+	"version": "2.41.1",
 	"private": true,
 	"description": "Example of using blobs in Fluid Framework",
 	"homepage": "https://fluidframework.com",
