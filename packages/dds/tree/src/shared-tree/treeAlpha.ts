@@ -527,17 +527,22 @@ export const TreeAlpha: TreeAlpha = {
 
 		if (isArrayNodeSchema(schema)) {
 			const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+
+			// Empty sequence - cannot have children.
 			if (sequence === undefined) {
 				return undefined;
 			}
 
 			const index = typeof key === "number" ? key : asIndex(key, Number.POSITIVE_INFINITY);
 
+			// If the key is not a valid index, then there is no corresponding child.
 			if (index === undefined) {
 				return undefined;
 			}
 
 			const childFlexTree = sequence.at(index);
+
+			// No child at the given index.
 			if (childFlexTree === undefined) {
 				return undefined;
 			}
@@ -601,7 +606,6 @@ export const TreeAlpha: TreeAlpha = {
 	},
 };
 
-// TODO: make a more public utility?
 function nodeFromInnerUnboxedNode(flexTree: FlexTreeUnknownUnboxed): TreeNode | TreeLeafValue {
 	return isFlexTreeNode(flexTree) ? getOrCreateNodeFromInnerNode(flexTree) : flexTree;
 }
