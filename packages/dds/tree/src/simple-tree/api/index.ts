@@ -48,7 +48,6 @@ export {
 	getIdentifierFromNode,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
-	getStoredKeyFromPropertyKey,
 	treeNodeApi,
 	type TreeNodeApi,
 	tryGetSchema,

@@ -357,21 +357,6 @@ export function getStoredKey(node: TreeNode): string | number {
 
 /**
  * Given a node schema, gets the {@link FieldProps.key | stored key} corresponding with the provided property key.
- * @remarks Asserts if the property key does not exist in the schema.
- */
-export function getStoredKeyFromPropertyKey(
-	schema: TreeNodeSchema,
-	propertyKey: string | number,
-): string | number {
-	const storedKey = tryGetStoredKeyFromPropertyKey(schema, propertyKey);
-	if (storedKey === undefined) {
-		fail(0xb39 /* Property key should always map to a field schema */);
-	}
-	return storedKey;
-}
-
-/**
- * Given a node schema, gets the {@link FieldProps.key | stored key} corresponding with the provided property key.
  * @returns The stored key if the property key exists in the schema. Otherwise, returns `undefined`.
  */
 export function tryGetStoredKeyFromPropertyKey(

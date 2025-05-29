@@ -85,7 +85,6 @@ export {
 	type TreeBranchEvents,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
-	getStoredKeyFromPropertyKey,
 	tryGetSchema,
 	tryGetStoredKeyFromPropertyKey,
 	applySchemaToParserOptions,

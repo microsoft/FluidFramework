@@ -60,8 +60,6 @@ import {
 	type FieldBatchEncodingContext,
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type LocalNodeIdentifier,
-	type FlexTreeNode,
-	type FlexTreeField,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
@@ -516,7 +514,9 @@ export const TreeAlpha: TreeAlpha = {
 
 	child: (node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined => {
 		const flexNode = getOrCreateInnerNode(node);
-		debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
+		debugAssert(
+			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+		);
 
 		const schema = treeNodeApi.schema(node);
 		const storedKey = tryGetStoredKeyFromPropertyKey(schema, key);
