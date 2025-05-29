@@ -735,11 +735,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					Lumberjack.warning("cooperative rebalance reassign: ", assignments);
 					consumer.incrementalAssign(assignments);
 				} else {
-					Lumberjack.warning("cooperative rebalance revoke: ", assignments);
 					consumer.assign(assignments);
 				}
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
 				if (consumer.rebalanceProtocol() === "COOPERATIVE") {
+					Lumberjack.warning("cooperative rebalance revoke: ", assignments);
 					consumer.incrementalUnassign(assignments);
 				} else {
 					consumer.unassign();
