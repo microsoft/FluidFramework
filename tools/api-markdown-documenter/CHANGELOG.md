@@ -7,6 +7,14 @@
 Updates default transformation logic for `ApiInterface` items to generate headings that read "Constructor" rather than "Construct Signature" for constructor-like members.
 This better aligns with similar policies for members like interface methods which are labeled "Method" and not "Method Signature", despite the underlying TypeScript AST entry being a "method signature".
 
+### `LayoutUtilities` function updates
+
+- `createSummaryParagraph` has been renamed to `createSummarySection`.
+  - It also now returns a `SectionNode`, rather than a `ParagraphNode` to be consistent with the other functions in `LayoutUtilities`.
+  - It has also been optimized to not create empty sections for doc comments with no summary component.
+
+- `createDeprecationNoticeSection` now returns a `SectionNode`, rather than a `ParagraphNode`.
+
 ### Simplify `DocumentationNode` types
 
 Removes:

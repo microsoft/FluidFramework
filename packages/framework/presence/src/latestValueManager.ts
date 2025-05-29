@@ -24,7 +24,7 @@ import { brandIVM } from "./valueManager.js";
 
 /**
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestRawEvents<T> {
 	/**
@@ -51,7 +51,7 @@ export interface LatestRawEvents<T> {
  * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestRaw<T> {
 	/**
@@ -184,7 +184,7 @@ class LatestValueManagerImpl<T, Key extends string>
 /**
  * Arguments that are passed to the {@link StateFactory.latest} function.
  *
- * @alpha
+ * @beta
  */
 export interface LatestArguments<T extends object | null> {
 	/**
@@ -202,7 +202,7 @@ export interface LatestArguments<T extends object | null> {
 /**
  * Factory for creating a {@link LatestRaw} State object.
  *
- * @alpha
+ * @beta
  */
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,

@@ -4,7 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+
 import type { ChangeRebaser, GraphCommit, RevisionTag } from "../core/index.js";
+
 import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
 
 /**

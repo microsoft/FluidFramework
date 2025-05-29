@@ -26,7 +26,6 @@ import {
 	type ModularChangeset,
 	ModularEditBuilder,
 	type TreeChunk,
-	buildForest,
 	fieldKinds,
 	initializeForest,
 } from "../../feature-libraries/index.js";
@@ -47,12 +46,14 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
 import {
+	buildTestForest,
 	failCodecFamily,
 	jsonTreeFromForest,
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
+import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
 
 const content: JsonCompatible = { x: 42 };
 
@@ -93,9 +94,9 @@ export function setupEnricher() {
 		testIdCompressor,
 		{ jsonValidator: typeboxValidator },
 	);
-	const forest = buildForest();
+	const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
+	const forest = buildTestForest({ additionalAsserts: true, schema });
 	initializeForest(forest, fieldJsonCursor([content]), testRevisionTagCodec, testIdCompressor);
-	const schema = new TreeStoredSchemaRepository();
 	const enricher = new SharedTreeReadonlyChangeEnricher(
 		forest,
 		schema,
