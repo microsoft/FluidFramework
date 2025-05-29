@@ -391,10 +391,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	/**
 	 * {@inheritDoc IRootDataObject.uploadBlob}
 	 */
-	public async uploadBlob(
-		blob: ArrayBufferLike,
-		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
-		return this.rootDataObject.uploadBlob(blob, signal);
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.rootDataObject.uploadBlob(blob);
 	}
 }

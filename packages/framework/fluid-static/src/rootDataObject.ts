@@ -164,11 +164,8 @@ class RootDataObject
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
 
-	public async uploadBlob(
-		blob: ArrayBufferLike,
-		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
-		return this.runtime.uploadBlob(blob, signal);
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.runtime.uploadBlob(blob);
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(

@@ -123,10 +123,7 @@ export interface IRootDataObject {
 	/**
 	 * {@inheritDoc IFluidDataStoreRuntime.uploadBlob}
 	 */
-	uploadBlob(
-		blob: ArrayBufferLike,
-		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 interface IProvideStaticEntryPoint {
