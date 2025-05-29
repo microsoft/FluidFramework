@@ -101,7 +101,7 @@ export function cloneWithReplacements(root: unknown, rootKey: string, replacer: 
     value: unknown;
 }): unknown;
 
-// @alpha
+// @alpha @input
 export interface CodecWriteOptions extends ICodecOptions {
     readonly oldestCompatibleClient: FluidClientVersion;
 }
@@ -331,7 +331,7 @@ export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema;
 // @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
-// @alpha
+// @alpha @input
 export interface ICodecOptions {
     readonly jsonValidator: JsonValidator;
 }
@@ -845,7 +845,7 @@ export type JsonTreeSchema = JsonFieldSchema & {
     readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 };
 
-// @alpha
+// @alpha @input
 export interface JsonValidator {
     compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
@@ -1168,7 +1168,7 @@ export interface SchemaStatics {
     readonly string: LeafSchema<"string", string>;
 }
 
-// @alpha
+// @alpha @input
 export interface SchemaValidationFunction<Schema extends TSchema> {
     check(data: unknown): data is Static<Schema>;
 }
