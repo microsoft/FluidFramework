@@ -59,6 +59,10 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  * @internal
  */
 export interface IDocumentSchema {
+	// Note: Incoming schemas from other clients may have additional root-level properties (i.e. IDocumentSchema.app)
+	// that this client does not understand. The runtime will ignore these properties, unless they are within the
+	// "runtime" sub-tree, in which case it will fail if it is unable to understand any runtime properties.
+
 	/**
 	 * Describes how data needed to understand the schema is stored in this structure.
 	 * If runtime sees a version it does not understand, it should immediately fail and not
