@@ -14,7 +14,7 @@ import { createSharedObjectKind } from "@fluidframework/shared-object-base/inter
 import { pkgVersion } from "../packageVersion.js";
 
 import type { ISharedSignal } from "./interfaces.js";
-import { SharedSignal as SharedSignalClass } from "./sharedSignal.js";
+import { SharedSignalClass } from "./sharedSignal.js";
 
 /**
  * @internal
