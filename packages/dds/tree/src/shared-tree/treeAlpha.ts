@@ -575,11 +575,12 @@ export const TreeAlpha: TreeAlpha = {
 				result.push([index, childTree]);
 			});
 		} else {
-			for (const childFlexField of flexNode.boxedIterator()) {
-				const propertyKey = getPropertyKeyFromStoredKey(schema, childFlexField.key);
-				const childTreeNode = tryGetTreeNodeForField(childFlexField);
+			for (const fieldKey of flexNode.keys()) {
+				const flexField =
+					flexNode.tryGetField(fieldKey) ?? fail("Field not found for reported key.");
+				const childTreeNode = tryGetTreeNodeForField(flexField);
 				if (childTreeNode !== undefined) {
-					result.push([propertyKey, childTreeNode]);
+					result.push([fieldKey, childTreeNode]);
 				}
 			}
 		}
