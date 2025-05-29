@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { evaluateLazySchema, isAnnotatedAllowedType, type AnnotatedAllowedType } from "../schemaTypes.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
 
 /**
@@ -31,14 +32,21 @@ export function walkNodeSchema(
  * Traverses all {@link TreeNodeSchema} schema reachable from `allowedTypes`, applying the visitor pattern.
  */
 export function walkAllowedTypes(
-	allowedTypes: Iterable<TreeNodeSchema>,
+	allowedTypes: Iterable<TreeNodeSchema | AnnotatedAllowedType>,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
 	for (const childType of allowedTypes) {
-		walkNodeSchema(childType, visitor, visitedSet);
+		if (isAnnotatedAllowedType(childType)) {
+			const { enablableSchemaUpgrade } = childType.metadata;
+			if (enablableSchemaUpgrade === undefined || visitor.includeEnablable ) {
+				walkNodeSchema(evaluateLazySchema(childType.type), visitor, visitedSet);
+			}
+		} else {
+			walkNodeSchema(childType, visitor, visitedSet);
+		}
 	}
-	visitor.allowedTypes?.(allowedTypes);
+	// visitor.allowedTypes?.(allowedTypes);
 }
 
 /**
@@ -55,5 +63,9 @@ export interface SchemaVisitor {
 	 *
 	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
 	 */
-	allowedTypes?: (allowedTypes: Iterable<TreeNodeSchema>) => void;
+	// allowedTypes?: (allowedTypes: Iterable<TreeNodeSchema>) => void;
+	/**
+	 * TODO
+	 */
+	includeEnablable: boolean;
 }
