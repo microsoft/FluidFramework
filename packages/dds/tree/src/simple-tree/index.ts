@@ -183,7 +183,7 @@ export {
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";
-export { getTreeNodeForField } from "./getTreeNodeForField.js";
+export { tryGetTreeNodeForField } from "./getTreeNodeForField.js";
 export {
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodePojoEmulationSchema,

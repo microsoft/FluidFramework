@@ -42,7 +42,7 @@ import {
 	mapTreeFromNodeData,
 	getOrCreateInnerNode,
 	getOrCreateNodeFromInnerNode,
-	getTreeNodeForField,
+	tryGetTreeNodeForField,
 	isArrayNodeSchema,
 	type TreeNodeSchema,
 	FieldSchema,
@@ -548,7 +548,7 @@ export const TreeAlpha: TreeAlpha = {
 
 		const field = flexNode.tryGetField(brand(String(storedKey)));
 		if (field !== undefined) {
-			return getTreeNodeForField(field);
+			return tryGetTreeNodeForField(field);
 		}
 
 		return undefined;
@@ -572,7 +572,7 @@ export const TreeAlpha: TreeAlpha = {
 		} else {
 			for (const childFlexField of flexNode.boxedIterator()) {
 				const propertyKey = getPropertyKeyFromStoredKey(schema, childFlexField.key);
-				const childTreeNode = getTreeNodeForField(childFlexField);
+				const childTreeNode = tryGetTreeNodeForField(childFlexField);
 				if (childTreeNode !== undefined) {
 					result.push([propertyKey, childTreeNode]);
 				}
