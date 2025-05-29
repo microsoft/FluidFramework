@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluid-internal/client-utils";
+import { bufferToString, createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
@@ -101,10 +101,19 @@ type IIncomingRegisterOperation<T> = IRegisterOperationSerialized | IRegisterOpe
 const incomingOpMatchesPlainFormat = <T>(op): op is IRegisterOperationPlain<T> =>
 	"value" in op;
 
-/** The type of the resolve function to call after the local operation is ack'd */
-type PendingResolve = (winner: boolean) => void;
-
 const snapshotFileName = "header";
+
+interface IConsensusRegisterCollectionInternalEvents {
+	/**
+	 * Emitted when a pending message is rolled back.
+	 */
+	pendingMessageRollback: (rollbackMessageId: number) => void;
+
+	/**
+	 * Emitted when a pending message is acknowledged.
+	 */
+	pendingMessageAck: (ackMessageId: number, winner: boolean) => void;
+}
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
@@ -116,6 +125,10 @@ export class ConsensusRegisterCollection<T>
 	implements IConsensusRegisterCollection<T>
 {
 	private readonly data = new Map<string, ILocalData<T>>();
+	private readonly internalEvents =
+		createEmitter<IConsensusRegisterCollectionInternalEvents>();
+
+	private nextPendingMessageId: number = 0;
 
 	/**
 	 * Constructs a new consensus register collection. If the object is non-local an id and service interfaces will
@@ -136,6 +149,11 @@ export class ConsensusRegisterCollection<T>
 	 * @returns Promise<true> if write was non-concurrent
 	 */
 	public async write(key: string, value: T): Promise<boolean> {
+		if (this.runtime.disposed) {
+			// Return false if disposed to signify that we did not write.
+			return false;
+		}
+
 		if (!this.isAttached()) {
 			this.processInboundWrite(key, value, 0, 0, true);
 			return true;
@@ -152,12 +170,46 @@ export class ConsensusRegisterCollection<T>
 			refSeq: this.deltaManager.lastSequenceNumber,
 		};
 
-		return this.newAckBasedPromise<boolean>((resolve) => {
-			// Send the resolve function as the localOpMetadata. This will be provided back to us when the
-			// op is ack'd.
-			this.submitLocalMessage(message, resolve);
-			// If we fail due to runtime being disposed, it's better to return false then unhandled exception.
-		}).catch((error) => false);
+		const pendingMessageId = this.nextPendingMessageId++;
+
+		// There are three ways the write promise can resolve:
+		// 1. The write is acked
+		// 2. The write is rolled back
+		// 3. The runtime is disposed
+		// The boolean value returned by the promise is true if the attempted write was ack'd and won, false otherwise.
+		return new Promise<boolean>((resolve) => {
+			const handleAck = (ackMessageId: number, winner: boolean) => {
+				if (ackMessageId === pendingMessageId) {
+					resolve(winner);
+					removeListeners();
+				}
+			};
+
+			const handleRollback = (rollbackMessageId: number) => {
+				if (rollbackMessageId === pendingMessageId) {
+					// If we rolled back the pending message, resolve the promise with false.
+					resolve(false);
+					removeListeners();
+				}
+			};
+
+			const handleDisposed = () => {
+				resolve(false);
+				removeListeners();
+			};
+
+			const removeListeners = () => {
+				this.internalEvents.off("pendingMessageAck", handleAck);
+				this.internalEvents.off("pendingMessageRollback", handleRollback);
+				this.runtime.off("dispose", handleDisposed);
+			};
+
+			this.internalEvents.on("pendingMessageAck", handleAck);
+			this.internalEvents.on("pendingMessageRollback", handleRollback);
+			this.runtime.on("dispose", handleDisposed);
+
+			this.submitLocalMessage(message, pendingMessageId);
+		});
 	}
 
 	/**
@@ -252,8 +304,8 @@ export class ConsensusRegisterCollection<T>
 					);
 					if (local) {
 						// Resolve the pending promise for this operation now that we have received an ack for it.
-						const resolve = localOpMetadata as PendingResolve;
-						resolve(winner);
+						const ackMessageId = localOpMetadata as number;
+						this.internalEvents.emit("pendingMessageAck", ackMessageId, winner);
 					}
 					break;
 				}
@@ -341,6 +393,13 @@ export class ConsensusRegisterCollection<T>
 
 	private parse(content: string, serializer: IFluidSerializer): any {
 		return serializer.parse(content);
+	}
+
+	protected rollback(content: unknown, localOpMetadata: unknown): void {
+		// We don't need to do anything to roll back CRC, it's safe to just drop
+		// the op on the floor since we don't modify the DDS until the ack.
+		// We emit an internal event so we know to resolve the pending promise.
+		this.internalEvents.emit("pendingMessageRollback", localOpMetadata as number);
 	}
 
 	protected applyStashedOp(): void {
