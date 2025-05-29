@@ -1195,7 +1195,7 @@ export const SharedTreeFormatVersion: {
 // @alpha
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
-// @alpha
+// @alpha @input
 export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
 
 // @alpha @sealed
