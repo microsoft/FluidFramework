@@ -208,7 +208,7 @@ export class SchemaFactoryAlpha<
 			...props,
 		});
 	}
-	
+
 	/**
 	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
 	 */

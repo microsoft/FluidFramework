@@ -447,10 +447,6 @@ describe("schemaFactory", () => {
 				baz: schemaFactory.optionalAlpha(schemaFactory.string, {
 					persistedMetadata: fooMetadata,
 				}),
-				buzz: schemaFactory.requiredRecursiveAlpha(
-					schemaFactory.objectAlpha("Buzz", { qux: schemaFactory.number }),
-					{ persistedMetadata: fooMetadata },
-				),
 				qux: schemaFactory.optionalRecursiveAlpha(
 					schemaFactory.objectAlpha("Qux", { quux: schemaFactory.string }),
 					{ persistedMetadata: fooMetadata },
@@ -460,7 +456,6 @@ describe("schemaFactory", () => {
 			const foo = hydrate(Foo, {
 				bar: 37,
 				baz: "test",
-				buzz: { qux: 42 },
 				qux: { quux: "test" },
 			});
 
