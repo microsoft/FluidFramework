@@ -670,6 +670,7 @@ export class DocumentsSchemaController {
 			const schema = {
 				...content,
 				refSeq: sequenceNumber,
+				// We explicity set version to satisfy IDocumentSchemaCurrent
 				version: currentDocumentVersionSchema,
 			} satisfies IDocumentSchemaCurrent;
 			this.documentSchema = schema;
