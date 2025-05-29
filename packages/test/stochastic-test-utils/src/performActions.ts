@@ -118,7 +118,7 @@ export async function performFuzzActionsAsync<
 		| AsyncReducer<TOperation, TState>
 		| { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
-	saveInfo?: SaveInfo,
+	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false, saveFluidOps: false },
 	forceGlobalSeed?: boolean,
 ): Promise<TState> {
 	const operations: TOperation[] = [];
@@ -160,12 +160,6 @@ export async function performFuzzActionsAsync<
 		return { seed, ...op };
 	};
 
-	const saveInfoDefined: SaveInfo = saveInfo ?? {
-		saveOnFailure: false,
-		saveOnSuccess: false,
-		includeFluidSequencedOps: false,
-	};
-
 	try {
 		for (
 			let operation = await runGenerator();
@@ -179,14 +173,14 @@ export async function performFuzzActionsAsync<
 			state = (await applyOperation(operation)) ?? state;
 		}
 	} catch (err) {
-		if (saveInfoDefined.saveOnFailure !== false) {
-			await saveOpsToFile(saveInfoDefined.saveOnFailure.path, operations);
+		if (saveInfo.saveOnFailure !== false) {
+			await saveOpsToFile(saveInfo.saveOnFailure.path, operations);
 		}
 		throw err;
 	}
 
-	if (saveInfoDefined.saveOnSuccess !== false) {
-		await saveOpsToFile(saveInfoDefined.saveOnSuccess.path, operations);
+	if (saveInfo.saveOnSuccess !== false) {
+		await saveOpsToFile(saveInfo.saveOnSuccess.path, operations);
 	}
 
 	return state;
@@ -283,11 +277,7 @@ export function performFuzzActions<
 		| Reducer<TOperation, TState>
 		| { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
-	saveInfo: SaveInfo = {
-		saveOnFailure: false,
-		saveOnSuccess: false,
-		includeFluidSequencedOps: false,
-	},
+	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false, saveFluidOps: false },
 ): TState {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;

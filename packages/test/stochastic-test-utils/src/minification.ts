@@ -47,17 +47,10 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 		minimizationTransforms: MinimizationTransform<TOperation>[] | undefined,
 		readonly operations: TOperation[],
 		readonly saveInfo: SaveInfo,
-		readonly replayTest: (
-			generator: AsyncGenerator<TOperation, unknown>,
-			saveInfo: SaveInfo,
-		) => Promise<void>,
+		readonly replayTest: (generator: AsyncGenerator<TOperation, unknown>) => Promise<void>,
 		readonly numIterations: number = 1000,
 	) {
 		this.transforms = minimizationTransforms ?? [];
-	}
-
-	async finalReplay(): Promise<void> {
-		await this.assertFails(true);
 	}
 
 	async minimize(): Promise<TOperation[]> {
@@ -194,7 +187,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	 * We use the simple heuristic of verifying the error message is the same
 	 * to avoid dealing with transforms that would result in invalid ops
 	 */
-	private async assertFails(final: boolean = false): Promise<boolean> {
+	private async assertFails(): Promise<boolean> {
 		let lastOp: BaseOperation = { type: "___none___" };
 		const operationsIterator = this.operations[Symbol.iterator]();
 		const generator: AsyncGenerator<TOperation, unknown> = async () => {
@@ -204,11 +197,8 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 			}
 			return (lastOp = val.value);
 		};
-		const saveInfo = final
-			? { ...this.saveInfo, includeFluidSequencedOps: true }
-			: this.saveInfo;
 		try {
-			await this.replayTest(generator, saveInfo);
+			await this.replayTest(generator);
 			return false;
 		} catch (error: unknown) {
 			if (
