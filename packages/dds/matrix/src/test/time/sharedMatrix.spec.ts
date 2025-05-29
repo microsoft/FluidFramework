@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import assert from "node:assert";
 
 import {
 	benchmark,
@@ -47,27 +47,25 @@ describe("SharedMatrix execution time", () => {
 						do {
 							// Since this setup one collects data from one iteration, assert that this is what is expected.
 							assert.equal(state.iterationsPerBatch, 1);
-
 							// Setup
 							localMatrix = createLocalMatrix({
 								id: "testLocalMatrix",
 								size: matrixSize,
 								initialValue: matrixValue,
 							});
-
 							// Operation
 							const before = state.timer.now();
 							for (let i = 0; i < count; i++) {
 								localMatrix.insertCols(Math.floor(localMatrix.colCount / 2), 1);
 							}
 							const after = state.timer.now();
-
 							// Measure
 							duration = state.timer.toSeconds(before, after);
-
 							// Collect data
 						} while (state.recordBatch(duration));
 					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
 				});
 
 				// Test the execute time of the SharedMatrix for inserting a row in the middle for a given number of times.
@@ -100,6 +98,8 @@ describe("SharedMatrix execution time", () => {
 							// Collect data
 						} while (state.recordBatch(duration));
 					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
 				});
 
 				// Test the execute time of the SharedMatrix for inserting a row and a column in the middle for a given number of times.
@@ -133,6 +133,8 @@ describe("SharedMatrix execution time", () => {
 							// Collect data
 						} while (state.recordBatch(duration));
 					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
 				});
 			}
 
@@ -168,6 +170,8 @@ describe("SharedMatrix execution time", () => {
 							// Collect data
 						} while (state.recordBatch(duration));
 					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
 				});
 
 				// Test the execute time of the SharedMatrix for removing a row in the middle for a given number of times.
@@ -200,6 +204,8 @@ describe("SharedMatrix execution time", () => {
 							// Collect data
 						} while (state.recordBatch(duration));
 					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
 				});
 
 				// Test the execute time of the SharedMatrix for removing a row and a column in the middle for a given number of times.
@@ -233,6 +239,8 @@ describe("SharedMatrix execution time", () => {
 							// Collect data
 						} while (state.recordBatch(duration));
 					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
 				});
 
 				// Test the execute time of the SharedMatrix for setting a string in a cell for a given number of times.
@@ -265,6 +273,8 @@ describe("SharedMatrix execution time", () => {
 							// Collect data
 						} while (state.recordBatch(duration));
 					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
 				});
 			}
 		});
