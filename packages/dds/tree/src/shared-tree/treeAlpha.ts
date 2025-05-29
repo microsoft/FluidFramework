@@ -64,6 +64,7 @@ import {
 	type LocalNodeIdentifier,
 	type FlexTreeSequenceField,
 	isFlexTreeNode,
+	type FlexTreeUnknownUnboxed,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
@@ -536,12 +537,12 @@ export const TreeAlpha: TreeAlpha = {
 				return undefined;
 			}
 
-			const child = sequence.boxedAt(index);
-			if (child === undefined) {
+			const childFlexTree = sequence.at(index);
+			if (childFlexTree === undefined) {
 				return undefined;
 			}
 
-			return getOrCreateNodeFromInnerNode(child);
+			return nodeFromInnerUnboxedNode(childFlexTree);
 		}
 
 		// TODO: simplify
@@ -573,10 +574,7 @@ export const TreeAlpha: TreeAlpha = {
 			}
 
 			sequence.map((childFlexTree, index) => {
-				// TODO: extract into shared helper?
-				const childTree = isFlexTreeNode(childFlexTree)
-					? getOrCreateNodeFromInnerNode(childFlexTree)
-					: childFlexTree;
+				const childTree = nodeFromInnerUnboxedNode(childFlexTree);
 				result.push([index, childTree]);
 			});
 		} else {
@@ -593,6 +591,11 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 };
+
+// TODO: make a more public utility?
+function nodeFromInnerUnboxedNode(flexTree: FlexTreeUnknownUnboxed): TreeNode | TreeLeafValue {
+	return isFlexTreeNode(flexTree) ? getOrCreateNodeFromInnerNode(flexTree) : flexTree;
+}
 
 function exportConcise(
 	node: TreeNode | TreeLeafValue,
