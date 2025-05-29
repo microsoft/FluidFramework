@@ -661,23 +661,21 @@ describe("Staging Mode", () => {
 		});
 	}
 
-	describe("other operations", () => {
-		it("Aliasing a datastore not supported in staging mode", async () => {
-			const deltaConnectionServer = LocalDeltaConnectionServer.create();
-			const clients = await createClients(deltaConnectionServer);
+	it("Aliasing a datastore not supported in staging mode", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const clients = await createClients(deltaConnectionServer);
 
-			clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.enterStagingMode();
 
-			// Create and alias a new datastore in staging mode
-			const newDataStore = await clients.original.dataObject.containerRuntime.createDataStore(
-				dataObjectFactory.type,
-			);
+		// Create and alias a new datastore in staging mode
+		const newDataStore = await clients.original.dataObject.containerRuntime.createDataStore(
+			dataObjectFactory.type,
+		);
 
-			await assert.rejects(
-				async () => newDataStore.trySetAlias("staged-alias"),
-				/Cannot set aliases while in staging mode/,
-				"Should not be able to set an alias in staging mode",
-			);
-		});
+		await assert.rejects(
+			async () => newDataStore.trySetAlias("staged-alias"),
+			/Cannot set aliases while in staging mode/,
+			"Should not be able to set an alias in staging mode",
+		);
 	});
 });

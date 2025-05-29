@@ -4500,7 +4500,7 @@ export class ContainerRuntime
 
 			assert(
 				!staged || canStageMessageOfType(type),
-				`Unexpected message submitted in staging mode, type=${type}`,
+				"Unexpected message type submitted in Staging Mode",
 			);
 
 			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
@@ -4727,7 +4727,7 @@ export class ContainerRuntime
 		{ type, contents }: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 	): void {
-		assert(canStageMessageOfType(type), `Can't rollback message of type: ${type}`);
+		assert(canStageMessageOfType(type), "Unexpected message type to be rolled back");
 
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
