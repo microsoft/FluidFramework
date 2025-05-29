@@ -110,11 +110,14 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 		}
 		case NodeKind.Map: {
 			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
-			return new MapNodeStoredSchema({
-				kind: FieldKinds.optional.identifier,
-				types,
-				metadata: schema.metadata,
-			});
+			return new MapNodeStoredSchema(
+				{
+					kind: FieldKinds.optional.identifier,
+					types,
+					metadata: schema.metadata,
+				},
+				schema.metadata,
+			);
 		}
 		case NodeKind.Array: {
 			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
@@ -124,14 +127,14 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 				metadata: schema.metadata,
 			};
 			const fields = new Map([[EmptyKey, field]]);
-			return new ObjectNodeStoredSchema(fields);
+			return new ObjectNodeStoredSchema(fields, schema.metadata);
 		}
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 			for (const fieldSchema of schema.fields.values()) {
 				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema));
 			}
-			return new ObjectNodeStoredSchema(fields);
+			return new ObjectNodeStoredSchema(fields, schema.metadata);
 		}
 		default:
 			unreachableCase(kind);
