@@ -62,6 +62,8 @@ import {
 	type FieldBatchEncodingContext,
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type LocalNodeIdentifier,
+	type FlexTreeSequenceField,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
@@ -563,12 +565,15 @@ export const TreeAlpha: TreeAlpha = {
 		const result: [string | number, TreeNode | TreeLeafValue][] = [];
 
 		if (isArrayNodeSchema(schema)) {
-			const sequence = flexNode.getBoxed(EmptyKey);
+			const sequence = flexNode.getBoxed(EmptyKey) as FlexTreeSequenceField;
 
-			for (const childFlexNode of sequence.boxedIterator()) {
-				const childTreeNode = getOrCreateNodeFromInnerNode(childFlexNode);
-				result.push([childFlexNode.parentField.index, childTreeNode]);
-			}
+			sequence.map((childFlexTree, index) => {
+				// TODO: extract into shared helper?
+				const childTree = isFlexTreeNode(childFlexTree)
+					? getOrCreateNodeFromInnerNode(childFlexTree)
+					: childFlexTree;
+				result.push([index, childTree]);
+			});
 		} else {
 			for (const childFlexField of flexNode.boxedIterator()) {
 				const propertyKey = getPropertyKeyFromStoredKey(schema, childFlexField.key);
