@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { TSchema } from "@sinclair/typebox";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
@@ -18,6 +19,7 @@ import {
 } from "../codec.js";
 
 import { Versioned } from "./format.js";
+import { pkgVersion } from "../../packageVersion.js";
 
 export function makeVersionedCodec<
 	TDecoded,
@@ -40,10 +42,12 @@ export function makeVersionedCodec<
 		},
 		decode: (data: TValidate, context: TContext): TDecoded => {
 			const versioned = data as Versioned; // Validated by withSchemaValidation
-			assert(
-				supportedVersions.has(versioned.version),
-				0x88c /* version being decoded is not supported */,
-			);
+			if (!supportedVersions.has(versioned.version)) {
+				throw new UsageError(
+					`Unsupported version ${versioned.version} encountered while decoding data. Supported versions for this data are: ${Array.from(supportedVersions).join(", ")}.
+The client which encoded this data likely specified an "oldestCompatibleClient" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
+				);
+			}
 			const decoded = inner.decode(data, context);
 			return decoded;
 		},
