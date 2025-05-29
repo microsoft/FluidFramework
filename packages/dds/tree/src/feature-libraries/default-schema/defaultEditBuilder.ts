@@ -452,7 +452,7 @@ export interface SequenceFieldEditBuilder<TContent> {
 }
 
 /**
- * @returns The number of path elements that both paths share, starting at index 0.
+ * Gets the number of path elements that both paths share, starting at index 0.
  */
 function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[]): number {
 	const minDepth = Math.min(pathA.length, pathB.length);

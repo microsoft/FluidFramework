@@ -276,8 +276,9 @@ export function createTreeCheckout(
 		disposeForksAfterTransaction?: boolean;
 	},
 ): TreeCheckout {
-	const forest = args?.forest ?? buildForest();
+	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
+	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions = { jsonValidator: noopValidator };
 	const defaultFieldBatchVersion = 1;
 	const changeFamily =
@@ -312,7 +313,7 @@ export function createTreeCheckout(
 		idCompressor,
 		args?.removedRoots,
 		args?.logger,
-		args?.breaker,
+		breaker,
 		args?.disposeForksAfterTransaction,
 	);
 }

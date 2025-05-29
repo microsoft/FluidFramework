@@ -4,6 +4,7 @@
  */
 
 import type { AxiosError } from "axios";
+
 import { isAxiosCanceledError } from "./utils";
 
 /**

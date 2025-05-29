@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { setGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
 import {
 	setGlobalAbortControllerContext,
 	setGlobalTimeoutContext,
 } from "@fluidframework/server-services-client";
+import { setGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
+
 import {
 	AsyncLocalStorageAbortControllerContext,
 	AsyncLocalStorageTelemetryContext,

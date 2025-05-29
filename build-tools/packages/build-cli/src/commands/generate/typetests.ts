@@ -44,6 +44,7 @@ import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGe
 // eslint-disable-next-line import/no-internal-modules
 import type { TypeData } from "../../typeValidator/typeData.js";
 import {
+	type BrokenCompatSettings,
 	type BrokenCompatTypes,
 	type PackageWithTypeTestSettings,
 	defaultTypeValidationConfig,
@@ -182,11 +183,12 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 `,
 		];
 
-		const testCases = generateCompatibilityTestCases(typeMap, currentPackageJson, fileHeader);
+		const testCases = generateCompatibilityTestCases(typeMap, currentPackageJson);
+		const output = [...fileHeader, ...testCases].join("\n");
 
 		await mkdir(outDir, { recursive: true });
 
-		await writeFile(typeTestOutputFile, testCases.join("\n"));
+		await writeFile(typeTestOutputFile, output);
 		this.info(
 			`${pkg.nameColored}: Generated type test file: ${path.resolve(typeTestOutputFile)}`,
 		);
@@ -449,14 +451,13 @@ export function loadTypesSourceFile(typesPath: string): SourceFile {
  *
  * @param typeMap - map containing type data to use to generate type tests
  * @param packageObject - package.json object containing type validation settings
- * @param testString - array to store generated test strings
  * @returns - string array representing generated compatibility test cases
  */
 export function generateCompatibilityTestCases(
 	typeMap: Map<string, TypeData>,
 	packageObject: PackageWithTypeTestSettings,
-	testString: string[],
 ): string[] {
+	const testString: string[] = [];
 	const broken: BrokenCompatTypes = packageObject.typeValidation?.broken ?? {};
 
 	// Convert Map entries to an array and sort by key. This is not strictly needed since Maps are iterated in insertion
@@ -465,52 +466,74 @@ export function generateCompatibilityTestCases(
 	const sortedEntries = [...typeMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
 	for (const [testCaseName, typeData] of sortedEntries) {
-		const [oldType, currentType]: TestCaseTypeData[] = [
-			{
-				prefix: "old",
-				...typeData,
-				removed: false,
-			},
-			{
-				prefix: "current",
-				...typeData,
-				removed: false,
-			},
-		];
-		const brokenData = broken?.[testCaseName];
+		testString.push(...generateCompatibilityTestCase(typeData, broken[testCaseName]));
+	}
+	return testString;
+}
 
-		const typePreprocessor = selectTypePreprocessor(currentType);
-		if (typePreprocessor !== undefined) {
-			if (typeData.tags.has("sealed")) {
-				// If the type was `@sealed` then only the code declaring it is allowed to create implementations.
-				// This means that the case of having the new (current) version of the type,
-				// but trying to implement it based on the old version should not occur and is not a supported usage.
-				// This means that adding members to sealed types, as well as making their members have more specific types is allowed as a non-breaking change.
-				// This check implements skipping generation of type tests which would flag such changes to sealed types as errors.
-			} else if (typeData.useTypeof) {
-				// If the type was using typeof treat it like `@sealed`.
-				// This assumes adding members to existing variables (and class statics) is non-breaking.
-				// This is true in most cases, though there are some edge cases where this assumption is wrong
-				// (for example name collisions with inherited statics in subclasses, and explicit use of typeof in user code to define a type which it implements),
-				// but overall skipping this case seems preferable to the large amount of false positives keeping it produces.
-			} else {
-				testString.push(
-					`/*`,
-					` * Validate forward compatibility by using the old type in place of the current type.`,
-					` * If this test starts failing, it indicates a change that is not forward compatible.`,
-					` * To acknowledge the breaking change, add the following to package.json under`,
-					` * typeValidation.broken:`,
-					` * "${currentType.testCaseName}": {"forwardCompat": false}`,
-					" */",
-					...buildTestCase(
-						oldType,
-						currentType,
-						brokenData?.forwardCompat ?? true,
-						typePreprocessor,
-					),
-					"",
-				);
-			}
+/**
+ * Internals of {@link generateCompatibilityTestCases} for a single type.
+ *
+ * @param typeData - The type to test.
+ * @param brokenData - Expected broken compatibilities, if any.
+ * @returns Lines of TypeScript code that make up the compatibility test.
+ */
+export function generateCompatibilityTestCase(
+	typeData: TypeData,
+	brokenData: BrokenCompatSettings | undefined,
+): string[] {
+	const testString: string[] = [];
+
+	const [oldType, currentType]: TestCaseTypeData[] = [
+		{
+			prefix: "old",
+			...typeData,
+			removed: false,
+		},
+		{
+			prefix: "current",
+			...typeData,
+			removed: false,
+		},
+	];
+
+	const typePreprocessor = selectTypePreprocessor(currentType);
+	if (typePreprocessor !== undefined) {
+		if (typeData.tags.has("sealed")) {
+			// If the type was `@sealed` then only the code declaring it is allowed to create implementations.
+			// This means that the case of having the new (current) version of the type,
+			// but trying to implement it based on the old version should not occur and is not a supported usage.
+			// This means that adding members to sealed types, as well as making their members have more specific types is allowed as a non-breaking change.
+			// This check implements skipping generation of type tests which would flag such changes to sealed types as errors.
+		} else if (typeData.useTypeof) {
+			// If the type was using typeof treat it like `@sealed`.
+			// This assumes adding members to existing variables (and class statics) is non-breaking.
+			// This is true in most cases, though there are some edge cases where this assumption is wrong
+			// (for example name collisions with inherited statics in subclasses, and explicit use of typeof in user code to define a type which it implements),
+			// but overall skipping this case seems preferable to the large amount of false positives keeping it produces.
+		} else {
+			testString.push(
+				`/*`,
+				` * Validate forward compatibility by using the old type in place of the current type.`,
+				` * If this test starts failing, it indicates a change that is not forward compatible.`,
+				` * To acknowledge the breaking change, add the following to package.json under`,
+				` * typeValidation.broken:`,
+				` * "${currentType.testCaseName}": {"forwardCompat": false}`,
+				" */",
+				...buildTestCase(
+					oldType,
+					currentType,
+					brokenData?.forwardCompat ?? true,
+					typePreprocessor,
+				),
+				"",
+			);
+		}
+		if (typeData.tags.has("input")) {
+			// If the type was `@input` then only the code declaring it is allowed to read from it.
+			// This means that as long as the old value of the type is assignable to the new (current) version, it is allowed.
+			// That case is covered above: skip this case where new type is assigned to the old.
+		} else {
 			testString.push(
 				`/*`,
 				` * Validate backward compatibility by using the current type in place of the old type.`,
@@ -535,7 +558,7 @@ export function generateCompatibilityTestCases(
 /**
  * Returns the name of the type preprocessing type meta-function to use, or undefined if no type test should be generated.
  */
-function selectTypePreprocessor(typeData: TypeData): string | undefined {
+function selectTypePreprocessor(typeData: Omit<TypeData, "node">): string | undefined {
 	if (typeData.tags.has("system")) {
 		return undefined;
 	}

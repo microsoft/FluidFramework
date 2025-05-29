@@ -41,6 +41,7 @@ import {
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
+import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 import type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
@@ -65,7 +66,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
