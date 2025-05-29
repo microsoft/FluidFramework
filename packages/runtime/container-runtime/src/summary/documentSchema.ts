@@ -551,8 +551,8 @@ export class DocumentsSchemaController {
 			);
 			const incomingDocumentSchema = {
 				...this.documentSchema,
-				// We explicity set version to satisfy IDocumentSchemaCurrent
-				version: currentDocumentVersionSchema,
+				// We explicity set version to make the compiler happy
+				version: this.documentSchema.version,
 			} satisfies IDocumentSchemaCurrent;
 			this.sessionSchema = and(incomingDocumentSchema, this.desiredSchema);
 			this.futureSchema = or(incomingDocumentSchema, this.desiredSchema);
@@ -569,7 +569,9 @@ export class DocumentsSchemaController {
 		checkRuntimeCompatibility(this.futureSchema, "future");
 	}
 
-	public summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined {
+	public summarizeDocumentSchema(
+		refSeq: number,
+	): IDocumentSchema | IDocumentSchemaCurrent | undefined {
 		// For legacy behavior, we could write nothing (return undefined).
 		// It does not buy us anything, as whatever written in summary does not actually impact clients operating in legacy mode.
 		// But writing current used config (and assuming most of the clients settle on same config over time) will help with transition
@@ -670,8 +672,8 @@ export class DocumentsSchemaController {
 			const schema = {
 				...content,
 				refSeq: sequenceNumber,
-				// We explicity set version to satisfy IDocumentSchemaCurrent
-				version: currentDocumentVersionSchema,
+				// We explicity set version to make the compiler happy
+				version: content.version,
 			} satisfies IDocumentSchemaCurrent;
 			this.documentSchema = schema;
 			this.sessionSchema = and(schema, this.desiredSchema);
