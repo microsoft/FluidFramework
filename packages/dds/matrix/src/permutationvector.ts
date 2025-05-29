@@ -18,7 +18,6 @@ import {
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 	ISegment,
-	ISegmentInternal,
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
 	segmentIsRemoved,
@@ -199,23 +198,50 @@ export class PermutationVector extends Client {
 	}
 
 	public adjustPosition(
-		pos: number,
-		op: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
-	): number | undefined {
-		const { segment, offset } = this.getContainingSegment<ISegmentInternal>(pos, {
+		posToAdjust: number,
+		op: ISequencedDocumentMessage,
+	): { pos: number | undefined; handle: Handle } {
+		const { segment, offset } = this.getContainingSegment<PermutationSegment>(posToAdjust, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});
 
-		// Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
-		// a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles
-		// by checking for the presence of 'removedSeq'.
-		if (segment === undefined || segmentIsRemoved(segment)) {
-			return undefined;
-		}
+		assert(
+			segment !== undefined && offset !== undefined,
+			"segment must be available for operations in the collab window",
+		);
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.getPosition(segment) + offset!;
+		if (segmentIsRemoved(segment)) {
+			// this case is tricky. the segment which the row or column data is remove
+			// but an op before that remove references a cell. we still want to apply
+			// the op, as the row/col could become active again in the case where
+			// the remove was local and it get's rolled back. so we allocate a handle
+			// for the row/col if not allocated, but don't put it in the cache
+			// as the cache can only contain live positions.
+			let handle = segment.start;
+			if (!isHandleValid(handle)) {
+				this.walkSegments(
+					(s) => {
+						const asPerm = s as PermutationSegment;
+						asPerm.start = handle = this.handleTable.allocate();
+						return true;
+					},
+					posToAdjust,
+					posToAdjust + 1,
+					/* accum: */ undefined,
+					/* splitRange: */ true,
+					op,
+				);
+			}
+
+			return { handle, pos: undefined };
+		} else {
+			const pos = this.getPosition(segment) + offset;
+			return {
+				pos,
+				handle: this.getAllocatedHandle(pos),
+			};
+		}
 	}
 
 	public handleToPosition(handle: Handle, localSeq = this.getCollabWindow().localSeq): number {
@@ -342,10 +368,12 @@ export class PermutationVector extends Client {
 			case MergeTreeDeltaType.INSERT: {
 				// Pass 1: Perform any internal maintenance first to avoid reentrancy.
 				for (const { segment, position } of ranges) {
-					// HACK: We need to include the allocated handle in the segment's JSON representation
-					//       for snapshots, but need to ignore the remote client's handle allocations when
-					//       processing remote ops.
-					segment.reset();
+					if (opArgs.rollback !== true) {
+						// HACK: We need to include the allocated handle in the segment's JSON representation
+						//       for snapshots, but need to ignore the remote client's handle allocations when
+						//       processing remote ops.
+						segment.reset();
+					}
 
 					this.handleCache.itemsChanged(
 						position,
@@ -364,7 +392,6 @@ export class PermutationVector extends Client {
 				}
 				break;
 			}
-
 			case MergeTreeDeltaType.REMOVE: {
 				// Pass 1: Perform any internal maintenance first to avoid reentrancy.
 				for (const { segment, position } of ranges) {
@@ -385,7 +412,6 @@ export class PermutationVector extends Client {
 				}
 				break;
 			}
-
 			default: {
 				throw new Error("Unhandled MergeTreeDeltaType");
 			}
