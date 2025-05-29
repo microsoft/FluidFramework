@@ -27,7 +27,7 @@ import {
 import { MockMessageRelay } from "./utils/index.js";
 
 const testContainerKey = "test-container-key";
-const testFluidObjectId = 1;
+const testFluidObjectId = "test-fluid-object-id";
 const testLabel = "test-node-key";
 
 describe("VisualTreeView component tests", () => {
