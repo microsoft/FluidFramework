@@ -58,7 +58,7 @@ const schema = new SchemaFactoryAlpha("com.example");
 
 class Point extends schema.object("Point", {}) {}
 
-describe("treeNodeApi", () => {
+describe.only("treeNodeApi", () => {
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });
@@ -276,12 +276,15 @@ describe("treeNodeApi", () => {
 
 				assert.equal(TreeAlpha.child(tree, "foo"), "test");
 				assert.equal(TreeAlpha.child(tree, 0), 42);
+				assert.equal(TreeAlpha.child(tree, "0"), 42);
 
 				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
 				assert.equal(TreeAlpha.child(tree, 1), undefined);
+				assert.equal(TreeAlpha.child(tree, "1"), undefined);
 
 				assert.equal(TreeAlpha.child(tree, "baz"), undefined);
 				assert.equal(TreeAlpha.child(tree, 2), undefined);
+				assert.equal(TreeAlpha.child(tree, "2"), undefined);
 			});
 
 			it("Extra optional properties not considered", () => {
@@ -380,11 +383,13 @@ describe("treeNodeApi", () => {
 				const tree = view.root;
 
 				assert.equal(TreeAlpha.child(tree, 0), "Hello");
+				assert.equal(TreeAlpha.child(tree, "0"), "Hello");
 				assert.equal(TreeAlpha.child(tree, 1), "World");
+				assert.equal(TreeAlpha.child(tree, "1"), "World");
 				assert.equal(TreeAlpha.child(tree, 2), undefined);
+				assert.equal(TreeAlpha.child(tree, "2"), undefined);
 				assert.equal(TreeAlpha.child(tree, "foo"), undefined);
 				assert.equal(TreeAlpha.child(tree, ""), undefined);
-				assert.equal(TreeAlpha.child(tree, "1"), "World");
 			});
 
 			it("Subclass properties are not considered", () => {
@@ -416,7 +421,7 @@ describe("treeNodeApi", () => {
 
 			assert.throws(
 				() => TreeAlpha.child(tree, "foo"),
-				(error: Error) => validateAssertionError(error, /TODO/),
+				validateUsageError(/Cannot access a Deleted node/),
 			);
 		});
 	});
@@ -653,7 +658,7 @@ describe("treeNodeApi", () => {
 
 			assert.throws(
 				() => TreeAlpha.children(tree),
-				(error: Error) => validateAssertionError(error, /TODO/),
+				validateUsageError(/Cannot access a Deleted node/),
 			);
 		});
 	});
