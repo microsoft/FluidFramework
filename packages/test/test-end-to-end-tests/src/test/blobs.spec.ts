@@ -144,7 +144,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 			});
 
 			it("can get remote attached blob", async function () {
-				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6286
+				// TODO: Re-enable after cross-client compat bugs are fixed - ADO:6286
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
 					this.skip();
 				}
@@ -168,7 +168,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 			});
 
 			it("round trip blob handle on shared string property", async function () {
-				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6286
+				// TODO: Re-enable after cross-client compat bugs are fixed - ADO:6286
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
 					this.skip();
 				}

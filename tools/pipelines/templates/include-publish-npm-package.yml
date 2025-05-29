@@ -47,14 +47,6 @@ stages:
       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
       pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
-  # Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main, test and release branch, and
-  # for the build of the client release group (we don't need manifests for anything else).
-  # Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branch.
-  - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/test/'))) }}:
-    - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
-      parameters:
-        buildDirectory: '${{ parameters.buildDirectory }}'
-
 # This stage and the following stage both run for non-test builds. The build feed is equivalent to the public npmjs.org
 # feed except it contains builds for every main- or next-branch build.
 - stage: publish_npm_internal_build
@@ -75,14 +67,6 @@ stages:
       buildDirectory: ${{ parameters.buildDirectory }}
       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
       pnpmStorePath: ${{ parameters.pnpmStorePath }}
-
-  # Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main, test and release branch, and
-  # for the build of the client release group (we don't need manifests for anything else).
-  # Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branch.
-  - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/test/'))) }}:
-    - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
-      parameters:
-        buildDirectory: '${{ parameters.buildDirectory }}'
 
 # Only add a stage to publish packages to the dev feed for release groups, which have separate lists of packages to
 # publish to each feed. Non-release-group builds (for an independent package) only need to publish to the build feed.
@@ -125,3 +109,29 @@ stages:
       buildDirectory: ${{ parameters.buildDirectory }}
       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
       pnpmStorePath: ${{ parameters.pnpmStorePath }}
+
+# Only upload release manifest files for runs in the internal project (i.e. CI runs, not PR runs), for the main, test, and release branches, and
+# for the build of the client release group (we don't need manifests for anything else).
+# Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branches.
+- ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/test/'))) }}:
+  - stage: upload_manifests
+    displayName: Upload release manifests
+    dependsOn:
+    - publish_npm_public
+    - publish_npm_internal_test
+    - publish_npm_internal_build
+    # This must be declared as an explicit dependency because upload-dev-manifest uses the version variable it outputs to generate the manifest.
+    - build
+    condition: |
+      and(
+        in(dependencies.publish_npm_public.result, 'Succeeded', 'Skipped'),
+        in(dependencies.publish_npm_internal_test.result, 'Succeeded', 'Skipped'),
+        in(dependencies.publish_npm_internal_build.result, 'Succeeded', 'Skipped')
+      )
+    # Note dev feed packages do not get manifests as we don't intend them to be consumed publicly, so no need for that to be a dependency here.
+    variables:
+    - group: ado-feeds
+    jobs:
+    - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
+      parameters:
+        buildDirectory: '${{ parameters.buildDirectory }}'

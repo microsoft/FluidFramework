@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import { independentView, TreeAlpha } from "../shared-tree/index.js";
+import { independentView, Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
 	allowUnused,
 	SchemaFactoryAlpha,
@@ -35,6 +35,7 @@ describe("TableFactory unit tests", () => {
 		}) {}
 		class Column extends TableSchema.column({
 			schemaFactory,
+			cell: Cell,
 			props: ColumnProps,
 		}) {}
 
@@ -86,7 +87,7 @@ describe("TableFactory unit tests", () => {
 
 	describe("Column Schema", () => {
 		it("Can create without props", () => {
-			class Column extends TableSchema.column({ schemaFactory }) {}
+			class Column extends TableSchema.column({ schemaFactory, cell: schemaFactory.string }) {}
 			const column = new Column({ id: "column-0" });
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
@@ -98,10 +99,58 @@ describe("TableFactory unit tests", () => {
 		it("Can create with props", () => {
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: schemaFactory.string,
 				props: schemaFactory.string,
 			}) {}
 			const column = new Column({ id: "column-0", props: "Column 0" });
 			assert.equal(column.props, "Column 0");
+		});
+
+		it("getCells", () => {
+			const { treeView, Table, Column } = createTableTree();
+			treeView.initialize(Table.empty());
+			const table = treeView.root;
+
+			// Calling `getCells` on a column that has not been inserted into the table throws an error.
+			const column0 = new Column({ id: "column-0", props: {} });
+			assert.throws(
+				() => column0.getCells(),
+				validateUsageError(/Column with ID "column-0" is not contained in a table./),
+			);
+
+			table.insertColumn({ column: column0 });
+
+			// No rows or cells have been inserted yet.
+			assert.equal(column0.getCells().length, 0);
+
+			table.insertRows({
+				rows: [
+					{ id: "row-0", cells: {} },
+					{ id: "row-1", cells: {} },
+					{ id: "row-2", cells: {} },
+				],
+			});
+			table.setCell({
+				key: {
+					column: column0,
+					row: "row-0",
+				},
+				cell: { value: "0-0" },
+			});
+			table.setCell({
+				key: {
+					column: column0,
+					row: "row-2",
+				},
+				cell: { value: "2-0" },
+			});
+
+			const cells = column0.getCells();
+			assert.equal(cells.length, 2);
+			assert.equal(cells[0].rowId, "row-0");
+			assertEqualTrees(cells[0].cell, { value: "0-0" });
+			assert.equal(cells[1].rowId, "row-2");
+			assertEqualTrees(cells[1].cell, { value: "2-0" });
 		});
 	});
 
@@ -131,6 +180,47 @@ describe("TableFactory unit tests", () => {
 			const column = new Row({ id: "row-0", cells: {}, props: "Row 0" });
 			assert.equal(column.props, "Row 0");
 		});
+
+		it("getCells", () => {
+			const { treeView, Table, Row } = createTableTree();
+			treeView.initialize(Table.empty());
+			const table = treeView.root;
+
+			const row = new Row({ id: "row-0", cells: {} });
+			table.insertRow({ row });
+
+			// No columns or cells have been inserted yet.
+			assert.equal(row.getCells().length, 0);
+
+			table.insertColumns({
+				columns: [
+					{ id: "column-0", props: { label: "Column 0" } },
+					{ id: "column-1", props: { label: "Column 0" } },
+					{ id: "column-2", props: { label: "Column 0" } },
+				],
+			});
+			table.setCell({
+				key: {
+					row: row.id,
+					column: "column-0",
+				},
+				cell: { value: "0-0" },
+			});
+			table.setCell({
+				key: {
+					row: row.id,
+					column: "column-2",
+				},
+				cell: { value: "0-2" },
+			});
+
+			const cells = row.getCells();
+			assert.equal(cells.length, 2);
+			assert.equal(cells[0].columnId, "column-0");
+			assertEqualTrees(cells[0].cell, { value: "0-0" });
+			assert.equal(cells[1].columnId, "column-2");
+			assertEqualTrees(cells[1].cell, { value: "0-2" });
+		});
 	});
 
 	describe("Table Schema", () => {
@@ -147,15 +237,17 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Can create with custom column schema", () => {
+			const Cell = schemaFactory.string;
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: Cell,
 				props: schemaFactory.object("column-props", {
 					label: schemaFactory.string,
 				}),
 			}) {}
 			class Table extends TableSchema.table({
 				schemaFactory,
-				cell: schemaFactory.string,
+				cell: Cell,
 				column: Column,
 			}) {}
 
@@ -190,6 +282,7 @@ describe("TableFactory unit tests", () => {
 			const Cell = schemaFactory.string;
 			class Column extends TableSchema.column({
 				schemaFactory,
+				cell: Cell,
 				props: schemaFactory.object("column-props", {
 					label: schemaFactory.string,
 				}),
@@ -388,25 +481,6 @@ describe("TableFactory unit tests", () => {
 				validateUsageError(/The index specified for insertion is out of bounds./),
 			);
 		});
-
-		it("Inserting existing column fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [],
-				columns: [
-					{ id: "column-a", props: {} },
-					{ id: "column-b", props: {} },
-				],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertColumn({
-						column: { id: "column-b", props: {} },
-					}),
-				validateUsageError(/A column with ID "column-b" already exists in the table./),
-			);
-		});
 	});
 
 	describe("insertColumns", () => {
@@ -551,44 +625,6 @@ describe("TableFactory unit tests", () => {
 				rows: [],
 			});
 		});
-
-		it("Inserting existing column fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-				],
-				rows: [],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertColumns({
-						columns: [
-							{
-								id: "column-c",
-								props: {},
-							},
-							{
-								// A column with this ID already exists in the table
-								id: "column-a",
-								props: {},
-							},
-						],
-					}),
-				validateUsageError(/A column with ID "column-a" already exists in the table./),
-			);
-
-			// Ensure no columns were inserted
-			assert(treeView.root.columns.length === 2);
-		});
 	});
 
 	describe("insertRow", () => {
@@ -701,25 +737,6 @@ describe("TableFactory unit tests", () => {
 						row: { cells: {}, props: {} },
 					}),
 				validateUsageError(/The index specified for insertion is out of bounds./),
-			);
-		});
-
-		it("Inserting existing row fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [
-					{ id: "row-a", cells: {}, props: {} },
-					{ id: "row-b", cells: {}, props: {} },
-				],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertRow({
-						row: { id: "row-b", cells: {}, props: {} },
-					}),
-				validateUsageError(/A row with ID "row-b" already exists in the table./),
 			);
 		});
 
@@ -910,48 +927,6 @@ describe("TableFactory unit tests", () => {
 					},
 				],
 			});
-		});
-
-		it("Inserting existing row fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-				],
-				columns: [],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertRows({
-						rows: [
-							{
-								id: "row-c",
-								cells: {},
-								props: {},
-							},
-							{
-								// A row with this ID already exists in the table
-								id: "row-a",
-								cells: {},
-								props: {},
-							},
-						],
-					}),
-				validateUsageError(/A row with ID "row-a" already exists in the table./),
-			);
-
-			// Ensure no rows were inserted
-			assert(treeView.root.rows.length === 2);
 		});
 	});
 
@@ -1367,6 +1342,98 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
+	describe("Responding to changes", () => {
+		it("Responding to any changes in the table", () => {
+			const { treeView, Row } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [],
+			});
+
+			let eventCount = 0;
+
+			// Bind listener to the table.
+			// The "treeChanged" event will fire when the associated node or any of its descendants change.
+			Tree.on(treeView.root, "treeChanged", () => {
+				eventCount++;
+			});
+
+			// Add a row
+			treeView.root.insertRow({
+				row: new Row({ id: "row-0", cells: {}, props: {} }),
+			});
+			assert.equal(eventCount, 1);
+
+			// Add a column
+			treeView.root.insertColumn({
+				column: { id: "column-0", props: {} },
+			});
+			assert.equal(eventCount, 2);
+
+			// Set a cell
+			treeView.root.setCell({
+				key: {
+					row: "row-0",
+					column: "column-0",
+				},
+				cell: { value: "Hello world!" },
+			});
+			assert.equal(eventCount, 3);
+
+			// Update cell value
+			const cell =
+				treeView.root.getCell({
+					row: "row-0",
+					column: "column-0",
+				}) ?? fail("Cell not found");
+			cell.value = "Updated value!";
+			assert.equal(eventCount, 4);
+		});
+
+		it("Responding to column list changes", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [],
+			});
+
+			const table = treeView.root;
+
+			let eventCount = 0;
+
+			// Bind listener to the columns list, so we know when a column is added or removed.
+			// The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).
+			Tree.on(table.columns, "nodeChanged", () => {
+				eventCount++;
+			});
+
+			// Add columns
+			table.insertColumns({
+				columns: [
+					{ id: "column-0", props: {} },
+					{ id: "column-0", props: {} },
+				],
+			});
+			assert.equal(eventCount, 1);
+
+			// Update column props
+			table.columns[0].props = { label: "Column 0" };
+			assert.equal(eventCount, 1); // Event should not have fired for column node changes
+
+			// Insert a row
+			table.insertRow({ row: { id: "row-0", cells: {}, props: {} } });
+			assert.equal(eventCount, 1); // Event should not have fired for row insertion
+
+			// Re-order columns
+			table.columns.moveToEnd(0);
+			assert.equal(eventCount, 2);
+
+			// Remove column
+			table.removeColumn("column-0");
+			assert.equal(eventCount, 3);
+		});
+	});
+
 	it("Gets proper table elements with getter methods", () => {
 		const { treeView, Column, Row, Cell } = createTableTree();
 
@@ -1391,19 +1458,15 @@ describe("TableFactory unit tests", () => {
 	// The code within the following tests is included in TSDoc comments in the source code.
 	// If you need to update any of these, please update the corresponding TSDoc comments as well.
 	describe("TSDoc comment examples", () => {
-		it("TableSchema: Default Column and Row schema", () => {
-			class Cell extends schemaFactory.object("TableCell", {
-				value: schemaFactory.string,
-			}) {}
-
-			class Table extends TableSchema.table({
+		it("TableSchema: Defining a Table schema", () => {
+			class MyTable extends TableSchema.table({
 				schemaFactory,
-				cell: Cell,
+				cell: schemaFactory.string,
 			}) {}
 
-			const table = new Table({
+			const table = new MyTable({
 				columns: [{ id: "column-0" }],
-				rows: [{ id: "row-0", cells: {} }],
+				rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
 			});
 
 			// Don't include this line in the example docs.
@@ -1411,20 +1474,98 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("TableSchema: Customizing Column and Row schema", () => {
-			class Cell extends schemaFactory.object("TableCell", {
-				value: schemaFactory.string,
+			const Cell = schemaFactory.string;
+
+			class MyColumn extends TableSchema.column({
+				schemaFactory,
+				cell: Cell,
+				props: schemaFactory.object("TableColumnProps", {
+					label: schemaFactory.string,
+				}),
 			}) {}
 
-			class ColumnProps extends schemaFactory.object("TableColumnProps", {
-				// Column label to display.
-				label: schemaFactory.string,
-				// The type of data represented by the cells. Default: string.
-				dataType: schemaFactory.optional(schemaFactory.string),
+			class MyRow extends TableSchema.row({
+				schemaFactory,
+				cell: Cell,
 			}) {}
+
+			class MyTable extends TableSchema.table({
+				schemaFactory,
+				cell: Cell,
+				column: MyColumn,
+				row: MyRow,
+			}) {}
+
+			const table = new MyTable({
+				columns: [
+					new MyColumn({ props: { label: "Entry" } }),
+					new MyColumn({ props: { label: "Date" } }),
+					new MyColumn({ props: { label: "Amount" } }),
+				],
+				rows: [],
+			});
+
+			// Don't include this line in the example docs.
+			allowUnused(table);
+		});
+
+		it("TableSchema: Listening for changes in the table", () => {
+			// #region Don't include this in the example docs.
+
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+			}) {}
+
+			const table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+
+			// #endregion
+
+			// Listen for any changes to the table and its children.
+			// The "treeChanged" event will fire when the associated node or any of its descendants change.
+			Tree.on(table, "treeChanged", () => {
+				// Respond to the change.
+			});
+		});
+
+		it("TableSchema: Listening for changes to the rows list only", () => {
+			// #region Don't include this in the example docs.
+
+			class Table extends TableSchema.table({
+				schemaFactory,
+				cell: schemaFactory.string,
+			}) {}
+
+			const table = new Table({
+				columns: [{ id: "column-0" }],
+				rows: [{ id: "row-0", cells: {} }],
+			});
+
+			// #endregion
+
+			// Listen for any changes to the list of rows.
+			// The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).
+			// In this case, the event will fire when a row is added or removed, or the order of the list is changed.
+			// But it won't fire when a row's properties change, or when the row's cells change, etc.
+			Tree.on(table.rows, "nodeChanged", () => {
+				// Respond to the change.
+			});
+		});
+
+		it("TableSchema: Remove column and corresponding cells in a transaction", () => {
+			// #region Don't include this in the example docs.
+
+			const Cell = schemaFactory.string;
 
 			class Column extends TableSchema.column({
 				schemaFactory,
-				props: ColumnProps,
+				cell: Cell,
+				props: schemaFactory.object("TableColumnProps", {
+					label: schemaFactory.string,
+				}),
 			}) {}
 
 			class Row extends TableSchema.row({
@@ -1439,17 +1580,69 @@ describe("TableFactory unit tests", () => {
 				row: Row,
 			}) {}
 
-			const table = new Table({
-				columns: [
-					new Column({ props: { label: "Entry", dataType: "string" } }),
-					new Column({ props: { label: "Date", dataType: "date" } }),
-					new Column({ props: { label: "Amount", dataType: "number" } }),
-				],
-				rows: [],
-			});
+			const treeView = independentView(
+				new TreeViewConfiguration({
+					schema: Table,
+					enableSchemaValidation: true,
+				}),
+				{ idCompressor: createIdCompressor() },
+			);
+			treeView.initialize(
+				new Table({
+					columns: [
+						{ id: "column-0", props: { label: "Column 0" } },
+						{ id: "column-1", props: { label: "Column 1" } },
+						{ id: "column-2", props: { label: "Column 2" } },
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {
+								"column-0": "0-0",
+								"column-1": "0-1",
+								"column-2": "0-2",
+							},
+						},
+						{
+							id: "row-1",
+							cells: {
+								"column-0": "1-0",
+								"column-1": "1-1",
+								"column-2": "1-2",
+							},
+						},
+						{
+							id: "row-2",
+							cells: {
+								"column-0": "2-0",
+								"column-1": "2-1",
+								"column-2": "2-2",
+							},
+						},
+					],
+				}),
+			);
 
-			// Don't include this line in the example docs.
-			allowUnused(table);
+			const table = treeView.root;
+
+			const column1 = table.getColumn("column-1") ?? fail("Column not found");
+
+			// #endregion
+
+			// Remove column1 and all of its cells.
+			// The "transaction" method will ensure that all changes are applied atomically.
+			Tree.runTransaction(table, () => {
+				// Remove column1
+				table.removeColumn(column1);
+
+				// Remove the cell at column1 for each row.
+				for (const row of table.rows) {
+					table.removeCell({
+						column: column1,
+						row,
+					});
+				}
+			});
 		});
 	});
 });

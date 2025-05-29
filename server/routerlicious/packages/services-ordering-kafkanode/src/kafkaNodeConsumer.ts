@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import events_pkg from "events_pkg";
-const { EventEmitter } = events_pkg;
 import * as util from "util";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import {
 	IConsumer,
 	IPartition,
@@ -14,8 +12,13 @@ import {
 	IZookeeperClient,
 } from "@fluidframework/server-services-core";
 import { ZookeeperClient } from "@fluidframework/server-services-ordering-zookeeper";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import events_pkg from "events_pkg";
 import * as kafka from "kafka-node";
+
 import { ensureTopics } from "./kafkaTopics";
+
+const { EventEmitter } = events_pkg;
 
 // time before reconnecting after an error occurs
 const defaultReconnectDelay = 5000;

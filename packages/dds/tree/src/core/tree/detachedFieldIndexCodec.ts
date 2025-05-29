@@ -4,12 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
+import { hasSingle } from "../../util/index.js";
 import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
 
 import {
@@ -23,8 +25,6 @@ import type {
 	DetachedFieldSummaryData,
 	Major,
 } from "./detachedFieldIndexTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { hasSingle } from "../../util/index.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(

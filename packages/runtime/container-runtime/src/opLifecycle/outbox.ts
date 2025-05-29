@@ -236,6 +236,13 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
+	public containsUserChanges(): boolean {
+		return (
+			this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges()
+			// ID Allocation ops are not user changes
+		);
+	}
+
 	/**
 	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that (if allowed) and create a new batch with the new
@@ -436,10 +443,12 @@ export class Outbox {
 
 		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId);
 
-		// When resubmitting, we respect the staged state of the original batch.
-		// In this case rawBatch.staged will match the state of inStagingMode when
-		// the resubmit occurred, which is not relevant.
-		const staged = resubmitInfo?.staged ?? rawBatch.staged === true;
+		// On resubmit we use the original batch's staged state, so these should match as well.
+		const staged = rawBatch.staged === true;
+		assert(
+			resubmitInfo === undefined || resubmitInfo.staged === staged,
+			0xba3 /* Mismatch in staged state tracking */,
+		);
 
 		const groupingEnabled =
 			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();

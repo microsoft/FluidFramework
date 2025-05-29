@@ -18,7 +18,7 @@ import { DataObjectGridAppView } from "./dataObjectGridView.js";
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
-async function start() {
+async function start(): Promise<void> {
 	const tinyliciousModelLoader = new TinyliciousModelLoader<IDataObjectGridAppModel>(
 		new StaticCodeLoader(new DataObjectGridContainerRuntimeFactory()),
 	);
@@ -34,15 +34,16 @@ async function start() {
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
 	}
 
 	// update the browser URL and the window title with the actual container ID
+	// eslint-disable-next-line require-atomic-updates
 	location.hash = id;
 	document.title = id;
 
-	const contentDiv = document.getElementById("content") as HTMLDivElement;
+	const contentDiv = document.querySelector("#content");
 
 	const parsedUrl = new URL(window.location.href);
 	const requestedItemId = parsedUrl.searchParams.get("item") ?? undefined;
@@ -64,10 +65,12 @@ async function start() {
 	}
 }
 
-start().catch((e) => {
-	console.error(e);
+try {
+	await start();
+} catch (error) {
+	console.error(error);
 	console.log(
 		"%cEnsure you are running the Tinylicious Fluid Server\nUse:`npm run start:server`",
 		"font-size:30px",
 	);
-});
+}

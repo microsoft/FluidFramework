@@ -48,7 +48,6 @@ import {
 	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
 import {
-	type TreeStoredContent,
 	type ISharedTreeEditor,
 	Tree,
 	ForestTypeOptimized,
@@ -58,11 +57,11 @@ import {
 	MockTreeCheckout,
 	checkoutWithContent,
 	forestWithContent,
+	getView,
 	mintRevisionTag,
 	testIdCompressor,
 } from "../../utils.js";
 import {
-	cursorFromInsertable,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
@@ -111,17 +110,10 @@ class HasIdentifier extends schemaFactory.object("parent", {
 }) {}
 
 function getIdentifierEncodingContext(id: string) {
-	const initialTree = cursorFromInsertable(
-		HasIdentifier,
-		new HasIdentifier({ identifier: id }),
-		new MockNodeIdentifierManager(),
-	);
+	const view = getView(new TreeViewConfiguration({ schema: HasIdentifier }));
+	view.initialize({ identifier: id });
 	const flexSchema = toStoredSchema(HasIdentifier);
-	const flexConfig: TreeStoredContent = {
-		schema: flexSchema,
-		initialTree,
-	};
-	const checkout = checkoutWithContent(flexConfig);
+	const checkout = view.checkout;
 
 	const encoderContext: FieldBatchEncodingContext = {
 		encodeType: TreeCompressionStrategy.Compressed,

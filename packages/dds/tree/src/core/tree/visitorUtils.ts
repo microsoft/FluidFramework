@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+
 import type { CodecWriteOptions } from "../../codec/index.js";
 import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
+import type { ITreeCursorSynchronous } from "./cursor.js";
 import type { DetachedNodeId, Root } from "./delta.js";
 import { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 import type { PlaceIndex, Range } from "./pathTree.js";
 import { type DeltaVisitor, visitDelta } from "./visitDelta.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { ITreeCursorSynchronous } from "./cursor.js";
 
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",

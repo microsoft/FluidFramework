@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	type CodecWriteOptions,
@@ -36,7 +37,6 @@ import type {
 	Major,
 	Minor,
 } from "./detachedFieldIndexTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * The tree index records detached field IDs and associates them with a change atom ID.

@@ -12,7 +12,8 @@ import {
 	type SchemaAndPolicy,
 } from "../../core/index.js";
 
-import { TreeStatus, type FlexTreeEntity } from "./flexTreeTypes.js";
+import type { FlexTreeContext } from "./context.js";
+import { TreeStatus } from "./flexTreeTypes.js";
 /**
  * Checks the detached field and returns the TreeStatus based on whether or not the detached field is a root field.
  * @param detachedField - the detached field you want to check.
@@ -75,15 +76,14 @@ export interface DetachedFieldCache {
 }
 
 /**
- * Utility function to get a {@link SchemaAndPolicy} object from a {@link FlexTreeNode} or {@link FlexTreeField}.
- * @param nodeOrField - {@link FlexTreeNode} or {@link FlexTreeField} to get the schema and policy from.
- * @returns A {@link SchemaAndPolicy} object with the stored schema and policy from the node or field provided.
- * For {@link Unhydrated} nodes this schema may only describe the types allowed subtree for this particular entity.
+ * Utility function to get a {@link SchemaAndPolicy} object from a {@link FlexTreeContext}.
+ * @returns A {@link SchemaAndPolicy} object with the stored schema and policy from the context provided.
+ * For {@link Unhydrated} contexts this schema may only describe the types allowed subtree for this particular entity.
  */
-export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy {
+export function getSchemaAndPolicy(context: FlexTreeContext): SchemaAndPolicy {
 	return {
-		schema: nodeOrField.context.schema,
-		policy: nodeOrField.context.schemaPolicy,
+		schema: context.schema,
+		policy: context.schemaPolicy,
 	};
 }
 

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
 import type {
 	HasListeners,
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -33,8 +33,6 @@ import {
 	SchemaCompatibilityTester,
 	type InsertableContent,
 	type TreeViewConfiguration,
-	mapTreeFromNodeData,
-	prepareContentForHydration,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
@@ -54,6 +52,7 @@ import {
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
+	prepareForInsertionContextless,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -62,9 +61,9 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
+import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -176,17 +175,16 @@ export class SchematizingSimpleTreeView<
 
 		this.runSchemaEdit(() => {
 			const schema = this.viewSchema.viewSchemaAsStored;
-			const mapTree = mapTreeFromNodeData(
+			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
-				this.nodeKeyManager,
 				{
 					schema,
 					policy: this.schemaPolicy,
 				},
+				this,
 			);
 
-			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
 				schema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),

@@ -4,7 +4,7 @@
  */
 
 import { inspect } from "util";
-import winston from "winston";
+
 import {
 	IContextErrorData,
 	IProducer,
@@ -13,6 +13,7 @@ import {
 import { KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafkanode";
 import { RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafka";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import winston from "winston";
 
 // set the max kafka message size to 900kb
 const maxKafkaMessageSize = MaxKafkaMessageSize;

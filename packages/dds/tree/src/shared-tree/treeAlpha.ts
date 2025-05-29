@@ -16,8 +16,6 @@ import {
 	TreeBeta,
 	tryGetSchema,
 	createFromCursor,
-	createFromInsertable,
-	cursorFromInsertable,
 	FieldKind,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
@@ -36,8 +34,13 @@ import {
 	extractPersistedSchema,
 	type TreeBranch,
 	TreeViewConfigurationAlpha,
+	getStoredKey,
+	getPropertyKeyFromStoredKey,
+	treeNodeApi,
+	getIdentifierFromNode,
+	mapTreeFromNodeData,
 } from "../simple-tree/index.js";
-import type { JsonCompatible } from "../util/index.js";
+import { extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import type { ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -49,10 +52,124 @@ import {
 	TreeCompressionStrategy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
+	fluidVersionToFieldBatchCodecWriteVersion,
+	type LocalNodeIdentifier,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { currentVersion, noopValidator } from "../codec/index.js";
+import { createFromMapTree } from "../simple-tree/index.js";
+
+const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
+	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");
+	if (typeof nodeIdentifier === "number") {
+		throw new TypeError("identifier should be uncompressed.");
+	}
+	return nodeIdentifier;
+};
+
+identifier.shorten = (branch: TreeBranch, nodeIdentifier: string): number | undefined => {
+	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
+		.nodeKeyManager;
+	const localNodeKey = nodeKeyManager.tryLocalizeNodeIdentifier(nodeIdentifier);
+	return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+};
+
+identifier.lengthen = (branch: TreeBranch, nodeIdentifier: number): string => {
+	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
+		.nodeKeyManager;
+	return nodeKeyManager.stabilizeNodeIdentifier(
+		nodeIdentifier as unknown as LocalNodeIdentifier,
+	);
+};
+
+identifier.getShort = (node: TreeNode): number | undefined => {
+	const shortIdentifier = getIdentifierFromNode(node, "compressed");
+	return typeof shortIdentifier === "number" ? shortIdentifier : undefined;
+};
+
+identifier.create = (branch: TreeBranch): string => {
+	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
+		.nodeKeyManager;
+	return nodeKeyManager.stabilizeNodeIdentifier(nodeKeyManager.generateLocalNodeIdentifier());
+};
+
+Object.freeze(identifier);
+
+/**
+ * A utility interface for retrieving or converting node identifiers.
+ *
+ * @remarks
+ * This provides methods to:
+ *
+ * - Retrieve long or short identifiers from nodes
+ *
+ * - Convert between long identifiers and short identifiers
+ *
+ * - Generates long identifiers
+ *
+ * @alpha @sealed
+ */
+export interface TreeIdentifierUtils {
+	/**
+	 * Returns the contents of a node's {@link SchemaFactory.identifier} field as a stable identifier.
+	 * If the identifier field does not exist, returns undefined.
+	 *
+	 * @param node - The TreeNode you want to get the identifier from,
+	 */
+	(node: TreeNode): string | undefined;
+
+	/**
+	 * Returns the shortened identifier as a number given long identifier known by the id compressor on the branch if possible.
+	 * Otherwise, it will return the original string identifier provided.
+	 * If the id does not exist, or is unknown by the id compressor, it returns undefined.
+	 *
+	 * This method is the inverse of {@link TreeIdentifierUtils.lengthen}. If you shorten an identifier
+	 * and then immediately pass it to {@link TreeIdentifierUtils.lengthen}, you will get the original string back.
+	 *
+	 * @param branch - TreeBranch from where you get the idCompressor to do the decompression.
+	 * @param nodeIdentifier - the stable identifier that needs to be shortened.
+	 */
+	shorten(branch: TreeBranch, nodeIdentifier: string): number | undefined;
+
+	/**
+	 * Returns the stable id as a string if the identifier is decompressible and known by the id compressor. Otherwise, it will throw an error.
+	 *
+	 * This method is the inverse of {@link TreeIdentifierUtils.shorten}. If you lengthen an identifier
+	 * and then immediately pass it to {@link TreeIdentifierUtils.shorten}, you will get the original short identifier back.
+	 *
+	 * @param branch - TreeBranch from where you want to get the id compressor to do the decompression.
+	 * @param nodeIdentifier - The local identifier that needs to be expanded.
+	 */
+	lengthen(branch: TreeBranch, nodeIdentifier: number): string;
+
+	/**
+	 * Returns the {@link SchemaFactory.identifier | identifier} of the given node in the most compressed form possible.
+	 * @remarks
+	 * If the node is {@link Unhydrated | hydrated} and its identifier is a valid UUID that was automatically generated by the SharedTree it is part of (or something else using the same {@link @fluidframework/id-compressor#IIdCompressor}), then this will return a process-unique integer corresponding to that identifier.
+	 * This is useful for performance-sensitive scenarios involving many nodes with identifiers that need to be compactly retained in memory or used for efficient lookup.
+	 * Note that automatically generated identifiers that were accessed before the node was hydrated will return the generated UUID, not the process-unique integer.
+	 *
+	 * If the node's identifier is any other user-provided string, then this will return undefined.
+	 *
+	 * If the node has no identifier (that is, it has no {@link SchemaFactory.identifier | identifier} field), then this returns `undefined`.
+	 *
+	 * If the node has more than one identifier, then this will throw an error.
+	 *
+	 * The returned integer should not be serialized or preserved outside of the current process.
+	 * Its lifetime is that of the current in-memory instance of the FF container for this client, and it is not guaranteed to be unique or stable outside of that context.
+	 * The same node's identifier may, for example, be different across multiple sessions for the same client and document, or different across two clients in the same session.
+	 */
+	getShort(node: TreeNode): number | undefined;
+
+	/**
+	 * Creates and returns a long identifier.
+	 * The long identifier is a compressible, stable identifier generated by the tree's ID compressor.
+	 *
+	 * @param branch - TreeBranch from where you want to get the id compressor to generate the identifier from.
+	 */
+	create(branch: TreeBranch): string;
+}
 
 /**
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
@@ -80,11 +197,8 @@ export interface TreeAlpha {
 	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
 	 * This function exists as a generalization that can be used in other cases as well,
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
-	 *
-	 * Like with {@link TreeNodeSchemaClass}'s constructor, it's an error to provide an existing node to this API.
-	 * For that case, use {@link (TreeBeta:interface).clone}.
 	 * @privateRemarks
-	 * There should be a way to provide a source for defaulted identifiers, wither via this API or some way to add them to its output later.
+	 * There should be a way to provide a source for defaulted identifiers, either via this API or some way to add them to its output later.
 	 */
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -177,7 +291,7 @@ export interface TreeAlpha {
 	 * Additionally using `createIdCompressor` to make an idCompressor is `@legacy` and thus not intended for use in this API surface.
 	 * It would probably make more sense if we provided a way to get an idCompressor from the context of a node,
 	 * which could be optional (and settable if missing) for un0hydrated nodes and required for hydrated ones.
-	 * Add in a stable public APi for creating idCompressors, and a way to get them from a tree (without view schema), and that should address the anticipated use-cases.
+	 * Add in a stable public API for creating idCompressors, and a way to get them from a tree (without view schema), and that should address the anticipated use-cases.
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,
@@ -211,6 +325,20 @@ export interface TreeAlpha {
 		compressedData: JsonCompatible<IFluidHandle>,
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+
+	/**
+	 * APIs for creating, converting, and retrieving identifiers.
+	 */
+	readonly identifier: TreeIdentifierUtils;
+
+	/**
+	 * The key of the given node under its parent.
+	 * @remarks
+	 * If `node` is an element in a {@link (TreeArrayNode:interface)}, this returns the index of `node` in the array node (a `number`).
+	 * If `node` is the root node, this returns undefined.
+	 * Otherwise, this returns the key of the field that it is under (a `string`).
+	 */
+	key2(node: TreeNode): string | number | undefined;
 }
 
 /**
@@ -232,7 +360,24 @@ export const TreeAlpha: TreeAlpha = {
 		return view;
 	},
 
-	create: createFromInsertable,
+	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		schema: UnsafeUnknownSchema extends TSchema
+			? ImplicitFieldSchema
+			: TSchema & ImplicitFieldSchema,
+		data: InsertableField<TSchema>,
+	): Unhydrated<
+		TSchema extends ImplicitFieldSchema
+			? TreeFieldFromImplicitField<TSchema>
+			: TreeNode | TreeLeafValue | undefined
+	> {
+		const mapTree = mapTreeFromNodeData(data as InsertableField<UnsafeUnknownSchema>, schema);
+		const result = mapTree === undefined ? undefined : createFromMapTree(schema, mapTree);
+		return result as Unhydrated<
+			TSchema extends ImplicitFieldSchema
+				? TreeFieldFromImplicitField<TSchema>
+				: TreeNode | TreeLeafValue | undefined
+		>;
+	},
 
 	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -244,14 +389,10 @@ export const TreeAlpha: TreeAlpha = {
 			? TreeFieldFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	> {
-		return createFromInsertable<UnsafeUnknownSchema>(
-			schema,
-			data as InsertableField<UnsafeUnknownSchema>,
-		) as Unhydrated<
-			TSchema extends ImplicitFieldSchema
-				? TreeFieldFromImplicitField<TSchema>
-				: TreeNode | TreeLeafValue | undefined
-		>;
+		// `importConcise` does not need to support all the formats that `create` does.
+		// Perhaps it should error instead of hydrating nodes for example.
+		// For now however, it is a simple wrapper around `create`.
+		return this.create(schema, data as InsertableField<TSchema>);
 	},
 
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
@@ -294,7 +435,7 @@ export const TreeAlpha: TreeAlpha = {
 		>,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const format = versionToFormat[options.oldestCompatibleClient];
+		const format = fluidVersionToFieldBatchCodecWriteVersion(options.oldestCompatibleClient);
 		const codec = makeFieldBatchCodec({ jsonValidator: noopValidator }, format);
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
@@ -326,6 +467,23 @@ export const TreeAlpha: TreeAlpha = {
 		const view = independentInitializedView(config, options, content);
 		return TreeBeta.clone<TSchema>(view.root);
 	},
+
+	identifier,
+
+	key2(node: TreeNode): string | number | undefined {
+		// If the parent is undefined, then this node is under the root field,
+		const parent = treeNodeApi.parent(node);
+		if (parent === undefined) {
+			return undefined;
+		}
+
+		// The flex-domain strictly operates in terms of "stored keys".
+		// To find the associated developer-facing "property key", we need to look up the field associated with
+		// the stored key from the flex-domain, and get property key its simple-domain counterpart was created with.
+		const storedKey = getStoredKey(node);
+		const parentSchema = treeNodeApi.schema(parent);
+		return getPropertyKeyFromStoredKey(parentSchema, storedKey);
+	},
 };
 
 function exportConcise(
@@ -355,32 +513,35 @@ function exportConcise(
 	);
 }
 
+/**
+ * Borrow a cursor from a node.
+ * @remarks
+ * The cursor must be put back to its original location before the node is used again.
+ */
 function borrowCursorFromTreeNodeOrValue(
 	node: TreeNode | TreeLeafValue,
 ): ITreeCursorSynchronous {
 	if (isTreeValue(node)) {
-		return cursorFromInsertable<UnsafeUnknownSchema>(
-			tryGetSchema(node) ?? fail(0xad0 /* missing schema */),
-			node,
-		);
+		return cursorFromVerbose(node, {});
 	}
 	const kernel = getKernel(node);
 	const cursor = kernel.getOrCreateInnerNode().borrowCursor();
 	return cursor;
 }
 
+/**
+ * Borrow a cursor from a field.
+ * @remarks
+ * The cursor must be put back to its original location before the node is used again.
+ */
 function borrowFieldCursorFromTreeNodeOrValue(
-	node: TreeNode | TreeLeafValue,
+	node: TreeNode | TreeLeafValue | undefined,
 ): ITreeCursorSynchronous {
+	if (node === undefined) {
+		return cursorForMapTreeField([]);
+	}
 	const cursor = borrowCursorFromTreeNodeOrValue(node);
-	// TODO: avoid copy
+	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
 }
-
-const versionToFormat = {
-	v2_0: 1,
-	v2_1: 1,
-	v2_2: 1,
-	v2_3: 1,
-};
