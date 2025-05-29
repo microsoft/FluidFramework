@@ -37,7 +37,7 @@ export type FluidObjectKey = string;
 
 /**
  * Base interface used in message data for events targeting a particular Fluid object (DDS) via
- * a unique ID.
+ * its {@link FluidObjectKey | key}.
  *
  * @internal
  */
