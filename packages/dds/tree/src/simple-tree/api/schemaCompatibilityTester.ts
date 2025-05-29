@@ -24,7 +24,6 @@ import {
 	comparePosetElements,
 } from "../../feature-libraries/index.js";
 import type { FieldSchema } from "../schemaTypes.js";
-import { toStoredSchema } from "../toStoredSchema.js";
 
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
@@ -35,20 +34,13 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  */
 export class SchemaCompatibilityTester {
 	/**
-	 * Cached conversion of the view schema in the stored schema format.
-	 */
-	public readonly viewSchemaAsStored: TreeStoredSchema;
-
-	/**
 	 * @param viewSchemaRoot - Schema for the root field.
 	 */
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		public readonly adapters: Adapters,
-		viewSchemaRoot: FieldSchema,
-	) {
-		this.viewSchemaAsStored = toStoredSchema(viewSchemaRoot);
-	}
+		public readonly viewSchemaRoot: FieldSchema,
+	) {}
 
 	/**
 	 * Determines the compatibility of a stored document

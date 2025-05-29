@@ -20,6 +20,7 @@ import {
 	type ValueSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
+import type { FieldSchema } from "../../simple-tree/index.js";
 
 // TODO:
 // The comparisons in this file seem redundant with those in comparison.ts.
@@ -158,12 +159,12 @@ function getNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactoryNodeK
  * It is up to the caller to determine whether such discrepancies matter.
  */
 export function* getAllowedContentDiscrepancies(
-	view: TreeStoredSchema,
+	view: FieldSchema,
 	stored: TreeStoredSchema,
 ): Iterable<Discrepancy> {
 	// check root schema discrepancies
 	yield* getFieldDiscrepancies(
-		view.rootFieldSchema,
+		view,
 		stored.rootFieldSchema,
 		undefined,
 		undefined,
@@ -268,7 +269,7 @@ function* getNodeDiscrepancies(
  * @param keyOrRoot - If the key is missing, it indicates that this is the root field schema.
  */
 function* getFieldDiscrepancies(
-	view: TreeFieldStoredSchema,
+	view: FieldSchema,
 	stored: TreeFieldStoredSchema,
 	identifier: TreeNodeSchemaIdentifier | undefined,
 	fieldKey: FieldKey | undefined,
