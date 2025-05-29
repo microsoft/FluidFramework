@@ -784,12 +784,9 @@ function canStageMessageOfType(
 	| ContainerMessageType.GC
 	| ContainerMessageType.DocumentSchemaChange {
 	return (
-		type in
-		[
-			ContainerMessageType.FluidDataStoreOp,
-			ContainerMessageType.GC,
-			ContainerMessageType.DocumentSchemaChange,
-		]
+		type === ContainerMessageType.FluidDataStoreOp ||
+		type === ContainerMessageType.GC ||
+		type === ContainerMessageType.DocumentSchemaChange
 	);
 }
 
