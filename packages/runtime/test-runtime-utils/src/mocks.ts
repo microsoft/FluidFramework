@@ -407,7 +407,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	/**
-	 * Rolls back all pending messages. This only works when the FlushMode is not immediate as immediate
+	 * Rolls back all pending messages.
+	 * @remarks
+	 * This only works when the FlushMode is not immediate as immediate
 	 * flush mode send the ops to the mock runtime factory for processing/sequencing, and so those
 	 * ops are no longer local, so not available for rollback.
 	 */
