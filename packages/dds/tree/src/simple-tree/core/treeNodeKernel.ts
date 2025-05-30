@@ -311,7 +311,7 @@ export class TreeNodeKernel {
 		}
 
 		if (this.disposed) {
-			throw new UsageError("Cannot access a Deleted node.");
+			throw new UsageError("Cannot access a deleted node.");
 		}
 
 		if (this.#hydrationState.innerNode === undefined) {
