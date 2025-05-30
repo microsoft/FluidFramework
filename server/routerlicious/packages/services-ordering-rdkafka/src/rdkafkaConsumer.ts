@@ -61,6 +61,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly pausedOffsets: Map<number, number> = new Map();
 	private readonly apiCounter = new InMemoryApiCounters();
 	private readonly failedApiCounterSuffix = ".Failed";
+	private readonly cooperativeRebalanceProtocol = "COOPERATIVE";
 	private consecutiveFailedCount = 0;
 	private apiCounterInterval: NodeJS.Timeout | undefined;
 
@@ -731,14 +732,14 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 				}
 
-				if (consumer.rebalanceProtocol() === "COOPERATIVE") {
+				if (consumer.rebalanceProtocol() === this.cooperativeRebalanceProtocol) {
 					Lumberjack.warning("cooperative rebalance reassign: ", assignments);
 					consumer.incrementalAssign(assignments);
 				} else {
 					consumer.assign(assignments);
 				}
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
-				if (consumer.rebalanceProtocol() === "COOPERATIVE") {
+				if (consumer.rebalanceProtocol() === this.cooperativeRebalanceProtocol) {
 					Lumberjack.warning("cooperative rebalance revoke: ", assignments);
 					consumer.incrementalUnassign(assignments);
 				} else {
