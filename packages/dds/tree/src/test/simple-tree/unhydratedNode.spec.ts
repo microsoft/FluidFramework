@@ -284,6 +284,15 @@ describe("Unhydrated nodes", () => {
 		assertArray();
 	});
 
+	it("flexTreeFromCursor", () => {
+		const tree = flexTreeFromCursor(
+			getUnhydratedContext(SchemaFactory.number),
+			singleJsonCursor(1),
+		);
+
+		assert.equal(tree.value, 1);
+	});
+
 	it("read constant defaulted properties", () => {
 		const defaultValue = 3;
 		const constantProvider: ConstantFieldProvider = (): UnhydratedFlexTreeNode[] => {
@@ -304,11 +313,10 @@ describe("Unhydrated nodes", () => {
 		assert.equal(defaultingLeaf.value, defaultValue);
 	});
 
-	// TODO: Fail instead of returning undefined, as is the case for identifiers.
 	it("read undefined for contextual defaulted properties", () => {
 		const defaultValue = 3;
 		const contextualProvider: ContextualFieldProvider = (context: unknown) => {
-			assert.notEqual(context, undefined);
+			assert.equal(context, "UseGlobalContext");
 			return [
 				flexTreeFromCursor(
 					getUnhydratedContext(SchemaFactory.number),
@@ -323,7 +331,7 @@ describe("Unhydrated nodes", () => {
 			),
 		}) {}
 		const defaultingLeaf = new HasDefault({ value: undefined });
-		assert.equal(defaultingLeaf.value, undefined);
+		assert.equal(defaultingLeaf.value, defaultValue);
 	});
 
 	it("read manually provided identifiers", () => {
@@ -353,7 +361,11 @@ describe("Unhydrated nodes", () => {
 
 		const id = "my identifier";
 		const object = new TestObjectWithId({ id, autoId: undefined });
-		assert.deepEqual(Object.entries(object), [["id", id]]);
+		assert.deepEqual(Object.entries(object), [
+			["id", id],
+			["autoId", object.autoId],
+		]);
+		assert(isStableId(object.autoId));
 	});
 
 	it("cannot be used twice in the same tree", () => {

@@ -94,8 +94,6 @@ import {
 	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
 	type MapTree,
-	aboveRootPlaceholder,
-	rootFieldKey,
 	SchemaVersion,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
@@ -115,6 +113,10 @@ import {
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
 	makeSchemaCodec,
+	mapTreeWithField,
+	type MinimalMapTreeNodeView,
+	jsonableTreeFromCursor,
+	cursorForMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
@@ -821,10 +823,7 @@ function createCheckoutWithContent(
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
-	const roots: MapTree = {
-		type: aboveRootPlaceholder,
-		fields: new Map([[rootFieldKey, mapTreeFieldFromCursor(fieldCursor)]]),
-	};
+	const roots: MapTree = mapTreeWithField(mapTreeFieldFromCursor(fieldCursor));
 	const schema = new TreeStoredSchemaRepository(content.schema);
 	const forest = buildTestForest({
 		additionalAsserts: args?.additionalAsserts ?? true,
@@ -892,10 +891,7 @@ export function buildTestForest(options: {
 
 export function forestWithContent(content: TreeStoredContent): IEditableForest {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
-	const roots: MapTree = {
-		type: aboveRootPlaceholder,
-		fields: new Map([[rootFieldKey, mapTreeFieldFromCursor(fieldCursor)]]),
-	};
+	const roots: MapTree = mapTreeWithField(mapTreeFieldFromCursor(fieldCursor));
 	const forest = buildTestForest({
 		additionalAsserts: true,
 		schema: new TreeStoredSchemaRepository(content.schema),
@@ -961,6 +957,23 @@ export function expectJsonTree(
 	if (expectRemovedRootsAreSynchronized) {
 		checkRemovedRootsAreSynchronized(trees);
 	}
+}
+
+export function expectEqualMapTreeViews(
+	actual: MinimalMapTreeNodeView,
+	expected: MinimalMapTreeNodeView,
+): void {
+	expectEqualCursors(cursorForMapTreeNode(actual), cursorForMapTreeNode(expected));
+}
+
+export function expectEqualCursors(
+	actual: ITreeCursorSynchronous | undefined,
+	expected: ITreeCursorSynchronous,
+): void {
+	assert(actual !== undefined);
+	const actualJson = jsonableTreeFromCursor(actual);
+	const expectedJson = jsonableTreeFromCursor(expected);
+	assert.deepEqual(actualJson, expectedJson);
 }
 
 export function expectNoRemovedRoots(tree: ITreeCheckout): void {

@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	deepCopyMapTree,
 	EmptyKey,
 	type ExclusiveMapTree,
 	type FieldKey,
@@ -54,11 +55,6 @@ import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTre
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 
 describe("toMapTree", () => {
-	let nodeKeyManager: MockNodeIdentifierManager;
-	beforeEach(() => {
-		nodeKeyManager = new MockNodeIdentifierManager();
-	});
-
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const tree = "Hello world";
@@ -71,7 +67,7 @@ describe("toMapTree", () => {
 			fields: new Map(),
 		};
 
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
 	it("null", () => {
@@ -86,7 +82,7 @@ describe("toMapTree", () => {
 			fields: new Map(),
 		};
 
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
 	it("handle", () => {
@@ -103,7 +99,7 @@ describe("toMapTree", () => {
 			fields: new Map(),
 		};
 
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
 	it("recursive", () => {
@@ -153,7 +149,7 @@ describe("toMapTree", () => {
 			]),
 		};
 
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
 	it("Fails when referenced schema has not yet been instantiated", () => {
@@ -204,7 +200,7 @@ describe("toMapTree", () => {
 				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Simple array", () => {
@@ -245,7 +241,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Complex array", () => {
@@ -311,7 +307,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Recursive array", () => {
@@ -409,7 +405,7 @@ describe("toMapTree", () => {
 				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Simple map", () => {
@@ -449,7 +445,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Complex Map", () => {
@@ -529,7 +525,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Undefined map entries are omitted", () => {
@@ -559,7 +555,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Throws on schema-incompatible entries", () => {
@@ -613,7 +609,7 @@ describe("toMapTree", () => {
 				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Simple object", () => {
@@ -656,7 +652,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Complex object", () => {
@@ -735,7 +731,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Undefined properties are omitted", () => {
@@ -764,7 +760,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Object with stored field keys specified", () => {
@@ -813,10 +809,11 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Populates identifier field with the default identifier provider", () => {
+			const nodeKeyManager = new MockNodeIdentifierManager();
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {
 				a: schemaFactory.identifier,
@@ -842,7 +839,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Populates optional field with the default optional provider.", () => {
@@ -864,6 +861,8 @@ describe("toMapTree", () => {
 		});
 
 		it("Populates a tree with defaults", () => {
+			const nodeKeyManager = new MockNodeIdentifierManager();
+
 			const log: string[] = [];
 			const defaultValue = 3;
 			const constantProvider: ConstantFieldProvider = () => {
@@ -1174,7 +1173,7 @@ describe("toMapTree", () => {
 			]),
 		};
 
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
 	it("ambiguous unions", () => {
@@ -1294,7 +1293,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Array containing `undefined` (throws if fallback type when not allowed by the schema)", () => {

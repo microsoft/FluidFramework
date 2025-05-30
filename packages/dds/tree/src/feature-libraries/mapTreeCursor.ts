@@ -17,6 +17,7 @@ import {
 	detachedFieldAsKey,
 	mapCursorField,
 	rootField,
+	rootFieldKey,
 } from "../core/index.js";
 
 import {
@@ -29,6 +30,9 @@ import {
 import type { requireAssignableTo } from "../util/index.js";
 
 export interface MapTreeNodeViewGeneric<TNode> extends NodeData {
+	/**
+	 * The non-empty fields on this node.
+	 */
 	readonly fields: Pick<
 		ReadonlyMap<FieldKey, MapTreeFieldViewGeneric<TNode>>,
 		typeof Symbol.iterator | "get" | "size" | "keys"
@@ -40,6 +44,9 @@ export type MapTreeFieldViewGeneric<TNode> = Pick<
 	typeof Symbol.iterator | "length"
 >;
 
+/**
+ * Like {@link MapTree} but with the minimal properties needed for reading.
+ */
 export interface MinimalMapTreeNodeView
 	extends MapTreeNodeViewGeneric<MinimalMapTreeNodeView> {}
 
@@ -58,6 +65,24 @@ export function cursorForMapTreeNode<T extends MapTreeNodeViewGeneric<T>>(
 	return stackTreeNodeCursor(adapterTyped, root);
 }
 
+export function mapTreeWithField(
+	children: ExclusiveMapTree[],
+	key = rootFieldKey,
+	type = aboveRootPlaceholder,
+): MapTree {
+	return {
+		type,
+		fields: mapTreeFieldsWithField(children, key),
+	};
+}
+
+export function mapTreeFieldsWithField<T extends readonly unknown[]>(
+	children: T,
+	key: FieldKey,
+): Map<FieldKey, T> {
+	return new Map(children.length === 0 ? [] : [[key, children]]);
+}
+
 /**
  * Returns an {@link ITreeCursorSynchronous} in fields mode for a MapTree field.
  */
@@ -69,7 +94,7 @@ export function cursorForMapTreeField<T extends MapTreeNodeViewGeneric<T>>(
 	const adapterTyped = adapter as unknown as CursorAdapter<T>;
 	const dummyRoot: MapTreeNodeViewGeneric<T> = {
 		type: aboveRootPlaceholder,
-		fields: new Map([[key, root]]),
+		fields: mapTreeFieldsWithField(root, key),
 	};
 	return stackTreeFieldCursor(adapterTyped, dummyRoot as T, detachedField);
 }

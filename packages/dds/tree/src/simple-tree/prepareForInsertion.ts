@@ -131,11 +131,14 @@ function validateAndPrepare(
 	mapTrees: readonly UnhydratedFlexTreeNode[],
 ): void {
 	if (hydratedData !== undefined) {
+		// Prepare content before validating side this populated defaults using the provided context rather than the global context.
+		// This ensures that when validation requests identifiers (or any other contextual defaults),
+		// they were already creating used the more specific context we have access to from `hydratedData`.
+		prepareContentForHydration(mapTrees, hydratedData.checkout.forest, hydratedData);
 		if (schemaAndPolicy.policy.validateSchema === true) {
 			const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
 			inSchemaOrThrow(maybeError);
 		}
-		prepareContentForHydration(mapTrees, hydratedData.checkout.forest, hydratedData);
 	}
 }
 
@@ -233,7 +236,7 @@ function walkMapTree(
 			}
 		}
 
-		for (const [key, field] of node.fields) {
+		for (const [key, field] of node.allFieldsLazy) {
 			field.fillPendingDefaults(context);
 			for (const [i, child] of field.children.entries()) {
 				nexts.push([

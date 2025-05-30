@@ -100,5 +100,9 @@ export function flexTreeFromCursor(
 			),
 		]),
 	);
-	return new UnhydratedFlexTreeNode({ type: cursor.type }, fields, context);
+	return new UnhydratedFlexTreeNode(
+		{ type: cursor.type, value: cursor.value },
+		fields,
+		context,
+	);
 }

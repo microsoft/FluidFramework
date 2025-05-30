@@ -22,6 +22,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
+	type TreeValue,
 	type Value,
 } from "../../core/index.js";
 import {
@@ -108,12 +109,30 @@ export class UnhydratedFlexTreeNode
 	 */
 	public constructor(
 		public readonly data: NodeData,
-		public readonly fields: Map<FieldKey, UnhydratedFlexTreeField>,
+		private readonly fieldsAll: Map<FieldKey, UnhydratedFlexTreeField>,
 		public readonly simpleContext: Context,
 	) {
-		for (const [_key, field] of this.fields) {
+		for (const [_key, field] of this.fieldsAll) {
 			field.parent = this;
 		}
+	}
+
+	/**
+	 * The non-empty fields on this node.
+	 */
+	public get fields(): ReadonlyMap<FieldKey, UnhydratedFlexTreeField> {
+		// TODO: doing this copy on every access is inefficient. SOme caching+invalidation or removal of the need for a separate map would be better.
+		const entries = [...this.fieldsAll.entries()].filter(([, field]) => field.length > 0);
+		return new Map(entries);
+	}
+
+	/**
+	 * Gets all fields, without filtering out empty ones.
+	 * @remarks
+	 * This avoids forcing the evaluating of pending defaults in the fields, and also saves a copy on access.
+	 */
+	public get allFieldsLazy(): ReadonlyMap<FieldKey, UnhydratedFlexTreeField> {
+		return this.fieldsAll;
 	}
 
 	public get type(): TreeNodeSchemaIdentifier {
@@ -125,7 +144,7 @@ export class UnhydratedFlexTreeNode
 	}
 
 	private getOrCreateField(key: FieldKey): UnhydratedFlexTreeField {
-		return getOrCreate(this.fields, key, () => {
+		return getOrCreate(this.fieldsAll, key, () => {
 			const stored = this.storedSchema.getFieldSchema(key).kind;
 			const field = createField(this.context, stored, key, []);
 			field.parent = this;
@@ -146,7 +165,7 @@ export class UnhydratedFlexTreeNode
 		if (parent !== undefined) {
 			assert(index !== undefined, 0xa08 /* Expected index */);
 			if (this.location !== unparentedLocation) {
-				throw new UsageError("A node may not be inserted if it's already in a tree");
+				throw new UsageError("A node may not be in more than one place in the tree");
 			}
 			let unhydratedNode: UnhydratedFlexTreeNode | undefined = parent.parent;
 			while (unhydratedNode !== undefined) {
@@ -393,8 +412,13 @@ export class UnhydratedFlexTreeField
 	}
 
 	/** Unboxes leaf nodes to their values */
-	protected unboxed(index: number): UnhydratedFlexTreeNode {
-		return this.children[index] ?? oob();
+	protected unboxed(index: number): TreeValue | UnhydratedFlexTreeNode {
+		const child = this.children[index] ?? oob();
+		const value = child.value;
+		if (value !== undefined) {
+			return value;
+		}
+		return child;
 	}
 }
 

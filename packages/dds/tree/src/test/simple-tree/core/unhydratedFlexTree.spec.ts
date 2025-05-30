@@ -23,6 +23,7 @@ import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 // eslint-disable-next-line import/no-internal-modules
 import { flexTreeFromCursor } from "../../../simple-tree/api/create.js";
+import { expectEqualCursors } from "../../utils.js";
 
 describe("unhydratedFlexTree", () => {
 	// #region The schema used in this test suite
@@ -135,10 +136,22 @@ describe("unhydratedFlexTree", () => {
 
 	it("can get the children of object nodes", () => {
 		assert.equal(object.getBoxed("map").key, "map");
-		assert.equal(object.tryGetField(objectMapKey)?.boxedAt(0), map);
-		assert.equal(object.tryGetField(objectFieldNodeKey)?.boxedAt(0), arrayNode);
-		assert.equal(object.getBoxed(objectMapKey).boxedAt(0), map);
-		assert.equal(object.getBoxed(objectFieldNodeKey).boxedAt(0), arrayNode);
+		expectEqualCursors(
+			object.tryGetField(objectMapKey)?.boxedAt(0)?.borrowCursor(),
+			map.borrowCursor(),
+		);
+		expectEqualCursors(
+			object.tryGetField(objectFieldNodeKey)?.boxedAt(0)?.borrowCursor(),
+			arrayNode.borrowCursor(),
+		);
+		expectEqualCursors(
+			object.getBoxed(objectMapKey).boxedAt(0)?.borrowCursor(),
+			map.borrowCursor(),
+		);
+		expectEqualCursors(
+			object.getBoxed(objectFieldNodeKey).boxedAt(0)?.borrowCursor(),
+			arrayNode.borrowCursor(),
+		);
 		assert.equal(object.tryGetField(brand("unknown key")), undefined);
 		assert.equal(object.getBoxed("unknown key").length, 0);
 		assert.equal([...object.boxedIterator()].length, 2);

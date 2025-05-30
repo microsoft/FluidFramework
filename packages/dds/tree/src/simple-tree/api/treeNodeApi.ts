@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
@@ -39,6 +39,7 @@ import {
 } from "../core/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
+import { getTreeNodeForField } from "../getTreeNodeForField.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -302,23 +303,39 @@ export function getIdentifierFromNode(
 			return undefined;
 		case 1: {
 			const key = identifierFieldKeys[0] ?? oob();
-			const identifier = flexNode.tryGetField(key)?.boxedAt(0);
-			assert(
-				identifier?.context.isHydrated() === true,
-				0xa27 /* Expected hydrated identifier */,
-			);
-			const identifierValue = identifier.value as string;
+			const identifierField = flexNode.tryGetField(key);
+			assert(identifierField !== undefined, "missing identifier field");
+			const identifierValue = getTreeNodeForField(identifierField);
+			assert(typeof identifierValue === "string", "identifier not a string");
 
-			if (compression === "preferCompressed") {
-				const localNodeKey =
-					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
-			} else if (compression === "compressed") {
-				const localNodeKey =
-					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+			const context = flexNode.context;
+			switch (compression) {
+				case "preferCompressed": {
+					if (context.isHydrated()) {
+						const localNodeKey =
+							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
+						return localNodeKey !== undefined
+							? extractFromOpaque(localNodeKey)
+							: identifierValue;
+					} else {
+						return identifierValue;
+					}
+				}
+				case "compressed": {
+					if (context.isHydrated()) {
+						const localNodeKey =
+							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
+						return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+					} else {
+						return undefined;
+					}
+				}
+				case "uncompressed": {
+					return identifierValue;
+				}
+				default:
+					unreachableCase(compression);
 			}
-			return identifierValue;
 		}
 		default:
 			throw new UsageError(

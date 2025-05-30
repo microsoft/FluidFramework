@@ -15,6 +15,9 @@ export {
 	cursorForMapTreeNode,
 	mapTreeFromCursor,
 	mapTreeFieldFromCursor,
+	type MinimalMapTreeNodeView,
+	mapTreeFieldsWithField,
+	mapTreeWithField,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
 export {
