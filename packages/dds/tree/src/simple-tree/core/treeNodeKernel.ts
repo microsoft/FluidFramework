@@ -178,6 +178,7 @@ export class TreeNodeKernel {
 		} else {
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode.anchorNode);
+			this.#hydrationState.innerNode = innerNode;
 		}
 	}
 
@@ -298,9 +299,9 @@ export class TreeNodeKernel {
 	 * For hydrated nodes it returns a FlexTreeNode backed by the forest.
 	 * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
 	 *
-	 * If `allowDeleted` is false, this will throw a UsageError if the node is deleted.
+	 * @throws If the node has been deleted.
 	 */
-	public getOrCreateInnerNode(allowDeleted = false): InnerNode {
+	public getOrCreateInnerNode(): InnerNode {
 		if (!isHydrated(this.#hydrationState)) {
 			debugAssert(
 				() =>
@@ -308,6 +309,10 @@ export class TreeNodeKernel {
 					"Unhydrated node should never be disposed",
 			);
 			return this.#hydrationState.innerNode; // Unhydrated case
+		}
+
+		if (this.disposed) {
+			throw new UsageError("Cannot access a deleted node.");
 		}
 
 		if (this.#hydrationState.innerNode === undefined) {
@@ -326,15 +331,7 @@ export class TreeNodeKernel {
 				context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 				this.#hydrationState.innerNode = makeTree(context, cursor);
 				cursor.free();
-				if (!allowDeleted) {
-					assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
-				}
-			}
-		}
-
-		if (!allowDeleted) {
-			if (this.#hydrationState.innerNode.context.isDisposed()) {
-				throw new UsageError("Cannot access a Deleted node.");
+				assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
 			}
 		}
 
@@ -444,11 +441,12 @@ export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
  * For hydrated nodes it returns a FlexTreeNode backed by the forest.
  * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
  *
- * If `allowDeleted` is false, this will throw a UsageError if the node is deleted.
+ *
+ * @throws If the node has been deleted.
  */
-export function getOrCreateInnerNode(treeNode: TreeNode, allowDeleted = false): InnerNode {
+export function getOrCreateInnerNode(treeNode: TreeNode): InnerNode {
 	const kernel = getKernel(treeNode);
-	return kernel.getOrCreateInnerNode(allowDeleted);
+	return kernel.getOrCreateInnerNode();
 }
 
 /**

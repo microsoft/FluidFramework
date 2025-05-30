@@ -215,7 +215,10 @@ describe.only("treeNodeApi", () => {
 		it("parent", () => {
 			class Child extends schema.object("Child", { x: Point }) {}
 			class Root extends schema.array("Root", Child) {}
-			const root = init(Root, [{ x: {} }, { x: {} }]);
+			const config = new TreeViewConfiguration({ schema: Root });
+			const view = getView(config);
+			const root = new Root([{ x: {} }, { x: {} }]);
+			view.initialize(root);
 
 			assert.equal(Tree.parent(root), undefined);
 			assert.equal(Tree.parent(root[0]), root);
@@ -229,6 +232,37 @@ describe.only("treeNodeApi", () => {
 			assert.equal(Tree.parent(added), root);
 			root.removeRange(0, 1);
 			assert.equal(Tree.parent(added), undefined);
+
+			view.dispose();
+			assert.throws(
+				() => Tree.parent(root),
+				validateUsageError(/Cannot access a deleted node/),
+			);
+		});
+
+		it("key", () => {
+			class Child extends schema.object("Child", { x: Point }) {}
+			class Root extends schema.array("Root", Child) {}
+			const config = new TreeViewConfiguration({ schema: Root });
+			const view = getView(config);
+			const root = new Root([{ x: {} }, { x: {} }]);
+			view.initialize(root);
+
+			assert.equal(Tree.key(root), rootFieldKey);
+			assert.equal(Tree.key(root[0]), 0);
+			assert.equal(Tree.key(root[1]), 1);
+			assert.equal(Tree.key(root[1].x), "x");
+
+			const added = new Child({ x: {} });
+
+			assert.equal(Tree.key(added), rootFieldKey);
+			root.insertAtStart(added);
+			assert.equal(Tree.key(added), 0);
+			root.removeRange(0, 1);
+			assert.equal(Tree.key(added), rootFieldKey);
+
+			view.dispose();
+			assert.throws(() => Tree.key(root), validateUsageError(/Cannot access a deleted node/));
 		});
 	});
 
