@@ -47,7 +47,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
-import { treeNodeApi, tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
+import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
 import { testSimpleTrees } from "../../testTrees.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { ajvValidator } from "../../codec/index.js";
@@ -57,7 +57,7 @@ const schema = new SchemaFactory("com.example");
 
 class Point extends schema.object("Point", {}) {}
 
-describe.only("treeNodeApi", () => {
+describe("treeNodeApi", () => {
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });
@@ -214,7 +214,10 @@ describe.only("treeNodeApi", () => {
 		it("parent", () => {
 			class Child extends schema.object("Child", { x: Point }) {}
 			class Root extends schema.array("Root", Child) {}
-			const root = init(Root, [{ x: {} }, { x: {} }]);
+			const config = new TreeViewConfiguration({ schema: Root });
+			const view = getView(config);
+			const root = new Root([{ x: {} }, { x: {} }]);
+			view.initialize(root);
 
 			assert.equal(Tree.parent(root), undefined);
 			assert.equal(Tree.parent(root[0]), root);
@@ -228,31 +231,37 @@ describe.only("treeNodeApi", () => {
 			assert.equal(Tree.parent(added), root);
 			root.removeRange(0, 1);
 			assert.equal(Tree.parent(added), undefined);
-		});
-
-		it("parent - throws for disposed node", () => {
-			const config = new TreeViewConfiguration({ schema: Point });
-			const view = getView(config);
-			const node = new Point({});
-			view.initialize(node);
 
 			view.dispose();
-
 			assert.throws(
-				() => Tree.parent(node),
+				() => Tree.parent(root),
 				validateUsageError(/Cannot access a deleted node/),
 			);
 		});
 
-		it("key - throws for disposed node", () => {
-			const config = new TreeViewConfiguration({ schema: Point });
+		it("key", () => {
+			class Child extends schema.object("Child", { x: Point }) {}
+			class Root extends schema.array("Root", Child) {}
+			const config = new TreeViewConfiguration({ schema: Root });
 			const view = getView(config);
-			const node = new Point({});
-			view.initialize(node);
+			const root = new Root([{ x: {} }, { x: {} }]);
+			view.initialize(root);
+
+			assert.equal(Tree.key(root), rootFieldKey);
+			assert.equal(Tree.key(root[0]), 0);
+			assert.equal(Tree.key(root[1]), 1);
+			assert.equal(Tree.key(root[1].x), "x");
+
+			const added = new Child({ x: {} });
+
+			assert.equal(Tree.key(added), rootFieldKey);
+			root.insertAtStart(added);
+			assert.equal(Tree.key(added), 0);
+			root.removeRange(0, 1);
+			assert.equal(Tree.key(added), rootFieldKey);
 
 			view.dispose();
-
-			assert.throws(() => Tree.key(node), validateUsageError(/Cannot access a deleted node/));
+			assert.throws(() => Tree.key(root), validateUsageError(/Cannot access a deleted node/));
 		});
 	});
 
