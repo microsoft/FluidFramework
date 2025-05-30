@@ -2759,7 +2759,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		const attachFieldEntry = getFirstFieldForCrossFieldKey(
 			this.table.baseChange,
 			{ ...attachIdEntry.value, target: CrossFieldTarget.Destination },
-			count,
+			countToProcess,
 		);
 
 		countToProcess = attachFieldEntry.length;
