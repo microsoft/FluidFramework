@@ -1045,6 +1045,8 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),
 		// we want to also trigger autorecovery to avoid the object being deleted
+		// i.e. this will be preceded by one of these telemetry events;
+		// GC_Tombstone_DataStore_Requested, GC_Tombstone_SubDataStore_Requested, GC_Tombstone_Blob_Requested
 		// Note: We don't need to trigger on "Changed" because any change will cause the object
 		// to be loaded by the Summarizer, and auto-recovery will be triggered then.
 		if (isTombstoned && reason === "Loaded") {

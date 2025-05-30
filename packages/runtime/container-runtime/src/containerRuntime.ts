@@ -1171,6 +1171,8 @@ export class ContainerRuntime
 
 	public readonly clientDetails: IClientDetails;
 
+	private readonly isSummarizerClient: boolean;
+
 	public get storage(): IDocumentStorageService {
 		return this._storage;
 	}
@@ -1574,7 +1576,7 @@ export class ContainerRuntime
 		// Values are generally expected to be set from the runtime side.
 		this.options = options ?? {};
 		this.clientDetails = clientDetails;
-		const isSummarizerClient = this.clientDetails.type === summarizerClientType;
+		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getClientId = () => context.clientId;
@@ -1615,7 +1617,7 @@ export class ContainerRuntime
 		);
 
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
-		this.closeFn = isSummarizerClient ? this.disposeFn : closeFn;
+		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1776,12 +1778,14 @@ export class ContainerRuntime
 			existing,
 			metadata,
 			createContainerMetadata: this.createContainerMetadata,
-			isSummarizerClient,
+			isSummarizerClient: this.isSummarizerClient,
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) =>
-				this.holdSystemMessageForSubmission(message),
+				this.isSummarizerClient
+					? this.submit(message)
+					: this.holdSystemMessageForSubmission(message),
 			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
 		});
 
@@ -2143,8 +2147,7 @@ export class ContainerRuntime
 			maxOpsSinceLastSummary,
 		);
 
-		const isSummarizerClient = this.clientDetails.type === summarizerClientType;
-		if (isSummarizerClient) {
+		if (this.isSummarizerClient) {
 			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
 			// so that all non summarizer clients don't have to load the code inside this module.
 			const module = await import(
