@@ -53,6 +53,9 @@ export interface FlexTreeContext {
 	isDisposed(): boolean;
 }
 
+/**
+ * Subset of a hydrated context which can be used in more cases (like before the root and events are set up).
+ */
 export interface FlexTreeHydratedContextMinimal {
 	readonly nodeKeyManager: NodeIdentifierManager;
 
