@@ -27,7 +27,6 @@ export type {
 	IMember,
 	IServiceAudience,
 	IServiceAudienceEvents,
-	LoadableObjectRecord,
 	MemberChangedListener,
 	Myself,
 } from "./types.js";

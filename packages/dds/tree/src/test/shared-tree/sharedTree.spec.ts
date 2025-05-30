@@ -241,7 +241,7 @@ describe("SharedTree", () => {
 			view1.dispose();
 
 			assert(Tree.status(root1) === TreeStatus.Deleted);
-			assert.throws(() => root1.number, validateUsageError(/Deleted/));
+			assert.throws(() => root1.number, validateUsageError(/deleted/));
 
 			checkAnchors(false);
 

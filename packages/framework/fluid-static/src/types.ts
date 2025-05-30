@@ -20,7 +20,6 @@ export type CompatibilityMode = "1" | "2";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
- * @internal
  */
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
@@ -98,7 +97,6 @@ export interface ContainerSchema {
 /**
  * Holds the collection of objects that the container was initially created with, as well as provides the ability
  * to dynamically create further objects during usage.
- * @internal
  */
 export interface IRootDataObject {
 	/**
@@ -121,7 +119,7 @@ interface IProvideStaticEntryPoint {
 }
 
 /**
- * @internal
+ * This is the internal entry point fluid-static creates.
  */
 export interface IStaticEntryPoint extends IProvideStaticEntryPoint {
 	readonly rootDataObject: IRootDataObject;

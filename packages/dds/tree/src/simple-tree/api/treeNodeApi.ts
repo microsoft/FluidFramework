@@ -43,8 +43,14 @@ import { lazilyAllocateIdentifier, isObjectNodeSchema } from "../node-kinds/inde
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
- * * @remarks
- * This type should only be used via the public `Tree` export.
+ *
+ * @remarks
+ * With the exception of {@link TreeNodeApi.status}, these functions should not be called with nodes that have
+ * been {@link TreeStatus.Deleted | deleted}.
+ * To verify whether or not a node already has been deleted, use the {@link TreeNodeApi.status} function.
+ *
+ * This type should only be used via the public {@link (Tree:variable)} export.
+ *
  * @privateRemarks
  * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
  *
@@ -75,14 +81,19 @@ export interface TreeNodeApi {
 
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
+	 *
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been {@link TreeStatus.Deleted | deleted}.
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
 
 	/**
 	 * The key of the given node under its parent.
+	 *
 	 * @remarks
 	 * If `node` is an element in a {@link (TreeArrayNode:interface)}, this returns the index of `node` in the array node (a `number`).
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
+	 *
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been {@link TreeStatus.Deleted | deleted}.
 	 */
 	key(node: TreeNode): string | number;
 
@@ -126,7 +137,7 @@ export interface TreeNodeApi {
 }
 
 /**
- * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
+ * {@inheritDoc TreeNodeApi}
  */
 export const treeNodeApi: TreeNodeApi = {
 	parent(node: TreeNode): TreeNode | undefined {

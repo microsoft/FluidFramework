@@ -62,11 +62,24 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
 /**
  * Brand for value that has not been verified.
  *
+ * @remarks
  * Usage:
  *
- * - Cast to with `as unknown as UnverifiedBrand<T>` when value of or containing expected type `T` is yet unknown.
+ * - Cast any value to `UnverifiedBrand` using `as unknown as UnverifiedBrand<T>`
+ * when it is not yet confirmed that value is of type `T`.
  *
- * - Cast from with `as unknown` when "instance" will be parsed to `T`.
+ * - When `T` value is needed, use narrowing type guards to check (preferred)
+ * or cast from `UnverifiedBrand` using `as unknown` when "instance" must
+ * be parsed to `T`.
+ *
+ * @example Example narrowing type guard:
+ * ```typescript
+ * function validateFoo(
+ *   unverified: Foo | (Record<string, unknown> & UnverifiedBrand<Foo>)
+ * ): unverified is Foo {
+ *   return unverified.IFooProvider === unverified;
+ * }
+ * ```
  *
  * @sealed
  * @internal
@@ -136,6 +149,12 @@ export type InboundExtensionMessage<TMessage extends TypedMessage = TypedMessage
 	| VerifiedInboundExtensionMessage<TMessage>;
 
 /**
+ * Runtime properties of an extension.
+ *
+ * @remarks
+ * This is used to coordinate select types that are known only to the extension, but
+ * that host will respect where it calls back or provides extension specific data.
+ *
  * @internal
  */
 export interface ExtensionRuntimeProperties {

@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This module provided collection of minimal (slim) helpers to support
+ * DataObject creation for temporary {@link ExperimentalPresenceManager}.
+ */
+
 import type {
 	FluidObject,
 	IFluidLoadable,
@@ -19,8 +24,9 @@ import type {
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 
 /**
- * Extends the FluidDataStoreRuntime to provide a request method that routes requests to
- * the entrypoint Fluid object that is expected to be a {@link LoadableFluidObject}.
+ * `BasicFluidDataStoreRuntime` extends the FluidDataStoreRuntime to provide a request
+ * method that routes requests to the entrypoint Fluid object that is expected to be a
+ * {@link LoadableFluidObject}.
  */
 class BasicFluidDataStoreRuntime extends FluidDataStoreRuntime {
 	public override async request(request: IRequest): Promise<IResponse> {
@@ -47,7 +53,7 @@ class BasicFluidDataStoreRuntime extends FluidDataStoreRuntime {
 }
 
 /**
- * @internal
+ * `BasicDataStoreFactory` is the factory for creating a {@link BasicFluidDataStoreRuntime}.
  */
 export class BasicDataStoreFactory<Type extends string> implements IFluidDataStoreFactory {
 	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
@@ -82,7 +88,8 @@ export class BasicDataStoreFactory<Type extends string> implements IFluidDataSto
 }
 
 /**
- * @internal
+ * `LoadableFluidObject` is helper to build a DataObject handling the {@link FluidObject}
+ * and {@link IFluidLoadable} requirements.
  */
 export abstract class LoadableFluidObject implements FluidObject, IFluidLoadable {
 	public constructor(protected readonly runtime: FluidDataStoreRuntime) {}

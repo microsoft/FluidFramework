@@ -72,7 +72,7 @@ function isPresenceMessage(
 }
 
 /**
- * @internal
+ * High-level contract for manager of singleton Presence datastore
  */
 export interface PresenceDatastoreManager {
 	joinSession(clientId: ClientConnectionId): void;

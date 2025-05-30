@@ -109,8 +109,6 @@ export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 /**
  * Utility type limiting to a specific attendee. (A attendee with
  * a specific session ID - not just any session ID.)
- *
- * @internal
  */
 export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
 	string extends SpecificAttendeeId ? never : Attendee<SpecificAttendeeId>;
