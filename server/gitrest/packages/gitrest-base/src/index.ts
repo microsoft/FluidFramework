@@ -45,6 +45,7 @@ export {
 	persistLatestFullSummaryInStorage,
 	RedisFsManagerFactory,
 	retrieveLatestFullSummaryFromStorage,
+	setupHybridFsHandler,
 	validateBlobContent,
 	validateBlobEncoding,
 } from "./utils";
