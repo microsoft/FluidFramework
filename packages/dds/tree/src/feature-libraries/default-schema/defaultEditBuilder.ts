@@ -434,6 +434,7 @@ export interface OptionalFieldEditBuilder<TContent> {
 }
 
 /**
+ * Edit builder for the sequence field kind.
  */
 export interface SequenceFieldEditBuilder<TContent, TRemoved = void> {
 	/**
