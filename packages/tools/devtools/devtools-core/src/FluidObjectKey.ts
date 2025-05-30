@@ -11,7 +11,7 @@ const visualizerIdMap = new WeakMap<object, number>();
  * Associates a unique stringified number with an {@link @fluidframework/devtools/devtools-core#VisualizerNode} in {@link DataVisualization}.
  *
  * @remarks
- * The stringifiedID number is tied to the object identity, not the object's contents; modifying the object will not cause it to get a different ID.
+ * The key is tied to the object identity, not the object's contents; modifying the object will not cause it to get a different key.
  * Adopted from the {@link @fluid-experimental/tree-react-api#objectIdNumber} function.
  */
 export function getKeyForFluidObject(visualizerNode: object): string {
