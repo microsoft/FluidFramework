@@ -82,7 +82,7 @@ export interface TreeNodeApi {
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 *
-	 * @throws If the node has been {@link TreeStatus.Deleted | deleted}.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been {@link TreeStatus.Deleted | deleted}.
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
 
@@ -93,7 +93,7 @@ export interface TreeNodeApi {
 	 * If `node` is an element in a {@link (TreeArrayNode:interface)}, this returns the index of `node` in the array node (a `number`).
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 *
-	 * @throws If the node has been {@link TreeStatus.Deleted | deleted}.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been {@link TreeStatus.Deleted | deleted}.
 	 */
 	key(node: TreeNode): string | number;
 
