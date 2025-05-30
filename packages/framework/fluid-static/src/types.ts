@@ -8,8 +8,8 @@ import type { ContainerExtensionStore } from "@fluidframework/container-runtime-
 import type {
 	IEvent,
 	IEventProvider,
-	IFluidLoadable,
 	IFluidHandle,
+	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -121,10 +121,12 @@ export interface IRootDataObject {
 	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
 
 	/**
-	 * Api to upload a blob of data.
+	 * Upload a blob of data.
+	 * Although it is marked as internal, there is external usage of this function for experimental purposes.
+	 * Please contact yunho-microsoft or vladsud if you need to change it.
 	 * @param blob - blob to be uploaded.
 	 *
-	 * @remarks This method is used to expose uploadBlob functionality to out layers (like FluidContainer).
+	 * @remarks This method is used to expose uploadBlob to the IFluidContainer level. UploadBlob will upload data to server side (as of now, ODSP only). There is no downloadBlob provided as it is not needed(blob lifetime managed by server).
 	 */
 	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
