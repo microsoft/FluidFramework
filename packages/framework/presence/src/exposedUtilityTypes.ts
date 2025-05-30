@@ -83,38 +83,6 @@ export namespace InternalUtilityTypes {
 	) => any
 		? JsonSerializable<P>
 		: never;
-
-	// /**
-	//  * @internal
-	//  * @system
-	//  */
-	// declare class JsonDeserializedBrand<T> extends BrandedType<T> {
-	// 	private readonly EncodedValue: T;
-	// 	private constructor();
-	// }
-
-	/**
-	 * @system
-	 */
-	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
-	// export type OpaqueJsonDeserialized<T> = UnverifiedBrand<T>;
-	// export type OpaqueJsonDeserialized<T> = JsonDeserializedBrand<T>;
-	// export type OpaqueJsonDeserialized<T extends JsonDeserialized<U>, U> = JsonDeserializedBrand<T, U>;
-
-	// /**
-	//  * @internal
-	//  * @system
-	//  */
-	// export declare class JsonSerializableBrand<T> extends BrandedType<T> {
-	// 	private readonly JsonSerializable: JsonSerializable<T>;
-	// 	private constructor();
-	// }
-
-	// /**
-	//  * @system
-	//  */
-	// export type JsonDeserializedHandle<T> = Tagged<JsonDeserialized<T>, "JsonDeserialized">;
-	// export type OpaqueJsonSerializable<T> = JsonSerializableBrand<T>;
 }
 
 /**
@@ -122,7 +90,7 @@ export namespace InternalUtilityTypes {
  *
  * @system
  */
-export function brandJson<const T>(
+export function toOpaqueJson<const T>(
 	value: JsonSerializable<T> | JsonDeserialized<T>,
 ): JsonTypeToOpaqueJson<T> {
 	return value as unknown as JsonTypeToOpaqueJson<T>;
@@ -133,17 +101,17 @@ export function brandJson<const T>(
  *
  * @system
  */
-export function unbrandJson<
+export function fromOpaqueJson<
 	TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
 >(opaque: TOpaque): OpaqueJsonToJsonType<TOpaque> {
 	return opaque as unknown as OpaqueJsonToJsonType<TOpaque>;
 }
 
 /**
- * Converts a JsonDeserializedHandle to a deeply readonly JsonDeserialized value.
+ * Converts an opaque JSON value to a deeply readonly value.
  */
 export function asDeeplyReadonlyFromJsonHandle<
 	TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
 >(value: TOpaque): DeepReadonly<OpaqueJsonToJsonType<TOpaque>> {
-	return asDeeplyReadonly(unbrandJson(value));
+	return asDeeplyReadonly(fromOpaqueJson(value));
 }

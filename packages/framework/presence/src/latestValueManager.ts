@@ -17,8 +17,8 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import {
-	unbrandJson,
-	brandJson,
+	fromOpaqueJson,
+	toOpaqueJson,
 	asDeeplyReadonlyFromJsonHandle,
 } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
@@ -117,14 +117,14 @@ class LatestValueManagerImpl<T, Key extends string>
 		return this.datastore.presence;
 	}
 
-	public get local(): DeepReadonly<JsonDeserialized<T>> {
+	public get local(): JsonDeserialized<T> {
 		return asDeeplyReadonlyFromJsonHandle(this.value.value);
 	}
 
 	public set local(value: JsonSerializable<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
-		this.value.value = brandJson(value);
+		this.value.value = toOpaqueJson(value);
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
@@ -159,7 +159,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 		return {
-			value: asDeeplyReadonly(unbrandJson(clientState.value)),
+			value: asDeeplyReadonly(fromOpaqueJson(clientState.value)),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -180,7 +180,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					value: asDeeplyReadonly(unbrandJson(value.value)),
+					value: asDeeplyReadonly(fromOpaqueJson(value.value)),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];

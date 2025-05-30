@@ -11,7 +11,7 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import { unbrandJson, type InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import { fromOpaqueJson, type InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -248,7 +248,7 @@ class NotificationsManagerImpl<
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): PostUpdateAction[] {
-		const unbrandedValue = unbrandJson(value.value);
+		const unbrandedValue = fromOpaqueJson(value.value);
 		const postUpdateActions: PostUpdateAction[] = [];
 		const eventName = unbrandedValue.name as keyof Listeners<NotificationSubscriptions<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {
