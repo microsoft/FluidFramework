@@ -160,7 +160,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		assert(height % 2 === 1, 0x3b8 /* must field height */);
 		const siblingStack = this.siblingStack[height] ?? oob();
 		const indexStack = this.indexStack[height] ?? oob();
-		// index is kept inbounds an an invariant of the class.
+		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (siblingStack as readonly FieldKey[])[indexStack]!;
 	}
