@@ -9,7 +9,7 @@ import type {
 	FlexTreeOptionalField,
 	OptionalFieldEditBuilder,
 } from "../../../feature-libraries/index.js";
-import { getTreeNodeForField } from "../../getTreeNodeForField.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	createFieldSchema,
 	FieldKind,
@@ -172,14 +172,14 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		for (const key of node.keys()) {
 			yield [
 				key,
-				getTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
+				tryGetTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
 			];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
 		const node = this.innerNode;
 		const field = node.getBoxed(brand(key));
-		return getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+		return tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
@@ -216,7 +216,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		thisArg?: unknown,
 	): void {
 		for (const field of getOrCreateInnerNode(this).boxedIterator()) {
-			const node = getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+			const node = tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}
 	}
