@@ -173,7 +173,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	private getStackedNode(height: number): TNode {
 		const index = this.getStackedNodeIndex(height);
 		// Can not use `?? oob()` since null and undefined are valid values.
-		// index is kept inbounds an an invariant of the class.
+		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (this.siblingStack[height] as Field<TNode>)[index]!;
 	}
@@ -366,7 +366,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	public getNode(): TNode {
 		// assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
 		// Can not use `?? oob()` since null and undefined are valid values.
-		// index is kept inbounds an an invariant of the class.
+		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (this.siblings as Field<TNode>)[this.index]!;
 	}
