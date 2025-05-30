@@ -4752,10 +4752,6 @@ export class ContainerRuntime
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			}
-			case ContainerMessageType.GC:
-			case ContainerMessageType.DocumentSchemaChange: {
-				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
-			}
 			default: {
 				unreachableCase(type);
 			}
