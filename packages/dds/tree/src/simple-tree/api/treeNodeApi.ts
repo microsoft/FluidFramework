@@ -137,12 +137,7 @@ export interface TreeNodeApi {
 }
 
 /**
- * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
- *
- * @remarks
- * With the exception of {@link TreeNodeApi.status}, these functions should not be called with nodes that have
- * been {@link TreeStatus.Deleted | deleted}.
- * To verify whether or not a node already has been deleted, use the {@link TreeNodeApi.status} function.
+ * {@inheritDoc TreeNodeApi}
  */
 export const treeNodeApi: TreeNodeApi = {
 	parent(node: TreeNode): TreeNode | undefined {
