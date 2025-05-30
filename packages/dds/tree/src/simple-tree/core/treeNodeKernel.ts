@@ -310,6 +310,10 @@ export class TreeNodeKernel {
 			return this.#hydrationState.innerNode; // Unhydrated case
 		}
 
+		if (this.disposed) {
+			throw new UsageError("Cannot access a deleted node.");
+		}
+
 		if (this.#hydrationState.innerNode === undefined) {
 			// Marinated case -> cooked
 			const anchorNode = this.#hydrationState.anchorNode;
@@ -328,10 +332,6 @@ export class TreeNodeKernel {
 				cursor.free();
 				assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
 			}
-		}
-
-		if (this.#hydrationState.innerNode.context.isDisposed()) {
-			throw new UsageError("Cannot access a Deleted node.");
 		}
 
 		return this.#hydrationState.innerNode;

@@ -47,7 +47,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
-import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
+import { treeNodeApi, tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
 import { testSimpleTrees } from "../../testTrees.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { ajvValidator } from "../../codec/index.js";
@@ -57,7 +57,7 @@ const schema = new SchemaFactory("com.example");
 
 class Point extends schema.object("Point", {}) {}
 
-describe("treeNodeApi", () => {
+describe.only("treeNodeApi", () => {
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });
@@ -228,6 +228,31 @@ describe("treeNodeApi", () => {
 			assert.equal(Tree.parent(added), root);
 			root.removeRange(0, 1);
 			assert.equal(Tree.parent(added), undefined);
+		});
+
+		it("parent - throws for disposed node", () => {
+			const config = new TreeViewConfiguration({ schema: Point });
+			const view = getView(config);
+			const node = new Point({});
+			view.initialize(node);
+
+			view.dispose();
+
+			assert.throws(
+				() => Tree.parent(node),
+				validateUsageError(/Cannot access a deleted node/),
+			);
+		});
+
+		it("key - throws for disposed node", () => {
+			const config = new TreeViewConfiguration({ schema: Point });
+			const view = getView(config);
+			const node = new Point({});
+			view.initialize(node);
+
+			view.dispose();
+
+			assert.throws(() => Tree.key(node), validateUsageError(/Cannot access a deleted node/));
 		});
 	});
 
