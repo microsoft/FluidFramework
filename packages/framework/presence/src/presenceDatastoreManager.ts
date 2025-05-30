@@ -167,9 +167,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.runtime.submitSignal({
 			type: joinMessageType,
 			content: {
-				// FIXME: error TS2353: Object literal may only specify known properties, and 'sendTimestamp' does not exist in
-				// type 'SerializationErrorPerNonPublicProperties'.
-				//// @ts-ignore
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				data: this.datastore,
@@ -306,9 +303,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			this.datastore["system:presence"].clientToSessionId[clientConnectionId]!;
 
 		const newMessage = {
-			// FIXME: error TS2353: Object literal may only specify known properties, and 'sendTimestamp' does not exist in
-			// type 'SerializationErrorPerNonPublicProperties'.
-			//// @ts-ignore
 			sendTimestamp: Date.now(),
 			avgLatency: this.averageLatency,
 			// isComplete: false,
@@ -328,11 +322,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.queuedData = undefined;
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
-			// FIXME: error TS2741: Property '"object serialization error"' is missing in type '{ sendTimestamp: number;
-			// avgLatency: number; data: { "system:presence": { clientToSessionId: { [x: string]: { value:
-			// InternalUtilityTypes.OpaqueJsonDeserialized<AttendeeId>; rev: number; timestamp: number; }; }; }; }; }' but
-			// required in type 'SerializationErrorPerNonPublicProperties'.
-			//// @ts-ignore
 			content: newMessage,
 		});
 	}
@@ -341,9 +330,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
 			content: {
-				// FIXME: error TS2353: Object literal may only specify known properties, and 'sendTimestamp' does not exist in
-				// type 'SerializationErrorPerNonPublicProperties'.
-				//// @ts-ignore
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
@@ -434,11 +420,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					...workspace.internal.processUpdate(
 						received,
 						timeModifier,
-						// FIXME: error TS2345: Argument of type '{ [x: string]: { [x: string & { readonly StableId:
-						// "53172b0d-a3d5-41ea-bd75-b43839c97f5a"; } & { readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
-						// } & { readonly AttendeeId: "AttendeeId"; }]: { ...; } | { ...; }; }; } | { ...; }' is not assignable to
-						// parameter of type 'ValueUpdateRecord'.
-						//// @ts-ignore
 						remoteDatastore,
 						message.clientId,
 					),

@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	DeepReadonly,
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+	OpaqueJsonDeserialized,
+	JsonTypeToOpaqueJson,
+	OpaqueJsonToJsonType,
+	OpaqueJsonSerializable,
+} from "@fluidframework/core-interfaces/internal";
 
 import { asDeeplyReadonly } from "./internalUtils.js";
 
@@ -119,8 +122,10 @@ export namespace InternalUtilityTypes {
  *
  * @system
  */
-export function brandJson<T>(value: JsonDeserialized<T>): OpaqueJsonDeserialized<T> {
-	return value as OpaqueJsonDeserialized<T>;
+export function brandJson<const T>(
+	value: JsonSerializable<T> | JsonDeserialized<T>,
+): JsonTypeToOpaqueJson<T> {
+	return value as unknown as JsonTypeToOpaqueJson<T>;
 }
 
 /**
@@ -128,15 +133,17 @@ export function brandJson<T>(value: JsonDeserialized<T>): OpaqueJsonDeserialized
  *
  * @system
  */
-export function unbrandJson<T>(value: OpaqueJsonDeserialized<T>): JsonDeserialized<T> {
-	return value as JsonDeserialized<T>;
+export function unbrandJson<
+	TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
+>(opaque: TOpaque): OpaqueJsonToJsonType<TOpaque> {
+	return opaque as unknown as OpaqueJsonToJsonType<TOpaque>;
 }
 
 /**
  * Converts a JsonDeserializedHandle to a deeply readonly JsonDeserialized value.
  */
-export function asDeeplyReadonlyFromJsonHandle<T>(
-	value: OpaqueJsonDeserialized<T>,
-): DeepReadonly<JsonDeserialized<T>> {
+export function asDeeplyReadonlyFromJsonHandle<
+	TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
+>(value: TOpaque): DeepReadonly<OpaqueJsonToJsonType<TOpaque>> {
 	return asDeeplyReadonly(unbrandJson(value));
 }

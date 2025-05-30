@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
+	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 
 /**

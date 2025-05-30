@@ -4,9 +4,11 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 import type { Listeners, Listenable, Off } from "@fluidframework/core-interfaces";
-import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
+import type {
+	JsonTypeWith,
+	OpaqueJsonDeserialized,
+} from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import { unbrandJson, type InternalUtilityTypes } from "./exposedUtilityTypes.js";

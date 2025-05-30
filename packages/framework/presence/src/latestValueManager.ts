@@ -4,13 +4,13 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { OpaqueJsonDeserialized } from "@fluidframework/container-runtime-definitions/internal";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import type {
 	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+	OpaqueJsonDeserialized,
+} from "@fluidframework/core-interfaces/internal";
 import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
@@ -82,7 +82,7 @@ export interface LatestRaw<T> {
 	 * setting, if needed. No comparison is done to detect changes; all sets are transmitted.
 	 */
 	get local(): DeepReadonly<JsonDeserialized<T>>;
-	set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+	set local(value: JsonSerializable<T>);
 
 	/**
 	 * Iterable access to remote clients' values.
@@ -121,7 +121,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		return asDeeplyReadonlyFromJsonHandle(this.value.value);
 	}
 
-	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
+	public set local(value: JsonSerializable<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
 		this.value.value = brandJson(value);
@@ -138,7 +138,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			if (attendeeId !== allKnownStates.self) {
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: asDeeplyReadonly(unbrandJson(value.value)),
+					value: asDeeplyReadonlyFromJsonHandle(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
 			}
