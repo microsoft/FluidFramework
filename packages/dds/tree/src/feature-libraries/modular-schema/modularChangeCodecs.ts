@@ -76,7 +76,7 @@ export function makeModularChangeCodecFamily(
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
-	{ jsonValidator: validator }: ICodecOptions,
+	codecOptions: ICodecOptions,
 	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): ICodecFamily<ModularChangeset, ChangeEncodingContext> {
 	return makeCodecFamily(
@@ -86,7 +86,7 @@ export function makeModularChangeCodecFamily(
 				fieldKinds,
 				revisionTagCodec,
 				fieldsCodec,
-				{ jsonValidator: validator },
+				codecOptions,
 				chunkCompressionStrategy,
 			),
 		]),
@@ -116,7 +116,7 @@ function makeModularChangeCodec(
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
-	{ jsonValidator: validator }: ICodecOptions,
+	codecOptions: ICodecOptions,
 	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): ModularChangeCodec {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -125,7 +125,7 @@ function makeModularChangeCodec(
 		return {
 			codec,
 			compiledSchema: codec.json.encodedSchema
-				? validator.compile(codec.json.encodedSchema)
+				? codecOptions.jsonValidator.compile(codec.json.encodedSchema)
 				: undefined,
 		};
 	};
@@ -519,7 +519,11 @@ function makeModularChangeCodec(
 		},
 	};
 
-	return withSchemaValidation(EncodedModularChangeset, modularChangeCodec, validator);
+	return withSchemaValidation(
+		EncodedModularChangeset,
+		modularChangeCodec,
+		codecOptions.jsonValidator,
+	);
 }
 
 function getChangeHandler(

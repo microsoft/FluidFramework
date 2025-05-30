@@ -1370,7 +1370,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 
 export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
 	return (error: Error) => {
-		assert(error instanceof UsageError);
+		assert(error instanceof UsageError, `Expected UsageError, got ${error}`);
 		if (
 			typeof expectedErrorMsg === "string"
 				? error.message !== expectedErrorMsg
