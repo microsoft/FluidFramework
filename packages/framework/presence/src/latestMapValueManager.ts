@@ -16,7 +16,13 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
+import {
+	asDeeplyReadonly,
+	objectEntries,
+	objectKeys,
+	fullySerializableToOpaqueJson,
+	asDeeplyReadonlyDeserializedJson,
+} from "./internalUtils.js";
 import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -286,23 +292,24 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	): void {
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(asDeeplyReadonly(item.value), key, this);
+				callbackfn(asDeeplyReadonlyDeserializedJson(item.value), key, this);
 			}
 		}
 	}
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
-		return asDeeplyReadonly(this.value.items[key]?.value);
+		return asDeeplyReadonlyDeserializedJson(this.value.items[key]?.value);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
 	}
-	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
+	public set(key: K, inValue: JsonSerializable<T> & JsonDeserialized<T>): this {
+		const value = fullySerializableToOpaqueJson(inValue);
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
 			this.value.items[key] = { rev: 0, timestamp: 0, value };
 		}
 		this.updateItem(key, value);
-		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
+		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(inValue) });
 		return this;
 	}
 	public get size(): number {
@@ -433,7 +440,7 @@ class LatestMapRawValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
-					value: asDeeplyReadonly(value),
+					value: asDeeplyReadonlyDeserializedJson(value),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -484,7 +491,7 @@ class LatestMapRawValueManagerImpl<
 			currentState.items[key] = item;
 			const metadata = { revision: item.rev, timestamp: item.timestamp };
 			if (item.value !== undefined) {
-				const itemValue = asDeeplyReadonly(item.value);
+				const itemValue = asDeeplyReadonlyDeserializedJson(item.value);
 				const updatedItem = {
 					attendee,
 					key,
@@ -512,6 +519,7 @@ class LatestMapRawValueManagerImpl<
 /**
  * Arguments that are passed to the {@link StateFactory.latestMap} function.
  *
+ * @input
  * @beta
  */
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
@@ -559,7 +567,7 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				value: initialValues[key],
+				value: fullySerializableToOpaqueJson(initialValues[key]),
 			};
 		}
 	}

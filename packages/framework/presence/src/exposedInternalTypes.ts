@@ -6,6 +6,7 @@
 import type {
 	JsonDeserialized,
 	JsonSerializable,
+	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
@@ -29,14 +30,14 @@ export namespace InternalTypes {
 	 * @system
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-		value?: JsonDeserialized<TValue>;
+		value?: OpaqueJsonDeserialized<TValue>;
 	}
 
 	/**
 	 * @system
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-		value: JsonDeserialized<TValue>;
+		value: OpaqueJsonDeserialized<TValue>;
 	}
 
 	/**
