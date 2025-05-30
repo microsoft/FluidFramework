@@ -705,11 +705,7 @@ export class IntervalCollection
 		number,
 		ISerializedInterval | SerializedIntervalDelta
 	>();
-	private readonly pendingChangesStart: Map<string, ISerializedIntervalCollectionV1> = new Map<
-		string,
-		ISerializedIntervalCollectionV1
-	>();
-	private readonly pendingChangesEnd: Map<string, ISerializedIntervalCollectionV1> = new Map<
+	private readonly pendingChanges: Map<string, ISerializedIntervalCollectionV1> = new Map<
 		string,
 		ISerializedIntervalCollectionV1
 	>();
@@ -1302,35 +1298,22 @@ export class IntervalCollection
 		if (!this.isCollaborating) {
 			return;
 		}
-		if (serializedInterval.start !== undefined) {
-			this.addPendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
+		assert(
+			(serializedInterval.start === undefined) === (serializedInterval.end === undefined),
+			"both start and end must be set or unset",
+		);
+		if (serializedInterval.start !== undefined || serializedInterval.end !== undefined) {
+			const entries = this.pendingChanges.get(id) ?? [];
+			this.pendingChanges.set(id, entries);
+			entries.push(serializedInterval as any);
 		}
-		if (serializedInterval.end !== undefined) {
-			this.addPendingChangeHelper(id, this.pendingChangesEnd, serializedInterval);
-		}
-	}
-
-	private addPendingChangeHelper(
-		id: string,
-		pendingChanges: Map<string, SerializedIntervalDelta[]>,
-		serializedInterval: SerializedIntervalDelta,
-	) {
-		let entries: SerializedIntervalDelta[] | undefined = pendingChanges.get(id);
-		if (!entries) {
-			entries = [];
-			pendingChanges.set(id, entries);
-		}
-		entries.push(serializedInterval);
 	}
 
 	private removePendingChange(serializedInterval: SerializedIntervalDelta) {
 		// Change ops always have an ID.
 		const { id } = getSerializedProperties(serializedInterval);
 		if (serializedInterval.start !== undefined) {
-			this.removePendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
-		}
-		if (serializedInterval.end !== undefined) {
-			this.removePendingChangeHelper(id, this.pendingChangesEnd, serializedInterval);
+			this.removePendingChangeHelper(id, this.pendingChanges, serializedInterval);
 		}
 	}
 
@@ -1354,13 +1337,8 @@ export class IntervalCollection
 		}
 	}
 
-	private hasPendingChangeStart(id: string) {
-		const entries = this.pendingChangesStart.get(id);
-		return entries && entries.length !== 0;
-	}
-
-	private hasPendingChangeEnd(id: string) {
-		const entries = this.pendingChangesEnd.get(id);
+	private hasPendingChanges(id: string) {
+		const entries = this.pendingChanges.get(id);
 		return entries && entries.length !== 0;
 	}
 
@@ -1405,10 +1383,8 @@ export class IntervalCollection
 			let start: number | "start" | "end" | undefined;
 			let end: number | "start" | "end" | undefined;
 			// Track pending start/end independently of one another.
-			if (!this.hasPendingChangeStart(id)) {
+			if (!this.hasPendingChanges(id)) {
 				start = serializedInterval.start;
-			}
-			if (!this.hasPendingChangeEnd(id)) {
 				end = serializedInterval.end;
 			}
 
@@ -1500,7 +1476,7 @@ export class IntervalCollection
 		if (
 			opName === "change" &&
 			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when .hasPendingChangeStart returns false.
-			(this.hasPendingChangeStart(id) || this.hasPendingChangeEnd(id))
+			this.hasPendingChanges(id)
 		) {
 			this.removePendingChange(serializedInterval);
 			this.addPendingChange(id, rebased);
@@ -1577,19 +1553,15 @@ export class IntervalCollection
 		);
 
 		const id = interval.getIntervalId();
-		const hasPendingStartChange = this.hasPendingChangeStart(id);
-		const hasPendingEndChange = this.hasPendingChangeEnd(id);
+		const hasPendingChange = this.hasPendingChanges(id);
 
-		if (!hasPendingStartChange) {
+		if (!hasPendingChange) {
 			setSlideOnRemove(interval.start);
-		}
-
-		if (!hasPendingEndChange) {
 			setSlideOnRemove(interval.end);
 		}
 
-		const needsStartUpdate = newStart !== undefined && !hasPendingStartChange;
-		const needsEndUpdate = newEnd !== undefined && !hasPendingEndChange;
+		const needsStartUpdate = newStart !== undefined && !hasPendingChange;
+		const needsEndUpdate = newEnd !== undefined && !hasPendingChange;
 
 		if (needsStartUpdate || needsEndUpdate) {
 			if (!this.localCollection) {
