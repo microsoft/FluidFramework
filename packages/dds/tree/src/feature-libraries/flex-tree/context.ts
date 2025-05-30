@@ -53,23 +53,27 @@ export interface FlexTreeContext {
 	isDisposed(): boolean;
 }
 
-/**
- * A common context of a "forest" of FlexTrees.
- * It handles group operations like transforming cursors into anchors for edits.
- */
-export interface FlexTreeHydratedContext extends FlexTreeContext {
-	readonly events: Listenable<ForestEvents>;
-	/**
-	 * Gets the root field of the tree.
-	 */
-	get root(): FlexTreeField;
-
+export interface FlexTreeHydratedContextMinimal {
 	readonly nodeKeyManager: NodeIdentifierManager;
 
 	/**
 	 * The checkout object associated with this context.
 	 */
 	readonly checkout: ITreeCheckout;
+}
+
+/**
+ * A common context of a "forest" of FlexTrees.
+ * It handles group operations like transforming cursors into anchors for edits.
+ */
+export interface FlexTreeHydratedContext
+	extends FlexTreeContext,
+		FlexTreeHydratedContextMinimal {
+	readonly events: Listenable<ForestEvents>;
+	/**
+	 * Gets the root field of the tree.
+	 */
+	get root(): FlexTreeField;
 }
 
 /**

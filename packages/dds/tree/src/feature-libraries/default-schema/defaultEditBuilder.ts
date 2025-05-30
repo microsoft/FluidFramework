@@ -435,7 +435,7 @@ export interface OptionalFieldEditBuilder<TContent> {
 
 /**
  */
-export interface SequenceFieldEditBuilder<TContent> {
+export interface SequenceFieldEditBuilder<TContent, TRemoved = void> {
 	/**
 	 * Issues a change which inserts the `newContent` at the given `index`.
 	 * @param index - the index at which to insert the `newContent`.
@@ -448,7 +448,7 @@ export interface SequenceFieldEditBuilder<TContent> {
 	 * @param index - The index of the first removed element.
 	 * @param count - The number of elements to remove.
 	 */
-	remove(index: number, count: number): void;
+	remove(index: number, count: number): TRemoved;
 }
 
 /**
