@@ -692,7 +692,7 @@ describe.only("treeNodeApi", () => {
 
 			assert.throws(
 				() => TreeAlpha.children(tree),
-				validateUsageError(/Cannot access a Deleted node/),
+				validateUsageError(/Cannot access a deleted node/),
 			);
 		});
 	});
