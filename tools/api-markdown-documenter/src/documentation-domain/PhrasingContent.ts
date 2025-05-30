@@ -29,7 +29,6 @@ import type { SpanNode } from "./SpanNode.js";
  * @privateRemarks
  * For more information on the concept of "phrasing content", see {@link https://github.com/syntax-tree/mdast?tab=readme-ov-file#content-model}.
  *
- * @sealed
  * @public
  */
 export interface PhrasingContentMap {

@@ -159,7 +159,7 @@ export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 // @public
 export type BlockContent = BlockContentMap[keyof BlockContentMap];
 
-// @public @sealed
+// @public
 export interface BlockContentMap {
     // (undocumented)
     blockquote: BlockQuoteNode;
@@ -722,7 +722,7 @@ export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> 
 // @public
 export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
 
-// @public @sealed
+// @public
 export interface PhrasingContentMap {
     // (undocumented)
     codeSpan: CodeSpanNode;
