@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -31,6 +31,7 @@ import type { SimpleNodeSchema, SimpleNodeSchemaBase } from "../simpleSchema.js"
 // eslint-disable-next-line import/no-internal-modules
 import { createField } from "../core/unhydratedFlexTree.js";
 import { getStoredSchema } from "../toStoredSchema.js";
+import { unknownTypeError } from "./customTree.js";
 
 /**
  * Creates an unhydrated simple-tree field from a cursor in nodes mode.
@@ -85,7 +86,7 @@ export function flexTreeFromCursor(
 	cursor: ITreeCursorSynchronous,
 ): UnhydratedFlexTreeNode {
 	assert(cursor.mode === CursorLocationType.Nodes, "Expected nodes cursor");
-	const schema = context.schema.get(cursor.type) ?? fail("missing schema");
+	const schema = context.schema.get(cursor.type) ?? unknownTypeError(cursor.type);
 	const storedSchema = getStoredSchema(
 		schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema,
 	);
