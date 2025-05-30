@@ -233,6 +233,9 @@ export function replaceHandles<T>(tree: unknown, replacer: HandleConverter<T>): 
 	});
 }
 
+/**
+ * Throws a `UsageError` indicating that a type is unknown in the current context.
+ */
 export function unknownTypeError(type: string): never {
 	throw new UsageError(
 		`Failed to parse tree due to occurrence of type ${JSON.stringify(type)} which is not defined in this context.`,
