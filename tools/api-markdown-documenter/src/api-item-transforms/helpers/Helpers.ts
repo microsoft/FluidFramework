@@ -102,7 +102,7 @@ export function createSignatureSection(
 				FencedCodeBlockNode.createFromPlainText(signatureExcerpt.trim(), "typescript"),
 			);
 
-			const renderedHeritageTypes = createHeritageTypesParagraph(apiItem, config);
+			const renderedHeritageTypes = createHeritageTypesContent(apiItem, config);
 			if (renderedHeritageTypes !== undefined) {
 				contents.push(...renderedHeritageTypes);
 			}
@@ -117,39 +117,6 @@ export function createSignatureSection(
 }
 
 /**
- * Generates a section for an API item's {@link https://tsdoc.org/pages/tags/see/ | @see} comment blocks.
- *
- * @remarks Displayed as a "See also" heading, followed by the contents of the API item's `@see` comment blocks
- * merged into a single section.
- *
- * @param apiItem - The API item whose `@see` comment blocks will be rendered.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- *
- * @returns The doc section if there was any signature content to render, otherwise `undefined`.
- *
- * @public
- */
-export function createSeeAlsoSection(
-	apiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
-): SectionNode | undefined {
-	const seeBlocks = getSeeBlocks(apiItem);
-	if (seeBlocks === undefined || seeBlocks.length === 0) {
-		return undefined;
-	}
-
-	const contents: BlockContent[] = [];
-	for (const seeBlock of seeBlocks) {
-		contents.push(...transformTsdoc(seeBlock, apiItem, config));
-	}
-
-	return wrapInSection(contents, {
-		title: "See Also",
-		id: `${getFileSafeNameForApiItem(apiItem)}-see-also`,
-	});
-}
-
-/**
  * Renders a section listing types extended / implemented by the API item, if any.
  *
  * @remarks Displayed as a heading with a comma-separated list of heritage types by category under it.
@@ -157,9 +124,11 @@ export function createSeeAlsoSection(
  * @param apiItem - The API item whose heritage types will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns The paragraph containing heritage type information, if any is present. Otherwise `undefined`.
+ * @returns
+ * The section content containing heritage type information, if any is present.
+ * Otherwise `undefined`.
  */
-export function createHeritageTypesParagraph(
+function createHeritageTypesContent(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): SectionContent[] | undefined {
@@ -292,6 +261,39 @@ function createHeritageTypeListSpan(
 		return new SpanNode([renderedLabel, ...renderedList]);
 	}
 	return undefined;
+}
+
+/**
+ * Generates a section for an API item's {@link https://tsdoc.org/pages/tags/see/ | @see} comment blocks.
+ *
+ * @remarks Displayed as a "See also" heading, followed by the contents of the API item's `@see` comment blocks
+ * merged into a single section.
+ *
+ * @param apiItem - The API item whose `@see` comment blocks will be rendered.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @returns The doc section if there was any signature content to render, otherwise `undefined`.
+ *
+ * @public
+ */
+export function createSeeAlsoSection(
+	apiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
+): SectionNode | undefined {
+	const seeBlocks = getSeeBlocks(apiItem);
+	if (seeBlocks === undefined || seeBlocks.length === 0) {
+		return undefined;
+	}
+
+	const contents: BlockContent[] = [];
+	for (const seeBlock of seeBlocks) {
+		contents.push(...transformTsdoc(seeBlock, apiItem, config));
+	}
+
+	return wrapInSection(contents, {
+		title: "See Also",
+		id: `${getFileSafeNameForApiItem(apiItem)}-see-also`,
+	});
 }
 
 /**
