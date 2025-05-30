@@ -61,7 +61,9 @@ export interface MinimalMapTreeNodeView
 export function cursorForMapTreeNode<T extends MapTreeNodeViewGeneric<T>>(
 	root: T,
 ): CursorWithNode<T> {
-	const adapterTyped = adapter as unknown as CursorAdapter<T>;
+	// There doesn't seem to be a clean way to get TypeScript to type check this without casting
+	// without declaring the adapter inside this generic function and needlessly recreating it on every call.
+	const adapterTyped = adapter as CursorAdapter<MapTreeNodeViewGeneric<T>> as CursorAdapter<T>;
 	return stackTreeNodeCursor(adapterTyped, root);
 }
 
