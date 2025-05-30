@@ -850,9 +850,8 @@ export class IntervalCollection
 		localOpMetadata: IMapMessageLocalMetadata,
 	): void {
 		const { opName, value } = op;
-		const { localSeq } = localOpMetadata;
 		const rebasedValue =
-			opName === "delete" ? value : this.rebaseLocalInterval(opName, value, localSeq);
+			opName === "delete" ? value : this.rebaseLocalInterval(opName, value, localOpMetadata);
 		if (rebasedValue === undefined) {
 			return undefined;
 		}
@@ -1106,8 +1105,10 @@ export class IntervalCollection
 
 		this.assertStickinessEnabled(start, end);
 
+		const intervalId = id ?? uuid();
+
 		const interval: SequenceIntervalClass = this.localCollection.addInterval(
-			id ?? uuid(),
+			intervalId,
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
 			props,
@@ -1132,6 +1133,7 @@ export class IntervalCollection
 					},
 					{
 						localSeq,
+						intervalId,
 					},
 				);
 			}
@@ -1170,6 +1172,7 @@ export class IntervalCollection
 					{
 						localSeq: this.getNextLocalSeq(),
 						previous: interval.serialize(),
+						intervalId: interval.getIntervalId(),
 					},
 				);
 			} else {
@@ -1265,6 +1268,7 @@ export class IntervalCollection
 					{
 						localSeq,
 						previous: interval.serialize(),
+						intervalId: id,
 					},
 				);
 			}
@@ -1344,22 +1348,23 @@ export class IntervalCollection
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
 
-		if (local) {
-			assert(
-				localOpMetadata !== undefined,
-				0x552 /* op metadata should be defined for local op */,
-			);
-			this.localSeqToSerializedInterval.delete(localOpMetadata?.localSeq);
-			// This is an ack from the server. Remove the pending change.
-			this.removePendingChange(serializedInterval);
-		}
-
 		// Note that the ID is in the property bag only to allow us to find the interval.
 		// This API cannot change the ID, and writing to the ID property will result in an exception. So we
 		// strip it out of the properties here.
 		const { id, properties } = getSerializedProperties(serializedInterval);
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
 		const interval: SequenceIntervalClass | undefined = this.getIntervalById(id);
+
+		if (local) {
+			assert(
+				localOpMetadata !== undefined,
+				0x552 /* op metadata should be defined for local op */,
+			);
+			// This is an ack from the server. Remove the pending change.
+			this.localSeqToSerializedInterval.delete(localOpMetadata?.localSeq);
+			this.removePendingChange(serializedInterval);
+		}
+
 		if (!interval) {
 			// The interval has been removed locally; no-op.
 			return;
@@ -1437,7 +1442,7 @@ export class IntervalCollection
 	public rebaseLocalInterval(
 		opName: string,
 		serializedInterval: SerializedIntervalDelta,
-		localSeq: number,
+		localOpMetadata: IMapMessageLocalMetadata,
 	): SerializedIntervalDelta | undefined {
 		if (!this.client) {
 			// If there's no associated mergeTree client, the originally submitted op is still correct.
@@ -1447,6 +1452,7 @@ export class IntervalCollection
 			throw new LoggingError("attachSequence must be called");
 		}
 
+		const { localSeq } = localOpMetadata;
 		const { intervalType, properties, stickiness, startSide, endSide } = serializedInterval;
 		const { id } = getSerializedProperties(serializedInterval);
 		const { start: startRebased, end: endRebased } =
