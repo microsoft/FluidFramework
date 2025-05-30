@@ -1063,7 +1063,7 @@ export class ModularChangeFamily
 	// This performs a first pass on all fields which have both new and base changes.
 	// TODO: Can we also handle additional passes in this method?
 	private rebaseIntersectingFields(
-		rootsChanges: [newChangeset: NodeId, baseChangeset: NodeId][],
+		rootChanges: [newChangeset: NodeId, baseChangeset: NodeId][],
 		crossFieldTable: RebaseTable,
 		rebasedNodes: ChangeAtomIdBTree<NodeChangeset>,
 		genId: IdAllocator,
@@ -1080,6 +1080,18 @@ export class ModularChangeFamily
 			metadata,
 		);
 
+		for (const [newChildChange, baseChildChange] of rootChanges) {
+			const rebasedNode = this.rebaseNodeChange(
+				newChildChange,
+				baseChildChange,
+				genId,
+				crossFieldTable,
+				metadata,
+			);
+
+			setInChangeAtomIdMap(rebasedNodes, newChildChange, rebasedNode);
+		}
+
 		// This loop processes all fields which have both base and new changes.
 		// Note that the call to `rebaseNodeChange` can add entries to `crossFieldTable.nodeIdPairs`.
 		for (const [newId, baseId, _attachState] of crossFieldTable.nodeIdPairs) {
@@ -1094,17 +1106,6 @@ export class ModularChangeFamily
 			setInChangeAtomIdMap(rebasedNodes, newId, rebasedNode);
 		}
 
-		for (const [newChildChange, baseChildChange] of rootsChanges) {
-			const rebasedNode = this.rebaseNodeChange(
-				newChildChange,
-				baseChildChange,
-				genId,
-				crossFieldTable,
-				metadata,
-			);
-
-			setInChangeAtomIdMap(rebasedNodes, newChildChange, rebasedNode);
-		}
 		return rebasedFields;
 	}
 
