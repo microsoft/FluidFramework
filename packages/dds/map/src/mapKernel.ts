@@ -31,7 +31,7 @@ interface IMapMessageHandler {
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	process(op: IMapOperation, local: boolean, localOpMetadata: number): void;
+	process(op: IMapOperation, local: boolean, localOpMetadata: number | undefined): void;
 
 	/**
 	 * Communicate the operation to remote clients.
@@ -460,7 +460,14 @@ export class MapKernel {
 		if (handler === undefined) {
 			return false;
 		}
-		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
+		if (local) {
+			assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
+		} else {
+			assert(
+				localOpMetadata === undefined,
+				"Expect localOpMetadata to be undefined for remote ops",
+			);
+		}
 		handler.process(op, local, localOpMetadata);
 		return true;
 	}
