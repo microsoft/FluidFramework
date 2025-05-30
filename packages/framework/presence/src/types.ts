@@ -47,6 +47,9 @@ export type StatesWorkspaceEntry<
  * @beta
  */
 export interface StatesWorkspaceSchema {
+	/**
+	 * Key-value pairs of State objects registered with the {@link StatesWorkspace}.
+	 */
 	[key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 

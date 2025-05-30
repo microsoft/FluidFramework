@@ -171,7 +171,6 @@ function setupSubComponents(
 	const datastoreManager = new PresenceDatastoreManagerImpl(
 		attendeeId,
 		runtime,
-		systemWorkspaceConfig.workspace.getAttendee.bind(systemWorkspaceConfig.workspace),
 		logger,
 		events,
 		presence,

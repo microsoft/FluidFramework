@@ -16,7 +16,8 @@ import type { ISharedArrayOperation } from "./sharedArrayOperations.js";
  * It can be used as a generic constraint (`extends SerializableTypeForSharedArray`) but is
  * *never* meant to be a concrete/real type on its own.
  *
- * @internal
+ * @legacy
+ * @alpha
  */
 export type SerializableTypeForSharedArray = boolean | number | string | object | IFluidHandle;
 
@@ -24,7 +25,8 @@ export type SerializableTypeForSharedArray = boolean | number | string | object 
  *
  * @typeParam T - The type of the object to make readonly
  *
- * @internal
+ * @legacy
+ * @alpha
  */
 export type FullyReadonly<T> = {
 	readonly [P in keyof T]: FullyReadonly<T[P]>;
@@ -34,7 +36,8 @@ export type FullyReadonly<T> = {
  * Interface defining the events that can be emitted by the SharedArray DDS
  * and the events that can be listened to by the SharedArray DDS
  *
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface ISharedArrayEvents extends ISharedObjectEvents {
 	(
@@ -56,7 +59,8 @@ export interface ISharedArrayEvents extends ISharedObjectEvents {
  *
  * @typeParam T - The type of the SharedArray
  *
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface ISharedArray<T extends SerializableTypeForSharedArray>
 	extends ISharedObject<ISharedArrayEvents> {
@@ -67,11 +71,6 @@ export interface ISharedArray<T extends SerializableTypeForSharedArray>
 }
 
 /**
- * Interface defining the SharedArray DDS with revertible operations
- * It is a generic interface that can be used to create a SharedArray of any type
- * The type of the SharedArray is defined by the type parameter T
- *
- * @typeParam T - The type of the SharedArray
  *
  * @internal
  */
@@ -155,7 +154,8 @@ export interface SnapshotFormat<T> {
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface IRevertible {
 	revert(): void;
