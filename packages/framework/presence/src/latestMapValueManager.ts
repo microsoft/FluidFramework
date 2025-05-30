@@ -284,10 +284,14 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
 	}
-	public set(key: K, value: JsonSerializable<T>): this {
+	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value: toOpaqueJson(value) };
+			this.value.items[key] = {
+				rev: 0,
+				timestamp: 0,
+				value: toOpaqueJson(value),
+			} satisfies InternalTypes.ValueOptionalState<T>;
 		}
 		this.updateItem(key, toOpaqueJson(value));
 		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });

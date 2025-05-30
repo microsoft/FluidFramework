@@ -117,7 +117,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		return this.datastore.presence;
 	}
 
-	public get local(): JsonDeserialized<T> {
+	public get local(): DeepReadonly<JsonDeserialized<T>> {
 		return asDeeplyReadonlyFromJsonHandle(this.value.value);
 	}
 
@@ -159,7 +159,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 		return {
-			value: asDeeplyReadonly(fromOpaqueJson(clientState.value)),
+			value: asDeeplyReadonlyFromJsonHandle(clientState.value),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}

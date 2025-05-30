@@ -102,7 +102,7 @@ export function toOpaqueJson<const T>(
  * @system
  */
 export function fromOpaqueJson<
-	TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
+	const TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
 >(opaque: TOpaque): OpaqueJsonToJsonType<TOpaque> {
 	return opaque as unknown as OpaqueJsonToJsonType<TOpaque>;
 }
@@ -111,7 +111,7 @@ export function fromOpaqueJson<
  * Converts an opaque JSON value to a deeply readonly value.
  */
 export function asDeeplyReadonlyFromJsonHandle<
-	TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
+	const TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
 >(value: TOpaque): DeepReadonly<OpaqueJsonToJsonType<TOpaque>> {
 	return asDeeplyReadonly(fromOpaqueJson(value));
 }
