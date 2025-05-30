@@ -72,6 +72,9 @@ export function stackTreeFieldCursor<TNode>(
 	return cursor;
 }
 
+/**
+ * The representation of a field used by {@link CursorAdapter}.
+ */
 export type Field<TNode> = Pick<readonly TNode[], typeof Symbol.iterator | "length" | number>;
 
 /**

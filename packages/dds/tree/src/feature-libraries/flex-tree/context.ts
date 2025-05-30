@@ -57,6 +57,9 @@ export interface FlexTreeContext {
  * Subset of a hydrated context which can be used in more cases (like before the root and events are set up).
  */
 export interface FlexTreeHydratedContextMinimal {
+	/**
+	 * The {@link NodeIdentifierManager} responsible for allocating and compressing identifiers for nodes in this context.
+	 */
 	readonly nodeKeyManager: NodeIdentifierManager;
 
 	/**
