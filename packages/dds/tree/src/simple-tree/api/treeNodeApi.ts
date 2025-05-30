@@ -49,9 +49,9 @@ import { lazilyAllocateIdentifier, isObjectNodeSchema } from "../node-kinds/inde
  * been {@link TreeStatus.Deleted | deleted}.
  * To verify whether or not a node already has been deleted, use the {@link TreeNodeApi.status} function.
  *
- * @privateRemarks
  * This type should only be used via the public `Tree` export.
  *
+ * @privateRemarks
  * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
  *
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
