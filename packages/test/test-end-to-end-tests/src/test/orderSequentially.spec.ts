@@ -5,11 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import {
-	describeCompat,
-	itExpects,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -22,6 +18,7 @@ import type {
 	SequenceDeltaEvent,
 	SharedString,
 } from "@fluidframework/sequence/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -169,39 +166,42 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		);
 	});
 
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	itExpects.only(
-		"Rollback should throw if unsupported op (e.g. rejoin) is rolled back",
+	itExpects(
+		"Should rollback if unsupported op (e.g. rejoin) is attempted to be submitted in orderSequentially",
 		[
 			{
 				category: "error",
 				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "RollbackError: Can't rollback rejoin",
 			},
 		],
 		async () => {
-			const detachedDataStore = await containerRuntime.createDataStore(TestDataObjectType);
+			sharedMap.set("key", "BEFORE");
+
 			try {
 				containerRuntime.orderSequentially(() => {
-					// This should generate a rejoin op, but rollback isn't supported for rejoin ops.
+					sharedMap.set("key", "SHOULD BE ROLLED BACK");
+
+					// Rejoin isn't supported during staging mode, this should throw and trigger rollback
 					(containerRuntime as unknown as { submit(msg: { type: string }): void }).submit({
 						type: "rejoin",
 					});
-					throw new Error(errorMessage); // Will trigger rollback which will throw a different error
 				});
 			} catch (err) {
 				error = err as Error;
 			}
 
-			assert.notEqual(error, undefined, "No error");
+			assert(error !== undefined, "No error");
+			validateAssertionError(error, "Unexpected message type submitted in Staging Mode");
 			assert.equal(
-				error?.message,
-				"RollbackError: Can't rollback rejoin",
-				"Unexpected error message",
+				changedEventData.length,
+				3,
+				"Expected 3 changes: 'BEFORE', 'SHOULD BE ROLLED BACK', and rollback",
 			);
-			assert.equal(changedEventData.length, 0);
+			assert.equal(
+				sharedMap.get("key"),
+				"BEFORE",
+				"SharedMap value should be rolled back to BEFORE",
+			);
 		},
 	);
 

@@ -773,6 +773,24 @@ export async function loadContainerRuntime(
 
 const defaultMaxConsecutiveReconnects = 7;
 
+//* POST-MERGE: Remove GC/DocSchema ops
+/**
+ * These are the ONLY message types that are allowed to be submitted while in staging mode
+ * (Does not apply to pre-StagingMode batches that are resubmitted, those are not considered to be staged)
+ */
+function canStageMessageOfType(
+	type: LocalContainerRuntimeMessage["type"],
+): type is
+	| ContainerMessageType.FluidDataStoreOp
+	| ContainerMessageType.GC
+	| ContainerMessageType.DocumentSchemaChange {
+	return (
+		type === ContainerMessageType.FluidDataStoreOp ||
+		type === ContainerMessageType.GC ||
+		type === ContainerMessageType.DocumentSchemaChange
+	);
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -4511,6 +4529,11 @@ export class ContainerRuntime
 			// If we're resubmitting a batch, keep the same "staged" value as before.  Otherwise, use the current "global" state.
 			const staged = this.batchRunner.resubmitInfo?.staged ?? this.inStagingMode;
 
+			assert(
+				!staged || canStageMessageOfType(type),
+				"Unexpected message type submitted in Staging Mode",
+			);
+
 			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
 			if (!staged) {
 				this.submitIdAllocationOpIfNeeded({ staged: false });
@@ -4724,14 +4747,15 @@ export class ContainerRuntime
 		}
 	}
 
+	/**
+	 * Rollback the given op which was only staged but not yet submitted.
+	 */
 	private rollbackStagedChanges(
-		runtimeOp: LocalContainerRuntimeMessage,
+		{ type, contents }: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 	): void {
-		const { type, contents } = runtimeOp as Exclude<
-			LocalContainerRuntimeMessage,
-			UnknownContainerRuntimeMessage // This is impossible - all these ops came from this current session, not stashed state
-		>;
+		assert(canStageMessageOfType(type), "Unexpected message type to be rolled back");
+
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store
@@ -4739,18 +4763,12 @@ export class ContainerRuntime
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			}
-			case ContainerMessageType.GC: // GC ops won't be generated in Staging Mode
-			case ContainerMessageType.DocumentSchemaChange: // Document schema ops won't be generated in Staging Mode
-			case ContainerMessageType.Attach: // Attach ops won't be generated in Staging Mode
-			case ContainerMessageType.Alias: // Alias ops won't be generated in Staging Mode
-			case ContainerMessageType.BlobAttach: // Attach ops won't be generated in Staging Mode
-			case ContainerMessageType.IdAllocation: // ID Allocation ops won't be generated in Staging Mode
-			// Rejoin ops are unused
-			case ContainerMessageType.Rejoin: {
-				throw new Error(`Can't rollback ${type}`);
+			case ContainerMessageType.GC:
+			case ContainerMessageType.DocumentSchemaChange: {
+				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
 			}
 			default: {
-				unreachableCase(type, `Can't rollback unknown message type: ${type}`);
+				unreachableCase(type);
 			}
 		}
 	}
