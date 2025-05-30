@@ -14,14 +14,14 @@ import type { ClientUpdateEntry } from "./presenceStates.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 
 /**
- * @internal
+ * Datastore that contains system workspace data
  */
 export interface SystemDatastore {
 	"system:presence": SystemWorkspaceDatastore;
 }
 
 /**
- * @internal
+ * General datastore (and message) structure.
  */
 export interface GeneralDatastoreMessageContent {
 	[WorkspaceAddress: string]: {
@@ -34,7 +34,7 @@ export interface GeneralDatastoreMessageContent {
 type DatastoreMessageContent = GeneralDatastoreMessageContent & SystemDatastore;
 
 /**
- * @internal
+ * Datastore update message type.
  */
 export const datastoreUpdateMessageType = "Pres:DatastoreUpdate";
 interface DatastoreUpdateMessage {
@@ -48,18 +48,18 @@ interface DatastoreUpdateMessage {
 }
 
 /**
- * @internal
+ * Outbound datastore update message
  */
 export type OutboundDatastoreUpdateMessage = OutboundExtensionMessage<DatastoreUpdateMessage>;
 
 /**
- * @internal
+ * Inbound and verified datastore update message
  */
 export type InboundDatastoreUpdateMessage =
 	VerifiedInboundExtensionMessage<DatastoreUpdateMessage>;
 
 /**
- * @internal
+ * Client join message type.
  */
 export const joinMessageType = "Pres:ClientJoin";
 interface ClientJoinMessage {
@@ -73,16 +73,16 @@ interface ClientJoinMessage {
 }
 
 /**
- * @internal
+ * Outbound client join message
  */
 export type OutboundClientJoinMessage = OutboundExtensionMessage<ClientJoinMessage>;
 
 /**
- * @internal
+ * Inbound and verified client join message
  */
 export type InboundClientJoinMessage = VerifiedInboundExtensionMessage<ClientJoinMessage>;
 
 /**
- * @internal
+ * Messages structures that can be sent and received as understood in the presence protocol
  */
 export type SignalMessages = ClientJoinMessage | DatastoreUpdateMessage;
