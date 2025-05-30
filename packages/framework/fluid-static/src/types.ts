@@ -121,7 +121,7 @@ interface IProvideStaticEntryPoint {
 }
 
 /**
- * @internal
+ * This is the internal entry point fluid-static creates.
  */
 export interface IStaticEntryPoint extends IProvideStaticEntryPoint {
 	readonly rootDataObject: IRootDataObject;
