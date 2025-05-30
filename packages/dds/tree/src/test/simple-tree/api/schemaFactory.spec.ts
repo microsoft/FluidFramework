@@ -427,11 +427,7 @@ describe("schemaFactory", () => {
 				{ persistedMetadata: fooMetadata },
 			) {}
 
-			assert.deepEqual(Foo.metadata, fooMetadata);
-
-			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
-			const persistedMetadata = Foo.metadata.persistedMetadata;
-			const a = Foo.metadata.persistedMetadata.a;
+			assert.deepEqual(Foo.persistedMetadata, fooMetadata);
 		});
 
 		it("Field schema persisted metadata", () => {
@@ -461,7 +457,11 @@ describe("schemaFactory", () => {
 
 			const schema = Tree.schema(foo) as ObjectNodeSchema;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert.deepEqual(schema.fields.get("bar")!.metadata, fooMetadata);
+			assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, fooMetadata);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("baz")!.persistedMetadata, fooMetadata);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("qux")!.persistedMetadata, fooMetadata);
 		});
 
 		describe("deep equality", () => {

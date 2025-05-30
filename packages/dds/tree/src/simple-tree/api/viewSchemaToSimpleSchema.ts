@@ -96,6 +96,7 @@ function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchem
 		kind: NodeKind.Leaf,
 		leafKind: schema.leafKind,
 		metadata: schema.metadata,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }
 
@@ -106,6 +107,7 @@ function copySimpleMapOrArraySchema(
 		kind: schema.kind,
 		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
 		metadata: schema.metadata,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }
 
@@ -125,5 +127,6 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 		kind: NodeKind.Object,
 		fields,
 		metadata: schema.metadata,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }

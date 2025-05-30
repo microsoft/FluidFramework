@@ -261,12 +261,11 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 				value,
 			});
 		}
-		return {
-			metadata: this.metadata,
-			kind: {
-				object: fieldsObject,
-			},
-		};
+
+		const kind = { object: fieldsObject };
+
+		// Omit metadata from the output if it is undefined
+		return this.metadata !== undefined ? { kind, metadata: this.metadata } : { kind };
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
@@ -293,18 +292,12 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 
 	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
-		return {
-			map: encodeFieldSchemaV1(this.mapFields),
-		};
+		return { map: encodeFieldSchemaV1(this.mapFields) };
 	}
 
 	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
-		return {
-			metadata: this.metadata,
-			kind: {
-				map: encodeFieldSchemaV2(this.mapFields),
-			},
-		};
+		const kind = { map: encodeFieldSchemaV2(this.mapFields) };
+		return this.metadata === undefined ? { kind, metadata: this.metadata } : { kind };
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
@@ -340,8 +333,7 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 
 	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
 		return {
-			// No metadata for leaf nodes.
-			metadata: undefined,
+			// No metadata for leaf nodes, so don't emit a metadata field.
 			kind: {
 				leaf: encodeValueSchema(this.leafValue),
 			},
@@ -406,10 +398,12 @@ export function encodeFieldSchemaV1(schema: TreeFieldStoredSchema): FieldSchemaF
 }
 
 export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaFormatV2 {
-	return {
-		...encodeFieldSchemaV1(schema),
-		metadata: schema.metadata,
-	};
+	const fieldSchema: FieldSchemaFormatV1 = encodeFieldSchemaV1(schema);
+
+	// Omit metadata from the output if it is undefined
+	return schema.metadata !== undefined
+		? { ...fieldSchema, metadata: schema.metadata }
+		: { ...fieldSchema };
 }
 
 export function decodeFieldSchema(schema: FieldSchemaFormatV2): TreeFieldStoredSchema {

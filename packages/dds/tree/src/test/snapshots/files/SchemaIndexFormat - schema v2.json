@@ -34,7 +34,8 @@
                           "items": {
                             "type": "string"
                           }
-                        }
+                        },
+                        "metadata": {}
                       },
                       "required": [
                         "kind",
@@ -55,7 +56,8 @@
                       "items": {
                         "type": "string"
                       }
-                    }
+                    },
+                    "metadata": {}
                   },
                   "required": [
                     "kind",

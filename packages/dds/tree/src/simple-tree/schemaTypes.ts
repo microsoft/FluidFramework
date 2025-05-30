@@ -540,11 +540,19 @@ export class FieldSchemaAlpha<
 {
 	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
 	private readonly lazyAnnotatedTypes: Lazy<ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>>;
+	private readonly propsAlpha: FieldPropsAlpha<TCustomMetadata> | undefined;
 
 	/**
 	 * Metadata on the types of tree nodes allowed on this field.
 	 */
 	public readonly allowedTypesMetadata: AllowedTypesMetadata;
+
+	/**
+	 * Persisted metadata for this field schema.
+	 */
+	public get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
+		return this.propsAlpha?.persistedMetadata ?? {};
+	}
 
 	static {
 		createFieldSchemaPrivate = <
@@ -554,7 +562,7 @@ export class FieldSchemaAlpha<
 		>(
 			kind: Kind2,
 			annotatedAllowedTypes: Types2,
-			props?: FieldProps<TCustomMetadata2>,
+			props?: FieldPropsAlpha<TCustomMetadata2>,
 		) =>
 			new FieldSchemaAlpha(
 				kind,
@@ -568,7 +576,7 @@ export class FieldSchemaAlpha<
 		kind: Kind,
 		types: Types,
 		public readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes,
-		props?: FieldProps<TCustomMetadata>,
+		props?: FieldPropsAlpha<TCustomMetadata>,
 	) {
 		super(kind, types, props);
 
@@ -581,6 +589,7 @@ export class FieldSchemaAlpha<
 		this.lazyIdentifiers = new Lazy(
 			() => new Set([...this.allowedTypeSet].map((t) => t.identifier)),
 		);
+		this.propsAlpha = props;
 	}
 
 	public get allowedTypesIdentifiers(): ReadonlySet<string> {

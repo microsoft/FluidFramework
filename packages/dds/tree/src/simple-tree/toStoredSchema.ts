@@ -114,9 +114,10 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 				{
 					kind: FieldKinds.optional.identifier,
 					types,
-					metadata: schema.metadata,
+					metadata: schema.persistedMetadata,
 				},
-				schema.metadata,
+				// TODO: Find a way to avoid injecting persistedMetadata twice in these constructor calls.
+				schema.persistedMetadata,
 			);
 		}
 		case NodeKind.Array: {
@@ -124,17 +125,17 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 			const field = {
 				kind: FieldKinds.sequence.identifier,
 				types,
-				metadata: schema.metadata,
+				metadata: schema.persistedMetadata,
 			};
 			const fields = new Map([[EmptyKey, field]]);
-			return new ObjectNodeStoredSchema(fields, schema.metadata);
+			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 			for (const fieldSchema of schema.fields.values()) {
 				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema));
 			}
-			return new ObjectNodeStoredSchema(fields, schema.metadata);
+			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
 		default:
 			unreachableCase(kind);

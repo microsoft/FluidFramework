@@ -24,12 +24,14 @@ const simpleString: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.String,
 	kind: NodeKind.Leaf,
 	metadata: {},
+	persistedMetadata: undefined,
 };
 
 const simpleNumber: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.Number,
 	kind: NodeKind.Leaf,
 	metadata: {},
+	persistedMetadata: undefined,
 };
 
 describe("getSimpleSchema", () => {
@@ -125,6 +127,7 @@ describe("getSimpleSchema", () => {
 						kind: NodeKind.Array,
 						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 						metadata: {},
+						persistedMetadata: undefined,
 					},
 				],
 				["com.fluidframework.leaf.string", simpleString],
@@ -150,6 +153,7 @@ describe("getSimpleSchema", () => {
 					{
 						kind: NodeKind.Map,
 						metadata: {},
+						persistedMetadata: undefined,
 						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 					},
 				],
@@ -180,6 +184,7 @@ describe("getSimpleSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map<string, SimpleObjectFieldSchema>([
 							[
 								"foo",
@@ -229,6 +234,7 @@ describe("getSimpleSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"id",
@@ -269,6 +275,7 @@ describe("getSimpleSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
@@ -312,6 +319,7 @@ describe("getSimpleSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
