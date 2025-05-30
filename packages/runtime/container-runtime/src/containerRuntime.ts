@@ -773,22 +773,14 @@ export async function loadContainerRuntime(
 
 const defaultMaxConsecutiveReconnects = 7;
 
-//* POST-MERGE: Remove GC/DocSchema ops
 /**
  * These are the ONLY message types that are allowed to be submitted while in staging mode
  * (Does not apply to pre-StagingMode batches that are resubmitted, those are not considered to be staged)
  */
 function canStageMessageOfType(
 	type: LocalContainerRuntimeMessage["type"],
-): type is
-	| ContainerMessageType.FluidDataStoreOp
-	| ContainerMessageType.GC
-	| ContainerMessageType.DocumentSchemaChange {
-	return (
-		type === ContainerMessageType.FluidDataStoreOp ||
-		type === ContainerMessageType.GC ||
-		type === ContainerMessageType.DocumentSchemaChange
-	);
+): type is ContainerMessageType.FluidDataStoreOp {
+	return type === ContainerMessageType.FluidDataStoreOp;
 }
 
 /**
@@ -4762,10 +4754,6 @@ export class ContainerRuntime
 				// and trigger rollback on it.
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
-			}
-			case ContainerMessageType.GC:
-			case ContainerMessageType.DocumentSchemaChange: {
-				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
 			}
 			default: {
 				unreachableCase(type);
