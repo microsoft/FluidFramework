@@ -43,9 +43,14 @@ import { lazilyAllocateIdentifier, isObjectNodeSchema } from "../node-kinds/inde
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
- * * @remarks
- * This type should only be used via the public `Tree` export.
+ *
+ * @remarks
+ * With the exception of {@link TreeNodeApi.status}, these functions should not be called with nodes that have been disposed.
+ * To verify whether or not a node already has been disposed, use the {@link TreeNodeApi.status} function.
+ *
  * @privateRemarks
+ * This type should only be used via the public `Tree` export.
+ *
  * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
  *
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
@@ -127,6 +132,10 @@ export interface TreeNodeApi {
 
 /**
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
+ *
+ * @remarks
+ * With the exception of {@link TreeNodeApi.status}, these functions should not be called with nodes that have been disposed.
+ * To verify whether or not a node already has been disposed, use the {@link TreeNodeApi.status} function.
  */
 export const treeNodeApi: TreeNodeApi = {
 	parent(node: TreeNode): TreeNode | undefined {
