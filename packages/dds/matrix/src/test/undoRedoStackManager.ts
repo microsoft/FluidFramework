@@ -48,6 +48,10 @@ class Stack<T> {
 			this.itemPushedCallback();
 		}
 	}
+
+	public get length(): number {
+		return this.items.length;
+	}
 }
 
 /**
