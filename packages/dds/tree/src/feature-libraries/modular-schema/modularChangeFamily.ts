@@ -189,7 +189,7 @@ export class ModularChangeFamily
 			left: ModularChangeset,
 			right: ModularChangeset,
 		): ModularChangeset => {
-			return this.composePair(left, right, revInfos, idState);
+			return this.composePair(left, right, idState);
 		};
 
 		const innerChanges = changes.map((change) => change.change);
@@ -199,9 +199,10 @@ export class ModularChangeFamily
 	private composePair(
 		change1: ModularChangeset,
 		change2: ModularChangeset,
-		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangeset {
+		const revInfos = composeRevInfos(change1.revisions, change2.revisions);
+
 		const { fieldChanges, nodeChanges, nodeToParent, nodeAliases, crossFieldKeys, rootNodes } =
 			this.composeAllFields(change1, change2, revInfos, idState);
 
@@ -1361,8 +1362,14 @@ export class ModularChangeFamily
 		metadata: RebaseRevisionMetadata,
 	): void {
 		if (parentBase.root !== undefined) {
-			setInChangeAtomIdMap(table.rebasedRootNodes.nodeChanges, parentBase.root, baseNodeId);
-			setInChangeAtomIdMap(table.rebasedNodeToParent, baseNodeId, parentBase);
+			const renamedRoot = firstAttachIdFromDetachId(
+				table.baseChange.rootNodes,
+				parentBase.root,
+				1,
+			).value;
+
+			setInChangeAtomIdMap(table.rebasedRootNodes.nodeChanges, renamedRoot, baseNodeId);
+			setInChangeAtomIdMap(table.rebasedNodeToParent, baseNodeId, { root: renamedRoot });
 			return;
 		}
 
@@ -2752,7 +2759,11 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		nodeChange: NodeId | undefined,
 	): void {
 		let countToProcess = count;
-		const attachIdEntry = firstAttachIdFromDetachId(this.table.baseRoots, baseDetachId, count);
+		const attachIdEntry = firstAttachIdFromDetachId(
+			this.table.baseRoots,
+			baseDetachId,
+			countToProcess,
+		);
 		const baseAttachId = attachIdEntry.value;
 		countToProcess = attachIdEntry.length;
 
@@ -3826,6 +3837,14 @@ function rebaseRename(
 			affectedBaseFields,
 		);
 	}
+}
+
+function composeRevInfos(
+	revisions1: readonly RevisionInfo[] | undefined,
+	revisions2: readonly RevisionInfo[] | undefined,
+): RevisionInfo[] {
+	const result: RevisionInfo[] = [...(revisions1 ?? []), ...(revisions2 ?? [])];
+	return result;
 }
 
 function composeRootTables(
