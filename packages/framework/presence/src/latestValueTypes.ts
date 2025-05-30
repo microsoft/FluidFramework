@@ -35,16 +35,27 @@ export interface LatestMetadata {
  * @beta
  */
 export interface LatestData<T> {
+	/**
+	 * The value of the state.
+	 * @remarks This is a deeply readonly value, meaning it cannot be modified.
+	 */
 	value: DeepReadonly<JsonDeserialized<T>>;
+
+	/**
+	 * Metadata associated with the value.
+	 */
 	metadata: LatestMetadata;
 }
 
 /**
- * State of a specific attendee's value and its metadata.
+ * State of a specific {@link Attendee}'s value and its metadata.
  *
  * @sealed
  * @beta
  */
 export interface LatestClientData<T> extends LatestData<T> {
+	/**
+	 * Associated {@link Attendee}.
+	 */
 	attendee: Attendee;
 }

@@ -140,9 +140,6 @@ class RootDataObject
 		await Promise.all(loadInitialObjectsP);
 	}
 
-	/**
-	 * {@inheritDoc IRootDataObject.initialObjects}
-	 */
 	public get initialObjects(): LoadableObjectRecord {
 		if (Object.keys(this._initialObjects).length === 0) {
 			throw new Error("Initial Objects were not correctly initialized");
@@ -150,9 +147,6 @@ class RootDataObject
 		return this._initialObjects;
 	}
 
-	/**
-	 * {@inheritDoc IRootDataObject.create}
-	 */
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
 		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
 		if (isDataObjectKind(internal)) {
@@ -289,9 +283,6 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		this.initialObjects = schema.initialObjects;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/aqueduct#BaseContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		// The first time we create the container we create the RootDataObject
 		await this.rootDataObjectFactory.createRootInstance(rootDataStoreId, runtime, {

@@ -99,7 +99,7 @@ export enum TreeStatus {
 	 * - The node was removed and nothing (e.g. undo/redo history) kept it from being cleaned up.
 	 * - The {@link TreeView} was disposed or had a schema change which made the tree incompatible.
 	 *
-	 * Deleted nodes' contents should not be observed or edited. This includes functionality exposed via {@link Tree},
+	 * Deleted nodes' contents should not be observed or edited. This includes functionality exposed via {@link (Tree:variable)},
 	 * with the exception of {@link TreeNodeApi.status}.
 	 *
 	 * @privateRemarks
