@@ -15,13 +15,14 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import {
-	asDeeplyReadonlyFromJsonHandle,
-	toOpaqueJson,
-	// type InternalUtilityTypes,
-} from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
+import {
+	asDeeplyReadonly,
+	asDeeplyReadonlyFromOpaqueJson,
+	objectEntries,
+	objectKeys,
+	toOpaqueJson,
+} from "./internalUtils.js";
 import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -271,7 +272,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	): void {
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(asDeeplyReadonlyFromJsonHandle(item.value), key, this);
+				callbackfn(asDeeplyReadonlyFromOpaqueJson(item.value), key, this);
 			}
 		}
 	}
@@ -279,7 +280,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		return this.value.items[key]?.value === undefined
 			? undefined
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
-				asDeeplyReadonlyFromJsonHandle(this.value.items[key]!.value!);
+				asDeeplyReadonlyFromOpaqueJson(this.value.items[key]!.value!);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -425,7 +426,7 @@ class LatestMapRawValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
-					value: asDeeplyReadonlyFromJsonHandle(value),
+					value: asDeeplyReadonlyFromOpaqueJson(value),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -476,7 +477,7 @@ class LatestMapRawValueManagerImpl<
 			currentState.items[key] = item;
 			const metadata = { revision: item.rev, timestamp: item.timestamp };
 			if (item.value !== undefined) {
-				const itemValue = asDeeplyReadonlyFromJsonHandle(item.value);
+				const itemValue = asDeeplyReadonlyFromOpaqueJson(item.value);
 				const updatedItem = {
 					attendee,
 					key,

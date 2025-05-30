@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { DeepReadonly } from "@fluidframework/core-interfaces/internal";
+import type {
+	DeepReadonly,
+	JsonDeserialized,
+	JsonSerializable,
+	JsonTypeToOpaqueJson,
+	OpaqueJsonDeserialized,
+	OpaqueJsonSerializable,
+	OpaqueJsonToJsonType,
+} from "@fluidframework/core-interfaces/internal";
 
 /**
  * Returns union of types of values in a record.
@@ -85,4 +93,35 @@ export function getOrCreateRecord<const K extends string | number | symbol, cons
  */
 export function asDeeplyReadonly<T>(value: T): DeepReadonly<T> {
 	return value as DeepReadonly<T>;
+}
+
+/**
+ * Cast a JSON value to an opaque version.
+ *
+ * @system
+ */
+export function toOpaqueJson<const T>(
+	value: JsonSerializable<T> | JsonDeserialized<T>,
+): JsonTypeToOpaqueJson<T> {
+	return value as unknown as JsonTypeToOpaqueJson<T>;
+}
+
+/**
+ * Cast an opaque JSON value back to its original version.
+ *
+ * @system
+ */
+export function fromOpaqueJson<
+	const TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
+>(opaque: TOpaque): OpaqueJsonToJsonType<TOpaque> {
+	return opaque as unknown as OpaqueJsonToJsonType<TOpaque>;
+}
+
+/**
+ * Converts an opaque JSON value to a deeply readonly value.
+ */
+export function asDeeplyReadonlyFromOpaqueJson<
+	const TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
+>(value: TOpaque): DeepReadonly<OpaqueJsonToJsonType<TOpaque>> {
+	return asDeeplyReadonly(fromOpaqueJson(value));
 }

@@ -4,17 +4,10 @@
  */
 
 import type {
-	DeepReadonly,
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
-	OpaqueJsonDeserialized,
-	JsonTypeToOpaqueJson,
-	OpaqueJsonToJsonType,
-	OpaqueJsonSerializable,
 } from "@fluidframework/core-interfaces/internal";
-
-import { asDeeplyReadonly } from "./internalUtils.js";
 
 /**
  * Collection of utility types that are not intended to be used/imported
@@ -83,35 +76,4 @@ export namespace InternalUtilityTypes {
 	) => any
 		? JsonSerializable<P>
 		: never;
-}
-
-/**
- * Cast a JsonDeserialized value to its branded version.
- *
- * @system
- */
-export function toOpaqueJson<const T>(
-	value: JsonSerializable<T> | JsonDeserialized<T>,
-): JsonTypeToOpaqueJson<T> {
-	return value as unknown as JsonTypeToOpaqueJson<T>;
-}
-
-/**
- * Cast a branded JsonDeserialized value back to its unbranded version.
- *
- * @system
- */
-export function fromOpaqueJson<
-	const TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
->(opaque: TOpaque): OpaqueJsonToJsonType<TOpaque> {
-	return opaque as unknown as OpaqueJsonToJsonType<TOpaque>;
-}
-
-/**
- * Converts an opaque JSON value to a deeply readonly value.
- */
-export function asDeeplyReadonlyFromJsonHandle<
-	const TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
->(value: TOpaque): DeepReadonly<OpaqueJsonToJsonType<TOpaque>> {
-	return asDeeplyReadonly(fromOpaqueJson(value));
 }

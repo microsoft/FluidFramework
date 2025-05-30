@@ -11,11 +11,12 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import { fromOpaqueJson, type InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
+import { fromOpaqueJson } from "./internalUtils.js";
 
 /**
  * @sealed

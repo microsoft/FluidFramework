@@ -16,13 +16,13 @@ import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import {
-	fromOpaqueJson,
-	toOpaqueJson,
-	asDeeplyReadonlyFromJsonHandle,
-} from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { asDeeplyReadonly, objectEntries } from "./internalUtils.js";
+import {
+	asDeeplyReadonly,
+	asDeeplyReadonlyFromOpaqueJson,
+	objectEntries,
+	toOpaqueJson,
+} from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -118,7 +118,7 @@ class LatestValueManagerImpl<T, Key extends string>
 	}
 
 	public get local(): DeepReadonly<JsonDeserialized<T>> {
-		return asDeeplyReadonlyFromJsonHandle(this.value.value);
+		return asDeeplyReadonlyFromOpaqueJson(this.value.value);
 	}
 
 	public set local(value: JsonSerializable<T>) {
@@ -138,7 +138,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			if (attendeeId !== allKnownStates.self) {
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: asDeeplyReadonlyFromJsonHandle(value.value),
+					value: asDeeplyReadonlyFromOpaqueJson(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
 			}
@@ -159,7 +159,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 		return {
-			value: asDeeplyReadonlyFromJsonHandle(clientState.value),
+			value: asDeeplyReadonlyFromOpaqueJson(clientState.value),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -180,7 +180,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					value: asDeeplyReadonly(fromOpaqueJson(value.value)),
+					value: asDeeplyReadonlyFromOpaqueJson(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];
