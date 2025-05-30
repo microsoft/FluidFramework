@@ -16,7 +16,7 @@ export type AttendeeId = SessionId & {
     readonly AttendeeId: "AttendeeId";
 };
 
-// @beta @sealed (undocumented)
+// @beta @sealed
 export interface AttendeesEvents {
     // @eventProperty
     attendeeConnected: (attendee: Attendee) => void;
@@ -153,15 +153,12 @@ export interface LatestArguments<T extends object | null> {
 
 // @beta @sealed
 export interface LatestClientData<T> extends LatestData<T> {
-    // (undocumented)
     attendee: Attendee;
 }
 
 // @beta @sealed
 export interface LatestData<T> {
-    // (undocumented)
     metadata: LatestMetadata;
-    // (undocumented)
     value: DeepReadonly<JsonDeserialized<T>>;
 }
 
@@ -179,23 +176,18 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 // @beta @sealed
 export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
     attendee: Attendee<SpecificAttendeeId>;
-    // (undocumented)
     items: ReadonlyMap<Keys, LatestData<T>>;
 }
 
 // @beta @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {
-    // (undocumented)
     attendee: Attendee;
-    // (undocumented)
     key: K;
-    // (undocumented)
     metadata: LatestMetadata;
 }
 
 // @beta @sealed
 export interface LatestMapItemUpdatedClientData<T, K extends string | number> extends LatestClientData<T> {
-    // (undocumented)
     key: K;
 }
 
@@ -210,7 +202,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
     readonly presence: Presence;
 }
 
-// @beta @sealed (undocumented)
+// @beta @sealed
 export interface LatestMapRawEvents<T, K extends string | number> {
     // @eventProperty
     localItemRemoved: (removedItem: {
@@ -247,7 +239,7 @@ export interface LatestRaw<T> {
     readonly presence: Presence;
 }
 
-// @beta @sealed (undocumented)
+// @beta @sealed
 export interface LatestRawEvents<T> {
     // @eventProperty
     localUpdated: (update: {
@@ -320,7 +312,7 @@ export interface Presence {
     };
 }
 
-// @beta @sealed (undocumented)
+// @beta @sealed
 export interface PresenceEvents {
     workspaceActivated: (workspaceAddress: WorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
@@ -342,15 +334,12 @@ export const StateFactory: {
 // @beta @sealed
 export interface StateMap<K extends string | number, V> {
     clear(): void;
-    // (undocumented)
     delete(key: K): boolean;
     forEach(callbackfn: (value: DeepReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
     get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
-    // (undocumented)
     has(key: K): boolean;
     keys(): IterableIterator<K>;
     set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
-    // (undocumented)
     readonly size: number;
 }
 
@@ -375,7 +364,6 @@ export type StatesWorkspaceEntry<TKey extends string, TValue extends InternalTyp
 
 // @beta
 export interface StatesWorkspaceSchema {
-    // (undocumented)
     [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
