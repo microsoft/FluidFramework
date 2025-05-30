@@ -178,6 +178,7 @@ export class TreeNodeKernel {
 		} else {
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode.anchorNode);
+			this.#hydrationState.innerNode = innerNode;
 		}
 	}
 
