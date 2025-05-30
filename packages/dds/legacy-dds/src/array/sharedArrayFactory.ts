@@ -10,6 +10,8 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 
+import { pkgVersion } from "../packageVersion.js";
+
 import type { ISharedArray, SerializableTypeForSharedArray } from "./interfaces.js";
 import { SharedArray } from "./sharedArray.js";
 
@@ -24,7 +26,7 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 	public static readonly Attributes: IChannelAttributes = {
 		type: SharedArrayFactory.Type,
 		snapshotFormatVersion: "0.1",
-		packageVersion: "0.25",
+		packageVersion: pkgVersion,
 	};
 
 	public get type(): string {

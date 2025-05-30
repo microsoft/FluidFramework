@@ -14,7 +14,6 @@ import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
 	AttendeeId,
-	Attendee,
 	PresenceWithNotifications as Presence,
 	PresenceEvents,
 } from "./presence.js";
@@ -142,7 +141,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	public constructor(
 		private readonly attendeeId: AttendeeId,
 		private readonly runtime: IEphemeralRuntime,
-		private readonly lookupClient: (clientId: AttendeeId) => Attendee,
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		private readonly events: IEmitter<PresenceEvents>,
 		private readonly presence: Presence,
@@ -217,7 +215,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			{
 				presence: this.presence,
 				attendeeId: this.attendeeId,
-				lookupClient: this.lookupClient,
 				localUpdate,
 			},
 			workspaceDatastore,
