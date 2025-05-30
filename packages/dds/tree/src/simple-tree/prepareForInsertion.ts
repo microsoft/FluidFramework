@@ -180,11 +180,13 @@ const placeholderKey: DetachedField & FieldKey = brand("placeholder" as const);
  * @remarks If the content tree contains any proxies, this function must be called just prior to inserting the content into the tree.
  * Specifically, no other content may be inserted into the tree between the invocation of this function and the insertion of `content`.
  * The insertion of `content` must occur or else this function will cause memory leaks.
+ *
+ * Exported fot testing purposes: otherwise should not be used outside this module.
  * @param content - the content subsequence to be inserted, of which might deeply contain {@link TreeNode}s which need to be hydrated.
  * @param forest - the forest the content is being inserted into.
  * See {@link extractFactoryContent} for more details.
  */
-function prepareContentForHydration(
+export function prepareContentForHydration(
 	content: readonly UnhydratedFlexTreeNode[],
 	forest: IForestSubscription,
 	context: FlexTreeHydratedContextMinimal,
