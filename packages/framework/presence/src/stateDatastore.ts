@@ -12,9 +12,6 @@ import type { AttendeeId, PresenceWithNotifications as Presence } from "./presen
 // 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,
 // > = TValue extends InternalTypes.ValueDirectoryOrState<infer T> ? InternalTypes.ValueDirectoryOrState<T> : never;
 
-// /**
-//  * @internal
-//  */
 // export interface StateDatastoreSchema {
 // 	// This type is not precise. It may
 // 	// need to be replaced with StatesWorkspace schema pattern
@@ -24,9 +21,14 @@ import type { AttendeeId, PresenceWithNotifications as Presence } from "./presen
 // }
 
 /**
- * @internal
+ * Miscellaneous options for local state updates
  */
 export interface LocalStateUpdateOptions {
+	/**
+	 * When defined, this is the maximum time in milliseconds that this
+	 * update is allowed to be delayed before it must be sent to service.
+	 * When `undefined`, the callee may determine maximum delay.
+	 */
 	allowableUpdateLatencyMs: number | undefined;
 
 	/**
@@ -36,7 +38,8 @@ export interface LocalStateUpdateOptions {
 }
 
 /**
- * @internal
+ * Contract for States Workspace to support State Manager access to
+ * datastore and general internal presence knowledge.
  */
 export interface StateDatastore<
 	TKey extends string,
@@ -59,8 +62,6 @@ export interface StateDatastore<
 
 /**
  * Helper to get a handle from a datastore.
- *
- * @internal
  */
 export function handleFromDatastore<
 	// Constraining TSchema would be great, but it seems nested types (at least with undefined) cause trouble.
@@ -79,8 +80,6 @@ export function handleFromDatastore<
 
 /**
  * Helper to get the datastore back from its handle.
- *
- * @internal
  */
 export function datastoreFromHandle<
 	TKey extends string,
