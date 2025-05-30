@@ -4496,12 +4496,6 @@ export class ContainerRuntime
 			0x93f /* metadata */,
 		);
 
-		assert(
-			!this.inStagingMode ||
-				containerRuntimeMessage.type === ContainerMessageType.FluidDataStoreOp,
-			"Only FluidDataStoreOp can be submitted in staging mode",
-		);
-
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
 		if (this.innerDeltaManager.readOnlyInfo.readonly) {
