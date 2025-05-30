@@ -151,7 +151,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		debugAssert(() =>
 			this.mode === CursorLocationType.Fields ? true : "must be in fields mode",
 		);
-		// index is kept inbounds an an invariant of the class.
+		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (this.siblings as readonly FieldKey[])[this.index]!;
 	}
