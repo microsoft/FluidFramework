@@ -298,7 +298,8 @@ export class TreeNodeKernel {
 	 *
 	 * For hydrated nodes it returns a FlexTreeNode backed by the forest.
 	 * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
-	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been deleted.
+	 *
+	 * @throws If the node has been deleted.
 	 */
 	public getOrCreateInnerNode(): InnerNode {
 		if (!isHydrated(this.#hydrationState)) {
@@ -440,7 +441,8 @@ export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
  * For hydrated nodes it returns a FlexTreeNode backed by the forest.
  * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
  *
- * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been deleted.
+ *
+ * @throws If the node has been deleted.
  */
 export function getOrCreateInnerNode(treeNode: TreeNode): InnerNode {
 	const kernel = getKernel(treeNode);
