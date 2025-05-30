@@ -64,7 +64,7 @@ export function reviveBigInt(_key: string, value: unknown): unknown {
  * Helper to return an Opaque Json type version of Json type
  */
 export function castToOpaqueJson<const T>(v: JsonSerializable<T>): JsonTypeToOpaqueJson<T> {
-	return v as unknown as JsonTypeToOpaqueJson<T>;
+	return v as JsonTypeToOpaqueJson<T>;
 }
 
 /**
