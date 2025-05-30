@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import {
 	ICache,
 	IDeltaService,
@@ -18,16 +19,17 @@ import {
 	IReadinessCheck,
 	type IDenyList,
 } from "@fluidframework/server-services-core";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
-import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+
 import { IDocumentDeleteService } from "../../services";
+
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
-import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 
 export function create(
 	config: Provider,

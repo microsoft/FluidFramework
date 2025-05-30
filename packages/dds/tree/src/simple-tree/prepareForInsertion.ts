@@ -118,7 +118,7 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	const fieldSchema = convertField(normalizeFieldSchema(schema));
 	validateAndPrepare(schemaAndPolicy, hydratedData, fieldSchema, contentArray);
 
-	return mapTree as TIn extends undefined ? undefined : ExclusiveMapTree;
+	return mapTree;
 }
 
 /**

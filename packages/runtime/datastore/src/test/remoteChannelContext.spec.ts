@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
@@ -22,7 +22,10 @@ import { RemoteChannelContext } from "../remoteChannelContext.js";
 describe("RemoteChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;
 	let sharedObjectRegistry: ISharedObjectRegistry;
-	const loadRuntime = (context: IFluidDataStoreContext, registry: ISharedObjectRegistry) =>
+	const loadRuntime = (
+		context: IFluidDataStoreContext,
+		registry: ISharedObjectRegistry,
+	): FluidDataStoreRuntime =>
 		new FluidDataStoreRuntime(context, registry, /* existing */ false, async () => ({
 			myProp: "myValue",
 		}));
@@ -42,7 +45,7 @@ describe("RemoteChannelContext Tests", () => {
 	it("rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
-		const codeBlock = () =>
+		const codeBlock = (): RemoteChannelContext =>
 			new RemoteChannelContext(
 				dataStoreRuntime,
 				dataStoreContext,

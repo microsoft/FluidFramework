@@ -4,9 +4,11 @@
  */
 
 import { EventEmitter } from "events";
+
 import { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
 import { Level } from "level";
 import sublevel from "level-sublevel";
+
 import { Collection, ICollectionProperty } from "./levelDbCollection";
 
 const MaxFetchSize = 2000;

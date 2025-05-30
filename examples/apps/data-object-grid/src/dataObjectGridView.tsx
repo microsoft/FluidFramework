@@ -7,7 +7,11 @@ import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 
 import { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
-import { IDataObjectGridItemEntry, dataObjectRegistry } from "./dataObjectRegistry.js";
+import {
+	IDataObjectGridItemEntry,
+	dataObjectRegistry,
+	type ISingleHandleItem,
+} from "./dataObjectRegistry.js";
 import { DataObjectGridToolbar } from "./toolbar.js";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -70,8 +74,8 @@ const ItemView: React.FC<IItemViewProps> = (
 // Stronger typing here maybe?
 interface IDataObjectGridViewProps {
 	getUrlForItem: (itemId: string) => string;
-	model: IDataObjectGrid;
-	registry: Map<string, IDataObjectGridItemEntry>;
+	model: IDataObjectGrid<ISingleHandleItem>;
+	registry: Map<string, IDataObjectGridItemEntry<ISingleHandleItem>>;
 	editable: boolean;
 }
 
@@ -80,10 +84,12 @@ const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (
 ) => {
 	const { getUrlForItem, model, registry, editable } = props;
 	// Again stronger typing would be good
-	const [itemList, setItemList] = React.useState<IDataObjectGridItem[]>(model.getItems());
+	const [itemList, setItemList] = React.useState<IDataObjectGridItem<ISingleHandleItem>[]>(
+		model.getItems(),
+	);
 
 	React.useEffect(() => {
-		const onItemListChanged = (newList: IDataObjectGridItem[]) => {
+		const onItemListChanged = (newList: IDataObjectGridItem<ISingleHandleItem>[]): void => {
 			setItemList(newList);
 		};
 		model.on("itemListChanged", onItemListChanged);
@@ -104,15 +110,16 @@ const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (
 		placeholder: Layout,
 		event: MouseEvent,
 		element: HTMLElement,
-	) => {
-		const key = newItem.i.split("_")[0];
+	): void => {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const key: string = newItem.i.split("_")[0]!;
 		model.updateLayout(key, newItem);
 	};
 
 	const itemViews: JSX.Element[] = [];
 	const layouts: Layout[] = [];
-	itemList.forEach((item) => {
-		const getItemView = async () => {
+	for (const item of itemList) {
+		const getItemView = async (): Promise<React.ReactElement> => {
 			const registryEntry = registry.get(item.type);
 
 			if (registryEntry === undefined) {
@@ -137,7 +144,7 @@ const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (
 				/>
 			</div>,
 		);
-	});
+	}
 
 	return (
 		<ReactGridLayout
@@ -145,13 +152,12 @@ const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (
 			cols={36}
 			rowHeight={50}
 			width={1800}
-			height={10000}
-			compactType={null} // null is required for the GridLayou t
+			// eslint-disable-next-line unicorn/no-null -- null is required for the GridLayout
+			compactType={null}
 			isDroppable={editable}
 			isDraggable={editable}
 			isResizable={editable}
 			preventCollision={true}
-			isRearrangeable={false}
 			onResizeStop={onGridChangeEvent}
 			onDragStop={onGridChangeEvent}
 			layout={layouts}
@@ -168,7 +174,7 @@ export interface IDataObjectGridAppViewProps {
 	/**
 	 * The app's model to render.
 	 */
-	readonly model: IDataObjectGrid;
+	readonly model: IDataObjectGrid<ISingleHandleItem>;
 	/**
 	 * The view provides a button to direct link to each individual data object.  The host can specify the URL format
 	 * that should be used for these direct links here (and should then also specifically load and render the

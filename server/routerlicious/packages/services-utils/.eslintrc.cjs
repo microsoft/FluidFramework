@@ -14,6 +14,9 @@ module.exports = {
 
 		// TODO: remove usages of deprecated APIs and remove these overrides
 		"import/no-deprecated": "warn",
-		"@typescript-eslint/strict-boolean-expressions": "off",
+
+		// TODO: fix violations and remove these overrides
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@typescript-eslint/strict-boolean-expressions": "warn",
 	},
 };

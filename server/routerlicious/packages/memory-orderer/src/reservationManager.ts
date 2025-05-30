@@ -4,7 +4,9 @@
  */
 
 import { EventEmitter } from "events";
+
 import { ICollection, MongoManager } from "@fluidframework/server-services-core";
+
 import { IConcreteNode, IReservationManager } from "./interfaces";
 import { NodeManager } from "./nodeManager";
 

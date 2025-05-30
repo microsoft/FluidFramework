@@ -4,9 +4,10 @@
  */
 
 import { IWholeFlatSummary } from "@fluidframework/server-services-client";
-import { ISummaryVersion, IWholeSummaryOptions } from "./definitions";
+
 import { Constants } from "./constants";
 import { buildFullGitTreeFromGitTree, convertFullGitTreeToFullSummaryTree } from "./conversions";
+import { ISummaryVersion, IWholeSummaryOptions } from "./definitions";
 
 /**
  * Retrieve the summary version (commit) for a given sha.

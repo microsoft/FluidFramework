@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IQueuedMessage } from "./queue";
 import { IContext, IContextErrorData } from "./lambdas";
+import { IQueuedMessage } from "./queue";
 
 /**
  * Allows checkpointing the minimum offset for multiple lambdas

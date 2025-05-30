@@ -33,6 +33,7 @@ describe("RedisCollaborationSessionManager", () => {
 			documentId: "test-doc-id",
 			tenantId: "test-tenant-id",
 			firstClientJoinTime: Date.now(),
+			latestClientJoinTime: Date.now(),
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient: true,
@@ -58,6 +59,7 @@ describe("RedisCollaborationSessionManager", () => {
 			documentId: "test-doc-id",
 			tenantId: "test-tenant-id",
 			firstClientJoinTime: Date.now(),
+			latestClientJoinTime: Date.now(),
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient: false,
@@ -103,6 +105,7 @@ describe("RedisCollaborationSessionManager", () => {
 			documentId: "test-doc-id-1",
 			tenantId: "test-tenant-id",
 			firstClientJoinTime: Date.now(),
+			latestClientJoinTime: Date.now(),
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient: true,
@@ -114,6 +117,7 @@ describe("RedisCollaborationSessionManager", () => {
 			documentId: "test-doc-id-2",
 			tenantId: "test-tenant-id",
 			firstClientJoinTime: Date.now(),
+			latestClientJoinTime: Date.now(),
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient: false,
@@ -153,6 +157,7 @@ describe("RedisCollaborationSessionManager", () => {
 				documentId: `test-doc-id-${i}`,
 				tenantId: `test-tenant-id-${i % 3}`,
 				firstClientJoinTime: Date.now() - 100 * i,
+				latestClientJoinTime: Date.now() - 50 * i,
 				lastClientLeaveTime: i % 4 === 0 ? Date.now() : undefined,
 				telemetryProperties: {
 					hadWriteClient: i % 2 === 0,

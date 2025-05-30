@@ -5,7 +5,9 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
+
 import { MongoManager } from "@fluidframework/server-services-core";
+
 import { IConcreteNode } from "./interfaces";
 import { RemoteNode } from "./remoteNode";
 

@@ -4,6 +4,7 @@
  */
 
 import { IBlob, ITree } from "@fluidframework/gitresources";
+
 import { IRepositoryManager } from "../definitions";
 
 export interface IWholeSummaryOptions {

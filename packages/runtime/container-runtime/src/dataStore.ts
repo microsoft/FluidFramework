@@ -11,6 +11,8 @@ import {
 	AliasResult,
 	IDataStore,
 	IFluidDataStoreChannel,
+	// eslint-disable-next-line import/no-deprecated
+	type IContainerRuntimeBaseExperimental,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -77,6 +79,11 @@ class DataStore implements IDataStore {
 	async trySetAlias(alias: string): Promise<AliasResult> {
 		if (alias.includes("/")) {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
+		}
+		// eslint-disable-next-line import/no-deprecated
+		const runtime = this.parentContext.containerRuntime as IContainerRuntimeBaseExperimental;
+		if (runtime.inStagingMode === true) {
+			throw new UsageError("Cannot set aliases while in staging mode");
 		}
 
 		switch (this.aliasState) {

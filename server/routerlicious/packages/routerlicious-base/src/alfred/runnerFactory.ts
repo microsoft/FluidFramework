@@ -4,19 +4,24 @@
  */
 
 import * as services from "@fluidframework/server-services";
-import * as core from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as utils from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
-import * as winston from "winston";
-import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import {
 	getGlobalAbortControllerContext,
 	IAlfredTenant,
 	setupAxiosInterceptorsForAbortSignals,
 } from "@fluidframework/server-services-client";
+import * as core from "@fluidframework/server-services-core";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import * as utils from "@fluidframework/server-services-utils";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+import { Provider } from "nconf";
+import * as winston from "winston";
+
 import { Constants } from "../utils";
+
+import { IAlfredResourcesCustomizations } from "./customizations";
 import { AlfredRunner } from "./runner";
 import {
 	DeltaService,
@@ -24,9 +29,6 @@ import {
 	IDocumentDeleteService,
 	DocumentDeleteService,
 } from "./services";
-import { IAlfredResourcesCustomizations } from ".";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
  * @internal

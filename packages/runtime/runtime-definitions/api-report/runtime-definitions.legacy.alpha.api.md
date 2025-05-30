@@ -263,9 +263,9 @@ export interface IGarbageCollectionDetailsBase {
 }
 
 // @alpha @legacy
-export interface IInboundSignalMessage extends ISignalMessage {
+export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage> extends ISignalMessage<TMessage> {
     // (undocumented)
-    readonly type: string;
+    readonly type: TMessage["type"];
 }
 
 // @alpha @legacy

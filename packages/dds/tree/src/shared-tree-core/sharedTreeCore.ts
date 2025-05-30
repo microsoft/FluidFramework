@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
@@ -17,6 +18,7 @@ import type {
 	IChannelView,
 	IFluidSerializer,
 } from "@fluidframework/shared-object-base/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -41,18 +43,16 @@ import {
 } from "../util/index.js";
 
 import type { SharedTreeBranch } from "./branch.js";
+import { BranchCommitEnricher } from "./branchCommitEnricher.js";
+import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
+import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import type { SeqNumber } from "./editManagerFormat.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { type MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import type { DecodedMessage } from "./messageTypes.js";
-import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
-import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
-import { BranchCommitEnricher } from "./branchCommitEnricher.js";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";

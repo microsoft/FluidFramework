@@ -18,9 +18,9 @@ import {
 	type TransactionConstraint,
 } from "../simple-tree/index.js";
 
+import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
-import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.

@@ -4,6 +4,7 @@
  */
 
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { ICollection, ICheckpointRepository } from "./database";
 import { ICheckpoint, IDeliState, IScribe } from "./document";
 import { runWithRetry } from "./runWithRetry";

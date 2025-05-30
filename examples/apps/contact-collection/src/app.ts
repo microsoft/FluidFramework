@@ -51,16 +51,17 @@ async function start(): Promise<void> {
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
 	}
 
 	// update the browser URL and the window title with the actual container ID
+	// eslint-disable-next-line require-atomic-updates
 	location.hash = id;
 	document.title = id;
 
 	// Render it
-	const contentDiv = document.getElementById("content") as HTMLDivElement;
+	const contentDiv = document.querySelector("#content") as HTMLDivElement;
 
 	// Our app has two rendering modes, contact list and single contact details view.  The app owns the url format,
 	// and here we've chosen to use the query params to pass the single contact id if that's the view we want (notice
@@ -80,4 +81,8 @@ async function start(): Promise<void> {
 	}
 }
 
-start().catch((error) => console.error(error));
+try {
+	await start();
+} catch (error) {
+	console.error(error);
+}

@@ -4,6 +4,7 @@
  */
 
 import type { ValueSchema } from "../core/index.js";
+
 import type { NodeKind } from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "./schemaTypes.js";
 

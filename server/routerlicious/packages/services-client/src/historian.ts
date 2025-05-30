@@ -5,11 +5,12 @@
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
+
+import { debug } from "./debug";
+import { NetworkError } from "./error";
 import { RestWrapper, BasicRestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
-import { NetworkError } from "./error";
-import { debug } from "./debug";
 
 function endsWith(value: string, endings: string[]): boolean {
 	for (const ending of endings) {

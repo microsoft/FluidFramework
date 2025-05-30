@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+
 import {
 	IContext,
 	IQueuedMessage,
@@ -11,6 +12,7 @@ import {
 	LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 

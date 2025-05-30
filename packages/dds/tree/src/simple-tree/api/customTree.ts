@@ -4,8 +4,8 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import {
 	EmptyKey,
@@ -19,8 +19,8 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
+import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 import { cloneWithReplacements } from "../../util/index.js";
-import type { TreeLeafValue } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import {
 	booleanSchema,
@@ -29,8 +29,8 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { isObjectNodeSchema } from "../objectNodeTypes.js";
-import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
+import { isObjectNodeSchema } from "../node-kinds/index.js";
+import type { TreeLeafValue } from "../schemaTypes.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.

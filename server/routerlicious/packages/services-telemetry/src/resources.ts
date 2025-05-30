@@ -4,6 +4,7 @@
  */
 
 import { serializeError } from "serialize-error";
+
 import { Lumber } from "./lumber";
 import { LumberEventName } from "./lumberEventNames";
 

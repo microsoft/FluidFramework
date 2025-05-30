@@ -4,11 +4,12 @@
  */
 
 import { runWithRetry } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { RedisFsApis, executeRedisFsApiWithMetric } from "./helpers";
 
 export interface RedisParams extends IRedisParameters {

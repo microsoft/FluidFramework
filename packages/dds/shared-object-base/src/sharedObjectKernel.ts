@@ -155,7 +155,10 @@ class SharedObjectFromKernel<
 	}
 
 	#initializeData(data: FactoryOut<TOut>): void {
-		assert(this.#lazyData === undefined, "initializeData must be called first and only once");
+		assert(
+			this.#lazyData === undefined,
+			0xb99 /* initializeData must be called first and only once */,
+		);
 		this.#lazyData = data;
 
 		// Make `this` implement TOut.
@@ -297,7 +300,7 @@ export function mergeAPIs<const Base extends object, const Extra extends object>
 	extra: Extra,
 ): asserts base is Base & Extra {
 	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(extra))) {
-		assert(!Reflect.has(base, key), "colliding properties");
+		assert(!Reflect.has(base, key), 0xb9a /* colliding properties */);
 
 		// Detect and special case functions.
 		// Currently this is done eagerly (when mergeAPIs is called) rather than lazily (when the property is read):
@@ -340,7 +343,7 @@ function forwardMethod<TArgs extends [], TReturn>(
 	if (thisWrap in f) {
 		return (...args: TArgs) => {
 			const result = f.call(oldThis, ...args);
-			assert(result === oldThis, "methods returning thisWrap should return this");
+			assert(result === oldThis, 0xb9b /* methods returning thisWrap should return this */);
 			return newThis;
 		};
 	} else {

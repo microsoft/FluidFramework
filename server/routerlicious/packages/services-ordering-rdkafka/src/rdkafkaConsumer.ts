@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type * as kafkaTypes from "node-rdkafka";
-
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	IConsumer,
@@ -15,6 +13,8 @@ import {
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
+import type * as kafkaTypes from "node-rdkafka";
+
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 /**

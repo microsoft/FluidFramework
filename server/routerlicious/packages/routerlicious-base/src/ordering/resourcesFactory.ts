@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { IPartitionLambdaPlugin, IResourcesFactory } from "@fluidframework/server-services-core";
 import {
 	KafkaResources,
 	KafkaResourcesFactory,
 } from "@fluidframework/server-services-ordering-kafkanode";
 import { RdkafkaResourcesFactory } from "@fluidframework/server-services-ordering-rdkafka";
 import { ZookeeperClient } from "@fluidframework/server-services-ordering-zookeeper";
-import { IPartitionLambdaPlugin, IResourcesFactory } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
 /**

@@ -6,6 +6,7 @@
 import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
+
 import {
 	CellId,
 	CellMark,

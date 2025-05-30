@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import RedisMock from "ioredis-mock";
 import * as Redis from "ioredis";
+import RedisMock from "ioredis-mock";
 
 /**
  * Adding a duplicate of the IRedisClientConnectionManager interface from server-services-utils

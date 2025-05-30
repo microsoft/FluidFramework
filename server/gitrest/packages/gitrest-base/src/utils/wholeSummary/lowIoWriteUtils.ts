@@ -10,22 +10,24 @@ import {
 	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
+import { NullExternalStorageManager } from "../../externalStorageManager";
 import { IRepositoryManager } from "../definitions";
 import { MemFsManagerFactory } from "../filesystems";
 import { IsomorphicGitManagerFactory } from "../isomorphicgitManager";
-import { NullExternalStorageManager } from "../../externalStorageManager";
-import { IFullGitTree, IWholeSummaryOptions } from "./definitions";
+
+import { Constants } from "./constants";
 import {
 	buildFullGitTreeFromGitTree,
 	convertFullSummaryToWholeSummaryEntries,
 } from "./conversions";
-import { Constants } from "./constants";
-import { readSummary } from "./readWholeSummary";
 import {
 	IWriteSummaryTreeOptions,
 	writeFullGitTreeAsSummaryTree,
 	writeSummaryTree,
 } from "./coreWriteUtils";
+import { IFullGitTree, IWholeSummaryOptions } from "./definitions";
+import { readSummary } from "./readWholeSummary";
 
 /**
  * Retrieve a git tree from storage, then write it into the in-memory filesystem.

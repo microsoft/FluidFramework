@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { GarbageCollectionMessage } from "../../gc/index.js";
 import {
 	ContainerMessageType,
 	type LocalContainerRuntimeMessage,
@@ -25,6 +26,13 @@ function op(data: string = "Some Data"): LocalContainerRuntimeMessage {
 		type: ContainerMessageType.FluidDataStoreOp,
 		contents: data as unknown,
 	} as LocalContainerRuntimeMessage;
+}
+
+function nonDirtyableOp(): LocalContainerRuntimeMessage {
+	return {
+		type: ContainerMessageType.GC,
+		contents: {} as unknown as GarbageCollectionMessage,
+	};
 }
 
 const generateStringOfSize = (sizeInBytes: number): string => "0".repeat(sizeInBytes);
@@ -221,5 +229,52 @@ describe("BatchManager", () => {
 				batchManager.push(smallMessage(), /* reentrant */ false);
 			});
 		}, /Error: Ops generated during rollback/);
+	});
+
+	describe("containsUserChanges", () => {
+		// default op used in other tests is dirtyable
+		const dirtyableOp = op;
+
+		it("returns false when there are no messages", () => {
+			const batchManager = new BatchManager(defaultOptions);
+			assert.equal(
+				batchManager.containsUserChanges(),
+				false,
+				"Should be false for empty batch",
+			);
+		});
+
+		it("returns true if at least one message is dirtyable", () => {
+			const batchManager = new BatchManager(defaultOptions);
+			batchManager.push({ runtimeOp: dirtyableOp(), referenceSequenceNumber: 0 }, false);
+			assert.equal(
+				batchManager.containsUserChanges(),
+				true,
+				"Should be true if dirtyable op present",
+			);
+		});
+
+		it("returns false if all messages are non-dirtyable", () => {
+			const batchManager = new BatchManager(defaultOptions);
+			batchManager.push({ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 0 }, false);
+			batchManager.push({ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 1 }, false);
+			assert.equal(
+				batchManager.containsUserChanges(),
+				false,
+				"Should be false if no dirtyable ops",
+			);
+		});
+
+		it("returns true if mixed dirtyable and non-dirtyable messages", () => {
+			const batchManager = new BatchManager(defaultOptions);
+			batchManager.push({ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 0 }, false);
+			batchManager.push({ runtimeOp: dirtyableOp(), referenceSequenceNumber: 1 }, false);
+			batchManager.push({ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 2 }, false);
+			assert.equal(
+				batchManager.containsUserChanges(),
+				true,
+				"Should be true if any dirtyable op present",
+			);
+		});
 	});
 });

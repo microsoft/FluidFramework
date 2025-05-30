@@ -19,9 +19,10 @@ import {
 	defaultSchemaPolicy,
 	mapTreeFromCursor,
 } from "../feature-libraries/index.js";
-import { isReadonlyArray } from "../util/index.js";
-import type { ITreeCheckout } from "./treeCheckout.js";
 import type { SchemaCompatibilityTester } from "../simple-tree/index.js";
+import { isReadonlyArray } from "../util/index.js";
+
+import type { ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.

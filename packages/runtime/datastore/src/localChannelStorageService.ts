@@ -21,7 +21,7 @@ export class LocalChannelStorageService implements IChannelStorageService {
 
 	public async contains(path: string): Promise<boolean> {
 		const blob = this.readBlobSync(path);
-		return blob !== undefined ? blob.contents !== undefined : false;
+		return blob === undefined ? false : blob.contents !== undefined;
 	}
 
 	public async list(path: string): Promise<string[]> {
@@ -35,17 +35,19 @@ export class LocalChannelStorageService implements IChannelStorageService {
 	private readBlobSyncInternal(path: string, tree: ITree): IBlob | undefined {
 		for (const entry of tree.entries) {
 			switch (entry.type) {
-				case TreeEntry.Blob:
+				case TreeEntry.Blob: {
 					if (path === entry.path) {
 						return entry.value;
 					}
 					break;
+				}
 
-				case TreeEntry.Tree:
+				case TreeEntry.Tree: {
 					if (path.startsWith(entry.path)) {
-						return this.readBlobSyncInternal(path.substr(entry.path.length + 1), entry.value);
+						return this.readBlobSyncInternal(path.slice(entry.path.length + 1), entry.value);
 					}
 					break;
+				}
 
 				default:
 			}

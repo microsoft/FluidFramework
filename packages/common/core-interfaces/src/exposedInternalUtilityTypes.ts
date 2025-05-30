@@ -536,19 +536,26 @@ export namespace InternalUtilityTypes {
 	export type IsExactlyObject<T extends object> = IsSameType<T, object>;
 
 	/**
+	 * Any Record type.
+	 *
+	 * @system
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` for property types is required to avoid "Index signature for type 'string' is missing in type" in some outside `FlattenIntersection` uses.
+	export type AnyRecord = Record<keyof any, any>;
+
+	/**
 	 * Creates a simple object type from an intersection of multiple.
 	 * @privateRemarks
-	 * `T extends Record` within the implementation encourages tsc to process
+	 * `T extends AnyRecord` within the implementation encourages tsc to process
 	 * intersections within unions.
 	 *
 	 * @system
 	 */
-	export type FlattenIntersection<T extends Record<string | number | symbol, unknown>> =
-		T extends Record<string | number | symbol, unknown>
-			? {
-					[K in keyof T]: T[K];
-				}
-			: T;
+	export type FlattenIntersection<T extends AnyRecord> = T extends AnyRecord
+		? {
+				[K in keyof T]: T[K];
+			}
+		: T;
 
 	/**
 	 * Extracts Function portion from an intersection (&) type returning

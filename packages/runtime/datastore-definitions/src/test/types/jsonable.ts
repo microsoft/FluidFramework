@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+// Tests below intentionally use `any` and `null`
+/* eslint-disable @rushstack/no-new-null */
+/* eslint-disable unicorn/no-null */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
+
 import type { Jsonable } from "../../index.js";
 
 declare function foo<T>(jsonable: Jsonable<T>): void;
@@ -56,10 +63,11 @@ declare const a2: IA2;
 foo(a2);
 
 // test complex indexed type
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- explicitly testing indexed type
 declare const a3: { [key: string]: string };
 foo(a3);
 
-// test "unknown" cannonical Json content
+// test "unknown" canonical Json content
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 declare const json: Json;
 foo(json);
@@ -176,7 +184,7 @@ foo(a14);
 
 // test class with function
 class bar {
-	public baz() {}
+	public baz(): void {}
 }
 // @ts-expect-error should not be jsonable
 foo(new bar());

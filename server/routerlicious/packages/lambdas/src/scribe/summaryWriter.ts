@@ -45,6 +45,7 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import safeStringify from "json-stringify-safe";
+
 import { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
 
 /**

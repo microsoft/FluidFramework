@@ -7,7 +7,7 @@ const { importInternalModulesAllowed } = require("../../.eslintrc.data.cjs");
 
 module.exports = {
 	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
+		require.resolve("@fluidframework/eslint-config-fluid"),
 		"prettier",
 		"../../.eslintrc.cjs",
 	],

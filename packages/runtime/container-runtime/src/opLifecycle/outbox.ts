@@ -236,6 +236,13 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
+	public containsUserChanges(): boolean {
+		return (
+			this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges()
+			// ID Allocation ops are not user changes
+		);
+	}
+
 	/**
 	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that (if allowed) and create a new batch with the new
@@ -440,7 +447,7 @@ export class Outbox {
 		const staged = rawBatch.staged === true;
 		assert(
 			resubmitInfo === undefined || resubmitInfo.staged === staged,
-			"Mismatch in staged state tracking",
+			0xba3 /* Mismatch in staged state tracking */,
 		);
 
 		const groupingEnabled =

@@ -66,7 +66,7 @@ export class FieldKindWithEditor<
 	}
 
 	/**
-	 * @returns true iff `superset` permits a (non-strict) superset of the subtrees
+	 * Returns true if and only if `superset` permits a (non-strict) superset of the subtrees
 	 * allowed by field made from `this` and `originalTypes`.
 	 */
 	public allowsFieldSuperset(

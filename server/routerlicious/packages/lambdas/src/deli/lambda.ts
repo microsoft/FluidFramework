@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ISequencedDocumentAugmentedMessage,
 	IBranchOrigin,
@@ -19,6 +20,7 @@ import {
 	ISummaryContent,
 	IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
+import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import {
 	canSummarize,
 	defaultHash,
@@ -63,8 +65,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { DocumentContext } from "@fluidframework/server-lambdas-driver";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+
 import { IEvent } from "../events";
 import {
 	logCommonSessionEndMetrics,
@@ -75,9 +76,10 @@ import {
 	DocumentCheckpointManager,
 	IServerMetadata,
 } from "../utils";
+
 import { CheckpointContext } from "./checkpointContext";
-import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
+import { ClientSequenceNumberManager } from "./clientSeqManager";
 
 enum IncomingMessageOrder {
 	Duplicate,

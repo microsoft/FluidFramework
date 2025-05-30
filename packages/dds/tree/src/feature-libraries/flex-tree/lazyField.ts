@@ -30,6 +30,7 @@ import {
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
+import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 
 import type { Context } from "./context.js";
@@ -49,7 +50,6 @@ import {
 import { LazyEntity } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
-import { cursorForMapTreeField } from "../mapTreeCursor.js";
 
 /**
  * Reuse fields.

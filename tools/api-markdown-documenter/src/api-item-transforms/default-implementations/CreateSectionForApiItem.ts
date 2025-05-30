@@ -20,7 +20,7 @@ import {
 	createRemarksSection,
 	createSeeAlsoSection,
 	createSignatureSection,
-	createSummaryParagraph,
+	createSummarySection,
 	createThrowsSection,
 	wrapInSection,
 } from "../helpers/index.js";
@@ -62,15 +62,15 @@ export function createSectionForApiItem(
 	const sections: SectionNode[] = [];
 
 	// Render summary comment (if any)
-	const summary = createSummaryParagraph(apiItem, config);
+	const summary = createSummarySection(apiItem, config);
 	if (summary !== undefined) {
-		sections.push(wrapInSection([summary]));
+		sections.push(summary);
 	}
 
 	// Render deprecation notice (if any)
 	const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
 	if (deprecationNotice !== undefined) {
-		sections.push(wrapInSection([deprecationNotice]));
+		sections.push(deprecationNotice);
 	}
 
 	// Render alpha/beta notice if applicable

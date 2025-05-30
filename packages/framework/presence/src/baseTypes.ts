@@ -19,6 +19,6 @@
  * strings. Branding broadly is likely a breaking change and may take decent
  * effort to manage.
  *
- * @alpha
+ * @beta
  */
 export type ClientConnectionId = string;

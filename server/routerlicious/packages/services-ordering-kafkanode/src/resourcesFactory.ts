@@ -10,8 +10,9 @@ import {
 	IResources,
 	IResourcesFactory,
 } from "@fluidframework/server-services-core";
-import sillyname from "sillyname";
 import { Provider } from "nconf";
+import sillyname from "sillyname";
+
 import { KafkaNodeConsumer } from "./kafkaNodeConsumer";
 
 /**

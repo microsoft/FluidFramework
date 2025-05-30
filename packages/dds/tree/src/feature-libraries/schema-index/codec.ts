@@ -4,6 +4,7 @@
  */
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	type FluidClientVersion,
 	type ICodecFamily,
@@ -14,12 +15,13 @@ import {
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import {
+	SchemaVersion,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	decodeFieldSchema,
 	encodeFieldSchema,
-	schemaFormatV1,
+	type schemaFormatV1,
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
 import { brand, type JsonCompatible } from "../../util/index.js";
@@ -27,22 +29,15 @@ import { brand, type JsonCompatible } from "../../util/index.js";
 import { Format as FormatV1 } from "./formatV1.js";
 
 /**
- * Versions for the codec that encodes an in-memory representation of a stored schema {@link TreeStoredSchema} into a persisted format (or decodes it in the opposite direction).
- */
-export enum SchemaCodecVersion {
-	v1 = 1,
-}
-
-/**
- * Convert a FluidClientVersion to a SchemaCodecVersion.
+ * Convert a FluidClientVersion to a SchemaVersion.
  * @param clientVersion - The FluidClientVersion to convert.
- * @returns The SchemaCodecVersion that corresponds to the provided FluidClientVersion.
+ * @returns The SchemaVersion that corresponds to the provided FluidClientVersion.
  */
 export function clientVersionToSchemaVersion(
 	clientVersion: FluidClientVersion,
-): SchemaCodecVersion {
+): SchemaVersion {
 	// Only one version of the schema codec is currently supported.
-	return SchemaCodecVersion.v1;
+	return SchemaVersion.v1;
 }
 
 /**
@@ -55,7 +50,7 @@ export function clientVersionToSchemaVersion(
  */
 export function makeSchemaCodec(
 	options: ICodecOptions,
-	writeVersion: SchemaCodecVersion,
+	writeVersion: SchemaVersion,
 ): IJsonCodec<TreeStoredSchema> {
 	const family = makeSchemaCodecs(options);
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
@@ -67,7 +62,7 @@ export function makeSchemaCodec(
  * @returns The composed codec family.
  */
 export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
-	return makeCodecFamily([[SchemaCodecVersion.v1, makeSchemaCodecV1(options)]]);
+	return makeCodecFamily([[SchemaVersion.v1, makeSchemaCodecV1(options)]]);
 }
 
 /**
@@ -76,12 +71,9 @@ export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStore
  * @param version - The schema write version.
  * @returns The encoded schema.
  */
-export function encodeRepo(
-	repo: TreeStoredSchema,
-	version: SchemaCodecVersion,
-): JsonCompatible {
+export function encodeRepo(repo: TreeStoredSchema, version: SchemaVersion): JsonCompatible {
 	switch (version) {
-		case SchemaCodecVersion.v1:
+		case SchemaVersion.v1:
 			return encodeRepoV1(repo);
 		default:
 			unreachableCase(version);
@@ -102,7 +94,7 @@ function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 		});
 	}
 	return {
-		version: schemaFormatV1.version,
+		version: SchemaVersion.v1,
 		nodes: nodeSchema,
 		root: rootFieldSchema,
 	};
@@ -125,7 +117,7 @@ function decode(f: FormatV1): TreeStoredSchema {
  * @returns The codec.
  */
 function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV1> {
-	return makeVersionedValidatedCodec(options, new Set([schemaFormatV1.version]), FormatV1, {
+	return makeVersionedValidatedCodec(options, new Set([SchemaVersion.v1]), FormatV1, {
 		encode: (data: TreeStoredSchema) => encodeRepoV1(data),
 		decode: (data: FormatV1) => decode(data),
 	});

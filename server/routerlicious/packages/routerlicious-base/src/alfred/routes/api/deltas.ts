@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import {
 	ICache,
 	IDeltaService,
@@ -19,11 +21,10 @@ import {
 	getBooleanFromConfig,
 	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+
 import { Constants } from "../../../utils";
 
 export function create(

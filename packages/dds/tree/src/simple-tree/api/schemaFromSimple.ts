@@ -4,6 +4,7 @@
  */
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import {
 	type FieldSchema,
@@ -17,8 +18,9 @@ import type {
 	SimpleNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
-import { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+
 import type { TreeSchema } from "./configuration.js";
+import { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 
 const factory = new SchemaFactoryAlpha(undefined);
 

@@ -13,10 +13,10 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.53.0
-        version: 0.51.0(@types/node@18.19.31)
+        version: 0.53.0(@types/node@18.19.31)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.3
-        version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.7.4
+        version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -96,8 +96,8 @@ packages:
   '@fluid-internal/eslint-plugin-fluid@0.1.5':
     resolution: {integrity: sha512-p0nVeMiEfLL2deQJQaRUxid08jgV5wEkh9h9WXNosR1BRq9nFCjD8nZpC1K+YhjwQZEvgGDE+s+28VR2lAg61Q==}
 
-  '@fluid-tools/version-tools@0.51.0':
-    resolution: {integrity: sha512-fB2LDQDxxZxWwJtaRqL96Vbc791rhu/Qp2Gvj/sGC6lrApO80CytLE8YC/oVnK6KfdjBsEUsYL8PUf8KRrZAnQ==}
+  '@fluid-tools/version-tools@0.53.0':
+    resolution: {integrity: sha512-jGxNBjWP9PYOh0v0kYs6sJ1kNiebyb+LqqsFvv7IfMDAVE8Qsd/bOj66ghRYJ7vREwn/hMj0gZw98mIwfVFHTg==}
     engines: {node: '>=18.17.1'}
     hasBin: true
 
@@ -105,13 +105,13 @@ packages:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
-  '@fluidframework/build-tools@0.51.0':
-    resolution: {integrity: sha512-4PnEMhPxKb/Za5qEwtX+q/PPUIUz4L73XZoTL2HqCBii+cLUDppOlC95D39dV/pxjbTkyg2CB+u7T7zCHG2MaA==}
+  '@fluidframework/build-tools@0.53.0':
+    resolution: {integrity: sha512-mJ/x0dKM42z9WwTvgD2ZCLoMwPNvJkgSETLODynzukViykA4PsZaXG5H3bmL9oW9hjL66wKeNdJTs7UARB+7VA==}
     engines: {node: '>=18.17.1'}
     hasBin: true
 
-  '@fluidframework/eslint-config-fluid@5.7.3':
-    resolution: {integrity: sha512-/+6JDYTM4k4F7wHDMCIxXwmf9oWP9OmUyYJSPtWd0VQhdRomfdClicdajHIHQd9RWbo2SdZSXEsllKRT6s/9+Q==}
+  '@fluidframework/eslint-config-fluid@5.7.4':
+    resolution: {integrity: sha512-2JD0fKhR0wk8kWkUmjNY6FcavLxs0/oQ413z0gFHUSzd8UTkwTYumFQWpDBEoAvXqQw4nUOTAbicNIqHY25EyQ==}
 
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
@@ -903,6 +903,7 @@ packages:
   eslint-plugin-i@2.29.1:
     resolution: {integrity: sha512-ORizX37MelIWLbMyqI7hi8VJMf7A0CskMmYkB+lkCX3aF4pkGV7kwx5bSEb4qx7Yce2rAf9s34HqDRPjGRZPNQ==}
     engines: {node: '>=12'}
+    deprecated: Please migrate to the brand new `eslint-plugin-import-x` instead
     peerDependencies:
       eslint: ^7.2.0 || ^8
 
@@ -1479,6 +1480,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
@@ -1721,6 +1723,10 @@ packages:
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
+
+  picospinner@2.1.0:
+    resolution: {integrity: sha512-kaBFPNItKVivIKrWt0RuLz0UilZX8KgZeaBrjSUjjExza5ISWtBAtbDYTOon31EGGH6wTdQ22gTXiykmhv/Kqg==}
+    engines: {node: '>=18.0.0'}
 
   pluralize@8.0.0:
     resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
@@ -2276,7 +2282,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluid-tools/version-tools@0.51.0(@types/node@18.19.31)':
+  '@fluid-tools/version-tools@0.53.0(@types/node@18.19.31)':
     dependencies:
       '@oclif/core': 4.0.33
       '@oclif/plugin-autocomplete': 3.2.11
@@ -2294,9 +2300,9 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.51.0(@types/node@18.19.31)':
+  '@fluidframework/build-tools@0.53.0(@types/node@18.19.31)':
     dependencies:
-      '@fluid-tools/version-tools': 0.51.0(@types/node@18.19.31)
+      '@fluid-tools/version-tools': 0.53.0(@types/node@18.19.31)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -2314,6 +2320,7 @@ snapshots:
       multimatch: 5.0.0
       picocolors: 1.1.1
       picomatch: 2.3.1
+      picospinner: 2.1.0
       rimraf: 4.4.1
       semver: 7.6.3
       sort-package-json: 1.57.0
@@ -2329,7 +2336,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/eslint-config-fluid@5.7.3(eslint@8.55.0)(typescript@5.4.5)':
+  '@fluidframework/eslint-config-fluid@5.7.4(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/tsdoc': 0.14.2
@@ -4203,6 +4210,8 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@2.3.1: {}
+
+  picospinner@2.1.0: {}
 
   pluralize@8.0.0: {}
 

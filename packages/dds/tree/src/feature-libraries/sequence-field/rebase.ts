@@ -344,7 +344,7 @@ function rebaseMarkIgnoreChild(
 }
 
 /**
- * @returns A pair of marks that represent the effects which should remain in place in the face of concurrent move,
+ * Returns a pair of marks that represent the effects which should remain in place in the face of concurrent move,
  * and the effects that should be sent to the move destination.
  */
 function separateEffectsForMove(mark: MarkEffect): {

@@ -26,6 +26,8 @@ import type {
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 
+import type { ContainerExtensionStore } from "./containerExtension.js";
+
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  * @legacy
@@ -198,3 +200,12 @@ export interface IContainerRuntime
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 }
+
+/**
+ * Represents the internal version of the runtime of the container.
+ *
+ * @internal
+ */
+export interface IContainerRuntimeInternal
+	extends IContainerRuntime,
+		ContainerExtensionStore {}

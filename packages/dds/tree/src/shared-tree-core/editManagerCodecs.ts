@@ -4,6 +4,7 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+
 import {
 	type ICodecFamily,
 	type ICodecOptions,

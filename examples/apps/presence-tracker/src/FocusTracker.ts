@@ -10,8 +10,8 @@ import type {
 	LatestRaw,
 	Presence,
 	StatesWorkspace,
-} from "@fluidframework/presence/alpha";
-import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
+import { AttendeeStatus, StateFactory } from "@fluidframework/presence/beta";
 
 /**
  * IFocusState is the data that individual session clients share via presence.

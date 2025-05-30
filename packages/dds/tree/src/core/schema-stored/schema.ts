@@ -19,6 +19,13 @@ import {
 import type { Multiplicity } from "./multiplicity.js";
 
 /**
+ * The format version for the schema.
+ */
+export enum SchemaVersion {
+	v1 = 1,
+}
+
+/**
  * Schema for what {@link TreeLeafValue} is allowed on a Leaf node.
  * @privateRemarks
  * See also {@link TreeValue}.

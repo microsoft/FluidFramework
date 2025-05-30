@@ -15,6 +15,7 @@ import {
 	getGlobalTelemetryContext,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
+
 import type { IRoom } from "./interfaces";
 
 export const getMessageMetadata = (

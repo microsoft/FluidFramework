@@ -43,7 +43,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@types/async": "^3.2.9",
 		"@types/cors": "^2.8.4",
 		"@types/debug": "^4.1.5",

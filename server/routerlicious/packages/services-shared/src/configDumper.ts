@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import fastRedact from "fast-redact";
 import { ILogger } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import fastRedact from "fast-redact";
 const errorSanitizationMessage = "FluidREDACTED";
 
 export class ConfigDumper {

@@ -5,6 +5,7 @@
 
 import assert from "assert";
 import { inspect } from "util";
+
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import {
 	IDocumentSystemMessage,
@@ -40,6 +41,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
+
 import {
 	createSessionMetric,
 	logCommonSessionEndMetrics,
@@ -47,6 +49,7 @@ import {
 	IServerMetadata,
 	DocumentCheckpointManager,
 } from "../utils";
+
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import {
 	getClientIds,
@@ -581,6 +584,7 @@ export class ScribeLambda implements IPartitionLambda {
 					typeof message.contents === "string" &&
 					message.type !== MessageType.ClientLeave
 				) {
+					// eslint-disable-next-line import/namespace
 					const clonedMessage = _.cloneDeep(message);
 					clonedMessage.contents = JSON.parse(clonedMessage.contents as string);
 					this.protocolHandler.processMessage(clonedMessage, false);

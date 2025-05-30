@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { GitManager } from "@fluidframework/server-services-client";
 import {
 	ITenant,
@@ -12,9 +13,9 @@ import {
 	IDb,
 	ITenantConfig,
 } from "@fluidframework/server-services-core";
-import { TestHistorian } from "./testHistorian";
+
 import { TestDb } from "./testCollection";
-import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
+import { TestHistorian } from "./testHistorian";
 
 /**
  * @internal

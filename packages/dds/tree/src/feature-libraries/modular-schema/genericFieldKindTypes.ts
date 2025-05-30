@@ -4,6 +4,7 @@
  */
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import type { NodeId } from "./modularChangeTypes.js";
 
 /**

@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+
 import { brand } from "../util/index.js";
 
 import type { SequenceId } from "./editManagerFormat.js";

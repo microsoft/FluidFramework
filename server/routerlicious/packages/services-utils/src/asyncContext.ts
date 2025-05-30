@@ -4,16 +4,17 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import {
-	ITelemetryContextProperties,
-	ITelemetryContext,
-	Lumberjack,
-} from "@fluidframework/server-services-telemetry";
+
 import {
 	NetworkError,
 	ITimeoutContext,
 	type IAbortControllerContext,
 } from "@fluidframework/server-services-client";
+import {
+	ITelemetryContextProperties,
+	ITelemetryContext,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 /**
  * @internal

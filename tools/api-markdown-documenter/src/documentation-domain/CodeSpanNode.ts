@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DocumentationParentNodeBase,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
@@ -27,10 +24,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  *
  * @public
  */
-export class CodeSpanNode
-	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements SingleLineDocumentationNode
-{
+export class CodeSpanNode extends DocumentationParentNodeBase<PlainTextNode> {
 	/**
 	 * Static singleton representing an empty Code Span node.
 	 */
@@ -48,7 +42,7 @@ export class CodeSpanNode
 		return true;
 	}
 
-	public constructor(children: SingleLineDocumentationNode[]) {
+	public constructor(children: PlainTextNode[]) {
 		super(children);
 	}
 

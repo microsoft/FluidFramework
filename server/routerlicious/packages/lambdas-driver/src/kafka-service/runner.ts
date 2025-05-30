@@ -4,7 +4,7 @@
  */
 
 import { inspect } from "util";
-import { serializeError } from "serialize-error";
+
 import { Deferred } from "@fluidframework/common-utils";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import {
@@ -20,6 +20,8 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
+import { serializeError } from "serialize-error";
+
 import { PartitionManager } from "./partitionManager";
 
 /**

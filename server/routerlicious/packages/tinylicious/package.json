@@ -73,7 +73,7 @@
 	"devDependencies": {
 		"@fluid-internal/mocha-test-setup": "~2.0.5",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/compression": "^1.7.2",
 		"@types/cookie-parser": "^1.4.1",

@@ -17,6 +17,7 @@ import safeStringify from "json-stringify-safe";
 import morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
+
 import { create as createRoutes } from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports

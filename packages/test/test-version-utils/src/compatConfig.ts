@@ -377,7 +377,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 					_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
 					break;
 				}
-				case "CROSS_VERSION": {
+				case "CROSS_CLIENT": {
 					_configList.push(...genCrossClientCompatConfig());
 					break;
 				}

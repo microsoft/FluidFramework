@@ -36,7 +36,7 @@ import * as React from "react";
 const codeMirrorFactory = new SmdeFactory();
 const proseMirrorFactory = new ProseMirrorFactory();
 
-interface ISingleHandleItem {
+export interface ISingleHandleItem {
 	handle: IFluidHandle;
 }
 
@@ -50,13 +50,17 @@ function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
 	};
 }
 
-const getClickerView = async (serializableObject: ISingleHandleItem) => {
+const getClickerView = async (
+	serializableObject: ISingleHandleItem,
+): Promise<React.ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<Clicker>;
 	const clicker = await handle.get();
 	return React.createElement(ClickerReactView, { clicker });
 };
 
-const getCodeMirrorView = async (serializableObject: ISingleHandleItem) => {
+const getCodeMirrorView = async (
+	serializableObject: ISingleHandleItem,
+): Promise<React.ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<CodeMirrorComponent>;
 	const codeMirror = await handle.get();
 	return React.createElement(CodeMirrorReactView, {
@@ -65,13 +69,17 @@ const getCodeMirrorView = async (serializableObject: ISingleHandleItem) => {
 	});
 };
 
-const getCollaborativeTextView = async (serializableObject: ISingleHandleItem) => {
+const getCollaborativeTextView = async (
+	serializableObject: ISingleHandleItem,
+): Promise<React.ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<CollaborativeText>;
 	const collaborativeText = await handle.get();
 	return React.createElement(CollaborativeTextView, { text: collaborativeText.text });
 };
 
-const getProseMirrorView = async (serializableObject: ISingleHandleItem) => {
+const getProseMirrorView = async (
+	serializableObject: ISingleHandleItem,
+): Promise<React.ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<ProseMirror>;
 	const proseMirror = await handle.get();
 	return React.createElement(ProseMirrorReactView, {
@@ -79,7 +87,9 @@ const getProseMirrorView = async (serializableObject: ISingleHandleItem) => {
 	});
 };
 
-const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) => {
+const getSliderCoordinateView = async (
+	serializableObject: ISingleHandleItem,
+): Promise<React.ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<Coordinate>;
 	const model = await handle.get();
 	return React.createElement(SliderCoordinateView, { label: "Coordinate", model });
@@ -88,11 +98,11 @@ const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) =>
 /**
  * A registry entry, with extra metadata.
  */
-export interface IDataObjectGridItemEntry<T = any> {
+export interface IDataObjectGridItemEntry<T = unknown> {
 	// Would be better if items to bring their own subregistries, and their own ability to create components
 	// This might be done by integrating these items with the data grid subcomponent registry?
 	create: (context: IFluidDataStoreContext) => Promise<Serializable<T>>;
-	getView: (serializableObject: Serializable<T>) => Promise<JSX.Element>;
+	getView: (serializableObject: Serializable<T>) => Promise<React.ReactElement>;
 	friendlyName: string;
 	fabricIconName: string;
 }
@@ -135,13 +145,15 @@ const sliderCoordinateItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
 /**
  * The registry for our app, containing the options for data objects that can be inserted into the grid.
  */
-export const dataObjectRegistry = new Map<string, IDataObjectGridItemEntry>([
-	["clicker", clickerItemEntry],
-	["codemirror", codemirrorItemEntry],
-	["textbox", textboxItemEntry],
-	["prosemirror", prosemirrorItemEntry],
-	["slider-coordinate", sliderCoordinateItemEntry],
-]);
+export const dataObjectRegistry = new Map<string, IDataObjectGridItemEntry<ISingleHandleItem>>(
+	[
+		["clicker", clickerItemEntry],
+		["codemirror", codemirrorItemEntry],
+		["textbox", textboxItemEntry],
+		["prosemirror", prosemirrorItemEntry],
+		["slider-coordinate", sliderCoordinateItemEntry],
+	],
+);
 
 /**
  * The registry entries the container runtime will use to instantiate the data stores.

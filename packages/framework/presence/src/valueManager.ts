@@ -8,8 +8,6 @@ import type { ValueManager } from "./internalTypes.js";
 
 /**
  * Given a value manager, return opaque InternalTypes.StateValue.
- *
- * @internal
  */
 export function brandIVM<
 	TManagerInterface,
@@ -23,8 +21,6 @@ export function brandIVM<
 
 /**
  * Extract the value manager from an opaque InternalTypes.StateValue.
- *
- * @internal
  */
 export function unbrandIVM<
 	TManagerInterface,

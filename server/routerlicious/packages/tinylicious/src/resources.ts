@@ -4,10 +4,10 @@
  */
 
 // import * as services from "@fluidframework/server-services";
-import * as core from "@fluidframework/server-services-core";
 // eslint-disable-next-line import/no-deprecated
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+import * as core from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
 export class TinyliciousResources implements core.IResources {

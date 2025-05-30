@@ -99,6 +99,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			tenantId: existingSession?.tenantId ?? sessionId.tenantId,
 			documentId: existingSession?.documentId ?? sessionId.documentId,
 			firstClientJoinTime: existingSession?.firstClientJoinTime ?? client.joinedTime,
+			latestClientJoinTime: client.joinedTime,
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient:
@@ -149,13 +150,18 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			sessionId,
 			knownConnectedClients,
 		);
-		if (!existingSession) {
-			throw new Error("Existing session not found in endClientSessionCore");
-		}
 
 		// Clear the session end timer if it exists. This shouldn't be necessary if the timer is
 		// properly cleared when the last client reconnects, but this is a safety measure.
 		clearTimeout(this.sessionEndTimers.get(sessionTimerKey));
+		if (!existingSession) {
+			// Session doesn't exist, so we can't end it.
+			Lumberjack.verbose("Session not found in endClientSessionCore", {
+				...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
+				numConnectedClients: knownConnectedClients?.length,
+			});
+			return;
+		}
 		if (otherConnectedClients.length === 0) {
 			// Start a timer to end the session after a period of inactivity
 			const timer = setTimeout(() => {
@@ -195,19 +201,38 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		});
 	}
 
+	private isSessionExpired(session: ICollaborationSession, timeoutBuffer = 0): boolean {
+		const now = Date.now();
+		if (session.lastClientLeaveTime === undefined) {
+			// Session has not ended yet, so it can't be expired
+			return false;
+		}
+		if (now - session.lastClientLeaveTime <= this.sessionActivityTimeoutMs + timeoutBuffer) {
+			// Session has not been inactive long enough to be expired
+			return false;
+		}
+		if (session.latestClientJoinTime !== undefined) {
+			if (
+				session.latestClientJoinTime > session.lastClientLeaveTime ||
+				now - session.latestClientJoinTime <= this.sessionActivityTimeoutMs + timeoutBuffer
+			) {
+				// Session has been rejoined since the last client leave, so it can't be expired.
+				// This can happen if a client rejoins before the session end timer expires, but
+				// the session end timer is not cleared on this instance due to the new client
+				// being on a different instance.
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private async pruneInactiveSessionsCore(): Promise<void> {
 		const allSessions = await this.sessionManager.getAllSessions();
-		const now = Date.now();
 		// Add a buffer to the session activity timeout to prevent pruning sessions that are already
 		// being closed or have just been closed normally.
-		const inactiveSessionPruningBuffer = Math.round(1.1 * this.sessionActivityTimeoutMs);
-		const inactiveSessionsToPrune = allSessions.filter(
-			(session) =>
-				// Check if the session has ended due to inactivity
-				session.lastClientLeaveTime !== undefined &&
-				// Check if the session has been inactive for longer than the timeout + buffer
-				now - session.lastClientLeaveTime >
-					this.sessionActivityTimeoutMs + inactiveSessionPruningBuffer,
+		const inactiveSessionPruningBuffer = Math.round(0.1 * this.sessionActivityTimeoutMs);
+		const inactiveSessionsToPrune = allSessions.filter((session) =>
+			this.isSessionExpired(session, inactiveSessionPruningBuffer),
 		);
 		const clientSessionTimeoutPs: Promise<void>[] = inactiveSessionsToPrune.map(
 			async (session) =>
@@ -231,7 +256,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 	}
 
 	private async getSessionAndClients(
-		client: ICollaborationSessionClient,
+		client: Pick<ICollaborationSessionClient, "clientId">,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
 	): Promise<{
@@ -250,6 +275,37 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		session: ICollaborationSession,
 		reason = "inactivity",
 	): Promise<void> {
+		const connectedClientsAfterTimeout = await this.clientManager.getClients(
+			session.tenantId,
+			session.documentId,
+		);
+		if (connectedClientsAfterTimeout.length > 0) {
+			// If there are still clients connected, don't end the session.
+			// This can happen if the session end timer expires but a client reconnects before the session is ended.
+			// When that happens on a different or new Nexus instance, the session end timer is not cleared.
+			Lumberjack.verbose("Session end timer expired but clients are still connected", {
+				...getLumberBaseProperties(session.documentId, session.tenantId),
+				...session.telemetryProperties,
+				numConnectedClients: connectedClientsAfterTimeout.length,
+			});
+			return;
+		}
+		const latestSessionInformation = await this.sessionManager.getSession({
+			tenantId: session.tenantId,
+			documentId: session.documentId,
+		});
+		if (latestSessionInformation !== undefined && this.isSessionExpired(session)) {
+			// Session information on this instance is stale, so don't end the session.
+			Lumberjack.verbose("Session end timer expired but session is still active", {
+				...getLumberBaseProperties(session.documentId, session.tenantId),
+				...latestSessionInformation.telemetryProperties,
+				lastClientLeaveTime: latestSessionInformation.lastClientLeaveTime,
+				latestClientJoinTime: latestSessionInformation.latestClientJoinTime,
+				numConnectedClients: connectedClientsAfterTimeout.length,
+			});
+			return;
+		}
+		// Session end timer expired and no clients are connected, so end the session.
 		const now = Date.now();
 		const sessionDurationInMs = now - session.firstClientJoinTime;
 		const metric = Lumberjack.newLumberMetric(LumberEventName.NexusSessionResult, {
@@ -268,6 +324,9 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 					: undefined,
 			...session.telemetryProperties,
 		});
+		// The lumber metric is created at the end of the session, so "timestamp" is the end time, rather than the usual "start time".
+		// Override the timestamp to be the start time of the session.
+		metric.overrideTimestamp(session.firstClientJoinTime);
 
 		// For now, always a "success" result
 		metric.success(`Session ended due to ${reason}`);

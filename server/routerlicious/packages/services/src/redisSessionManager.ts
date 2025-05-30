@@ -25,6 +25,10 @@ interface IShortCollaborationSession {
 	 */
 	fjt: number;
 	/**
+	 * {@link ICollaborationSession.latestClientJoinTime}
+	 */
+	ljt: number | undefined;
+	/**
 	 * {@link ICollaborationSession.lastClientLeaveTime}
 	 */
 	llt: number | undefined;
@@ -157,6 +161,7 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		return {
 			fjt: session.firstClientJoinTime,
 			llt: session.lastClientLeaveTime,
+			ljt: session.latestClientJoinTime,
 			tp: {
 				hwc: session.telemetryProperties.hadWriteClient,
 				tlj: session.telemetryProperties.totalClientsJoined,
@@ -172,6 +177,7 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		return {
 			...this.getTenantIdDocumentIdFromFieldKey(fieldKey),
 			firstClientJoinTime: shortSession.fjt,
+			latestClientJoinTime: shortSession.ljt,
 			lastClientLeaveTime: shortSession.llt,
 			telemetryProperties: {
 				hadWriteClient: shortSession.tp.hwc,

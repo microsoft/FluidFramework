@@ -10,7 +10,6 @@ import {
 	ISignalMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-
 import {
 	extractBoxcar,
 	IClientManager,

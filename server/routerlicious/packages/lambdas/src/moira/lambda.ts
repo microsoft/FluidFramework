@@ -17,8 +17,8 @@ import {
 	getLumberBaseProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import shajs from "sha.js";
 import axios from "axios";
+import shajs from "sha.js";
 
 /**
  * @internal

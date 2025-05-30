@@ -26,8 +26,6 @@ export {
 	DocumentationLiteralNodeBase,
 	type DocumentationParentNode,
 	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-	type SingleLineDocumentationNode,
 } from "./DocumentationNode.js";
 export { DocumentationNodeType } from "./DocumentationNodeType.js";
 export { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
@@ -39,7 +37,7 @@ export { OrderedListNode } from "./OrderedListNode.js";
 export { ParagraphNode } from "./ParagraphNode.js";
 export { PlainTextNode } from "./PlainTextNode.js";
 export { SectionNode } from "./SectionNode.js";
-export { SpanNode, SingleLineSpanNode } from "./SpanNode.js";
+export { SpanNode } from "./SpanNode.js";
 export {
 	TableCellNode,
 	TableBodyCellNode,

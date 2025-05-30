@@ -99,10 +99,9 @@ export const initialFuzzSchema = createTreeViewSchema([]);
 export const fuzzFieldSchema = FuzzNode.info.optionalChild;
 
 /**
- *
+ * Returns the {@link FuzzNodeSchema} with the {@link initialAllowedTypes}, as well as the additional nodeTypes passed in.
  * @param nodeTypes - The additional node types outside of the {@link initialAllowedTypes} that the fuzzNode is allowed to contain
  * @param schemaFactory - The schemaFactory used to build the {@link FuzzNodeSchema}. The scope prefix must be "treeFuzz".
- * @returns the {@link FuzzNodeSchema} with the {@link initialAllowedTypes}, as well as the additional nodeTypes passed in.
  */
 function createFuzzNodeSchema(
 	nodeTypes: TreeNodeSchema[],

@@ -5,7 +5,12 @@
 
 import { expect } from "chai";
 
-import { OrderedListNode } from "../../../documentation-domain/index.js";
+import {
+	LineBreakNode,
+	OrderedListNode,
+	PlainTextNode,
+	SpanNode,
+} from "../../../documentation-domain/index.js";
 
 import { testRender } from "./Utilities.js";
 
@@ -24,6 +29,21 @@ describe("OrderedListNode Markdown rendering tests", () => {
 			const result = testRender(input);
 
 			const expected = ["", `1. ${text1}`, `1. ${text2}`, `1. ${text3}`, "", ""].join("\n");
+
+			expect(result).to.equal(expected);
+		});
+
+		it("Multi-line list item", () => {
+			const item = new SpanNode([
+				new PlainTextNode("Hello"),
+				LineBreakNode.Singleton,
+				new PlainTextNode("world"),
+			]);
+
+			const input = new OrderedListNode([item]);
+			const result = testRender(input);
+
+			const expected = ["", `1. <span>Hello<br>world</span>`, "", ""].join("\n");
 
 			expect(result).to.equal(expected);
 		});

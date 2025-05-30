@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import {
+	generateCompatibilityTestCase,
 	loadTypesSourceFile,
 	typeDataFromFile,
 } from "../../../commands/generate/typetests.js";
@@ -77,7 +78,50 @@ describe("generate:typetests", () => {
 				import: "InternalTypes.InnerInternal",
 				tags: ["internal"],
 			},
+			{
+				name: "TypeAlias_Sealed",
+				import: "Sealed",
+				tags: ["sealed"],
+			},
+			{
+				name: "TypeAlias_Input",
+				import: "Input",
+				tags: ["input"],
+			},
 		]);
+	});
+
+	describe("generateCompatibilityTestCase", () => {
+		it("sealed", () => {
+			const currentFile = loadTypesSourceFile("./src/test/data/exports/exports.d.ts");
+			const typeData = typeDataFromFile(currentFile, logger);
+			const testType = typeData.get("TypeAlias_Sealed");
+			assert(testType !== undefined);
+
+			const test = generateCompatibilityTestCase(testType, {});
+			// strip comments to simplify comparison
+			const code = test.filter(
+				(line) => !(line.startsWith("/*") || line.startsWith(" *") || line.length === 0),
+			);
+			assert.deepEqual(code, [
+				"declare type current_as_old_for_TypeAlias_Sealed = requireAssignableTo<TypeOnly<current.Sealed>, TypeOnly<old.Sealed>>",
+			]);
+		});
+		it("input", () => {
+			const currentFile = loadTypesSourceFile("./src/test/data/exports/exports.d.ts");
+			const typeData = typeDataFromFile(currentFile, logger);
+			const testType = typeData.get("TypeAlias_Input");
+			assert(testType !== undefined);
+
+			const test = generateCompatibilityTestCase(testType, {});
+			// strip comments to simplify comparison
+			const code = test.filter(
+				(line) => !(line.startsWith("/*") || line.startsWith(" *") || line.length === 0),
+			);
+			assert.deepEqual(code, [
+				"declare type old_as_current_for_TypeAlias_Input = requireAssignableTo<TypeOnly<old.Input>, TypeOnly<current.Input>>",
+			]);
+		});
 	});
 
 	// Test classes generate both cases correctly

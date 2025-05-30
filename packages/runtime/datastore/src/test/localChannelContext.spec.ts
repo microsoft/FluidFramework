@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
@@ -19,7 +19,10 @@ import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChan
 describe("LocalChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;
 	let sharedObjectRegistry: ISharedObjectRegistry;
-	const loadRuntime = (context: IFluidDataStoreContext, registry: ISharedObjectRegistry) =>
+	const loadRuntime = (
+		context: IFluidDataStoreContext,
+		registry: ISharedObjectRegistry,
+	): FluidDataStoreRuntime =>
 		new FluidDataStoreRuntime(context, registry, /* existing */ false, async () => ({
 			myProp: "myValue",
 		}));
@@ -31,8 +34,8 @@ describe("LocalChannelContext Tests", () => {
 				return {
 					type,
 					attributes: { type, snapshotFormatVersion: "0" },
-					create: () => ({}) as any as IChannel,
-					load: async () => Promise.resolve({} as any as IChannel),
+					create: () => ({}) as unknown as IChannel,
+					load: async () => ({}) as unknown as IChannel,
 				};
 			},
 		};
@@ -41,9 +44,9 @@ describe("LocalChannelContext Tests", () => {
 	it("LocalChannelContext rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
-		const codeBlock = () =>
+		const codeBlock = (): LocalChannelContext =>
 			new LocalChannelContext(
-				{ id: invalidId } as any as IChannel,
+				{ id: invalidId } as unknown as IChannel,
 				dataStoreRuntime,
 				dataStoreContext,
 				dataStoreContext.storage,
@@ -61,7 +64,7 @@ describe("LocalChannelContext Tests", () => {
 	it("RehydratedLocalChannelContext rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
-		const codeBlock = () =>
+		const codeBlock = (): RehydratedLocalChannelContext =>
 			new RehydratedLocalChannelContext(
 				invalidId,
 				sharedObjectRegistry,
@@ -71,7 +74,7 @@ describe("LocalChannelContext Tests", () => {
 				dataStoreContext.baseLogger,
 				(content, localOpMetadata) => {},
 				(s: string) => {},
-				null as unknown as ISnapshotTree,
+				undefined as unknown as ISnapshotTree,
 			);
 		assert.throws(
 			codeBlock,

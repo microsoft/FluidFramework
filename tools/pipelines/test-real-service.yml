@@ -110,8 +110,8 @@ stages:
           flags: --compatVersion=-1
         - name: LTS
           flags: --compatVersion=LTS
-        - name: Cross-version
-          flags: --compatVersion=CROSS_VERSION
+        - name: Cross-Client
+          flags: --compatVersion=CROSS_CLIENT
       cacheCompatVersionsInstalls: true
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
@@ -145,8 +145,8 @@ stages:
           flags: --compatVersion=-1
         - name: LTS
           flags: --compatVersion=LTS
-        - name: Cross-Version
-          flags: --compatVersion=CROSS_VERSION
+        - name: Cross-Client
+          flags: --compatVersion=CROSS_CLIENT
       cacheCompatVersionsInstalls: true
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
@@ -174,8 +174,8 @@ stages:
           flags: --compatVersion=0 --tenantIndex=0
         - name: N-1
           flags: --compatVersion=-1 --tenantIndex=1
-        - name: Cross-Version
-          flags: --compatVersion=CROSS_VERSION
+        - name: Cross-Client
+          flags: --compatVersion=CROSS_CLIENT
         # Assumes Non-compat and N-1 scenarios are covered
         # Tests N-2 to LTS+1 back compat for loader
         # Tests N-2 to LTS+3 back compat for loader + driver

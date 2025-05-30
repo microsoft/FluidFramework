@@ -4,6 +4,7 @@
  */
 
 import { ICollection } from "@fluidframework/server-services-core";
+
 import { ITenantDocument } from "./tenantManager";
 
 /**

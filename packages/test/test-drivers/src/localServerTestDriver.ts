@@ -69,4 +69,13 @@ export class LocalServerTestDriver implements ITestDriver {
 	async createContainerUrl(testId: string): Promise<string> {
 		return `http://localhost/${testId}`;
 	}
+
+	/**
+	 * Local server dispose flows are especially important to avoid leaking memory over the course of a test run.
+	 */
+	dispose() {
+		this._server.close().catch(() => {
+			// TODO: We may want to log the error in the future.
+		});
+	}
 }

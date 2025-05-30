@@ -4,6 +4,7 @@
  */
 
 import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import { IServiceConfiguration } from "./configuration";
 import { IWebSocket } from "./http";
 

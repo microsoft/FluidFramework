@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import CircuitBreaker from "opossum";
-import { serializeError } from "serialize-error";
 import { IContext } from "@fluidframework/server-services-core";
 import { Lumberjack, Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
+import CircuitBreaker from "opossum";
+import { serializeError } from "serialize-error";
 
 export interface circuitBreakerOptions {
 	errorThresholdPercentage: number; // Percentage of errors before opening the circuit

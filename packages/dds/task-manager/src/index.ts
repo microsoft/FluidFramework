@@ -10,5 +10,5 @@
  * @packageDocumentation
  */
 
-export { ITaskManager, ITaskManagerEvents, TaskEventListener } from "./interfaces.js";
+export type { ITaskManager, ITaskManagerEvents, TaskEventListener } from "./interfaces.js";
 export { TaskManager } from "./taskManagerFactory.js";

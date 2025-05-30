@@ -36,7 +36,7 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { isObjectNodeSchema } from "../objectNodeTypes.js";
+import { isObjectNodeSchema } from "../node-kinds/index.js";
 import {
 	customFromCursor,
 	replaceHandles,

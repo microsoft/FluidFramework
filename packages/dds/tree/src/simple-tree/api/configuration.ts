@@ -16,7 +16,7 @@ import {
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
+import { isObjectNodeSchema, type ObjectNodeSchema } from "../node-kinds/index.js";
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";

@@ -432,6 +432,12 @@ export type TelemetryBaseEventPropertyType = string | number | boolean | undefin
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
+// @alpha @legacy
+export interface TypedMessage {
+    content: unknown;
+    type: string;
+}
+
 // (No @packageDocumentation comment for this package)
 
 ```

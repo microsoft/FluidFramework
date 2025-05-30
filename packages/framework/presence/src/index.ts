@@ -30,6 +30,7 @@ export {
 	AttendeeStatus,
 	type Presence,
 	type PresenceEvents,
+	type PresenceWithNotifications,
 } from "./presence.js";
 
 export type {
@@ -37,7 +38,7 @@ export type {
 	BroadcastControlSettings,
 } from "./broadcastControls.js";
 
-export { getPresence } from "./experimentalAccess.js";
+export { getPresence, getPresenceAlpha } from "./experimentalAccess.js";
 
 export {
 	getPresenceViaDataObject,

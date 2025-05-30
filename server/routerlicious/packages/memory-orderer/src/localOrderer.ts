@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { merge } from "lodash";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient } from "@fluidframework/protocol-definitions";
 import {
@@ -39,6 +38,8 @@ import {
 	CheckpointService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { merge } from "lodash";
+
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
 import { LocalKafka } from "./localKafka";

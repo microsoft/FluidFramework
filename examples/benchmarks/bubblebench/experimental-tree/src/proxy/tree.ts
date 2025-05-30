@@ -24,13 +24,15 @@ function getChild(
 	const view = tree.currentView;
 	const node = view.getViewNode(nodeId);
 	switch (node.definition) {
-		case NodeKind.scalar:
+		case NodeKind.scalar: {
 			return node.payload;
+		}
 		case NodeKind.array: {
 			return new TreeArrayProxy(tree, nodeId, update);
 		}
-		default:
+		default: {
 			return TreeObjectProxy(tree, nodeId, update);
+		}
 	}
 }
 
@@ -87,37 +89,39 @@ export class TreeArrayProxy<T> {
 	) {
 		const handler: ProxyHandler<TreeArrayProxy<T>> = {
 			get(target, key) {
-				if (typeof key !== "symbol" && !isNaN(key as unknown as number)) {
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					const index = parseInt(key as string, 10);
-					const view = tree.currentView;
-					const childrenIds = view.getTrait({
-						parent: nodeId,
-						label: "items" as TraitLabel,
-					});
-					return getChild(tree, childrenIds[index], update);
+				if (typeof key !== "symbol") {
+					const index = Number.parseInt(key, 10);
+					if (!Number.isNaN(index)) {
+						const view = tree.currentView;
+						const childrenIds = view.getTrait({
+							parent: nodeId,
+							label: "items" as TraitLabel,
+						});
+						return getChild(tree, childrenIds[index], update);
+					}
 				}
 
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return target[key];
 			},
 			set(target, key, value) {
-				if (typeof key !== "symbol" && !isNaN(key as unknown as number)) {
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					const index = parseInt(key as string, 10);
-					const view = tree.currentView;
-					const childrenIds = view.getTrait({
-						parent: nodeId,
-						label: "items" as TraitLabel,
-					});
-					update(
-						...Change.insertTree(
-							[fromJson(tree, value)],
-							StablePlace.after(view.getViewNode(childrenIds[index])),
-						),
-						Change.delete(StableRange.only(view.getViewNode(childrenIds[index]))),
-					);
-					return true;
+				if (typeof key !== "symbol") {
+					const index = Number.parseInt(key, 10);
+					if (!Number.isNaN(index)) {
+						const view = tree.currentView;
+						const childrenIds = view.getTrait({
+							parent: nodeId,
+							label: "items" as TraitLabel,
+						});
+						update(
+							...Change.insertTree(
+								[fromJson(tree, value)],
+								StablePlace.after(view.getViewNode(childrenIds[index])),
+							),
+							Change.delete(StableRange.only(view.getViewNode(childrenIds[index]))),
+						);
+						return true;
+					}
 				}
 
 				return false;
@@ -133,7 +137,7 @@ export class TreeArrayProxy<T> {
 		return view.getTrait({ parent: this.nodeId, label: "items" as TraitLabel });
 	}
 
-	private idsToItems(itemIds: readonly NodeId[]) {
+	private idsToItems(itemIds: readonly NodeId[]): Serializable<T>[] {
 		return itemIds.map((itemId) =>
 			getChild(this.tree, itemId, this.update),
 		) as Serializable<T>[];
@@ -183,7 +187,7 @@ export class TreeArrayProxy<T> {
 		return this.items.length;
 	}
 
-	pushNode(...node: ChangeNode[]) {
+	pushNode(...node: ChangeNode[]): void {
 		this.update(
 			...Change.insertTree(
 				node,
@@ -197,8 +201,12 @@ export class TreeArrayProxy<T> {
 
 	map<U>(
 		callbackfn: (value: Serializable<T>, index: number, array: Serializable<T>[]) => U,
-		thisArg?: any,
+		thisArg?: unknown,
 	): U[] {
-		return this.items.map<U>(callbackfn, thisArg);
+		return this.items.map<U>(
+			(value, index, array) => callbackfn(value, index, array),
+			// eslint-disable-next-line unicorn/no-array-method-this-argument
+			thisArg,
+		);
 	}
 }

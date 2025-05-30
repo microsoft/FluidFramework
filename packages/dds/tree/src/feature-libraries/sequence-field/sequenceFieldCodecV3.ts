@@ -12,13 +12,13 @@ import type {
 	RevisionTag,
 } from "../../core/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
-
-import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
-import type { Changeset, Mark, MarkEffect, Rename } from "./types.js";
-import { isNoopMark } from "./utils.js";
 import type { FieldChangeEncodingContext } from "../index.js";
 import { EncodedNodeChangeset } from "../modular-schema/index.js";
+
+import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
 import { makeV2CodecHelpers } from "./sequenceFieldCodecV2.js";
+import type { Changeset, Mark, MarkEffect, Rename } from "./types.js";
+import { isNoopMark } from "./utils.js";
 
 export function makeV3Codec(
 	revisionTagCodec: IJsonCodec<

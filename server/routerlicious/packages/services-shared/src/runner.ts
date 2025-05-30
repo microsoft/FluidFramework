@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import nconf from "nconf";
-import { serializeError } from "serialize-error";
 import {
 	ILogger,
 	IResources,
@@ -16,6 +14,9 @@ import {
 	LumberEventName,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
+import nconf from "nconf";
+import { serializeError } from "serialize-error";
+
 import { ConfigDumper } from "./configDumper";
 
 /**

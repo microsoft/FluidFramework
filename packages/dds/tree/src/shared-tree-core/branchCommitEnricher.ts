@@ -4,15 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	type ChangeRebaser,
 	type GraphCommit,
 	replaceChange,
 	type RevisionTag,
 } from "../core/index.js";
+
+import type { SharedTreeBranchChange } from "./branch.js";
 import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
 import { TransactionEnricher } from "./transactionEnricher.js";
-import type { SharedTreeBranchChange } from "./branch.js";
 
 /**
  * Utility for enriching commits from a {@link Branch} before these commits are applied and submitted.

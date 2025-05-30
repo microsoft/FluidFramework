@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	ConnectionMode,
@@ -18,9 +19,10 @@ import {
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { IWebSocket } from "@fluidframework/server-services-core";
-import { KJUR as jsrsasign } from "jsrsasign";
 import { TestNotImplementedDocumentRepository } from "@fluidframework/server-test-utils";
+import { KJUR as jsrsasign } from "jsrsasign";
 import Sinon from "sinon";
+
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

@@ -172,8 +172,8 @@ describe("Summary benchmarks", () => {
 });
 
 /**
- * @param content - content to full the tree with
- * @returns the tree's summary
+ * Returns the tree's summary.
+ * @param content - The content to fill the tree with.
  */
 function getSummaryTree<T extends ImplicitFieldSchema>(
 	content: TreeSimpleContentTyped<T>,

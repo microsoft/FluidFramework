@@ -4,11 +4,11 @@
  */
 
 import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
+import { SchemaVersion } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
 	makeSchemaCodec,
-	SchemaCodecVersion,
 } from "../../feature-libraries/index.js";
 import {
 	clientVersionToSchemaVersion,
@@ -17,10 +17,11 @@ import {
 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
-import { simpleToStoredSchema } from "../toStoredSchema.js";
-import type { SchemaCompatibilityStatus } from "./tree.js";
-import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
+import { simpleToStoredSchema } from "../toStoredSchema.js";
+
+import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.
@@ -98,7 +99,7 @@ export function comparePersistedSchema(
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	// Any version can be passed down to makeSchemaCodec here.
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec(options, SchemaCodecVersion.v1);
+	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new SchemaCompatibilityTester(
 		defaultSchemaPolicy,

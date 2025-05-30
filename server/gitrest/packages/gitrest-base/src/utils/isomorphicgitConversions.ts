@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as isomorphicGit from "isomorphic-git";
 import * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import * as isomorphicGit from "isomorphic-git";
 
 type IsomorphicGitTreeEntryType = "commit" | "blob" | "tree";
 type IsomorphicGitTagObjectType = IsomorphicGitTreeEntryType | "tag";

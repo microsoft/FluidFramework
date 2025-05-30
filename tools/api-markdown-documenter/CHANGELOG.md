@@ -7,6 +7,27 @@
 Updates default transformation logic for `ApiInterface` items to generate headings that read "Constructor" rather than "Construct Signature" for constructor-like members.
 This better aligns with similar policies for members like interface methods which are labeled "Method" and not "Method Signature", despite the underlying TypeScript AST entry being a "method signature".
 
+### `LayoutUtilities` function updates
+
+- `createSummaryParagraph` has been renamed to `createSummarySection`.
+  - It also now returns a `SectionNode`, rather than a `ParagraphNode` to be consistent with the other functions in `LayoutUtilities`.
+  - It has also been optimized to not create empty sections for doc comments with no summary component.
+
+- `createDeprecationNoticeSection` now returns a `SectionNode`, rather than a `ParagraphNode`.
+
+### Simplify `DocumentationNode` types
+
+Removes:
+
+- `MultiLineDocumentationNode`
+- `SingleLineDocumentationNode`
+- `SingleLineSpanNode`
+
+Updates `DocumentationNode` types that were constrained to single-line nodes to allow any `DocumentationNode` children.
+Rendering to Markdown falls back to HTML syntax in cases where multi-line content appears in relevant contexts (lists).
+
+Also updates `CodeSpanNode` to only allow plain text content, which is in line with how it is used, and how it is constrained in Markdown.
+
 ## 0.19.0
 
 ### Add the ability to filter out individual API items (and their descendants) from documentation generation

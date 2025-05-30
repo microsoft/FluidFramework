@@ -19,6 +19,7 @@ import {
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+
 import { ISummaryUploadManager, IGitManager } from "./storage";
 import { IWholeSummaryPayloadType } from "./storageContracts";
 

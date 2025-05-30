@@ -5,7 +5,7 @@
 
 import { PathLike, Stats, type BigIntStats } from "fs";
 import * as path from "path";
-import { Request } from "express";
+
 import {
 	IGetRefParamsExternal,
 	IWholeFlatSummary,
@@ -17,6 +17,8 @@ import {
 	HttpProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import { Request } from "express";
+
 import {
 	Constants,
 	IExternalWriterConfig,
@@ -26,11 +28,11 @@ import {
 	IRepositoryManagerFactory,
 	IStorageRoutingId,
 } from "./definitions";
+import { isFilesystemError, throwFileSystemErrorAsNetworkError } from "./fileSystemHelper";
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 } from "./gitrestTelemetryDefinitions";
-import { isFilesystemError, throwFileSystemErrorAsNetworkError } from "./fileSystemHelper";
 
 /**
  * Validates that the input encoding is valid

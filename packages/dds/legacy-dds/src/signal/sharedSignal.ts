@@ -36,7 +36,7 @@ const snapshotFileName = "header";
  *
  * @internal
  */
-export class SharedSignal<T extends SerializableTypeForSharedSignal = any>
+export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	extends SharedObject<ISharedSignalEvents<T>>
 	implements ISharedSignal<T>
 {
@@ -47,8 +47,8 @@ export class SharedSignal<T extends SerializableTypeForSharedSignal = any>
 	 * @param id - optional name of the shared signal
 	 * @returns newly create shared signal (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedSignal {
-		return runtime.createChannel(id, SharedSignalFactory.Type) as SharedSignal;
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedSignalClass {
+		return runtime.createChannel(id, SharedSignalFactory.Type) as SharedSignalClass;
 	}
 
 	/**

@@ -57,32 +57,6 @@ export interface DocumentationNode<TData extends object = UnistData> extends Uni
 }
 
 /**
- * A {@link DocumentationNode} that is contractually rendered to a single line (no line breaks allowed).
- *
- * @public
- */
-export interface SingleLineDocumentationNode<TData extends object = UnistData>
-	extends DocumentationNode<TData> {
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	readonly singleLine: true;
-}
-
-/**
- * A {@link DocumentationNode} that is contractually rendered as more than 1 line.
- *
- * @public
- */
-export interface MultiLineDocumentationNode<TData extends object = UnistData>
-	extends DocumentationNode<TData> {
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	readonly singleLine: false;
-}
-
-/**
  * A documentation node that has child nodes.
  *
  * @see {@link https://github.com/syntax-tree/unist#parent}

@@ -9,6 +9,7 @@ import {
 	makeBubble,
 	makeClient,
 	SimpleClient,
+	type IBubble,
 } from "@fluid-example/bubblebench-common";
 import { Change, SharedTree } from "@fluid-experimental/tree";
 
@@ -55,15 +56,15 @@ export class AppState implements IAppState {
 		this.applyEdits();
 	}
 
-	public setSize(width?: number, height?: number) {
+	public setSize(width?: number, height?: number): void {
 		this._width = width ?? 640;
 		this._height = height ?? 480;
 	}
 
-	public get width() {
+	public get width(): number {
 		return this._width;
 	}
-	public get height() {
+	public get height(): number {
 		return this._height;
 	}
 
@@ -71,15 +72,15 @@ export class AppState implements IAppState {
 		return this.root.clients;
 	}
 
-	private makeBubble() {
+	private makeBubble(): IBubble {
 		return makeBubble(this.width, this.height);
 	}
 
-	public increaseBubbles() {
+	public increaseBubbles(): void {
 		this.localClient.bubbles.push(this.makeBubble());
 	}
 
-	public decreaseBubbles() {
+	public decreaseBubbles(): void {
 		const bubbles = this.localClient.bubbles;
 		if (bubbles.length > 1) {
 			bubbles.pop();

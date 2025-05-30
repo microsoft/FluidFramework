@@ -8,8 +8,6 @@ import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 import { unionOptions } from "../../codec/index.js";
 import { type Brand, brandedStringType } from "../../util/index.js";
 
-export const version = 1 as const;
-
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeNodeStoredSchema.
  *

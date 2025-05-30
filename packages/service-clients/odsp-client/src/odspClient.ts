@@ -14,12 +14,10 @@ import {
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
-	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -27,7 +25,6 @@ import type {
 	ContainerSchema,
 	IFluidContainer,
 } from "@fluidframework/fluid-static";
-import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
@@ -156,9 +153,8 @@ export class OdspClient {
 		});
 		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
 
-		const fluidContainer = createFluidContainer({
+		const fluidContainer = await createFluidContainer({
 			container,
-			rootDataObject: await this.getContainerEntryPoint(container),
 		});
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer as IFluidContainer<T>, services };
@@ -201,8 +197,6 @@ export class OdspClient {
 		container: IContainer,
 		connection: OdspConnectionConfig,
 	): Promise<IFluidContainer> {
-		const rootDataObject = await this.getContainerEntryPoint(container);
-
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
@@ -233,7 +227,7 @@ export class OdspClient {
 			 */
 			return resolvedUrl.itemId;
 		};
-		const fluidContainer = createFluidContainer({ container, rootDataObject });
+		const fluidContainer = await createFluidContainer({ container });
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
@@ -245,14 +239,5 @@ export class OdspClient {
 				createServiceMember: createOdspAudienceMember,
 			}),
 		};
-	}
-
-	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
-		assert(
-			rootDataObject.IRootDataObject !== undefined,
-			0x878 /* entryPoint must be of type IRootDataObject */,
-		);
-		return rootDataObject.IRootDataObject;
 	}
 }

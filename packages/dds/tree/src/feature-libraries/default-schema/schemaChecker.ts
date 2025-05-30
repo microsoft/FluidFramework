@@ -4,6 +4,7 @@
  */
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type MapTree,
@@ -15,7 +16,6 @@ import {
 	type SchemaAndPolicy,
 } from "../../core/index.js";
 import { allowsValue } from "../valueUtilities.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 export enum SchemaValidationError {
 	Field_KindNotInSchemaPolicy,
