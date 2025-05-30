@@ -43,10 +43,10 @@ export type FluidObjectId = string;
  */
 export interface HasFluidObjectId {
 	/**
+	 * The ID of the Fluid object (DDS) associated with data or a request.
+	 * @privateRemarks
 	 * TODO: This should be renamed to something like 'fluidObjectKey' to better reflect its purpose as a key rather than an ID.
 	 * Cannot be changed now due to backward compatibility requirements.
-	 *
-	 * The ID of the Fluid object (DDS) associated with data or a request.
 	 */
 	readonly fluidObjectId: FluidObjectId;
 }
