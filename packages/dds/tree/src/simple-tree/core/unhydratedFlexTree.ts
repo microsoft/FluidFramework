@@ -397,7 +397,6 @@ export class UnhydratedFlexTreeField
 		}
 
 		this.lazyChildren = edit(this.children) ?? this.children;
-		this.parent?.emitChangedEvent(this.key);
 
 		// Set parents for all new map trees.
 		for (const [index, tree] of this.children.entries()) {
