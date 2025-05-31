@@ -453,7 +453,7 @@ export class FluidDataStoreRuntime
 		return (
 			// eslint-disable-next-line import/no-deprecated
 			(this.dataStoreContext.containerRuntime as IContainerRuntimeBaseExperimental)
-				.inStagingMode
+				?.inStagingMode
 		);
 	}
 
