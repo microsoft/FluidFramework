@@ -1,0 +1,17 @@
+.eslintrc.cjs
+CHANGELOG.md
+LICENSE
+README.md
+biome.jsonc
+package.json
+tsconfig.json
+lib/index.d.ts
+lib/index.d.ts.map
+lib/index.js
+lib/index.js.map
+lib/model.d.ts
+lib/model.d.ts.map
+lib/model.js
+lib/model.js.map
+src/index.ts
+src/model.ts
