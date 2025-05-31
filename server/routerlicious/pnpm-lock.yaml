@@ -1389,8 +1389,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0
       node-rdkafka:
-        specifier: ^3.0.1
-        version: 3.0.1
+        specifier: ^3.4.0
+        version: 3.4.0
       sillyname:
         specifier: ^0.1.0
         version: 0.1.0
@@ -6713,6 +6713,9 @@ packages:
   nan@2.19.0:
     resolution: {integrity: sha512-nO1xXxfh/RWNxfd/XPfbIfFk5vgLsAxUR9y5O0cHMJu/AW9U95JLXqthYHjEp+8gQ5p96K9jUp8nbVOxCdRbtw==}
 
+  nan@2.22.2:
+    resolution: {integrity: sha512-DANghxFkS1plDdRsX0X9pm0Z6SJNN6gBdtXfanwoZ8hooC5gosGFSBGRYHUVPz1asKA/kMRqDRdHrluZ61SpBQ==}
+
   napi-build-utils@1.0.2:
     resolution: {integrity: sha512-ONmRUqK7zj7DWX0D9ADe03wbwOBZxNAfF20PlGfCWQcD3+/MakShIHrMqx9YwPTfxDdF1zLeL+RGZiR9kGMLdg==}
 
@@ -6790,8 +6793,8 @@ packages:
     engines: {node: ^12.13 || ^14.13 || >=16}
     hasBin: true
 
-  node-rdkafka@3.0.1:
-    resolution: {integrity: sha512-USTFu7ylRj+fEiGz0hA92GWSqmX/hu/xSTqtgmInPPmh5zKhjauTciRjDEG3yK5m6yChwyHKQTIgmr56DfhiaQ==}
+  node-rdkafka@3.4.0:
+    resolution: {integrity: sha512-jLFIsGzlAq8hHMY+c0B7e8vEZs9qs65tr95GTUqgSc95qCNE97Nk9f1kor2isXdLC3diILKqzk+oKqmRYO64MA==}
     engines: {node: '>=16'}
 
   node-releases@2.0.14:
@@ -10198,7 +10201,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 5.0.0
       events_pkg: events@3.3.0
       nconf: 0.12.1
-      node-rdkafka: 3.0.1
+      node-rdkafka: 3.4.0
       sillyname: 0.1.0
     transitivePeerDependencies:
       - supports-color
@@ -15825,7 +15828,10 @@ snapshots:
 
   nan@2.17.0: {}
 
-  nan@2.19.0: {}
+  nan@2.19.0:
+    optional: true
+
+  nan@2.22.2: {}
 
   napi-build-utils@1.0.2:
     optional: true
@@ -15923,10 +15929,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  node-rdkafka@3.0.1:
+  node-rdkafka@3.4.0:
     dependencies:
       bindings: 1.5.0
-      nan: 2.19.0
+      nan: 2.22.2
 
   node-releases@2.0.14: {}
 
