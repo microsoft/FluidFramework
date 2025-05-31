@@ -703,6 +703,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 	public readonly dispose = (): void => this.disposeOnce.value;
 
+	//* Add overloads that specify squash is false if not "Component" op type
 	public reSubmit(
 		type: string,
 		content: unknown,

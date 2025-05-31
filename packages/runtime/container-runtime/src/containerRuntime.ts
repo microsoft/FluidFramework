@@ -779,14 +779,13 @@ const defaultMaxConsecutiveReconnects = 7;
  */
 function canStageMessageOfType(
 	type: LocalContainerRuntimeMessage["type"],
-): type is
-	| ContainerMessageType.FluidDataStoreOp
-	| ContainerMessageType.GC
-	| ContainerMessageType.DocumentSchemaChange {
+): type is ContainerMessageType.FluidDataStoreOp | ContainerMessageType.GC {
 	return (
+		// These are user changes coming up from the runtime's DataStores
 		type === ContainerMessageType.FluidDataStoreOp ||
-		type === ContainerMessageType.GC ||
-		type === ContainerMessageType.DocumentSchemaChange
+		// GC ops are used to detect issues in the reference graph so all clients can repair their GC state.
+		// These can be submitted at any time, including while in Staging Mode.
+		type === ContainerMessageType.GC
 	);
 }
 
@@ -1178,6 +1177,8 @@ export class ContainerRuntime
 
 	public readonly clientDetails: IClientDetails;
 
+	private readonly isSummarizerClient: boolean;
+
 	public get storage(): IDocumentStorageService {
 		return this._storage;
 	}
@@ -1520,6 +1521,11 @@ export class ContainerRuntime
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
+			properties: {
+				all: {
+					inStagingMode: this.inStagingMode,
+				},
+			},
 		});
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
@@ -1576,7 +1582,7 @@ export class ContainerRuntime
 		// Values are generally expected to be set from the runtime side.
 		this.options = options ?? {};
 		this.clientDetails = clientDetails;
-		const isSummarizerClient = this.clientDetails.type === summarizerClientType;
+		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getClientId = () => context.clientId;
@@ -1617,7 +1623,7 @@ export class ContainerRuntime
 		);
 
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
-		this.closeFn = isSummarizerClient ? this.disposeFn : closeFn;
+		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1778,7 +1784,7 @@ export class ContainerRuntime
 			existing,
 			metadata,
 			createContainerMetadata: this.createContainerMetadata,
-			isSummarizerClient,
+			isSummarizerClient: this.isSummarizerClient,
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
@@ -2143,8 +2149,7 @@ export class ContainerRuntime
 			maxOpsSinceLastSummary,
 		);
 
-		const isSummarizerClient = this.clientDetails.type === summarizerClientType;
-		if (isSummarizerClient) {
+		if (this.isSummarizerClient) {
 			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
 			// so that all non summarizer clients don't have to load the code inside this module.
 			const module = await import(
@@ -4460,6 +4465,32 @@ export class ContainerRuntime
 		}
 	}
 
+	/**
+	 * Submit a system message to the Outbox.
+	 * In interactive clients, system messages submitted via this function will be
+	 * held in the Outbox until the next flush.
+	 * This avoids sending an op apart from user interaction, which is preferable when possible.
+	 *
+	 * @privateremarks
+	 * Right now the only message type supported here is DocumentSchemaChange.
+	 * ID Allocation ops may be suited for use this flow as well.
+	 * GC ops are not since they should be sent immediately.
+	 *
+	 * @param systemMessage - The system message to submit.
+	 */
+	private submitSystemMessage(systemMessage: ContainerRuntimeDocumentSchemaMessage): void {
+		if (this.isSummarizerClient) {
+			this.submit(systemMessage);
+			return;
+		}
+
+		this.outbox.holdSystemMessageUntilNextFlush({
+			runtimeOp: systemMessage,
+			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			staged: false,
+		});
+	}
+
 	private submit(
 		containerRuntimeMessage: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
@@ -4509,8 +4540,7 @@ export class ContainerRuntime
 			}
 
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
-			// If it needs to send a message, it will call provided callback with payload of such message and rely
-			// on this callback to do actual sending.
+			// submitSystemMessage will have the Outbox hold the message and only send it when the next flush happens.
 			const schemaChangeMessage = this.documentsSchemaController.maybeSendSchemaMessage();
 			if (schemaChangeMessage) {
 				this.mc.logger.sendTelemetryEvent({
@@ -4525,11 +4555,7 @@ export class ContainerRuntime
 					type: ContainerMessageType.DocumentSchemaChange,
 					contents: schemaChangeMessage,
 				};
-				this.outbox.submit({
-					runtimeOp: msg,
-					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					staged,
-				});
+				this.submitSystemMessage(msg);
 			}
 
 			const message: LocalBatchMessage = {
@@ -4670,6 +4696,10 @@ export class ContainerRuntime
 			this._summarizer === undefined,
 			0x8f2 /* Summarizer never reconnects so should never resubmit */,
 		);
+		assert(
+			!squash || canStageMessageOfType(message.type),
+			"Only expecting staged messages to be squashed on resubmit",
+		);
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
@@ -4703,6 +4733,7 @@ export class ContainerRuntime
 				break;
 			}
 			case ContainerMessageType.GC: {
+				// NOTE: Squash doesn't apply to GC ops, send them all.
 				this.submit(message);
 				break;
 			}
@@ -4736,9 +4767,16 @@ export class ContainerRuntime
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			}
-			case ContainerMessageType.GC:
-			case ContainerMessageType.DocumentSchemaChange: {
-				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
+			//* TODO: Add a test to ensure the log happens as expected
+			case ContainerMessageType.GC: {
+				// Just drop it, but log an error, this is not expected and not ideal, but not critical failure either.
+				// Currently the only expected type here is TombstoneLoaded, which will have been preceded by one of these events as well:
+				// GC_Tombstone_DataStore_Requested, GC_Tombstone_SubDataStore_Requested, GC_Tombstone_Blob_Requested
+				this.mc.logger.sendErrorEvent({
+					eventName: "DroppingGCOp",
+					details: { subType: contents.type },
+				});
+				break;
 			}
 			default: {
 				unreachableCase(type);
