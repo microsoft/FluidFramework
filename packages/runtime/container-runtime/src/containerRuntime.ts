@@ -4696,6 +4696,10 @@ export class ContainerRuntime
 			this._summarizer === undefined,
 			0x8f2 /* Summarizer never reconnects so should never resubmit */,
 		);
+		assert(
+			!squash || canStageMessageOfType(message.type),
+			"Only expecting staged messages to be squashed on resubmit",
+		);
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
@@ -4729,6 +4733,7 @@ export class ContainerRuntime
 				break;
 			}
 			case ContainerMessageType.GC: {
+				// NOTE: Squash doesn't apply to GC ops, send them all.
 				this.submit(message);
 				break;
 			}

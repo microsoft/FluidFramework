@@ -274,7 +274,6 @@ describe("Outbox", () => {
 				state.opsResubmitted++;
 			},
 			opReentrancy: () => state.isReentrant,
-			getPrerequisiteSystemMessages: () => [],
 		});
 	};
 
