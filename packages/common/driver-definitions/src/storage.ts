@@ -238,7 +238,7 @@ export interface IDocumentServiceEvents extends IEvent {
  */
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "nack", listener: (documentId: string, message: INack[]) => void);
-	(event: "disconnect", listener: (reason: IAnyDriverError) => void);
+	(event: "disconnect", listener: (reason?: IAnyDriverError) => void);
 	(event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
 	(event: "signal", listener: (message: ISignalMessage | ISignalMessage[]) => void);
 	(event: "pong", listener: (latency: number) => void);
