@@ -13,7 +13,6 @@ import {
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { validateUsageError } from "../../utils.js";
 import { singleJsonCursor } from "../../json/index.js";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 describe("simple-tree create", () => {
 	describe("createFromCursor", () => {
@@ -26,7 +25,9 @@ describe("simple-tree create", () => {
 			const cursor = singleJsonCursor("Hello world");
 			assert.throws(
 				() => createFromCursor(SchemaFactory.number, cursor),
-				(e: Error) => validateAssertionError(e, /missing schema/),
+				validateUsageError(
+					`Failed to parse tree due to occurrence of type "com.fluidframework.leaf.string" which is not defined in this context.`,
+				),
 			);
 		});
 
