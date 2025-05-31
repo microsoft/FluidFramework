@@ -415,7 +415,7 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexCont
 /**
  * Check {@link FactoryContentObject} for a property which could be store a field.
  *
- * If the property exists, return its value, otherwise returns undefined.
+ * @returns If the property exists, return its value. Otherwise, returns undefined.
  * @remarks
  * The currently policy is to only consider own properties.
  * See {@link InsertableObjectFromSchemaRecord} for where this policy is documented in the public API.

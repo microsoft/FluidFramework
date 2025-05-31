@@ -13,10 +13,12 @@ import {
 	type ITreeCursor,
 	type MapTree,
 	type NodeData,
+	type NodeData,
 	aboveRootPlaceholder,
 	detachedFieldAsKey,
 	mapCursorField,
 	rootField,
+	rootFieldKey,
 	rootFieldKey,
 } from "../core/index.js";
 
@@ -24,14 +26,24 @@ import {
 	type CursorAdapter,
 	type CursorWithNode,
 	type Field,
+	type Field,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "./treeCursorUtils.js";
 import type { requireAssignableTo } from "../util/index.js";
 
+/**
+ * A generic variant of {@link MapTree} that can be used to strongly type trees implementing a MapTree-like API.
+ * @remarks
+ * Due to how TypeScript handles recursive generic types, explicitly named extension interfaces work best for parameterizing this, and a default type parameter can't be provided.
+ * @see {@link MinimalMapTreeNodeView} for a minimal configuration of this interface.
+ */
 export interface MapTreeNodeViewGeneric<TNode> extends NodeData {
 	/**
 	 * The non-empty fields on this node.
+	 * @remarks
+	 * This is the subset of map needed to view the tree.
+	 * Theoretically "size" could be removed by measuring the length of keys, but it is included for convenience.
 	 */
 	readonly fields: Pick<
 		ReadonlyMap<FieldKey, MapTreeFieldViewGeneric<TNode>>,
@@ -39,6 +51,9 @@ export interface MapTreeNodeViewGeneric<TNode> extends NodeData {
 	>;
 }
 
+/**
+ * A field in {@link MapTreeNodeViewGeneric}.
+ */
 export type MapTreeFieldViewGeneric<TNode> = Pick<
 	readonly TNode[],
 	typeof Symbol.iterator | "length"
@@ -51,6 +66,7 @@ export interface MinimalMapTreeNodeView
 	extends MapTreeNodeViewGeneric<MinimalMapTreeNodeView> {}
 
 {
+	// Check that these interfaces are subsets of MapTree as intended:
 	type _check1 = requireAssignableTo<MapTree, MinimalMapTreeNodeView>;
 	type _check2 = requireAssignableTo<MapTree, MapTreeNodeViewGeneric<MapTree>>;
 }
@@ -61,21 +77,33 @@ export interface MinimalMapTreeNodeView
 export function cursorForMapTreeNode<T extends MapTreeNodeViewGeneric<T>>(
 	root: T,
 ): CursorWithNode<T> {
-	const adapterTyped = adapter as unknown as CursorAdapter<T>;
+	// There doesn't seem to be a clean way to get TypeScript to type check this without casting
+	// without declaring the adapter inside this generic function and needlessly recreating it on every call.
+	const adapterTyped = adapter as CursorAdapter<MapTreeNodeViewGeneric<T>> as CursorAdapter<T>;
 	return stackTreeNodeCursor(adapterTyped, root);
 }
 
+/**
+ * Creates an {@link ExclusiveMapTree} with a single field and no value.
+ * @remarks
+ * This handles ensuring the field is omitted if empty, and defaults to making the node above the root.
+ */
 export function mapTreeWithField(
 	children: ExclusiveMapTree[],
 	key = rootFieldKey,
 	type = aboveRootPlaceholder,
-): MapTree {
+): ExclusiveMapTree {
 	return {
 		type,
 		fields: mapTreeFieldsWithField(children, key),
 	};
 }
 
+/**
+ * Creates a Map suitable for use as {@link MapTree.fields} with a single field.
+ * @remarks
+ * This handles ensuring the field is omitted if empty.
+ */
 export function mapTreeFieldsWithField<T extends readonly unknown[]>(
 	children: T,
 	key: FieldKey,

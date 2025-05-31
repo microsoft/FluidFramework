@@ -72,6 +72,9 @@ export function stackTreeFieldCursor<TNode>(
 	return cursor;
 }
 
+/**
+ * The representation of a field used by {@link CursorAdapter}.
+ */
 export type Field<TNode> = Pick<readonly TNode[], typeof Symbol.iterator | "length" | number>;
 
 /**
@@ -151,7 +154,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		debugAssert(() =>
 			this.mode === CursorLocationType.Fields ? true : "must be in fields mode",
 		);
-		// index is kept inbounds an an invariant of the class.
+		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (this.siblings as readonly FieldKey[])[this.index]!;
 	}
@@ -160,7 +163,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		assert(height % 2 === 1, 0x3b8 /* must field height */);
 		const siblingStack = this.siblingStack[height] ?? oob();
 		const indexStack = this.indexStack[height] ?? oob();
-		// index is kept inbounds an an invariant of the class.
+		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (siblingStack as readonly FieldKey[])[indexStack]!;
 	}
@@ -173,7 +176,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	private getStackedNode(height: number): TNode {
 		const index = this.getStackedNodeIndex(height);
 		// Can not use `?? oob()` since null and undefined are valid values.
-		// index is kept inbounds an an invariant of the class.
+		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (this.siblingStack[height] as Field<TNode>)[index]!;
 	}
@@ -366,7 +369,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	public getNode(): TNode {
 		// assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
 		// Can not use `?? oob()` since null and undefined are valid values.
-		// index is kept inbounds an an invariant of the class.
+		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (this.siblings as Field<TNode>)[this.index]!;
 	}
