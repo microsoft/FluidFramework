@@ -7,15 +7,16 @@ import { strict as assert } from "node:assert";
 
 import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/index.js";
 import {
-	deepCopyMapTree,
 	EmptyKey,
 	type ExclusiveMapTree,
 	type FieldKey,
+	type MapTree,
 	type Value,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
-import type {
-	UnhydratedOptionalField,
+import {
+	UnhydratedFlexTreeNode,
+	type UnhydratedOptionalField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
 import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
@@ -76,9 +77,13 @@ describe("unhydratedFlexTree", () => {
 		arrayNodeSchemaSimple,
 		objectSchemaSimple,
 	]);
-	const map = flexTreeFromCursor(context, cursorForMapTreeNode(mapMapTree));
-	const arrayNode = flexTreeFromCursor(context, cursorForMapTreeNode(fieldNodeMapTree));
+
 	const object = flexTreeFromCursor(context, cursorForMapTreeNode(objectMapTree));
+	const map = object.getBoxed(objectMapKey).boxedAt(0) ?? assert.fail();
+	const arrayNode = object.getBoxed(objectFieldNodeKey).boxedAt(0) ?? assert.fail();
+
+	assert(map instanceof UnhydratedFlexTreeNode);
+	assert(arrayNode instanceof UnhydratedFlexTreeNode);
 
 	it("can get their type", () => {
 		assert.equal(map.type, "Test.Map");
@@ -212,27 +217,26 @@ describe("unhydratedFlexTree", () => {
 
 	describe("can mutate", () => {
 		it("required fields", () => {
-			const mutableObjectMapTree = deepCopyMapTree(objectMapTree);
-			const mutableObjectMapTreeMap = mutableObjectMapTree.fields.get(objectMapKey)?.[0];
-			assert(mutableObjectMapTreeMap !== undefined);
-			const mutableObject = flexTreeFromCursor(
-				context,
-				cursorForMapTreeNode(mutableObjectMapTree),
-			);
+			const mutableObject = flexTreeFromCursor(context, cursorForMapTreeNode(objectMapTree));
+			// Find a field to edit. In this case the one with the map in it.
 			const field = mutableObject.getBoxed(objectMapKey) as UnhydratedOptionalField;
 			const oldMap = field.boxedAt(0);
-			assert(oldMap !== undefined);
+			assert(oldMap instanceof UnhydratedFlexTreeNode);
 			assert.equal(oldMap.parentField.parent.parent, mutableObject);
+
+			// Allocate a new node
 			const newMap = flexTreeFromCursor(context, cursorForMapTreeNode(mapMapTree));
 			assert.notEqual(newMap, oldMap);
 			assert.equal(newMap.parentField.parent.parent, undefined);
+
 			// Replace the old map with a new map
 			field.editor.set(newMap);
 			assert.equal(oldMap.parentField.parent.parent, undefined);
 			assert.equal(newMap.parentField.parent.parent, mutableObject);
 			assert.equal(field.boxedAt(0), newMap);
+
 			// Replace the new map with the old map again
-			field.editor.set(mutableObjectMapTreeMap);
+			field.editor.set(oldMap);
 			assert.equal(oldMap.parentField.parent.parent, mutableObject);
 			assert.equal(newMap.parentField.parent.parent, undefined);
 			assert.equal(field.boxedAt(0), oldMap);
@@ -243,7 +247,8 @@ describe("unhydratedFlexTree", () => {
 			const field = mutableMap.getBoxed(mapKey) as UnhydratedOptionalField;
 			const oldValue = field.boxedAt(0);
 			const newValue = `new ${childValue}`;
-			field.editor.set({ ...mapChildMapTree, value: newValue });
+			const newTree: MapTree = { ...mapChildMapTree, value: newValue };
+			field.editor.set(flexTreeFromCursor(context, cursorForMapTreeNode(newTree)));
 			assert.equal(field.boxedAt(0)?.value, newValue);
 			assert.notEqual(newValue, oldValue);
 			field.editor.set(undefined);
