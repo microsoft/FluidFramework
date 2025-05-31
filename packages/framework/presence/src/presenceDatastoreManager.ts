@@ -36,7 +36,11 @@ import type {
 	SignalMessages,
 	SystemDatastore,
 } from "./protocol.js";
-import { datastoreUpdateMessageType, joinMessageType } from "./protocol.js";
+import {
+	acknowledgementMessageType,
+	datastoreUpdateMessageType,
+	joinMessageType,
+} from "./protocol.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
@@ -64,7 +68,11 @@ const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications"
 	n: "Notifications",
 } as const;
 
-const knownMessageTypes = new Set([joinMessageType, datastoreUpdateMessageType]);
+const knownMessageTypes = new Set([
+	joinMessageType,
+	datastoreUpdateMessageType,
+	acknowledgementMessageType,
+]);
 function isPresenceMessage(
 	message: InboundExtensionMessage<SignalMessages>,
 ): message is InboundDatastoreUpdateMessage | InboundClientJoinMessage {
@@ -146,6 +154,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly presence: Presence,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: AnyWorkspaceEntry<StatesWorkspaceSchema>,
+		private readonly targetedSignalSupport: boolean,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
@@ -344,6 +353,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			assert(optional, "Unrecognized message type in critical message");
 			return;
 		}
+
 		if (local) {
 			const deliveryDelta = received - message.content.sendTimestamp;
 			// Limit returnedMessages count to 256 such that newest message
@@ -373,6 +383,15 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		} else {
 			if (message.content.isComplete) {
 				this.refreshBroadcastRequested = false;
+			}
+			// If the message requests an acknowledgement, we will send a targeted acknowledgement message back to just the requestor.
+			if (message.content.acknowledgementId !== undefined) {
+				assert(this.targetedSignalSupport, "Targeted signals not supported");
+				this.runtime.submitSignal({
+					type: acknowledgementMessageType,
+					content: { id: message.content.acknowledgementId },
+					targetClientId: message.clientId,
+				});
 			}
 		}
 

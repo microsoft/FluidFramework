@@ -7,7 +7,7 @@
  * Hacky support for internal datastore based usages.
  */
 
-import { createEmitter } from "@fluid-internal/client-utils";
+import { createEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type {
 	ExtensionHostEvents,
 	RawInboundExtensionMessage,
@@ -21,6 +21,7 @@ import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.j
 import type { PresenceWithNotifications as Presence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
 import type {
+	OutboundAcknowledgementMessage,
 	OutboundClientJoinMessage,
 	OutboundDatastoreUpdateMessage,
 	SignalMessages,
@@ -60,8 +61,14 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 				events,
 				getQuorum: runtime.getQuorum.bind(runtime),
 				getAudience: runtime.getAudience.bind(runtime),
-				submitSignal: (message: OutboundClientJoinMessage | OutboundDatastoreUpdateMessage) =>
-					runtime.submitSignal(message.type, message.content, message.targetClientId),
+				submitSignal: (
+					message:
+						| OutboundAcknowledgementMessage
+						| OutboundClientJoinMessage
+						| OutboundDatastoreUpdateMessage,
+				) => runtime.submitSignal(message.type, message.content, message.targetClientId),
+				supportedFeatures:
+					(runtime.ILayerCompatDetails as ILayerCompatDetails)?.supportedFeatures ?? new Set(),
 			});
 			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assertSignalMessageIsValid(message);

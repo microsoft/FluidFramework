@@ -42,6 +42,7 @@ interface DatastoreUpdateMessage {
 	content: {
 		sendTimestamp: number;
 		avgLatency: number;
+		acknowledgementId?: number;
 		isComplete?: true;
 		data: DatastoreMessageContent;
 	};
@@ -75,6 +76,23 @@ interface ClientJoinMessage {
 /**
  * Outbound client join message
  */
+export const acknowledgementMessageType = "Pres:Ack";
+
+interface AcknowledgementMessage {
+	type: typeof acknowledgementMessageType;
+	content: {
+		id: number;
+	};
+}
+
+/**
+ * @internal
+ */
+export type OutboundAcknowledgementMessage = OutboundExtensionMessage<AcknowledgementMessage>;
+
+/**
+ * @internal
+ */
 export type OutboundClientJoinMessage = OutboundExtensionMessage<ClientJoinMessage>;
 
 /**
@@ -85,4 +103,7 @@ export type InboundClientJoinMessage = VerifiedInboundExtensionMessage<ClientJoi
 /**
  * Messages structures that can be sent and received as understood in the presence protocol
  */
-export type SignalMessages = ClientJoinMessage | DatastoreUpdateMessage;
+export type SignalMessages =
+	| AcknowledgementMessage
+	| ClientJoinMessage
+	| DatastoreUpdateMessage;

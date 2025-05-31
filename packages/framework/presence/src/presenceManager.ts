@@ -74,7 +74,11 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 
 	private readonly mc: MonitoringContext | undefined = undefined;
 
-	public constructor(runtime: IEphemeralRuntime, attendeeId: AttendeeId) {
+	public constructor(
+		runtime: IEphemeralRuntime,
+		attendeeId: AttendeeId,
+		targetedSignalSupport: boolean,
+	) {
 		const logger = runtime.logger;
 		if (logger) {
 			this.mc = createChildMonitoringContext({ logger, namespace: "Presence" });
@@ -87,6 +91,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			this.events,
 			this.mc?.logger,
 			this,
+			targetedSignalSupport,
 		);
 		this.attendees = this.systemWorkspace;
 
@@ -158,6 +163,7 @@ function setupSubComponents(
 		IEmitter<PresenceEvents & AttendeesEvents>,
 	logger: ITelemetryLoggerExt | undefined,
 	presence: Presence,
+	targetedSignalSupport: boolean,
 ): [PresenceDatastoreManager, SystemWorkspace] {
 	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {
 		clientToSessionId: {},
@@ -176,6 +182,7 @@ function setupSubComponents(
 		presence,
 		systemWorkspaceDatastore,
 		systemWorkspaceConfig.statesEntry,
+		targetedSignalSupport,
 	);
 	return [datastoreManager, systemWorkspaceConfig.workspace];
 }
@@ -185,7 +192,8 @@ function setupSubComponents(
  */
 export function createPresenceManager(
 	runtime: IEphemeralRuntime,
+	targetedSignalSupport: boolean = false,
 	attendeeId: AttendeeId = createSessionId() as AttendeeId,
 ): Presence & PresenceExtensionInterface {
-	return new PresenceManager(runtime, attendeeId);
+	return new PresenceManager(runtime, attendeeId, targetedSignalSupport);
 }

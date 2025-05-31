@@ -35,12 +35,15 @@ class ContainerPresenceManager
 	private readonly manager: PresenceExtensionInterface;
 
 	public constructor(host: ExtensionHost) {
-		this.interface = this.manager = createPresenceManager({
-			...host,
-			submitSignal: (message) => {
-				host.submitAddressedSignal([], message);
+		this.interface = this.manager = createPresenceManager(
+			{
+				...host,
+				submitSignal: (message) => {
+					host.submitAddressedSignal([], message);
+				},
 			},
-		});
+			host.supportedFeatures.has("submit_signals_v2"),
+		);
 	}
 
 	public onNewUse(): void {
