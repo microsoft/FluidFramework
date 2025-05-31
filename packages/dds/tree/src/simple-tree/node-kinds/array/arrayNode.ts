@@ -6,8 +6,9 @@
 import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, type ExclusiveMapTree } from "../../../core/index.js";
+import { EmptyKey } from "../../../core/index.js";
 import {
+	type FlexibleFieldContent,
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
 	isFlexTreeNode,
@@ -37,14 +38,12 @@ import {
 	getSimpleNodeSchemaFromInnerNode,
 	getOrCreateInnerNode,
 	type TreeNodeSchemaClass,
-} from "../../core/index.js";
-import { type InsertableContent, mapTreeFromNodeData } from "../../toMapTree.js";
-import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
-import {
 	getKernel,
 	UnhydratedFlexTreeNode,
 	UnhydratedTreeSequenceField,
 } from "../../core/index.js";
+import { type InsertableContent, mapTreeFromNodeData } from "../../toMapTree.js";
+import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import type { System_Unsafe } from "../../api/index.js";
@@ -852,7 +851,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		super(input ?? []);
 	}
 
-	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
+	#mapTreesFromFieldData(value: Insertable<T>): FlexibleFieldContent {
 		const sequenceField = getSequenceField(this);
 		const content = value as readonly (
 			| InsertableContent
