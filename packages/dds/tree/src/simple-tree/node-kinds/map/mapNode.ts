@@ -33,9 +33,9 @@ import {
 	type TreeNode,
 	typeSchemaSymbol,
 	type Context,
-	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
+	type UnhydratedFlexTreeNode,
 } from "../../core/index.js";
 import {
 	mapTreeFromNodeData,
@@ -271,9 +271,9 @@ export function mapSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
+			return mapTreeFromNodeData(
+				input as FactoryContent,
+				this as unknown as ImplicitAllowedTypes,
 			);
 		}
 
