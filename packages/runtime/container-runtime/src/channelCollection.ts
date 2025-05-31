@@ -1116,10 +1116,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		context.processSignal(message, local);
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string): void {
+	public setConnectionState(canSendOps: boolean, clientId?: string): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
-				context.setConnectionState(connected, clientId);
+				context.setConnectionState(canSendOps, clientId);
 			} catch (error) {
 				this.mc.logger.sendErrorEvent(
 					{
@@ -1130,7 +1130,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						}),
 						details: JSON.stringify({
 							runtimeConnected: this.parentContext.connected,
-							connected,
+							connected: canSendOps,
 						}),
 					},
 					error,
