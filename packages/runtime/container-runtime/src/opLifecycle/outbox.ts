@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
+import type { ContainerRuntimeDocumentSchemaMessage } from "../messageTypes.js";
 import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
@@ -69,7 +70,6 @@ export interface IOutboxParameters {
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: PendingMessageResubmitData, squash: boolean) => void;
 	readonly opReentrancy: () => boolean;
-	readonly getPrerequisiteSystemMessages: () => LocalBatchMessage[];
 }
 
 /**
@@ -327,6 +327,19 @@ export class Outbox {
 		throw errorWrapper.value;
 	}
 
+	private readonly heldSystemMessages: LocalBatchMessage[] = [];
+
+	/**
+	 * Hold a system message until the next flush.
+	 * These will not contribute to {@link Outbox.containsUserChanges}, and will not be included in any batch
+	 * until flush is actually sending the batch (i.e. connected and not staged).
+	 */
+	public holdSystemMessageUntilNextFlush(
+		systemMessage: LocalBatchMessage & { runtimeOp: ContainerRuntimeDocumentSchemaMessage },
+	): void {
+		this.heldSystemMessages.push(systemMessage);
+	}
+
 	public submit(message: LocalBatchMessage): void {
 		this.maybeFlushPartialBatch();
 
@@ -478,9 +491,9 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend() && !staged) {
-			// Prepend prerequisite system messages before adding batch metadata and virtualizing
-			const prerequisiteMessages = this.params.getPrerequisiteSystemMessages();
-			rawBatch.messages.unshift(...prerequisiteMessages);
+			// Prepend held system messages before adding batch metadata and virtualizing
+			const systemMessages = this.heldSystemMessages.splice(0);
+			rawBatch.messages.unshift(...systemMessages);
 			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
