@@ -1785,6 +1785,45 @@ describe("treeNodeApi", () => {
 
 	describe("verbose", () => {
 		describe("importVerbose", () => {
+			it("unknown schema: leaf", () => {
+				// Input using schema not included in the context
+				assert.throws(
+					() => TreeAlpha.importVerbose(SchemaFactory.number, "x"),
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("unknown schema: non-leaf", () => {
+				const factory = new SchemaFactory("Test");
+				class A extends factory.object("A", {}) {}
+				class B extends factory.object("B", {}) {}
+				// Input using schema not included in the context
+				assert.throws(
+					() => TreeAlpha.importVerbose(A, { type: B.identifier, fields: {} }),
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("invalid with known schema", () => {
+				const factory = new SchemaFactory("Test");
+				class A extends factory.object("A", { a: SchemaFactory.string }) {}
+				assert.throws(
+					() => TreeAlpha.importVerbose(A, { type: A.identifier, fields: { wrong: "x" } }),
+					validateUsageError(
+						`Failed to parse VerboseTree due to unexpected key "wrong" on type "Test.A".`,
+					),
+				);
+			});
+
+			it("missing field with default", () => {
+				const factory = new SchemaFactory("Test");
+				class A extends factory.object("A", { a: factory.identifier }) {}
+				assert.throws(
+					() => TreeAlpha.importVerbose(A, { type: A.identifier, fields: {} }),
+					validateUsageError(/Field_MissingRequiredChild/),
+				);
+			});
+
 			it("undefined", () => {
 				// Valid
 				assert.equal(TreeAlpha.importVerbose(schema.optional([]), undefined), undefined);
@@ -1796,7 +1835,7 @@ describe("treeNodeApi", () => {
 				// Undefined required, not provided
 				assert.throws(
 					() => TreeAlpha.importVerbose(schema.optional([]), 1),
-					validateUsageError(/does not conform to schema/),
+					validateUsageError(/Tree does not conform to schema/),
 				);
 			});
 
@@ -1806,7 +1845,7 @@ describe("treeNodeApi", () => {
 				// invalid
 				assert.throws(
 					() => TreeAlpha.importVerbose([schema.null, schema.number], "x"),
-					validateUsageError(/does not conform to schema/),
+					validateUsageError(/Tree does not conform to schema/),
 				);
 			});
 
@@ -1855,10 +1894,14 @@ describe("treeNodeApi", () => {
 					const testTree = new Point3D({ x: 1, y: 2, z: 3 });
 					const exported = TreeAlpha.exportVerbose(testTree);
 
-					// TODO:AB#26720 The error here should be more clear.
+					// TODO:AB#26720 The error here should be more clear:
+					// perhaps reference allowUnknownOptionalFields and stored keys specifically.
 					assert.throws(
 						() => TreeAlpha.importVerbose(Point2D, exported),
-						(error: Error) => validateAssertionError(error, /missing field info/),
+
+						validateUsageError(
+							`Failed to parse VerboseTree due to unexpected key "z" on type "com.example.Point".`,
+						),
 					);
 				});
 			});
