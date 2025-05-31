@@ -419,7 +419,7 @@ export class DocumentDeltaConnection
 		);
 	}
 
-	protected disconnect(err: IAnyDriverError) {
+	protected disconnect = (err: IAnyDriverError) => {
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
@@ -449,7 +449,7 @@ export class DocumentDeltaConnection
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
-	}
+	};
 
 	/**
 	 * Disconnect from the websocket.
