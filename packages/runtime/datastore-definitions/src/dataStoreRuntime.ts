@@ -179,7 +179,6 @@ export interface IFluidDataStoreRuntime
  */
 export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
 	readonly inStagingMode?: boolean;
-	readonly isDirty?: boolean;
 }
 
 /**

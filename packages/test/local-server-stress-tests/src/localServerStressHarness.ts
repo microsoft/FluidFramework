@@ -158,12 +158,12 @@ export interface LocalServerStressModel<TOperation extends BaseOperation> {
 	reducer: AsyncReducer<TOperation, LocalServerStressState>;
 
 	/**
-	 * Equivalence validation function, which should verify that the provided clients contain the same data.
+	 * Equivalence validation function, which should verify that the provided channels contain the same data.
 	 * This is run at each synchronization point for all connected clients (as disconnected clients won't
 	 * necessarily have the same set of ops applied).
-	 * @throws - An informative error if the clients don't have equivalent data.
+	 * @throws - An informative error if the channels don't have equivalent data.
 	 */
-	validateConsistency: (clientA: Client, clientB: Client) => void | Promise<void>;
+	validateConsistency: (channelA: Client, channelB: Client) => void | Promise<void>;
 
 	/**
 	 * An array of transforms used during fuzz test minimization to reduce test
