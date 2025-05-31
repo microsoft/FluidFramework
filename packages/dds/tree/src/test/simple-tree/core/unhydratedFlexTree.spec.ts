@@ -265,13 +265,17 @@ describe("unhydratedFlexTree", () => {
 				assert(field.is(FieldKinds.sequence));
 				const values = (): Value[] => Array.from(field.boxedIterator(), (n): Value => n.value);
 				assert.deepEqual(values(), [childValue]);
+				const treeC: MapTree = { ...mapChildMapTree, value: "c" };
+				const treeD: MapTree = { ...mapChildMapTree, value: "d" };
 				field.editor.insert(1, [
-					{ ...mapChildMapTree, value: "c" },
-					{ ...mapChildMapTree, value: "d" },
+					flexTreeFromCursor(context, cursorForMapTreeNode(treeC)),
+					flexTreeFromCursor(context, cursorForMapTreeNode(treeD)),
 				]);
+				const treeA: MapTree = { ...mapChildMapTree, value: "a" };
+				const treeB: MapTree = { ...mapChildMapTree, value: "b" };
 				field.editor.insert(0, [
-					{ ...mapChildMapTree, value: "a" },
-					{ ...mapChildMapTree, value: "b" },
+					flexTreeFromCursor(context, cursorForMapTreeNode(treeA)),
+					flexTreeFromCursor(context, cursorForMapTreeNode(treeB)),
 				]);
 				assert.deepEqual(values(), ["a", "b", childValue, "c", "d"]);
 				field.editor.remove(2, 1);
@@ -289,9 +293,10 @@ describe("unhydratedFlexTree", () => {
 				);
 				const field = mutableFieldNode.getBoxed(EmptyKey);
 				assert(field.is(FieldKinds.sequence));
-				const newContent: ExclusiveMapTree[] = [];
+				const newContent: UnhydratedFlexTreeNode[] = [];
 				for (let i = 0; i < 10000; i++) {
-					newContent.push({ ...mapChildMapTree, value: String(i) });
+					const tree: MapTree = { ...mapChildMapTree, value: String(i) };
+					newContent.push(flexTreeFromCursor(context, cursorForMapTreeNode(tree)));
 				}
 				field.editor.insert(0, newContent);
 				assert.equal(field.length, newContent.length);
