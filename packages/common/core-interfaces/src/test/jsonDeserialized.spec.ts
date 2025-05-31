@@ -596,11 +596,11 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, objectWithAlternatingRecursion);
 			});
 
-			it("simple non-null object json (`NonNullJsonObjectWith<never>`)", () => {
+			it("simple non-null Json object (`NonNullJsonObjectWith<never>`)", () => {
 				const resultRead = passThru(jsonObject);
 				assertIdenticalTypes(resultRead, jsonObject);
 			});
-			it("simple read-only non-null object json (`ReadonlyNonNullJsonObjectWith<never>`)", () => {
+			it("simple read-only non-null Json object (`ReadonlyNonNullJsonObjectWith<never>`)", () => {
 				const resultRead = passThru(immutableJsonObject);
 				assertIdenticalTypes(resultRead, immutableJsonObject);
 			});
@@ -844,7 +844,7 @@ describe("JsonDeserialized", () => {
 					);
 				});
 
-				it("object with recursion and `symbol` unrolls 4 times and then has generic Json", () => {
+				it("object with recursion and `symbol` unrolls 4 times and then has non-null Json object", () => {
 					const resultRead = passThru(objectWithSymbolOrRecursion, { recurse: {} });
 					assertIdenticalTypes(
 						resultRead,
@@ -853,7 +853,7 @@ describe("JsonDeserialized", () => {
 								recurse?: {
 									recurse?: {
 										recurse?: {
-											recurse?: JsonTypeWith<never>;
+											recurse?: NonNullJsonObjectWith<never>;
 										};
 									};
 								};
@@ -899,7 +899,7 @@ describe("JsonDeserialized", () => {
 									recurse?: {
 										recurse?: {
 											recurse?: {
-												recurse?: JsonTypeWith<never>;
+												recurse?: NonNullJsonObjectWith<never>;
 											};
 										};
 									};
@@ -923,7 +923,7 @@ describe("JsonDeserialized", () => {
 									recurse?: {
 										recurse?: {
 											recurse?: {
-												recurse?: JsonTypeWith<never>;
+												recurse?: NonNullJsonObjectWith<never>;
 											};
 										};
 									};
@@ -932,7 +932,7 @@ describe("JsonDeserialized", () => {
 						}>(),
 					);
 				});
-				it("object with required `unknown` in recursion when `unknown` is allowed unrolls 4 times with optional `unknown`", () => {
+				it("object with required `unknown` in recursion when `unknown` is allowed unrolls 4 times with optional `NonNullJsonObjectWith<unknown>`", () => {
 					const resultRead = passThruPreservingUnknown(objectWithUnknownInOptionalRecursion);
 					assertIdenticalTypes(
 						resultRead,
@@ -946,8 +946,7 @@ describe("JsonDeserialized", () => {
 										unknown?: unknown;
 										recurse?: {
 											unknown?: unknown;
-											// This is JsonTypeWith<unknown> which is simply `unknown`.
-											recurse?: unknown;
+											recurse?: NonNullJsonObjectWith<unknown>;
 										};
 									};
 								};
@@ -1111,7 +1110,7 @@ describe("JsonDeserialized", () => {
 								recurse?: {
 									recurse?: {
 										recurse?: {
-											recurse?: JsonTypeWith<never>;
+											recurse?: NonNullJsonObjectWith<never>;
 										};
 									};
 								};
@@ -1128,7 +1127,7 @@ describe("JsonDeserialized", () => {
 								recurse?: {
 									recurse?: {
 										recurse?: {
-											recurse?: JsonTypeWith<never>;
+											recurse?: NonNullJsonObjectWith<never>;
 										};
 									};
 								};
@@ -1258,7 +1257,7 @@ describe("JsonDeserialized", () => {
 						"instanceRead is not an instance of ClassWithPrivateData",
 					);
 				});
-				it("object with recursion and handle unrolls 4 times listing public properties and then has generic Json", () => {
+				it("object with recursion and handle unrolls 4 times listing public properties and then has non-null Json object", () => {
 					const resultRead = passThru(objectWithFluidHandleOrRecursion, {
 						recurseToHandle: { recurseToHandle: "fake-handle" },
 					});
@@ -1274,7 +1273,7 @@ describe("JsonDeserialized", () => {
 																recurseToHandle:
 																	| {
 																			recurseToHandle:
-																				| JsonTypeWith<never>
+																				| NonNullJsonObjectWith<never>
 																				| {
 																						readonly isAttached: boolean;
 																				  };

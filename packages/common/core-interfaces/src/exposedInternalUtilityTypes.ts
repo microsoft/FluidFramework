@@ -1170,7 +1170,7 @@ export namespace InternalUtilityTypes {
 		T,
 		Controls extends DeserializedFilterControls,
 		RecurseLimit extends RecursionLimit,
-		TAncestorTypes,
+		TAncestorTypes extends object,
 	> = T extends TAncestorTypes
 		? RecurseLimit extends `+${infer RecursionRemainder}`
 			? /* Now that specific recursion is found, process that recursive type
@@ -1181,8 +1181,8 @@ export namespace InternalUtilityTypes {
 					Controls,
 					RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0
 				>
-			: Controls["DegenerateSubstitute"]
-		: JsonDeserializedFilter<T, Controls, RecurseLimit, TAncestorTypes | T>;
+			: Controls["DegenerateNonNullObjectSubstitute"]
+		: JsonDeserializedFilter<T, Controls, RecurseLimit, TAncestorTypes | Extract<T, object>>;
 
 	/**
 	 * Handle Opaque Json types for {@link JsonDeserialized}.
@@ -1222,7 +1222,8 @@ export namespace InternalUtilityTypes {
 		T,
 		Controls extends DeserializedFilterControls,
 		RecurseLimit extends RecursionLimit,
-		TAncestorTypes = T /* Always start with self as ancestor; otherwise recursion limit appears one greater */,
+		// Always start with object portion of self as ancestor; otherwise recursion limit appears one greater
+		TAncestorTypes extends object = Extract<T, object>,
 	> = /* test for 'any' */ boolean extends (T extends never ? true : false)
 		? /* 'any' => */ Controls["DegenerateSubstitute"]
 		: /* test for 'unknown' */ unknown extends T
