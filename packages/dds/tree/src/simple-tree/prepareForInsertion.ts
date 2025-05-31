@@ -17,7 +17,6 @@ import {
 	getSchemaAndPolicy,
 	type FlexTreeHydratedContextMinimal,
 	FieldKinds,
-	type FlexTreeHydratedContextMinimal,
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
 } from "../feature-libraries/index.js";
@@ -108,8 +107,8 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	schema: ImplicitFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: FlexTreeHydratedContextMinimal | undefined,
-): TIn extends undefined ? undefined : ExclusiveMapTree {
-	const mapTree = mapTreeFromNodeData(data, schema, hydratedData?.nodeKeyManager);
+): TIn extends undefined ? undefined : FlexibleNodeContent {
+	const mapTree = mapTreeFromNodeData(data, schema);
 
 	const contentArray = mapTree === undefined ? [] : [mapTree];
 	const fieldSchema = convertField(normalizeFieldSchema(schema));

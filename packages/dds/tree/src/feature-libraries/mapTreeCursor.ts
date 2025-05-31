@@ -13,19 +13,16 @@ import {
 	type ITreeCursor,
 	type MapTree,
 	type NodeData,
-	type NodeData,
 	aboveRootPlaceholder,
 	detachedFieldAsKey,
 	mapCursorField,
 	rootField,
-	rootFieldKey,
 	rootFieldKey,
 } from "../core/index.js";
 
 import {
 	type CursorAdapter,
 	type CursorWithNode,
-	type Field,
 	type Field,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
