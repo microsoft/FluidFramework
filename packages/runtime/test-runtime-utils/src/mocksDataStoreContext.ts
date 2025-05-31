@@ -51,11 +51,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public baseSnapshot: ISnapshotTree | undefined;
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
 		new MockDeltaManager(() => this.clientId);
-	public containerRuntime: IContainerRuntimeBase = {} as any;
-	public storage: IDocumentStorageService = {} as any;
-	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = {} as any;
-	public IFluidHandleContext: IFluidHandleContext = {} as any;
-	public idCompressor: IIdCompressorCore & IIdCompressor = {} as any;
+	public containerRuntime: IContainerRuntimeBase = undefined as any;
+	public storage: IDocumentStorageService = undefined as any;
+	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
+	public IFluidHandleContext: IFluidHandleContext = undefined as any;
+	public idCompressor: IIdCompressorCore & IIdCompressor = undefined as any;
 	public readonly gcThrowOnTombstoneUsage = false;
 	public readonly gcTombstoneEnforcementAllowed = false;
 
@@ -113,7 +113,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	}
 
 	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
-		// No-op for mock context
+		throw new Error("Method not implemented.");
 	}
 
 	public submitSignal(type: string, content: any): void {
