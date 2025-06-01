@@ -186,7 +186,7 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 	],
 	[
 		4,
-		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
+		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
 	],
 ]);
 
@@ -246,6 +246,7 @@ export class SharedTreeKernel
 			idCompressor,
 			options,
 		);
+		console.log("Creating schemaCodec with version:", codecVersions.schema); // This was ending up with version 1
 		const schemaCodec = makeSchemaCodec(options, codecVersions.schema);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
@@ -568,6 +569,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v3: 3,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v4: 4,
 } as const;
 
 /**
@@ -697,7 +703,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: noopValidator,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v3,
+	formatVersion: SharedTreeFormatVersion.v4,
 	disposeForksAfterTransaction: true,
 };
 

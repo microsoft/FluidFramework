@@ -213,10 +213,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
+		console.log("In summarizeCore");
 		const builder = new SummaryTreeBuilder();
 		const summarizableBuilder = new SummaryTreeBuilder();
 		// Merge the summaries of all summarizables together under a single ISummaryTree
 		for (const s of this.summarizables) {
+			if (s.key === "Schema") {
+				console.log("Adding summarizable for summary key:", s.key);
+			}
 			summarizableBuilder.addWithStats(
 				s.key,
 				s.getAttachSummary(
@@ -229,8 +233,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			);
 		}
 
+		console.log("Adding summarizablesTreeKey to summary", summarizablesTreeKey);
 		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
-		return builder.getSummaryTree();
+		const result = builder.getSummaryTree();
+		console.log("Returning summary", JSON.stringify(result));
+		return result;
 	}
 
 	public async loadCore(services: IChannelStorageService): Promise<void> {

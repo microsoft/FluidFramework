@@ -221,10 +221,12 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>,
 		metadata?: PersistedMetadataFormat | undefined,
 	) {
+		console.log("Constructing ObjectNodeStoredSchema; metadata:", metadata !== undefined ? JSON.stringify(metadata) : "[undefined]");
 		super(metadata);
 	}
 
 	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
+		console.log("In encodeV1");
 		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
@@ -240,12 +242,14 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 				value,
 			});
 		}
+		console.log("Returning from encodeV1", JSON.stringify(fieldsObject));
 		return {
 			object: fieldsObject,
 		};
 	}
 
 	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
+		console.log("In encodeV2");
 		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
@@ -264,6 +268,8 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 
 		const kind = { object: fieldsObject };
 
+		console.log("Returning from encodeV2", JSON.stringify(fieldsObject));
+		console.log("Returning from encodeV2, metadata:", this.metadata !== undefined ? JSON.stringify(this.metadata) : "[undefined]");
 		// Omit metadata from the output if it is undefined
 		return this.metadata !== undefined ? { kind, metadata: this.metadata } : { kind };
 	}
