@@ -221,7 +221,10 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>,
 		metadata?: PersistedMetadataFormat | undefined,
 	) {
-		console.log("Constructing ObjectNodeStoredSchema; metadata:", metadata !== undefined ? JSON.stringify(metadata) : "[undefined]");
+		console.log(
+			"Constructing ObjectNodeStoredSchema; metadata:",
+			metadata !== undefined ? JSON.stringify(metadata) : "[undefined]",
+		);
 		super(metadata);
 	}
 
@@ -269,7 +272,10 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		const kind = { object: fieldsObject };
 
 		console.log("Returning from encodeV2", JSON.stringify(fieldsObject));
-		console.log("Returning from encodeV2, metadata:", this.metadata !== undefined ? JSON.stringify(this.metadata) : "[undefined]");
+		console.log(
+			"Returning from encodeV2, metadata:",
+			this.metadata !== undefined ? JSON.stringify(this.metadata) : "[undefined]",
+		);
 		// Omit metadata from the output if it is undefined
 		return this.metadata !== undefined ? { kind, metadata: this.metadata } : { kind };
 	}
