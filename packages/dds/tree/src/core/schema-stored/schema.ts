@@ -223,7 +223,8 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	) {
 		console.log(
 			"Constructing ObjectNodeStoredSchema; metadata:",
-			metadata !== undefined ? JSON.stringify(metadata) : "[undefined]",
+			metadata !== undefined ? JSON.stringify(metadata) : "[undefined]", "; objectNodeFields:",
+			JSON.stringify([...objectNodeFields.entries()]),
 		);
 		super(metadata);
 	}
@@ -373,6 +374,10 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 	leaf: (data: PersistedValueSchema) => (metadata) =>
 		new LeafNodeStoredSchema(decodeValueSchema(data)),
 	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>) => (metadata) => {
+		console.log(
+			"Processing object node inside storedSchemaDecodeDispatcher; field schema data:",
+			JSON.stringify(data),
+		);
 		const map = new Map();
 		for (const [key, value] of Object.entries(data)) {
 			map.set(key, decodeFieldSchema(value));
@@ -412,6 +417,7 @@ export function encodeFieldSchemaV1(schema: TreeFieldStoredSchema): FieldSchemaF
 export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaFormatV2 {
 	const fieldSchema: FieldSchemaFormatV1 = encodeFieldSchemaV1(schema);
 
+	console.log("Inside encodeFieldSchemaV2; schema:", JSON.stringify(schema));
 	// Omit metadata from the output if it is undefined
 	return schema.metadata !== undefined
 		? { ...fieldSchema, metadata: schema.metadata }

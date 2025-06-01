@@ -168,6 +168,10 @@ export type SimpleNodeSchema =
  *
  * @alpha
  * @sealed
+ *
+ * @privateRemarks
+ * Seems like we need an Alpha version of this one that has persistedMetadata so we can avoid the hack
+ * in toStoredSchema.ts line 93
  */
 export interface SimpleFieldSchema {
 	/**
