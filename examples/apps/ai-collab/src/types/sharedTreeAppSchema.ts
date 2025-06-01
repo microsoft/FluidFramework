@@ -16,33 +16,33 @@ const sf = new SchemaFactoryAlpha("ai-collab-sample-application");
 export class SharedTreeTask extends sf.objectAlpha(
 	"Task",
 	{
-		title: sf.required(sf.string, {
+		title: sf.requiredAlpha(sf.string, {
 			metadata: {
 				description: `The title of the task.`,
 			},
 		}),
 		id: sf.identifier,
-		description: sf.required(sf.string, {
+		description: sf.requiredAlpha(sf.string, {
 			metadata: {
 				description: `The description of the task.`,
 			},
 		}),
-		priority: sf.required(sf.string, {
+		priority: sf.requiredAlpha(sf.string, {
 			metadata: {
 				description: `The priority of the task which can ONLY be one of three levels: "Low", "Medium", "High" (case-sensitive).`,
 			},
 		}),
-		complexity: sf.required(sf.number, {
+		complexity: sf.requiredAlpha(sf.number, {
 			metadata: {
 				description: `The complexity of the task as a fibonacci number.`,
 			},
 		}),
-		status: sf.required(sf.string, {
+		status: sf.requiredAlpha(sf.string, {
 			metadata: {
 				description: `The status of the task which can ONLY be one of the following values: "To Do", "In Progress", "Done"  (case-sensitive).`,
 			},
 		}),
-		assignee: sf.required(sf.string, {
+		assignee: sf.requiredAlpha(sf.string, {
 			metadata: {
 				description: `The name of the tasks assignee e.g. "Bob" or "Alice".`,
 			},
@@ -52,6 +52,9 @@ export class SharedTreeTask extends sf.objectAlpha(
 		metadata: {
 			description: `A task that can be assigned to an engineer.`,
 		},
+		persistedMetadata: {
+			"eDiscovery-exclude": "comment",
+		},
 	},
 ) {}
 
@@ -60,20 +63,27 @@ export class SharedTreeTaskList extends sf.array("TaskList", SharedTreeTask) {}
 export class SharedTreeEngineer extends sf.objectAlpha(
 	"Engineer",
 	{
-		name: sf.required(sf.string, {
+		name: sf.requiredAlpha(sf.string, {
 			metadata: {
 				description: `The name of the engineer.`,
 			},
 		}),
 		id: sf.identifier,
-		skills: sf.required(sf.string, {
+		skills: sf.requiredAlpha(sf.string, {
 			metadata: {
 				description: `A description of the engineer's skills, which influence what types of tasks they should be assigned to.`,
 			},
+			persistedMetadata: {
+				"eDiscovery-exclude": "comment",
+			},
 		}),
-		maxCapacity: sf.required(sf.number, {
+		maxCapacity: sf.requiredAlpha(sf.number, {
 			metadata: {
 				description: `The maximum capacity of tasks this engineer can handle, measured in task complexity points.`,
+			},
+			persistedMetadata: {
+				"eDiscovery-exclude": "exclude",
+				"search-exclude": "true",
 			},
 		}),
 	},
@@ -89,23 +99,23 @@ export class SharedTreeEngineerList extends sf.array("EngineerList", SharedTreeE
 export class SharedTreeTaskGroup extends sf.objectAlpha(
 	"TaskGroup",
 	{
-		description: sf.required(sf.string, {
+		description: sf.requiredAlpha(sf.string, {
 			metadata: {
 				description: `The description of the task group.`,
 			},
 		}),
 		id: sf.identifier,
-		title: sf.required(sf.string, {
+		title: sf.requiredAlpha(sf.string, {
 			metadata: {
 				description: `The title of the task group.`,
 			},
 		}),
-		tasks: sf.required(SharedTreeTaskList, {
+		tasks: sf.requiredAlpha(SharedTreeTaskList, {
 			metadata: {
 				description: `The lists of tasks within this task group.`,
 			},
 		}),
-		engineers: sf.required(SharedTreeEngineerList, {
+		engineers: sf.requiredAlpha(SharedTreeEngineerList, {
 			metadata: {
 				description: `The lists of engineers within this task group to whom tasks may be assigned.`,
 			},
@@ -121,7 +131,7 @@ export class SharedTreeTaskGroup extends sf.objectAlpha(
 export class SharedTreeTaskGroupList extends sf.array("TaskGroupList", SharedTreeTaskGroup) {}
 
 export class SharedTreeAppState extends sf.object("AppState", {
-	taskGroups: sf.required(SharedTreeTaskGroupList, {
+	taskGroups: sf.requiredAlpha(SharedTreeTaskGroupList, {
 		metadata: {
 			description: `The list of task groups that are being managed by this task management application.`,
 		},
