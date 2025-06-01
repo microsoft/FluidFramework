@@ -743,7 +743,7 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 		default:
 			fail(0xaca /* invalid field kind */);
 	}
-	return { kind, allowedTypesIdentifiers: schema.types, metadata: {} };
+	return { kind, allowedTypesIdentifiers: schema.types, metadata: schema.metadata };
 }
 
 function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
@@ -753,7 +753,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Array,
 			allowedTypesIdentifiers: arrayTypes,
 			metadata: {},
-			persistedMetadata: undefined,
+			persistedMetadata: schema.metadata,
 		};
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
@@ -761,7 +761,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
-		return { kind: NodeKind.Object, fields, metadata: {}, persistedMetadata: undefined };
+		return { kind: NodeKind.Object, fields, metadata: {}, persistedMetadata: schema.metadata };
 	}
 	if (schema instanceof MapNodeStoredSchema) {
 		assert(
@@ -772,7 +772,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Map,
 			allowedTypesIdentifiers: schema.mapFields.types,
 			metadata: {},
-			persistedMetadata: undefined,
+			persistedMetadata: schema.metadata,
 		};
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
@@ -780,7 +780,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Leaf,
 			leafKind: schema.leafValue,
 			metadata: {},
-			persistedMetadata: undefined,
+			persistedMetadata: schema.metadata,
 		};
 	}
 	fail(0xacb /* invalid schema kind */);
