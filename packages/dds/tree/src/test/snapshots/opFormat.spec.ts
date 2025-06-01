@@ -45,9 +45,9 @@ describe("SharedTree op format snapshots", () => {
 
 	for (const versionKey of Object.keys(SharedTreeFormatVersion)) {
 		// Skipping tests for v4 since we don't have the snapshots for it yet
-			if (versionKey === "v4") {
-				continue;
-			}
+		if (versionKey === "v4") {
+			continue;
+		}
 		describe(`using SharedTreeFormatVersion.${versionKey}`, () => {
 			useSnapshotDirectory(`op-format/${versionKey}`);
 			beforeEach(() => {
