@@ -68,12 +68,7 @@ interface LocationInField {
 }
 
 /**
- * An unhydrated implementation of {@link FlexTreeNode} which wraps a {@link MapTree}.
- * @remarks
- * MapTreeNodes are unconditionally cached -
- * when retrieved via {@link getOrCreateNodeFromInnerNode}, the same {@link MapTree} object will always produce the same `UnhydratedFlexTreeNode` object.
- *
- * Create a `UnhydratedFlexTreeNode` by calling {@link getOrCreate}.
+ * The {@link Unhydrated} implementation of {@link FlexTreeNode}.
  */
 export class UnhydratedFlexTreeNode
 	implements FlexTreeNode, MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>
@@ -87,7 +82,10 @@ export class UnhydratedFlexTreeNode
 	}
 
 	/**
-	 * Cache storing the TreeNode for this inner node.
+	 * Cache storing the {@link TreeNode} for this inner node.
+	 * @remarks
+	 * When creating a `TreeNode` for this `UnhydratedFlexTreeNode`, cache the `TreeNode` in this property: see {@link TreeNodeKernel}.
+	 * See {@link getOrCreateNodeFromInnerNode} how to get the `TreeNode`, even if not already created, regardless of hydration status.
 	 */
 	public treeNode: TreeNode | undefined = undefined;
 
@@ -308,6 +306,9 @@ const unparentedLocation: LocationInField = {
 	index: -1,
 };
 
+/**
+ * The {@link Unhydrated} implementation of {@link FlexTreeField}.
+ */
 export class UnhydratedFlexTreeField
 	implements FlexTreeField, MapTreeFieldViewGeneric<UnhydratedFlexTreeNode>
 {
@@ -426,6 +427,9 @@ export class UnhydratedFlexTreeField
 	}
 }
 
+/**
+ * The {@link Unhydrated} implementation of {@link FlexTreeOptionalField}.
+ */
 export class UnhydratedOptionalField
 	extends UnhydratedFlexTreeField
 	implements FlexTreeOptionalField
@@ -471,6 +475,9 @@ class UnhydratedRequiredField
 	}
 }
 
+/**
+ * The {@link Unhydrated} implementation of {@link FlexTreeSequenceField}.
+ */
 export class UnhydratedSequenceField
 	extends UnhydratedFlexTreeField
 	implements FlexTreeSequenceField
