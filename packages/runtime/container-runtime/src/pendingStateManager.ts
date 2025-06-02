@@ -676,7 +676,10 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
-		assert(!pendingMessage.batchInfo.staged, 0xb85 /* Can't get an ack from a staged batch */);
+		assert(
+			!pendingMessage.batchInfo.staged,
+			0xb85 /* Pending state mismatch, ack came in but next pending message is staged */,
+		);
 
 		// If this batch became empty on resubmit, batch.messages will be empty (but keyMessage is always set)
 		// and the next pending message should be an empty batch marker.
