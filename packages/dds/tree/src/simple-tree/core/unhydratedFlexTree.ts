@@ -50,7 +50,7 @@ import {
 	type MapTreeFieldViewGeneric,
 	type MapTreeNodeViewGeneric,
 } from "../../feature-libraries/index.js";
-import { brand, getOrCreate } from "../../util/index.js";
+import { brand, filterIterable, getOrCreate } from "../../util/index.js";
 
 import type { Context } from "./context.js";
 import type { ContextualFieldProvider } from "../schemaTypes.js";
@@ -127,11 +127,14 @@ export class UnhydratedFlexTreeNode
 	 * Due to having to detect if a field is empty, this forces the evaluation of any pending defaults in the fields.
 	 * Use {@link allFieldsLazy} to avoid evaluating pending defaults.
 	 */
-	public get fields(): ReadonlyMap<FieldKey, UnhydratedFlexTreeField> {
-		// TODO: doing this copy on every access is inefficient. Some caching+invalidation or removal of the need for a separate map would be better.
-		const entries = [...this.fieldsAll.entries()].filter(([, field]) => field.length > 0);
-		return new Map(entries);
-	}
+	public readonly fields: Pick<
+		Map<FieldKey, UnhydratedFlexTreeField>,
+		typeof Symbol.iterator | "get"
+	> = {
+		get: (key: FieldKey): UnhydratedFlexTreeField | undefined => this.tryGetField(key),
+		[Symbol.iterator]: (): IterableIterator<[FieldKey, UnhydratedFlexTreeField]> =>
+			filterIterable(this.fieldsAll, ([, field]) => field.length > 0),
+	};
 
 	/**
 	 * Gets all fields, without filtering out empty ones.

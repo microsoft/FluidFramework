@@ -16,7 +16,7 @@ import {
 } from "../../core/index.js";
 import { allowsValue } from "../valueUtilities.js";
 import type { MapTreeFieldViewGeneric, MinimalMapTreeNodeView } from "../mapTreeCursor.js";
-import { iterableHasSome } from "../../util/index.js";
+import { iterableHasSome, mapIterable } from "../../util/index.js";
 
 export enum SchemaValidationError {
 	Field_KindNotInSchemaPolicy,
@@ -70,7 +70,7 @@ export function isNodeInSchema(
 		}
 
 		if (schema instanceof ObjectNodeStoredSchema) {
-			const uncheckedFieldsFromNode = new Set(node.fields.keys());
+			const uncheckedFieldsFromNode = new Set(mapIterable(node.fields, ([key, field]) => key));
 			for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
 				const nodeField = node.fields.get(fieldKey) ?? [];
 				const fieldInSchemaResult = isFieldInSchema(nodeField, fieldSchema, schemaAndPolicy);

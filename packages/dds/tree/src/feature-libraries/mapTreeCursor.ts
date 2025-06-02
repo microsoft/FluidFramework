@@ -43,8 +43,8 @@ export interface MapTreeNodeViewGeneric<TNode> extends NodeData {
 	 * Theoretically `Symbol.iterator` and "keys" are redundant.
 	 */
 	readonly fields: Pick<
-		ReadonlyMap<FieldKey, MapTreeFieldViewGeneric<TNode>>,
-		typeof Symbol.iterator | "get" | "keys"
+		Map<FieldKey, MapTreeFieldViewGeneric<TNode>>,
+		typeof Symbol.iterator | "get"
 	>;
 }
 
@@ -127,7 +127,7 @@ export function cursorForMapTreeField<T extends MapTreeNodeViewGeneric<T>>(
 const adapter: CursorAdapter<MinimalMapTreeNodeView> = {
 	value: (node) => node.value,
 	type: (node) => node.type,
-	keysFromNode: (node) => [...node.fields.keys()], // TODO: don't convert this to array here.
+	keysFromNode: (node) => Array.from(node.fields, ([key, field]) => key),
 	getFieldFromNode: (node, key): Field<MinimalMapTreeNodeView> => {
 		const field = node.fields.get(key) as
 			| MinimalMapTreeNodeView[]
