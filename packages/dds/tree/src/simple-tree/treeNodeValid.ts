@@ -20,8 +20,8 @@ import {
 	type InnerNode,
 	type Context,
 	type UnhydratedFlexTreeNode,
+	getSimpleNodeSchemaFromInnerNode
 } from "./core/index.js";
-import { getSimpleNodeSchemaFromInnerNode } from "./core/index.js";
 import { markEager } from "./flexList.js";
 
 /**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeLeafValue } from "../schemaTypes.js";
+import type { AllowedTypeMetadata, AnnotatedAllowedType, TreeLeafValue } from "../schemaTypes.js";
 import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 
 import type { TreeNode } from "./treeNode.js";
@@ -295,7 +295,23 @@ export interface TreeNodeSchemaCore<
 	 * To keep options option, this is marked `@system` for now.
 	 * @system
 	 */
-	readonly childTypes: ReadonlySet<TreeNodeSchema>;
+	readonly childTypes: ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>;
+
+	/**
+	 * All possible schema that a direct child of a node with this schema could have along with any allowed type metadata that may be associated
+	 * with a particular schema.
+	 *
+	 * TODO
+	 * @remarks
+	 * TODO
+	 *
+	 * @privateRemarks
+	 * Currently there isn't much use for this in the public API,
+	 * and it's possible this will want to be tweaked or renamed as part of a larger schema reflection API surface that might be added later.
+	 * To keep options option, this is marked `@system` for now.
+	 * @system
+	 */
+	readonly childAnnotatedAllowedTypes: ReadonlySet<AnnotatedAllowedType>;
 
 	/**
 	 * Constructs an instance of this node type.
