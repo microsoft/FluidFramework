@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { IAudience } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- BrandedType is a class declaration only
 import type {
@@ -223,6 +224,8 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 	readonly events: Listenable<ExtensionHostEvents>;
 
 	readonly logger: ITelemetryBaseLogger;
+
+	readonly supportedFeatures: ILayerCompatDetails["supportedFeatures"];
 
 	/**
 	 * Submits a signal to be sent to other clients.

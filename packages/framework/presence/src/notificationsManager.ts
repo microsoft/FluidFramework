@@ -7,16 +7,15 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listeners, Listenable, Off } from "@fluidframework/core-interfaces";
 import type {
 	JsonTypeWith,
-	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
+import { asDeserializedJson, fullySerializableToOpaqueJson } from "./internalUtils.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
-import { fromOpaqueJson } from "./internalUtils.js";
 
 /**
  * @sealed
@@ -104,7 +103,7 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
 	 * @param notificationName - the name of the notification to fire
 	 * @param args - the arguments sent with the notification
 	 */
-	broadcast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(
+	broadcast<K extends keyof InternalUtilityTypes.NotificationListeners<E>>(
 		notificationName: K,
 		...args: Parameters<E[K]>
 	): void;
@@ -115,7 +114,7 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
 	 * @param targetAttendee - the single attendee to notify
 	 * @param args - the arguments sent with the notification
 	 */
-	unicast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(
+	unicast<K extends keyof InternalUtilityTypes.NotificationListeners<E>>(
 		notificationName: K,
 		targetAttendee: Attendee,
 		...args: Parameters<E[K]>
@@ -175,34 +174,32 @@ class NotificationsManagerImpl<
 	public readonly events = createEmitter<NotificationsManagerEvents>();
 
 	public readonly emit: NotificationEmitter<T> = {
-		broadcast: (name, ...args) => {
+		broadcast: (name: string, ...args) => {
 			this.datastore.localUpdate(
 				this.key,
 				{
 					rev: 0,
 					timestamp: 0,
-					value: {
+					value: fullySerializableToOpaqueJson({
 						name,
 						args: [...(args as JsonTypeWith<never>[])],
-						// FIXME: Why doesn't as cast work?
-					} as unknown as OpaqueJsonDeserialized<InternalTypes.NotificationType>,
+					}),
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.
 				{ allowableUpdateLatencyMs: 0 },
 			);
 		},
-		unicast: (name, targetAttendee, ...args) => {
+		unicast: (name: string, targetAttendee, ...args) => {
 			this.datastore.localUpdate(
 				this.key,
 				{
 					rev: 0,
 					timestamp: 0,
-					value: {
+					value: fullySerializableToOpaqueJson({
 						name,
 						args: [...(args as JsonTypeWith<never>[])],
-						// FIXME: Why doesn't as cast work?
-					} as unknown as OpaqueJsonDeserialized<InternalTypes.NotificationType>,
+					}),
 					ignoreUnmonitored: true,
 				},
 				// This is a notification, so we want to send it immediately.
@@ -214,7 +211,6 @@ class NotificationsManagerImpl<
 	// Workaround for types
 	private readonly notificationsInternal = createEmitter<NotificationSubscriptions<T>>();
 
-	// @ts-expect-error TODO
 	public readonly notifications: NotificationListenable<T> = this.notificationsInternal;
 
 	public constructor(
@@ -247,26 +243,22 @@ class NotificationsManagerImpl<
 	public update(
 		attendee: Attendee,
 		_received: number,
-		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
+		updateValue: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): PostUpdateAction[] {
 		const unbrandedValue = fromOpaqueJson(value.value);
 		const postUpdateActions: PostUpdateAction[] = [];
-		const eventName = unbrandedValue.name as keyof Listeners<NotificationSubscriptions<T>>;
+		const value = asDeserializedJson(updateValue.value);
+		const eventName = value.name as keyof Listeners<NotificationSubscriptions<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.
 			// For now we assume the user is sending the correct types and there is no corruption along the way.
-			const args = [attendee, ...unbrandedValue.args] as Parameters<
+			const args = [attendee, ...value.args] as Parameters<
 				NotificationSubscriptions<T>[typeof eventName]
 			>;
 			postUpdateActions.push(() => this.notificationsInternal.emit(eventName, ...args));
 		} else {
 			postUpdateActions.push(() =>
-				this.events.emit(
-					"unattendedNotification",
-					unbrandedValue.name,
-					attendee,
-					...unbrandedValue.args,
-				),
+				this.events.emit("unattendedNotification", value.name, attendee, ...value.args),
 			);
 		}
 		return postUpdateActions;

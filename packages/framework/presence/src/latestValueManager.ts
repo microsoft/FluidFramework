@@ -19,9 +19,9 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
-	asDeeplyReadonlyFromOpaqueJson,
+	asDeeplyReadonlyDeserializedJson,
+	fullySerializableToOpaqueJson,
 	objectEntries,
-	toOpaqueJson,
 } from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
@@ -120,13 +120,13 @@ class LatestValueManagerImpl<T, Key extends string>
 	}
 
 	public get local(): DeepReadonly<JsonDeserialized<T>> {
-		return asDeeplyReadonlyFromOpaqueJson(this.value.value);
+		return asDeeplyReadonlyDeserializedJson(this.value.value);
 	}
 
 	public set local(value: JsonDeserialized<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
-		this.value.value = toOpaqueJson(value);
+		this.value.value = fullySerializableToOpaqueJson(value);
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
@@ -142,7 +142,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			if (attendeeId !== allKnownStates.self) {
 				yield {
 					attendee: this.datastore.presence.attendees.getAttendee(attendeeId),
-					value: asDeeplyReadonlyFromOpaqueJson(value.value),
+					value: asDeeplyReadonlyDeserializedJson(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
 			}
@@ -163,7 +163,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 		return {
-			value: asDeeplyReadonlyFromOpaqueJson(clientState.value),
+			value: asDeeplyReadonlyDeserializedJson(clientState.value),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -184,7 +184,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					value: asDeeplyReadonlyFromOpaqueJson(value.value),
+					value: asDeeplyReadonlyDeserializedJson(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];
@@ -192,16 +192,27 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
+ * Shallow clone an object that might be null.
+ *
+ * @param value - The object to clone
+ * @returns A shallow clone of the input value
+ * @internal
+ */
+export function shallowCloneNullableObject<T extends object | null>(value: T): T {
+	return value === null ? value : shallowCloneObject(value);
+}
+
+/**
  * Arguments that are passed to the {@link StateFactory.latest} function.
  *
+ * @input
  * @beta
  */
 export interface LatestArguments<T extends object | null> {
 	/**
 	 * The initial value of the local state.
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
-	local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
+	local: JsonSerializable<T> & JsonDeserialized<T>;
 
 	/**
 	 * See {@link BroadcastControlSettings}.
@@ -221,15 +232,11 @@ export function latest<T extends object | null, Key extends string = string>(
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
-	const internalValue =
-		local === null
-			? (local as unknown as OpaqueJsonDeserialized<T>)
-			: // FIXME: Why isn't this directly castable?
-				(shallowCloneObject(local) as unknown as OpaqueJsonDeserialized<T>);
+	const opaqueLocal = fullySerializableToOpaqueJson<T>(local);
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: internalValue,
+		value: shallowCloneNullableObject(opaqueLocal),
 	};
 	const factory = (
 		key: Key,

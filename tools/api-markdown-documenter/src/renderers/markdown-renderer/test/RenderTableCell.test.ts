@@ -7,7 +7,6 @@ import { expect } from "chai";
 
 import {
 	LineBreakNode,
-	ParagraphNode,
 	PlainTextNode,
 	SpanNode,
 	TableBodyCellNode,
@@ -35,41 +34,18 @@ describe("Table Markdown rendering tests", () => {
 
 		it("Cell with complex, multi-line content", () => {
 			const input = new TableBodyCellNode([
-				new ParagraphNode([
-					new PlainTextNode("Hello world!"),
-					LineBreakNode.Singleton,
-					new ParagraphNode([
-						SpanNode.createFromPlainText("Meaning of life", { bold: true }),
-						new PlainTextNode(": "),
-						SpanNode.createFromPlainText("42", { italic: true }),
-					]),
+				new PlainTextNode("Hello world!"),
+				LineBreakNode.Singleton,
+				new SpanNode([
+					SpanNode.createFromPlainText("Meaning of life", { bold: true }),
+					new PlainTextNode(": "),
+					SpanNode.createFromPlainText("42", { italic: true }),
 				]),
 			]);
 
 			const result = testRender(input);
 
-			// Since the contents are multi-line, the table cell will fall back to HTML rendering.
-			// Additionally, since we're in a Markdown table, the contents of the cell *must* be on a single line.
-			const expected = [
-				"<p>",
-				"Hello world!",
-				"<br>",
-				"<p>",
-				"<span>",
-				"<b>",
-				"Meaning of life",
-				"</b>",
-				"</span>",
-				": ",
-				"<span>",
-				"<i>",
-				"42",
-				"</i>",
-				"</span>",
-				"</p>",
-				"</p>",
-			].join("");
-
+			const expected = "Hello world!<br>**Meaning of life**: _42_";
 			expect(result).to.equal(expected);
 		});
 	});

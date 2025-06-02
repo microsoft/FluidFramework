@@ -18,10 +18,10 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
-	asDeeplyReadonlyFromOpaqueJson,
 	objectEntries,
 	objectKeys,
-	toOpaqueJson,
+	fullySerializableToOpaqueJson,
+	asDeeplyReadonlyDeserializedJson,
 } from "./internalUtils.js";
 import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
@@ -292,7 +292,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	): void {
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(asDeeplyReadonlyFromOpaqueJson(item.value), key, this);
+				callbackfn(asDeeplyReadonlyDeserializedJson(item.value), key, this);
 			}
 		}
 	}
@@ -300,22 +300,23 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		return this.value.items[key]?.value === undefined
 			? undefined
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
-				asDeeplyReadonlyFromOpaqueJson(this.value.items[key]!.value!);
+				asDeeplyReadonlyDeserializedJson(this.value.items[key]!.value!);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
 	}
-	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
+	public set(key: K, inValue: JsonSerializable<T> & JsonDeserialized<T>): this {
+		const value = fullySerializableToOpaqueJson(inValue);
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
 			this.value.items[key] = {
 				rev: 0,
 				timestamp: 0,
-				value: toOpaqueJson(value),
+				value,
 			} satisfies InternalTypes.ValueOptionalState<T>;
 		}
-		this.updateItem(key, toOpaqueJson(value));
-		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
+		this.updateItem(key, value);
+		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(inValue) });
 		return this;
 	}
 	public get size(): number {
@@ -446,7 +447,7 @@ class LatestMapRawValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
-					value: asDeeplyReadonlyFromOpaqueJson(value),
+					value: asDeeplyReadonlyDeserializedJson(value),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -497,7 +498,7 @@ class LatestMapRawValueManagerImpl<
 			currentState.items[key] = item;
 			const metadata = { revision: item.rev, timestamp: item.timestamp };
 			if (item.value !== undefined) {
-				const itemValue = asDeeplyReadonlyFromOpaqueJson(item.value);
+				const itemValue = asDeeplyReadonlyDeserializedJson(item.value);
 				const updatedItem = {
 					attendee,
 					key,
@@ -525,6 +526,7 @@ class LatestMapRawValueManagerImpl<
 /**
  * Arguments that are passed to the {@link StateFactory.latestMap} function.
  *
+ * @input
  * @beta
  */
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
@@ -572,7 +574,7 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				value: toOpaqueJson(initialValues[key]),
+				value: fullySerializableToOpaqueJson(initialValues[key]),
 			};
 		}
 	}

@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import { fromOpaqueJson, toOpaqueJson } from "./internalUtils.js";
+import { asDeserializedJson, fullySerializableToOpaqueJson } from "./internalUtils.js";
 import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
@@ -132,7 +132,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
-			const attendeeId = fromOpaqueJson(value.value);
+			const attendeeId = asDeserializedJson(value.value);
 			const { attendee, isJoining } = this.ensureAttendee(
 				attendeeId,
 				clientConnectionId,
@@ -147,8 +147,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				postUpdateActions.push(() => this.events.emit("attendeeConnected", attendee));
 			}
 
-			const knownSessionId: InternalTypes.ValueRequiredState<AttendeeId> | undefined =
-				this.datastore.clientToSessionId[clientConnectionId];
+			const knownSessionId = this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
 				this.datastore.clientToSessionId[clientConnectionId] = value;
 			} else {
@@ -168,7 +167,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		this.datastore.clientToSessionId[clientConnectionId] = {
 			rev: this.selfAttendee.order++,
 			timestamp: Date.now(),
-			value: toOpaqueJson(this.selfAttendee.attendeeId),
+			value: fullySerializableToOpaqueJson(this.selfAttendee.attendeeId),
 		};
 
 		// Mark 'Connected' remote attendees connections as stale

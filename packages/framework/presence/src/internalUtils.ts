@@ -6,8 +6,9 @@
 import type {
 	DeepReadonly,
 	JsonDeserialized,
+	JsonSerializable,
 	OpaqueJsonDeserialized,
-	OpaqueJsonToJsonType,
+	OpaqueJsonSerializable,
 } from "@fluidframework/core-interfaces/internal";
 
 /**
@@ -80,7 +81,7 @@ export function getOrCreateRecord<const K extends string | number | symbol, cons
 }
 
 /**
- * Do nothing helper to apply deep immutability to a value's type.
+ * Does nothing helper to apply deep immutability to a value's type.
  */
 export function asDeeplyReadonly<T>(value: T): DeepReadonly<T> {
 	return value as DeepReadonly<T>;
@@ -113,4 +114,35 @@ export function asDeeplyReadonlyFromOpaqueJson<
 	const TOpaque extends OpaqueJsonDeserialized<unknown>,
 >(value: TOpaque): DeepReadonly<OpaqueJsonToJsonType<TOpaque>> {
 	return asDeeplyReadonly(fromOpaqueJson(value));
+}
+
+export function asDeeplyReadonlyDeserializedJson<T>(
+	value: OpaqueJsonDeserialized<T>,
+): DeepReadonly<JsonDeserialized<T>>;
+export function asDeeplyReadonlyDeserializedJson<T>(
+	value: OpaqueJsonDeserialized<T> | undefined,
+): DeepReadonly<JsonDeserialized<T>> | undefined;
+/**
+ * Does nothing helper to apply deep immutability to a value's opaque Json type revealing the Json type.
+ */
+export function asDeeplyReadonlyDeserializedJson<T>(
+	value: OpaqueJsonDeserialized<T> | undefined,
+): DeepReadonly<JsonDeserialized<T>> | undefined {
+	return value as DeepReadonly<JsonDeserialized<T>> | undefined;
+}
+
+/**
+ * Does nothing helper to reveal the Json type from a value's opaque Json type.
+ */
+export function asDeserializedJson<T>(value: OpaqueJsonDeserialized<T>): JsonDeserialized<T> {
+	return value as JsonDeserialized<T>;
+}
+
+/**
+ * Does nothing helper to automatically cast Json type to Opaque Json type.
+ */
+export function fullySerializableToOpaqueJson<const T>(
+	value: JsonSerializable<T> & JsonDeserialized<T>,
+): OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T> {
+	return value as OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T>;
 }
