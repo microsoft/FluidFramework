@@ -363,6 +363,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		end: number | undefined,
 		accum: TClientData,
 		splitRange?: boolean,
+		perspective?: Pick<ISequencedDocumentMessage, "clientId" | "referenceSequenceNumber">,
 	): void;
 	public walkSegments(
 		handler: ISegmentAction<undefined>,
@@ -370,6 +371,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		end?: number,
 		accum?: undefined,
 		splitRange?: boolean,
+		perspective?: Pick<ISequencedDocumentMessage, "clientId" | "referenceSequenceNumber">,
 	): void;
 	public walkSegments<TClientData>(
 		handler: ISegmentAction<TClientData>,
@@ -377,10 +379,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		end: number | undefined,
 		accum: TClientData,
 		splitRange: boolean = false,
+		perspective?: Pick<ISequencedDocumentMessage, "clientId" | "referenceSequenceNumber">,
 	): void {
 		this._mergeTree.mapRange(
 			handler,
-			this._mergeTree.localPerspective,
+			perspective === undefined
+				? this.getCollabWindow().localPerspective
+				: this.getOperationPerspective(perspective),
 			accum,
 			start,
 			end,
@@ -556,7 +561,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	private getOperationPerspective(
-		sequencedMessage: ISequencedDocumentMessage | undefined,
+		sequencedMessage:
+			| Pick<ISequencedDocumentMessage, "clientId" | "referenceSequenceNumber">
+			| undefined,
 	): Perspective {
 		if (!sequencedMessage) {
 			return this._mergeTree.localPerspective;
