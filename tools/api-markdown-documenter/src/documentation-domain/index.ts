@@ -39,7 +39,7 @@ export { ParagraphNode } from "./ParagraphNode.js";
 export type { PhrasingContent, PhrasingContentMap } from "./PhrasingContent.js";
 export { PlainTextNode } from "./PlainTextNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";
-export { type SpanContent, SpanNode } from "./SpanNode.js";
+export { SpanNode } from "./SpanNode.js";
 export {
 	type TableCellContent,
 	TableCellNode,

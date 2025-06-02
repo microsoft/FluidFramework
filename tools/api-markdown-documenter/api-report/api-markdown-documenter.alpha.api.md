@@ -824,12 +824,9 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 // @public
 function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationConfiguration): boolean;
 
-// @public @sealed
-export type SpanContent = PhrasingContent | BlockContent;
-
 // @public
-export class SpanNode extends DocumentationParentNodeBase<SpanContent> {
-    constructor(children: SpanContent[], formatting?: TextFormatting);
+export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
+    constructor(children: PhrasingContent[], formatting?: TextFormatting);
     static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode;
     static readonly Empty: SpanNode;
     readonly textFormatting?: TextFormatting;
