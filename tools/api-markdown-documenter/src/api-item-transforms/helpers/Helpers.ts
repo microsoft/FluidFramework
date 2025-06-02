@@ -38,14 +38,12 @@ import {
 	type DocumentationParentNode,
 	FencedCodeBlockNode,
 	HeadingNode,
-	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
 	type PhrasingContent,
 	PlainTextNode,
 	type SectionContent,
 	SectionNode,
-	type SpanContent,
 	SpanNode,
 	UnorderedListNode,
 } from "../../documentation-domain/index.js";
@@ -253,7 +251,7 @@ function createHeritageTypeListSpan(
 			}
 		}
 
-		const renderedList = injectSeparator<SpanContent>(
+		const renderedList = injectSeparator<PhrasingContent>(
 			renderedHeritageTypes,
 			new PlainTextNode(", "),
 		);
@@ -347,7 +345,7 @@ export function createExcerptSpanWithHyperlinks(
 		return undefined;
 	}
 
-	const children: SpanContent[] = [];
+	const children: PhrasingContent[] = [];
 	for (const token of excerpt.spannedTokens) {
 		// Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
 		// the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
@@ -567,11 +565,8 @@ export function createDeprecationNoticeSection(
 				"WARNING: This API is deprecated and will be removed in a future release.",
 				{ bold: true },
 			),
-			LineBreakNode.Singleton,
-			new SpanNode(transformTsdoc(deprecatedBlock, apiItem, config), {
-				italic: true,
-			}),
 		]),
+		...transformTsdoc(deprecatedBlock, apiItem, config),
 	]);
 }
 
