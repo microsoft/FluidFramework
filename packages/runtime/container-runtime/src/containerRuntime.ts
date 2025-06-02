@@ -3424,9 +3424,6 @@ export class ContainerRuntime
 		if (this.attachState === AttachState.Detached) {
 			throw new UsageError("cannot enter staging mode while detached");
 		}
-		if (this.flushMode !== FlushMode.TurnBased) {
-			throw new UsageError("Staging Mode is only supported in TurnBased flush mode");
-		}
 
 		// Make sure all BatchManagers are empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
