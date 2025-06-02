@@ -168,7 +168,7 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
  *
  * @typeparam Union - The union to convert.
  * @typeparam AsOverloadedFunction - Implementation detail: do not specify.
- * @system @alpha
+ * @system @beta
  */
 export type PopUnion<
 	Union,
@@ -189,7 +189,7 @@ export type PopUnion<
  *
  * https://www.hacklewayne.com/typescript-convert-union-to-tuple-array-yes-but-how and https://catchts.com/union-array both explain the general approach this uses pretty well.
  * This implementation is inspired to those, but slightly different in implementation.
- * @alpha
+ * @system @beta
  */
 export type UnionToTuple<
 	Union,
