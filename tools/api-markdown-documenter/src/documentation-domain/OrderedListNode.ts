@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
 // TODOs:
@@ -35,12 +32,10 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * </ol>
  * ```
  *
+ * @sealed
  * @public
  */
-export class OrderedListNode
-	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements MultiLineDocumentationNode
-{
+export class OrderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * Static singleton representing an empty Ordered List node.
 	 */
@@ -58,7 +53,7 @@ export class OrderedListNode
 		return false;
 	}
 
-	public constructor(children: SingleLineDocumentationNode[]) {
+	public constructor(children: PhrasingContent[]) {
 		super(children);
 	}
 

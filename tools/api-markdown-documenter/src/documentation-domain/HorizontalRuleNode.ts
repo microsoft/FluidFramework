@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { MultiLineDocumentationNode } from "./DocumentationNode.js";
+import type { DocumentationNode } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
@@ -23,9 +23,10 @@ import { DocumentationNodeType } from "./DocumentationNodeType.js";
  *
  * @see {@link https://www.markdownguide.org/basic-syntax#horizontal-rules}
  *
+ * @sealed
  * @public
  */
-export class HorizontalRuleNode implements MultiLineDocumentationNode {
+export class HorizontalRuleNode implements DocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */

@@ -11,7 +11,7 @@ import {
 	UsageError,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { noopValidator } from "../codec/index.js";
+import { FluidClientVersion, noopValidator } from "../codec/index.js";
 import {
 	type Anchor,
 	type AnchorLocator,
@@ -276,9 +276,13 @@ export function createTreeCheckout(
 		disposeForksAfterTransaction?: boolean;
 	},
 ): TreeCheckout {
-	const forest = args?.forest ?? buildForest();
+	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
-	const defaultCodecOptions = { jsonValidator: noopValidator };
+	const forest = args?.forest ?? buildForest(breaker, schema);
+	const defaultCodecOptions = {
+		jsonValidator: noopValidator,
+		oldestCompatibleClient: FluidClientVersion.v2_0,
+	};
 	const defaultFieldBatchVersion = 1;
 	const changeFamily =
 		args?.changeFamily ??
@@ -286,7 +290,7 @@ export function createTreeCheckout(
 			revisionTagCodec,
 			args?.fieldBatchCodec ??
 				makeFieldBatchCodec(defaultCodecOptions, defaultFieldBatchVersion),
-			{ jsonValidator: noopValidator },
+			defaultCodecOptions,
 			args?.chunkCompressionStrategy,
 			idCompressor,
 		);
@@ -312,7 +316,7 @@ export function createTreeCheckout(
 		idCompressor,
 		args?.removedRoots,
 		args?.logger,
-		args?.breaker,
+		breaker,
 		args?.disposeForksAfterTransaction,
 	);
 }

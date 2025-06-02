@@ -5,7 +5,7 @@
 
 import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import type { SectionNode } from "../../documentation-domain/index.js";
+import { ParagraphNode, type SectionNode } from "../../documentation-domain/index.js";
 import { getEffectiveReleaseLevel } from "../../utilities/index.js";
 import {
 	doesItemRequireOwnDocument,
@@ -20,7 +20,7 @@ import {
 	createRemarksSection,
 	createSeeAlsoSection,
 	createSignatureSection,
-	createSummaryParagraph,
+	createSummarySection,
 	createThrowsSection,
 	wrapInSection,
 } from "../helpers/index.js";
@@ -62,23 +62,23 @@ export function createSectionForApiItem(
 	const sections: SectionNode[] = [];
 
 	// Render summary comment (if any)
-	const summary = createSummaryParagraph(apiItem, config);
+	const summary = createSummarySection(apiItem, config);
 	if (summary !== undefined) {
-		sections.push(wrapInSection([summary]));
+		sections.push(summary);
 	}
 
 	// Render deprecation notice (if any)
 	const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
 	if (deprecationNotice !== undefined) {
-		sections.push(wrapInSection([deprecationNotice]));
+		sections.push(deprecationNotice);
 	}
 
 	// Render alpha/beta notice if applicable
 	const releaseLevel = getEffectiveReleaseLevel(apiItem);
 	if (releaseLevel === ReleaseTag.Alpha) {
-		sections.push(wrapInSection([alphaWarningSpan]));
+		sections.push(wrapInSection([new ParagraphNode([alphaWarningSpan])]));
 	} else if (releaseLevel === ReleaseTag.Beta) {
-		sections.push(wrapInSection([betaWarningSpan]));
+		sections.push(wrapInSection([new ParagraphNode([betaWarningSpan])]));
 	}
 
 	// Render signature (if any)

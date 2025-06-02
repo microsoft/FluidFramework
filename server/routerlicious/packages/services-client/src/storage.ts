@@ -5,6 +5,7 @@
 
 import * as git from "@fluidframework/gitresources";
 import * as api from "@fluidframework/protocol-definitions";
+
 import {
 	IWholeSummaryPayload,
 	IWholeFlatSummary,

@@ -5,7 +5,7 @@
 
 import type { AzureUser } from "@fluidframework/azure-client/internal";
 // eslint-disable-next-line import/no-internal-modules
-import type { AttendeeId } from "@fluidframework/presence/alpha";
+import type { AttendeeId } from "@fluidframework/presence/beta";
 
 export type MessageToChild = ConnectCommand | DisconnectSelfCommand;
 interface ConnectCommand {

@@ -19,8 +19,11 @@ import type {
 } from "../../core/index.js";
 import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
+import type { FieldChangeEncodingContext } from "../index.js";
+import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV2.js";
+import type { SequenceCodecHelpers } from "./helperTypes.js";
 import {
 	type Attach,
 	type AttachAndDetach,
@@ -36,9 +39,6 @@ import {
 	type Rename,
 } from "./types.js";
 import { isNoopMark, normalizeCellRename } from "./utils.js";
-import type { FieldChangeEncodingContext } from "../index.js";
-import { EncodedNodeChangeset } from "../modular-schema/index.js";
-import type { SequenceCodecHelpers } from "./helperTypes.js";
 
 export function makeV2CodecHelpers(
 	revisionTagCodec: IJsonCodec<

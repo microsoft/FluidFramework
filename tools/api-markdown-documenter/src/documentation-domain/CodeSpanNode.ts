@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DocumentationParentNodeBase,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
@@ -25,16 +22,14 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * <code>Foo</code>
  * ```
  *
+ * @sealed
  * @public
  */
-export class CodeSpanNode
-	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements SingleLineDocumentationNode
-{
+export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
 	/**
 	 * Static singleton representing an empty Code Span node.
 	 */
-	public static readonly Empty: CodeSpanNode = new CodeSpanNode([]);
+	public static readonly Empty: CodeSpanNode = new CodeSpanNode(PlainTextNode.Empty);
 
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
@@ -44,12 +39,17 @@ export class CodeSpanNode
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
 	 */
-	public override get singleLine(): true {
-		return true;
+	public readonly singleLine = true;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public get isEmpty(): boolean {
+		return this.value.isEmpty;
 	}
 
-	public constructor(children: SingleLineDocumentationNode[]) {
-		super(children);
+	public constructor(value: PlainTextNode) {
+		super(value);
 	}
 
 	/**
@@ -57,6 +57,6 @@ export class CodeSpanNode
 	 * @param text - The node contents. Note: this must not contain newline characters.
 	 */
 	public static createFromPlainText(text: string): CodeSpanNode {
-		return new CodeSpanNode([new PlainTextNode(text)]);
+		return new CodeSpanNode(new PlainTextNode(text));
 	}
 }

@@ -21,11 +21,7 @@ import {
 	type NormalizedFieldUpPath,
 	TreeStoredSchemaRepository,
 } from "../../core/index.js";
-import {
-	buildForest,
-	FieldKinds,
-	MockNodeIdentifierManager,
-} from "../../feature-libraries/index.js";
+import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
 	getBranch,
 	Tree,
@@ -37,6 +33,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
+	buildTestForest,
 	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
@@ -1464,13 +1461,14 @@ function itView<
 	} {
 		const logger = createMockLoggerExt();
 
+		const schema = new TreeStoredSchemaRepository();
 		const checkout = createTreeCheckout(
 			testIdCompressor,
 			mintRevisionTag,
 			testRevisionTagCodec,
 			{
-				forest: buildForest(),
-				schema: new TreeStoredSchemaRepository(),
+				forest: buildTestForest({ additionalAsserts: true, schema }),
+				schema,
 				logger,
 			},
 		);

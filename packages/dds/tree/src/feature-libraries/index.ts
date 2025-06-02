@@ -15,6 +15,9 @@ export {
 	cursorForMapTreeNode,
 	mapTreeFromCursor,
 	mapTreeFieldFromCursor,
+	type MinimalMapTreeNodeView,
+	mapTreeFieldsWithField,
+	mapTreeWithField,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
 export {
@@ -22,7 +25,6 @@ export {
 	encodeTreeSchema,
 	makeSchemaCodec,
 	makeSchemaCodecs,
-	SchemaCodecVersion,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -175,6 +177,9 @@ export {
 	treeStatusFromAnchorCache,
 	indexForAt,
 	FlexTreeEntityKind,
+	type FlexibleNodeContent,
+	type FlexibleFieldContent,
+	type FlexTreeHydratedContextMinimal,
 } from "./flex-tree/index.js";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
