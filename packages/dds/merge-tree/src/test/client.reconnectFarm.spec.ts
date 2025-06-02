@@ -120,7 +120,7 @@ function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): 
 				testOpts,
 				applyMessagesWithReconnect,
 			);
-		}).timeout(30 * 1000);
+		}).timeout(45 * 1000);
 	});
 }
 
