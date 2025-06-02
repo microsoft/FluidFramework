@@ -732,14 +732,14 @@ function createExampleSection(
 		logger?.verbose(
 			`Found example comment with title "${exampleTitle}". Adjusting output to adhere to TSDoc spec...`,
 		);
-		exampleSection = stripTitleFromParagraph(exampleSection, exampleTitle, logger);
+		exampleSection = stripTitleFromExampleComment(exampleSection, exampleTitle, logger);
 	}
 
 	const headingId = `${getFileSafeNameForApiItem(example.apiItem)}-example${
 		example.exampleNumber ?? ""
 	}`;
 
-	return wrapInSection([exampleSection], {
+	return wrapInSection(exampleSection.children, {
 		title: headingTitle,
 		id: headingId,
 	});
@@ -798,7 +798,7 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
  * In the case where the output is not in a form we expect, we will log an error and return the node we were given,
  * rather than making a copy.
  */
-function stripTitleFromParagraph<TNode extends DocumentationParentNode>(
+function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
 	node: TNode,
 	title: string,
 	logger: Logger | undefined,
@@ -818,7 +818,7 @@ function stripTitleFromParagraph<TNode extends DocumentationParentNode>(
 
 	const firstChild = children[0];
 	if (firstChild.isParent) {
-		const newFirstChild = stripTitleFromParagraph(
+		const newFirstChild = stripTitleFromExampleComment(
 			firstChild as DocumentationParentNode,
 			title,
 			logger,
