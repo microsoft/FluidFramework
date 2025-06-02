@@ -102,15 +102,24 @@ export class UnhydratedFlexTreeNode
 
 	/**
 	 * Create a new UnhydratedFlexTreeNode.
-	 * @param location - the parentage of this node, if it is being created underneath an existing node and field, or undefined if not
-	 * @remarks This class (and its subclasses) should not be directly constructed outside of this module.
-	 * Instead, use {@link getOrCreateNodeFromInnerNode} to create a UnhydratedFlexTreeNode from a {@link MapTree}.
-	 * A `UnhydratedFlexTreeNode` may never be constructed more than once for the same {@link MapTree} object.
-	 * Instead, it should always be acquired via {@link getOrCreateNodeFromInnerNode}.
 	 */
 	public constructor(
+		/**
+		 * The {@link NodeData} for this node.
+		 */
 		public readonly data: NodeData,
+		/**
+		 * All {@link UnhydratedFlexTreeField} for this node that have been created so far.
+		 * @remarks
+		 * This includes all non-empty fields, but also any empty fields which have been previously requested.
+		 */
 		private readonly fieldsAll: Map<FieldKey, UnhydratedFlexTreeField>,
+		/**
+		 * The {@link Context} for this node.
+		 * @remarks
+		 * Provides access to all schema reachable from this node.
+		 * See {@link getUnhydratedContext}.
+		 */
 		public readonly simpleContext: Context,
 	) {
 		for (const [_key, field] of this.fieldsAll) {
