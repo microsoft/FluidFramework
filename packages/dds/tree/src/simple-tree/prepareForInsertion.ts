@@ -28,12 +28,7 @@ import {
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
-import {
-	getKernel,
-	type TreeNode,
-	type UnhydratedFlexTreeNode,
-	unhydratedFlexTreeNodeToTreeNode,
-} from "./core/index.js";
+import { getKernel, type TreeNode, type UnhydratedFlexTreeNode } from "./core/index.js";
 import { debugAssert, oob } from "@fluidframework/core-utils/internal";
 import { inSchemaOrThrow, isFieldInSchema } from "../feature-libraries/index.js";
 import { convertField } from "./toStoredSchema.js";
@@ -231,7 +226,7 @@ function walkMapTree(
 	for (let next: Next | undefined = [path, root]; next !== undefined; next = nexts.pop()) {
 		const [p, node] = next;
 		if (node !== undefined) {
-			const treeNode = unhydratedFlexTreeNodeToTreeNode.get(node);
+			const treeNode = node.treeNode;
 			if (treeNode !== undefined) {
 				onVisitTreeNode(p, treeNode);
 			}

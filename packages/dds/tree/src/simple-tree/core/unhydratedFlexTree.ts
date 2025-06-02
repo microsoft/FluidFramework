@@ -54,6 +54,7 @@ import { brand, getOrCreate } from "../../util/index.js";
 
 import type { Context } from "./context.js";
 import type { ContextualFieldProvider } from "../schemaTypes.js";
+import type { TreeNode } from "./treeNode.js";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
 	extends SequenceFieldEditBuilder<FlexibleFieldContent, UnhydratedFlexTreeNode[]> {}
@@ -84,6 +85,11 @@ export class UnhydratedFlexTreeNode
 			this.context.schema.nodeSchema.get(this.data.type) ?? fail(0xb46 /* missing schema */)
 		);
 	}
+
+	/**
+	 * Cache storing the TreeNode for this inner node.
+	 */
+	public treeNode: TreeNode | undefined = undefined;
 
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
 

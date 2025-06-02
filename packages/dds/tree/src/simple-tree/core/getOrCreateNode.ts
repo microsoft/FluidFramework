@@ -8,7 +8,6 @@ import type { TreeValue } from "../../core/index.js";
 import type { TreeNode } from "./treeNode.js";
 import {
 	type InnerNode,
-	unhydratedFlexTreeNodeToTreeNode,
 	simpleTreeNodeSlot,
 	createTreeNodeFromInner,
 } from "./treeNodeKernel.js";
@@ -23,7 +22,7 @@ import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 export function getOrCreateNodeFromInnerNode(flexNode: InnerNode): TreeNode | TreeValue {
 	const cached =
 		flexNode instanceof UnhydratedFlexTreeNode
-			? unhydratedFlexTreeNodeToTreeNode.get(flexNode)
+			? flexNode.treeNode
 			: flexNode.anchorNode.slots.get(simpleTreeNodeSlot);
 
 	if (cached !== undefined) {

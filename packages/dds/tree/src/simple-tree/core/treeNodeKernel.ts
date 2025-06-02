@@ -148,7 +148,8 @@ export class TreeNodeKernel {
 
 		if (innerNode instanceof UnhydratedFlexTreeNode) {
 			// Unhydrated case
-			unhydratedFlexTreeNodeToTreeNodeInternal.set(innerNode, node);
+			debugAssert(() => innerNode.treeNode === undefined);
+			innerNode.treeNode = node;
 			// Register for change events from the unhydrated flex node.
 			// These will be fired if the unhydrated node is edited, and will also be forwarded later to the hydrated node.
 			this.#hydrationState = {
@@ -160,7 +161,7 @@ export class TreeNodeKernel {
 
 					let unhydratedNode: UnhydratedFlexTreeNode | undefined = innerNode;
 					while (unhydratedNode !== undefined) {
-						const treeNode = unhydratedFlexTreeNodeToTreeNodeInternal.get(unhydratedNode);
+						const treeNode = unhydratedNode.treeNode;
 						if (treeNode !== undefined) {
 							const kernel = getKernel(treeNode);
 							kernel.#unhydratedEvents.value.emit("subtreeChangedAfterBatch");
@@ -203,7 +204,6 @@ export class TreeNodeKernel {
 	public hydrate(anchors: AnchorSet, path: UpPath): void {
 		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
 		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
-		unhydratedFlexTreeNodeToTreeNodeInternal.delete(this.#hydrationState.innerNode);
 
 		const anchor = anchors.track(path);
 		const anchorNode =
@@ -374,22 +374,6 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
  * Maybe getOrCreateInnerNode should cook marinated nodes so they have a proper InnerNode?
  */
 export type InnerNode = FlexTreeNode | UnhydratedFlexTreeNode;
-
-/**
- * Associates a given {@link UnhydratedFlexTreeNode} with a {@link TreeNode}.
- */
-const unhydratedFlexTreeNodeToTreeNodeInternal = new WeakMap<
-	UnhydratedFlexTreeNode,
-	TreeNode
->();
-/**
- * Retrieves the {@link TreeNode} associated with the given {@link UnhydratedFlexTreeNode} if any.
- */
-export const unhydratedFlexTreeNodeToTreeNode =
-	unhydratedFlexTreeNodeToTreeNodeInternal as Pick<
-		WeakMap<UnhydratedFlexTreeNode, TreeNode>,
-		"get"
-	>;
 
 /**
  * An anchor slot which associates an anchor with its corresponding {@link TreeNode}, if there is one.
