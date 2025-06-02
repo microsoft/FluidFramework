@@ -6,7 +6,7 @@
 import { BrandedType } from "./brandedType.js";
 
 /**
- * Placeholder for value that has is known to be Json because it has been
+ * Placeholder for value that is known to be JSON because it has been
  * deserialized (`T` filtered through {@link JsonDeserialized} as out value).
  *
  * @remarks
@@ -46,8 +46,8 @@ export declare class OpaqueJsonDeserialized<
 }
 
 /**
- * Placeholder for value that has is known to be Json because it will be
- * serialized (`T` filtered through {@link JsonSerializable} before "created").
+ * Placeholder for value that is known to be JSON because it will have been
+ * serialized checked (`T` filtered through {@link JsonSerializable} before "created").
  *
  * @remarks
  * Usage:

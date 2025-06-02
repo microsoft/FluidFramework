@@ -20,10 +20,11 @@ import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
+import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
 import {
-	createDataObjectVisualizer,
-	createTreeDataObjectVisualizer,
+	visualizeDataObject,
+	visualizeTreeDataObject,
 	visualizeUnknownSharedObject,
 } from "./DefaultVisualizers.js";
 import {
@@ -244,28 +245,28 @@ export class DataVisualizerGraph
 		const isDataObj = isDataObject(visualizableObject);
 		const isTreeDataObj = isTreeDataObject(visualizableObject);
 
-		let rootSharedObject: ISharedObject;
-		let fluidObjectId: string;
 		let visualizationFunction: VisualizeSharedObject;
+		let rootSharedObject: ISharedObject;
+		let objectId: FluidObjectId;
 
 		if (isDataObj) {
 			rootSharedObject = (visualizableObject as unknown as { readonly root: ISharedDirectory })
 				.root;
-			fluidObjectId = `${visualizableObject.id}-${rootSharedObject.id}`;
-			visualizationFunction = createDataObjectVisualizer(visualizableObject.id);
+			objectId = getKeyForFluidObject(rootSharedObject);
+			visualizationFunction = visualizeDataObject;
 		} else if (isTreeDataObj) {
 			rootSharedObject = visualizableObject.sharedTree as unknown as ISharedObject;
-			fluidObjectId = `${visualizableObject.id}-${rootSharedObject.id}`;
-			visualizationFunction = createTreeDataObjectVisualizer(visualizableObject.id);
+			objectId = getKeyForFluidObject(rootSharedObject);
+			visualizationFunction = visualizeTreeDataObject;
 		} else {
 			rootSharedObject = visualizableObject;
-			fluidObjectId = visualizableObject.id;
+			objectId = getKeyForFluidObject(visualizableObject);
 			visualizationFunction =
 				(this.visualizers[visualizableObject.attributes.type] as VisualizeSharedObject) ??
 				visualizeUnknownSharedObject;
 		}
 
-		if (!this.visualizerNodes.has(fluidObjectId)) {
+		if (!this.visualizerNodes.has(objectId)) {
 			const visualizerNode = new VisualizerNode(
 				rootSharedObject,
 				visualizationFunction,
@@ -276,9 +277,10 @@ export class DataVisualizerGraph
 			visualizerNode.on("update", this.onVisualUpdateHandler);
 
 			// Add the visualizer node to our collection
-			this.visualizerNodes.set(fluidObjectId, visualizerNode);
+			this.visualizerNodes.set(objectId, visualizerNode);
 		}
-		return fluidObjectId;
+
+		return objectId;
 	}
 
 	/**

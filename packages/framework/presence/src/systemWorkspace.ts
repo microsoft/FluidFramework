@@ -19,8 +19,6 @@ import type { AnyWorkspace, StatesWorkspaceSchema } from "./types.js";
 
 /**
  * The system workspace's datastore structure.
- *
- * @internal
  */
 export interface SystemWorkspaceDatastore {
 	clientToSessionId: {
@@ -63,7 +61,7 @@ class SessionClient implements Attendee {
 }
 
 /**
- * @internal
+ * Internal workspace that manages metadata for session attendees.
  */
 export interface SystemWorkspace
 	// Portion of Presence that is handled by SystemWorkspace along with
@@ -288,8 +286,6 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 /**
  * Instantiates the system workspace.
- *
- * @internal
  */
 export function createSystemWorkspace(
 	attendeeId: AttendeeId,

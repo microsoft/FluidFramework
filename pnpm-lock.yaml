@@ -13653,6 +13653,9 @@ importers:
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../dds/map
+      '@fluidframework/matrix':
+        specifier: workspace:~
+        version: link:../../dds/matrix
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions

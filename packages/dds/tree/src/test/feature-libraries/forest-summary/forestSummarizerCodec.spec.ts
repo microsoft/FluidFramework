@@ -31,7 +31,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
-import { testIdCompressor } from "../../utils.js";
+import { testIdCompressor, validateUsageError } from "../../utils.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
 const fieldBatchCodec = makeFieldBatchCodec(codecOptions, 1);
@@ -121,7 +121,7 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				(e: Error) => validateAssertionError(e, "version being decoded is not supported"),
+				validateUsageError(/Unsupported version 2 encountered while decoding data/),
 			);
 		});
 
@@ -136,7 +136,7 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				(e: Error) => validateAssertionError(e, "version being decoded is not supported"),
+				validateUsageError(/Unsupported version 2 encountered while decoding data/),
 			);
 		});
 

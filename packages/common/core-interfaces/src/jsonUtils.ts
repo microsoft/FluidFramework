@@ -11,7 +11,7 @@ import type { OpaqueJsonDeserialized, OpaqueJsonSerializable } from "./opaqueJso
  * Helper to return an Opaque Json type version of Json type
  *
  * @remarks
- * To use this helper create a helper function that filters type `T` through at
+ * To use this helper, create a helper function that filters type `T` through at
  * least {@link JsonSerializable} and optionally {@link JsonDeserialized}. Then
  * cast value through `unknown as JsonTypeToOpaqueJson<T, Options>`, where
  * `Options` reflects the serialization capabilities of that area.

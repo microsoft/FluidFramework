@@ -37,8 +37,6 @@ type RequiredAndNotUndefined<T> = {
  * The is a defect in this utility when a string index appears in the object.
  * In such a case, the only result is `[string, T]`, where `T` is the type
  * of the string index entry.
- *
- * @internal
  */
 export const objectEntries = Object.entries as <const T>(o: T) => KeyValuePairs<T>;
 
@@ -49,8 +47,6 @@ export const objectEntries = Object.entries as <const T>(o: T) => KeyValuePairs<
  * Given `T` should not contain `undefined` values. If it does, use
  * {@link objectEntries} instead. Without `undefined` values, this
  * typing provides best handling of objects with optional properties.
- *
- * @internal
  */
 export const objectEntriesWithoutUndefined = Object.entries as <const T>(
 	o: T,
@@ -58,8 +54,6 @@ export const objectEntriesWithoutUndefined = Object.entries as <const T>(
 
 /**
  * Object.keys retyped to preserve known keys and their types.
- *
- * @internal
  */
 export const objectKeys = Object.keys as <const T>(
 	o: T,

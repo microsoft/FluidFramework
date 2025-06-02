@@ -1575,7 +1575,7 @@ describe("JsonDeserialized", () => {
 		});
 	});
 
-	// These test cases are note really negative compilation test like they are to JsonSerializable.
+	// These test cases are not really negative compilation test like they are to JsonSerializable.
 	// These cases are for instances of notable loss of original information.
 	describe("negative compilation tests", () => {
 		describe("assumptions", () => {

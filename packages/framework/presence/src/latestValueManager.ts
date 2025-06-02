@@ -29,6 +29,8 @@ import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
 /**
+ * Events from {@link LatestRaw}.
+ *
  * @sealed
  * @beta
  */
@@ -137,7 +139,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
 				yield {
-					attendee: this.datastore.lookupClient(attendeeId),
+					attendee: this.datastore.presence.attendees.getAttendee(attendeeId),
 					value: asDeeplyReadonlyFromOpaqueJson(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
@@ -149,7 +151,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return Object.keys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)
-			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
+			.map((attendeeId) => this.datastore.presence.attendees.getAttendee(attendeeId));
 	}
 
 	public getRemote(attendee: Attendee): LatestData<T> {
