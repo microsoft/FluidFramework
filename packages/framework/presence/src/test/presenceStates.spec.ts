@@ -43,7 +43,7 @@ describe("Presence", () => {
 });
 
 declare function createValueManager<T, Key extends string>(
-	initial: JsonSerializable<T>,
+	initial: JsonSerializable<T> & JsonDeserialized<T>,
 ): { instanceBase: new () => unknown } & ((
 	key: Key,
 	datastoreHandle: InternalTypes.StateDatastoreHandle<
