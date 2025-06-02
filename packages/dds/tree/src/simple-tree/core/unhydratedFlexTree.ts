@@ -42,6 +42,9 @@ import {
 	FieldKinds,
 	type SequenceFieldEditBuilder,
 	cursorForMapTreeNode,
+	type OptionalFieldEditBuilder,
+	type ValueFieldEditBuilder,
+	type FlexibleNodeContent,
 } from "../../feature-libraries/index.js";
 import { brand, getOrCreate, mapIterable } from "../../util/index.js";
 
@@ -453,7 +456,8 @@ class EagerMapTreeOptionalField
 				}
 			});
 		},
-	};
+	} satisfies OptionalFieldEditBuilder<FlexibleNodeContent> &
+		ValueFieldEditBuilder<FlexibleNodeContent>;
 
 	public get content(): FlexTreeUnknownUnboxed | undefined {
 		const value = this.mapTrees[0];

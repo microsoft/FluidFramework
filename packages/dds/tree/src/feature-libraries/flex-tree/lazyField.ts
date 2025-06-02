@@ -43,6 +43,8 @@ import {
 	type FlexTreeSequenceField,
 	type FlexTreeTypedField,
 	type FlexTreeUnknownUnboxed,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
 	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
@@ -263,7 +265,7 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 		return this.map((x) => x);
 	}
 
-	public editor: SequenceFieldEditBuilder<ExclusiveMapTree[]> = {
+	public editor: SequenceFieldEditBuilder<FlexibleFieldContent> = {
 		insert: (index, newContent) => {
 			this.sequenceEditor().insert(index, cursorForMapTreeField(newContent));
 		},
@@ -279,7 +281,7 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 }
 
 export class LazyValueField extends LazyField implements FlexTreeRequiredField {
-	public editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
+	public editor: ValueFieldEditBuilder<FlexibleNodeContent> = {
 		set: (newContent) => {
 			this.valueFieldEditor().set(cursorForMapTreeField([newContent]));
 		},

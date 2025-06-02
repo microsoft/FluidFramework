@@ -21,6 +21,7 @@ import type {
 import type {
 	FluidObject,
 	FluidObjectKeys,
+	IFluidHandle,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -155,6 +156,10 @@ class RootDataObject
 			return this.createSharedObject(internal);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
+	}
+
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.runtime.uploadBlob(blob);
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(

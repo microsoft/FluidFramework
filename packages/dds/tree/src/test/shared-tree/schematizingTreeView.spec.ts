@@ -58,12 +58,10 @@ const configGeneralized2 = new TreeViewConfiguration({
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
 	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
-	nodeKeyManager = new MockNodeIdentifierManager(),
 ): TreeCheckout {
 	const initialTree = fieldCursorFromInsertable<UnsafeUnknownSchema>(
 		viewConfig.schema,
 		unhydratedInitialTree,
-		nodeKeyManager,
 	);
 	const treeContent: TreeStoredContent = {
 		schema: toStoredSchema(viewConfig.schema),

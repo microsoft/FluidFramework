@@ -15,6 +15,7 @@ import type {
 	FluidObject,
 	IEvent,
 	IEventProvider,
+	IFluidHandle,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -254,6 +255,16 @@ export interface IFluidContainerInternal extends ContainerExtensionStore {
 	 * @remarks Used to power debug tooling and experimental features.
 	 */
 	readonly container: IContainer;
+
+	/**
+	 * Upload a blob of data.
+	 * Although it is marked as internal, there is external usage of this function for experimental purposes.
+	 * Please contact yunho-microsoft or vladsud if you need to change it.
+	 * @param blob - blob to be uploaded.
+	 *
+	 * @remarks This method is used to expose uploadBlob to the IFluidContainer level. UploadBlob will upload data to server side (as of now, ODSP only). There is no downloadBlob provided as it is not needed(blob lifetime managed by server).
+	 */
+	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
@@ -385,5 +396,9 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.container.off("disconnected", this.disconnectedHandler);
 		this.container.off("saved", this.savedHandler);
 		this.container.off("dirty", this.dirtyHandler);
+	}
+
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.rootDataObject.uploadBlob(blob);
 	}
 }
