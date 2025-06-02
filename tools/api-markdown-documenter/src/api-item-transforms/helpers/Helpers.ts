@@ -753,7 +753,10 @@ function createExampleSection(
  * Per TSDoc spec, if the `@example` comment has content on the same line as the tag,
  * that line is expected to be treated as the title.
  *
- * This information is not provided to us directly, so instead we will walk the content tree
+ * Ideally, the TSDoc parser would handle all of this for us, but it does not currently do so.
+ * See the following github issue for more details: {@link https://github.com/microsoft/rushstack/issues/4860}
+ *
+ * Since the information is not provided to us directly, we instead walk the content tree
  * and see if the first leaf node is plain text. If it is, we will use that as the title (header).
  * If not (undefined), we will use the default heading scheme.
  *
