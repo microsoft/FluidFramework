@@ -3764,7 +3764,7 @@ function rebaseRoots(
 	affectedBaseFields: TupleBTree<FieldIdKey, boolean>,
 	nodesToRebase: [newChangeset: NodeId, baseChangeset: NodeId][],
 ): RootNodeTable {
-	const rebasedRoots = cloneRootTable(change.rootNodes);
+	const rebasedRoots = newRootTable();
 	for (const renameEntry of change.rootNodes.oldToNewId.entries()) {
 		rebaseRename(rebasedRoots, renameEntry, base, affectedBaseFields);
 	}
@@ -3813,14 +3813,11 @@ function rebaseRename(
 	count = baseAttachEntry.length;
 
 	if (baseAttachEntry.value !== undefined) {
-		deleteNodeRename(rebasedRoots, baseRenameEntry.start, count);
-
 		// This rename represents an intention to detach these nodes.
 		// The rebased change should have a detach in the field where the base change attaches the nodes,
 		// so we need to ensure that field is processed.
 		affectedBaseFields.set(fieldIdKeyFromFieldId(baseAttachEntry.value), true);
 	} else if (baseRenameEntry.value !== undefined) {
-		deleteNodeRename(rebasedRoots, baseRenameEntry.start, count);
 		renameNodes(rebasedRoots, baseRenameEntry.value, renameEntry.value, count);
 	}
 
