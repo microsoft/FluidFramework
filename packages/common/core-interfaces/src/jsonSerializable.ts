@@ -89,8 +89,8 @@ export interface JsonSerializableOptions {
  * Also, `JsonSerializable<T>` does not prevent the construction of circular references.
  *
  * Specifying `JsonSerializable<unknown>` or `JsonSerializable<any>` yields a type
- * alias for {@link JsonTypeWith}`<never>` and should not be used if precise type
- * safety is desired.
+ * alias for {@link JsonTypeWith}`<never>` | {@link OpaqueJsonSerializable}`<unknown>`
+ * and should not be used if precise type safety is desired.
  *
  * Class instances are indistinguishable from general objects by type checking
  * unless they have non-public members.
