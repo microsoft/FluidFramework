@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode.js";
+import type { BlockContent } from "./BlockContent.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
@@ -29,6 +31,13 @@ export enum TableCellKind {
 }
 
 /**
+ * The types of child nodes that can be contained within a {@link TableCellNode}.
+ *
+ * @public
+ */
+export type TableCellContent = PhrasingContent | BlockContent;
+
+/**
  * A cell within a table.
  *
  * @example Markdown
@@ -49,9 +58,10 @@ export enum TableCellKind {
  *
  * - {@link TableRowNode}
  *
+ * @sealed
  * @public
  */
-export abstract class TableCellNode extends DocumentationParentNodeBase {
+export abstract class TableCellNode extends DocumentationParentNodeBase<TableCellContent> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -62,7 +72,7 @@ export abstract class TableCellNode extends DocumentationParentNodeBase {
 	 */
 	public readonly cellKind: TableCellKind;
 
-	protected constructor(children: DocumentationNode[], cellKind: TableCellKind) {
+	protected constructor(children: TableCellContent[], cellKind: TableCellKind) {
 		super(children);
 		this.cellKind = cellKind;
 	}
@@ -71,6 +81,7 @@ export abstract class TableCellNode extends DocumentationParentNodeBase {
 /**
  * A {@link TableCellNode} that lives in the heading row of a {@link TableNode}.
  *
+ * @sealed
  * @public
  */
 export class TableHeaderCellNode extends TableCellNode {
@@ -79,7 +90,7 @@ export class TableHeaderCellNode extends TableCellNode {
 	 */
 	public static readonly Empty = new TableHeaderCellNode([]);
 
-	public constructor(children: DocumentationNode[]) {
+	public constructor(children: TableCellContent[]) {
 		super(children, TableCellKind.Header);
 	}
 
@@ -97,6 +108,7 @@ export class TableHeaderCellNode extends TableCellNode {
 /**
  * A {@link TableCellNode} that lives in the body of a {@link TableNode}.
  *
+ * @sealed
  * @public
  */
 export class TableBodyCellNode extends TableCellNode {
@@ -105,7 +117,7 @@ export class TableBodyCellNode extends TableCellNode {
 	 */
 	public static readonly Empty = new TableBodyCellNode([]);
 
-	public constructor(children: DocumentationNode[]) {
+	public constructor(children: TableCellContent[]) {
 		super(children, TableCellKind.Body);
 	}
 
