@@ -4659,6 +4659,11 @@ export class ContainerRuntime
 		batch: PendingMessageResubmitData[],
 		{ batchId, staged, squash }: PendingBatchResubmitMetadata,
 	): void {
+		assert(
+			this._summarizer === undefined,
+			0x8f2 /* Summarizer never reconnects so should never resubmit */,
+		);
+
 		const resubmitInfo = {
 			// Only include Batch ID if "Offline Load" feature is enabled
 			// It's only needed to identify batches across container forks arising from misuse of offline load.
@@ -4668,15 +4673,41 @@ export class ContainerRuntime
 
 		this.batchRunner.run(() => {
 			for (const message of batch) {
-				this.reSubmit(message, squash);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+				staged ? this.reSubmitStaged(message, squash) : this.reSubmit(message);
 			}
 		}, resubmitInfo);
 
 		this.flush(resubmitInfo);
 	}
 
-	private reSubmit(message: PendingMessageResubmitData, squash: boolean): void {
-		this.reSubmitCore(message.runtimeOp, message.localOpMetadata, message.opMetadata, squash);
+	private reSubmitStaged(
+		{ runtimeOp: message, localOpMetadata }: PendingMessageResubmitData,
+		squash: boolean,
+	): void {
+		assert(
+			canStageMessageOfType(message.type),
+			"Expected message type to be compatible with staging",
+		);
+		switch (message.type) {
+			case ContainerMessageType.FluidDataStoreOp: {
+				this.channelCollection.reSubmit(
+					message.type,
+					message.contents,
+					localOpMetadata,
+					squash,
+				);
+				break;
+			}
+			case ContainerMessageType.GC: {
+				// NOTE: Squash doesn't apply to GC ops, send them all.
+				this.submit(message);
+				break;
+			}
+			default: {
+				unreachableCase(message.type);
+			}
+		}
 	}
 
 	/**
@@ -4686,20 +4717,11 @@ export class ContainerRuntime
 	 * @param message - The original LocalContainerRuntimeMessage.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	private reSubmitCore(
-		message: LocalContainerRuntimeMessage,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-		squash: boolean,
-	): void {
-		assert(
-			this._summarizer === undefined,
-			0x8f2 /* Summarizer never reconnects so should never resubmit */,
-		);
-		assert(
-			!squash || canStageMessageOfType(message.type),
-			"Only expecting staged messages to be squashed on resubmit",
-		);
+	private reSubmit({
+		runtimeOp: message,
+		localOpMetadata,
+		opMetadata,
+	}: PendingMessageResubmitData): void {
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
@@ -4710,7 +4732,7 @@ export class ContainerRuntime
 					message.type,
 					message.contents,
 					localOpMetadata,
-					squash,
+					/* squash: */ false,
 				);
 				break;
 			}
