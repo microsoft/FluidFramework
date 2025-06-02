@@ -434,8 +434,9 @@ export interface OptionalFieldEditBuilder<TContent> {
 }
 
 /**
+ * Edit builder for the sequence field kind.
  */
-export interface SequenceFieldEditBuilder<TContent> {
+export interface SequenceFieldEditBuilder<TContent, TRemoved = void> {
 	/**
 	 * Issues a change which inserts the `newContent` at the given `index`.
 	 * @param index - the index at which to insert the `newContent`.
@@ -448,11 +449,11 @@ export interface SequenceFieldEditBuilder<TContent> {
 	 * @param index - The index of the first removed element.
 	 * @param count - The number of elements to remove.
 	 */
-	remove(index: number, count: number): void;
+	remove(index: number, count: number): TRemoved;
 }
 
 /**
- * @returns The number of path elements that both paths share, starting at index 0.
+ * Gets the number of path elements that both paths share, starting at index 0.
  */
 function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[]): number {
 	const minDepth = Math.min(pathA.length, pathB.length);

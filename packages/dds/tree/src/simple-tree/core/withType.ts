@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
 import type { TreeNode } from "./treeNode.js";
+import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
 
 /**
  * The type of a {@link TreeNode}.

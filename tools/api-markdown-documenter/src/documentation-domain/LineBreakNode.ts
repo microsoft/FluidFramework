@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { MultiLineDocumentationNode } from "./DocumentationNode.js";
+import type { DocumentationNode } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
@@ -16,9 +16,10 @@ import { DocumentationNodeType } from "./DocumentationNodeType.js";
  * To build up a grouping of text including line breaks, use this type alongside text nodes within a
  * container type like {@link ParagraphNode} or {@link SpanNode}.
  *
+ * @sealed
  * @public
  */
-export class LineBreakNode implements MultiLineDocumentationNode {
+export class LineBreakNode implements DocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */

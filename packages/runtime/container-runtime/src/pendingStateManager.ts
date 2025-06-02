@@ -15,6 +15,7 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
+import { isContainerMessageDirtyable } from "./containerRuntime.js";
 import {
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -280,6 +281,22 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public get pendingMessagesCount(): number {
 		return this.pendingMessages.length + this.initialMessages.length;
+	}
+
+	/**
+	 * Checks the pending messages to see if any of them represent user changes (aka "dirtyable" messages)
+	 */
+	public hasPendingUserChanges(): boolean {
+		for (let i = 0; i < this.pendingMessages.length; i++) {
+			const element = this.pendingMessages.get(i);
+			// Missing runtimeOp implies not dirtyable: This only happens for empty batches
+			if (element?.runtimeOp !== undefined && isContainerMessageDirtyable(element.runtimeOp)) {
+				return true;
+			}
+		}
+		// Consider any initial messages to be user changes
+		// (it's an approximation since we would have to parse them to know for sure)
+		return this.initialMessages.length > 0;
 	}
 
 	/**
@@ -659,7 +676,10 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
-		assert(!pendingMessage.batchInfo.staged, 0xb85 /* Can't get an ack from a staged batch */);
+		assert(
+			!pendingMessage.batchInfo.staged,
+			0xb85 /* Pending state mismatch, ack came in but next pending message is staged */,
+		);
 
 		// If this batch became empty on resubmit, batch.messages will be empty (but keyMessage is always set)
 		// and the next pending message should be an empty batch marker.

@@ -93,12 +93,12 @@ import {
 	type DeltaDetachedNodeRename,
 	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
+	type MapTree,
 	SchemaVersion,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	type NodeIdentifierManager,
-	buildForest,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
@@ -111,9 +111,12 @@ import {
 	mapTreeFieldFromCursor,
 	defaultChunkPolicy,
 	cursorForJsonableTreeField,
-	initializeForest,
 	chunkFieldSingle,
 	makeSchemaCodec,
+	mapTreeWithField,
+	type MinimalMapTreeNodeView,
+	jsonableTreeFromCursor,
+	cursorForMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
@@ -146,6 +149,9 @@ import {
 	type TreeView,
 	type TreeBranchEvents,
 	type ITree,
+	type UnsafeUnknownSchema,
+	type InsertableField,
+	mapTreeFromNodeData,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -176,6 +182,8 @@ import type {
 	ISharedObjectKind,
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
 
 // Testing utilities
 
@@ -670,14 +678,15 @@ export function validateFuzzTreeConsistency(
 	);
 }
 
-function contentToJsonableTree(
-	content: TreeSimpleContent | TreeStoredContent,
-): JsonableTree[] {
+function contentToJsonableTree(content: TreeStoredContent): JsonableTree[] {
 	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
 }
 
 export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleContent): void {
-	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
+	const contentReference = jsonableTreeFromFieldCursor(
+		fieldCursorFromInsertable<UnsafeUnknownSchema>(content.schema, content.initialTree),
+	);
+	assert.deepEqual(toJsonableTree(tree), contentReference);
 	expectSchemaEqual(tree.storedSchema, toStoredSchema(content.schema));
 }
 export function validateTreeStoredContent(
@@ -793,6 +802,7 @@ export function checkoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
+		additionalAsserts?: boolean;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -805,9 +815,18 @@ function createCheckoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
+		additionalAsserts?: boolean;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
-	const forest = forestWithContent(content);
+	const fieldCursor = normalizeNewFieldContent(content.initialTree);
+	const roots: MapTree = mapTreeWithField(mapTreeFieldFromCursor(fieldCursor));
+	const schema = new TreeStoredSchemaRepository(content.schema);
+	const forest = buildTestForest({
+		additionalAsserts: args?.additionalAsserts ?? true,
+		schema,
+		roots,
+	});
+
 	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
 		testIdCompressor,
@@ -816,7 +835,7 @@ function createCheckoutWithContent(
 		{
 			...args,
 			forest,
-			schema: new TreeStoredSchemaRepository(content.schema),
+			schema,
 			logger,
 		},
 	);
@@ -833,7 +852,13 @@ export function flexTreeViewWithContent(
 	},
 ): CheckoutFlexTreeView {
 	const view = checkoutWithContent(
-		{ initialTree: content.initialTree, schema: toStoredSchema(content.schema) },
+		{
+			initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
+				content.schema,
+				content.initialTree,
+			),
+			schema: toStoredSchema(content.schema),
+		},
 		args,
 	);
 	return new CheckoutFlexTreeView(
@@ -843,10 +868,32 @@ export function flexTreeViewWithContent(
 	);
 }
 
+/**
+ * Builds a reference forest.
+ */
+export function buildTestForest(options: {
+	schema?: TreeStoredSchemaRepository;
+	additionalAsserts: boolean;
+	roots?: MapTree;
+}): IEditableForest {
+	return new ObjectForest(
+		new Breakable("buildTestForest"),
+		options.schema,
+		undefined,
+		options.additionalAsserts,
+		options.roots,
+	);
+}
+
 export function forestWithContent(content: TreeStoredContent): IEditableForest {
-	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
-	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
+	const roots: MapTree = mapTreeWithField(mapTreeFieldFromCursor(fieldCursor));
+	const forest = buildTestForest({
+		additionalAsserts: true,
+		schema: new TreeStoredSchemaRepository(content.schema),
+		roots,
+	});
+
 	return forest;
 }
 
@@ -906,6 +953,23 @@ export function expectJsonTree(
 	if (expectRemovedRootsAreSynchronized) {
 		checkRemovedRootsAreSynchronized(trees);
 	}
+}
+
+export function expectEqualMapTreeViews(
+	actual: MinimalMapTreeNodeView,
+	expected: MinimalMapTreeNodeView,
+): void {
+	expectEqualCursors(cursorForMapTreeNode(actual), cursorForMapTreeNode(expected));
+}
+
+export function expectEqualCursors(
+	actual: ITreeCursorSynchronous | undefined,
+	expected: ITreeCursorSynchronous,
+): void {
+	assert(actual !== undefined);
+	const actualJson = jsonableTreeFromCursor(actual);
+	const expectedJson = jsonableTreeFromCursor(expected);
+	assert.deepEqual(actualJson, expectedJson);
 }
 
 export function expectNoRemovedRoots(tree: ITreeCheckout): void {
@@ -1315,7 +1379,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 
 export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
 	return (error: Error) => {
-		assert(error instanceof UsageError);
+		assert(error instanceof UsageError, `Expected UsageError, got ${error}`);
 		if (
 			typeof expectedErrorMsg === "string"
 				? error.message !== expectedErrorMsg
@@ -1396,4 +1460,25 @@ export function chunkToMapTreeField(chunk: TreeChunk): ExclusiveMapTree[] {
 
 export function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
 	return mapCursorField(trees.cursor(), (c) => c.fork());
+}
+
+/**
+ * Construct field cursor from content that is compatible with the field defined by the provided `schema`.
+ * @param schema - The schema for what to construct.
+ * @param data - The data used to construct the field content.
+ * @remarks
+ * When providing a {@link TreeNodeSchemaClass},
+ * this is the same as invoking its constructor except that an unhydrated node can also be provided and the returned value is a cursor.
+ * When `undefined` is provided (for an optional field), `undefined` is returned.
+ */
+export function fieldCursorFromInsertable<
+	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+>(
+	schema: UnsafeUnknownSchema extends TSchema
+		? ImplicitFieldSchema
+		: TSchema & ImplicitFieldSchema,
+	data: InsertableField<TSchema>,
+): ITreeCursorSynchronous {
+	const mapTree = mapTreeFromNodeData(data as InsertableField<UnsafeUnknownSchema>, schema);
+	return cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]);
 }

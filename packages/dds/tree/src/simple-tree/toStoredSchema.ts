@@ -21,16 +21,17 @@ import {
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate } from "../util/index.js";
+
 import { NodeKind } from "./core/index.js";
-import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
-import { walkFieldSchema } from "./walkFieldSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
+import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,
 	SimpleNodeSchemaBase,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
+import { walkFieldSchema } from "./walkFieldSchema.js";
 
 const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
 
@@ -92,7 +93,10 @@ export function convertField(schema: SimpleFieldSchema): TreeFieldStoredSchema {
 	return { kind, types, metadata: schema.persistedMetadata };
 }
 
-const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
+const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
+	FieldKind,
+	FlexFieldKind
+>([
 	[FieldKind.Optional, FieldKinds.optional],
 	[FieldKind.Required, FieldKinds.required],
 	[FieldKind.Identifier, FieldKinds.identifier],

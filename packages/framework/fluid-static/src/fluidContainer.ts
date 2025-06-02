@@ -10,10 +10,23 @@ import {
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { ContainerExtensionStore } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	FluidObject,
+	IEvent,
+	IEventProvider,
+	IFluidHandle,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
-import type { ContainerAttachProps, ContainerSchema, IRootDataObject } from "./types.js";
+import type {
+	ContainerAttachProps,
+	ContainerSchema,
+	IRootDataObject,
+	IStaticEntryPoint,
+} from "./types.js";
 
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.
@@ -235,13 +248,23 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
  *
  * @internal
  */
-export interface IFluidContainerInternal {
+export interface IFluidContainerInternal extends ContainerExtensionStore {
 	/**
 	 * The underlying {@link @fluidframework/container-definitions#IContainer}.
 	 *
 	 * @remarks Used to power debug tooling and experimental features.
 	 */
 	readonly container: IContainer;
+
+	/**
+	 * Upload a blob of data.
+	 * Although it is marked as internal, there is external usage of this function for experimental purposes.
+	 * Please contact yunho-microsoft or vladsud if you need to change it.
+	 * @param blob - blob to be uploaded.
+	 *
+	 * @remarks This method is used to expose uploadBlob to the IFluidContainer level. UploadBlob will upload data to server side (as of now, ODSP only). There is no downloadBlob provided as it is not needed(blob lifetime managed by server).
+	 */
+	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
@@ -249,13 +272,21 @@ export interface IFluidContainerInternal {
  *
  * @internal
  */
-export function createFluidContainer<
+export async function createFluidContainer<
 	TContainerSchema extends ContainerSchema = ContainerSchema,
 >(props: {
 	container: IContainer;
-	rootDataObject: IRootDataObject;
-}): IFluidContainer<TContainerSchema> {
-	return new FluidContainer<TContainerSchema>(props.container, props.rootDataObject);
+}): Promise<IFluidContainer<TContainerSchema>> {
+	const entryPoint: FluidObject<IStaticEntryPoint> = await props.container.getEntryPoint();
+	assert(
+		entryPoint.IStaticEntryPoint !== undefined,
+		0xb9e /* entryPoint must be of type IStaticEntryPoint */,
+	);
+	return new FluidContainer<TContainerSchema>(
+		props.container,
+		entryPoint.IStaticEntryPoint.rootDataObject,
+		entryPoint.IStaticEntryPoint.extensionStore,
+	);
 }
 
 /**
@@ -291,12 +322,15 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.emit("disposed", error);
 	private readonly savedHandler = (): boolean => this.emit("saved");
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
+	public readonly acquireExtension: ContainerExtensionStore["acquireExtension"];
 
 	public constructor(
 		public readonly container: IContainer,
 		private readonly rootDataObject: IRootDataObject,
+		extensionStore: ContainerExtensionStore,
 	) {
 		super();
+		this.acquireExtension = extensionStore.acquireExtension.bind(extensionStore);
 		container.on("connected", this.connectedHandler);
 		container.on("closed", this.disposedHandler);
 		container.on("disconnected", this.disconnectedHandler);
@@ -362,5 +396,9 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.container.off("disconnected", this.disconnectedHandler);
 		this.container.off("saved", this.savedHandler);
 		this.container.off("dirty", this.dirtyHandler);
+	}
+
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.rootDataObject.uploadBlob(blob);
 	}
 }

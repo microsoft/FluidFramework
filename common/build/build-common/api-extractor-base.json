@@ -27,7 +27,8 @@
 		// These tags have breaking change implications, so they provide useful context during code reviews.
 		"tagsToReport": {
 			"@legacy": true,
-			"@system": true
+			"@system": true,
+			"@input": true
 		}
 	},
 

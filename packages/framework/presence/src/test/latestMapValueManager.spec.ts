@@ -15,8 +15,8 @@ import type {
 	LatestMapRaw,
 	LatestMapItemUpdatedClientData,
 	Presence,
-} from "@fluidframework/presence/alpha";
-import { StateFactory } from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
+import { StateFactory } from "@fluidframework/presence/beta";
 
 const testWorkspaceName = "name:testWorkspaceA";
 

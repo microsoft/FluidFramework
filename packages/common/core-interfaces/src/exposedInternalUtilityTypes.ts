@@ -12,6 +12,7 @@ import type {
 	SerializationErrorPerUndefinedArrayElement,
 } from "./jsonSerializationErrors.js";
 import type { JsonTypeWith, NonNullJsonObjectWith, ReadonlyJsonTypeWith } from "./jsonType.js";
+import type { OpaqueJsonDeserialized, OpaqueJsonSerializable } from "./opaqueJson.js";
 
 /**
  * Unique symbol for recursion meta-typing.
@@ -536,19 +537,40 @@ export namespace InternalUtilityTypes {
 	export type IsExactlyObject<T extends object> = IsSameType<T, object>;
 
 	/**
+	 * Any Record type.
+	 *
+	 * @system
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` for property types is required to avoid "Index signature for type 'string' is missing in type" in some outside `FlattenIntersection` uses.
+	export type AnyRecord = Record<keyof any, any>;
+
+	/**
 	 * Creates a simple object type from an intersection of multiple.
 	 * @privateRemarks
-	 * `T extends Record` within the implementation encourages tsc to process
+	 * `T extends AnyRecord` within the implementation encourages tsc to process
 	 * intersections within unions.
 	 *
 	 * @system
 	 */
-	export type FlattenIntersection<T extends Record<string | number | symbol, unknown>> =
-		T extends Record<string | number | symbol, unknown>
-			? {
-					[K in keyof T]: T[K];
-				}
-			: T;
+	export type FlattenIntersection<T extends AnyRecord> = T extends AnyRecord
+		? {
+				[K in keyof T]: T[K];
+			}
+		: T;
+
+	/**
+	 * Convenience constraint for any Opaque Json type.
+	 *
+	 * @remarks
+	 * Use in extends check: `T extends AnyOpaqueJsonType`
+	 *
+	 * @system
+	 */
+	export type AnyOpaqueJsonType =
+		/* eslint-disable @typescript-eslint/no-explicit-any -- must use `any` for invariant constraint override */
+		| OpaqueJsonSerializable<unknown, any, unknown>
+		| OpaqueJsonDeserialized<unknown, any, unknown>;
+	/* eslint-enable @typescript-eslint/no-explicit-any */
 
 	/**
 	 * Extracts Function portion from an intersection (&) type returning
@@ -789,8 +811,14 @@ export namespace InternalUtilityTypes {
 								T,
 								{
 									AllowExactly: Controls["AllowExactly"];
-									// Add in primitives that may be branded to ignore intersection classes
-									AllowExtensionOf: Controls["AllowExtensionOf"] | boolean | number | string;
+									AllowExtensionOf:
+										| Controls["AllowExtensionOf"]
+										// Add in primitives that may be branded to ignore intersection classes
+										| boolean
+										| number
+										| string
+										// Add in Opaque Json types
+										| AnyOpaqueJsonType;
 									DegenerateSubstitute: Controls["DegenerateSubstitute"];
 								},
 								"found non-publics",
@@ -817,6 +845,56 @@ export namespace InternalUtilityTypes {
 							>
 			: never /* FilterControlsWithSubstitution assert else; should never be reached */
 		: never /* unreachable else for infer */;
+
+	/**
+	 * Handle Opaque Json types for {@link JsonSerializable}.
+	 *
+	 * @remarks
+	 * {@link OpaqueJsonSerializable} and {@link OpaqueJsonDeserialized} instances
+	 * are limited to `Controls` given context supports. Further, the data type
+	 * is filtered through {@link JsonSerializable} with those `Controls`.
+	 *
+	 * @privateRemarks
+	 * Additional intersections beyond {@link OpaqueJsonSerializable},
+	 * {@link OpaqueJsonDeserialized}, or intersected matching opaque pair are
+	 * not correctly filtered as need is not expected.
+	 *
+	 * @system
+	 */
+	export type JsonSerializableOpaqueAllowances<
+		T extends AnyOpaqueJsonType,
+		Controls extends FilterControlsWithSubstitution,
+	> = /* eslint-disable @typescript-eslint/no-explicit-any -- must use `any` for invariant constraint override */
+	/* infer underlying data type */ T extends
+		| OpaqueJsonSerializable<infer TData, any, unknown>
+		| OpaqueJsonDeserialized<infer TData, any, unknown>
+		? T extends OpaqueJsonSerializable<TData, any, unknown> &
+				OpaqueJsonDeserialized<TData, any, unknown>
+			? OpaqueJsonSerializable<
+					JsonSerializableImpl<TData, Controls>,
+					Controls["AllowExactly"],
+					Controls["AllowExtensionOf"]
+				> &
+					OpaqueJsonDeserialized<
+						JsonSerializableImpl<TData, Controls>,
+						Controls["AllowExactly"],
+						Controls["AllowExtensionOf"]
+					>
+			: T extends OpaqueJsonSerializable<TData, any, unknown>
+				? OpaqueJsonSerializable<
+						JsonSerializableImpl<TData, Controls>,
+						Controls["AllowExactly"],
+						Controls["AllowExtensionOf"]
+					>
+				: T extends OpaqueJsonDeserialized<TData, any, unknown>
+					? OpaqueJsonDeserialized<
+							JsonSerializableImpl<TData, Controls>,
+							Controls["AllowExactly"],
+							Controls["AllowExtensionOf"]
+						>
+					: "internal error: failed to determine Opaque Json type"
+		: never;
+	/* eslint-enable @typescript-eslint/no-explicit-any */
 
 	/**
 	 * Essentially a check for a template literal that has $\{string\} or
@@ -926,45 +1004,50 @@ export namespace InternalUtilityTypes {
 											>
 										: /* test for enum like types */ IfEnumLike<T> extends never
 											? /* enum or similar simple type (return as-is) => */ T
-											: /* property bag => */ FlattenIntersection<
-													{
-														/* required properties are recursed and may not have undefined values. */
-														[K in keyof T as RequiredNonSymbolKeysOf<
-															T,
-															K
-														>]-?: IfPossiblyUndefinedProperty<
-															K,
-															T[K],
-															{
-																IfPossiblyUndefined: {
-																	["error required property may not allow `undefined` value"]: never;
-																};
-																IfUnknownNonIndexed: {
-																	["error required property may not allow `unknown` value"]: never;
-																};
-																Otherwise: JsonSerializableFilter<
-																	T[K],
-																	Controls,
-																	[TNextAncestor, ...TAncestorTypes]
-																>;
-															}
-														>;
-													} & {
-														/* optional properties are recursed and, when exactOptionalPropertyTypes is
+											: /* test for Opaque Json types */ T extends AnyOpaqueJsonType
+												? /* Opaque Json type => */ JsonSerializableOpaqueAllowances<
+														T,
+														Controls
+													>
+												: /* property bag => */ FlattenIntersection<
+														{
+															/* required properties are recursed and may not have undefined values. */
+															[K in keyof T as RequiredNonSymbolKeysOf<
+																T,
+																K
+															>]-?: IfPossiblyUndefinedProperty<
+																K,
+																T[K],
+																{
+																	IfPossiblyUndefined: {
+																		["error required property may not allow `undefined` value"]: never;
+																	};
+																	IfUnknownNonIndexed: {
+																		["error required property may not allow `unknown` value"]: never;
+																	};
+																	Otherwise: JsonSerializableFilter<
+																		T[K],
+																		Controls,
+																		[TNextAncestor, ...TAncestorTypes]
+																	>;
+																}
+															>;
+														} & {
+															/* optional properties are recursed and, when exactOptionalPropertyTypes is
 														   false, are allowed to preserve undefined value type. */
-														[K in keyof T as OptionalNonSymbolKeysOf<
-															T,
-															K
-														>]?: JsonSerializableFilter<
-															T[K],
-															Controls,
-															[TNextAncestor, ...TAncestorTypes]
-														>;
-													} & {
-														/* symbol properties are rejected */
-														[K in keyof T & symbol]: never;
-													}
-												>
+															[K in keyof T as OptionalNonSymbolKeysOf<
+																T,
+																K
+															>]?: JsonSerializableFilter<
+																T[K],
+																Controls,
+																[TNextAncestor, ...TAncestorTypes]
+															>;
+														} & {
+															/* symbol properties are rejected */
+															[K in keyof T & symbol]: never;
+														}
+													>
 								: /* not an object => */ never
 							: /* function => */ never;
 
@@ -1103,6 +1186,35 @@ export namespace InternalUtilityTypes {
 		: JsonDeserializedFilter<T, Controls, RecurseLimit, TAncestorTypes | T>;
 
 	/**
+	 * Handle Opaque Json types for {@link JsonDeserialized}.
+	 *
+	 * @remarks
+	 * {@link OpaqueJsonSerializable} instances are converted to {@link OpaqueJsonDeserialized}.
+	 * The `AllowExactly` and `AllowExtensionOf` properties are set to match the given `Controls`.
+	 * The data type is kept exactly as-is to avoid processing in generic contexts that can't
+	 * produce a meaningful result. The data type should always be filtered through
+	 * {@link JsonDeserialized} when {@link OpaqueJsonDeserialized} is cracked open. So, really
+	 * the filtering is just deferred.
+	 *
+	 * @privateRemarks
+	 * Additional intersections beyond {@link OpaqueJsonSerializable},
+	 * {@link OpaqueJsonDeserialized}, or intersected matching opaque pair are
+	 * not correctly filtered as need is not expected.
+	 *
+	 * @system
+	 */
+	export type JsonDeserializedOpaqueConversion<
+		T extends AnyOpaqueJsonType,
+		Controls extends FilterControls,
+	> = /* eslint-disable @typescript-eslint/no-explicit-any -- must use `any` for invariant constraint override */
+	T extends
+		| OpaqueJsonSerializable<infer TData, any, unknown>
+		| OpaqueJsonDeserialized<infer TData, any, unknown>
+		? OpaqueJsonDeserialized<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]>
+		: "internal error: failed to determine Opaque Json type";
+	/* eslint-enable @typescript-eslint/no-explicit-any */
+
+	/**
 	 * Core implementation of {@link JsonDeserialized}.
 	 *
 	 * @system
@@ -1150,36 +1262,38 @@ export namespace InternalUtilityTypes {
 									? /* `object` => */ Controls["DegenerateNonNullObjectSubstitute"]
 									: /* test for enum like types */ IfEnumLike<T> extends never
 										? /* enum or similar simple type (return as-is) => */ T
-										: /* property bag => */ FlattenIntersection<
-												/* properties with symbol keys or wholly unsupported values are removed */
-												{
-													/* properties with defined values are recursed */
-													[K in keyof T as NonSymbolWithDeserializablePropertyOf<
-														T,
-														Controls["AllowExactly"],
-														Controls["AllowExtensionOf"],
-														K
-													>]: JsonDeserializedRecursion<
-														T[K],
-														Controls,
-														RecurseLimit,
-														TAncestorTypes
-													>;
-												} & {
-													/* properties that may have undefined values are optional */
-													[K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<
-														T,
-														Controls["AllowExactly"],
-														Controls["AllowExtensionOf"],
-														K
-													>]?: JsonDeserializedRecursion<
-														T[K],
-														Controls,
-														RecurseLimit,
-														TAncestorTypes
-													>;
-												}
-											>
+										: /* test for matching Opaque Json types */ T extends AnyOpaqueJsonType
+											? /* Opaque Json type => */ JsonDeserializedOpaqueConversion<T, Controls>
+											: /* property bag => */ FlattenIntersection<
+													/* properties with symbol keys or wholly unsupported values are removed */
+													{
+														/* properties with defined values are recursed */
+														[K in keyof T as NonSymbolWithDeserializablePropertyOf<
+															T,
+															Controls["AllowExactly"],
+															Controls["AllowExtensionOf"],
+															K
+														>]: JsonDeserializedRecursion<
+															T[K],
+															Controls,
+															RecurseLimit,
+															TAncestorTypes
+														>;
+													} & {
+														/* properties that may have undefined values are optional */
+														[K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<
+															T,
+															Controls["AllowExactly"],
+															Controls["AllowExtensionOf"],
+															K
+														>]?: JsonDeserializedRecursion<
+															T[K],
+															Controls,
+															RecurseLimit,
+															TAncestorTypes
+														>;
+													}
+												>
 						: /* not an object => */ never;
 
 	// #endregion
