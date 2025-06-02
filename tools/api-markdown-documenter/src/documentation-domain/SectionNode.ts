@@ -3,9 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode.js";
+import type { BlockContent } from "./BlockContent.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { HeadingNode } from "./HeadingNode.js";
+
+/**
+ * Union of all kinds of {@link DocumentationNode} that can occur as children of {@link SectionNode}
+ *
+ * @remarks To register custom nodes, add them to {@link BlockContentMap}.
+ *
+ * @public
+ */
+export type SectionContent = BlockContent | SectionNode;
 
 /**
  * Represents a hierarchically nested section.
@@ -30,9 +40,10 @@ import type { HeadingNode } from "./HeadingNode.js";
  * </section>
  * ```
  *
+ * @sealed
  * @public
  */
-export class SectionNode extends DocumentationParentNodeBase {
+export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -58,35 +69,9 @@ export class SectionNode extends DocumentationParentNodeBase {
 		return false;
 	}
 
-	public constructor(children: DocumentationNode[], heading?: HeadingNode) {
+	public constructor(children: SectionContent[], heading?: HeadingNode) {
 		super(children);
 
 		this.heading = heading;
-	}
-
-	/**
-	 * Merges a list of {@link SectionNode}s into a single section.
-	 *
-	 * @remarks This is an option if you wish to group a series of sections without putting them under some parent section
-	 * (which would affect the hierarchy).
-	 * @param sections - The sections to merge.
-	 */
-	public static combine(...sections: SectionNode[]): SectionNode {
-		if (sections.length === 0) {
-			return SectionNode.Empty;
-		}
-
-		if (sections.length === 1) {
-			return sections[0];
-		}
-
-		const childNodes: DocumentationNode[] = [];
-		for (const section of sections) {
-			if (section.heading !== undefined) {
-				childNodes.push(section.heading);
-			}
-			childNodes.push(...section.children);
-		}
-		return new SectionNode(childNodes, undefined);
 	}
 }

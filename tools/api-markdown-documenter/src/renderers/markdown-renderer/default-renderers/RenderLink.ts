@@ -5,7 +5,7 @@
 
 import type { LinkNode } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
-import { renderNodes } from "../Render.js";
+import { renderNode } from "../Render.js";
 import type { RenderContext } from "../RenderContext.js";
 
 /**
@@ -21,6 +21,6 @@ export function renderLink(
 	context: RenderContext,
 ): void {
 	writer.write("[");
-	renderNodes(node.children, writer, context);
+	renderNode(node.text, writer, context);
 	writer.write(`](${node.target})`);
 }

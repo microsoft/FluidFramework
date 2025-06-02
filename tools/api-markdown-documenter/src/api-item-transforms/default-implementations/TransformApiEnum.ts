@@ -10,7 +10,7 @@ import {
 	ApiItemKind,
 } from "@microsoft/api-extractor-model";
 
-import type { DocumentationNode, SectionNode } from "../../documentation-domain/index.js";
+import type { SectionContent, SectionNode } from "../../documentation-domain/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
@@ -65,7 +65,7 @@ export function transformApiEnum(
 
 		// Render individual flag details
 		if (flags.length > 0) {
-			const detailsSubSections: DocumentationNode[] = [];
+			const detailsSubSections: SectionContent[] = [];
 			for (const flag of flags) {
 				detailsSubSections.push(...generateChildContent(flag));
 			}
