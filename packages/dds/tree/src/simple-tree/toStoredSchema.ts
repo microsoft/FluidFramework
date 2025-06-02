@@ -89,7 +89,7 @@ export function convertField(schema: SimpleFieldSchema): TreeFieldStoredSchema {
 	const kind: FieldKindIdentifier =
 		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
 	const types: TreeTypeSet = schema.allowedTypesIdentifiers as TreeTypeSet;
-	return { kind, types, metadata: undefined };
+	return { kind, types, metadata: schema.persistedMetadata };
 }
 
 const convertFieldKind = new Map<FieldKind, FlexFieldKind>([

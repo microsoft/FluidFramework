@@ -188,6 +188,10 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 		4,
 		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
 	],
+	[
+		5,
+		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
+	],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
@@ -568,6 +572,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v3: 3,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v5: 5,
 } as const;
 
 /**
@@ -737,7 +746,12 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 		default:
 			fail(0xaca /* invalid field kind */);
 	}
-	return { kind, allowedTypesIdentifiers: schema.types, metadata: {} };
+	return {
+		kind,
+		allowedTypesIdentifiers: schema.types,
+		metadata: {},
+		persistedMetadata: schema.metadata,
+	};
 }
 
 function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
@@ -747,7 +761,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Array,
 			allowedTypesIdentifiers: arrayTypes,
 			metadata: {},
-			persistedMetadata: undefined,
+			persistedMetadata: schema.metadata,
 		};
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
@@ -755,7 +769,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
-		return { kind: NodeKind.Object, fields, metadata: {}, persistedMetadata: undefined };
+		return { kind: NodeKind.Object, fields, metadata: {}, persistedMetadata: schema.metadata };
 	}
 	if (schema instanceof MapNodeStoredSchema) {
 		assert(
@@ -766,7 +780,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Map,
 			allowedTypesIdentifiers: schema.mapFields.types,
 			metadata: {},
-			persistedMetadata: undefined,
+			persistedMetadata: schema.metadata,
 		};
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
@@ -774,7 +788,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Leaf,
 			leafKind: schema.leafValue,
 			metadata: {},
-			persistedMetadata: undefined,
+			persistedMetadata: schema.metadata,
 		};
 	}
 	fail(0xacb /* invalid schema kind */);

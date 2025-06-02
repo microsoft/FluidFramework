@@ -187,6 +187,11 @@ export interface SimpleFieldSchema {
 	 * {@inheritDoc FieldSchemaMetadata}
 	 */
 	readonly metadata: FieldSchemaMetadata;
+
+	/**
+	 * Persisted metadata for this field schema.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**

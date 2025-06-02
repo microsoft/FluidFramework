@@ -65,6 +65,7 @@ export function toSimpleTreeSchema(
 					allowedTypesIdentifiers: normalizedSchema.allowedTypesIdentifiers,
 					kind: normalizedSchema.kind,
 					metadata: normalizedSchema.metadata,
+					persistedMetadata: normalizedSchema.persistedMetadata,
 				} satisfies SimpleFieldSchema)
 			: normalizedSchema,
 		definitions,
@@ -119,6 +120,7 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 			kind: field.kind,
 			allowedTypesIdentifiers: field.allowedTypesIdentifiers,
 			metadata: field.metadata,
+			persistedMetadata: field.persistedMetadata,
 			storedKey: field.storedKey,
 		});
 	}

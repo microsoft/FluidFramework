@@ -551,7 +551,7 @@ export class FieldSchemaAlpha<
 	 * Persisted metadata for this field schema.
 	 */
 	public get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
-		return this.propsAlpha?.persistedMetadata ?? {};
+		return this.propsAlpha?.persistedMetadata;
 	}
 
 	static {
