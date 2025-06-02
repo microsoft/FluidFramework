@@ -38,7 +38,6 @@ import {
 	type DocumentationParentNode,
 	FencedCodeBlockNode,
 	HeadingNode,
-	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
 	type PhrasingContent,
@@ -566,7 +565,6 @@ export function createDeprecationNoticeSection(
 				"WARNING: This API is deprecated and will be removed in a future release.",
 				{ bold: true },
 			),
-			LineBreakNode.Singleton,
 		]),
 		...transformTsdoc(deprecatedBlock, apiItem, config),
 	]);
