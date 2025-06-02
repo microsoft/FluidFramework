@@ -8,6 +8,7 @@ import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/int
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
 
+import { serializableToOpaqueJson } from "../internalUtils.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
@@ -102,7 +103,7 @@ export function generateBasicClientJoin(
 						[clientConnectionId]: {
 							"rev": connectionOrder,
 							"timestamp": fixedTime,
-							"value": attendeeId as AttendeeId,
+							"value": serializableToOpaqueJson(attendeeId as AttendeeId),
 						},
 					},
 				},
