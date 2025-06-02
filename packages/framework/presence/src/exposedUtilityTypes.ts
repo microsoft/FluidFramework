@@ -13,7 +13,7 @@ import type {
  * Collection of utility types that are not intended to be used/imported
  * directly outside of this package.
  *
- * @beta
+ * @internal
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace

@@ -302,8 +302,7 @@ export function createSystemWorkspace(
 	return {
 		workspace,
 		statesEntry: {
-			// FIXME: Cast shouldn't be needed
-			internal: workspace as PresenceStatesInternal,
+			internal: workspace,
 			public: undefined as unknown as AnyWorkspace<StatesWorkspaceSchema>,
 		},
 	};

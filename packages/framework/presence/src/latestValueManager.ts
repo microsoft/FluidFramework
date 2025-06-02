@@ -47,7 +47,7 @@ export interface LatestRawEvents<T> {
 	 * @eventProperty
 	 */
 	localUpdated: (update: {
-		value: DeepReadonly<JsonSerializable<T>>;
+		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
 	}) => void;
 }
 
@@ -83,7 +83,7 @@ export interface LatestRaw<T> {
 	 * setting, if needed. No comparison is done to detect changes; all sets are transmitted.
 	 */
 	get local(): DeepReadonly<JsonDeserialized<T>>;
-	set local(value: JsonSerializable<T>);
+	set local(value: JsonDeserialized<T>);
 
 	/**
 	 * Iterable access to remote clients' values.
@@ -131,7 +131,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		});
 
 		this.events.emit("localUpdated", {
-			value: asDeeplyReadonly(value as JsonSerializable<T>),
+			value: asDeeplyReadonly(value),
 		});
 	}
 

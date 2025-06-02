@@ -128,20 +128,6 @@ export namespace InternalTypes {
     }
 }
 
-// @beta @system
-export namespace InternalUtilityTypes {
-    // @system
-    export type IfNotificationListener<Event, IfListener, Else> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, IfListener, Else> : Else;
-    // @system
-    export type JsonDeserializedParameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
-    // @system
-    export type JsonSerializableParameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
-    // @system
-    export type NotificationListeners<E> = {
-        [P in keyof E as IfNotificationListener<E[P], P, never>]: E[P];
-    };
-}
-
 // @beta
 export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
@@ -235,7 +221,7 @@ export interface LatestRaw<T> {
     getRemotes(): IterableIterator<LatestClientData<T>>;
     getStateAttendees(): Attendee[];
     get local(): DeepReadonly_2<JsonDeserialized<T>>;
-    set local(value: JsonSerializable<T>);
+    set local(value: JsonDeserialized<T>);
     readonly presence: Presence;
 }
 
@@ -243,7 +229,7 @@ export interface LatestRaw<T> {
 export interface LatestRawEvents<T> {
     // @eventProperty
     localUpdated: (update: {
-        value: DeepReadonly_2<JsonSerializable<T>>;
+        value: DeepReadonly_2<JsonSerializable<T> & JsonDeserialized<T>>;
     }) => void;
     // @eventProperty
     remoteUpdated: (update: LatestClientData<T>) => void;
