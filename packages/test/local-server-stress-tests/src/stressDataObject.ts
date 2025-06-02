@@ -22,7 +22,11 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IChannel,
+	// eslint-disable-next-line import/no-deprecated
+	IFluidDataStoreRuntimeExperimental,
+} from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 // eslint-disable-next-line import/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
@@ -78,6 +82,9 @@ export class StressDataObject extends DataObject {
 		registryEntries: [
 			["StressDataObject", new LazyPromise(async () => StressDataObject.factory)],
 		],
+		policies: {
+			readonlyInStagingMode: false,
+		},
 	});
 
 	get StressDataObject() {
@@ -175,7 +182,13 @@ export class StressDataObject extends DataObject {
 	public orderSequentially(act: () => void) {
 		this.context.containerRuntime.orderSequentially(act);
 	}
+
+	public get isDirty(): boolean | undefined {
+		// eslint-disable-next-line import/no-deprecated
+		return (this.runtime as IFluidDataStoreRuntimeExperimental).isDirty;
+	}
 }
+
 export type ContainerObjects =
 	| { type: "newBlob"; handle: IFluidHandle; tag: `blob-${number}` }
 	| {
@@ -341,6 +354,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			} as any,
 		},
 		enableRuntimeIdCompressor: "on",
+		createBlobPayloadPending: true,
 	};
 
 	return {
@@ -348,8 +362,6 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			return this;
 		},
 		instantiateRuntime: async (context, existing) => {
-			// This can be removed or scoped to options passed to specific data stores once we support squashing more widely.
-			context.options.allowStagingModeWithoutSquashing = true;
 			const runtime = await loadContainerRuntime({
 				context,
 				existing,

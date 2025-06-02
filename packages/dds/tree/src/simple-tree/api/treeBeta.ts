@@ -7,14 +7,15 @@ import {
 	getKernel,
 	isTreeNode,
 	type NodeKind,
-	type TreeChangeEvents,
 	type TreeNode,
 	type Unhydrated,
 	type WithType,
 } from "../core/index.js";
-import { treeNodeApi } from "./treeNodeApi.js";
-import { createFromCursor } from "./create.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
+
+import { createFromCursor } from "./create.js";
+import type { TreeChangeEvents } from "./treeChangeEvents.js";
+import { treeNodeApi } from "./treeNodeApi.js";
 
 // Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
 // and where most of the actual implementation is for much of it.
@@ -122,7 +123,9 @@ export interface TreeBeta {
 	 *
 	 * - Local state, such as properties added to customized schema classes, will not be cloned. However, they will be
 	 * initialized to their default state just as if the node had been created via its constructor.
+	 *
 	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
+	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(

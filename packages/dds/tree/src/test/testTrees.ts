@@ -23,21 +23,19 @@ import {
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	fieldKinds,
-	jsonableTreeFromCursor,
 } from "../feature-libraries/index.js";
 import type { TreeStoredContent } from "../shared-tree/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	cursorFromInsertable,
 	getStoredSchema,
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
 	toStoredSchema,
+	type UnsafeUnknownSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
-	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -48,6 +46,8 @@ import { brand } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { isLazy, type LazyItem } from "../simple-tree/flexList.js";
+import { schemaStatics } from "../simple-tree/index.js";
+import { fieldCursorFromInsertable } from "./utils.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -82,11 +82,12 @@ function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 }
 
 function convertSimpleTreeTest(data: TestSimpleTree): TestTree {
-	const cursor = cursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root());
 	return test(
 		data.name,
 		toStoredSchema(data.schema),
-		cursor === undefined ? [] : [jsonableTreeFromCursor(cursor)],
+		jsonableTreesFromFieldCursor(
+			fieldCursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root()),
+		),
 	);
 }
 
@@ -213,7 +214,7 @@ const library = {
 	nodeSchema: new Map([
 		[brand(Minimal.identifier), getStoredSchema(Minimal)],
 		[allTheFieldsName, allTheFields],
-		[brand(factory.number.identifier), getStoredSchema(factory.number)],
+		[brand(factory.number.identifier), getStoredSchema(schemaStatics.number)],
 	]),
 } satisfies Partial<TreeStoredSchema>;
 
@@ -279,7 +280,9 @@ export const testTrees: readonly TestTree[] = [
 		treeFactory: (idCompressor?: IIdCompressor) => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
-			return [jsonableTreeFromCursor(cursorFromInsertable(HasIdentifierField, { field: id }))];
+			return jsonableTreesFromFieldCursor(
+				fieldCursorFromInsertable(HasIdentifierField, { field: id }),
+			);
 		},
 		policy: defaultSchemaPolicy,
 	},

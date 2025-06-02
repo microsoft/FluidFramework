@@ -1,5 +1,25 @@
 # @fluid-experimental/presence
 
+## 2.41.0
+
+### Minor Changes
+
+- Presence APIs promoted to beta [cc10c102f1](https://github.com/microsoft/FluidFramework/commit/cc10c102f150ca09d7a8b409852a7a0c14f8c2f1)
+
+  [Presence APIs](https://fluidframework.com/docs/build/presence) are now beta and can be imported via `@fluidframework/presence/beta`.
+
+  Note: `Notifications` are only supported via `/alpha` imports. To access notifications-only workspace support, cast `Presence` to `PresenceWithNotifications`.
+
+- "getPresence(container: IFluidContainer): Presence" now supported ([#24399](https://github.com/microsoft/FluidFramework/pull/24399)) [5c6824a48d](https://github.com/microsoft/FluidFramework/commit/5c6824a48da7dad6cb5911e6b1af02dfaf6382e1)
+
+  You can now use the `getPresence` function to directly acquire `Presence`. In previous releases, you were required to
+  use `ExperimentalPresenceManager` in container schema and calling `getPresenceViaDataObject`, but that is no longer
+  required. Both `ExperimentalPresenceManager` and `getPresenceViaDataObject` are now deprecated.
+
+## 2.40.0
+
+Dependency updates only.
+
 ## 2.33.0
 
 ### Minor Changes

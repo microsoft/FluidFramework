@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-stress-tests",
-	"version": "2.40.0",
+	"version": "2.42.0",
 	"private": true,
 	"description": "Stress tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -72,10 +72,11 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
+		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
@@ -104,8 +105,10 @@
 			"build:test": [
 				"^tsc",
 				"^api-extractor:commonjs",
+				"@fluidframework/id-compressor#build:test",
 				"@fluidframework/sequence#build:test",
-				"@fluidframework/map#build:test"
+				"@fluidframework/map#build:test",
+				"@fluidframework/matrix#build:test"
 			]
 		}
 	},

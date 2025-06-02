@@ -1,5 +1,18 @@
 # @fluid-experimental/tree-react-api
 
+## 2.41.0
+
+### Minor Changes
+
+- New experimental objectIdNumber API ([#21115](https://github.com/microsoft/FluidFramework/pull/21115)) [df2f139be8](https://github.com/microsoft/FluidFramework/commit/df2f139be8e8145d5eea313814cd6d35018cacee)
+
+  A new `objectIdNumber` has been added, which is useful when you need an identifier which corresponds to an object identity.
+  For example: when specifying a React "key" that corresponds to a `TreeNode`.
+
+## 2.40.0
+
+Dependency updates only.
+
 ## 2.33.0
 
 Dependency updates only.

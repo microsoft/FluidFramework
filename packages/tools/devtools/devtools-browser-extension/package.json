@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.40.0",
+	"version": "2.42.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -96,7 +96,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",

@@ -14,7 +14,7 @@ import type { Attendee } from "./presence.js";
  * Metadata for the value state.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMetadata {
 	/**
@@ -32,19 +32,30 @@ export interface LatestMetadata {
  * State of a value and its metadata.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestData<T> {
+	/**
+	 * The value of the state.
+	 * @remarks This is a deeply readonly value, meaning it cannot be modified.
+	 */
 	value: DeepReadonly<JsonDeserialized<T>>;
+
+	/**
+	 * Metadata associated with the value.
+	 */
 	metadata: LatestMetadata;
 }
 
 /**
- * State of a specific attendee's value and its metadata.
+ * State of a specific {@link Attendee}'s value and its metadata.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestClientData<T> extends LatestData<T> {
+	/**
+	 * Associated {@link Attendee}.
+	 */
 	attendee: Attendee;
 }

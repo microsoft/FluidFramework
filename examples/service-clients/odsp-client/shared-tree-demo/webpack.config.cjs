@@ -4,6 +4,7 @@
  */
 
 const path = require("path");
+const Dotenv = require("dotenv-webpack");
 const { merge } = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
@@ -60,6 +61,9 @@ module.exports = (env) => {
 				new HtmlWebpackPlugin({
 					title: "Hello Demo",
 					favicon: "",
+				}),
+				new Dotenv({
+					systemvars: true,
 				}),
 			],
 		},

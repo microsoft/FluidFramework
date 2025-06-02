@@ -12,49 +12,136 @@ import {
 	type FieldKey,
 	type ITreeCursor,
 	type MapTree,
+	type NodeData,
 	aboveRootPlaceholder,
 	detachedFieldAsKey,
 	mapCursorField,
 	rootField,
+	rootFieldKey,
 } from "../core/index.js";
 
 import {
 	type CursorAdapter,
 	type CursorWithNode,
+	type Field,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "./treeCursorUtils.js";
+import type { requireAssignableTo } from "../util/index.js";
 
 /**
- * @returns An {@link ITreeCursorSynchronous} in nodes mode for a single {@link MapTree}.
+ * A generic variant of {@link MapTree} that can be used to strongly type trees implementing a MapTree-like API.
+ * @remarks
+ * Due to how TypeScript handles recursive generic types, explicitly named extension interfaces work best for parameterizing this, and a default type parameter can't be provided.
+ * @see {@link MinimalMapTreeNodeView} for a minimal configuration of this interface.
  */
-export function cursorForMapTreeNode(root: MapTree): CursorWithNode<MapTree> {
-	return stackTreeNodeCursor(adapter, root);
+export interface MapTreeNodeViewGeneric<TNode> extends NodeData {
+	/**
+	 * The non-empty fields on this node.
+	 * @remarks
+	 * This is the subset of map needed to view the tree.
+	 * Theoretically "size" could be removed by measuring the length of keys, but it is included for convenience.
+	 */
+	readonly fields: Pick<
+		ReadonlyMap<FieldKey, MapTreeFieldViewGeneric<TNode>>,
+		typeof Symbol.iterator | "get" | "size" | "keys"
+	>;
 }
 
 /**
- * @returns an {@link ITreeCursorSynchronous} in fields mode for a MapTree field.
+ * A field in {@link MapTreeNodeViewGeneric}.
  */
-export function cursorForMapTreeField(
-	root: MapTree[],
+export type MapTreeFieldViewGeneric<TNode> = Pick<
+	readonly TNode[],
+	typeof Symbol.iterator | "length"
+>;
+
+/**
+ * Like {@link MapTree} but with the minimal properties needed for reading.
+ */
+export interface MinimalMapTreeNodeView
+	extends MapTreeNodeViewGeneric<MinimalMapTreeNodeView> {}
+
+{
+	// Check that these interfaces are subsets of MapTree as intended:
+	type _check1 = requireAssignableTo<MapTree, MinimalMapTreeNodeView>;
+	type _check2 = requireAssignableTo<MapTree, MapTreeNodeViewGeneric<MapTree>>;
+}
+
+/**
+ * Returns an {@link ITreeCursorSynchronous} in nodes mode for a single {@link MapTree}.
+ */
+export function cursorForMapTreeNode<T extends MapTreeNodeViewGeneric<T>>(
+	root: T,
+): CursorWithNode<T> {
+	// There doesn't seem to be a clean way to get TypeScript to type check this without casting
+	// without declaring the adapter inside this generic function and needlessly recreating it on every call.
+	const adapterTyped = adapter as CursorAdapter<MapTreeNodeViewGeneric<T>> as CursorAdapter<T>;
+	return stackTreeNodeCursor(adapterTyped, root);
+}
+
+/**
+ * Creates an {@link ExclusiveMapTree} with a single field and no value.
+ * @remarks
+ * This handles ensuring the field is omitted if empty, and defaults to making the node above the root.
+ */
+export function mapTreeWithField(
+	children: ExclusiveMapTree[],
+	key = rootFieldKey,
+	type = aboveRootPlaceholder,
+): ExclusiveMapTree {
+	return {
+		type,
+		fields: mapTreeFieldsWithField(children, key),
+	};
+}
+
+/**
+ * Creates a Map suitable for use as {@link MapTree.fields} with a single field.
+ * @remarks
+ * This handles ensuring the field is omitted if empty.
+ */
+export function mapTreeFieldsWithField<T extends readonly unknown[]>(
+	children: T,
+	key: FieldKey,
+): Map<FieldKey, T> {
+	return new Map(children.length === 0 ? [] : [[key, children]]);
+}
+
+/**
+ * Returns an {@link ITreeCursorSynchronous} in fields mode for a MapTree field.
+ */
+export function cursorForMapTreeField<T extends MapTreeNodeViewGeneric<T>>(
+	root: readonly T[],
 	detachedField: DetachedField = rootField,
-): CursorWithNode<MapTree> {
+): CursorWithNode<T> {
 	const key = detachedFieldAsKey(detachedField);
-	return stackTreeFieldCursor(
-		adapter,
-		{
-			type: aboveRootPlaceholder,
-			fields: new Map([[key, root]]),
-		},
-		detachedField,
-	);
+	const adapterTyped = adapter as unknown as CursorAdapter<T>;
+	const dummyRoot: MapTreeNodeViewGeneric<T> = {
+		type: aboveRootPlaceholder,
+		fields: mapTreeFieldsWithField(root, key),
+	};
+	return stackTreeFieldCursor(adapterTyped, dummyRoot as T, detachedField);
 }
 
-const adapter: CursorAdapter<MapTree> = {
+const adapter: CursorAdapter<MinimalMapTreeNodeView> = {
 	value: (node) => node.value,
 	type: (node) => node.type,
 	keysFromNode: (node) => [...node.fields.keys()], // TODO: don't convert this to array here.
-	getFieldFromNode: (node, key) => node.fields.get(key) ?? [],
+	getFieldFromNode: (node, key): Field<MinimalMapTreeNodeView> => {
+		const field = node.fields.get(key) as
+			| MinimalMapTreeNodeView[]
+			| Iterable<MinimalMapTreeNodeView>
+			| undefined;
+		if (field === undefined) {
+			return [];
+		}
+		if (Array.isArray(field)) {
+			return field as readonly MinimalMapTreeNodeView[];
+		}
+		// TODO: this copy could be avoided by using Array.at instead of indexing in `Field`, but that requires ES2022.
+		return [...field] as readonly MinimalMapTreeNodeView[];
+	},
 };
 
 /**

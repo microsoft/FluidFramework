@@ -1,5 +1,17 @@
 # @fluidframework/azure-client
 
+## 2.41.0
+
+Dependency updates only.
+
+## 2.40.0
+
+### Minor Changes
+
+- ITokenClaims and ScopeType re-exports have been removed ([#24530](https://github.com/microsoft/FluidFramework/pull/24530)) [665a9f4b1b](https://github.com/microsoft/FluidFramework/commit/665a9f4b1b412883c0666c5a0818c3f2d054daef)
+
+  Import from `@fluidframework/driver-definitions/legacy` as needed. See issue [#23702](https://github.com/microsoft/FluidFramework/issues/23702).
+
 ## 2.33.0
 
 Dependency updates only.

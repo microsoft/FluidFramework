@@ -15,7 +15,7 @@ import {
 	IAudience,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
+import type {
 	ContainerWarning,
 	IBatchMessage,
 	ICodeDetailsLoader,
@@ -30,11 +30,11 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
-	isFluidCodeDetails,
 	ReadOnlyInfo,
-	type ILoader,
-	type ILoaderOptions,
+	ILoader,
+	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
+import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IEvent,
@@ -1830,7 +1830,7 @@ export class Container
 			if (attachmentBlobs !== undefined) {
 				assert(
 					this.detachedBlobStorage !== undefined,
-					"detached blob storage should always exist when detached",
+					0xb8e /* detached blob storage should always exist when detached */,
 				);
 				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
 			}

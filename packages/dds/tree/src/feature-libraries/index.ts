@@ -15,9 +15,17 @@ export {
 	cursorForMapTreeNode,
 	mapTreeFromCursor,
 	mapTreeFieldFromCursor,
+	type MinimalMapTreeNodeView,
+	mapTreeFieldsWithField,
+	mapTreeWithField,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
-export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/index.js";
+export {
+	SchemaSummarizer,
+	encodeTreeSchema,
+	makeSchemaCodec,
+	makeSchemaCodecs,
+} from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
 	type CursorAdapter,
@@ -103,6 +111,7 @@ export {
 	type FieldBatchCodec,
 	makeTreeChunker,
 	makeFieldBatchCodec,
+	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
 } from "./chunked-forest/index.js";
 
@@ -136,9 +145,10 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
-	SchemaValidationErrors,
+	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
+	inSchemaOrThrow,
 } from "./default-schema/index.js";
 
 export {
@@ -152,7 +162,6 @@ export {
 	type FlexTreeEntity,
 	type FlexTreeField,
 	type FlexTreeNode,
-	getTreeContext,
 	TreeStatus,
 	Context,
 	type FlexTreeNodeEvents,
@@ -168,6 +177,9 @@ export {
 	treeStatusFromAnchorCache,
 	indexForAt,
 	FlexTreeEntityKind,
+	type FlexibleNodeContent,
+	type FlexibleFieldContent,
+	type FlexTreeHydratedContextMinimal,
 } from "./flex-tree/index.js";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";

@@ -1,5 +1,24 @@
 # @fluidframework/container-loader
 
+## 2.41.0
+
+Dependency updates only.
+
+## 2.40.0
+
+### Minor Changes
+
+- IDetachedBlobStorage (deprecated) has been removed from Loader ([#24490](https://github.com/microsoft/FluidFramework/pull/24490)) [ef47644da8](https://github.com/microsoft/FluidFramework/commit/ef47644da889d13b81c7233c3afe8600eaa1600f)
+
+  It is no longer necessary or supported to provide `detachedBlobStorage` to the Loader.
+  This functionality is now provided by default, and the deprecated `IDetachedBlobStorage` has been removed.
+
+- IContainer.getContainerPackageInfo has been removed ([#24525](https://github.com/microsoft/FluidFramework/pull/24525)) [15a541265b](https://github.com/microsoft/FluidFramework/commit/15a541265ba6293bf24e95308a5e667d5f7e9794)
+
+  `IContainer.getContainerPackageInfo()` was set to be removed in release 2.40.0. To access the package name `getContainerPackageInfo()` provided, use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()`.
+
+  See [issue #23898](https://github.com/microsoft/FluidFramework/issues/23898) for more information.
+
 ## 2.33.0
 
 Dependency updates only.

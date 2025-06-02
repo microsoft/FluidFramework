@@ -96,6 +96,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
         content: any;
         localOpMetadata?: unknown;
     }[]): void;
+    rollback?(): void;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
     submit(messageContent: any, localOpMetadata?: unknown): number;
@@ -188,6 +189,8 @@ export class MockDeltaConnection implements IDeltaConnection {
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
     reSubmit(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)
     setConnectionState(connected: boolean): void;
     // (undocumented)
@@ -516,7 +519,7 @@ export class MockHandle<T> extends FluidHandleBase<T> {
     readonly absolutePath: string;
     // (undocumented)
     attachGraph(): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     bind(): void;
     // (undocumented)
     get(): Promise<T>;

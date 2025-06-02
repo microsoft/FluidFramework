@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
-import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
+import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	anchorSlot,
 	type AnchorEvents,
@@ -16,6 +16,9 @@ import {
 	type TreeValue,
 	type UpPath,
 } from "../../core/index.js";
+// TODO: decide how to deal with dependencies on flex-tree implementation.
+// eslint-disable-next-line import/no-internal-modules
+import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
 import {
 	assertFlexTreeEntityNotFreed,
 	ContextSlot,
@@ -25,11 +28,11 @@ import {
 	treeStatusFromAnchorCache,
 	type FlexTreeNode,
 } from "../../feature-libraries/index.js";
-import type { TreeNodeSchema } from "./treeNodeSchema.js";
-// TODO: decide how to deal with dependencies on flex-tree implementation.
-// eslint-disable-next-line import/no-internal-modules
-import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
+
 import { SimpleContextSlot, type Context, type HydratedContext } from "./context.js";
+import type { TreeNode } from "./treeNode.js";
+import type { TreeNodeSchema } from "./treeNodeSchema.js";
+import type { InternalTreeNode, Unhydrated } from "./types.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
@@ -174,12 +177,8 @@ export class TreeNodeKernel {
 			};
 		} else {
 			// Hydrated case
-			const { anchorNode } = innerNode;
-			assert(
-				!anchorNode.slots.has(proxySlot),
-				0x7f5 /* Cannot associate an flex node with multiple simple-tree nodes */,
-			);
-			this.#hydrationState = this.createHydratedState(anchorNode);
+			this.#hydrationState = this.createHydratedState(innerNode.anchorNode);
+			this.#hydrationState.innerNode = innerNode;
 		}
 	}
 
@@ -196,16 +195,22 @@ export class TreeNodeKernel {
 
 	/**
 	 * Transition from {@link Unhydrated} to hydrated.
-	 * Bi-directionally associates the given hydrated TreeNode to the given anchor node.
+	 * Bi-directionally associates the given hydrated TreeNode to the anchor node at the provided path.
 	 * @remarks
 	 * Happens at most once for any given node.
-	 * Cleans up mappings to {@link UnhydratedFlexTreeNode} - it is assumed that they are no longer needed once the proxy has an anchor node.
+	 * Cleans up mappings to {@link UnhydratedFlexTreeNode} - it is assumed that they are no longer needed once this node has an anchor node.
 	 */
-	private hydrate(anchorNode: AnchorNode): void {
+	public hydrate(anchors: AnchorSet, path: UpPath): void {
 		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
 		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
 		unhydratedFlexTreeNodeToTreeNodeInternal.delete(this.#hydrationState.innerNode);
+
+		const anchor = anchors.track(path);
+		const anchorNode =
+			anchors.locate(anchor) ?? fail(0xb42 /* Expected anchor node to be present */);
+
 		this.#hydrationState = this.createHydratedState(anchorNode);
+		this.#hydrationState.offAnchorNode.add(() => anchors.forget(anchor));
 
 		// If needed, register forwarding emitters for events from before hydration
 		if (this.#unhydratedEvents.evaluated) {
@@ -223,7 +228,11 @@ export class TreeNodeKernel {
 	}
 
 	private createHydratedState(anchorNode: AnchorNode): HydratedState {
-		anchorNode.slots.set(proxySlot, this.node);
+		assert(
+			!anchorNode.slots.has(simpleTreeNodeSlot),
+			0x7f5 /* Cannot associate an flex node with multiple simple-tree nodes */,
+		);
+		anchorNode.slots.set(simpleTreeNodeSlot, this.node);
 		return {
 			anchorNode,
 			offAnchorNode: new Set([
@@ -264,6 +273,7 @@ export class TreeNodeKernel {
 	}
 
 	public dispose(): void {
+		debugAssert(() => !this.disposed || "Cannot dispose a disposed node");
 		this.disposed = true;
 		if (isHydrated(this.#hydrationState)) {
 			for (const off of this.#hydrationState.offAnchorNode) {
@@ -289,9 +299,9 @@ export class TreeNodeKernel {
 	 * For hydrated nodes it returns a FlexTreeNode backed by the forest.
 	 * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
 	 *
-	 * If `allowDeleted` is false, this will throw a UsageError if the node is deleted.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been deleted.
 	 */
-	public getOrCreateInnerNode(allowDeleted = false): InnerNode {
+	public getOrCreateInnerNode(): InnerNode {
 		if (!isHydrated(this.#hydrationState)) {
 			debugAssert(
 				() =>
@@ -301,10 +311,14 @@ export class TreeNodeKernel {
 			return this.#hydrationState.innerNode; // Unhydrated case
 		}
 
+		if (this.disposed) {
+			throw new UsageError("Cannot access a deleted node.");
+		}
+
 		if (this.#hydrationState.innerNode === undefined) {
 			// Marinated case -> cooked
 			const anchorNode = this.#hydrationState.anchorNode;
-			// The proxy is bound to an anchor node, but it may or may not have an actual flex node yet
+			// This TreeNode is bound to an anchor node, but it may or may not have an actual flex node yet
 			const flexNode = anchorNode.slots.get(flexTreeSlot);
 			if (flexNode !== undefined) {
 				// If the flex node already exists, use it...
@@ -317,50 +331,11 @@ export class TreeNodeKernel {
 				context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 				this.#hydrationState.innerNode = makeTree(context, cursor);
 				cursor.free();
-				// Calling this is a performance improvement, however, do this only after demand to avoid momentarily having no anchors to anchorNode
-				anchorForgetters?.get(this.node)?.();
-				if (!allowDeleted) {
-					assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
-				}
-			}
-		}
-
-		if (!allowDeleted) {
-			if (this.#hydrationState.innerNode.context.isDisposed()) {
-				throw new UsageError("Cannot access a Deleted node.");
+				assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
 			}
 		}
 
 		return this.#hydrationState.innerNode;
-	}
-
-	/**
-	 * Creates an anchor node and associates it with the given proxy.
-	 * @privateRemarks
-	 * Use `forgetters` to cleanup the anchor allocated by this function once the anchor is no longer needed.
-	 * In practice, this happens when either the anchor node is destroyed, or another anchor to the same node is created by a new flex node.
-	 *
-	 * The FlexTreeNode holds a reference to the same anchor, and has a lifetime at least as long as the simple-tree,
-	 * so this would be unnecessary except for the case of "marinated" nodes, which have an anchor,
-	 * but might not have a FlexTreeNode.
-	 * Handling this case is an optimization assuming that this extra anchor reference is cheaper than eagerly creating FlexTreeNodes.
-	 */
-	public anchorProxy(anchors: AnchorSet, path: UpPath): AnchorNode {
-		assert(!anchorForgetters.has(this.node), 0x91c /* Proxy anchor should not be set twice */);
-		const anchor = anchors.track(path);
-		const anchorNode =
-			anchors.locate(anchor) ?? fail(0xb42 /* Expected anchor node to be present */);
-		this.hydrate(anchorNode);
-		const forget = (): void => {
-			if (anchors.locate(anchor)) {
-				anchors.forget(anchor);
-			}
-			anchorForgetters.delete(this.node);
-			off();
-		};
-		anchorForgetters.set(this.node, forget);
-		const off = anchorNode.events.on("afterDestroy", forget);
-		return anchorNode;
 	}
 
 	/**
@@ -381,11 +356,6 @@ export class TreeNodeKernel {
 		return this.#hydrationState.innerNode;
 	}
 }
-
-/**
- * Used by {@link anchorProxy} as an optimization to ensure that only one anchor is remembered at a time for a given anchor node
- */
-const anchorForgetters = new WeakMap<TreeNode, () => void>();
 
 const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] as const;
 
@@ -422,22 +392,22 @@ export const unhydratedFlexTreeNodeToTreeNode =
 	>;
 
 /**
- * An anchor slot which associates an anchor with its corresponding TreeNode, if there is one.
+ * An anchor slot which associates an anchor with its corresponding {@link TreeNode}, if there is one.
  * @remarks
  * For this to work, we have to require that there is at most a single view using a given AnchorSet.
  * FlexTree already has this assumption, and we also assume there is a single simple-tree per FlexTree, so this is valid.
  */
-export const proxySlot = anchorSlot<TreeNode>();
+export const simpleTreeNodeSlot = anchorSlot<TreeNode>();
 
 /**
  * Dispose a TreeNode (if any) for an existing anchor without disposing the anchor.
  */
 export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
-	const treeNode = anchorNode.slots.get(proxySlot);
+	const treeNode = anchorNode.slots.get(simpleTreeNodeSlot);
 	if (treeNode !== undefined) {
 		const kernel = getKernel(treeNode);
 		kernel.dispose();
-		anchorNode.slots.delete(proxySlot);
+		anchorNode.slots.delete(simpleTreeNodeSlot);
 	}
 }
 
@@ -471,18 +441,17 @@ export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
  * For hydrated nodes it returns a FlexTreeNode backed by the forest.
  * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
  *
- * If `allowDeleted` is false, this will throw a UsageError if the node is deleted.
+ * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been deleted.
  */
-export function getOrCreateInnerNode(treeNode: TreeNode, allowDeleted = false): InnerNode {
+export function getOrCreateInnerNode(treeNode: TreeNode): InnerNode {
 	const kernel = getKernel(treeNode);
-	return kernel.getOrCreateInnerNode(allowDeleted);
+	return kernel.getOrCreateInnerNode();
 }
 
 /**
  * Gets a flex node from an anchor node
  */
 function flexNodeFromAnchor(anchorNode: AnchorNode): FlexTreeNode {
-	// the proxy is bound to an anchor node, but it may or may not have an actual flex node yet
 	const flexNode = anchorNode.slots.get(flexTreeSlot);
 	if (flexNode !== undefined) {
 		return flexNode; // If it does have a flex node, return it...
@@ -500,7 +469,7 @@ function flexNodeFromAnchor(anchorNode: AnchorNode): FlexTreeNode {
  * Gets a tree node from an anchor node
  */
 export function treeNodeFromAnchor(anchorNode: AnchorNode): TreeNode | TreeValue {
-	const cached = anchorNode.slots.get(proxySlot);
+	const cached = anchorNode.slots.get(simpleTreeNodeSlot);
 	if (cached !== undefined) {
 		return cached;
 	}
