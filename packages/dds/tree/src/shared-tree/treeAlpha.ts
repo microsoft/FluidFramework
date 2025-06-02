@@ -39,6 +39,7 @@ import {
 	treeNodeApi,
 	getIdentifierFromNode,
 	mapTreeFromNodeData,
+	getOrCreateNodeFromInnerNode,
 } from "../simple-tree/index.js";
 import { extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
@@ -58,8 +59,6 @@ import {
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { currentVersion, noopValidator } from "../codec/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getOrCreateNodeFromInnerNode } from "../simple-tree/core/index.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");

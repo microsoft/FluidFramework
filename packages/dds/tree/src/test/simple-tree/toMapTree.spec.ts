@@ -21,6 +21,7 @@ import {
 	stringSchema,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
+	getKernel,
 } from "../../simple-tree/index.js";
 import {
 	createFieldSchema,
@@ -41,14 +42,12 @@ import {
 } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getKernel } from "../../simple-tree/core/index.js";
-import { hydrate } from "./utils.js";
-// eslint-disable-next-line import/no-internal-modules
 import { prepareContentForHydration } from "../../simple-tree/prepareForInsertion.js";
+import { hydrate } from "./utils.js";
 
 describe("toMapTree", () => {
 	it("string", () => {

@@ -41,22 +41,19 @@ import {
 	type FlexFieldKind,
 	FieldKinds,
 	type SequenceFieldEditBuilder,
+	cursorForMapTreeNode,
 	type OptionalFieldEditBuilder,
 	type ValueFieldEditBuilder,
 	type FlexibleNodeContent,
 	type FlexTreeHydratedContextMinimal,
-	cursorForMapTreeNode,
 	type FlexibleFieldContent,
+	type MapTreeFieldViewGeneric,
+	type MapTreeNodeViewGeneric,
 } from "../../feature-libraries/index.js";
 import { brand, getOrCreate } from "../../util/index.js";
 
 import type { Context } from "./context.js";
 import type { ContextualFieldProvider } from "../schemaTypes.js";
-import type {
-	MapTreeFieldViewGeneric,
-	MapTreeNodeViewGeneric,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/mapTreeCursor.js";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
 	extends SequenceFieldEditBuilder<FlexibleFieldContent, UnhydratedFlexTreeNode[]> {}

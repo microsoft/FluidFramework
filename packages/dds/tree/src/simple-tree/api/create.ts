@@ -19,6 +19,7 @@ import {
 	type NodeKind,
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
+	createField,
 } from "../core/index.js";
 import {
 	defaultSchemaPolicy,
@@ -28,8 +29,6 @@ import {
 import { getUnhydratedContext } from "../createContext.js";
 import { createUnknownOptionalFieldPolicy } from "../node-kinds/index.js";
 import type { SimpleNodeSchema, SimpleNodeSchemaBase } from "../simpleSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { createField } from "../core/unhydratedFlexTree.js";
 import { getStoredSchema } from "../toStoredSchema.js";
 import { unknownTypeError } from "./customTree.js";
 

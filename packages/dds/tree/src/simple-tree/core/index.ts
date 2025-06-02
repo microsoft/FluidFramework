@@ -40,4 +40,5 @@ export {
 	UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
 	UnhydratedContext,
+	createField,
 } from "./unhydratedFlexTree.js";

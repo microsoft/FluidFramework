@@ -22,6 +22,7 @@ export {
 	HydratedContext,
 	SimpleContextSlot,
 	getOrCreateInnerNode,
+	getOrCreateNodeFromInnerNode,
 	getKernel,
 } from "./core/index.js";
 export {
