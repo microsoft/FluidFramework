@@ -50,7 +50,7 @@ export interface IRevertible {
 }
 
 // @alpha @legacy
-export interface ISharedArray<T extends SerializableTypeForSharedArray> extends ISharedObject<ISharedArrayEvents> {
+export interface ISharedArray<T extends SerializableTypeForSharedArray> extends SharedObject<ISharedArrayEvents> {
     // (undocumented)
     delete(index: number): void;
     // (undocumented)
@@ -59,6 +59,10 @@ export interface ISharedArray<T extends SerializableTypeForSharedArray> extends 
     insert<TWrite>(index: number, value: Serializable<TWrite> & T): void;
     // (undocumented)
     move(oldIndex: number, newIndex: number): void;
+    // (undocumented)
+    toggle(entryId: string): void;
+    // (undocumented)
+    toggleMove(oldEntryId: string, newEntryId: string): void;
 }
 
 // @alpha @legacy
@@ -124,6 +128,9 @@ export type SerializableTypeForSharedArray = boolean | number | string | object 
 
 // @alpha @legacy
 export type SerializableTypeForSharedSignal = boolean | number | string | IFluidHandle | object;
+
+// @alpha @legacy
+export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> & SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>;
 
 // @alpha @legacy
 export const SharedSignal: ISharedObjectKind<ISharedSignal<any>> & SharedObjectKind<ISharedSignal<any>>;

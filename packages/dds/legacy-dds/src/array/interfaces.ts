@@ -8,6 +8,7 @@ import type { Serializable } from "@fluidframework/datastore-definitions/interna
 import type {
 	ISharedObjectEvents,
 	ISharedObject,
+	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedArrayOperation } from "./sharedArrayOperations.js";
@@ -63,11 +64,13 @@ export interface ISharedArrayEvents extends ISharedObjectEvents {
  * @alpha
  */
 export interface ISharedArray<T extends SerializableTypeForSharedArray>
-	extends ISharedObject<ISharedArrayEvents> {
+	extends SharedObject<ISharedArrayEvents> {
 	get(): FullyReadonly<T[]>;
 	insert<TWrite>(index: number, value: Serializable<TWrite> & T): void;
 	delete(index: number): void;
 	move(oldIndex: number, newIndex: number): void;
+	toggle(entryId: string): void;
+	toggleMove(oldEntryId: string, newEntryId: string): void;
 }
 
 /**

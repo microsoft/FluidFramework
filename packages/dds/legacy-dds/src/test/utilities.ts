@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
-import type { SharedArray } from "../index.js";
+import type { FullyReadonly, ISharedArray } from "../index.js";
 
 /**
  * Verifies that two arrays contain the same entries.
@@ -48,7 +48,7 @@ export function getRandomInt(min: number, max: number): number {
 /**
  * Inserts all elements of `entries` into the `SharedArray`.
  */
-export function fillEntries(sharedArray: SharedArray<number>, entries: number[]): void {
+export function fillEntries(sharedArray: ISharedArray<number>, entries: number[]): void {
 	let index = 0;
 	for (const entry of entries) {
 		sharedArray.insert(index, entry);
@@ -60,8 +60,8 @@ export function fillEntries(sharedArray: SharedArray<number>, entries: number[])
  * Creates a mock handle for the given value.
  */
 export const verifyIFluidHandleEntries = (
-	actualEntries: readonly IFluidHandle[],
-	expectedEntries: readonly IFluidHandle[],
+	actualEntries: FullyReadonly<IFluidHandle[]>,
+	expectedEntries: FullyReadonly<IFluidHandle[]>,
 	message?: string,
 ): void => {
 	assert.equal(
@@ -76,8 +76,8 @@ export const verifyIFluidHandleEntries = (
 		assert.ok(expected);
 		assert.ok(actualEntries[i]);
 		assert.equal(
-			toFluidHandleInternal(actual).absolutePath,
-			toFluidHandleInternal(expected).absolutePath,
+			toFluidHandleInternal(actual as IFluidHandle).absolutePath,
+			toFluidHandleInternal(expected as IFluidHandle).absolutePath,
 			`value not as expected at index ${i.toString()}`,
 		);
 	}
