@@ -282,7 +282,7 @@ export interface FlexTreeField extends FlexTreeEntity {
 /**
  * Typed tree for inserting as the content of a field.
  */
-export type FlexibleFieldContent = ExclusiveMapTree[];
+export type FlexibleFieldContent = readonly FlexibleNodeContent[];
 
 /**
  * Tree for inserting as a node.

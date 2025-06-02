@@ -5,6 +5,7 @@
 
 import { Lazy } from "@fluidframework/core-utils/internal";
 import type {
+	FlexibleNodeContent,
 	FlexTreeNode,
 	FlexTreeOptionalField,
 	OptionalFieldEditBuilder,
@@ -44,7 +45,6 @@ import {
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { brand, count, type RestrictiveStringRecord } from "../../../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
-import type { ExclusiveMapTree } from "../../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import type { MapNodeCustomizableSchema, MapNodePojoEmulationSchema } from "./mapNodeTypes.js";
 
@@ -158,7 +158,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return getOrCreateInnerNode(this);
 	}
 
-	private editor(key: string): OptionalFieldEditBuilder<ExclusiveMapTree> {
+	private editor(key: string): OptionalFieldEditBuilder<FlexibleNodeContent> {
 		const field = this.innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 		return field.editor;
 	}
