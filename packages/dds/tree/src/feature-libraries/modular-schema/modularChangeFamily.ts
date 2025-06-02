@@ -348,13 +348,8 @@ export class ModularChangeFamily
 
 		const rebaser = getChangeHandler(this.fieldKinds, composedChange.fieldKind).rebaser;
 		const composeNodes = (child1: NodeId | undefined, child2: NodeId | undefined): NodeId => {
-			if (
-				child1 !== undefined &&
-				child2 !== undefined &&
-				getFromChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2) === undefined
-			) {
-				setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2, child1);
-				crossFieldTable.pendingCompositions.nodeIdsToCompose.push([child1, child2]);
+			if (child1 !== undefined && child2 !== undefined) {
+				addNodesToCompose(crossFieldTable, child1, child2);
 			}
 
 			return child1 ?? child2 ?? fail(0xb22 /* Should not compose two undefined nodes */);
@@ -608,8 +603,7 @@ export class ModularChangeFamily
 			contextualizeFieldChangeset(change2Normalized, crossFieldTable.newChange),
 			(child1, child2) => {
 				if (child1 !== undefined && child2 !== undefined) {
-					setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2, child1);
-					crossFieldTable.pendingCompositions.nodeIdsToCompose.push([child1, child2]);
+					addNodesToCompose(crossFieldTable, child1, child2);
 				}
 				return child1 ?? child2 ?? fail(0xb23 /* Should not compose two undefined nodes */);
 			},
@@ -2998,7 +2992,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				);
 
 				if (baseNodeId !== undefined) {
-					this.table.pendingCompositions.nodeIdsToCompose.push([baseNodeId, newChanges]);
+					addNodesToCompose(this.table, baseNodeId, newChanges);
 				} else {
 					setInChangeAtomIdMap(
 						this.table.composedRootNodes.nodeChanges,
@@ -3833,6 +3827,13 @@ function rebaseRename(
 			base,
 			affectedBaseFields,
 		);
+	}
+}
+
+function addNodesToCompose(table: ComposeTable, id1: NodeId, id2: NodeId): void {
+	if (getFromChangeAtomIdMap(table.newToBaseNodeId, id2) === undefined) {
+		setInChangeAtomIdMap(table.newToBaseNodeId, id2, id1);
+		table.pendingCompositions.nodeIdsToCompose.push([id1, id2]);
 	}
 }
 
