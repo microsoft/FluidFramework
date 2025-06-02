@@ -27,12 +27,7 @@ export namespace InternalUtilityTypes {
 	export type IfNotificationListener<Event, IfListener, Else> = Event extends (
 		...args: infer P
 	) => void
-		? CoreInternalUtilityTypes.IfSameType<
-				P,
-				JsonSerializable<P> & JsonDeserialized<P>,
-				IfListener,
-				Else
-			>
+		? CoreInternalUtilityTypes.IfSameType<P, JsonSerializable<P>, IfListener, Else>
 		: Else;
 
 	/**

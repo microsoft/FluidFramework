@@ -10,7 +10,7 @@ import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { asDeserializedJson, fullySerializableToOpaqueJson } from "./internalUtils.js";
+import { asDeserializedJson, serializableToOpaqueJson } from "./internalUtils.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -178,7 +178,7 @@ class NotificationsManagerImpl<
 				{
 					rev: 0,
 					timestamp: 0,
-					value: fullySerializableToOpaqueJson({
+					value: serializableToOpaqueJson({
 						name,
 						args: [...(args as JsonTypeWith<never>[])],
 					}),
@@ -194,7 +194,7 @@ class NotificationsManagerImpl<
 				{
 					rev: 0,
 					timestamp: 0,
-					value: fullySerializableToOpaqueJson({
+					value: serializableToOpaqueJson({
 						name,
 						args: [...(args as JsonTypeWith<never>[])],
 					}),
