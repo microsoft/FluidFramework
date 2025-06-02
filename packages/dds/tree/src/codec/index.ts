@@ -8,6 +8,7 @@ export {
 	type IBinaryCodec,
 	type ICodecFamily,
 	type ICodecOptions,
+	type CodecWriteOptions,
 	type IDecoder,
 	type IEncoder,
 	type IJsonCodec,
