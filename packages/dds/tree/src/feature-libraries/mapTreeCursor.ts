@@ -40,11 +40,11 @@ export interface MapTreeNodeViewGeneric<TNode> extends NodeData {
 	 * The non-empty fields on this node.
 	 * @remarks
 	 * This is the subset of map needed to view the tree.
-	 * Theoretically "size" could be removed by measuring the length of keys, but it is included for convenience.
+	 * Theoretically `Symbol.iterator` and "keys" are redundant.
 	 */
 	readonly fields: Pick<
 		ReadonlyMap<FieldKey, MapTreeFieldViewGeneric<TNode>>,
-		typeof Symbol.iterator | "get" | "size" | "keys"
+		typeof Symbol.iterator | "get" | "keys"
 	>;
 }
 

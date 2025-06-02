@@ -122,9 +122,13 @@ export class UnhydratedFlexTreeNode
 
 	/**
 	 * The non-empty fields on this node.
+	 * @remarks
+	 * This is needed to implement {@link MapTreeNodeViewGeneric.fields}, which must omit empty fields.
+	 * Due to having to detect if a field is empty, this forces the evaluation of any pending defaults in the fields.
+	 * Use {@link allFieldsLazy} to avoid evaluating pending defaults.
 	 */
 	public get fields(): ReadonlyMap<FieldKey, UnhydratedFlexTreeField> {
-		// TODO: doing this copy on every access is inefficient. SOme caching+invalidation or removal of the need for a separate map would be better.
+		// TODO: doing this copy on every access is inefficient. Some caching+invalidation or removal of the need for a separate map would be better.
 		const entries = [...this.fieldsAll.entries()].filter(([, field]) => field.length > 0);
 		return new Map(entries);
 	}
@@ -207,7 +211,7 @@ export class UnhydratedFlexTreeNode
 	}
 
 	public tryGetField(key: FieldKey): UnhydratedFlexTreeField | undefined {
-		const field = this.fields.get(key);
+		const field = this.fieldsAll.get(key);
 		// Only return the field if it is not empty, in order to fulfill the contract of `tryGetField`.
 		if (field !== undefined && field.length > 0) {
 			return field;
@@ -220,16 +224,11 @@ export class UnhydratedFlexTreeNode
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
-		return [...this.fields.values()]
-			.filter((field) => field.children.length > 0)
-			[Symbol.iterator]();
+		return Array.from(this.fields, ([key, field]) => field)[Symbol.iterator]();
 	}
 
 	public keys(): IterableIterator<FieldKey> {
-		return [...this.fields.entries()]
-			.filter((kv) => kv[1].children.length > 0)
-			.map((kv) => kv[0])
-			[Symbol.iterator]();
+		return Array.from(this.fields, ([key]) => key)[Symbol.iterator]();
 	}
 
 	public get value(): Value {
