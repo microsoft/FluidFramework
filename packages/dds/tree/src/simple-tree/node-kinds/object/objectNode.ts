@@ -45,7 +45,6 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type FieldSchema,
 	normalizeFieldSchema,
-	type ImplicitAllowedTypes,
 	FieldKind,
 	type NodeSchemaMetadata,
 	type FieldSchemaAlpha,
@@ -454,7 +453,7 @@ export function objectSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes);
+			return mapTreeFromNodeData(input as object, this as Output);
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
