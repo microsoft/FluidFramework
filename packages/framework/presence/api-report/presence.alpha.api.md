@@ -131,23 +131,23 @@ export namespace InternalTypes {
 // @beta @system
 export namespace InternalUtilityTypes {
     // @system
-    export type IsNotificationListener<Event> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, true, false> : false;
+    export type IfNotificationListener<Event, IfListener, Else> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, IfListener, Else> : Else;
     // @system
-    export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
+    export type JsonDeserializedParameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
     // @system
-    export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
+    export type JsonSerializableParameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
     // @system
     export type NotificationListeners<E> = {
-        [P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
+        [P in keyof E as IfNotificationListener<E[P], P, never>]: E[P];
     };
 }
 
 // @beta
 export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
-// @beta
+// @beta @input
 export interface LatestArguments<T extends object | null> {
-    local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
+    local: JsonSerializable<T> & JsonDeserialized<T>;
     settings?: BroadcastControlSettings | undefined;
 }
 
@@ -165,7 +165,7 @@ export interface LatestData<T> {
 // @beta
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
-// @beta
+// @beta @input
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
     local?: {
         [K in Keys]: JsonSerializable_2<T> & JsonDeserialized_2<T>;
@@ -251,8 +251,8 @@ export interface LatestRawEvents<T> {
 
 // @alpha @sealed
 export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationListeners<E>> {
-    broadcast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
-    unicast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, targetAttendee: Attendee, ...args: Parameters<E[K]>): void;
+    broadcast<K extends keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
+    unicast<K extends keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, targetAttendee: Attendee, ...args: Parameters<E[K]>): void;
 }
 
 // @alpha @sealed

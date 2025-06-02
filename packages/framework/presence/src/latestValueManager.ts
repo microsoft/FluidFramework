@@ -9,7 +9,6 @@ import type {
 	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
-	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
@@ -123,7 +122,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		return asDeeplyReadonlyDeserializedJson(this.value.value);
 	}
 
-	public set local(value: JsonDeserialized<T>) {
+	public set local(value: JsonDeserialized<T> & JsonSerializable<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
 		this.value.value = fullySerializableToOpaqueJson(value);

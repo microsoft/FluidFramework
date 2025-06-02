@@ -87,35 +87,6 @@ export function asDeeplyReadonly<T>(value: T): DeepReadonly<T> {
 	return value as DeepReadonly<T>;
 }
 
-/**
- * Cast a JSON value to an opaque version.
- *
- * @system
- */
-export function toOpaqueJson<const T>(value: JsonDeserialized<T>): OpaqueJsonDeserialized<T> {
-	return value as unknown as OpaqueJsonDeserialized<T>;
-}
-
-/**
- * Cast an opaque JSON value back to its original version.
- *
- * @system
- */
-export function fromOpaqueJson<const TOpaque extends OpaqueJsonDeserialized<unknown>>(
-	opaque: TOpaque,
-): OpaqueJsonToJsonType<TOpaque> {
-	return opaque as unknown as OpaqueJsonToJsonType<TOpaque>;
-}
-
-/**
- * Converts an opaque JSON value to a deeply readonly value.
- */
-export function asDeeplyReadonlyFromOpaqueJson<
-	const TOpaque extends OpaqueJsonDeserialized<unknown>,
->(value: TOpaque): DeepReadonly<OpaqueJsonToJsonType<TOpaque>> {
-	return asDeeplyReadonly(fromOpaqueJson(value));
-}
-
 export function asDeeplyReadonlyDeserializedJson<T>(
 	value: OpaqueJsonDeserialized<T>,
 ): DeepReadonly<JsonDeserialized<T>>;

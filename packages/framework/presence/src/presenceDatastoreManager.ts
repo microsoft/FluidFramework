@@ -453,14 +453,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				// Ensure there is a datastore at this address and get it.
 				const workspaceDatastore = (this.datastore[workspaceAddress] ??= {});
 				for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
-					// error TS2345: Argument of type '{ [x: string & { readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
-					// } & { readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58"; } & { readonly AttendeeId: "AttendeeId";
-					// }]: { ...; } | { ...; }; }' is not assignable to parameter of type 'ClientUpdateRecord'.
-					//
-					// 'string & {readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a"; } & { readonly SessionId:
-					// "4498f850-e14e-4be9-8db0-89ec00997e58"; } & { readonly AttendeeId: "AttendeeId"; }' and 'AttendeeId' index
-					// signatures are incompatible.
-					//// @ts-ignore
 					mergeUntrackedDatastore(key, remoteAllKnownState, workspaceDatastore, timeModifier);
 				}
 			}

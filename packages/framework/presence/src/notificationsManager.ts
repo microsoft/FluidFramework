@@ -5,9 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listeners, Listenable, Off } from "@fluidframework/core-interfaces";
-import type {
-	JsonTypeWith,
-} from "@fluidframework/core-interfaces/internal";
+import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
@@ -245,7 +243,6 @@ class NotificationsManagerImpl<
 		_received: number,
 		updateValue: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): PostUpdateAction[] {
-		const unbrandedValue = fromOpaqueJson(value.value);
 		const postUpdateActions: PostUpdateAction[] = [];
 		const value = asDeserializedJson(updateValue.value);
 		const eventName = value.name as keyof Listeners<NotificationSubscriptions<T>>;
