@@ -32,6 +32,7 @@ export interface GeneralDatastoreMessageContent {
 }
 
 type DatastoreMessageContent = GeneralDatastoreMessageContent & SystemDatastore;
+type AcknowledgmentId = string;
 
 /**
  * Datastore update message type.
@@ -42,7 +43,7 @@ interface DatastoreUpdateMessage {
 	content: {
 		sendTimestamp: number;
 		avgLatency: number;
-		acknowledgementId?: AcknowledgmentIdType;
+		acknowledgementId?: AcknowledgmentId;
 		isComplete?: true;
 		data: DatastoreMessageContent;
 	};
@@ -81,11 +82,9 @@ export const acknowledgementMessageType = "Pres:Ack";
 interface AcknowledgementMessage {
 	type: typeof acknowledgementMessageType;
 	content: {
-		id: AcknowledgmentIdType;
+		id: AcknowledgmentId;
 	};
 }
-
-type AcknowledgmentIdType = string;
 
 /**
  * Outbound acknowledgement message.
