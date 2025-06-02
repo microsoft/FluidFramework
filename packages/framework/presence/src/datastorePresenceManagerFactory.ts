@@ -20,11 +20,7 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
 import type { PresenceWithNotifications as Presence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
-import type {
-	OutboundClientJoinMessage,
-	OutboundDatastoreUpdateMessage,
-	SignalMessages,
-} from "./protocol.js";
+import type { OutboundPresenceMessage, SignalMessages } from "./protocol.js";
 
 /**
  * This provides faux validation of the signal message.
@@ -60,8 +56,10 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 				events,
 				getQuorum: runtime.getQuorum.bind(runtime),
 				getAudience: runtime.getAudience.bind(runtime),
-				submitSignal: (message: OutboundClientJoinMessage | OutboundDatastoreUpdateMessage) =>
+				submitSignal: (message: OutboundPresenceMessage) =>
 					runtime.submitSignal(message.type, message.content, message.targetClientId),
+				supportedFeatures:
+					new Set() /* We do not implement feature detection here since this is a deprecated path */,
 			});
 			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assertSignalMessageIsValid(message);
