@@ -48,7 +48,7 @@ export interface LatestRawEvents<T> {
 	 * @eventProperty
 	 */
 	localUpdated: (update: {
-		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T>>;
 	}) => void;
 }
 
@@ -123,7 +123,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		return asDeeplyReadonlyFromOpaqueJson(this.value.value);
 	}
 
-	public set local(value: JsonSerializable<T>) {
+	public set local(value: JsonDeserialized<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
 		this.value.value = toOpaqueJson(value);
@@ -131,7 +131,9 @@ class LatestValueManagerImpl<T, Key extends string>
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
 
-		this.events.emit("localUpdated", { value: asDeeplyReadonly(value) });
+		this.events.emit("localUpdated", {
+			value: asDeeplyReadonly(value as JsonSerializable<T>),
+		});
 	}
 
 	public *getRemotes(): IterableIterator<LatestClientData<T>> {

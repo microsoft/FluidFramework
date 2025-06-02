@@ -167,7 +167,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
-				data: this.datastore,
+				// FIXME: remove cast
+				data: this.datastore as any,
 				updateProviders,
 			},
 		});
@@ -330,7 +331,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
-				data: this.datastore,
+				// FIXME: remove cast
+				data: this.datastore as any,
 			},
 		});
 		this.refreshBroadcastRequested = false;
