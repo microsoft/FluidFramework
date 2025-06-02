@@ -71,6 +71,8 @@ export enum HttpProperties {
 	status = "status",
 	url = "url",
 	retryCount = "retryCount",
+	tenantId = "tenantId",
+	documentId = "documentId",
 }
 
 /**
