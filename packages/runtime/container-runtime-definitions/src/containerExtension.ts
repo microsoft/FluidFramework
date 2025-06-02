@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { IAudience } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- BrandedType is a class declaration only
 import type {
@@ -22,6 +23,7 @@ import type { IQuorumClients } from "@fluidframework/driver-definitions/internal
  * @internal
  */
 export type ClientConnectionId = string;
+
 /**
  * Common structure between incoming and outgoing extension signals.
  *
@@ -204,7 +206,7 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 
 	readonly logger: ITelemetryBaseLogger;
 
-	readonly supportedFeatures: ReadonlySet<string>;
+	readonly supportedFeatures: ILayerCompatDetails["supportedFeatures"];
 
 	/**
 	 * Submits a signal to be sent to other clients.

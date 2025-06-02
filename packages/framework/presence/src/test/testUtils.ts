@@ -155,11 +155,7 @@ export function prepareConnectedPresence(
 	delete expectedClientJoin.clientId;
 	runtime.signalsExpected.push([expectedClientJoin]);
 
-	const presence = createPresenceManager(
-		runtime,
-		true /* targetedSignalSupport */,
-		attendeeId as AttendeeId,
-	);
+	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
 
 	// Validate expectations post initialization to make sure logger
 	// and runtime are left in a clean expectation state.

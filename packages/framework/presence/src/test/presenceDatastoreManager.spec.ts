@@ -477,7 +477,7 @@ describe("Presence", () => {
 				runtime.signalsExpected.push([
 					{
 						type: "Pres:Ack",
-						content: { id: 1 },
+						content: { id: "ackID" },
 						targetClientId: "client4",
 					},
 				]);
@@ -494,7 +494,7 @@ describe("Presence", () => {
 								"system:presence": systemWorkspaceUpdate,
 								"s:name:testStateWorkspace": statesWorkspaceUpdate,
 							},
-							acknowledgementId: 1,
+							acknowledgementId: "ackID",
 						},
 						clientId: "client4",
 					},

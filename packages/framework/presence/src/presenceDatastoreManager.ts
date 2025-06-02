@@ -146,6 +146,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private refreshBroadcastRequested = false;
 	private readonly timer = new TimerManager();
 	private readonly workspaces = new Map<string, AnyWorkspaceEntry<StatesWorkspaceSchema>>();
+	private readonly targetedSignalSupport: boolean;
 
 	public constructor(
 		private readonly attendeeId: AttendeeId,
@@ -156,11 +157,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly presence: Presence,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: AnyWorkspaceEntry<StatesWorkspaceSchema>,
-		private readonly targetedSignalSupport: boolean,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
 		this.workspaces.set("system:presence", systemWorkspace);
+		this.targetedSignalSupport = this.runtime.supportedFeatures.has("submit_signals_v2");
 	}
 
 	public joinSession(clientId: ClientConnectionId): void {
@@ -389,7 +390,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 			// If the message requests an acknowledgement, we will send a targeted acknowledgement message back to just the requestor.
 			if (message.content.acknowledgementId !== undefined) {
-				assert(this.targetedSignalSupport, "Targeted signals not supported");
+				assert(
+					this.targetedSignalSupport,
+					"Acknowledgment message was requested while targeted signal capability is not supported",
+				);
 				this.runtime.submitSignal({
 					type: acknowledgementMessageType,
 					content: { id: message.content.acknowledgementId },

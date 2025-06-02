@@ -42,7 +42,7 @@ interface DatastoreUpdateMessage {
 	content: {
 		sendTimestamp: number;
 		avgLatency: number;
-		acknowledgementId?: number;
+		acknowledgementId?: AcknowledgmentIdType;
 		isComplete?: true;
 		data: DatastoreMessageContent;
 	};
@@ -74,19 +74,21 @@ interface ClientJoinMessage {
 }
 
 /**
- * @internal
+ * Acknowledgement message type.
  */
 export const acknowledgementMessageType = "Pres:Ack";
 
 interface AcknowledgementMessage {
 	type: typeof acknowledgementMessageType;
 	content: {
-		id: number;
+		id: AcknowledgmentIdType;
 	};
 }
 
+type AcknowledgmentIdType = string;
+
 /**
- * @internal
+ * Outbound acknowledgement message.
  */
 export type OutboundAcknowledgementMessage = OutboundExtensionMessage<AcknowledgementMessage>;
 
@@ -99,6 +101,14 @@ export type OutboundClientJoinMessage = OutboundExtensionMessage<ClientJoinMessa
  * @internal
  */
 export type InboundClientJoinMessage = VerifiedInboundExtensionMessage<ClientJoinMessage>;
+
+/**
+ * Outbound presence message.
+ */
+export type OutboundPresenceMessage =
+	| OutboundAcknowledgementMessage
+	| OutboundClientJoinMessage
+	| OutboundDatastoreUpdateMessage;
 
 /**
  * @internal

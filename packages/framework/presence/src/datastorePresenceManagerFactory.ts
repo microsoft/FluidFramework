@@ -7,7 +7,7 @@
  * Hacky support for internal datastore based usages.
  */
 
-import { createEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type {
 	ExtensionHostEvents,
 	RawInboundExtensionMessage,
@@ -20,12 +20,7 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
 import type { PresenceWithNotifications as Presence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
-import type {
-	OutboundAcknowledgementMessage,
-	OutboundClientJoinMessage,
-	OutboundDatastoreUpdateMessage,
-	SignalMessages,
-} from "./protocol.js";
+import type { OutboundPresenceMessage, SignalMessages } from "./protocol.js";
 
 /**
  * This provides faux validation of the signal message.
@@ -61,14 +56,10 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 				events,
 				getQuorum: runtime.getQuorum.bind(runtime),
 				getAudience: runtime.getAudience.bind(runtime),
-				submitSignal: (
-					message:
-						| OutboundAcknowledgementMessage
-						| OutboundClientJoinMessage
-						| OutboundDatastoreUpdateMessage,
-				) => runtime.submitSignal(message.type, message.content, message.targetClientId),
+				submitSignal: (message: OutboundPresenceMessage) =>
+					runtime.submitSignal(message.type, message.content, message.targetClientId),
 				supportedFeatures:
-					(runtime.ILayerCompatDetails as ILayerCompatDetails)?.supportedFeatures ?? new Set(),
+					new Set() /* We do not implement feature detection here since this is a deprecated path */,
 			});
 			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assertSignalMessageIsValid(message);
