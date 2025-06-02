@@ -151,6 +151,7 @@ import {
 	classInstanceWithPrivateSetter,
 	classInstanceWithPublicData,
 	classInstanceWithPublicMethod,
+	objectWithClassWithPrivateDataInOptionalRecursion,
 	functionObjectWithPrivateData,
 	functionObjectWithPublicData,
 	classInstanceWithPrivateDataAndIsFunction,
@@ -844,20 +845,12 @@ describe("JsonDeserialized", () => {
 					);
 				});
 
-				it("object with recursion and `symbol` unrolls 4 times and then has non-null Json object", () => {
+				it("object with recursion and `symbol` unrolls once and then has OpaqueJsonDeserialized wrapper", () => {
 					const resultRead = passThru(objectWithSymbolOrRecursion, { recurse: {} });
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{
-							recurse?: {
-								recurse?: {
-									recurse?: {
-										recurse?: {
-											recurse?: NonNullJsonObjectWith<never>;
-										};
-									};
-								};
-							};
+							recurse?: OpaqueJsonDeserialized<typeof objectWithSymbolOrRecursion>;
 						}>(),
 					);
 				});
@@ -895,15 +888,9 @@ describe("JsonDeserialized", () => {
 						resultRead,
 						createInstanceOf<{
 							outerFnOjb?: {
-								recurse?: {
-									recurse?: {
-										recurse?: {
-											recurse?: {
-												recurse?: NonNullJsonObjectWith<never>;
-											};
-										};
-									};
-								};
+								recurse?: OpaqueJsonDeserialized<
+									(typeof objectWithFunctionObjectAndRecursion)["outerFnOjb"]
+								>;
 							};
 						}>(),
 					);
@@ -919,38 +906,23 @@ describe("JsonDeserialized", () => {
 						resultRead,
 						createInstanceOf<{
 							outerFnOjb?: {
-								recurse?: {
-									recurse?: {
-										recurse?: {
-											recurse?: {
-												recurse?: NonNullJsonObjectWith<never>;
-											};
-										};
-									};
-								};
+								recurse?: OpaqueJsonDeserialized<
+									(typeof objectWithObjectAndFunctionWithRecursion)["outerFnOjb"]
+								>;
 							};
 						}>(),
 					);
 				});
-				it("object with required `unknown` in recursion when `unknown` is allowed unrolls 4 times with optional `NonNullJsonObjectWith<unknown>`", () => {
+				it("object with required `unknown` in recursion when `unknown` is allowed unrolls once and then has OpaqueJsonDeserialized wrapper", () => {
 					const resultRead = passThruPreservingUnknown(objectWithUnknownInOptionalRecursion);
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{
 							unknown?: unknown;
-							recurse?: {
-								unknown?: unknown;
-								recurse?: {
-									unknown?: unknown;
-									recurse?: {
-										unknown?: unknown;
-										recurse?: {
-											unknown?: unknown;
-											recurse?: NonNullJsonObjectWith<unknown>;
-										};
-									};
-								};
-							};
+							recurse?: OpaqueJsonDeserialized<
+								typeof objectWithUnknownInOptionalRecursion,
+								[unknown]
+							>;
 						}>(),
 					);
 				});
@@ -1098,6 +1070,33 @@ describe("JsonDeserialized", () => {
 					});
 					assertIdenticalTypes(resultRead, createInstanceOf<{ public: string }>());
 				});
+				it("class instance in object with optional recursion", () => {
+					const resultRead = passThru(objectWithClassWithPrivateDataInOptionalRecursion, {
+						class: {
+							public: "public",
+							// secret is also not allowed but is present
+							secret: 0,
+						},
+						recurse: {
+							class: {
+								public: "public",
+								// secret is also not allowed but is present
+								secret: 0,
+							},
+						},
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							class: {
+								public: string;
+							};
+							recurse?: OpaqueJsonDeserialized<
+								typeof objectWithClassWithPrivateDataInOptionalRecursion
+							>;
+						}>(),
+					);
+				});
 				it("function object with recursion", () => {
 					const resultRead = passThruThrows(
 						selfRecursiveFunctionWithProperties,
@@ -1106,15 +1105,7 @@ describe("JsonDeserialized", () => {
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{
-							recurse?: {
-								recurse?: {
-									recurse?: {
-										recurse?: {
-											recurse?: NonNullJsonObjectWith<never>;
-										};
-									};
-								};
-							};
+							recurse?: OpaqueJsonDeserialized<typeof selfRecursiveFunctionWithProperties>;
 						}>(),
 					);
 				});
@@ -1123,15 +1114,7 @@ describe("JsonDeserialized", () => {
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{
-							recurse?: {
-								recurse?: {
-									recurse?: {
-										recurse?: {
-											recurse?: NonNullJsonObjectWith<never>;
-										};
-									};
-								};
-							};
+							recurse?: OpaqueJsonDeserialized<typeof selfRecursiveObjectAndFunction>;
 						}>(),
 					);
 				});
@@ -1257,7 +1240,7 @@ describe("JsonDeserialized", () => {
 						"instanceRead is not an instance of ClassWithPrivateData",
 					);
 				});
-				it("object with recursion and handle unrolls 4 times listing public properties and then has non-null Json object", () => {
+				it("object with recursion and handle unrolls once listing public properties and then has OpaqueJsonDeserialized wrapper", () => {
 					const resultRead = passThru(objectWithFluidHandleOrRecursion, {
 						recurseToHandle: { recurseToHandle: "fake-handle" },
 					});
@@ -1265,31 +1248,7 @@ describe("JsonDeserialized", () => {
 						resultRead,
 						createInstanceOf<{
 							recurseToHandle:
-								| {
-										recurseToHandle:
-											| {
-													recurseToHandle:
-														| {
-																recurseToHandle:
-																	| {
-																			recurseToHandle:
-																				| NonNullJsonObjectWith<never>
-																				| {
-																						readonly isAttached: boolean;
-																				  };
-																	  }
-																	| {
-																			readonly isAttached: boolean;
-																	  };
-														  }
-														| {
-																readonly isAttached: boolean;
-														  };
-											  }
-											| {
-													readonly isAttached: boolean;
-											  };
-								  }
+								| OpaqueJsonDeserialized<typeof objectWithFluidHandleOrRecursion>
 								| {
 										readonly isAttached: boolean;
 								  };

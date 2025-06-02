@@ -600,6 +600,16 @@ export const classInstanceWithPublicDataAndIsFunction = Object.assign(
 	() => 26,
 );
 
+type ObjectWithClassWithPrivateDataInOptionalRecursion = {
+	class: ClassWithPrivateData;
+	recurse?: ObjectWithClassWithPrivateDataInOptionalRecursion;
+};
+export const objectWithClassWithPrivateDataInOptionalRecursion: ObjectWithClassWithPrivateDataInOptionalRecursion =
+	{
+		class: classInstanceWithPrivateData,
+		recurse: { class: classInstanceWithPrivateData },
+	};
+
 // #region Built-in Class types
 
 export type Point = { x: number; y: number };

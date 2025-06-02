@@ -154,6 +154,7 @@ import {
 	classInstanceWithPrivateSetter,
 	classInstanceWithPublicData,
 	classInstanceWithPublicMethod,
+	objectWithClassWithPrivateDataInOptionalRecursion,
 	functionObjectWithPrivateData,
 	functionObjectWithPublicData,
 	classInstanceWithPrivateDataAndIsFunction,
@@ -1825,6 +1826,30 @@ describe("JsonSerializable", () => {
 								public: string;
 								getSecret: never;
 							}>(),
+						);
+					});
+					it("with private data in optional recursion", () => {
+						const { filteredIn } = passThru(
+							// @ts-expect-error SerializationErrorPerNonPublicProperties
+							objectWithClassWithPrivateDataInOptionalRecursion,
+							{
+								class: {
+									public: "public",
+									// secret is also not allowed but is present
+									secret: 0,
+								},
+								recurse: {
+									class: {
+										public: "public",
+										// secret is also not allowed but is present
+										secret: 0,
+									},
+								},
+							},
+						);
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<SerializationErrorPerNonPublicProperties>(),
 						);
 					});
 				});

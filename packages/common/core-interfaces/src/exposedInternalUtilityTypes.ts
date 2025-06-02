@@ -1062,28 +1062,26 @@ export namespace InternalUtilityTypes {
 		[RecursionMarkerSymbol]: typeof RecursionMarkerSymbol;
 	}
 
-	/**
-	 * Recursion limit is the count of `+` that prefix it when string.
-	 *
-	 * @system
-	 */
-	export type RecursionLimit = `+${string}` | 0;
-
 	// #region JsonDeserialized implementation
 
 	/**
 	 * Outer implementation of {@link JsonDeserialized} handling meta cases
 	 * like recursive types.
 	 *
-	 * @privateRemarks
-	 * This utility is reentrant and will process a type `T` up to `RecurseLimit`.
+	 * @remarks
+	 * If no modification is needed (`T` is exactly deserilizable), `T` will
+	 * be the result.
+	 *
+	 * Upon recursion with `T` that requires modification, `T` is wrapped in
+	 * {@link OpaqueJsonDeserialized} to avoid further immediate processing.
+	 * Caller will need to unwrap the type to continue processing.
 	 *
 	 * @system
 	 */
 	export type JsonDeserializedImpl<
 		T,
 		Options extends Partial<FilterControls>,
-		RecurseLimit extends RecursionLimit = "++++" /* 4 */,
+		TypeUnderRecursion extends boolean = false,
 	> = /* Build Controls from Options filling in defaults for any missing properties */
 	{
 		AllowExactly: Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [];
@@ -1124,8 +1122,7 @@ export namespace InternalUtilityTypes {
 									AllowExtensionOf: Controls["AllowExtensionOf"];
 									DegenerateSubstitute: Controls["DegenerateSubstitute"];
 									DegenerateNonNullObjectSubstitute: Controls["DegenerateNonNullObjectSubstitute"];
-								},
-								0
+								}
 							>
 						> extends true
 						? /* same (no filtering needed) => test for non-public
@@ -1134,55 +1131,66 @@ export namespace InternalUtilityTypes {
 								T,
 								// Note: no extra allowance is made here for possible branded
 								// primitives as JsonDeserializedFilter will allow them as
-								// extensions of the primitives. Should there need a need to
-								// explicit allow them here, see JsonSerializableImpl's use.
+								// extensions of the primitives. Should there be a need to
+								// explicitly allow them here, see JsonSerializableImpl's use.
 								Controls,
 								"found non-publics",
 								"only publics"
 							> extends "found non-publics"
 							? /* hidden props => apply filtering to avoid retaining
-							     exact class except for any classes in allowances => */
-								JsonDeserializedFilter<
-									T,
-									Controls,
-									// Note that use of RecurseLimit may not be needed here
-									// could have an adverse effect on correctness if there
-									// several ancestor types that require modification and
-									// are peeling away the limit. In such a case, the limit
-									// will be used for the problems and result is already
-									// messy; so deferring full understanding of the problems
-									// that could arise from a reset and being conservative.
-									RecurseLimit
-								>
+							     exact class except for any classes in allowances =>
+								 test for known recursion */
+								TypeUnderRecursion extends false
+								? /* no known recursion => */ JsonDeserializedFilter<T, Controls>
+								: /* known recursion => use OpaqueJsonDeserialized for later processing */
+									OpaqueJsonDeserialized<
+										T,
+										Controls["AllowExactly"],
+										Controls["AllowExtensionOf"]
+									>
 							: /* no hidden properties => deserialized T is just T */
 								T
-						: /* filtering is needed => */ JsonDeserializedFilter<T, Controls, RecurseLimit>
+						: /* filtering is needed => test for known recursion */ TypeUnderRecursion extends false
+							? /* no known recursion => */ JsonDeserializedFilter<T, Controls>
+							: /* known recursion => use OpaqueJsonDeserialized for later processing */
+								OpaqueJsonDeserialized<
+									T,
+									Controls["AllowExactly"],
+									Controls["AllowExtensionOf"]
+								>
 					: /* unreachable else for infer */ never
 			: never /* DeserializedFilterControls assert else; should never be reached */
 		: never /* unreachable else for infer */;
 
 	/**
-	 * Recurses `T` applying {@link InternalUtilityTypes.JsonDeserializedFilter} up to `RecurseLimit` times.
+	 * Recurses `T` applying {@link InternalUtilityTypes.JsonDeserializedFilter} up until
+	 * `T` is found to be a match of an ancestor type. At that point `T` is wrapped in
+	 * {@link OpaqueJsonDeserialized} to avoid further immediate processing, if
+	 * modification is needed. Caller will need to unwrap the type to continue processing.
+	 * If no modification is needed, then `T` will be the result.
+	 *
+	 * @privateRemarks If exact recursion match is found to be needed, then use the
+	 * pattern found in `ReplaceRecursionWithMarkerAndPreserveAllowances`. This will
+	 * also allow shortcut test to return `OpaqueJsonDeserialized<T>` from here when
+	 * the exact recursion match is the first ancestor type in tuple as it must have
+	 * been processed and found to need modification.
 	 *
 	 * @system
 	 */
 	export type JsonDeserializedRecursion<
 		T,
 		Controls extends DeserializedFilterControls,
-		RecurseLimit extends RecursionLimit,
 		TAncestorTypes extends object,
 	> = T extends TAncestorTypes
-		? RecurseLimit extends `+${infer RecursionRemainder}`
-			? /* Now that specific recursion is found, process that recursive type
-			     directly to avoid any collateral damage from ancestor type that
-			     required modification. */
-				JsonDeserializedImpl<
-					T,
-					Controls,
-					RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0
-				>
-			: Controls["DegenerateNonNullObjectSubstitute"]
-		: JsonDeserializedFilter<T, Controls, RecurseLimit, TAncestorTypes | Extract<T, object>>;
+		? /* recursion found => reprocess that recursive type directly to avoid
+		     any collateral damage from ancestor type that required modification.
+			 Further recursion will not happen during processing. Either:
+			  - the type requires modification and the `TypeUnderRecursion=true`
+			    arg will result in `OpaqueJsonDeserialized<T>` wrapper OR
+			  - no change is needed from this point and `T` will result. */
+			JsonDeserializedImpl<T, Controls, true>
+		: /* no recursion yet detected => */
+			JsonDeserializedFilter<T, Controls, TAncestorTypes | Extract<T, object>>;
 
 	/**
 	 * Handle Opaque Json types for {@link JsonDeserialized}.
@@ -1221,8 +1229,8 @@ export namespace InternalUtilityTypes {
 	export type JsonDeserializedFilter<
 		T,
 		Controls extends DeserializedFilterControls,
-		RecurseLimit extends RecursionLimit,
-		// Always start with object portion of self as ancestor; otherwise recursion limit appears one greater
+		// Always start with object portion of self as ancestor. Filtering will
+		// not apply past recursion (nested occurrence of this).
 		TAncestorTypes extends object = Extract<T, object>,
 	> = /* test for 'any' */ boolean extends (T extends never ? true : false)
 		? /* 'any' => */ Controls["DegenerateSubstitute"]
@@ -1255,7 +1263,7 @@ export namespace InternalUtilityTypes {
 										[K in keyof T]: JsonForDeserializedArrayItem<
 											T[K],
 											Controls,
-											JsonDeserializedRecursion<T[K], Controls, RecurseLimit, TAncestorTypes>
+											JsonDeserializedRecursion<T[K], Controls, TAncestorTypes>
 										>;
 									}
 								: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
@@ -1273,12 +1281,7 @@ export namespace InternalUtilityTypes {
 															Controls["AllowExactly"],
 															Controls["AllowExtensionOf"],
 															K
-														>]: JsonDeserializedRecursion<
-															T[K],
-															Controls,
-															RecurseLimit,
-															TAncestorTypes
-														>;
+														>]: JsonDeserializedRecursion<T[K], Controls, TAncestorTypes>;
 													} & {
 														/* properties that may have undefined values are optional */
 														[K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<
@@ -1286,12 +1289,7 @@ export namespace InternalUtilityTypes {
 															Controls["AllowExactly"],
 															Controls["AllowExtensionOf"],
 															K
-														>]?: JsonDeserializedRecursion<
-															T[K],
-															Controls,
-															RecurseLimit,
-															TAncestorTypes
-														>;
+														>]?: JsonDeserializedRecursion<T[K], Controls, TAncestorTypes>;
 													}
 												>
 						: /* not an object => */ never;
@@ -1299,6 +1297,13 @@ export namespace InternalUtilityTypes {
 	// #endregion
 
 	// #region *Readonly implementations
+
+	/**
+	 * Recursion limit is the count of `+` that prefix it when string.
+	 *
+	 * @system
+	 */
+	export type RecursionLimit = `+${string}` | 0;
 
 	/**
 	 * If `T` is a `Map<K,V>` or `ReadonlyMap<K,V>`, returns `ReadonlyMap` and,
