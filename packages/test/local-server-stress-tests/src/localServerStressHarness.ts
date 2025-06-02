@@ -1005,12 +1005,16 @@ async function maybeSaveFluidOpsTofile(
 		return;
 	}
 
+	// No ops were sequenced - we never attached!
+	if (finalState.validationClient.container.resolvedUrl === undefined) {
+		return saveOpsToFile(`${saveInfo.saveFluidOps.path}`, []);
+	}
+
 	const documentServiceFactory = new LocalDocumentServiceFactory(
 		finalState.localDeltaConnectionServer,
 	);
 	const documentService = await documentServiceFactory.createDocumentService(
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		finalState.validationClient.container.resolvedUrl!,
+		finalState.validationClient.container.resolvedUrl,
 	);
 	const deltaStorage = await documentService.connectToDeltaStorage();
 	const ops = deltaStorage.fetchMessages(0, undefined);
