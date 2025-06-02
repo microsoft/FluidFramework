@@ -257,7 +257,7 @@ const documentSchemaSupportedConfigs = {
 function checkRuntimeCompatibility(
 	documentSchema: IDocumentSchema | undefined,
 	schemaName: string,
-): void {
+): asserts documentSchema is IDocumentSchemaCurrent {
 	// Back-compat - we can't do anything about legacy documents.
 	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
 	// do not run into compat problems.
@@ -544,21 +544,11 @@ export class DocumentsSchemaController {
 			);
 			this.futureSchema = undefined;
 		} else {
-			// checkRuntimeCompatibility() would have thrown if this.documentSchema.version !== currentDocumentVersionSchema
-			assert(
-				this.documentSchema.version === currentDocumentVersionSchema,
-				"this.documentSchema.version should be currentDocumentVersionSchema",
-			);
-			const incomingDocumentSchema = {
-				...this.documentSchema,
-				// We explicity set version to make the compiler happy
-				version: this.documentSchema.version,
-			} satisfies IDocumentSchemaCurrent;
-			this.sessionSchema = and(incomingDocumentSchema, this.desiredSchema);
-			this.futureSchema = or(incomingDocumentSchema, this.desiredSchema);
+			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
+			this.futureSchema = or(this.documentSchema, this.desiredSchema);
 			assert(this.sessionSchema.runtime.explicitSchemaControl === true, 0x94b /* legacy */);
 			assert(this.futureSchema.runtime.explicitSchemaControl === true, 0x94c /* legacy */);
-			if (same(incomingDocumentSchema, this.futureSchema)) {
+			if (same(this.documentSchema, this.futureSchema)) {
 				this.futureSchema = undefined;
 			}
 		}
@@ -664,17 +654,10 @@ export class DocumentsSchemaController {
 
 			// Changes are in effect. Immediately check that this client understands these changes
 			checkRuntimeCompatibility(content, "change");
-			// checkRuntimeCompatibility() would have thrown if content.version !== currentDocumentVersionSchema
-			assert(
-				content.version === currentDocumentVersionSchema,
-				"content.version must be currentDocumentVersionSchema",
-			);
-			const schema = {
+			const schema: IDocumentSchemaCurrent = {
 				...content,
 				refSeq: sequenceNumber,
-				// We explicity set version to make the compiler happy
-				version: content.version,
-			} satisfies IDocumentSchemaCurrent;
+			};
 			this.documentSchema = schema;
 			this.sessionSchema = and(schema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
