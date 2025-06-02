@@ -89,7 +89,7 @@ let testLogger: FluidTestRunLogger;
  * @internal
  */
 export const mochaHooks = {
-	async beforeAll () {
+	async beforeAll() {
 		// Code in our tests will call the global `createTestLogger` function to get a logger to use.
 		// First we call the version of that function that was (potentially) injected dynamicaly to get the logger that it
 		// provides and wrap it with a more intelligent logger which adds test-run-related context to all events logged
