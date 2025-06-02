@@ -29,7 +29,7 @@ import { validateUsageError } from "../utils.js";
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import { singleJsonCursor } from "../json/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { flexTreeFromCursor } from "../../simple-tree/api/create.js";
+import { unhydratedFlexTreeFromCursor } from "../../simple-tree/api/create.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 
@@ -285,7 +285,7 @@ describe("Unhydrated nodes", () => {
 	});
 
 	it("flexTreeFromCursor", () => {
-		const tree = flexTreeFromCursor(
+		const tree = unhydratedFlexTreeFromCursor(
 			getUnhydratedContext(SchemaFactory.number),
 			singleJsonCursor(1),
 		);
@@ -297,7 +297,7 @@ describe("Unhydrated nodes", () => {
 		const defaultValue = 3;
 		const constantProvider: ConstantFieldProvider = (): UnhydratedFlexTreeNode[] => {
 			return [
-				flexTreeFromCursor(
+				unhydratedFlexTreeFromCursor(
 					getUnhydratedContext(SchemaFactory.number),
 					singleJsonCursor(defaultValue),
 				),
@@ -318,7 +318,7 @@ describe("Unhydrated nodes", () => {
 		const contextualProvider: ContextualFieldProvider = (context: unknown) => {
 			assert.equal(context, "UseGlobalContext");
 			return [
-				flexTreeFromCursor(
+				unhydratedFlexTreeFromCursor(
 					getUnhydratedContext(SchemaFactory.number),
 					singleJsonCursor(defaultValue),
 				),

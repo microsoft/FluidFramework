@@ -23,7 +23,7 @@ import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 // eslint-disable-next-line import/no-internal-modules
-import { flexTreeFromCursor } from "../../../simple-tree/api/create.js";
+import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
 import { expectEqualCursors } from "../../utils.js";
 
 describe("unhydratedFlexTree", () => {
@@ -78,7 +78,7 @@ describe("unhydratedFlexTree", () => {
 		objectSchemaSimple,
 	]);
 
-	const object = flexTreeFromCursor(context, cursorForMapTreeNode(objectMapTree));
+	const object = unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(objectMapTree));
 	const map = object.getBoxed(objectMapKey).boxedAt(0) ?? assert.fail();
 	const arrayNode = object.getBoxed(objectFieldNodeKey).boxedAt(0) ?? assert.fail();
 
@@ -164,7 +164,7 @@ describe("unhydratedFlexTree", () => {
 
 	it("cannot be multiparented", () => {
 		assert.throws(() =>
-			flexTreeFromCursor(
+			unhydratedFlexTreeFromCursor(
 				context,
 				cursorForMapTreeNode({
 					type: brand("Parent of a node that already has another parent"),
@@ -179,7 +179,7 @@ describe("unhydratedFlexTree", () => {
 			fields: new Map(),
 		};
 		assert.throws(() => {
-			flexTreeFromCursor(
+			unhydratedFlexTreeFromCursor(
 				context,
 				cursorForMapTreeNode({
 					type: brand("Parent with the same child twice in the same field"),
@@ -217,7 +217,10 @@ describe("unhydratedFlexTree", () => {
 
 	describe("can mutate", () => {
 		it("required fields", () => {
-			const mutableObject = flexTreeFromCursor(context, cursorForMapTreeNode(objectMapTree));
+			const mutableObject = unhydratedFlexTreeFromCursor(
+				context,
+				cursorForMapTreeNode(objectMapTree),
+			);
 			// Find a field to edit. In this case the one with the map in it.
 			const field = mutableObject.getBoxed(objectMapKey) as UnhydratedOptionalField;
 			const oldMap = field.boxedAt(0);
@@ -225,7 +228,7 @@ describe("unhydratedFlexTree", () => {
 			assert.equal(oldMap.parentField.parent.parent, mutableObject);
 
 			// Allocate a new node
-			const newMap = flexTreeFromCursor(context, cursorForMapTreeNode(mapMapTree));
+			const newMap = unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(mapMapTree));
 			assert.notEqual(newMap, oldMap);
 			assert.equal(newMap.parentField.parent.parent, undefined);
 
@@ -243,12 +246,15 @@ describe("unhydratedFlexTree", () => {
 		});
 
 		it("optional fields", () => {
-			const mutableMap = flexTreeFromCursor(context, cursorForMapTreeNode(mapMapTree));
+			const mutableMap = unhydratedFlexTreeFromCursor(
+				context,
+				cursorForMapTreeNode(mapMapTree),
+			);
 			const field = mutableMap.getBoxed(mapKey) as UnhydratedOptionalField;
 			const oldValue = field.boxedAt(0);
 			const newValue = `new ${childValue}`;
 			const newTree: MapTree = { ...mapChildMapTree, value: newValue };
-			field.editor.set(flexTreeFromCursor(context, cursorForMapTreeNode(newTree)));
+			field.editor.set(unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(newTree)));
 			assert.equal(field.boxedAt(0)?.value, newValue);
 			assert.notEqual(newValue, oldValue);
 			field.editor.set(undefined);
@@ -257,7 +263,7 @@ describe("unhydratedFlexTree", () => {
 
 		describe("arrays", () => {
 			it("insert and remove", () => {
-				const mutableFieldNode = flexTreeFromCursor(
+				const mutableFieldNode = unhydratedFlexTreeFromCursor(
 					context,
 					cursorForMapTreeNode(fieldNodeMapTree),
 				);
@@ -268,14 +274,14 @@ describe("unhydratedFlexTree", () => {
 				const treeC: MapTree = { ...mapChildMapTree, value: "c" };
 				const treeD: MapTree = { ...mapChildMapTree, value: "d" };
 				field.editor.insert(1, [
-					flexTreeFromCursor(context, cursorForMapTreeNode(treeC)),
-					flexTreeFromCursor(context, cursorForMapTreeNode(treeD)),
+					unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(treeC)),
+					unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(treeD)),
 				]);
 				const treeA: MapTree = { ...mapChildMapTree, value: "a" };
 				const treeB: MapTree = { ...mapChildMapTree, value: "b" };
 				field.editor.insert(0, [
-					flexTreeFromCursor(context, cursorForMapTreeNode(treeA)),
-					flexTreeFromCursor(context, cursorForMapTreeNode(treeB)),
+					unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(treeA)),
+					unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(treeB)),
 				]);
 				assert.deepEqual(values(), ["a", "b", childValue, "c", "d"]);
 				field.editor.remove(2, 1);
@@ -284,7 +290,7 @@ describe("unhydratedFlexTree", () => {
 
 			it("with a large sequence of new content", () => {
 				// This exercises a special code path for inserting large arrays, since large arrays are treated differently to avoid overflow with `splice` + spread.
-				const mutableFieldNode = flexTreeFromCursor(
+				const mutableFieldNode = unhydratedFlexTreeFromCursor(
 					context,
 					cursorForMapTreeNode({
 						...fieldNodeMapTree,
@@ -296,7 +302,7 @@ describe("unhydratedFlexTree", () => {
 				const newContent: UnhydratedFlexTreeNode[] = [];
 				for (let i = 0; i < 10000; i++) {
 					const tree: MapTree = { ...mapChildMapTree, value: String(i) };
-					newContent.push(flexTreeFromCursor(context, cursorForMapTreeNode(tree)));
+					newContent.push(unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(tree)));
 				}
 				field.editor.insert(0, newContent);
 				assert.equal(field.length, newContent.length);

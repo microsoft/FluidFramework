@@ -84,10 +84,12 @@ export class UnhydratedFlexTreeNode
 	/**
 	 * Cache storing the {@link TreeNode} for this inner node.
 	 * @remarks
-	 * When creating a `TreeNode` for this `UnhydratedFlexTreeNode`, cache the `TreeNode` in this property: see {@link TreeNodeKernel}.
+	 * When creating a `TreeNode` for this `UnhydratedFlexTreeNode`, cache the `TreeNode` in this property.
+	 * Currently this is done by {@link TreeNodeKernel}.
+	 *
 	 * See {@link getOrCreateNodeFromInnerNode} how to get the `TreeNode`, even if not already created, regardless of hydration status.
 	 */
-	public treeNode: TreeNode | undefined = undefined;
+	public treeNode: TreeNode | undefined;
 
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
 

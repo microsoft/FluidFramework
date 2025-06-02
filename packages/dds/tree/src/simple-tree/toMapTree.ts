@@ -31,10 +31,8 @@ import {
 } from "./schemaTypes.js";
 import {
 	getKernel,
-	getSimpleNodeSchemaFromInnerNode,
 	isTreeNode,
 	NodeKind,
-	type InnerNode,
 	type TreeNode,
 	type TreeNodeSchema,
 	type Unhydrated,
@@ -122,22 +120,19 @@ function nodeDataToMapTree(
 	data: InsertableContent,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 ): UnhydratedFlexTreeNode {
-	// A special cache path for processing unhydrated nodes.
-	// They already have the mapTree, so there is no need to recompute it.
-	const innerNode = tryGetInnerNode(data);
-	if (innerNode !== undefined) {
-		if (innerNode instanceof UnhydratedFlexTreeNode) {
-			if (!allowedTypes.has(getSimpleNodeSchemaFromInnerNode(innerNode))) {
-				throw new UsageError("Invalid schema for this context.");
-			}
-			return innerNode;
-		} else {
+	if (isTreeNode(data)) {
+		const kernel = getKernel(data);
+		const inner = kernel.getInnerNodeIfUnhydrated();
+		if (inner === undefined) {
 			// The node is already hydrated, meaning that it already got inserted into the tree previously
 			throw new UsageError("A node may not be inserted into the tree more than once");
+		} else {
+			if (!allowedTypes.has(kernel.schema)) {
+				throw new UsageError("Invalid schema for this context.");
+			}
+			return inner;
 		}
 	}
-
-	assert(!isTreeNode(data), 0xa23 /* data without an inner node cannot be TreeNode */);
 
 	const schema = getType(data, allowedTypes);
 
@@ -392,12 +387,7 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexCont
 				fieldInfo.schema.props?.defaultProvider ??
 				fail("missing field has no default provider");
 			const fieldProvider = extractFieldProvider(defaultProvider);
-			// eslint-disable-next-line unicorn/prefer-ternary
-			if (isConstant(fieldProvider)) {
-				children = fieldProvider();
-			} else {
-				children = fieldProvider;
-			}
+			children = isConstant(fieldProvider) ? fieldProvider() : fieldProvider;
 		} else {
 			children = [nodeDataToMapTree(value, fieldInfo.schema.allowedTypeSet)];
 		}
@@ -601,19 +591,6 @@ function allowsValue(schema: TreeNodeSchema, value: TreeValue): boolean {
 		return valueSchemaAllows(schema.info as ValueSchema, value);
 	}
 	return false;
-}
-
-/**
- * Retrieves the InnerNode associated with the given target via {@link setInnerNode}, if any.
- * @remarks
- * If `target` is a unhydrated node, returns its MapTreeNode.
- * If `target` is a cooked node (or marinated but a FlexTreeNode exists) returns the FlexTreeNode.
- * If the target is not a node, or a marinated node with no FlexTreeNode for its anchor, returns undefined.
- */
-function tryGetInnerNode(target: unknown): InnerNode | undefined {
-	if (isTreeNode(target)) {
-		return getKernel(target).tryGetInnerNode();
-	}
 }
 
 /**

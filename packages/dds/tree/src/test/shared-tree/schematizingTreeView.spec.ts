@@ -119,7 +119,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 					const root = new Root({ content: 5 });
 
-					const inner = getKernel(root).tryGetInnerNode() ?? assert.fail("Expected child");
+					const inner = getKernel(root).getOrCreateInnerNode();
 					const field = inner.getBoxed(brand("content"));
 					const child = field.boxedAt(0) ?? assert.fail("Expected child");
 					assert(child instanceof UnhydratedFlexTreeNode);

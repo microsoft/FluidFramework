@@ -292,7 +292,7 @@ export class TreeNodeKernel {
 	}
 
 	/**
-	 * Retrieves the flex node associated with the given target via {@link setInnerNode}.
+	 * Retrieves the flex node associated with the given target.
 	 * @remarks
 	 * For {@link Unhydrated} nodes, this returns the MapTreeNode.
 	 *
@@ -339,20 +339,12 @@ export class TreeNodeKernel {
 	}
 
 	/**
-	 * Retrieves the InnerNode associated with the given target via {@link setInnerNode}, if any.
-	 * @remarks
-	 * If `target` is an unhydrated node, returns its UnhydratedFlexTreeNode.
-	 * If `target` is a cooked node (or marinated but a FlexTreeNode exists) returns the FlexTreeNode.
-	 * If the target is a marinated node with no FlexTreeNode for its anchor, returns undefined.
+	 * Retrieves the {@link UnhydratedFlexTreeNode} if unhydrated. otherwise undefined.
 	 */
-	public tryGetInnerNode(): InnerNode | undefined {
+	public getInnerNodeIfUnhydrated(): UnhydratedFlexTreeNode | undefined {
 		if (isHydrated(this.#hydrationState)) {
-			return (
-				this.#hydrationState.innerNode ??
-				this.#hydrationState.anchorNode.slots.get(flexTreeSlot)
-			);
+			return undefined;
 		}
-
 		return this.#hydrationState.innerNode;
 	}
 }
@@ -418,7 +410,7 @@ export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
 }
 
 /**
- * Retrieves the flex node associated with the given target via {@link setInnerNode}.
+ * Retrieves the flex node associated with the given target.
  * @remarks
  * For {@link Unhydrated} nodes, this returns the MapTreeNode.
  *

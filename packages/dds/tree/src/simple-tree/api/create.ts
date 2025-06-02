@@ -43,7 +43,7 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	cursor: ITreeCursorSynchronous | undefined,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 	const context = getUnhydratedContext(schema);
-	const mapTrees = cursor === undefined ? [] : [flexTreeFromCursor(context, cursor)];
+	const mapTrees = cursor === undefined ? [] : [unhydratedFlexTreeFromCursor(context, cursor)];
 
 	const flexSchema = context.flexContext.schema;
 
@@ -80,7 +80,7 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
  * @remarks
  * This does not validate the node is in schema.
  */
-export function flexTreeFromCursor(
+export function unhydratedFlexTreeFromCursor(
 	context: Context,
 	cursor: ITreeCursorSynchronous,
 ): UnhydratedFlexTreeNode {
@@ -96,7 +96,7 @@ export function flexTreeFromCursor(
 				context.flexContext,
 				storedSchema.getFieldSchema(cursor.getFieldKey()).kind,
 				cursor.getFieldKey(),
-				mapCursorField(cursor, () => flexTreeFromCursor(context, cursor)),
+				mapCursorField(cursor, () => unhydratedFlexTreeFromCursor(context, cursor)),
 			),
 		]),
 	);
