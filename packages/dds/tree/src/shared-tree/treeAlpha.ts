@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	debugAssert,
+	fail,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -545,52 +550,62 @@ export const TreeAlpha: TreeAlpha = {
 
 		const schema = treeNodeApi.schema(node);
 
-		if (isArrayNodeSchema(schema)) {
-			const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+		switch (schema.kind) {
+			case NodeKind.Array: {
+				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
 
-			// Empty sequence - cannot have children.
-			if (sequence === undefined) {
+				// Empty sequence - cannot have children.
+				if (sequence === undefined) {
+					return undefined;
+				}
+
+				const index = typeof key === "number" ? key : asIndex(key, Number.POSITIVE_INFINITY);
+
+				// If the key is not a valid index, then there is no corresponding child.
+				if (index === undefined) {
+					return undefined;
+				}
+
+				const childFlexTree = sequence.at(index);
+
+				// No child at the given index.
+				if (childFlexTree === undefined) {
+					return undefined;
+				}
+
+				return nodeFromInnerUnboxedNode(childFlexTree);
+			}
+			case NodeKind.Map:
+			case NodeKind.Object: {
+				let storedKey: string | number = key;
+				if (schema.kind === NodeKind.Object) {
+					const fields = schema.info as Record<string, ImplicitFieldSchema>;
+
+					const fieldSchema = fields[key];
+					if (fieldSchema === undefined) {
+						return undefined;
+					}
+
+					storedKey =
+						fieldSchema instanceof FieldSchema && fieldSchema.props?.key !== undefined
+							? fieldSchema.props.key
+							: key;
+				}
+
+				const field = flexNode.tryGetField(brand(String(storedKey)));
+				if (field !== undefined) {
+					return tryGetTreeNodeForField(field);
+				}
+
 				return undefined;
 			}
-
-			const index = typeof key === "number" ? key : asIndex(key, Number.POSITIVE_INFINITY);
-
-			// If the key is not a valid index, then there is no corresponding child.
-			if (index === undefined) {
-				return undefined;
+			case NodeKind.Leaf: {
+				fail("Leaf schema associated with non-leaf tree node.");
 			}
-
-			const childFlexTree = sequence.at(index);
-
-			// No child at the given index.
-			if (childFlexTree === undefined) {
-				return undefined;
+			default: {
+				unreachableCase(schema.kind);
 			}
-
-			return nodeFromInnerUnboxedNode(childFlexTree);
 		}
-
-		let storedKey: string | number = key;
-		if (schema.kind === NodeKind.Object) {
-			const fields = schema.info as Record<string, ImplicitFieldSchema>;
-
-			const fieldSchema = fields[key];
-			if (fieldSchema === undefined) {
-				return undefined;
-			}
-
-			storedKey =
-				fieldSchema instanceof FieldSchema && fieldSchema.props?.key !== undefined
-					? fieldSchema.props.key
-					: key;
-		}
-
-		const field = flexNode.tryGetField(brand(String(storedKey)));
-		if (field !== undefined) {
-			return tryGetTreeNodeForField(field);
-		}
-
-		return undefined;
 	},
 
 	children: (node: TreeNode): [string | number, TreeNode | TreeLeafValue][] => {
@@ -601,24 +616,36 @@ export const TreeAlpha: TreeAlpha = {
 
 		const result: [string | number, TreeNode | TreeLeafValue][] = [];
 
-		if (isArrayNodeSchema(schema)) {
-			const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
-			if (sequence === undefined) {
-				return [];
-			}
-
-			sequence.map((childFlexTree, index) => {
-				const childTree = nodeFromInnerUnboxedNode(childFlexTree);
-				result.push([index, childTree]);
-			});
-		} else {
-			for (const fieldKey of flexNode.keys()) {
-				const flexField =
-					flexNode.tryGetField(fieldKey) ?? fail("Field not found for reported key.");
-				const childTreeNode = tryGetTreeNodeForField(flexField);
-				if (childTreeNode !== undefined) {
-					result.push([fieldKey, childTreeNode]);
+		switch (schema.kind) {
+			case NodeKind.Array: {
+				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+				if (sequence === undefined) {
+					return [];
 				}
+
+				sequence.map((childFlexTree, index) => {
+					const childTree = nodeFromInnerUnboxedNode(childFlexTree);
+					result.push([index, childTree]);
+				});
+				break;
+			}
+			case NodeKind.Map:
+			case NodeKind.Object: {
+				for (const fieldKey of flexNode.keys()) {
+					const flexField =
+						flexNode.tryGetField(fieldKey) ?? fail("Field not found for reported key.");
+					const childTreeNode = tryGetTreeNodeForField(flexField);
+					if (childTreeNode !== undefined) {
+						result.push([fieldKey, childTreeNode]);
+					}
+				}
+				break;
+			}
+			case NodeKind.Leaf: {
+				fail("Leaf schema associated with non-leaf tree node.");
+			}
+			default: {
+				unreachableCase(schema.kind);
 			}
 		}
 
