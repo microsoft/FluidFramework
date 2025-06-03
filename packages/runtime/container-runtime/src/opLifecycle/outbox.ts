@@ -195,6 +195,10 @@ export class Outbox {
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
 	private readonly idAllocationBatch: BatchManager;
+	/**
+	 * These messages are held until the next flush, at which point they'll be prepended to the first batch being flushed
+	 */
+	private readonly heldDocumentSchemaMessages: LocalBatchMessage[] = [];
 	private batchRebasesToReport = 5;
 	private rebasing = false;
 
@@ -218,8 +222,16 @@ export class Outbox {
 		});
 	}
 
+	/**
+	 * Count of all messages, batched or held
+	 */
 	public get messageCount(): number {
-		return this.mainBatch.length + this.blobAttachBatch.length + this.idAllocationBatch.length;
+		return (
+			this.mainBatch.length +
+			this.blobAttachBatch.length +
+			this.idAllocationBatch.length +
+			this.heldDocumentSchemaMessages.length
+		);
 	}
 
 	public get mainBatchMessageCount(): number {
@@ -234,8 +246,9 @@ export class Outbox {
 		return this.idAllocationBatch.length;
 	}
 
-	public get isEmpty(): boolean {
-		return this.messageCount === 0;
+	public get allBatchesEmpty(): boolean {
+		// Note we don't consider heldDocumentSchemaMessages here, as they are not part of any batch until flush is happening.
+		return this.mainBatch.empty && this.blobAttachBatch.empty && this.idAllocationBatch.empty;
 	}
 
 	public containsUserChanges(): boolean {
@@ -327,17 +340,23 @@ export class Outbox {
 		throw errorWrapper.value;
 	}
 
-	private readonly heldSystemMessages: LocalBatchMessage[] = [];
-
 	/**
-	 * Hold a system message until the next flush.
+	 * Hold a DocumentSchema message until the next flush.
+	 *
+	 * @remarks
 	 * These will not contribute to {@link Outbox.containsUserChanges}, and will not be included in any batch
 	 * until flush is actually sending the batch (i.e. connected and not staged).
+	 *
+	 * @privateRemarks
+	 * Maybe useful for other types of "system messages" as well that don't represent user changes
+	 * and can wait and be flushed whenever we do have user changes.
+	 *
+	 * @param message - The message to hold. Currently only DocumentSchema messages are expected to be held up this way.
 	 */
-	public holdSystemMessageUntilNextFlush(
-		systemMessage: LocalBatchMessage & { runtimeOp: ContainerRuntimeDocumentSchemaMessage },
+	public holdDocumentSchemaMessageUntilNextFlush(
+		message: LocalBatchMessage & { runtimeOp: ContainerRuntimeDocumentSchemaMessage },
 	): void {
-		this.heldSystemMessages.push(systemMessage);
+		this.heldDocumentSchemaMessages.push(message);
 	}
 
 	public submit(message: LocalBatchMessage): void {
@@ -491,9 +510,10 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend() && !staged) {
-			// Prepend held system messages before adding batch metadata and virtualizing
-			const systemMessages = this.heldSystemMessages.splice(0);
-			rawBatch.messages.unshift(...systemMessages);
+			// Prepend held document schema messages before adding batch metadata and virtualizing.
+			// Note this is valid to do for any of the BatchManagers.
+			const documentSchemaMessages = this.heldDocumentSchemaMessages.splice(0);
+			rawBatch.messages.unshift(...documentSchemaMessages);
 			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 

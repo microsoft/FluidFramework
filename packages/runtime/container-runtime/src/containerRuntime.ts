@@ -2571,7 +2571,7 @@ export class ContainerRuntime
 			return true;
 		}
 
-		if (!this.hasPendingMessages()) {
+		if (this.pendingMessagesCount === 0) {
 			// If there are no pending messages, we can always reconnect
 			this.resetReconnectCount();
 			return true;
@@ -3321,7 +3321,7 @@ export class ContainerRuntime
 			);
 
 			this.outbox.flush(resubmitInfo);
-			assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+			assert(this.outbox.allBatchesEmpty, 0x3cf /* reentrancy */);
 		} catch (error) {
 			const error2 = normalizeError(error, {
 				props: {
@@ -3982,7 +3982,7 @@ export class ContainerRuntime
 		});
 
 		// legacy: assert 0x3d1
-		if (!this.outbox.isEmpty) {
+		if (!this.outbox.allBatchesEmpty) {
 			throw DataProcessingError.create(
 				"Can't trigger summary in the middle of a batch",
 				"submitSummary",
@@ -4387,12 +4387,11 @@ export class ContainerRuntime
 		}
 	}
 
+	/**
+	 * Count of all messages that have been submitted (flushed to Ordering Service, or at least in the Outbox) but not yet acked
+	 */
 	private get pendingMessagesCount(): number {
 		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
-	}
-
-	private hasPendingMessages(): boolean {
-		return this.pendingMessagesCount !== 0;
 	}
 
 	/**
@@ -4466,26 +4465,25 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Submit a system message to the Outbox.
-	 * In interactive clients, system messages submitted via this function will be
+	 * Submit a Document Schema message to the Outbox.
+	 * In interactive clients, Document Schema messages submitted via this function will be
 	 * held in the Outbox until the next flush.
 	 * This avoids sending an op apart from user interaction, which is preferable when possible.
 	 *
 	 * @privateremarks
-	 * Right now the only message type supported here is DocumentSchemaChange.
-	 * ID Allocation ops may be suited for use this flow as well.
+	 * ID Allocation ops may prove to be well-suited to use this flow as well.
 	 * GC ops are not since they should be sent immediately.
 	 *
-	 * @param systemMessage - The system message to submit.
+	 * @param message - The Document Schema message to submit.
 	 */
-	private submitSystemMessage(systemMessage: ContainerRuntimeDocumentSchemaMessage): void {
+	private submitDocumentSchemaMessage(message: ContainerRuntimeDocumentSchemaMessage): void {
 		if (this.isSummarizerClient) {
-			this.submit(systemMessage);
+			this.submit(message);
 			return;
 		}
 
-		this.outbox.holdSystemMessageUntilNextFlush({
-			runtimeOp: systemMessage,
+		this.outbox.holdDocumentSchemaMessageUntilNextFlush({
+			runtimeOp: message,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			staged: false,
 		});
@@ -4540,7 +4538,7 @@ export class ContainerRuntime
 			}
 
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
-			// submitSystemMessage will have the Outbox hold the message and only send it when the next flush happens.
+			// In interactive clients, the Outbox will hold the message and only send it when the next flush happens.
 			const schemaChangeMessage = this.documentsSchemaController.maybeSendSchemaMessage();
 			if (schemaChangeMessage) {
 				this.mc.logger.sendTelemetryEvent({
@@ -4555,7 +4553,7 @@ export class ContainerRuntime
 					type: ContainerMessageType.DocumentSchemaChange,
 					contents: schemaChangeMessage,
 				};
-				this.submitSystemMessage(msg);
+				this.submitDocumentSchemaMessage(msg);
 			}
 
 			const message: LocalBatchMessage = {
@@ -4634,7 +4632,7 @@ export class ContainerRuntime
 		);
 
 		// System message should not be sent in the middle of the batch.
-		assert(this.outbox.isEmpty, 0x3d4 /* System op in the middle of a batch */);
+		assert(this.outbox.allBatchesEmpty, 0x3d4 /* System op in the middle of a batch */);
 
 		return this.submitSummaryFn(contents, referenceSequenceNumber);
 	}
