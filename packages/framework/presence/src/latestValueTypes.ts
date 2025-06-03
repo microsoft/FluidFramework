@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	DeepReadonly,
-	JsonDeserialized,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type { DeepReadonly, JsonDeserialized } from "@fluidframework/core-interfaces/internal";
 
 import type { Attendee } from "./presence.js";
 
