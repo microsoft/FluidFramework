@@ -128,7 +128,7 @@ export namespace InternalTypes {
     }
 }
 
-// @beta @system
+// @alpha @system
 export namespace InternalUtilityTypes {
     // @system
     export type IfNotificationListener<Event, IfListener, Else> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P>, IfListener, Else> : Else;
