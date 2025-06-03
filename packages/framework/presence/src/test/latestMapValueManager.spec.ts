@@ -230,5 +230,6 @@ export function checkCompiles(): void {
 	// This happened under PR #24752 unexpectedly. Presumably from some additional inference complication.
 	// This is a better inferred result; so it can stand, but would not be terrible if the behavior changes.
 	// Caller can always use explicit generic specification to be completely clear about the types.
+	// @ts-expect-error See description above.
 	localPrimitiveMap.set("true", false);
 }
