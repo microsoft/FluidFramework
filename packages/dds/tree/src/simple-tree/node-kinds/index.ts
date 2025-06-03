@@ -38,3 +38,18 @@ export {
 	setField,
 	type TreeObjectNode,
 } from "./object/index.js";
+
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export {
+	isRecordNodeSchema,
+	type RecordNodeCustomizableSchema,
+	type RecordNodeInsertableData,
+	type RecordNodePojoEmulationSchema,
+	RecordNodeSchema,
+	recordSchema,
+	type TreeRecordNode,
+} from "./record/index.js";

@@ -205,6 +205,12 @@ export {
 	type TreeObjectNode,
 	setField,
 	createUnknownOptionalFieldPolicy,
+	isRecordNodeSchema,
+	type RecordNodeCustomizableSchema,
+	type RecordNodeInsertableData,
+	type RecordNodePojoEmulationSchema,
+	RecordNodeSchema,
+	type TreeRecordNode,
 } from "./node-kinds/index.js";
 export {
 	mapTreeFromNodeData,

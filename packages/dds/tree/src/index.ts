@@ -245,6 +245,11 @@ export {
 	type ObjectFromSchemaRecord,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
+	RecordNodeSchema,
+	type RecordNodeCustomizableSchema,
+	type RecordNodeInsertableData,
+	type RecordNodePojoEmulationSchema,
+	type TreeRecordNode,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
