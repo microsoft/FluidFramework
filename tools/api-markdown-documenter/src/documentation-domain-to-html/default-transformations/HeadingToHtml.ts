@@ -48,7 +48,7 @@ export function headingToHtml(
 
 		return transformChildrenUnderTag(
 			{ name: `h${headingLevel}`, attributes },
-			headingNode.children,
+			[headingNode.title],
 			context,
 		);
 	} else {
@@ -57,7 +57,7 @@ export function headingToHtml(
 			transformedChildren.push(h("a", { id: headingNode.id }));
 		}
 		transformedChildren.push(
-			transformChildrenUnderTag({ name: "b" }, headingNode.children, context),
+			transformChildrenUnderTag({ name: "b" }, [headingNode.title], context),
 		);
 
 		// Wrap the 2 child elements in a fragment
