@@ -376,6 +376,8 @@ export interface TreeAlpha {
 	 * @remarks
 	 * No guarantees are made regarding the order of the children in the returned array.
 	 *
+	 * Unset optional properties of Object nodes are not included in the result.
+	 *
 	 * Unknown optional fields of Object nodes are not included in the result.
 	 *
 	 * @param node - The node whose children are being requested.
