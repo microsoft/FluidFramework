@@ -331,6 +331,13 @@ export class UnhydratedFlexTreeField
 		public readonly context: FlexTreeContext,
 		public readonly schema: FieldKindIdentifier,
 		public readonly key: FieldKey,
+		/**
+		 * The children of this field.
+		 * @remarks
+		 * This is either an array of {@link UnhydratedFlexTreeNode}s or a {@link ContextualFieldProvider} that will be used to populate the children lazily (after which it will become an array).
+		 * See {@link fillPendingDefaults}.
+		 * Note that any fields using a {@link ConstantFieldProvider} should be evaluated before constructing the UnhydratedFlexTreeField.
+		 */
 		private lazyChildren: UnhydratedFlexTreeNode[] | ContextualFieldProvider,
 	) {
 		// When this field is created (which only happens one time, because it is cached), all the children become parented for the first time.
