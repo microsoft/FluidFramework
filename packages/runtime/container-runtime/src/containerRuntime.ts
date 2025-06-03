@@ -3419,7 +3419,10 @@ export class ContainerRuntime
 	// eslint-disable-next-line import/no-deprecated
 	public enterStagingMode = (): StageControlsExperimental => {
 		if (this.stageControls !== undefined) {
-			throw new Error("already in staging mode");
+			throw new UsageError("already in staging mode");
+		}
+		if (this.attachState === AttachState.Detached) {
+			throw new UsageError("cannot enter staging mode while detached");
 		}
 
 		// Make sure all BatchManagers are empty before entering staging mode,
