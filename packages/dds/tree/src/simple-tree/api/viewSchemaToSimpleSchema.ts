@@ -13,6 +13,7 @@ import type {
 	SimpleNodeSchema,
 	SimpleObjectFieldSchema,
 	SimpleObjectNodeSchema,
+	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
 import { NodeKind } from "../core/index.js";
@@ -81,7 +82,8 @@ function copySimpleNodeSchema(schema: SimpleNodeSchema): SimpleNodeSchema {
 			return copySimpleLeafSchema(schema);
 		case NodeKind.Array:
 		case NodeKind.Map:
-			return copySimpleMapOrArraySchema(schema);
+		case NodeKind.Record:
+			return copySimpleSchemaWithAllowedTypes(schema);
 		case NodeKind.Object:
 			return copySimpleObjectSchema(schema);
 		default:
@@ -97,9 +99,9 @@ function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchem
 	};
 }
 
-function copySimpleMapOrArraySchema(
-	schema: SimpleMapNodeSchema | SimpleArrayNodeSchema,
-): SimpleMapNodeSchema | SimpleArrayNodeSchema {
+function copySimpleSchemaWithAllowedTypes(
+	schema: SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema,
+): SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema {
 	return {
 		kind: schema.kind,
 		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,

@@ -157,7 +157,8 @@ export type SimpleNodeSchema =
 	| SimpleLeafNodeSchema
 	| SimpleMapNodeSchema
 	| SimpleArrayNodeSchema
-	| SimpleObjectNodeSchema;
+	| SimpleObjectNodeSchema
+	| SimpleRecordNodeSchema;
 
 /**
  * A simple, shallow representation of a schema for a field.

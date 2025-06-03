@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
@@ -50,9 +51,10 @@ import {
 // TODO: Having the schema provide their own policy functions for compatibility which
 // toMapTree invokes instead of manually handling each kind would remove this bad
 // dependency, and reduce coupling.
-// eslint-disable-next-line import/no-internal-modules
+/* eslint-disable import/no-internal-modules */
 import { isObjectNodeSchema } from "./node-kinds/object/objectNodeTypes.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { isRecordNodeSchema } from "./node-kinds/record/recordNodeTypes.js";
+/* eslint-enable import/no-internal-modules */
 
 /**
  * Module notes:
@@ -162,7 +164,8 @@ function nodeDataToMapTree(
 			result = objectToMapTree(data, schema);
 			break;
 		case NodeKind.Record:
-			throw new Error("TODO");
+			result = recordToMapTree(data, schema);
+			break;
 		default:
 			unreachableCase(schema.kind);
 	}
@@ -380,6 +383,42 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): Exclusiv
 }
 
 /**
+ * Transforms data under an Object schema.
+ * @param data - The tree data to be transformed. Must be a Record-like object.
+ * @param schema - The schema associated with the value.
+ */
+function recordToMapTree(data: FactoryContent, schema: TreeNodeSchema): ExclusiveMapTree {
+	assert(isRecordNodeSchema(schema), "Expected a Record schema.");
+	if (!(typeof data === "object" && data !== null)) {
+		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
+	}
+
+	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+
+	const fieldsIterator: Iterable<readonly [string, InsertableContent]> = Object.entries(data);
+
+	const transformedFields = new Map<FieldKey, ExclusiveMapTree[]>();
+	for (const item of fieldsIterator) {
+		if (!isReadonlyArray(item) || item.length !== 2 || typeof item[0] !== "string") {
+			throw new UsageError(`Input data is incompatible with record entry: ${item}`);
+		}
+		const [key, value] = item;
+		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
+
+		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
+		if (value !== undefined) {
+			const mappedField = nodeDataToMapTree(value, allowedChildTypes);
+			transformedFields.set(brand(key), [mappedField]);
+		}
+	}
+
+	return {
+		type: brand(schema.identifier),
+		fields: transformedFields,
+	};
+}
+
+/**
  * Check {@link FactoryContentObject} for a property which could be store a field.
  *
  * @returns If the property exists, return its value. Otherwise, returns undefined.
@@ -547,6 +586,10 @@ function shallowCompatibilityTest(
 
 	// At this point, it is assumed data is a record-like object since all the other cases have been eliminated.
 
+	if (schema.kind === NodeKind.Record) {
+		return CompatibilityLevel.Normal;
+	}
+
 	if (schema.kind === NodeKind.Array) {
 		return CompatibilityLevel.None;
 	}
@@ -631,6 +674,7 @@ export function addDefaultsToMapTree(
 	switch (schema.kind) {
 		case NodeKind.Array:
 		case NodeKind.Map:
+		case NodeKind.Record:
 			{
 				for (const field of mapTree.fields.values()) {
 					for (const child of field) {

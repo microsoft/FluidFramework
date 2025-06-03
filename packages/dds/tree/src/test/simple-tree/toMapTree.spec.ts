@@ -22,6 +22,7 @@ import {
 	nullSchema,
 	numberSchema,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	stringSchema,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
@@ -586,6 +587,205 @@ describe("toMapTree", () => {
 			class TestSchema2 extends schemaFactory.object("testObject", {
 				field: schemaFactory.string,
 			}) {}
+
+			const testData = new TestSchema2({ field: "test" });
+
+			assert.throws(
+				() => mapTreeFromNodeData(testData, TestSchema),
+				validateUsageError("Invalid schema for this context."),
+			);
+		});
+	});
+
+	describe("record", () => {
+		it("Empty record", () => {
+			const schemaFactory = new SchemaFactoryAlpha("test");
+			const schema = schemaFactory.record("record", [schemaFactory.number]);
+
+			const actual = mapTreeFromNodeData({}, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.record"),
+				fields: new Map<FieldKey, MapTree[]>(),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Simple map", () => {
+			const schemaFactory = new SchemaFactoryAlpha("test");
+			const schema = schemaFactory.record("record", [
+				schemaFactory.number,
+				schemaFactory.string,
+			]);
+
+			const actual = mapTreeFromNodeData(
+				{
+					a: 42,
+					b: "Hello world",
+					c: 37,
+				},
+				[schema],
+			);
+
+			const expected: MapTree = {
+				type: brand("test.record"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						brand("a"),
+						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+					],
+					[
+						brand("b"),
+						[
+							{
+								type: brand(stringSchema.identifier),
+								value: "Hello world",
+								fields: new Map(),
+							},
+						],
+					],
+					[
+						brand("c"),
+						[{ type: brand(numberSchema.identifier), value: 37, fields: new Map() }],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Complex Map", () => {
+			const schemaFactory = new SchemaFactoryAlpha("test");
+			const childObjectSchema = schemaFactory.object("child-object", {
+				name: schemaFactory.string,
+				age: schemaFactory.number,
+			});
+			const schema = schemaFactory.record("record", [
+				childObjectSchema,
+				schemaFactory.number,
+				schemaFactory.string,
+				schemaFactory.null,
+			]);
+
+			const actual = mapTreeFromNodeData(
+				{
+					a: 42,
+					b: "Hello world",
+					c: null,
+					d: { age: 37, name: "Jill" },
+				},
+				[schema],
+			);
+
+			const expected: MapTree = {
+				type: brand("test.record"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						brand("a"),
+						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+					],
+					[
+						brand("b"),
+						[
+							{
+								type: brand(stringSchema.identifier),
+								value: "Hello world",
+								fields: new Map(),
+							},
+						],
+					],
+					[
+						brand("c"),
+						[{ type: brand(nullSchema.identifier), value: null, fields: new Map() }],
+					],
+					[
+						brand("d"),
+						[
+							{
+								type: brand(childObjectSchema.identifier),
+								fields: new Map([
+									[
+										brand("name"),
+										[
+											{
+												type: brand(stringSchema.identifier),
+												value: "Jill",
+												fields: new Map(),
+											},
+										],
+									],
+									[
+										brand("age"),
+										[
+											{
+												type: brand(numberSchema.identifier),
+												value: 37,
+												fields: new Map(),
+											},
+										],
+									],
+								]),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Undefined map entries are omitted", () => {
+			const schemaFactory = new SchemaFactoryAlpha("test");
+			const schema = schemaFactory.record("record", [schemaFactory.number]);
+
+			const actual = mapTreeFromNodeData(
+				{
+					a: 42,
+					b: undefined as unknown as InsertableContent, // Should be skipped in output
+					c: 37,
+				},
+				[schema],
+			);
+
+			const expected: MapTree = {
+				type: brand("test.record"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						brand("a"),
+						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+					],
+					[
+						brand("c"),
+						[{ type: brand(numberSchema.identifier), value: 37, fields: new Map() }],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Throws on schema-incompatible entries", () => {
+			const schemaFactory = new SchemaFactoryAlpha("test");
+			const schema = schemaFactory.record("record", schemaFactory.string);
+
+			assert.throws(
+				() =>
+					mapTreeFromNodeData(
+						{
+							a: "Hello world",
+							b: true, // Boolean input is not allowed by the schema
+						},
+						schema,
+					),
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			);
+		});
+
+		it("Throws for structurally valid data, but created with a different schema.", () => {
+			const schemaFactory = new SchemaFactoryAlpha("test");
+			class TestSchema extends schemaFactory.record("test-a", schemaFactory.string) {}
+			class TestSchema2 extends schemaFactory.record("test-b", schemaFactory.string) {}
 
 			const testData = new TestSchema2({ field: "test" });
 

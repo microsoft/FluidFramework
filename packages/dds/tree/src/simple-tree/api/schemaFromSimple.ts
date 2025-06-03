@@ -116,6 +116,12 @@ function generateNode(
 				generateAllowedTypes(schema.allowedTypesIdentifiers, context),
 				{ metadata: schema.metadata },
 			);
+		case NodeKind.Record:
+			return factory.record(
+				id,
+				generateAllowedTypes(schema.allowedTypesIdentifiers, context),
+				{ metadata: schema.metadata },
+			);
 		case NodeKind.Leaf:
 			return (
 				SchemaFactoryAlpha.leaves.find((leaf) => leaf.identifier === id) ??

@@ -112,6 +112,7 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 			assert(schema instanceof LeafNodeSchema, 0xa4a /* invalid kind */);
 			return new LeafNodeStoredSchema(schema.leafKind);
 		}
+		case NodeKind.Record: // TODO: is this right?
 		case NodeKind.Map: {
 			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
 			return new MapNodeStoredSchema({ kind: FieldKinds.optional.identifier, types });
@@ -132,7 +133,8 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 			}
 			return new ObjectNodeStoredSchema(fields);
 		}
-		default:
+		default: {
 			unreachableCase(kind);
+		}
 	}
 }
