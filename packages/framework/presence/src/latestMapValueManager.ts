@@ -21,7 +21,7 @@ import {
 	asDeeplyReadonlyDeserializedJson,
 	objectEntries,
 	objectKeys,
-	serializableToOpaqueJson,
+	toOpaqueJson,
 } from "./internalUtils.js";
 import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
@@ -306,7 +306,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		return this.value.items[key]?.value !== undefined;
 	}
 	public set(key: K, inValue: JsonSerializable<T>): this {
-		const value = serializableToOpaqueJson<T>(inValue);
+		const value = toOpaqueJson<T>(inValue);
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
 			this.value.items[key] = {
@@ -574,7 +574,7 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				value: serializableToOpaqueJson(initialValues[key]),
+				value: toOpaqueJson(initialValues[key]),
 			};
 		}
 	}

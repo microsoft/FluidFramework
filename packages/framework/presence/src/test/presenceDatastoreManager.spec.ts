@@ -9,7 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
-import { serializableToOpaqueJson } from "../internalUtils.js";
+import { toOpaqueJson } from "../internalUtils.js";
 import type { AttendeeId } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
@@ -29,7 +29,7 @@ const attendee4SystemWorkspaceDatastore = {
 		["client4" as AttendeeId]: {
 			"rev": 0,
 			"timestamp": 700,
-			"value": serializableToOpaqueJson(createSpecificAttendeeId("attendeeId-4")),
+			"value": toOpaqueJson(createSpecificAttendeeId("attendeeId-4")),
 		},
 	},
 } as const satisfies SystemWorkspaceDatastore;
@@ -106,7 +106,7 @@ describe("Presence", () => {
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": serializableToOpaqueJson(attendeeId2),
+											"value": toOpaqueJson(attendeeId2),
 										},
 									},
 								},
@@ -183,7 +183,7 @@ describe("Presence", () => {
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": serializableToOpaqueJson(attendeeId2),
+											"value": toOpaqueJson(attendeeId2),
 										},
 									},
 								},
@@ -211,7 +211,7 @@ describe("Presence", () => {
 					"client1": {
 						"rev": 0,
 						"timestamp": 0,
-						"value": serializableToOpaqueJson(attendeeId1),
+						"value": toOpaqueJson(attendeeId1),
 					},
 				},
 			};
@@ -221,7 +221,7 @@ describe("Presence", () => {
 					[attendeeId1]: {
 						"rev": 1,
 						"timestamp": 0,
-						"value": serializableToOpaqueJson({}),
+						"value": toOpaqueJson({}),
 					},
 				},
 			};
@@ -231,7 +231,7 @@ describe("Presence", () => {
 					[attendeeId1]: {
 						"rev": 0,
 						"timestamp": 0,
-						"value": serializableToOpaqueJson({}),
+						"value": toOpaqueJson({}),
 						"ignoreUnmonitored": true,
 					},
 				},
@@ -329,7 +329,7 @@ describe("Presence", () => {
 										[attendeeId1]: {
 											"rev": 1,
 											"timestamp": 0,
-											"value": serializableToOpaqueJson({ x: 1, y: 1, z: 1 }),
+											"value": toOpaqueJson({ x: 1, y: 1, z: 1 }),
 										},
 									},
 								},

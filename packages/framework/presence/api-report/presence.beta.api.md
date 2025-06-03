@@ -146,7 +146,7 @@ export interface LatestClientData<T> extends LatestData<T> {
 // @beta @sealed
 export interface LatestData<T> {
     metadata: LatestMetadata;
-    value: DeepReadonly<JsonDeserialized_2<T>>;
+    value: DeepReadonly<JsonDeserialized<T>>;
 }
 
 // @beta
@@ -197,7 +197,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
     }) => void;
     // @eventProperty
     localItemUpdated: (updatedItem: {
-        value: DeepReadonly<JsonSerializable_2<T>>;
+        value: DeepReadonly_2<JsonSerializable_2<T>>;
         key: K;
     }) => void;
     // @eventProperty
@@ -221,7 +221,7 @@ export interface LatestRaw<T> {
     getRemote(attendee: Attendee): LatestData<T>;
     getRemotes(): IterableIterator<LatestClientData<T>>;
     getStateAttendees(): Attendee[];
-    get local(): DeepReadonly_2<JsonDeserialized<T>>;
+    get local(): DeepReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T>);
     readonly presence: Presence;
 }
@@ -230,7 +230,7 @@ export interface LatestRaw<T> {
 export interface LatestRawEvents<T> {
     // @eventProperty
     localUpdated: (update: {
-        value: DeepReadonly_2<JsonSerializable<T>>;
+        value: DeepReadonly<JsonSerializable<T>>;
     }) => void;
     // @eventProperty
     remoteUpdated: (update: LatestClientData<T>) => void;
@@ -267,8 +267,8 @@ export const StateFactory: {
 export interface StateMap<K extends string | number, V> {
     clear(): void;
     delete(key: K): boolean;
-    forEach(callbackfn: (value: DeepReadonly<JsonDeserialized_2<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
-    get(key: K): DeepReadonly<JsonDeserialized_2<V>> | undefined;
+    forEach(callbackfn: (value: DeepReadonly_2<JsonDeserialized_2<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
+    get(key: K): DeepReadonly_2<JsonDeserialized_2<V>> | undefined;
     has(key: K): boolean;
     keys(): IterableIterator<K>;
     set(key: K, value: JsonSerializable_2<V>): this;
