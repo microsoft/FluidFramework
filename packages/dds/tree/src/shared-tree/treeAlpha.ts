@@ -355,12 +355,16 @@ export interface TreeAlpha {
 	key2(node: TreeNode): string | number | undefined;
 
 	/**
-	 * Gets the child of the given node with the given key if a child exists under that key.
+	 * Gets the child of the given node with the given property key if a child exists under that key.
 	 *
 	 * @param node - The parent node whose child is being requested.
-	 * @param key - The key under the node under which the child is being requested.
+	 * @param key - The property key under the node under which the child is being requested.
+	 * Note: this is the "property key", not the "stored key".
 	 *
 	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
+	 *
+	 * @see {@link (TreeAlpha:interface).key2}
+	 * @see {@link (Tree:interface).parent}
 	 */
 	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
 
@@ -373,8 +377,12 @@ export interface TreeAlpha {
 	 * @param node - The node whose children are being requested.
 	 *
 	 * @returns
-	 * An array of pairs of the form `[key, child]`, where `key` is the property name of the node's field, and `child`
+	 * An array of pairs of the form `[key, child]`, where `key` is the "property key" of the node's field, and `child`
 	 * is the child node or leaf value under that field.
+	 * Note: the returned keys are the "property keys", not the "stored keys".
+	 *
+	 * @see {@link (TreeAlpha:interface).key2}
+	 * @see {@link (Tree:interface).parent}
 	 */
 	children(node: TreeNode): [string | number, TreeNode | TreeLeafValue][];
 }
