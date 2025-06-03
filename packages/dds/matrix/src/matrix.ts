@@ -826,11 +826,15 @@ export class SharedMatrix<T = any>
 		} else {
 			switch (content.target) {
 				case SnapshotPath.cols: {
-					this.submitColMessage(this.cols.regeneratePendingOp(content, localOpMetadata));
+					this.submitColMessage(
+						this.cols.regeneratePendingOp(content, localOpMetadata, false),
+					);
 					break;
 				}
 				case SnapshotPath.rows: {
-					this.submitRowMessage(this.rows.regeneratePendingOp(content, localOpMetadata));
+					this.submitRowMessage(
+						this.rows.regeneratePendingOp(content, localOpMetadata, false),
+					);
 					break;
 				}
 				default: {
