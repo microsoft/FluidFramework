@@ -223,18 +223,20 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 			},
 		};
 
-		const container = await provider.makeTestContainer({
+		// 1st container doesn't want ID Compressor enabled at first (but has explicitSchemaControl enabled)
+		const container1 = await provider.makeTestContainer({
 			runtimeOptions: {
 				explicitSchemaControl: true,
 				enableRuntimeIdCompressor: undefined,
 			},
 		});
-		const entry = await getEntryPoint(container);
-		entry._root.set("someKey", "someValue");
+		const entry1 = await getEntryPoint(container1);
+		entry1._root.set("someKey", "someValue");
 
 		// ensure that old container is fully loaded (connected)
 		await provider.ensureSynchronized();
 
+		// 2nd container wants ID Compressor enabled and will trigger a document schema change op
 		const container2 = await loadContainer({
 			runtimeOptions: {
 				explicitSchemaControl,
@@ -248,7 +250,7 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		entry2._root.set("someKey2", "someValue");
 		await provider.ensureSynchronized();
 
-		// ID compressor loading is async. THere is no way to check when it's done.
+		// ID compressor loading is async. There is no way to check when it's done.
 		// To be safe, make another round of sending-waiting
 		entry2._root.set("someKey2", "someValue");
 		await provider.ensureSynchronized();
@@ -257,28 +259,28 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		// In order for ID compressor to produce short IDs, the following needs to happen:
 		// 1. Request unique ID (will initially get long ID)
 		// 2. Send any op (will trigger ID compressor to reserve short IDs)
-		entry._context.containerRuntime.generateDocumentUniqueId();
-		entry._root.set("someKey3", "someValue");
+		entry1._context.containerRuntime.generateDocumentUniqueId();
+		entry1._root.set("someKey3", "someValue");
 		entry2._context.containerRuntime.generateDocumentUniqueId();
 		entry2._root.set("someKey4", "someValue");
 		await provider.ensureSynchronized();
 
-		const id = entry._context.containerRuntime.generateDocumentUniqueId();
+		const id1 = entry1._context.containerRuntime.generateDocumentUniqueId();
 		const id2 = entry2._context.containerRuntime.generateDocumentUniqueId();
 
 		if (explicitSchemaControl) {
 			// Now ID compressor should give us short IDs!
-			assert(Number.isInteger(id));
+			assert(Number.isInteger(id1));
 			assert(Number.isInteger(id2));
 		} else {
 			// Runtime will not change enableRuntimeIdCompressor setting if explicitSchemaControl is off
 			// Other containers will not expect ID compressor ops and will fail, thus runtime does not allow this upgrade.
 			// generateDocumentUniqueId() works, but gives long IDs
-			assert(!Number.isInteger(id));
+			assert(!Number.isInteger(id1));
 			assert(!Number.isInteger(id2));
 		}
 
-		assert(!container.closed);
+		assert(!container1.closed);
 		assert(!container2.closed);
 	}
 });
