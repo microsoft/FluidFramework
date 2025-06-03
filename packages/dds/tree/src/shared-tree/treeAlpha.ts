@@ -357,8 +357,7 @@ export interface TreeAlpha {
 	/**
 	 * Gets the child of the given node with the given property key if a child exists under that key.
 	 *
-	 * @remarks
-	 * Note: it is not possible to access unknown optional fields of Object nodes using this method.
+	 * @remarks Unknown optional fields of Object nodes cannot be accessed using this method.
 	 *
 	 * @param node - The parent node whose child is being requested.
 	 * @param key - The property key under the node under which the child is being requested.
@@ -376,6 +375,8 @@ export interface TreeAlpha {
 	 *
 	 * @remarks
 	 * No guarantees are made regarding the order of the children in the returned array.
+	 *
+	 * Unknown optional fields of Object nodes are not included in the result.
 	 *
 	 * @param node - The node whose children are being requested.
 	 *
