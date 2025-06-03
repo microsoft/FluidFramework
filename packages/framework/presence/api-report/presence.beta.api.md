@@ -73,7 +73,7 @@ export namespace InternalTypes {
     // @system (undocumented)
     export interface NotificationType {
         // (undocumented)
-        args: (JsonSerializable<unknown> & JsonDeserialized<unknown>)[];
+        args: unknown[];
         // (undocumented)
         name: string;
     }
@@ -99,12 +99,12 @@ export namespace InternalTypes {
     // @system (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
-        value?: JsonDeserialized<TValue>;
+        value?: OpaqueJsonDeserialized<TValue>;
     }
     // @system (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
         // (undocumented)
-        value: JsonDeserialized<TValue>;
+        value: OpaqueJsonDeserialized<TValue>;
     }
     // @system (undocumented)
     export interface ValueStateMetadata {
@@ -118,9 +118,9 @@ export namespace InternalTypes {
 // @beta
 export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
-// @beta
+// @beta @input
 export interface LatestArguments<T extends object | null> {
-    local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
+    local: JsonSerializable<T>;
     settings?: BroadcastControlSettings | undefined;
 }
 
@@ -138,10 +138,10 @@ export interface LatestData<T> {
 // @beta
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
-// @beta
+// @beta @input
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
     local?: {
-        [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+        [K in Keys]: JsonSerializable<T>;
     };
     settings?: BroadcastControlSettings | undefined;
 }
@@ -183,7 +183,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
     }) => void;
     // @eventProperty
     localItemUpdated: (updatedItem: {
-        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        value: DeepReadonly<JsonSerializable<T>>;
         key: K;
     }) => void;
     // @eventProperty
@@ -208,7 +208,7 @@ export interface LatestRaw<T> {
     getRemotes(): IterableIterator<LatestClientData<T>>;
     getStateAttendees(): Attendee[];
     get local(): DeepReadonly<JsonDeserialized<T>>;
-    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+    set local(value: JsonSerializable<T>);
     readonly presence: Presence;
 }
 
@@ -216,7 +216,7 @@ export interface LatestRaw<T> {
 export interface LatestRawEvents<T> {
     // @eventProperty
     localUpdated: (update: {
-        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        value: DeepReadonly<JsonSerializable<T>>;
     }) => void;
     // @eventProperty
     remoteUpdated: (update: LatestClientData<T>) => void;
@@ -257,7 +257,7 @@ export interface StateMap<K extends string | number, V> {
     get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
     has(key: K): boolean;
     keys(): IterableIterator<K>;
-    set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
+    set(key: K, value: JsonSerializable<V>): this;
     readonly size: number;
 }
 
