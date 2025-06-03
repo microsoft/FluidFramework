@@ -17,7 +17,7 @@ import type {
 import {
 	type FlexTreeContext,
 	getSchemaAndPolicy,
-	type FlexTreeHydratedContext,
+	type FlexTreeHydratedContextMinimal,
 	FieldKinds,
 } from "../feature-libraries/index.js";
 import {
@@ -110,7 +110,7 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	data: TIn,
 	schema: ImplicitFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
-	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
+	hydratedData: FlexTreeHydratedContextMinimal | undefined,
 ): TIn extends undefined ? undefined : ExclusiveMapTree {
 	const mapTree = mapTreeFromNodeData(data, schema, hydratedData?.nodeKeyManager);
 
@@ -129,7 +129,7 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
  */
 function validateAndPrepare(
 	schemaAndPolicy: SchemaAndPolicy,
-	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
+	hydratedData: FlexTreeHydratedContextMinimal | undefined,
 	fieldSchema: TreeFieldStoredSchema,
 	mapTrees: ExclusiveMapTree[],
 ): void {

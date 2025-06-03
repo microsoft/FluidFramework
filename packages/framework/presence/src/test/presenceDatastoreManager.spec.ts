@@ -471,6 +471,39 @@ describe("Presence", () => {
 				// Verify
 				assert.strictEqual(listener.callCount, 1);
 			});
+
+			it("with acknowledgementId sends targeted acknowledgment messsage back to requestor", () => {
+				// We expect to send a targeted acknowledgment back to the requestor
+				runtime.signalsExpected.push([
+					{
+						type: "Pres:Ack",
+						content: { id: "ackID" },
+						targetClientId: "client4",
+					},
+				]);
+
+				// Act - send generic datastore update with acknowledgement id specified
+				presence.processSignal(
+					[],
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+							acknowledgementId: "ackID",
+						},
+						clientId: "client4",
+					},
+					false,
+				);
+
+				// Verify
+				assertFinalExpectations(runtime, logger);
+			});
 		});
 	});
 });
