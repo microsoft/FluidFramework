@@ -331,7 +331,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				// (which is this client's client session id) is always represented in
 				// system workspace of recipient clients.
 				"system:presence": {
-					// @ts-expect-error Type 'OpaqueJsonDeserialized<AttendeeId> | undefined' is not assignable to type 'OpaqueJsonDeserialized<AttendeeId, [], never>'
 					clientToSessionId: {
 						[clientConnectionId]: { ...currentClientToSessionValueState },
 					},
@@ -342,7 +341,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.queuedData = undefined;
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
-			// @ts-expect-error Property 'updateProviders' is missing in type ...
 			content: newMessage,
 		});
 	}
