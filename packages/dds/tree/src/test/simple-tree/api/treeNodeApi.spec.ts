@@ -613,7 +613,7 @@ describe("treeNodeApi", () => {
 			it("Empty", () => {
 				const { tree } = initializeObjectTree({});
 
-				const children = TreeAlpha.children(tree);
+				const children = [...TreeAlpha.children(tree)];
 				assert.equal(children.length, 0);
 			});
 
@@ -717,21 +717,21 @@ describe("treeNodeApi", () => {
 				);
 				const tree = view.root;
 
-				const rootChildren = TreeAlpha.children(tree);
+				const rootChildren = [...TreeAlpha.children(tree)];
 				assert.equal(rootChildren.length, 2);
 				assert.deepEqual(rootChildren[0], ["label", "A"]);
 				assert.equal(rootChildren[1][0], "data");
 				const sub1Node = rootChildren[1][1];
 				assert(sub1Node !== undefined && isTreeNode(sub1Node));
 
-				const sub1Children = TreeAlpha.children(sub1Node);
+				const sub1Children = [...TreeAlpha.children(sub1Node)];
 				assert.equal(sub1Children.length, 2);
 				assert.deepEqual(sub1Children[0], ["label", "B"]);
 				assert.equal(sub1Children[1][0], "data");
 				const sub2Node = sub1Children[1][1];
 				assert(sub2Node !== undefined && isTreeNode(sub2Node));
 
-				const sub2Children = TreeAlpha.children(sub2Node);
+				const sub2Children = [...TreeAlpha.children(sub2Node)];
 				assert.equal(sub2Children.length, 1);
 				assert.deepEqual(sub2Children[0], ["label", "C"]);
 			});
@@ -756,7 +756,7 @@ describe("treeNodeApi", () => {
 			it("empty", () => {
 				const { tree } = initializeMapTree({});
 
-				const children = TreeAlpha.children(tree);
+				const children = [...TreeAlpha.children(tree)];
 				assert.equal(children.length, 0);
 			});
 
@@ -809,21 +809,21 @@ describe("treeNodeApi", () => {
 				);
 				const tree = view.root;
 
-				const rootChildren = TreeAlpha.children(tree);
+				const rootChildren = [...TreeAlpha.children(tree)];
 				assert.equal(rootChildren.length, 2);
 				assert.deepEqual(rootChildren[0], ["label", "A"]);
 				assert.equal(rootChildren[1][0], "data");
 				const sub1Node = rootChildren[1][1];
 				assert(sub1Node !== undefined && isTreeNode(sub1Node));
 
-				const sub1Children = TreeAlpha.children(sub1Node);
+				const sub1Children = [...TreeAlpha.children(sub1Node)];
 				assert.equal(sub1Children.length, 2);
 				assert.deepEqual(sub1Children[0], ["label", "B"]);
 				assert.equal(sub1Children[1][0], "data");
 				const sub2Node = sub1Children[1][1];
 				assert(sub2Node !== undefined && isTreeNode(sub2Node));
 
-				const sub2Children = TreeAlpha.children(sub2Node);
+				const sub2Children = [...TreeAlpha.children(sub2Node)];
 				assert.equal(sub2Children.length, 1);
 				assert.deepEqual(sub2Children[0], ["label", "C"]);
 			});
@@ -848,7 +848,7 @@ describe("treeNodeApi", () => {
 			it("empty", () => {
 				const { tree } = initializeArrayTree([]);
 
-				const children = TreeAlpha.children(tree);
+				const children = [...TreeAlpha.children(tree)];
 				assert.equal(children.length, 0);
 			});
 
@@ -891,21 +891,21 @@ describe("treeNodeApi", () => {
 				);
 				const tree = view.root;
 
-				const rootChildren = TreeAlpha.children(tree);
+				const rootChildren = [...TreeAlpha.children(tree)];
 				assert.equal(rootChildren.length, 2);
 				assert.deepEqual(rootChildren[0], [0, "Hello"]);
 
 				const sub1Node = rootChildren[1][1];
 				assert(sub1Node !== undefined && isTreeNode(sub1Node));
 
-				const sub1Children = TreeAlpha.children(sub1Node);
+				const sub1Children = [...TreeAlpha.children(sub1Node)];
 				assert.equal(sub1Children.length, 2);
 				assert.deepEqual(sub1Children[0], [0, "World"]);
 
 				const sub2Node = sub1Children[1][1];
 				assert(sub2Node !== undefined && isTreeNode(sub2Node));
 
-				const sub2Children = TreeAlpha.children(sub2Node);
+				const sub2Children = [...TreeAlpha.children(sub2Node)];
 				assert.equal(sub2Children.length, 1);
 				assert.deepEqual(sub2Children[0], [0, "!"]);
 			});
@@ -944,7 +944,7 @@ describe("treeNodeApi", () => {
 			]);
 			const tree = view.root;
 
-			const children = TreeAlpha.children(tree);
+			const children = [...TreeAlpha.children(tree)];
 			assert(children.length === 3);
 			for (const [, child] of children) {
 				assert(isTreeNode(child));

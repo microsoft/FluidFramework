@@ -48,7 +48,6 @@ import {
 	getOrCreateInnerNode,
 	getOrCreateNodeFromInnerNode,
 	tryGetTreeNodeForField,
-	isArrayNodeSchema,
 	FieldSchema,
 	NodeKind,
 } from "../simple-tree/index.js";
@@ -395,7 +394,7 @@ export interface TreeAlpha {
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeNodeApi:interface).parent}
 	 */
-	children(node: TreeNode): [string | number, TreeNode | TreeLeafValue][];
+	children(node: TreeNode): Iterable<[string | number, TreeNode | TreeLeafValue]>;
 }
 
 /**
@@ -608,25 +607,25 @@ export const TreeAlpha: TreeAlpha = {
 		}
 	},
 
-	children: (node: TreeNode): [string | number, TreeNode | TreeLeafValue][] => {
+	*children(node: TreeNode): Generator<[string | number, TreeNode | TreeLeafValue]> {
 		const flexNode = getOrCreateInnerNode(node);
 		debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 
 		const schema = treeNodeApi.schema(node);
 
-		const result: [string | number, TreeNode | TreeLeafValue][] = [];
-
 		switch (schema.kind) {
 			case NodeKind.Array: {
 				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
 				if (sequence === undefined) {
-					return [];
+					break;
 				}
 
-				sequence.map((childFlexTree, index) => {
+				for (let index = 0; index < sequence.length; index++) {
+					const childFlexTree = sequence.at(index);
+					assert(childFlexTree !== undefined, "Sequence child was undefined.");
 					const childTree = nodeFromInnerUnboxedNode(childFlexTree);
-					result.push([index, childTree]);
-				});
+					yield [index, childTree];
+				}
 				break;
 			}
 			case NodeKind.Map:
@@ -636,7 +635,7 @@ export const TreeAlpha: TreeAlpha = {
 						flexNode.tryGetField(fieldKey) ?? fail("Field not found for reported key.");
 					const childTreeNode = tryGetTreeNodeForField(flexField);
 					if (childTreeNode !== undefined) {
-						result.push([fieldKey, childTreeNode]);
+						yield [fieldKey, childTreeNode];
 					}
 				}
 				break;
@@ -648,8 +647,6 @@ export const TreeAlpha: TreeAlpha = {
 				unreachableCase(schema.kind);
 			}
 		}
-
-		return result;
 	},
 };
 
