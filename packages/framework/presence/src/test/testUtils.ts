@@ -151,13 +151,35 @@ export function prepareConnectedPresence(
 		quorumClientIds.length = 3;
 	}
 
-	// @ts-expect-error Type 'unknown' is not assignable to type 'JsonTypeWith<never> | OpaqueJsonSerializable<unknown, [], never>'. I was expecting a type matching JsonTypeWith<never> | OpaqueJsonSerializable<unknown, [], never>, but instead you passed unknown.
-	const expectedClientJoin: OutboundClientJoinMessage &
-		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
+	// TODO: #??? investigate and address `InboundClientJoinMessage` incompatibility with `OutboundClientJoinMessage`
+	// The difference is likely from JsonSerializable expectation of
+	// OutboundClientJoinMessage as it applies to SystemDatastore whereas
+	// InboundClientJoinMessage has JsonDeserialized.
+	// "system:presence" is always expected to be first in the data; so that it
+	// is processed first. Build copy without it to use spread and maintain order.
+	// This is very similar to `PresenceDatastore` incompatibility with
+	// `DatastoreMessageContent` seen in `presenceDatastoreManager.ts`.
+	const inboundClientJoin = generateBasicClientJoin(clock.now, {
 		attendeeId,
 		clientConnectionId,
 		updateProviders: quorumClientIds,
 	});
+	const inboundContentDataWithoutSystem: Omit<
+		InboundClientJoinMessage["content"]["data"],
+		"system:presence"
+	> = { ...inboundClientJoin.content.data };
+	delete inboundContentDataWithoutSystem["system:presence"];
+	const expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">> = {
+		...inboundClientJoin,
+		content: {
+			...inboundClientJoin.content,
+			data: {
+				"system:presence": inboundClientJoin.content.data["system:presence"],
+				...inboundContentDataWithoutSystem,
+			},
+		},
+	};
 	delete expectedClientJoin.clientId;
 	runtime.signalsExpected.push([expectedClientJoin]);
 

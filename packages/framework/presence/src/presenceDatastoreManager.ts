@@ -172,15 +172,24 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (updateProviders.length > 3) {
 			updateProviders.length = 3;
 		}
+		// TODO: #??? investigate and address `PresenceDatastore` incompatibility with `DatastoreMessageContent`
+		// "system:presence" is always expected to be first in the data; so that it
+		// is processed first. Build copy without it to use spread and maintain order.
+		const datastoreWithoutSystem: Omit<PresenceDatastore, "system:presence"> = {
+			...this.datastore,
+		};
+		delete datastoreWithoutSystem["system:presence"];
 		this.runtime.submitSignal({
 			type: joinMessageType,
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
-				// @ts-expect-error Type 'unknown' is not assignable to type 'JsonTypeWith<never> |
-				// OpaqueJsonSerializable<unknown, [], never>'. I was expecting a type matching JsonTypeWith<never> |
-				// OpaqueJsonSerializable<unknown, [], never>, but instead you passed unknown.
-				data: this.datastore,
+				data: {
+					"system:presence":
+						// this.datastore["system:presence"], // does not work directly
+						{ ...this.datastore["system:presence"] },
+					...datastoreWithoutSystem,
+				},
 				updateProviders,
 			},
 		});
@@ -339,16 +348,25 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	private broadcastAllKnownState(): void {
+		// TODO: #??? investigate and address `PresenceDatastore` incompatibility with `DatastoreMessageContent`
+		// "system:presence" is always expected to be first in the data; so that it
+		// is processed first. Build copy without it to use spread and maintain order.
+		const datastoreWithoutSystem: Omit<PresenceDatastore, "system:presence"> = {
+			...this.datastore,
+		};
+		delete datastoreWithoutSystem["system:presence"];
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
-				// @ts-expect-error Type 'unknown' is not assignable to type 'JsonTypeWith<never> |
-				// OpaqueJsonSerializable<unknown, [], never>'. I was expecting a type matching JsonTypeWith<never> |
-				// OpaqueJsonSerializable<unknown, [], never>, but instead you passed unknown.
-				data: this.datastore,
+				data: {
+					"system:presence":
+						// this.datastore["system:presence"], // does not work directly
+						{ ...this.datastore["system:presence"] },
+					...datastoreWithoutSystem,
+				},
 			},
 		});
 		this.refreshBroadcastRequested = false;
