@@ -8,6 +8,7 @@ import type { ExtensionHost as ContainerExtensionHost } from "@fluidframework/co
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { AttendeeId, Attendee } from "./presence.js";
 import type {
+	OutboundAcknowledgementMessage,
 	OutboundClientJoinMessage,
 	OutboundDatastoreUpdateMessage,
 	SignalMessages,
@@ -54,7 +55,10 @@ export type IEphemeralRuntime = Omit<ExtensionHost, "logger" | "submitAddressedS
 		 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 		 */
 		submitSignal: (
-			message: OutboundClientJoinMessage | OutboundDatastoreUpdateMessage,
+			message:
+				| OutboundAcknowledgementMessage
+				| OutboundClientJoinMessage
+				| OutboundDatastoreUpdateMessage,
 		) => void;
 	};
 

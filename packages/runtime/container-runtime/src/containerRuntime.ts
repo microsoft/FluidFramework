@@ -208,7 +208,7 @@ import {
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
 	ContainerMessageType,
-	type ContainerRuntimeDocumentSchemaMessage,
+	type OutboundContainerRuntimeDocumentSchemaMessage,
 	ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -246,7 +246,7 @@ import {
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import type {
-	IDocumentSchemaChangeMessage,
+	IDocumentSchemaChangeMessageIncoming,
 	IDocumentSchemaCurrent,
 	Summarizer,
 	IDocumentSchemaFeatures,
@@ -3184,7 +3184,7 @@ export class ContainerRuntime
 			}
 			case ContainerMessageType.DocumentSchemaChange: {
 				this.documentsSchemaController.processDocumentSchemaMessages(
-					contents as IDocumentSchemaChangeMessage[],
+					contents as IDocumentSchemaChangeMessageIncoming[],
 					local,
 					message.sequenceNumber,
 				);
@@ -3424,7 +3424,10 @@ export class ContainerRuntime
 	// eslint-disable-next-line import/no-deprecated
 	public enterStagingMode = (): StageControlsExperimental => {
 		if (this.stageControls !== undefined) {
-			throw new Error("already in staging mode");
+			throw new UsageError("already in staging mode");
+		}
+		if (this.attachState === AttachState.Detached) {
+			throw new UsageError("cannot enter staging mode while detached");
 		}
 
 		// Make sure all BatchManagers are empty before entering staging mode,
@@ -4516,7 +4519,7 @@ export class ContainerRuntime
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
 			// on this callback to do actual sending.
-			const schemaChangeMessage = this.documentsSchemaController.maybeSendSchemaMessage();
+			const schemaChangeMessage = this.documentsSchemaController.maybeGenerateSchemaMessage();
 			if (schemaChangeMessage) {
 				this.mc.logger.sendTelemetryEvent({
 					eventName: "SchemaChangeProposal",
@@ -4526,7 +4529,7 @@ export class ContainerRuntime
 					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
 				});
-				const msg: ContainerRuntimeDocumentSchemaMessage = {
+				const msg: OutboundContainerRuntimeDocumentSchemaMessage = {
 					type: ContainerMessageType.DocumentSchemaChange,
 					contents: schemaChangeMessage,
 				};
@@ -5026,6 +5029,7 @@ export class ContainerRuntime
 				},
 				getQuorum: this.getQuorum.bind(this),
 				getAudience: this.getAudience.bind(this),
+				supportedFeatures: this.ILayerCompatDetails.supportedFeatures,
 			} satisfies ExtensionHost<TRuntimeProperties>;
 			entry = new factory(runtime, ...useContext);
 			this.extensions.set(id, entry);

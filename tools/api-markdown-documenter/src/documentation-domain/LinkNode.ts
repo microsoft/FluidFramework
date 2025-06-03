@@ -5,7 +5,7 @@
 
 import type { Link, UrlTarget } from "../Link.js";
 
-import { DocumentationParentNodeBase, type DocumentationNode } from "./DocumentationNode.js";
+import type { DocumentationNode } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
@@ -24,30 +24,48 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * <a href="https://fluidframework.com/">Fluid Framework</a>
  * ```
  *
+ * @sealed
  * @public
  */
-export class LinkNode extends DocumentationParentNodeBase implements Omit<Link, "text"> {
+export class LinkNode implements DocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.Link;
 
 	/**
-	 * {@inheritDoc Link.target}
-	 */
-	public readonly target: UrlTarget;
-
-	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
 	 */
-	public override get singleLine(): true {
-		return true;
+	public readonly singleLine = true;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isLiteral}
+	 */
+	public readonly isLiteral = false;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isParent}
+	 */
+	public readonly isParent = false;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public get isEmpty(): boolean {
+		return this.text.isEmpty && this.target.length === 0;
 	}
 
-	public constructor(content: DocumentationNode[], target: UrlTarget) {
-		super(content);
-		this.target = target;
-	}
+	public constructor(
+		/**
+		 * Link display text.
+		 */
+		public readonly text: PlainTextNode,
+
+		/**
+		 * Link target URL.
+		 */
+		public readonly target: UrlTarget,
+	) {}
 
 	/**
 	 * Generates a {@link LinkNode} from the provided string.
@@ -56,7 +74,7 @@ export class LinkNode extends DocumentationParentNodeBase implements Omit<Link, 
 	 * @param target - See {@link LinkNode.target}.
 	 */
 	public static createFromPlainText(text: string, target: UrlTarget): LinkNode {
-		return new LinkNode([new PlainTextNode(text)], target);
+		return new LinkNode(new PlainTextNode(text), target);
 	}
 
 	/**
