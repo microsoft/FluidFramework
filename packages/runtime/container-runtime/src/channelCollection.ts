@@ -1130,7 +1130,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						}),
 						details: JSON.stringify({
 							runtimeConnected: this.parentContext.connected,
-							connected: canSendOps,
+							canSendOps,
 						}),
 					},
 					error,
