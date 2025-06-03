@@ -40,7 +40,7 @@ export namespace InternalTypes {
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
 		value: OpaqueJsonDeserialized<TValue>;
-		validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+		validatedValue?: OpaqueJsonDeserialized<TValue>;
 	}
 
 	/**
