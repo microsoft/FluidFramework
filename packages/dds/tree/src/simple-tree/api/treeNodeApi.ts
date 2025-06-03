@@ -83,6 +83,9 @@ export interface TreeNodeApi {
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 *
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been {@link TreeStatus.Deleted | deleted}.
+	 *
+	 * @see {@link (TreeAlpha:interface).child}
+	 * @see {@link (TreeAlpha:interface).children}
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
 
