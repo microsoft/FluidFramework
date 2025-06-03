@@ -589,12 +589,12 @@ describe("treeNodeApi", () => {
 		});
 	});
 
-	// TODO: recursive schema tests
 	describe("children", () => {
 		describe("object", () => {
 			function getObjectSchema() {
 				return schema.object("TestObject", {
 					foo: schema.optional(schema.string),
+					bar: schema.optional(schema.string),
 					"0": SchemaFactory.optional(schema.number),
 				});
 			}
@@ -696,6 +696,45 @@ describe("treeNodeApi", () => {
 				assert.equal(children.size, 1);
 				assert.equal(children.get("toString"), "test");
 			});
+
+			it("Recursive", () => {
+				class TestObject extends schema.objectRecursive("TestObject", {
+					label: schema.string,
+					data: schema.optionalRecursive([() => TestObject]),
+				}) {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize(
+					new TestObject({
+						label: "A",
+						data: new TestObject({
+							label: "B",
+							data: new TestObject({
+								label: "C",
+							}),
+						}),
+					}),
+				);
+				const tree = view.root;
+
+				const rootChildren = TreeAlpha.children(tree);
+				assert.equal(rootChildren.length, 2);
+				assert.deepEqual(rootChildren[0], ["label", "A"]);
+				assert.equal(rootChildren[1][0], "data");
+				const sub1Node = rootChildren[1][1];
+				assert(sub1Node !== undefined && isTreeNode(sub1Node));
+
+				const sub1Children = TreeAlpha.children(sub1Node);
+				assert.equal(sub1Children.length, 2);
+				assert.deepEqual(sub1Children[0], ["label", "B"]);
+				assert.equal(sub1Children[1][0], "data");
+				const sub2Node = sub1Children[1][1];
+				assert(sub2Node !== undefined && isTreeNode(sub2Node));
+
+				const sub2Children = TreeAlpha.children(sub2Node);
+				assert.equal(sub2Children.length, 1);
+				assert.deepEqual(sub2Children[0], ["label", "C"]);
+			});
 		});
 
 		describe("map", () => {
@@ -752,6 +791,42 @@ describe("treeNodeApi", () => {
 				assert.equal(children.size, 1);
 				assert.equal(children.get("bar"), undefined);
 			});
+
+			it("Recursive", () => {
+				class TestMap extends schema.mapRecursive("TestMap", [schema.string, () => TestMap]) {}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize(
+					new TestMap({
+						label: "A",
+						data: new TestMap({
+							label: "B",
+							data: new TestMap({
+								label: "C",
+							}),
+						}),
+					}),
+				);
+				const tree = view.root;
+
+				const rootChildren = TreeAlpha.children(tree);
+				assert.equal(rootChildren.length, 2);
+				assert.deepEqual(rootChildren[0], ["label", "A"]);
+				assert.equal(rootChildren[1][0], "data");
+				const sub1Node = rootChildren[1][1];
+				assert(sub1Node !== undefined && isTreeNode(sub1Node));
+
+				const sub1Children = TreeAlpha.children(sub1Node);
+				assert.equal(sub1Children.length, 2);
+				assert.deepEqual(sub1Children[0], ["label", "B"]);
+				assert.equal(sub1Children[1][0], "data");
+				const sub2Node = sub1Children[1][1];
+				assert(sub2Node !== undefined && isTreeNode(sub2Node));
+
+				const sub2Children = TreeAlpha.children(sub2Node);
+				assert.equal(sub2Children.length, 1);
+				assert.deepEqual(sub2Children[0], ["label", "C"]);
+			});
 		});
 
 		describe("array", () => {
@@ -802,6 +877,37 @@ describe("treeNodeApi", () => {
 				);
 				assert.equal(children.size, 2);
 				assert.equal(children.get("bar"), undefined);
+			});
+
+			it("Recursive", () => {
+				class TestArray extends schema.arrayRecursive("TestArray", [
+					schema.string,
+					() => TestArray,
+				]) {}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(
+					new TestArray(["Hello", new TestArray(["World", new TestArray(["!"])])]),
+				);
+				const tree = view.root;
+
+				const rootChildren = TreeAlpha.children(tree);
+				assert.equal(rootChildren.length, 2);
+				assert.deepEqual(rootChildren[0], [0, "Hello"]);
+
+				const sub1Node = rootChildren[1][1];
+				assert(sub1Node !== undefined && isTreeNode(sub1Node));
+
+				const sub1Children = TreeAlpha.children(sub1Node);
+				assert.equal(sub1Children.length, 2);
+				assert.deepEqual(sub1Children[0], [0, "World"]);
+
+				const sub2Node = sub1Children[1][1];
+				assert(sub2Node !== undefined && isTreeNode(sub2Node));
+
+				const sub2Children = TreeAlpha.children(sub2Node);
+				assert.equal(sub2Children.length, 1);
+				assert.deepEqual(sub2Children[0], [0, "!"]);
 			});
 		});
 
