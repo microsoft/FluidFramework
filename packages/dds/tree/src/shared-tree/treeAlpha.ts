@@ -365,7 +365,7 @@ export interface TreeAlpha {
 	 *
 	 * @param node - The parent node whose child is being requested.
 	 * @param key - The property key under the node under which the child is being requested.
-	 * Note: this is the "property key", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
+	 * For Object nodes, this is the developer-facing "property key", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
 	 *
 	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
 	 *
@@ -389,7 +389,10 @@ export interface TreeAlpha {
 	 * @returns
 	 * An array of pairs of the form `[key, child]`, where `key` is the "property key" of the node's field, and `child`
 	 * is the child node or leaf value under that field.
-	 * Note: the returned keys are the "property keys", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
+	 *
+	 * For Array nodes, the key is the index of the child in the array.
+	 *
+	 * For Object nodes, the returned keys are the developer-facing "property keys", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeNodeApi:interface).parent}
