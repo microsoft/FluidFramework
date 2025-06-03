@@ -51,15 +51,16 @@ export class SchemaSummarizer implements Summarizable {
 		});
 	}
 
-	public getAttachSummary(
+	public summarize(
 		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
+		fullTree: boolean = false,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		if (
+			!fullTree &&
 			incrementalSummaryContext !== undefined &&
 			this.schemaIndexLastChangedSeq !== undefined &&
 			incrementalSummaryContext.latestSummarySequenceNumber >= this.schemaIndexLastChangedSeq
@@ -67,23 +68,13 @@ export class SchemaSummarizer implements Summarizable {
 			builder.addHandle(
 				schemaStringKey,
 				SummaryType.Blob,
-				`${incrementalSummaryContext.summaryPath}/indexes/${this.key}/${schemaStringKey}`,
+				`${incrementalSummaryContext.summaryPath}/${schemaStringKey}`,
 			);
 		} else {
 			const dataString = JSON.stringify(this.codec.encode(this.schema));
 			builder.addBlob(schemaStringKey, dataString);
 		}
 		return builder.getSummaryTree();
-	}
-
-	public async summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
-	): Promise<ISummaryTreeWithStats> {
-		throw new Error("Method not implemented.");
 	}
 
 	public async load(

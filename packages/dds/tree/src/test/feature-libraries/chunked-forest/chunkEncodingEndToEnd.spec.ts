@@ -203,7 +203,7 @@ describe("End to end chunked encoding", () => {
 			assert(chunk.isShared());
 			return JSON.stringify(content);
 		}
-		forestSummarizer.getAttachSummary(stringifier);
+		forestSummarizer.summarize(stringifier);
 	});
 
 	// See note on above test.
@@ -236,7 +236,7 @@ describe("End to end chunked encoding", () => {
 			assert(chunk.isShared());
 			return JSON.stringify(content);
 		}
-		forestSummarizer.getAttachSummary(stringifier);
+		forestSummarizer.summarize(stringifier);
 	});
 
 	describe("identifier field encoding", () => {
@@ -257,7 +257,7 @@ describe("End to end chunked encoding", () => {
 			function stringifier(content: unknown) {
 				return JSON.stringify(content);
 			}
-			const { summary } = forestSummarizer.getAttachSummary(stringifier);
+			const { summary } = forestSummarizer.summarize(stringifier);
 			const tree = summary.tree.ForestTree;
 			assert(tree.type === SummaryType.Blob);
 			const treeContent = JSON.parse(tree.content as string);
@@ -287,7 +287,7 @@ describe("End to end chunked encoding", () => {
 			function stringifier(content: unknown) {
 				return JSON.stringify(content);
 			}
-			const { summary } = forestSummarizer.getAttachSummary(stringifier);
+			const { summary } = forestSummarizer.summarize(stringifier);
 			const tree = summary.tree.ForestTree;
 			assert(tree.type === SummaryType.Blob);
 			const treeContent = JSON.parse(tree.content as string);
@@ -312,7 +312,7 @@ describe("End to end chunked encoding", () => {
 			function stringifier(content: unknown) {
 				return JSON.stringify(content);
 			}
-			const { summary } = forestSummarizer.getAttachSummary(stringifier);
+			const { summary } = forestSummarizer.summarize(stringifier);
 			const tree = summary.tree.ForestTree;
 			assert(tree.type === SummaryType.Blob);
 			const treeContent = JSON.parse(tree.content as string);

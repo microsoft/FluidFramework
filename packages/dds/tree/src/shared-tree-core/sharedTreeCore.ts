@@ -212,19 +212,29 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree?: boolean,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		const summarizableBuilder = new SummaryTreeBuilder();
 		// Merge the summaries of all summarizables together under a single ISummaryTree
 		for (const s of this.summarizables) {
+			// Add the summarizable's path in the summary tree to the incremental summary context's
+			// summary path, so that the summarizable can use it to generate incremental summaries.
+			const childIncrementalSummaryContext =
+				incrementalSummaryContext === undefined
+					? undefined
+					: {
+							...incrementalSummaryContext,
+							summaryPath: `${incrementalSummaryContext.summaryPath}/${summarizablesTreeKey}/${s.key}`,
+						};
 			summarizableBuilder.addWithStats(
 				s.key,
-				s.getAttachSummary(
+				s.summarize(
 					(contents) => serializer.stringify(contents, this.sharedObject.handle),
-					undefined,
-					undefined,
+					fullTree,
+					undefined /* trackState */,
 					telemetryContext,
-					incrementalSummaryContext,
+					childIncrementalSummaryContext,
 				),
 			);
 		}
@@ -435,18 +445,6 @@ export interface Summarizable {
 	readonly key: string;
 
 	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
-	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
-	 */
-	getAttachSummary(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): ISummaryTreeWithStats;
-
-	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
 	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
 	 */
@@ -455,7 +453,8 @@ export interface Summarizable {
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
-	): Promise<ISummaryTreeWithStats>;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+	): ISummaryTreeWithStats;
 
 	/**
 	 * Allows the component to perform custom loading. The storage service is scoped to this component and therefore

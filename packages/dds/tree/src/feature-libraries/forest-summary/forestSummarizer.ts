@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
+	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -95,21 +96,13 @@ export class ForestSummarizer implements Summarizable {
 		return stringify(encoded);
 	}
 
-	public getAttachSummary(
+	public summarize(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
-		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));
-	}
-
-	public async summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): Promise<ISummaryTreeWithStats> {
 		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));
 	}
 
