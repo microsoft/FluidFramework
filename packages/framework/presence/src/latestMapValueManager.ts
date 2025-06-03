@@ -23,8 +23,7 @@ import {
 	objectKeys,
 	serializableToOpaqueJson,
 } from "./internalUtils.js";
-import {
-	createValidatedGetter} from "./latestValueTypes.js";
+import { createValidatedGetter } from "./latestValueTypes.js";
 import type {
 	LatestClientData,
 	LatestData,
@@ -651,7 +650,7 @@ export function latestMap<
 /**
  * Factory for creating a {@link LatestMap} State object.
  *
- * @alpha
+ * @beta
  */
 export function latestMap<
 	T,

@@ -185,6 +185,11 @@ export function latestMap<T, Keys extends string | number = string | number, Reg
 // @beta
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: Omit<LatestMapArguments<T, Keys>, "validator">): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
+// @beta
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys> & {
+    validator: StateSchemaValidator<T>;
+}): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+
 // @beta @input
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
     local?: {

@@ -19,6 +19,7 @@ import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../pro
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import type { StateSchemaValidator } from "../latestValueTypes.js";
 
 /**
  * Use to compile-time assert types of two variables are identical.

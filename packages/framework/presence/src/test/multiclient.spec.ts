@@ -109,10 +109,12 @@ const event = {
 		);
 	},
 	async LocalUpdated<T>(latestData: Latest<T>, tag = ""): Promise<void> {
-		await timeoutPromise<DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>>(
+		await timeoutPromise<DeepReadonly<JsonDeserialized<T>>>(
 			(resolve) =>
 				latestData.events.on("localUpdated", (data) => {
 					// console.log(`${tag}localUpdated: ${JSON.stringify(data, undefined, 2)}`);
+
+					// @ts-expect-error Type 'null' is not assignable to type 'DeepReadonly<JsonDeserialized<T>> | PromiseLike<DeepReadonly<JsonDeserialized<T>>>'.
 					resolve(data.value);
 				}),
 			{

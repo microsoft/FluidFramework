@@ -159,10 +159,10 @@ export function createValidatedGetter<T>(
 				? // No validator, so use the raw value
 					clientState.value
 				: clientState.validated === true
-				// Stored value has been validated, so return it without revalidating
-					? clientState.validatedValue
-					// Use false to signal that value
-					: false;
+					? // Stored value has been validated, so return it without revalidating
+						clientState.validatedValue
+					: // Use false to signal that value needs to be validated
+						false;
 
 		if (valueToCheck !== false) {
 			return valueToCheck === undefined
@@ -177,8 +177,7 @@ export function createValidatedGetter<T>(
 		);
 		clientState.validated = true;
 		clientState.validatedValue =
-
-		// @ts-expect-error Argument of type 'T & ({} | null)' is not assignable to parameter of type
+			// @ts-expect-error Argument of type 'T & ({} | null)' is not assignable to parameter of type
 			validData === undefined ? undefined : serializableToOpaqueJson(validData);
 		return clientState.validatedValue === undefined
 			? undefined
