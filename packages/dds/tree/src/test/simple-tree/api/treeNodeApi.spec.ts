@@ -58,7 +58,7 @@ const schema = new SchemaFactoryAlpha("com.example");
 
 class Point extends schema.object("Point", {}) {}
 
-describe.only("treeNodeApi", () => {
+describe("treeNodeApi", () => {
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });
