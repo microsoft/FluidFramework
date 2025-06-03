@@ -4650,8 +4650,14 @@ export class ContainerRuntime
 
 	/**
 	 * Resubmits each message in the batch, and then flushes the outbox.
+	 * This typically happens when we reconnect and there are pending messages.
 	 *
-	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
+	 * @remarks
+	 * Attempting to resubmit a batch that has been successfully sequenced will not happen due to
+	 * checks in the ConnectionStateHandler (Loader layer)
+	 *
+	 * The only exception to this would be if the Container "forks" due to misuse of the "Offline Load" feature.
+	 * If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
 	 * for correlation to detect container forking.
 	 */
 	private reSubmitBatch(
@@ -4670,20 +4676,27 @@ export class ContainerRuntime
 			staged,
 		};
 
+		const resubmitFn = squash
+			? this.reSubmitWithSquashing.bind(this)
+			: this.reSubmit.bind(this);
+
 		this.batchRunner.run(() => {
 			for (const message of batch) {
-				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-				staged ? this.reSubmitStaged(message, squash) : this.reSubmit(message);
+				resubmitFn(message);
 			}
 		}, resubmitInfo);
 
 		this.flush(resubmitInfo);
 	}
 
-	private reSubmitStaged(
-		{ runtimeOp: message, localOpMetadata }: PendingMessageResubmitData,
-		squash: boolean,
-	): void {
+	/**
+	 * Resubmit the given message as part of a squash rebase upon exiting Staging Mode.
+	 * How to resubmit is up to the subsystem that submitted the op to begin with
+	 */
+	private reSubmitWithSquashing({
+		runtimeOp: message,
+		localOpMetadata,
+	}: PendingMessageResubmitData): void {
 		assert(
 			canStageMessageOfType(message.type),
 			"Expected message type to be compatible with staging",
@@ -4694,7 +4707,7 @@ export class ContainerRuntime
 					message.type,
 					message.contents,
 					localOpMetadata,
-					squash,
+					/* squash: */ true,
 				);
 				break;
 			}
@@ -4710,11 +4723,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Finds the right store and asks it to resubmit the message. This typically happens when we
-	 * reconnect and there are pending messages.
-	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
-	 * @param message - The original LocalContainerRuntimeMessage.
-	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * Resubmit the given message which was previously submitted to the ContainerRuntime but not successfully
+	 * transmitted to the ordering service (e.g. due to a disconnect, or being in Staging Mode)
+	 * How to resubmit is up to the subsystem that submitted the op to begin with
 	 */
 	private reSubmit({
 		runtimeOp: message,
