@@ -341,12 +341,34 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					"Expected the Tombstone header",
 				);
 
+				// This request fails even though there's a query parameter in the URL (simulating a deep link to a tombstoned datastore)
+				const tombstoneErrorResponse2 = await (
+					entryPoint._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: `${unreferencedId}?query=string`,
+				});
+				assert.equal(
+					tombstoneErrorResponse2.status,
+					404,
+					"Should not be able to retrieve a tombstoned datastore in non-summarizer clients",
+				);
+				assert.equal(
+					tombstoneErrorResponse2.value,
+					`DataStore was tombstoned: ${unreferencedId}`,
+					"Expected the Tombstone error message",
+				);
+				assert.equal(
+					tombstoneErrorResponse2.headers?.[TombstoneResponseHeaderKey],
+					true,
+					"Expected the Tombstone header",
+				);
+
 				// This request succeeds because the "allowTombstone" header is set to true
 				const tombstoneSuccessResponse = await (
 					entryPoint._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
-					url: unreferencedId,
-					headers: { [AllowTombstoneRequestHeaderKey]: true },
+					url: `${unreferencedId}?query=string`,
+					//* headers: { [AllowTombstoneRequestHeaderKey]: true },
 				});
 				assert.equal(
 					tombstoneSuccessResponse.status,
