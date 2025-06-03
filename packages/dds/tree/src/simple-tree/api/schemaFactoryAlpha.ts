@@ -10,6 +10,8 @@ import {
 	mapSchema,
 	type ObjectNodeSchema,
 	objectSchema,
+	type RecordNodeCustomizableSchema,
+	recordSchema,
 } from "../node-kinds/index.js";
 import {
 	defaultSchemaFactoryObjectOptions,
@@ -260,6 +262,25 @@ export class SchemaFactoryAlpha<
 			T,
 			TCustomMetadata
 		>;
+	}
+
+	/**
+	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeRecordNode}.
+	 *
+	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param allowedTypes - The types that may appear as values in the record.
+	 * @param options - Additional options for the schema.
+	 */
+	public record<
+		const Name extends TName,
+		const T extends ImplicitAnnotatedAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
+		name: Name,
+		allowedTypes: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
+	): RecordNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
+		return recordSchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
 	}
 
 	/**
