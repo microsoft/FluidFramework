@@ -20,7 +20,7 @@ import {
 	ReleaseTag,
 	SectionNode,
 	SpanNode,
-	transformTsdocNode,
+	transformTsdoc,
 } from "@fluid-tools/api-markdown-documenter";
 
 import { AdmonitionNode } from "./admonition-node.mjs";
@@ -229,7 +229,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 	}
 
 	// Add summary comment (if any)
-	addSection(LayoutUtilities.createSummaryParagraph(apiItem, config));
+	addSection(LayoutUtilities.createSummarySection(apiItem, config));
 
 	// Add system notice (if any) that supersedes deprecation and import notices
 	if (!addSection(createTagNotice(apiItem, "@system", systemNotice))) {
@@ -298,13 +298,13 @@ function createDeprecationNoticeSection(apiItem, config) {
 		return undefined;
 	}
 
-	const transformedDeprecatedBlock = transformTsdocNode(deprecatedBlock, apiItem, config);
-	if (transformedDeprecatedBlock === undefined) {
+	const transformedDeprecatedBlockContents = transformTsdoc(deprecatedBlock, apiItem, config);
+	if (transformedDeprecatedBlockContents === undefined) {
 		throw new Error("Failed to transform deprecated block.");
 	}
 
 	return new AdmonitionNode(
-		[transformedDeprecatedBlock],
+		transformedDeprecatedBlockContents,
 		"Warning",
 		"This API is deprecated and will be removed in a future release.",
 	);
