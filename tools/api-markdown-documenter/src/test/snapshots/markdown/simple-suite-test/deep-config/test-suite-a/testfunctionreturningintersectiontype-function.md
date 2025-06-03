@@ -6,7 +6,7 @@ Test function that returns an inline type
 
 **WARNING: This API is deprecated and will be removed in a future release.**
 
-_This is a test deprecation notice. Here is a_ [_link_](/test-suite-a/testfunctionreturninguniontype-function)<!-- --> _to something else!_
+This is a test deprecation notice. Here is a [link](/test-suite-a/testfunctionreturninguniontype-function) to something else!
 
 ## Signature {#testfunctionreturningintersectiontype-signature}
 

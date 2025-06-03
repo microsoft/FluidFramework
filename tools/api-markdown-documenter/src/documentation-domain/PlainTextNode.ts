@@ -16,6 +16,7 @@ import { DocumentationNodeType } from "./DocumentationNodeType.js";
  * To include line breaks in your text, use {@link LineBreakNode} in a container node like
  * {@link SpanNode} or {@link ParagraphNode}.
  *
+ * @sealed
  * @public
  */
 export class PlainTextNode extends DocumentationLiteralNodeBase<string> {

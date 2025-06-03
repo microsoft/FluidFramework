@@ -19,7 +19,7 @@ describe("CodeSpan HTML rendering tests", () => {
 	});
 
 	it("Simple CodeSpan", () => {
-		const input = new CodeSpanNode([new PlainTextNode("console.log('hello world');")]);
+		const input = new CodeSpanNode(new PlainTextNode("console.log('hello world');"));
 		const expected = h("code", [{ type: "text", value: "console.log('hello world');" }]);
 
 		assertTransformation(input, expected);

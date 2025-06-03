@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
@@ -31,9 +32,10 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * </p>
  * ```
  *
+ * @sealed
  * @public
  */
-export class ParagraphNode extends DocumentationParentNodeBase {
+export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * Static singleton representing an empty Paragraph node.
 	 */
@@ -51,7 +53,7 @@ export class ParagraphNode extends DocumentationParentNodeBase {
 		return false;
 	}
 
-	public constructor(children: DocumentationNode[]) {
+	public constructor(children: PhrasingContent[]) {
 		super(children);
 	}
 

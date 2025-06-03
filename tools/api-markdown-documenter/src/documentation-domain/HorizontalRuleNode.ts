@@ -23,6 +23,7 @@ import { DocumentationNodeType } from "./DocumentationNodeType.js";
  *
  * @see {@link https://www.markdownguide.org/basic-syntax#horizontal-rules}
  *
+ * @sealed
  * @public
  */
 export class HorizontalRuleNode implements DocumentationNode {
