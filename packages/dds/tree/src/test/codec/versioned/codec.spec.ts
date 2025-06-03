@@ -78,7 +78,7 @@ The client which encoded this data likely specified an "oldestCompatibleClient" 
 						writeVersionOverrides: new Map([["Test", 1]]),
 					}),
 				validateUsageError(
-					`Codec "Test" does not support requested format version 1 because it is only compatible back to client version 2 and the requested oldest compatible client was 1. Use "allowPossiblyIncompatibleOverrides" to override this error.`,
+					`Codec "Test" does not support requested format version 1 because it is only compatible back to client version 2 and the requested oldest compatible client was 1. Use "allowPossiblyIncompatibleWriteVersionOverrides" to override this error.`,
 				),
 			);
 

@@ -192,11 +192,11 @@ export class ClientVersionDispatchingCodecBuilder<Name extends CodecName, TDecod
 			} else if (options.allowPossiblyIncompatibleWriteVersionOverrides !== true) {
 				if (selected.oldestCompatibleClient === undefined) {
 					throw new UsageError(
-						`Codec "${this.name}" does not support requested format version ${selectedFormatVersion} because it does not specify an oldest compatible client. Use "allowPossiblyIncompatibleOverrides" to override this error.`,
+						`Codec "${this.name}" does not support requested format version ${selectedFormatVersion} because it does not specify an oldest compatible client. Use "allowPossiblyIncompatibleWriteVersionOverrides" to override this error.`,
 					);
 				} else if (selected.oldestCompatibleClient > options.oldestCompatibleClient) {
 					throw new UsageError(
-						`Codec "${this.name}" does not support requested format version ${selectedFormatVersion} because it is only compatible back to client version ${selected.oldestCompatibleClient} and the requested oldest compatible client was ${options.oldestCompatibleClient}. Use "allowPossiblyIncompatibleOverrides" to override this error.`,
+						`Codec "${this.name}" does not support requested format version ${selectedFormatVersion} because it is only compatible back to client version ${selected.oldestCompatibleClient} and the requested oldest compatible client was ${options.oldestCompatibleClient}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to override this error.`,
 					);
 				}
 			}
