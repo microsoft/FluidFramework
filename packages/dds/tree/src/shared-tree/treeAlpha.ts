@@ -357,6 +357,9 @@ export interface TreeAlpha {
 	/**
 	 * Gets the child of the given node with the given property key if a child exists under that key.
 	 *
+	 * @remarks
+	 * Note: it is not possible to access unknown optional fields of Object nodes using this method.
+	 *
 	 * @param node - The parent node whose child is being requested.
 	 * @param key - The property key under the node under which the child is being requested.
 	 * Note: this is the "property key", not the "stored key".
@@ -369,7 +372,7 @@ export interface TreeAlpha {
 	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
 
 	/**
-	 * Gets the children of the provided node, paired with their property key under the node.
+	 * Gets the children of the provided node, paired with their property keys under the node.
 	 *
 	 * @remarks
 	 * No guarantees are made regarding the order of the children in the returned array.
