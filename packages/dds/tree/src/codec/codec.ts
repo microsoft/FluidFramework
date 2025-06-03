@@ -101,6 +101,18 @@ export interface CodecWriteOptions extends ICodecOptions {
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
 	readonly oldestCompatibleClient: FluidClientVersion;
+
+	/**
+	 * Overrides the version of the codec to use for encoding.
+	 * @remarks
+	 * Without an override, the selected version will be based on {@link CodecWriteOptions.oldestCompatibleClient}.
+	 */
+	readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
+
+	/**
+	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the `oldestCompatibleClient`
+	 */
+	readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
 }
 
 /**
@@ -199,10 +211,19 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 
 /**
  * A version stamp for encoded data.
- *
+ * @remarks
  * Undefined is tolerated to enable the scenario where data was not initially versioned.
+ * @alpha
  */
 export type FormatVersion = number | undefined;
+
+/**
+ * A unique name given to this codec family.
+ * @remarks
+ * This is not persisted: it is only used to specify version overrides and in errors.
+ * @alpha
+ */
+export type CodecName = string;
 
 /**
  * Creates a codec family from a registry of codecs.

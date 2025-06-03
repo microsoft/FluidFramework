@@ -5,12 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	type FluidClientVersion,
-	type ICodecFamily,
-	type IJsonCodec,
-	makeCodecFamily,
-} from "../../../codec/index.js";
+import { FluidClientVersion, type IJsonCodec } from "../../../codec/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ClientVersionDispatchingCodecBuilder } from "../../../codec/versioned/codec.js";
@@ -36,19 +31,17 @@ describe("versioned Codecs", () => {
 			decode: (x) => (x as unknown as V2).value2,
 		};
 
-		const family: ICodecFamily<number> = makeCodecFamily([
-			[1, codecV1],
-			[2, codecV2],
-		]);
-		const builder = new ClientVersionDispatchingCodecBuilder(
-			family,
-			(oldestCompatibleClient: FluidClientVersion) => (oldestCompatibleClient > 5 ? 2 : 1),
-		);
+		it("using oldestCompatibleClient", () => {
+			const builder = new ClientVersionDispatchingCodecBuilder(
+				"Test",
+				{ formatVersion: 1, oldestCompatibleClient: 0 as FluidClientVersion, codec: codecV1 },
+				{ formatVersion: 2, oldestCompatibleClient: 5 as FluidClientVersion, codec: codecV2 },
+			);
 
-		it("round trip", () => {
 			const codec1 = builder.build({
 				oldestCompatibleClient: 2 as FluidClientVersion,
 				jsonValidator: typeboxValidator,
+				writeVersionOverrides: new Map([["Unrelated", 100]]),
 			});
 			const codec2 = builder.build({
 				oldestCompatibleClient: 6 as FluidClientVersion,
@@ -68,6 +61,42 @@ describe("versioned Codecs", () => {
 				validateUsageError(`Unsupported version 3 encountered while decoding data. Supported versions for this data are: 1, 2.
 The client which encoded this data likely specified an "oldestCompatibleClient" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
 			);
+		});
+
+		it("overridden", () => {
+			const builder = new ClientVersionDispatchingCodecBuilder(
+				"Test",
+				{ formatVersion: 1, oldestCompatibleClient: FluidClientVersion.v2_0, codec: codecV1 },
+				{ formatVersion: 2, oldestCompatibleClient: undefined, codec: codecV2 },
+			);
+
+			assert.throws(
+				() =>
+					builder.build({
+						oldestCompatibleClient: FluidClientVersion.v2_0 - 1,
+						jsonValidator: typeboxValidator,
+						writeVersionOverrides: new Map([["Test", 1]]),
+					}),
+				validateUsageError(
+					`Codec "Test" does not support requested format version 1 because it is only compatible back to client version 2 and the requested oldest compatible client was 1. Use "allowPossiblyIncompatibleOverrides" to override this error.`,
+				),
+			);
+
+			const codec1 = builder.build({
+				oldestCompatibleClient: FluidClientVersion.v2_0,
+				jsonValidator: typeboxValidator,
+				writeVersionOverrides: new Map([["Test", 1]]),
+			});
+			const codec2 = builder.build({
+				oldestCompatibleClient: FluidClientVersion.v2_0,
+				jsonValidator: typeboxValidator,
+				writeVersionOverrides: new Map([["Test", 2]]),
+				allowPossiblyIncompatibleWriteVersionOverrides: true,
+			});
+			const v1 = codec1.encode(42);
+			const v2 = codec2.encode(42);
+			assert.deepEqual(v1, { version: 1, value1: 42 });
+			assert.deepEqual(v2, { version: 2, value2: 42 });
 		});
 	});
 });

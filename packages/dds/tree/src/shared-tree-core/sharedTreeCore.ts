@@ -20,7 +20,7 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
+import type { FluidClientVersion, ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
@@ -58,6 +58,10 @@ import type { ResubmitMachine } from "./resubmitMachine.js";
 const summarizablesTreeKey = "indexes";
 
 export interface ExplicitCoreCodecVersions {
+	/**
+	 * See {@link CodecVersion.oldestCompatibleClient} for details.
+	 */
+	oldestCompatibleClient: FluidClientVersion;
 	editManager: number;
 	message: number;
 }
@@ -121,6 +125,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
 		changeFamily: ChangeFamily<TEditor, TChange>,
+		/**
+		 * TODO: replace this and formatOptions with a single `CodecWriteOptions` parameter.
+		 */
 		options: ICodecOptions,
 		formatOptions: ExplicitCoreCodecVersions,
 		private readonly idCompressor: IIdCompressor,
@@ -167,16 +174,20 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		});
 
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
-		const editManagerCodec = makeEditManagerCodec(
+		const editManagerCodecBuilder = makeEditManagerCodec(
 			this.editManager.changeFamily.codecs,
 			revisionTagCodec,
-			options,
-			formatOptions.editManager,
 		);
 		this.summarizables = [
 			new EditManagerSummarizer(
 				this.editManager,
-				editManagerCodec,
+				editManagerCodecBuilder.build({
+					...options,
+					oldestCompatibleClient: formatOptions.oldestCompatibleClient,
+					writeVersionOverrides: new Map([
+						[editManagerCodecBuilder.name, formatOptions.editManager],
+					]),
+				}),
 				this.idCompressor,
 				this.schemaAndPolicy,
 			),

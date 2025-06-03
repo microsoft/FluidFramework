@@ -13,7 +13,7 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ICodecOptions } from "../../codec/index.js";
+import { FluidClientVersion, type ICodecOptions } from "../../codec/index.js";
 import {
 	RevisionTagCodec,
 	tagChange,
@@ -72,7 +72,12 @@ import { TestChange } from "../testChange.js";
 const codecOptions: ICodecOptions = {
 	jsonValidator: typeboxValidator,
 };
-const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
+const formatVersions = {
+	editManager: 1,
+	message: 1,
+	fieldBatch: 1,
+	oldestCompatibleClient: FluidClientVersion.v2_0,
+};
 
 export function createTree<TIndexes extends readonly Summarizable[]>(
 	indexes: TIndexes,
