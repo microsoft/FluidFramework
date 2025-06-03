@@ -27,7 +27,6 @@ import { SchemaVersion } from "../../core/index.js";
 export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
 	return makeCodecFamily([
 		[SchemaVersion.v1, makeSchemaChangeCodecV1(options, SchemaVersion.v1)],
-		[SchemaVersion.v2, makeSchemaChangeCodecV1(options, SchemaVersion.v2)],
 	]);
 }
 
