@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type {
 	EncodedRevisionTag,
@@ -27,6 +26,7 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
+	validateUsageError,
 } from "../utils.js";
 
 const commit1 = {
@@ -223,8 +223,7 @@ describe("message codec", () => {
 			} satisfies Message);
 			assert.throws(
 				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
-				(e: Error) => validateAssertionError(e, "version being decoded is not supported"),
-				"Expected decoding to fail validation",
+				validateUsageError(/Unsupported version -1 encountered while decoding data/),
 			);
 		});
 	});

@@ -12,12 +12,13 @@ import {
 	createDetachedContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -30,6 +31,16 @@ import {
 	TestFluidObjectFactory,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+
+const nonDirtyableOp = {
+	type: "GC",
+	contents: { type: "TombstoneLoaded", nodePath: "/" },
+} as const;
+
+type IContainerRuntime_WithSubmit = IContainerRuntime & {
+	// Expose the submit function only to be used to submit a sample non-dirtyable op
+	submit: (msg: typeof nonDirtyableOp) => void;
+};
 
 describe("Document Dirty", () => {
 	const documentId = "documentDirtyTest";
@@ -44,7 +55,7 @@ describe("Document Dirty", () => {
 	let loaderContainerTracker: LoaderContainerTracker;
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
-	let containerRuntime: IContainerRuntime;
+	let containerRuntime: IContainerRuntime_WithSubmit;
 	let sharedMap: ISharedMap;
 	let wasMarkedDirtyRuntimeCount: number;
 	let wasMarkedCleanRuntimeCount: number;
@@ -136,6 +147,10 @@ describe("Document Dirty", () => {
 				urlResolver,
 				documentServiceFactory,
 				codeLoader,
+				configProvider: {
+					getRawConfig: (key: string) =>
+						key === "Fluid.ContainerRuntime.EnableRollback" ? true : undefined,
+				},
 			};
 
 			const containerUsingProps = await createAndAttachContainerUsingProps(
@@ -154,7 +169,7 @@ describe("Document Dirty", () => {
 			// Create the first container, component and DDSes.
 			container = await createContainer();
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
+			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime_WithSubmit;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
@@ -209,7 +224,7 @@ describe("Document Dirty", () => {
 
 		describe("Connected state", () => {
 			it("marks state as dirty when ops are sent and clean when acks are received", async () => {
-				checkDirtyState("before attach", false, 0);
+				checkDirtyState("before value set", false, 0);
 
 				sharedMap.set("key", "value");
 
@@ -218,8 +233,7 @@ describe("Document Dirty", () => {
 				// Wait for the ops to get processed which should mark the document clean after processing
 				await loaderContainerTracker.ensureSynchronized();
 
-				// Document will have been marked clean on reconnection
-
+				// Document will have been marked clean after sync
 				checkDirtyState("after processing value set", false, 1);
 			});
 
@@ -235,6 +249,75 @@ describe("Document Dirty", () => {
 				await loaderContainerTracker.ensureSynchronized();
 
 				checkDirtyState("after processing batch value set", false, 1);
+			});
+
+			it("Leaves as clean when non-dirtyable op is sent", async () => {
+				checkDirtyState("before value set", false, 0);
+
+				// Submit a non-dirtyable op
+				containerRuntime.submit(nonDirtyableOp);
+
+				// Should remain clean since the op is non-dirtyable
+				checkDirtyState("after value set", false, 0);
+
+				// Wait for the ops to get processed which should mark the document clean after processing
+				await loaderContainerTracker.ensureSynchronized();
+
+				// Document will still be clean
+				checkDirtyState("after processing value set", false, 0);
+			});
+
+			it("Returns to as clean state when only non-dirtyable op remains after rollback", async () => {
+				checkDirtyState("before value set", false, 0);
+
+				// Submit a non-dirtyable op
+				containerRuntime.submit(nonDirtyableOp);
+
+				try {
+					containerRuntime.orderSequentially(() => {
+						sharedMap.set("key", "value");
+						checkDirtyState("after value set", true, 0);
+						throw new Error("Trigger rollback");
+					});
+				} catch (e) {
+					// Ignore the error, we are just triggering a rollback
+				}
+
+				// Not dirty since all that's left is a non-dirtyable op
+				checkDirtyState("after rollback", false, 1);
+
+				// Wait for the ops to get processed
+				await loaderContainerTracker.ensureSynchronized();
+
+				// Document will still be clean
+				checkDirtyState("after processing value set", false, 1);
+			});
+
+			it("Returns to as clean state when only non-dirtyable op remains after staging mode", async () => {
+				checkDirtyState("before value set", false, 0);
+
+				// Submit a non-dirtyable op
+				containerRuntime.submit(nonDirtyableOp);
+
+				const stageControls = (
+					containerRuntime as IContainerRuntimeBaseExperimental
+				).enterStagingMode?.();
+
+				// Submit an op in staging mode - we will discard it later
+				sharedMap.set("key", "value");
+
+				// Dirty due to staged op
+				checkDirtyState("after value set", true, 0);
+
+				stageControls?.discardChanges();
+				// Not dirty since all that's left is a non-dirtyable op
+				checkDirtyState("after discarding staged changes", false, 1);
+
+				// Wait for the ops to get processed
+				await loaderContainerTracker.ensureSynchronized();
+
+				// Document will still be clean
+				checkDirtyState("after processing value set", false, 1);
 			});
 
 			it(`doesn't affect document state while reconnecting`, async () => {
@@ -565,7 +648,7 @@ describe("Document Dirty", () => {
 			// Create the first container, component and DDSes.
 			container = await createDetachedContainerForTest();
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
+			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime_WithSubmit;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is

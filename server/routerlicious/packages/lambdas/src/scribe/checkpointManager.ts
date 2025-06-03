@@ -16,6 +16,7 @@ import {
 	ICheckpointService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { ICheckpointManager } from "./interfaces";
 import { isLocalCheckpoint } from "./utils";
 

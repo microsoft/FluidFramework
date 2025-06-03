@@ -13,7 +13,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import {
-	cursorFromInsertable,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -29,6 +28,7 @@ import {
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
+	fieldCursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
 	validateUsageError,
@@ -58,12 +58,10 @@ const configGeneralized2 = new TreeViewConfiguration({
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
 	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
-	nodeKeyManager = new MockNodeIdentifierManager(),
 ): TreeCheckout {
-	const initialTree = cursorFromInsertable<UnsafeUnknownSchema>(
+	const initialTree = fieldCursorFromInsertable<UnsafeUnknownSchema>(
 		viewConfig.schema,
 		unhydratedInitialTree,
-		nodeKeyManager,
 	);
 	const treeContent: TreeStoredContent = {
 		schema: toStoredSchema(viewConfig.schema),
@@ -573,7 +571,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const stringArrayStoredSchema = toStoredSchema(stringArraySchema);
 			const stringArrayContent = {
 				schema: stringArrayStoredSchema,
-				initialTree: cursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
+				initialTree: fieldCursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
 			};
 			const checkout = checkoutWithContent(stringArrayContent);
 			const main = new SchematizingSimpleTreeView(

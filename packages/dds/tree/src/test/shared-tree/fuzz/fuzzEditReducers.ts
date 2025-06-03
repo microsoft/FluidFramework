@@ -54,7 +54,7 @@ import {
 
 import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
+import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
 import {
 	SchemaFactory,
 	TreeArrayNode,

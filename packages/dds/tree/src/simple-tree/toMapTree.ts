@@ -20,7 +20,7 @@ import {
 	valueSchemaAllows,
 	type NodeIdentifierManager,
 } from "../feature-libraries/index.js";
-import { brand, isReadonlyArray, find, hasSome, hasSingle } from "../util/index.js";
+import { brand, isReadonlyArray, find, hasSingle } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import {
@@ -46,7 +46,12 @@ import {
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import { isObjectNodeSchema } from "./objectNodeTypes.js";
+// Required to prevent the introduction of new circular dependencies
+// TODO: Having the schema provide their own policy functions for compatibility which
+// toMapTree invokes instead of manually handling each kind would remove this bad
+// dependency, and reduce coupling.
+// eslint-disable-next-line import/no-internal-modules
+import { isObjectNodeSchema } from "./node-kinds/object/objectNodeTypes.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
@@ -83,37 +88,13 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
- *
- * TODO:BUG: AB#9131
- * This schema validation is done before defaults are provided.
- * This can not easily be fixed by reordering things within this implementation since even at the end of this function defaults requiring a context may not have been filled.
- * This means schema validation reject required fields getting their value from a default like identifier fields.
- *
  * @remarks The resulting tree will be populated with any defaults from {@link FieldProvider}s in the schema.
- *
- * @privateRemarks
- * TODO: AB#9126 AB#9131
- * When an app wants schema validation, we should ensure data is validated. Doing the validation here is not robust (since many callers to this don't have a context and thus can't opt into validation).
- * Additionally the validation here does not correctly handle default values, and introduces a second schema representation which is a bit odd API wise as its typically derivable from the view schema.
- * It may make more sense to validate when hydrating the MapTreeNode when the context is known and the defaults are available.
- * Applying the "parse don't validate" idiom here could help ensuring we capture when the validation optionally happens in the type system to avoid missing or redundant validation,
- * as well as ensuring validation happens after defaulting (or can handle validating data missing defaults)
  */
-export function mapTreeFromNodeData(
-	data: InsertableContent,
-	allowedTypes: ImplicitAllowedTypes,
-	context?: NodeIdentifierManager,
-): ExclusiveMapTree;
-export function mapTreeFromNodeData(
-	data: InsertableContent | undefined,
+export function mapTreeFromNodeData<TIn extends InsertableContent | undefined>(
+	data: TIn,
 	allowedTypes: ImplicitFieldSchema,
 	context?: NodeIdentifierManager,
-): ExclusiveMapTree | undefined;
-export function mapTreeFromNodeData(
-	data: InsertableContent | undefined,
-	allowedTypes: ImplicitFieldSchema,
-	context?: NodeIdentifierManager,
-): ExclusiveMapTree | undefined {
+): TIn extends undefined ? undefined : ExclusiveMapTree {
 	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
 
 	if (data === undefined) {
@@ -121,14 +102,14 @@ export function mapTreeFromNodeData(
 		if (normalizedFieldSchema.kind !== FieldKind.Optional) {
 			throw new UsageError("Got undefined for non-optional field.");
 		}
-		return undefined;
+		return undefined as TIn extends undefined ? undefined : ExclusiveMapTree;
 	}
 
 	const mapTree = nodeDataToMapTree(data, normalizedFieldSchema.allowedTypeSet);
 	// Add what defaults can be provided. If no `context` is providing, some defaults may still be missing.
 	addDefaultsToMapTree(mapTree, normalizedFieldSchema.allowedTypes, context);
 
-	return mapTree;
+	return mapTree as TIn extends undefined ? undefined : ExclusiveMapTree;
 }
 
 /**
@@ -384,8 +365,8 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): Exclusiv
 	// Loop through field keys without data.
 	// This does NOT apply defaults.
 	for (const [key, fieldInfo] of schema.flexKeyMap) {
-		if (checkFieldProperty(data, key)) {
-			const value = (data as Record<string, InsertableContent>)[key as string];
+		const value = getFieldProperty(data, key);
+		if (value !== undefined) {
 			setFieldValue(fields, value, fieldInfo.schema, fieldInfo.storedKey);
 		}
 	}
@@ -398,20 +379,27 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): Exclusiv
 
 /**
  * Check {@link FactoryContentObject} for a property which could be store a field.
+ *
+ * @returns If the property exists, return its value. Otherwise, returns undefined.
  * @remarks
  * The currently policy is to only consider own properties.
  * See {@link InsertableObjectFromSchemaRecord} for where this policy is documented in the public API.
  *
- * Explicit undefined members are considered to exist, as long as they are own properties.
+ * Explicit undefined values are treated the same as missing properties to allow explicit use of undefined with defaulted identifiers.
+ *
+ * @privateRemarks
+ * If we ever want to have an optional field which defaults to something other than undefined, this will need changes.
+ * It would need to adjusting the handling of explicit undefined in contexts where undefined is allowed, and a default provider also exists.
  */
-function checkFieldProperty(
+function getFieldProperty(
 	data: FactoryContentObject,
 	key: string | symbol,
-): data is {
-	readonly [P in string]: InsertableContent | undefined;
-} {
+): InsertableContent | undefined {
 	// This policy only allows own properties.
-	return Object.hasOwnProperty.call(data, key);
+	if (Object.hasOwnProperty.call(data, key)) {
+		return (data as Record<string, InsertableContent>)[key as string];
+	}
+	return undefined;
 }
 
 function setFieldValue(
@@ -440,10 +428,6 @@ function getType(
 			)}.`,
 		);
 	}
-	assert(
-		hasSome(possibleTypes),
-		0x84e /* data is incompatible with all types allowed by the schema */,
-	);
 	if (!hasSingle(possibleTypes)) {
 		throw new UsageError(
 			`The provided data is compatible with more than one type allowed by the schema.
@@ -582,11 +566,7 @@ function shallowCompatibilityTest(
 	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of schema.fields) {
 		if (fieldSchema.requiresValue) {
-			if (checkFieldProperty(data, fieldKey)) {
-				if (data[fieldKey] === undefined) {
-					return CompatibilityLevel.None;
-				}
-			} else {
+			if (getFieldProperty(data, fieldKey) === undefined) {
 				return CompatibilityLevel.None;
 			}
 		}

@@ -4,6 +4,7 @@
  */
 
 import { inspect } from "util";
+
 import {
 	IContextErrorData,
 	IPartitionLambda,
@@ -14,6 +15,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { QueueObject, queue } from "async";
+
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {

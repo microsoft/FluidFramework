@@ -25,11 +25,8 @@ export type {
 	ContainerAttachProps,
 	IConnection,
 	IMember,
-	IProvideRootDataObject,
-	IRootDataObject,
 	IServiceAudience,
 	IServiceAudienceEvents,
-	LoadableObjectRecord,
 	MemberChangedListener,
 	Myself,
 } from "./types.js";

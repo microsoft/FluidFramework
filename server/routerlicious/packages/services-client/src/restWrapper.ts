@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import safeStringify from "json-stringify-safe";
 import {
 	default as Axios,
 	AxiosError,
@@ -12,14 +11,16 @@ import {
 	RawAxiosRequestHeaders,
 	type AxiosResponse,
 } from "axios";
+import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
-import { debug } from "./debug";
-import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
+
 import {
 	CallingServiceHeaderName,
 	CorrelationIdHeaderName,
 	TelemetryContextHeaderName,
 } from "./constants";
+import { debug } from "./debug";
+import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
 import { getGlobalTimeoutContext } from "./timeoutContext";
 import { isAxiosCanceledError } from "./utils";
 

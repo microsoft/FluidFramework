@@ -53,8 +53,6 @@ export {
 	getIdentifierFromNode,
 } from "./treeNodeApi.js";
 export {
-	createFromInsertable,
-	cursorFromInsertable,
 	createFromCursor,
 	createFromMapTree,
 } from "./create.js";

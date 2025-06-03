@@ -155,7 +155,6 @@ export type InboundContainerRuntimeMessage =
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
 	| InboundContainerRuntimeDocumentSchemaMessage
-	| OutboundContainerRuntimeDocumentSchemaMessage
 	// Inbound messages may include unknown types from other clients, so we include that as a special case here
 	| UnknownContainerRuntimeMessage;
 
@@ -171,7 +170,6 @@ export type LocalContainerRuntimeMessage =
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
-	| InboundContainerRuntimeDocumentSchemaMessage
 	| OutboundContainerRuntimeDocumentSchemaMessage
 	// In rare cases (e.g. related to stashed ops) we could have a local message of an unknown type
 	| UnknownContainerRuntimeMessage;

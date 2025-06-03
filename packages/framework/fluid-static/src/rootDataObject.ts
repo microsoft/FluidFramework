@@ -14,8 +14,17 @@ import {
 	FluidDataStoreRegistry,
 	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type {
+	IContainerRuntime,
+	IContainerRuntimeInternal,
+} from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	FluidObject,
+	FluidObjectKeys,
+	IFluidHandle,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { IDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
@@ -29,6 +38,7 @@ import type {
 	CompatibilityMode,
 	ContainerSchema,
 	IRootDataObject,
+	IStaticEntryPoint,
 	LoadableObjectKind,
 	LoadableObjectKindRecord,
 	LoadableObjectRecord,
@@ -59,18 +69,22 @@ interface RootDataObjectProps {
 	readonly initialObjects: LoadableObjectKindRecord;
 }
 
+interface IProvideRootDataObject {
+	readonly RootDataObject: RootDataObject;
+}
+
 /**
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
 class RootDataObject
 	extends DataObject<{ InitialState: RootDataObjectProps }>
-	implements IRootDataObject
+	implements IRootDataObject, IProvideRootDataObject
 {
 	private readonly initialObjectsDirKey = "initial-objects-key";
 	private readonly _initialObjects: LoadableObjectRecord = {};
 
-	public get IRootDataObject(): IRootDataObject {
+	public get RootDataObject(): RootDataObject {
 		return this;
 	}
 
@@ -127,9 +141,6 @@ class RootDataObject
 		await Promise.all(loadInitialObjectsP);
 	}
 
-	/**
-	 * {@inheritDoc IRootDataObject.initialObjects}
-	 */
 	public get initialObjects(): LoadableObjectRecord {
 		if (Object.keys(this._initialObjects).length === 0) {
 			throw new Error("Initial Objects were not correctly initialized");
@@ -137,9 +148,6 @@ class RootDataObject
 		return this._initialObjects;
 	}
 
-	/**
-	 * {@inheritDoc IRootDataObject.create}
-	 */
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
 		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
 		if (isDataObjectKind(internal)) {
@@ -148,6 +156,10 @@ class RootDataObject
 			return this.createSharedObject(internal);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
+	}
+
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.runtime.uploadBlob(blob);
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
@@ -173,8 +185,9 @@ const rootDataStoreId = "rootDOId";
 
 /**
  * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} which constructs containers
- * with a single {@link IRootDataObject} as their entry point, where the root data object's registry
- * and initial objects are configured based on the provided schema (and optionally, data store registry).
+ * with an entry point containing single IRootDataObject (entry point is opaque to caller),
+ * where the root data object's registry and initial objects are configured based on the provided
+ * schema (and optionally, data store registry).
  *
  * @internal
  */
@@ -203,9 +216,35 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	);
 }
 
+function makeFluidObject<T extends object, K extends FluidObjectKeys<T> = FluidObjectKeys<T>>(
+	object: Omit<T, K>,
+	providerKey: K,
+): T {
+	return Object.defineProperty(object, providerKey, { value: object }) as T;
+}
+
+async function provideEntryPoint(
+	containerRuntime: IContainerRuntime,
+): Promise<IStaticEntryPoint> {
+	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+	if (entryPoint === undefined) {
+		throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
+	}
+	const rootDataObject = ((await entryPoint.get()) as FluidObject<RootDataObject>)
+		.RootDataObject;
+	assert(rootDataObject !== undefined, 0xb9f /* entryPoint must be of type RootDataObject */);
+	return makeFluidObject<IStaticEntryPoint>(
+		{
+			rootDataObject,
+			extensionStore: containerRuntime as IContainerRuntimeInternal,
+		},
+		"IStaticEntryPoint",
+	);
+}
+
 /**
- * Factory for Container Runtime instances that provide a single {@link IRootDataObject}
- * as their entry point.
+ * Factory for Container Runtime instances that provide a {@link IStaticEntryPoint}
+ * (containing single {@link IRootDataObject}) as their entry point.
  */
 class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
@@ -239,16 +278,6 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			{ InitialState: RootDataObjectProps }
 		>,
 	) {
-		const provideEntryPoint = async (
-			containerRuntime: IContainerRuntime,
-			// eslint-disable-next-line unicorn/consistent-function-scoping
-		): Promise<FluidObject> => {
-			const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
-			if (entryPoint === undefined) {
-				throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
-			}
-			return entryPoint.get();
-		};
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
@@ -259,9 +288,6 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		this.initialObjects = schema.initialObjects;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/aqueduct#BaseContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		// The first time we create the container we create the RootDataObject
 		await this.rootDataObjectFactory.createRootInstance(rootDataStoreId, runtime, {

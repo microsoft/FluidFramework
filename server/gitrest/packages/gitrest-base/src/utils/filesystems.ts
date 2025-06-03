@@ -5,18 +5,20 @@
 
 import fs from "node:fs";
 import fsPromises from "node:fs/promises";
+
+import { closeRedisClientConnections } from "@fluidframework/server-services-shared";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { Volume } from "memfs";
 import { Provider } from "nconf";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { closeRedisClientConnections } from "@fluidframework/server-services-shared";
+
 import {
 	IFileSystemManager,
 	IFileSystemManagerFactory,
 	IFileSystemManagerParams,
 	type IFileSystemPromises,
 } from "./definitions";
-import { RedisParams, RedisFsManager, RedisFsConfig } from "./redisFs";
 import { FsPromisesBase } from "./fileSystemBase";
+import { RedisParams, RedisFsManager, RedisFsConfig } from "./redisFs";
 
 class SimpleFsPromisesWrapper extends FsPromisesBase {
 	constructor(
