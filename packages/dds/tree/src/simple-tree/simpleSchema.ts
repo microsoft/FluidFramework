@@ -110,6 +110,23 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
 }
 
 /**
+ * A {@link SimpleNodeSchema} for a map node.
+ *
+ * @alpha
+ * @sealed
+ */
+export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
+	extends SimpleNodeSchemaBase<NodeKind.Record, TCustomMetadata> {
+	/**
+	 * The types allowed as values in the record.
+	 *
+	 * @remarks Refers to the types by identifier.
+	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 */
+	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+}
+
+/**
  * A {@link SimpleNodeSchema} for a leaf node.
  *
  * @alpha

@@ -43,10 +43,7 @@ import type {
 } from "./recordNodeTypes.js";
 
 /**
- * A map of string keys to tree objects.
- *
- * @privateRemarks
- * Add support for `clear` once we have established merge semantics for it.
+ * A record of string keys to tree objects.
  *
  * @sealed @alpha
  */
@@ -56,19 +53,20 @@ export interface TreeRecordNode<_T extends ImplicitAllowedTypes = ImplicitAllowe
 	// TODO
 }
 
-// TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
+// TreeRecordNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
 // This is not ideal, but no alternatives are possible.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handler: ProxyHandler<TreeRecordNode<any>> = {
-	getPrototypeOf: () => {
-		return Map.prototype;
-	},
+	// getPrototypeOf: () => {
+	// 	return Map.prototype;
+	// },
+	// TODO: property accessors (like Array)
 };
 
 abstract class CustomRecordNodeBase<
 	const T extends ImplicitAllowedTypes,
 > extends TreeNodeValid<RecordNodeInsertableData<T>> {
-	public static readonly kind = NodeKind.Map;
+	public static readonly kind = NodeKind.Record;
 
 	public constructor(input?: InternalTreeNode | RecordNodeInsertableData<T> | undefined) {
 		super(input ?? {});

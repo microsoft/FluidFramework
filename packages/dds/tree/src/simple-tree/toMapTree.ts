@@ -161,6 +161,8 @@ function nodeDataToMapTree(
 		case NodeKind.Object:
 			result = objectToMapTree(data, schema);
 			break;
+		case NodeKind.Record:
+			throw new Error("TODO");
 		default:
 			unreachableCase(schema.kind);
 	}

@@ -16,7 +16,7 @@ import {
 	type WithType,
 } from "../../core/index.js";
 
-import type { SimpleMapNodeSchema } from "../../simpleSchema.js";
+import type { SimpleRecordNodeSchema } from "../../simpleSchema.js";
 
 /**
  * A schema for customizable {@link (TreeMapNode:interface)}s.
@@ -29,15 +29,15 @@ export interface RecordNodeCustomizableSchema<
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			TName,
-			NodeKind.Map,
-			TreeRecordNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Map, T>,
+			NodeKind.Record,
+			TreeRecordNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Record, T>,
 			RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable,
 			T,
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleMapNodeSchema<TCustomMetadata> {}
+		SimpleRecordNodeSchema<TCustomMetadata> {}
 
 /**
  * A schema for POJO emulation mode {@link (TreeMapNode:interface)}s.
@@ -50,18 +50,18 @@ export interface RecordNodePojoEmulationSchema<
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<
 			TName,
-			NodeKind.Map,
-			TreeRecordNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Map, T>,
+			NodeKind.Record,
+			TreeRecordNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Record, T>,
 			RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable,
 			T,
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleMapNodeSchema<TCustomMetadata> {}
+		SimpleRecordNodeSchema<TCustomMetadata> {}
 
 /**
- * A schema for {@link (TreeMapNode:interface)}s.
+ * A schema for {@link (TreeRecordNode:interface)}s.
  * @privateRemarks
  * This could have generic arguments added and forwarded.
  * The expected use-cases for this don't need them however, and if they did want an argument it would probably be the allowed types;
@@ -75,7 +75,7 @@ export type RecordNodeSchema = RecordNodeCustomizableSchema | RecordNodePojoEmul
  */
 export const RecordNodeSchema = {
 	/**
-	 * instanceof-based narrowing support for MapNodeSchema in Javascript and TypeScript 5.3 or newer.
+	 * instanceof-based narrowing support for RecordNodeSchema in Javascript and TypeScript 5.3 or newer.
 	 */
 	[Symbol.hasInstance](value: TreeNodeSchema): value is RecordNodeSchema {
 		return isRecordNodeSchema(value);
@@ -83,11 +83,11 @@ export const RecordNodeSchema = {
 } as const;
 
 /**
- * Narrows a {@link (TreeNodeSchema:interface)} to an {@link (MapNodeSchema:interface)}.
+ * Narrows a {@link (TreeNodeSchema:interface)} to an {@link (RecordNodeSchema:interface)}.
  * @privateRemarks
  * If at some point we want to have internal only APIs for MapNodeSchema (like done for objects),
  * this can include those since its not the public facing API.
  */
 export function isRecordNodeSchema(schema: TreeNodeSchema): schema is RecordNodeSchema {
-	return schema.kind === NodeKind.Map;
+	return schema.kind === NodeKind.Record;
 }

@@ -338,6 +338,10 @@ export enum NodeKind {
 	 */
 	Object,
 	/**
+	 * A node which serves as a record, storing children under string keys.
+	 */
+	Record,
+	/**
 	 * A node which stores a single leaf value.
 	 */
 	Leaf,
