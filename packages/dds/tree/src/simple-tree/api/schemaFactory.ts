@@ -1308,4 +1308,10 @@ export function structuralName<const T extends string>(
 	return `${collectionName}<${inner}>`;
 }
 
+/**
+ * Used to allocate default identifiers for unhydrated nodes when no context is available.
+ * @remarks
+ * The identifiers allocated by this will never be compressed to Short Ids.
+ * Using this is only better than creating fully random V4 UUIDs because it reduces the entropy making it possible for things like text compression to work slightly better.
+ */
 const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
