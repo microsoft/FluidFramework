@@ -652,10 +652,6 @@ export function mixinReconnect<
 	options: DDSFuzzSuiteOptions,
 	isReconnectAllowed = (state: TState): boolean => !state.isDetached,
 ): DDSFuzzHarnessModel<TChannelFactory, TOperation | ChangeConnectionState, TState> {
-	const isChangeConnectionState = (
-		op: TOperation | ChangeConnectionState,
-	): op is ChangeConnectionState => op.type === "changeConnectionState";
-
 	const generatorFactory: () => AsyncGenerator<TOperation | ChangeConnectionState, TState> =
 		() => {
 			const baseGenerator = model.generatorFactory();
@@ -684,7 +680,7 @@ export function mixinReconnect<
 		state,
 		operation,
 	) => {
-		if (isChangeConnectionState(operation)) {
+		if (isOperationType<ChangeConnectionState>("changeConnectionState", operation)) {
 			if (operation.squash === true) {
 				reconnectAndSquash(state.client.containerRuntime, state.client.dataStoreRuntime);
 			} else {
