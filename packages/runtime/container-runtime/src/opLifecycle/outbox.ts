@@ -512,6 +512,7 @@ export class Outbox {
 		if (this.params.shouldSend() && !staged) {
 			// Prepend held document schema messages before adding batch metadata and virtualizing.
 			// Note this is valid to do for any of the BatchManagers.
+			// DocumentSchema messages should always be sent first, in case new features are represented in the batched ops.
 			const documentSchemaMessages = this.heldDocumentSchemaMessages.splice(0);
 			rawBatch.messages.unshift(...documentSchemaMessages);
 			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
@@ -523,6 +524,9 @@ export class Outbox {
 				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
 			);
 		} else {
+			// If we aren't able to send the batch now, we don't add held messages or virtualize the batch.
+			// We do need batch metadata though, for consistency in the PendingStateManager.
+			// Note that this batch will be resubmitted later.
 			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 		}
 

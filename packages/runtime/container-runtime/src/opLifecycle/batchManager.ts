@@ -141,7 +141,6 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		// Do NOT add batch metadata here anymore. This is now handled in Outbox before virtualizeBatch.
 		return batch;
 	}
 

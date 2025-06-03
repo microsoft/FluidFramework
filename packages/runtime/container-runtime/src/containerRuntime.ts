@@ -4803,7 +4803,7 @@ export class ContainerRuntime
 				// Currently the only expected type here is TombstoneLoaded, which will have been preceded by one of these events as well:
 				// GC_Tombstone_DataStore_Requested, GC_Tombstone_SubDataStore_Requested, GC_Tombstone_Blob_Requested
 				this.mc.logger.sendErrorEvent({
-					eventName: "DroppingGCOp",
+					eventName: "GC_OpDiscarded",
 					details: { subType: contents.type },
 				});
 				break;
