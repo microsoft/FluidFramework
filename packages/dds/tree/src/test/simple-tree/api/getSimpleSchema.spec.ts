@@ -20,6 +20,8 @@ import { toSimpleTreeSchema } from "../../../simple-tree/api/viewSchemaToSimpleS
 // eslint-disable-next-line import/no-internal-modules
 import { schemaStatics } from "../../../simple-tree/api/schemaFactory.js";
 
+// TODO: Record node tests
+
 const simpleString: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.String,
 	kind: NodeKind.Leaf,

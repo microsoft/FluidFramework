@@ -33,6 +33,8 @@ import { ValueSchema } from "../../../core/index.js";
 import { testSimpleTrees } from "../../testTrees.js";
 import { TreeAlpha } from "../../../shared-tree/index.js";
 
+// TODO: Record node tests
+
 function simpleToJsonSchema(simpleSchema: SimpleTreeSchema): JsonTreeSchema {
 	const schema = generateSchemaFromSimpleSchema(simpleSchema);
 	return toJsonSchema(schema, {

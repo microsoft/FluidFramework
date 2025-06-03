@@ -53,6 +53,8 @@ import type {
 import { hydrate } from "../utils.js";
 import { getView, validateUsageError } from "../../utils.js";
 
+// TODO: Record node tests
+
 {
 	const schema = new SchemaFactory("Blah");
 
