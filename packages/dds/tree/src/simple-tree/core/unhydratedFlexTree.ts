@@ -546,12 +546,7 @@ export class UnhydratedSequenceField
 
 /** Creates a field with the given attributes */
 export function createField(
-	...args: [
-		FlexTreeContext,
-		FieldKindIdentifier,
-		FieldKey,
-		UnhydratedFlexTreeNode[] | ContextualFieldProvider,
-	]
+	...args: ConstructorParameters<typeof UnhydratedFlexTreeField>
 ): UnhydratedFlexTreeField {
 	switch (args[1]) {
 		case FieldKinds.required.identifier:
