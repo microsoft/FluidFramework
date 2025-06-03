@@ -14,10 +14,7 @@ import {
 	EmptyKey,
 	type ExclusiveMapTree,
 	type FieldKey,
-	type FieldKindIdentifier,
 	type MapTree,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
 import {
 	booleanSchema,
@@ -52,20 +49,6 @@ import {
 	type NodeIdentifierManager,
 } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
-
-/**
- * Helper for building {@link TreeFieldStoredSchema}.
- */
-function getFieldSchema(
-	kind: { identifier: FieldKindIdentifier },
-	allowedTypes?: Iterable<TreeNodeSchemaIdentifier>,
-): TreeFieldStoredSchema {
-	return {
-		kind: kind.identifier,
-		types: new Set(allowedTypes),
-		metadata: undefined,
-	};
-}
 
 describe("toMapTree", () => {
 	let nodeKeyManager: MockNodeIdentifierManager;

@@ -222,15 +222,13 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {
-			const value = encodeFieldSchemaV1(
-				this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
-			);
-
 			Object.defineProperty(fieldsObject, key, {
 				enumerable: true,
 				configurable: true,
 				writable: true,
-				value,
+				value: encodeFieldSchemaV1(
+					this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
+				),
 			});
 		}
 		return {

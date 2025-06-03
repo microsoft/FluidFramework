@@ -13,7 +13,7 @@ import {
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { makeSchemaCodec } from "../schema-index/index.js";
+import { makeSchemaCodec, type FormatV1 } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
@@ -62,8 +62,8 @@ function makeSchemaChangeCodecV1(
 				0x933 /* Inverse schema changes should never be transmitted */,
 			);
 			return {
-				new: schemaCodec.encode(schemaChange.schema.new),
-				old: schemaCodec.encode(schemaChange.schema.old),
+				new: schemaCodec.encode(schemaChange.schema.new) as FormatV1,
+				old: schemaCodec.encode(schemaChange.schema.old) as FormatV1,
 			};
 		},
 		decode: (encoded) => {
