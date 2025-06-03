@@ -207,7 +207,7 @@ import {
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
 	ContainerMessageType,
-	type ContainerRuntimeDocumentSchemaMessage,
+	type OutboundContainerRuntimeDocumentSchemaMessage,
 	ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -245,7 +245,7 @@ import {
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import type {
-	IDocumentSchemaChangeMessage,
+	IDocumentSchemaChangeMessageIncoming,
 	IDocumentSchemaCurrent,
 	Summarizer,
 	IDocumentSchemaFeatures,
@@ -3179,7 +3179,7 @@ export class ContainerRuntime
 			}
 			case ContainerMessageType.DocumentSchemaChange: {
 				this.documentsSchemaController.processDocumentSchemaMessages(
-					contents as IDocumentSchemaChangeMessage[],
+					contents as IDocumentSchemaChangeMessageIncoming[],
 					local,
 					message.sequenceNumber,
 				);
@@ -4511,7 +4511,7 @@ export class ContainerRuntime
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
 			// on this callback to do actual sending.
-			const schemaChangeMessage = this.documentsSchemaController.maybeSendSchemaMessage();
+			const schemaChangeMessage = this.documentsSchemaController.maybeGenerateSchemaMessage();
 			if (schemaChangeMessage) {
 				this.mc.logger.sendTelemetryEvent({
 					eventName: "SchemaChangeProposal",
@@ -4521,7 +4521,7 @@ export class ContainerRuntime
 					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
 				});
-				const msg: ContainerRuntimeDocumentSchemaMessage = {
+				const msg: OutboundContainerRuntimeDocumentSchemaMessage = {
 					type: ContainerMessageType.DocumentSchemaChange,
 					contents: schemaChangeMessage,
 				};
