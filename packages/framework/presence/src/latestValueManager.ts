@@ -163,10 +163,10 @@ class LatestValueManagerImpl<T, Key extends string>
 		});
 	}
 
-	public getRemotes: () => IterableIterator<LatestClientData<T, ValueAccessor<T>>> =
-		function* (this: LatestValueManagerImpl<T, Key>) {
-			const allKnownStates = this.datastore.knownValues(this.key);
-			for (const [attendeeId, clientState] of objectEntries(allKnownStates.states)) {
+	public *getRemotes(): IterableIterator<LatestClientData<T, ValueAccessor<T>>> {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		for (const [attendeeId, clientState] of objectEntries(allKnownStates.states)) {
+			if (attendeeId !== allKnownStates.self) {
 				yield {
 					attendee: this.datastore.presence.attendees.getAttendee(attendeeId),
 					value:
@@ -179,7 +179,8 @@ class LatestValueManagerImpl<T, Key extends string>
 					},
 				};
 			}
-		};
+		}
+	}
 
 	public getStateAttendees(): Attendee[] {
 		const allKnownStates = this.datastore.knownValues(this.key);

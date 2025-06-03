@@ -38,10 +38,6 @@ export interface LatestMetadata {
  * @beta
  */
 export type RawValueAccessor<_T> = "raw";
-// export interface RawValueAccessor<T> {
-// 	kind: "raw";
-// 	accessor: DeepReadonly<JsonDeserialized<T>>;
-// }
 
 /**
  * Represents a value that is accessed via a function call, which may result in no value.
@@ -50,15 +46,10 @@ export type RawValueAccessor<_T> = "raw";
  * @beta
  */
 export type ProxiedValueAccessor<_T> = "proxied";
-// export interface ProxiedValueAccessor<T> {
-// 	kind: "proxied";
-// 	accessor: () => DeepReadonly<JsonDeserialized<T>> | undefined;
-// }
 
 /**
- * Union of possible accessor types for a value.
+ * Union type for a raw or proxied accessor.
  *
- * @sealed
  * @beta
  */
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
@@ -97,7 +88,6 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 	/**
 	 * Metadata associated with the value.
 	 */
-
 	metadata: LatestMetadata;
 }
 
@@ -169,7 +159,9 @@ export function createValidatedGetter<T>(
 				? // No validator, so use the raw value
 					clientState.value
 				: clientState.validated === true
+				// Stored value has been validated, so return it without revalidating
 					? clientState.validatedValue
+					// Use false to signal that value
 					: false;
 
 		if (valueToCheck !== false) {
@@ -177,27 +169,16 @@ export function createValidatedGetter<T>(
 				? undefined
 				: asDeeplyReadonlyDeserializedJson(valueToCheck);
 		}
-		// if (validator === undefined) {
-		// 	// No validator, so return the raw value
-		// 	return clientState.value === undefined
-		// 		? undefined
-		// 		: asDeeplyReadonlyFromJsonHandle(clientState.value);
-		// }
-
-		// if (clientState.validated === true) {
-		// 	// Data was previously validated, so return the validated value, which may be undefined.
-		// 	return clientState.validatedValue === undefined
-		// 		? undefined
-		// 		: asDeeplyReadonlyFromJsonHandle(clientState.validatedValue);
-		// }
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const validData = validator!(
+		// @ts-expect-error Type 'null' is not assignable to type 'T | undefined'.
+		const validData: T | undefined = validator!(
 			clientState.value === undefined ? undefined : asDeserializedJson(clientState.value),
 		);
 		clientState.validated = true;
-		// FIXME: Cast shouldn't be needed
 		clientState.validatedValue =
+
+		// @ts-expect-error Argument of type 'T & ({} | null)' is not assignable to parameter of type
 			validData === undefined ? undefined : serializableToOpaqueJson(validData);
 		return clientState.validatedValue === undefined
 			? undefined

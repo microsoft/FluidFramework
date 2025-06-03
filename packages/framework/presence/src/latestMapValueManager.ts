@@ -24,14 +24,15 @@ import {
 	serializableToOpaqueJson,
 } from "./internalUtils.js";
 import {
-	createValidatedGetter,
-	type LatestClientData,
-	type LatestData,
-	type LatestMetadata,
-	type ProxiedValueAccessor,
-	type RawValueAccessor,
-	type StateSchemaValidator,
-	type ValueAccessor,
+	createValidatedGetter} from "./latestValueTypes.js";
+import type {
+	LatestClientData,
+	LatestData,
+	LatestMetadata,
+	ProxiedValueAccessor,
+	RawValueAccessor,
+	StateSchemaValidator,
+	ValueAccessor,
 } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -503,6 +504,7 @@ class LatestMapValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
+					// @ts-expect-error Type {} is not assignable to type ...
 					value:
 						validator === undefined
 							? asDeeplyReadonly(value)
