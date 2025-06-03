@@ -91,7 +91,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 			previousLength = this.operations.length;
 			let idx = previousLength - 1;
 
-			while (idx > 0) {
+			while (idx >= 0) {
 				const deletedOp = this.operations.splice(idx, 1)[0];
 
 				// don't remove attach ops, as it creates invalid scenarios

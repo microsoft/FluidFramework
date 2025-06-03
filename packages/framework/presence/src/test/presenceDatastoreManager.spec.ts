@@ -9,6 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
+import { serializableToOpaqueJson } from "../internalUtils.js";
 import type { AttendeeId } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
@@ -28,7 +29,7 @@ const attendee4SystemWorkspaceDatastore = {
 		["client4" as AttendeeId]: {
 			"rev": 0,
 			"timestamp": 700,
-			"value": createSpecificAttendeeId("attendeeId-4"),
+			"value": serializableToOpaqueJson(createSpecificAttendeeId("attendeeId-4")),
 		},
 	},
 } as const satisfies SystemWorkspaceDatastore;
@@ -105,7 +106,7 @@ describe("Presence", () => {
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": attendeeId2,
+											"value": serializableToOpaqueJson(attendeeId2),
 										},
 									},
 								},
@@ -182,7 +183,7 @@ describe("Presence", () => {
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": attendeeId2,
+											"value": serializableToOpaqueJson(attendeeId2),
 										},
 									},
 								},
@@ -210,7 +211,7 @@ describe("Presence", () => {
 					"client1": {
 						"rev": 0,
 						"timestamp": 0,
-						"value": attendeeId1,
+						"value": serializableToOpaqueJson(attendeeId1),
 					},
 				},
 			};
@@ -220,7 +221,7 @@ describe("Presence", () => {
 					[attendeeId1]: {
 						"rev": 1,
 						"timestamp": 0,
-						"value": {},
+						"value": serializableToOpaqueJson({}),
 					},
 				},
 			};
@@ -230,7 +231,7 @@ describe("Presence", () => {
 					[attendeeId1]: {
 						"rev": 0,
 						"timestamp": 0,
-						"value": {},
+						"value": serializableToOpaqueJson({}),
 						"ignoreUnmonitored": true,
 					},
 				},
@@ -328,7 +329,7 @@ describe("Presence", () => {
 										[attendeeId1]: {
 											"rev": 1,
 											"timestamp": 0,
-											"value": { x: 1, y: 1, z: 1 },
+											"value": serializableToOpaqueJson({ x: 1, y: 1, z: 1 }),
 										},
 									},
 								},
@@ -470,6 +471,39 @@ describe("Presence", () => {
 				);
 				// Verify
 				assert.strictEqual(listener.callCount, 1);
+			});
+
+			it("with acknowledgementId sends targeted acknowledgment messsage back to requestor", () => {
+				// We expect to send a targeted acknowledgment back to the requestor
+				runtime.signalsExpected.push([
+					{
+						type: "Pres:Ack",
+						content: { id: "ackID" },
+						targetClientId: "client4",
+					},
+				]);
+
+				// Act - send generic datastore update with acknowledgement id specified
+				presence.processSignal(
+					[],
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+							acknowledgementId: "ackID",
+						},
+						clientId: "client4",
+					},
+					false,
+				);
+
+				// Verify
+				assertFinalExpectations(runtime, logger);
 			});
 		});
 	});

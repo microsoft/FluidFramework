@@ -11,12 +11,17 @@ import type {
 	IFluidHandleErased,
 } from "@fluidframework/core-interfaces";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
-import type { ReadonlyNonNullJsonObjectWith } from "@fluidframework/core-interfaces/internal";
+import type {
+	BrandedType,
+	ReadonlyNonNullJsonObjectWith,
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	JsonTypeWith,
 	InternalUtilityTypes,
 	ReadonlyJsonTypeWith,
 	NonNullJsonObjectWith,
+	OpaqueJsonSerializable,
+	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /* eslint-disable jsdoc/require-jsdoc */
@@ -619,12 +624,6 @@ export const readonlySetOfRecords: ReadonlySet<StringRecordOfPoints> = setOfReco
 
 // #region Branded types
 
-declare class BrandedType<Brand> {
-	protected readonly brand: (dummy: never) => Brand;
-	private constructor();
-	public static [Symbol.hasInstance](value: never): value is never;
-}
-
 export const brandedNumber = 0 as number & BrandedType<"zero">;
 export const brandedString = "encoding" as string & BrandedType<"encoded">;
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -661,7 +660,43 @@ export const objectWithFluidHandle = {
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface TestErasedType<T> extends ErasedType<readonly ["TestCustomType", T]> {}
 
-export const erasedType: TestErasedType<number> = 0 as unknown as TestErasedType<number>;
+export const erasedType = 0 as unknown as TestErasedType<number>;
+
+export const opaqueSerializableObject = objectWithNumber as unknown as OpaqueJsonSerializable<
+	typeof objectWithNumber
+>;
+export const opaqueDeserializedObject = objectWithNumber as unknown as OpaqueJsonDeserialized<
+	typeof objectWithNumber
+>;
+export const opaqueSerializableAndDeserializedObject =
+	objectWithNumber as unknown as OpaqueJsonSerializable<typeof objectWithNumber> &
+		OpaqueJsonDeserialized<typeof objectWithNumber>;
+
+export const opaqueSerializableObjectRequiringBigintSupport =
+	objectWithBigint as unknown as OpaqueJsonSerializable<typeof objectWithBigint, [bigint]>;
+export const opaqueDeserializedObjectRequiringBigintSupport =
+	objectWithBigint as unknown as OpaqueJsonDeserialized<typeof objectWithBigint, [bigint]>;
+export const opaqueSerializableAndDeserializedObjectRequiringBigintSupport =
+	objectWithBigint as unknown as OpaqueJsonSerializable<typeof objectWithBigint, [bigint]> &
+		OpaqueJsonDeserialized<typeof objectWithBigint, [bigint]>;
+
+// These values are branded as expecting `bigint` support, but they don't actually require it.
+export const opaqueSerializableObjectExpectingBigintSupport =
+	objectWithReadonlyArrayOfNumbers as unknown as OpaqueJsonSerializable<
+		typeof objectWithReadonlyArrayOfNumbers,
+		[bigint]
+	>;
+export const opaqueDeserializedObjectExpectingBigintSupport =
+	objectWithReadonlyArrayOfNumbers as unknown as OpaqueJsonDeserialized<
+		typeof objectWithReadonlyArrayOfNumbers,
+		[bigint]
+	>;
+export const opaqueSerializableAndDeserializedObjectExpectingBigintSupport =
+	objectWithReadonlyArrayOfNumbers as unknown as OpaqueJsonSerializable<
+		typeof objectWithReadonlyArrayOfNumbers,
+		[bigint]
+	> &
+		OpaqueJsonDeserialized<typeof objectWithReadonlyArrayOfNumbers, [bigint]>;
 
 // #endregion
 

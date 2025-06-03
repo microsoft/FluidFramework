@@ -73,22 +73,33 @@ export type Accessor<T> = T extends ProxiedValueAccessor<infer U>
  * @beta
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
+	/**
+	 * The value of the state.
+	 * @remarks This is a deeply readonly value, meaning it cannot be modified.
+	 */
 	value: TValueAccessor extends ProxiedValueAccessor<T>
 		? () => DeepReadonly<JsonDeserialized<T>> | undefined
 		: TValueAccessor extends RawValueAccessor<T>
 			? DeepReadonly<JsonDeserialized<T>>
 			: never;
+
+	/**
+	 * Metadata associated with the value.
+	 */
 	metadata: LatestMetadata;
 }
 
 /**
- * State of a specific attendee's value and its metadata.
+ * State of a specific {@link Attendee}'s value and its metadata.
  *
  * @sealed
  * @beta
  */
 export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>>
 	extends LatestData<T, TValueAccessor> {
+	/**
+	 * Associated {@link Attendee}.
+	 */
 	attendee: Attendee;
 }
 
