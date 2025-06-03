@@ -23,6 +23,7 @@ export {
 	getSoftDeletedMarkerPath,
 	GitObjectType,
 	GitWholeSummaryManager,
+	HybridFsManagerFactory,
 	IExternalWriterConfig,
 	IFileSystemManager,
 	IFileSystemManagerFactories,
