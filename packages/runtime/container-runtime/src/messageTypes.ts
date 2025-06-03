@@ -14,7 +14,10 @@ import {
 import { IDataStoreAliasMessage } from "./dataStore.js";
 import { GarbageCollectionMessage } from "./gc/index.js";
 import { IChunkedOp } from "./opLifecycle/index.js";
-import { IDocumentSchemaChangeMessage } from "./summary/index.js";
+import {
+	type IDocumentSchemaChangeMessageIncoming,
+	type IDocumentSchemaChangeMessageOutgoing,
+} from "./summary/index.js";
 
 /**
  * @legacy
@@ -112,9 +115,13 @@ export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
 	GarbageCollectionMessage
 >;
-export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
+export type InboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.DocumentSchemaChange,
-	IDocumentSchemaChangeMessage
+	IDocumentSchemaChangeMessageIncoming
+>;
+export type OutboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.DocumentSchemaChange,
+	IDocumentSchemaChangeMessageOutgoing
 >;
 
 /**
@@ -147,7 +154,7 @@ export type InboundContainerRuntimeMessage =
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
-	| ContainerRuntimeDocumentSchemaMessage
+	| InboundContainerRuntimeDocumentSchemaMessage
 	// Inbound messages may include unknown types from other clients, so we include that as a special case here
 	| UnknownContainerRuntimeMessage;
 
@@ -163,7 +170,7 @@ export type LocalContainerRuntimeMessage =
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
-	| ContainerRuntimeDocumentSchemaMessage
+	| OutboundContainerRuntimeDocumentSchemaMessage
 	// In rare cases (e.g. related to stashed ops) we could have a local message of an unknown type
 	| UnknownContainerRuntimeMessage;
 
