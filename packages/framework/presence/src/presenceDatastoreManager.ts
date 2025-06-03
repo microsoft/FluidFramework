@@ -177,8 +177,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
-				// FIXME: remove cast
-				data: this.datastore as any,
+				// @ts-expect-error Type 'unknown' is not assignable to type 'JsonTypeWith<never> |
+				// OpaqueJsonSerializable<unknown, [], never>'. I was expecting a type matching JsonTypeWith<never> |
+				// OpaqueJsonSerializable<unknown, [], never>, but instead you passed unknown.
+				data: this.datastore,
 				updateProviders,
 			},
 		});
@@ -341,8 +343,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
-				// FIXME: remove cast
-				data: this.datastore as any,
+				// @ts-expect-error Type 'unknown' is not assignable to type 'JsonTypeWith<never> |
+				// OpaqueJsonSerializable<unknown, [], never>'. I was expecting a type matching JsonTypeWith<never> |
+				// OpaqueJsonSerializable<unknown, [], never>, but instead you passed unknown.
+				data: this.datastore,
 			},
 		});
 		this.refreshBroadcastRequested = false;
