@@ -18,10 +18,10 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
+	asDeeplyReadonlyDeserializedJson,
 	objectEntries,
 	objectKeys,
-	fullySerializableToOpaqueJson,
-	asDeeplyReadonlyDeserializedJson,
+	serializableToOpaqueJson,
 } from "./internalUtils.js";
 import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
@@ -128,7 +128,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
 	 * @eventProperty
 	 */
 	localItemUpdated: (updatedItem: {
-		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T>>;
 		key: K;
 	}) => void;
 
@@ -202,7 +202,7 @@ export interface StateMap<K extends string | number, V> {
 	 * Make a deep clone before setting, if needed. No comparison is done to detect changes; all
 	 * sets are transmitted.
 	 */
-	set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
+	set(key: K, value: JsonSerializable<V>): this;
 
 	/**
 	 * The number of elements in the StateMap.
@@ -305,8 +305,8 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
 	}
-	public set(key: K, inValue: JsonSerializable<T> & JsonDeserialized<T>): this {
-		const value = fullySerializableToOpaqueJson(inValue);
+	public set(key: K, inValue: JsonSerializable<T>): this {
+		const value = serializableToOpaqueJson<T>(inValue);
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
 			this.value.items[key] = {
@@ -534,7 +534,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 	 * The initial value of the local state.
 	 */
 	local?: {
-		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+		[K in Keys]: JsonSerializable<T>;
 	};
 
 	/**
@@ -574,7 +574,7 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				value: fullySerializableToOpaqueJson(initialValues[key]),
+				value: serializableToOpaqueJson(initialValues[key]),
 			};
 		}
 	}

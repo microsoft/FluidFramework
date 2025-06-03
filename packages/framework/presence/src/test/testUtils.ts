@@ -8,6 +8,7 @@ import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/int
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
 
+import { serializableToOpaqueJson } from "../internalUtils.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
@@ -102,7 +103,7 @@ export function generateBasicClientJoin(
 						[clientConnectionId]: {
 							"rev": connectionOrder,
 							"timestamp": fixedTime,
-							"value": attendeeId as AttendeeId,
+							"value": serializableToOpaqueJson(attendeeId as AttendeeId),
 						},
 					},
 				},
@@ -146,6 +147,7 @@ export function prepareConnectedPresence(
 		quorumClientIds.length = 3;
 	}
 
+	// @ts-expect-error Type 'unknown' is not assignable to type 'JsonTypeWith<never> | OpaqueJsonSerializable<unknown, [], never>'. I was expecting a type matching JsonTypeWith<never> | OpaqueJsonSerializable<unknown, [], never>, but instead you passed unknown.
 	const expectedClientJoin: OutboundClientJoinMessage &
 		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
 		attendeeId,

@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	JsonDeserialized,
-	JsonSerializable,
-	OpaqueJsonDeserialized,
-} from "@fluidframework/core-interfaces/internal";
+import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Collection of value types that are not intended to be used/imported
@@ -122,6 +118,6 @@ export namespace InternalTypes {
 	 */
 	export interface NotificationType {
 		name: string;
-		args: (JsonSerializable<unknown> & JsonDeserialized<unknown>)[];
+		args: unknown[];
 	}
 }

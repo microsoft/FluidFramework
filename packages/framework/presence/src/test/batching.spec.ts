@@ -9,6 +9,7 @@ import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import type { NotificationsWorkspace } from "../index.js";
 import { Notifications, StateFactory } from "../index.js";
+import { serializableToOpaqueJson } from "../internalUtils.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -69,7 +70,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -78,9 +79,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 1010,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 0,
-												},
+												}),
 											},
 										},
 									},
@@ -100,7 +101,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -109,9 +110,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 1,
 												"timestamp": 1020,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 42,
-												},
+												}),
 											},
 										},
 									},
@@ -131,7 +132,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -140,9 +141,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1020,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 84,
-												},
+												}),
 											},
 										},
 									},
@@ -187,7 +188,7 @@ describe("Presence", () => {
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": attendeeId2,
+											"value": serializableToOpaqueJson(attendeeId2),
 										},
 									},
 								},
@@ -196,9 +197,9 @@ describe("Presence", () => {
 										[attendeeId2]: {
 											"rev": 0,
 											"timestamp": 1010,
-											"value": {
+											"value": serializableToOpaqueJson({
 												"num": 0,
-											},
+											}),
 										},
 									},
 								},
@@ -235,7 +236,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -244,9 +245,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 3,
 												"timestamp": 1060,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 22,
-												},
+												}),
 											},
 										},
 									},
@@ -266,7 +267,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -275,9 +276,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 6,
 												"timestamp": 1140,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 90,
-												},
+												}),
 											},
 										},
 									},
@@ -343,7 +344,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -352,9 +353,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1100,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 34,
-												},
+												}),
 											},
 										},
 									},
@@ -374,7 +375,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -383,9 +384,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 5,
 												"timestamp": 1220,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 90,
-												},
+												}),
 											},
 										},
 									},
@@ -449,7 +450,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -458,18 +459,18 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 1010,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 0,
-												},
+												}),
 											},
 										},
 										"immediateUpdate": {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 1010,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 0,
-												},
+												}),
 											},
 										},
 									},
@@ -489,7 +490,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -498,18 +499,18 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1100,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 34,
-												},
+												}),
 											},
 										},
 										"immediateUpdate": {
 											[attendeeId2]: {
 												"rev": 1,
 												"timestamp": 1110,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 56,
-												},
+												}),
 											},
 										},
 									},
@@ -563,7 +564,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -572,18 +573,18 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1050,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 34,
-												},
+												}),
 											},
 										},
 										"note": {
 											[attendeeId2]: {
 												"rev": 1,
 												"timestamp": 1020,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"message": "will be queued",
-												},
+												}),
 											},
 										},
 									},
@@ -600,7 +601,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": 1000,
+												"value": serializableToOpaqueJson(attendeeId2),
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -608,7 +613,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1060,
-												"value": { "message": "final message" },
+												"value": serializableToOpaqueJson({ "message": "final message" }),
 											},
 										},
 									},
@@ -667,7 +672,7 @@ describe("Presence", () => {
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": attendeeId2,
+											"value": serializableToOpaqueJson(attendeeId2),
 										},
 									},
 								},
@@ -676,9 +681,9 @@ describe("Presence", () => {
 										[attendeeId2]: {
 											"rev": 2,
 											"timestamp": 1050,
-											"value": {
+											"value": serializableToOpaqueJson({
 												"num": 34,
-											},
+											}),
 										},
 									},
 								},
@@ -687,9 +692,9 @@ describe("Presence", () => {
 										[attendeeId2]: {
 											"rev": 2,
 											"timestamp": 1060,
-											"value": {
+											"value": serializableToOpaqueJson({
 												"message": "final message",
-											},
+											}),
 										},
 									},
 								},
@@ -747,7 +752,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": 1000,
+												"value": serializableToOpaqueJson(attendeeId2),
+											},
 										},
 									},
 									"n:name:testNotificationWorkspace": {
@@ -755,7 +764,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": { "name": "newId", "args": [77] },
+												"value": serializableToOpaqueJson({ "name": "newId", "args": [77] }),
 												"ignoreUnmonitored": true,
 											},
 										},
@@ -773,7 +782,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": 1000,
+												"value": serializableToOpaqueJson(attendeeId2),
+											},
 										},
 									},
 									"n:name:testNotificationWorkspace": {
@@ -781,7 +794,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": { "name": "newId", "args": [88] },
+												"value": serializableToOpaqueJson({ "name": "newId", "args": [88] }),
 												"ignoreUnmonitored": true,
 											},
 										},
@@ -838,7 +851,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -847,9 +860,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 3,
 												"timestamp": 1040,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"num": 56,
-												},
+												}),
 											},
 										},
 									},
@@ -858,10 +871,10 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"name": "newId",
 													"args": [99],
-												},
+												}),
 												"ignoreUnmonitored": true,
 											},
 										},
@@ -882,7 +895,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": attendeeId2,
+												"value": serializableToOpaqueJson(attendeeId2),
 											},
 										},
 									},
@@ -891,10 +904,10 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": {
+												"value": serializableToOpaqueJson({
 													"name": "newId",
 													"args": [111],
-												},
+												}),
 												"ignoreUnmonitored": true,
 											},
 										},

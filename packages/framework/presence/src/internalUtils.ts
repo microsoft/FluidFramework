@@ -112,8 +112,8 @@ export function asDeserializedJson<T>(value: OpaqueJsonDeserialized<T>): JsonDes
 /**
  * Does nothing helper to automatically cast Json type to Opaque Json type.
  */
-export function fullySerializableToOpaqueJson<const T>(
-	value: JsonSerializable<T> & JsonDeserialized<T>,
+export function serializableToOpaqueJson<const T>(
+	value: JsonSerializable<T>,
 ): OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T> {
 	return value as OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T>;
 }

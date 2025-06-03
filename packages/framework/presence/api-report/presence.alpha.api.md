@@ -86,7 +86,7 @@ export namespace InternalTypes {
     // @system (undocumented)
     export interface NotificationType {
         // (undocumented)
-        args: (JsonSerializable<unknown> & JsonDeserialized<unknown>)[];
+        args: unknown[];
         // (undocumented)
         name: string;
     }
@@ -133,7 +133,7 @@ export function latest<T extends object | null, Key extends string = string>(arg
 
 // @beta @input
 export interface LatestArguments<T extends object | null> {
-    local: JsonSerializable<T> & JsonDeserialized<T>;
+    local: JsonSerializable<T>;
     settings?: BroadcastControlSettings | undefined;
 }
 
@@ -154,7 +154,7 @@ export function latestMap<T, Keys extends string | number = string | number, Reg
 // @beta @input
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
     local?: {
-        [K in Keys]: JsonSerializable_2<T> & JsonDeserialized_2<T>;
+        [K in Keys]: JsonSerializable_2<T>;
     };
     settings?: BroadcastControlSettings | undefined;
 }
@@ -196,7 +196,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
     }) => void;
     // @eventProperty
     localItemUpdated: (updatedItem: {
-        value: DeepReadonly<JsonSerializable_2<T> & JsonDeserialized_2<T>>;
+        value: DeepReadonly<JsonSerializable_2<T>>;
         key: K;
     }) => void;
     // @eventProperty
@@ -221,7 +221,7 @@ export interface LatestRaw<T> {
     getRemotes(): IterableIterator<LatestClientData<T>>;
     getStateAttendees(): Attendee[];
     get local(): DeepReadonly_2<JsonDeserialized<T>>;
-    set local(value: JsonDeserialized<T>);
+    set local(value: JsonSerializable<T>);
     readonly presence: Presence;
 }
 
@@ -229,7 +229,7 @@ export interface LatestRaw<T> {
 export interface LatestRawEvents<T> {
     // @eventProperty
     localUpdated: (update: {
-        value: DeepReadonly_2<JsonSerializable<T> & JsonDeserialized<T>>;
+        value: DeepReadonly_2<JsonSerializable<T>>;
     }) => void;
     // @eventProperty
     remoteUpdated: (update: LatestClientData<T>) => void;
@@ -325,7 +325,7 @@ export interface StateMap<K extends string | number, V> {
     get(key: K): DeepReadonly<JsonDeserialized_2<V>> | undefined;
     has(key: K): boolean;
     keys(): IterableIterator<K>;
-    set(key: K, value: JsonSerializable_2<V> & JsonDeserialized_2<V>): this;
+    set(key: K, value: JsonSerializable_2<V>): this;
     readonly size: number;
 }
 

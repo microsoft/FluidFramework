@@ -19,8 +19,8 @@ import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
 	asDeeplyReadonlyDeserializedJson,
-	fullySerializableToOpaqueJson,
 	objectEntries,
+	serializableToOpaqueJson,
 } from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
@@ -47,7 +47,7 @@ export interface LatestRawEvents<T> {
 	 * @eventProperty
 	 */
 	localUpdated: (update: {
-		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T>>;
 	}) => void;
 }
 
@@ -83,7 +83,7 @@ export interface LatestRaw<T> {
 	 * setting, if needed. No comparison is done to detect changes; all sets are transmitted.
 	 */
 	get local(): DeepReadonly<JsonDeserialized<T>>;
-	set local(value: JsonDeserialized<T>);
+	set local(value: JsonSerializable<T>);
 
 	/**
 	 * Iterable access to remote clients' values.
@@ -122,10 +122,10 @@ class LatestValueManagerImpl<T, Key extends string>
 		return asDeeplyReadonlyDeserializedJson(this.value.value);
 	}
 
-	public set local(value: JsonDeserialized<T> & JsonSerializable<T>) {
+	public set local(value: JsonSerializable<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
-		this.value.value = fullySerializableToOpaqueJson(value);
+		this.value.value = serializableToOpaqueJson<T>(value);
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
@@ -211,7 +211,7 @@ export interface LatestArguments<T extends object | null> {
 	/**
 	 * The initial value of the local state.
 	 */
-	local: JsonSerializable<T> & JsonDeserialized<T>;
+	local: JsonSerializable<T>;
 
 	/**
 	 * See {@link BroadcastControlSettings}.
@@ -231,7 +231,7 @@ export function latest<T extends object | null, Key extends string = string>(
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
-	const opaqueLocal = fullySerializableToOpaqueJson<T>(local);
+	const opaqueLocal = serializableToOpaqueJson<T>(local);
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
