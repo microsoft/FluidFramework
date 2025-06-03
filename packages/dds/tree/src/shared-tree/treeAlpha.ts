@@ -361,7 +361,7 @@ export interface TreeAlpha {
 	/**
 	 * Gets the child of the given node with the given property key if a child exists under that key.
 	 *
-	 * @remarks {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields}  of Object nodes cannot be accessed using this method.
+	 * @remarks {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
 	 *
 	 * @param node - The parent node whose child is being requested.
 	 * @param key - The property key under the node under which the child is being requested.
