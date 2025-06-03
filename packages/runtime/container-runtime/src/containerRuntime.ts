@@ -4388,7 +4388,8 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Count of all messages that have been submitted (flushed to Ordering Service, or at least in the Outbox) but not yet acked
+	 * Count of all messages that have been submitted but not yet ack'd.
+	 * ("Submitted" meaning flushed to Ordering Service, or at least put in the Outbox)
 	 */
 	private get pendingMessagesCount(): number {
 		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
@@ -4753,7 +4754,6 @@ export class ContainerRuntime
 				break;
 			}
 			case ContainerMessageType.GC: {
-				// NOTE: Squash doesn't apply to GC ops, send them all.
 				this.submit(message);
 				break;
 			}
@@ -4787,7 +4787,6 @@ export class ContainerRuntime
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			}
-			//* TODO: Add a test to ensure the log happens as expected
 			case ContainerMessageType.GC: {
 				// Just drop it, but log an error, this is not expected and not ideal, but not critical failure either.
 				// Currently the only expected type here is TombstoneLoaded, which will have been preceded by one of these events as well:

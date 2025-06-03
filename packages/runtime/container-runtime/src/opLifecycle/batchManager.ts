@@ -179,6 +179,13 @@ export class BatchManager {
 	}
 }
 
+/**
+ * Adds the batch metadata to the first and last messages of the batch
+ * to indicate the start and end of the batch, as well as the batch ID if provided.
+ * Modifies the messages in the batch in place.
+ * @param batch - The batch to which metadata will be added.
+ * @param batchId - Optional batch ID to stamp on the first message.
+ */
 export const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): void => {
 	const batchEnd = batch.messages.length - 1;
 
