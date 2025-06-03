@@ -1109,7 +1109,7 @@ export class ContainerRuntime
 
 		// If the minVersionForCollab for this client is greater than the existing one, we should use that one going forward.
 		const existingMinVersionForCollab =
-			documentSchemaController.sessionSchema.info?.minVersionForCollab;
+			documentSchemaController.sessionSchema.info.minVersionForCollab;
 		const updatedMinVersionForCollab =
 			existingMinVersionForCollab === undefined ||
 			gt(minVersionForCollab, existingMinVersionForCollab)
