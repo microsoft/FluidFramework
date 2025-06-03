@@ -182,9 +182,10 @@ export const currentDocumentVersionSchema = 1;
  * Current document schema.
  * @internal
  */
-export interface IDocumentSchemaCurrent extends Required<IDocumentSchema> {
+export interface IDocumentSchemaCurrent extends IDocumentSchema {
 	// This is the version of the schema that we currently understand.
 	version: typeof currentDocumentVersionSchema;
+	// We currently understand the runtime features in IDocumentSchemaFeatures
 	runtime: {
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
@@ -355,7 +356,8 @@ function checkRuntimeCompatibility(
 
 function and(
 	persistedSchema: IDocumentSchemaCurrent,
-	providedSchema: IDocumentSchemaCurrent,
+	// Required since the provided schema should have all properties defined (including info)
+	providedSchema: Required<IDocumentSchemaCurrent>,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
 	for (const key of new Set([
@@ -383,7 +385,8 @@ function and(
 
 function or(
 	persistedSchema: IDocumentSchemaCurrent,
-	providedSchema: IDocumentSchemaCurrent,
+	// Required since the provided schema should have all properties defined (including info)
+	providedSchema: Required<IDocumentSchemaCurrent>,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
 	for (const key of new Set([
@@ -414,7 +417,8 @@ function or(
 
 function same(
 	persistedSchema: IDocumentSchemaCurrent,
-	providedSchema: IDocumentSchemaCurrent,
+	// Required since the provided schema should have all properties defined (including info)
+	providedSchema: Required<IDocumentSchemaCurrent>,
 ): boolean {
 	if (
 		persistedSchema.info === undefined ||
@@ -632,10 +636,12 @@ export class DocumentsSchemaController {
 			);
 			this.futureSchema = undefined;
 		} else {
+			assertDocSchemaCurrent(this.desiredSchema);
 			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 			this.futureSchema = or(this.documentSchema, this.desiredSchema);
 			assert(this.sessionSchema.runtime.explicitSchemaControl === true, 0x94b /* legacy */);
 			assert(this.futureSchema.runtime.explicitSchemaControl === true, 0x94c /* legacy */);
+			assertDocSchemaCurrent(this.futureSchema);
 			if (same(this.documentSchema, this.futureSchema)) {
 				this.futureSchema = undefined;
 			}
@@ -747,6 +753,7 @@ export class DocumentsSchemaController {
 				refSeq: sequenceNumber,
 			} satisfies IDocumentSchemaCurrent;
 			this.documentSchema = schema;
+			assertDocSchemaCurrent(this.desiredSchema);
 			this.sessionSchema = and(schema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
 
@@ -771,6 +778,15 @@ export class DocumentsSchemaController {
 	public onDisconnect(): void {
 		this.generateOp = true;
 	}
+}
+
+/**
+ * Asserts that the given document schema has all the properties of Required<IDocumentSchemaCurrent>.
+ */
+function assertDocSchemaCurrent(
+	docSchema: IDocumentSchemaCurrent,
+): asserts docSchema is Required<IDocumentSchemaCurrent> {
+	assert(docSchema.info !== undefined, "info must be defined");
 }
 
 /* eslint-enable jsdoc/check-indentation */
