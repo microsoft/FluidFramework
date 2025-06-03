@@ -29,6 +29,11 @@ function arrayToProp(arr: string[]) {
 }
 
 describe("Runtime", () => {
+	let logger: IMockLoggerExt;
+	beforeEach(() => {
+		logger = createMockLoggerExt();
+	});
+
 	const validConfig = {
 		version: 1,
 		refSeq: 0,
@@ -422,7 +427,7 @@ describe("Runtime", () => {
 			{ minVersionForCollab: "2.20.0" }, // info
 			logger,
 		);
-		const message = controller.maybeSendSchemaMessage();
+		const message = controller.maybeGenerateSchemaMessage();
 		assert(message !== undefined);
 		assert.strictEqual(message.info?.minVersionForCollab, "2.20.0");
 		assert(
@@ -447,7 +452,7 @@ describe("Runtime", () => {
 			{ minVersionForCollab: "2.20.0" }, // info
 			logger,
 		);
-		const message = controller.maybeSendSchemaMessage();
+		const message = controller.maybeGenerateSchemaMessage();
 		assert(message !== undefined);
 		assert.strictEqual(message.info?.minVersionForCollab, "2.20.0");
 		assert(
@@ -473,7 +478,7 @@ describe("Runtime", () => {
 			{ minVersionForCollab: "2.20.0" }, // info
 			logger,
 		);
-		const message1 = controller1.maybeSendSchemaMessage();
+		const message1 = controller1.maybeGenerateSchemaMessage();
 		assert(message1 !== undefined);
 		assert(
 			controller1.processDocumentSchemaMessages(
@@ -496,7 +501,7 @@ describe("Runtime", () => {
 			{ minVersionForCollab: "2.0.0" }, // info
 			logger,
 		);
-		const message2 = controller2.maybeSendSchemaMessage();
+		const message2 = controller2.maybeGenerateSchemaMessage();
 		// Should be undefined since there is no update to the schema
 		assert(message2 === undefined);
 		const schema2 = controller2.summarizeDocumentSchema(600);
@@ -513,7 +518,7 @@ describe("Runtime", () => {
 			{ minVersionForCollab: "2.30.0" }, // info
 			logger,
 		);
-		const message3 = controller3.maybeSendSchemaMessage();
+		const message3 = controller3.maybeGenerateSchemaMessage();
 		assert(message3 !== undefined);
 		assert(
 			controller3.processDocumentSchemaMessages(

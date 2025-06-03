@@ -371,7 +371,7 @@ function and(
 	// We keep the persisted minVersionForCollab if present, even if the provided minVersionForCollab
 	// is higher.
 	const minVersionForCollab =
-		currentDocSchema.info?.minVersionForCollab ?? desiredDocSchema.info.minVersionForCollab;
+		persistedSchema.info?.minVersionForCollab ?? providedSchema.info.minVersionForCollab;
 
 	return {
 		version: currentDocumentVersionSchema,
@@ -398,14 +398,11 @@ function or(
 
 	// We take the greater of the persisted/provided minVersionForCollab
 	const minVersionForCollab =
-		currentDocSchema.info === undefined
-			? desiredDocSchema.info.minVersionForCollab
-			: gt(
-						currentDocSchema.info.minVersionForCollab,
-						desiredDocSchema.info.minVersionForCollab,
-					)
-				? currentDocSchema.info.minVersionForCollab
-				: desiredDocSchema.info.minVersionForCollab;
+		persistedSchema.info === undefined
+			? providedSchema.info.minVersionForCollab
+			: gt(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
+				? persistedSchema.info.minVersionForCollab
+				: providedSchema.info.minVersionForCollab;
 
 	return {
 		version: currentDocumentVersionSchema,
@@ -420,8 +417,8 @@ function same(
 	providedSchema: IDocumentSchemaCurrent,
 ): boolean {
 	if (
-		currentDocSchema.info === undefined ||
-		!eq(currentDocSchema.info.minVersionForCollab, desiredDocSchema.info.minVersionForCollab)
+		persistedSchema.info === undefined ||
+		!eq(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
 	) {
 		// If the current/desired minVersionForCollab are not equal, then we need a schema change
 		return false;
