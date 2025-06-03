@@ -357,11 +357,11 @@ export interface TreeAlpha {
 	/**
 	 * Gets the child of the given node with the given property key if a child exists under that key.
 	 *
-	 * @remarks Unknown optional fields of Object nodes cannot be accessed using this method.
+	 * @remarks {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields}  of Object nodes cannot be accessed using this method.
 	 *
 	 * @param node - The parent node whose child is being requested.
 	 * @param key - The property key under the node under which the child is being requested.
-	 * Note: this is the "property key", not the "stored key".
+	 * Note: this is the "property key", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
 	 *
 	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
 	 *
@@ -376,16 +376,16 @@ export interface TreeAlpha {
 	 * @remarks
 	 * No guarantees are made regarding the order of the children in the returned array.
 	 *
-	 * Unset optional properties of Object nodes are not included in the result.
+	 * Optional properties of Object nodes with no value are not included in the result.
 	 *
-	 * Unknown optional fields of Object nodes are not included in the result.
+	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes are not included in the result.
 	 *
 	 * @param node - The node whose children are being requested.
 	 *
 	 * @returns
 	 * An array of pairs of the form `[key, child]`, where `key` is the "property key" of the node's field, and `child`
 	 * is the child node or leaf value under that field.
-	 * Note: the returned keys are the "property keys", not the "stored keys".
+	 * Note: the returned keys are the "property keys", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeNodeApi:interface).parent}
