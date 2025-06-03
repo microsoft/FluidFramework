@@ -1543,9 +1543,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const requestParser = RequestParser.create(request);
 		const id = requestParser.pathParts[0];
 
-		//* Write test with DataStore route + query that fails this isLeaf(1) check - but is NOT a request for a child!
 		// Differentiate between requesting the dataStore directly, or one of its children
-		const requestForChild = !requestParser.isLeaf(1);
+		const requestForChild = requestParser.pathParts.length > 1;
 
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
