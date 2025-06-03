@@ -74,7 +74,9 @@ function applyMessagesWithReconnect(
 
 	// regenerate the ops that were applied as stashed ops. this simulates resubmit()
 	const regeneratedStashedOps = stashedOps.map((op) =>
-		stashClients[op[2]].makeOpMessage(stashClients[op[2]].regeneratePendingOp(op[0], op[1])),
+		stashClients[op[2]].makeOpMessage(
+			stashClients[op[2]].regeneratePendingOp(op[0], op[1], false),
+		),
 	);
 
 	// apply the regenerated stashed ops
@@ -91,7 +93,7 @@ function applyMessagesWithReconnect(
 	const reconnectMsgs: ISequencedDocumentMessage[] = [];
 	for (const opData of reconnectClientMsgs) {
 		const newMsg = clients[1].makeOpMessage(
-			clients[1].regeneratePendingOp(opData[0], opData[1]),
+			clients[1].regeneratePendingOp(opData[0], opData[1], false),
 		);
 		newMsg.minimumSequenceNumber = minSeq;
 		reconnectMsgs.push(newMsg);
@@ -122,7 +124,7 @@ function applyMessagesWithReconnect(
 	// resubmit regenerated stashed ops
 	const reRegeneratedStashedMessages = stashedRegeneratedOps.map((stashedOp) =>
 		stashClients[1].makeOpMessage(
-			stashClients[1].regeneratePendingOp(stashedOp[0], stashedOp[1]),
+			stashClients[1].regeneratePendingOp(stashedOp[0], stashedOp[1], false),
 		),
 	);
 

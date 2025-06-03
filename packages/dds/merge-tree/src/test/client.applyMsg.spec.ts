@@ -526,7 +526,7 @@ describe("client.applyMsg", () => {
 		);
 		[clientA, clientB].map((c) => c.applyMsg(removeOp));
 
-		const regeneratedOp = clientA.regeneratePendingOp(annotateOp, seg);
+		const regeneratedOp = clientA.regeneratePendingOp(annotateOp, seg, false);
 		assert(regeneratedOp.type === MergeTreeDeltaType.GROUP);
 		assert.strictEqual(regeneratedOp.ops.length, 0);
 	});
@@ -684,7 +684,9 @@ describe("client.applyMsg", () => {
 			for (const op of clientOps.splice(0)) clients.all[i].applyMsg(op);
 
 		// rebase and resubmit disconnected client ops
-		ops.push(clients.B.makeOpMessage(clients.B.regeneratePendingOp(bOp.op, bOp.sg), ++seq));
+		ops.push(
+			clients.B.makeOpMessage(clients.B.regeneratePendingOp(bOp.op, bOp.sg, false), ++seq),
+		);
 
 		const trackingGroup = new TrackingGroup();
 		const trackedSegs: ISegmentPrivate[] = [];
@@ -695,7 +697,9 @@ describe("client.applyMsg", () => {
 
 		assert.equal(beforeSlides, 0, "should be no slides");
 		assert.equal(afterSlides, 0, "should be no slides");
-		ops.push(clients.C.makeOpMessage(clients.C.regeneratePendingOp(cOp.op, cOp.sg), ++seq));
+		ops.push(
+			clients.C.makeOpMessage(clients.C.regeneratePendingOp(cOp.op, cOp.sg, false), ++seq),
+		);
 		assert.equal(beforeSlides, 1, "should be 1 slide");
 		assert.equal(afterSlides, 1, "should be 1 slide");
 
@@ -1150,6 +1154,7 @@ describe("client.applyMsg", () => {
 					localClient.regeneratePendingOp(
 						resubmittedOp!,
 						localClient.peekPendingSegmentGroups()!,
+						false,
 					),
 					/* seq */ 18,
 					/* refSeq */ 16,

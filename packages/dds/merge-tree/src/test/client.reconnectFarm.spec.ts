@@ -59,7 +59,7 @@ function applyMessagesWithReconnect(
 	for (const [clientId, messageData] of reconnectClientMsgs.entries()) {
 		const client = clients.find(({ longClientId }) => longClientId === clientId)!;
 		for (const [op, segmentGroup] of messageData) {
-			const newMsg = client.makeOpMessage(client.regeneratePendingOp(op, segmentGroup));
+			const newMsg = client.makeOpMessage(client.regeneratePendingOp(op, segmentGroup, false));
 			newMsg.minimumSequenceNumber = minSeq;
 			// apply message doesn't use the segment group, so just pass undefined
 			reconnectMsgs.push([newMsg, undefined as never]);
@@ -120,7 +120,7 @@ function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): 
 				testOpts,
 				applyMessagesWithReconnect,
 			);
-		}).timeout(45 * 1000);
+		}).timeout(30 * 1000);
 	});
 }
 

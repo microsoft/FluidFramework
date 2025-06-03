@@ -1422,7 +1422,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public regeneratePendingOp(
 		resetOp: IMergeTreeOp,
 		localOpMetadata: unknown,
-		squash: boolean = false,
+		squash: boolean,
 	): IMergeTreeOp {
 		const segmentGroup = localOpMetadata as SegmentGroup | SegmentGroup[];
 		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
