@@ -5,22 +5,25 @@
 
 import { strict as assert } from "node:assert";
 
+import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import { StateFactory, type StateSchemaValidator } from "../index.js";
+import { StateFactory, type AttendeeId, type StateSchemaValidator } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
 	createNullValidator,
+	createSpecificAttendeeId,
 	createSpiedValidator,
 	// generateBasicClientJoin,
 	prepareConnectedPresence,
 	type ValidatorSpy,
 } from "./testUtils.js";
+import { serializableToOpaqueJson } from "../internalUtils.js";
 
 describe("Presence", () => {
 	let runtime: MockEphemeralRuntime;
@@ -78,33 +81,49 @@ describe("Presence", () => {
 
 			it("connects", () => {
 				runtime.signalsExpected.push([
-					"Pres:DatastoreUpdate",
 					{
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": {
-										"rev": 0,
-										"timestamp": initialTime,
-										"value": "attendeeId-2",
+						type: "Pres:DatastoreUpdate",
+						content: {
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										["client2" as AttendeeId]: {
+											"rev": 0,
+											"timestamp": initialTime,
+											"value": serializableToOpaqueJson(
+												createSpecificAttendeeId("attendeeId-2"),
+											),
+										},
 									},
 								},
 							},
+							"isComplete": true,
+							"sendTimestamp": clock.now,
 						},
-						"isComplete": true,
-						"sendTimestamp": clock.now,
 					},
 				]);
 
 				presence.processSignal(
-					"",
+					[],
 					{
 						type: "Pres:ClientJoin",
 						content: {
 							sendTimestamp: clock.now - 50,
 							avgLatency: 50,
-							data: {},
+							data: {
+								"system:presence": {
+									"clientToSessionId": {
+										["client4" as AttendeeId]: {
+											"rev": 0,
+											"timestamp": 700,
+											"value": serializableToOpaqueJson(
+												createSpecificAttendeeId("attendeeId-4"),
+											),
+										},
+									},
+								},
+							},
 							updateProviders: ["client2"],
 						},
 						clientId: "client4",

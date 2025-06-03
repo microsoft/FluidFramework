@@ -13,13 +13,13 @@ import type { SinonFakeTimers, SinonSpy } from "sinon";
 
 import type { ClientConnectionId } from "../baseTypes.js";
 import { serializableToOpaqueJson } from "../internalUtils.js";
+import type { StateSchemaValidator } from "../latestValueTypes.js";
 import type { AttendeeId } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import type { StateSchemaValidator } from "../latestValueTypes.js";
 
 /**
  * Use to compile-time assert types of two variables are identical.

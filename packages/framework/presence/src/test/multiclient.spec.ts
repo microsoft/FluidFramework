@@ -6,15 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-// import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
-// import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { Off } from "@fluidframework/core-interfaces";
-import type {
-	DeepReadonly,
-	JsonDeserialized,
-	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal";
+import type { DeepReadonly, JsonDeserialized } from "@fluidframework/core-interfaces/internal";
 import type { ScopeType } from "@fluidframework/driver-definitions/internal";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";

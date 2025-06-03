@@ -170,8 +170,8 @@ export function createValidatedGetter<T>(
 				: asDeeplyReadonlyDeserializedJson(valueToCheck);
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		// @ts-expect-error Type 'null' is not assignable to type 'T | undefined'.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const validData: T | undefined = validator!(
 			clientState.value === undefined ? undefined : asDeserializedJson(clientState.value),
 		);
