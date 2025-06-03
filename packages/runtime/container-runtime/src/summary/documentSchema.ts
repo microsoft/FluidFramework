@@ -654,10 +654,10 @@ export class DocumentsSchemaController {
 
 			// Changes are in effect. Immediately check that this client understands these changes
 			checkRuntimeCompatibility(content, "change");
-			const schema: IDocumentSchemaCurrent = {
+			const schema = {
 				...content,
 				refSeq: sequenceNumber,
-			};
+			} satisfies IDocumentSchemaCurrent;
 			this.documentSchema = schema;
 			this.sessionSchema = and(schema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
