@@ -36,8 +36,6 @@ export function createServiceAudience<TMember extends IMember = IMember>(props: 
  * the user and client details returned in {@link IMember}.
  *
  * @typeParam TMember - A service-specific {@link IMember} implementation.
- *
- * @internal
  */
 class ServiceAudience<TMember extends IMember = IMember>
 	extends TypedEventEmitter<IServiceAudienceEvents<TMember>>
