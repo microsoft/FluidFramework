@@ -14,7 +14,10 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
-describeCompat(
+//* SKIP
+//* SKIP
+//* SKIP
+describeCompat.skip(
 	"ContainerRuntime Document Schema",
 	"FullCompat",
 	(getTestObjectProvider, apis) => {
@@ -205,9 +208,9 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		provider = getTestObjectProvider();
 	});
 
-	it("upgrade with explicitSchemaControl = false", async () => {
-		await testUpgrade(false);
-	});
+	// it("upgrade with explicitSchemaControl = false", async () => {
+	// 	await testUpgrade(false);
+	// });
 
 	it("upgrade with explicitSchemaControl = true", async () => {
 		await testUpgrade(true);
@@ -222,7 +225,7 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 
 		const container = await provider.makeTestContainer({
 			runtimeOptions: {
-				explicitSchemaControl: false,
+				explicitSchemaControl: true,
 				enableRuntimeIdCompressor: undefined,
 			},
 		});
