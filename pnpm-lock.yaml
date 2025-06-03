@@ -12303,6 +12303,9 @@ importers:
 
   packages/runtime/container-runtime-definitions:
     dependencies:
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../common/client-utils
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -13653,6 +13656,9 @@ importers:
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../dds/map
+      '@fluidframework/matrix':
+        specifier: workspace:~
+        version: link:../../dds/matrix
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions

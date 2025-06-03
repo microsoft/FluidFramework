@@ -14,14 +14,14 @@ import type { ClientUpdateEntry } from "./presenceStates.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 
 /**
- * @internal
+ * Datastore that contains system workspace data
  */
 export interface SystemDatastore {
 	"system:presence": SystemWorkspaceDatastore;
 }
 
 /**
- * @internal
+ * General datastore (and message) structure.
  */
 export interface GeneralDatastoreMessageContent {
 	[WorkspaceAddress: string]: {
@@ -32,9 +32,10 @@ export interface GeneralDatastoreMessageContent {
 }
 
 type DatastoreMessageContent = GeneralDatastoreMessageContent & SystemDatastore;
+type AcknowledgmentId = string;
 
 /**
- * @internal
+ * Datastore update message type.
  */
 export const datastoreUpdateMessageType = "Pres:DatastoreUpdate";
 interface DatastoreUpdateMessage {
@@ -42,24 +43,25 @@ interface DatastoreUpdateMessage {
 	content: {
 		sendTimestamp: number;
 		avgLatency: number;
+		acknowledgementId?: AcknowledgmentId;
 		isComplete?: true;
 		data: DatastoreMessageContent;
 	};
 }
 
 /**
- * @internal
+ * Outbound datastore update message
  */
 export type OutboundDatastoreUpdateMessage = OutboundExtensionMessage<DatastoreUpdateMessage>;
 
 /**
- * @internal
+ * Inbound and verified datastore update message
  */
 export type InboundDatastoreUpdateMessage =
 	VerifiedInboundExtensionMessage<DatastoreUpdateMessage>;
 
 /**
- * @internal
+ * Client join message type.
  */
 export const joinMessageType = "Pres:ClientJoin";
 interface ClientJoinMessage {
@@ -73,16 +75,44 @@ interface ClientJoinMessage {
 }
 
 /**
- * @internal
+ * Acknowledgement message type.
+ */
+export const acknowledgementMessageType = "Pres:Ack";
+
+interface AcknowledgementMessage {
+	type: typeof acknowledgementMessageType;
+	content: {
+		id: AcknowledgmentId;
+	};
+}
+
+/**
+ * Outbound acknowledgement message.
+ */
+export type OutboundAcknowledgementMessage = OutboundExtensionMessage<AcknowledgementMessage>;
+
+/**
+ * Outbound client join message
  */
 export type OutboundClientJoinMessage = OutboundExtensionMessage<ClientJoinMessage>;
 
 /**
- * @internal
+ * Inbound and verified client join message
  */
 export type InboundClientJoinMessage = VerifiedInboundExtensionMessage<ClientJoinMessage>;
 
 /**
- * @internal
+ * Outbound presence message.
  */
-export type SignalMessages = ClientJoinMessage | DatastoreUpdateMessage;
+export type OutboundPresenceMessage =
+	| OutboundAcknowledgementMessage
+	| OutboundClientJoinMessage
+	| OutboundDatastoreUpdateMessage;
+
+/**
+ * Messages structures that can be sent and received as understood in the presence protocol
+ */
+export type SignalMessages =
+	| AcknowledgementMessage
+	| ClientJoinMessage
+	| DatastoreUpdateMessage;
