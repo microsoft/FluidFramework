@@ -45,15 +45,17 @@ describe("SharedMatrix execution time", () => {
 					title: `Insert a column in the middle ${count} times`,
 					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 						let duration: number;
-						localMatrix = createLocalMatrix({
-							id: "testLocalMatrix",
-							size: matrixSize,
-							initialValue: matrixValue,
-						});
+
 						do {
 							// Since this setup one collects data from one iteration, assert that this is what is expected.
 							assert.equal(state.iterationsPerBatch, 1);
 
+							// Setup
+							localMatrix = createLocalMatrix({
+								id: "testLocalMatrix",
+								size: matrixSize,
+								initialValue: matrixValue,
+							});
 							// Operation
 							const before = state.timer.now();
 							for (let i = 0; i < count; i++) {
@@ -76,14 +78,17 @@ describe("SharedMatrix execution time", () => {
 					title: `Insert a row in the middle ${count} times`,
 					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 						let duration: number;
-						localMatrix = createLocalMatrix({
-							id: "testLocalMatrix",
-							size: matrixSize,
-							initialValue: matrixValue,
-						});
+
 						do {
 							// Since this setup one collects data from one iteration, assert that this is what is expected.
 							assert.equal(state.iterationsPerBatch, 1);
+
+							// Setup
+							localMatrix = createLocalMatrix({
+								id: "testLocalMatrix",
+								size: matrixSize,
+								initialValue: matrixValue,
+							});
 
 							// Operation
 							const before = state.timer.now();
@@ -109,14 +114,17 @@ describe("SharedMatrix execution time", () => {
 					title: `Insert a row and a column ${count} times`,
 					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 						let duration: number;
-						localMatrix = createLocalMatrix({
-							id: "testLocalMatrix",
-							size: matrixSize,
-							initialValue: matrixValue,
-						});
+
 						do {
 							// Since this setup one collects data from one iteration, assert that this is what is expected.
 							assert.equal(state.iterationsPerBatch, 1);
+
+							// Setup
+							localMatrix = createLocalMatrix({
+								id: "testLocalMatrix",
+								size: matrixSize,
+								initialValue: matrixValue,
+							});
 
 							// Operation
 							const before = state.timer.now();
@@ -134,6 +142,7 @@ describe("SharedMatrix execution time", () => {
 					},
 					// Force batch size of 1
 					minBatchDurationSeconds: 0,
+					// Matrix size 100 benchmarks use increased duration (10s) to improve statistical significance.
 					maxBenchmarkDurationSeconds: matrixSize === 100 ? 10 : 5,
 				});
 			}
@@ -150,115 +159,18 @@ describe("SharedMatrix execution time", () => {
 						do {
 							// Since this setup one collects data from one iteration, assert that this is what is expected.
 							assert.equal(state.iterationsPerBatch, 1);
+
+							// Setup
 							localMatrix = createLocalMatrix({
 								id: "testLocalMatrix",
 								size: matrixSize,
 								initialValue: matrixValue,
 							});
+
 							// Operation
 							const before = state.timer.now();
 							for (let i = 0; i < count; i++) {
 								localMatrix.removeCols(Math.floor(localMatrix.colCount / 2), 1);
-							}
-							const after = state.timer.now();
-
-							// Measure
-							duration = state.timer.toSeconds(before, after);
-
-							// Collect data
-						} while (state.recordBatch(duration));
-					},
-					// Force batch size of 1
-					minBatchDurationSeconds: 0,
-					maxBenchmarkDurationSeconds: matrixSize === 100 ? 10 : 5,
-				});
-
-				// Test the execute time of the SharedMatrix for removing a row in the middle for a given number of times.
-				benchmark({
-					type: BenchmarkType.Measurement,
-					title: `Remove the middle row ${count} times`,
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-						let duration: number;
-
-						do {
-							// Since this setup one collects data from one iteration, assert that this is what is expected.
-							assert.equal(state.iterationsPerBatch, 1);
-							localMatrix = createLocalMatrix({
-								id: "testLocalMatrix",
-								size: matrixSize,
-								initialValue: matrixValue,
-							});
-							// Operation
-							const before = state.timer.now();
-							for (let i = 0; i < count; i++) {
-								localMatrix.removeRows(Math.floor(localMatrix.rowCount / 2), 1);
-							}
-							const after = state.timer.now();
-
-							// Measure
-							duration = state.timer.toSeconds(before, after);
-
-							// Collect data
-						} while (state.recordBatch(duration));
-					},
-					// Force batch size of 1
-					minBatchDurationSeconds: 0,
-					maxBenchmarkDurationSeconds: matrixSize === 100 ? 10 : 5,
-				});
-
-				// Test the execute time of the SharedMatrix for removing a row and a column in the middle for a given number of times.
-				benchmark({
-					type: BenchmarkType.Measurement,
-					title: `Remove the middle row and column ${count} times`,
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-						let duration: number;
-
-						do {
-							// Since this setup one collects data from one iteration, assert that this is what is expected.
-							assert.equal(state.iterationsPerBatch, 1);
-							localMatrix = createLocalMatrix({
-								id: "testLocalMatrix",
-								size: matrixSize,
-								initialValue: matrixValue,
-							});
-							// Operation
-							const before = state.timer.now();
-							for (let i = 0; i < count; i++) {
-								localMatrix.removeCols(Math.floor(localMatrix.colCount / 2), 1);
-								localMatrix.removeRows(Math.floor(localMatrix.rowCount / 2), 1);
-							}
-							const after = state.timer.now();
-
-							// Measure
-							duration = state.timer.toSeconds(before, after);
-
-							// Collect data
-						} while (state.recordBatch(duration));
-					},
-					// Force batch size of 1
-					minBatchDurationSeconds: 0,
-					maxBenchmarkDurationSeconds: matrixSize === 100 ? 10 : 5,
-				});
-
-				// Test the execute time of the SharedMatrix for setting a string in a cell for a given number of times.
-				benchmark({
-					type: BenchmarkType.Measurement,
-					title: `Set a 3-character string in ${count} cells`,
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-						let duration: number;
-						localMatrix = createLocalMatrix({
-							id: "testLocalMatrix",
-							size: matrixSize,
-							initialValue: matrixValue,
-						});
-						do {
-							// Since this setup one collects data from one iteration, assert that this is what is expected.
-							assert.equal(state.iterationsPerBatch, 1);
-
-							// Operation
-							const before = state.timer.now();
-							for (let i = 0; i < count; i++) {
-								localMatrix.setCell(i, i, "abc");
 							}
 							const after = state.timer.now();
 
@@ -272,6 +184,98 @@ describe("SharedMatrix execution time", () => {
 					minBatchDurationSeconds: 0,
 					// Matrix size 100 benchmarks use increased duration (10s) to improve statistical significance.
 					maxBenchmarkDurationSeconds: matrixSize === 100 ? 10 : 5,
+				});
+
+				// Test the execute time of the SharedMatrix for removing a row in the middle for a given number of times.
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Remove the middle row ${count} times`,
+					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						let duration: number;
+
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
+
+							// Setup
+							localMatrix = createLocalMatrix({
+								id: "testLocalMatrix",
+								size: matrixSize,
+								initialValue: matrixValue,
+							});
+
+							// Operation
+							const before = state.timer.now();
+							for (let i = 0; i < count; i++) {
+								localMatrix.removeRows(Math.floor(localMatrix.rowCount / 2), 1);
+							}
+							const after = state.timer.now();
+
+							// Measure
+							duration = state.timer.toSeconds(before, after);
+
+							// Collect data
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+					// Matrix size 100 benchmarks use increased duration (10s) to improve statistical significance.
+					maxBenchmarkDurationSeconds: matrixSize === 100 ? 10 : 5,
+				});
+
+				// Test the execute time of the SharedMatrix for removing a row and a column in the middle for a given number of times.
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Remove the middle row and column ${count} times`,
+					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						let duration: number;
+
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
+
+							// Setup
+							localMatrix = createLocalMatrix({
+								id: "testLocalMatrix",
+								size: matrixSize,
+								initialValue: matrixValue,
+							});
+
+							// Operation
+							const before = state.timer.now();
+							for (let i = 0; i < count; i++) {
+								localMatrix.removeCols(Math.floor(localMatrix.colCount / 2), 1);
+								localMatrix.removeRows(Math.floor(localMatrix.rowCount / 2), 1);
+							}
+							const after = state.timer.now();
+
+							// Measure
+							duration = state.timer.toSeconds(before, after);
+
+							// Collect data
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+					// Matrix size 100 benchmarks use increased duration (10s) to improve statistical significance.
+					maxBenchmarkDurationSeconds: matrixSize === 100 ? 10 : 5,
+				});
+
+				// Test the execute time of the SharedMatrix for setting a string in a cell for a given number of times.
+				benchmark({
+					title: `Set a 3-character string in ${count} cells`,
+					before: async () => {
+						localMatrix = createLocalMatrix({
+							id: "testLocalMatrix",
+							size: matrixSize,
+							initialValue: matrixValue,
+						});
+					},
+					benchmarkFn: () => {
+						for (let i = 0; i < count; i++) {
+							localMatrix.setCell(i, i, "abc");
+						}
+					},
 				});
 			}
 		});

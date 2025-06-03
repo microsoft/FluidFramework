@@ -15,5 +15,5 @@ module.exports = {
 	"reporterOptions": ["reportDir=.benchmarkOutput/"],
 	"require": ["node_modules/@fluid-internal/mocha-test-setup"],
 	"spec": ["dist/test/time/**/*.spec.*js", "--perfMode"],
-	"timeout": "90000",
+	"timeout": "15000",
 };
