@@ -19,7 +19,6 @@ import type {
 	IToggleMoveOperation,
 	IRevertible,
 	ISharedArray,
-	ISharedArrayRevertible,
 } from "../../index.js";
 import { SharedArray, SharedArrayRevertible } from "../../index.js";
 import {
@@ -286,14 +285,11 @@ describe("SharedArray", () => {
 					// Choose a random deletion index.
 					const deleteIndex = getRandomInt(0, sharedArray.get().length);
 
-					let revertible: IRevertible = new SharedArrayRevertible(
-						sharedArray as unknown as ISharedArrayRevertible,
-						{
-							entryId: "dummy",
-							type: 3,
-							isDeleted: false,
-						} satisfies IToggleOperation,
-					);
+					let revertible: IRevertible = new SharedArrayRevertible(sharedArray, {
+						entryId: "dummy",
+						type: 3,
+						isDeleted: false,
+					} satisfies IToggleOperation);
 
 					// Attach the revertible event listener.
 					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
