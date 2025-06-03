@@ -366,7 +366,7 @@ export interface TreeAlpha {
 	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
-	 * @see {@link (Tree:interface).parent}
+	 * @see {@link (TreeNodeApi:interface).parent}
 	 */
 	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
 
@@ -388,7 +388,7 @@ export interface TreeAlpha {
 	 * Note: the returned keys are the "property keys", not the "stored keys".
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
-	 * @see {@link (Tree:interface).parent}
+	 * @see {@link (TreeNodeApi:interface).parent}
 	 */
 	children(node: TreeNode): [string | number, TreeNode | TreeLeafValue][];
 }
