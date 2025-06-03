@@ -569,6 +569,24 @@ describe("treeNodeApi", () => {
 				validateUsageError(/Cannot access a deleted node/),
 			);
 		});
+
+		it("parent of child is original node", () => {
+			class TestChildObject extends schema.object("TestChildObject", {}) {}
+			class TestObject extends schema.object("TestObject", {
+				data: TestChildObject,
+			}) {}
+
+			const config = new TreeViewConfiguration({ schema: TestObject });
+			const view = getView(config);
+			view.initialize({
+				data: {},
+			});
+			const tree = view.root;
+
+			const child = TreeAlpha.child(tree, "data");
+			assert(child !== undefined && isTreeNode(child));
+			assert.equal(Tree.parent(child), tree);
+		});
 	});
 
 	// TODO: recursive schema tests
@@ -805,6 +823,27 @@ describe("treeNodeApi", () => {
 				() => TreeAlpha.children(tree),
 				validateUsageError(/Cannot access a deleted node/),
 			);
+		});
+
+		it("parent of each child is original node", () => {
+			class TestChildObject extends schema.object("TestChildObject", {}) {}
+			class TestArray extends schema.array("TestObject", TestChildObject) {}
+
+			const config = new TreeViewConfiguration({ schema: TestArray });
+			const view = getView(config);
+			view.initialize([
+				new TestChildObject({}),
+				new TestChildObject({}),
+				new TestChildObject({}),
+			]);
+			const tree = view.root;
+
+			const children = TreeAlpha.children(tree);
+			assert(children.length === 3);
+			for (const [, child] of children) {
+				assert(isTreeNode(child));
+				assert.equal(Tree.parent(child), tree);
+			}
 		});
 	});
 
