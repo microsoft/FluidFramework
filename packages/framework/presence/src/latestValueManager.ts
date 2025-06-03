@@ -9,34 +9,35 @@ import type {
 	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+} from "@fluidframework/core-interfaces/internal";
 import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
-import {
-	unbrandJson,
-	brandJson,
-	asDeeplyReadonlyFromJsonHandle,
-} from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { asDeeplyReadonly, objectEntries } from "./internalUtils.js";
 import {
-	createValidatedGetter,
-	type LatestClientData,
-	type LatestData,
-	type ProxiedValueAccessor,
-	type RawValueAccessor,
-	type StateSchemaValidator,
-	type ValueAccessor,
+	asDeeplyReadonly,
+	asDeeplyReadonlyDeserializedJson,
+	objectEntries,
+	serializableToOpaqueJson,
+} from "./internalUtils.js";
+import { createValidatedGetter } from "./latestValueTypes.js";
+import type {
+	LatestClientData,
+	LatestData,
+	ProxiedValueAccessor,
+	RawValueAccessor,
+	StateSchemaValidator,
+	ValueAccessor,
 } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
 /**
+ * Events from {@link LatestRaw}.
+ *
  * @sealed
  * @beta
  */
@@ -54,7 +55,7 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
 	 * @eventProperty
 	 */
 	localUpdated: (update: {
-		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T>>;
 	}) => void;
 }
 
@@ -104,7 +105,7 @@ export interface Latest<
 	 * setting, if needed. No comparison is done to detect changes; all sets are transmitted.
 	 */
 	get local(): DeepReadonly<JsonDeserialized<T>>;
-	set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+	set local(value: JsonSerializable<T>);
 
 	/**
 	 * Array of {@link Attendee}s that have provided states.
@@ -146,18 +147,20 @@ class LatestValueManagerImpl<T, Key extends string>
 	}
 
 	public get local(): DeepReadonly<JsonDeserialized<T>> {
-		return asDeeplyReadonly(unbrandJson(this.value.value));
+		return asDeeplyReadonlyDeserializedJson(this.value.value);
 	}
 
-	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
+	public set local(value: JsonSerializable<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
-		this.value.value = brandJson(value);
+		this.value.value = serializableToOpaqueJson<T>(value);
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
 
-		this.events.emit("localUpdated", { value: asDeeplyReadonly(value) });
+		this.events.emit("localUpdated", {
+			value: asDeeplyReadonly(value),
+		});
 	}
 
 	public getRemotes: () => IterableIterator<LatestClientData<T, ValueAccessor<T>>> =
@@ -165,10 +168,10 @@ class LatestValueManagerImpl<T, Key extends string>
 			const allKnownStates = this.datastore.knownValues(this.key);
 			for (const [attendeeId, clientState] of objectEntries(allKnownStates.states)) {
 				yield {
-					attendee: this.datastore.lookupClient(attendeeId),
+					attendee: this.datastore.presence.attendees.getAttendee(attendeeId),
 					value:
 						this.validator === undefined
-							? asDeeplyReadonlyFromJsonHandle(clientState.value)
+							? asDeeplyReadonlyDeserializedJson(clientState.value)
 							: createValidatedGetter(clientState, this.validator),
 					metadata: {
 						revision: clientState.rev,
@@ -182,7 +185,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return Object.keys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)
-			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
+			.map((attendeeId) => this.datastore.presence.attendees.getAttendee(attendeeId));
 	}
 
 	public getRemote = (attendee: Attendee): LatestData<T, ValueAccessor<T>> => {
@@ -194,7 +197,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		return {
 			value:
 				this.validator === undefined
-					? asDeeplyReadonlyFromJsonHandle(clientState.value)
+					? asDeeplyReadonlyDeserializedJson(clientState.value)
 					: createValidatedGetter(clientState, this.validator),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
@@ -224,16 +227,27 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
+ * Shallow clone an object that might be null.
+ *
+ * @param value - The object to clone
+ * @returns A shallow clone of the input value
+ * @internal
+ */
+export function shallowCloneNullableObject<T extends object | null>(value: T): T {
+	return value === null ? value : shallowCloneObject(value);
+}
+
+/**
  * Arguments that are passed to the {@link StateFactory.latest} function.
  *
+ * @input
  * @beta
  */
 export interface LatestArguments<T extends object | null> {
 	/**
 	 * The initial value of the local state.
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
-	local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
+	local: JsonSerializable<T>;
 
 	/**
 	 * See {@link BroadcastControlSettings}.
@@ -274,17 +288,11 @@ export function latest<T extends object | null, Key extends string = string>(
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
-	const internalValue =
-		local === null
-			? (local as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<T>)
-			: // FIXME: Why isn't this directly castable?
-				(shallowCloneObject(
-					local,
-				) as unknown as InternalUtilityTypes.OpaqueJsonDeserialized<T>);
+	const opaqueLocal = serializableToOpaqueJson<T>(local);
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: internalValue,
+		value: shallowCloneNullableObject(opaqueLocal),
 	};
 
 	// FIXME There has to be a better way than duplicating the function...

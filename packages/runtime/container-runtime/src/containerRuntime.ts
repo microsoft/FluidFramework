@@ -60,6 +60,7 @@ import {
 	PromiseCache,
 	delay,
 	fail,
+	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type {
 	IClientDetails,
@@ -771,6 +772,23 @@ export async function loadContainerRuntime(
 }
 
 const defaultMaxConsecutiveReconnects = 7;
+
+/**
+ * These are the ONLY message types that are allowed to be submitted while in staging mode
+ * (Does not apply to pre-StagingMode batches that are resubmitted, those are not considered to be staged)
+ */
+function canStageMessageOfType(
+	type: LocalContainerRuntimeMessage["type"],
+): type is
+	| ContainerMessageType.FluidDataStoreOp
+	| ContainerMessageType.GC
+	| ContainerMessageType.DocumentSchemaChange {
+	return (
+		type === ContainerMessageType.FluidDataStoreOp ||
+		type === ContainerMessageType.GC ||
+		type === ContainerMessageType.DocumentSchemaChange
+	);
+}
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -3334,7 +3352,8 @@ export class ContainerRuntime
 					// This will throw and close the container if rollback fails
 					try {
 						checkpoint.rollback((message: LocalBatchMessage) =>
-							this.rollback(message.runtimeOp, message.localOpMetadata),
+							// These changes are staged since we entered staging mode above
+							this.rollbackStagedChanges(message.runtimeOp, message.localOpMetadata),
 						);
 						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
@@ -3430,7 +3449,7 @@ export class ContainerRuntime
 						runtimeOp !== undefined,
 						0xb82 /* Staged batches expected to have runtimeOp defined */,
 					);
-					this.rollback(runtimeOp, localOpMetadata);
+					this.rollbackStagedChanges(runtimeOp, localOpMetadata);
 				});
 				this.updateDocumentDirtyState();
 			}),
@@ -4479,6 +4498,11 @@ export class ContainerRuntime
 			// If we're resubmitting a batch, keep the same "staged" value as before.  Otherwise, use the current "global" state.
 			const staged = this.batchRunner.resubmitInfo?.staged ?? this.inStagingMode;
 
+			assert(
+				!staged || canStageMessageOfType(type),
+				"Unexpected message type submitted in Staging Mode",
+			);
+
 			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
 			if (!staged) {
 				this.submitIdAllocationOpIfNeeded({ staged: false });
@@ -4696,8 +4720,15 @@ export class ContainerRuntime
 		}
 	}
 
-	private rollback(runtimeOp: LocalContainerRuntimeMessage, localOpMetadata: unknown): void {
-		const { type, contents } = runtimeOp;
+	/**
+	 * Rollback the given op which was only staged but not yet submitted.
+	 */
+	private rollbackStagedChanges(
+		{ type, contents }: LocalContainerRuntimeMessage,
+		localOpMetadata: unknown,
+	): void {
+		assert(canStageMessageOfType(type), "Unexpected message type to be rolled back");
+
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store
@@ -4705,8 +4736,12 @@ export class ContainerRuntime
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			}
+			case ContainerMessageType.GC:
+			case ContainerMessageType.DocumentSchemaChange: {
+				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
+			}
 			default: {
-				throw new Error(`Can't rollback ${type}`);
+				unreachableCase(type);
 			}
 		}
 	}
@@ -4986,6 +5021,7 @@ export class ContainerRuntime
 				},
 				getQuorum: this.getQuorum.bind(this),
 				getAudience: this.getAudience.bind(this),
+				supportedFeatures: this.ILayerCompatDetails.supportedFeatures,
 			} satisfies ExtensionHost<TRuntimeProperties>;
 			entry = new factory(runtime, ...useContext);
 			this.extensions.set(id, entry);

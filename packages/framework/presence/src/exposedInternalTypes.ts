@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	JsonDeserialized,
-	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Collection of value types that are not intended to be used/imported
@@ -34,16 +31,16 @@ export namespace InternalTypes {
 	 * @system
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-		value?: JsonDeserialized<TValue>;
-		validatedValue?: JsonDeserialized<TValue> | undefined;
+		value?: OpaqueJsonDeserialized<TValue>;
+		validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
 	}
 
 	/**
 	 * @system
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-		value: JsonDeserialized<TValue>;
-		validatedValue?: JsonDeserialized<TValue> | undefined;
+		value: OpaqueJsonDeserialized<TValue>;
+		validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
 	}
 
 	/**
@@ -128,6 +125,6 @@ export namespace InternalTypes {
 	 */
 	export interface NotificationType {
 		name: string;
-		args: (JsonSerializable<unknown> & JsonDeserialized<unknown>)[];
+		args: unknown[];
 	}
 }

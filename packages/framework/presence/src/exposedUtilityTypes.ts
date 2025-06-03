@@ -7,30 +7,28 @@ import type {
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+} from "@fluidframework/core-interfaces/internal";
 
 /**
  * Collection of utility types that are not intended to be used/imported
  * directly outside of this package.
  *
- * @alpha
+ * @internal
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace InternalUtilityTypes {
 	/**
-	 * `true` iff the given type is an acceptable shape for a notification.
+	 * `IfListener` iff the given type is an acceptable shape for a notification.
+	 * `Else` otherwise.
 	 *
 	 * @system
 	 */
-	export type IsNotificationListener<Event> = Event extends (...args: infer P) => void
-		? CoreInternalUtilityTypes.IfSameType<
-				P,
-				JsonSerializable<P> & JsonDeserialized<P>,
-				true,
-				false
-			>
-		: false;
+	export type IfNotificationListener<Event, IfListener, Else> = Event extends (
+		...args: infer P
+	) => void
+		? CoreInternalUtilityTypes.IfSameType<P, JsonSerializable<P>, IfListener, Else>
+		: Else;
 
 	/**
 	 * Used to specify the kinds of notifications emitted by a {@link NotificationListenable}.
@@ -52,7 +50,7 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	export type NotificationListeners<E> = {
-		[P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
+		[P in keyof E as IfNotificationListener<E[P], P, never>]: E[P];
 	};
 
 	/**
@@ -60,7 +58,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (
+	export type JsonDeserializedParameters<T extends (...args: any[]) => any> = T extends (
 		...args: infer P
 	) => any
 		? JsonDeserialized<P>
@@ -71,7 +69,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (
+	export type JsonSerializableParameters<T extends (...args: any[]) => any> = T extends (
 		...args: infer P
 	) => any
 		? JsonSerializable<P>

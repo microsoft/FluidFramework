@@ -16,7 +16,13 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
+import {
+	asDeeplyReadonly,
+	asDeeplyReadonlyDeserializedJson,
+	objectEntries,
+	objectKeys,
+	serializableToOpaqueJson,
+} from "./internalUtils.js";
 import {
 	createValidatedGetter,
 	type LatestClientData,
@@ -32,7 +38,7 @@ import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
 /**
- * Collection of latest known values for a specific client.
+ * Collection of latest known values for a specific {@link Attendee}.
  *
  * @sealed
  * @beta
@@ -44,11 +50,13 @@ export interface LatestMapClientData<
 	SpecificAttendeeId extends AttendeeId = AttendeeId,
 > {
 	/**
-	 * Associated attendee.
+	 * Associated {@link Attendee}.
 	 */
 	attendee: Attendee<SpecificAttendeeId>;
 
 	/**
+	 * Map of items for the state.
+	 *
 	 * @privateRemarks This could be regular map currently as no Map is
 	 * stored internally and a new instance is created for every request.
 	 */
@@ -66,6 +74,9 @@ export interface LatestMapItemUpdatedClientData<
 	K extends string | number,
 	TValueAccessor extends ValueAccessor<T>,
 > extends LatestClientData<T, TValueAccessor> {
+	/**
+	 * Key of the updated item.
+	 */
 	key: K;
 }
 
@@ -76,12 +87,23 @@ export interface LatestMapItemUpdatedClientData<
  * @beta
  */
 export interface LatestMapItemRemovedClientData<K extends string | number> {
+	/**
+	 * Associated {@link Attendee}.
+	 */
 	attendee: Attendee;
+	/**
+	 * Key of the removed item.
+	 */
 	key: K;
+	/**
+	 * Metadata associated with the removal of the item.
+	 */
 	metadata: LatestMetadata;
 }
 
 /**
+ * Events from {@link LatestMapRaw}.
+ *
  * @sealed
  * @beta
  */
@@ -125,7 +147,7 @@ export interface LatestMapEvents<
 	 * @eventProperty
 	 */
 	localItemUpdated: (updatedItem: {
-		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T>>;
 		key: K;
 	}) => void;
 
@@ -154,6 +176,8 @@ export interface StateMap<K extends string | number, V> {
 	clear(): void;
 
 	/**
+	 * Removes the element with the specified key from the StateMap, if it exists.
+	 *
 	 * @returns true if an element in the StateMap existed and has been removed, or false if
 	 * the element does not exist.
 	 * @remarks No entry is fully removed. Instead an undefined placeholder is locally and
@@ -177,12 +201,14 @@ export interface StateMap<K extends string | number, V> {
 	): void;
 
 	/**
-	 * Returns a specified element from the StateMap object.
+	 * Returns the element with the specified key from the StateMap, if it exists.
+	 *
 	 * @returns Returns the element associated with the specified key. If no element is associated with the specified key, undefined is returned.
 	 */
 	get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
 
 	/**
+	 * Checks if an element with the specified key exists in the StateMap.
 	 * @returns boolean indicating whether an element with the specified key exists or not.
 	 */
 	has(key: K): boolean;
@@ -195,10 +221,10 @@ export interface StateMap<K extends string | number, V> {
 	 * Make a deep clone before setting, if needed. No comparison is done to detect changes; all
 	 * sets are transmitted.
 	 */
-	set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
+	set(key: K, value: JsonSerializable<V>): this;
 
 	/**
-	 * @returns the number of elements in the StateMap.
+	 * The number of elements in the StateMap.
 	 */
 	readonly size: number;
 
@@ -286,7 +312,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		// TODO: This is a data read, so we need to validate.
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(asDeeplyReadonly(item.value), key, this);
+				callbackfn(asDeeplyReadonlyDeserializedJson(item.value), key, this);
 			}
 		}
 	}
@@ -306,18 +332,23 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		return data === undefined
 			? undefined
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
-				this.value.items[key]!.value!;
+				asDeeplyReadonlyDeserializedJson(this.value.items[key]!.value!);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
 	}
-	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
+	public set(key: K, inValue: JsonSerializable<T>): this {
+		const value = serializableToOpaqueJson<T>(inValue);
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value: brandJson(value) };
+			this.value.items[key] = {
+				rev: 0,
+				timestamp: 0,
+				value,
+			} satisfies InternalTypes.ValueOptionalState<T>;
 		}
-		this.updateItem(key, brandJson(value));
-		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
+		this.updateItem(key, value);
+		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(inValue) });
 		return this;
 	}
 	public get size(): number {
@@ -445,7 +476,7 @@ class LatestMapValueManagerImpl<
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const attendeeId of objectKeys(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
-				const attendee = this.datastore.lookupClient(attendeeId);
+				const attendee = this.datastore.presence.attendees.getAttendee(attendeeId);
 				const items = this.getRemote(attendee);
 				yield { attendee, items };
 			}
@@ -456,7 +487,7 @@ class LatestMapValueManagerImpl<
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return objectKeys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)
-			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
+			.map((attendeeId) => this.datastore.presence.attendees.getAttendee(attendeeId));
 	}
 
 	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, ValueAccessor<T>>> {
@@ -560,6 +591,7 @@ class LatestMapValueManagerImpl<
 /**
  * Arguments that are passed to the {@link StateFactory.latestMap} function.
  *
+ * @input
  * @beta
  */
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
@@ -567,7 +599,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 	 * The initial value of the local state.
 	 */
 	local?: {
-		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+		[K in Keys]: JsonSerializable<T>;
 	};
 
 	/**
@@ -666,7 +698,7 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				value: brandJson(initialValues[key]),
+				value: serializableToOpaqueJson(initialValues[key]),
 			};
 		}
 	}

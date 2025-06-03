@@ -37,13 +37,16 @@ export type FluidObjectId = string;
 
 /**
  * Base interface used in message data for events targeting a particular Fluid object (DDS) via
- * a unique ID.
+ * its {@link HasFluidObjectId.fluidObjectId | fluidObjectId}.
  *
  * @internal
  */
 export interface HasFluidObjectId {
 	/**
 	 * The ID of the Fluid object (DDS) associated with data or a request.
+	 * @privateRemarks
+	 * TODO: This should be renamed to something like 'fluidObjectKey' to better reflect its purpose as a key rather than an ID.
+	 * Cannot be changed now due to backward compatibility requirements.
 	 */
 	readonly fluidObjectId: FluidObjectId;
 }

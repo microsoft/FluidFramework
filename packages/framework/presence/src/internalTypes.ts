@@ -8,6 +8,7 @@ import type { ExtensionHost as ContainerExtensionHost } from "@fluidframework/co
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { AttendeeId, Attendee } from "./presence.js";
 import type {
+	OutboundAcknowledgementMessage,
 	OutboundClientJoinMessage,
 	OutboundDatastoreUpdateMessage,
 	SignalMessages,
@@ -15,19 +16,20 @@ import type {
 
 /**
  * Presence {@link ContainerExtension} version of {@link @fluidframework/container-runtime-definitions#ExtensionRuntimeProperties}
- * @internal
  */
 export interface ExtensionRuntimeProperties {
 	SignalMessages: SignalMessages;
 }
 /**
  * Presence specific ExtensionHost
- * @internal
  */
 export type ExtensionHost = ContainerExtensionHost<ExtensionRuntimeProperties>;
 
 /**
- * @internal
+ * Basic structure of set of {@link Attendee} records within Presence datastore
+ *
+ * @remarks
+ * This is commonly exists per named state in State Managers.
  */
 export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState<unknown>> {
 	// Caution: any particular item may or may not exist
@@ -42,8 +44,6 @@ export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState
  *
  * @privateRemarks
  * Replace with non-DataStore based interface.
- *
- * @internal
  */
 export type IEphemeralRuntime = Omit<ExtensionHost, "logger" | "submitAddressedSignal"> &
 	// Apart from tests, there is always a logger. So this could be promoted to required.
@@ -55,12 +55,18 @@ export type IEphemeralRuntime = Omit<ExtensionHost, "logger" | "submitAddressedS
 		 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 		 */
 		submitSignal: (
-			message: OutboundClientJoinMessage | OutboundDatastoreUpdateMessage,
+			message:
+				| OutboundAcknowledgementMessage
+				| OutboundClientJoinMessage
+				| OutboundDatastoreUpdateMessage,
 		) => void;
 	};
 
 /**
- * @internal
+ * Contract for State Managers as used by a States Workspace (`PresenceStatesImpl`)
+ *
+ * @remarks
+ * See uses of `unbrandIVM`.
  */
 export interface ValueManager<
 	TValue,
@@ -73,6 +79,6 @@ export interface ValueManager<
 }
 
 /**
- * @internal
+ * A function to be called at the end of an update frame
  */
 export type PostUpdateAction = () => void;

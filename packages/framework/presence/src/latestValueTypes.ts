@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	DeepReadonly,
-	JsonDeserialized,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type { DeepReadonly, JsonDeserialized } from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import {
+	asDeeplyReadonlyDeserializedJson,
+	asDeserializedJson,
+	serializableToOpaqueJson,
+} from "./internalUtils.js";
 import type { Attendee } from "./presence.js";
-import { asDeeplyReadonly } from "./internalUtils.js";
 
 /**
  * Metadata for the value state.
@@ -63,15 +64,6 @@ export type ProxiedValueAccessor<_T> = "proxied";
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
 /**
- * @beta
- */
-// export type AccessorNonDist<T> = [T] extends [ProxiedValueAccessor<T>]
-// 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
-// 	: [T] extends [RawValueAccessor<T>]
-// 		? DeepReadonly<JsonDeserialized<T>>
-// 		: never;
-
-/**
  * Utility type that conditionally represents an accesstor type based on the base accessor type.
  *
  * @beta
@@ -92,30 +84,34 @@ export type Accessor<T> = T extends ProxiedValueAccessor<infer U>
  * @beta
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
+	/**
+	 * The value of the state. This will either be a value or a function that can be called to retrieve the value.
+	 * @remarks This is a deeply readonly value, meaning it cannot be modified.
+	 */
 	value: TValueAccessor extends ProxiedValueAccessor<T>
 		? () => DeepReadonly<JsonDeserialized<T>> | undefined
 		: TValueAccessor extends RawValueAccessor<T>
 			? DeepReadonly<JsonDeserialized<T>>
 			: never;
-	// value: TValueAccessor;
-	// value: [T] extends [ProxiedValueAccessor<T>]
-	// 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
-	// 	: [T] extends [RawValueAccessor<T>]
-	// 		? DeepReadonly<JsonDeserialized<T>>
-	// 		: never;
-	// value: Accessor<TValueAccessor>;
-	// value: TValueAccessor;
+
+	/**
+	 * Metadata associated with the value.
+	 */
+
 	metadata: LatestMetadata;
 }
 
 /**
- * State of a specific attendee's value and its metadata.
+ * State of a specific {@link Attendee}'s value and its metadata.
  *
  * @sealed
  * @beta
  */
 export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>>
 	extends LatestData<T, TValueAccessor> {
+	/**
+	 * Associated {@link Attendee}.
+	 */
 	attendee: Attendee;
 }
 
@@ -167,10 +163,11 @@ export function createValidatedGetter<T>(
 	clientState: InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
 	validator?: StateSchemaValidator<T>,
 ): () => DeepReadonly<JsonDeserialized<T>> | undefined {
-	const f = (): DeepReadonly<JsonDeserialized<T>> | undefined => {
+	const getterFunction = (): DeepReadonly<JsonDeserialized<T>> | undefined => {
 		const valueToCheck =
 			validator === undefined
-				? clientState.value
+				? // No validator, so use the raw value
+					clientState.value
 				: clientState.validated === true
 					? clientState.validatedValue
 					: false;
@@ -178,7 +175,7 @@ export function createValidatedGetter<T>(
 		if (valueToCheck !== false) {
 			return valueToCheck === undefined
 				? undefined
-				: asDeeplyReadonly(valueToCheck);
+				: asDeeplyReadonlyDeserializedJson(valueToCheck);
 		}
 		// if (validator === undefined) {
 		// 	// No validator, so return the raw value
@@ -196,14 +193,15 @@ export function createValidatedGetter<T>(
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const validData = validator!(
-			clientState.value === undefined ? undefined : unbrandJson(clientState.value),
+			clientState.value === undefined ? undefined : asDeserializedJson(clientState.value),
 		);
 		clientState.validated = true;
 		// FIXME: Cast shouldn't be needed
-		clientState.validatedValue = validData === undefined ? undefined : brandJson(validData);
+		clientState.validatedValue =
+			validData === undefined ? undefined : serializableToOpaqueJson(validData);
 		return clientState.validatedValue === undefined
 			? undefined
-			: asDeeplyReadonlyFromJsonHandle(clientState.validatedValue);
+			: asDeeplyReadonlyDeserializedJson(clientState.validatedValue);
 	};
-	return f;
+	return getterFunction;
 }
