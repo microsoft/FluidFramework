@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes, JsonDeserialized, JsonSerializable } from "@fluidframework/core-interfaces/internal";
+import type { InternalUtilityTypes } from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
 
+import { toOpaqueJson } from "../internalUtils.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
@@ -15,7 +16,6 @@ import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type { AttendeeId, ClientConnectionId } from "@fluidframework/presence/alpha";
-import { toOpaqueJson } from "../internalUtils.js";
 
 /**
  * Use to compile-time assert types of two variables are identical.
@@ -92,7 +92,7 @@ export function generateBasicClientJoin(
 						[clientConnectionId]: {
 							"rev": connectionOrder,
 							"timestamp": fixedTime,
-							"value": (attendeeId),
+							"value": toOpaqueJson(attendeeId as AttendeeId),
 						},
 					},
 				},
