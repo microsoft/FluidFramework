@@ -9,7 +9,7 @@ import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import type { NotificationsWorkspace } from "../index.js";
 import { Notifications, StateFactory } from "../index.js";
-import { serializableToOpaqueJson } from "../internalUtils.js";
+import { toOpaqueJson } from "../internalUtils.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -79,7 +79,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 1010,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 0,
 												}),
 											},
@@ -110,7 +110,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 1,
 												"timestamp": 1020,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 42,
 												}),
 											},
@@ -141,7 +141,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1020,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 84,
 												}),
 											},
@@ -197,7 +197,7 @@ describe("Presence", () => {
 										[attendeeId2]: {
 											"rev": 0,
 											"timestamp": 1010,
-											"value": serializableToOpaqueJson({
+											"value": toOpaqueJson({
 												"num": 0,
 											}),
 										},
@@ -245,7 +245,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 3,
 												"timestamp": 1060,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 22,
 												}),
 											},
@@ -276,7 +276,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 6,
 												"timestamp": 1140,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 90,
 												}),
 											},
@@ -353,7 +353,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1100,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 34,
 												}),
 											},
@@ -384,7 +384,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 5,
 												"timestamp": 1220,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 90,
 												}),
 											},
@@ -459,7 +459,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 1010,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 0,
 												}),
 											},
@@ -468,7 +468,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 1010,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 0,
 												}),
 											},
@@ -499,7 +499,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1100,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 34,
 												}),
 											},
@@ -508,7 +508,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 1,
 												"timestamp": 1110,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 56,
 												}),
 											},
@@ -573,7 +573,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1050,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 34,
 												}),
 											},
@@ -582,7 +582,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 1,
 												"timestamp": 1020,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"message": "will be queued",
 												}),
 											},
@@ -613,7 +613,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1060,
-												"value": serializableToOpaqueJson({ "message": "final message" }),
+												"value": toOpaqueJson({ "message": "final message" }),
 											},
 										},
 									},
@@ -681,7 +681,7 @@ describe("Presence", () => {
 										[attendeeId2]: {
 											"rev": 2,
 											"timestamp": 1050,
-											"value": serializableToOpaqueJson({
+											"value": toOpaqueJson({
 												"num": 34,
 											}),
 										},
@@ -692,7 +692,7 @@ describe("Presence", () => {
 										[attendeeId2]: {
 											"rev": 2,
 											"timestamp": 1060,
-											"value": serializableToOpaqueJson({
+											"value": toOpaqueJson({
 												"message": "final message",
 											}),
 										},
@@ -764,7 +764,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": serializableToOpaqueJson({ "name": "newId", "args": [77] }),
+												"value": toOpaqueJson({ "name": "newId", "args": [77] }),
 												"ignoreUnmonitored": true,
 											},
 										},
@@ -794,7 +794,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": serializableToOpaqueJson({ "name": "newId", "args": [88] }),
+												"value": toOpaqueJson({ "name": "newId", "args": [88] }),
 												"ignoreUnmonitored": true,
 											},
 										},
@@ -860,7 +860,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 3,
 												"timestamp": 1040,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"num": 56,
 												}),
 											},
@@ -871,7 +871,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"name": "newId",
 													"args": [99],
 												}),
@@ -904,7 +904,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": serializableToOpaqueJson({
+												"value": toOpaqueJson({
 													"name": "newId",
 													"args": [111],
 												}),

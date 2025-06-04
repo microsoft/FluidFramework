@@ -115,7 +115,7 @@ type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
  * {@link OpaqueJsonDeserialized} instances will be replaced shallowly such
  * that nested instances are retained.
  */
-export function asDeserializedJson<T>(value: T): RevealOpaqueJsonDeserialized<T> {
+export function revealOpaqueJson<T>(value: T): RevealOpaqueJsonDeserialized<T> {
 	return value as RevealOpaqueJsonDeserialized<T>;
 }
 
@@ -128,7 +128,7 @@ export function asDeserializedJson<T>(value: T): RevealOpaqueJsonDeserialized<T>
  * the return type is both {@link OpaqueJsonSerializable} and
  * {@link OpaqueJsonDeserialized}.
  */
-export function serializableToOpaqueJson<const T>(
+export function toOpaqueJson<const T>(
 	value: JsonSerializable<T>,
 ): OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T> {
 	return value as OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T>;

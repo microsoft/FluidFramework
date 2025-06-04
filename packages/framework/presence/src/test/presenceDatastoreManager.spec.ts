@@ -9,7 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
-import { serializableToOpaqueJson } from "../internalUtils.js";
+import { toOpaqueJson } from "../internalUtils.js";
 import type { AttendeeId } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InternalWorkspaceAddress } from "../protocol.js";
@@ -222,7 +222,7 @@ describe("Presence", () => {
 					[attendeeId1]: {
 						"rev": 1,
 						"timestamp": 0,
-						"value": serializableToOpaqueJson({}),
+						"value": toOpaqueJson({}),
 					},
 				},
 			};
@@ -232,7 +232,7 @@ describe("Presence", () => {
 					[attendeeId1]: {
 						"rev": 0,
 						"timestamp": 0,
-						"value": serializableToOpaqueJson({}),
+						"value": toOpaqueJson({}),
 						"ignoreUnmonitored": true,
 					},
 				},
@@ -330,7 +330,7 @@ describe("Presence", () => {
 										[attendeeId1]: {
 											"rev": 1,
 											"timestamp": 0,
-											"value": serializableToOpaqueJson({ x: 1, y: 1, z: 1 }),
+											"value": toOpaqueJson({ x: 1, y: 1, z: 1 }),
 										},
 									},
 								},

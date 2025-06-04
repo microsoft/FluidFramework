@@ -20,7 +20,7 @@ import {
 	asDeeplyReadonly,
 	asDeeplyReadonlyDeserializedJson,
 	objectEntries,
-	serializableToOpaqueJson,
+	toOpaqueJson,
 } from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
@@ -125,7 +125,7 @@ class LatestValueManagerImpl<T, Key extends string>
 	public set local(value: JsonSerializable<T>) {
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
-		this.value.value = serializableToOpaqueJson<T>(value);
+		this.value.value = toOpaqueJson<T>(value);
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
@@ -229,7 +229,7 @@ export function latest<T extends object | null, Key extends string = string>(
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
-	const opaqueLocal = serializableToOpaqueJson<T>(local);
+	const opaqueLocal = toOpaqueJson<T>(local);
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
