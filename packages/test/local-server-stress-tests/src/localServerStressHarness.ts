@@ -1006,9 +1006,15 @@ async function maybeSaveFluidOpsTofile(
 	}
 
 	// No ops were sequenced - we never attached!
-	if (finalState.validationClient.container.resolvedUrl === undefined) {
-		return saveOpsToFile(`${saveInfo.saveFluidOps.path}`, []);
+	if (finalState.validationClient.container.attachState !== AttachState.Attached) {
+		await saveOpsToFile(`${saveInfo.saveFluidOps.path}`, []);
+		return;
 	}
+
+	assert(
+		finalState.validationClient.container.resolvedUrl !== undefined,
+		"Attached Container must have a URL",
+	);
 
 	const documentServiceFactory = new LocalDocumentServiceFactory(
 		finalState.localDeltaConnectionServer,
