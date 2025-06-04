@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import { fromOpaqueJson, toOpaqueJson } from "./internalUtils.js";
+import { fromOpaqueJson } from "./internalUtils.js";
 import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
@@ -152,9 +152,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		for (const [clientConnectionId, value] of Object.entries(
 			fromOpaqueJson(remoteDatastore.clientToSessionId),
 		)) {
-			const attendeeId = fromOpaqueJson(value.value);
 			const { attendee, isJoining } = this.ensureAttendee(
-				attendeeId,
+				value.value,
 				clientConnectionId,
 				/* order */ value.rev,
 				// If the attendee is present in audience OR if the attendee update is from the sending remote client itself,
