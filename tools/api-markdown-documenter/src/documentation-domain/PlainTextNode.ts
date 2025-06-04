@@ -4,7 +4,6 @@
  */
 
 import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * Plain text.
@@ -28,7 +27,7 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.PlainText;
+	public readonly type = "text";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}

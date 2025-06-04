@@ -13,15 +13,14 @@ import type {
 	TableRow as MdastTableRow,
 } from "mdast";
 
-import {
-	type BlockContentMap,
-	type PhrasingContentMap,
-	DocumentationNodeType,
-	type DocumentationNode,
-	type SectionNode,
-	type TableCellNode,
-	type TableRowNode,
-	type HeadingNode,
+import type {
+	BlockContentMap,
+	PhrasingContentMap,
+	DocumentationNode,
+	SectionNode,
+	TableCellNode,
+	TableRowNode,
+	HeadingNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
@@ -65,10 +64,10 @@ export type PhrasingContentTransformations = {
  */
 export type Transformations = BlockContentTransformations &
 	PhrasingContentTransformations & {
-		readonly [DocumentationNodeType.Heading]: Transformation<HeadingNode, MdastHeading>;
-		readonly [DocumentationNodeType.Section]: Transformation<SectionNode, MdastRootContent>;
-		readonly [DocumentationNodeType.TableCell]: Transformation<TableCellNode, MdastTableCell>;
-		readonly [DocumentationNodeType.TableRow]: Transformation<TableRowNode, MdastTableRow>;
+		readonly ["heading"]: Transformation<HeadingNode, MdastHeading>;
+		readonly ["section"]: Transformation<SectionNode, MdastRootContent>;
+		readonly ["tableCell"]: Transformation<TableCellNode, MdastTableCell>;
+		readonly ["tableRow"]: Transformation<TableRowNode, MdastTableRow>;
 	};
 
 /**
@@ -88,20 +87,20 @@ export type Transformation<
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	[DocumentationNodeType.BlockQuote]: blockQuoteToMarkdown,
-	[DocumentationNodeType.CodeSpan]: codeSpanToMarkdown,
-	[DocumentationNodeType.FencedCode]: fencedCodeBlockToMarkdown,
-	[DocumentationNodeType.Heading]: headingToMarkdown,
-	[DocumentationNodeType.LineBreak]: lineBreakToMarkdown,
-	[DocumentationNodeType.Link]: linkToMarkdown,
-	[DocumentationNodeType.Section]: sectionToMarkdown,
-	[DocumentationNodeType.HorizontalRule]: horizontalRuleToMarkdown,
-	[DocumentationNodeType.OrderedList]: orderedListToMarkdown,
-	[DocumentationNodeType.Paragraph]: paragraphToMarkdown,
-	[DocumentationNodeType.PlainText]: plainTextToMarkdown,
-	[DocumentationNodeType.Span]: spanToMarkdown,
-	[DocumentationNodeType.Table]: tableToMarkdown,
-	[DocumentationNodeType.TableCell]: tableCellToMarkdown,
-	[DocumentationNodeType.TableRow]: tableRowToMarkdown,
-	[DocumentationNodeType.UnorderedList]: unorderedListToMarkdown,
+	["blockQuote"]: blockQuoteToMarkdown,
+	["codeSpan"]: codeSpanToMarkdown,
+	["fencedCode"]: fencedCodeBlockToMarkdown,
+	["heading"]: headingToMarkdown,
+	["lineBreak"]: lineBreakToMarkdown,
+	["link"]: linkToMarkdown,
+	["section"]: sectionToMarkdown,
+	["horizontalRule"]: horizontalRuleToMarkdown,
+	["orderedList"]: orderedListToMarkdown,
+	["paragraph"]: paragraphToMarkdown,
+	["text"]: plainTextToMarkdown,
+	["span"]: spanToMarkdown,
+	["table"]: tableToMarkdown,
+	["tableCell"]: tableCellToMarkdown,
+	["tableRow"]: tableRowToMarkdown,
+	["unorderedList"]: unorderedListToMarkdown,
 };

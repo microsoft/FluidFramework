@@ -5,7 +5,7 @@
 
 import type { RootContent as MdastRootContent } from "mdast";
 
-import { DocumentationNodeType, type SectionNode } from "../../documentation-domain/index.js";
+import type { SectionNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -28,10 +28,7 @@ export function sectionToMarkdown(
 	const transformedChildren: MdastRootContent[] = [];
 
 	if (node.heading !== undefined) {
-		const transformedHeading = transformations[DocumentationNodeType.Heading](
-			node.heading,
-			context,
-		);
+		const transformedHeading = transformations.heading(node.heading, context);
 		transformedChildren.push(transformedHeading);
 	}
 

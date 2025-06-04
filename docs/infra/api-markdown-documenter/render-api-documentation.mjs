@@ -98,9 +98,9 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 	 */
 	const customRenderers = {
 		// @ts-ignore TODO: fix typing in API-Markdown-Documenter package
-		[DocumentationNodeType.BlockQuote]: renderBlockQuoteNode,
+		["blockQuote"]: renderBlockQuoteNode,
 		// @ts-ignore TODO: fix typing in API-Markdown-Documenter package
-		[DocumentationNodeType.Table]: renderTableNode,
+		["table"]: renderTableNode,
 		// @ts-ignore TODO: fix typing in API-Markdown-Documenter package
 		[admonitionNodeType]: renderAdmonitionNode,
 	};

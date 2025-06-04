@@ -6,7 +6,6 @@
 import type { Heading } from "../Heading.js";
 
 import type { DocumentationNode } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
 /**
@@ -35,7 +34,7 @@ export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Headi
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Heading;
+	public readonly type = "heading";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
