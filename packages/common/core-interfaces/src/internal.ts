@@ -41,11 +41,13 @@ import type {
 // Also not useful, at least in VS Code, as substitution is not made in place.
 
 /**
+ * @beta
  * @system
  */
 export type DeepReadonly<T> = ExposedDeepReadonly<T>;
 
 /**
+ * @beta
  * @system
  */
 export type JsonDeserialized<
@@ -57,6 +59,7 @@ export type JsonDeserialized<
 > = ExposedJsonDeserialized<T, Options>;
 
 /**
+ * @beta
  * @system
  */
 export type JsonSerializable<
@@ -78,6 +81,7 @@ export type JsonTypeWith<T> = ExposedJsonTypeWith<T>;
 export type ReadonlyNonNullJsonObjectWith<T> = ExposedReadonlyNonNullJsonObjectWith<T>;
 
 /**
+ * @beta
  * @system
  */
 export type OpaqueJsonDeserialized<
@@ -87,6 +91,7 @@ export type OpaqueJsonDeserialized<
 > = ExposedOpaqueJsonDeserialized<T, Option_AllowExactly, Option_AllowExtensionOf>;
 
 /**
+ * @beta
  * @system
  */
 export type OpaqueJsonSerializable<
@@ -96,6 +101,7 @@ export type OpaqueJsonSerializable<
 > = ExposedOpaqueJsonSerializable<T, Option_AllowExactly, Option_AllowExtensionOf>;
 
 /**
+ * @beta
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
