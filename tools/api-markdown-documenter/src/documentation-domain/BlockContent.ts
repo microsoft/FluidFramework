@@ -6,7 +6,6 @@
 import type { BlockQuoteNode } from "./BlockQuoteNode.js";
 import type { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 import type { HorizontalRuleNode } from "./HorizontalRuleNode.js";
-import type { LineBreakNode } from "./LineBreakNode.js";
 import type { OrderedListNode } from "./OrderedListNode.js";
 import type { ParagraphNode } from "./ParagraphNode.js";
 import type { TableNode } from "./TableNode.js";
@@ -39,7 +38,6 @@ export interface BlockContentMap {
 	blockquote: BlockQuoteNode;
 	fencedCodeBlock: FencedCodeBlockNode;
 	horizontalRule: HorizontalRuleNode;
-	lineBreak: LineBreakNode;
 	orderedList: OrderedListNode;
 	paragraph: ParagraphNode;
 	table: TableNode;
