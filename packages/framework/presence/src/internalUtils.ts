@@ -81,7 +81,7 @@ export function getOrCreateRecord<const K extends string | number | symbol, cons
 }
 
 /**
- * Does nothing helper to apply deep immutability to a value's type.
+ * No-runtime-effect helper to apply deep immutability to a value's type.
  */
 export function asDeeplyReadonly<T>(value: T): DeepReadonly<T> {
 	return value as DeepReadonly<T>;
@@ -94,7 +94,8 @@ export function asDeeplyReadonlyDeserializedJson<T>(
 	value: OpaqueJsonDeserialized<T> | undefined,
 ): DeepReadonly<JsonDeserialized<T>> | undefined;
 /**
- * Does nothing helper to apply deep immutability to a value's opaque Json type revealing the Json type.
+ * No-runtime-effect helper to apply deep immutability to a value's opaque JSON
+ * type, revealing the JSON type.
  */
 export function asDeeplyReadonlyDeserializedJson<T>(
 	value: OpaqueJsonDeserialized<T> | undefined,
@@ -107,14 +108,25 @@ type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
 	: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
 
 /**
- * Does nothing helper to reveal the Json type from a value's opaque Json type.
+ * No-runtime-effect helper to reveal the JSON type from a value's opaque JSON
+ * types throughout a structure.
+ *
+ * @remarks
+ * {@link OpaqueJsonDeserialized} instances will be replaced shallowly such
+ * that nested instances are retained.
  */
 export function asDeserializedJson<T>(value: T): RevealOpaqueJsonDeserialized<T> {
 	return value as RevealOpaqueJsonDeserialized<T>;
 }
 
 /**
- * Does nothing helper to automatically cast Json type to Opaque Json type.
+ * No-runtime-effect helper to automatically cast JSON type to Opaque JSON type
+ * at outermost scope.
+ *
+ * @remarks
+ * Types that satisfy {@link JsonSerializable} may also be deserialized. Thus,
+ * the return type is both {@link OpaqueJsonSerializable} and
+ * {@link OpaqueJsonDeserialized}.
  */
 export function serializableToOpaqueJson<const T>(
 	value: JsonSerializable<T>,

@@ -131,7 +131,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		/**
 		 * Remote datastore typed to match {@link PresenceStatesInternal.processUpdate}'s
 		 * `ValueUpdateRecord` type that uses {@link InternalTypes.ValueRequiredState}
-		 * and expects and Opaque Json type. (We get away with a non-`unknown` value type
+		 * and expects and Opaque JSON type. (We get away with a non-`unknown` value type
 		 * per TypeScript's method parameter bivariance.) Proper type would be
 		 * {@link ConnectionValueState} directly.
 		 * {@link ClientConnectionId} use for index is also a deviation, but conveniently
