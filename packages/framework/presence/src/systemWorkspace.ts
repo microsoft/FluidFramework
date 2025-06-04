@@ -150,10 +150,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		const audienceMembers = this.audience.getMembers();
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [clientConnectionId, value] of Object.entries(
-			fromOpaqueJson(remoteDatastore.clientToSessionId),
+			remoteDatastore.clientToSessionId,
 		)) {
+			const jsonValue = fromOpaqueJson(value.value);
 			const { attendee, isJoining } = this.ensureAttendee(
-				value.value,
+				jsonValue,
 				clientConnectionId,
 				/* order */ value.rev,
 				// If the attendee is present in audience OR if the attendee update is from the sending remote client itself,
@@ -168,9 +169,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 			const knownSessionId = this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
-				this.datastore.clientToSessionId[clientConnectionId] = value;
+				this.datastore.clientToSessionId[clientConnectionId] = jsonValue;
 			} else {
-				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
+				assert(knownSessionId.value === jsonValue, 0xa5a /* Mismatched SessionId */);
 			}
 		}
 

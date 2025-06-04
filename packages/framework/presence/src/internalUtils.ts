@@ -103,10 +103,6 @@ export function asDeeplyReadonlyDeserializedJson<T>(
 	return value as DeepReadonly<JsonDeserialized<T>> | undefined;
 }
 
-type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
-	? JsonDeserialized<U>
-	: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
-
 /**
  * No-effect helper to reveal the JSON type from a value's opaque JSON type.
  */
