@@ -28,7 +28,6 @@ export {
 	type DocumentationParentNode,
 	DocumentationParentNodeBase,
 } from "./DocumentationNode.js";
-export { DocumentationNodeType } from "./DocumentationNodeType.js";
 export { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 export { HeadingNode } from "./HeadingNode.js";
 export { HorizontalRuleNode } from "./HorizontalRuleNode.js";

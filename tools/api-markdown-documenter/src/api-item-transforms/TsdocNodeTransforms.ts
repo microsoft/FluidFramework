@@ -25,7 +25,6 @@ import type { LoggingConfiguration } from "../LoggingConfiguration.js";
 import {
 	type BlockContent,
 	CodeSpanNode,
-	DocumentationNodeType,
 	FencedCodeBlockNode,
 	LineBreakNode,
 	LinkNode,
@@ -196,17 +195,14 @@ function transformTsdocParagraph(
 	// Trim leading whitespace from first child if it is plain text,
 	// and trim trailing whitespace from last child if it is plain text.
 	if (transformedChildren.length > 0) {
-		if (transformedChildren[0].type === DocumentationNodeType.PlainText) {
+		if (transformedChildren[0].type === "text") {
 			const plainTextNode = transformedChildren[0];
 			transformedChildren[0] = new PlainTextNode(
 				plainTextNode.value.trimStart(),
 				plainTextNode.escaped,
 			);
 		}
-		if (
-			transformedChildren[transformedChildren.length - 1].type ===
-			DocumentationNodeType.PlainText
-		) {
+		if (transformedChildren[transformedChildren.length - 1].type === "text") {
 			const plainTextNode = transformedChildren[
 				transformedChildren.length - 1
 			] as PlainTextNode;
@@ -422,7 +418,7 @@ function collapseAdjacentLineBreaks(nodes: readonly PhrasingContent[]): Phrasing
 	const result: PhrasingContent[] = [];
 	let onNewline = false;
 	for (const node of nodes) {
-		if (node.type === DocumentationNodeType.LineBreak) {
+		if (node.type === "lineBreak") {
 			if (onNewline) {
 				continue;
 			} else {
@@ -455,7 +451,7 @@ function trimLeadingAndTrailingLineBreaks(
 	let endIndex = nodes.length - 1;
 
 	for (const node of nodes) {
-		if (node.type === DocumentationNodeType.LineBreak) {
+		if (node.type === "lineBreak") {
 			startIndex++;
 		} else {
 			break;
@@ -463,7 +459,7 @@ function trimLeadingAndTrailingLineBreaks(
 	}
 
 	for (let i = nodes.length - 1; i > startIndex; i--) {
-		if (nodes[i].type === DocumentationNodeType.LineBreak) {
+		if (nodes[i].type === "lineBreak") {
 			endIndex--;
 		} else {
 			break;
@@ -485,11 +481,9 @@ function filterNewlinesAdjacentToParagraphs(nodes: readonly BlockContent[]): Blo
 
 	const result: BlockContent[] = [];
 	for (let i = 0; i < nodes.length; i++) {
-		if (nodes[i].type === DocumentationNodeType.LineBreak) {
-			const previousIsParagraph =
-				i > 0 ? nodes[i - 1].type === DocumentationNodeType.Paragraph : false;
-			const nextIsParagraph =
-				i < nodes.length - 1 ? nodes[i + 1].type === DocumentationNodeType.Paragraph : false;
+		if (nodes[i].type === "lineBreak") {
+			const previousIsParagraph = i > 0 ? nodes[i - 1].type === "paragraph" : false;
+			const nextIsParagraph = i < nodes.length - 1 ? nodes[i + 1].type === "paragraph" : false;
 			if (previousIsParagraph || nextIsParagraph) {
 				continue;
 			}

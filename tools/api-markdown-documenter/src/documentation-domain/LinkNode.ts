@@ -6,7 +6,6 @@
 import type { Link, UrlTarget } from "../Link.js";
 
 import type { DocumentationNode } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
 /**
@@ -31,7 +30,7 @@ export class LinkNode implements DocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Link;
+	public readonly type = "link";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}

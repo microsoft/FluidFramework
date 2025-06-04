@@ -4,7 +4,6 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
@@ -41,7 +40,7 @@ export class BlockQuoteNode extends DocumentationParentNodeBase<PhrasingContent>
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.BlockQuote;
+	public readonly type = "blockQuote";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
