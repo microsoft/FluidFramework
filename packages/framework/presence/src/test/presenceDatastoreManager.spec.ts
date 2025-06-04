@@ -12,6 +12,7 @@ import { useFakeTimers, spy } from "sinon";
 import { serializableToOpaqueJson } from "../internalUtils.js";
 import type { AttendeeId } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
+import type { InternalWorkspaceAddress } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -324,7 +325,7 @@ describe("Presence", () => {
 							avgLatency: 20,
 							data: {
 								"system:presence": systemWorkspaceUpdate,
-								"u:name:testUnknownWorkspace": {
+								["u:name:testUnknownWorkspace" as InternalWorkspaceAddress]: {
 									"latest": {
 										[attendeeId1]: {
 											"rev": 1,
@@ -391,7 +392,8 @@ describe("Presence", () => {
 							data: {
 								"system:presence": systemWorkspaceUpdate,
 								// Unrecognized internal address
-								"sn:name:testStateWorkspace": statesWorkspaceUpdate,
+								["sn:name:testStateWorkspace" as InternalWorkspaceAddress]:
+									statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -419,7 +421,7 @@ describe("Presence", () => {
 							data: {
 								"system:presence": systemWorkspaceUpdate,
 								// Invalid public address (must be `${string}:${string}`)
-								"s:testStateWorkspace": statesWorkspaceUpdate,
+								["s:testStateWorkspace" as InternalWorkspaceAddress]: statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -473,7 +475,7 @@ describe("Presence", () => {
 				assert.strictEqual(listener.callCount, 1);
 			});
 
-			it("with acknowledgementId sends targeted acknowledgment messsage back to requestor", () => {
+			it("with acknowledgementId sends targeted acknowledgment message back to requestor", () => {
 				// We expect to send a targeted acknowledgment back to the requestor
 				runtime.signalsExpected.push([
 					{
