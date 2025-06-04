@@ -53,16 +53,6 @@ export interface TreeRecordNode<_T extends ImplicitAllowedTypes = ImplicitAllowe
 	// TODO
 }
 
-// TreeRecordNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
-// This is not ideal, but no alternatives are possible.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const handler: ProxyHandler<TreeRecordNode<any>> = {
-	// getPrototypeOf: () => {
-	// 	return Map.prototype;
-	// },
-	// TODO: property accessors (like Array)
-};
-
 abstract class CustomRecordNodeBase<
 	const T extends ImplicitAllowedTypes,
 > extends TreeNodeValid<RecordNodeInsertableData<T>> {
@@ -92,7 +82,6 @@ abstract class CustomRecordNodeBase<
  * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
  *
  * @param base - base schema type to extend.
- * @param useMapPrototype - should this type emulate a ES6 Map object (by faking its prototype with a proxy).
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function recordSchema<
@@ -104,7 +93,6 @@ export function recordSchema<
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-	useMapPrototype: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ) {
 	const lazyChildTypes = new Lazy(() =>
@@ -125,9 +113,6 @@ export function recordSchema<
 			instance: TreeNodeValid<T2>,
 			flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
-			if (useMapPrototype) {
-				return new Proxy<Schema>(instance as Schema, handler as ProxyHandler<Schema>);
-			}
 			return instance;
 		}
 
