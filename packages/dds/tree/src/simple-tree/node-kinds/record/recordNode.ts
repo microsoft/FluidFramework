@@ -4,6 +4,8 @@
  */
 
 import { Lazy } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import type {
 	FlexibleNodeContent,
 	FlexTreeNode,
@@ -33,7 +35,11 @@ import {
 	getOrCreateInnerNode,
 	type InternalTreeNode,
 } from "../../core/index.js";
-import { mapTreeFromNodeData, type FactoryContent } from "../../toMapTree.js";
+import {
+	mapTreeFromNodeData,
+	type FactoryContent,
+	type InsertableContent,
+} from "../../toMapTree.js";
 import { brand, type RestrictiveStringRecord } from "../../../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import { getUnhydratedContext } from "../../createContext.js";
@@ -41,6 +47,7 @@ import type {
 	RecordNodeCustomizableSchema,
 	RecordNodePojoEmulationSchema,
 } from "./recordNodeTypes.js";
+import { getTreeNodeForField } from "../../getTreeNodeForField.js";
 
 /**
  * A record of string keys to tree objects.
@@ -51,6 +58,99 @@ export interface TreeRecordNode<_T extends ImplicitAllowedTypes = ImplicitAllowe
 	extends TreeNode {
 	// RestrictiveStringRecord<TreeNodeFromImplicitAllowedTypes<T>>
 	// TODO
+}
+
+// TODO: don't allow shadowing of properties - just methods?
+
+/**
+ * Create a proxy which implements the {@link TreeRecordNode} API.
+ * @param proxyTarget - Target object of the proxy. Must provide an own `length` value property
+ * (which is not used but must exist for getOwnPropertyDescriptor invariants) and the array functionality from {@link arrayNodePrototype}.
+ * Controls the prototype exposed by the produced proxy.
+ * @param dispatchTarget - provides the functionally of the node, implementing all fields.
+ */
+function createRecordNodeProxy(proxyTarget: object, dispatchTarget: object): TreeRecordNode {
+	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
+	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
+	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
+	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(proxyTarget as TreeRecordNode, {
+		get: (target, key, receiver) => {
+			// TODO: is this right?
+			if (typeof key === "symbol") {
+				return false;
+			}
+
+			const innerNode = getOrCreateInnerNode(receiver);
+			const field = innerNode.tryGetField(brand(key));
+			if (field === undefined) {
+				return false;
+			}
+
+			// TODO: handle customizable
+			return getTreeNodeForField(field);
+		},
+		set: (target, key, value: InsertableContent | undefined, receiver) => {
+			// TODO: is this right?
+			if (typeof key === "symbol") {
+				return false;
+			}
+
+			const innerNode = getOrCreateInnerNode(receiver);
+			const childField = innerNode.tryGetField(brand(key));
+
+			// TODO: handle customizable
+			if (childField === undefined) {
+				return false;
+			}
+
+			// TODO: set data on node
+			throw new Error("TODO");
+		},
+		has: (target, key) => {
+			// TODO: is this right?
+			if (typeof key === "symbol") {
+				return false;
+			}
+			const innerNode = getOrCreateInnerNode(proxy);
+			const childField = innerNode.tryGetField(brand(key));
+
+			// TODO: handle customizable
+			return childField !== undefined;
+		},
+		ownKeys: (target) => {
+			const innerNode = getOrCreateInnerNode(proxy);
+			// TODO: anything else we need to include here?
+			return [...innerNode.keys()];
+		},
+		getOwnPropertyDescriptor: (target, key) => {
+			// TODO: is this right?
+			if (typeof key === "symbol") {
+				return undefined;
+			}
+			const innerNode = getOrCreateInnerNode(proxy);
+			const field = innerNode.tryGetField(brand(key));
+
+			// TODO: handle customizable
+			if (field === undefined) {
+				return undefined;
+			}
+
+			return {
+				value: getTreeNodeForField(field),
+				writable: true,
+				// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
+				// Make empty fields not enumerable so they get skipped when iterating over an object to better align with
+				// JSON and deep equals with JSON compatible object (which can't have undefined fields).
+				enumerable: field !== undefined,
+				configurable: true, // Must be 'configurable' if property is absent from proxy target.
+			};
+		},
+		defineProperty(target, key, attributes) {
+			// TODO: prevent shadowing of properties?
+			return Reflect.defineProperty(dispatchTarget, key, attributes);
+		},
+	});
+	return proxy;
 }
 
 abstract class CustomRecordNodeBase<
@@ -79,7 +179,7 @@ abstract class CustomRecordNodeBase<
 }
 
 /**
- * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
+ * Define a {@link TreeNodeSchema} for a {@link (TreeRecordNode:interface)}.
  *
  * @param base - base schema type to extend.
  */
@@ -95,6 +195,9 @@ export function recordSchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ) {
+	// Field set can't be modified after this since derived data is stored in maps.
+	Object.freeze(info);
+
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
 	);
@@ -104,16 +207,38 @@ export function recordSchema<
 
 	let unhydratedContext: Context;
 
-	class Schema
+	class CustomRecordNode
 		extends CustomRecordNodeBase<UnannotateImplicitAllowedTypes<T>>
 		implements TreeRecordNode<UnannotateImplicitAllowedTypes<T>>
 	{
+		/**
+		 * Differentiate between the following cases:
+		 *
+		 * Case 1: Direct construction (POJO emulation)
+		 *
+		 * ```typescript
+		 * const Foo = schemaFactory.record("Foo", schemaFactory.number);
+		 * assert.deepEqual(new Foo({ bar: 42 }), { bar: 42 }, "Prototype chain equivalent to POJO.");
+		 * ```
+		 *
+		 * Case 2: Subclass construction (Customizable Object)
+		 *
+		 * ```typescript
+		 * class Foo extends schemaFactory.object("Foo", schemaFactory.number) {}
+		 * assert.notDeepEqual(new Foo({ bar: 42 }), { bar: 42 }, "Subclass prototype chain differs from POJO.");
+		 * ```
+		 *
+		 * In Case 1 (POJO emulation), the prototype chain match '\{\}' (proxyTarget = undefined)
+		 * In Case 2 (Customizable Object), the prototype chain include the user's subclass (proxyTarget = this)
+		 */
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
-			return instance;
+			const proxyTarget = {};
+			// TODO: customizable support
+			return createRecordNodeProxy(proxyTarget, instance) as unknown as CustomRecordNode;
 		}
 
 		public static override buildRawNode<T2>(
@@ -136,6 +261,9 @@ export function recordSchema<
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			const schema = this as unknown as TreeNodeSchema;
 			unhydratedContext = getUnhydratedContext(schema);
+
+			// TODO: any input validation needed?
+
 			return unhydratedContext;
 		}
 
@@ -153,7 +281,7 @@ export function recordSchema<
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): typeof schemaErased {
-			return Schema.constructorCached?.constructor as unknown as typeof schemaErased;
+			return CustomRecordNode.constructorCached?.constructor as unknown as typeof schemaErased;
 		}
 	}
 	const schemaErased: RecordNodeCustomizableSchema<
@@ -162,7 +290,8 @@ export function recordSchema<
 		ImplicitlyConstructable,
 		TCustomMetadata
 	> &
-		RecordNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> = Schema;
+		RecordNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> =
+		CustomRecordNode;
 	return schemaErased;
 }
 
