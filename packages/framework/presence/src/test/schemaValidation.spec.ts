@@ -9,7 +9,6 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import { toOpaqueJson } from "../internalUtils.js";
 import type { StateSchemaValidator } from "../latestValueTypes.js";
 import type { AttendeeId } from "../presence.js";
 import type { createPresenceManager } from "../presenceManager.js";
@@ -18,10 +17,10 @@ import { StateFactory } from "../stateFactory.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
+	attendeeId1,
+	attendeeId2,
 	createNullValidator,
-	createSpecificAttendeeId,
 	createSpiedValidator,
-	// generateBasicClientJoin,
 	prepareConnectedPresence,
 	type ValidatorSpy,
 } from "./testUtils.js";
@@ -64,7 +63,7 @@ describe("Presence", () => {
 		}
 
 		beforeEach(() => {
-			presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+			presence = prepareConnectedPresence(runtime, attendeeId1, "client1", clock, logger);
 
 			// Pass a little time (to mimic reality)
 			clock.tick(10);
@@ -92,7 +91,7 @@ describe("Presence", () => {
 										["client2" as AttendeeId]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": toOpaqueJson(createSpecificAttendeeId("attendeeId-2")),
+											"value": attendeeId2,
 										},
 									},
 								},
@@ -113,10 +112,10 @@ describe("Presence", () => {
 							data: {
 								"system:presence": {
 									"clientToSessionId": {
-										["client4" as AttendeeId]: {
+										["client2" as AttendeeId]: {
 											"rev": 0,
 											"timestamp": 700,
-											"value": toOpaqueJson(createSpecificAttendeeId("attendeeId-4")),
+											"value": attendeeId2,
 										},
 									},
 								},

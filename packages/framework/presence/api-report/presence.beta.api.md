@@ -179,6 +179,9 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
     readonly presence: Presence;
 }
 
+// @beta (undocumented)
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: undefined): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+
 // @beta
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 

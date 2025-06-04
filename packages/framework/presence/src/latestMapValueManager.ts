@@ -615,6 +615,22 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 	validator?: StateSchemaValidator<T> | undefined;
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @beta
+ */
+export function latestMap<
+	T,
+	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
+>(
+	args?: undefined,
+): InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMapRaw<T, Keys>
+>;
+
 /**
  * Factory for creating a {@link LatestMapRaw} State object with no arguments.
  *

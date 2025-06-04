@@ -12,7 +12,6 @@ import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/inter
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 
 import type { ClientConnectionId } from "../baseTypes.js";
-import { toOpaqueJson } from "../internalUtils.js";
 import type { StateSchemaValidator } from "../latestValueTypes.js";
 import type { AttendeeId } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
