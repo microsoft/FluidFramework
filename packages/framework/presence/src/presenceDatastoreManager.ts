@@ -171,24 +171,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (updateProviders.length > 3) {
 			updateProviders.length = 3;
 		}
-		// TODO: #??? investigate and address `PresenceDatastore` incompatibility with `DatastoreMessageContent`
-		// "system:presence" is always expected to be first in the data; so that it
-		// is processed first. Build copy without it to use spread and maintain order.
-		const datastoreWithoutSystem: Omit<PresenceDatastore, "system:presence"> = {
-			...this.datastore,
-		};
-		delete datastoreWithoutSystem["system:presence"];
 		this.runtime.submitSignal({
 			type: joinMessageType,
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
-				data: {
-					"system:presence":
-						// this.datastore["system:presence"], // does not work directly
-						{ ...this.datastore["system:presence"] },
-					...datastoreWithoutSystem,
-				},
+				data: this.datastore,
 				updateProviders,
 			},
 		});
@@ -338,32 +326,17 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			},
 		} satisfies OutboundDatastoreUpdateMessage["content"];
 		this.queuedData = undefined;
-		this.runtime.submitSignal({
-			type: datastoreUpdateMessageType,
-			content: newMessage,
-		});
+		this.runtime.submitSignal({ type: datastoreUpdateMessageType, content: newMessage });
 	}
 
 	private broadcastAllKnownState(): void {
-		// TODO: #??? investigate and address `PresenceDatastore` incompatibility with `DatastoreMessageContent`
-		// "system:presence" is always expected to be first in the data; so that it
-		// is processed first. Build copy without it to use spread and maintain order.
-		const datastoreWithoutSystem: Omit<PresenceDatastore, "system:presence"> = {
-			...this.datastore,
-		};
-		delete datastoreWithoutSystem["system:presence"];
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
-				data: {
-					"system:presence":
-						// this.datastore["system:presence"], // does not work directly
-						{ ...this.datastore["system:presence"] },
-					...datastoreWithoutSystem,
-				},
+				data: this.datastore,
 			},
 		});
 		this.refreshBroadcastRequested = false;
