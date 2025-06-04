@@ -56,19 +56,8 @@ export const attendeeId1 = createSpecificAttendeeId("attendeeId-1");
 export const attendeeId2 = createSpecificAttendeeId("attendeeId-2");
 /**
  * Mock {@link ClientConnectionId}.
- *
- * @remarks
- * This is an {@link AttendeeId} as a workaround to TypeScript expectation
- * that specific properties overriding an indexed property still conform
- * to the index signature. This makes cases where it is used as
- * `clientConnectionId` key in {@link SystemWorkspaceDatastore} also
- * satisfy {@link GeneralDatastoreMessageContent}'s `AttendeeId` key.
- *
- * The only known alternative is to use
- * `satisfies SystemWorkspaceDatastore as SystemWorkspaceDatastore`
- * wherever "system:presence" is defined.
  */
-export const connectionId2 = createSpecificAttendeeId("client2");
+export const connectionId2 = "client2" as const satisfies ClientConnectionId;
 
 /**
  * Generates expected inbound join signal for a client that was initialized while connected.
