@@ -104,10 +104,18 @@ export function asDeeplyReadonlyDeserializedJson<T>(
 }
 
 /**
+ * Conditional type that reveals the underlying JSON type of an opaque JSON value. If `T` is an object, the key values
+ * will be revealed.
+ */
+type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
+	? JsonDeserialized<U>
+	: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
+
+/**
  * No-effect helper to reveal the JSON type from a value's opaque JSON type.
  */
-export function fromOpaqueJson<T>(value: OpaqueJsonDeserialized<T>): JsonDeserialized<T> {
-	return value as JsonDeserialized<T>;
+export function fromOpaqueJson<T>(value: T): RevealOpaqueJsonDeserialized<T> {
+	return value as RevealOpaqueJsonDeserialized<T>;
 }
 
 /**

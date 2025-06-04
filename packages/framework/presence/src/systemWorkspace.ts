@@ -167,8 +167,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				postUpdateActions.push(() => this.events.emit("attendeeConnected", attendee));
 			}
 
-			const knownSessionId: ConnectionValueState | undefined =
-				this.datastore.clientToSessionId[clientConnectionId];
+			const knownSessionId = this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
 				this.datastore.clientToSessionId[clientConnectionId] =
 					// FIXME: Why is the roundtrip through unknown needed?
