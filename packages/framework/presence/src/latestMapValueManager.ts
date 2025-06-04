@@ -704,7 +704,7 @@ export function latestMap<
 		}
 	}
 
-	// FIXME There has to be a better way than duplicating the function...
+	// FIXME: There has to be a better way than duplicating the function...
 	const factory =
 		validator === undefined
 			? (

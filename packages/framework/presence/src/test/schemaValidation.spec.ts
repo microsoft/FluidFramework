@@ -5,13 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import { StateFactory, type AttendeeId, type StateSchemaValidator } from "../index.js";
+import { serializableToOpaqueJson } from "../internalUtils.js";
+import type { StateSchemaValidator } from "../latestValueTypes.js";
+import type { AttendeeId } from "../presence.js";
 import type { createPresenceManager } from "../presenceManager.js";
+import { StateFactory } from "../stateFactory.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
@@ -23,7 +25,6 @@ import {
 	prepareConnectedPresence,
 	type ValidatorSpy,
 } from "./testUtils.js";
-import { serializableToOpaqueJson } from "../internalUtils.js";
 
 describe("Presence", () => {
 	let runtime: MockEphemeralRuntime;

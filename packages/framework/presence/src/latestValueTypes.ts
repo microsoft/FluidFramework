@@ -48,8 +48,9 @@ export type RawValueAccessor<_T> = "raw";
 export type ProxiedValueAccessor<_T> = "proxied";
 
 /**
- * Union type for a raw or proxied accessor.
+ * Union of possible accessor types for a value.
  *
+ * @sealed
  * @beta
  */
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
