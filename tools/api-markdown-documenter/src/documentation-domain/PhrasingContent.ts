@@ -4,6 +4,7 @@
  */
 
 import type { CodeSpanNode } from "./CodeSpanNode.js";
+import type { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { LineBreakNode } from "./LineBreakNode.js";
 import type { LinkNode } from "./LinkNode.js";
 import type { PlainTextNode } from "./PlainTextNode.js";
@@ -32,11 +33,11 @@ import type { SpanNode } from "./SpanNode.js";
  * @public
  */
 export interface PhrasingContentMap {
-	codeSpan: CodeSpanNode;
-	lineBreak: LineBreakNode;
-	link: LinkNode;
-	span: SpanNode;
-	text: PlainTextNode;
+	[DocumentationNodeType.CodeSpan]: CodeSpanNode;
+	[DocumentationNodeType.LineBreak]: LineBreakNode;
+	[DocumentationNodeType.Link]: LinkNode;
+	[DocumentationNodeType.Span]: SpanNode;
+	[DocumentationNodeType.PlainText]: PlainTextNode;
 }
 
 /**

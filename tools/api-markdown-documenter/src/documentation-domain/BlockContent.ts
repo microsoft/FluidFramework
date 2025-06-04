@@ -4,9 +4,9 @@
  */
 
 import type { BlockQuoteNode } from "./BlockQuoteNode.js";
+import type { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 import type { HorizontalRuleNode } from "./HorizontalRuleNode.js";
-import type { LineBreakNode } from "./LineBreakNode.js";
 import type { OrderedListNode } from "./OrderedListNode.js";
 import type { ParagraphNode } from "./ParagraphNode.js";
 import type { TableNode } from "./TableNode.js";
@@ -36,14 +36,13 @@ import type { UnorderedListNode } from "./UnorderedListNode.js";
  * @public
  */
 export interface BlockContentMap {
-	blockquote: BlockQuoteNode;
-	fencedCodeBlock: FencedCodeBlockNode;
-	horizontalRule: HorizontalRuleNode;
-	lineBreak: LineBreakNode;
-	orderedList: OrderedListNode;
-	paragraph: ParagraphNode;
-	table: TableNode;
-	unorderedList: UnorderedListNode;
+	[DocumentationNodeType.BlockQuote]: BlockQuoteNode;
+	[DocumentationNodeType.FencedCode]: FencedCodeBlockNode;
+	[DocumentationNodeType.HorizontalRule]: HorizontalRuleNode;
+	[DocumentationNodeType.OrderedList]: OrderedListNode;
+	[DocumentationNodeType.Paragraph]: ParagraphNode;
+	[DocumentationNodeType.Table]: TableNode;
+	[DocumentationNodeType.UnorderedList]: UnorderedListNode;
 }
 
 /**
