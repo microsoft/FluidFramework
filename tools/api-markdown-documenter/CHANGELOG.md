@@ -4,7 +4,7 @@
 
 ### `LineBreakNode` removed from `BlockContent`
 
-All forms of Block Content are implicitly separated by a line break, so allowing `LineBreakNode`s in that context is redundant.
+Block Content items are implicitly separated by a line break, so allowing `LineBreakNode`s in that context is redundant.
 Support for `LineBreakNode`s in `BlockContent` contexts has been removed.
 
 ## 0.20.0
