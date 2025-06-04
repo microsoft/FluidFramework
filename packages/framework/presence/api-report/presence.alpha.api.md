@@ -133,7 +133,7 @@ export namespace InternalTypes {
     }
 }
 
-// @beta @system
+// @alpha @system
 export namespace InternalUtilityTypes {
     // @system
     export type IfNotificationListener<Event, IfListener, Else> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P>, IfListener, Else> : Else;
@@ -220,7 +220,7 @@ export function latestMap<T, Keys extends string | number = string | number, Reg
 // @beta @input
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
     local?: {
-        [K in Keys]: JsonSerializable_2<T>;
+        [K in Keys]: JsonSerializable<T>;
     };
     settings?: BroadcastControlSettings | undefined;
     validator?: StateSchemaValidator<T> | undefined;
@@ -240,7 +240,7 @@ export interface LatestMapEvents<T, K extends string | number, TRemoteValueAcces
     }) => void;
     // @eventProperty
     localItemUpdated: (updatedItem: {
-        value: DeepReadonly_2<JsonSerializable_2<T>>;
+        value: DeepReadonly<JsonSerializable<T>>;
         key: K;
     }) => void;
     // @eventProperty
@@ -367,11 +367,11 @@ export const StateFactory: {
 export interface StateMap<K extends string | number, V> {
     clear(): void;
     delete(key: K): boolean;
-    forEach(callbackfn: (value: DeepReadonly_2<JsonDeserialized_2<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
-    get(key: K): DeepReadonly_2<JsonDeserialized_2<V>> | undefined;
+    forEach(callbackfn: (value: DeepReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
+    get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
     has(key: K): boolean;
     keys(): IterableIterator<K>;
-    set(key: K, value: JsonSerializable_2<V>): this;
+    set(key: K, value: JsonSerializable<V>): this;
     readonly size: number;
 }
 

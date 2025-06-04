@@ -9,7 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import { serializableToOpaqueJson } from "../internalUtils.js";
+import { toOpaqueJson } from "../internalUtils.js";
 import type { StateSchemaValidator } from "../latestValueTypes.js";
 import type { AttendeeId } from "../presence.js";
 import type { createPresenceManager } from "../presenceManager.js";
@@ -92,9 +92,7 @@ describe("Presence", () => {
 										["client2" as AttendeeId]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": serializableToOpaqueJson(
-												createSpecificAttendeeId("attendeeId-2"),
-											),
+											"value": toOpaqueJson(createSpecificAttendeeId("attendeeId-2")),
 										},
 									},
 								},
@@ -118,9 +116,7 @@ describe("Presence", () => {
 										["client4" as AttendeeId]: {
 											"rev": 0,
 											"timestamp": 700,
-											"value": serializableToOpaqueJson(
-												createSpecificAttendeeId("attendeeId-4"),
-											),
+											"value": toOpaqueJson(createSpecificAttendeeId("attendeeId-4")),
 										},
 									},
 								},

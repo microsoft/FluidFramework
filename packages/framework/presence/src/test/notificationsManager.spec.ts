@@ -10,7 +10,7 @@ import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import type { Attendee, NotificationsManager, NotificationsWorkspace } from "../index.js";
 import { Notifications } from "../index.js";
-import { serializableToOpaqueJson } from "../internalUtils.js";
+import { toOpaqueJson } from "../internalUtils.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -131,7 +131,7 @@ describe("Presence", () => {
 									[connectionId2]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId2),
+										"value": toOpaqueJson(attendeeId2),
 									},
 								},
 							},
@@ -140,7 +140,7 @@ describe("Presence", () => {
 									[attendeeId2]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": serializableToOpaqueJson({ "name": "newId", "args": [42] }),
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -188,7 +188,7 @@ describe("Presence", () => {
 									[connectionId2]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId2),
+										"value": toOpaqueJson(attendeeId2),
 									},
 								},
 							},
@@ -197,7 +197,7 @@ describe("Presence", () => {
 									[attendeeId2]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": serializableToOpaqueJson({ "name": "newId", "args": [42] }),
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -271,7 +271,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId3),
+										"value": toOpaqueJson(attendeeId3),
 									},
 								},
 							},
@@ -280,7 +280,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": serializableToOpaqueJson({ "name": "newId", "args": [42] }),
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -353,7 +353,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId3),
+										"value": toOpaqueJson(attendeeId3),
 									},
 								},
 							},
@@ -362,7 +362,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": serializableToOpaqueJson({ "name": "oldId", "args": [41] }),
+										"value": toOpaqueJson({ "name": "oldId", "args": [41] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -423,7 +423,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId3),
+										"value": toOpaqueJson(attendeeId3),
 									},
 								},
 							},
@@ -432,7 +432,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": serializableToOpaqueJson({ "name": "newId", "args": [43] }),
+										"value": toOpaqueJson({ "name": "newId", "args": [43] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -499,7 +499,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId3),
+										"value": toOpaqueJson(attendeeId3),
 									},
 								},
 							},
@@ -508,7 +508,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": serializableToOpaqueJson({ "name": "newId", "args": [44] }),
+										"value": toOpaqueJson({ "name": "newId", "args": [44] }),
 										"ignoreUnmonitored": true,
 									},
 								},

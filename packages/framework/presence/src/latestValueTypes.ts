@@ -8,8 +8,8 @@ import type { DeepReadonly, JsonDeserialized } from "@fluidframework/core-interf
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import {
 	asDeeplyReadonlyDeserializedJson,
-	asDeserializedJson,
-	serializableToOpaqueJson,
+	fromOpaqueJson,
+	toOpaqueJson,
 } from "./internalUtils.js";
 import type { Attendee } from "./presence.js";
 
@@ -174,12 +174,12 @@ export function createValidatedGetter<T>(
 		// @ts-expect-error Type 'null' is not assignable to type 'T | undefined'.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const validData: T | undefined = validator!(
-			clientState.value === undefined ? undefined : asDeserializedJson(clientState.value),
+			clientState.value === undefined ? undefined : fromOpaqueJson(clientState.value),
 		);
 		clientState.validated = true;
 		clientState.validatedValue =
 			// @ts-expect-error Argument of type 'T & ({} | null)' is not assignable to parameter of type
-			validData === undefined ? undefined : serializableToOpaqueJson(validData);
+			validData === undefined ? undefined : toOpaqueJson(validData);
 		return clientState.validatedValue === undefined
 			? undefined
 			: asDeeplyReadonlyDeserializedJson(clientState.validatedValue);

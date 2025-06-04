@@ -81,12 +81,13 @@ export function getOrCreateRecord<const K extends string | number | symbol, cons
 }
 
 /**
- * Does nothing helper to apply deep immutability to a value's type.
+ * No-effect helper to apply deep immutability to a value's type.
  */
 export function asDeeplyReadonly<T>(value: T): DeepReadonly<T> {
 	return value as DeepReadonly<T>;
 }
 
+// function overloads
 export function asDeeplyReadonlyDeserializedJson<T>(
 	value: OpaqueJsonDeserialized<T>,
 ): DeepReadonly<JsonDeserialized<T>>;
@@ -94,7 +95,7 @@ export function asDeeplyReadonlyDeserializedJson<T>(
 	value: OpaqueJsonDeserialized<T> | undefined,
 ): DeepReadonly<JsonDeserialized<T>> | undefined;
 /**
- * Does nothing helper to apply deep immutability to a value's opaque Json type revealing the Json type.
+ * No-effect helper to apply deep immutability to a value's opaque JSON type, revealing the JSON type.
  */
 export function asDeeplyReadonlyDeserializedJson<T>(
 	value: OpaqueJsonDeserialized<T> | undefined,
@@ -103,16 +104,16 @@ export function asDeeplyReadonlyDeserializedJson<T>(
 }
 
 /**
- * Does nothing helper to reveal the Json type from a value's opaque Json type.
+ * No-effect helper to reveal the JSON type from a value's opaque JSON type.
  */
-export function asDeserializedJson<T>(value: OpaqueJsonDeserialized<T>): JsonDeserialized<T> {
+export function fromOpaqueJson<T>(value: OpaqueJsonDeserialized<T>): JsonDeserialized<T> {
 	return value as JsonDeserialized<T>;
 }
 
 /**
- * Does nothing helper to automatically cast Json type to Opaque Json type.
+ * No-effect helper to automatically cast a JSON type to an opaque JSON type.
  */
-export function serializableToOpaqueJson<const T>(
+export function toOpaqueJson<const T>(
 	value: JsonSerializable<T>,
 ): OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T> {
 	return value as OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T>;
