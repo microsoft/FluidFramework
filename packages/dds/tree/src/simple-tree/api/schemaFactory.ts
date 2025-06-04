@@ -990,7 +990,7 @@ export class SchemaFactory<
 	 * @returns The structural {@link TreeNodeSchema} associated with the given name and types.
 	 * @throws `UsageError` if a schema structurally named schema with the same name is cached in `structuralTypes` but had different input types.
 	 */
-	private getStructuralType(
+	protected getStructuralType(
 		fullName: string,
 		types: TreeNodeSchema | readonly TreeNodeSchema[],
 		builder: () => TreeNodeSchema,

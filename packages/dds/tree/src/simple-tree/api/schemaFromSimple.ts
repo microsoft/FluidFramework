@@ -117,7 +117,7 @@ function generateNode(
 				{ metadata: schema.metadata },
 			);
 		case NodeKind.Record:
-			return factory.record(
+			return factory.recordAlpha(
 				id,
 				generateAllowedTypes(schema.allowedTypesIdentifiers, context),
 				{ metadata: schema.metadata },
