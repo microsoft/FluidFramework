@@ -23,6 +23,12 @@ export namespace InternalTypes {
 	}
 
 	/**
+	 * `ValueRequiredState` is used to represent a state that may have a value.
+	 * And it includes standard metadata.
+	 *
+	 * @remarks
+	 * See {@link InternalTypes.ValueRequiredState}.
+	 *
 	 * @system
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
@@ -30,6 +36,18 @@ export namespace InternalTypes {
 	}
 
 	/**
+	 * `ValueRequiredState` is used to represent a state that must have a value.
+	 * And it includes standard metadata.
+	 *
+	 * @remarks
+	 * The value is wrapped in `OpaqueJsonDeserialized` as uses are expected
+	 * to involve generic or unknown types that will be filtered. It is here
+	 * mostly as a convenience to the many such uses that would otherwise
+	 * need to specify some wrapper themselves.
+	 *
+	 * For known cases, construct a custom interface that extends
+	 * {@link InternalTypes.ValueStateMetadata}.
+	 *
 	 * @system
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {

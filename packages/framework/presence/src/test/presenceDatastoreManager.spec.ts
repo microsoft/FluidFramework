@@ -29,7 +29,7 @@ const attendee4SystemWorkspaceDatastore = {
 		["client4" as AttendeeId]: {
 			"rev": 0,
 			"timestamp": 700,
-			"value": serializableToOpaqueJson(createSpecificAttendeeId("attendeeId-4")),
+			"value": createSpecificAttendeeId("attendeeId-4"),
 		},
 	},
 } as const satisfies SystemWorkspaceDatastore;
@@ -106,7 +106,7 @@ describe("Presence", () => {
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": serializableToOpaqueJson(attendeeId2),
+											"value": attendeeId2,
 										},
 									},
 								},
@@ -183,7 +183,7 @@ describe("Presence", () => {
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": serializableToOpaqueJson(attendeeId2),
+											"value": attendeeId2,
 										},
 									},
 								},
@@ -211,7 +211,7 @@ describe("Presence", () => {
 					"client1": {
 						"rev": 0,
 						"timestamp": 0,
-						"value": serializableToOpaqueJson(attendeeId1),
+						"value": attendeeId1,
 					},
 				},
 			};

@@ -131,7 +131,7 @@ describe("Presence", () => {
 									[connectionId2]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId2),
+										"value": attendeeId2,
 									},
 								},
 							},
@@ -188,7 +188,7 @@ describe("Presence", () => {
 									[connectionId2]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId2),
+										"value": attendeeId2,
 									},
 								},
 							},
@@ -271,7 +271,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId3),
+										"value": attendeeId3,
 									},
 								},
 							},
@@ -353,7 +353,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId3),
+										"value": attendeeId3,
 									},
 								},
 							},
@@ -423,7 +423,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId3),
+										"value": attendeeId3,
 									},
 								},
 							},
@@ -499,7 +499,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": serializableToOpaqueJson(attendeeId3),
+										"value": attendeeId3,
 									},
 								},
 							},

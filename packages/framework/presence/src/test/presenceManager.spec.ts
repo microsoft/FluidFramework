@@ -10,7 +10,6 @@ import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
 import type { ClientConnectionId } from "../baseTypes.js";
-import { serializableToOpaqueJson } from "../internalUtils.js";
 import { AttendeeStatus, type Attendee } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
@@ -270,7 +269,7 @@ describe("Presence", () => {
 								[collateralAttendeeConnectionId]: {
 									rev: 0,
 									timestamp: 0,
-									value: serializableToOpaqueJson(collateralSessionId),
+									value: collateralSessionId,
 								},
 							},
 						});
@@ -308,7 +307,7 @@ describe("Presence", () => {
 								[oldAttendeeConnectionId]: {
 									rev: 0,
 									timestamp: 0,
-									value: serializableToOpaqueJson(collateralSessionId),
+									value: collateralSessionId,
 								},
 							},
 						});
@@ -325,7 +324,7 @@ describe("Presence", () => {
 								[oldAttendeeConnectionId]: {
 									rev: 0,
 									timestamp: 0,
-									value: serializableToOpaqueJson(collateralSessionId),
+									value: collateralSessionId,
 								},
 							},
 						});

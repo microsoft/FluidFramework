@@ -10,7 +10,6 @@ import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
 import type { Attendee, WorkspaceAddress } from "../index.js";
-import { serializableToOpaqueJson } from "../internalUtils.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
@@ -36,7 +35,7 @@ const attendeeUpdate = {
 		"client1": {
 			"rev": 0,
 			"timestamp": 0,
-			"value": serializableToOpaqueJson(attendeeId1),
+			"value": attendeeId1,
 		},
 	},
 } as const;
