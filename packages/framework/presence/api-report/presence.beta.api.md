@@ -96,14 +96,14 @@ export namespace InternalTypes {
     }
     // @system (undocumented)
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
-    // @system (undocumented)
+    // @system
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
         validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
         // (undocumented)
         value?: OpaqueJsonDeserialized<TValue>;
     }
-    // @system (undocumented)
+    // @system
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
         // (undocumented)
         validatedValue?: OpaqueJsonDeserialized<TValue>;

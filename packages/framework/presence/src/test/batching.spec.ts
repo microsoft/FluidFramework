@@ -70,7 +70,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -101,7 +101,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -132,7 +132,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -188,7 +188,7 @@ describe("Presence", () => {
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": toOpaqueJson(attendeeId2),
+											"value": attendeeId2,
 										},
 									},
 								},
@@ -236,7 +236,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -267,7 +267,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -344,7 +344,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -375,7 +375,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -450,7 +450,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -490,7 +490,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -564,7 +564,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -604,7 +604,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -672,7 +672,7 @@ describe("Presence", () => {
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": toOpaqueJson(attendeeId2),
+											"value": attendeeId2,
 										},
 									},
 								},
@@ -755,7 +755,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -785,7 +785,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -851,7 +851,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},
@@ -895,7 +895,7 @@ describe("Presence", () => {
 											[connectionId2]: {
 												"rev": 0,
 												"timestamp": 1000,
-												"value": toOpaqueJson(attendeeId2),
+												"value": attendeeId2,
 											},
 										},
 									},

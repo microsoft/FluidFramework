@@ -32,6 +32,7 @@ import type {
 	GeneralDatastoreMessageContent,
 	InboundClientJoinMessage,
 	InboundDatastoreUpdateMessage,
+	InternalWorkspaceAddress,
 	OutboundDatastoreUpdateMessage,
 	SignalMessages,
 	SystemDatastore,
@@ -58,10 +59,8 @@ interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 }
 
 type PresenceDatastore = SystemDatastore & {
-	[WorkspaceAddress: string]: ValueElementMap<StatesWorkspaceSchema>;
+	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
 };
-
-type InternalWorkspaceAddress = `${"s" | "n"}:${WorkspaceAddress}`;
 
 const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications">> = {
 	s: "States",
@@ -109,7 +108,7 @@ function mergeGeneralDatastoreMessageContent(
 
 	// Merge the current data with the existing data, if any exists.
 	// Iterate over the current message data; individual items are workspaces.
-	for (const [workspaceName, workspaceData] of Object.entries(newData)) {
+	for (const [workspaceName, workspaceData] of objectEntries(newData)) {
 		// Initialize the merged data as the queued datastore entry for the workspace.
 		// Since the key might not exist, create an empty object in that case. It will
 		// be set explicitly after the loop.
@@ -172,24 +171,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (updateProviders.length > 3) {
 			updateProviders.length = 3;
 		}
-		// TODO: #??? investigate and address `PresenceDatastore` incompatibility with `DatastoreMessageContent`
-		// "system:presence" is always expected to be first in the data; so that it
-		// is processed first. Build copy without it to use spread and maintain order.
-		const datastoreWithoutSystem: Omit<PresenceDatastore, "system:presence"> = {
-			...this.datastore,
-		};
-		delete datastoreWithoutSystem["system:presence"];
 		this.runtime.submitSignal({
 			type: joinMessageType,
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
-				data: {
-					"system:presence":
-						// this.datastore["system:presence"], // does not work directly
-						{ ...this.datastore["system:presence"] },
-					...datastoreWithoutSystem,
-				},
+				data: this.datastore,
 				updateProviders,
 			},
 		});
@@ -339,32 +326,17 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			},
 		} satisfies OutboundDatastoreUpdateMessage["content"];
 		this.queuedData = undefined;
-		this.runtime.submitSignal({
-			type: datastoreUpdateMessageType,
-			content: newMessage,
-		});
+		this.runtime.submitSignal({ type: datastoreUpdateMessageType, content: newMessage });
 	}
 
 	private broadcastAllKnownState(): void {
-		// TODO: #??? investigate and address `PresenceDatastore` incompatibility with `DatastoreMessageContent`
-		// "system:presence" is always expected to be first in the data; so that it
-		// is processed first. Build copy without it to use spread and maintain order.
-		const datastoreWithoutSystem: Omit<PresenceDatastore, "system:presence"> = {
-			...this.datastore,
-		};
-		delete datastoreWithoutSystem["system:presence"];
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
-				data: {
-					"system:presence":
-						// this.datastore["system:presence"], // does not work directly
-						{ ...this.datastore["system:presence"] },
-					...datastoreWithoutSystem,
-				},
+				data: this.datastore,
 			},
 		});
 		this.refreshBroadcastRequested = false;
@@ -427,7 +399,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 
 		// Handle activation of unregistered workspaces before processing updates.
-		for (const [workspaceAddress] of Object.entries(message.content.data)) {
+		for (const [workspaceAddress] of objectEntries(message.content.data)) {
 			// The first part of OR condition checks if workspace is already registered.
 			// The second part checks if the workspace has already been seen before.
 			// In either case we can skip emitting 'workspaceActivated' event.
@@ -456,7 +428,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// While the system workspace is processed here too, it is declared as
 		// conforming to the general schema. So drop its override.
 		const data = message.content.data as Omit<typeof message.content.data, "system:presence">;
-		for (const [workspaceAddress, remoteDatastore] of Object.entries(data)) {
+		for (const [workspaceAddress, remoteDatastore] of objectEntries(data)) {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {

@@ -8,7 +8,12 @@ import { strict as assert, fail } from "node:assert";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import type { Attendee, NotificationsManager, NotificationsWorkspace } from "../index.js";
+import type {
+	Attendee,
+	ClientConnectionId,
+	NotificationsManager,
+	NotificationsWorkspace,
+} from "../index.js";
 import { Notifications } from "../index.js";
 import { toOpaqueJson } from "../internalUtils.js";
 import type { createPresenceManager } from "../presenceManager.js";
@@ -25,8 +30,7 @@ import {
 } from "./testUtils.js";
 
 const attendeeId3 = createSpecificAttendeeId("attendeeId-3");
-// Really a ClientConnectionId, but typed as AttendeeId for TypeScript workaround.
-const connectionId3 = createSpecificAttendeeId("client3");
+const connectionId3 = "client3" as const satisfies ClientConnectionId;
 
 describe("Presence", () => {
 	describe("NotificationsManager", () => {
@@ -131,7 +135,7 @@ describe("Presence", () => {
 									[connectionId2]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": toOpaqueJson(attendeeId2),
+										"value": attendeeId2,
 									},
 								},
 							},
@@ -188,7 +192,7 @@ describe("Presence", () => {
 									[connectionId2]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": toOpaqueJson(attendeeId2),
+										"value": attendeeId2,
 									},
 								},
 							},
@@ -271,7 +275,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": toOpaqueJson(attendeeId3),
+										"value": attendeeId3,
 									},
 								},
 							},
@@ -353,7 +357,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": toOpaqueJson(attendeeId3),
+										"value": attendeeId3,
 									},
 								},
 							},
@@ -423,7 +427,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": toOpaqueJson(attendeeId3),
+										"value": attendeeId3,
 									},
 								},
 							},
@@ -499,7 +503,7 @@ describe("Presence", () => {
 									[connectionId3]: {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": toOpaqueJson(attendeeId3),
+										"value": attendeeId3,
 									},
 								},
 							},

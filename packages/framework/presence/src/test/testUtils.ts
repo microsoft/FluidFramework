@@ -61,19 +61,8 @@ export const attendeeId1 = createSpecificAttendeeId("attendeeId-1");
 export const attendeeId2 = createSpecificAttendeeId("attendeeId-2");
 /**
  * Mock {@link ClientConnectionId}.
- *
- * @remarks
- * This is an {@link AttendeeId} as a workaround to TypeScript expectation
- * that specific properties overriding an indexed property still conform
- * to the index signature. This makes cases where it is used as
- * `clientConnectionId` key in {@link SystemWorkspaceDatastore} also
- * satisfy {@link GeneralDatastoreMessageContent}'s `AttendeeId` key.
- *
- * The only known alternative is to use
- * `satisfies SystemWorkspaceDatastore as SystemWorkspaceDatastore`
- * wherever "system:presence" is defined.
  */
-export const connectionId2 = createSpecificAttendeeId("client2");
+export const connectionId2 = "client2" as const satisfies ClientConnectionId;
 
 /**
  * Generates expected inbound join signal for a client that was initialized while connected.
@@ -107,7 +96,7 @@ export function generateBasicClientJoin(
 						[clientConnectionId]: {
 							"rev": connectionOrder,
 							"timestamp": fixedTime,
-							"value": toOpaqueJson(attendeeId as AttendeeId),
+							"value": attendeeId as AttendeeId,
 						},
 					},
 				},
@@ -151,35 +140,12 @@ export function prepareConnectedPresence(
 		quorumClientIds.length = 3;
 	}
 
-	// TODO: #??? investigate and address `InboundClientJoinMessage` incompatibility with `OutboundClientJoinMessage`
-	// The difference is likely from JsonSerializable expectation of
-	// OutboundClientJoinMessage as it applies to SystemDatastore whereas
-	// InboundClientJoinMessage has JsonDeserialized.
-	// "system:presence" is always expected to be first in the data; so that it
-	// is processed first. Build copy without it to use spread and maintain order.
-	// This is very similar to `PresenceDatastore` incompatibility with
-	// `DatastoreMessageContent` seen in `presenceDatastoreManager.ts`.
-	const inboundClientJoin = generateBasicClientJoin(clock.now, {
+	const expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
 		attendeeId,
 		clientConnectionId,
 		updateProviders: quorumClientIds,
 	});
-	const inboundContentDataWithoutSystem: Omit<
-		InboundClientJoinMessage["content"]["data"],
-		"system:presence"
-	> = { ...inboundClientJoin.content.data };
-	delete inboundContentDataWithoutSystem["system:presence"];
-	const expectedClientJoin: OutboundClientJoinMessage &
-		Partial<Pick<InboundClientJoinMessage, "clientId">> = {
-		...inboundClientJoin,
-		content: {
-			...inboundClientJoin.content,
-			data: {
-				"system:presence": inboundClientJoin.content.data["system:presence"],
-				...inboundContentDataWithoutSystem,
-			},
-		},
-	};
 	delete expectedClientJoin.clientId;
 	runtime.signalsExpected.push([expectedClientJoin]);
 

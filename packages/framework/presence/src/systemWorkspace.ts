@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import { fromOpaqueJson, toOpaqueJson } from "./internalUtils.js";
+import { fromOpaqueJson } from "./internalUtils.js";
 import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
@@ -18,11 +18,21 @@ import { TimerManager } from "./timerManager.js";
 import type { AnyWorkspace, StatesWorkspaceSchema } from "./types.js";
 
 /**
+ * `ConnectionValueState` is known value state for `clientToSessionId` data.
+ *
+ * @remarks
+ * It is {@link InternalTypes.ValueRequiredState} with a known value type.
+ */
+interface ConnectionValueState extends InternalTypes.ValueStateMetadata {
+	value: AttendeeId;
+}
+
+/**
  * The system workspace's datastore structure.
  */
 export interface SystemWorkspaceDatastore {
 	clientToSessionId: {
-		[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<AttendeeId>;
+		[ConnectionId: ClientConnectionId]: ConnectionValueState;
 	};
 }
 
@@ -118,11 +128,21 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	public processUpdate(
 		_received: number,
 		_timeModifier: number,
+		/**
+		 * Remote datastore typed to match {@link PresenceStatesInternal.processUpdate}'s
+		 * `ValueUpdateRecord` type that uses {@link InternalTypes.ValueRequiredState}
+		 * and expects and Opaque Json type. (We get away with a non-`unknown` value type
+		 * per TypeScript's method parameter bivariance.) Proper type would be
+		 * {@link ConnectionValueState} directly.
+		 * {@link ClientConnectionId} use for index is also a deviation, but conveniently
+		 * the accurate {@link AttendeeId} type is just a brand string, and
+		 * {@link ClientConnectionId} is just `string`.
+		 */
 		remoteDatastore: {
 			clientToSessionId: {
-				[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<AttendeeId> & {
-					ignoreUnmonitored?: true;
-				};
+				[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<
+					ConnectionValueState["value"]
+				>;
 			};
 		},
 		senderConnectionId: ClientConnectionId,
@@ -149,9 +169,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 			const knownSessionId = this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
-				this.datastore.clientToSessionId[clientConnectionId] = value;
+				this.datastore.clientToSessionId[clientConnectionId] =
+					// FIXME: Why is the roundtrip through unknown needed?
+					value as unknown as ConnectionValueState;
 			} else {
-				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
+				assert(knownSessionId.value === attendeeId, 0xa5a /* Mismatched SessionId */);
 			}
 		}
 
@@ -167,7 +189,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		this.datastore.clientToSessionId[clientConnectionId] = {
 			rev: this.selfAttendee.order++,
 			timestamp: Date.now(),
-			value: toOpaqueJson(this.selfAttendee.attendeeId),
+			value: this.selfAttendee.attendeeId,
 		};
 
 		// Mark 'Connected' remote attendees connections as stale

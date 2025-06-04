@@ -1310,7 +1310,7 @@ export class ContainerRuntime
 	private readonly offlineEnabled: boolean;
 	private flushScheduled = false;
 
-	private _connected: boolean;
+	private canSendOps: boolean;
 
 	private consecutiveReconnects = 0;
 
@@ -1332,8 +1332,12 @@ export class ContainerRuntime
 		return this.dataModelChangeRunner.run(callback);
 	}
 
+	/**
+	 * Indicates whether the container is in a state where it is able to send
+	 * ops (connected to op stream and not in readonly mode).
+	 */
 	public get connected(): boolean {
-		return this._connected;
+		return this.canSendOps;
 	}
 
 	/**
@@ -1643,7 +1647,7 @@ export class ContainerRuntime
 
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
-		this._connected = connected;
+		this.canSendOps = connected;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -1905,7 +1909,7 @@ export class ContainerRuntime
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableFlushBeforeProcess") === true;
 
 		this.outbox = new Outbox({
-			shouldSend: () => this.canSendOps(),
+			shouldSend: () => this.shouldSendOps(),
 			pendingStateManager: this.pendingStateManager,
 			submitBatchFn,
 			legacySendBatchFn,
@@ -2593,7 +2597,7 @@ export class ContainerRuntime
 
 	private replayPendingStates(): void {
 		// We need to be able to send ops to replay states
-		if (!this.canSendOps()) {
+		if (!this.shouldSendOps()) {
 			return;
 		}
 
@@ -2703,7 +2707,7 @@ export class ContainerRuntime
 	private readonly notifyReadOnlyState = (readonly: boolean): void =>
 		this.channelCollection.notifyReadOnlyState(readonly);
 
-	public setConnectionState(connected: boolean, clientId?: string): void {
+	public setConnectionState(canSendOps: boolean, clientId?: string): void {
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -2712,10 +2716,10 @@ export class ContainerRuntime
 			0x978 /* this.clientId does not match Audience */,
 		);
 
-		if (connected && this.sessionSchema.idCompressorMode === "delayed") {
+		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
 			this.loadIdCompressor();
 		}
-		if (connected === false && this.delayConnectClientId !== undefined) {
+		if (canSendOps === false && this.delayConnectClientId !== undefined) {
 			this.delayConnectClientId = undefined;
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "UnsuccessfulConnectedTransition",
@@ -2724,14 +2728,14 @@ export class ContainerRuntime
 			return;
 		}
 
-		if (!connected) {
+		if (!canSendOps) {
 			this.documentsSchemaController.onDisconnect();
 		}
 
 		// If there are stashed blobs in the pending state, we need to delay
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
-		const connecting = connected && !this._connected;
+		const connecting = canSendOps && !this.canSendOps;
 		if (connecting && this.blobManager.hasPendingStashedUploads()) {
 			assert(
 				!this.delayConnectClientId,
@@ -2742,10 +2746,15 @@ export class ContainerRuntime
 			return;
 		}
 
-		this.setConnectionStateCore(connected, clientId);
+		this.setConnectionStateCore(canSendOps, clientId);
 	}
 
-	private setConnectionStateCore(connected: boolean, clientId?: string): void {
+	/**
+	 * Raises and propagates connected events.
+	 * @param canSendOps - Indicates whether the container can send ops or not (connected and not readonly).
+	 * @remarks The connection state from container context used here when raising connected events.
+	 */
+	private setConnectionStateCore(canSendOps: boolean, clientId?: string): void {
 		assert(
 			!this.delayConnectClientId,
 			0x394 /* connect event delay must be cleared before propagating connect event */,
@@ -2753,24 +2762,24 @@ export class ContainerRuntime
 		this.verifyNotClosed();
 
 		// There might be no change of state due to Container calling this API after loading runtime.
-		const changeOfState = this._connected !== connected;
-		const reconnection = changeOfState && !connected;
+		const canSendOpsChanged = this.canSendOps !== canSendOps;
+		const reconnection = canSendOpsChanged && !canSendOps;
 
 		// We need to flush the ops currently collected by Outbox to preserve original order.
 		// This flush NEEDS to happen before we set the ContainerRuntime to "connected".
 		// We want these ops to get to the PendingStateManager without sending to service and have them return to the Outbox upon calling "replayPendingStates".
-		if (changeOfState && connected) {
+		if (canSendOpsChanged && canSendOps) {
 			this.flush();
 		}
 
-		this._connected = connected;
+		this.canSendOps = canSendOps;
 
-		if (connected) {
+		if (canSendOps) {
 			assert(
 				this.attachState === AttachState.Attached,
 				0x3cd /* Connection is possible only if container exists in storage */,
 			);
-			if (changeOfState) {
+			if (canSendOpsChanged) {
 				this.signalTelemetryManager.resetTracking();
 			}
 		}
@@ -2796,14 +2805,14 @@ export class ContainerRuntime
 			}
 		}
 
-		if (changeOfState) {
+		if (canSendOpsChanged) {
 			this.replayPendingStates();
 		}
 
-		this.channelCollection.setConnectionState(connected, clientId);
-		this.garbageCollector.setConnectionState(connected, clientId);
+		this.channelCollection.setConnectionState(canSendOps, clientId);
+		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
-		raiseConnectedEvent(this.mc.logger, this, connected, clientId);
+		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
@@ -3536,7 +3545,7 @@ export class ContainerRuntime
 		);
 	}
 
-	private canSendOps(): boolean {
+	private shouldSendOps(): boolean {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
 		return (
