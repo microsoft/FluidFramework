@@ -63,6 +63,7 @@ describe("Presence", () => {
 		}
 
 		beforeEach(() => {
+			// Create a session and join a single user
 			presence = prepareConnectedPresence(runtime, attendeeId1, "client1", clock, logger);
 
 			// Pass a little time (to mimic reality)
@@ -77,31 +78,10 @@ describe("Presence", () => {
 		});
 
 		describe("multiple users", () => {
-			beforeEach(() => {});
+			// beforeEach(() => {});
 
-			it("connects", () => {
-				runtime.signalsExpected.push([
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										["client2" as AttendeeId]: {
-											"rev": 0,
-											"timestamp": initialTime,
-											"value": attendeeId2,
-										},
-									},
-								},
-							},
-							"isComplete": true,
-							"sendTimestamp": clock.now,
-						},
-					},
-				]);
-
+			it("second user connects", () => {
+				// Process join signal from second client to join the session
 				presence.processSignal(
 					[],
 					{
@@ -122,19 +102,10 @@ describe("Presence", () => {
 							},
 							updateProviders: ["client2"],
 						},
-						clientId: "client4",
+						clientId: "client2",
 					},
 					false,
 				);
-
-				// Join a second user
-				// const joinSignal = generateBasicClientJoin(initialTime + 50, {
-				// 	attendeeId: "attendeeId-3",
-				// 	clientConnectionId: "client3",
-				// 	updateProviders: ["client2"],
-				// });
-				// runtime.signalsExpected.push([joinSignal.type, joinSignal.content]);
-				// runtime.submitSignal(joinSignal.type, joinSignal.content);
 			});
 		});
 
