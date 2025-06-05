@@ -5,11 +5,6 @@
 ```ts
 
 // @alpha @legacy (undocumented)
-export type FullyReadonly<T> = {
-    readonly [P in keyof T]: FullyReadonly<T[P]>;
-};
-
-// @alpha @legacy (undocumented)
 export interface IDeleteOperation {
     // (undocumented)
     entryId: string;
@@ -50,11 +45,11 @@ export interface IRevertible {
 }
 
 // @alpha @legacy
-export interface ISharedArray<T extends SerializableTypeForSharedArray> extends SharedObject<ISharedArrayEvents> {
+export interface ISharedArray<T extends SerializableTypeForSharedArray> extends ISharedObject<ISharedArrayEvents> {
     // (undocumented)
     delete(index: number): void;
     // (undocumented)
-    get(): FullyReadonly<T[]>;
+    get(): readonly T[];
     // (undocumented)
     insert<TWrite>(index: number, value: Serializable<TWrite> & T): void;
     // (undocumented)
@@ -67,9 +62,9 @@ export interface ISharedArray<T extends SerializableTypeForSharedArray> extends 
 
 // @alpha @legacy
 export interface ISharedArrayEvents extends ISharedObjectEvents {
-    // (undocumented)
+    // @eventProperty (undocumented)
     (event: "valueChanged", listener: (op: ISharedArrayOperation, isLocal: boolean, target: IEventThisPlaceHolder) => void): void;
-    // (undocumented)
+    // @eventProperty (undocumented)
     (event: "revertible", listener: (revertible: IRevertible) => void): void;
 }
 

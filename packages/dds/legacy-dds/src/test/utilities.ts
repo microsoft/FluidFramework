@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
-import type { FullyReadonly, ISharedArray } from "../index.js";
+import type { ISharedArray } from "../index.js";
 
 /**
  * Verifies that two arrays contain the same entries.
@@ -60,8 +60,8 @@ export function fillEntries(sharedArray: ISharedArray<number>, entries: number[]
  * Creates a mock handle for the given value.
  */
 export const verifyIFluidHandleEntries = (
-	actualEntries: FullyReadonly<IFluidHandle[]>,
-	expectedEntries: FullyReadonly<IFluidHandle[]>,
+	actualEntries: readonly IFluidHandle[],
+	expectedEntries: readonly IFluidHandle[],
 	message?: string,
 ): void => {
 	assert.equal(
@@ -76,8 +76,8 @@ export const verifyIFluidHandleEntries = (
 		assert.ok(expected);
 		assert.ok(actualEntries[i]);
 		assert.equal(
-			toFluidHandleInternal(actual as IFluidHandle).absolutePath,
-			toFluidHandleInternal(expected as IFluidHandle).absolutePath,
+			toFluidHandleInternal(actual).absolutePath,
+			toFluidHandleInternal(expected).absolutePath,
 			`value not as expected at index ${i.toString()}`,
 		);
 	}

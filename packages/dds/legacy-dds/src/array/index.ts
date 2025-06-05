@@ -10,7 +10,6 @@ export type {
 	ISharedArray,
 	ISharedArrayEvents,
 	ISharedArrayRevertible,
-	FullyReadonly,
 	IRevertible,
 } from "./interfaces.js";
 export type {

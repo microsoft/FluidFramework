@@ -133,8 +133,8 @@ describe("SharedArray", () => {
 						isDeleted: false,
 					} satisfies IToggleOperation);
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -178,8 +178,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -292,8 +292,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -336,8 +336,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -454,8 +454,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleMoveOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -502,8 +502,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleMoveOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
