@@ -66,6 +66,8 @@ export interface CompatConfig {
 const defaultCompatVersions = {
 	// N and N - 1
 	currentVersionDeltas: [0, -1],
+	// N, N-1, and N-2 for cross-client compat
+	currentCrossClientVersionDeltas: [0, -1, -2],
 	// we are currently supporting 1.3.X long-term
 	ltsVersions: [resolveVersion("^1.3", false)],
 };
@@ -296,32 +298,69 @@ function genCompatConfig(createVersion: string, loadVersion: string): CompatConf
 /**
  * Generates the cross-client compat config permutations.
  * This will resolve to one permutation where `CompatConfig.createVersion` is set to the current version and
- * `CompatConfig.loadVersion` is set to the delta (N-1) version. Then, a second permutation where `CompatConfig.createVersion`
- * is set to the delta (N-1) version and `CompatConfig.loadVersion` is set to the current version.
- *
- * Note: `adjustMajorPublic` will be set to true when requesting versions. This will ensure that we test against
- * the latest **public** major release when using the N-1 version (instead of the most recent internal major release).
+ * `CompatConfig.loadVersion` is set to the delta version. Then, a second permutation where `CompatConfig.createVersion`
+ * is set to the delta version and `CompatConfig.loadVersion` is set to the current version.
+ * The delta version will be the last minor release, N-1, N-2, and LTS versions.
  *
  * @internal
  */
 export const genCrossClientCompatConfig = (): CompatConfig[] => {
-	const currentVersion = getRequestedVersion(pkgVersion, 0);
+	const currentVersion = getRequestedVersion(
+		pkgVersion,
+		0,
+		false, // adjustMajorPublic = false
+	);
 
-	// Build a list of all the versions we want to test, except current version.
-	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas
+	// We build a list of all the versions we want to test the current version against.
+	// This will include the last minor release, N-1, N-2, and LTS versions.
+	// It's possible that N-1/N-2 may overlap with LTS versions, so we will avoid
+	// adding duplicates.
+	// We also will not add any versions below 1.0.0, as those are not supported
+	// by our cross-client compat policy.
+	const deltaVersions: string[] = [];
+
+	// Last minor version
+	deltaVersions.push(
+		getRequestedVersion(
+			pkgVersion,
+			-1,
+			false, // adjustMajorPublic = false
+		),
+	);
+
+	// N-1 and N-2 versions
+	// Calculate the version for N-1 and N-2, then add them to the list if they are at least
+	// version 1.0.0 and not already in the list.
+	defaultCompatVersions.currentCrossClientVersionDeltas
 		.filter((delta) => delta !== 0) // skip current build
-		.map((delta) => getRequestedVersion(pkgVersion, delta));
-	allDefaultDeltaVersions.push(...defaultCompatVersions.ltsVersions);
+		.forEach((delta) => {
+			const v = getRequestedVersion(
+				pkgVersion,
+				delta,
+				true, // adjustMajorPublic = true
+			);
+			if (semver.gte(v, "1.0.0") && !deltaVersions.includes(v)) {
+				deltaVersions.push(v);
+			}
+		});
 
-	// Build all combos of (current verison, prior version) & (prior version, current version)
-	const configs: CompatConfig[] = [];
-
-	for (const c of allDefaultDeltaVersions) {
-		configs.push(genCompatConfig(currentVersion, c));
+	// LTS versions
+	// Add all LTS versions that are at least 1.0.0 and not already in the list.
+	for (const v of defaultCompatVersions.ltsVersions) {
+		if (semver.gte(v, "1.0.0") && !deltaVersions.includes(v)) {
+			deltaVersions.push(v);
+		}
 	}
 
-	for (const c of allDefaultDeltaVersions) {
-		configs.push(genCompatConfig(c, currentVersion));
+	// Build all combos of (current version, prior version) & (prior version, current version)
+	const configs: CompatConfig[] = [];
+
+	for (const v of deltaVersions) {
+		configs.push(genCompatConfig(currentVersion, v));
+	}
+
+	for (const v of deltaVersions) {
+		configs.push(genCompatConfig(v, currentVersion));
 	}
 
 	return configs;
