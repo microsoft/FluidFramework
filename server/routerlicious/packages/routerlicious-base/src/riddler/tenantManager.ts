@@ -571,6 +571,7 @@ export class TenantManager {
 			scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
 			enablePrivateKeyAccess: this.isTenantPrivateKeyAccessEnabled(tenantDocument),
 			enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenantDocument),
+			publicNetworkAccessEnabled: tenantDocument.publicNetworkAccessEnabled ?? false,
 		};
 	}
 
@@ -647,6 +648,52 @@ export class TenantManager {
 			);
 		} else {
 			return this.buildTenantConfig(tenantDocument);
+		}
+
+		const updatedtenantDocument = await this.getTenantDocument(tenantId);
+		if (updatedtenantDocument === undefined) {
+			Lumberjack.error("Could not find tenantId after updating private key access policy.", {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+			});
+			throw new NetworkError(404, `Could not find updated tenant: ${tenantId}`);
+		}
+		return this.buildTenantConfig(updatedtenantDocument);
+	}
+
+	public async updatePublicNetworkAccessPolicy(
+		tenantId: string,
+		enablePublicNetworkAccess: boolean,
+	): Promise<ITenantConfig> {
+		const tenantDocument = await this.getTenantDocument(tenantId);
+		if (tenantDocument === undefined) {
+			Lumberjack.error("Could not find tenantId.", {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+			});
+			throw new NetworkError(404, `Could not find tenant: ${tenantId}`);
+		}
+
+		const updates: Partial<ITenantDocument> = {};
+		const currentPublicNetworkAccessConfig = tenantDocument.publicNetworkAccessEnabled;
+
+		if (currentPublicNetworkAccessConfig === enablePublicNetworkAccess) {
+			// No change in public network access policy, return the current tenant config
+			Lumberjack.info(`No changes requested to public network access policy.`, { tenantId });
+			return this.buildTenantConfig(tenantDocument);
+		} else {
+			// Update the public network access policy
+			updates.publicNetworkAccessEnabled = enablePublicNetworkAccess;
+		}
+
+		try {
+			await this.runWithDatabaseRequestCounter(async () =>
+				this.tenantRepository.update({ _id: tenantId }, updates, null),
+			);
+		} catch (error) {
+			Lumberjack.error("Error updating public network access policy.", {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+				error,
+			});
+			throw new NetworkError(500, "Error updating public network access policy.");
 		}
 
 		const updatedtenantDocument = await this.getTenantDocument(tenantId);

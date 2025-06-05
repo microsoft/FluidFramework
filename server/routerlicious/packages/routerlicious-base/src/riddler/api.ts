@@ -150,6 +150,19 @@ export function create(
 	});
 
 	/**
+	 * Updates the public network access setting for the given tenant
+	 */
+	router.put("/tenants/:id/publicNetworkAccess", (request, response) => {
+		const tenantId = request.params.id;
+		const enablePublicNetworkAccess = request.body.enablePublicNetworkAccess ?? false; // default to false
+		const publicNetworkUpdateP = manager.updatePublicNetworkAccessPolicy(
+			tenantId,
+			enablePublicNetworkAccess,
+		);
+		handleResponse(publicNetworkUpdateP, response);
+	});
+
+	/**
 	 * Updates the customData for the given tenant
 	 */
 	router.put("/tenants/:id/customData", (request, response) => {
@@ -190,7 +203,7 @@ export function create(
 			tenantCustomData,
 			enableSharedKeyAccess,
 			enablePrivateKeyAccess,
-			publicNetworkAccessEnabled
+			publicNetworkAccessEnabled,
 		);
 		handleResponse(tenantP, response);
 	});
