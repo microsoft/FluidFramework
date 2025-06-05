@@ -7,10 +7,9 @@ import { strict as assert } from "node:assert";
 
 import {
 	type AsyncGenerator,
-	type AsyncReducer,
 	type Generator,
+	type Reducer,
 	combineReducers,
-	combineReducersAsync,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
 	takeAsync,
@@ -151,7 +150,7 @@ export const baseMapModel: DDSFuzzModel<MapFactory, MapOperation> = {
 	workloadName: "default",
 	factory: new MapFactory(),
 	generatorFactory: () => takeAsync(100, mapMakeGenerator()),
-	reducer: async (state, operation) => mapReducer(state, operation),
+	reducer: (state, operation) => mapReducer(state, operation),
 	validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
 };
 
@@ -428,15 +427,17 @@ interface LoggingInfo {
 }
 
 function logCurrentState(clients: Client<DirectoryFactory>[], loggingInfo: LoggingInfo): void {
-	for (const id of loggingInfo.clientIds) {
-		const { channel: sharedDirectory } =
-			clients.find((s) => s.containerRuntime.clientId === id) ?? {};
-		if (sharedDirectory !== undefined) {
-			console.log(`Client ${id}:`);
-			console.log(
-				JSON.stringify(sharedDirectory.getAttachSummary(true).summary, undefined, 4),
-			);
-			console.log("\n");
+	if (loggingInfo.printConsoleLogs === true) {
+		for (const id of loggingInfo.clientIds) {
+			const { channel: sharedDirectory } =
+				clients.find((s) => s.containerRuntime.clientId === id) ?? {};
+			if (sharedDirectory !== undefined) {
+				console.log(`Client ${id}:`);
+				console.log(
+					JSON.stringify(sharedDirectory.getAttachSummary(true).summary, undefined, 4),
+				);
+				console.log("\n");
+			}
 		}
 	}
 }
@@ -448,19 +449,19 @@ function logCurrentState(clients: Client<DirectoryFactory>[], loggingInfo: Loggi
  */
 export function makeDirReducer(
 	loggingInfo?: LoggingInfo,
-): AsyncReducer<DirOperation, DirFuzzTestState> {
+): Reducer<DirOperation, DirFuzzTestState> {
 	const withLogging =
-		<T>(baseReducer: AsyncReducer<T, DirFuzzTestState>): AsyncReducer<T, DirFuzzTestState> =>
-		async (state, operation) => {
-			if (loggingInfo !== undefined && loggingInfo.printConsoleLogs) {
+		<T>(baseReducer: Reducer<T, DirFuzzTestState>): Reducer<T, DirFuzzTestState> =>
+		(state, operation) => {
+			if (loggingInfo?.printConsoleLogs === true) {
 				logCurrentState(state.clients, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
 			try {
-				await baseReducer(state, operation);
+				baseReducer(state, operation);
 			} catch (error) {
-				if (loggingInfo !== undefined) {
+				if (loggingInfo?.printConsoleLogs === true) {
 					logCurrentState(state.clients, loggingInfo);
 				}
 				throw error;
@@ -468,28 +469,28 @@ export function makeDirReducer(
 			return state;
 		};
 
-	const reducer: AsyncReducer<DirOperation, DirFuzzTestState> = combineReducersAsync({
-		createSubDirectory: async ({ client }, { path, name }) => {
+	const reducer: Reducer<DirOperation, DirFuzzTestState> = combineReducers({
+		createSubDirectory: ({ client }, { path, name }) => {
 			const dir = client.channel.getWorkingDirectory(path);
 			assert(dir);
 			dir.createSubDirectory(name);
 		},
-		deleteSubDirectory: async ({ client }, { path, name }) => {
+		deleteSubDirectory: ({ client }, { path, name }) => {
 			const dir = client.channel.getWorkingDirectory(path);
 			assert(dir);
 			dir.deleteSubDirectory(name);
 		},
-		set: async ({ client }, { path, key, value }) => {
+		set: ({ client }, { path, key, value }) => {
 			const dir = client.channel.getWorkingDirectory(path);
 			assert(dir);
 			dir.set(key, value);
 		},
-		clear: async ({ client }, { path }) => {
+		clear: ({ client }, { path }) => {
 			const dir = client.channel.getWorkingDirectory(path);
 			assert(dir);
 			dir.clear();
 		},
-		delete: async ({ client }, { path, key }) => {
+		delete: ({ client }, { path, key }) => {
 			const dir = client.channel.getWorkingDirectory(path);
 			assert(dir);
 			dir.delete(key);

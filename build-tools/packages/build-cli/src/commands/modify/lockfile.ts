@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { updatePackageJsonFile } from "@fluidframework/build-tools";
+import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
 import { Flags } from "@oclif/core";
 import execa from "execa";
-
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import { BaseCommand } from "../../library/index.js";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -13,17 +13,19 @@ import {
 	type FieldAnchor,
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldUpPath,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
+	type NormalizedFieldUpPath,
 	type TreeNavigationResult,
 	inCursorNode,
 	iterateCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { disposeSymbol, fail, getOrCreate } from "../../util/index.js";
+import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import {
 	FieldKinds,
+	MappedEditBuilder,
+	type IDefaultEditBuilder,
 	type OptionalFieldEditBuilder,
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
@@ -44,17 +46,10 @@ import {
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
-import {
-	LazyEntity,
-	anchorSymbol,
-	cursorSymbol,
-	forgetAnchorSymbol,
-	isFreedSymbol,
-	tryMoveCursorToAnchorSymbol,
-} from "./lazyEntity.js";
+import { LazyEntity } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
-import { cursorForMapTreeField, cursorForMapTreeNode } from "../mapTreeCursor.js";
+import { cursorForMapTreeField } from "../mapTreeCursor.js";
 
 /**
  * Reuse fields.
@@ -82,12 +77,9 @@ export function makeField(
 
 	const makeFlexTreeField = (): FlexTreeField => {
 		usedAnchor = true;
-		const field = new (kindToClass.get(schema) ?? fail("missing field implementation"))(
-			context,
-			schema,
-			cursor,
-			fieldAnchor,
-		);
+		const field = new (
+			kindToClass.get(schema) ?? fail(0xb0f /* missing field implementation */)
+		)(context, schema, cursor, fieldAnchor);
 		return field;
 	};
 
@@ -97,7 +89,8 @@ export function makeField(
 
 	// For the common case (all but roots), cache field associated with its node's anchor and field key.
 	const anchorNode =
-		context.checkout.forest.anchors.locate(fieldAnchor.parent) ?? fail("missing anchor");
+		context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
+		fail(0xb10 /* missing anchor */);
 
 	// Since anchor-set could be reused across a flex tree context getting disposed, key off the flex tree node not the anchor.
 	const cacheKey = anchorNode.slots.get(flexTreeSlot);
@@ -150,7 +143,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		if (fieldAnchor.parent !== undefined) {
 			const anchorNode =
 				context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
-				fail("parent anchor node should always exist since field is under a node");
+				fail(0xb11 /* parent anchor node should always exist since field is under a node */);
 			this.offAfterDestroy = anchorNode.events.on("afterDestroy", () => {
 				this[disposeSymbol]();
 			});
@@ -167,36 +160,36 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public get parent(): FlexTreeNode | undefined {
-		if (this[anchorSymbol].parent === undefined) {
+		if (this.anchor.parent === undefined) {
 			return undefined;
 		}
 
-		const cursor = this[cursorSymbol];
+		const cursor = this.cursor;
 		cursor.exitField();
 		const output = makeTree(this.context, cursor);
 		cursor.enterField(this.key);
 		return output;
 	}
 
-	protected override [tryMoveCursorToAnchorSymbol](
+	protected override tryMoveCursorToAnchor(
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.checkout.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
+		return this.context.checkout.forest.tryMoveCursorToField(this.anchor, cursor);
 	}
 
-	protected override [forgetAnchorSymbol](): void {
+	protected override forgetAnchor(): void {
 		this.offAfterDestroy?.();
-		if (this[anchorSymbol].parent === undefined) return;
-		this.context.checkout.forest.anchors.forget(this[anchorSymbol].parent);
+		if (this.anchor.parent === undefined) return;
+		this.context.checkout.forest.anchors.forget(this.anchor.parent);
 	}
 
 	public get length(): number {
-		return this[cursorSymbol].getFieldLength();
+		return this.cursor.getFieldLength();
 	}
 
 	public atIndex(index: number): FlexTreeUnknownUnboxed {
-		return inCursorNode(this[cursorSymbol], index, (cursor) =>
-			unboxedFlexNode(this.context, cursor, this[anchorSymbol]),
+		return inCursorNode(this.cursor, index, (cursor) =>
+			unboxedFlexNode(this.context, cursor, this.anchor),
 		);
 	}
 
@@ -207,9 +200,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			return undefined;
 		}
 
-		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
-			makeTree(this.context, cursor),
-		);
+		return inCursorNode(this.cursor, finalIndex, (cursor) => makeTree(this.context, cursor));
 	}
 
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
@@ -217,28 +208,28 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeNode> {
-		return iterateCursorField(this[cursorSymbol], (cursor) => makeTree(this.context, cursor));
+		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
 	}
 
 	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
-		return iterateCursorField(this[cursorSymbol], (cursor) =>
-			unboxedFlexNode(this.context, cursor, this[anchorSymbol]),
+		return iterateCursorField(this.cursor, (cursor) =>
+			unboxedFlexNode(this.context, cursor, this.anchor),
 		);
 	}
 
-	public getFieldPath(): FieldUpPath {
-		return this[cursorSymbol].getFieldPath();
+	public getFieldPath(): NormalizedFieldUpPath {
+		return { parent: this.parent?.anchorNode, field: this.key };
 	}
 
 	/**
 	 * Returns the path to this field to use for editing. Throws iff this path is not {@link TreeStatus#InDocument}.
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
-	public getFieldPathForEditing(): FieldUpPath {
-		if (!this[isFreedSymbol]()) {
+	public getFieldPathForEditing(): NormalizedFieldUpPath {
+		if (!this.isFreed()) {
 			if (
 				// Only allow editing if we are the root document field...
-				(this.parent === undefined && this[anchorSymbol].fieldKey === rootFieldKey) ||
+				(this.parent === undefined && this.anchor.fieldKey === rootFieldKey) ||
 				// ...or are under a node in the document
 				(this.parent !== undefined &&
 					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument)
@@ -248,6 +239,13 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		}
 
 		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+	}
+
+	protected getEditor(): IDefaultEditBuilder<ITreeCursorSynchronous> {
+		return new MappedEditBuilder(
+			this.context.checkout.editor,
+			(cursor: ITreeCursorSynchronous) => this.context.checkout.forest.chunkField(cursor),
+		);
 	}
 }
 
@@ -276,36 +274,24 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 
 	private sequenceEditor(): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
-		return this.context.checkout.editor.sequenceField(fieldPath);
+		return this.getEditor().sequenceField(fieldPath);
 	}
 }
 
-export class ReadonlyLazyValueField extends LazyField implements FlexTreeRequiredField {
+export class LazyValueField extends LazyField implements FlexTreeRequiredField {
 	public editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent) => {
-			assert(false, 0xa0c /* Unexpected set of readonly field */);
-		},
-	};
-
-	public get content(): FlexTreeUnknownUnboxed {
-		return this.atIndex(0);
-	}
-}
-
-export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRequiredField {
-	public override editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
-		set: (newContent) => {
-			this.valueFieldEditor().set(cursorForMapTreeNode(newContent));
+			this.valueFieldEditor().set(cursorForMapTreeField([newContent]));
 		},
 	};
 
 	private valueFieldEditor(): ValueFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.checkout.editor.valueField(fieldPath);
+		const fieldEditor = this.getEditor().valueField(fieldPath);
 		return fieldEditor;
 	}
 
-	public override get content(): FlexTreeUnknownUnboxed {
+	public get content(): FlexTreeUnknownUnboxed {
 		return this.atIndex(0);
 	}
 }
@@ -314,7 +300,7 @@ export class LazyOptionalField extends LazyField implements FlexTreeOptionalFiel
 	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent, wasEmpty) => {
 			this.optionalEditor().set(
-				newContent !== undefined ? cursorForMapTreeNode(newContent) : newContent,
+				newContent !== undefined ? cursorForMapTreeField([newContent]) : newContent,
 				wasEmpty,
 			);
 		},
@@ -322,7 +308,7 @@ export class LazyOptionalField extends LazyField implements FlexTreeOptionalFiel
 
 	private optionalEditor(): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.checkout.editor.optionalField(fieldPath);
+		const fieldEditor = this.getEditor().optionalField(fieldPath);
 		return fieldEditor;
 	}
 

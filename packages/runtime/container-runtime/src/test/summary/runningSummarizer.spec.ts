@@ -31,25 +31,24 @@ import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-ut
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
-import { ISummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IGeneratedSummaryStats,
 	ISummarizeHeuristicData,
 	ISummarizerRuntime,
 	ISummaryCancellationToken,
 	RetriableSummaryError,
-	RunningSummarizer,
 	SubmitSummaryResult,
 	SummarizeHeuristicData,
 	SummaryCollection,
 	getFailMessage,
 	neverCancelledSummaryToken,
+	type ISummaryConfiguration,
 } from "../../summary/index.js";
 import {
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../summary/runningSummarizer.js";
+	RunningSummarizer,
+} from "../../summary/index.js";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	disposed = false;

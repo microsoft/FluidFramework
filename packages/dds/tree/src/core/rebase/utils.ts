@@ -294,7 +294,7 @@ export function rebaseBranch<TChange>(
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 	let editsToCompose: TaggedChange<TChange>[] = targetRebasePath.slice();
 	for (const c of sourcePath) {
-		const rollback = rollbackFromCommit(changeRebaser, c, mintRevisionTag, false);
+		const rollback = rollbackFromCommit(changeRebaser, c, mintRevisionTag, true /* cache */);
 		if (sourceSet.has(c.revision)) {
 			const currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
 			editsToCompose = [currentComposedEdit];
@@ -440,19 +440,21 @@ function rollbackFromCommit<TChange>(
 	mintRevisionTag: () => RevisionTag,
 	cache?: boolean,
 ): TaggedChange<TChange, RevisionTag> {
-	const rollback = Rollback.get(commit);
-	if (rollback !== undefined) {
-		return rollback;
+	const cachedRollback = Rollback.get(commit);
+	if (cachedRollback !== undefined) {
+		return cachedRollback;
 	}
 	const tag = mintRevisionTag();
-	const untagged = changeRebaser.invert(commit, true, tag);
-	const deeplyTaggedRollback = changeRebaser.changeRevision(untagged, tag, commit.revision);
-	const fullyTaggedRollback = tagRollbackInverse(deeplyTaggedRollback, tag, commit.revision);
+	const rollback = tagRollbackInverse(
+		changeRebaser.invert(commit, true, tag),
+		tag,
+		commit.revision,
+	);
 
 	if (cache === true) {
-		Rollback.set(commit, fullyTaggedRollback);
+		Rollback.set(commit, rollback);
 	}
-	return fullyTaggedRollback;
+	return rollback;
 }
 
 /**

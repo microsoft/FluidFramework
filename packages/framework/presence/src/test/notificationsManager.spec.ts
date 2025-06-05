@@ -8,7 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import type { ISessionClient, NotificationsManager, PresenceNotifications } from "../index.js";
+import type { Attendee, NotificationsManager, NotificationsWorkspace } from "../index.js";
 import { Notifications } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
@@ -29,7 +29,7 @@ describe("Presence", () => {
 		let clock: SinonFakeTimers;
 		let presence: ReturnType<typeof createPresenceManager>;
 		// eslint-disable-next-line @typescript-eslint/ban-types
-		let notificationsWorkspace: PresenceNotifications<{}>;
+		let notificationsWorkspace: NotificationsWorkspace<{}>;
 
 		before(async () => {
 			clock = useFakeTimers();
@@ -45,10 +45,13 @@ describe("Presence", () => {
 			clock.setSystemTime(initialTime);
 
 			// Set up the presence connection
-			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+			presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
 
 			// Get a notifications workspace
-			notificationsWorkspace = presence.getNotifications("name:testNotificationWorkspace", {});
+			notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{},
+			);
 		});
 
 		afterEach(function (done: Mocha.Done) {
@@ -82,9 +85,9 @@ describe("Presence", () => {
 			);
 
 			// Verify
-			assert.notEqual(notificationsWorkspace.props.testEvents, undefined);
+			assert.notEqual(notificationsWorkspace.notifications.testEvents, undefined);
 			assertIdenticalTypes(
-				notificationsWorkspace.props.testEvents,
+				notificationsWorkspace.notifications.testEvents,
 				createInstanceOf<NotificationsManager<{ newId: (id: number) => void }>>(),
 			);
 		});
@@ -100,11 +103,11 @@ describe("Presence", () => {
 					},
 					"testEvents"
 				>({
-					newId: (_client: ISessionClient, _id: number) => {},
+					newId: (_attendee: Attendee, _id: number) => {},
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			clock.tick(10);
 
@@ -116,12 +119,12 @@ describe("Presence", () => {
 					"data": {
 						"system:presence": {
 							"clientToSessionId": {
-								"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+								"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
 							},
 						},
 						"n:name:testNotificationWorkspace": {
 							"testEvents": {
-								"sessionId-2": {
+								"attendeeId-2": {
 									"rev": 0,
 									"timestamp": 0,
 									"value": { "name": "newId", "args": [42] },
@@ -151,11 +154,11 @@ describe("Presence", () => {
 					},
 					"testEvents"
 				>({
-					newId: (_client: ISessionClient, _id: number) => {},
+					newId: (_attendee: Attendee, _id: number) => {},
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			clock.tick(10);
 
@@ -167,12 +170,12 @@ describe("Presence", () => {
 					"data": {
 						"system:presence": {
 							"clientToSessionId": {
-								"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+								"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
 							},
 						},
 						"n:name:testNotificationWorkspace": {
 							"testEvents": {
-								"sessionId-2": {
+								"attendeeId-2": {
 									"rev": 0,
 									"timestamp": 0,
 									"value": { "name": "newId", "args": [42] },
@@ -187,23 +190,23 @@ describe("Presence", () => {
 			]);
 
 			// Act & Verify
-			testEvents.emit.unicast("newId", presence.getMyself(), 42);
+			testEvents.emit.unicast("newId", presence.attendees.getMyself(), 42);
 
 			assertFinalExpectations(runtime, logger);
 		});
 
 		it("raises named event when notification is received", async () => {
-			type EventCalls = { client: ISessionClient; id: number }[];
+			type EventCalls = { attendee: Attendee; id: number }[];
 			const eventHandlerCalls = {
 				original: [] as EventCalls,
 				secondary: [] as EventCalls,
 				tertiary: [] as EventCalls,
 			};
 
-			function originalEventHandler(client: ISessionClient, id: number): void {
-				assert.equal(client.sessionId, "sessionId-3");
+			function originalEventHandler(attendee: Attendee, id: number): void {
+				assert.equal(attendee.attendeeId, "attendeeId-3");
 				assert.equal(id, 42);
-				eventHandlerCalls.original.push({ client, id });
+				eventHandlerCalls.original.push({ attendee, id });
 			}
 
 			notificationsWorkspace.add(
@@ -219,18 +222,18 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			testEvents.events.on("unattendedNotification", (name) => {
 				fail(`Unexpected unattendedNotification: ${name}`);
 			});
 
 			const disconnectFunctions = [
-				testEvents.notifications.on("newId", (client: ISessionClient, id: number) => {
-					eventHandlerCalls.secondary.push({ client, id });
+				testEvents.notifications.on("newId", (attendee: Attendee, id: number) => {
+					eventHandlerCalls.secondary.push({ attendee, id });
 				}),
-				testEvents.notifications.on("newId", (client: ISessionClient, id: number) => {
-					eventHandlerCalls.tertiary.push({ client, id });
+				testEvents.notifications.on("newId", (attendee: Attendee, id: number) => {
+					eventHandlerCalls.tertiary.push({ attendee, id });
 				}),
 			];
 
@@ -245,12 +248,12 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									"client3": { "rev": 0, "timestamp": 1000, "value": "sessionId-3" },
+									"client3": { "rev": 0, "timestamp": 1000, "value": "attendeeId-3" },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									"sessionId-3": {
+									"attendeeId-3": {
 										"rev": 0,
 										"timestamp": 0,
 										"value": { "name": "newId", "args": [42] },
@@ -296,17 +299,17 @@ describe("Presence", () => {
 					},
 					"testEvents"
 				>({
-					newId: (client: ISessionClient, id: number) => {
+					newId: (attendee: Attendee, id: number) => {
 						fail(`Unexpected newId event`);
 					},
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			testEvents.events.on("unattendedNotification", (name, sender, ...content) => {
 				assert.equal(name, "oldId");
-				assert.equal(sender.sessionId, "sessionId-3");
+				assert.equal(sender.attendeeId, "attendeeId-3");
 				assert.deepEqual(content, [41]);
 				assert(!unattendedEventCalled);
 				unattendedEventCalled = true;
@@ -323,12 +326,12 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									"client3": { "rev": 0, "timestamp": 1000, "value": "sessionId-3" },
+									"client3": { "rev": 0, "timestamp": 1000, "value": "attendeeId-3" },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									"sessionId-3": {
+									"attendeeId-3": {
 										"rev": 0,
 										"timestamp": 0,
 										"value": { "name": "oldId", "args": [41] },
@@ -349,7 +352,7 @@ describe("Presence", () => {
 		it("raises `unattendedEvent` event when recognized notification is received without listeners", async () => {
 			let unattendedEventCalled = false;
 
-			function newIdEventHandler(client: ISessionClient, id: number): void {
+			function newIdEventHandler(attendee: Attendee, id: number): void {
 				fail(`Unexpected newId event`);
 			}
 
@@ -366,11 +369,11 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			testEvents.events.on("unattendedNotification", (name, sender, ...content) => {
 				assert.equal(name, "newId");
-				assert.equal(sender.sessionId, "sessionId-3");
+				assert.equal(sender.attendeeId, "attendeeId-3");
 				assert.deepEqual(content, [43]);
 				assert(!unattendedEventCalled);
 				unattendedEventCalled = true;
@@ -389,12 +392,12 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									"client3": { "rev": 0, "timestamp": 1000, "value": "sessionId-3" },
+									"client3": { "rev": 0, "timestamp": 1000, "value": "attendeeId-3" },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									"sessionId-3": {
+									"attendeeId-3": {
 										"rev": 0,
 										"timestamp": 0,
 										"value": { "name": "newId", "args": [43] },
@@ -415,8 +418,8 @@ describe("Presence", () => {
 		it("removed listeners are not called when related notification is received", async () => {
 			let originalEventHandlerCalled = false;
 
-			function originalEventHandler(client: ISessionClient, id: number): void {
-				assert.equal(client.sessionId, "sessionId-3");
+			function originalEventHandler(attendee: Attendee, id: number): void {
+				assert.equal(attendee.attendeeId, "attendeeId-3");
 				assert.equal(id, 44);
 				assert.equal(originalEventHandlerCalled, false);
 				originalEventHandlerCalled = true;
@@ -435,7 +438,7 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notificationsWorkspace.props;
+			const { testEvents } = notificationsWorkspace.notifications;
 
 			testEvents.events.on("unattendedNotification", (name) => {
 				fail(`Unexpected unattendedNotification: ${name}`);
@@ -443,7 +446,7 @@ describe("Presence", () => {
 
 			const disconnect = testEvents.notifications.on(
 				"newId",
-				(_client: ISessionClient, _id: number) => {
+				(_attendee: Attendee, _id: number) => {
 					fail(`Unexpected event raised on disconnected listener`);
 				},
 			);
@@ -461,12 +464,12 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									"client3": { "rev": 0, "timestamp": 1000, "value": "sessionId-3" },
+									"client3": { "rev": 0, "timestamp": 1000, "value": "attendeeId-3" },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									"sessionId-3": {
+									"attendeeId-3": {
 										"rev": 0,
 										"timestamp": 0,
 										"value": { "name": "newId", "args": [44] },
@@ -483,6 +486,25 @@ describe("Presence", () => {
 
 			// Verify
 			assert(originalEventHandlerCalled, "originalEventHandler not called");
+		});
+
+		it(".presence provides Presence it was created under", () => {
+			notificationsWorkspace.add(
+				"testEvents",
+				Notifications<
+					// Below explicit generic specification should not be required.
+					{
+						newId: (id: number) => void;
+					},
+					"testEvents"
+				>(
+					// A default handler is not required
+					{},
+				),
+			);
+
+			assert.strictEqual(notificationsWorkspace.notifications.testEvents.presence, presence);
+			assert.strictEqual(notificationsWorkspace.presence, presence);
 		});
 	});
 });

@@ -22,8 +22,8 @@ import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
+import { createDataStoreFactory } from "@fluidframework/test-utils/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,

@@ -19,7 +19,6 @@ import {
 	type UpPath,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { isFreedSymbol } from "../../../feature-libraries/flex-tree/lazyEntity.js";
 import {
 	LazyField,
 	LazyOptionalField,
@@ -29,10 +28,10 @@ import {
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
 	FieldKinds,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
-	getTreeContext,
+	Context,
 	isFlexTreeNode,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
@@ -52,7 +51,8 @@ import {
 	stringSchema,
 } from "../../../simple-tree/index.js";
 import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
-import { JsonObject, JsonUnion, singleJsonCursor } from "../../json/index.js";
+import { singleJsonCursor } from "../../json/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
@@ -64,12 +64,12 @@ class TestLazyField extends LazyField {}
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
-		const schema = toStoredSchema(JsonObject);
+		const schema = toStoredSchema(JsonAsTree.JsonObject);
 		const forest = forestWithContent({
 			schema,
 			initialTree: singleJsonCursor({}),
 		});
-		const context = getReadonlyContext(forest, JsonObject);
+		const context = getReadonlyContext(forest, JsonAsTree.JsonObject);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
 		const optionalField = new LazyOptionalField(
@@ -182,9 +182,9 @@ describe("LazyField", () => {
 			detachedFieldAnchor,
 		);
 
-		assert(!field[isFreedSymbol]());
+		assert(!field.isFreed());
 		context[disposeSymbol]();
-		assert(field[isFreedSymbol]());
+		assert(field.isFreed());
 	});
 
 	it("Disposes when parent is disposed", () => {
@@ -202,10 +202,10 @@ describe("LazyField", () => {
 		const field = holder.getBoxed(brand("f"));
 		assert(field instanceof LazyField);
 
-		assert(!field[isFreedSymbol]());
+		assert(!field.isFreed());
 		const v = forest.anchors.acquireVisitor();
 		v.destroy(rootFieldKey, 1);
-		assert(field[isFreedSymbol]());
+		assert(field.isFreed());
 
 		// Should not double free.
 		context[disposeSymbol]();
@@ -226,9 +226,9 @@ describe("LazyField", () => {
 		const field = holder.getBoxed(brand("f"));
 		assert(field instanceof LazyField);
 
-		assert(!field[isFreedSymbol]());
+		assert(!field.isFreed());
 		context[disposeSymbol]();
-		assert(field[isFreedSymbol]());
+		assert(field.isFreed());
 		// Should not double free.
 		const v = forest.anchors.acquireVisitor();
 		v.destroy(rootFieldKey, 1);
@@ -263,7 +263,7 @@ describe("LazyField", () => {
 
 		it("Non-Leaf", () => {
 			const { context, cursor } = readonlyTreeWithContent({
-				schema: JsonUnion,
+				schema: JsonAsTree.Tree,
 				initialTree: singleJsonCursor({}),
 			});
 			cursor.enterNode(0); // Root node field has 1 node; move into it
@@ -277,7 +277,7 @@ describe("LazyField", () => {
 
 		it("Non-Leaf - cached", () => {
 			const { context, cursor } = readonlyTreeWithContent({
-				schema: JsonUnion,
+				schema: JsonAsTree.Tree,
 				initialTree: singleJsonCursor({}),
 			});
 
@@ -459,12 +459,12 @@ describe("LazyField", () => {
 				schema,
 				initialTree: content,
 			});
-			const context = getTreeContext(
+			const context = new Context(
 				defaultSchemaPolicy,
 				new MockTreeCheckout(forest, {
 					schema: new TreeStoredSchemaRepository(schema),
 				}),
-				new MockNodeKeyManager(),
+				new MockNodeIdentifierManager(),
 			);
 			const cursor = initializeCursor(context, rootFieldAnchor);
 

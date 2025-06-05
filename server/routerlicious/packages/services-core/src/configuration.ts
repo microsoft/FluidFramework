@@ -306,3 +306,12 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 		partitionActivityCheckInterval: 60 * 1000,
 	},
 };
+
+// Kafka has an internal limit of 1MB.
+// Runtime has a client-imposed limit of 700KB.
+// Set our enforced limit at 750KB = client-imposed limit of 700KB + buffer 50KB to account for any
+// potential overhead.
+/**
+ * @internal
+ */
+export const MaxKafkaMessageSize = 750 * 1024;

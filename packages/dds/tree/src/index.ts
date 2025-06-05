@@ -61,10 +61,7 @@ export {
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
-	type TransactionConstraint,
-	type NodeInDocumentConstraint,
 	type RunTransaction,
-	rollback,
 	type ForestOptions,
 	getBranch,
 	type BranchableTree,
@@ -72,19 +69,11 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
+	type TreeIdentifierUtils,
 	independentView,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
-	type TransactionResultFailed,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
-	SharedTreeAttributes,
-	SharedTreeFactoryType,
 } from "./shared-tree/index.js";
 
 export {
@@ -112,12 +101,14 @@ export {
 	type TreeLeafValue,
 	FieldKind,
 	FieldSchema,
+	type FieldSchemaAlpha,
 	type FieldSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	NodeKind,
 	type TreeObjectNode,
+	ObjectNodeSchema,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
@@ -134,15 +125,10 @@ export {
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 	type AllowedTypes,
-	type TreeObjectNodeUnsafe,
-	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	type TreeArrayNodeUnsafe,
-	type TreeMapNodeUnsafe,
-	type InsertableObjectFromSchemaRecordUnsafe,
-	type InsertableTreeFieldFromImplicitFieldUnsafe,
-	type FieldSchemaUnsafe,
-	type TreeNodeSchemaClassUnsafe,
-	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type System_Unsafe,
+	type FieldSchemaAlphaUnsafe,
+	type ArrayNodeCustomizableSchemaUnsafe,
+	type MapNodeCustomizableSchemaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -167,6 +153,20 @@ export {
 	type FactoryContentObject,
 	type ReadableField,
 	type ReadSchema,
+	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAnnotatedFieldSchema,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type AllowedTypeMetadata,
+	type AllowedTypesMetadata,
+	type InsertableObjectFromAnnotatedSchemaRecord,
+	type UnannotateImplicitAllowedTypes,
+	type UnannotateAllowedTypes,
+	type UnannotateAllowedType,
+	type UnannotateAllowedTypesList,
+	type UnannotateAllowedTypeOrLazyItem,
+	type UnannotateImplicitFieldSchema,
+	type UnannotateSchemaRecord,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -174,9 +174,12 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	// Other
 	type VerboseTreeNode,
-	type EncodeOptions,
-	type ParseOptions,
+	type TreeEncodingOptions,
+	type TreeSchemaEncodingOptions,
+	type TreeSchema,
+	TreeViewConfigurationAlpha,
 	type VerboseTree,
 	extractPersistedSchema,
 	comparePersistedSchema,
@@ -206,6 +209,7 @@ export {
 	type SimpleMapNodeSchema,
 	type SimpleArrayNodeSchema,
 	type SimpleObjectNodeSchema,
+	type SimpleObjectFieldSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
 	type ReadonlyArrayNode,
@@ -216,11 +220,42 @@ export {
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
+	type SchemaStatics,
+	type ITreeAlpha,
+	type TransactionConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	rollback,
+	generateSchemaFromSimpleSchema,
+	evaluateLazySchema,
+	replaceConciseTreeHandles,
+	replaceHandles,
+	replaceVerboseTreeHandles,
+	type HandleConverter,
+	allowUnused,
+	type LeafSchema,
+	type ArrayNodeCustomizableSchema,
+	type ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
+	type MapNodeCustomizableSchema,
+	type MapNodePojoEmulationSchema,
+	MapNodeSchema,
+	type ObjectFromSchemaRecord,
+	type ValidateRecursiveSchemaTemplate,
+	type FixRecursiveRecursionLimit,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
 } from "./treeFactory.js";
+export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
+export { persistedToSimpleSchema } from "./shared-tree/index.js";
 
 export {
 	type ICodecOptions,
@@ -231,15 +266,27 @@ export {
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
-export {
-	type RestrictiveReadonlyRecord,
-	type RestrictiveStringRecord,
-	type MakeNominal,
-	type IsUnion,
-	type UnionToIntersection,
-	type UnionToTuple,
-	type PopUnion,
+export type {
+	// Type Testing
+	requireTrue,
+	requireFalse,
+	requireAssignableTo,
+	areSafelyAssignable,
+	isAssignableTo,
+	isAny,
+	eitherIsAny,
+	// Other
+	RestrictiveReadonlyRecord,
+	RestrictiveStringRecord,
+	MakeNominal,
+	IsUnion,
+	UnionToIntersection,
+	UnionToTuple,
+	PopUnion,
+	JsonCompatible,
+	JsonCompatibleObject,
 } from "./util/index.js";
+export { cloneWithReplacements } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
 export {
@@ -255,4 +302,6 @@ export {
 // The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
-export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
+export { JsonAsTree } from "./jsonDomainSchema.js";
+export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
+export { TableSchema, type System_TableSchema } from "./tableSchema.js";

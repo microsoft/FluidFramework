@@ -4,17 +4,17 @@
 
 ```ts
 
-// @alpha
+// @alpha @legacy
 export interface AdjustParams {
     delta: number;
     max?: number | undefined;
     min?: number | undefined;
 }
 
-// @alpha
+// @alpha @legacy
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export abstract class BaseSegment implements ISegment {
     constructor(properties?: PropertySet);
     // (undocumented)
@@ -49,10 +49,10 @@ export abstract class BaseSegment implements ISegment {
     abstract readonly type: string;
 }
 
-// @alpha
+// @alpha @legacy
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @alpha
+// @alpha @legacy
 export function endpointPosAndSide(start: SequencePlace | undefined, end: SequencePlace | undefined): {
     startSide: Side | undefined;
     endSide: Side | undefined;
@@ -60,7 +60,7 @@ export function endpointPosAndSide(start: SequencePlace | undefined, end: Sequen
     endPos: number | "start" | "end" | undefined;
 };
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IAttributionCollection<T> {
     // (undocumented)
     append(other: IAttributionCollection<T>): void;
@@ -80,7 +80,7 @@ export interface IAttributionCollection<T> {
     update(name: string | undefined, channel: IAttributionCollection<T>): void;
 }
 
-// @alpha @sealed (undocumented)
+// @alpha @sealed @legacy (undocumented)
 export interface IAttributionCollectionSerializer {
     populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
     // (undocumented)
@@ -90,7 +90,7 @@ export interface IAttributionCollectionSerializer {
     }>): SerializedAttributionCollection;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IAttributionCollectionSpec<T> {
     // (undocumented)
     channels?: {
@@ -108,31 +108,31 @@ export interface IAttributionCollectionSpec<T> {
     }>;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IJSONMarkerSegment extends IJSONSegment {
     // (undocumented)
     marker: IMarkerDef;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IJSONSegment {
     // (undocumented)
     props?: Record<string, any>;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IJSONTextSegment extends IJSONSegment {
     // (undocumented)
     text: string;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMarkerDef {
     // (undocumented)
     refType?: ReferenceType;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
     // (undocumented)
     adjust: Record<string, AdjustParams>;
@@ -150,7 +150,7 @@ export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.ANNOTATE;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     // (undocumented)
     adjust?: never;
@@ -168,28 +168,29 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.ANNOTATE;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeDelta {
     type: MergeTreeDeltaType;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType> {
     readonly deltaSegments: IMergeTreeSegmentDelta[];
     readonly operation: TOperationType;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeAnnotateAdjustMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeDeltaOpArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
+    readonly rollback?: true;
     readonly sequencedMessage?: ISequencedDocumentMessage;
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha @deprecated @legacy (undocumented)
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     // (undocumented)
     ops: IMergeTreeDeltaOp[];
@@ -197,7 +198,7 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.GROUP;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     // (undocumented)
     pos1?: number;
@@ -213,11 +214,11 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.INSERT;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha @deprecated @legacy (undocumented)
 export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
     // (undocumented)
     pos1?: number;
@@ -229,7 +230,7 @@ export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.OBLITERATE;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeObliterateSidedMsg extends IMergeTreeDelta {
     // (undocumented)
     pos1: {
@@ -247,10 +248,10 @@ export interface IMergeTreeObliterateSidedMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.OBLITERATE_SIDED;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeOptions {
     // (undocumented)
     catchUpBlobName?: string;
@@ -264,7 +265,7 @@ export interface IMergeTreeOptions {
     newMergeTreeSnapshotFormat?: boolean;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     // (undocumented)
     pos1?: number;
@@ -278,13 +279,13 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.REMOVE;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IMergeTreeSegmentDelta {
     propertyDeltas?: PropertySet;
     segment: ISegment;
 }
 
-// @alpha
+// @alpha @legacy
 export interface InteriorSequencePlace {
     // (undocumented)
     pos: number;
@@ -292,14 +293,14 @@ export interface InteriorSequencePlace {
     side: Side;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IRelativePosition {
     before?: boolean;
     id?: string;
     offset?: number;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ISegment {
     // (undocumented)
     append(segment: ISegment): void;
@@ -322,13 +323,13 @@ export interface ISegment {
     readonly type: string;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface ISegmentAction<TClientData> {
     // (undocumented)
     (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum: TClientData): boolean;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface ITrackingGroup {
     // (undocumented)
     has(trackable: Trackable): boolean;
@@ -342,7 +343,7 @@ export interface ITrackingGroup {
     unlink(trackable: Trackable): boolean;
 }
 
-// @alpha @sealed (undocumented)
+// @alpha @sealed @legacy (undocumented)
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     addProperties(newProps: PropertySet): void;
@@ -353,13 +354,13 @@ export interface LocalReferencePosition extends ReferencePosition {
     readonly trackingCollection: TrackingGroupCollection;
 }
 
-// @alpha
+// @alpha @legacy
 export interface MapLike<T> {
     // (undocumented)
     [index: string]: T;
 }
 
-// @alpha
+// @alpha @legacy
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
     constructor(refType: ReferenceType, props?: PropertySet);
     // (undocumented)
@@ -396,13 +397,13 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
     readonly type = "Marker";
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE | typeof MergeTreeDeltaType.OBLITERATE;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type MergeTreeDeltaRevertible = {
     operation: typeof MergeTreeDeltaType.INSERT;
     trackingGroup: ITrackingGroup;
@@ -415,7 +416,7 @@ export type MergeTreeDeltaRevertible = {
     propertyDeltas: PropertySet;
 };
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export const MergeTreeDeltaType: {
     readonly INSERT: 0;
     readonly REMOVE: 1;
@@ -425,10 +426,10 @@ export const MergeTreeDeltaType: {
     readonly OBLITERATE_SIDED: 5;
 };
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
-// @alpha
+// @alpha @legacy
 export const MergeTreeMaintenanceType: {
     readonly APPEND: -1;
     readonly SPLIT: -2;
@@ -436,10 +437,10 @@ export const MergeTreeMaintenanceType: {
     readonly ACKNOWLEDGED: -4;
 };
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type MergeTreeMaintenanceType = (typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface MergeTreeRevertibleDriver {
     // (undocumented)
     annotateRange(start: number, end: number, props: PropertySet): void;
@@ -449,10 +450,10 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): void;
 }
 
-// @alpha
+// @alpha @legacy
 export type PropertySet = MapLike<any>;
 
-// @alpha
+// @alpha @legacy
 export interface ReferencePosition {
     getOffset(): number;
     getSegment(): ISegment | undefined;
@@ -464,7 +465,7 @@ export interface ReferencePosition {
     slidingPreference?: SlidingPreference;
 }
 
-// @alpha
+// @alpha @legacy
 export enum ReferenceType {
     RangeBegin = 16,
     RangeEnd = 32,
@@ -476,32 +477,32 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @alpha
+// @alpha @legacy
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @alpha
+// @alpha @legacy
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
 
-// @alpha
+// @alpha @legacy
 export const reservedMarkerIdKey = "markerId";
 
-// @alpha
+// @alpha @legacy
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @alpha
+// @alpha @legacy
 export function segmentIsRemoved(segment: ISegment): boolean;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface SequenceOffsets {
     // (undocumented)
     posBreakpoints: number[];
     seqs: (number | AttributionKey | null)[];
 }
 
-// @alpha
+// @alpha @legacy
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface SerializedAttributionCollection extends SequenceOffsets {
     // (undocumented)
     channels?: {
@@ -511,7 +512,7 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
     length: number;
 }
 
-// @alpha
+// @alpha @legacy
 export enum Side {
     // (undocumented)
     After = 1,
@@ -519,16 +520,16 @@ export enum Side {
     Before = 0
 }
 
-// @alpha
+// @alpha @legacy
 export const SlidingPreference: {
     readonly BACKWARD: 0;
     readonly FORWARD: 1;
 };
 
-// @alpha
+// @alpha @legacy
 export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export class TextSegment extends BaseSegment {
     constructor(text: string, props?: PropertySet);
     // (undocumented)
@@ -557,10 +558,10 @@ export class TextSegment extends BaseSegment {
     readonly type = "TextSegment";
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type Trackable = ISegment | LocalReferencePosition;
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export class TrackingGroup implements ITrackingGroup {
     constructor();
     // (undocumented)
@@ -575,7 +576,7 @@ export class TrackingGroup implements ITrackingGroup {
     unlink(trackable: Trackable): boolean;
 }
 
-// @alpha
+// @alpha @legacy
 export class TrackingGroupCollection {
     constructor(trackable: Trackable);
     // (undocumented)

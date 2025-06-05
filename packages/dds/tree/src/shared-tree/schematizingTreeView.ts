@@ -12,9 +12,9 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
+import { anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 	defaultSchemaPolicy,
 	ContextSlot,
 	cursorForMapTreeNode,
@@ -30,13 +30,9 @@ import {
 	getTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	ViewSchema,
+	SchemaCompatibilityTester,
 	type InsertableContent,
 	type TreeViewConfiguration,
-	mapTreeFromNodeData,
-	prepareContentForHydration,
-	comparePersistedSchemaInternal,
-	toStoredSchema,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
@@ -46,26 +42,28 @@ import {
 	type TreeBranchEvents,
 	getOrCreateInnerNode,
 	getKernel,
-} from "../simple-tree/index.js";
-import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
-
-import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
-import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import {
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type RunTransactionParams,
+	type TransactionConstraint,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
+	prepareForInsertionContextless,
 } from "../simple-tree/index.js";
-import type {
-	VoidTransactionCallbackStatus,
-	TransactionCallbackStatus,
-	TransactionResult,
-	TransactionResultExt,
-	RunTransactionParams,
-	TransactionConstraint,
-} from "./transactionTypes.js";
+import {
+	type Breakable,
+	breakingClass,
+	disposeSymbol,
+	type WithBreakable,
+} from "../util/index.js";
+
+import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -97,8 +95,11 @@ export class SchematizingSimpleTreeView<
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
-	private readonly viewSchema: ViewSchema;
+	private readonly viewSchema: SchemaCompatibilityTester;
 
+	/**
+	 * Events to unregister upon disposal.
+	 */
 	private readonly unregisterCallbacks = new Set<() => void>();
 
 	public disposed = false;
@@ -111,14 +112,15 @@ export class SchematizingSimpleTreeView<
 	private midUpgrade = false;
 
 	private readonly rootFieldSchema: FieldSchema;
+	public readonly breaker: Breakable;
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
-		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
+		public readonly nodeKeyManager: NodeIdentifierManager,
 		private readonly onDispose?: () => void,
 	) {
+		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
 		}
@@ -131,7 +133,11 @@ export class SchematizingSimpleTreeView<
 			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(this.rootFieldSchema),
 		};
 
-		this.viewSchema = new ViewSchema(this.schemaPolicy, {}, this.rootFieldSchema);
+		this.viewSchema = new SchemaCompatibilityTester(
+			this.schemaPolicy,
+			{},
+			this.rootFieldSchema,
+		);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -168,19 +174,19 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const mapTree = mapTreeFromNodeData(
+			const schema = this.viewSchema.viewSchemaAsStored;
+			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
-				this.nodeKeyManager,
 				{
-					schema: this.checkout.storedSchema,
+					schema,
 					policy: this.schemaPolicy,
 				},
+				this,
 			);
 
-			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: toStoredSchema(this.viewSchema.schema),
+				schema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -202,15 +208,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const result = ensureSchema(
-				this.viewSchema,
-				AllowedUpdateType.SchemaCompatible,
-				this.checkout,
-				{
-					schema: toStoredSchema(this.viewSchema.schema),
-					initialTree: undefined,
-				},
-			);
+			const result = ensureSchema(this.viewSchema, this.checkout);
 			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
 		});
 	}
@@ -326,15 +324,14 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeView();
 
-		const compatibility = comparePersistedSchemaInternal(
-			this.checkout.storedSchema,
-			this.viewSchema,
-			canInitialize(this.checkout),
-		);
+		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
 
 		let lastRoot =
 			this.compatibility.canView && this.view !== undefined ? this.root : undefined;
-		this.currentCompatibility = compatibility;
+		this.currentCompatibility = {
+			...compatibility,
+			canInitialize: canInitialize(this.checkout),
+		};
 
 		if (compatibility.canView) {
 			// Trigger "rootChanged" if the root changes in the future.
@@ -500,14 +497,14 @@ export function getCheckout(context: TreeBranch): TreeCheckout {
 }
 
 /**
- * Creates a view that self-disposes whenenever the stored schema changes.
+ * Creates a view that self-disposes whenever the stored schema changes.
  * This may only be called when the schema is already known to be compatible (typically via ensureSchema).
  */
 export function requireSchema(
 	checkout: ITreeCheckout,
-	viewSchema: ViewSchema,
+	viewSchema: SchemaCompatibilityTester,
 	onDispose: () => void,
-	nodeKeyManager: NodeKeyManager,
+	nodeKeyManager: NodeIdentifierManager,
 	schemaPolicy: FullSchemaPolicy,
 ): CheckoutFlexTreeView {
 	const slots = checkout.forest.anchors.slots;

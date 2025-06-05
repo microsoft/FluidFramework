@@ -142,7 +142,7 @@ export type RestrictiveStringRecord<T> = {
  * Returns `true` if T is a union and false if it is not.
  * @typeparam T - Type to test if it is a union.
  * @typeparam T2 - Do not specify: default value used as implementation detail.
- * @system @alpha
+ * @system @public
  */
 export type IsUnion<T, T2 = T> = T extends unknown
 	? [T2] extends [T]

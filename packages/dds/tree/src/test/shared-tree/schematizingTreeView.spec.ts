@@ -7,7 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { MockNodeKeyManager } from "../../feature-libraries/index.js";
+import { MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
@@ -21,9 +21,11 @@ import {
 	type InsertableField,
 	type InsertableTypedNode,
 	type UnsafeUnknownSchema,
+	type TransactionResult,
+	type TransactionResultExt,
+	toStoredSchema,
+	getKernel,
 } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -34,11 +36,13 @@ import {
 import { insert } from "../sequenceRootUtils.js";
 import {
 	CheckoutFlexTreeView,
-	type TransactionResult,
-	type TransactionResultExt,
 	type TreeCheckout,
 	type TreeStoredContent,
 } from "../../shared-tree/index.js";
+import type { Mutable } from "../../util/index.js";
+import { brand } from "../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -52,7 +56,7 @@ const configGeneralized2 = new TreeViewConfiguration({
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
 	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
-	nodeKeyManager = new MockNodeKeyManager(),
+	nodeKeyManager = new MockNodeIdentifierManager(),
 ): TreeCheckout {
 	const initialTree = cursorFromInsertable<UnsafeUnknownSchema>(
 		viewConfig.schema,
@@ -70,38 +74,110 @@ function checkoutWithInitialTree(
 const emptySchema = toStoredSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
-	it("Initialize document", () => {
-		const emptyContent = {
-			schema: emptySchema,
-			initialTree: undefined,
-		};
-		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+	describe("initialize", () => {
+		it("Initialize document", () => {
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			const checkout = checkoutWithContent(emptyContent);
+			const view = new SchematizingSimpleTreeView(
+				checkout,
+				config,
+				new MockNodeIdentifierManager(),
+			);
 
-		const { compatibility } = view;
-		assert.equal(compatibility.canView, false);
-		assert.equal(compatibility.canUpgrade, false);
-		assert.equal(compatibility.canInitialize, true);
+			const { compatibility } = view;
+			assert.equal(compatibility.canView, false);
+			assert.equal(compatibility.canUpgrade, false);
+			assert.equal(compatibility.canInitialize, true);
 
-		view.initialize(5);
-		assert.equal(view.root, 5);
+			view.initialize(5);
+			assert.equal(view.root, 5);
+
+			assert.throws(
+				() => view.initialize(5),
+				validateUsageError(/initialized more than once/),
+			);
+		});
+
+		for (const enableSchemaValidation of [true, false]) {
+			it(`Initialize invalid content: enableSchemaValidation: ${enableSchemaValidation}`, () => {
+				const emptyContent = {
+					schema: emptySchema,
+					initialTree: undefined,
+				};
+				const checkout = checkoutWithContent(emptyContent);
+
+				class Root extends schema.object("Root", {
+					content: schema.number,
+				}) {}
+
+				const config2 = new TreeViewConfiguration({
+					schema: Root,
+					enableSchemaValidation,
+				});
+
+				const view = new SchematizingSimpleTreeView(
+					checkout,
+					config2,
+					new MockNodeIdentifierManager(),
+				);
+
+				const root = new Root({ content: 5 });
+
+				const inner = getKernel(root).tryGetInnerNode() ?? assert.fail("Expected child");
+				const field = inner.getBoxed(brand("content"));
+				const child = field.boxedAt(0) ?? assert.fail("Expected child");
+				assert(child instanceof UnhydratedFlexTreeNode);
+
+				// Modify the tree so that it is out of schema.
+				// The public API is supposed to prevent out of schema trees,
+				// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
+				// In production cases this extra validation exists to help prevent corruption when bugs
+				// allow invalid data through the public API.
+				(child.mapTree as Mutable<typeof child.mapTree>).value = "invalid value";
+
+				// Attempt to initialize with invalid content
+				if (enableSchemaValidation) {
+					assert.throws(
+						() => view.initialize(root),
+						validateUsageError(/Tree does not conform to schema./),
+					);
+
+					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+				} else {
+					view.initialize(root);
+					assert.equal(view.root.content, "invalid value");
+				}
+			});
+		}
 	});
 
-	it("Initialize errors", () => {
+	it("Broken state", () => {
 		const emptyContent = {
 			schema: emptySchema,
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 
-		assert.throws(() => view.root, validateUsageError(/compatibility/));
-
+		// Put into broken state by trying incompatible upgrade
 		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
+
 		assert.throws(
 			() => view.initialize(5),
 			validateUsageError(/invalid state by another error/),
 		);
+		assert.throws(
+			() => view.upgradeSchema(),
+			validateUsageError(/invalid state by another error/),
+		);
+		assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
 	});
 
 	const getChangeData = <T extends ImplicitFieldSchema>(
@@ -114,7 +190,11 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Open and close existing document", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 		assert.equal(view.compatibility.isEquivalent, true);
 		const root = view.root;
 		assert.equal(root, 5);
@@ -143,7 +223,11 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Modify root", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 		assert.equal(view.root, 5);
@@ -156,7 +240,11 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Schema becomes un-upgradeable then exact match again", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
@@ -193,12 +281,12 @@ describe("SchematizingSimpleTreeView", () => {
 		// up a document that has been created and/or edited by a "newer" version of an application (which has
 		// expanded the schema to include more information).
 		const factory = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factory.object("Person", {
+		class PersonGeneralized extends factory.objectAlpha("Person", {
 			name: factory.string,
 			age: factory.number,
 			address: factory.optional(factory.string),
 		}) {}
-		class PersonSpecific extends factory.object(
+		class PersonSpecific extends factory.objectAlpha(
 			"Person",
 			{
 				name: factory.string,
@@ -220,7 +308,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const viewSpecific = new SchematizingSimpleTreeView(
 			checkout,
 			personConfig,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 
 		assert.deepEqual(viewSpecific.compatibility, {
@@ -239,7 +327,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const viewGeneralized = new SchematizingSimpleTreeView(
 			checkout,
 			personConfigGeneralied,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 		assert.deepEqual(viewGeneralized.compatibility, {
 			canView: true,
@@ -257,12 +345,12 @@ describe("SchematizingSimpleTreeView", () => {
 	it("Calling moveToEnd on a more specific schema preserves a node's optional fields that were unknown to that schema", () => {
 		const factorySpecific = new SchemaFactoryAlpha(undefined);
 		const factoryGeneral = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factorySpecific.object("Person", {
+		class PersonGeneralized extends factorySpecific.objectAlpha("Person", {
 			name: factoryGeneral.string,
 			age: factoryGeneral.number,
 			address: factoryGeneral.optional(factoryGeneral.string),
 		}) {}
-		class PersonSpecific extends factorySpecific.object(
+		class PersonSpecific extends factorySpecific.objectAlpha(
 			"Person",
 			{
 				name: factorySpecific.string,
@@ -284,7 +372,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const viewSpecific = new SchematizingSimpleTreeView(
 			checkout,
 			peopleConfig,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 
 		assert.deepEqual(viewSpecific.compatibility, {
@@ -306,7 +394,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const viewGeneralized = new SchematizingSimpleTreeView(
 			checkout,
 			peopleGeneralizedConfig,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 		assert.deepEqual(viewGeneralized.compatibility, {
 			canView: true,
@@ -327,7 +415,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			configGeneralized,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 		const log: [string, unknown][] = [];
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
@@ -350,7 +438,11 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Attempt to open document using view schema that is incompatible due to being too strict compared to the stored schema", () => {
 		const checkout = checkoutWithInitialTree(configGeneralized, 6);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
@@ -371,7 +463,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			configGeneralized2,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 
 		assert.equal(view.compatibility.canView, false);
@@ -394,7 +486,11 @@ describe("SchematizingSimpleTreeView", () => {
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 
 		const { undoStack, redoStack } = createTestUndoRedoStacks(view.events);
 
@@ -407,6 +503,40 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(redoStack.length, 1);
 	});
 
+	const schemaFactory = new SchemaFactory(undefined);
+	class ChildObject extends schemaFactory.object("ChildObject", {
+		content: schemaFactory.number,
+	}) {}
+	class TestObject extends schemaFactory.object("TestObject", {
+		content: schemaFactory.number,
+		child: schemaFactory.optional(ChildObject),
+	}) {}
+
+	function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
+		const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			content: 42,
+			child,
+		});
+		return view;
+	}
+
+	it("breaks on error", () => {
+		const view = getTestObjectView();
+		const node = view.root;
+		assert.throws(() => view.breaker.break(new Error("Oh no")));
+
+		assert.throws(() => view.root, validateUsageError(/Oh no/));
+
+		// Ideally this would error, but thats not too important: reads are less dangerous.
+		// assert.throws(() => node.content, validateUsageError(/Oh no/));
+
+		// Its important that editing errors when we might be in an invalid state.
+		assert.throws(() => {
+			node.content = 5;
+		}, validateUsageError(/Oh no/));
+	});
+
 	describe("events", () => {
 		it("schemaChanged", () => {
 			const content = {
@@ -414,7 +544,11 @@ describe("SchematizingSimpleTreeView", () => {
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(content);
-			const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+			const view = new SchematizingSimpleTreeView(
+				checkout,
+				config,
+				new MockNodeIdentifierManager(),
+			);
 			const log: string[] = [];
 			view.events.on("schemaChanged", () => log.push("changed"));
 			assert.deepEqual(log, []);
@@ -428,7 +562,11 @@ describe("SchematizingSimpleTreeView", () => {
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(emptyContent);
-			const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+			const view = new SchematizingSimpleTreeView(
+				checkout,
+				config,
+				new MockNodeIdentifierManager(),
+			);
 
 			let localChanges = 0;
 
@@ -454,7 +592,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const main = new SchematizingSimpleTreeView(
 				checkout,
 				new TreeViewConfiguration({ schema: stringArraySchema }),
-				new MockNodeKeyManager(),
+				new MockNodeIdentifierManager(),
 			);
 			const branch = main.fork();
 			const mainRoot = main.root;
@@ -475,24 +613,6 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	describe("runTransaction", () => {
-		const schemaFactory = new SchemaFactory(undefined);
-		class ChildObject extends schemaFactory.object("ChildObject", {
-			content: schemaFactory.number,
-		}) {}
-		class TestObject extends schemaFactory.object("TestObject", {
-			content: schemaFactory.number,
-			child: schemaFactory.optional(ChildObject),
-		}) {}
-
-		function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
-			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
-			view.initialize({
-				content: 42,
-				child,
-			});
-			return view;
-		}
-
 		describe("transaction callback return values", () => {
 			it("implicit success", () => {
 				const view = getTestObjectView();
@@ -648,6 +768,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			it("breaks the view on error", () => {
 				const view = getTestObjectView();
+				const node = view.root;
 				assert.throws(
 					() =>
 						view.runTransaction(() => {
@@ -658,7 +779,7 @@ describe("SchematizingSimpleTreeView", () => {
 						return e instanceof Error && e.message === "Oh no";
 					},
 				);
-				assert.throws(() => view.root.content, "View should be broken");
+				assert.throws(() => view.root, validateUsageError(/Oh no/));
 			});
 
 			it("undoes and redoes entire transaction", () => {
@@ -723,12 +844,12 @@ describe("SchematizingSimpleTreeView", () => {
 				const provider = new TestTreeProviderLite(2);
 				const [treeA, treeB] = provider.trees;
 				const viewA = treeA.viewWith(viewConfig);
-				const viewB = treeB.viewWith(viewConfig);
+				const viewB = treeB.kernel.viewWith(viewConfig);
 				viewA.initialize({
 					content: 42,
 					child: { content: 42 },
 				});
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
 				viewA.root.child = undefined;
@@ -754,7 +875,7 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.equal(viewA.root.content, 42);
 				assert.equal(viewB.root.content, 43);
 				// ...but then is rolled back after sequencing because the child node was removed by Tree A.
-				provider.processMessages();
+				provider.synchronizeMessages();
 				assert.equal(viewB.root.content, 42);
 				assert.equal(viewB.root.content, 42);
 			});

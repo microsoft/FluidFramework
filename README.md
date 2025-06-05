@@ -147,7 +147,7 @@ If you've _upgraded_ your Mac to Catalina or higher, you may need to follow [the
 
 -   Building [server/Routerlicious](./server/routerlicious/README.md)
     -   Refer to that package's README for additional requirements.
-    -   Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server` (e.g. `fluid-build --symlink:full`).
+    -   Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server`.
 
 #### On Windows
 
@@ -295,22 +295,21 @@ Then:
 
 ## Tools
 
-### Prettier
+### Biome
 
-This repository uses [prettier](https://prettier.io/) as its code formatter.
-Right now, this is implemented on a per-package basis, with a [shared base configuration](./common/build/build-common/prettier.config.cjs).
+This repository uses [biome](https://biomejs.dev/formatter/) as its code formatter.
+Right now, this is implemented on a per-package basis, with a [shared base configuration](./biome.jsonc).
 
--   To run `prettier` on your code, run `npm run format` from the appropriate package or release group, or run
+-   To run `biome` on your code, run `npm run format` from the appropriate package or release group, or run
     `npm run format:changed` from the root of the repo to format only files changed since the main branch.
-    If your change is for the next branch instead, you can run `npm run format:changed:next`.
--   To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the
+-   To run `biome` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the
     script argument: `fluid-build -t format` or `npm run build:fast -- -t format`
 
 To ensure our formatting remains consistent, we run a formatting check as a part of each package's `lint` script.
 
 #### VSCode Options
 
-Our [workspace configuration](./.vscode/settings.json) specifies `prettier` as the default formatter.
+Our [workspace configuration](./.vscode/settings.json) specifies `biome` as the default formatter.
 Please do not change this.
 
 It is not configured to do any formatting automatically, however.

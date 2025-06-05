@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
-import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
+import { extractFromOpaque } from "../../util/index.js";
 import {
 	type TreeLeafValue,
 	type ImplicitFieldSchema,
 	FieldSchema,
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
+	normalizeAllowedTypes,
 } from "../schemaTypes.js";
 import {
 	booleanSchema,
@@ -31,7 +32,6 @@ import {
 	type TreeNodeSchema,
 	NodeKind,
 	type TreeNode,
-	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
 	getOrCreateNodeFromInnerNode,
 	UnhydratedFlexTreeNode,
@@ -39,7 +39,7 @@ import {
 	getOrCreateInnerNode,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
-import { isLazy, type LazyItem } from "../flexList.js";
+import type { TreeChangeEvents } from "./treeChangeEvents.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -174,7 +174,7 @@ export const treeNodeApi: TreeNodeApi = {
 								changedFields,
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
-									fail("Could not find stored key in schema."),
+									fail(0xb36 /* Could not find stored key in schema. */),
 							),
 						);
 						listener({ changedProperties });
@@ -203,64 +203,21 @@ export const treeNodeApi: TreeNodeApi = {
 		value: unknown,
 		schema: TSchema,
 	): value is TreeNodeFromImplicitAllowedTypes<TSchema> {
+		// This "is" utility would return false if the provided schema is a base type of the actual schema.
+		// This could be confusing, and that case can only be hit when violating the rule that there is a single most derived schema that gets used (See documentation on TreeNodeSchemaClass).
+		// Therefore this uses markSchemaMostDerived to ensure an informative usage error is thrown in the case where a base type is used.
+
 		const actualSchema = tryGetSchema(value);
 		if (actualSchema === undefined) {
 			return false;
 		}
-		if (isReadonlyArray<LazyItem<TreeNodeSchema>>(schema)) {
-			for (const singleSchema of schema) {
-				const testSchema = isLazy(singleSchema) ? singleSchema() : singleSchema;
-				if (testSchema === actualSchema) {
-					return true;
-				}
-			}
-			return false;
-		} else {
-			// Linter is incorrect about this bering unnecessary: it does not compile without the type assertion.
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-			return (schema as TreeNodeSchema) === actualSchema;
-		}
+		return normalizeAllowedTypes(schema).has(actualSchema);
 	},
 	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema {
-		return tryGetSchema(node) ?? fail("Not a tree node");
+		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);
 	},
 	shortId(node: TreeNode): number | string | undefined {
-		const schema = node[typeSchemaSymbol];
-		if (!isObjectNodeSchema(schema)) {
-			return undefined;
-		}
-
-		const flexNode = getOrCreateInnerNode(node);
-		const identifierFieldKeys = schema.identifierFieldKeys;
-
-		switch (identifierFieldKeys.length) {
-			case 0:
-				return undefined;
-			case 1: {
-				const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
-				if (flexNode instanceof UnhydratedFlexTreeNode) {
-					if (identifier === undefined) {
-						throw new UsageError(
-							"Tree.shortId cannot access default identifiers on unhydrated nodes",
-						);
-					}
-					return identifier.value as string;
-				}
-				assert(
-					identifier?.context.isHydrated() === true,
-					0xa27 /* Expected hydrated identifier */,
-				);
-				const identifierValue = identifier.value as string;
-
-				const localNodeKey =
-					identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
-				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
-			}
-			default:
-				throw new UsageError(
-					"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
-				);
-		}
+		return getIdentifierFromNode(node, "preferCompressed");
 	},
 };
 
@@ -294,9 +251,94 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 }
 
 /**
+ * Gets the identifier from a node.
+ *
+ * @param node - {@link TreeNode} where you want to extract the identifier from.
+ * @param compression - string value to determine what type of identifier you want to retrieve.
+ *
+ * @remarks
+ * If the node does not contain an identifier field, it returns undefined.
+ *
+ * If `compression` is set to `compressed`:
+ *
+ * - If the node contains a compressible identifier known by the id compressor, the compressed identifier is returned.
+ *
+ * - If the node contains an identifier, but is not compressible or unknown by the id compressor, `undefined` is returned.
+ *
+ * If `compression` is set to `preferCompressed`:
+ *
+ * - If the node contains a compressible identifier known by the id compressor, the compressed identifier is returned.
+ *
+ * - If the node contains an identifier, but is not compressible or unknown by the id compressor, the uncompressed identifier is returned.
+ *
+ * If `compression` is set to `uncompressed`:
+ * - If the node contains an identifier field, the uncompressed identifier is returned.
+ */
+export function getIdentifierFromNode(
+	node: TreeNode,
+	compression: "preferCompressed",
+): number | string | undefined;
+export function getIdentifierFromNode(
+	node: TreeNode,
+	compression: "compressed",
+): number | undefined;
+export function getIdentifierFromNode(
+	node: TreeNode,
+	compression: "uncompressed",
+): string | undefined;
+export function getIdentifierFromNode(
+	node: TreeNode,
+	compression: "preferCompressed" | "compressed" | "uncompressed",
+): number | string | undefined {
+	const schema = node[typeSchemaSymbol];
+	if (!isObjectNodeSchema(schema)) {
+		return undefined;
+	}
+
+	const flexNode = getOrCreateInnerNode(node);
+	const identifierFieldKeys = schema.identifierFieldKeys;
+
+	switch (identifierFieldKeys.length) {
+		case 0:
+			return undefined;
+		case 1: {
+			const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
+			if (flexNode instanceof UnhydratedFlexTreeNode) {
+				if (identifier === undefined) {
+					throw new UsageError(
+						"Tree.shortId cannot access default identifiers on unhydrated nodes",
+					);
+				}
+				return identifier.value as string;
+			}
+			assert(
+				identifier?.context.isHydrated() === true,
+				0xa27 /* Expected hydrated identifier */,
+			);
+			const identifierValue = identifier.value as string;
+
+			if (compression === "preferCompressed") {
+				const localNodeKey =
+					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
+				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
+			} else if (compression === "compressed") {
+				const localNodeKey =
+					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
+				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+			}
+			return identifierValue;
+		}
+		default:
+			throw new UsageError(
+				"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
+			);
+	}
+}
+
+/**
  * Gets the stored key with which the provided node is associated in the parent.
  */
-function getStoredKey(node: TreeNode): string | number {
+export function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
@@ -317,7 +359,7 @@ function getStoredKey(node: TreeNode): string | number {
 /**
  * Given a node schema, gets the property key corresponding with the provided {@link FieldProps.key | stored key}.
  */
-function getPropertyKeyFromStoredKey(
+export function getPropertyKeyFromStoredKey(
 	schema: TreeNodeSchema,
 	storedKey: string | number,
 ): string | number {
@@ -341,7 +383,7 @@ function getPropertyKeyFromStoredKey(
 	}
 
 	if (fields[storedKey] === undefined) {
-		fail("Existing stored key should always map to a property key");
+		fail(0xb38 /* Existing stored key should always map to a property key */);
 	}
 
 	return storedKey;

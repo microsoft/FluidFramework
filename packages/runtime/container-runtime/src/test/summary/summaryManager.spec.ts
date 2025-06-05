@@ -22,7 +22,6 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
-import { DefaultSummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IConnectedEvents,
 	IConnectedState,
@@ -32,13 +31,14 @@ import {
 	ISummarizerRuntime,
 	ISummaryManagerConfig,
 	ISummaryOpMessage,
-	RunningSummarizer,
 	SummarizeHeuristicData,
 	Summarizer,
 	SummaryCollection,
 	SummaryManager,
 	SummaryManagerState,
 	neverCancelledSummaryToken,
+	DefaultSummaryConfiguration,
+	RunningSummarizer,
 } from "../../summary/index.js";
 
 class MockRuntime {

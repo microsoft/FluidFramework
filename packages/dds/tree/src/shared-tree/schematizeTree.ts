@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
-	AllowedUpdateType,
 	CursorLocationType,
 	type ITreeCursorSynchronous,
 	type TreeStoredSchema,
@@ -20,10 +19,9 @@ import {
 	defaultSchemaPolicy,
 	mapTreeFromCursor,
 } from "../feature-libraries/index.js";
-import { fail, isReadonlyArray } from "../util/index.js";
-
+import { isReadonlyArray } from "../util/index.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
-import { toStoredSchema, type ViewSchema } from "../simple-tree/index.js";
+import type { SchemaCompatibilityTester } from "../simple-tree/index.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -99,10 +97,6 @@ export enum UpdateType {
 	 */
 	None,
 	/**
-	 * Empty: needs initializing.
-	 */
-	Initialize,
-	/**
 	 * Schema can be upgraded leaving tree as is.
 	 */
 	SchemaCompatible,
@@ -112,9 +106,11 @@ export enum UpdateType {
 	Incompatible,
 }
 
+/**
+ * Returns how compatible updating checkout's schema is with the viewSchema.
+ */
 export function evaluateUpdate(
-	viewSchema: ViewSchema,
-	allowedSchemaModifications: AllowedUpdateType,
+	viewSchema: SchemaCompatibilityTester,
 	checkout: ITreeCheckout,
 ): UpdateType {
 	const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
@@ -122,11 +118,6 @@ export function evaluateUpdate(
 	if (compatibility.canUpgrade && compatibility.canView) {
 		// Compatible as is
 		return UpdateType.None;
-	}
-
-	// eslint-disable-next-line no-bitwise
-	if (allowedSchemaModifications & AllowedUpdateType.Initialize && canInitialize(checkout)) {
-		return UpdateType.Initialize;
 	}
 
 	if (!compatibility.canUpgrade) {
@@ -137,10 +128,7 @@ export function evaluateUpdate(
 	assert(!compatibility.canView, 0x8bd /* unexpected case */);
 	assert(compatibility.canUpgrade, 0x8be /* unexpected case */);
 
-	// eslint-disable-next-line no-bitwise
-	return allowedSchemaModifications & AllowedUpdateType.SchemaCompatible
-		? UpdateType.SchemaCompatible
-		: UpdateType.Incompatible;
+	return UpdateType.SchemaCompatible;
 }
 
 export function canInitialize(checkout: ITreeCheckout): boolean {
@@ -171,7 +159,7 @@ function normalizeNewFieldContent(
  * This function should only be called when the tree is uninitialized (no schema or content).
  * @remarks
  *
- * If the proposed schema (from `treeContent`) is not compatible with the emptry tree, this function handles using an intermediate schema
+ * If the proposed schema (from `treeContent`) is not compatible with the empty tree, this function handles using an intermediate schema
  * which supports the empty tree as well as the final tree content.
  */
 export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredContent): void {
@@ -180,6 +168,7 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredConte
 		initializeContent(checkout, treeContent.schema, () => {
 			const field = { field: rootFieldKey, parent: undefined };
 			const content = normalizeNewFieldContent(treeContent.initialTree);
+			const contentChunk = checkout.forest.chunkField(content);
 
 			switch (checkout.storedSchema.rootFieldSchema.kind) {
 				case FieldKinds.optional.identifier: {
@@ -188,17 +177,17 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredConte
 						content.getFieldLength() <= 1,
 						0x7f4 /* optional field content should normalize at most one item */,
 					);
-					fieldEditor.set(content.getFieldLength() === 0 ? undefined : content, true);
+					fieldEditor.set(contentChunk.topLevelLength === 0 ? undefined : contentChunk, true);
 					break;
 				}
 				case FieldKinds.sequence.identifier: {
 					const fieldEditor = checkout.editor.sequenceField(field);
 					// TODO: should do an idempotent edit here.
-					fieldEditor.insert(0, content);
+					fieldEditor.insert(0, contentChunk);
 					break;
 				}
 				default: {
-					fail("unexpected root field kind during initialize");
+					fail(0xac7 /* unexpected root field kind during initialize */);
 				}
 			}
 		});
@@ -208,7 +197,7 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredConte
 }
 
 /**
- * Ensure a {@link ITreeCheckout} can be used with a given {@link ViewSchema}.
+ * Ensure a {@link ITreeCheckout} can be used with a given {@link SchemaCompatibilityTester}.
  *
  * @remarks
  * It is up to the caller to ensure that compatibility is reevaluated if the checkout's stored schema is edited in the future.
@@ -220,18 +209,10 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredConte
  * @returns true iff checkout now is compatible with `viewSchema`.
  */
 export function ensureSchema(
-	viewSchema: ViewSchema,
-	allowedSchemaModifications: AllowedUpdateType,
+	viewSchema: SchemaCompatibilityTester,
 	checkout: ITreeCheckout,
-	treeContent: TreeStoredContent | undefined,
 ): boolean {
-	let possibleModifications = allowedSchemaModifications;
-	if (treeContent === undefined) {
-		// Clear bit for Initialize if initial tree is not provided.
-		// eslint-disable-next-line no-bitwise
-		possibleModifications &= ~AllowedUpdateType.Initialize;
-	}
-	const updatedNeeded = evaluateUpdate(viewSchema, possibleModifications, checkout);
+	const updatedNeeded = evaluateUpdate(viewSchema, checkout);
 	switch (updatedNeeded) {
 		case UpdateType.None: {
 			return true;
@@ -240,17 +221,7 @@ export function ensureSchema(
 			return false;
 		}
 		case UpdateType.SchemaCompatible: {
-			checkout.updateSchema(toStoredSchema(viewSchema.schema));
-			return true;
-		}
-		case UpdateType.Initialize: {
-			if (treeContent === undefined) {
-				return false;
-			}
-			// TODO:
-			// When this becomes a more proper out of schema adapter, editing should be made lazy.
-			// This will improve support for readonly documents, cross version collaboration and attribution.
-			initialize(checkout, treeContent);
+			checkout.updateSchema(viewSchema.viewSchemaAsStored);
 			return true;
 		}
 		default: {

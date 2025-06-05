@@ -750,35 +750,6 @@ describe("ArrayNode", () => {
 	describeHydration(
 		"Iteration",
 		(init) => {
-			it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
-				class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
-
-				// Create unhydrated array node
-				const array = new TestArray([1, 2]);
-
-				const provider = new TestTreeProviderLite();
-				const tree = provider.trees[0];
-				const view = tree.viewWith(new TreeViewConfiguration({ schema: TestArray }));
-				const values = array.values();
-
-				// Initialize the tree with unhydrated array node
-				view.initialize(array);
-
-				// Checks that the iterator works after hydrating the node.
-				values.next();
-
-				// Make an edit
-				array.insertAtEnd(3);
-
-				// Checks that the iterator throws after
-				assert.throws(
-					() => {
-						values.next();
-					},
-					validateUsageError(/Concurrent editing and iteration is not allowed./),
-				);
-			});
-
 			it("Iterates through the values of the array", () => {
 				const array = init(CustomizableNumberArray, [1, 2, 3]);
 				const result = [];
@@ -812,6 +783,35 @@ describe("ArrayNode", () => {
 			});
 		},
 		() => {
+			it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
+				class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
+
+				// Create unhydrated array node
+				const array = new TestArray([1, 2]);
+
+				const provider = new TestTreeProviderLite();
+				const tree = provider.trees[0];
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: TestArray }));
+				const values = array.values();
+
+				// Initialize the tree with unhydrated array node
+				view.initialize(array);
+
+				// Checks that the iterator works after hydrating the node.
+				values.next();
+
+				// Make an edit
+				array.insertAtEnd(3);
+
+				// Checks that the iterator throws after
+				assert.throws(
+					() => {
+						values.next();
+					},
+					validateUsageError(/Concurrent editing and iteration is not allowed./),
+				);
+			});
+
 			it("Concurrently iterating and editing should throw an error.", () => {
 				const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
 				const values = array.values();

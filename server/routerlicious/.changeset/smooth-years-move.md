@@ -1,5 +1,6 @@
 ---
-"@fluidframework/server-services-shared": minor
+"@fluidframework/server-services-shared": major
+"__section": other
 ---
 
 Startup probe not a singleton anymore

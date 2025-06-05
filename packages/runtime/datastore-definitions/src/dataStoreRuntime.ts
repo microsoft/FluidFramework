@@ -34,6 +34,11 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "op", listener: (message: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "connected", listener: (clientId: string) => void);
+	/*
+	 * The readonly event is fired when the readonly state of the datastore runtime changes.
+	 * The isReadOnly param will express the new readonly state.
+	 */
+	(event: "readonly", listener: (isReadOnly: boolean) => void);
 }
 
 /**
@@ -69,6 +74,12 @@ export interface IFluidDataStoreRuntime
 
 	readonly connected: boolean;
 
+	/**
+	 * Get the current readonly state.
+	 * @returns true if read-only, otherwise false
+	 */
+	readonly isReadOnly: () => boolean;
+
 	readonly logger: ITelemetryBaseLogger;
 
 	/**
@@ -76,6 +87,12 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
+	/**
+	 * An optional ID compressor.
+	 * @remarks
+	 * When provided, can be used to compress and decompress IDs stored in this datastore.
+	 * Some SharedObjects, like SharedTree, require this.
+	 */
 	readonly idCompressor: IIdCompressor | undefined;
 
 	/**
@@ -149,4 +166,25 @@ export interface IFluidDataStoreRuntime
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
+	readonly inStagingMode?: boolean;
+}
+
+/**
+ * Internal configs possibly implemented by IFuidDataStoreRuntimes, for use only within the runtime layer.
+ * For example, temporary layer compatibility details
+ *
+ * @internal
+ */
+export interface IFluidDataStoreRuntimeInternalConfig {
+	readonly submitMessagesWithoutEncodingHandles?: boolean;
 }

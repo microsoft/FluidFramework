@@ -92,7 +92,7 @@ export function getTelemetryContextPropertiesWithHttpInfo(
  * Requests from the Fluid client may not include a correlationId, so one is generated when unavailable.
  * @internal
  */
-export const bindTelemetryContext = (): RequestHandler => {
+export const bindTelemetryContext = (serviceName: string): RequestHandler => {
 	return (req, res, next) => {
 		const telemetryContext = getGlobalTelemetryContext();
 		// Bind incoming telemetry properties to async context.
@@ -101,6 +101,7 @@ export const bindTelemetryContext = (): RequestHandler => {
 		if (!telemetryContextProperties.correlationId) {
 			telemetryContextProperties.correlationId = uuid();
 		}
+		telemetryContextProperties.serviceName = serviceName;
 		// Assign response headers for client telemetry purposes.
 		res.setHeader(CorrelationIdHeaderName, telemetryContextProperties.correlationId);
 		telemetryContext.bindProperties(telemetryContextProperties, () => next());

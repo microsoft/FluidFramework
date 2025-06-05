@@ -118,7 +118,7 @@ module.exports = {
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
-		"check:are-the-types-wrong": ["build"],
+		"check:are-the-types-wrong": ["tsc", "build:esnext", "api"],
 		"check:format": {
 			dependencies: [],
 			script: true,
@@ -142,6 +142,18 @@ module.exports = {
 		"clean": {
 			before: ["*"],
 		},
+
+		// Non-incremental tasks of convenience to ensure build is up-to-date
+		// before command is run. And some aliases for convenience.
+		"test:cjs": { dependsOn: ["test:unit:cjs"], script: false },
+		"test:esm": { dependsOn: ["test:unit:esm"], script: false },
+		"test:jest": ["build:compile"],
+		"test:mocha": ["build:test"],
+		"test:mocha:cjs": ["build:test:cjs"],
+		"test:mocha:esm": ["build:test:esm"],
+		"test:unit": { dependsOn: ["test:mocha", "test:jest"], script: false },
+		"test:unit:cjs": { dependsOn: ["test:mocha:cjs"], script: false },
+		"test:unit:esm": { dependsOn: ["test:mocha:esm"], script: false },
 
 		// alias for back compat
 		"build:full": {
@@ -311,6 +323,7 @@ module.exports = {
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
 			"common/build/build-common/src/esm/package.json",
+			"packages/common/core-interfaces/src/cjs/package.json",
 			"packages/framework/presence/src/cjs/package.json",
 		],
 		// Exclusion per handler
@@ -355,6 +368,8 @@ module.exports = {
 				"docs/build-redirects.js",
 				"docs/download-apis.js",
 				"docs/local-api-rollup.js",
+				// Avoids MIME-type issues in the browser.
+				"docs/static/trusted-types-policy.js",
 				"docs/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
@@ -415,8 +430,6 @@ module.exports = {
 				// Packages that violate the API linting rules
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
-				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
-				"^experimental/dds/tree/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
@@ -611,6 +624,9 @@ module.exports = {
 
 	releaseNotes: {
 		sections: {
+			// Note: Breaking changes should be reserved for major releases, which practically speaking means server.
+			// Client releases with breaking _legacy_ changes should be in the "legacy" section instead.
+			breaking: { heading: "🚨 Breaking Changes" },
 			feature: { heading: "✨ New Features" },
 			tree: { heading: "🌳 SharedTree DDS Changes" },
 			fix: { heading: "🐛 Bug Fixes" },

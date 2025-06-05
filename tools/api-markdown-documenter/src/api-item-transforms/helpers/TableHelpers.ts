@@ -125,7 +125,7 @@ export function createTableWithHeading(
 		: new SectionNode(
 				[table],
 				HeadingNode.createFromPlainText(memberTableProperties.headingTitle),
-		  );
+			);
 }
 
 /**
@@ -357,7 +357,9 @@ export function createTypeParametersSummaryTable(
 		if (hasAnyDefaults) {
 			bodyRowCells.push(createTypeDefaultCell(apiTypeParameter));
 		}
-		bodyRowCells.push(createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config));
+		bodyRowCells.push(
+			createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config),
+		);
 
 		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}

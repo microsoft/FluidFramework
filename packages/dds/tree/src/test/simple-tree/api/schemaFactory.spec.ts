@@ -6,9 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
-	MockFluidDataStoreRuntime,
 	MockHandle,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
@@ -37,6 +35,8 @@ import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
+	schemaStaticsBase,
+	type SchemaStatics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
@@ -45,7 +45,6 @@ import type {
 	TreeNodeFromImplicitAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/schemaTypes.js";
-import { TreeFactory } from "../../../treeFactory.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
@@ -53,7 +52,7 @@ import type {
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
-import { validateUsageError } from "../../utils.js";
+import { getView, validateUsageError } from "../../utils.js";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -117,12 +116,7 @@ describe("schemaFactory", () => {
 
 		const config = new TreeViewConfiguration({ schema: schema.number });
 
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize(5);
 		assert.equal(view.root, 5);
 	});
@@ -190,6 +184,31 @@ describe("schemaFactory", () => {
 		const _check3 = new Foo({ x: 1 });
 	});
 
+	it("empty field", () => {
+		// A field with no allowed types and thus must always be empty.
+		const config = new TreeViewConfiguration({ schema: SchemaFactory.optional([]) });
+		const view = getView(config);
+		view.initialize(undefined);
+		assert.equal(view.root, undefined);
+		type Field = typeof view.root;
+		type _check = requireTrue<areSafelyAssignable<Field, undefined>>;
+	});
+
+	it("empty object field", () => {
+		const factory = new SchemaFactory("test-scope");
+		class Foo extends factory.object("foo", {
+			// A field with no allowed types and thus must always be empty.
+			x: SchemaFactory.optional([]),
+		}) {}
+
+		const config = new TreeViewConfiguration({ schema: Foo });
+		const view = getView(config);
+		view.initialize({});
+		assert.equal(view.root.x, undefined);
+		type Field = typeof view.root.x;
+		type _check = requireTrue<areSafelyAssignable<Field, undefined>>;
+	});
+
 	it("Required fields", () => {
 		const factory = new SchemaFactory("test");
 		class Foo extends factory.object("foo", {
@@ -239,12 +258,7 @@ describe("schemaFactory", () => {
 
 			const config = new TreeViewConfiguration({ schema: Point });
 
-			const factory = new TreeFactory({});
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"tree",
-			);
-			const view = tree.viewWith(config);
+			const view = getView(config);
 			view.initialize(new Point({ x: 1, y: 2 }));
 			const { root } = view;
 			assert.equal(root.x, 1);
@@ -278,12 +292,7 @@ describe("schemaFactory", () => {
 
 			const config = new TreeViewConfiguration({ schema: Point });
 
-			const factory = new TreeFactory({});
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"tree",
-			);
-			const view = tree.viewWith(config);
+			const view = getView(config);
 			view.initialize(new Point({ x: 1 }));
 			const { root } = view;
 			assert.equal(root.x, 1);
@@ -374,7 +383,7 @@ describe("schemaFactory", () => {
 				},
 			};
 
-			class Foo extends factory.object(
+			class Foo extends factory.objectAlpha(
 				"Foo",
 				{ bar: factory.number },
 				{ metadata: fooMetadata },
@@ -471,12 +480,7 @@ describe("schemaFactory", () => {
 
 		const config = new TreeViewConfiguration({ schema: Canvas });
 
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view: TreeView<typeof Canvas> = tree.viewWith(config);
+		const view: TreeView<typeof Canvas> = getView(config);
 		view.initialize(
 			new Canvas({
 				stuff: new NodeList([new Note({ text: "hi", location: undefined })]),
@@ -499,20 +503,13 @@ describe("schemaFactory", () => {
 
 			const treeConfiguration = new TreeViewConfiguration({ schema: Inventory });
 
-			const factory = new TreeFactory({});
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"tree",
-			);
-			const view = tree.viewWith(treeConfiguration);
+			const view = getView(treeConfiguration);
 			view.initialize(
 				new Inventory({
 					parts: [1, 2],
 				}),
 			);
 		});
-
-		const treeFactory = new TreeFactory({});
 
 		it("Structural", () => {
 			const factory = new SchemaFactory("test");
@@ -543,11 +540,7 @@ describe("schemaFactory", () => {
 
 			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the list node:
 			const treeConfiguration = new TreeViewConfiguration({ schema: Parent });
-			const tree = treeFactory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"tree",
-			);
-			const view = tree.viewWith(treeConfiguration);
+			const view = getView(treeConfiguration);
 			view.initialize(new Parent({ child: [5] }));
 
 			const listNode = view.root.child;
@@ -589,8 +582,6 @@ describe("schemaFactory", () => {
 	});
 
 	describe("Map", () => {
-		const treeFactory = new TreeFactory({});
-
 		it("Structural", () => {
 			const factory = new SchemaFactory("test");
 
@@ -618,11 +609,7 @@ describe("schemaFactory", () => {
 
 			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the map node:
 			const treeConfiguration = new TreeViewConfiguration({ schema: Parent });
-			const tree = treeFactory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"tree",
-			);
-			const view = tree.viewWith(treeConfiguration);
+			const view = getView(treeConfiguration);
 			view.initialize(new Parent({ child: new Map([["x", 5]]) }));
 
 			const mapNode = view.root.child;
@@ -823,14 +810,9 @@ describe("schemaFactory", () => {
 			validate: (view: TreeView<typeof ComboRoot>, nodes: ComboNode[]) => void,
 		) {
 			const config = new TreeViewConfiguration({ schema: ComboRoot });
-			const factory = new TreeFactory({});
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"tree",
-			);
 
 			// Check that nodes in the initial tree are hydrated
-			const view = tree.viewWith(config);
+			const view = getView(config);
 			const { parent: initialParent, nodes: initialNodes } = createComboTree({
 				parentType,
 				childType,
@@ -895,12 +877,21 @@ describe("schemaFactory", () => {
 	});
 
 	it("schemaFromValue", () => {
+		assert.equal(schemaFromValue(1), SchemaFactory.number);
+		assert.equal(schemaFromValue(""), SchemaFactory.string);
+		assert.equal(schemaFromValue(null), SchemaFactory.null);
+		assert.equal(schemaFromValue(new MockHandle("x")), SchemaFactory.handle);
+		assert.equal(schemaFromValue(false), SchemaFactory.boolean);
+	});
+
+	it("statics", () => {
 		const f = new SchemaFactory("");
-		assert.equal(schemaFromValue(1), f.number);
-		assert.equal(schemaFromValue(""), f.string);
-		assert.equal(schemaFromValue(null), f.null);
-		assert.equal(schemaFromValue(new MockHandle("x")), f.handle);
-		assert.equal(schemaFromValue(false), f.boolean);
+		for (const [key, value] of Object.entries(schemaStaticsBase)) {
+			assert.equal((SchemaFactory as unknown as Record<string, unknown>)[key], value);
+			assert.equal((f as unknown as Record<string, unknown>)[key], value);
+		}
+
+		const _static: SchemaStatics = SchemaFactory;
 	});
 
 	it("extra fields in object constructor", () => {

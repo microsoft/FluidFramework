@@ -10,7 +10,8 @@ import {
 	configureDebugAsserts,
 	debugAssert,
 	nonProductionConditionalsIncluded,
-} from "@fluidframework/core-utils/internal";
+	onAssertionFailure,
+} from "../assert.js";
 
 describe("assert", () => {
 	it("Validate Shortcode Format", () => {
@@ -47,5 +48,24 @@ describe("assert", () => {
 		debugAssert(() => {
 			throw new Error("Should not run");
 		});
+	});
+
+	it("onAssertionFailure", () => {
+		const log: string[] = [];
+		const handler = (error: Error): void => {
+			log.push(error.message);
+		};
+		const removeListener = onAssertionFailure(handler);
+		strict.throws(() => assert(false, "A"));
+
+		const removeListener2 = onAssertionFailure(handler);
+
+		strict.throws(() => assert(false, "B"));
+		removeListener();
+		strict.throws(() => assert(false, "C"));
+		removeListener2();
+		strict.throws(() => assert(false, "D"));
+
+		strict.deepEqual(log, ["A", "B", "B", "C"]);
 	});
 });

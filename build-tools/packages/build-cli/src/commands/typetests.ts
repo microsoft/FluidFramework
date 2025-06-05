@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Package, updatePackageJsonFile } from "@fluidframework/build-tools";
+import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
+import { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-
 import { PackageCommand } from "../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../flags.js";
 import {

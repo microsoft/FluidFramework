@@ -17,7 +17,13 @@ export {
 	mapTreeFieldFromCursor,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
-export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/index.js";
+export {
+	SchemaSummarizer,
+	encodeTreeSchema,
+	makeSchemaCodec,
+	makeSchemaCodecs,
+	SchemaCodecVersion,
+} from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
 	type CursorAdapter,
@@ -103,19 +109,20 @@ export {
 	type FieldBatchCodec,
 	makeTreeChunker,
 	makeFieldBatchCodec,
+	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
 } from "./chunked-forest/index.js";
 
 export {
-	compareLocalNodeKeys,
-	createNodeKeyManager,
-	isStableNodeKey,
-	type LocalNodeKey,
-	MockNodeKeyManager,
-	type NodeKeyManager,
+	compareLocalNodeIdentifiers,
+	createNodeIdentifierManager,
+	isStableNodeIdentifier,
+	type LocalNodeIdentifier,
+	MockNodeIdentifierManager,
+	type NodeIdentifierManager,
 	nodeKeyTreeIdentifier,
-	type StableNodeKey,
-} from "./node-key/index.js";
+	type StableNodeIdentifier,
+} from "./node-identifier/index.js";
 
 export {
 	FieldKinds,
@@ -136,9 +143,10 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
-	SchemaValidationErrors,
+	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
+	inSchemaOrThrow,
 } from "./default-schema/index.js";
 
 export {
@@ -152,7 +160,6 @@ export {
 	type FlexTreeEntity,
 	type FlexTreeField,
 	type FlexTreeNode,
-	getTreeContext,
 	TreeStatus,
 	Context,
 	type FlexTreeNodeEvents,
@@ -164,7 +171,6 @@ export {
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
 	getSchemaAndPolicy,
-	isFreedSymbol,
 	LazyEntity,
 	treeStatusFromAnchorCache,
 	indexForAt,
@@ -193,3 +199,5 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
+
+export { initializeForest } from "./initializeForest.js";

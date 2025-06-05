@@ -11,13 +11,11 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	IOrderedClientElection,
-	// eslint-disable-next-line import/no-deprecated
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection.js";
+import { summarizerClientType } from "./summarizerTypes.js";
 import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
-
-export const summarizerClientType = "summarizer";
 
 export interface ISummarizerClientElectionEvents extends IEvent {
 	(event: "electedSummarizerChanged", handler: () => void): void;
@@ -120,7 +118,6 @@ export class SummarizerClientElection
 		});
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	public serialize(): ISerializedElection {
 		const { electedClientId, electedParentId, electionSequenceNumber } =
 			this.clientElection.serialize();

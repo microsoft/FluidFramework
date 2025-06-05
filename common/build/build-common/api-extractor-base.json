@@ -20,11 +20,15 @@
 		"enabled": true,
 		"reportFileName": "<unscopedPackageName>",
 		"reportFolder": "<projectFolder>/api-report/",
-		"reportTempFolder": "<projectFolder>/_api-extractor-temp/"
-		// https://github.com/microsoft/rushstack/issues/4786 requires the derived configs
-		// to have the same length reportVariants or longer. Otherwise, later array entries
-		// bleed thru. So reportVariants should only be set in derived configs.
-		// "reportVariants": set-in-derived-configs
+		"reportTempFolder": "<projectFolder>/_api-extractor-temp/",
+		"reportVariants": ["public", "beta", "alpha"], // TODO: add "complete"?
+
+		// Add `@legacy` and `@system` to the list of tags included in API reports.
+		// These tags have breaking change implications, so they provide useful context during code reviews.
+		"tagsToReport": {
+			"@legacy": true,
+			"@system": true
+		}
 	},
 
 	/**

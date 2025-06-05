@@ -5,6 +5,5 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"exactOptionalPropertyTypes": false,
 	},
 }

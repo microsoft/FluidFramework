@@ -22,6 +22,7 @@ import {
 	IRevokedTokenChecker,
 	ICollaborationSessionTracker,
 	IReadinessCheck,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -64,6 +65,7 @@ export class NexusRunner implements IRunner {
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly collaborationSessionTracker?: ICollaborationSessionTracker,
 		private readonly readinessCheck?: IReadinessCheck,
+		private readonly denyList?: IDenyList,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -124,6 +126,7 @@ export class NexusRunner implements IRunner {
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.collaborationSessionTracker,
+				this.denyList,
 			);
 
 			if (this.tokenRevocationManager) {
@@ -140,6 +143,11 @@ export class NexusRunner implements IRunner {
 		httpServer.on("upgrade", (req, socket, initialMsgBuffer) =>
 			this.setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer),
 		);
+		httpServer.on("request", (req, res) => {
+			if (req.url?.startsWith("/socket.io")) {
+				this.setupSocketIoRequestMetric(req, res);
+			}
+		});
 		// Listen on primary thread port, on all network interfaces,
 		// or allow cluster module to assign random port for worker thread.
 		httpServer.listen(cluster.isPrimary ? this.port : 0);
@@ -205,6 +213,33 @@ export class NexusRunner implements IRunner {
 	}
 
 	/**
+	 * Sets up telemetry for socket.io requests.
+	 * It logs all socket.io HTTP requests received by the server.
+	 */
+	private setupSocketIoRequestMetric(req, res) {
+		const requestProperties = {
+			requestUrl: req.url,
+			requestMethod: req.method,
+			isWebSocketUpgrade: req.headers.upgrade?.toLowerCase() === "websocket",
+		};
+		Lumberjack.info("Socket.IO request received", requestProperties);
+		const socketIoRequestMetric = Lumberjack.newLumberMetric(
+			LumberEventName.SocketIoRequest,
+			requestProperties,
+		);
+
+		res.on("finish", () => {
+			socketIoRequestMetric.setProperty("statusCode", res.statusCode);
+			socketIoRequestMetric.success("Socket.IO request finished");
+		});
+
+		// Log any exceptions
+		res.on("error", (error) => {
+			socketIoRequestMetric.error("Socket.IO request error", requestProperties, error);
+		});
+	}
+
+	/**
 	 * Handles the on "upgrade" event to setup connection count telemetry. This telemetry is updated
 	 * on all socket events: "upgrade", "close", "error".
 	 */
@@ -212,6 +247,8 @@ export class NexusRunner implements IRunner {
 		const metric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
 			origin: "upgrade",
 			metricValue: socket.server._connections,
+			requestUrl: req.url,
+			requestMethod: req.method,
 		});
 		metric.success("WebSockets: connection upgraded");
 		socket.on("close", (hadError: boolean) => {

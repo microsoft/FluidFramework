@@ -97,7 +97,7 @@ export interface ApiItemTransformations {
 	readonly [ApiItemKind.Namespace]: TransformApiItemWithChildren<ApiNamespace>;
 	readonly [ApiItemKind.Property]: TransformApiItemWithoutChildren<ApiProperty>;
 	readonly [ApiItemKind.PropertySignature]: TransformApiItemWithoutChildren<ApiPropertySignature>;
-	readonly [ApiItemKind.TypeAlias]: TransformApiItemWithoutChildren<ApiTypeAlias>;
+	readonly [ApiItemKind.TypeAlias]: TransformApiItemWithChildren<ApiTypeAlias>;
 	readonly [ApiItemKind.Variable]: TransformApiItemWithoutChildren<ApiVariable>;
 }
 
@@ -107,16 +107,18 @@ export interface ApiItemTransformations {
 const defaultApiItemTransformationOptions: ApiItemTransformations = {
 	[ApiItemKind.CallSignature]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	[ApiItemKind.Class]: DefaultTransformationImplementations.transformApiClass,
+	[ApiItemKind.Class]: DefaultTransformationImplementations.transformApiTypeLike,
 	[ApiItemKind.Constructor]: DefaultTransformationImplementations.transformApiFunctionLike,
-	[ApiItemKind.ConstructSignature]: DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.ConstructSignature]:
+		DefaultTransformationImplementations.transformApiFunctionLike,
 	[ApiItemKind.EntryPoint]: DefaultTransformationImplementations.transformApiEntryPoint,
 	[ApiItemKind.Enum]: DefaultTransformationImplementations.transformApiEnum,
-	[ApiItemKind.EnumMember]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
+	[ApiItemKind.EnumMember]:
+		DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	[ApiItemKind.Function]: DefaultTransformationImplementations.transformApiFunctionLike,
 	[ApiItemKind.IndexSignature]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	[ApiItemKind.Interface]: DefaultTransformationImplementations.transformApiInterface,
+	[ApiItemKind.Interface]: DefaultTransformationImplementations.transformApiTypeLike,
 	[ApiItemKind.Method]: DefaultTransformationImplementations.transformApiFunctionLike,
 	[ApiItemKind.MethodSignature]: DefaultTransformationImplementations.transformApiFunctionLike,
 	[ApiItemKind.Model]: DefaultTransformationImplementations.transformApiModel,
@@ -124,7 +126,7 @@ const defaultApiItemTransformationOptions: ApiItemTransformations = {
 	[ApiItemKind.Property]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	[ApiItemKind.PropertySignature]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	[ApiItemKind.TypeAlias]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
+	[ApiItemKind.TypeAlias]: DefaultTransformationImplementations.transformApiTypeLike,
 	[ApiItemKind.Variable]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 };
 

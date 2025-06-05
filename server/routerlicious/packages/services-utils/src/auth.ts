@@ -8,7 +8,7 @@
 import { Params } from "express-serve-static-core";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { decode, sign } from "jsonwebtoken";
-import { v4 as uuid } from "uuid";
+import { v4 as uuid, validate } from "uuid";
 import {
 	NetworkError,
 	isNetworkError,
@@ -466,4 +466,16 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
  */
 export function getParam(params: Params, key: string) {
 	return Array.isArray(params) ? undefined : params[key];
+}
+
+export function getJtiClaimFromAccessToken(token: string): string | undefined {
+	try {
+		const claims = decode(token) as ITokenClaims;
+		if (claims?.jti && validate(claims.jti)) {
+			return claims.jti;
+		}
+	} catch (error) {
+		Lumberjack.error("Error decoding token", undefined, error);
+	}
+	return undefined;
 }

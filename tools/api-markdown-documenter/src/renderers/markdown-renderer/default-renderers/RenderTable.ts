@@ -23,7 +23,11 @@ import { renderNodeWithHtmlSyntax } from "../Utilities.js";
  *
  * @remarks Will render as HTML when within another table's context.
  */
-export function renderTable(node: TableNode, writer: DocumentWriter, context: RenderContext): void {
+export function renderTable(
+	node: TableNode,
+	writer: DocumentWriter,
+	context: RenderContext,
+): void {
 	// Render as HTML if we are rendering this table under another table (not supported natively by Markdown).
 	if (context.insideTable === true) {
 		renderNodeWithHtmlSyntax(node, writer, context);

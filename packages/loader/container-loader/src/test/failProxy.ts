@@ -24,7 +24,7 @@ export const failSometimeProxy = <T extends object>(handler: Partial<T>): T => {
 			if (p in handler) {
 				return Reflect.get(t, p, r);
 			}
-			return failProxy();
+			throw new Error(`${p.toString()} not implemented`);
 		},
 	});
 	return proxy;

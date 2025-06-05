@@ -71,12 +71,14 @@ export class HandleCache implements IVectorConsumer<Handle> {
 
 	/**
 	 * Used by {@link HandleCache.cacheMiss} to retrieve handles for a range of positions.
+	 * @param start - The start position (inclusive).
+	 * @param end - The end position (exclusive).
+	 * @param handles - The array to populate with handles. Note that it is mutated in place.
 	 */
-	private getHandles(start: number, end: number): Handle[] {
+	private getHandles(start: number, end: number, handles: Handle[]): void {
 		// TODO: This can be accelerated substantially using 'walkSegments()'.  The only catch
 		//       is that
 
-		const handles: Handle[] = [];
 		const { vector } = this;
 
 		for (let pos = start; pos < end; pos++) {
@@ -85,8 +87,6 @@ export class HandleCache implements IVectorConsumer<Handle> {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			handles.push(asPerm.start + offset!);
 		}
-
-		return handles;
 	}
 
 	private cacheMiss(position: number): Handle {
@@ -102,16 +102,15 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		//       the handle cache).
 
 		if (_position < this.start) {
-			this.handles = [...this.getHandles(_position, this.start), ...this.handles];
+			const handles: Handle[] = [];
+			this.getHandles(_position, this.start, handles);
+			handles.push(...this.handles);
+			this.handles = handles;
 			this.start = _position;
 			return this.handles[0];
 		} else {
 			ensureRange(_position, this.vector.getLength());
-
-			this.handles = [
-				...this.handles,
-				...this.getHandles(this.start + this.handles.length, _position + 1),
-			];
+			this.getHandles(this.start + this.handles.length, _position + 1, this.handles);
 			return this.handles[this.handles.length - 1];
 		}
 	}

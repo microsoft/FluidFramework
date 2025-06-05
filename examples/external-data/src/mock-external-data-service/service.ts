@@ -286,9 +286,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 				.json({ message: "Missing parameter externalTaskListId in request url" });
 		}
 		externalDataSource.fetchData(externalTaskListId).then(
-			(response) => {
-				// eslint-disable-next-line @typescript-eslint/no-base-to-string
-				const responseBody = JSON.parse(response.body.toString()) as Record<
+			async (response) => {
+				const responseText = await response.text();
+				const responseBody = JSON.parse(responseText) as Record<
 					string | number | symbol,
 					unknown
 				>;

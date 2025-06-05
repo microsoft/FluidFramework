@@ -25,8 +25,10 @@ import type { DataObjectTypes, IDataObjectProps } from "./types.js";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
+ *
+ * @remarks
  * You probably don't want to inherit from this data store directly unless
- * you are creating another base data store class
+ * you are creating another base data store class.
  *
  * @typeParam I - The optional input types used to strongly type the data object
  * @legacy

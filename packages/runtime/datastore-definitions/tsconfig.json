@@ -6,6 +6,5 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"emitDeclarationOnly": true,
-		"exactOptionalPropertyTypes": false,
 	},
 }

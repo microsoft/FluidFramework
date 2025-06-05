@@ -6,7 +6,7 @@
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
 	parserOptions: {
-		project: ["./tsconfig.json"],
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
 		// Disabled because they conflict with Prettier.
@@ -14,7 +14,6 @@ module.exports = {
 
 		// Disabled because it is incompatible with API-Extractor.
 		"@typescript-eslint/no-namespace": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	overrides: [
 		{

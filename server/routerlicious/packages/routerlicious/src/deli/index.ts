@@ -65,6 +65,9 @@ export async function deliCreate(
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+	const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+		| number
+		| undefined;
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
 
@@ -161,6 +164,8 @@ export async function deliCreate(
 			undefined,
 			redisConfig.enableClustering,
 			redisConfig.slotsRefreshTimeout,
+			undefined /* retryDelays */,
+			redisConfig.enableVerboseErrorLogging,
 		);
 	// The socketioredispublisher handles redis connection graceful shutdown
 	const publisher = new services.SocketIoRedisPublisher(redisClientConnectionManager);
@@ -216,6 +221,7 @@ export async function deliCreate(
 		reverseProducer,
 		serviceConfiguration,
 		customizations?.clusterDrainingChecker,
+		ephemeralDocumentTTLSec,
 	);
 
 	deliLambdaFactory.on("dispose", () => {

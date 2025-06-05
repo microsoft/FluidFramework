@@ -66,7 +66,7 @@ describe("Minimum Compat Version", () => {
 		assert.strictEqual(
 			isCompatVersionBelowMinVersion(greaterVersion, {
 				name: "test",
-				kind: CompatKind.CrossVersion,
+				kind: CompatKind.CrossClient,
 				compatVersion: greaterVersion,
 				loadVersion: lowerVersion,
 			}),
@@ -78,7 +78,7 @@ describe("Minimum Compat Version", () => {
 		assert.strictEqual(
 			isCompatVersionBelowMinVersion(greaterVersion, {
 				name: "test",
-				kind: CompatKind.CrossVersion,
+				kind: CompatKind.CrossClient,
 				compatVersion: lowerVersion,
 				loadVersion: greaterVersion,
 			}),
@@ -90,7 +90,7 @@ describe("Minimum Compat Version", () => {
 		assert.strictEqual(
 			isCompatVersionBelowMinVersion(lowerVersion, {
 				name: "test",
-				kind: CompatKind.CrossVersion,
+				kind: CompatKind.CrossClient,
 				compatVersion: greaterVersion,
 				loadVersion: lowerVersion,
 			}),
@@ -100,7 +100,7 @@ describe("Minimum Compat Version", () => {
 		assert.strictEqual(
 			isCompatVersionBelowMinVersion(lowerVersion, {
 				name: "test",
-				kind: CompatKind.CrossVersion,
+				kind: CompatKind.CrossClient,
 				compatVersion: lowerVersion,
 				loadVersion: greaterVersion,
 			}),

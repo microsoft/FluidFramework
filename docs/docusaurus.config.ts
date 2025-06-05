@@ -18,6 +18,24 @@ const githubUrl = "https://github.com/microsoft/FluidFramework";
 const githubMainBranchUrl = `${githubUrl}/tree/main`;
 const githubDocsUrl = `${githubMainBranchUrl}/docs`;
 
+// See https://docusaurus.io/docs/api/plugin-methods/lifecycle-apis and
+// https://webpack.js.org/configuration/output/#outputtrustedtypes for more information about
+// the trusted types plugin and how to use it.
+const trustedTypesPlugin = () => {
+	return {
+		name: "webpack-trusted-types",
+		configureWebpack() {
+			return {
+				output: {
+					trustedTypes: {
+						policyName: "ff#webpack",
+					},
+				},
+			};
+		},
+	};
+};
+
 // #region Generate the Docusaurus versions from our versions config.
 
 const versionsConfig: { [versionName: string]: VersionOptions } = {
@@ -74,7 +92,7 @@ const config: Config = {
 	// TODO: consider re-enabling after the following issue is resolved:
 	// <https://github.com/Azure/static-web-apps/issues/1036>
 	// trailingSlash: false,
-	plugins: ["docusaurus-plugin-sass"],
+	plugins: ["docusaurus-plugin-sass", trustedTypesPlugin],
 	presets: [
 		[
 			"classic",
@@ -91,7 +109,7 @@ const config: Config = {
 						if (docPath.startsWith("api/")) {
 							return undefined;
 						}
-						return `${githubDocsUrl}/${versionDocsDirPath}${docPath}`;
+						return `${githubDocsUrl}/${versionDocsDirPath}/${docPath}`;
 					},
 				},
 				// We can add support for blog posts in the future.
@@ -172,6 +190,12 @@ const config: Config = {
 	customFields: {
 		INSTRUMENTATION_KEY: process.env.INSTRUMENTATION_KEY,
 	},
+	scripts: [
+		{
+			src: "/trusted-types-policy.js",
+			async: false,
+		},
+	],
 };
 
 export default config;

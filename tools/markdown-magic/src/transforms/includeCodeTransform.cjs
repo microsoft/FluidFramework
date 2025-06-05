@@ -34,10 +34,16 @@ const {
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function includeCodeTransform(content, options, config) {
-	const { path: relativeFilePath, start: startLineString, end: endLineString, language } = options;
+	const {
+		path: relativeFilePath,
+		start: startLineString,
+		end: endLineString,
+		language,
+	} = options;
 	const { originalPath: documentFilePath } = config;
 
-	const startLine = startLineString === undefined ? undefined : Number.parseInt(startLineString);
+	const startLine =
+		startLineString === undefined ? undefined : Number.parseInt(startLineString);
 	const endLine = endLineString === undefined ? undefined : Number.parseInt(endLineString);
 
 	if (!relativeFilePath) {
@@ -51,11 +57,7 @@ function includeCodeTransform(content, options, config) {
 	try {
 		const fileContents = readFile(resolvedFilePath, startLine, endLine);
 
-		const codeBlock = [
-			`\`\`\`${language ?? ""}`,
-			fileContents,
-			"```",
-		].join("\n");
+		const codeBlock = [`\`\`\`${language ?? ""}`, fileContents, "```"].join("\n");
 
 		const section = formattedSectionText(codeBlock, /* headingOptions: */ undefined);
 

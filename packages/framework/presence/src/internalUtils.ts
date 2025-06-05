@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { DeepReadonly } from "@fluidframework/core-interfaces/internal";
+
 /**
  * Returns union of types of values in a record.
  */
@@ -69,4 +71,11 @@ export function getOrCreateRecord<K extends string | number | symbol, V>(
 		record[key] = defaultValue(key);
 	}
 	return record[key];
+}
+
+/**
+ * Do nothing helper to apply deep immutability to a value's type.
+ */
+export function asDeeplyReadonly<T>(value: T): DeepReadonly<T> {
+	return value as DeepReadonly<T>;
 }

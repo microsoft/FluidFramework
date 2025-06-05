@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
@@ -16,6 +16,7 @@ import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
+	debugAssert,
 	Deferred,
 	LazyPromise,
 	unreachableCase,
@@ -56,6 +57,11 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	// eslint-disable-next-line import/no-deprecated
+	type IContainerRuntimeBaseExperimental,
+	notifiesReadOnlyState,
+	encodeHandlesInContainerRuntime,
+	type IFluidDataStorePolicies,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -88,6 +94,11 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
+import {
+	dataStoreCompatDetailsForRuntime,
+	// dataStoreCompatDetailsForRuntime,
+	validateRuntimeCompatibility,
+} from "./dataStoreLayerCompatState.js";
 import { FluidObjectHandle } from "./fluidHandle.js";
 import {
 	LocalChannelContext,
@@ -96,6 +107,22 @@ import {
 } from "./localChannelContext.js";
 import { pkgVersion } from "./packageVersion.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
+
+type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T, K> &
+	Required<Pick<T, K>>;
+
+interface IFluidDataStoreContextFeaturesToTypes {
+	[encodeHandlesInContainerRuntime]: IFluidDataStoreContext; // No difference in typing with this feature
+	[notifiesReadOnlyState]: PickRequired<IFluidDataStoreContext, "isReadOnly">;
+}
+
+function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
+	obj: IFluidDataStoreContext,
+	feature: K,
+): obj is IFluidDataStoreContextFeaturesToTypes[K] {
+	const { ILayerCompatDetails } = obj as FluidObject<ILayerCompatDetails>;
+	return ILayerCompatDetails?.supportedFeatures.has(feature) ?? false;
+}
 
 /**
  * @legacy
@@ -117,6 +144,10 @@ export interface ISharedObjectRegistry {
 	get(name: string): IChannelFactory | undefined;
 }
 
+const defaultPolicies: IFluidDataStorePolicies = {
+	readonlyInStagingMode: true,
+};
+
 /**
  * Base data store class
  * @legacy
@@ -134,6 +165,13 @@ export class FluidDataStoreRuntime
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
 	}
+
+	public readonly policies: IFluidDataStorePolicies;
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isReadOnly}
+	 */
+	public readonly isReadOnly = (): boolean => this._readonly;
 
 	public get clientId(): string | undefined {
 		return this.dataStoreContext.clientId;
@@ -216,6 +254,24 @@ export class FluidDataStoreRuntime
 	private localChangesTelemetryCount: number;
 
 	/**
+	 * The compatibility details of the DataStore layer that is exposed to the Runtime layer
+	 * for validating Runtime-DataStore compatibility.
+	 * @remarks This is for internal use only.
+	 * The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
+	 * is currently marked as legacy alpha. So, using unknown here.
+	 */
+	public readonly ILayerCompatDetails?: unknown = dataStoreCompatDetailsForRuntime;
+
+	/**
+	 * See IFluidDataStoreRuntimeInternalConfig.submitMessagesWithoutEncodingHandles
+	 *
+	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
+	 * and we keep this property as private, but consumers may optimistically cast
+	 * to the internal interface to access this property.
+	 */
+	private readonly submitMessagesWithoutEncodingHandles: boolean;
+
+	/**
 	 * Create an instance of a DataStore runtime.
 	 *
 	 * @param dataStoreContext - Context object for the runtime.
@@ -231,6 +287,7 @@ export class FluidDataStoreRuntime
 		private readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
 
@@ -238,6 +295,29 @@ export class FluidDataStoreRuntime
 			!dataStoreContext.id.includes("/"),
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
+
+		this.policies = { ...defaultPolicies, ...policies };
+
+		// Validate that the Runtime is compatible with this DataStore.
+		const { ILayerCompatDetails: runtimeCompatDetails } =
+			dataStoreContext as FluidObject<ILayerCompatDetails>;
+		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this));
+
+		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
+			this._readonly = dataStoreContext.isReadOnly();
+		} else {
+			this._readonly = this.dataStoreContext.deltaManager.readOnlyInfo.readonly === true;
+			this.dataStoreContext.deltaManager.on("readonly", (readonly) =>
+				this.notifyReadOnlyState(readonly),
+			);
+		}
+
+		this.submitMessagesWithoutEncodingHandles = contextSupportsFeature(
+			dataStoreContext,
+			encodeHandlesInContainerRuntime,
+		);
+		// We read this property here to avoid a compiler error (unused private member)
+		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
 
 		this.mc = createChildMonitoringContext({
 			logger: dataStoreContext.baseLogger,
@@ -335,6 +415,18 @@ export class FluidDataStoreRuntime
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+
+		// eslint-disable-next-line import/no-deprecated
+		const base: IContainerRuntimeBaseExperimental | undefined =
+			// eslint-disable-next-line import/no-deprecated
+			this.dataStoreContext.containerRuntime satisfies IContainerRuntimeBaseExperimental;
+		if (base !== undefined && "inStagingMode" in base) {
+			Object.defineProperty(this, "inStagingMode", {
+				get: () => {
+					return base.inStagingMode;
+				},
+			});
+		}
 	}
 
 	get deltaManager(): IDeltaManagerErased {
@@ -459,11 +551,11 @@ export class FluidDataStoreRuntime
 			this.validateChannelId(id);
 		} else {
 			/**
-			 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
-			 * in the snapshot.
-			 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
+			 * Return uuid if short-ids are explicitly disabled via feature flags.
 			 */
-			if (this.mc.config.getBoolean("Fluid.Runtime.UseShortIds") === true) {
+			if (this.mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
+				id = uuid();
+			} else {
 				// We use three non-overlapping namespaces:
 				// - detached state: even numbers
 				// - attached state: odd numbers
@@ -480,8 +572,6 @@ export class FluidDataStoreRuntime
 						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 				}
-			} else {
-				id = uuid();
 			}
 			assert(!id.includes("/"), 0x8fc /* slash */);
 		}
@@ -619,6 +709,20 @@ export class FluidDataStoreRuntime
 		}
 
 		raiseConnectedEvent(this.logger, this, connected, clientId);
+	}
+
+	private _readonly: boolean;
+	/**
+	 * This function is used by the datastore context to configure the
+	 * readonly state of this object. It should not be invoked by
+	 * any other callers.
+	 */
+	public notifyReadOnlyState(readonly: boolean): void {
+		this.verifyNotClosed();
+		if (readonly !== this._readonly) {
+			this._readonly = readonly;
+			this.emit("readonly", readonly);
+		}
 	}
 
 	public getQuorum(): IQuorumClients {
@@ -786,29 +890,6 @@ export class FluidDataStoreRuntime
 		for (const { contents, clientSequenceNumber } of messagesContent) {
 			this.emit("op", { ...envelope, contents, clientSequenceNumber });
 		}
-	}
-
-	/**
-	 * back-compat ADO 21575.
-	 * This is still here for back-compat purposes because it exists on IFluidDataStoreChannel. Once it is removed from
-	 * the interface, this method can be removed.
-	 */
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		this.processMessages({
-			envelope: message,
-			messagesContent: [
-				{
-					contents: message.contents,
-					localOpMetadata,
-					clientSequenceNumber: message.clientSequenceNumber,
-				},
-			],
-			local,
-		});
 	}
 
 	public processSignal(message: IInboundSignalMessage, local: boolean) {
@@ -1141,7 +1222,12 @@ export class FluidDataStoreRuntime
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	public reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+	public reSubmit(
+		type: DataStoreMessageType,
+		content: any,
+		localOpMetadata: unknown,
+		squash?: boolean,
+	) {
 		this.verifyNotClosed();
 
 		switch (type) {
@@ -1150,7 +1236,7 @@ export class FluidDataStoreRuntime
 				const envelope = content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
-				channelContext.reSubmit(envelope.contents, localOpMetadata);
+				channelContext.reSubmit(envelope.contents, localOpMetadata, squash);
 				break;
 			}
 			case DataStoreMessageType.Attach:

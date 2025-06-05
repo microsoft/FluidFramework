@@ -19,7 +19,6 @@ import {
 	forEachNodeInSubtree,
 } from "../core/index.js";
 import { TreeStatus } from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
 
 /**
  * A helper class for common anchor operation.
@@ -51,7 +50,7 @@ export class TestAnchor {
 		const paths: UpPath[] = [];
 		forEachNodeInSubtree(cursor, (c): void => {
 			if (Object.is(c.value, value)) {
-				paths.push(c.getPath() ?? fail("Expected path"));
+				paths.push(c.getPath() ?? assert.fail("Expected path"));
 			}
 		});
 		cursor.free();

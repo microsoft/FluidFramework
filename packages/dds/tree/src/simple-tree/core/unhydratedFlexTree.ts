@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -15,17 +15,17 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldUpPath,
 	forbiddenFieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type MapTree,
+	type NormalizedFieldUpPath,
 	type SchemaPolicy,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
+import { brand, getOrCreate, mapIterable } from "../../util/index.js";
 import {
 	type FlexTreeContext,
 	FlexTreeEntityKind,
@@ -69,17 +69,19 @@ interface LocationInField {
  * An unhydrated implementation of {@link FlexTreeNode} which wraps a {@link MapTree}.
  * @remarks
  * MapTreeNodes are unconditionally cached -
- * when retrieved via {@link getOrCreateNode}, the same {@link MapTree} object will always produce the same `UnhydratedFlexTreeNode` object.
+ * when retrieved via {@link getOrCreateNodeFromInnerNode}, the same {@link MapTree} object will always produce the same `UnhydratedFlexTreeNode` object.
  *
  * Create a `UnhydratedFlexTreeNode` by calling {@link getOrCreate}.
  */
-export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
+export class UnhydratedFlexTreeNode implements FlexTreeNode {
 	public get schema(): TreeNodeSchemaIdentifier {
 		return this.mapTree.type;
 	}
 
 	public get storedSchema(): TreeNodeStoredSchema {
-		return this.context.schema.nodeSchema.get(this.mapTree.type) ?? fail("missing schema");
+		return (
+			this.context.schema.nodeSchema.get(this.mapTree.type) ?? fail(0xb46 /* missing schema */)
+		);
 	}
 
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
@@ -110,9 +112,9 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	 * Create a new UnhydratedFlexTreeNode.
 	 * @param location - the parentage of this node, if it is being created underneath an existing node and field, or undefined if not
 	 * @remarks This class (and its subclasses) should not be directly constructed outside of this module.
-	 * Instead, use {@link getOrCreateNode} to create a UnhydratedFlexTreeNode from a {@link MapTree}.
+	 * Instead, use {@link getOrCreateNodeFromInnerNode} to create a UnhydratedFlexTreeNode from a {@link MapTree}.
 	 * A `UnhydratedFlexTreeNode` may never be constructed more than once for the same {@link MapTree} object.
-	 * Instead, it should always be acquired via {@link getOrCreateNode}.
+	 * Instead, it should always be acquired via {@link getOrCreateNodeFromInnerNode}.
 	 */
 	public constructor(
 		public readonly simpleContext: Context,
@@ -148,11 +150,24 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	public adoptBy(parent: UnhydratedFlexTreeField, index: number): void;
 	public adoptBy(parent: UnhydratedFlexTreeField | undefined, index?: number): void {
 		if (parent !== undefined) {
-			assert(
-				this.location === unparentedLocation,
-				0x98c /* Node may not be adopted if it already has a parent */,
-			);
 			assert(index !== undefined, 0xa08 /* Expected index */);
+			if (this.location !== unparentedLocation) {
+				throw new UsageError("A node may not be inserted if it's already in a tree");
+			}
+			let unhydratedNode: UnhydratedFlexTreeNode | undefined = parent.parent;
+			while (unhydratedNode !== undefined) {
+				if (unhydratedNode === this) {
+					throw new UsageError(
+						"A node may not be inserted into a location that is under itself",
+					);
+				}
+				const parentNode: FlexTreeNode | undefined = unhydratedNode.parentField.parent.parent;
+				assert(
+					parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
+					0xb77 /* Unhydrated node's parent should be an unhydrated node */,
+				);
+				unhydratedNode = parentNode;
+			}
 			this.location = { parent, index };
 		} else {
 			assert(
@@ -215,7 +230,7 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	public get anchorNode(): AnchorNode {
 		// This API is relevant to `LazyTreeNode`s, but not `UnhydratedFlexTreeNode`s.
 		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
-		return fail("UnhydratedFlexTreeNode does not implement anchorNode");
+		return fail(0xb47 /* UnhydratedFlexTreeNode does not implement anchorNode */);
 	}
 
 	private walkTree(): void {
@@ -262,6 +277,10 @@ export class UnhydratedContext implements FlexTreeContext {
 		public readonly schema: TreeStoredSchema,
 	) {}
 
+	public isDisposed(): boolean {
+		return false;
+	}
+
 	public isHydrated(): this is FlexTreeHydratedContext {
 		return false;
 	}
@@ -294,10 +313,10 @@ const unparentedLocation: LocationInField = {
 		},
 		schema: brand(forbiddenFieldKindIdentifier),
 		get context(): never {
-			return fail("unsupported");
+			return fail(0xb48 /* unsupported */);
 		},
 		getFieldPath() {
-			fail("unsupported");
+			fail(0xb49 /* unsupported */);
 		},
 	},
 	index: -1,
@@ -392,7 +411,7 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 		this.onEdit?.();
 	}
 
-	public getFieldPath(): FieldUpPath {
+	public getFieldPath(): NormalizedFieldUpPath {
 		throw unsupportedUsageError("Editing an array");
 	}
 
@@ -489,7 +508,7 @@ export class UnhydratedTreeSequenceField
 			this.edit((mapTrees) => {
 				removed = mapTrees.splice(index, count);
 			});
-			return removed ?? fail("Expected removed to be set by edit");
+			return removed ?? fail(0xb4a /* Expected removed to be set by edit */);
 		},
 	};
 
@@ -529,7 +548,7 @@ function getFieldKeyCache(
 
 /**
  * If there exists a {@link UnhydratedFlexTreeNode} for the given {@link MapTree}, returns it, otherwise returns `undefined`.
- * @remarks {@link UnhydratedFlexTreeNode | UnhydratedFlexTreeNodes} are created via {@link getOrCreateNode}.
+ * @remarks {@link UnhydratedFlexTreeNode | UnhydratedFlexTreeNodes} are created via {@link getOrCreateNodeFromInnerNode}.
  */
 export function tryUnhydratedFlexTreeNode(
 	mapTree: MapTree,
@@ -578,7 +597,12 @@ function getOrCreateField(
 		return new UnhydratedTreeSequenceField(parent.simpleContext, schema, key, parent, onEdit);
 	}
 
-	return new UnhydratedFlexTreeField(parent.simpleContext, schema, key, parent, onEdit);
+	// TODO: this seems to used by unknown optional fields. They should probably use "optional" not "Forbidden" schema.
+	if (schema === FieldKinds.forbidden.identifier) {
+		return new UnhydratedFlexTreeField(parent.simpleContext, schema, key, parent, onEdit);
+	}
+
+	return fail("unsupported field kind");
 }
 
 // #endregion Caching and unboxing utilities

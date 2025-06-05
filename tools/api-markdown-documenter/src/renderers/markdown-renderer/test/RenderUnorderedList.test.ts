@@ -31,9 +31,7 @@ describe("UnorderedListNode Markdown rendering tests", () => {
 
 	describe("Table context", () => {
 		it("Empty list", () => {
-			expect(testRender(UnorderedListNode.Empty, { insideTable: true })).to.equal(
-				"<ul></ul>",
-			);
+			expect(testRender(UnorderedListNode.Empty, { insideTable: true })).to.equal("<ul></ul>");
 		});
 
 		it("Simple list", () => {

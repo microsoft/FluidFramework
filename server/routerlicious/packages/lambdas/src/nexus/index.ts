@@ -115,6 +115,7 @@ export function configureWebSocketServices(
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
 	collaborationSessionTracker?: core.ICollaborationSessionTracker,
+	denyList?: core.IDenyList,
 ): void {
 	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
@@ -260,6 +261,7 @@ export function configureWebSocketServices(
 						lambdaConnectionStateTrackers,
 						connectionMessage,
 						properties,
+						denyList,
 					)
 						.then((message) => {
 							socket.emit("connect_document_success", message.connection);
@@ -418,6 +420,11 @@ export function configureWebSocketServices(
 									const maxMessageSize =
 										connection.serviceConfiguration.maxMessageSize;
 									if (messageSize > maxMessageSize) {
+										Lumberjack.error("Op size too large", {
+											...lumberjackProperties,
+											messageSize,
+											maxMessageSize,
+										});
 										// Exit early from processing message batch
 										throw new NetworkError(413, "Op size too large");
 									}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type Anchor,
@@ -21,7 +21,7 @@ import {
 	mapCursorFields,
 	rootFieldKey,
 } from "../../core/index.js";
-import { disposeSymbol, fail } from "../../util/index.js";
+import { disposeSymbol } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 
 import type { Context } from "./context.js";
@@ -32,23 +32,17 @@ import {
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
-import {
-	LazyEntity,
-	anchorSymbol,
-	cursorSymbol,
-	forgetAnchorSymbol,
-	tryMoveCursorToAnchorSymbol,
-} from "./lazyEntity.js";
+import { LazyEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 
 /**
- * @param cursor - This does not take ownership of this cursor: Node will fork it as needed.
+ * This does not take ownership of this cursor: Node will fork it as needed.
  */
 export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
 		context.checkout.forest.anchors.locate(anchor) ??
-		fail("cursor should point to a node that is not the root of the AnchorSet");
+		fail(0xb12 /* cursor should point to a node that is not the root of the AnchorSet */);
 	const cached = anchorNode.slots.get(flexTreeSlot);
 	if (cached !== undefined) {
 		context.checkout.forest.anchors.forget(anchor);
@@ -60,7 +54,8 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 }
 
 function cleanupTree(anchor: AnchorNode): void {
-	const cached = anchor.slots.get(flexTreeSlot) ?? fail("tree should only be cleaned up once");
+	const cached =
+		anchor.slots.get(flexTreeSlot) ?? fail(0xb13 /* tree should only be cleaned up once */);
 	assert(cached instanceof LazyTreeNode, 0x92d /* Expected LazyTreeNode */);
 	cached[disposeSymbol]();
 }
@@ -86,38 +81,39 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 		anchor: Anchor,
 	) {
 		super(context, cursor, anchor);
-		this.storedSchema = context.schema.nodeSchema.get(this.schema) ?? fail("missing schema");
+		this.storedSchema =
+			context.schema.nodeSchema.get(this.schema) ?? fail(0xb14 /* missing schema */);
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.events.on("afterDestroy", cleanupTree);
 	}
 
 	public borrowCursor(): ITreeCursorSynchronous {
-		return this[cursorSymbol] as ITreeCursorSynchronous;
+		return this.cursor as ITreeCursorSynchronous;
 	}
 
-	protected override [tryMoveCursorToAnchorSymbol](
+	protected override tryMoveCursorToAnchor(
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.checkout.forest.tryMoveCursorToNode(this[anchorSymbol], cursor);
+		return this.context.checkout.forest.tryMoveCursorToNode(this.anchor, cursor);
 	}
 
-	protected override [forgetAnchorSymbol](): void {
+	protected override forgetAnchor(): void {
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
 		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
-		this.context.checkout.forest.anchors.forget(this[anchorSymbol]);
+		this.context.checkout.forest.anchors.forget(this.anchor);
 	}
 
 	public get value(): Value {
-		return this[cursorSymbol].value;
+		return this.cursor.value;
 	}
 
 	public tryGetField(fieldKey: FieldKey): FlexTreeField | undefined {
 		const schema = this.storedSchema.getFieldSchema(fieldKey);
-		return inCursorField(this[cursorSymbol], fieldKey, (cursor) => {
+		return inCursorField(this.cursor, fieldKey, (cursor) => {
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
 			}
@@ -127,13 +123,13 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 
 	public getBoxed(key: FieldKey): FlexTreeField {
 		const fieldSchema = this.storedSchema.getFieldSchema(key);
-		return inCursorField(this[cursorSymbol], key, (cursor) => {
+		return inCursorField(this.cursor, key, (cursor) => {
 			return makeField(this.context, fieldSchema.kind, cursor);
 		});
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
-		return mapCursorFields(this[cursorSymbol], (cursor) =>
+		return mapCursorFields(this.cursor, (cursor) =>
 			makeField(
 				this.context,
 				this.storedSchema.getFieldSchema(cursor.getFieldKey()).kind,
@@ -143,7 +139,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 	}
 
 	public get parentField(): { readonly parent: FlexTreeField; readonly index: number } {
-		const cursor = this[cursorSymbol];
+		const cursor = this.cursor;
 		const index = this.anchorNode.parentIndex;
 		assert(cursor.fieldIndex === index, 0x786 /* mismatched indexes */);
 		const key = this.anchorNode.parentField;
@@ -180,7 +176,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 			cursor.enterField(key);
 			const nodeSchema =
 				this.context.schema.nodeSchema.get(parentType) ??
-				fail("requested schema that does not exist");
+				fail(0xb15 /* requested schema that does not exist */);
 			fieldSchema = nodeSchema.getFieldSchema(key).kind;
 		}
 
@@ -191,6 +187,6 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 	}
 
 	public keys(): IterableIterator<FieldKey> {
-		return mapCursorFields(this[cursorSymbol], (cursor) => cursor.getFieldKey()).values();
+		return mapCursorFields(this.cursor, (cursor) => cursor.getFieldKey()).values();
 	}
 }

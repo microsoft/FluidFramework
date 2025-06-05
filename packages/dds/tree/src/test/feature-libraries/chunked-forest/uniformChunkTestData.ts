@@ -14,7 +14,7 @@ import {
 import { numberSchema } from "../../../simple-tree/index.js";
 import { brand, makeArray } from "../../../util/index.js";
 import { type TestField, EmptyObject } from "../../cursorTestSuite.js";
-import { JsonArray, JsonObject } from "../../json/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 export const emptyShape = new TreeShape(brand(EmptyObject.identifier), false, []);
 
@@ -22,16 +22,16 @@ export const xField: FieldKey = brand("x");
 export const yField: FieldKey = brand("y");
 
 const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
-const withChildShape = new TreeShape(brand(JsonObject.identifier), false, [
+const withChildShape = new TreeShape(brand(JsonAsTree.JsonObject.identifier), false, [
 	[xField, numberShape, 1],
 ]);
-const pointShape = new TreeShape(brand(JsonObject.identifier), false, [
+const pointShape = new TreeShape(brand(JsonAsTree.JsonObject.identifier), false, [
 	[xField, numberShape, 1],
 	[yField, numberShape, 1],
 ]);
 
 const sides = 100;
-const polygon = new TreeShape(brand(JsonArray.identifier), false, [
+const polygon = new TreeShape(brand(JsonAsTree.Array.identifier), false, [
 	[EmptyKey, pointShape, sides],
 ]).withTopLevelLength(1);
 
@@ -43,10 +43,10 @@ export const polygonTree = {
 			makeArray(sides * 2, (index) => index),
 		),
 	reference: {
-		type: brand(JsonArray.identifier),
+		type: brand(JsonAsTree.Array.identifier),
 		fields: {
 			[EmptyKey]: makeArray(sides, (index) => ({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					x: [{ type: brand(numberSchema.identifier), value: index * 2 }],
 					y: [{ type: brand(numberSchema.identifier), value: index * 2 + 1 }],
@@ -79,14 +79,14 @@ const testTrees: {
 		name: "child sequence",
 		dataFactory: () =>
 			new UniformChunk(
-				new TreeShape(brand(JsonArray.identifier), false, [
+				new TreeShape(brand(JsonAsTree.Array.identifier), false, [
 					[EmptyKey, numberShape, 3],
 				]).withTopLevelLength(1),
 				[1, 2, 3],
 			),
 		reference: [
 			{
-				type: brand(JsonArray.identifier),
+				type: brand(JsonAsTree.Array.identifier),
 				fields: {
 					[EmptyKey]: [
 						{ type: brand(numberSchema.identifier), value: 1 },
@@ -102,7 +102,7 @@ const testTrees: {
 		dataFactory: () => new UniformChunk(withChildShape.withTopLevelLength(1), [1]),
 		reference: [
 			{
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					x: [{ type: brand(numberSchema.identifier), value: 1 }],
 				},
@@ -114,7 +114,7 @@ const testTrees: {
 		dataFactory: () => new UniformChunk(pointShape.withTopLevelLength(1), [1, 2]),
 		reference: [
 			{
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					x: [{ type: brand(numberSchema.identifier), value: 1 }],
 					y: [{ type: brand(numberSchema.identifier), value: 2 }],

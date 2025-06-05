@@ -12,7 +12,7 @@ import {
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/legacy";
 import {
-	acquirePresenceViaDataObject,
+	getPresenceViaDataObject,
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
@@ -182,8 +182,8 @@ async function start(): Promise<void> {
 
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	const lastRoll: { die1?: DieValue; die2?: DieValue } = {};
-	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
-	const states = buildDicePresence(presence).props;
+	const presence = getPresenceViaDataObject(container.initialObjects.presence);
+	const states = buildDicePresence(presence).states;
 
 	// Initialize Devtools
 	initializeDevtools({
@@ -216,9 +216,9 @@ async function start(): Promise<void> {
 
 	// lastDiceRolls is here just to demonstrate an example of LatestMap
 	// Its updates are only logged to the console.
-	states.lastDiceRolls.events.on("itemUpdated", (update) => {
+	states.lastDiceRolls.events.on("remoteItemUpdated", (update) => {
 		console.log(
-			`Client ${update.client.sessionId.slice(0, 8)}'s ${update.key} rolled to ${update.value.value}`,
+			`Client ${update.attendee.attendeeId.slice(0, 8)}'s ${update.key} rolled to ${update.value.value}`,
 		);
 	});
 

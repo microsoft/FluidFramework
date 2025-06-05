@@ -13,7 +13,10 @@ import {
 	transformApiModel,
 } from "./api-item-transforms/index.js";
 import type { DocumentNode } from "./documentation-domain/index.js";
-import { type RenderDocumentAsHtmlConfiguration, renderDocumentAsHtml } from "./renderers/index.js";
+import {
+	type RenderDocumentAsHtmlConfiguration,
+	renderDocumentAsHtml,
+} from "./renderers/index.js";
 
 /**
  * API Model HTML rendering options.
@@ -30,7 +33,9 @@ export interface RenderApiModelAsHtmlOptions
  *
  * @alpha
  */
-export async function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions): Promise<void> {
+export async function renderApiModelAsHtml(
+	options: RenderApiModelAsHtmlOptions,
+): Promise<void> {
 	const documents = transformApiModel(options);
 
 	return renderDocumentsAsHtml(documents, options);

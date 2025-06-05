@@ -28,7 +28,6 @@ export {
 } from "./navigation.js";
 
 export {
-	getTreeContext,
 	type FlexTreeContext,
 	type FlexTreeHydratedContext,
 	Context,
@@ -39,7 +38,6 @@ export { type FlexTreeNodeEvents } from "./treeEvents.js";
 
 export {
 	assertFlexTreeEntityNotFreed,
-	isFreedSymbol,
 	LazyEntity,
 } from "./lazyEntity.js";
 

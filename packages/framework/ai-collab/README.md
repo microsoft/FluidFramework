@@ -85,14 +85,14 @@ export class PlannerAppState extends sf.object("PlannerAppState", {
 ### Example 1: Collaborate with AI
 
 ```ts
-import { aiCollab } from "@fluidframework/ai-collab/alpha";
+import { aiCollab, DebugEvent } from "@fluidframework/ai-collab/alpha";
 import { PlannerAppState } from "./types.ts"
 // This is not a real file, this is meant to represent how you initialize your app data.
 import { initializeAppState } from "./yourAppInitializationFile.ts"
 
 //  --------- File name: "app.ts" ---------
 
-// Initialize your app state somehow
+// Initialize your Fluid app state somehow
 const appState: PlannerAppState = initializeAppState({
 		taskGroups: [
 		{
@@ -143,9 +143,12 @@ const response = await aiCollab({
 				"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
 			userAsk: userAsk,
 		},
+		limiters: {
+			maxModelCalls: 25
+		}
 		planningStep: true,
 		finalReviewStep: true,
-		dumpDebugLog: true,
+		debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
 	});
 
 if (response.status === 'sucess') {
@@ -174,12 +177,231 @@ Once the `aiCollab` function call is initiated, an LLM will immediately begin at
      - `promptGeneration.ts`: Logic for producing the different types of prompts sent to an LLM in order to edit a SharedTree.
      - `typeGeneration.ts`: Generates serialized(/able) representations of a SharedTree Schema which is used within prompts and the generated of the structured output JSON schema
      - `utils.ts`: Utilities for interacting with a SharedTree
+	 - `debugEvents.ts`: Types and helper functions for `DebugEvent`'s emitted to the callback provided to the aiCollab's `debugEventLogHandler`
 - `/implicit-strategy`: The original implicit strategy, currently not used under the exported aiCollab API surface.
+
+## Debug Events
+This package allows users to consume `DebugEvents` that can be very helpful in understanding what's going on internally and debugging potential issues.
+Users can consume these events by passing in a `debugEventLogHandler` when calling the `aiCollab()` function:
+```ts
+aiCollab({
+	openAI: {
+		client: new OpenAI({
+			apiKey: OPENAI_API_KEY,
+		}),
+		modelName: "gpt-4o",
+	},
+	treeNode: view.root.taskGroups[0],
+	prompt: {
+		systemRoleContext:
+			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+		userAsk: userAsk,
+	},
+	limiters: {
+		maxModelCalls: 25
+	}
+	planningStep: true,
+	finalReviewStep: true,
+	debugEventLogHandler: (event: DebugEvent) => {console.log(event);} // This should be your debug event log handler
+});
+
+```
+
+All debug events implement the `DebugEvent` interface. Some also implement `EventFlowDebugEvent`, which lets them mark a progress point in a specific logic flow within a given execution of `aiCollab()`.
+
+### Event flow Overview
+
+To see detailed information about each event, please read their cooresponding [tsdoc](./src/explicit-strategy/debugEvents.ts#L46)
+
+1. **Core Event Loop** - The start and end of a single execution of aiCollab.
+	- Events:
+		1. **Core Event Loop Started**
+		1. **Core Event Loop Completed**
+2. **Generate Planning Prompt** - The event flow for producing an initial LLM generated plan to assist the LLM with creating edits to the users Shared Tree.
+	- Events
+		1. **Generate Planning Prompt Started**
+			- Child `DebugEvent`'s triggered:
+				1. **Llm Api Call** - An event detailing the raw api request to the LLM client.
+		1. **Generate Planning Prompt Completed**
+3. **Generate Tree Edit** - The event flow for generating an edit to the users Shared Tree to further complete the users request.
+	- Events:
+		1. **Generate Tree Edit Started**
+			- Child `DebugEvent`'s triggered:
+				1. **Llm Api Call** - An event detailing the raw api request to the LLM client.
+		1. **Generate Tree Edit Completed**
+		1. **Apply Edit Success** OR **Apply Edit Failure** - The outcome of applying the LLM generated tree edit.
+4. **Final Review** - The event flow for asking the LLM to complete a final review of work it has completed and confirming if the users request has been completed. If the LLM is not satisfied, the **Generate Tree Edit** loop will start again.
+	- Events:
+		- **Final Review Started**
+			- Child `DebugEvent`'s triggered:
+				1. **Llm Api Call** - An event detailing the raw api request to the LLM client.
+		- **Final Review Completed**
+
+
+### Using Trace Id's
+
+Debug Events in ai-collab have two different types of trace id's:
+- `traceId`: This field exists on all debug events and can be used to correlate all debug events that happened in a single execution of `aiCollab()`. Sorting the events by timestamp will show the proper chronological order of the events. Note that the events should already be emitted in chronological order.
+- `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to correlate all events from a particular event flow. Additionally all LLM api call events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
+
+## Edit Differences
+
+`ai-collab` provides an array of `Diff` objects with its response. Each of these objects allows developers to identify tree nodes that have been modified as a result of AI collaboration and visualize them according to their needs.
+
+Every `Diff` will include one or more `NodePaths` representing the nodes affected by a single edit created by the ai agent. A `NodePath` is an array whose items represent segment paths, beginning from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call (at the end of the array), along with an explanation directly from the AI agent as to why it performed an edit.
+
+Let's take a look at some examples for the following SharedTree application schema.
+
+```ts
+import { aiCollab, DebugEvent, Diff } from "@fluidframework/ai-collab/alpha";
+
+const sf = new SchemaFactory("testApp");
+
+class Todo extends sf.object("Todo", {
+	id: sf.identifier,
+	title: string
+	description: string
+}) {}
+
+class TestAppRootObject extends sf.object("TestAppRootObject", {
+	id: sf.identifier,
+	todos: sf.array([Todo]),
+	innerObject: sf.object("InnerObject", {
+		nestedTodos: sf.array([Todo]),
+	}),
+}) {}
+
+const response = aiCollab({
+	openAI: {
+		client: new OpenAI({
+			apiKey: OPENAI_API_KEY,
+		}),
+		modelName: "gpt-4o",
+	},
+	prompt: {
+		systemRoleContext:
+			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+		userAsk: userAsk,
+	},
+	limiters: {
+		maxModelCalls: 25
+	}
+	planningStep: true,
+	finalReviewStep: true,
+	debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
+});
+
+const diffs: Diff[] = response.diffs;
+```
+
+Each `Diff` will contain one or more `NodePath`s. Each `NodePath` is an array of objects that detail the path from the root node passed to ai-collab, down to the node targeted for editing. The first index in the `NodePath` points to the target node and the last index is always the root node.
+
+Let's look at an example of the Insert Diff.
+
+### Example Insert Diff
+
+The following `InsertDiff` is an example of a `Diff` that would result from an AI agent inserting an object into index 1 of `TestAppRootObject.rootVectors`.
+
+```json
+type: "insert",
+nodePath: [
+		{
+			shortId: -14,
+			schemaIdentifier: "testApp.Todo",
+			parentField: 1,
+		},
+		{
+			shortId: undefined,
+			schemaIdentifier: "testApp.Array<[\"testApp.Todo\"]>",
+			parentField: "todos",
+		},
+		{
+			shortId: -1,
+			schemaIdentifier: "testApp.TestAppRootObject",
+			parentField: "rootFieldKey",
+		},
+	],
+  	aiExplanation: "I need to insert a todo within the todos array",
+  	nodeContent: {
+Using a `Diff`, you can identify the modified node in a number of different ways.
+```
+
+As you can see, the object at the beginning of the `nodePath` array directly points to the newly inserted node, while each subsequent object is the parent of the preceding node, terminating in the root node that was passed to the `ai-collab` function call.
+
+The simplest way is to use the `shortId`, where you can use the following code to identify the newly inserted node within the SharedTree.
+
+> [!NOTE]
+> The `shortId` field will only exist for objects that have a field defined as the `SchemaFactory.identifier` field.
+
+See the above example app schema in this section to see the schema field defined as `sf.identifier`
+
+Let's take a look at another UI example of using an array of Diffs to render changes.
+
+```ts
+import { Tree } from "@fluidframework/tree"
+
+function renderTodoWithDiffs(todo: Todo, Diffs: diff[]) {
+	const modifyDiffs = Diffs.filter((diff): diff is ModifyDiff => diff.type === "modify") ?? [];
+	const matchingModifyDiffs = modifyDiffs.filter(
+		(diff: ModifyDiff) =>
+			// Modify diffs are a field level edit, so the first path will be the field on the target node and the second will be the node itself.diff.nodePath.length > 1 && diff.nodePath[1]?.shortId === Tree.shortId(task),
+		);
+
+	const insertDiffs = Diffs.filter((diff): diff is InsertDiff => diff.type === "insert") ?? [];
+	const matchingInsertDiffs = insertDiffs.filter(
+		(diff: InsertDiff) =>
+			// Insert diffs are a node level edit, so the first path will be the node.
+			diff.nodePath[0]?.shortId === Tree.shortId(task),
+	);
+}
+
+if (insertDiffs.length > 0) {
+	renderNewlyInsertedTodo(todo)
+} else if (modifyDiffs.length > 0) {
+	renderModifiedTodo(todo, modifiedFields)
+} else {
+	renderTodo(todo)
+}
+```
+
+You can also use the `type` and `schemaIdentifier` fields to group related `diff`s.
+
+```ts
+const userAsk: "user-defined prompt for what they're asking the LLM to accomplish",
+const result = aiCollab({
+	openAI: {
+		client: new OpenAI({
+			apiKey: OPENAI_API_KEY,
+		}),
+		modelName: "gpt-4o",
+	},
+	treeNode: view.root,
+	prompt: {
+		systemRoleContext:
+			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+		userAsk: userAsk,
+	},
+	limiters: {
+		maxModelCalls: 25
+	}
+	planningStep: true,
+	finalReviewStep: true,
+});
+
+const Diffs: diff[] = result.diffs;
+
+const insertDiffs = result.diffs.filter(diff => diff.type === 'insert');
+
+const insertedVectorsDiffs = insertDiffs.filter(diff => diff.path[0]?.schemaIdentifier === TestVector.identifier)
+```
+
+Other `Diff` types follow the same basic structure.
+Read the tsdoc [here](./src/diffTypes.ts) for more info.
+
 
 ## Known Issues & limitations
 
 1. Union types for a TreeNode are not present when generating App Schema. This will require extracting a field schema instead of TreeNodeSchema when passed a non root node.
-1. The Editing System prompt & structured out schema currently provide array related edits even when there are no arrays. This forces you to have an array in your schema to produce a valid json schema
 1. Optional roots are not allowed, This is because if you pass undefined as your treeNode to the API, we cannot disambiguate whether you passed the root or not.
 1. Primitive root nodes are not allowed to be passed to the API. You must use an object or array as your root.
 1. Optional nodes are not supported -- when we use optional nodes, the OpenAI API returns an error complaining that the structured output JSON schema is invalid. I have introduced a fix that should work upon manual validation of the json schema, but there looks to be an issue with their API. I have filed a ticket with OpenAI to address this
@@ -210,6 +432,7 @@ When making such a request please include if the configuration already works (an
 ### Supported Runtimes
 
 -   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+    -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 
 ### Supported Tools

@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
-import type { BrandedType } from "../../../util/index.js";
 import type { TreeChunk } from "../../../core/index.js";
+import type { BrandedType } from "../../../util/index.js";
 
 import {
 	type ChunkDecoder,
@@ -15,8 +15,8 @@ import {
 	getChecked,
 	readStream,
 } from "./chunkCodecUtilities.js";
-import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
 import type { IdDecodingContext } from "./chunkDecoding.js";
+import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.

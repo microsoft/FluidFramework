@@ -4,6 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
@@ -85,14 +86,25 @@ export function createSingleBlobSummary(
  *
  * @internal
  */
-export function bindHandles(
-	value: unknown,
+export function bindHandles<T = unknown>(
+	value: T,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-): void {
+): T {
 	// N.B. AB#7316 this could be made more efficient by writing an ad hoc
 	// implementation that doesn't clone at all. Today the distinction between
 	// this function and `encode` is purely semantic -- encoding both serializes
 	// handles and binds them, but sometimes we only wish to do the latter
 	serializer.encode(value, bind);
+
+	// Return the input value so this function can be swapped in for makeHandlesSerializable
+	return value;
 }
+
+/**
+ * Information about a Fluid channel.
+ * @privateRemarks
+ * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
+ * @internal
+ */
+export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;

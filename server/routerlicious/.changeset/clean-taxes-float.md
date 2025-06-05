@@ -1,6 +1,7 @@
 ---
 "@fluidframework/server-services-telemetry": major
 "@fluidframework/server-services-utils": major
+"__section": other
 ---
 
 Default value for enableGlobalTelemetryContext config changed to true

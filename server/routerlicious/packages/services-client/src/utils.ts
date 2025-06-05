@@ -4,7 +4,14 @@
  */
 
 import * as resources from "@fluidframework/gitresources";
-import { default as Axios, RawAxiosRequestHeaders } from "axios";
+import { default as Axios, RawAxiosRequestHeaders, type AxiosError } from "axios";
+
+/**
+ * @internal
+ */
+export function isAxiosCanceledError(error: AxiosError): boolean {
+	return error.name === "CanceledError" && error.code === Axios.AxiosError.ERR_CANCELED;
+}
 
 /**
  * @internal

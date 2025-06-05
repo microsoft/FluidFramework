@@ -15,8 +15,11 @@ import {
 	rootFieldKey,
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { type Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
-import { defaultSchemaPolicy, MockNodeKeyManager } from "../../../feature-libraries/index.js";
+import { Context } from "../../../feature-libraries/flex-tree/context.js";
+import {
+	defaultSchemaPolicy,
+	MockNodeIdentifierManager,
+} from "../../../feature-libraries/index.js";
 import { MockTreeCheckout, forestWithContent } from "../../utils.js";
 import {
 	toStoredSchema,
@@ -28,12 +31,12 @@ export function getReadonlyContext(
 	forest: IEditableForest,
 	schema: ImplicitFieldSchema,
 ): Context {
-	return getTreeContext(
+	return new Context(
 		defaultSchemaPolicy,
 		new MockTreeCheckout(forest, {
 			schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
 		}),
-		new MockNodeKeyManager(),
+		new MockNodeIdentifierManager(),
 	);
 }
 

@@ -95,7 +95,7 @@ function useContainerInfo(
 			devtools.registerContainerDevtools({
 				container: containerInfo.container,
 				containerKey: sharedContainerKey,
-				containerData: containerInfo.appData.getRootObject(),
+				containerData: { appData: containerInfo.appData },
 			});
 		}, console.error);
 
@@ -104,7 +104,7 @@ function useContainerInfo(
 			devtools.registerContainerDevtools({
 				container: containerInfo.container,
 				containerKey: privateContainerKey,
-				containerData: containerInfo.appData.getRootObject(),
+				containerData: { appData: containerInfo.appData },
 			});
 		}, console.error);
 

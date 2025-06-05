@@ -19,11 +19,12 @@ import { stub, type SinonStub } from "sinon";
 import { Socket } from "socket.io-client";
 
 import { createOdspUrl } from "../createOdspUrl.js";
+import { mockify } from "../mockify.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getJoinSessionCacheKey } from "../odspUtils.js";
-import * as socketModule from "../socketModule.js";
-import * as joinSession from "../vroom.js";
+import { SocketIOClientStatic } from "../socketModule.js";
+import { fetchJoinSession } from "../vroom.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { ClientSocketMock } from "./socketTests/socketMock.js";
@@ -56,14 +57,14 @@ describe("expose joinSessionInfo Tests", () => {
 	);
 
 	function addJoinSessionStub(): SinonStub {
-		const joinSessionStub = stub(joinSession, "fetchJoinSession").callsFake(
+		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(
 			async () => joinSessionResponse,
 		);
 		return joinSessionStub;
 	}
 
 	async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
-		const getSocketCreationStub = stub(socketModule, "SocketIOClientStatic");
+		const getSocketCreationStub = stub(SocketIOClientStatic, mockify.key);
 		getSocketCreationStub.returns(_response);
 		try {
 			return await callback();

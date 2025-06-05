@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
@@ -13,7 +13,7 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import { type JsonCompatibleReadOnly, type Mutable, brand, fail } from "../../util/index.js";
+import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
 import {
@@ -145,7 +145,7 @@ export function makeV1Codec(
 						context,
 					);
 				case NoopMarkType:
-					fail("Mark type: NoopMarkType should not be encoded.");
+					fail(0xb2b /* Mark type: NoopMarkType should not be encoded. */);
 				default:
 					unreachableCase(type);
 			}

@@ -19,6 +19,7 @@ export {
 	withDefaultBinaryEncoding,
 	withSchemaValidation,
 	FluidClientVersion,
+	currentVersion,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,

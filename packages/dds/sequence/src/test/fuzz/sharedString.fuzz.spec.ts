@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { baseSharedStringModel, defaultFuzzOptions } from "./fuzzUtils.js";
+import {
+	baseSharedStringModel,
+	defaultFuzzOptions,
+	makeIntervalOperationGenerator,
+} from "./fuzzUtils.js";
 
 describe("SharedString fuzz testing", () => {
 	createDDSFuzzSuite(
@@ -35,6 +40,42 @@ describe("SharedString fuzz with stashing", () => {
 	);
 });
 
+describe("SharedString fuzz with obliterate", () => {
+	const model: typeof baseSharedStringModel = {
+		...baseSharedStringModel,
+		generatorFactory: () =>
+			takeAsync(
+				100,
+				makeIntervalOperationGenerator({
+					weights: {
+						addText: 3,
+						removeRange: 2,
+						annotateRange: 1,
+						obliterateRange: 3,
+						addInterval: 1,
+						deleteInterval: 1,
+						changeInterval: 1,
+						revertWeight: 0,
+					},
+				}),
+			),
+	};
+	createDDSFuzzSuite(
+		{ ...model, workloadName: "SharedString with obliterate" },
+		{
+			...defaultFuzzOptions,
+			// Uncomment this line to replay a specific seed from its failure file:
+			// replay: 0,
+
+			forceGlobalSeed: true,
+			skip: [
+				51, // AB#7220: This seed should be enabled. The failure here is unrelated to obliterate.
+				68, // AB#35446: Different number of intervals found in C and summarizer at collection comments
+			],
+		},
+	);
+});
+
 describe("SharedString fuzz testing with rebased batches", () => {
 	createDDSFuzzSuite(
 		{ ...baseSharedStringModel, workloadName: "SharedString with rebasing" },
@@ -57,11 +98,7 @@ describe("SharedString fuzz testing with rebased batches", () => {
 	);
 });
 
-// todo: potentially related to AB#7050
-//
-// `intervalRebasing.spec.ts` contains some reduced tests exhibiting the crashes
-// linked to AB#7050
-describe.skip("SharedString fuzz testing with rebased batches and reconnect", () => {
+describe("SharedString fuzz testing with rebased batches and reconnect", () => {
 	createDDSFuzzSuite(
 		{
 			...baseSharedStringModel,

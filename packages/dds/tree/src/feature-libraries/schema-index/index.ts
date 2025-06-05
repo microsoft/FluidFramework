@@ -4,5 +4,10 @@
  */
 
 export { SchemaSummarizer, encodeTreeSchema } from "./schemaSummarizer.js";
-export { makeSchemaCodec } from "./codec.js";
-export { Format } from "./format.js";
+export {
+	makeSchemaCodec,
+	makeSchemaCodecs,
+	SchemaCodecVersion,
+	clientVersionToSchemaVersion,
+} from "./codec.js";
+export { Format } from "./formatV1.js";

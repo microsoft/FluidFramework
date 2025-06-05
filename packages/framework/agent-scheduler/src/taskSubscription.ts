@@ -55,7 +55,7 @@ export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents>
 	 * Check if currently holding ownership of the task.
 	 * @returns true if currently the task owner, false otherwise.
 	 */
-	public haveTask() {
+	public haveTask(): boolean {
 		return this.agentScheduler.pickedTasks().includes(this.taskId);
 	}
 
@@ -63,7 +63,7 @@ export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents>
 	 * Volunteer for the task.  By default, the TaskSubscription will only watch the task and not volunteer.
 	 * This is safe to call multiple times across multiple TaskSubscriptions.
 	 */
-	public volunteer() {
+	public volunteer(): void {
 		if (!this.subscribed) {
 			// AgentScheduler throws if the same task is picked twice but we don't care because our
 			// worker does nothing.  We only care that the AgentScheduler is trying to pick.

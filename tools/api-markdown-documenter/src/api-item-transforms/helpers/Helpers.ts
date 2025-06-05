@@ -60,12 +60,21 @@ import {
 	type ValidApiItemKind,
 	getFilteredParent,
 } from "../../utilities/index.js";
-import { doesItemKindRequireOwnDocument, getLinkForApiItem } from "../ApiItemTransformUtilities.js";
+import {
+	doesItemKindRequireOwnDocument,
+	getLinkForApiItem,
+} from "../ApiItemTransformUtilities.js";
 import { transformTsdocSection } from "../TsdocNodeTransforms.js";
 import { getTsdocNodeTransformationOptions } from "../Utilities.js";
-import { HierarchyKind, type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import {
+	HierarchyKind,
+	type ApiItemTransformationConfiguration,
+} from "../configuration/index.js";
 
-import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers.js";
+import {
+	createParametersSummaryTable,
+	createTypeParametersSummaryTable,
+} from "./TableHelpers.js";
 
 /**
  * Generates a section for an API signature.
@@ -927,7 +936,10 @@ export function createReturnsSection(
 	}
 
 	// Generate paragraph with notes about the return type
-	if (ApiReturnTypeMixin.isBaseClassOf(apiItem) && apiItem.returnTypeExcerpt.text.trim() !== "") {
+	if (
+		ApiReturnTypeMixin.isBaseClassOf(apiItem) &&
+		apiItem.returnTypeExcerpt.text.trim() !== ""
+	) {
 		// Special case to detect when the return type is `void`.
 		// We will skip declaring the return type in this case.
 		// eslint-disable-next-line unicorn/no-lonely-if
@@ -952,7 +964,7 @@ export function createReturnsSection(
 		: wrapInSection(children, {
 				title: "Returns",
 				id: `${getFileSafeNameForApiItem(apiItem)}-returns`,
-		  });
+			});
 }
 
 /**

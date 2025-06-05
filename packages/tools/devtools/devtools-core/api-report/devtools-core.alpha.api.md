@@ -22,7 +22,7 @@ export interface FluidDevtoolsProps {
     logger?: IDevtoolsLogger;
 }
 
-// @beta @sealed
+// @beta @sealed @system
 export interface HasContainerKey {
     readonly containerKey: ContainerKey;
 }
@@ -39,5 +39,8 @@ export interface IFluidDevtools extends IDisposable {
 
 // @alpha
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
+
+// @alpha
+export function tryGetFluidDevtools(): IFluidDevtools | undefined;
 
 ```

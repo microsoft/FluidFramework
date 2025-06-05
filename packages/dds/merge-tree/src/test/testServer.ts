@@ -9,6 +9,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { RedBlackTree } from "../collections/index.js";
 import { compareNumbers } from "../mergeTreeNodes.js";
+import { PriorPerspective } from "../perspective.js";
 import { PropertySet } from "../properties.js";
 
 import { TestClient } from "./testClient.js";
@@ -50,8 +51,9 @@ export class TestServer extends TestClient {
 	applyMsg(msg: ISequencedDocumentMessage): boolean {
 		super.applyMsg(msg);
 		if (TestClient.useCheckQ) {
-			const clid = this.getShortClientId(msg.clientId as string);
-			return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
+			const clientId = this.getShortClientId(msg.clientId as string);
+			const perspective = new PriorPerspective(msg.referenceSequenceNumber, clientId);
+			return checkTextMatchRelative(perspective, this, msg);
 		} else {
 			return false;
 		}
@@ -135,13 +137,12 @@ export class TestServer extends TestClient {
  * Used for in-memory testing.  This will queue a reference string for each client message.
  */
 export function checkTextMatchRelative(
-	refSeq: number,
-	clientId: number,
+	perspective: PriorPerspective,
 	server: TestServer,
 	msg: ISequencedDocumentMessage,
 ): boolean {
-	const client = server.clients[clientId];
-	const serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
+	const client = server.clients[perspective.clientId];
+	const serverText = new MergeTreeTextHelper(server.mergeTree).getText(perspective);
 	const cliText = client.checkQ.shift()?.data;
 	if (cliText === undefined || cliText !== serverText) {
 		console.log(`mismatch `);

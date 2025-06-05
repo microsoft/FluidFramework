@@ -15,7 +15,10 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import { type IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
+import {
+	type IContainerRuntimeOptionsInternal,
+	type MinimumVersionForCollab,
+} from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
@@ -43,6 +46,7 @@ import { v4 as uuid } from "uuid";
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
+import { isNonEmptyArray } from "./nonEmptyArrayType.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
 
 const defaultCodeDetails: IFluidCodeDetails = {
@@ -51,13 +55,32 @@ const defaultCodeDetails: IFluidCodeDetails = {
 };
 
 /**
+ * Exposes fine-grained control over the Container's inbound and outbound op queues
+ *
  * @legacy
  * @alpha
  */
 export interface IOpProcessingController {
+	/**
+	 * Process all ops sitting in the inbound queue, leaving the inbound queue paused afterwards
+	 * @param containers - optional subset of all open containers
+	 */
 	processIncoming(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Process all ops sitting in the outbound queue, leaving the inbound queue paused afterwards.
+	 * Also waits for the outbound ops to arrive in the inbound queue.
+	 * @param containers - optional subset of all open containers
+	 */
 	processOutgoing(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Process all queue activities, to prepare for fine-grained control via processIncoming and processOutgoing
+	 * @param containers - optional subset of all open containers
+	 */
 	pauseProcessing(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Resume all queue activities for normal operation of the container
+	 * @param containers - optional subset of all open containers
+	 */
 	resumeProcessing(...containers: IContainer[]): void;
 }
 
@@ -245,6 +268,12 @@ export interface ITestContainerConfig {
 
 	/** Loader options for the loader used to create containers */
 	loaderProps?: Partial<ILoaderProps>;
+
+	/**
+	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 */
+	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }
 
 /**
@@ -354,7 +383,7 @@ export class EventAndErrorTrackingLogger
 	}
 
 	send(event: ITelemetryBaseEvent): void {
-		if (this.expectedEvents.length > 0) {
+		if (isNonEmptyArray(this.expectedEvents)) {
 			const ee = this.expectedEvents[0].event;
 			if (ee.eventName === event.eventName) {
 				let matches = true;

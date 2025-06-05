@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { BaseOperation } from "@fluid-private/stochastic-test-utils";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
@@ -13,7 +14,7 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
-import type { BaseOperation, ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness.js";
+import type { ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness.js";
 
 /**
  * Mock DDS which holds no data.
@@ -119,7 +120,7 @@ export const baseModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeCon
 		workloadName: "test",
 		factory: new SharedNothingFactory(),
 		generatorFactory: () => noopGenerator,
-		reducer: async (state, op) => {},
+		reducer: (state, op) => {},
 		validateConsistency: () => {},
 		minimizationTransforms: [],
 	};

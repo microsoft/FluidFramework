@@ -85,8 +85,6 @@ interface IDirectoryMessageHandler {
 
 /**
  * Operation indicating a value should be set for a key.
- * @legacy
- * @alpha
  */
 export interface IDirectorySetOperation {
 	/**
@@ -113,8 +111,6 @@ export interface IDirectorySetOperation {
 
 /**
  * Operation indicating a key should be deleted from the directory.
- * @legacy
- * @alpha
  */
 export interface IDirectoryDeleteOperation {
 	/**
@@ -135,15 +131,11 @@ export interface IDirectoryDeleteOperation {
 
 /**
  * An operation on a specific key within a directory.
- * @legacy
- * @alpha
  */
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
- * @legacy
- * @alpha
  */
 export interface IDirectoryClearOperation {
 	/**
@@ -159,15 +151,11 @@ export interface IDirectoryClearOperation {
 
 /**
  * An operation on one or more of the keys within a directory.
- * @legacy
- * @alpha
  */
 export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
- * @legacy
- * @alpha
  */
 export interface IDirectoryCreateSubDirectoryOperation {
 	/**
@@ -188,8 +176,6 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 /**
  * Operation indicating a subdirectory should be deleted.
- * @legacy
- * @alpha
  */
 export interface IDirectoryDeleteSubDirectoryOperation {
 	/**
@@ -210,8 +196,6 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 
 /**
  * An operation on the subdirectories within a directory.
- * @legacy
- * @alpha
  */
 export type IDirectorySubDirectoryOperation =
 	| IDirectoryCreateSubDirectoryOperation
@@ -219,8 +203,6 @@ export type IDirectorySubDirectoryOperation =
 
 /**
  * Any operation on a directory.
- * @legacy
- * @alpha
  */
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
@@ -424,8 +406,6 @@ class DirectoryCreationTracker {
  * ```
  *
  * @sealed
- * @legacy
- * @alpha
  */
 export class SharedDirectory
 	extends SharedObject<ISharedDirectoryEvents>
@@ -687,7 +667,7 @@ export class SharedDirectory
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const message = content as IDirectoryOperation;
 		const handler = this.messageHandlers.get(message.type);
 		assert(handler !== undefined, 0x00d /* Missing message handler for message type */);
@@ -816,7 +796,7 @@ export class SharedDirectory
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
-	protected rollback(content: unknown, localOpMetadata: unknown): void {
+	protected override rollback(content: unknown, localOpMetadata: unknown): void {
 		const op: IDirectoryOperation = content as IDirectoryOperation;
 		const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 		if (subdir) {

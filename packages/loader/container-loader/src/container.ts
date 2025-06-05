@@ -22,6 +22,7 @@ import {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
+	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
@@ -30,9 +31,9 @@ import {
 	IProvideRuntimeFactory,
 	IRuntime,
 	isFluidCodeDetails,
-	IDeltaManager,
 	ReadOnlyInfo,
 	type ILoader,
+	type ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -71,7 +72,6 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	type ConnectionMode,
-	type IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -127,13 +127,12 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
-import { validateRuntimeCompatibility } from "./layerCompatState.js";
-// eslint-disable-next-line import/no-deprecated
-import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
+import { RelativeLoader } from "./loader.js";
+import { validateRuntimeCompatibility } from "./loaderLayerCompatState.js";
 import {
-	serializeMemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
+	type MemoryDetachedBlobStorage,
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -226,7 +225,6 @@ export interface IContainerCreateProps {
 	 * A property bag of options used by various layers
 	 * to control features
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly options: ILoaderOptions;
 
 	/**
@@ -239,12 +237,6 @@ export interface IContainerCreateProps {
 	 * The logger downstream consumers should construct their loggers from
 	 */
 	readonly subLogger: ITelemetryLoggerExt;
-
-	/**
-	 * Blobs storage for detached containers.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly detachedBlobStorage?: IDetachedBlobStorage;
 
 	/**
 	 * Optional property for allowing the container to use a custom
@@ -488,12 +480,10 @@ export class Container
 	private readonly urlResolver: IUrlResolver;
 	private readonly serviceFactory: IDocumentServiceFactory;
 	private readonly codeLoader: ICodeDetailsLoader;
-	// eslint-disable-next-line import/no-deprecated
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
-	// eslint-disable-next-line import/no-deprecated
-	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
+	private readonly detachedBlobStorage: MemoryDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
 
@@ -724,14 +714,6 @@ export class Container
 		return this._loadedCodeDetails;
 	}
 
-	/**
-	 * Get the package info for the code details that were used to load the container.
-	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined otherwise
-	 */
-	public getContainerPackageInfo?(): IContainerPackageInfo | undefined {
-		return getPackageName(this._loadedCodeDetails);
-	}
-
 	private _loadedModule: IFluidModuleWithDetails | undefined;
 
 	/**
@@ -804,7 +786,6 @@ export class Container
 			options,
 			scope,
 			subLogger,
-			detachedBlobStorage,
 			protocolHandlerBuilder,
 		} = createProps;
 
@@ -994,16 +975,16 @@ export class Container
 				? summaryTree
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
-		// Whether the combined summary tree has been forced on by either the supportedFeatures flag by the service or the the loader option or the monitoring context
-		const enableSummarizeProtocolTree =
-			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			options.summarizeProtocolTree;
+		// Feature gate to enable single-commit summaries. The expected enablement is through driver layer's policies,
+		// but here we also specify config setting to use for testing purposes.
+		const enableSummarizeProtocolTree = this.mc.config.getBoolean(
+			"Fluid.Container.summarizeProtocolTree2",
+		);
 
 		this.detachedBlobStorage =
-			detachedBlobStorage ??
-			(this.mc.config.getBoolean("Fluid.Container.MemoryBlobStorageEnabled") === true
-				? createMemoryDetachedBlobStorage()
-				: undefined);
+			this.attachState === AttachState.Attached
+				? undefined
+				: createMemoryDetachedBlobStorage();
 
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,
@@ -1278,7 +1259,7 @@ export class Container
 			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
-			attachmentBlobs: serializeMemoryDetachedBlobStorage(this.detachedBlobStorage),
+			attachmentBlobs: this.detachedBlobStorage?.serialize(),
 		};
 		return JSON.stringify(detachedContainerState);
 	}
@@ -1840,6 +1821,10 @@ export class Container
 	}: IPendingDetachedContainerState): Promise<void> {
 		if (hasAttachmentBlobs) {
 			if (attachmentBlobs !== undefined) {
+				assert(
+					this.detachedBlobStorage !== undefined,
+					0xb8e /* detached blob storage should always exist when detached */,
+				);
 				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
 			}
 			assert(
@@ -2472,6 +2457,7 @@ export class Container
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
 
+		// Validate that the Runtime is compatible with this Loader.
 		const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
 		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
 			this.dispose(error),

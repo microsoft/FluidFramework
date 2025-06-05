@@ -79,17 +79,15 @@ describe("separate-container migration", () => {
 
 			await migrationP;
 
-			// Validate the migration status shows "two" after the migration
-			const leftContainsTwo = await page.evaluate(() => {
+			// After migration, the view should update.  Wait and confirm the migration status shows "two".
+			await page.waitForFunction(() => {
 				const migrationStatusElements = document.querySelectorAll(".migration-status");
 				return migrationStatusElements[0]?.textContent?.includes("two") === true;
 			});
-			const rightContainsTwo = await page.evaluate(() => {
+			await page.waitForFunction(() => {
 				const migrationStatusElements = document.querySelectorAll(".migration-status");
 				return migrationStatusElements[1]?.textContent?.includes("two") === true;
 			});
-			expect(leftContainsTwo).toEqual(true);
-			expect(rightContainsTwo).toEqual(true);
 		});
 	});
 
@@ -178,17 +176,15 @@ describe("separate-container migration", () => {
 
 			await migrationP;
 
-			// Validate the migration status shows "two" after the migration
-			const leftContainsTwo = await page.evaluate(() => {
+			// After migration, the view should update.  Wait and confirm the migration status shows "two".
+			await page.waitForFunction(() => {
 				const migrationStatusElements = document.querySelectorAll(".migration-status");
 				return migrationStatusElements[0]?.textContent?.includes("two") === true;
 			});
-			const rightContainsTwo = await page.evaluate(() => {
+			await page.waitForFunction(() => {
 				const migrationStatusElements = document.querySelectorAll(".migration-status");
 				return migrationStatusElements[1]?.textContent?.includes("two") === true;
 			});
-			expect(leftContainsTwo).toEqual(true);
-			expect(rightContainsTwo).toEqual(true);
 		});
 	});
 });

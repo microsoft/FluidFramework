@@ -5,11 +5,6 @@
 
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions/internal";
 import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {
@@ -102,31 +97,5 @@ export function createResponseError(
 			return errWithStack.stack;
 		},
 		headers,
-	};
-}
-
-/**
- * @internal
- */
-export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
-
-/**
- * @internal
- */
-export function createDataStoreFactory(
-	type: string,
-	factory: Factory | Promise<Factory>,
-): IFluidDataStoreFactory & IFluidDataStoreRegistry {
-	return {
-		type,
-		get IFluidDataStoreFactory() {
-			return this;
-		},
-		get IFluidDataStoreRegistry() {
-			return this;
-		},
-		instantiateDataStore: async (context, existing) =>
-			(await factory).instantiateDataStore(context, existing),
-		get: async (name: string) => (await factory).IFluidDataStoreRegistry?.get(name),
 	};
 }

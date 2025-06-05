@@ -12,7 +12,6 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/no-shadow": "off",
 		"space-before-function-paren": "off", // Off because it conflicts with typescript-formatter
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	overrides: [
 		{

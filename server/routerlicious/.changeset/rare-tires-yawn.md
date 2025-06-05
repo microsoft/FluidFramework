@@ -2,6 +2,7 @@
 "@fluidframework/server-routerlicious-base": major
 "@fluidframework/server-services": major
 "@fluidframework/server-services-core": major
+"__section": feature
 ---
 
 Added healthCheck for mongo database

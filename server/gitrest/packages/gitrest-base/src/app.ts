@@ -4,19 +4,25 @@
  */
 
 import { ICreateRepoParams } from "@fluidframework/gitresources";
-import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
+import {
+	DriverVersionHeaderName,
+	CallingServiceHeaderName,
+} from "@fluidframework/server-services-client";
 import {
 	BaseTelemetryProperties,
 	HttpProperties,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
 	alternativeMorganLoggerMiddleware,
+	bindAbortControllerContext,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 	ResponseSizeMiddleware,
 } from "@fluidframework/server-services-utils";
 import { json, urlencoded } from "body-parser";
+import compression from "compression";
 import cors from "cors";
 import express, { Express } from "express";
 import nconf from "nconf";
@@ -45,11 +51,16 @@ export function create(
 	// Express app configuration
 	const app: Express = express();
 
-	app.use(bindTelemetryContext());
+	app.use(bindTelemetryContext("gitrest"));
+	const axiosAbortSignalEnabled = store.get("axiosAbortSignalEnabled") ?? false;
+	if (axiosAbortSignalEnabled) {
+		app.use(bindAbortControllerContext());
+	}
 	const loggerFormat = store.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		const enableResponseCloseLatencyMetric =
 			store.get("enableResponseCloseLatencyMetric") ?? false;
+		const enableEventLoopLagMetric = store.get("enableEventLoopLagMetric") ?? false;
 		app.use(
 			jsonMorganLoggerMiddleware(
 				"gitrest",
@@ -66,6 +77,8 @@ export function create(
 							req,
 						),
 						[BaseTelemetryProperties.documentId]: params.storageRoutingId?.documentId,
+						[CommonProperties.callingServiceName]:
+							req.headers[CallingServiceHeaderName] ?? "",
 					};
 					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
 						additionalProperties.isEphemeralContainer = req.get(
@@ -75,6 +88,7 @@ export function create(
 					return additionalProperties;
 				},
 				enableResponseCloseLatencyMetric,
+				enableEventLoopLagMetric,
 			),
 		);
 	} else {
@@ -82,6 +96,7 @@ export function create(
 	}
 
 	const requestSize = store.get("requestSizeLimit");
+	app.use(compression());
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
 

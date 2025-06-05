@@ -13,7 +13,10 @@ import {
 	transformApiModel,
 } from "./api-item-transforms/index.js";
 import type { DocumentNode } from "./documentation-domain/index.js";
-import { type MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./renderers/index.js";
+import {
+	type MarkdownRenderConfiguration,
+	renderDocumentAsMarkdown,
+} from "./renderers/index.js";
 
 /**
  * API Model Markdown rendering options.

@@ -73,13 +73,11 @@ export interface IDataObjectGridItem {
 export class DataObjectGrid extends DataObject implements IDataObjectGrid {
 	public static readonly ComponentName = "@fluid-example/data-object-grid";
 
-	private static readonly factory = new DataObjectFactory(
-		DataObjectGrid.ComponentName,
-		DataObjectGrid,
-		[],
-		{},
-		[...registryEntries],
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: DataObjectGrid.ComponentName,
+		ctor: DataObjectGrid,
+		registryEntries: [...registryEntries],
+	});
 
 	public static getFactory() {
 		return DataObjectGrid.factory;

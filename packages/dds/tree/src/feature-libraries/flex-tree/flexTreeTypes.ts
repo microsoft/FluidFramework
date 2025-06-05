@@ -8,8 +8,8 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldUpPath,
 	type ITreeCursorSynchronous,
+	type NormalizedFieldUpPath,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	anchorSlot,
@@ -94,6 +94,14 @@ export enum TreeStatus {
 
 	/**
 	 * Is removed and cannot be added back to the original document tree.
+	 * @remarks
+	 * Nodes can enter this state for multiple reasons:
+	 * - The node was removed and nothing (e.g. undo/redo history) kept it from being cleaned up.
+	 * - The {@link TreeView} was disposed or had a schema change which made the tree incompatible.
+	 * @privateRemarks
+	 * There was planned work (AB#17948) to make the first reason a node could become "Deleted" impossible,
+	 * at least as an opt in feature,
+	 * by lifetime extending all nodes which are still possible to reach automatically.
 	 */
 	Deleted = 2,
 
@@ -255,7 +263,7 @@ export interface FlexTreeField extends FlexTreeEntity {
 	/**
 	 * Gets the FieldUpPath of a field.
 	 */
-	getFieldPath(): FieldUpPath;
+	getFieldPath(): NormalizedFieldUpPath;
 
 	/**
 	 * Schema for this entity.

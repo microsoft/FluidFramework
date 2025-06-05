@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { rootFieldKey } from "../../core/index.js";
 import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
@@ -17,7 +18,7 @@ describe("Repair Data", () => {
 	describe("is destroyed when", () => {
 		it("the collab window progresses far enough", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -28,8 +29,8 @@ describe("Repair Data", () => {
 			// make sure that revertibles are created
 			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
-			provider.processMessages();
-			const view2 = provider.trees[1].viewWith(
+			provider.synchronizeMessages();
+			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -43,7 +44,7 @@ describe("Repair Data", () => {
 			// remove in first tree
 			view1.root.removeRange(0, 2);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...view1.root], ["C", "D"]);
 			assert.deepEqual([...view2.root], ["C", "D"]);
@@ -69,7 +70,7 @@ describe("Repair Data", () => {
 
 		it("the collab window progresses far enough after a rebase", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -77,8 +78,8 @@ describe("Repair Data", () => {
 			);
 			view1.initialize(["A", "B", "C", "D"]);
 
-			provider.processMessages();
-			const view2 = provider.trees[1].viewWith(
+			provider.synchronizeMessages();
+			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -95,7 +96,7 @@ describe("Repair Data", () => {
 			assert.deepEqual([...view2.root], ["A", "B", "D"]);
 
 			// Syncing will cause view2 to rebase its local changes
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...view1.root], ["A", "x", "B", "D"]);
@@ -116,7 +117,7 @@ describe("Repair Data", () => {
 
 		it("the corresponding revertible is disposed", () => {
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -133,7 +134,7 @@ describe("Repair Data", () => {
 
 			// remove in first tree
 			view1.root.removeRange(0, 2);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 
 			assert.deepEqual([...view1.root], ["C", "D"]);
@@ -156,9 +157,55 @@ describe("Repair Data", () => {
 			unsubscribe();
 		});
 
+		it("the corresponding revertible is disposed with grouped batching", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				undefined /* factory */,
+				undefined /* useDeterministicSessionIds */,
+				FlushMode.TurnBased,
+			);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.kernel.viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
+			view1.initialize(["A", "B"]);
+
+			// make sure that revertibles are created
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
+
+			// get anchors to the nodes we're removing
+			const anchorAOnTree1 = TestAnchor.fromValue(view1.checkout.forest, "A");
+
+			// remove in first tree
+			view1.root.removeRange(0, 1);
+
+			provider.synchronizeMessages();
+			const removeSequenceNumber = provider.sequenceNumber;
+
+			assert.deepEqual([...view1.root], ["B"]);
+
+			advanceCollabWindow(provider, removeSequenceNumber);
+
+			// The nodes should not have been deleted yet because the revertible is still active
+			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Removed);
+			assert.equal(view1.checkout.getRemovedRoots().length, 1);
+
+			// dispose the revertible
+			undoStack[0].dispose();
+
+			// check that the repair data on the first tree is destroyed
+			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Deleted);
+			assert.equal(view1.checkout.getRemovedRoots().length, 0);
+
+			unsubscribe();
+		});
+
 		it("created in a transaction with an aborted nested transaction", () => {
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -184,7 +231,7 @@ describe("Repair Data", () => {
 			assert.equal(anchorA.treeStatus, TreeStatus.Removed);
 			assert.equal(anchorB.treeStatus, TreeStatus.InDocument);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...view1.root], ["B", "C", "D"]);
 			assert.equal(view1.checkout.getRemovedRoots().length, 1);
@@ -202,7 +249,7 @@ describe("Repair Data", () => {
 	describe("is not destroyed when", () => {
 		it("still relevant due to branches", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -210,8 +257,8 @@ describe("Repair Data", () => {
 			);
 			view1.initialize(["A", "B", "C", "D"]);
 
-			provider.processMessages();
-			const view2 = provider.trees[1].viewWith(
+			provider.synchronizeMessages();
+			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -227,7 +274,7 @@ describe("Repair Data", () => {
 			// remove in first tree
 			view1.root.removeAt(0);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...view1.root], ["B", "C", "D"]);
 			assert.deepEqual([...view2.root], ["B", "C", "D"]);
@@ -248,7 +295,7 @@ describe("Repair Data", () => {
 
 		it("still relevant due to revertibles", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -259,8 +306,8 @@ describe("Repair Data", () => {
 			// make sure that revertibles are created
 			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
-			provider.processMessages();
-			const view2 = provider.trees[1].viewWith(
+			provider.synchronizeMessages();
+			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -276,7 +323,7 @@ describe("Repair Data", () => {
 			// remove in first tree
 			view1.root.removeAt(0);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...view1.root], ["B", "C", "D"]);
 			assert.deepEqual([...view2.root], ["B", "C", "D"]);
@@ -304,17 +351,17 @@ describe("Repair Data", () => {
 });
 
 function advanceCollabWindow(provider: TestTreeProviderLite, removeSequenceNumber: number) {
-	provider.processMessages();
+	provider.synchronizeMessages();
 	while (provider.minimumSequenceNumber <= removeSequenceNumber) {
 		for (const tree of provider.trees) {
-			tree.editor.enterTransaction();
-			tree.editor.addNodeExistsConstraint({
+			tree.kernel.getEditor().enterTransaction();
+			tree.kernel.getEditor().addNodeExistsConstraint({
 				parent: undefined,
 				parentField: rootFieldKey,
 				parentIndex: 0,
 			});
-			tree.editor.exitTransaction();
-			provider.processMessages();
+			tree.kernel.getEditor().exitTransaction();
+			provider.synchronizeMessages();
 		}
 	}
 }

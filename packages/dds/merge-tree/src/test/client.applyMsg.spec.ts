@@ -95,7 +95,7 @@ describe("client.applyMsg", () => {
 					case 5: {
 						assertRemoved(seg);
 						assert.equal(
-							seg.removedSeq,
+							seg.removes[0].seq,
 							msg.sequenceNumber,
 							"removed segment has unexpected id",
 						);
@@ -105,7 +105,11 @@ describe("client.applyMsg", () => {
 					case 1:
 					case 4: {
 						assertInserted(seg);
-						assert.equal(seg.seq, msg.sequenceNumber, "inserted segment has unexpected id");
+						assert.equal(
+							seg.insert.seq,
+							msg.sequenceNumber,
+							"inserted segment has unexpected id",
+						);
 						break;
 					}
 
@@ -118,7 +122,7 @@ describe("client.applyMsg", () => {
 			const segmentInfo = client.getContainingSegment<ISegmentPrivate>(i);
 
 			assert.notEqual(
-				toInsertionInfo(segmentInfo.segment)?.seq,
+				toInsertionInfo(segmentInfo.segment)?.insert.seq,
 				UnassignedSequenceNumber,
 				"all segments should be acked",
 			);
@@ -134,22 +138,22 @@ describe("client.applyMsg", () => {
 
 		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
-		assert.equal(toInsertionInfo(segmentInfo.segment)?.seq, UnassignedSequenceNumber);
+		assert.equal(toInsertionInfo(segmentInfo.segment)?.insert.seq, UnassignedSequenceNumber);
 
 		client.applyMsg(client.makeOpMessage(op, 17));
 
-		assert.equal(toInsertionInfo(segmentInfo.segment)?.seq, 17);
+		assert.equal(toInsertionInfo(segmentInfo.segment)?.insert.seq, 17);
 	});
 
 	it("removeRangeLocal", () => {
 		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
 		const removeOp = client.removeRangeLocal(0, 1);
-		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, UnassignedSequenceNumber);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removes[0].seq, UnassignedSequenceNumber);
 
 		client.applyMsg(client.makeOpMessage(removeOp, 17));
 
-		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, 17);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removes[0].seq, 17);
 	});
 
 	it("annotateSegmentLocal", () => {
@@ -181,17 +185,17 @@ describe("client.applyMsg", () => {
 
 		const removeOp = client.removeRangeLocal(start, end);
 
-		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, UnassignedSequenceNumber);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removes[0].seq, UnassignedSequenceNumber);
 		assert.equal(client.mergeTree.pendingSegments?.length, 2);
 
 		client.applyMsg(client.makeOpMessage(annotateOp, 17));
 
-		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, UnassignedSequenceNumber);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removes[0].seq, UnassignedSequenceNumber);
 		assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
 		client.applyMsg(client.makeOpMessage(removeOp, 18, 0));
 
-		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, 18);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removes[0].seq, 18);
 		assert.equal(client.mergeTree.pendingSegments?.length, 0);
 	});
 
@@ -226,12 +230,12 @@ describe("client.applyMsg", () => {
 		const initialText = client.getText();
 		const initialLength = initialText.length;
 
-		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, undefined);
+		assert.equal(toRemovalInfo(segmentInfo.segment), undefined);
 		assert(segmentInfo.segment?.segmentGroups?.empty !== false);
 
 		const removeOp = client.removeRangeLocal(start, end);
 
-		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, UnassignedSequenceNumber);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removes[0].seq, UnassignedSequenceNumber);
 		assert.equal(segmentInfo.segment?.segmentGroups?.size, 1);
 
 		const remoteMessage = client.makeOpMessage(removeOp, 17);
@@ -239,12 +243,18 @@ describe("client.applyMsg", () => {
 
 		client.applyMsg(remoteMessage);
 
-		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, remoteMessage.sequenceNumber);
+		assert.equal(
+			toRemovalInfo(segmentInfo.segment)?.removes[0].seq,
+			remoteMessage.sequenceNumber,
+		);
 		assert.equal(segmentInfo.segment?.segmentGroups.size, 1);
 
 		client.applyMsg(client.makeOpMessage(removeOp, 18, 0));
 
-		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, remoteMessage.sequenceNumber);
+		assert.equal(
+			toRemovalInfo(segmentInfo.segment)?.removes[0].seq,
+			remoteMessage.sequenceNumber,
+		);
 		assert(segmentInfo.segment?.segmentGroups.empty);
 		assert.equal(client.getLength(), initialLength - (end - start));
 		assert.equal(

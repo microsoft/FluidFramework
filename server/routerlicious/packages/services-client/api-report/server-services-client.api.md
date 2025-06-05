@@ -5,6 +5,7 @@
 ```ts
 
 import * as api from '@fluidframework/protocol-definitions';
+import { AxiosError } from 'axios';
 import { AxiosInstance } from 'axios';
 import { AxiosRequestConfig } from 'axios';
 import { ICreateTreeEntry } from '@fluidframework/gitresources';
@@ -25,13 +26,16 @@ import { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @internal (undocumented)
 export class BasicRestWrapper extends RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>) | undefined);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>) | undefined, logHttpMetrics?: ((requestProps: IBasicRestWrapperMetricProps) => void) | undefined, getCallingServiceName?: (() => string | undefined) | undefined);
     // (undocumented)
     protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
 
 // @internal
 export const buildTreePath: (...nodeNames: string[]) => string;
+
+// @internal
+export const CallingServiceHeaderName = "x-calling-service";
 
 // @internal
 export const canDeleteDoc: (scopes: string[]) => boolean;
@@ -50,6 +54,9 @@ export const canWrite: (scopes: string[]) => boolean;
 
 // @internal (undocumented)
 export const choose: () => string;
+
+// @internal (undocumented)
+export function convertAxiosErrorToNetorkError(error: AxiosError): NetworkError;
 
 // @internal
 export function convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree: IWholeSummaryTree, unreferenced?: true | undefined): ISummaryTree;
@@ -95,6 +102,9 @@ export function generateUser(): IUser;
 
 // @internal (undocumented)
 export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) => string;
+
+// @internal
+export const getGlobalAbortControllerContext: () => IAbortControllerContext;
 
 // @internal
 export const getGlobalTimeoutContext: () => ITimeoutContext;
@@ -221,12 +231,39 @@ export class Historian implements IHistorian {
     updateRef(ref: string, params: resources.IPatchRefParams): Promise<resources.IRef>;
 }
 
+// @internal
+export interface IAbortControllerContext {
+    bindAbortController(abortController: AbortController, callback: () => void): void;
+    bindAbortControllerAsync<T>(abortController: AbortController, callback: () => Promise<T>): Promise<T>;
+    getAbortController(): AbortController | undefined;
+}
+
 // @internal (undocumented)
 export interface IAlfredTenant {
     // (undocumented)
     id: string;
     // (undocumented)
     key: string;
+}
+
+// @internal (undocumented)
+export interface IBasicRestWrapperMetricProps {
+    // (undocumented)
+    axiosError: AxiosError<any>;
+    // (undocumented)
+    baseUrl: string;
+    // (undocumented)
+    correlationId: string;
+    // (undocumented)
+    durationInMs: number;
+    // (undocumented)
+    method: string;
+    // (undocumented)
+    status: number | string;
+    // (undocumented)
+    timeoutInMs: number | string;
+    // (undocumented)
+    url: string;
 }
 
 // @internal
@@ -437,6 +474,7 @@ export interface ITimeoutContext {
     bindTimeout(maxDurationMs: number, callback: () => void): void;
     bindTimeoutAsync<T>(maxDurationMs: number, callback: () => Promise<T>): Promise<T>;
     checkTimeout(): void;
+    getTimeRemainingMs(): number | undefined;
 }
 
 // @internal (undocumented)
@@ -642,7 +680,13 @@ export abstract class RestWrapper {
 }
 
 // @internal
+export const setGlobalAbortControllerContext: (abortControllerContext: IAbortControllerContext) => void;
+
+// @internal
 export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
+
+// @internal (undocumented)
+export function setupAxiosInterceptorsForAbortSignals(getAbortController: () => AbortController | undefined): void;
 
 // @internal
 export class SummaryTreeUploadManager implements ISummaryUploadManager {

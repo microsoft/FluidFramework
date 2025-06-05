@@ -30,7 +30,6 @@ import {
 	type IdAllocator,
 	type Mutable,
 	brand,
-	fail,
 	idAllocatorFromMaxId,
 	newTupleBTree,
 } from "../../../util/index.js";
@@ -229,7 +228,7 @@ function addNodeToField(
 	return changeHandler.rebaser.compose(
 		fieldWithChange,
 		fieldChangeset,
-		(node1, node2) => node1 ?? node2 ?? fail("Should not compose two undefined nodes"),
+		(node1, node2) => node1 ?? node2 ?? assert.fail("Should not compose two undefined nodes"),
 		idAllocator,
 		dummyCrossFieldManager,
 		dummyRevisionMetadata,
@@ -242,15 +241,15 @@ const dummyCrossFieldManager: CrossFieldManager = {
 		start: { revision, localId: id },
 		length: count,
 	}),
-	set: () => fail("Not supported"),
-	onMoveIn: () => fail("Not supported"),
-	moveKey: () => fail("Not supported"),
+	set: () => assert.fail("Not supported"),
+	onMoveIn: () => assert.fail("Not supported"),
+	moveKey: () => assert.fail("Not supported"),
 };
 
 const dummyRevisionMetadata: RevisionMetadataSource = {
-	getIndex: () => fail("Not supported"),
-	tryGetInfo: () => fail("Not supported"),
-	hasRollback: () => fail("Not supported"),
+	getIndex: () => assert.fail("Not supported"),
+	tryGetInfo: () => assert.fail("Not supported"),
+	hasRollback: () => assert.fail("Not supported"),
 };
 
 export function removeAliases(changeset: ModularChangeset): ModularChangeset {

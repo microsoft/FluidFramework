@@ -32,7 +32,12 @@ export class ListCommand extends Command {
 
 		// load the BuildProject
 		const repo = loadBuildProject(searchPath);
-		const _ = full ? await this.logFullReport(repo) : await this.logCompactReport(repo);
+		// eslint-disable-next-line unicorn/prefer-ternary
+		if (full) {
+			await this.logFullReport(repo);
+		} else {
+			await this.logCompactReport(repo);
+		}
 	}
 
 	private async logFullReport(repo: IBuildProject): Promise<void> {
