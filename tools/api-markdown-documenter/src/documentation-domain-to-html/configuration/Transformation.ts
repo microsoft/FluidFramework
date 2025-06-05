@@ -47,7 +47,7 @@ import {
  *
  * @remarks
  *
- * The system supplies a suite of default transformations for all nodes of types {@link DocumentationNodeType}.
+ * The system supplies a suite of default transformations for all {@link DocumentationNode} types exported by this library.
  * For any other custom {@link DocumentationNode}s, transformations must be specified or the system will throw an error
  * when handling an unknown node kind.
  *

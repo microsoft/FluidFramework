@@ -6,6 +6,7 @@
 import type { Paragraph as MdastParagraph } from "mdast";
 
 import type { ParagraphNode } from "../../documentation-domain/index.js";
+import { transformPhrasingContent } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -18,9 +19,8 @@ export function paragraphToMarkdown(
 	node: ParagraphNode,
 	context: TransformationContext,
 ): MdastParagraph {
-	const { transformations } = context;
 	return {
 		type: "paragraph",
-		children: node.children.map((child) => transformations[child.type](child, context)),
+		children: node.children.map((child) => transformPhrasingContent(child, context)),
 	};
 }

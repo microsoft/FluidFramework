@@ -48,7 +48,7 @@ import {
  *
  * @remarks
  *
- * The system supplies a suite of default renderers for all nodes of types {@link DocumentationNodeType}.
+ * The system supplies a suite of default renderers for all {@link DocumentationNode} types exported by this library.
  * For any other custom {@link DocumentationNode}s, renderers must be specified or the system will throw an error
  * when rendering an unknown node kind.
  *

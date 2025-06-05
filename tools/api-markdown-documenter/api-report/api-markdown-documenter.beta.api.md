@@ -162,13 +162,11 @@ export type BlockContent = BlockContentMap[keyof BlockContentMap];
 // @public
 export interface BlockContentMap {
     // (undocumented)
-    blockquote: BlockQuoteNode;
+    blockQuote: BlockQuoteNode;
     // (undocumented)
-    fencedCodeBlock: FencedCodeBlockNode;
+    fencedCode: FencedCodeBlockNode;
     // (undocumented)
     horizontalRule: HorizontalRuleNode;
-    // (undocumented)
-    lineBreak: LineBreakNode;
     // (undocumented)
     orderedList: OrderedListNode;
     // (undocumented)
@@ -295,27 +293,6 @@ export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlC
 export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
 
 // @public
-export enum DocumentationNodeType {
-    BlockQuote = "BlockQuote",
-    CodeSpan = "CodeSpan",
-    Document = "Document",
-    FencedCode = "FencedCode",
-    Heading = "Heading",
-    HorizontalRule = "HorizontalRule",
-    LineBreak = "LineBreak",
-    Link = "Link",
-    OrderedList = "OrderedList",
-    Paragraph = "Paragraph",
-    PlainText = "PlainText",
-    Section = "Section",
-    Span = "Span",
-    Table = "Table",
-    TableCell = "TableCell",
-    TableRow = "TableRow",
-    UnorderedList = "UnorderedList"
-}
-
-// @public
 export interface DocumentationParentNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends Parent<TDocumentationNode, Data>, DocumentationNode {
     readonly children: TDocumentationNode[];
     readonly hasChildren: boolean;
@@ -365,7 +342,7 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
     readonly documentPath: string;
-    readonly type = DocumentationNodeType.Document;
+    readonly type = "document";
 }
 
 // @public

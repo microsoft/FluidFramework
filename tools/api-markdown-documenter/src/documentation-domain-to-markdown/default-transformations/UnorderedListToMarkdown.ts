@@ -6,6 +6,7 @@
 import type { List as MdastList, PhrasingContent as MdastPhrasingContent } from "mdast";
 
 import type { UnorderedListNode } from "../../documentation-domain/index.js";
+import { transformPhrasingContent } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 import { createList } from "./Utilities.js";
@@ -20,9 +21,8 @@ export function unorderedListToMarkdown(
 	node: UnorderedListNode,
 	context: TransformationContext,
 ): MdastList {
-	const { transformations } = context;
 	const transformedChildren: MdastPhrasingContent[] = node.children.map((child) =>
-		transformations[child.type](child, context),
+		transformPhrasingContent(child, context),
 	);
 
 	return createList(transformedChildren, false);
