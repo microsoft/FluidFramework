@@ -60,6 +60,7 @@ import type { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode.js";
  *
  * - {@link TableRowNode}
  *
+ * @sealed
  * @public
  */
 export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> {

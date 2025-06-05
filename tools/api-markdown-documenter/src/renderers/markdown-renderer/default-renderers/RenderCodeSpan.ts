@@ -5,7 +5,7 @@
 
 import type { CodeSpanNode } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
-import { renderNodes } from "../Render.js";
+import { renderNode } from "../Render.js";
 import type { RenderContext } from "../RenderContext.js";
 
 /**
@@ -20,10 +20,8 @@ export function renderCodeSpan(
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	// TODO: This will not correctly handle nested code spans / blocks.
-	// We likely want to escape inner code span / block backticks.
 	writer.write("`");
-	renderNodes(node.children, writer, {
+	renderNode(node.value, writer, {
 		...context,
 		insideCodeBlock: true,
 	});

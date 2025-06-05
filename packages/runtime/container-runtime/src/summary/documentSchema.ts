@@ -59,26 +59,42 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  * @internal
  */
 export interface IDocumentSchema {
-	// version that describes how data is stored in this structure.
-	// If runtime sees a version it does not understand, it should immediately fail and not
-	// attempt to interpret any further data.
+	// Note: Incoming schemas from other clients may have additional root-level properties (i.e. IDocumentSchema.app)
+	// that this client does not understand. The runtime will ignore these properties, unless they are within the
+	// "runtime" sub-tree, in which case it will fail if it is unable to understand any runtime properties.
+
+	/**
+	 * Describes how data needed to understand the schema is stored in this structure.
+	 * If runtime sees a version it does not understand, it should immediately fail and not
+	 * attempt to interpret any further data.
+	 */
 	version: number;
 
-	// Sequence number when this schema became active.
+	/**
+	 * Sequence number when this schema became active.
+	 */
 	refSeq: number;
 
+	/**
+	 * Runtime configurations that affect the document schema. Other clients must understand these
+	 * properties to be able to open the document.
+	 */
 	runtime: Record<string, DocumentSchemaValueType>;
 }
 
 /**
  * Content of the type=ContainerMessageType.DocumentSchemaChange ops.
- * The meaning of refSeq field is different in such messages (compared to other usages of IDocumentSchemaCurrent)
- * ContainerMessageType.DocumentSchemaChange messages use CAS (Compare-and-swap) semantics, and convey
- * regSeq of last known schema change (known to a client proposing schema change).
- * @see ContainerRuntimeDocumentSchemaMessage
+ * @see InboundContainerRuntimeDocumentSchemaMessage
  * @internal
  */
-export type IDocumentSchemaChangeMessage = IDocumentSchema;
+export type IDocumentSchemaChangeMessageIncoming = IDocumentSchema;
+
+/**
+ * Similar to {@link IDocumentSchemaChangeMessageIncoming}, but used for outgoing schema messages.
+ * @see OutboundContainerRuntimeDocumentSchemaMessage
+ * @internal
+ */
+export type IDocumentSchemaChangeMessageOutgoing = IDocumentSchemaCurrent;
 
 /**
  * Settings that this session would like to have, based on options and feature gates.
@@ -113,9 +129,12 @@ export interface IDocumentSchemaFeatures {
 
 /**
  * Current version known properties that define document schema
- * This must be bumped whenever the format of document schema or protocol for changing the current document schema changes.
- * Ex: adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version.
- * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version.
+ * This must be bumped whenever the format of document schema or protocol for changing the current document schema changes
+ * in a way that all old/new clients are required to understand.
+ * Ex: Adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version since there is logic
+ * in old clients for handling new/unknown properties.
+ * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version
+ * since all clients need to understand the new protocol.
  * @internal
  */
 export const currentDocumentVersionSchema = 1;
@@ -124,31 +143,29 @@ export const currentDocumentVersionSchema = 1;
  * Current document schema.
  * @internal
  */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type IDocumentSchemaCurrent = {
-	version: 1;
-	refSeq: number;
-
+export interface IDocumentSchemaCurrent extends Required<IDocumentSchema> {
+	// This is the version of the schema that we currently understand.
+	version: typeof currentDocumentVersionSchema;
 	runtime: {
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
 			: IDocumentSchemaFeatures[P];
 	};
-};
+}
 
 interface IProperty<T = unknown> {
-	and: (currentDocSchema: T, desiredDocSchema: T) => T;
-	or: (currentDocSchema: T, desiredDocSchema: T) => T;
+	and: (persistedSchema: T, providedSchema: T) => T;
+	or: (persistedSchema: T, providedSchema: T) => T;
 	validate(t: unknown): boolean;
 }
 
 class TrueOrUndefined implements IProperty<true | undefined> {
-	public and(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
-		return currentDocSchema === true && desiredDocSchema === true ? true : undefined;
+	public and(persistedSchema?: true, providedSchema?: true): true | undefined {
+		return persistedSchema === true && providedSchema === true ? true : undefined;
 	}
 
-	public or(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
-		return currentDocSchema === true || desiredDocSchema === true ? true : undefined;
+	public or(persistedSchema?: true, providedSchema?: true): true | undefined {
+		return persistedSchema === true || providedSchema === true ? true : undefined;
 	}
 
 	public validate(t: unknown): t is true | undefined {
@@ -157,32 +174,32 @@ class TrueOrUndefined implements IProperty<true | undefined> {
 }
 
 class TrueOrUndefinedMax extends TrueOrUndefined {
-	public and(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
-		return this.or(currentDocSchema, desiredDocSchema);
+	public and(persistedSchema?: true, providedSchema?: true): true | undefined {
+		return this.or(persistedSchema, providedSchema);
 	}
 }
 
 class MultiChoice implements IProperty<string | undefined> {
 	constructor(private readonly choices: string[]) {}
 
-	public and(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
-		if (currentDocSchema === undefined || desiredDocSchema === undefined) {
+	public and(persistedSchema?: string, providedSchema?: string): string | undefined {
+		if (persistedSchema === undefined || providedSchema === undefined) {
 			return undefined;
 		}
 		return this.choices[
-			Math.min(this.choices.indexOf(currentDocSchema), this.choices.indexOf(desiredDocSchema))
+			Math.min(this.choices.indexOf(persistedSchema), this.choices.indexOf(providedSchema))
 		];
 	}
 
-	public or(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
-		if (currentDocSchema === undefined) {
-			return desiredDocSchema;
+	public or(persistedSchema?: string, providedSchema?: string): string | undefined {
+		if (persistedSchema === undefined) {
+			return providedSchema;
 		}
-		if (desiredDocSchema === undefined) {
-			return currentDocSchema;
+		if (providedSchema === undefined) {
+			return persistedSchema;
 		}
 		return this.choices[
-			Math.max(this.choices.indexOf(currentDocSchema), this.choices.indexOf(desiredDocSchema))
+			Math.max(this.choices.indexOf(persistedSchema), this.choices.indexOf(providedSchema))
 		];
 	}
 
@@ -193,26 +210,26 @@ class MultiChoice implements IProperty<string | undefined> {
 
 class IdCompressorProperty extends MultiChoice {
 	// document schema always wins!
-	public and(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
-		return currentDocSchema;
+	public and(persistedSchema?: string, providedSchema?: string): string | undefined {
+		return persistedSchema;
 	}
 }
 
 class CheckVersions implements IProperty<string[] | undefined> {
 	public or(
-		currentDocSchema: string[] = [],
-		desiredDocSchema: string[] = [],
+		persistedSchema: string[] = [],
+		providedSchema: string[] = [],
 	): string[] | undefined {
-		const set = new Set<string>([...currentDocSchema, ...desiredDocSchema]);
+		const set = new Set<string>([...persistedSchema, ...providedSchema]);
 		return arrayToProp([...set.values()]);
 	}
 
 	// Once version is there, it stays there forever.
 	public and(
-		currentDocSchema: string[] = [],
-		desiredDocSchema: string[] = [],
+		persistedSchema: string[] = [],
+		providedSchema: string[] = [],
 	): string[] | undefined {
-		return this.or(currentDocSchema, desiredDocSchema);
+		return this.or(persistedSchema, providedSchema);
 	}
 
 	public validate(t: unknown): boolean {
@@ -240,7 +257,7 @@ const documentSchemaSupportedConfigs = {
 function checkRuntimeCompatibility(
 	documentSchema: IDocumentSchema | undefined,
 	schemaName: string,
-): void {
+): asserts documentSchema is IDocumentSchemaCurrent {
 	// Back-compat - we can't do anything about legacy documents.
 	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
 	// do not run into compat problems.
@@ -298,59 +315,59 @@ function checkRuntimeCompatibility(
 }
 
 function and(
-	currentDocSchema: IDocumentSchemaCurrent,
-	desiredDocSchema: IDocumentSchemaCurrent,
+	persistedSchema: IDocumentSchemaCurrent,
+	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
 	for (const key of new Set([
-		...Object.keys(currentDocSchema.runtime),
-		...Object.keys(desiredDocSchema.runtime),
+		...Object.keys(persistedSchema.runtime),
+		...Object.keys(providedSchema.runtime),
 	])) {
 		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).and(
-			currentDocSchema.runtime[key],
-			desiredDocSchema.runtime[key],
+			persistedSchema.runtime[key],
+			providedSchema.runtime[key],
 		);
 	}
 	return {
 		version: currentDocumentVersionSchema,
-		refSeq: currentDocSchema.refSeq,
+		refSeq: persistedSchema.refSeq,
 		runtime,
-	} as unknown as IDocumentSchemaCurrent;
+	};
 }
 
 function or(
-	currentDocSchema: IDocumentSchemaCurrent,
-	desiredDocSchema: IDocumentSchemaCurrent,
+	persistedSchema: IDocumentSchemaCurrent,
+	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
 	for (const key of new Set([
-		...Object.keys(currentDocSchema.runtime),
-		...Object.keys(desiredDocSchema.runtime),
+		...Object.keys(persistedSchema.runtime),
+		...Object.keys(providedSchema.runtime),
 	])) {
 		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).or(
-			currentDocSchema.runtime[key],
-			desiredDocSchema.runtime[key],
+			persistedSchema.runtime[key],
+			providedSchema.runtime[key],
 		);
 	}
 	return {
 		version: currentDocumentVersionSchema,
-		refSeq: currentDocSchema.refSeq,
+		refSeq: persistedSchema.refSeq,
 		runtime,
-	} as unknown as IDocumentSchemaCurrent;
+	};
 }
 
 function same(
-	currentDocSchema: IDocumentSchemaCurrent,
-	desiredDocSchema: IDocumentSchemaCurrent,
+	persistedSchema: IDocumentSchemaCurrent,
+	providedSchema: IDocumentSchemaCurrent,
 ): boolean {
 	for (const key of new Set([
-		...Object.keys(currentDocSchema.runtime),
-		...Object.keys(desiredDocSchema.runtime),
+		...Object.keys(persistedSchema.runtime),
+		...Object.keys(providedSchema.runtime),
 	])) {
 		// If schemas differ only by type of behavior, then we should not send schema change ops!
 		if (
 			key !== "explicitSchemaControl" &&
-			currentDocSchema.runtime[key] !== desiredDocSchema.runtime[key]
+			persistedSchema.runtime[key] !== providedSchema.runtime[key]
 		) {
 			return false;
 		}
@@ -436,10 +453,10 @@ function arrayToProp(arr: string[]): string[] | undefined {
  */
 export class DocumentsSchemaController {
 	private explicitSchemaControl: boolean;
-	private sendOp = true;
+	private generateOp = true;
 
 	// schema coming from document metadata (snapshot we loaded from)
-	private documentSchema: IDocumentSchemaCurrent;
+	private documentSchema: IDocumentSchema;
 
 	// desired schema, based on feature gates / runtime options.
 	// This includes requests to enable to disable functionality
@@ -491,9 +508,9 @@ export class DocumentsSchemaController {
 
 		// Schema coming from document metadata (snapshot we loaded from), or if no document exists
 		// (this is a new document) then this is the same as desiredSchema (same as session schema in such case).
-		// Latter is importnat sure that's what will go into summary.
+		// Latter is important sure that's what will go into summary.
 		this.documentSchema = existing
-			? ((documentMetadataSchema as IDocumentSchemaCurrent) ??
+			? (documentMetadataSchema ??
 				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
@@ -542,14 +559,15 @@ export class DocumentsSchemaController {
 		checkRuntimeCompatibility(this.futureSchema, "future");
 	}
 
-	public summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined {
+	public summarizeDocumentSchema(
+		refSeq: number,
+	): IDocumentSchema | IDocumentSchemaCurrent | undefined {
 		// For legacy behavior, we could write nothing (return undefined).
 		// It does not buy us anything, as whatever written in summary does not actually impact clients operating in legacy mode.
 		// But writing current used config (and assuming most of the clients settle on same config over time) will help with transition
 		// out of legacy mode, as clients transitioning out of it would be able to use all the
 		// features that are mentioned in schema right away, without a need to go through schema transition (and thus for a session or
 		// two losing ability to use all the features)
-
 		const schema = this.explicitSchemaControl ? this.documentSchema : this.desiredSchema;
 
 		// It's important to keep refSeq at zero in legacy mode, such that transition out of it is simple and we do not have
@@ -567,20 +585,17 @@ export class DocumentsSchemaController {
 	/**
 	 * Called by Container runtime whenever it is about to send some op.
 	 * It gives opportunity for controller to issue its own ops - we do not want to send ops if there are no local changes in document.
-	 * Please consider note above constructor about race conditions - current design is to send op only once in a session lifetime.
+	 * Please consider note above constructor about race conditions - current design is to generate op only once in a session lifetime.
 	 * @returns Optional message to send.
 	 */
-	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined {
-		if (this.sendOp && this.futureSchema !== undefined) {
-			this.sendOp = false;
+	public maybeGenerateSchemaMessage(): IDocumentSchemaChangeMessageOutgoing | undefined {
+		if (this.generateOp && this.futureSchema !== undefined) {
+			this.generateOp = false;
 			assert(
 				this.explicitSchemaControl && this.futureSchema.runtime.explicitSchemaControl === true,
 				0x94e /* not legacy */,
 			);
-			return {
-				...this.futureSchema,
-				refSeq: this.documentSchema.refSeq,
-			};
+			return this.futureSchema;
 		}
 	}
 
@@ -612,7 +627,7 @@ export class DocumentsSchemaController {
 	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
 	public processDocumentSchemaMessages(
-		contents: IDocumentSchemaChangeMessage[],
+		contents: IDocumentSchemaChangeMessageIncoming[],
 		local: boolean,
 		sequenceNumber: number,
 	): boolean {
@@ -639,10 +654,12 @@ export class DocumentsSchemaController {
 
 			// Changes are in effect. Immediately check that this client understands these changes
 			checkRuntimeCompatibility(content, "change");
-
-			const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
-			this.documentSchema = schema as IDocumentSchemaCurrent;
-			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
+			const schema = {
+				...content,
+				refSeq: sequenceNumber,
+			} satisfies IDocumentSchemaCurrent;
+			this.documentSchema = schema;
+			this.sessionSchema = and(schema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
 
 			// legacy behavior is automatically off for the document once someone sends a schema op -
@@ -664,7 +681,7 @@ export class DocumentsSchemaController {
 	}
 
 	public onDisconnect(): void {
-		this.sendOp = true;
+		this.generateOp = true;
 	}
 }
 

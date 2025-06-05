@@ -11,6 +11,7 @@ import { useFakeTimers, spy } from "sinon";
 
 import type { AttendeeId } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
+import type { InternalWorkspaceAddress } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -323,7 +324,7 @@ describe("Presence", () => {
 							avgLatency: 20,
 							data: {
 								"system:presence": systemWorkspaceUpdate,
-								"u:name:testUnknownWorkspace": {
+								["u:name:testUnknownWorkspace" as InternalWorkspaceAddress]: {
 									"latest": {
 										[attendeeId1]: {
 											"rev": 1,
@@ -390,7 +391,8 @@ describe("Presence", () => {
 							data: {
 								"system:presence": systemWorkspaceUpdate,
 								// Unrecognized internal address
-								"sn:name:testStateWorkspace": statesWorkspaceUpdate,
+								["sn:name:testStateWorkspace" as InternalWorkspaceAddress]:
+									statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -418,7 +420,7 @@ describe("Presence", () => {
 							data: {
 								"system:presence": systemWorkspaceUpdate,
 								// Invalid public address (must be `${string}:${string}`)
-								"s:testStateWorkspace": statesWorkspaceUpdate,
+								["s:testStateWorkspace" as InternalWorkspaceAddress]: statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -470,6 +472,39 @@ describe("Presence", () => {
 				);
 				// Verify
 				assert.strictEqual(listener.callCount, 1);
+			});
+
+			it("with acknowledgementId sends targeted acknowledgment message back to requestor", () => {
+				// We expect to send a targeted acknowledgment back to the requestor
+				runtime.signalsExpected.push([
+					{
+						type: "Pres:Ack",
+						content: { id: "ackID" },
+						targetClientId: "client4",
+					},
+				]);
+
+				// Act - send generic datastore update with acknowledgement id specified
+				presence.processSignal(
+					[],
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+							acknowledgementId: "ackID",
+						},
+						clientId: "client4",
+					},
+					false,
+				);
+
+				// Verify
+				assertFinalExpectations(runtime, logger);
 			});
 		});
 	});
