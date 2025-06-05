@@ -14,6 +14,7 @@ import {
 	createFieldSchema,
 	FieldKind,
 	normalizeAllowedTypes,
+	normalizeAnnotatedAllowedTypes,
 	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
@@ -35,6 +36,7 @@ import {
 	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
+	type AnnotatedAllowedSchema,
 } from "../../core/index.js";
 import {
 	mapTreeFromNodeData,
@@ -245,6 +247,7 @@ export function mapSchema<
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
 	);
+	const lazyAnnotatedTypes = new Lazy(() => normalizeAnnotatedAllowedTypes(info));
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
@@ -295,6 +298,9 @@ export function mapSchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
+		}
+		public static get childAnnotatedAllowedTypes(): ReadonlySet<AnnotatedAllowedSchema> {
+			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 

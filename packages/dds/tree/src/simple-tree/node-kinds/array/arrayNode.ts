@@ -14,6 +14,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import {
 	normalizeAllowedTypes,
+	normalizeAnnotatedAllowedTypes,
 	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
@@ -52,6 +53,7 @@ import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 } from "./arrayNodeTypes.js";
+import type { AnnotatedAllowedSchema } from "../../core/treeNodeSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -1105,6 +1107,7 @@ export function arraySchema<
 	const unannotatedTypes = unannotateImplicitAllowedTypes(info);
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(unannotatedTypes));
+	const lazyAnnotatedTypes = new Lazy(() => normalizeAnnotatedAllowedTypes(info));
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
@@ -1189,6 +1192,9 @@ export function arraySchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
+		}
+		public static get childAnnotatedAllowedTypes(): ReadonlySet<AnnotatedAllowedSchema> {
+			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 

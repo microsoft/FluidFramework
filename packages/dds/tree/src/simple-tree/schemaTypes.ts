@@ -30,6 +30,7 @@ import type {
 	TreeNode,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
+	AnnotatedAllowedSchema,
 } from "./core/index.js";
 import { inPrototypeChain } from "./core/index.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
@@ -507,7 +508,7 @@ export class FieldSchemaAlpha<
 	implements SimpleFieldSchema
 {
 	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
-	private readonly lazyAnnotatedTypes: Lazy<ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>>;
+	private readonly lazyAnnotatedTypes: Lazy<ReadonlySet<AnnotatedAllowedSchema>>;
 
 	/**
 	 * Metadata on the types of tree nodes allowed on this field.
@@ -544,7 +545,7 @@ export class FieldSchemaAlpha<
 			? annotatedAllowedTypes.metadata
 			: {};
 		this.lazyAnnotatedTypes = new Lazy(() =>
-			extractAnnotationsFromAllowedTypes(this.annotatedAllowedTypes),
+			normalizeAnnotatedAllowedTypes(annotatedAllowedTypes),
 		);
 		this.lazyIdentifiers = new Lazy(
 			() => new Set([...this.allowedTypeSet].map((t) => t.identifier)),
@@ -559,7 +560,7 @@ export class FieldSchemaAlpha<
 	 * What types of tree nodes are allowed in this field and their annotations.
 	 * @remarks Counterpart to {@link FieldSchemaAlpha.annotatedAllowedTypes}, with any lazy definitions evaluated.
 	 */
-	public get annotatedAllowedTypeSet(): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata> {
+	public get annotatedAllowedTypeSet(): ReadonlySet<AnnotatedAllowedSchema> {
 		return this.lazyAnnotatedTypes.value;
 	}
 }
@@ -639,6 +640,45 @@ export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
 }
 
 /**
+ * Normalizes a {@link ImplicitAnnotatedAllowedTypes} to a set of {@link AnnotatedAllowedSchema}s, by eagerly evaluating any
+ * lazy schema declarations and adding empty metadata if it doesn't already exist.
+ *
+ * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
+ * recursive schemas may fail.
+ *
+ * @internal
+ */
+export function normalizeAnnotatedAllowedTypes(
+	types: ImplicitAnnotatedAllowedTypes,
+): ReadonlySet<AnnotatedAllowedSchema> {
+	const typesWithoutAnnotation = isAnnotatedAllowedTypes(types) ? types.types : types;
+	const annotations = new Set<AnnotatedAllowedSchema>();
+	if (isReadonlyArray(typesWithoutAnnotation)) {
+		for (const annotatedType of typesWithoutAnnotation) {
+			if (isAnnotatedAllowedType(annotatedType)) {
+				annotations.add({
+					type: evaluateLazySchema(annotatedType.type),
+					metadata: annotatedType.metadata,
+				});
+			} else {
+				annotations.add({ type: evaluateLazySchema(annotatedType), metadata: {} });
+			}
+		}
+	} else {
+		if (isAnnotatedAllowedType(typesWithoutAnnotation)) {
+			annotations.add({
+				type: evaluateLazySchema(typesWithoutAnnotation.type),
+				metadata: typesWithoutAnnotation.metadata,
+			});
+		} else {
+			annotations.add({ type: evaluateLazySchema(typesWithoutAnnotation), metadata: {} });
+		}
+	}
+
+	return annotations;
+}
+
+/**
  * Converts an {@link ImplicitAnnotatedAllowedTypes} to an {@link ImplicitAllowedTypes}s, by removing
  * any annotations.
  * @remarks
@@ -674,36 +714,6 @@ export function unannotateSchemaRecord<
 			schema instanceof FieldSchema ? schema : unannotateImplicitAllowedTypes(schema),
 		]),
 	) as UnannotateSchemaRecord<Schema>;
-}
-
-/**
- * Converts annotated allowed types into a mapping between the type schema and their associated annotations.
- */
-export function extractAnnotationsFromAllowedTypes(
-	types: ImplicitAnnotatedAllowedTypes,
-): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata> {
-	const typesWithoutAnnotation = isAnnotatedAllowedTypes(types) ? types.types : types;
-	const annotations = new Map<TreeNodeSchema, AllowedTypeMetadata>();
-	if (isReadonlyArray(typesWithoutAnnotation)) {
-		for (const annotatedType of typesWithoutAnnotation) {
-			if (isAnnotatedAllowedType(annotatedType)) {
-				annotations.set(evaluateLazySchema(annotatedType.type), annotatedType.metadata);
-			} else {
-				annotations.set(evaluateLazySchema(annotatedType), {});
-			}
-		}
-	} else {
-		if (isAnnotatedAllowedType(typesWithoutAnnotation)) {
-			annotations.set(
-				evaluateLazySchema(typesWithoutAnnotation.type),
-				typesWithoutAnnotation.metadata,
-			);
-		} else {
-			annotations.set(evaluateLazySchema(typesWithoutAnnotation), {});
-		}
-	}
-
-	return annotations;
 }
 
 /**

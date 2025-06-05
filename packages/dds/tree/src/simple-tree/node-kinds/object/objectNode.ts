@@ -30,6 +30,7 @@ import {
 	type Context,
 	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
+	type AnnotatedAllowedSchema,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import { getTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -424,6 +425,14 @@ export function objectSchema<
 	const lazyChildTypes = new Lazy(
 		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
 	);
+	const lazyAnnotatedTypes = new Lazy(
+		() =>
+			new Set(
+				Array.from(Object.values(info), (f) => [
+					...normalizeFieldSchema(f).annotatedAllowedTypeSet,
+				]).flat(),
+			),
+	);
 
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
@@ -544,6 +553,9 @@ export function objectSchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
+		}
+		public static get childAnnotatedAllowedTypes(): ReadonlySet<AnnotatedAllowedSchema> {
+			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 

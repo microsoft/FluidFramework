@@ -562,6 +562,8 @@ export type TreeNodeSchemaClass<Name extends string = string, Kind extends NodeK
 // @public @sealed
 export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean, out Info = unknown, out TInsertable = never, out TCustomMetadata = unknown> extends SimpleNodeSchemaBase<Kind, TCustomMetadata> {
     // @system
+    readonly childAnnotatedAllowedTypes: ReadonlySet<AnnotatedAllowedSchema>;
+    // @system
     readonly childTypes: ReadonlySet<TreeNodeSchema>;
     // @sealed @system
     createFromInsertable(data: TInsertable): Unhydrated<TreeNode | TreeLeafValue>;

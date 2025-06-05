@@ -22,7 +22,6 @@ import {
 	TreeStatus,
 } from "../feature-libraries/index.js";
 import {
-	type FieldSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type TreeView,
@@ -53,6 +52,7 @@ import {
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
 	prepareForInsertionContextless,
+	type FieldSchemaAlpha,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -111,7 +111,7 @@ export class SchematizingSimpleTreeView<
 	 */
 	private midUpgrade = false;
 
-	private readonly rootFieldSchema: FieldSchema;
+	private readonly rootFieldSchema: FieldSchemaAlpha;
 	public readonly breaker: Breakable;
 
 	public constructor(
@@ -374,7 +374,7 @@ export class SchematizingSimpleTreeView<
 			);
 			this.checkout.forest.anchors.slots.set(
 				SimpleContextSlot,
-				new HydratedContext(this.rootFieldSchema.allowedTypeSet, view.context),
+				new HydratedContext(this.rootFieldSchema.annotatedAllowedTypeSet, view.context),
 			);
 
 			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {

@@ -32,6 +32,12 @@ export interface AllowedTypesMetadata {
 export function allowUnused<T>(t?: T): void;
 
 // @alpha
+export interface AnnotatedAllowedSchema {
+    metadata: AllowedTypeMetadata;
+    type: TreeNodeSchema;
+}
+
+// @alpha
 export interface AnnotatedAllowedType<T extends TreeNodeSchema = TreeNodeSchema> {
     readonly metadata: AllowedTypeMetadata;
     readonly type: LazyItem<T>;
@@ -204,7 +210,7 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     readonly allowedTypesMetadata: AllowedTypesMetadata;
     // (undocumented)
     readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes;
-    get annotatedAllowedTypeSet(): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>;
+    get annotatedAllowedTypeSet(): ReadonlySet<AnnotatedAllowedSchema>;
 }
 
 // @alpha @sealed @system
@@ -1344,6 +1350,8 @@ export type TreeNodeSchemaClass<Name extends string = string, Kind extends NodeK
 
 // @public @sealed
 export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean, out Info = unknown, out TInsertable = never, out TCustomMetadata = unknown> extends SimpleNodeSchemaBase<Kind, TCustomMetadata> {
+    // @system
+    readonly childAnnotatedAllowedTypes: ReadonlySet<AnnotatedAllowedSchema>;
     // @system
     readonly childTypes: ReadonlySet<TreeNodeSchema>;
     // @sealed @system

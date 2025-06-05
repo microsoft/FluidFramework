@@ -188,8 +188,13 @@ export class TreeViewConfiguration<
 
 			node: (schema) => markSchemaMostDerived(schema, true),
 			allowedTypes(types): void {
+				const uniqueTypes = new Set<TreeNodeSchema>();
+				for (const { type } of types) {
+					uniqueTypes.add(type);
+				}
+
 				if (config.preventAmbiguity) {
-					checkUnion(types, ambiguityErrors);
+					checkUnion(uniqueTypes, ambiguityErrors);
 				}
 			},
 		});

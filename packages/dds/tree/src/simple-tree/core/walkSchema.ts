@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeNodeSchema } from "./treeNodeSchema.js";
+import type { AnnotatedAllowedSchema, TreeNodeSchema } from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
@@ -31,14 +31,12 @@ export function walkNodeSchema(
  * Traverses all {@link TreeNodeSchema} schema reachable from `allowedTypes`, applying the visitor pattern.
  */
 export function walkAllowedTypes(
-	annotatedAllowedTypes: Iterable<AnnotatedAllowedType>,
+	annotatedAllowedTypes: Iterable<AnnotatedAllowedSchema>,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	const allowedTypes: TreeNodeSchema[] = [];
 	for (const annotatedAllowedType of annotatedAllowedTypes) {
-		const allowedType = evaluateLazySchema(annotatedAllowedType.type);
-		walkNodeSchema(allowedType, visitor, visitedSet);
+		walkNodeSchema(annotatedAllowedType.type, visitor, visitedSet);
 	}
 	visitor.allowedTypes?.(annotatedAllowedTypes);
 }
@@ -57,5 +55,5 @@ export interface SchemaVisitor {
 	 *
 	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
 	 */
-	allowedTypes?: (allowedTypes: Iterable<AnnotatedAllowedType>) => void;
+	allowedTypes?: (allowedTypes: Iterable<AnnotatedAllowedSchema>) => void;
 }
