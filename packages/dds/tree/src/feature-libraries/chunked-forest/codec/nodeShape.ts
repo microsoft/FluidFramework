@@ -121,9 +121,9 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		};
 	}
 
-	public count(
+	public discoverReferencedShapesAndCount(
 		identifiers: Counter<string>,
-		shapes: (shape: Shape<EncodedChunkShape>) => void,
+		shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
 	): void {
 		if (this.type !== undefined) {
 			identifiers.add(this.type);
@@ -131,11 +131,11 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 
 		for (const fieldEncoder of this.specializedFieldEncoders) {
 			identifiers.add(fieldEncoder.key);
-			shapes(fieldEncoder.encoder.shape);
+			shapeDiscovered(fieldEncoder.encoder.shape);
 		}
 
 		if (this.otherFieldsEncoder !== undefined) {
-			shapes(this.otherFieldsEncoder.shape);
+			shapeDiscovered(this.otherFieldsEncoder.shape);
 		}
 	}
 

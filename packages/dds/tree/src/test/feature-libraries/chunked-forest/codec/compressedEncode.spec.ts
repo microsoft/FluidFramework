@@ -27,7 +27,7 @@ import {
 import {
 	type BufferFormat,
 	IdentifierToken,
-	handleShapesAndIdentifiers,
+	encodeShapesAndIdentifiers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
@@ -159,7 +159,7 @@ describe("compressedEncode", () => {
 				const buffer: BufferFormat<EncodedChunkShape> = [];
 				encodeValue(value, shape, buffer);
 				assert.deepEqual(buffer, encoded);
-				const processed = handleShapesAndIdentifiers(version, [buffer]);
+				const processed = encodeShapesAndIdentifiers(version, [buffer]);
 				assert(processed.data.length === 1);
 				const stream = { data: processed.data[0], offset: 0 };
 				const decoded = readValue(stream, shape, {
