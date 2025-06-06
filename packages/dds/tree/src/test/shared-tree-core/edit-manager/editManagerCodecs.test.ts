@@ -8,7 +8,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import type { ChangeEncodingContext } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
+import { makeEditManagerCodec } from "../../../shared-tree-core/editManagerCodecs.js";
 import type { SummaryData } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
@@ -19,6 +19,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
+import { FluidClientVersion } from "../../../codec/index.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
@@ -169,8 +170,9 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 
 export function testCodec() {
 	describe("Codec", () => {
-		const family = makeEditManagerCodecs(TestChange.codecs, testRevisionTagCodec, {
+		const family = makeEditManagerCodec(TestChange.codecs, testRevisionTagCodec).getFamily({
 			jsonValidator: typeboxValidator,
+			oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
 		});
 
 		makeEncodingTestSuite(family, testCases);

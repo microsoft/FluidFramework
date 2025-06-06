@@ -178,19 +178,51 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
 	[
 		1,
-		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 },
+		{
+			oldestCompatibleClient: FluidClientVersion.v2_0,
+			forest: 1,
+			schema: 1,
+			detachedFieldIndex: 1,
+			editManager: 1,
+			message: 1,
+			fieldBatch: 1,
+		},
 	],
 	[
 		2,
-		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 },
+		{
+			oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
+			forest: 1,
+			schema: 1,
+			detachedFieldIndex: 1,
+			editManager: 2,
+			message: 2,
+			fieldBatch: 1,
+		},
 	],
 	[
 		3,
-		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 3, message: 3, fieldBatch: 1 },
+		{
+			oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
+			forest: 1,
+			schema: 1,
+			detachedFieldIndex: 1,
+			editManager: 3,
+			message: 3,
+			fieldBatch: 1,
+		},
 	],
 	[
 		4,
-		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
+		{
+			oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
+			forest: 1,
+			schema: 1,
+			detachedFieldIndex: 1,
+			editManager: 4,
+			message: 4,
+			fieldBatch: 1,
+		},
 	],
 ]);
 
@@ -712,6 +744,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,
+	writeVersionOverrides: new Map(),
+	allowPossiblyIncompatibleWriteVersionOverrides: false,
 };
 
 function verboseFromCursor(

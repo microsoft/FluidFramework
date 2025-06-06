@@ -101,9 +101,14 @@ export function cloneWithReplacements(root: unknown, rootKey: string, replacer: 
     value: unknown;
 }): unknown;
 
+// @alpha
+export type CodecName = string;
+
 // @alpha @input
 export interface CodecWriteOptions extends ICodecOptions {
+    readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
     readonly oldestCompatibleClient: FluidClientVersion;
+    readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 }
 
 // @public
@@ -312,6 +317,9 @@ export const ForestTypeOptimized: ForestType;
 
 // @alpha
 export const ForestTypeReference: ForestType;
+
+// @alpha
+export type FormatVersion = number | undefined;
 
 // @alpha
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;
