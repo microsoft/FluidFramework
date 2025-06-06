@@ -4,7 +4,6 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
@@ -44,7 +43,7 @@ export class OrderedListNode extends DocumentationParentNodeBase<PhrasingContent
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.OrderedList;
+	public readonly type = "orderedList";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}

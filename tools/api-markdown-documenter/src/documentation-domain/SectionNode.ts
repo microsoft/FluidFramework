@@ -5,7 +5,6 @@
 
 import type { BlockContent } from "./BlockContent.js";
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { HeadingNode } from "./HeadingNode.js";
 
 /**
@@ -47,7 +46,7 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Section;
+	public readonly type = "section";
 
 	/**
 	 * Optional heading to display for the section.

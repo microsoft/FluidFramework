@@ -4,7 +4,6 @@
  */
 
 import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
 /**
@@ -34,7 +33,7 @@ export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.CodeSpan;
+	public readonly type = "codeSpan";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
