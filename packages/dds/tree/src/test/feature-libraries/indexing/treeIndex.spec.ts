@@ -11,12 +11,13 @@ import {
 	AnchorTreeIndex,
 	isTreeValue,
 } from "../../../feature-libraries/index.js";
-import type {
-	AnchorNode,
-	FieldKey,
-	IEditableForest,
-	ITreeSubscriptionCursor,
-	TreeValue,
+import {
+	forEachNode,
+	type AnchorNode,
+	type FieldKey,
+	type IEditableForest,
+	type ITreeSubscriptionCursor,
+	type TreeValue,
 } from "../../../core/index.js";
 import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
 import {
@@ -223,30 +224,29 @@ describe("tree indexes", () => {
 							const colors = new Map<string, number>();
 
 							cursor.enterField(brand("bird"));
-							if (cursor.firstNode()) {
-								cursor.enterField(brand("eggs"));
-								cursor.firstNode();
-								cursor.enterField(brand("")); // enter the array of eggs
-								let hasNextEgg = cursor.firstNode();
+							cursor.enterNode(0);
+							cursor.enterField(brand("eggs"));
+							cursor.enterNode(0);
+							cursor.enterField(brand("")); // enter the array of eggs
 
-								while (hasNextEgg) {
-									cursor.enterField(brand("color"));
-									cursor.firstNode();
-									const color = cursor.value as string;
+							forEachNode(cursor, () => {
+								cursor.enterField(brand("color"));
+								cursor.enterNode(0);
+								const color = cursor.value;
+								assert(typeof color === "string");
 
-									// increment or initialize color count in the map
-									colors.set(color, (colors.get(color) ?? 0) + 1);
+								// increment or initialize color count in the map
+								colors.set(color, (colors.get(color) ?? 0) + 1);
 
-									cursor.exitNode();
-									cursor.exitField(); // exit "color"
-									hasNextEgg = cursor.nextNode(); // move to next egg
-								}
-								cursor.exitNode(); // exit the current egg
-								cursor.exitField(); // exit the array field
-								cursor.exitNode(); // exit the array node
-								cursor.exitField(); // exit "eggs" field
-								cursor.exitNode(); // exit "bird"
-							}
+								cursor.exitNode();
+								cursor.exitField(); // exit "color"
+							});
+
+							cursor.exitField(); // exit the array of eggs
+							cursor.exitNode(); // exit the array node
+							cursor.exitField(); // exit "eggs" field
+							cursor.exitNode(); // exit "Bird" node
+							cursor.exitField(); // exit "bird" field
 
 							// Early exit if no colors were found
 							if (colors.size === 0) {
