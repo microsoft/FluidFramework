@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { eq, gt } from "semver-ts";
 
-import { type SemanticVersion } from "../compatUtils.js";
+import type { SemanticVersion } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 
 /**
