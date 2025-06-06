@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TableRow as MdastTableRow } from "mdast";
+import type { TableCell as MdastTableCell, TableRow as MdastTableRow } from "mdast";
 
 import type { TableRowNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
@@ -18,5 +18,14 @@ export function tableRowToMarkdown(
 	node: TableRowNode,
 	context: TransformationContext,
 ): MdastTableRow {
-	throw new Error("TODO");
+	const { transformations } = context;
+
+	const transformedChildren: MdastTableCell[] = node.children.map((cell) =>
+		transformations.tableCell(cell, context),
+	);
+
+	return {
+		type: "tableRow",
+		children: transformedChildren,
+	};
 }

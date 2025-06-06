@@ -3,10 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type { TableCell as MdastTableCell } from "mdast";
+import type {
+	PhrasingContent as MdastPhrasingContent,
+	TableCell as MdastTableCell,
+} from "mdast";
 
-import type { TableCellNode } from "../../documentation-domain/index.js";
+import {
+	isPhrasingContent,
+	type TableCellContent,
+	type TableCellNode,
+} from "../../documentation-domain/index.js";
+import { transformPhrasingContent } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
+
+import { transformAsHtml } from "./Utilities.js";
 
 /**
  * Transform a {@link TableCellNode} to HTML.
@@ -18,15 +28,27 @@ export function tableCellToMarkdown(
 	node: TableCellNode,
 	context: TransformationContext,
 ): MdastTableCell {
-	// const { transformations } = context;
-
 	// TODO: ensure block content is HTML wrapped
-	// const transformedChildren = node.children.map((child) =>
-	// 	transformations[child.type](child, {
-	// 		...context,
-	// 		insideTable: true,
-	// 	}),
-	// );
+	const transformedChildren = node.children.map((child) =>
+		transformCellContent(child, context),
+	);
 
-	throw new Error("TODO");
+	return {
+		type: "tableCell",
+		children: transformedChildren,
+	};
+}
+
+/**
+ * TODO
+ */
+function transformCellContent(
+	node: TableCellContent,
+	context: TransformationContext,
+): MdastPhrasingContent {
+	if (isPhrasingContent(node)) {
+		return transformPhrasingContent(node, context);
+	}
+
+	return transformAsHtml(node, context);
 }

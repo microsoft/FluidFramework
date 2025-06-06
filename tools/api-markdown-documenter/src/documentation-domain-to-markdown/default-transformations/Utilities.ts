@@ -4,12 +4,24 @@
  */
 
 import type {
+	Html as MdastHtml,
 	List as MdastList,
 	ListItem as MdastListItem,
 	PhrasingContent as MdastPhrasingContent,
 } from "mdast";
 
-import type { TextFormatting } from "../../documentation-domain/index.js";
+import type { DocumentationNode, TextFormatting } from "../../documentation-domain/index.js";
+import type { TransformationContext } from "../TransformationContext.js";
+
+/**
+ * TODO
+ */
+export function transformAsHtml(
+	node: DocumentationNode,
+	context: TransformationContext,
+): MdastHtml {
+	throw new Error("TODO");
+}
 
 /**
  * TODO

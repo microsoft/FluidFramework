@@ -4,6 +4,7 @@
  */
 
 import type { CodeSpanNode } from "./CodeSpanNode.js";
+import type { DocumentationNode } from "./DocumentationNode.js";
 import type { LineBreakNode } from "./LineBreakNode.js";
 import type { LinkNode } from "./LinkNode.js";
 import type { PlainTextNode } from "./PlainTextNode.js";
@@ -47,3 +48,10 @@ export interface PhrasingContentMap {
  * @public
  */
 export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
+
+/**
+ * Type guard to determine if a {@link DocumentationNode} is a kind of {@link PhrasingContent}.
+ */
+export function isPhrasingContent(node: DocumentationNode): node is PhrasingContent {
+	return node.type in ["codeSpan", "lineBreak", "link", "span", "text"];
+}
