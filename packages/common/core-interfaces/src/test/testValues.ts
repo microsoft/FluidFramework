@@ -672,6 +672,14 @@ export const opaqueSerializableAndDeserializedObject =
 	objectWithNumber as unknown as OpaqueJsonSerializable<typeof objectWithNumber> &
 		OpaqueJsonDeserialized<typeof objectWithNumber>;
 
+export const opaqueSerializableUnknown =
+	opaqueSerializableObject as OpaqueJsonSerializable<unknown>;
+export const opaqueDeserializedUnknown =
+	opaqueDeserializedObject as OpaqueJsonDeserialized<unknown>;
+export const opaqueSerializableAndDeserializedUnknown =
+	opaqueSerializableAndDeserializedObject as OpaqueJsonSerializable<unknown> &
+		OpaqueJsonDeserialized<unknown>;
+
 export const opaqueSerializableObjectRequiringBigintSupport =
 	objectWithBigint as unknown as OpaqueJsonSerializable<typeof objectWithBigint, [bigint]>;
 export const opaqueDeserializedObjectRequiringBigintSupport =
