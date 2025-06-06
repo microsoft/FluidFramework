@@ -3474,22 +3474,28 @@ export class ContainerRuntime
 			throw new UsageError("cannot enter staging mode while detached");
 		}
 
-		// Make sure all BatchManagers are empty before entering staging mode,
+		// Make sure Outbox is empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
-		this.outbox.flush();
+		this.flush();
 
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
-			// Final flush of any last staged changes
-			this.outbox.flush();
+			try {
+				// Final flush of any last staged changes
+				this.flush();
 
-			this.stageControls = undefined;
+				this.stageControls = undefined;
 
-			// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
-			// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
-			this.submitIdAllocationOpIfNeeded({ staged: false });
-			discardOrCommit();
+				// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
+				// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
+				this.submitIdAllocationOpIfNeeded({ staged: false });
+				discardOrCommit();
 
-			this.channelCollection.notifyStagingMode(false);
+				this.channelCollection.notifyStagingMode(false);
+			} catch (error) {
+				const normalizedError = normalizeError(error);
+				this.closeFn(normalizedError);
+				throw normalizedError;
+			}
 		};
 
 		// eslint-disable-next-line import/no-deprecated
