@@ -59,10 +59,10 @@ export interface EmptyGroupedBatch {
 /**
  * This is an empty grouped batch which is sent when resubmitting an empty batch.
  */
-const emptyGroupedBatch: EmptyGroupedBatch = {
+const makeEmptyGroupedBatch = (): EmptyGroupedBatch => ({
 	type: "groupedBatch",
 	contents: [],
-};
+});
 
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
@@ -94,6 +94,7 @@ export class OpGroupingManager {
 			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
 		);
 
+		const emptyGroupedBatch = makeEmptyGroupedBatch();
 		const serializedOp = JSON.stringify(emptyGroupedBatch);
 
 		const placeholderMessage: LocalEmptyBatchPlaceholder = {
