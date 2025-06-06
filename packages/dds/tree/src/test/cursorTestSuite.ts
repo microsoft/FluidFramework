@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -438,248 +439,261 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 			};
 
 	return describe(`${cursorName} cursor implementation`, () => {
-		describe("test trees", () => {
-			for (const { name, dataFactory, reference, path } of testData) {
-				describe(name, () => {
-					let data: TData;
+		for (const emulateProduction of [true, false]) {
+			describe(`emulateProductionBuild: ${emulateProduction}`, () => {
+				if (emulateProduction) {
 					before(() => {
-						data = dataFactory();
+						emulateProductionBuild();
 					});
-					it("jsonableTreeFromCursor", () => {
-						const cursor = cursorFactory(data);
-						const jsonableClone = jsonableTreeFromCursor(cursor);
-						// Check jsonable objects are actually json compatible
-						const text = JSON.stringify(jsonableClone);
-						const parsed = JSON.parse(text);
-						assert.deepEqual(parsed, jsonableClone);
+					after(() => {
+						emulateProductionBuild(false);
 					});
+				}
 
-					it("traversal", () => {
-						checkTraversal(cursorFactory(data), path ?? parent);
-					});
+				describe("test trees", () => {
+					for (const { name, dataFactory, reference, path } of testData) {
+						describe(name, () => {
+							let data: TData;
+							before(() => {
+								data = dataFactory();
+							});
+							it("jsonableTreeFromCursor", () => {
+								const cursor = cursorFactory(data);
+								const jsonableClone = jsonableTreeFromCursor(cursor);
+								// Check jsonable objects are actually json compatible
+								const text = JSON.stringify(jsonableClone);
+								const parsed = JSON.parse(text);
+								assert.deepEqual(parsed, jsonableClone);
+							});
 
-					if (reference !== undefined) {
-						it("equals reference", () => {
-							if (dataFromJsonableTree !== undefined) {
-								const dataClone = dataFromJsonableTree(reference);
-								// This assumes `TData` works with deepEqual.
-								assert.deepEqual(data, dataClone);
+							it("traversal", () => {
+								checkTraversal(cursorFactory(data), path ?? parent);
+							});
+
+							if (reference !== undefined) {
+								it("equals reference", () => {
+									if (dataFromJsonableTree !== undefined) {
+										const dataClone = dataFromJsonableTree(reference);
+										// This assumes `TData` works with deepEqual.
+										assert.deepEqual(data, dataClone);
+									}
+
+									const clone = jsonableTreeFromCursor(cursorFactory(data));
+									assert.deepEqual(clone, reference);
+								});
 							}
 
-							const clone = jsonableTreeFromCursor(cursorFactory(data));
-							assert.deepEqual(clone, reference);
-						});
-					}
+							if (dataFromCursor !== undefined) {
+								it("roundtrip with dataFromCursor", () => {
+									const cursor = cursorFactory(data);
+									const cursorClonedData = dataFromCursor(cursor);
+									// This assumes `T` works with deepEqual.
+									assert.deepEqual(cursorClonedData, data);
+								});
+							}
 
-					if (dataFromCursor !== undefined) {
-						it("roundtrip with dataFromCursor", () => {
-							const cursor = cursorFactory(data);
-							const cursorClonedData = dataFromCursor(cursor);
-							// This assumes `T` works with deepEqual.
-							assert.deepEqual(cursorClonedData, data);
-						});
-					}
-
-					if (dataFromJsonableTree !== undefined) {
-						it("roundtrip with dataFromJsonableTree", () => {
-							const cursor = cursorFactory(data);
-							const jsonableClone = jsonableTreeFromCursor(cursor);
-							const dataClone = dataFromJsonableTree(jsonableClone);
-							assert.deepEqual(data, dataClone);
+							if (dataFromJsonableTree !== undefined) {
+								it("roundtrip with dataFromJsonableTree", () => {
+									const cursor = cursorFactory(data);
+									const jsonableClone = jsonableTreeFromCursor(cursor);
+									const dataClone = dataFromJsonableTree(jsonableClone);
+									assert.deepEqual(data, dataClone);
+								});
+							}
 						});
 					}
 				});
-			}
-		});
 
-		// TODO: replace some of these tests with ones that do not require dataFromJsonableTree
-		if (dataFromJsonableTree !== undefined) {
-			const factory = (data: JsonableTree): ITreeCursor => {
-				return cursorFactory(dataFromJsonableTree(data));
-			};
-
-			// TODO: revisit spec for forest cursors and root and clarify what should be tested for them regarding Up from root.
-			if (!extraRoot) {
-				it("up from root", () => {
-					const cursor = factory({ type: emptyObjectIdentifier });
-					assert.throws(() => {
-						cursor.exitNode();
-					});
-				});
-			}
-			describe("getPath() and getFieldPath()", () => {
-				it("at root", () => {
-					const cursor = factory({
-						type: emptyObjectIdentifier,
-					});
-					expectEqualPaths(cursor.getPath(), parent);
-				});
-
-				it("getFieldPath in root field", () => {
-					const cursor = factory({
-						type: emptyObjectIdentifier,
-					});
-					cursor.enterField(brand("key"));
-					expectEqualFieldPaths(cursor.getFieldPath(), {
-						parent,
-						field: brand("key"),
-					});
-				});
-
-				it("first node in a root field", () => {
-					const cursor = factory({
-						type: brand(JsonAsTree.JsonObject.identifier),
-						fields: { key: [{ type: brand(numberSchema.identifier), value: 0 }] },
-					});
-					cursor.enterField(brand("key"));
-					cursor.firstNode();
-					expectEqualPaths(cursor.getPath(), {
-						parent,
-						parentField: brand<FieldKey>("key"),
-						parentIndex: 0,
-					});
-				});
-
-				it("node in a root field", () => {
-					const cursor = factory({
-						type: brand(JsonAsTree.JsonObject.identifier),
-						fields: {
-							key: [
-								{ type: brand(numberSchema.identifier), value: 0 },
-								{ type: brand(numberSchema.identifier), value: 1 },
-							],
-						},
-					});
-					cursor.enterField(brand("key"));
-					cursor.enterNode(1);
-					expectEqualPaths(cursor.getPath(), {
-						parent,
-						parentField: brand<FieldKey>("key"),
-						parentIndex: 1,
-					});
-				});
-
-				it("in a nested field", () => {
-					const cursor = factory({
-						type: brand(JsonAsTree.JsonObject.identifier),
-						fields: {
-							a: [
-								{
-									type: brand(JsonAsTree.JsonObject.identifier),
-									fields: { [EmptyKey]: [{ type: emptyObjectIdentifier }] },
-								},
-								{
-									type: brand(JsonAsTree.JsonObject.identifier),
-									fields: { [EmptyKey]: [{ type: emptyObjectIdentifier }] },
-								},
-							],
-						},
-					});
-					cursor.enterField(brand("a"));
-					cursor.enterNode(1);
-					cursor.enterField(EmptyKey);
-					const initialPath: UpPath = {
-						parent,
-						parentField: brand("a"),
-						parentIndex: 1,
+				// TODO: replace some of these tests with ones that do not require dataFromJsonableTree
+				if (dataFromJsonableTree !== undefined) {
+					const factory = (data: JsonableTree): ITreeCursor => {
+						return cursorFactory(dataFromJsonableTree(data));
 					};
-					expectEqualFieldPaths(cursor.getFieldPath(), {
-						parent: initialPath,
-						field: EmptyKey,
-					});
-					cursor.enterNode(0);
-					expectEqualPaths(cursor.getPath(), {
-						parent: initialPath,
-						parentField: EmptyKey,
-						parentIndex: 0,
-					});
-				});
-			});
-		}
-		if (withKeys !== undefined) {
-			describe("key tests", () => {
-				const unrelatedKey: FieldKey = brand("unrelated");
-				for (const key of testKeys) {
-					it(`returns no values for key: ${key.toString()}`, () => {
-						// Test an empty tree, and one with unrelated fields
-						const trees: TData[] = [withKeys([]), withKeys([unrelatedKey])];
-						// We have a builder: use it to make a tree with unrelatedKey.
-						trees.push(withKeys([unrelatedKey]));
 
-						for (const data of trees) {
-							const cursor = cursorFactory(data);
-							cursor.enterField(key);
-							assert.equal(cursor.getFieldLength(), 0);
+					// TODO: revisit spec for forest cursors and root and clarify what should be tested for them regarding Up from root.
+					if (!extraRoot) {
+						it("up from root", () => {
+							const cursor = factory({ type: emptyObjectIdentifier });
+							assert.throws(() => {
+								cursor.exitNode();
+							});
+						});
+					}
+					describe("getPath() and getFieldPath()", () => {
+						it("at root", () => {
+							const cursor = factory({
+								type: emptyObjectIdentifier,
+							});
+							expectEqualPaths(cursor.getPath(), parent);
+						});
+
+						it("getFieldPath in root field", () => {
+							const cursor = factory({
+								type: emptyObjectIdentifier,
+							});
+							cursor.enterField(brand("key"));
+							expectEqualFieldPaths(cursor.getFieldPath(), {
+								parent,
+								field: brand("key"),
+							});
+						});
+
+						it("first node in a root field", () => {
+							const cursor = factory({
+								type: brand(JsonAsTree.JsonObject.identifier),
+								fields: { key: [{ type: brand(numberSchema.identifier), value: 0 }] },
+							});
+							cursor.enterField(brand("key"));
+							cursor.firstNode();
+							expectEqualPaths(cursor.getPath(), {
+								parent,
+								parentField: brand<FieldKey>("key"),
+								parentIndex: 0,
+							});
+						});
+
+						it("node in a root field", () => {
+							const cursor = factory({
+								type: brand(JsonAsTree.JsonObject.identifier),
+								fields: {
+									key: [
+										{ type: brand(numberSchema.identifier), value: 0 },
+										{ type: brand(numberSchema.identifier), value: 1 },
+									],
+								},
+							});
+							cursor.enterField(brand("key"));
+							cursor.enterNode(1);
+							expectEqualPaths(cursor.getPath(), {
+								parent,
+								parentField: brand<FieldKey>("key"),
+								parentIndex: 1,
+							});
+						});
+
+						it("in a nested field", () => {
+							const cursor = factory({
+								type: brand(JsonAsTree.JsonObject.identifier),
+								fields: {
+									a: [
+										{
+											type: brand(JsonAsTree.JsonObject.identifier),
+											fields: { [EmptyKey]: [{ type: emptyObjectIdentifier }] },
+										},
+										{
+											type: brand(JsonAsTree.JsonObject.identifier),
+											fields: { [EmptyKey]: [{ type: emptyObjectIdentifier }] },
+										},
+									],
+								},
+							});
+							cursor.enterField(brand("a"));
+							cursor.enterNode(1);
+							cursor.enterField(EmptyKey);
+							const initialPath: UpPath = {
+								parent,
+								parentField: brand("a"),
+								parentIndex: 1,
+							};
+							expectEqualFieldPaths(cursor.getFieldPath(), {
+								parent: initialPath,
+								field: EmptyKey,
+							});
+							cursor.enterNode(0);
+							expectEqualPaths(cursor.getPath(), {
+								parent: initialPath,
+								parentField: EmptyKey,
+								parentIndex: 0,
+							});
+						});
+					});
+				}
+				if (withKeys !== undefined) {
+					describe("key tests", () => {
+						const unrelatedKey: FieldKey = brand("unrelated");
+						for (const key of testKeys) {
+							it(`returns no values for key: ${key.toString()}`, () => {
+								// Test an empty tree, and one with unrelated fields
+								const trees: TData[] = [withKeys([]), withKeys([unrelatedKey])];
+								// We have a builder: use it to make a tree with unrelatedKey.
+								trees.push(withKeys([unrelatedKey]));
+
+								for (const data of trees) {
+									const cursor = cursorFactory(data);
+									cursor.enterField(key);
+									assert.equal(cursor.getFieldLength(), 0);
+								}
+							});
+
+							const dataFactory = () => withKeys([key]);
+
+							if (dataFactory !== undefined) {
+								it(`handles values for key: ${key.toString()}`, () => {
+									const dataWithKey = dataFactory();
+									const cursor = cursorFactory(dataWithKey);
+									cursor.enterField(key);
+									assert.equal(cursor.getFieldLength(), 1);
+									cursor.enterNode(0);
+								});
+
+								it(`traversal with key: ${key.toString()}`, () => {
+									const dataWithKey = dataFactory();
+									const cursor = cursorFactory(dataWithKey);
+									checkTraversal(cursor, parent);
+								});
+							}
 						}
 					});
 
-					const dataFactory = () => withKeys([key]);
+					it("traverse with no keys", () => {
+						const data = withKeys([]);
+						const cursor = cursorFactory(data);
+						checkTraversal(cursor, parent);
+					});
 
-					if (dataFactory !== undefined) {
-						it(`handles values for key: ${key.toString()}`, () => {
-							const dataWithKey = dataFactory();
-							const cursor = cursorFactory(dataWithKey);
-							cursor.enterField(key);
-							assert.equal(cursor.getFieldLength(), 1);
-							cursor.enterNode(0);
-						});
+					describe("cursor prefix tests", () => {
+						it("at root", () => {
+							const data = withKeys([]);
+							const cursor = cursorFactory(data);
+							expectEqualPaths(cursor.getPath(), parent);
 
-						it(`traversal with key: ${key.toString()}`, () => {
-							const dataWithKey = dataFactory();
-							const cursor = cursorFactory(dataWithKey);
-							checkTraversal(cursor, parent);
+							const prefixParent: UpPath = {
+								parent: undefined,
+								parentField: brand("prefixParentField"),
+								parentIndex: 5,
+							};
+
+							const prefixes: (PathRootPrefix | undefined)[] = [
+								undefined,
+								{},
+								{ indexOffset: 10, rootFieldOverride: EmptyKey },
+								{ parent: prefixParent },
+							];
+
+							for (const prefix of prefixes) {
+								// prefixPath has its own tests, so we can use it to test cursors here:
+								expectEqualPaths(cursor.getPath(prefix), prefixPath(prefix, parent));
+							}
+
+							cursor.enterField(brand("testField"));
+							assert(
+								compareFieldUpPaths(cursor.getFieldPath(), {
+									field: brand("testField"),
+									parent,
+								}),
+							);
+
+							for (const prefix of prefixes) {
+								assert(
+									compareFieldUpPaths(
+										cursor.getFieldPath(prefix),
+										prefixFieldPath(prefix, { field: brand("testField"), parent }),
+									),
+								);
+							}
 						});
-					}
+					});
 				}
-			});
-
-			it("traverse with no keys", () => {
-				const data = withKeys([]);
-				const cursor = cursorFactory(data);
-				checkTraversal(cursor, parent);
-			});
-
-			describe("cursor prefix tests", () => {
-				it("at root", () => {
-					const data = withKeys([]);
-					const cursor = cursorFactory(data);
-					expectEqualPaths(cursor.getPath(), parent);
-
-					const prefixParent: UpPath = {
-						parent: undefined,
-						parentField: brand("prefixParentField"),
-						parentIndex: 5,
-					};
-
-					const prefixes: (PathRootPrefix | undefined)[] = [
-						undefined,
-						{},
-						{ indexOffset: 10, rootFieldOverride: EmptyKey },
-						{ parent: prefixParent },
-					];
-
-					for (const prefix of prefixes) {
-						// prefixPath has its own tests, so we can use it to test cursors here:
-						expectEqualPaths(cursor.getPath(prefix), prefixPath(prefix, parent));
-					}
-
-					cursor.enterField(brand("testField"));
-					assert(
-						compareFieldUpPaths(cursor.getFieldPath(), {
-							field: brand("testField"),
-							parent,
-						}),
-					);
-
-					for (const prefix of prefixes) {
-						assert(
-							compareFieldUpPaths(
-								cursor.getFieldPath(prefix),
-								prefixFieldPath(prefix, { field: brand("testField"), parent }),
-							),
-						);
-					}
-				});
 			});
 		}
 	});
