@@ -281,7 +281,7 @@ describe("Runtime", () => {
 		);
 
 		if (!existing || !explicitSchemaControl) {
-			controller.onDisconnect();
+			controller.pendingOpNotAcked();
 			assert(
 				controller.maybeGenerateSchemaMessage() === undefined,
 				"no messages should be sent!",
@@ -369,7 +369,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 		);
 
-		controller.onDisconnect();
+		controller.pendingOpNotAcked();
 		assert(
 			controller.maybeGenerateSchemaMessage() === undefined,
 			"no messages should be sent!",
