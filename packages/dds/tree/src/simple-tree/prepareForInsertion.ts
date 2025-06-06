@@ -125,8 +125,8 @@ function validateAndPrepare(
 	mapTrees: readonly UnhydratedFlexTreeNode[],
 ): void {
 	if (hydratedData !== undefined) {
-		// Prepare content before validating side this populated defaults using the provided context rather than the global context.
-		// This ensures that when validation requests identifiers (or any other contextual defaults),
+		// Run `prepareContentForHydration` before walking the tree in `isFieldInSchema`.
+		// This ensures that when `isFieldInSchema` requests identifiers (or any other contextual defaults),
 		// they were already creating used the more specific context we have access to from `hydratedData`.
 		prepareContentForHydration(mapTrees, hydratedData.checkout.forest, hydratedData);
 		if (schemaAndPolicy.policy.validateSchema === true) {
@@ -170,15 +170,16 @@ interface LocatedNodesBatch {
 const placeholderKey: DetachedField & FieldKey = brand("placeholder" as const);
 
 /**
- * Records any proxies in the given content tree and does the necessary bookkeeping to ensure they are synchronized with subsequent reads of the tree.
- * @remarks If the content tree contains any proxies, this function must be called just prior to inserting the content into the tree.
+ * Records any {@link TreeNode}s in the given `content` tree and does the necessary bookkeeping to ensure they are synchronized with subsequent reads of the tree.
+ * Additionally populates any {@link UnhydratedFlexTreeField.pendingDefault}s using the provided `context`.
+ *
+ * @remarks If the content tree contains has any associated {@link TreeNode}s, this function must be called just prior to inserting the content into the tree.
  * Specifically, no other content may be inserted into the tree between the invocation of this function and the insertion of `content`.
  * The insertion of `content` must occur or else this function will cause memory leaks.
  *
- * Exported fot testing purposes: otherwise should not be used outside this module.
+ * Exported for testing purposes: otherwise should not be used outside this module.
  * @param content - the content subsequence to be inserted, of which might deeply contain {@link TreeNode}s which need to be hydrated.
  * @param forest - the forest the content is being inserted into.
- * See {@link extractFactoryContent} for more details.
  */
 export function prepareContentForHydration(
 	content: readonly UnhydratedFlexTreeNode[],

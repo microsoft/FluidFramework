@@ -357,6 +357,7 @@ export class UnhydratedFlexTreeField
 	 * Populate pending default (if present) using the provided context.
 	 * @remarks
 	 * This apply to just this field: caller will likely want to recursively walk the tree.
+	 * @see {@link pendingDefault}.
 	 */
 	public fillPendingDefaults(context: FlexTreeHydratedContextMinimal): void {
 		const provider = this.getPendingDefault();
@@ -366,6 +367,9 @@ export class UnhydratedFlexTreeField
 		}
 	}
 
+	/**
+	 * Returns true if this field has a pending default due to defined defined using a {@link ContextualFieldProvider}.
+	 */
 	public get pendingDefault(): boolean {
 		return this.getPendingDefault() !== undefined;
 	}
