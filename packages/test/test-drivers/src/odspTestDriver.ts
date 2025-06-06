@@ -53,21 +53,6 @@ interface IOdspTestDriverConfig extends TokenConfig {
 	options: HostStoragePolicy | undefined;
 }
 
-// specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
-// interface LoginTenantRange {
-// 	prefix: string;
-// 	start: number;
-// 	count: number;
-// 	password: string;
-// }
-
-// interface LoginTenants {
-// 	[tenant: string]: {
-// 		range: LoginTenantRange;
-// 		// add different format here
-// 	};
-// }
-
 /**
  * Properties of the credentials for an individual user returned from the TRIPS API.
  */

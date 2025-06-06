@@ -255,7 +255,7 @@ stages:
                 exit -1
               fi
 
-        # Install test, logger, and tenant packages
+        # Install test and logger packages
         - task: Bash@3
           displayName: 'npm install'
           # ADO feeds have latency on the order of minutes before packages are available downstream. See:
@@ -367,13 +367,14 @@ stages:
             script: |
               set -eu -o pipefail
 
-              npx --package=@ff-internal/trips-setup@0.0.1 -- trips-setup $SYSTEM_ACCESSTOKEN
+              npx --package=@ff-internal/trips-setup@0.0.2 -- trips-setup $SYSTEM_ACCESSTOKEN
 
         # run the test
         - task: Npm@1
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
+            login__microsoft__clientId: $(appClientId)
             ${{ if eq(endsWith(parameters.stageId, 'odspdf'), true) }}:
               login__odspdf__test__tenants: $(tenantCreds)
             ${{ if eq(endsWith(parameters.stageId, 'odsp'), true) }}:
@@ -448,7 +449,7 @@ stages:
             script: |
               set -eu -o pipefail
 
-              npx --package=@ff-internal/trips-setup@0.0.1 -- trips-cleanup $(stringBearerToken)
+              npx --package=@ff-internal/trips-setup@0.0.2 -- trips-cleanup $(stringBearerToken)
 
         # Log Test Failures
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self

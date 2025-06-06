@@ -169,6 +169,5 @@ stages:
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
-        login__microsoft__clientId: $(login-microsoft-clientId)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
