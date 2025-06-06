@@ -5,7 +5,7 @@
 
 import type { HeadingNode } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
-import { renderNodes } from "../Render.js";
+import { renderNode } from "../Render.js";
 import type { RenderContext } from "../RenderContext.js";
 import { renderNodeWithHtmlSyntax } from "../Utilities.js";
 
@@ -60,7 +60,7 @@ function renderHeadingWithMarkdownSyntax(
 	if (renderAsHeading) {
 		const headingPreamble = "#".repeat(headingLevel);
 		writer.write(`${headingPreamble} `);
-		renderNodes(headingNode.children, writer, context);
+		renderNode(headingNode.title, writer, context);
 
 		if (headingNode.id !== undefined) {
 			const escapedId = escapeTextForMarkdown(headingNode.id);
@@ -70,7 +70,7 @@ function renderHeadingWithMarkdownSyntax(
 		if (headingNode.id !== undefined) {
 			renderAnchor(headingNode.id, writer);
 		}
-		renderNodes(headingNode.children, writer, { ...context, bold: true });
+		renderNode(headingNode.title, writer, { ...context, bold: true });
 	}
 
 	writer.ensureSkippedLine(); // Headings require trailing blank line

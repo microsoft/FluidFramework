@@ -3,21 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
 import type { NodeIdentifierManager } from "../../feature-libraries/index.js";
-import {
-	type RestrictiveStringRecord,
-	getOrCreate,
-	isReadonlyArray,
-} from "../../util/index.js";
 // This import is required for intellisense in @link doc comments on mouseover in VSCode.
 // eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 import type { TreeAlpha } from "../../shared-tree/index.js";
-
+import {
+	type RestrictiveStringRecord,
+	compareSets,
+	getOrCreate,
+	isReadonlyArray,
+} from "../../util/index.js";
+import type {
+	NodeKind,
+	WithType,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaBoth,
+} from "../core/index.js";
+import { isLazy } from "../flexList.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -26,6 +36,16 @@ import {
 	stringSchema,
 	type LeafSchema,
 } from "../leafNodeSchema.js";
+import {
+	arraySchema,
+	type MapNodeInsertableData,
+	mapSchema,
+	objectSchema,
+	type TreeArrayNode,
+	type InsertableObjectFromSchemaRecord,
+	type TreeMapNode,
+	type TreeObjectNode,
+} from "../node-kinds/index.js";
 import {
 	FieldKind,
 	type FieldSchema,
@@ -42,25 +62,11 @@ import {
 	type ImplicitAnnotatedAllowedTypes,
 	type UnannotateImplicitAllowedTypes,
 	type UnannotateSchemaRecord,
+	normalizeAllowedTypes,
 } from "../schemaTypes.js";
-import type {
-	NodeKind,
-	WithType,
-	TreeNodeSchema,
-	TreeNodeSchemaClass,
-	TreeNodeSchemaNonClass,
-	TreeNodeSchemaBoth,
-} from "../core/index.js";
-import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
-import {
-	type InsertableObjectFromSchemaRecord,
-	type TreeObjectNode,
-	objectSchema,
-} from "../objectNode.js";
-import { type MapNodeInsertableData, type TreeMapNode, mapSchema } from "../mapNode.js";
-import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
+
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
-import { isLazy } from "../flexList.js";
+import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -763,9 +769,9 @@ export class SchemaFactory<
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
-			return getOrCreate(
-				this.structuralTypes,
+			return this.getStructuralType(
 				fullName,
+				types,
 				() =>
 					this.namedMap(
 						fullName as TName,
@@ -951,7 +957,7 @@ export class SchemaFactory<
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Array", types);
-			return getOrCreate(this.structuralTypes, fullName, () =>
+			return this.getStructuralType(fullName, types, () =>
 				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaClass<
 				ScopedSchemaName<TScope, string>,
@@ -973,6 +979,35 @@ export class SchemaFactory<
 			undefined
 		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
 		return out;
+	}
+
+	/**
+	 * Retrieves or creates a structural {@link TreeNodeSchema} with the specified name and types.
+	 *
+	 * @param fullName - The name for the structural schema.
+	 * @param types - The input schema(s) used to define the structural schema.
+	 * @param builder - A function that builds the schema if it does not already exist.
+	 * @returns The structural {@link TreeNodeSchema} associated with the given name and types.
+	 * @throws `UsageError` if a schema structurally named schema with the same name is cached in `structuralTypes` but had different input types.
+	 */
+	private getStructuralType(
+		fullName: string,
+		types: TreeNodeSchema | readonly TreeNodeSchema[],
+		builder: () => TreeNodeSchema,
+	): TreeNodeSchema {
+		const structural = getOrCreate(this.structuralTypes, fullName, builder);
+		const inputTypes = new Set(normalizeAllowedTypes(types));
+		const outputTypes = new Set(
+			normalizeAllowedTypes(structural.info as TreeNodeSchema | readonly TreeNodeSchema[]),
+		);
+		// If our cached value had a different set of types then were requested, the user must have caused a collision.
+		const same = compareSets({ a: inputTypes, b: outputTypes });
+		if (!same) {
+			throw new UsageError(
+				`Structurally named schema collision: two schema named "${fullName}" were defined with different input schema.`,
+			);
+		}
+		return structural;
 	}
 
 	/**
@@ -1072,10 +1107,12 @@ export class SchemaFactory<
 	 * - It is a UUID which will not collide with other generated UUIDs.
 	 *
 	 * - It is compressed to a space-efficient representation when stored in the document.
+	 * Reading the identifier before inserting the node into a tree prevents the identifier from being stored in its compressed form,
+	 * resulting in a larger storage footprint.
 	 *
 	 * - A compressed form of the identifier can be accessed at runtime via the {@link TreeNodeApi.shortId|Tree.shortId()} API.
 	 *
-	 * - It will error if read (and will not be present in the object's iterable properties) before the node has been inserted into a tree.
+	 * - It will not be present in the object's iterable properties until explicitly read or until having been inserted into a tree.
 	 *
 	 * However, a user may alternatively supply their own string as the identifier if desired (for example, if importing identifiers from another system).
 	 * In that case, if the user requires it to be unique, it is up to them to ensure uniqueness.

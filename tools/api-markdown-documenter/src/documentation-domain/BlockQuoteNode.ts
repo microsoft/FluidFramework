@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type DocumentationNode,
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
@@ -32,12 +29,10 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * </blockquote>
  * ```
  *
+ * @sealed
  * @public
  */
-export class BlockQuoteNode
-	extends DocumentationParentNodeBase
-	implements MultiLineDocumentationNode
-{
+export class BlockQuoteNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * Static singleton representing an empty Block Quote node.
 	 */
@@ -55,7 +50,7 @@ export class BlockQuoteNode
 		return false;
 	}
 
-	public constructor(children: DocumentationNode[]) {
+	public constructor(children: PhrasingContent[]) {
 		super(children);
 	}
 

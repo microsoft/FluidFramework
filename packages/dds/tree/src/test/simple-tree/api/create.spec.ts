@@ -6,55 +6,37 @@
 import { strict as assert } from "node:assert";
 
 import {
-	createFromInsertable,
-	cursorFromInsertable,
+	createFromCursor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/create.js";
 
-import { TreeAlpha } from "../../../shared-tree/index.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
-import { MockNodeIdentifierManager } from "../../../feature-libraries/index.js";
 import { validateUsageError } from "../../utils.js";
-
-const schema = new SchemaFactory("com.example");
-
-class NodeMap extends schema.map("NoteMap", schema.string) {}
-class NodeList extends schema.array("NoteList", schema.string) {}
-class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
+import { singleJsonCursor } from "../../json/index.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 describe("simple-tree create", () => {
-	it("createFromInsertable", () => {
-		const canvas1 = createFromInsertable(Canvas, { stuff: [] });
-		const canvas2 = createFromInsertable(Canvas, new Canvas({ stuff: [] }));
-		const canvas3 = new Canvas({ stuff: [] });
-		assert.deepEqual(canvas1, canvas2);
-		assert.deepEqual(canvas1, canvas3);
-	});
-
-	it("createFromVerbose", () => {
-		const canvas1 = TreeAlpha.importVerbose(Canvas, {
-			type: Canvas.identifier,
-			fields: { stuff: { type: NodeList.identifier, fields: [] } },
-		});
-		const canvas2 = new Canvas({ stuff: [] });
-		assert.deepEqual(canvas1, canvas2);
-	});
-
-	describe("cursorFromInsertable", () => {
+	describe("createFromCursor", () => {
 		it("Success", () => {
-			cursorFromInsertable(schema.string, "Hello world", new MockNodeIdentifierManager());
+			const cursor = singleJsonCursor("Hello world");
+			createFromCursor(SchemaFactory.string, cursor);
 		});
 
-		it("Failure", () => {
+		it("Failure: unknown schema", () => {
+			const cursor = singleJsonCursor("Hello world");
 			assert.throws(
-				() =>
-					cursorFromInsertable(
-						schema.number,
-						// @ts-expect-error invalid data for schema
-						"Hello world",
-						new MockNodeIdentifierManager(),
-					),
-				validateUsageError(/incompatible/),
+				() => createFromCursor(SchemaFactory.number, cursor),
+				(e: Error) => validateAssertionError(e, /Tree does not conform to schema/),
+			);
+		});
+
+		it("Failure: out of schema", () => {
+			const factory = new SchemaFactory("test");
+			class Obj extends factory.object("Obj", { x: SchemaFactory.string }) {}
+			const cursor = singleJsonCursor("Hello world");
+			assert.throws(
+				() => createFromCursor(Obj, cursor),
+				validateUsageError(/does not conform to schema/),
 			);
 		});
 	});

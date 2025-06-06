@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { NetworkError } from "@fluidframework/server-services-client";
 import fs, { type PathLike } from "fs";
 import type { FileHandle } from "fs/promises";
+
+import { NetworkError } from "@fluidframework/server-services-client";
 
 export const packedRefsFileName = "packed-refs";
 

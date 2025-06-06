@@ -11,12 +11,12 @@ import {
 	ILogger,
 	IUsageData,
 } from "@fluidframework/server-services-core";
-import LRUCache from "lru-cache";
 import {
 	CommonProperties,
 	Lumberjack,
 	ThrottlingTelemetryProperties,
 } from "@fluidframework/server-services-telemetry";
+import LRUCache from "lru-cache";
 
 /**
  * A lenient implementation of IThrottlerHelper that prioritizes low latency over strict throttling.

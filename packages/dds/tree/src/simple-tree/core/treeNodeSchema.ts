@@ -5,6 +5,7 @@
 
 import type { TreeLeafValue } from "../schemaTypes.js";
 import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
+
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
 

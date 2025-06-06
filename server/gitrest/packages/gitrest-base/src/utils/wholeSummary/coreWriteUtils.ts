@@ -4,6 +4,8 @@
  */
 
 import { IBlob, ICreateTreeEntry, ITree, ITreeEntry } from "@fluidframework/gitresources";
+import { getGitMode, getGitType } from "@fluidframework/protocol-base";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IWholeSummaryBlob,
 	IWholeSummaryTree,
@@ -12,17 +14,17 @@ import {
 	NetworkError,
 	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
-import { getGitMode, getGitType } from "@fluidframework/protocol-base";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { IRepositoryManager } from "../definitions";
-import { IFullGitTree } from "./definitions";
+
 import {
 	buildFullGitTreeFromGitTree,
 	convertFullGitTreeToFullSummaryTree,
 	convertFullSummaryToWholeSummaryEntries,
 	convertWholeSummaryTreeEntryToSummaryObject,
 } from "./conversions";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { IFullGitTree } from "./definitions";
 
 /**
  * Options and flags for writing a summary tree.

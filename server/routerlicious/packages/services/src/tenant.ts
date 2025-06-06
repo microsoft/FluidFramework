@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ScopeType, type IUser } from "@fluidframework/protocol-definitions";
 import {
 	GitManager,
@@ -16,21 +17,21 @@ import {
 	NetworkError,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import {
-	extractTokenFromHeader,
-	getValidAccessToken,
-	logHttpMetrics,
-} from "@fluidframework/server-services-utils";
+import type { IInvalidTokenError } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
 	getLumberBaseProperties,
 	getGlobalTelemetryContext,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import {
+	extractTokenFromHeader,
+	getValidAccessToken,
+	logHttpMetrics,
+} from "@fluidframework/server-services-utils";
 import { RawAxiosRequestHeaders } from "axios";
+
 import { IsEphemeralContainer } from ".";
-import type { IInvalidTokenError } from "@fluidframework/server-services-core";
 
 export function getRefreshTokenIfNeededCallback(
 	tenantManager: core.ITenantManager,

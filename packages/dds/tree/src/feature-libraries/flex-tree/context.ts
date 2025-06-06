@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert, debugAssert } from "@fluidframework/core-utils/internal";
 
 import {
@@ -15,14 +16,13 @@ import {
 	moveToDetachedField,
 	rootField,
 } from "../../core/index.js";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
 import type { NodeIdentifierManager } from "../node-identifier/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
 import type { LazyEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
-import type { ITreeCheckout } from "../../shared-tree/index.js";
 
 /**
  * Context for FlexTrees.
@@ -54,22 +54,32 @@ export interface FlexTreeContext {
 }
 
 /**
- * A common context of a "forest" of FlexTrees.
- * It handles group operations like transforming cursors into anchors for edits.
+ * Subset of a hydrated context which can be used in more cases (like before the root and events are set up).
  */
-export interface FlexTreeHydratedContext extends FlexTreeContext {
-	readonly events: Listenable<ForestEvents>;
+export interface FlexTreeHydratedContextMinimal {
 	/**
-	 * Gets the root field of the tree.
+	 * The {@link NodeIdentifierManager} responsible for allocating and compressing identifiers for nodes in this context.
 	 */
-	get root(): FlexTreeField;
-
 	readonly nodeKeyManager: NodeIdentifierManager;
 
 	/**
 	 * The checkout object associated with this context.
 	 */
 	readonly checkout: ITreeCheckout;
+}
+
+/**
+ * A common context of a "forest" of FlexTrees.
+ * It handles group operations like transforming cursors into anchors for edits.
+ */
+export interface FlexTreeHydratedContext
+	extends FlexTreeContext,
+		FlexTreeHydratedContextMinimal {
+	readonly events: Listenable<ForestEvents>;
+	/**
+	 * Gets the root field of the tree.
+	 */
+	get root(): FlexTreeField;
 }
 
 /**
@@ -198,7 +208,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	 * Additionally if the detached field's content is deleted, the field will become out of schema if it is required: it must not be used after that point.
 	 */
 	public detachedField(key: DetachedField, schema: FieldKindIdentifier): FlexTreeField {
-		assert(this.disposed === false, "use after dispose");
+		assert(this.disposed === false, 0xb9c /* use after dispose */);
 
 		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor, key);

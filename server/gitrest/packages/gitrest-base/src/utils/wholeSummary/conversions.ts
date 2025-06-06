@@ -15,10 +15,12 @@ import {
 	NetworkError,
 	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
-import { IRepositoryManager } from "../definitions";
-import { IFullGitTree } from "./definitions";
-import { Constants } from "./constants";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
+import { IRepositoryManager } from "../definitions";
+
+import { Constants } from "./constants";
+import { IFullGitTree } from "./definitions";
 
 /**
  * A representation of an IFullGitTree in summary format that

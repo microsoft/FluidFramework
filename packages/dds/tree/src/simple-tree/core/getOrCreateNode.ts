@@ -4,13 +4,14 @@
  */
 
 import type { TreeValue } from "../../core/index.js";
+
+import type { TreeNode } from "./treeNode.js";
 import {
 	type InnerNode,
 	unhydratedFlexTreeNodeToTreeNode,
 	simpleTreeNodeSlot,
 	createTreeNodeFromInner,
 } from "./treeNodeKernel.js";
-import type { TreeNode } from "./treeNode.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
 /**

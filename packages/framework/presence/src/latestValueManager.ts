@@ -23,8 +23,10 @@ import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
 /**
+ * Events from {@link LatestRaw}.
+ *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestRawEvents<T> {
 	/**
@@ -51,7 +53,7 @@ export interface LatestRawEvents<T> {
  * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestRaw<T> {
 	/**
@@ -131,7 +133,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
 				yield {
-					attendee: this.datastore.lookupClient(attendeeId),
+					attendee: this.datastore.presence.attendees.getAttendee(attendeeId),
 					value: asDeeplyReadonly(value.value),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
@@ -143,7 +145,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return Object.keys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)
-			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
+			.map((attendeeId) => this.datastore.presence.attendees.getAttendee(attendeeId));
 	}
 
 	public getRemote(attendee: Attendee): LatestData<T> {
@@ -184,7 +186,7 @@ class LatestValueManagerImpl<T, Key extends string>
 /**
  * Arguments that are passed to the {@link StateFactory.latest} function.
  *
- * @alpha
+ * @beta
  */
 export interface LatestArguments<T extends object | null> {
 	/**
@@ -202,7 +204,7 @@ export interface LatestArguments<T extends object | null> {
 /**
  * Factory for creating a {@link LatestRaw} State object.
  *
- * @alpha
+ * @beta
  */
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T>,

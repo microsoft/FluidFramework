@@ -23,10 +23,10 @@ import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
 /**
- * Collection of latest known values for a specific client.
+ * Collection of latest known values for a specific {@link Attendee}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapClientData<
 	T,
@@ -34,11 +34,13 @@ export interface LatestMapClientData<
 	SpecificAttendeeId extends AttendeeId = AttendeeId,
 > {
 	/**
-	 * Associated attendee.
+	 * Associated {@link Attendee}.
 	 */
 	attendee: Attendee<SpecificAttendeeId>;
 
 	/**
+	 * Map of items for the state.
+	 *
 	 * @privateRemarks This could be regular map currently as no Map is
 	 * stored internally and a new instance is created for every request.
 	 */
@@ -49,10 +51,13 @@ export interface LatestMapClientData<
  * State of a single item value, its key, and its metadata.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapItemUpdatedClientData<T, K extends string | number>
 	extends LatestClientData<T> {
+	/**
+	 * Key of the updated item.
+	 */
 	key: K;
 }
 
@@ -60,17 +65,28 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number>
  * Identifier and metadata for a removed item.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapItemRemovedClientData<K extends string | number> {
+	/**
+	 * Associated {@link Attendee}.
+	 */
 	attendee: Attendee;
+	/**
+	 * Key of the removed item.
+	 */
 	key: K;
+	/**
+	 * Metadata associated with the removal of the item.
+	 */
 	metadata: LatestMetadata;
 }
 
 /**
+ * Events from {@link LatestMapRaw}.
+ *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapRawEvents<T, K extends string | number> {
 	/**
@@ -125,7 +141,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
  * Map of local client's values. Modifications are transmitted to all other connected clients.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface StateMap<K extends string | number, V> {
 	/**
@@ -135,6 +151,8 @@ export interface StateMap<K extends string | number, V> {
 	clear(): void;
 
 	/**
+	 * Removes the element with the specified key from the StateMap, if it exists.
+	 *
 	 * @returns true if an element in the StateMap existed and has been removed, or false if
 	 * the element does not exist.
 	 * @remarks No entry is fully removed. Instead an undefined placeholder is locally and
@@ -158,12 +176,14 @@ export interface StateMap<K extends string | number, V> {
 	): void;
 
 	/**
-	 * Returns a specified element from the StateMap object.
+	 * Returns the element with the specified key from the StateMap, if it exists.
+	 *
 	 * @returns Returns the element associated with the specified key. If no element is associated with the specified key, undefined is returned.
 	 */
 	get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
 
 	/**
+	 * Checks if an element with the specified key exists in the StateMap.
 	 * @returns boolean indicating whether an element with the specified key exists or not.
 	 */
 	has(key: K): boolean;
@@ -179,7 +199,7 @@ export interface StateMap<K extends string | number, V> {
 	set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
 
 	/**
-	 * @returns the number of elements in the StateMap.
+	 * The number of elements in the StateMap.
 	 */
 	readonly size: number;
 
@@ -308,7 +328,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  * @remarks Create using {@link StateFactory.latestMap} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface LatestMapRaw<T, Keys extends string | number = string | number> {
 	/**
@@ -387,7 +407,7 @@ class LatestMapRawValueManagerImpl<
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const attendeeId of objectKeys(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
-				const attendee = this.datastore.lookupClient(attendeeId);
+				const attendee = this.datastore.presence.attendees.getAttendee(attendeeId);
 				const items = this.getRemote(attendee);
 				yield { attendee, items };
 			}
@@ -398,7 +418,7 @@ class LatestMapRawValueManagerImpl<
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return objectKeys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)
-			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
+			.map((attendeeId) => this.datastore.presence.attendees.getAttendee(attendeeId));
 	}
 
 	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>> {
@@ -492,7 +512,7 @@ class LatestMapRawValueManagerImpl<
 /**
  * Arguments that are passed to the {@link StateFactory.latestMap} function.
  *
- * @alpha
+ * @beta
  */
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
 	/**
@@ -511,7 +531,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 /**
  * Factory for creating a {@link LatestMapRaw} State object.
  *
- * @alpha
+ * @beta
  */
 export function latestMap<
 	T,

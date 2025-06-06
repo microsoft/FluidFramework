@@ -15,6 +15,7 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
+import { isContainerMessageDirtyable } from "./containerRuntime.js";
 import {
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -49,8 +50,19 @@ export interface IPendingMessage {
 	 * Unless this pending message came from stashed content, in which case this was roundtripped through string
 	 */
 	runtimeOp?: LocalContainerRuntimeMessage | undefined; // Undefined for empty batches and initial messages before parsing
+	/**
+	 * Local Op Metadata that was passed to the ContainerRuntime when the op was submitted.
+	 * This contains state needed when processing the ack, or to resubmit or rollback the op.
+	 */
 	localOpMetadata: unknown;
+	/**
+	 * Metadata that was passed to the ContainerRuntime when the op was submitted.
+	 * This is rarely used, and may be inspected by the service (as opposed to op contents which is opaque)
+	 */
 	opMetadata: Record<string, unknown> | undefined;
+	/**
+	 * Populated upon processing the op's ack, before moving the pending message to savedOps.
+	 */
 	sequenceNumber?: number;
 	/**
 	 * Info about the batch this pending message belongs to, for validation and for computing the batchId on reconnect
@@ -280,6 +292,22 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public get pendingMessagesCount(): number {
 		return this.pendingMessages.length + this.initialMessages.length;
+	}
+
+	/**
+	 * Checks the pending messages to see if any of them represent user changes (aka "dirtyable" messages)
+	 */
+	public hasPendingUserChanges(): boolean {
+		for (let i = 0; i < this.pendingMessages.length; i++) {
+			const element = this.pendingMessages.get(i);
+			// Missing runtimeOp implies not dirtyable: This only happens for empty batches
+			if (element?.runtimeOp !== undefined && isContainerMessageDirtyable(element.runtimeOp)) {
+				return true;
+			}
+		}
+		// Consider any initial messages to be user changes
+		// (it's an approximation since we would have to parse them to know for sure)
+		return this.initialMessages.length > 0;
 	}
 
 	/**
@@ -659,7 +687,10 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
-		assert(!pendingMessage.batchInfo.staged, 0xb85 /* Can't get an ack from a staged batch */);
+		assert(
+			!pendingMessage.batchInfo.staged,
+			0xb85 /* Pending state mismatch, ack came in but next pending message is staged */,
+		);
 
 		// If this batch became empty on resubmit, batch.messages will be empty (but keyMessage is always set)
 		// and the next pending message should be an empty batch marker.

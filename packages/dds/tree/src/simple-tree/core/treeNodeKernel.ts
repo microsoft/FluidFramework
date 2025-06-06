@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
-import type { InternalTreeNode, Unhydrated } from "./types.js";
+import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	anchorSlot,
 	type AnchorEvents,
@@ -16,6 +16,9 @@ import {
 	type TreeValue,
 	type UpPath,
 } from "../../core/index.js";
+// TODO: decide how to deal with dependencies on flex-tree implementation.
+// eslint-disable-next-line import/no-internal-modules
+import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
 import {
 	assertFlexTreeEntityNotFreed,
 	ContextSlot,
@@ -25,13 +28,12 @@ import {
 	treeStatusFromAnchorCache,
 	type FlexTreeNode,
 } from "../../feature-libraries/index.js";
-import type { TreeNodeSchema } from "./treeNodeSchema.js";
-// TODO: decide how to deal with dependencies on flex-tree implementation.
-// eslint-disable-next-line import/no-internal-modules
-import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
+
 import { SimpleContextSlot, type Context, type HydratedContext } from "./context.js";
-import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 import type { TreeNode } from "./treeNode.js";
+import type { TreeNodeSchema } from "./treeNodeSchema.js";
+import type { InternalTreeNode, Unhydrated } from "./types.js";
+import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 
@@ -176,6 +178,7 @@ export class TreeNodeKernel {
 		} else {
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode.anchorNode);
+			this.#hydrationState.innerNode = innerNode;
 		}
 	}
 
@@ -296,9 +299,9 @@ export class TreeNodeKernel {
 	 * For hydrated nodes it returns a FlexTreeNode backed by the forest.
 	 * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
 	 *
-	 * If `allowDeleted` is false, this will throw a UsageError if the node is deleted.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been deleted.
 	 */
-	public getOrCreateInnerNode(allowDeleted = false): InnerNode {
+	public getOrCreateInnerNode(): InnerNode {
 		if (!isHydrated(this.#hydrationState)) {
 			debugAssert(
 				() =>
@@ -306,6 +309,10 @@ export class TreeNodeKernel {
 					"Unhydrated node should never be disposed",
 			);
 			return this.#hydrationState.innerNode; // Unhydrated case
+		}
+
+		if (this.disposed) {
+			throw new UsageError("Cannot access a deleted node.");
 		}
 
 		if (this.#hydrationState.innerNode === undefined) {
@@ -324,15 +331,7 @@ export class TreeNodeKernel {
 				context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 				this.#hydrationState.innerNode = makeTree(context, cursor);
 				cursor.free();
-				if (!allowDeleted) {
-					assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
-				}
-			}
-		}
-
-		if (!allowDeleted) {
-			if (this.#hydrationState.innerNode.context.isDisposed()) {
-				throw new UsageError("Cannot access a Deleted node.");
+				assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
 			}
 		}
 
@@ -442,11 +441,11 @@ export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
  * For hydrated nodes it returns a FlexTreeNode backed by the forest.
  * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
  *
- * If `allowDeleted` is false, this will throw a UsageError if the node is deleted.
+ * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been deleted.
  */
-export function getOrCreateInnerNode(treeNode: TreeNode, allowDeleted = false): InnerNode {
+export function getOrCreateInnerNode(treeNode: TreeNode): InnerNode {
 	const kernel = getKernel(treeNode);
-	return kernel.getOrCreateInnerNode(allowDeleted);
+	return kernel.getOrCreateInnerNode();
 }
 
 /**

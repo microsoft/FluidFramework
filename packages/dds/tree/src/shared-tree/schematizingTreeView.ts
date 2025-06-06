@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
 import type {
 	HasListeners,
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -61,9 +61,9 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
+import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already

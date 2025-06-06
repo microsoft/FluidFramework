@@ -4,6 +4,7 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+
 import type { TreeValue } from "../core/index.js";
 import {
 	FieldKinds,
@@ -12,6 +13,7 @@ import {
 	type FlexTreeRequiredField,
 	type FlexTreeOptionalField,
 } from "../feature-libraries/index.js";
+
 import { type TreeNode, getOrCreateNodeFromInnerNode } from "./core/index.js";
 
 /**
