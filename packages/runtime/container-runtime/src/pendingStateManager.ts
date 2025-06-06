@@ -23,6 +23,7 @@ import {
 } from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import {
+	EmptyGroupedBatch,
 	LocalBatchMessage,
 	getEffectiveBatchId,
 	BatchStartInfo,
@@ -31,7 +32,6 @@ import {
 	type LocalEmptyBatchPlaceholder,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
-import type { EmptyGroupedBatch } from "./opLifecycle/opGroupingManager.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the

@@ -51,10 +51,10 @@ export interface OpGroupingManagerConfig {
  * We also put this in the placeholder for an empty batch in the PendingStateManager.
  * But most places throughout the ContainerRuntime, this will not be used (just as Grouped Batches in general don't appear outside opLifecycle dir)
  */
-export type EmptyGroupedBatch = {
+export interface EmptyGroupedBatch {
 	type: typeof OpGroupingManager.groupedBatchOp;
 	contents: readonly unknown[];
-};
+}
 
 /**
  * This is an empty grouped batch which is sent when resubmitting an empty batch.
