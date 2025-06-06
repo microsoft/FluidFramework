@@ -4,8 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	DataProcessingError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
+import { eq, gt } from "semver-ts";
 
+import { type SemanticVersion } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 
 /**
@@ -80,10 +85,42 @@ export interface IDocumentSchema {
 	 * properties to be able to open the document.
 	 */
 	runtime: Record<string, DocumentSchemaValueType>;
+
+	/**
+	 * Info about this document that can be updated via Document Schema change op, but isn't required
+	 * to be understood by all clients (unlike the rest of IDocumentSchema properties). Because of this,
+	 * some older documents may not have this property, so it's an optional property.
+	 */
+	info?: IDocumentSchemaInfo;
+}
+
+/**
+ * Informational properties of the document that are not subject to strict schema enforcement.
+ *
+ * @internal
+ */
+export interface IDocumentSchemaInfo {
+	/**
+	 * The minimum version of the FF runtime that should be used to load this document.
+	 * Will likely be advanced over time as applications pick up later FF versions.
+	 *
+	 * We use this to issue telemetry warning events if a client tries to open a document
+	 * with a runtime version lower than this.
+	 *
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for additional details on `minVersionForCollab`.
+	 *
+	 * @remarks
+	 * We use `SemanticVersion` instead of `MinimumVersionForCollab` since we may open future documents that with a
+	 * minVersionForCollab version that `MinimumVersionForCollab` does not support.
+	 */
+	minVersionForCollab: SemanticVersion;
 }
 
 /**
  * Content of the type=ContainerMessageType.DocumentSchemaChange ops.
+ * The meaning of refSeq field is different in such messages (compared to other usages of IDocumentSchemaCurrent)
+ * ContainerMessageType.DocumentSchemaChange messages use CAS (Compare-and-swap) semantics, and convey
+ * regSeq of last known schema change (known to a client proposing schema change).
  * @see InboundContainerRuntimeDocumentSchemaMessage
  * @internal
  */
@@ -133,6 +170,8 @@ export interface IDocumentSchemaFeatures {
  * in a way that all old/new clients are required to understand.
  * Ex: Adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version since there is logic
  * in old clients for handling new/unknown properties.
+ * Ex: Adding a new property to IDocumentSchema.info does not require changing this version, since info properties are not required to be
+ * understood by all clients.
  * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version
  * since all clients need to understand the new protocol.
  * @internal
@@ -141,16 +180,32 @@ export const currentDocumentVersionSchema = 1;
 
 /**
  * Current document schema.
+ * This interface represents the schema that we currently understand and know the
+ * structure of (which properties will be present).
+ *
  * @internal
  */
 export interface IDocumentSchemaCurrent extends Required<IDocumentSchema> {
 	// This is the version of the schema that we currently understand.
 	version: typeof currentDocumentVersionSchema;
+	// We currently understand the runtime features in IDocumentSchemaFeatures
 	runtime: {
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
 			: IDocumentSchemaFeatures[P];
 	};
+}
+
+/**
+ * Current document schema with the info property optional.
+ *
+ * This interface is represents when we have validated that an incoming IDocumentSchema object
+ * is compatible with the current runtime (by calling `checkRuntimeCompatibility()`).
+ * However, the `info` property is optional because some older documents may not have this property, but
+ * `info` is not required to be understood by all clients to be compatible.
+ */
+interface IDocumentSchemaCurrentWithOptionalInfo extends Omit<IDocumentSchemaCurrent, "info"> {
+	info?: IDocumentSchemaInfo;
 }
 
 interface IProperty<T = unknown> {
@@ -257,7 +312,7 @@ const documentSchemaSupportedConfigs = {
 function checkRuntimeCompatibility(
 	documentSchema: IDocumentSchema | undefined,
 	schemaName: string,
-): asserts documentSchema is IDocumentSchemaCurrent {
+): asserts documentSchema is IDocumentSchemaCurrentWithOptionalInfo {
 	// Back-compat - we can't do anything about legacy documents.
 	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
 	// do not run into compat problems.
@@ -315,7 +370,7 @@ function checkRuntimeCompatibility(
 }
 
 function and(
-	persistedSchema: IDocumentSchemaCurrent,
+	persistedSchema: IDocumentSchemaCurrentWithOptionalInfo,
 	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -328,15 +383,22 @@ function and(
 			providedSchema.runtime[key],
 		);
 	}
+
+	// We keep the persisted minVersionForCollab if present, even if the provided minVersionForCollab
+	// is higher.
+	const minVersionForCollab =
+		persistedSchema.info?.minVersionForCollab ?? providedSchema.info.minVersionForCollab;
+
 	return {
 		version: currentDocumentVersionSchema,
 		refSeq: persistedSchema.refSeq,
+		info: { minVersionForCollab },
 		runtime,
 	};
 }
 
 function or(
-	persistedSchema: IDocumentSchemaCurrent,
+	persistedSchema: IDocumentSchemaCurrentWithOptionalInfo,
 	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -349,17 +411,34 @@ function or(
 			providedSchema.runtime[key],
 		);
 	}
+
+	// We take the greater of the persisted/provided minVersionForCollab
+	const minVersionForCollab =
+		persistedSchema.info === undefined
+			? providedSchema.info.minVersionForCollab
+			: gt(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
+				? persistedSchema.info.minVersionForCollab
+				: providedSchema.info.minVersionForCollab;
+
 	return {
 		version: currentDocumentVersionSchema,
 		refSeq: persistedSchema.refSeq,
+		info: { minVersionForCollab },
 		runtime,
 	};
 }
 
 function same(
-	persistedSchema: IDocumentSchemaCurrent,
+	persistedSchema: IDocumentSchemaCurrentWithOptionalInfo,
 	providedSchema: IDocumentSchemaCurrent,
 ): boolean {
+	if (
+		persistedSchema.info === undefined ||
+		!eq(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
+	) {
+		// If the current/desired minVersionForCollab are not equal, then we need a schema change
+		return false;
+	}
 	for (const key of new Set([
 		...Object.keys(persistedSchema.runtime),
 		...Object.keys(providedSchema.runtime),
@@ -483,6 +562,8 @@ export class DocumentsSchemaController {
 	 * @param documentMetadataSchema - current document's schema, if present.
 	 * @param features - features of the document schema that current session wants to see enabled.
 	 * @param onSchemaChange - callback that is called whenever schema is changed (not called on creation / load, only when processing document schema change ops)
+	 * @param info - Informational properties of the document that are not subject to strict schema enforcement
+	 * @param logger - telemetry logger from the runtime
 	 */
 	constructor(
 		existing: boolean,
@@ -490,6 +571,8 @@ export class DocumentsSchemaController {
 		documentMetadataSchema: IDocumentSchema | undefined,
 		features: IDocumentSchemaFeatures,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
+		info: IDocumentSchemaInfo,
+		logger: ITelemetryLoggerExt,
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
 		assert(
@@ -497,10 +580,30 @@ export class DocumentsSchemaController {
 			0x949 /* not supported */,
 		);
 
+		// We check the document's metadata to see if there is a minVersionForCollab. If it's not an existing document or
+		// if the document is older, then it won't have one. If it does have a minVersionForCollab, we check if it's greater
+		// than this client's runtime version. If so, we log a telemetry event to warn the customer that the client is outdated.
+		// Note: We only send a warning because we will confirm via `checkRuntimeCompatibility` if this client **can** understand
+		// the existing document's schema. We still want to issue a warning regardless if this client can or cannot understand the
+		// schema since it may be a sign that the customer is not properly waiting for saturation before updating their
+		// `minVersionForCollab` value, which could cause disruptions to users in the future.
+		const existingMinVersionForCollab = documentMetadataSchema?.info?.minVersionForCollab;
+		if (
+			existingMinVersionForCollab !== undefined &&
+			gt(existingMinVersionForCollab, pkgVersion)
+		) {
+			const warnMsg = `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${existingMinVersionForCollab} or later to ensure compatibility.`;
+			logger.sendTelemetryEvent({
+				eventName: "MinVersionForCollabWarning",
+				message: warnMsg,
+			});
+		}
+
 		// Desired schema by this session - almost all props are coming from arguments
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
 			refSeq: documentMetadataSchema?.refSeq ?? 0,
+			info,
 			runtime: {
 				explicitSchemaControl: boolToProp(features.explicitSchemaControl),
 				compressionLz4: boolToProp(features.compressionLz4),
@@ -520,6 +623,7 @@ export class DocumentsSchemaController {
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
 					refSeq: 0,
+					info,
 					// If it's existing document and it has no schema, then it was written by legacy client.
 					// If it's a new document, then we define it's legacy-related behaviors.
 					runtime: {
@@ -662,7 +766,7 @@ export class DocumentsSchemaController {
 			const schema = {
 				...content,
 				refSeq: sequenceNumber,
-			} satisfies IDocumentSchemaCurrent;
+			} satisfies IDocumentSchemaCurrentWithOptionalInfo;
 			this.documentSchema = schema;
 			this.sessionSchema = and(schema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);

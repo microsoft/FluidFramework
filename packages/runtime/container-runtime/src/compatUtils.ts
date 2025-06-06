@@ -64,6 +64,8 @@ export type MinimumVersionForCollab =
  * String in a valid semver format of a specific version at least specifying minor.
  * Unlike {@link MinimumVersionForCollab}, this type allows any bigint for the major version.
  * Used as a more generic type that allows major versions other than 1 or 2.
+ *
+ * @internal
  */
 export type SemanticVersion =
 	| `${bigint}.${bigint}.${bigint}`
