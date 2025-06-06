@@ -4820,7 +4820,6 @@ export class ContainerRuntime
 	/**
 	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
-
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
