@@ -46,6 +46,24 @@ export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
 }
 
+/**
+ * This is the type of an empty grouped batch we send over the wire
+ * We also put this in the placeholder for an empty batch in the PendingStateManager.
+ * But most places throughout the ContainerRuntime, this will not be used (just as Grouped Batches in general don't appear outside opLifecycle dir)
+ */
+export type EmptyGroupedBatch = {
+	type: typeof OpGroupingManager.groupedBatchOp;
+	contents: readonly unknown[];
+};
+
+/**
+ * This is an empty grouped batch which is sent when resubmitting an empty batch.
+ */
+const emptyGroupedBatch: EmptyGroupedBatch = {
+	type: "groupedBatch",
+	contents: [],
+};
+
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
 	private readonly logger: ITelemetryLoggerExt;
@@ -75,19 +93,18 @@ export class OpGroupingManager {
 			this.config.groupedBatchingEnabled,
 			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
 		);
-		const serializedOp = JSON.stringify({
-			type: OpGroupingManager.groupedBatchOp,
-			contents: [],
-		});
+
+		const serializedOp = JSON.stringify(emptyGroupedBatch);
 
 		const placeholderMessage: LocalEmptyBatchPlaceholder = {
 			metadata: { batchId: resubmittingBatchId },
 			localOpMetadata: { emptyBatch: true },
 			referenceSequenceNumber,
+			runtimeOp: emptyGroupedBatch,
 		};
 		const outboundBatch: OutboundSingletonBatch = {
 			contentSizeInBytes: 0,
-			messages: [{ ...placeholderMessage, contents: serializedOp }],
+			messages: [{ ...placeholderMessage, runtimeOp: undefined, contents: serializedOp }],
 			referenceSequenceNumber,
 		};
 		return { outboundBatch, placeholderMessage };
