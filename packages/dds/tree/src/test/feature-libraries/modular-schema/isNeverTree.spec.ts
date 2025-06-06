@@ -42,7 +42,7 @@ function fieldSchema(
 	return {
 		kind: kind.identifier,
 		types: new Set(types),
-		metadata: undefined,
+		persistedMetadata: undefined,
 	};
 }
 

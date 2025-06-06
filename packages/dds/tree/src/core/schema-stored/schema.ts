@@ -151,8 +151,10 @@ export interface TreeFieldStoredSchema {
 	 * Portion of the metadata which can be persisted.
 	 * @remarks
 	 * Discarded when encoding to {@link SchemaFormatVersion.V1}.
+	 * @privateRemarks
+	 * This field corresponds to the `metadata` field in the persisted schema format.
 	 */
-	readonly metadata: PersistedMetadataFormat | undefined;
+	readonly persistedMetadata: PersistedMetadataFormat | undefined;
 }
 
 /**
@@ -176,7 +178,7 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 	kind: brand(forbiddenFieldKindIdentifier),
 	// This type set also forces the field to be empty not not allowing any types as all.
 	types: new Set(),
-	metadata: undefined,
+	persistedMetadata: undefined,
 };
 
 /**
@@ -345,7 +347,7 @@ export function decodeFieldSchema(schema: FieldSchemaFormatV1): TreeFieldStoredS
 		kind: schema.kind,
 		types: new Set(schema.types),
 		// TODO: Persist metadata once schema FormatV2 has been added.
-		metadata: undefined,
+		persistedMetadata: undefined,
 	};
 	return out;
 }

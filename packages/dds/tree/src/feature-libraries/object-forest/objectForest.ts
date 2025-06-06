@@ -156,7 +156,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 								types: new Set(documentRoot.map((node) => node.type)),
 
 								// Metadata is not used for schema checks
-								metadata: undefined,
+								persistedMetadata: undefined,
 							};
 				const maybeError = isFieldInSchema(documentRoot, fieldSchema, {
 					schema,

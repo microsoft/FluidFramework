@@ -155,7 +155,7 @@ describe("schemaBasedEncoding", () => {
 				{
 					kind: FieldKinds.sequence.identifier,
 					types: new Set([brand(Minimal.identifier)]),
-					metadata: undefined,
+					persistedMetadata: undefined,
 				},
 				cache,
 				{ nodeSchema: new Map() },
@@ -186,7 +186,7 @@ describe("schemaBasedEncoding", () => {
 			const storedSchema: TreeFieldStoredSchema = {
 				kind: FieldKinds.identifier.identifier,
 				types: new Set([brand(stringSchema.identifier)]),
-				metadata: undefined,
+				persistedMetadata: undefined,
 			};
 
 			const shape = fieldShaper(

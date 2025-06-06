@@ -135,7 +135,7 @@ describe("prepareForInsertion", () => {
 				return {
 					kind: kind.identifier,
 					types: new Set(allowedTypes),
-					metadata: undefined,
+					persistedMetadata: undefined,
 				};
 			}
 

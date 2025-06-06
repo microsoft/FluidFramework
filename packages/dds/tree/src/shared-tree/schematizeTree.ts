@@ -68,7 +68,7 @@ export function initializeContent(
 			rootFieldSchema: {
 				kind: FieldKinds.optional.identifier,
 				types: rootSchema.types,
-				metadata: rootSchema.metadata,
+				persistedMetadata: rootSchema.persistedMetadata,
 			},
 		};
 	}

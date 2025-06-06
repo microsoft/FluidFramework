@@ -754,7 +754,7 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 		kind,
 		allowedTypesIdentifiers: schema.types,
 		metadata: {},
-		persistedMetadata: schema.metadata,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }
 

@@ -90,7 +90,7 @@ export function convertField(schema: SimpleFieldSchema): TreeFieldStoredSchema {
 	const kind: FieldKindIdentifier =
 		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
 	const types: TreeTypeSet = schema.allowedTypesIdentifiers as TreeTypeSet;
-	return { kind, types, metadata: schema.persistedMetadata };
+	return { kind, types, persistedMetadata: schema.persistedMetadata };
 }
 
 const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
@@ -119,7 +119,7 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 			return new MapNodeStoredSchema({
 				kind: FieldKinds.optional.identifier,
 				types,
-				metadata: schema.persistedMetadata,
+				persistedMetadata: schema.persistedMetadata,
 			});
 		}
 		case NodeKind.Array: {
@@ -127,7 +127,7 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 			const field = {
 				kind: FieldKinds.sequence.identifier,
 				types,
-				metadata: schema.persistedMetadata,
+				persistedMetadata: schema.persistedMetadata,
 			};
 			const fields = new Map([[EmptyKey, field]]);
 			return new ObjectNodeStoredSchema(fields);
