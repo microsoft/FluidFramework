@@ -7,6 +7,7 @@
 
 const { existsSync } = require("fs");
 const path = require("path");
+const { stdout } = require("process");
 
 function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
 	const moduleDir = `${packageDir}/node_modules`;
@@ -41,12 +42,15 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		return mod;
 	});
 
-	if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
-		// Inject implementation of getTestLogger, put it first before mocha-test-setup
-		requiredModulePaths.unshift(process.env.FLUID_TEST_LOGGER_PKG_PATH);
-	} else if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER) {
+	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER) {
+		const modulePath = path.join(moduleDir, process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 		// Inject implementation of createTestLogger, put it first before mocha-test-setup
-		requiredModulePaths.unshift(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+		if (existsSync(modulePath)) {
+			requiredModulePaths.unshift(modulePath);
+			process.stdout.write(`Using test logger from ${modulePath}\n`);
+		} else {
+			process.stdout.write(`Warning: Test logger package ${modulePath} was not found\n`);
+		}
 	}
 
 	const config = {
