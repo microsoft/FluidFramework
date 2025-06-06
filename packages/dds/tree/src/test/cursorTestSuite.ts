@@ -439,6 +439,9 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 			};
 
 	return describe(`${cursorName} cursor implementation`, () => {
+		// Cursors have quite a few debugAsserts, so validate them with and without debug asserts enabled.
+		// It is very unlikely for any of their debug asserts to cause issues in production mode:
+		// this is mostly just a demonstration of how to run the tests in both modes, but also provides some extra validation.
 		for (const emulateProduction of [true, false]) {
 			describe(`emulateProductionBuild: ${emulateProduction}`, () => {
 				if (emulateProduction) {

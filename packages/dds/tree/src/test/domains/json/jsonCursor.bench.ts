@@ -63,6 +63,10 @@ function bench(
 		dataConsumer: (cursor: ITreeCursor, calculate: (a: number) => void) => void;
 	}[],
 ) {
+	// The debug asserts in cursors have some performance overhead (which is part of why they are debug asserts).
+	// Running these benchmarks in both modes not only allows confirming that the mode selection works,
+	// but also helps measure the performance impact of the debug asserts.
+	// Note that real production mode would be even lower overhead as the debug asserts would be removed by the bundler instead of just early existing.
 	for (const emulateProduction of [true, false]) {
 		describe(`emulateProductionBuild: ${emulateProduction}`, () => {
 			for (const { name, getJson, dataConsumer } of data) {
@@ -83,7 +87,7 @@ function bench(
 					}
 
 					benchmark({
-						type: BenchmarkType.Measurement,
+						type: BenchmarkType.Perspective,
 						title: "Clone JS Object",
 						before: () => {
 							const cloned = clone(json);
@@ -177,7 +181,9 @@ function bench(
 							for (const [consumerName, consumer] of consumers) {
 								let cursor: ITreeCursor;
 								benchmark({
-									type: BenchmarkType.Measurement,
+									type: emulateProduction
+										? BenchmarkType.Measurement
+										: BenchmarkType.Perspective,
 									title: `${consumerName}(${factoryName})`,
 									before: () => {
 										cursor = factory();
