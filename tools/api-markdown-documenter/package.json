@@ -81,6 +81,7 @@
 		"hast-util-raw": "^9.0.2",
 		"hast-util-to-html": "^9.0.3",
 		"hastscript": "^9.0.0",
+		"mdast-util-to-markdown": "^2.1.2",
 		"unist-util-remove-position": "^5.0.0"
 	},
 	"devDependencies": {

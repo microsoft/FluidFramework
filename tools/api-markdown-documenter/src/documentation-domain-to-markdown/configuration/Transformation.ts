@@ -44,6 +44,7 @@ import {
 
 /**
  * TODO
+ * @public
  */
 export type BlockContentTransformations = {
 	readonly [K in keyof BlockContentMap]: Transformation<BlockContentMap[K], MdastBlockContent>;
@@ -51,6 +52,7 @@ export type BlockContentTransformations = {
 
 /**
  * TODO
+ * @public
  */
 export type PhrasingContentTransformations = {
 	readonly [K in keyof PhrasingContentMap]: Transformation<
@@ -61,6 +63,7 @@ export type PhrasingContentTransformations = {
 
 /**
  * TODO
+ * @public
  */
 export type Transformations = BlockContentTransformations &
 	PhrasingContentTransformations & {
@@ -76,7 +79,7 @@ export type Transformations = BlockContentTransformations &
  * @param node - The input node to be transformed.
  * @param context - Transformation context, including custom transformation implementations.
  *
- * @beta
+ * @public
  */
 export type Transformation<
 	TIn extends DocumentationNode = DocumentationNode,

@@ -10,9 +10,9 @@ import type { TextFormatting } from "../../documentation-domain/index.js";
 import type { Transformations } from "./Transformation.js";
 
 /**
- * Configuration for transforming {@link DocumentationNode}s to HTML.
+ * Configuration for transforming {@link DocumentationNode}s to Markdown.
  *
- * @beta
+ * @public
  */
 export interface TransformationConfiguration extends LoggingConfiguration {
 	/**

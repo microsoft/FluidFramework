@@ -4,6 +4,8 @@
  */
 
 export type {
+	BlockContentTransformations,
+	PhrasingContentTransformations,
 	TransformationConfiguration,
 	Transformation,
 	Transformations,

@@ -15,7 +15,7 @@ import {
 /**
  * Context passed to recursive {@link DocumentationNode} transformations.
  *
- * @beta
+ * @public
  */
 export interface TransformationContext extends TextFormatting {
 	/**
