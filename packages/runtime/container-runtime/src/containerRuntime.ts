@@ -2742,10 +2742,6 @@ export class ContainerRuntime
 			return;
 		}
 
-		if (!canSendOps) {
-			this.documentsSchemaController.onDisconnect();
-		}
-
 		// If there are stashed blobs in the pending state, we need to delay
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
@@ -4769,9 +4765,9 @@ export class ContainerRuntime
 				break;
 			}
 			case ContainerMessageType.DocumentSchemaChange: {
-				// There is no need to resend this message. Document schema controller will properly resend it again (if needed)
-				// on a first occasion (any ops sent after reconnect). There is a good chance, though, that it will not want to
-				// send any ops, as some other client already changed schema.
+				// We shouldn't directly resubmit due to Compare-And-Swap semantics.
+				// If needed it will be generated from scratch before other ops are submitted.
+				this.documentsSchemaController.pendingOpNotAcked();
 				break;
 			}
 			default: {
@@ -4809,7 +4805,10 @@ export class ContainerRuntime
 				break;
 			}
 			case ContainerMessageType.DocumentSchemaChange: {
-				throw new Error(`Handling ${type} ops in rolled back batch not yet implemented`);
+				// Notify the document schema controller that the pending op was not acked.
+				// This will allow it to propose the schema change again if needed.
+				this.documentsSchemaController.pendingOpNotAcked();
+				break;
 			}
 			default: {
 				unreachableCase(type);
