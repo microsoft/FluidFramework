@@ -2644,10 +2644,6 @@ export class ContainerRuntime
 			this.emitDirtyDocumentEvent = true;
 		}
 
-		//* Instead, clear this on flush, even if all batches are empty?
-		// If somehow this wasn't submitted, we should clear it since its refseq will be out of date after this synchronous frame returns.
-		this.outstandingUnfinalizedIdCreationRangeOp = undefined;
-
 		// This will emit an event if the state changed relative to before replay
 		this.updateDocumentDirtyState();
 	}
@@ -3350,6 +3346,9 @@ export class ContainerRuntime
 
 			this.outbox.flush(resubmitInfo);
 			assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+
+			// Regardless of whether this was set, once we flush we need to clear it because its reference sequence number will soon be out of date, if not already
+			this.outstandingUnfinalizedIdCreationRangeOp = undefined;
 		} catch (error) {
 			const error2 = normalizeError(error, {
 				props: {
