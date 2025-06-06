@@ -50,8 +50,19 @@ export interface IPendingMessage {
 	 * Unless this pending message came from stashed content, in which case this was roundtripped through string
 	 */
 	runtimeOp?: LocalContainerRuntimeMessage | undefined; // Undefined for empty batches and initial messages before parsing
+	/**
+	 * Local Op Metadata that was passed to the ContainerRuntime when the op was submitted.
+	 * This contains state needed when processing the ack, or to resubmit or rollback the op.
+	 */
 	localOpMetadata: unknown;
+	/**
+	 * Metadata that was passed to the ContainerRuntime when the op was submitted.
+	 * This is rarely used, and may be inspected by the service (as opposed to op contents which is opaque)
+	 */
 	opMetadata: Record<string, unknown> | undefined;
+	/**
+	 * Populated upon processing the op's ack, before moving the pending message to savedOps.
+	 */
 	sequenceNumber?: number;
 	/**
 	 * Info about the batch this pending message belongs to, for validation and for computing the batchId on reconnect
