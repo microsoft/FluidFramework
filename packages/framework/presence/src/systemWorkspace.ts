@@ -152,8 +152,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		for (const [clientConnectionId, value] of Object.entries(
 			revealOpaqueJson(remoteDatastore.clientToSessionId),
 		)) {
+			const attendeeId = value.value;
 			const { attendee, isJoining } = this.ensureAttendee(
-				value.value,
+				attendeeId,
 				clientConnectionId,
 				/* order */ value.rev,
 				// If the attendee is present in audience OR if the attendee update is from the sending remote client itself,
