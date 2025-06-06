@@ -65,7 +65,7 @@ describe("isomorphic-git manager", () => {
 		undefined /* apiSamplingPeriod */,
 		gitMaxBlobSizeBytes,
 	);
-	const repoManagerParams: Required<IRepoManagerParams> = {
+	const repoManagerParams: IRepoManagerParams = {
 		repoOwner: "fluid",
 		repoName: "test",
 		storageRoutingId: {
