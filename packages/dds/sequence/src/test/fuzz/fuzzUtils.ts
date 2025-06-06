@@ -529,6 +529,7 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	},
 	defaultTestCount: 100,
 	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
+	testSquashResubmit: true,
 };
 
 export function makeIntervalOperationGenerator(

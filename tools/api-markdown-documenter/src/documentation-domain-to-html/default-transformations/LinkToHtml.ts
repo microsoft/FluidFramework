@@ -22,7 +22,7 @@ import { transformChildrenUnderTag } from "../Utilities.js";
 export function linkToHtml(node: LinkNode, context: TransformationContext): HastElement {
 	return transformChildrenUnderTag(
 		{ name: "a", attributes: { href: node.target } },
-		node.children,
+		[node.text],
 		context,
 	);
 }
