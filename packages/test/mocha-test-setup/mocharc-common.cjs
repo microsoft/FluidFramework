@@ -7,7 +7,6 @@
 
 const { existsSync } = require("fs");
 const path = require("path");
-const { stdout } = require("process");
 
 function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
 	const moduleDir = `${packageDir}/node_modules`;
