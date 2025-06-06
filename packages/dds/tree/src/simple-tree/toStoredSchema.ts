@@ -90,7 +90,7 @@ export function convertField(schema: SimpleFieldSchema): TreeFieldStoredSchema {
 	const kind: FieldKindIdentifier =
 		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
 	const types: TreeTypeSet = schema.allowedTypesIdentifiers as TreeTypeSet;
-	return { kind, types };
+	return { kind, types, metadata: schema.persistedMetadata };
 }
 
 const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
@@ -114,23 +114,32 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 		}
 		case NodeKind.Map: {
 			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
-			return new MapNodeStoredSchema({ kind: FieldKinds.optional.identifier, types });
+			return new MapNodeStoredSchema(
+				{
+					kind: FieldKinds.optional.identifier,
+					types,
+					metadata: schema.persistedMetadata,
+				},
+				// TODO: Find a way to avoid injecting persistedMetadata twice in these constructor calls.
+				schema.persistedMetadata,
+			);
 		}
 		case NodeKind.Array: {
 			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
 			const field = {
 				kind: FieldKinds.sequence.identifier,
 				types,
+				metadata: schema.persistedMetadata,
 			};
 			const fields = new Map([[EmptyKey, field]]);
-			return new ObjectNodeStoredSchema(fields);
+			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 			for (const fieldSchema of schema.fields.values()) {
 				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema));
 			}
-			return new ObjectNodeStoredSchema(fields);
+			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
 		default:
 			unreachableCase(kind);

@@ -413,6 +413,56 @@ describe("schemaFactory", () => {
 			assert.deepEqual(schema.fields.get("bar")!.metadata, barMetadata);
 		});
 
+		it("Node schema persisted metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			const fooMetadata = {
+				persistedMetadata: { "a": 2 },
+			};
+
+			class Foo extends factory.objectAlpha(
+				"Foo",
+				{ bar: factory.number },
+				{ persistedMetadata: fooMetadata },
+			) {}
+
+			assert.deepEqual(Foo.persistedMetadata, fooMetadata);
+		});
+
+		it("Field schema persisted metadata", () => {
+			const schemaFactory = new SchemaFactoryAlpha("com.example");
+			const fooMetadata = {
+				persistedMetadata: { "a": 2 },
+			};
+
+			class Foo extends schemaFactory.objectAlpha("Foo", {
+				bar: schemaFactory.requiredAlpha(schemaFactory.number, {
+					persistedMetadata: fooMetadata,
+				}),
+				baz: schemaFactory.optionalAlpha(schemaFactory.string, {
+					persistedMetadata: fooMetadata,
+				}),
+				qux: schemaFactory.optionalRecursiveAlpha(
+					schemaFactory.objectAlpha("Qux", { quux: schemaFactory.string }),
+					{ persistedMetadata: fooMetadata },
+				),
+			}) {}
+
+			const foo = hydrate(Foo, {
+				bar: 37,
+				baz: "test",
+				qux: { quux: "test" },
+			});
+
+			const schema = Tree.schema(foo) as ObjectNodeSchema;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, fooMetadata);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("baz")!.persistedMetadata, fooMetadata);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("qux")!.persistedMetadata, fooMetadata);
+		});
+
 		describe("deep equality", () => {
 			const schema = new SchemaFactory("com.example");
 

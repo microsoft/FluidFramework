@@ -275,7 +275,7 @@ export class SchemaCompatibilityTester {
 				}
 			}
 
-			return { kind: original.kind, types };
+			return { kind: original.kind, types, metadata: undefined };
 		}
 		return original;
 	}
