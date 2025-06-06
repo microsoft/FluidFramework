@@ -13,7 +13,6 @@ import {
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
-import { v4 as uuid } from "uuid";
 import * as core from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
@@ -23,7 +22,12 @@ import {
 	getGlobalTelemetryContext,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
+import { v4 as uuid } from "uuid";
+
 import { createNackMessage } from "../utils";
+
+import { connectDocument } from "./connect";
+import { disconnectDocument } from "./disconnect";
 import {
 	ICollaborationSessionEvents,
 	IRoom,
@@ -31,6 +35,13 @@ import {
 	type INexusLambdaConnectionStateTrackers,
 	type INexusLambdaDependencies,
 } from "./interfaces";
+import { isValidConnectionMessage } from "./protocol";
+import {
+	checkThrottleAndUsage,
+	getSubmitOpThrottleId,
+	getSubmitSignalThrottleId,
+} from "./throttleAndUsage";
+import { addNexusMessageTrace } from "./trace";
 import {
 	ExpirationTimer,
 	isSentSignalMessage,
@@ -38,15 +49,6 @@ import {
 	getRoomId,
 	hasWriteAccess,
 } from "./utils";
-import {
-	checkThrottleAndUsage,
-	getSubmitOpThrottleId,
-	getSubmitSignalThrottleId,
-} from "./throttleAndUsage";
-import { addNexusMessageTrace } from "./trace";
-import { connectDocument } from "./connect";
-import { disconnectDocument } from "./disconnect";
-import { isValidConnectionMessage } from "./protocol";
 
 export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
@@ -115,6 +117,7 @@ export function configureWebSocketServices(
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
 	collaborationSessionTracker?: core.ICollaborationSessionTracker,
+	denyList?: core.IDenyList,
 ): void {
 	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
@@ -260,6 +263,7 @@ export function configureWebSocketServices(
 						lambdaConnectionStateTrackers,
 						connectionMessage,
 						properties,
+						denyList,
 					)
 						.then((message) => {
 							socket.emit("connect_document_success", message.connection);

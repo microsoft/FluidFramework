@@ -222,7 +222,7 @@ describe("MergeTree", () => {
 					assert.equal(splitSegment.properties?.secondChange, 1);
 					assert.equal(splitSegment.properties?.splitOnly, 1);
 
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
@@ -244,7 +244,7 @@ describe("MergeTree", () => {
 					assert.equal(splitSegment.properties?.secondChange, 1);
 					assert.equal(splitSegment.properties?.splitOnly, 1);
 
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
@@ -266,7 +266,7 @@ describe("MergeTree", () => {
 					assert.equal(splitSegment.properties?.secondChange, 1);
 					assert.equal(splitSegment.properties?.splitOnly, 1);
 
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: splitPos,
 							pos2: annotateEnd,
@@ -313,7 +313,7 @@ describe("MergeTree", () => {
 				});
 
 				it("sequenced local", () => {
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
@@ -335,7 +335,7 @@ describe("MergeTree", () => {
 				});
 
 				it("sequenced local before remote", () => {
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
@@ -411,7 +411,7 @@ describe("MergeTree", () => {
 					assert.equal(segment.properties?.secondSource, 1);
 					assert.equal(segment.properties?.thirdSource, 1);
 
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
@@ -427,7 +427,7 @@ describe("MergeTree", () => {
 					assert.equal(segment.properties?.secondSource, 1);
 					assert.equal(segment.properties?.thirdSource, 1);
 
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
@@ -443,7 +443,7 @@ describe("MergeTree", () => {
 					assert.equal(segment.properties?.secondSource, 1);
 					assert.equal(segment.properties?.thirdSource, 1);
 
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
@@ -472,7 +472,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
@@ -592,7 +592,7 @@ describe("MergeTree", () => {
 
 					assert.equal(segmentInfo.segment?.segmentGroups?.size, 1);
 
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
@@ -669,7 +669,7 @@ describe("MergeTree", () => {
 				});
 
 				it("sequenced local before remote", () => {
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
@@ -715,7 +715,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					mergeTree.ackPendingSegment({
+					mergeTree.ackOp({
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,

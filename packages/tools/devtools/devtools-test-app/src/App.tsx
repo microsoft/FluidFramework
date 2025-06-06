@@ -38,8 +38,8 @@ import {
 	loadExistingContainer,
 } from "./ClientUtilities.js";
 import type { IAppModel } from "./Container.js";
-import type { AppData } from "./FluidObject.js";
-import { CounterWidget, EmojiGrid } from "./widgets/index.js";
+import type { AppData, AppDataTree } from "./FluidObject.js";
+import { CounterWidget, EmojiGrid, TodoListView } from "./widgets/index.js";
 
 const sharedContainerKey: ContainerKey = "Shared Container";
 const privateContainerKey: ContainerKey = "Private Container";
@@ -95,7 +95,7 @@ function useContainerInfo(
 			devtools.registerContainerDevtools({
 				container: containerInfo.container,
 				containerKey: sharedContainerKey,
-				containerData: containerInfo.appData.getRootObject(),
+				containerData: { appData: containerInfo.appData },
 			});
 		}, console.error);
 
@@ -104,7 +104,7 @@ function useContainerInfo(
 			devtools.registerContainerDevtools({
 				container: containerInfo.container,
 				containerKey: privateContainerKey,
-				containerData: containerInfo.appData.getRootObject(),
+				containerData: { appData: containerInfo.appData },
 			});
 		}, console.error);
 
@@ -271,6 +271,7 @@ function AppView(props: AppViewProps): React.ReactElement {
 			<EmojiMatrixView emojiMatrix={appData.emojiMatrix} />
 			<CounterView sharedCounter={appData.counter} />
 			<TextView sharedText={appData.text} />
+			<TodoAppView todoModel={appData.treeDataObject} />
 		</div>
 	);
 }
@@ -309,4 +310,14 @@ function EmojiMatrixView(props: EmojiMatrixViewProps): React.ReactElement {
 	const { emojiMatrix } = props;
 
 	return emojiMatrix === undefined ? <Spinner /> : <EmojiGrid emojiMatrix={emojiMatrix} />;
+}
+
+interface TodoAppViewProps {
+	todoModel: AppDataTree;
+}
+
+function TodoAppView(props: TodoAppViewProps): React.ReactElement {
+	const { todoModel } = props;
+
+	return todoModel === undefined ? <Spinner /> : <TodoListView todoModel={todoModel} />;
 }

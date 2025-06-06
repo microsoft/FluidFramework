@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IIntegerRange } from "./client.js";
-import { UniversalSequenceNumber } from "./constants.js";
-import { MergeTree } from "./mergeTree.js";
-import { ISegmentPrivate } from "./mergeTreeNodes.js";
-import { PriorPerspective, type Perspective } from "./perspective.js";
-import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
+import type { IIntegerRange } from "./client.js";
+import type { MergeTree } from "./mergeTree.js";
+import type { ISegmentPrivate } from "./mergeTreeNodes.js";
+import type { Perspective } from "./perspective.js";
+import { TextSegment } from "./textSegment.js";
 
 interface ITextAccumulator {
 	textSegment: TextSegment;
@@ -16,20 +15,22 @@ interface ITextAccumulator {
 	parallelArrays?: boolean;
 }
 
+/**
+ * @internal
+ */
+export interface IMergeTreeTextHelper {
+	getText(perspective: Perspective, placeholder: string, start?: number, end?: number): string;
+}
+
 export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	constructor(private readonly mergeTree: MergeTree) {}
 
 	public getText(
-		refSeq: number,
-		clientId: number,
+		perspective: Perspective,
 		placeholder = "",
 		start?: number,
 		end?: number,
 	): string {
-		const perspective =
-			refSeq === UniversalSequenceNumber || clientId === this.mergeTree.collabWindow.clientId
-				? this.mergeTree.localPerspective
-				: new PriorPerspective(refSeq, clientId);
 		const range = this.getValidRange(start, end, perspective);
 
 		const accum: ITextAccumulator = { textSegment: new TextSegment(""), placeholder };

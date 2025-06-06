@@ -9,6 +9,8 @@ export {
 	fluidEntryPoint,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
+	Factory,
+	createDataStoreFactory,
 } from "./localCodeLoader.js";
 export {
 	createAndAttachContainer,
@@ -26,6 +28,7 @@ export {
 	ChannelFactoryRegistry,
 	TestFluidObject,
 	TestFluidObjectFactory,
+	TestDataObjectKind,
 } from "./testFluidObject.js";
 export {
 	createDocumentId,
@@ -65,3 +68,5 @@ export {
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+
+export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";

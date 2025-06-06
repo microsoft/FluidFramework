@@ -1,6 +1,7 @@
 ---
 "@fluidframework/server-services-telemetry": major
 "@fluidframework/server-services-utils": major
+"__section": feature
 ---
 
 Adds a new property to track the source of the correlationId

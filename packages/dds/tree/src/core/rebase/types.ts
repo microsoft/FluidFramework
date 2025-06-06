@@ -70,7 +70,7 @@ export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | Chang
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
 
 /**
- * @returns true iff `a` and `b` are the same.
+ * Returns true iff `a` and `b` are the same.
  */
 export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean {
 	return a.localId === b.localId && a.revision === b.revision;
@@ -88,7 +88,7 @@ export function areEqualChangeAtomIdOpts(
 }
 
 /**
- * @returns a ChangeAtomId with the given revision and local ID.
+ * Returns a ChangeAtomId with the given revision and local ID.
  */
 export function makeChangeAtomId(
 	localId: ChangesetLocalId,

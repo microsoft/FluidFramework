@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { isStableId } from "@fluidframework/id-compressor/internal";
+
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import {
@@ -20,7 +22,6 @@ import type {
 	FieldProvider,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { hydrate } from "./utils.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
@@ -320,20 +321,13 @@ describe("Unhydrated nodes", () => {
 		assert.equal(object.id, id);
 	});
 
-	it("fail to read automatically generated identifiers", () => {
+	it("read automatically generated identifiers", () => {
 		class TestObjectWithId extends schemaFactory.object("HasId", {
 			id: schemaFactory.identifier,
 		}) {}
 
 		const object = new TestObjectWithId({ id: undefined });
-		assert.throws(
-			() => object.id,
-			(error: Error) =>
-				validateAssertionError(
-					error,
-					/An automatically generated node identifier may not be queried until the node is inserted into the tree/,
-				),
-		);
+		assert(isStableId(object.id));
 	});
 
 	it("correctly iterate identifiers", () => {

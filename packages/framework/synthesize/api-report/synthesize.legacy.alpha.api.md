@@ -4,20 +4,20 @@
 
 ```ts
 
-// @alpha
+// @alpha @legacy
 export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
 
-// @alpha
+// @alpha @legacy
 export type AsyncOptionalFluidObjectProvider<T> = T extends undefined ? Record<string, never> : {
     [P in keyof T]?: Promise<T[P] | undefined>;
 };
 
-// @alpha
+// @alpha @legacy
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined ? Record<string, never> : {
     [P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined | null>>>;
 };
 
-// @alpha
+// @alpha @legacy
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     constructor(...parents: (IFluidDependencySynthesizer | undefined)[]);
     has(type: string, excludeParents?: boolean): boolean;
@@ -28,24 +28,24 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     unregister(type: keyof TMap): void;
 }
 
-// @alpha
+// @alpha @legacy
 export type FluidObjectProvider<T> = NonNullable<T> | Promise<NonNullable<T>> | ((dependencyContainer: IFluidDependencySynthesizer) => NonNullable<T>) | ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullable<T>>);
 
-// @alpha
+// @alpha @legacy
 export type FluidObjectSymbolProvider<T> = {
     [P in keyof T]?: P;
 };
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesizer;
 
-// @alpha
+// @alpha @legacy
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
     has(type: string): boolean;
     synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>): AsyncFluidObjectProvider<O, R>;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IProvideFluidDependencySynthesizer {
     // (undocumented)
     IFluidDependencySynthesizer: IFluidDependencySynthesizer;

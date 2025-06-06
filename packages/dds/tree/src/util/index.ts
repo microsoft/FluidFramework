@@ -58,7 +58,6 @@ export {
 	balancedReduce,
 	clone,
 	compareSets,
-	fail,
 	getOrAddEmptyToMap,
 	getOrCreate,
 	isJsonObject,

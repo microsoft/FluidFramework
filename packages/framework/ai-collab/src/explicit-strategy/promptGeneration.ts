@@ -74,7 +74,9 @@ export function getPlanningSystemPrompt(
 ): string {
 	const schema = Tree.schema(treeNode);
 
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(
+		getJsonSchema(schema, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+	);
 	const role = `I'm an agent who makes plans for another agent to achieve a user-specified goal to update the state of an application.${
 		systemRoleContext === undefined
 			? ""
@@ -126,7 +128,9 @@ export function getEditingSystemPrompt(
 	plan?: string,
 ): string {
 	const schema = Tree.schema(treeNode);
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(
+		getJsonSchema(schema, { useStoredKeys: false, requireFieldsWithDefaults: false }),
+	);
 	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
 
 	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
@@ -176,7 +180,9 @@ export function getReviewSystemPrompt(
 	appGuidance?: string,
 ): string {
 	const schema = Tree.schema(treeNode);
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(
+		getJsonSchema(schema, { useStoredKeys: false, requireFieldsWithDefaults: false }),
+	);
 	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
 
 	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
@@ -206,6 +212,10 @@ export function getReviewSystemPrompt(
  * @remarks
  * - TODO: Determine what to do with user-provided names that include periods (e.g. "Foo.Bar").
  * - TODO: Should probably ensure name starts with an uppercase character.
+ * - TODO: Should probably ensure name is a valid TypeScript identifier.
+ * - TODO: Should probably ensure name is unique.
+ * - TODO: Should probably take in a TreeNodeSchema or SimpleNodeSchema.
+ * Note: For explicitly subclassed TreeNodeSchema, the developer/code facing name of the class can be recovered using `.name`: this might be useful.
  */
 export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
 	let stringifiedSchema = "";

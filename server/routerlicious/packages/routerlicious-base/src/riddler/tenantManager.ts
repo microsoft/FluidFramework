@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
+import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
 	EncryptionKeyVersion,
 	IEncryptedTenantKeys,
@@ -19,7 +21,6 @@ import {
 	type IEncryptedPrivateTenantKeys,
 	type IFluidAccessToken,
 } from "@fluidframework/server-services-core";
-import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	IApiCounters,
@@ -27,13 +28,14 @@ import {
 	ITenantKeyGenerator,
 	isKeylessFluidAccessClaimEnabled,
 	generateToken,
+	getJtiClaimFromAccessToken,
 } from "@fluidframework/server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
-import * as winston from "winston";
-import { ITenantRepository } from "./mongoTenantRepository";
-import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
+import * as winston from "winston";
+
+import { ITenantRepository } from "./mongoTenantRepository";
 
 /**
  * Tenant details stored to the document database
@@ -244,6 +246,17 @@ export class TenantManager {
 		};
 	}
 
+	private logInvalidTokenJti(tenantId: string, token: string, status: number): void {
+		const jtiClaim = getJtiClaimFromAccessToken(token);
+		if (jtiClaim) {
+			Lumberjack.error("Token is invalid", {
+				tenantId,
+				jtiClaim,
+				status,
+			});
+		}
+	}
+
 	/**
 	 * Validates a tenant's API token
 	 */
@@ -289,11 +302,13 @@ export class TenantManager {
 							},
 						);
 					}
+					this.logInvalidTokenJti(tenantId, token, error.code);
 					throw error;
 				}
 				if (error.code === 401 || !tenantKeys.key2) {
 					// Trying key2 with an expired token won't help.
 					// Also, if there is no key2, don't bother validating.
+					this.logInvalidTokenJti(tenantId, token, error.code);
 					throw error;
 				}
 			}
@@ -329,6 +344,7 @@ export class TenantManager {
 						);
 					}
 				}
+				this.logInvalidTokenJti(tenantId, token, error.code);
 				throw error;
 			}
 		}
@@ -515,6 +531,7 @@ export class TenantManager {
 		);
 
 		const tenant = await this.getTenant(id);
+		// eslint-disable-next-line import/namespace
 		return _.extend(tenant, {
 			key: tenantKeys?.key1,
 			secondaryKey: tenantKeys?.key2,

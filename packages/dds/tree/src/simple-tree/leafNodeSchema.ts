@@ -11,8 +11,10 @@ import {
 	isFlexTreeNode,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+
 import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaNonClass } from "./core/index.js";
 import type { NodeSchemaMetadata, TreeLeafValue } from "./schemaTypes.js";
+import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
@@ -62,7 +64,7 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 function makeLeaf<Name extends string, const T extends ValueSchema>(
 	name: Name,
 	t: T,
-): LeafSchema<Name, TreeValue<T>> {
+): LeafSchema<Name, TreeValue<T>> & SimpleLeafNodeSchema {
 	// Names in this domain follow https://en.wikipedia.org/wiki/Reverse_domain_name_notation
 	return new LeafNodeSchema(`com.fluidframework.leaf.${name}`, t);
 }

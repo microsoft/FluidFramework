@@ -4,8 +4,6 @@
 
 ```ts
 
-export { DocumentType_2 as DocumentType }
-
 // (No @packageDocumentation comment for this package)
 
 ```

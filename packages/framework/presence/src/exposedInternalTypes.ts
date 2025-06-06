@@ -12,7 +12,7 @@ import type {
  * Collection of value types that are not intended to be used/imported
  * directly outside of this package.
  *
- * @alpha
+ * @beta
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -100,7 +100,7 @@ export namespace InternalTypes {
 	export type StateValue<T> = T & StateValueBrand<T>;
 
 	/**
-	 * Package internal function declaration for value manager instantiation.
+	 * Package internal function declaration for state and notification instantiation.
 	 *
 	 * @system
 	 */

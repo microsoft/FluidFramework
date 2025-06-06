@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-services-core": major
+"__section": feature
 ---
 
 Adds new props to the tenant interface to support private key based access

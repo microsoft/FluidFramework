@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, oob } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, oob, fail } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	CursorLocationType,
@@ -24,14 +25,13 @@ import {
 	type TreeChunk,
 	tryGetChunk,
 } from "../../core/index.js";
-import { fail, getOrCreate } from "../../util/index.js";
+import { getOrCreate } from "../../util/index.js";
 import type { FullSchemaPolicy } from "../modular-schema/index.js";
+import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
-import { isStableNodeIdentifier } from "../node-identifier/index.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface Disposable {
 	/**

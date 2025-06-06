@@ -9,6 +9,7 @@ import type {
 	FlexTreeHydratedContext,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
+
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
 import { walkAllowedTypes } from "./walkSchema.js";
 

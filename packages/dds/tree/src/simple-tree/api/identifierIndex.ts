@@ -7,7 +7,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { TreeIndexKey } from "../../feature-libraries/index.js";
 import { FieldKind, type ImplicitFieldSchema } from "../schemaTypes.js";
 import type { TreeNode } from "../core/index.js";
-import { ObjectNodeSchema } from "../objectNodeTypes.js";
+import { ObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeView } from "./tree.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";

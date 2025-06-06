@@ -4,6 +4,7 @@
  */
 
 import cluster from "cluster";
+
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	IRunner,
@@ -13,10 +14,11 @@ import {
 	ICache,
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
-import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
-import { Provider } from "nconf";
+import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { ITenantKeyGenerator } from "@fluidframework/server-services-utils";
+import { Provider } from "nconf";
+
 import * as app from "./app";
 import { ITenantRepository } from "./mongoTenantRepository";
 

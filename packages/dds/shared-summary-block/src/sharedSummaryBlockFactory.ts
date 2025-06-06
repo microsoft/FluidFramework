@@ -36,14 +36,14 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
-	public get type() {
+	public get type(): string {
 		return SharedSummaryBlockFactory.Type;
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
 	 */
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return SharedSummaryBlockFactory.Attributes;
 	}
 

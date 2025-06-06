@@ -4,9 +4,11 @@
  */
 
 import { EventEmitter } from "events";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { IQueuedMessage } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as Deque from "double-ended-queue";
+
 import { IKafkaSubscriber } from "./interfaces";
 
 /**

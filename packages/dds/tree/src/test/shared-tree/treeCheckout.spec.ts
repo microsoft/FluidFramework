@@ -19,8 +19,9 @@ import {
 	EmptyKey,
 	type RevertibleFactory,
 	type NormalizedFieldUpPath,
+	TreeStoredSchemaRepository,
 } from "../../core/index.js";
-import { FieldKinds } from "../../feature-libraries/index.js";
+import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
 	getBranch,
 	Tree,
@@ -28,17 +29,22 @@ import {
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
 	type BranchableTree,
+	createTreeCheckout,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
+	buildTestForest,
 	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
+	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
 	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -96,11 +102,13 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree",
+				"change",
 				"subtree",
 				"change",
 				"after",
 				"editStart",
 				"subtree",
+				"change",
 				"subtree",
 				"change",
 				"after",
@@ -138,11 +146,13 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree-rootFieldKey-0",
+				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
 				"editStart",
 				"subtree-rootFieldKey-0",
+				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
@@ -485,7 +495,7 @@ describe("sharedTreeView", () => {
 						? "schemaA"
 						: t.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier
 							? "schemaB"
-							: fail("Unexpected schema");
+							: assert.fail("Unexpected schema");
 				}
 
 				assert.equal(getSchema(parentView.checkout), "schemaA");
@@ -515,7 +525,7 @@ describe("sharedTreeView", () => {
 				}),
 			);
 			view1.initialize([]);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const tree2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
@@ -527,13 +537,13 @@ describe("sharedTreeView", () => {
 			const view = tree.viewWith(view1.config);
 			// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
 			view.root.insertAtStart("42");
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(tree2.root[0], undefined);
 			baseTree.merge(tree);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(tree2.root[0], undefined);
 			branch1.merge(baseTree);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(tree2.root[0], "42");
 		});
 
@@ -549,7 +559,7 @@ describe("sharedTreeView", () => {
 				}),
 			);
 			view1.initialize([]);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			let opsReceived = 0;
 			provider.trees[1].on("op", () => (opsReceived += 1));
 			const baseBranch = branch1.branch();
@@ -559,7 +569,7 @@ describe("sharedTreeView", () => {
 			view.root.insertAtStart("B");
 			baseBranch.merge(tree);
 			branch1.merge(baseBranch);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(opsReceived, 2);
 		});
 
@@ -895,20 +905,20 @@ describe("sharedTreeView", () => {
 
 		view1.initialize(["A", 1, "B", 2]);
 		const storedSchema1 = toStoredSchema(schema1);
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		const checkout1Revertibles = createTestUndoRedoStacks(view1.checkout.events);
 
 		view1.root.removeAt(0); // Remove "A"
 		view1.root.removeAt(0); // Remove 1
 		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		const checkout2Revertibles = createTestUndoRedoStacks(view2.checkout.events);
 		view2.root.removeAt(1); // Remove "B"
 		view2.root.removeAt(1); // Remove 2
 		checkout2Revertibles.undoStack.pop()?.revert(); // Restore 2
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		expectSchemaEqual(storedSchema1, view1.checkout.storedSchema);
 		expectSchemaEqual(storedSchema1, view2.checkout.storedSchema);
@@ -931,7 +941,7 @@ describe("sharedTreeView", () => {
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
 		assert.deepEqual(provider.trees[0].kernel.checkout.getRemovedRoots().length, 2);
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		assert.equal(checkout2Revertibles.undoStack.length, 1);
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
@@ -1450,7 +1460,24 @@ function itView<
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
-		const view = getView(config, undefined, logger);
+
+		const schema = new TreeStoredSchemaRepository();
+		const checkout = createTreeCheckout(
+			testIdCompressor,
+			mintRevisionTag,
+			testRevisionTagCodec,
+			{
+				forest: buildTestForest({ additionalAsserts: true, schema }),
+				schema,
+				logger,
+			},
+		);
+		const view = new SchematizingSimpleTreeView<TRootSchema>(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+
 		if (fork) {
 			const treeBranch = getBranch(view).branch();
 			const viewBranch = treeBranch.viewWith(view.config);

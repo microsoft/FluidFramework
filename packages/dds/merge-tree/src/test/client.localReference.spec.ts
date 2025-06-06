@@ -25,7 +25,7 @@ import { toRemovalInfo } from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
-import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { ClientTestHelper } from "./clientTestHelper.js";
 import { TestClient } from "./testClient.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
 import { validateRefCount } from "./testUtils.js";
@@ -205,7 +205,7 @@ describe("MergeTree.Client", () => {
 		// Failure to do so can break eventual consistency in features relying on SlideOnRemove references (such as
 		// IntervalCollection).
 		it("Remove then obliterate", () => {
-			const helper = new ReconnectTestHelper({
+			const helper = new ClientTestHelper({
 				mergeTreeEnableSidedObliterate: true,
 			});
 			const { A, B } = helper.clients;
@@ -239,7 +239,7 @@ describe("MergeTree.Client", () => {
 		});
 
 		it("Obliterate then remove", () => {
-			const helper = new ReconnectTestHelper({
+			const helper = new ClientTestHelper({
 				mergeTreeEnableSidedObliterate: true,
 			});
 			const { A, B } = helper.clients;

@@ -4,8 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-import { fail } from "../../util/index.js";
+import { fail } from "@fluidframework/core-utils/internal";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
 import type { NodeFromSchema } from "../schemaTypes.js";

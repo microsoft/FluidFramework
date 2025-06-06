@@ -17,7 +17,7 @@ import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import { TestClientLogger } from "./testClientLogger.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 import { validatePartialLengths } from "./testUtils.js";
 
 describe("client.rollback", () => {
@@ -610,5 +610,24 @@ describe("client.rollback", () => {
 		}
 
 		logger.validate({ baseText: "124abc5" });
+	});
+
+	it("Conflicting insert with winner split by rollback", () => {
+		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B");
+		const logger = new TestClientLogger(clients.all);
+		let seq = 0;
+		const ops = [
+			clients.A.makeOpMessage(clients.A.insertTextLocal(0, "AAAAA"), ++seq),
+			clients.B.makeOpMessage(clients.B.insertTextLocal(0, "BBBBB"), ++seq),
+		];
+		const rollbackOp = clients.B.insertTextLocal(2, "RRRRR");
+		clients.B.rollback(rollbackOp, clients.B.peekPendingSegmentGroups());
+
+		for (const op of ops) {
+			for (const c of clients.all) {
+				c.applyMsg(op);
+			}
+		}
+		logger.validate({ baseText: "BBBBBAAAAA" });
 	});
 });

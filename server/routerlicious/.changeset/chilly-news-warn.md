@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-services-utils": major
+"__section": feature
 ---
 
 Adds support for making `/accesstoken` API calls

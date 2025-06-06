@@ -14,9 +14,10 @@ import {
 	rootFieldKey,
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
+	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
 import type { ITreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
-import { type JsonCompatible, brand, fail, makeArray } from "../../util/index.js";
+import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
 	chunkFromJsonableTrees,
@@ -29,7 +30,7 @@ import {
 	validateUsageError,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
-import { SchemaFactory, toStoredSchema } from "../../simple-tree/index.js";
+import { numberSchema, SchemaFactory, toStoredSchema } from "../../simple-tree/index.js";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 
 const rootField: NormalizedFieldUpPath = {
@@ -360,7 +361,7 @@ describe("Editing", () => {
 				parentField: brand("foo"),
 				parentIndex: 0,
 			};
-			const tree1 = makeTreeFromJson({ foo: ["A", "B", "C"] });
+			const tree1 = makeTreeFromJson({ foo: ["A", "B", "C"] }, true);
 			const tree2 = tree1.branch();
 
 			const { undoStack } = createTestUndoRedoStacks(tree1.events);
@@ -666,9 +667,7 @@ describe("Editing", () => {
 		});
 
 		it("can rebase node deletion over cross-field move of descendant", () => {
-			const tree1 = makeTreeFromJson({
-				foo: ["A"],
-			});
+			const tree1 = makeTreeFromJsonSequence([{ foo: ["A"] }]);
 			const tree2 = tree1.branch();
 
 			const fooList: NormalizedUpPath = {
@@ -2423,7 +2422,7 @@ describe("Editing", () => {
 				describe(`reverting [${action.title}] restores A`, () => {
 					for (const disruption of disruptions) {
 						it(`even if it was ${disruption.title} before the revert`, () => {
-							const tree = makeTreeFromJson("A");
+							const tree = makeTreeFromJson("A", true);
 
 							const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 							action.delegate(tree);
@@ -2437,7 +2436,7 @@ describe("Editing", () => {
 						});
 
 						it(`even if it was ${disruption.title} concurrently to (and sequenced before) the revert`, () => {
-							const tree1 = makeTreeFromJson("A");
+							const tree1 = makeTreeFromJson("A", true);
 							const tree2 = tree1.branch();
 
 							const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
@@ -2459,7 +2458,7 @@ describe("Editing", () => {
 						});
 
 						it(`even if it was ${disruption.title} concurrently to (and sequenced before) the ${action.title}`, () => {
-							const tree1 = makeTreeFromJson("A");
+							const tree1 = makeTreeFromJson("A", true);
 							const tree2 = tree1.branch();
 
 							disruption.delegate(tree1, false);
@@ -2485,7 +2484,7 @@ describe("Editing", () => {
 		});
 
 		it("undo restores the removed node even when that node has been concurrently replaced", () => {
-			const tree = makeTreeFromJson("42");
+			const tree = makeTreeFromJson("42", true);
 			const tree2 = tree.branch();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
 
@@ -2571,7 +2570,7 @@ describe("Editing", () => {
 		});
 
 		it("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {
-			const tree = makeTreeFromJson(1);
+			const tree = makeTreeFromJson(1, true);
 			const fork = tree.branch();
 
 			tree.editor.optionalField(rootField).set(chunkFromJsonTrees([2]), false);
@@ -2590,7 +2589,7 @@ describe("Editing", () => {
 	describe("Constraints", () => {
 		describe("Node existence constraint", () => {
 			it("handles ancestor revive", () => {
-				const tree = checkoutWithContent(emptyJsonContent);
+				const tree = makeTreeFromJsonSequence([]);
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 				const rootSequence = tree.editor.sequenceField(rootField);
@@ -2628,37 +2627,31 @@ describe("Editing", () => {
 			});
 
 			it("handles ancestor remove", () => {
-				const tree = checkoutWithContent(emptyJsonContent);
-
-				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(0, chunkFromJsonTrees([{}]));
-				const treeSequence = tree.editor.sequenceField({
-					parent: rootNode,
-					field: brand("foo"),
-				});
-				treeSequence.insert(0, chunkFromJsonTrees(["A"]));
+				const tree = makeTreeFromJsonSequence([{ foo: ["A"] }]);
 
 				const tree2 = tree.branch();
 
-				const fooPath: NormalizedFieldUpPath = {
+				const fooArrayNodePath: NormalizedUpPath = {
 					parent: rootNode,
-					field: brand("foo"),
+					parentField: brand("foo"),
+					parentIndex: 0,
+				};
+
+				const fooArrayFieldPath: NormalizedFieldUpPath = {
+					parent: fooArrayNodePath,
+					field: brand(""),
 				};
 
 				// Modify the field containing the node existence constraint then remove its ancestor
 				tree.transaction.start();
-				tree.editor.sequenceField(fooPath).insert(0, chunkFromJsonTrees(["C"]));
+				tree.editor.sequenceField(fooArrayFieldPath).insert(0, chunkFromJsonTrees(["C"]));
 				remove(tree, 0, 1);
 				tree.transaction.commit();
 
 				tree2.transaction.start();
 
 				// Put existence constraint on child of A
-				tree2.editor.addNodeExistsConstraint({
-					parent: rootNode,
-					parentField: brand("foo"),
-					parentIndex: 0,
-				});
+				tree2.editor.addNodeExistsConstraint(fooArrayNodePath);
 				const tree2Sequence = tree2.editor.sequenceField(rootField);
 
 				// Insert B if the child of A is still attached
@@ -2672,7 +2665,7 @@ describe("Editing", () => {
 			});
 
 			it("sequence field node exists constraint", () => {
-				const tree = checkoutWithContent(emptyJsonContent);
+				const tree = makeTreeFromJsonSequence([]);
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 				insert(tree, 0, "A", "D");
@@ -2719,7 +2712,7 @@ describe("Editing", () => {
 			});
 
 			it("optional field node exists constraint", () => {
-				const tree = checkoutWithContent(emptyJsonContent);
+				const tree = makeTreeFromJsonSequence([]);
 				const rootSequence = tree.editor.sequenceField(rootField);
 				rootSequence.insert(0, chunkFromJsonTrees([{}]));
 				const optional = tree.editor.optionalField({
@@ -2751,7 +2744,7 @@ describe("Editing", () => {
 			});
 
 			it("revived optional field node exists constraint", () => {
-				const tree = checkoutWithContent(emptyJsonContent);
+				const tree = makeTreeFromJsonSequence([]);
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 				const rootSequence = tree.editor.sequenceField(rootField);
 				rootSequence.insert(0, chunkFromJsonTrees([{}]));
@@ -2786,7 +2779,7 @@ describe("Editing", () => {
 			});
 
 			it("existence constraint on node inserted in prior transaction", () => {
-				const tree = checkoutWithContent(emptyJsonContent);
+				const tree = makeTreeFromJsonSequence([]);
 				const tree2 = tree.branch();
 
 				// Insert "a"
@@ -2847,7 +2840,7 @@ describe("Editing", () => {
 			});
 
 			it("a change can depend on the existence of a node that is built in a prior change whose constraint was violated", () => {
-				const tree = checkoutWithContent(emptyJsonContent);
+				const tree = makeTreeFromJsonSequence([]);
 				const rootSequence = tree.editor.sequenceField(rootField);
 				rootSequence.insert(0, chunkFromJsonTrees([{}]));
 				const optional = tree.editor.optionalField({
@@ -3019,7 +3012,7 @@ describe("Editing", () => {
 				tree.transaction.commit();
 				expectJsonTree(tree, [{ foo: "B" }]);
 
-				const changedFooAtoB = stack.undoStack[0] ?? fail("Missing undo");
+				const changedFooAtoB = stack.undoStack[0] ?? assert.fail("Missing undo");
 
 				// This change should not violate the constraint in the inverse because it is changing
 				// a different node on filed "bar".
@@ -3053,7 +3046,7 @@ describe("Editing", () => {
 				tree.transaction.commit();
 				expectJsonTree(tree, [{ foo: "B" }]);
 
-				const changedFooAtoB = stack.undoStack[0] ?? fail("Missing undo");
+				const changedFooAtoB = stack.undoStack[0] ?? assert.fail("Missing undo");
 
 				// This change should violate the inverse constraint because it changes the
 				// node "B" to "C" on field "foo".
@@ -3099,7 +3092,7 @@ describe("Editing", () => {
 				// and doesn't go through any more rebases. This validates the scenario where an inverse is
 				// directly applied without any rebases.
 				tree.merge(branch);
-				const changedBarOldToNew = stack.undoStack[0] ?? fail("Missing undo");
+				const changedBarOldToNew = stack.undoStack[0] ?? assert.fail("Missing undo");
 
 				expectJsonTree(tree, [{ foo: "C", bar: "new" }]);
 
@@ -3229,6 +3222,9 @@ describe("Editing", () => {
 	});
 
 	describe("Can abort transactions", () => {
+		/**
+		 * Takes a path to a field containing a single array node and returns a path to the array node's field.
+		 */
 		function getInnerSequenceFieldPath(outer: NormalizedFieldUpPath): NormalizedFieldUpPath {
 			return {
 				parent: {
@@ -3250,17 +3246,26 @@ describe("Editing", () => {
 			const foo1 = branch.editor.sequenceField(
 				getInnerSequenceFieldPath({ parent: rootNode2, field: brand("foo") }),
 			);
+
+			const Number: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+
 			foo0.remove(1, 1);
-			foo0.insert(1, chunkFromJsonableTrees([{ type: brand("Number"), value: 41 }]));
+			foo0.insert(1, chunkFromJsonableTrees([{ type: Number, value: 41 }]));
 			foo0.remove(2, 1);
-			foo0.insert(1, chunkFromJsonableTrees([{ type: brand("Number"), value: 42 }]));
+			foo0.insert(1, chunkFromJsonableTrees([{ type: Number, value: 42 }]));
 			foo0.remove(0, 1);
-			rootSequence.insert(0, chunkFromJsonableTrees([{ type: brand("Test") }]));
+			rootSequence.insert(
+				0,
+				chunkFromJsonableTrees([{ type: brand(JsonAsTree.JsonObject.identifier) }]),
+			);
 			foo1.remove(0, 1);
-			foo1.insert(0, chunkFromJsonableTrees([{ type: brand("Number"), value: "RootValue2" }]));
-			foo1.insert(0, chunkFromJsonableTrees([{ type: brand("Test") }]));
+			foo1.insert(0, chunkFromJsonableTrees([{ type: Number, value: 123 }]));
+			foo1.insert(
+				0,
+				chunkFromJsonableTrees([{ type: brand(JsonAsTree.JsonObject.identifier) }]),
+			);
 			foo1.remove(1, 1);
-			foo1.insert(1, chunkFromJsonableTrees([{ type: brand("Number"), value: 82 }]));
+			foo1.insert(1, chunkFromJsonableTrees([{ type: Number, value: 82 }]));
 
 			// Aborting the transaction should restore the forest
 			branch.transaction.abort();
@@ -3270,19 +3275,19 @@ describe("Editing", () => {
 		}
 
 		it("on the main branch", () => {
-			const tree = makeTreeFromJson(initialState);
+			const tree = makeTreeFromJsonSequence([initialState]);
 			abortTransaction(tree);
 		});
 
 		it("on a child branch", () => {
-			const tree = makeTreeFromJson(initialState);
+			const tree = makeTreeFromJsonSequence([initialState]);
 			const child = tree.branch();
 			abortTransaction(child);
 		});
 	});
 
 	it("invert a composite change that include a mix of nested changes in a field that requires an amend pass", () => {
-		const tree = makeTreeFromJson({});
+		const tree = makeTreeFromJsonSequence([{}]);
 
 		tree.transaction.start();
 		tree.transaction.start();

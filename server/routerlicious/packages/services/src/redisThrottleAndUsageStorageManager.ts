@@ -9,16 +9,16 @@ import {
 	IUsageData,
 } from "@fluidframework/server-services-core";
 import {
+	BaseTelemetryProperties,
+	CommonProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
+import {
 	executeRedisMultiWithHmsetExpire,
 	executeRedisMultiWithHmsetExpireAndLpush,
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import {
-	BaseTelemetryProperties,
-	CommonProperties,
-	Lumberjack,
-} from "@fluidframework/server-services-telemetry";
 
 /**
  * Manages storage of throttling metrics and usage data in redis.

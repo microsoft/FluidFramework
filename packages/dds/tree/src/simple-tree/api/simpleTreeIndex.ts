@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import type {
 	AnchorNode,
 	FieldKey,
@@ -18,7 +19,7 @@ import {
 	type TreeIndexKey,
 	type KeyFinder,
 } from "../../feature-libraries/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import type { ImplicitFieldSchema, NodeFromSchema } from "../schemaTypes.js";
 import { treeNodeFromAnchor, type TreeNode, type TreeNodeSchema } from "../core/index.js";
 import { treeNodeApi } from "./treeNodeApi.js";

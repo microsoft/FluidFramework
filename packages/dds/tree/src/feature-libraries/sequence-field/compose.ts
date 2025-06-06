@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type ChangeAtomId,
@@ -11,7 +11,7 @@ import {
 	type RevisionTag,
 	offsetChangeAtomId,
 } from "../../core/index.js";
-import { type IdAllocator, fail } from "../../util/index.js";
+import type { IdAllocator } from "../../util/index.js";
 import {
 	type CrossFieldManager,
 	CrossFieldTarget,

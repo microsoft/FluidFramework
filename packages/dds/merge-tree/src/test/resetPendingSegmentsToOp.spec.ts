@@ -96,7 +96,7 @@ describe("resetPendingSegmentsToOp", () => {
 			const oldops = opList;
 			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
-				op: client.regeneratePendingOp(op.op, pending.shift()!),
+				op: client.regeneratePendingOp(op.op, pending.shift()!, false),
 				refSeq: client.getCurrentSeq(),
 			}));
 			applyOpList(client);
@@ -107,7 +107,7 @@ describe("resetPendingSegmentsToOp", () => {
 			const oldops = opList;
 			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
-				op: client.regeneratePendingOp(op.op, pending.shift()!),
+				op: client.regeneratePendingOp(op.op, pending.shift()!, false),
 				refSeq: client.getCurrentSeq(),
 			}));
 			// we expect a nack op per segment since our original ops split segments
@@ -143,6 +143,7 @@ describe("resetPendingSegmentsToOp", () => {
 				op: client.regeneratePendingOp(
 					opList.shift()!.op,
 					client.mergeTree.pendingSegments.first!.data,
+					false,
 				),
 				refSeq: client.getCurrentSeq(),
 			});
@@ -162,7 +163,7 @@ describe("resetPendingSegmentsToOp", () => {
 			const oldops = opList;
 			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
-				op: client.regeneratePendingOp(op.op, pending.shift()!),
+				op: client.regeneratePendingOp(op.op, pending.shift()!, false),
 				refSeq: client.getCurrentSeq(),
 			}));
 
@@ -198,6 +199,7 @@ describe("resetPendingSegmentsToOp", () => {
 				op: client.regeneratePendingOp(
 					opList.shift()!.op,
 					client.mergeTree.pendingSegments.first!.data,
+					false,
 				),
 				refSeq: client.getCurrentSeq(),
 			});
@@ -217,7 +219,7 @@ describe("resetPendingSegmentsToOp", () => {
 			const oldops = opList;
 			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
-				op: client.regeneratePendingOp(op.op, pending.shift()!),
+				op: client.regeneratePendingOp(op.op, pending.shift()!, false),
 				refSeq: client.getCurrentSeq(),
 			}));
 			// we expect a nack op per segment since our original ops split segments
@@ -247,6 +249,7 @@ describe("resetPendingSegmentsToOp", () => {
 			const regeneratedInsert = client.regeneratePendingOp(
 				insertOp,
 				client.mergeTree.pendingSegments.first!.data,
+				false,
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
@@ -270,6 +273,7 @@ describe("resetPendingSegmentsToOp", () => {
 			const regeneratedInsert = client.regeneratePendingOp(
 				insertOp,
 				client.mergeTree.pendingSegments.first!.data,
+				false,
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
@@ -288,6 +292,7 @@ describe("resetPendingSegmentsToOp", () => {
 			const regeneratedInsert = client.regeneratePendingOp(
 				insertOp,
 				client.mergeTree.pendingSegments.first!.data,
+				false,
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
@@ -318,7 +323,7 @@ describe("resetPendingSegmentsToOp.rebase", () => {
 				.splice(Math.floor(ops.length / 2))
 				.map<[ISequencedDocumentMessage, SegmentGroup]>(([op, sg]) => [
 					clients.A.makeOpMessage(
-						clients.A.regeneratePendingOp(op.contents as IMergeTreeOp, sg),
+						clients.A.regeneratePendingOp(op.contents as IMergeTreeOp, sg, false),
 						op.sequenceNumber,
 					),
 					clients.A.peekPendingSegmentGroups()!,

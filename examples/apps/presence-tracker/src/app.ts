@@ -4,7 +4,10 @@
  */
 
 import {
-	acquirePresenceViaDataObject,
+	getPresence,
+	// eslint-disable-next-line import/no-deprecated
+	getPresenceViaDataObject,
+	// eslint-disable-next-line import/no-deprecated
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
@@ -16,11 +19,15 @@ import { initializeReactions } from "./reactions.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
 // Define the schema of the Fluid container.
-// This example uses the presence features only, so only that data object is added.
+// This example uses the presence features only, so no data object is required.
+// But the old experimental presence data object is used to check that old path still works.
+// Besides initialObjects is not currently allowed to be empty.
+// That version of presence is compatible with all 2.x runtimes. Long-term support without
+// data object requires 2.41 or later.
 const containerSchema = {
 	initialObjects: {
-		// A Presence Manager object temporarily needs to be placed within container schema
-		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
+		// Optional Presence Manager object placed within container schema for experimental presence access
+		// eslint-disable-next-line import/no-deprecated
 		presence: ExperimentalPresenceManager,
 	},
 } satisfies ContainerSchema;
@@ -56,13 +63,17 @@ async function start() {
 		({ container } = await client.getContainer(id, containerSchema, "2"));
 	}
 
-	// Retrieve a reference to the presence APIs via the data object.
-	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
+	const useDataObject = new URLSearchParams(location.search).has("useDataObject");
+	const presence = useDataObject
+		? // Retrieve a reference to the presence APIs via the data object.
+			// eslint-disable-next-line import/no-deprecated
+			getPresenceViaDataObject(container.initialObjects.presence)
+		: getPresence(container);
 
 	// Get the states workspace for the tracker data. This workspace will be created if it doesn't exist.
 	// We create it with no states; we will pass the workspace to the Mouse and Focus trackers, and they will create value
 	// managers within the workspace to track and share individual pieces of state.
-	const appPresence = presence.getStates("name:trackerData", {});
+	const appPresence = presence.states.getWorkspace("name:trackerData", {});
 
 	// Update the browser URL and the window title with the actual container ID
 	location.hash = id;
@@ -85,8 +96,8 @@ async function start() {
 
 	// Setting "fluid*" and these helpers are just for our test automation
 	const buildAttendeeMap = () => {
-		return [...presence.getAttendees()].reduce((map, a) => {
-			map[a.sessionId] = a.getConnectionStatus();
+		return [...presence.attendees.getAttendees()].reduce((map, a) => {
+			map[a.attendeeId] = a.getConnectionStatus();
 			return map;
 		}, {});
 	};
@@ -107,20 +118,20 @@ async function start() {
 	/* eslint-disable @typescript-eslint/dot-notation */
 	window["fluidSessionAttendeeCheck"] = checkAttendees;
 	window["fluidSessionAttendees"] = buildAttendeeMap();
-	window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
-	presence.events.on("attendeeJoined", (attendee) => {
-		console.log(`Attendee joined: ${attendee.sessionId}`);
+	window["fluidSessionAttendeeCount"] = presence.attendees.getAttendees().size;
+	presence.attendees.events.on("attendeeConnected", (attendee) => {
+		console.log(`Attendee joined: ${attendee.attendeeId}`);
 		window["fluidSessionAttendees"] = buildAttendeeMap();
-		window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
-		window["fluidAttendeeJoinedCalled"] = true;
+		window["fluidSessionAttendeeCount"] = presence.attendees.getAttendees().size;
+		window["fluidattendeeConnectedCalled"] = true;
 	});
-	presence.events.on("attendeeDisconnected", (attendee) => {
-		console.log(`Attendee left: ${attendee.sessionId}`);
+	presence.attendees.events.on("attendeeDisconnected", (attendee) => {
+		console.log(`Attendee left: ${attendee.attendeeId}`);
 		window["fluidSessionAttendees"] = buildAttendeeMap();
-		window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
+		window["fluidSessionAttendeeCount"] = presence.attendees.getAttendees().size;
 		window["fluidAttendeeDisconnectedCalled"] = true;
 	});
-	window["fluidSessionId"] = presence.getMyself().sessionId;
+	window["fluidSessionId"] = presence.attendees.getMyself().attendeeId;
 	// Always set last as it is used as fence for load completion
 	window["fluidContainerId"] = id;
 	/* eslint-enable @typescript-eslint/dot-notation */

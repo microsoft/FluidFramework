@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export type { BrandedType } from "./brandedType.js";
+
 export type { IDisposable } from "./disposable.js";
 
 export type { IErrorBase, IGenericError, IUsageError, IThrottlingWarning } from "./error.js";
@@ -28,10 +30,16 @@ export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable.js";
 export type { IRequest, IRequestHeader, IResponse } from "./fluidRouter.js";
 
 export type {
-	IProvideFluidHandleContext,
-	IProvideFluidHandle,
-	IFluidHandleInternal,
 	IFluidHandleErased,
+	IFluidHandleEvents,
+	IFluidHandleInternal,
+	IFluidHandleInternalPayloadPending,
+	IFluidHandlePayloadPending,
+	ILocalFluidHandle,
+	ILocalFluidHandleEvents,
+	IProvideFluidHandle,
+	IProvideFluidHandleContext,
+	PayloadState,
 } from "./handles.js";
 export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";
 
@@ -46,7 +54,7 @@ export type {
 export { LogLevel } from "./logger.js";
 export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider.js";
 export type { ConfigTypes, IConfigProviderBase } from "./config.js";
-export type { ISignalEnvelope } from "./messages.js";
+export type { ISignalEnvelope, TypedMessage } from "./messages.js";
 export type { ErasedType } from "./erasedType.js";
 
 export type {

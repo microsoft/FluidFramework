@@ -15,3 +15,4 @@ export type {
 } from "./reactSharedTreeView.js";
 export { treeDataObject, treeDataObjectInternal } from "./reactSharedTreeView.js";
 export { useTree } from "./useTree.js";
+export { objectIdNumber } from "./simpleIdentifier.js";

@@ -9,8 +9,11 @@ import {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/legacy";
 import { Loader } from "@fluidframework/container-loader/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #26986: `fluid-static` internal used in examples
-import { createDOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static/internal";
+import {
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
+	// eslint-disable-next-line import/no-internal-modules -- #26986: `fluid-static` internal used in examples
+} from "@fluidframework/fluid-static/internal";
 // eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
@@ -119,8 +122,7 @@ async function createContainerAndRenderInElement(
 	);
 
 	// Get the Default Object from the Container
-	const fluidContainer =
-		(await container.getEntryPoint()) as IFluidContainer<TestContainerSchema>;
+	const fluidContainer = await createFluidContainer<TestContainerSchema>({ container });
 	if (createNewFlag) {
 		await initializeNewContainer(fluidContainer);
 		await attach?.();

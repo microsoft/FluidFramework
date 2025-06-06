@@ -4,11 +4,11 @@
  */
 
 // eslint-disable-next-line import/no-internal-modules
-import type { ReadonlyMapInlined } from "../../../simple-tree/api/typesUnsafe.js";
+import type { System_Unsafe } from "../../../simple-tree/api/typesUnsafe.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { numberSchema } from "../../../simple-tree/leafNodeSchema.js";
 import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 
-type MapInlined = ReadonlyMapInlined<string, typeof numberSchema>;
+type MapInlined = System_Unsafe.ReadonlyMapInlined<string, typeof numberSchema>;
 
 type _check = requireTrue<areSafelyAssignable<MapInlined, ReadonlyMap<string, number>>>;

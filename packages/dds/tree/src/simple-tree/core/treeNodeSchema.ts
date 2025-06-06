@@ -5,7 +5,9 @@
 
 import type { TreeLeafValue } from "../schemaTypes.js";
 import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
-import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
+
+import type { TreeNode } from "./treeNode.js";
+import type { InternalTreeNode, Unhydrated } from "./types.js";
 
 /**
  * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
@@ -89,6 +91,8 @@ export type TreeNodeSchemaNonClass<
 		? {
 				/**
 				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @privateRemarks
+				 * Also allows InternalTreeNode.
 				 * @sealed
 				 */
 				create(data?: TInsertable | TConstructorExtra): TNode;
@@ -96,6 +100,8 @@ export type TreeNodeSchemaNonClass<
 		: {
 				/**
 				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @privateRemarks
+				 * Also allows InternalTreeNode.
 				 * @sealed
 				 */
 				create(data: TInsertable | TConstructorExtra): TNode;
@@ -132,6 +138,7 @@ export type TreeNodeSchemaNonClass<
  * // If both get used, its an error!
  * class Invalid extends base {}
  * ```
+ *
  * - Do not modify the constructor input parameter types or values:
  * ```typescript
  * class Invalid extends schemaFactory.object("A", {
