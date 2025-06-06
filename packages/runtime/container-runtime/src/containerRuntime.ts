@@ -4692,12 +4692,10 @@ export class ContainerRuntime
 
 	/**
 	 * Resubmit the given message as part of a squash rebase upon exiting Staging Mode.
-	 * How to resubmit is up to the subsystem that submitted the op to begin with
+	 * How exactly to resubmit the message is up to the subsystem that submitted the op to begin with.
 	 */
-	private reSubmitWithSquashing({
-		runtimeOp: message,
-		localOpMetadata,
-	}: PendingMessageResubmitData): void {
+	private reSubmitWithSquashing(resubmitData: PendingMessageResubmitData): void {
+		const message = resubmitData.runtimeOp;
 		assert(
 			canStageMessageOfType(message.type),
 			"Expected message type to be compatible with staging",
@@ -4707,20 +4705,15 @@ export class ContainerRuntime
 				this.channelCollection.reSubmit(
 					message.type,
 					message.contents,
-					localOpMetadata,
+					resubmitData.localOpMetadata,
 					/* squash: */ true,
 				);
 				break;
 			}
-			case ContainerMessageType.GC: {
-				// NOTE: Squash doesn't apply to GC or DocumentSchemaChange ops, send them all.
-				this.submit(message);
-				break;
-			}
+			// NOTE: Squash doesn't apply to GC or DocumentSchemaChange ops, fallback to typical resubmit logic.
+			case ContainerMessageType.GC:
 			case ContainerMessageType.DocumentSchemaChange: {
-				// There is no need to resend this message. Document schema controller will properly resend it again (if needed)
-				// on a first occasion (any ops sent after reconnect). There is a good chance, though, that it will not want to
-				// send any ops, as some other client already changed schema.
+				this.reSubmit(resubmitData);
 				break;
 			}
 			default: {
