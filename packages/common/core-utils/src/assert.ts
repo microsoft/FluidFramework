@@ -230,7 +230,7 @@ export function nonProductionConditionalsIncluded(): boolean {
  * @privateRemarks
  * See {@link skipInProduction}.
  *
- * This design, with a counter, was picked so that its always safe for some scope to opt in when trying to test production behavior,
+ * This design, with a counter, was picked so that it's always safe for some scope to opt in when trying to test production behavior,
  * and it should be basically impossible to accidentally fail to test the production mode when trying to.
  * Some tests or test suites may want to run in production mode and they can use this API to op in (via before and after hooks for example).
  * Additionally something might want to opt into to production mode at some other level (for example test running the entire test suite again with production mode enabled).
