@@ -90,7 +90,11 @@ export function prepareArrayContentForInsertion(
 	validateAndPrepare(
 		getSchemaAndPolicy(destinationContext),
 		destinationContext.isHydrated() ? destinationContext : undefined,
-		{ kind: FieldKinds.sequence.identifier, types: fieldSchema.types },
+		{
+			kind: FieldKinds.sequence.identifier,
+			types: fieldSchema.types,
+			persistedMetadata: undefined,
+		},
 		mapTrees,
 	);
 

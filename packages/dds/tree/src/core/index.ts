@@ -142,7 +142,7 @@ export {
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	decodeFieldSchema,
-	encodeFieldSchema,
+	encodeFieldSchemaV1,
 	storedSchemaDecodeDispatcher,
 	type SchemaAndPolicy,
 	Multiplicity,
