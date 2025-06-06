@@ -300,10 +300,7 @@ describe("Pending State Manager", () => {
 			);
 		});
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		it.only("empty batch is processed correctly", () => {
+		it("empty batch is processed correctly", () => {
 			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
 			pendingStateManager.onFlushEmptyBatch(
 				placeholderMessage,
@@ -751,10 +748,7 @@ describe("Pending State Manager", () => {
 			assert.strictEqual(resubmittedBatchIds[1], `${clientId}_[0]`);
 		});
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		it.only("replays pending states with empty batch", () => {
+		it("replays pending states with empty batch", () => {
 			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
 			pendingStateManager.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
 			pendingStateManager.replayPendingStates();
@@ -801,10 +795,7 @@ describe("Pending State Manager", () => {
 			assert.strictEqual(pendingStateManager.pendingMessagesCount, 2);
 		});
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		it.only("applyStashedOpsAt for empty batch", async () => {
+		it("applyStashedOpsAt for empty batch", async () => {
 			const oldPsm = new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -1140,10 +1131,7 @@ describe("Pending State Manager", () => {
 			);
 		});
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		it.only("returns false if all pending messages are empty batches (runtimeOp undefined)", () => {
+		it("returns false if all pending messages are empty batches (runtimeOp undefined)", () => {
 			const psm = createPendingStateManager();
 			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
 			psm.onFlushEmptyBatch(placeholderMessage, 0, false);
