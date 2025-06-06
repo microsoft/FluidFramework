@@ -51,14 +51,16 @@ export class SchemaSummarizer implements Summarizable {
 		});
 	}
 
-	public summarize(
-		stringify: SummaryElementStringifier,
-		fullTree: boolean = false,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): ISummaryTreeWithStats {
+	public summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats {
+		const incrementalSummaryContext = props.incrementalSummaryContext;
 		const builder = new SummaryTreeBuilder();
+		const fullTree = props.fullTree ?? false;
 		if (
 			!fullTree &&
 			incrementalSummaryContext !== undefined &&

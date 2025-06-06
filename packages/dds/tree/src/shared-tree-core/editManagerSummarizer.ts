@@ -50,14 +50,14 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 	) {}
 
-	public summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): ISummaryTreeWithStats {
-		return this.summarizeCore(stringify);
+	public summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats {
+		return this.summarizeCore(props.stringify);
 	}
 
 	private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {

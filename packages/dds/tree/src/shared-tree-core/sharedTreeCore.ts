@@ -229,13 +229,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 						};
 			summarizableBuilder.addWithStats(
 				s.key,
-				s.summarize(
-					(contents) => serializer.stringify(contents, this.sharedObject.handle),
+				s.summarize({
+					stringify: (contents: unknown) =>
+						serializer.stringify(contents, this.sharedObject.handle),
 					fullTree,
-					undefined /* trackState */,
 					telemetryContext,
-					childIncrementalSummaryContext,
-				),
+					incrementalSummaryContext: childIncrementalSummaryContext,
+				}),
 			);
 		}
 
@@ -447,14 +447,24 @@ export interface Summarizable {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
 	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
+	 * @param fullTree - flag indicating whether the attempt should generate a full
+	 * summary tree without any handles for unchanged subtrees. It should only be set to true when generating
+	 * a summary from the entire container.
+	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
+	 * of an object did not change since last successful summary, an
+	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
+	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
+	 * send an `ISummaryHandle`, since you are not expected to track state.
+	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
+	 * @param incrementalSummaryContext - See {@link @fluidframework/runtime-definitions#IExperimentalIncrementalSummaryContext}.
 	 */
-	summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): ISummaryTreeWithStats;
+	summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats;
 
 	/**
 	 * Allows the component to perform custom loading. The storage service is scoped to this component and therefore

@@ -96,14 +96,14 @@ export class ForestSummarizer implements Summarizable {
 		return stringify(encoded);
 	}
 
-	public summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): ISummaryTreeWithStats {
-		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));
+	public summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats {
+		return createSingleBlobSummary(treeBlobKey, this.getTreeString(props.stringify));
 	}
 
 	public async load(

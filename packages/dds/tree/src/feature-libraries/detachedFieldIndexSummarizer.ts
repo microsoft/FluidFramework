@@ -33,15 +33,15 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 
 	public constructor(private readonly detachedFieldIndex: DetachedFieldIndex) {}
 
-	public summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): ISummaryTreeWithStats {
+	public summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats {
 		const data = this.detachedFieldIndex.encode();
-		return createSingleBlobSummary(detachedFieldIndexBlobKey, stringify(data));
+		return createSingleBlobSummary(detachedFieldIndexBlobKey, props.stringify(data));
 	}
 
 	public async load(
