@@ -14,10 +14,7 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
-//* SKIP
-//* SKIP
-//* SKIP
-describeCompat.skip(
+describeCompat(
 	"ContainerRuntime Document Schema",
 	"FullCompat",
 	(getTestObjectProvider, apis) => {
@@ -208,9 +205,9 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		provider = getTestObjectProvider();
 	});
 
-	// it("upgrade with explicitSchemaControl = false", async () => {
-	// 	await testUpgrade(false);
-	// });
+	it("upgrade with explicitSchemaControl = false", async () => {
+		await testUpgrade(false);
+	});
 
 	it("upgrade with explicitSchemaControl = true", async () => {
 		await testUpgrade(true);
@@ -226,7 +223,7 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		// 1st container doesn't want ID Compressor enabled at first (but has explicitSchemaControl enabled)
 		const container1 = await provider.makeTestContainer({
 			runtimeOptions: {
-				explicitSchemaControl: true,
+				explicitSchemaControl: false,
 				enableRuntimeIdCompressor: undefined,
 			},
 		});
@@ -245,7 +242,11 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		});
 		const entry2 = await getEntryPoint(container2);
 
-		// Send some ops, it will trigger schema change ops
+		// This will NOT be a compressed ID in any case since we haven't tried the schema change yet.
+		const uuid = entry2._context.containerRuntime.generateDocumentUniqueId();
+		assert(typeof uuid === "string", "Expected long ID to be generated before schema change");
+
+		// Send some ops, it will trigger schema change ops (if explicitSchemaControl is true)
 		// This will also trigger delay loading of ID compressor for both clients!
 		entry2._root.set("someKey2", "someValue");
 		await provider.ensureSynchronized();
@@ -255,6 +256,7 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		entry2._root.set("someKey2", "someValue");
 		await provider.ensureSynchronized();
 
+		// If explicitSchemaControl is true:
 		// Now we should have new schema, ID compressor loaded, and be able to allocate ID range
 		// In order for ID compressor to produce short IDs, the following needs to happen:
 		// 1. Request unique ID (will initially get long ID)

@@ -419,7 +419,6 @@ export interface ContainerRuntimeOptions {
 
 	/**
 	 * Enable the IdCompressor in the runtime.
-	 * @experimental Not ready for use.
 	 */
 	readonly enableRuntimeIdCompressor: IdCompressorMode;
 
@@ -4506,11 +4505,6 @@ export class ContainerRuntime
 				"Unexpected message type submitted in Staging Mode",
 			);
 
-			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
-			if (!staged) {
-				this.submitIdAllocationOpIfNeeded({ staged: false });
-			}
-
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
 			// on this callback to do actual sending.
@@ -4533,6 +4527,11 @@ export class ContainerRuntime
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 					staged,
 				});
+			}
+
+			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
+			if (!staged) {
+				this.submitIdAllocationOpIfNeeded({ staged: false });
 			}
 
 			const message: LocalBatchMessage = {
