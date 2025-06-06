@@ -4,10 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	DataProcessingError,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { eq, gt } from "semver-ts";
 
 import type { SemanticVersion } from "../compatUtils.js";
