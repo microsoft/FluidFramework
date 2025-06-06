@@ -613,14 +613,14 @@ describe("SharedTreeCore", () => {
 			}
 		}
 
-		public summarize(
-			stringify: SummaryElementStringifier,
-			fullTree?: boolean | undefined,
-			trackState?: boolean | undefined,
-			telemetryContext?: ITelemetryContext | undefined,
-		): ISummaryTreeWithStats {
+		public summarize(props: {
+			stringify: SummaryElementStringifier;
+			fullTree?: boolean | undefined;
+			trackState?: boolean | undefined;
+			telemetryContext?: ITelemetryContext | undefined;
+		}): ISummaryTreeWithStats {
 			this.emit("summarizeAttached");
-			return this.summarizeCore(stringify);
+			return this.summarizeCore(props.stringify);
 		}
 
 		private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {
