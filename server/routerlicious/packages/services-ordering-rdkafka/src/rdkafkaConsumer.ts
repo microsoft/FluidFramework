@@ -326,79 +326,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
 				err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS
 			) {
-				const newAssignedPartitions = new Set<number>(
-					topicPartitions.map((tp) => tp.partition),
-				);
-
-				if (
-					newAssignedPartitions.size === this.assignedPartitions.size &&
-					Array.from(this.assignedPartitions).every((ap) => newAssignedPartitions.has(ap))
-				) {
-					// the consumer is already up to date
-					return;
-				}
-
-				// clear pending messages
-				this.pendingMessages.clear();
-
-				if (!this.consumerOptions.optimizedRebalance) {
-					if (this.isRebalancing) {
-						this.isRebalancing = false;
-					} else {
-						this.emit(
-							"rebalancing",
-							this.getPartitions(this.assignedPartitions),
-							err.code,
-						);
-					}
-				}
-
-				const originalAssignedPartitions = this.assignedPartitions;
-				this.assignedPartitions = newAssignedPartitions;
-
-				try {
-					this.isRebalancing = true;
-					const partitions = this.getPartitions(this.assignedPartitions);
-					this.emit("rebalanced", partitions, err.code);
-
-					// cleanup things left over from the lost partitions
-					for (const partition of originalAssignedPartitions) {
-						if (!newAssignedPartitions.has(partition)) {
-							// clear latest offset
-							this.latestOffsets.delete(partition);
-
-							// clear paused offset if it exists
-							if (this.pausedOffsets.has(partition)) {
-								this.pausedOffsets.delete(partition);
-							}
-							if (this.paused.has(partition)) {
-								this.paused.delete(partition);
-							}
-
-							// reject pending commit
-							const deferredCommit = this.pendingCommits.get(partition);
-							if (deferredCommit) {
-								this.pendingCommits.delete(partition);
-								deferredCommit.reject(
-									new Error(`Partition for commit was unassigned. ${partition}`),
-								);
-							}
-						}
-					}
-
-					this.isRebalancing = false;
-
-					for (const pendingMessages of this.pendingMessages.values()) {
-						// process messages sent while we were rebalancing for each partition in order
-						for (const pendingMessage of pendingMessages) {
-							this.processMessage(pendingMessage);
-						}
-					}
-				} catch (ex) {
-					this.isRebalancing = false;
-					this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance" });
-				} finally {
-					this.pendingMessages.clear();
+				if (consumer.rebalanceProtocol() === this.cooperativeRebalanceProtocol) {
+					this.cooperativeRebalanceHandler(err, topicPartitions);
+				} else {
+					this.eagerRebalanceHandler(err, topicPartitions);
 				}
 			} else {
 				this.error(err, { restart: false, errorLabel: "rdkafkaConsumer:rebalance" });
@@ -634,6 +565,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		return Promise.resolve();
 	}
 
+	public isCooperativeRebalancing(): boolean {
+		return this.consumer?.rebalanceProtocol() === this.cooperativeRebalanceProtocol;
+	}
+
 	/**
 	 * Saves the latest offset for the partition and emits the data event with the message.
 	 * If we are in the middle of rebalancing and the message was sent for a partition we will own,
@@ -750,6 +685,130 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			if (consumer.isConnected()) {
 				consumer.emit("rebalance.error", ex);
 			}
+		}
+	}
+
+	private eagerRebalanceHandler(
+		err: kafkaTypes.LibrdKafkaError,
+		topicPartitions: kafkaTypes.TopicPartition[],
+	) {
+		const newAssignedPartitions = new Set<number>(topicPartitions.map((tp) => tp.partition));
+
+		if (
+			newAssignedPartitions.size === this.assignedPartitions.size &&
+			Array.from(this.assignedPartitions).every((ap) => newAssignedPartitions.has(ap))
+		) {
+			// the consumer is already up to date
+			return;
+		}
+
+		// clear pending messages
+		this.pendingMessages.clear();
+
+		if (!this.consumerOptions.optimizedRebalance) {
+			if (this.isRebalancing) {
+				this.isRebalancing = false;
+			} else {
+				this.emit("rebalancing", this.getPartitions(this.assignedPartitions), err.code);
+			}
+		}
+
+		const originalAssignedPartitions = this.assignedPartitions;
+		this.assignedPartitions = newAssignedPartitions;
+
+		try {
+			this.isRebalancing = true;
+			const partitions = this.getPartitions(this.assignedPartitions);
+			this.emit("rebalanced", partitions, err.code);
+
+			// cleanup things left over from the lost partitions
+			for (const partition of originalAssignedPartitions) {
+				if (!newAssignedPartitions.has(partition)) {
+					// clear latest offset
+					this.latestOffsets.delete(partition);
+
+					// clear paused offset if it exists
+					if (this.pausedOffsets.has(partition)) {
+						this.pausedOffsets.delete(partition);
+					}
+					if (this.paused.has(partition)) {
+						this.paused.delete(partition);
+					}
+
+					// reject pending commit
+					const deferredCommit = this.pendingCommits.get(partition);
+					if (deferredCommit) {
+						this.pendingCommits.delete(partition);
+						deferredCommit.reject(
+							new Error(`Partition for commit was unassigned. ${partition}`),
+						);
+					}
+				}
+			}
+
+			this.isRebalancing = false;
+
+			for (const pendingMessages of this.pendingMessages.values()) {
+				// process messages sent while we were rebalancing for each partition in order
+				for (const pendingMessage of pendingMessages) {
+					this.processMessage(pendingMessage);
+				}
+			}
+		} catch (ex) {
+			this.isRebalancing = false;
+			this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance:eager" });
+		} finally {
+			this.pendingMessages.clear();
+		}
+	}
+
+	private cooperativeRebalanceHandler(
+		err: kafkaTypes.LibrdKafkaError,
+		partitions: kafkaTypes.TopicPartition[],
+	) {
+		this.isRebalancing = true;
+		try {
+			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
+				this.emit("coop.rebalance.assign", partitions, err.code);
+			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
+				this.emit("coop.rebalance.revoke", partitions, err.code);
+
+				// cleanup things left over from the lost partitions
+				partitions.forEach((tp) => {
+					const partition = tp.partition;
+					// clear latest offset
+					this.latestOffsets.delete(partition);
+
+					// clear paused offset if it exists
+					if (this.pausedOffsets.has(partition)) {
+						this.pausedOffsets.delete(partition);
+					}
+					if (this.paused.has(partition)) {
+						this.paused.delete(partition);
+					}
+
+					// reject pending commit
+					const deferredCommit = this.pendingCommits.get(partition);
+					if (deferredCommit) {
+						this.pendingCommits.delete(partition);
+						deferredCommit.reject(
+							new Error(`Partition for commit was unassigned. ${partition}`),
+						);
+					}
+				});
+			}
+
+			this.isRebalancing = false;
+
+			for (const pendingMessages of this.pendingMessages.values()) {
+				// process messages sent while we were rebalancing for each partition in order
+				for (const pendingMessage of pendingMessages) {
+					this.processMessage(pendingMessage);
+				}
+			}
+		} catch (ex) {
+			this.isRebalancing = false;
+			this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance:cooperative" });
 		}
 	}
 }
