@@ -3,18 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "@fluidframework/core-interfaces/internal";
+import type {
+	InternalUtilityTypes,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
-import type { SinonFakeTimers } from "sinon";
+import type { SinonFakeTimers, SinonSpy } from "sinon";
 
+import type { ClientConnectionId } from "../baseTypes.js";
+import type { StateSchemaValidator } from "../latestValueTypes.js";
+import type { AttendeeId } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-
-import type { AttendeeId, ClientConnectionId } from "@fluidframework/presence/alpha";
 
 /**
  * Use to compile-time assert types of two variables are identical.
@@ -177,4 +181,36 @@ export function assertFinalExpectations(
 	}
 	// Make sure all expected signals were sent.
 	runtime.assertAllSignalsSubmitted();
+}
+
+/**
+ * Creates a null validator (one that does nothing) for a given type T.
+ */
+export function createNullValidator<T extends object>(): StateSchemaValidator<T> {
+	const nullValidator: StateSchemaValidator<T> = (data: unknown) => {
+		return data as JsonDeserialized<T>;
+	};
+	return nullValidator;
+}
+
+/**
+ * A validator function spy.
+ */
+export type ValidatorSpy = Pick<SinonSpy, "callCount">;
+
+/**
+ * Creates a validator and a spy for test purposes.
+ */
+export function createSpiedValidator<T extends object>(
+	validator: StateSchemaValidator<T>,
+): [StateSchemaValidator<T>, ValidatorSpy] {
+	const spy: ValidatorSpy = {
+		callCount: 0,
+	};
+
+	const nullValidatorSpy: StateSchemaValidator<T> = (data: unknown) => {
+		spy.callCount++;
+		return validator(data) as JsonDeserialized<T>;
+	};
+	return [nullValidatorSpy, spy];
 }

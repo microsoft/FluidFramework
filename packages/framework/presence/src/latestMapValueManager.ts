@@ -5,19 +5,34 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
-import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import type {
 	DeepReadonly,
+	IEmitter,
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+} from "@fluidframework/core-interfaces/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { asDeeplyReadonly, objectEntries, objectKeys } from "./internalUtils.js";
-import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
+import {
+	asDeeplyReadonly,
+	asDeeplyReadonlyDeserializedJson,
+	objectEntries,
+	objectKeys,
+	toOpaqueJson,
+} from "./internalUtils.js";
+import { createValidatedGetter } from "./latestValueTypes.js";
+import type {
+	LatestClientData,
+	LatestData,
+	LatestMetadata,
+	ProxiedValueAccessor,
+	RawValueAccessor,
+	StateSchemaValidator,
+	ValueAccessor,
+} from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -31,6 +46,7 @@ import { brandIVM } from "./valueManager.js";
 export interface LatestMapClientData<
 	T,
 	Keys extends string | number,
+	TValueAccessor extends ValueAccessor<T>,
 	SpecificAttendeeId extends AttendeeId = AttendeeId,
 > {
 	/**
@@ -44,7 +60,7 @@ export interface LatestMapClientData<
 	 * @privateRemarks This could be regular map currently as no Map is
 	 * stored internally and a new instance is created for every request.
 	 */
-	items: ReadonlyMap<Keys, LatestData<T>>;
+	items: ReadonlyMap<Keys, LatestData<T, TValueAccessor>>;
 }
 
 /**
@@ -53,8 +69,11 @@ export interface LatestMapClientData<
  * @sealed
  * @beta
  */
-export interface LatestMapItemUpdatedClientData<T, K extends string | number>
-	extends LatestClientData<T> {
+export interface LatestMapItemUpdatedClientData<
+	T,
+	K extends string | number,
+	TValueAccessor extends ValueAccessor<T>,
+> extends LatestClientData<T, TValueAccessor> {
 	/**
 	 * Key of the updated item.
 	 */
@@ -88,7 +107,11 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
  * @sealed
  * @beta
  */
-export interface LatestMapRawEvents<T, K extends string | number> {
+export interface LatestMapEvents<
+	T,
+	K extends string | number,
+	TRemoteValueAccessor extends ValueAccessor<T>,
+> {
 	/**
 	 * Raised when any item's value for remote client is updated.
 	 * @param updates - Map of one or more values updated.
@@ -97,7 +120,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	remoteUpdated: (updates: LatestMapClientData<T, K>) => void;
+	remoteUpdated: (updates: LatestMapClientData<T, K, TRemoteValueAccessor>) => void;
 
 	/**
 	 * Raised when specific item's value of remote client is updated.
@@ -105,7 +128,9 @@ export interface LatestMapRawEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	remoteItemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
+	remoteItemUpdated: (
+		updatedItem: LatestMapItemUpdatedClientData<T, K, TRemoteValueAccessor>,
+	) => void;
 
 	/**
 	 * Raised when specific item of remote client is removed.
@@ -122,7 +147,7 @@ export interface LatestMapRawEvents<T, K extends string | number> {
 	 * @eventProperty
 	 */
 	localItemUpdated: (updatedItem: {
-		value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		value: DeepReadonly<JsonSerializable<T>>;
 		key: K;
 	}) => void;
 
@@ -196,7 +221,7 @@ export interface StateMap<K extends string | number, V> {
 	 * Make a deep clone before setting, if needed. No comparison is done to detect changes; all
 	 * sets are transmitted.
 	 */
-	set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
+	set(key: K, value: JsonSerializable<V>): this;
 
 	/**
 	 * The number of elements in the StateMap.
@@ -229,7 +254,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T, K>,
 		private readonly emitter: IEmitter<
-			Pick<LatestMapRawEvents<T, K>, "localItemUpdated" | "localItemRemoved">
+			Pick<LatestMapEvents<T, K, ValueAccessor<T>>, "localItemUpdated" | "localItemRemoved">
 		>,
 		private readonly localUpdate: (
 			updates: InternalTypes.MapValueState<
@@ -284,25 +309,46 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		) => void,
 		thisArg?: unknown,
 	): void {
+		// TODO: This is a data read, so we need to validate.
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(asDeeplyReadonly(item.value), key, this);
+				callbackfn(asDeeplyReadonlyDeserializedJson(item.value), key, this);
 			}
 		}
 	}
+
+	// FIXME: This gets called when using mapState.local.get(), even though we only want to validate remote data.
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
-		return asDeeplyReadonly(this.value.items[key]?.value);
+		const data = this.value.items[key]?.value;
+		// if (this.validator === undefined) {
+		// 	return data === undefined
+		// 		? undefined
+		// 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
+		// 			asDeeplyReadonlyFromJsonHandle(this.value.items[key]!.value!);
+		// }
+		// const maybeValid = this.validator(data, { key });
+		// return asDeeplyReadonly(maybeValid);
+
+		return data === undefined
+			? undefined
+			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
+				asDeeplyReadonlyDeserializedJson(this.value.items[key]!.value!);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
 	}
-	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
+	public set(key: K, inValue: JsonSerializable<T>): this {
+		const value = toOpaqueJson<T>(inValue);
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value };
+			this.value.items[key] = {
+				rev: 0,
+				timestamp: 0,
+				value,
+			} satisfies InternalTypes.ValueOptionalState<T>;
 		}
 		this.updateItem(key, value);
-		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(value) });
+		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(inValue) });
 		return this;
 	}
 	public get size(): number {
@@ -330,16 +376,20 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  * @sealed
  * @beta
  */
-export interface LatestMapRaw<T, Keys extends string | number = string | number> {
+export interface LatestMap<
+	T,
+	Keys extends string | number = string | number,
+	TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
+> {
 	/**
 	 * Containing {@link Presence}
 	 */
 	readonly presence: Presence;
 
 	/**
-	 * Events for LatestMapRaw.
+	 * Events for LatestMap.
 	 */
-	readonly events: Listenable<LatestMapRawEvents<T, Keys>>;
+	readonly events: Listenable<LatestMapEvents<T, Keys, TRemoteAccessor>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -353,7 +403,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Iterable access to remote clients' map of values.
 	 */
-	getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
+	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, TRemoteAccessor>>;
 	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
@@ -361,18 +411,36 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
+	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, TRemoteAccessor>>;
 }
 
-class LatestMapRawValueManagerImpl<
+/**
+ * State that provides a `Map` of latest known values from this client to
+ * others and read access to their values.
+ * Entries in the map may vary over time and by client, but all values are expected to
+ * be of the same type, which may be a union type.
+ *
+ * @remarks Create using {@link StateFactory.latestMap} registered to {@link StatesWorkspace}.
+ *
+ * @sealed
+ * @beta
+ */
+export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<
+	T,
+	Keys,
+	RawValueAccessor<T>
+>;
+
+class LatestMapValueManagerImpl<
 	T,
 	RegistrationKey extends string,
 	Keys extends string | number = string | number,
 > implements
 		LatestMapRaw<T, Keys>,
+		LatestMap<T, Keys>,
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
-	public readonly events = createEmitter<LatestMapRawEvents<T, Keys>>();
+	public readonly events = createEmitter<LatestMapEvents<T, Keys, ValueAccessor<T>>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -383,6 +451,7 @@ class LatestMapRawValueManagerImpl<
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
+		private readonly validator?: StateSchemaValidator<T>,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 
@@ -403,7 +472,7 @@ class LatestMapRawValueManagerImpl<
 
 	public readonly local: StateMap<Keys, T>;
 
-	public *getRemotes(): IterableIterator<LatestMapClientData<T, Keys>> {
+	public *getRemotes(): IterableIterator<LatestMapClientData<T, Keys, ValueAccessor<T>>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const attendeeId of objectKeys(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
@@ -421,19 +490,24 @@ class LatestMapRawValueManagerImpl<
 			.map((attendeeId) => this.datastore.presence.attendees.getAttendee(attendeeId));
 	}
 
-	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>> {
+	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, ValueAccessor<T>>> {
+		const validator = this.validator;
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const attendeeId = attendee.attendeeId;
 		const clientStateMap = allKnownStates.states[attendeeId];
 		if (clientStateMap === undefined) {
 			throw new Error("No entry for attendee");
 		}
-		const items = new Map<Keys, LatestData<T>>();
+		const items = new Map<Keys, LatestData<T, ValueAccessor<T>>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
-					value: asDeeplyReadonly(value),
+					// @ts-expect-error Type {} is not assignable to type ...
+					value:
+						validator === undefined
+							? asDeeplyReadonly(value)
+							: createValidatedGetter(item, validator),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -474,7 +548,7 @@ class LatestMapRawValueManagerImpl<
 		}
 		const allUpdates = {
 			attendee,
-			items: new Map<Keys, LatestData<T>>(),
+			items: new Map<Keys, LatestData<T, ValueAccessor<T>>>(),
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
@@ -482,17 +556,23 @@ class LatestMapRawValueManagerImpl<
 			const item = value.items[key]!;
 			const hadPriorValue = currentState.items[key]?.value;
 			currentState.items[key] = item;
-			const metadata = { revision: item.rev, timestamp: item.timestamp };
+			const metadata = {
+				revision: item.rev,
+				timestamp: item.timestamp,
+			};
+
 			if (item.value !== undefined) {
-				const itemValue = asDeeplyReadonly(item.value);
 				const updatedItem = {
 					attendee,
 					key,
-					value: itemValue,
+					value: createValidatedGetter(item, this.validator),
 					metadata,
-				};
+				} satisfies LatestMapItemUpdatedClientData<T, Keys, ValueAccessor<T>>;
 				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
-				allUpdates.items.set(key, { value: itemValue, metadata });
+				allUpdates.items.set(key, {
+					value: createValidatedGetter(item, this.validator),
+					metadata,
+				});
 			} else if (hadPriorValue !== undefined) {
 				postUpdateActions.push(() =>
 					this.events.emit("remoteItemRemoved", {
@@ -512,6 +592,7 @@ class LatestMapRawValueManagerImpl<
 /**
  * Arguments that are passed to the {@link StateFactory.latestMap} function.
  *
+ * @input
  * @beta
  */
 export interface LatestMapArguments<T, Keys extends string | number = string | number> {
@@ -519,14 +600,51 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 	 * The initial value of the local state.
 	 */
 	local?: {
-		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+		[K in Keys]: JsonSerializable<T>;
 	};
 
 	/**
 	 * See {@link BroadcastControlSettings}.
 	 */
 	settings?: BroadcastControlSettings | undefined;
+
+	/**
+	 * An optional function that will be called at runtime to validate the presence data. A runtime validator is strongly
+	 * recommended. See {@link StateSchemaValidator}.
+	 */
+	validator?: StateSchemaValidator<T> | undefined;
 }
+
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @beta
+ */
+export function latestMap<
+	T,
+	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
+>(
+	args?: undefined,
+): InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMapRaw<T, Keys>
+>;
+
+/**
+ * Factory for creating a {@link LatestMapRaw} State object with no arguments.
+ *
+ * @beta
+ */
+export function latestMap<
+	T,
+	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
+>(): InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMapRaw<T, Keys>
+>;
 
 /**
  * Factory for creating a {@link LatestMapRaw} State object.
@@ -538,14 +656,52 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	args?: LatestMapArguments<T, Keys>,
+	args: Omit<LatestMapArguments<T, Keys>, "validator">,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMapRaw<T, Keys>
-> {
+>;
+
+/**
+ * Factory for creating a {@link LatestMap} State object.
+ *
+ * @beta
+ */
+export function latestMap<
+	T,
+	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
+>(
+	args: LatestMapArguments<T, Keys> & { validator: StateSchemaValidator<T> },
+): InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMap<T, Keys>
+>;
+
+/* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
+export function latestMap<
+	T,
+	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
+>(
+	inputArgs?: LatestMapArguments<T, Keys>,
+):
+	| InternalTypes.ManagerFactory<
+			RegistrationKey,
+			InternalTypes.MapValueState<T, Keys>,
+			LatestMap<T, Keys>
+	  >
+	| InternalTypes.ManagerFactory<
+			RegistrationKey,
+			InternalTypes.MapValueState<T, Keys>,
+			LatestMapRaw<T, Keys>
+	  > {
+	const args = inputArgs as LatestMapArguments<T, Keys>;
 	const settings = args?.settings;
 	const initialValues = args?.local;
+	const validator = args?.validator;
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
@@ -559,33 +715,65 @@ export function latestMap<
 			value.items[key] = {
 				rev: 0,
 				timestamp,
-				value: initialValues[key],
+				value: toOpaqueJson(initialValues[key]),
 			};
 		}
 	}
-	const factory = (
-		key: RegistrationKey,
-		datastoreHandle: InternalTypes.StateDatastoreHandle<
-			RegistrationKey,
-			InternalTypes.MapValueState<T, Keys>
-		>,
-	): {
-		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<LatestMapRaw<T, Keys>>;
-	} => ({
-		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
-		manager: brandIVM<
-			LatestMapRawValueManagerImpl<T, RegistrationKey, Keys>,
-			T,
-			InternalTypes.MapValueState<T, Keys>
-		>(
-			new LatestMapRawValueManagerImpl(
-				key,
-				datastoreFromHandle(datastoreHandle),
-				value,
-				settings,
-			),
-		),
-	});
-	return Object.assign(factory, { instanceBase: LatestMapRawValueManagerImpl });
+
+	// FIXME: There has to be a better way than duplicating the function...
+	const factory =
+		validator === undefined
+			? (
+					key: RegistrationKey,
+					datastoreHandle: InternalTypes.StateDatastoreHandle<
+						RegistrationKey,
+						InternalTypes.MapValueState<T, Keys>
+					>,
+				): {
+					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
+					manager: InternalTypes.StateValue<LatestMapRaw<T, Keys>>;
+				} => ({
+					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+					manager: brandIVM<
+						LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
+						T,
+						InternalTypes.MapValueState<T, Keys>
+					>(
+						new LatestMapValueManagerImpl(
+							key,
+							datastoreFromHandle(datastoreHandle),
+							value,
+							settings,
+							validator,
+						),
+					),
+				})
+			: (
+					key: RegistrationKey,
+					datastoreHandle: InternalTypes.StateDatastoreHandle<
+						RegistrationKey,
+						InternalTypes.MapValueState<T, Keys>
+					>,
+				): {
+					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
+					manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
+				} => ({
+					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+					manager: brandIVM<
+						LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
+						T,
+						InternalTypes.MapValueState<T, Keys>
+					>(
+						new LatestMapValueManagerImpl(
+							key,
+							datastoreFromHandle(datastoreHandle),
+							value,
+							settings,
+							validator,
+						),
+					),
+				});
+
+	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
 }
+/* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */

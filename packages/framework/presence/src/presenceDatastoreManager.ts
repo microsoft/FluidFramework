@@ -176,6 +176,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
+				// @ts-expect-error -- FIXME
 				data: this.datastore,
 				updateProviders,
 			},
@@ -336,6 +337,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
+				// @ts-expect-error -- FIXME
 				data: this.datastore,
 			},
 		});

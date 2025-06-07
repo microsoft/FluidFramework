@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	JsonDeserialized,
-	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Collection of value types that are not intended to be used/imported
@@ -23,20 +20,45 @@ export namespace InternalTypes {
 	export interface ValueStateMetadata {
 		rev: number;
 		timestamp: number;
+
+		/**
+		 * Will be true if the value has been validated.
+		 */
+		validated?: boolean;
 	}
 
 	/**
+	 * `ValueRequiredState` is used to represent a state that may have a value.
+	 * And it includes standard metadata.
+	 *
+	 * @remarks
+	 * See {@link InternalTypes.ValueRequiredState}.
+	 *
 	 * @system
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-		value?: JsonDeserialized<TValue>;
+		value?: OpaqueJsonDeserialized<TValue>;
+		validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
 	}
 
 	/**
+	 * `ValueRequiredState` is used to represent a state that must have a value.
+	 * And it includes standard metadata.
+	 *
+	 * @remarks
+	 * The value is wrapped in `OpaqueJsonDeserialized` as uses are expected
+	 * to involve generic or unknown types that will be filtered. It is here
+	 * mostly as a convenience to the many such uses that would otherwise
+	 * need to specify some wrapper themselves.
+	 *
+	 * For known cases, construct a custom interface that extends
+	 * {@link InternalTypes.ValueStateMetadata}.
+	 *
 	 * @system
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-		value: JsonDeserialized<TValue>;
+		value: OpaqueJsonDeserialized<TValue>;
+		validatedValue?: OpaqueJsonDeserialized<TValue>;
 	}
 
 	/**
@@ -121,6 +143,6 @@ export namespace InternalTypes {
 	 */
 	export interface NotificationType {
 		name: string;
-		args: (JsonSerializable<unknown> & JsonDeserialized<unknown>)[];
+		args: unknown[];
 	}
 }

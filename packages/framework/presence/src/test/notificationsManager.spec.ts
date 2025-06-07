@@ -15,6 +15,7 @@ import type {
 	NotificationsWorkspace,
 } from "../index.js";
 import { Notifications } from "../index.js";
+import { toOpaqueJson } from "../internalUtils.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -131,7 +132,11 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+									[connectionId2]: {
+										"rev": 0,
+										"timestamp": 1000,
+										"value": attendeeId2,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -139,7 +144,7 @@ describe("Presence", () => {
 									[attendeeId2]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [42] },
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -184,7 +189,11 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+									[connectionId2]: {
+										"rev": 0,
+										"timestamp": 1000,
+										"value": attendeeId2,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -192,7 +201,7 @@ describe("Presence", () => {
 									[attendeeId2]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [42] },
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -263,7 +272,11 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
+									[connectionId3]: {
+										"rev": 0,
+										"timestamp": 1000,
+										"value": attendeeId3,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -271,7 +284,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [42] },
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -341,7 +354,11 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
+									[connectionId3]: {
+										"rev": 0,
+										"timestamp": 1000,
+										"value": attendeeId3,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -349,7 +366,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "oldId", "args": [41] },
+										"value": toOpaqueJson({ "name": "oldId", "args": [41] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -407,7 +424,11 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
+									[connectionId3]: {
+										"rev": 0,
+										"timestamp": 1000,
+										"value": attendeeId3,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -415,7 +436,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [43] },
+										"value": toOpaqueJson({ "name": "newId", "args": [43] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -479,7 +500,11 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
+									[connectionId3]: {
+										"rev": 0,
+										"timestamp": 1000,
+										"value": attendeeId3,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -487,7 +512,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [44] },
+										"value": toOpaqueJson({ "name": "newId", "args": [44] }),
 										"ignoreUnmonitored": true,
 									},
 								},

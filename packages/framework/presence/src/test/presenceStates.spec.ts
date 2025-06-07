@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+} from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "../exposedInternalTypes.js";
 import type { Presence } from "../presence.js";
@@ -43,7 +43,7 @@ describe("Presence", () => {
 });
 
 declare function createValueManager<T, Key extends string>(
-	initial: JsonSerializable<T> & JsonDeserialized<T>,
+	initial: JsonSerializable<T>,
 ): { instanceBase: new () => unknown } & ((
 	key: Key,
 	datastoreHandle: InternalTypes.StateDatastoreHandle<
