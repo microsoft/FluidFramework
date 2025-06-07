@@ -214,7 +214,7 @@ class LatestValueManagerImpl<T, Key extends string>
  *
  * @beta
  */
-export interface LatestArgumentsRaw<T extends object | null> {
+export interface LatestArguments<T extends object | null> {
 	/**
 	 * The initial value of the local state.
 	 */
@@ -225,18 +225,11 @@ export interface LatestArgumentsRaw<T extends object | null> {
 	 * See {@link BroadcastControlSettings}.
 	 */
 	settings?: BroadcastControlSettings | undefined;
-}
 
-/**
- * Arguments that are passed to the {@link StateFactory.latest} function.
- *
- * @beta
- */
-export interface LatestArguments<T extends object | null> extends LatestArgumentsRaw<T> {
 	/**
 	 * See {@link StateSchemaValidator}.
 	 */
-	validator?: StateSchemaValidator<T> | undefined;
+	validator?: StateSchemaValidator<T>;
 }
 
 /**
@@ -254,18 +247,17 @@ export function latest<T extends object | null, Key extends string = string>(
  * @beta
  */
 export function latest<T extends object | null, Key extends string = string>(
-	args: LatestArgumentsRaw<T>,
+	args: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
 /* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
 export function latest<T extends object | null, Key extends string = string>(
-	args: LatestArguments<T> | LatestArgumentsRaw<T>,
+	args: LatestArguments<T>,
 ):
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
-	const { local, settings } = args;
-	// eslint-disable-next-line unicorn/consistent-destructuring -- false positive; this property cannot be destructured
-	if ("validator" in args && args.validator !== undefined) {
+	const { local, settings, validator } = args;
+	if (validator !== undefined) {
 		throw new Error(`Validators are not yet implemented.`);
 	}
 

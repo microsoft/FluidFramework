@@ -61,7 +61,6 @@ export type {
 	latest,
 	Latest,
 	LatestArguments,
-	LatestArgumentsRaw,
 	LatestEvents,
 	LatestRaw,
 } from "./latestValueManager.js";
