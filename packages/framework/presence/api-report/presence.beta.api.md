@@ -128,18 +128,20 @@ export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedVal
 }
 
 // @beta
-export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T> & {
-    validator: StateSchemaValidator<T>;
-}): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @beta
-export function latest<T extends object | null, Key extends string = string>(args: Omit<LatestArguments<T>, "validator">): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+export function latest<T extends object | null, Key extends string = string>(args: LatestArgumentsRaw<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
 // @beta
-export interface LatestArguments<T extends object | null> {
+export interface LatestArguments<T extends object | null> extends LatestArgumentsRaw<T> {
+    validator?: StateSchemaValidator<T> | undefined;
+}
+
+// @beta
+export interface LatestArgumentsRaw<T extends object | null> {
     local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
     settings?: BroadcastControlSettings | undefined;
-    validator?: StateSchemaValidator<T> | undefined;
 }
 
 // @beta @sealed
