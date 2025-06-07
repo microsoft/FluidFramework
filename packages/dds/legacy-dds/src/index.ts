@@ -22,7 +22,6 @@ export type {
 } from "./array/index.js";
 export type {
 	ISharedArrayOperation,
-	FullyReadonly,
 	IDeleteOperation,
 	IInsertOperation,
 	IMoveOperation,

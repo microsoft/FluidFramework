@@ -14,7 +14,12 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { IToggleOperation, IToggleMoveOperation, IRevertible } from "../../index.js";
+import type {
+	IToggleOperation,
+	IToggleMoveOperation,
+	IRevertible,
+	ISharedArray,
+} from "../../index.js";
 import { SharedArray, SharedArrayRevertible } from "../../index.js";
 import {
 	verifyEventsEmitted,
@@ -25,7 +30,7 @@ import {
 } from "../utilities.js";
 
 describe("SharedArray", () => {
-	let sharedArray: SharedArray<number>;
+	let sharedArray: ISharedArray<number>;
 	let factory: IChannelFactory;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let testData: number[];
@@ -34,13 +39,13 @@ describe("SharedArray", () => {
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		factory = SharedArray.getFactory();
-		sharedArray = factory.create(dataStoreRuntime, "sharedArray") as SharedArray<number>;
+		sharedArray = factory.create(dataStoreRuntime, "sharedArray") as ISharedArray<number>;
 		testData = [1, 2, 3, 4];
 		expectedSharedArray = testData;
 	});
 
 	describe("SharedArray in connected state with a remote SharedArray", () => {
-		let remoteSharedArray: SharedArray<number>;
+		let remoteSharedArray: ISharedArray<number>;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		beforeEach(async () => {
@@ -68,7 +73,7 @@ describe("SharedArray", () => {
 			remoteSharedArray = factory.create(
 				dataStoreRuntime2,
 				"remoteSharedArray",
-			) as SharedArray<number>;
+			) as ISharedArray<number>;
 			remoteSharedArray.connect(services2);
 		});
 
@@ -127,10 +132,9 @@ describe("SharedArray", () => {
 						type: 3,
 						isDeleted: false,
 					} satisfies IToggleOperation);
-
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -174,8 +178,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -288,8 +292,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -332,8 +336,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -450,8 +454,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleMoveOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -498,8 +502,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleMoveOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -556,8 +560,8 @@ describe("SharedArray", () => {
 describe("SharedArray in connected state with a remote SharedArray with IFluidHandle", () => {
 	let factory: IChannelFactory;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
-	let localSharedArray: SharedArray<IFluidHandle>;
-	let remoteSharedArray: SharedArray<IFluidHandle>;
+	let localSharedArray: ISharedArray<IFluidHandle>;
+	let remoteSharedArray: ISharedArray<IFluidHandle>;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	// const mockHandle = new MockHandle({});
 
@@ -576,7 +580,7 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 		localSharedArray = factory.create(
 			dataStoreRuntime,
 			"sharedArrayIFluidHandle",
-		) as SharedArray<IFluidHandle>;
+		) as ISharedArray<IFluidHandle>;
 		localSharedArray.connect(services1);
 
 		// Create and connect a second SharedArray.
@@ -591,7 +595,7 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 		remoteSharedArray = factory.create(
 			dataStoreRuntime2,
 			"remoteSharedArrayId",
-		) as SharedArray<IFluidHandle>;
+		) as ISharedArray<IFluidHandle>;
 		remoteSharedArray.connect(services2);
 	});
 

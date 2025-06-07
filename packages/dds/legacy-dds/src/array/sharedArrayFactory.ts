@@ -9,11 +9,16 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
+import {
+	createSharedObjectKind,
+	type ISharedObjectKind,
+	type SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "../packageVersion.js";
 
 import type { ISharedArray, SerializableTypeForSharedArray } from "./interfaces.js";
-import { SharedArray } from "./sharedArray.js";
+import { SharedArrayClass } from "./sharedArray.js";
 
 /**
  * @internal
@@ -46,7 +51,7 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 		/**
 		 * * The SharedArray
 		 */
-		const sharedArray = new SharedArray<T>(id, runtime, attributes);
+		const sharedArray = new SharedArrayClass<T>(id, runtime, attributes);
 		await sharedArray.load(services);
 		return sharedArray;
 	}
@@ -55,8 +60,17 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 		/**
 		 * * The SharedArray
 		 */
-		const sharedArray = new SharedArray<T>(id, document, this.attributes);
+		const sharedArray = new SharedArrayClass<T>(id, document, this.attributes);
 		sharedArray.initializeLocal();
 		return sharedArray;
 	}
 }
+
+/**
+ * Entrypoint for {@link ISharedArray} creation.
+ * @legacy
+ * @alpha
+ */
+export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> &
+	SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> =
+	createSharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>(SharedArrayFactory);

@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { SharedArray } from "./sharedArray.js";
-export { SharedArrayFactory } from "./sharedArrayFactory.js";
+export { SharedArrayFactory, SharedArray } from "./sharedArrayFactory.js";
 export { SharedArrayRevertible } from "./sharedArrayRevertible.js";
 export type {
 	SerializableTypeForSharedArray,
 	ISharedArray,
 	ISharedArrayEvents,
 	ISharedArrayRevertible,
-	FullyReadonly,
 	IRevertible,
 } from "./interfaces.js";
 export type {
