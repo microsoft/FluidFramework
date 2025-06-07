@@ -1544,7 +1544,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const id = requestParser.pathParts[0];
 
 		// Differentiate between requesting the dataStore directly, or one of its children
-		const requestForChild = !requestParser.isLeaf(1);
+		const requestForChild = requestParser.pathParts.length > 1;
 
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {

@@ -453,7 +453,12 @@ function arrayToProp(arr: string[]): string[] | undefined {
  */
 export class DocumentsSchemaController {
 	private explicitSchemaControl: boolean;
-	private generateOp = true;
+
+	/**
+	 * Have we generated a DocumentSchemaChange op and we're waiting for the ack?
+	 * This is used to ensure that we do not generate multiple schema change ops - this client should only ever send one (if any).
+	 */
+	private opPending = false;
 
 	// schema coming from document metadata (snapshot we loaded from)
 	private documentSchema: IDocumentSchema;
@@ -589,8 +594,8 @@ export class DocumentsSchemaController {
 	 * @returns Optional message to send.
 	 */
 	public maybeGenerateSchemaMessage(): IDocumentSchemaChangeMessageOutgoing | undefined {
-		if (this.generateOp && this.futureSchema !== undefined) {
-			this.generateOp = false;
+		if (this.futureSchema !== undefined && !this.opPending) {
+			this.opPending = true;
 			assert(
 				this.explicitSchemaControl && this.futureSchema.runtime.explicitSchemaControl === true,
 				0x94e /* not legacy */,
@@ -680,8 +685,11 @@ export class DocumentsSchemaController {
 		return true;
 	}
 
-	public onDisconnect(): void {
-		this.generateOp = true;
+	/**
+	 * Indicates the pending op was not ack'd and we may try to send it again if needed.
+	 */
+	public pendingOpNotAcked(): void {
+		this.opPending = false;
 	}
 }
 

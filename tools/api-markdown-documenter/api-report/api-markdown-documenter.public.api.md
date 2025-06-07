@@ -168,8 +168,6 @@ export interface BlockContentMap {
     // (undocumented)
     horizontalRule: HorizontalRuleNode;
     // (undocumented)
-    lineBreak: LineBreakNode;
-    // (undocumented)
     orderedList: OrderedListNode;
     // (undocumented)
     paragraph: ParagraphNode;

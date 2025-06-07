@@ -35,7 +35,6 @@ parameters:
   type: object
   default:
     - "@fluidframework/tree"
-    - "@fluidframework/matrix"
     - "@fluid-experimental/tree"
     - "@fluidframework/merge-tree"
     - "@fluidframework/container-runtime"

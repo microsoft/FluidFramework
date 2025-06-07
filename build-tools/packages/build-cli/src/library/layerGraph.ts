@@ -4,7 +4,6 @@
  */
 
 import assert from "node:assert";
-import { EOL as newline } from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Package } from "@fluidframework/build-tools";
@@ -14,6 +13,9 @@ import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Always use LF since that's our repo standard.
+const newline = "\n";
 
 interface ILayerInfo {
 	deps?: string[];
