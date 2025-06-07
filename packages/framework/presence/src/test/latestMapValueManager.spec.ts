@@ -201,7 +201,7 @@ export function checkCompiles(): void {
 				null: null,
 				string: "string",
 				number: 0,
-				true: true,
+				boolean: true,
 			},
 		}),
 	);
@@ -210,19 +210,20 @@ export function checkCompiles(): void {
 
 	// map value types are not matched to specific key
 	localPrimitiveMap.set("string", 1);
-	localPrimitiveMap.set("number", true);
+	// latestMap should infer that `true` or `false` is a valid value
+	// without use of `true as const` or explicit specification.
+	// That happened under PR #24752 unexpectedly. Presumably from some
+	// additional inference complication where `& JsonDeserialized<T>`
+	// was used in `LatestMapArguments` that was relaxed in PR #247??. !!! <- to fill in
+	// Caller can always use explicit generic specification to be
+	// completely clear about the types.
+	localPrimitiveMap.set("number", false);
 	// eslint-disable-next-line unicorn/no-null
-	localPrimitiveMap.set("true", null);
+	localPrimitiveMap.set("boolean", null);
 	localPrimitiveMap.set("null", "null");
 
 	// @ts-expect-error with inferred keys only those named in init are accessible
 	localPrimitiveMap.set("key3", "value");
 	// @ts-expect-error value of type value is not assignable
 	localPrimitiveMap.set("null", { value: "value" });
-	// latestMap infers that only `true` is a valid value without use of `false` or explicit specification.
-	// This happened under PR #24752 unexpectedly. Presumably from some additional inference complication.
-	// This is a better inferred result; so it can stand, but would not be terrible if the behavior changes.
-	// Caller can always use explicit generic specification to be completely clear about the types.
-	// @ts-expect-error Argument of type 'false' is not assignable to parameter of type 'string | number | true | null'.
-	localPrimitiveMap.set("true", false);
 }
