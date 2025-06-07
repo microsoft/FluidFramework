@@ -99,6 +99,13 @@ export function hasSome<T>(array: readonly T[]): array is [T, ...T[]] {
 }
 
 /**
+ * Returns true if and only if the given iterable has at least one element.
+ */
+export function iterableHasSome<T>(iterable: Iterable<T>): boolean {
+	return iterable[Symbol.iterator]().next().done === false;
+}
+
+/**
  * Returns true if and only if the given array has exactly one element.
  * @param array - The array to check.
  * @remarks

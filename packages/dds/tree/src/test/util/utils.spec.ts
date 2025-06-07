@@ -10,6 +10,7 @@ import {
 	capitalize,
 	copyProperty,
 	defineLazyCachedProperty,
+	iterableHasSome,
 	mapIterable,
 	transformObjectMap,
 } from "../../util/index.js";
@@ -156,5 +157,11 @@ describe("Utils", () => {
 			assert.equal(factoryCallCount, 0);
 			assert.equal(delegateCallCount, 6);
 		});
+	});
+
+	it("iterableHasSome", () => {
+		assert(!iterableHasSome([]));
+		assert(iterableHasSome([1]));
+		assert(!iterableHasSome(new Map([])));
 	});
 });
