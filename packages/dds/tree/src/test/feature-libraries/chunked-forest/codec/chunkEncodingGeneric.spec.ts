@@ -16,7 +16,7 @@ import type {
 import {
 	IdentifierToken,
 	Shape,
-	handleShapesAndIdentifiers,
+	encodeShapesAndIdentifiers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 
@@ -41,9 +41,9 @@ type EncodedChunkShape = Static<typeof EncodedChunkShape>;
 class TestShape extends Shape<EncodedChunkShape> {
 	public constructor(
 		public readonly data: string,
-		public readonly count: (
+		public readonly discoverReferencedShapesAndCount: (
 			identifiers: Counter<string>,
-			shapes: (shape: Shape<EncodedChunkShape>) => void,
+			shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
 		) => void = () => {},
 	) {
 		super();
@@ -62,9 +62,9 @@ class TestConstantShape extends Shape<EncodedChunkShape> {
 		super();
 	}
 
-	public count(
+	public discoverReferencedShapesAndCount(
 		identifiers: Counter<string>,
-		shapes: (shape: Shape<EncodedChunkShape>) => void,
+		shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
 	): void {}
 
 	public encodeShape(
@@ -78,9 +78,9 @@ class TestConstantShape extends Shape<EncodedChunkShape> {
 const testConstantShape = new TestConstantShape();
 
 describe("chunkEncodingGeneric", () => {
-	describe("handleShapesAndIdentifiers", () => {
+	describe("encodeShapesAndIdentifiers", () => {
 		it("Empty", () => {
-			assert.deepEqual(handleShapesAndIdentifiers(version, []), {
+			assert.deepEqual(encodeShapesAndIdentifiers(version, []), {
 				version,
 				identifiers: [],
 				shapes: [],
@@ -89,7 +89,7 @@ describe("chunkEncodingGeneric", () => {
 		});
 		it("data", () => {
 			const input = [["x", 1, [1, 2], { a: 1, b: 2 }]];
-			assert.deepEqual(handleShapesAndIdentifiers(version, input), {
+			assert.deepEqual(encodeShapesAndIdentifiers(version, input), {
 				version,
 				identifiers: [],
 				shapes: [],
@@ -97,7 +97,7 @@ describe("chunkEncodingGeneric", () => {
 			});
 		});
 		it("identifier: inline", () => {
-			assert.deepEqual(handleShapesAndIdentifiers(version, [[new IdentifierToken("x")]]), {
+			assert.deepEqual(encodeShapesAndIdentifiers(version, [[new IdentifierToken("x")]]), {
 				version,
 				identifiers: [],
 				shapes: [],
@@ -106,7 +106,7 @@ describe("chunkEncodingGeneric", () => {
 		});
 		it("identifier: deduplicated", () => {
 			assert.deepEqual(
-				handleShapesAndIdentifiers(version, [
+				encodeShapesAndIdentifiers(version, [
 					[new IdentifierToken("long string"), new IdentifierToken("long string")],
 				]),
 				{ version, identifiers: ["long string"], shapes: [], data: [[0, 0]] },
@@ -114,7 +114,7 @@ describe("chunkEncodingGeneric", () => {
 		});
 		it("identifier: mixed", () => {
 			assert.deepEqual(
-				handleShapesAndIdentifiers(version, [
+				encodeShapesAndIdentifiers(version, [
 					[
 						new IdentifierToken("long string"),
 						5,
@@ -132,7 +132,7 @@ describe("chunkEncodingGeneric", () => {
 			);
 		});
 		it("shape: minimal", () => {
-			assert.deepEqual(handleShapesAndIdentifiers(version, [[new TestShape("shape data")]]), {
+			assert.deepEqual(encodeShapesAndIdentifiers(version, [[new TestShape("shape data")]]), {
 				version,
 				identifiers: [],
 				shapes: [{ b: "shape data" }],
@@ -144,7 +144,7 @@ describe("chunkEncodingGeneric", () => {
 			const shape2 = new TestShape("2");
 			const shape3 = new TestShape("3");
 			assert.deepEqual(
-				handleShapesAndIdentifiers(version, [
+				encodeShapesAndIdentifiers(version, [
 					[shape1, shape3, shape3, shape2, shape3, shape2],
 				]),
 				{
@@ -168,7 +168,7 @@ describe("chunkEncodingGeneric", () => {
 				countShape(shape2);
 				countShape(shape3); // cycle
 			});
-			assert.deepEqual(handleShapesAndIdentifiers(version, [[shape3, shape3]]), {
+			assert.deepEqual(encodeShapesAndIdentifiers(version, [[shape3, shape3]]), {
 				version,
 				identifiers: ["deduplicated-id"],
 				// Ensure shapes are sorted by most frequent first
@@ -179,7 +179,7 @@ describe("chunkEncodingGeneric", () => {
 
 		it("nested arrays", () => {
 			assert.deepEqual(
-				handleShapesAndIdentifiers(version, [
+				encodeShapesAndIdentifiers(version, [
 					[[[new IdentifierToken("long string"), new IdentifierToken("long string")]]],
 				]),
 				{ version, identifiers: ["long string"], shapes: [], data: [[[[0, 0]]]] },

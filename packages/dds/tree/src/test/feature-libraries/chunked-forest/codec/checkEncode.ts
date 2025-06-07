@@ -11,7 +11,7 @@ import type { CounterFilter } from "../../../../feature-libraries/chunked-forest
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import/no-internal-modules
-import { handleShapesAndIdentifiers } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
+import { encodeShapesAndIdentifiers } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import type {
 	BufferFormat,
 	EncoderCache,
@@ -75,7 +75,7 @@ function checkDecode(
 }
 
 /**
- * Clones anything handleShapesAndIdentifiers might modify in-place.
+ * Clones anything encodeShapesAndIdentifiers might modify in-place.
  */
 function cloneArrays<T>(data: readonly T[]): T[] {
 	return data.map((item) => (Array.isArray(item) ? cloneArrays(item) : item)) as T[];
@@ -87,7 +87,7 @@ function testDecode(
 	identifierFilter: CounterFilter<string>,
 	idCompressor?: IIdCompressor,
 ): EncodedFieldBatch {
-	const chunk = handleShapesAndIdentifiers(version, cloneArrays(buffer), identifierFilter);
+	const chunk = encodeShapesAndIdentifiers(version, cloneArrays(buffer), identifierFilter);
 
 	// TODO: check chunk matches schema
 
