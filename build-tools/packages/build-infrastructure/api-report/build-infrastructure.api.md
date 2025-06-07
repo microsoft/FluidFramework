@@ -4,6 +4,7 @@
 
 ```ts
 
+import type { InterdependencyRange } from '@fluid-tools/version-tools';
 import type { Opaque } from 'type-fest';
 import type { PackageJson as PackageJson_2 } from 'type-fest';
 import { SemVer } from 'semver';
@@ -238,6 +239,9 @@ export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 export interface Reloadable {
     reload(): void;
 }
+
+// @public
+export function setDependencyRange<P extends IPackage>(packagesToUpdate: Iterable<P>, dependencies: Iterable<P>, dependencyRange: InterdependencyRange): Promise<void>;
 
 // @public
 export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
