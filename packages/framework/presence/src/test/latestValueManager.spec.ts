@@ -12,7 +12,9 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
+	Latest,
 	LatestClientData,
+	LatestRaw,
 	Presence,
 	ProxiedValueAccessor,
 	RawValueAccessor,
@@ -205,16 +207,17 @@ export function checkCompiles(): void {
 	// Validated value
 	const latestData = props.validated.getRemote(presence.attendees.getMyself());
 
-	// The next line correctly does not compile because props.validated is Latest, while raw is LatestRaw
-	// const raw: LatestRaw<{num: number}> = props.validated; // Latest<{num: number}>
+	// @ts-expect-error Type 'Latest<{ num: number; }, "proxied">' is not assignable to type 'LatestRaw<{ num: number; }>'.
+	const raw: LatestRaw<{ num: number }> = props.validated; // Latest<{num: number}>
 
-	// The next line correctly does not compile because props.cursor is LatestRaw while validated is Latest
-	// const validated: Latest<{ x: number, y: number }> = props.cursor; // LatestRaw<{ x: number, y: number }>
+	// @ts-expect-error Type 'LatestRaw<{ x: number; y: number; }>' is not assignable to type 'Latest<{ x: number; y: number; }, "proxied">'.
+	const validated: Latest<{ x: number; y: number }> = props.cursor;
 
 	// The next line correctly does not compile because the value argument must be a RawValueAccessor
-	// logClientValue({attendee: presence.attendees.getMyself(), value: latestData.value} );
+	// @ts-expect-error Type '() => { readonly num: number; } | undefined' is not assignable to type 'never'.
+	logClientValue({ attendee: presence.attendees.getMyself(), value: latestData.value });
 
-	// This line does compile because logRemoteValue expects a ProxiedValueAccessor
+	// This line correctly compiles because logRemoteValue expects a ProxiedValueAccessor
 	logRemoteValue({ attendee: presence.attendees.getMyself(), value: latestData.value });
 
 	assert(typeof latestData.value === "function");
