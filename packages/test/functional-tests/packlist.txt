@@ -1,0 +1,9 @@
+.eslintrc.cjs
+.mocharc.cjs
+CHANGELOG.md
+README.md
+biome.jsonc
+package.json
+tsconfig.cjs.json
+tsconfig.json
+dist/package.json
