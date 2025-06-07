@@ -842,7 +842,12 @@ export abstract class SharedObject<
 		trackState: boolean = false,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		const result = this.summarizeCore(this.serializer, telemetryContext);
+		const result = this.summarizeCore(
+			this.serializer,
+			telemetryContext,
+			undefined /* incrementalSummaryContext */,
+			fullTree,
+		);
 		this.incrementTelemetryMetric(
 			blobCountPropertyName,
 			result.stats.blobNodeCount,
@@ -869,6 +874,7 @@ export abstract class SharedObject<
 			this.serializer,
 			telemetryContext,
 			incrementalSummaryContext,
+			fullTree,
 		);
 		this.incrementTelemetryMetric(
 			blobCountPropertyName,
@@ -937,6 +943,7 @@ export abstract class SharedObject<
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree?: boolean,
 	): ISummaryTreeWithStats;
 
 	private incrementTelemetryMetric(
