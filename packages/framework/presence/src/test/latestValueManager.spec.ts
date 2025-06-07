@@ -16,7 +16,6 @@ import type {
 	LatestClientData,
 	LatestRaw,
 	Presence,
-	ProxiedValueAccessor,
 	RawValueAccessor,
 } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
