@@ -10,17 +10,37 @@ import type {
 	PhrasingContent as MdastPhrasingContent,
 } from "mdast";
 
+import { renderHtml } from "../../HtmlRendererModule.js";
 import type { DocumentationNode, TextFormatting } from "../../documentation-domain/index.js";
+import {
+	documentationNodeToHtml,
+	type TransformationConfiguration as HtmlTransformationConfiguration,
+} from "../../documentation-domain-to-html/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
  * TODO
  */
 export function transformAsHtml(
-	node: DocumentationNode,
+	nodes: DocumentationNode,
 	context: TransformationContext,
 ): MdastHtml {
-	throw new Error("TODO");
+	const htmlTransformationConfig: HtmlTransformationConfiguration = {
+		startingHeadingLevel: context.headingLevel,
+		rootFormatting: {
+			italic: context.italic,
+			bold: context.bold,
+			strikethrough: context.strikethrough,
+		},
+		logger: context.logger,
+	};
+	const htmlTree = documentationNodeToHtml(nodes, htmlTransformationConfig);
+	const htmlString = renderHtml(htmlTree, {});
+
+	return {
+		type: "html",
+		value: htmlString,
+	};
 }
 
 /**

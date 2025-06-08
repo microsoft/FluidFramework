@@ -8,10 +8,10 @@ import type {
 	TableCell as MdastTableCell,
 } from "mdast";
 
-import {
-	isPhrasingContent,
-	type TableCellContent,
-	type TableCellNode,
+import type {
+	PhrasingContent,
+	TableCellContent,
+	TableCellNode,
 } from "../../documentation-domain/index.js";
 import { transformPhrasingContent } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
@@ -28,7 +28,6 @@ export function tableCellToMarkdown(
 	node: TableCellNode,
 	context: TransformationContext,
 ): MdastTableCell {
-	// TODO: ensure block content is HTML wrapped
 	const transformedChildren = node.children.map((child) =>
 		transformCellContent(child, context),
 	);
@@ -46,8 +45,10 @@ function transformCellContent(
 	node: TableCellContent,
 	context: TransformationContext,
 ): MdastPhrasingContent {
-	if (isPhrasingContent(node)) {
-		return transformPhrasingContent(node, context);
+	// Since our library supports block content under table cells, but Markdown does not,
+	// we need to wrap contents that are not simple phrasing content as HTML.
+	if (node.type in ["text", "codeSpan", "link", "span"]) {
+		return transformPhrasingContent(node as PhrasingContent, context);
 	}
 
 	return transformAsHtml(node, context);

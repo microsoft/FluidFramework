@@ -36,7 +36,6 @@ export { LinkNode } from "./LinkNode.js";
 export { OrderedListNode } from "./OrderedListNode.js";
 export { ParagraphNode } from "./ParagraphNode.js";
 export {
-	isPhrasingContent,
 	type PhrasingContent,
 	type PhrasingContentMap,
 } from "./PhrasingContent.js";
