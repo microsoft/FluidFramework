@@ -46,7 +46,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface TsdocNodeTransformOptions extends LoggingConfiguration {
+export interface TsdocNodeTransformOptions extends Required<LoggingConfiguration> {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -138,13 +138,11 @@ function transformTsdocSectionContent(
 			return transformed === undefined ? [] : [transformed];
 		}
 		default: {
-			// TODO
-			throw new Error(`Unsupported DocNode kind under section node: "${node.kind}".`);
-			// options.logger?.error(
-			// 	`Unsupported DocNode kind under section node: "${node.kind}".`,
-			// 	node,
-			// );
-			// return [];
+			options.logger.error(
+				`Unsupported DocNode kind under section node: "${node.kind}".`,
+				node,
+			);
+			return [];
 		}
 	}
 }
@@ -260,13 +258,11 @@ function transformTsdocParagraphContent(
 			return [LineBreakNode.Singleton];
 		}
 		default: {
-			// TODO
-			throw new Error(`Unsupported DocNode kind under paragraph node: "${node.kind}".`);
-			// options.logger?.error(
-			// 	`Unsupported DocNode kind under paragraph node: "${node.kind}".`,
-			// 	node,
-			// );
-			// return [];
+			options.logger.error(
+				`Unsupported DocNode kind under paragraph node: "${node.kind}".`,
+				node,
+			);
+			return [];
 		}
 	}
 }
