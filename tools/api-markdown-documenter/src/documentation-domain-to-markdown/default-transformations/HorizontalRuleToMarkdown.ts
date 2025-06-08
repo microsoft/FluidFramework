@@ -17,10 +17,12 @@ import type { TransformationContext } from "../TransformationContext.js";
 export function horizontalRuleToMarkdown(
 	node: HorizontalRuleNode,
 	context: TransformationContext,
-): MdastThematicBreak {
+): [MdastThematicBreak] {
 	// TODO: Do we need to do anything special in tables?
 
-	return {
-		type: "thematicBreak",
-	};
+	return [
+		{
+			type: "thematicBreak",
+		},
+	];
 }

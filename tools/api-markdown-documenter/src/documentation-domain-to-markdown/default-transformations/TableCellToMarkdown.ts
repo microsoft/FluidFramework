@@ -27,15 +27,17 @@ import { transformAsHtml } from "./Utilities.js";
 export function tableCellToMarkdown(
 	node: TableCellNode,
 	context: TransformationContext,
-): MdastTableCell {
+): [MdastTableCell] {
 	const transformedChildren = node.children.map((child) =>
 		transformCellContent(child, context),
 	);
 
-	return {
-		type: "tableCell",
-		children: transformedChildren,
-	};
+	return [
+		{
+			type: "tableCell",
+			children: transformedChildren,
+		},
+	];
 }
 
 /**
@@ -48,7 +50,7 @@ function transformCellContent(
 	// Since our library supports block content under table cells, but Markdown does not,
 	// we need to wrap contents that are not simple phrasing content as HTML.
 	if (node.type in ["text", "codeSpan", "link", "span"]) {
-		return transformPhrasingContent(node as PhrasingContent, context);
+		return transformPhrasingContent(node as PhrasingContent, context)[0];
 	}
 
 	return transformAsHtml(node, context);

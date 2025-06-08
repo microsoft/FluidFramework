@@ -18,21 +18,27 @@ import type { TransformationContext } from "../TransformationContext.js";
  *
  * @remarks Will render as HTML when in an HTML context, or within another table context.
  */
-export function tableToMarkdown(node: TableNode, context: TransformationContext): MdastTable {
+export function tableToMarkdown(
+	node: TableNode,
+	context: TransformationContext,
+): [MdastTable] {
 	const { transformations } = context;
+
 	const transformedChildren: MdastTableRow[] = [];
 
 	if (node.headerRow !== undefined) {
-		transformedChildren.push(transformations.tableRow(node.headerRow, context));
+		transformedChildren.push(...transformations.tableRow(node.headerRow, context));
 	}
 	if (node.children.length > 0) {
-		transformedChildren.push(
-			...node.children.map((row) => transformations.tableRow(row, context)),
-		);
+		for (const row of node.children) {
+			transformedChildren.push(...transformations.tableRow(row, context));
+		}
 	}
 
-	return {
-		type: "table",
-		children: transformedChildren,
-	};
+	return [
+		{
+			type: "table",
+			children: transformedChildren,
+		},
+	];
 }

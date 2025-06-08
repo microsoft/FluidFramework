@@ -19,7 +19,7 @@ import { applyFormatting } from "./Utilities.js";
 export function plainTextToMarkdown(
 	node: PlainTextNode,
 	context: TransformationContext,
-): MdastPhrasingContent {
+): [MdastPhrasingContent] {
 	// TODO: handle escaped text
 
 	const transformed: MdastText = {
@@ -27,5 +27,5 @@ export function plainTextToMarkdown(
 		value: node.value,
 	};
 
-	return applyFormatting(transformed, context);
+	return [applyFormatting(transformed, context)];
 }

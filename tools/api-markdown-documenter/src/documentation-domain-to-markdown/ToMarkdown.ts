@@ -37,13 +37,14 @@ export function documentToMarkdown(
 ): MdastRoot {
 	const transformationContext = createTransformationContext(config);
 
-	const transformedChildren = document.children.map((child) =>
-		transformSectionContent(child, transformationContext),
-	);
+	const transformedSections: MdastRootContent[] = [];
+	for (const section of document.children) {
+		transformedSections.push(...transformSectionContent(section, transformationContext));
+	}
 
 	return {
 		type: "root",
-		children: transformedChildren,
+		children: transformedSections,
 	};
 }
 
@@ -53,12 +54,12 @@ export function documentToMarkdown(
 export function transformSectionContent(
 	node: SectionContent,
 	context: TransformationContext,
-): MdastRootContent {
+): MdastRootContent[] {
 	const { transformations } = context;
 
 	const transformation = transformations[node.type] as Transformation<
 		SectionContent,
-		MdastRootContent
+		MdastRootContent[]
 	>;
 	if (transformation === undefined) {
 		throw new Error(`No transformation defined for node type: ${node.type}`);
@@ -72,12 +73,12 @@ export function transformSectionContent(
 export function transformBlockContent(
 	node: BlockContent,
 	context: TransformationContext,
-): MdastBlockContent {
+): [MdastBlockContent] {
 	const { transformations } = context;
 
 	const transformation = transformations[node.type] as Transformation<
 		BlockContent,
-		MdastBlockContent
+		[MdastBlockContent]
 	>;
 	if (transformation === undefined) {
 		throw new Error(`No transformation defined for node type: ${node.type}`);
@@ -91,12 +92,12 @@ export function transformBlockContent(
 export function transformPhrasingContent(
 	node: PhrasingContent,
 	context: TransformationContext,
-): MdastPhrasingContent {
+): [MdastPhrasingContent] {
 	const { transformations } = context;
 
 	const transformation = transformations[node.type] as Transformation<
 		PhrasingContent,
-		MdastPhrasingContent
+		[MdastPhrasingContent]
 	>;
 	if (transformation === undefined) {
 		throw new Error(`No transformation defined for node type: ${node.type}`);

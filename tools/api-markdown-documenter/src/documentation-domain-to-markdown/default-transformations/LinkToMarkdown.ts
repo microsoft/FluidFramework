@@ -14,6 +14,12 @@ import type { TransformationContext } from "../TransformationContext.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function linkToMarkdown(node: LinkNode, context: TransformationContext): MdastLink {
-	throw new Error("TODO");
+export function linkToMarkdown(node: LinkNode, context: TransformationContext): [MdastLink] {
+	return [
+		{
+			type: "link",
+			url: node.target,
+			children: [{ type: "text", value: node.text }],
+		},
+	];
 }

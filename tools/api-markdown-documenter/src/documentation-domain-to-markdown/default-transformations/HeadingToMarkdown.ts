@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { Heading as MdastHeading } from "mdast";
+import type {
+	Heading as MdastHeading,
+	BlockContent as MdastBlockContent,
+	Paragraph as MdastParagraph,
+} from "mdast";
 
 import type { HeadingNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
@@ -28,7 +32,7 @@ function isInHeadingRange(level: number): level is 1 | 2 | 3 | 4 | 5 | 6 {
 export function headingToMarkdown(
 	headingNode: HeadingNode,
 	context: TransformationContext,
-): MdastHeading {
+): MdastBlockContent[] {
 	const { headingLevel, transformations } = context;
 
 	const transformedTitle = transformations[headingNode.title.type](headingNode.title, context);
@@ -36,17 +40,25 @@ export function headingToMarkdown(
 	// HTML only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple
 	// bold text, with an accompanying anchor to ensure we can still link to the text.
 	if (isInHeadingRange(headingLevel)) {
-		return {
+		// TODO: anchor
+		const heading: MdastHeading = {
 			type: "heading",
 			depth: headingLevel,
-			children: [transformedTitle],
+			children: transformedTitle,
 		};
+		return [heading];
 	} else {
-		// const boldTitle = {
-		// 	type: "strong",
-		// 	children: [transformedTitle],
-		// };
+		// TODO: anchor
+		const boldTitle: MdastParagraph = {
+			type: "paragraph",
+			children: [
+				{
+					type: "strong",
+					children: transformedTitle,
+				},
+			],
+		};
 
-		throw new Error("TODO");
+		return [boldTitle];
 	}
 }

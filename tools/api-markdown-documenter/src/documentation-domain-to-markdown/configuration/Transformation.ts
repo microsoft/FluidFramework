@@ -6,7 +6,6 @@
 import type {
 	Nodes as MdastTree,
 	BlockContent as MdastBlockContent,
-	Heading as MdastHeading,
 	PhrasingContent as MdastPhrasingContent,
 	RootContent as MdastRootContent,
 	TableCell as MdastTableCell,
@@ -47,7 +46,10 @@ import {
  * @public
  */
 export type BlockContentTransformations = {
-	readonly [K in keyof BlockContentMap]: Transformation<BlockContentMap[K], MdastBlockContent>;
+	readonly [K in keyof BlockContentMap]: Transformation<
+		BlockContentMap[K],
+		MdastBlockContent[]
+	>;
 };
 
 /**
@@ -57,7 +59,7 @@ export type BlockContentTransformations = {
 export type PhrasingContentTransformations = {
 	readonly [K in keyof PhrasingContentMap]: Transformation<
 		PhrasingContentMap[K],
-		MdastPhrasingContent
+		MdastPhrasingContent[]
 	>;
 };
 
@@ -67,10 +69,10 @@ export type PhrasingContentTransformations = {
  */
 export type Transformations = BlockContentTransformations &
 	PhrasingContentTransformations & {
-		readonly ["heading"]: Transformation<HeadingNode, MdastHeading>;
-		readonly ["section"]: Transformation<SectionNode, MdastRootContent>;
-		readonly ["tableCell"]: Transformation<TableCellNode, MdastTableCell>;
-		readonly ["tableRow"]: Transformation<TableRowNode, MdastTableRow>;
+		readonly ["heading"]: Transformation<HeadingNode, MdastBlockContent[]>;
+		readonly ["section"]: Transformation<SectionNode, MdastRootContent[]>;
+		readonly ["tableCell"]: Transformation<TableCellNode, [MdastTableCell]>;
+		readonly ["tableRow"]: Transformation<TableRowNode, [MdastTableRow]>;
 	};
 
 /**
@@ -83,27 +85,27 @@ export type Transformations = BlockContentTransformations &
  */
 export type Transformation<
 	TIn extends DocumentationNode = DocumentationNode,
-	TOut extends MdastTree = MdastTree,
+	TOut extends MdastTree[] = [MdastTree],
 > = (node: TIn, context: TransformationContext) => TOut;
 
 /**
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	["blockQuote"]: blockQuoteToMarkdown,
-	["codeSpan"]: codeSpanToMarkdown,
-	["fencedCode"]: fencedCodeBlockToMarkdown,
-	["heading"]: headingToMarkdown,
-	["lineBreak"]: lineBreakToMarkdown,
-	["link"]: linkToMarkdown,
-	["section"]: sectionToMarkdown,
-	["horizontalRule"]: horizontalRuleToMarkdown,
-	["orderedList"]: orderedListToMarkdown,
-	["paragraph"]: paragraphToMarkdown,
-	["text"]: plainTextToMarkdown,
-	["span"]: spanToMarkdown,
-	["table"]: tableToMarkdown,
-	["tableCell"]: tableCellToMarkdown,
-	["tableRow"]: tableRowToMarkdown,
-	["unorderedList"]: unorderedListToMarkdown,
+	blockQuote: blockQuoteToMarkdown,
+	codeSpan: codeSpanToMarkdown,
+	fencedCode: fencedCodeBlockToMarkdown,
+	heading: headingToMarkdown,
+	lineBreak: lineBreakToMarkdown,
+	link: linkToMarkdown,
+	section: sectionToMarkdown,
+	horizontalRule: horizontalRuleToMarkdown,
+	orderedList: orderedListToMarkdown,
+	paragraph: paragraphToMarkdown,
+	text: plainTextToMarkdown,
+	span: spanToMarkdown,
+	table: tableToMarkdown,
+	tableCell: tableCellToMarkdown,
+	tableRow: tableRowToMarkdown,
+	unorderedList: unorderedListToMarkdown,
 };

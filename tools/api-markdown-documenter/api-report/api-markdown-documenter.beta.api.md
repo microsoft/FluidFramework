@@ -29,7 +29,6 @@ import type { BlockContent as BlockContent_2 } from 'mdast';
 import type { Data } from 'unist';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
-import type { Heading as Heading_2 } from 'mdast';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -187,7 +186,7 @@ export interface BlockContentMap {
 
 // @public
 export type BlockContentToMarkdownTransformations = {
-    readonly [K in keyof BlockContentMap]: ToMarkdownTransformation<BlockContentMap[K], BlockContent_2>;
+    readonly [K in keyof BlockContentMap]: ToMarkdownTransformation<BlockContentMap[K], BlockContent_2[]>;
 };
 
 // @public @sealed
@@ -390,13 +389,16 @@ export namespace DocumentWriter {
 }
 
 // @public @sealed
-export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[], language?: string);
+export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
+    constructor(children: FencedCodeBlockNodeContent[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
     readonly language?: string;
     get singleLine(): false;
     readonly type = "fencedCode";
 }
+
+// @public
+export type FencedCodeBlockNodeContent = PlainTextNode | LineBreakNode;
 
 // @public
 export interface FileSystemConfiguration {
@@ -600,7 +602,7 @@ export interface Link {
 // @public @sealed
 export class LinkNode implements DocumentationNode {
     constructor(
-    text: PlainTextNode,
+    text: string,
     target: UrlTarget);
     static createFromPlainText(text: string, target: UrlTarget): LinkNode;
     static createFromPlainTextLink(link: Link): LinkNode;
@@ -609,7 +611,7 @@ export class LinkNode implements DocumentationNode {
     readonly isParent = false;
     readonly singleLine = true;
     readonly target: UrlTarget;
-    readonly text: PlainTextNode;
+    readonly text: string;
     readonly type = "link";
 }
 
@@ -713,7 +715,7 @@ export interface PhrasingContentMap {
 
 // @public
 export type PhrasingContentToMarkdownTransformations = {
-    readonly [K in keyof PhrasingContentMap]: ToMarkdownTransformation<PhrasingContentMap[K], PhrasingContent_2>;
+    readonly [K in keyof PhrasingContentMap]: ToMarkdownTransformation<PhrasingContentMap[K], PhrasingContent_2[]>;
 };
 
 // @public @sealed
@@ -915,14 +917,14 @@ export interface ToMarkdownContext extends TextFormatting {
 }
 
 // @public
-export type ToMarkdownTransformation<TIn extends DocumentationNode = DocumentationNode, TOut extends Nodes_2 = Nodes_2> = (node: TIn, context: ToMarkdownContext) => TOut;
+export type ToMarkdownTransformation<TIn extends DocumentationNode = DocumentationNode, TOut extends Nodes_2[] = [Nodes_2]> = (node: TIn, context: ToMarkdownContext) => TOut;
 
 // @public
 export type ToMarkdownTransformations = BlockContentToMarkdownTransformations & PhrasingContentToMarkdownTransformations & {
-    readonly ["heading"]: ToMarkdownTransformation<HeadingNode, Heading_2>;
-    readonly ["section"]: ToMarkdownTransformation<SectionNode, RootContent>;
-    readonly ["tableCell"]: ToMarkdownTransformation<TableCellNode, TableCell>;
-    readonly ["tableRow"]: ToMarkdownTransformation<TableRowNode, TableRow>;
+    readonly ["heading"]: ToMarkdownTransformation<HeadingNode, BlockContent_2[]>;
+    readonly ["section"]: ToMarkdownTransformation<SectionNode, RootContent[]>;
+    readonly ["tableCell"]: ToMarkdownTransformation<TableCellNode, [TableCell]>;
+    readonly ["tableRow"]: ToMarkdownTransformation<TableRowNode, [TableRow]>;
 };
 
 // @public

@@ -17,10 +17,12 @@ import type { TransformationContext } from "../TransformationContext.js";
 export function lineBreakToMarkdown(
 	node: LineBreakNode,
 	context: TransformationContext,
-): Break {
+): [Break] {
 	// TODO: Do we need to do anything special in tables?
 
-	return {
-		type: "break",
-	};
+	return [
+		{
+			type: "break",
+		},
+	];
 }

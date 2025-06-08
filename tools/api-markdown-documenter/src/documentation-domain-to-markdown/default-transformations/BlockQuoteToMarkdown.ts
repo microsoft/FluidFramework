@@ -21,6 +21,6 @@ import type { TransformationContext } from "../TransformationContext.js";
 export function blockQuoteToMarkdown(
 	node: BlockQuoteNode,
 	context: TransformationContext,
-): MdastBlockquote {
+): [MdastBlockquote] {
 	throw new Error("TODO");
 }

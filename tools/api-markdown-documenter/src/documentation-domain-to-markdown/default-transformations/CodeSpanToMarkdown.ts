@@ -17,6 +17,11 @@ import type { TransformationContext } from "../TransformationContext.js";
 export function codeSpanToMarkdown(
 	node: CodeSpanNode,
 	context: TransformationContext,
-): MdastInlineCode {
-	throw new Error("TODO");
+): [MdastInlineCode] {
+	return [
+		{
+			type: "inlineCode",
+			value: node.value.text,
+		},
+	];
 }

@@ -4,6 +4,7 @@
  */
 
 import type { Nodes as MdastTree } from "mdast";
+import { gfmToMarkdown } from "mdast-util-gfm";
 import { toMarkdown as toMarkdownString } from "mdast-util-to-markdown";
 
 import type { DocumentNode } from "../../documentation-domain/index.js";
@@ -58,5 +59,5 @@ export function renderDocument(
  * @public
  */
 export function renderMarkdown(tree: MdastTree): string {
-	return toMarkdownString(tree);
+	return toMarkdownString(tree, { extensions: [gfmToMarkdown()] });
 }

@@ -20,10 +20,11 @@ import { createList } from "./Utilities.js";
 export function orderedListToMarkdown(
 	node: OrderedListNode,
 	context: TransformationContext,
-): MdastList {
-	const transformedChildren: MdastPhrasingContent[] = node.children.map((child) =>
-		transformPhrasingContent(child, context),
-	);
+): [MdastList] {
+	const transformedChildren: MdastPhrasingContent[] = [];
+	for (const child of node.children) {
+		transformedChildren.push(...transformPhrasingContent(child, context));
+	}
 
-	return createList(transformedChildren, true);
+	return [createList(transformedChildren, true)];
 }

@@ -17,15 +17,18 @@ import type { TransformationContext } from "../TransformationContext.js";
 export function tableRowToMarkdown(
 	node: TableRowNode,
 	context: TransformationContext,
-): MdastTableRow {
+): [MdastTableRow] {
 	const { transformations } = context;
 
-	const transformedChildren: MdastTableCell[] = node.children.map((cell) =>
-		transformations.tableCell(cell, context),
-	);
+	const transformedChildren: MdastTableCell[] = [];
+	for (const cell of node.children) {
+		transformedChildren.push(...transformations.tableCell(cell, context));
+	}
 
-	return {
-		type: "tableRow",
-		children: transformedChildren,
-	};
+	return [
+		{
+			type: "tableRow",
+			children: transformedChildren,
+		},
+	];
 }

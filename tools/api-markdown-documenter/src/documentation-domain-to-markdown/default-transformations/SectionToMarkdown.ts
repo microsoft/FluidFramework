@@ -23,24 +23,24 @@ import type { TransformationContext } from "../TransformationContext.js";
 export function sectionToMarkdown(
 	node: SectionNode,
 	context: TransformationContext,
-): MdastRootContent {
+): MdastRootContent[] {
 	const { headingLevel, transformations } = context;
 
-	const transformedChildren: MdastRootContent[] = [];
+	const transformedSectionContent: MdastRootContent[] = [];
 
 	if (node.heading !== undefined) {
 		const transformedHeading = transformations.heading(node.heading, context);
-		transformedChildren.push(transformedHeading);
+		transformedSectionContent.push(...transformedHeading);
 	}
 
-	transformedChildren.push(
-		...node.children.map((child) =>
-			transformSectionContent(child, {
+	for (const child of node.children) {
+		transformedSectionContent.push(
+			...transformSectionContent(child, {
 				...context,
 				headingLevel: headingLevel + 1, // Increase heading level for nested sections
 			}),
-		),
-	);
+		);
+	}
 
-	throw new Error("TODO");
+	return transformedSectionContent;
 }
