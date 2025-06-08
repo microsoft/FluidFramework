@@ -7,6 +7,8 @@ import type {
 	Heading as MdastHeading,
 	BlockContent as MdastBlockContent,
 	Paragraph as MdastParagraph,
+	Html as MdastHtml,
+	Break,
 } from "mdast";
 
 import type { HeadingNode } from "../../documentation-domain/index.js";
@@ -51,7 +53,6 @@ export function headingToMarkdown(
 		};
 		return [heading];
 	} else {
-		// TODO: anchor
 		const boldTitle: MdastParagraph = {
 			type: "paragraph",
 			children: [
@@ -62,6 +63,20 @@ export function headingToMarkdown(
 			],
 		};
 
-		return [boldTitle];
+		if (headingNode.id === undefined) {
+			return [boldTitle];
+		}
+
+		const anchorHtml: MdastHtml = {
+			type: "html",
+			value: `<a id="${headingNode.id ?? ""}"></a>`,
+		};
+		const lineBreak: Break = { type: "break" };
+		return [
+			{
+				type: "paragraph",
+				children: [anchorHtml, lineBreak, ...boldTitle.children],
+			},
+		];
 	}
 }
