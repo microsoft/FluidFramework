@@ -16,6 +16,8 @@ Here are some remarks about the namespace
 
 #### Example: TypeScript Example {#testnamespace-example1}
 
+
+
 ```typescript
 const foo: Foo = {
 	bar: "Hello world!";
@@ -24,6 +26,8 @@ const foo: Foo = {
 ```
 
 #### Example: JavaScript Example {#testnamespace-example2}
+
+
 
 ```javascript
 const foo = {
@@ -35,29 +39,29 @@ const foo = {
 ### Classes
 
 | Class | Description |
-| --- | --- |
+| - | - |
 | [TestClass](docs/test-suite-a/testnamespace-testclass-class) | Test class |
 
 ### Enumerations
 
 | Enum | Description |
-| --- | --- |
+| - | - |
 | [TestEnum](docs/test-suite-a/testnamespace-testenum-enum) | Test Enum |
 
 ### Types
 
 | TypeAlias | Description |
-| --- | --- |
+| - | - |
 | [TestTypeAlias](docs/test-suite-a/testnamespace-testtypealias-typealias) | Test Type-Alias |
 
 ### Functions
 
 | Function | Return Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [testFunction(testParameter)](docs/test-suite-a/testnamespace-testfunction-function) | number | Test function |
 
 ### Namespaces
 
 | Namespace | Description |
-| --- | --- |
+| - | - |
 | [TestSubNamespace](docs/test-suite-a/testnamespace-testsubnamespace-namespace) | Test sub-namespace |

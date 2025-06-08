@@ -1,6 +1,6 @@
 # TestNamespace
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/)
 
 Test Namespace
 
@@ -18,6 +18,8 @@ Here are some remarks about the namespace
 
 ### Example: TypeScript Example {#testnamespace-example1}
 
+
+
 ```typescript
 const foo: Foo = {
 	bar: "Hello world!";
@@ -26,6 +28,8 @@ const foo: Foo = {
 ```
 
 ### Example: JavaScript Example {#testnamespace-example2}
+
+
 
 ```javascript
 const foo = {
@@ -37,43 +41,43 @@ const foo = {
 ## Interfaces
 
 | Interface | Alerts | Description |
-| --- | --- | --- |
+| - | - | - |
 | [TestInterface](/test-suite-a/testnamespace-namespace/testinterface-interface) | `Alpha` | Test interface |
 
 ## Classes
 
 | Class | Description |
-| --- | --- |
+| - | - |
 | [TestClass](/test-suite-a/testnamespace-namespace/testclass-class) | Test class |
 
 ## Enumerations
 
 | Enum | Description |
-| --- | --- |
+| - | - |
 | [TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum) | Test Enum |
 
 ## Types
 
 | TypeAlias | Description |
-| --- | --- |
+| - | - |
 | [TestTypeAlias](/test-suite-a/testnamespace-namespace/testtypealias-typealias) | Test Type-Alias |
 
 ## Functions
 
 | Function | Return Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [testFunction(testParameter)](/test-suite-a/testnamespace-namespace/#testfunction-function) | number | Test function |
 
 ## Variables
 
 | Variable | Alerts | Modifiers | Type | Description |
-| --- | --- | --- | --- | --- |
-| [TestConst](/test-suite-a/testnamespace-namespace/#testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| - | - | - | - | - |
+| [TestConst](/test-suite-a/testnamespace-namespace/#testconst-variable) | `Beta` | `readonly` | | Test Constant |
 
 ## Namespaces
 
 | Namespace | Description |
-| --- | --- |
+| - | - |
 | [TestSubNamespace](/test-suite-a/testnamespace-namespace/testsubnamespace-namespace/) | Test sub-namespace |
 
 ## Function Details
@@ -91,14 +95,14 @@ function testFunction(testParameter: number): number;
 #### Parameters {#testfunction-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
-| testParameter | number |  |
+| - | - | - |
+| testParameter | number | |
 
 #### Returns {#testfunction-returns}
 
 A number
 
-**Return type:** number
+**Return type**: number
 
 #### Throws {#testfunction-throws}
 

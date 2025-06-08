@@ -15,11 +15,11 @@ Here are some remarks about the method
 ### Parameters {#testmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | input | string | A string |
 
 ### Returns {#testmethod-returns}
 
 A number
 
-**Return type:** number
+**Return type**: number
