@@ -33,7 +33,7 @@ This is a test [link](/test-suite-a/testinterface-interface/) to another API mem
 
 The provided parameter
 
-**Return type:** TTypeParameter
+**Return type**: TTypeParameter
 
 ## Throws {#testfunction-throws}
 

@@ -10,7 +10,7 @@ Test Enum
 bar: TestEnum;
 ```
 
-**Type:** [TestEnum](/test-suite-a/testenum-enum/)
+**Type**: [TestEnum](/test-suite-a/testenum-enum/)
 
 ## Remarks {#bar-remarks}
 

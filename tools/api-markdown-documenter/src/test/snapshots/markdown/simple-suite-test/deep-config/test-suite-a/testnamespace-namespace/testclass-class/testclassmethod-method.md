@@ -20,7 +20,7 @@ testClassMethod(testParameter: string): Promise<string>;
 
 A Promise
 
-**Return type:** Promise&lt;string&gt;
+**Return type**: Promise&lt;string&gt;
 
 ## Throws {#testclassmethod-throws}
 

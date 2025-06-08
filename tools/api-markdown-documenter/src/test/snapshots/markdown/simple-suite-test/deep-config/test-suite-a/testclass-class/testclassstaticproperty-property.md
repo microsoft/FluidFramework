@@ -10,4 +10,4 @@ Test static class property
 static testClassStaticProperty: (foo: number) => string;
 ```
 
-**Type:** (foo: number) =&gt; string
+**Type**: (foo: number) =&gt; string

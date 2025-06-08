@@ -12,4 +12,4 @@ Test interface property
 testInterfaceProperty: boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean

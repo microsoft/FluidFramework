@@ -10,4 +10,4 @@ Test optional property
 testOptionalInterfaceProperty?: number;
 ```
 
-**Type:** number
+**Type**: number

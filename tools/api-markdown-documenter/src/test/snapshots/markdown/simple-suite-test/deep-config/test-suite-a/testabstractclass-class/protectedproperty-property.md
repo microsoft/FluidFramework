@@ -10,4 +10,4 @@ A test protected property.
 protected readonly protectedProperty: TestEnum;
 ```
 
-**Type:** [TestEnum](/test-suite-a/testenum-enum/)
+**Type**: [TestEnum](/test-suite-a/testenum-enum/)

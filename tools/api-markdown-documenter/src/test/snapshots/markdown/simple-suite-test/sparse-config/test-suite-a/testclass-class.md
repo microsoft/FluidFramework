@@ -8,7 +8,7 @@ Test class
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
 ```
 
-**Extends:** [TestAbstractClass](docs/test-suite-a/testabstractclass-class)
+**Extends**: [TestAbstractClass](docs/test-suite-a/testabstractclass-class)
 
 #### Type Parameters
 

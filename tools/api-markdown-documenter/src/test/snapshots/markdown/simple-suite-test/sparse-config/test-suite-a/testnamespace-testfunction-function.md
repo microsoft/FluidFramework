@@ -18,7 +18,7 @@ function testFunction(testParameter: number): number;
 
 A number
 
-**Return type:** number
+**Return type**: number
 
 ### Throws {#testfunction-throws}
 

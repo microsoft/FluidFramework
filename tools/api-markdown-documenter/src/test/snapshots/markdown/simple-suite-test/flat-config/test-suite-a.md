@@ -164,7 +164,7 @@ new (): TestInterface;
 
 ##### Returns {#\_new\_-returns}
 
-**Return type:** [TestInterface](docs/test-suite-a#testinterface-interface)
+**Return type**: [TestInterface](docs/test-suite-a#testinterface-interface)
 
 ### Event Details
 
@@ -178,7 +178,7 @@ Test interface event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () =&gt; void
+**Type**: () =&gt; void
 
 ##### Remarks {#testclasseventproperty-remarks}
 
@@ -196,7 +196,7 @@ A test getter-only interface property.
 get getterProperty(): boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean
 
 #### propertyWithBadInheritDocTarget {#testinterface-propertywithbadinheritdoctarget-propertysignature}
 
@@ -206,7 +206,7 @@ get getterProperty(): boolean;
 propertyWithBadInheritDocTarget: boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean
 
 #### setterProperty {#testinterface-setterproperty-property}
 
@@ -219,7 +219,7 @@ get setterProperty(): boolean;
 set setterProperty(newValue: boolean);
 ```
 
-**Type:** boolean
+**Type**: boolean
 
 #### testInterfaceProperty {#testinterface-testinterfaceproperty-propertysignature}
 
@@ -231,7 +231,7 @@ Test interface property
 testInterfaceProperty: number;
 ```
 
-**Type:** number
+**Type**: number
 
 ##### Remarks {#testinterfaceproperty-remarks}
 
@@ -247,7 +247,7 @@ Test optional property
 testOptionalInterfaceProperty?: number;
 ```
 
-**Type:** number
+**Type**: number
 
 ### Method Details
 
@@ -315,7 +315,7 @@ Test interface that extends other interfaces
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
 ```
 
-**Extends:** [TestInterface](docs/test-suite-a#testinterface-interface), [TestMappedType](docs/test-suite-a#testmappedtype-typealias), [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)&lt;number&gt;
+**Extends**: [TestInterface](docs/test-suite-a#testinterface-interface), [TestMappedType](docs/test-suite-a#testmappedtype-typealias), [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)&lt;number&gt;
 
 ### Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
@@ -353,7 +353,7 @@ Here are some remarks about the method
 
 A number
 
-**Return type:** number
+**Return type**: number
 
 ### See Also {#testinterfaceextendingotherinterfaces-see-also}
 
@@ -431,7 +431,7 @@ A test interface property using generic type parameter
 testProperty: T;
 ```
 
-**Type:** T
+**Type**: T
 
 ##### Remarks {#testproperty-remarks}
 
@@ -501,7 +501,7 @@ A test abstract getter property.
 abstract get abstractPropertyGetter(): TestMappedType;
 ```
 
-**Type:** [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
+**Type**: [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
 
 #### protectedProperty {#testabstractclass-protectedproperty-property}
 
@@ -513,7 +513,7 @@ A test protected property.
 protected readonly protectedProperty: TestEnum;
 ```
 
-**Type:** [TestEnum](docs/test-suite-a#testenum-enum)
+**Type**: [TestEnum](docs/test-suite-a#testenum-enum)
 
 ### Method Details
 
@@ -542,7 +542,7 @@ protected sealedMethod(): string;
 
 A string!
 
-**Return type:** string
+**Return type**: string
 
 #### virtualMethod {#testabstractclass-virtualmethod-method}
 
@@ -559,7 +559,7 @@ protected virtualMethod(): number;
 
 A number!
 
-**Return type:** number
+**Return type**: number
 
 ## TestClass {#testclass-class}
 
@@ -571,7 +571,7 @@ Test class
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
 ```
 
-**Extends:** [TestAbstractClass](docs/test-suite-a#testabstractclass-class)
+**Extends**: [TestAbstractClass](docs/test-suite-a#testabstractclass-class)
 
 #### Type Parameters
 
@@ -661,7 +661,7 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () =&gt; void
+**Type**: () =&gt; void
 
 ##### Remarks {#testclasseventproperty-remarks}
 
@@ -679,7 +679,7 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
-**Type:** [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
+**Type**: [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
 
 #### testClassGetterProperty {#testclass-testclassgetterproperty-property}
 
@@ -693,7 +693,7 @@ get testClassGetterProperty(): number;
 set testClassGetterProperty(newValue: number);
 ```
 
-**Type:** number
+**Type**: number
 
 ##### Remarks {#testclassgetterproperty-remarks}
 
@@ -709,7 +709,7 @@ Test class property
 readonly testClassProperty: TTypeParameterB;
 ```
 
-**Type:** TTypeParameterB
+**Type**: TTypeParameterB
 
 ##### Remarks {#testclassproperty-remarks}
 
@@ -725,7 +725,7 @@ Test static class property
 static testClassStaticProperty: (foo: number) => string;
 ```
 
-**Type:** (foo: number) =&gt; string
+**Type**: (foo: number) =&gt; string
 
 ### Method Details
 
@@ -762,7 +762,7 @@ Here are some remarks about the method
 
 ##### Returns {#testclassmethod-returns}
 
-**Return type:** TTypeParameterA
+**Return type**: TTypeParameterA
 
 ##### Throws {#testclassmethod-throws}
 
@@ -790,7 +790,7 @@ static testClassStaticMethod(foo: number): string;
 
 - Some string
 
-**Return type:** string
+**Return type**: string
 
 #### virtualMethod {#testclass-virtualmethod-method}
 
@@ -805,7 +805,7 @@ protected virtualMethod(): number;
 
 ##### Returns {#virtualmethod-returns}
 
-**Return type:** number
+**Return type**: number
 
 ### See Also {#testclass-see-also}
 
@@ -946,7 +946,7 @@ export declare function testFunctionReturningInlineType(): {
 
 An inline type
 
-**Return type:** {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); }
+**Return type**: {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); }
 
 ## testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
@@ -966,7 +966,7 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
-**Return type:** [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)&lt;number&gt;
+**Return type**: [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)&lt;number&gt;
 
 ## testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
@@ -982,7 +982,7 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 A union type
 
-**Return type:** string \| [TestInterface](docs/test-suite-a#testinterface-interface)
+**Return type**: string \| [TestInterface](docs/test-suite-a#testinterface-interface)
 
 # Variable Details
 
@@ -1014,7 +1014,7 @@ I have a `@deprecated` tag with an empty comment block.
 testConstWithEmptyDeprecatedBlock: string
 ```
 
-**Type:** string
+**Type**: string
 
 # Namespace Details
 
@@ -1216,7 +1216,7 @@ Test interface property
 readonly testClassProperty: string;
 ```
 
-**Type:** string
+**Type**: string
 
 ##### Method Details
 
@@ -1243,7 +1243,7 @@ testClassMethod(testParameter: string): Promise<string>;
 
 A Promise
 
-**Return type:** Promise&lt;string&gt;
+**Return type**: Promise&lt;string&gt;
 
 <a id="testclassmethod-throws"></a>
 **Throws**
@@ -1329,7 +1329,7 @@ function testFunction(testParameter: number): number;
 
 A number
 
-**Return type:** number
+**Return type**: number
 
 ##### Throws {#testfunction-throws}
 

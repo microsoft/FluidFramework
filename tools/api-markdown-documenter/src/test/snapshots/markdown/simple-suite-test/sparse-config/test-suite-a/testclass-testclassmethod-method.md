@@ -21,7 +21,7 @@ Here are some remarks about the method
 
 ### Returns {#testclassmethod-returns}
 
-**Return type:** TTypeParameterA
+**Return type**: TTypeParameterA
 
 ### Throws {#testclassmethod-throws}
 

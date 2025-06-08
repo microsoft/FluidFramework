@@ -10,7 +10,7 @@ Test class
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
 ```
 
-**Extends:** [TestAbstractClass](/test-suite-a/testabstractclass-class)
+**Extends**: [TestAbstractClass](/test-suite-a/testabstractclass-class)
 
 ### Type Parameters
 
@@ -100,7 +100,7 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () =&gt; void
+**Type**: () =&gt; void
 
 #### Remarks {#testclasseventproperty-remarks}
 
@@ -118,7 +118,7 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
-**Type:** [TestMappedType](/test-suite-a/testmappedtype-typealias)
+**Type**: [TestMappedType](/test-suite-a/testmappedtype-typealias)
 
 ### testClassGetterProperty {#testclassgetterproperty-property}
 
@@ -132,7 +132,7 @@ get testClassGetterProperty(): number;
 set testClassGetterProperty(newValue: number);
 ```
 
-**Type:** number
+**Type**: number
 
 #### Remarks {#testclassgetterproperty-remarks}
 
@@ -148,7 +148,7 @@ Test class property
 readonly testClassProperty: TTypeParameterB;
 ```
 
-**Type:** TTypeParameterB
+**Type**: TTypeParameterB
 
 #### Remarks {#testclassproperty-remarks}
 
@@ -164,7 +164,7 @@ Test static class property
 static testClassStaticProperty: (foo: number) => string;
 ```
 
-**Type:** (foo: number) =&gt; string
+**Type**: (foo: number) =&gt; string
 
 ## Method Details
 
@@ -201,7 +201,7 @@ Here are some remarks about the method
 
 #### Returns {#testclassmethod-returns}
 
-**Return type:** TTypeParameterA
+**Return type**: TTypeParameterA
 
 #### Throws {#testclassmethod-throws}
 
@@ -229,7 +229,7 @@ static testClassStaticMethod(foo: number): string;
 
 - Some string
 
-**Return type:** string
+**Return type**: string
 
 ### virtualMethod {#virtualmethod-method}
 
@@ -244,7 +244,7 @@ protected virtualMethod(): number;
 
 #### Returns {#virtualmethod-returns}
 
-**Return type:** number
+**Return type**: number
 
 ## See Also {#testclass-see-also}
 

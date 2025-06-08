@@ -18,4 +18,4 @@ static testClassStaticMethod(foo: number): string;
 
 - Some string
 
-**Return type:** string
+**Return type**: string

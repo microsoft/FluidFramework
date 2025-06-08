@@ -10,7 +10,7 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () =&gt; void
+**Type**: () =&gt; void
 
 ## Remarks {#testclasseventproperty-remarks}
 

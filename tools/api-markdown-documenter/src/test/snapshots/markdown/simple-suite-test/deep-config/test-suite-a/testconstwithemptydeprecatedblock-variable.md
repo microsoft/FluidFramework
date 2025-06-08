@@ -12,4 +12,4 @@ I have a `@deprecated` tag with an empty comment block.
 testConstWithEmptyDeprecatedBlock: string
 ```
 
-**Type:** string
+**Type**: string

@@ -8,7 +8,7 @@ A test interface property using generic type parameter
 testProperty: T;
 ```
 
-**Type:** T
+**Type**: T
 
 ### Remarks {#testproperty-remarks}
 
