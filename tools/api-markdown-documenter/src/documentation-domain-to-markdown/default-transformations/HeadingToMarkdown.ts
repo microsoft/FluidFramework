@@ -40,7 +40,10 @@ export function headingToMarkdown(
 	// HTML only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple
 	// bold text, with an accompanying anchor to ensure we can still link to the text.
 	if (isInHeadingRange(headingLevel)) {
-		// TODO: anchor
+		if (headingNode.id !== undefined) {
+			transformedTitle.push({ type: "text", value: ` {#${headingNode.id}}` });
+		}
+
 		const heading: MdastHeading = {
 			type: "heading",
 			depth: headingLevel,
