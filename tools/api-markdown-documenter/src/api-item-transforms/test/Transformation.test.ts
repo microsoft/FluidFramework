@@ -363,7 +363,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 									),
 									new ParagraphNode([
 										new SpanNode([
-											SpanNode.createFromPlainText("Type: ", { bold: true }),
+											SpanNode.createFromPlainText("Type", { bold: true }),
+											new PlainTextNode(": "),
 											SpanNode.createFromPlainText("number"),
 										]),
 									]),
