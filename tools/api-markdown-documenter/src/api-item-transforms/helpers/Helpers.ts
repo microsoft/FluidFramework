@@ -240,8 +240,6 @@ function createHeritageTypeListSpan(
 	config: ApiItemTransformationConfiguration,
 ): SpanNode | undefined {
 	if (heritageTypes.length > 0) {
-		const renderedLabel = SpanNode.createFromPlainText(`${label}: `, { bold: true });
-
 		// Build up array of excerpt entries
 		const renderedHeritageTypes: SpanNode[] = [];
 		for (const heritageType of heritageTypes) {
@@ -256,7 +254,11 @@ function createHeritageTypeListSpan(
 			new PlainTextNode(", "),
 		);
 
-		return new SpanNode([renderedLabel, ...renderedList]);
+		return new SpanNode([
+			SpanNode.createFromPlainText(label, { bold: true }),
+			new PlainTextNode(": "),
+			...renderedList,
+		]);
 	}
 	return undefined;
 }
