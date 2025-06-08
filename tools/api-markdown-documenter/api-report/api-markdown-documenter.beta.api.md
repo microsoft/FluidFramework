@@ -187,8 +187,8 @@ export class BlockQuoteNode extends DocumentationParentNodeBase<PhrasingContent>
 }
 
 // @public @sealed
-export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
-    constructor(value: PlainTextNode);
+export class CodeSpanNode extends DocumentationLiteralNodeBase<string> {
+    constructor(value: string);
     static createFromPlainText(text: string): CodeSpanNode;
     static readonly Empty: CodeSpanNode;
     get isEmpty(): boolean;

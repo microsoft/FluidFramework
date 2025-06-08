@@ -285,7 +285,7 @@ function transformTsdocCodeSpan(
 	node: DocCodeSpan,
 	options: TsdocNodeTransformOptions,
 ): CodeSpanNode {
-	return CodeSpanNode.createFromPlainText(node.code.trim());
+	return new CodeSpanNode(node.code.trim());
 }
 
 /**

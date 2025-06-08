@@ -329,7 +329,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										"/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
 									),
 								]),
-								new TableBodyCellNode([CodeSpanNode.createFromPlainText("optional")]),
+								new TableBodyCellNode([new CodeSpanNode("optional")]),
 								TableBodyCellNode.createFromPlainText("0"),
 								new TableBodyCellNode([SpanNode.createFromPlainText("number")]),
 								TableBodyCellNode.createFromPlainText("Test optional property"),
@@ -444,8 +444,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 										"/test-package/testnamespace-namespace/#bar-variable",
 									),
 								]),
-								new TableBodyCellNode([CodeSpanNode.createFromPlainText("Beta")]), // Alert
-								new TableBodyCellNode([CodeSpanNode.createFromPlainText("readonly")]), // Modifier
+								new TableBodyCellNode([new CodeSpanNode("Beta")]), // Alert
+								new TableBodyCellNode([new CodeSpanNode("readonly")]), // Modifier
 								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
@@ -458,7 +458,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 									),
 								]),
 								TableBodyCellNode.Empty, // No alert for `@public`
-								new TableBodyCellNode([CodeSpanNode.createFromPlainText("readonly")]), // Modifier
+								new TableBodyCellNode([new CodeSpanNode("readonly")]), // Modifier
 								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
@@ -605,7 +605,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 											new TableBodyCellNode([
 												LinkNode.createFromPlainText("hello", "/test-package/#hello-variable"),
 											]),
-											new TableBodyCellNode([CodeSpanNode.createFromPlainText("readonly")]),
+											new TableBodyCellNode([new CodeSpanNode("readonly")]),
 											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
 										]),
