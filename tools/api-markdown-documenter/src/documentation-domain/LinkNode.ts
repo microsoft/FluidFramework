@@ -7,7 +7,6 @@ import type { Link, UrlTarget } from "../Link.js";
 
 import type { DocumentationNode } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { PlainTextNode } from "./PlainTextNode.js";
 
 /**
  * A hyperlink to some other content.
@@ -27,7 +26,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * @sealed
  * @public
  */
-export class LinkNode implements DocumentationNode {
+export class LinkNode implements DocumentationNode, Link {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -52,17 +51,17 @@ export class LinkNode implements DocumentationNode {
 	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
 	public get isEmpty(): boolean {
-		return this.text.isEmpty && this.target.length === 0;
+		return this.text.length === 0 && this.target.length === 0;
 	}
 
 	public constructor(
 		/**
-		 * Link display text.
+		 * {@inheritDoc Link.text}
 		 */
-		public readonly text: PlainTextNode,
+		public readonly text: string,
 
 		/**
-		 * Link target URL.
+		 * {@inheritDoc Link.target}
 		 */
 		public readonly target: UrlTarget,
 	) {}
@@ -74,7 +73,7 @@ export class LinkNode implements DocumentationNode {
 	 * @param target - See {@link LinkNode.target}.
 	 */
 	public static createFromPlainText(text: string, target: UrlTarget): LinkNode {
-		return new LinkNode(new PlainTextNode(text), target);
+		return new LinkNode(text, target);
 	}
 
 	/**

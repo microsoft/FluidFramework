@@ -603,9 +603,9 @@ export interface Link {
 }
 
 // @public @sealed
-export class LinkNode implements DocumentationNode {
+export class LinkNode implements DocumentationNode, Link {
     constructor(
-    text: PlainTextNode,
+    text: string,
     target: UrlTarget);
     static createFromPlainText(text: string, target: UrlTarget): LinkNode;
     static createFromPlainTextLink(link: Link): LinkNode;
@@ -614,7 +614,7 @@ export class LinkNode implements DocumentationNode {
     readonly isParent = false;
     readonly singleLine = true;
     readonly target: UrlTarget;
-    readonly text: PlainTextNode;
+    readonly text: string;
     readonly type = DocumentationNodeType.Link;
 }
 
