@@ -7,7 +7,6 @@ import type { Heading } from "../Heading.js";
 
 import type { DocumentationNode } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { PlainTextNode } from "./PlainTextNode.js";
 
 /**
  * A document heading.
@@ -31,7 +30,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * @sealed
  * @public
  */
-export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Heading, "title"> {
+export class HeadingNode implements DocumentationNode, Heading {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -56,14 +55,14 @@ export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Headi
 	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
 	public get isEmpty(): boolean {
-		return this.title.isEmpty;
+		return this.title.length === 0;
 	}
 
 	public constructor(
 		/**
 		 * {@inheritDoc Heading.title}
 		 */
-		public readonly title: PlainTextNode,
+		public readonly title: string,
 
 		/**
 		 * {@inheritDoc Heading.id}
@@ -77,7 +76,7 @@ export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Headi
 	 * @param id - See {@link Heading.id}
 	 */
 	public static createFromPlainText(title: string, id?: string): HeadingNode {
-		return new HeadingNode(new PlainTextNode(title), id);
+		return new HeadingNode(title, id);
 	}
 
 	/**

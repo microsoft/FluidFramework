@@ -483,9 +483,9 @@ export interface Heading {
 }
 
 // @public @sealed
-export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Heading, "title"> {
+export class HeadingNode implements DocumentationNode, Heading {
     constructor(
-    title: PlainTextNode,
+    title: string,
     id?: string | undefined);
     static createFromPlainText(title: string, id?: string): HeadingNode;
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
@@ -494,7 +494,7 @@ export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Headi
     readonly isLiteral = false;
     readonly isParent = false;
     readonly singleLine = true;
-    readonly title: PlainTextNode;
+    readonly title: string;
     readonly type = DocumentationNodeType.Heading;
 }
 
