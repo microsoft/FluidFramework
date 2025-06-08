@@ -176,12 +176,12 @@ title: Markdown
 graph LR
     A[ApiModel]
     B[Documentation AST]
-    C[Markdown AST~]
+    C[Markdown AST]
     D[raw Markdown]
 
     A-->|transformApiModel|B
-    B-->|documentToMarkdown~|C
-    C-->|MarkdownRenderer.renderMarkdown~|D
+    B-->|documentToMarkdown|C
+    C-->|MarkdownRenderer.renderMarkdown|D
 
     A-.->|MarkdownRenderer.renderApiModel|D
     B-.->|MarkdownRenderer.renderDocument|D
@@ -206,10 +206,6 @@ graph LR
     A-.->|HtmlRenderer.renderApiModel|D
     B-.->|HtmlRenderer.renderDocument|D
 ```
-
-**Note:** APIs above marked with an `*` are in preview, and may change without notice.
-
-**Note:** APIs above marked with an `~` are planned, but do not yet exist.
 
 For more details on the interior `Documentation AST` ([Abstract Syntax Tree][]) domain, see [Documentation Domain](#documentation-domain) below.
 
@@ -382,10 +378,10 @@ Other validation may be added in the future as needed.
 -   Add extensibility options for `DocNode` transformations
     -   If a consumer has a custom tsdoc config associated with their API-Extractor setup, this will be needed.
 
-### Documentation Improvements
+### Usability Improvements
 
 -   Intro sandbox (api report)
--   Extensibility examples (maybe use the "AlertNode" concept used by the fluidframework.com build)
+-   Pre-canned hierarchy policies (flat, index, adjacency)
 
 ### Styling Improvements
 
@@ -398,13 +394,6 @@ Other validation may be added in the future as needed.
 ### Performance Improvements
 
 -   Rather than repeatedly walking up a given `ApiItem`'s hierarchy when evaluating paths, links, etc., we could pass down transformation context object containing a running record of the item's hierarchy as we walk the tree.
-
-## Longer-term work
-
--   Support placing documents _within_ their own hierarchy (support for the "index" model used by systems like DocFX)
--   Pre-canned policies (flat, index, adjacency)
--   Add `documentToMarkdown` API that generates `mdast` output.
-    -   Update Markdown rendering APIs to leverage the `mdast` and `hast` domain outputs.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
