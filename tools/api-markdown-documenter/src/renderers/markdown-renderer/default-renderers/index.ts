@@ -5,6 +5,7 @@
 
 export { renderBlockQuote } from "./RenderBlockQuote.js";
 export { renderCodeSpan } from "./RenderCodeSpan.js";
+export { renderEscapedText } from "./RenderEscapedText.js";
 export { renderFencedCodeBlock } from "./RenderFencedCodeBlock.js";
 export { renderHeading } from "./RenderHeading.js";
 export { renderSection as renderHierarchicalSection } from "./RenderSection.js";

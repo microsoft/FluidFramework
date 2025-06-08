@@ -8,6 +8,7 @@ import {
 	type CodeSpanNode,
 	type DocumentationNode,
 	DocumentationNodeType,
+	type EscapedTextNode,
 	type FencedCodeBlockNode,
 	type HeadingNode,
 	type HorizontalRuleNode,
@@ -28,6 +29,7 @@ import type { RenderContext } from "../RenderContext.js";
 import {
 	renderBlockQuote,
 	renderCodeSpan,
+	renderEscapedText,
 	renderFencedCodeBlock,
 	renderHeading,
 	renderHierarchicalSection,
@@ -80,6 +82,8 @@ export const defaultRenderers: Renderers = {
 		renderBlockQuote(node as BlockQuoteNode, writer, context),
 	[DocumentationNodeType.CodeSpan]: (node, writer, context): void =>
 		renderCodeSpan(node as CodeSpanNode, writer, context),
+	escapedText: (node, writer, context): void =>
+		renderEscapedText(node as EscapedTextNode, writer, context),
 	[DocumentationNodeType.FencedCode]: (node, writer, context): void =>
 		renderFencedCodeBlock(node as FencedCodeBlockNode, writer, context),
 	[DocumentationNodeType.Heading]: (node, writer, context): void =>

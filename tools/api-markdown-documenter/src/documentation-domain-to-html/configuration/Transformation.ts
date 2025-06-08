@@ -11,6 +11,7 @@ import {
 	type DocumentationNode,
 	type BlockQuoteNode,
 	type CodeSpanNode,
+	type EscapedTextNode,
 	type FencedCodeBlockNode,
 	type HeadingNode,
 	type LinkNode,
@@ -40,6 +41,7 @@ import {
 	tableCellToHtml,
 	tableRowToHtml,
 	unorderedListToHtml,
+	escapedTextToHtml,
 } from "../default-transformations/index.js";
 
 /**
@@ -89,6 +91,7 @@ export const defaultTransformations: Transformations = {
 		blockQuoteToHtml(node as BlockQuoteNode, context),
 	[DocumentationNodeType.CodeSpan]: (node, context) =>
 		codeSpanToHtml(node as CodeSpanNode, context),
+	escapedText: (node, context) => escapedTextToHtml(node as EscapedTextNode, context),
 	[DocumentationNodeType.FencedCode]: (node, context) =>
 		fencedCodeBlockToHtml(node as FencedCodeBlockNode, context),
 	[DocumentationNodeType.Heading]: (node, context) =>
