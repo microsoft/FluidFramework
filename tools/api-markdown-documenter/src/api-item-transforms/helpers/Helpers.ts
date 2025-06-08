@@ -936,7 +936,8 @@ export function createReturnsSection(
 			if (typeExcerptSpan !== undefined) {
 				children.push(
 					new ParagraphNode([
-						SpanNode.createFromPlainText("Return type: ", { bold: true }),
+						SpanNode.createFromPlainText("Return type", { bold: true }),
+						new PlainTextNode(": "),
 						typeExcerptSpan,
 					]),
 				);
