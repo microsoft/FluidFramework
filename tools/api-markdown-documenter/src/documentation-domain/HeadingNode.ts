@@ -71,18 +71,9 @@ export class HeadingNode implements DocumentationNode, Heading {
 	) {}
 
 	/**
-	 * Generates a `HeadingNode` from the provided string.
-	 * @param title - See {@link Heading.title}
-	 * @param id - See {@link Heading.id}
-	 */
-	public static createFromPlainText(title: string, id?: string): HeadingNode {
-		return new HeadingNode(title, id);
-	}
-
-	/**
 	 * Generates a `HeadingNode` from the provided {@link Heading}.
 	 */
 	public static createFromPlainTextHeading(heading: Heading): HeadingNode {
-		return HeadingNode.createFromPlainText(heading.title, heading.id);
+		return new HeadingNode(heading.title, heading.id);
 	}
 }

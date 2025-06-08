@@ -124,10 +124,7 @@ export function createTableWithHeading(
 
 	return table === undefined
 		? undefined
-		: new SectionNode(
-				[table],
-				HeadingNode.createFromPlainText(memberTableProperties.headingTitle),
-			);
+		: new SectionNode([table], new HeadingNode(memberTableProperties.headingTitle));
 }
 
 /**

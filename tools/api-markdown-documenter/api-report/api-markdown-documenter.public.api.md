@@ -487,7 +487,6 @@ export class HeadingNode implements DocumentationNode, Heading {
     constructor(
     title: string,
     id?: string | undefined);
-    static createFromPlainText(title: string, id?: string): HeadingNode;
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
     readonly id?: string | undefined;
     get isEmpty(): boolean;
