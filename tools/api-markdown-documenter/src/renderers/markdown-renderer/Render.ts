@@ -59,5 +59,12 @@ export function renderDocument(
  * @public
  */
 export function renderMarkdown(tree: MdastTree): string {
-	return toMarkdownString(tree, { extensions: [gfmToMarkdown()] });
+	return toMarkdownString(tree, {
+		emphasis: "_", // Backwards compat
+		extensions: [
+			gfmToMarkdown({
+				tablePipeAlign: false, // Backwards compat
+			}),
+		],
+	});
 }
