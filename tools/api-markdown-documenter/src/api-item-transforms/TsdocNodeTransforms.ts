@@ -25,6 +25,7 @@ import type { LoggingConfiguration } from "../LoggingConfiguration.js";
 import {
 	type BlockContent,
 	CodeSpanNode,
+	EscapedTextNode,
 	FencedCodeBlockNode,
 	LineBreakNode,
 	LinkNode,
@@ -194,10 +195,7 @@ function transformTsdocParagraph(
 	if (transformedChildren.length > 0) {
 		if (transformedChildren[0].type === "text") {
 			const plainTextNode = transformedChildren[0];
-			transformedChildren[0] = new PlainTextNode(
-				plainTextNode.value.trimStart(),
-				plainTextNode.escaped,
-			);
+			transformedChildren[0] = new PlainTextNode(plainTextNode.value.trimStart());
 		}
 		if (transformedChildren[transformedChildren.length - 1].type === "text") {
 			const plainTextNode = transformedChildren[
@@ -205,7 +203,6 @@ function transformTsdocParagraph(
 			] as PlainTextNode;
 			transformedChildren[transformedChildren.length - 1] = new PlainTextNode(
 				plainTextNode.value.trimEnd(),
-				plainTextNode.escaped,
 			);
 		}
 	}
@@ -325,8 +322,8 @@ function transformTsdocPlainText(
 function transformTsdocEscapedText(
 	node: DocEscapedText,
 	options: TsdocNodeTransformOptions,
-): PlainTextNode {
-	return new PlainTextNode(node.encodedText, /* escaped: */ true);
+): EscapedTextNode {
+	return new EscapedTextNode(node.encodedText);
 }
 
 /**

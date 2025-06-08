@@ -5,6 +5,7 @@
 
 export { blockQuoteToMarkdown } from "./BlockQuoteToMarkdown.js";
 export { codeSpanToMarkdown } from "./CodeSpanToMarkdown.js";
+export { escapedTextToMarkdown } from "./EscapedTextToMarkdown.js";
 export { fencedCodeBlockToMarkdown } from "./FencedCodeBlockToMarkdown.js";
 export { headingToMarkdown } from "./HeadingToMarkdown.js";
 export { horizontalRuleToMarkdown } from "./HorizontalRuleToMarkdown.js";

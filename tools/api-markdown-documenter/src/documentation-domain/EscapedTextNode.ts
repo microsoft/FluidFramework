@@ -6,28 +6,30 @@
 import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
 
 /**
- * Plain text.
+ * Escaped plain text.
  *
  * @remarks
  *
- * Must not contain any line breaks.
+ * This is an "unsafe" type for representing text that has already been escaped for use in an HTML context (including Markdown).
+ * Use of this type should be avoided unless you are certain that the text has been properly escaped.
  *
+ * Must not contain any line breaks.
  * To include line breaks in your text, use {@link LineBreakNode} in a container node like
  * {@link SpanNode} or {@link ParagraphNode}.
  *
  * @sealed
  * @public
  */
-export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
+export class EscapedTextNode extends DocumentationLiteralNodeBase<string> {
 	/**
 	 * Static singleton representing an empty Plain Text node.
 	 */
-	public static readonly Empty: PlainTextNode = new PlainTextNode("");
+	public static readonly Empty: EscapedTextNode = new EscapedTextNode("");
 
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = "text";
+	public readonly type = "escapedText";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}

@@ -7,6 +7,7 @@ import { expect } from "chai";
 
 import {
 	DocumentNode,
+	EscapedTextNode,
 	HeadingNode,
 	ParagraphNode,
 	PlainTextNode,
@@ -62,9 +63,8 @@ describe("Document Markdown rendering tests", () => {
 			children: [
 				new SectionNode([
 					new ParagraphNode([
-						new PlainTextNode(
+						new EscapedTextNode(
 							"This is a **test** with special <Markdown> characters that _should not_ be escaped.",
-							true, // escaped
 						),
 					]),
 				]),

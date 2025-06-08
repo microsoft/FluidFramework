@@ -22,6 +22,7 @@ import type {
 	TableNode,
 	TableRowNode,
 	UnorderedListNode,
+	EscapedTextNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
@@ -39,6 +40,7 @@ import {
 	tableCellToHtml,
 	tableRowToHtml,
 	unorderedListToHtml,
+	escapedTextToHtml,
 } from "../default-transformations/index.js";
 
 /**
@@ -86,6 +88,7 @@ const hastHorizontalRule = h("hr");
 export const defaultTransformations: Transformations = {
 	["blockQuote"]: (node, context) => blockQuoteToHtml(node as BlockQuoteNode, context),
 	["codeSpan"]: (node, context) => codeSpanToHtml(node as CodeSpanNode, context),
+	escapedText: (node, context) => escapedTextToHtml(node as EscapedTextNode, context),
 	["fencedCode"]: (node, context) =>
 		fencedCodeBlockToHtml(node as FencedCodeBlockNode, context),
 	["heading"]: (node, context) => headingToHtml(node as HeadingNode, context),
