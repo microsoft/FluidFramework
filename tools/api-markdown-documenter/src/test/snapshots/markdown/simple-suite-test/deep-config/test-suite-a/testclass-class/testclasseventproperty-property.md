@@ -1,6 +1,6 @@
 # testClassEventProperty
 
-[Packages](/) > [test-suite-a](/test-suite-a/) > [TestClass](/test-suite-a/testclass-class/) > [testClassEventProperty](/test-suite-a/testclass-class/testclasseventproperty-property)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestClass](/test-suite-a/testclass-class/) \> [testClassEventProperty](/test-suite-a/testclass-class/testclasseventproperty-property)
 
 Test class event property
 
@@ -10,7 +10,7 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () => void
+**Type:** () =\> void
 
 ## Remarks {#testclasseventproperty-remarks}
 

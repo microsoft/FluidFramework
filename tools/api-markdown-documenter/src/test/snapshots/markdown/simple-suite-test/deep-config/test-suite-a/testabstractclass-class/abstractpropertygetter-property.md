@@ -1,6 +1,6 @@
 # abstractPropertyGetter
 
-[Packages](/) > [test-suite-a](/test-suite-a/) > [TestAbstractClass](/test-suite-a/testabstractclass-class/) > [abstractPropertyGetter](/test-suite-a/testabstractclass-class/abstractpropertygetter-property)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestAbstractClass](/test-suite-a/testabstractclass-class/) \> [abstractPropertyGetter](/test-suite-a/testabstractclass-class/abstractpropertygetter-property)
 
 A test abstract getter property.
 

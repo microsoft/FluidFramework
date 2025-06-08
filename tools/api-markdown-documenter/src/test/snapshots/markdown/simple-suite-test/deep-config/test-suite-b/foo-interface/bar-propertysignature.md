@@ -1,6 +1,6 @@
 # bar
 
-[Packages](/) > [test-suite-b](/test-suite-b/) > [Foo](/test-suite-b/foo-interface/) > [bar](/test-suite-b/foo-interface/bar-propertysignature)
+[Packages](/) \> [test-suite-b](/test-suite-b/) \> [Foo](/test-suite-b/foo-interface/) \> [bar](/test-suite-b/foo-interface/bar-propertysignature)
 
 Test Enum
 

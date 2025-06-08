@@ -1,6 +1,6 @@
 # testClassProperty
 
-[Packages](/) > [test-suite-a](/test-suite-a/) > [TestClass](/test-suite-a/testclass-class/) > [testClassProperty](/test-suite-a/testclass-class/testclassproperty-property)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestClass](/test-suite-a/testclass-class/) \> [testClassProperty](/test-suite-a/testclass-class/testclassproperty-property)
 
 Test class property
 

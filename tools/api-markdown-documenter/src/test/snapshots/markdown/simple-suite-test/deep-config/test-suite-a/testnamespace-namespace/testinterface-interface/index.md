@@ -1,6 +1,6 @@
 # TestInterface
 
-[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/) > [TestInterface](/test-suite-a/testnamespace-namespace/testinterface-interface/)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestNamespace](/test-suite-a/testnamespace-namespace/) \> [TestInterface](/test-suite-a/testnamespace-namespace/testinterface-interface/)
 
 Test interface
 
@@ -12,7 +12,7 @@ Test interface
 interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 ```
 
-**Extends:** [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)\<[TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum/)>
+**Extends:** [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)\<[TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum/)\>
 
 ## Properties
 

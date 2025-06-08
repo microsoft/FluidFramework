@@ -22,7 +22,7 @@ Here are some remarks about the interface
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [testClassEventProperty](docs/test-suite-a/testinterface-testclasseventproperty-propertysignature) | `readonly` | () => void | Test interface event property |
+| [testClassEventProperty](docs/test-suite-a/testinterface-testclasseventproperty-propertysignature) | `readonly` | () =\> void | Test interface event property |
 
 ### Properties
 
@@ -44,8 +44,8 @@ Here are some remarks about the interface
 
 | CallSignature | Description |
 | --- | --- |
-| [(event: 'testCallSignature', listener: (input: unknown) => void): any](docs/test-suite-a/testinterface-_call_-callsignature) | Test interface event call signature |
-| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](docs/test-suite-a/testinterface-_call__1-callsignature) | Another example call signature |
+| [(event: 'testCallSignature', listener: (input: unknown) =\> void): any](docs/test-suite-a/testinterface-_call_-callsignature) | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) =\> string): number](docs/test-suite-a/testinterface-_call__1-callsignature) | Another example call signature |
 
 ### See Also {#testinterface-see-also}
 

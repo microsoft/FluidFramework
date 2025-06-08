@@ -1,6 +1,6 @@
 # TestModule
 
-[Packages](/) > [test-suite-a](/test-suite-a/) > [TestModule](/test-suite-a/testmodule-namespace/)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestModule](/test-suite-a/testmodule-namespace/)
 
 ## Variables
 

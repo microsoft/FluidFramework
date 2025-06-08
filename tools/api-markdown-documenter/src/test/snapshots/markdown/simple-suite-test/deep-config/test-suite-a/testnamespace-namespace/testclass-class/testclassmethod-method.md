@@ -1,6 +1,6 @@
 # testClassMethod
 
-[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/) > [TestClass](/test-suite-a/testnamespace-namespace/testclass-class/) > [testClassMethod(testParameter)](/test-suite-a/testnamespace-namespace/testclass-class/testclassmethod-method)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestNamespace](/test-suite-a/testnamespace-namespace/) \> [TestClass](/test-suite-a/testnamespace-namespace/testclass-class/) \> [testClassMethod(testParameter)](/test-suite-a/testnamespace-namespace/testclass-class/testclassmethod-method)
 
 Test class method
 
@@ -20,7 +20,7 @@ testClassMethod(testParameter: string): Promise<string>;
 
 A Promise
 
-**Return type:** Promise\<string>
+**Return type:** Promise\<string\>
 
 ## Throws {#testclassmethod-throws}
 

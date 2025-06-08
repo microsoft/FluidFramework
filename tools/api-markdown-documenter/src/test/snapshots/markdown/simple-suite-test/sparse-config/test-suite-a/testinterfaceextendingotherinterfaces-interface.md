@@ -8,7 +8,7 @@ Test interface that extends other interfaces
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
 ```
 
-**Extends:** [TestInterface](docs/test-suite-a/testinterface-interface), [TestMappedType](docs/test-suite-a/testmappedtype-typealias), [TestInterfaceWithTypeParameter](docs/test-suite-a/testinterfacewithtypeparameter-interface)\<number>
+**Extends:** [TestInterface](docs/test-suite-a/testinterface-interface), [TestMappedType](docs/test-suite-a/testmappedtype-typealias), [TestInterfaceWithTypeParameter](docs/test-suite-a/testinterfacewithtypeparameter-interface)\<number\>
 
 ### Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
