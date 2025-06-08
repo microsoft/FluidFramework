@@ -29,17 +29,6 @@ export interface TransformationContext extends TextFormatting {
 	readonly headingLevel: number;
 
 	/**
-	 * Whether or not we are currently rendering inside of a table context.
-	 *
-	 * @remarks
-	 *
-	 * Certain kinds of Markdown content (namely, multi-line contents) cannot be correctly rendered
-	 * within a Markdown table cell. To work around this, we render some kinds of child content as HTML when
-	 * inside of a table cell context.
-	 */
-	readonly insideTable: boolean;
-
-	/**
 	 * Complete set of transformations (includes defaults and user-specified).
 	 */
 	readonly transformations: Transformations;
@@ -67,7 +56,6 @@ export function createTransformationContext(
 		headingLevel,
 		transformations,
 		logger: config?.logger ?? defaultConsoleLogger,
-		insideTable: false,
 		...formatting,
 	};
 }
