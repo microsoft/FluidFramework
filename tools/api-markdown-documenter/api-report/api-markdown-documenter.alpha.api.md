@@ -367,7 +367,7 @@ export interface DocumentNodeProps {
 // @public
 export function documentToHtml(document: DocumentNode, config: ToHtmlConfiguration): Root;
 
-// @beta
+// @public
 export function documentToMarkdown(document: DocumentNode, config: ToMarkdownConfiguration): Root_2;
 
 // @public

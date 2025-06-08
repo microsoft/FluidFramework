@@ -368,6 +368,9 @@ export interface DocumentNodeProps {
 export function documentToHtml(document: DocumentNode, config: ToHtmlConfiguration): Root;
 
 // @public
+export function documentToMarkdown(document: DocumentNode, config: ToMarkdownConfiguration): Root_2;
+
+// @public
 export interface DocumentWriter {
     decreaseIndent(): void;
     ensureNewLine(): void;

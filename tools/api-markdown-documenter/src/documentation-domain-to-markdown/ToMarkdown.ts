@@ -29,7 +29,7 @@ import type { Transformation, TransformationConfiguration } from "./configuratio
  * @param document - The document to transform.
  * @param config - HTML transformation configuration.
  *
- * @beta
+ * @public
  */
 export function documentToMarkdown(
 	document: DocumentNode,
