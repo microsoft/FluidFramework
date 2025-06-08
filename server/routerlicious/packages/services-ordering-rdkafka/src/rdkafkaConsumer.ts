@@ -327,8 +327,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS
 			) {
 				if (consumer.rebalanceProtocol() === this.cooperativeRebalanceProtocol) {
+					Lumberjack.info("Cooperative rebalance in progress");
 					this.cooperativeRebalanceHandler(err, topicPartitions);
 				} else {
+					Lumberjack.info("Eager rebalance in progress");
 					this.eagerRebalanceHandler(err, topicPartitions);
 				}
 			} else {
@@ -628,6 +630,14 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}));
 	}
 
+	private convertPartitions(partitions: kafkaTypes.TopicPartition[]): IPartition[] {
+		return partitions.map((partition) => ({
+			topic: this.topic,
+			partition: partition.partition,
+			offset: -1, // n/a
+		}));
+	}
+
 	/**
 	 * The default node-rdkafka consumer rebalance callback with the addition
 	 * of continuing from the last seen offset for assignments that have not changed
@@ -769,9 +779,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		this.isRebalancing = true;
 		try {
 			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
-				this.emit("coop.rebalance.assign", partitions, err.code);
+				// FIXME
+				Lumberjack.info("cooperative rebalance assign: ", partitions);
+				this.emit("coop.rebalance.assign", this.convertPartitions(partitions), err.code);
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
-				this.emit("coop.rebalance.revoke", partitions, err.code);
+				// FIXME
+				Lumberjack.info("cooperative rebalance revoke: ", partitions);
+				this.emit("coop.rebalance.revoke", this.convertPartitions(partitions), err.code);
 
 				// cleanup things left over from the lost partitions
 				partitions.forEach((tp) => {
