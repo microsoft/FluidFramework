@@ -2,6 +2,31 @@
 
 ## 0.21.0
 
+### Add DocumentationNode -> mdast transformation layer
+
+Adds transformation library for generating [mdast]() from `DocumentationNode`s.
+
+#### Example
+
+```typescript
+const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
+
+// Create the API Model from our API reports
+const apiModel = await loadModel({
+	modelDirectoryPath,
+});
+
+// Transform the API Model to documents
+const documents = transformApiModel({
+	apiModel,
+});
+
+// Convert the documents to Markdown via mdast
+const markdownDocuments = documents.map((document) => documentToMarkdown(document, {}));
+
+// Use the resulting HTML documents with your favorite mdast-compatible library!
+```
+
 ### `LineBreakNode` removed from `BlockContent`
 
 Block Content items are implicitly separated by a line break, so allowing `LineBreakNode`s in that context is redundant.
