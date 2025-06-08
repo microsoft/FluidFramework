@@ -6,7 +6,7 @@
 import type { PhrasingContent as MdastPhrasingContent } from "mdast";
 
 import type { SpanNode } from "../../documentation-domain/index.js";
-import { transformPhrasingContent } from "../ToMarkdown.js";
+import { phrasingContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -22,7 +22,7 @@ export function spanToMarkdown(
 	const childContext = { ...context, ...node.textFormatting };
 	const transformedChildren: MdastPhrasingContent[] = [];
 	for (const child of node.children) {
-		transformedChildren.push(...transformPhrasingContent(child, childContext));
+		transformedChildren.push(...phrasingContentToMarkdown(child, childContext));
 	}
 	return transformedChildren;
 }

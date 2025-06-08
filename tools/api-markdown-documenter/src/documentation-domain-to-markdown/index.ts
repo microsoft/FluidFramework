@@ -10,5 +10,10 @@ export type {
 	Transformation,
 	Transformations,
 } from "./configuration/index.js";
-export { documentToMarkdown } from "./ToMarkdown.js";
+export {
+	blockContentToMarkdown,
+	documentToMarkdown,
+	phrasingContentToMarkdown,
+	sectionContentToMarkdown,
+} from "./ToMarkdown.js";
 export type { TransformationContext } from "./TransformationContext.js";

@@ -13,7 +13,7 @@ import type {
 	TableCellContent,
 	TableCellNode,
 } from "../../documentation-domain/index.js";
-import { transformPhrasingContent } from "../ToMarkdown.js";
+import { phrasingContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 import { transformAsHtml } from "./Utilities.js";
@@ -50,7 +50,7 @@ function transformCellContent(
 	// Since our library supports block content under table cells, but Markdown does not,
 	// we need to wrap contents that are not simple phrasing content as HTML.
 	if (["text", "codeSpan", "link", "span"].includes(node.type)) {
-		return transformPhrasingContent(node as PhrasingContent, context)[0];
+		return phrasingContentToMarkdown(node as PhrasingContent, context)[0];
 	}
 
 	return transformAsHtml(node, context);

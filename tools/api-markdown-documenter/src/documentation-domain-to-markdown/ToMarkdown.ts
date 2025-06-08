@@ -24,10 +24,10 @@ import {
 import type { Transformation, TransformationConfiguration } from "./configuration/index.js";
 
 /**
- * Generates an HTML AST from the provided {@link DocumentNode}.
+ * Generates a Markdown AST from the provided {@link DocumentNode}.
  *
  * @param document - The document to transform.
- * @param config - HTML transformation configuration.
+ * @param config - Markdown transformation configuration.
  *
  * @public
  */
@@ -39,7 +39,7 @@ export function documentToMarkdown(
 
 	const transformedSections: MdastRootContent[] = [];
 	for (const section of document.children) {
-		transformedSections.push(...transformSectionContent(section, transformationContext));
+		transformedSections.push(...sectionContentToMarkdown(section, transformationContext));
 	}
 
 	return {
@@ -49,9 +49,14 @@ export function documentToMarkdown(
 }
 
 /**
- * TODO
+ * Generates a Markdown AST from the provided {@link SectionContent}.
+ *
+ * @param node - The node to transform.
+ * @param config - Markdown transformation configuration.
+ *
+ * @public
  */
-export function transformSectionContent(
+export function sectionContentToMarkdown(
 	node: SectionContent,
 	context: TransformationContext,
 ): MdastRootContent[] {
@@ -68,9 +73,14 @@ export function transformSectionContent(
 }
 
 /**
- * TODO
+ * Generates a Markdown AST from the provided {@link SectionContent}.
+ *
+ * @param node - The node to transform.
+ * @param config - Markdown transformation configuration.
+ *
+ * @public
  */
-export function transformBlockContent(
+export function blockContentToMarkdown(
 	node: BlockContent,
 	context: TransformationContext,
 ): [MdastBlockContent] {
@@ -87,9 +97,14 @@ export function transformBlockContent(
 }
 
 /**
- * TODO
+ * Generates a Markdown AST from the provided {@link SectionContent}.
+ *
+ * @param node - The node to transform.
+ * @param config - Markdown transformation configuration.
+ *
+ * @public
  */
-export function transformPhrasingContent(
+export function phrasingContentToMarkdown(
 	node: PhrasingContent,
 	context: TransformationContext,
 ): [MdastPhrasingContent] {

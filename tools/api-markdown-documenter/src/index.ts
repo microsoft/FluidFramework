@@ -52,9 +52,12 @@ export {
 	type TransformationContext as ToHtmlContext,
 } from "./documentation-domain-to-html/index.js";
 export {
+	blockContentToMarkdown,
 	type BlockContentTransformations as BlockContentToMarkdownTransformations,
-	type PhrasingContentTransformations as PhrasingContentToMarkdownTransformations,
 	documentToMarkdown,
+	phrasingContentToMarkdown,
+	type PhrasingContentTransformations as PhrasingContentToMarkdownTransformations,
+	sectionContentToMarkdown,
 	type Transformation as ToMarkdownTransformation,
 	type TransformationConfiguration as ToMarkdownConfiguration,
 	type TransformationContext as ToMarkdownContext,

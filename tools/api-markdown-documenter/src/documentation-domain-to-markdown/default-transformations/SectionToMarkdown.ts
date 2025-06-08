@@ -6,7 +6,7 @@
 import type { RootContent as MdastRootContent } from "mdast";
 
 import type { SectionNode } from "../../documentation-domain/index.js";
-import { transformSectionContent } from "../ToMarkdown.js";
+import { sectionContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -35,7 +35,7 @@ export function sectionToMarkdown(
 
 	for (const child of node.children) {
 		transformedSectionContent.push(
-			...transformSectionContent(child, {
+			...sectionContentToMarkdown(child, {
 				...context,
 				headingLevel: headingLevel + 1, // Increase heading level for nested sections
 			}),

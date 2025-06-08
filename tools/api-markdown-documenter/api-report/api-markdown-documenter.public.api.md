@@ -185,6 +185,9 @@ export interface BlockContentMap {
 }
 
 // @public
+export function blockContentToMarkdown(node: BlockContent, context: ToMarkdownContext): [BlockContent_2];
+
+// @public
 export type BlockContentToMarkdownTransformations = {
     readonly [K in keyof BlockContentMap]: ToMarkdownTransformation<BlockContentMap[K], BlockContent_2[]>;
 };
@@ -704,6 +707,9 @@ export interface PhrasingContentMap {
 }
 
 // @public
+export function phrasingContentToMarkdown(node: PhrasingContent, context: ToMarkdownContext): [PhrasingContent_2];
+
+// @public
 export type PhrasingContentToMarkdownTransformations = {
     readonly [K in keyof PhrasingContentMap]: ToMarkdownTransformation<PhrasingContentMap[K], PhrasingContent_2[]>;
 };
@@ -768,6 +774,9 @@ export interface RenderMarkdownConfiguration {
 
 // @public
 export type SectionContent = BlockContent | SectionNode;
+
+// @public
+export function sectionContentToMarkdown(node: SectionContent, context: ToMarkdownContext): RootContent[];
 
 // @public @sealed
 export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {

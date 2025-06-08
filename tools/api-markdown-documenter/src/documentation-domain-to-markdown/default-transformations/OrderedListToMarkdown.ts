@@ -6,7 +6,7 @@
 import type { List as MdastList, PhrasingContent as MdastPhrasingContent } from "mdast";
 
 import type { OrderedListNode } from "../../documentation-domain/index.js";
-import { transformPhrasingContent } from "../ToMarkdown.js";
+import { phrasingContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 import { createList } from "./Utilities.js";
@@ -23,7 +23,7 @@ export function orderedListToMarkdown(
 ): [MdastList] {
 	const transformedChildren: MdastPhrasingContent[] = [];
 	for (const child of node.children) {
-		transformedChildren.push(...transformPhrasingContent(child, context));
+		transformedChildren.push(...phrasingContentToMarkdown(child, context));
 	}
 
 	return [createList(transformedChildren, true)];

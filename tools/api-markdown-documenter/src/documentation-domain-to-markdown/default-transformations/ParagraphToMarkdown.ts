@@ -9,7 +9,7 @@ import type {
 } from "mdast";
 
 import type { ParagraphNode } from "../../documentation-domain/index.js";
-import { transformPhrasingContent } from "../ToMarkdown.js";
+import { phrasingContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -24,7 +24,7 @@ export function paragraphToMarkdown(
 ): [MdastParagraph] {
 	const transformedChildren: MdastPhrasingContent[] = [];
 	for (const child of node.children) {
-		transformedChildren.push(...transformPhrasingContent(child, context));
+		transformedChildren.push(...phrasingContentToMarkdown(child, context));
 	}
 
 	return [
