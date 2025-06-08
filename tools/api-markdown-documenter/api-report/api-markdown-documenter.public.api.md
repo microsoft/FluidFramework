@@ -555,9 +555,6 @@ function isDeprecated(apiItem: ApiItem): boolean;
 function isOptional(apiItem: ApiItem): boolean;
 
 // @public
-export function isPhrasingContent(node: DocumentationNode): node is PhrasingContent;
-
-// @public
 function isReadonly(apiItem: ApiItem): boolean;
 
 // @public
