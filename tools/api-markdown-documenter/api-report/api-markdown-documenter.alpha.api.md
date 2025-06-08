@@ -606,7 +606,6 @@ export class LinkNode implements DocumentationNode, Link {
     constructor(
     text: string,
     target: UrlTarget);
-    static createFromPlainText(text: string, target: UrlTarget): LinkNode;
     static createFromPlainTextLink(link: Link): LinkNode;
     get isEmpty(): boolean;
     readonly isLiteral = false;

@@ -67,21 +67,11 @@ export class LinkNode implements DocumentationNode, Link {
 	) {}
 
 	/**
-	 * Generates a {@link LinkNode} from the provided string.
-	 *
-	 * @param text - The node contents. Note: this must not contain newline characters.
-	 * @param target - See {@link LinkNode.target}.
-	 */
-	public static createFromPlainText(text: string, target: UrlTarget): LinkNode {
-		return new LinkNode(text, target);
-	}
-
-	/**
 	 * Generates a {@link LinkNode} from the provided {@link Link}.
 	 *
 	 * @param link - The link to represent. Note: its text must not contain newline characters.
 	 */
 	public static createFromPlainTextLink(link: Link): LinkNode {
-		return this.createFromPlainText(link.text, link.target);
+		return new LinkNode(link.text, link.target);
 	}
 }
