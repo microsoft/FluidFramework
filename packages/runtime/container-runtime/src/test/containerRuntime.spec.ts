@@ -75,7 +75,7 @@ import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
 import { defaultMinVersionForCollab } from "../compatUtils.js";
-import { CompressionAlgorithms } from "../compressionDefinitions.js";
+import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
@@ -3898,7 +3898,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("minVersionForCollab not provided, with manual configs for each property", async () => {
+			it("minVersionForCollab not provided, with manual configs", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3913,7 +3913,6 @@ describe("Runtime", () => {
 						chunkSizeInBytes: 200,
 						enableRuntimeIdCompressor: "on",
 						enableGroupedBatching: false, // By turning off batching, we will also disable compression automatically
-						explicitSchemaControl: true,
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -3931,7 +3930,7 @@ describe("Runtime", () => {
 					chunkSizeInBytes: 200,
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
-					explicitSchemaControl: true,
+					explicitSchemaControl: false,
 				};
 
 				logger.assertMatchAny([
@@ -4041,6 +4040,51 @@ describe("Runtime", () => {
 						minVersionForCollab,
 					},
 				]);
+			});
+
+			for (const runtimeOption of [
+				{ enableGroupedBatching: true },
+				{ enableGroupedBatching: true, compressionOptions: enabledCompressionConfig },
+				{ explicitSchemaControl: true },
+				{ gcOptions: { enableGCSweep: true } },
+				// Adding in an arbitrary entry into the IGCRuntimeOptions object
+				{ gcOptions: { enableGCSweep: true, sweepGracePeriodMs: 1 } },
+				{ enableRuntimeIdCompressor: "on" },
+				{ enableRuntimeIdCompressor: "delayed" },
+				{ createBlobPayloadPending: true },
+				{ flushMode: FlushMode.TurnBased },
+			]) {
+				it(`throws if minVersionForCollab is incompatible with runtimeOptions: ${JSON.stringify(runtimeOption)}`, async () => {
+					const runtimeOptions = {
+						...runtimeOption,
+					} as unknown as IContainerRuntimeOptionsInternal;
+					const logger = new MockLogger();
+					const minVersionForCollab = "1.0.0";
+					await assert.rejects(async () => {
+						await ContainerRuntime.loadRuntime({
+							context: getMockContext({ logger }) as IContainerContext,
+							registryEntries: [],
+							existing: false,
+							runtimeOptions,
+							provideEntryPoint: mockProvideEntryPoint,
+							minVersionForCollab,
+						});
+					});
+				});
+			}
+			it("does not throw if minVersionForCollab is not set and the default is incompatible with runtimeOptions", async () => {
+				const logger = new MockLogger();
+				await assert.doesNotReject(async () => {
+					await ContainerRuntime.loadRuntime({
+						context: getMockContext({ logger }) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
+						// not explicity set minVersionForCollab, we allow it.
+						runtimeOptions: { createBlobPayloadPending: true },
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+				});
 			});
 		});
 	});

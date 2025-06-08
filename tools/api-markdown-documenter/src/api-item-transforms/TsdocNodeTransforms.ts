@@ -107,13 +107,10 @@ function transformTsdocSection(
 	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
 	// and map the subsequence to an "html" node.
 
-	let transformedChildren: BlockContent[] = [];
+	const transformedChildren: BlockContent[] = [];
 	for (const child of node.nodes) {
 		transformedChildren.push(...transformTsdocSectionContent(child, options));
 	}
-
-	// Remove line breaks adjacent to paragraphs, as they are redundant
-	transformedChildren = filterNewlinesAdjacentToParagraphs(transformedChildren);
 
 	return transformedChildren;
 }
@@ -467,28 +464,4 @@ function trimLeadingAndTrailingLineBreaks(
 	}
 
 	return nodes.slice(startIndex, endIndex + 1);
-}
-
-/**
- * Filters out line break nodes that are adjacent to paragraph nodes.
- * Since paragraph nodes inherently create line breaks on either side, these nodes are redundant and
- * clutter the output tree.
- */
-function filterNewlinesAdjacentToParagraphs(nodes: readonly BlockContent[]): BlockContent[] {
-	if (nodes.length === 0) {
-		return [];
-	}
-
-	const result: BlockContent[] = [];
-	for (let i = 0; i < nodes.length; i++) {
-		if (nodes[i].type === "lineBreak") {
-			const previousIsParagraph = i > 0 ? nodes[i - 1].type === "paragraph" : false;
-			const nextIsParagraph = i < nodes.length - 1 ? nodes[i + 1].type === "paragraph" : false;
-			if (previousIsParagraph || nextIsParagraph) {
-				continue;
-			}
-		}
-		result.push(nodes[i]);
-	}
-	return result;
 }

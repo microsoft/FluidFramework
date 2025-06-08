@@ -26,7 +26,7 @@ export function asEmptyBatchLocalOpMetadata(
  */
 export interface IEmptyBatchMetadata {
 	// Set to true on localOpMetadata for empty batches
-	emptyBatch?: boolean;
+	emptyBatch?: true;
 }
 /**
  * Properties put on the op metadata object for batch tracking

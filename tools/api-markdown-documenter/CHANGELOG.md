@@ -8,6 +8,11 @@ The `DocumentationNodeType` enum has been removed.
 Enumerations of supported node kinds in various contexts is now handled via type unions like `BlockContent` and `PhrasingContent`.
 String literal types makes typing much simpler to reason about, and more inline with `unist` patterns.
 
+### `LineBreakNode` removed from `BlockContent`
+
+Block Content items are implicitly separated by a line break, so allowing `LineBreakNode`s in that context is redundant.
+Support for `LineBreakNode`s in `BlockContent` contexts has been removed.
+
 ## 0.20.0
 
 ### Add stronger type restrictions to Documentation Domain

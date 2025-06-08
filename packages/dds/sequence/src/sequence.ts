@@ -776,7 +776,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+	protected reSubmitCore(content: any, localOpMetadata: unknown, squash: boolean = false) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(
 			originalRefSeq !== undefined,
@@ -790,10 +790,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				)
 			) {
 				this.submitSequenceMessage(
-					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata),
+					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata, squash),
 				);
 			}
 		});
+	}
+
+	protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata, true);
 	}
 
 	/**
