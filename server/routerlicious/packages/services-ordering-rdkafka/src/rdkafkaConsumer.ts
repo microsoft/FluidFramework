@@ -61,7 +61,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly pausedOffsets: Map<number, number> = new Map();
 	private readonly apiCounter = new InMemoryApiCounters();
 	private readonly failedApiCounterSuffix = ".Failed";
-	private readonly cooperativeRebalanceProtocol = "COOPERATIVE";
+	private readonly isCooperativeRebalancingStrategy: boolean;
 	private consecutiveFailedCount = 0;
 	private apiCounterInterval: NodeJS.Timeout | undefined;
 
@@ -109,6 +109,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				this.terminateBasedOnCounterThreshold(counters);
 			}, this.apiCounterConfig.apiCounterIntervalMS);
 		}
+
+		// Check if the consumer is using cooperative-sticky assignment strategy
+		this.isCooperativeRebalancingStrategy =
+			options?.additionalOptions?.["partition.assignment.strategy"]?.toLowerCase() ===
+			"cooperative-sticky";
 	}
 
 	private terminateBasedOnCounterThreshold(counters: Record<string, number>): void {
@@ -326,7 +331,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
 				err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS
 			) {
-				if (consumer.rebalanceProtocol() === this.cooperativeRebalanceProtocol) {
+				if (this.isCooperativeRebalancingStrategy) {
 					Lumberjack.info("Cooperative rebalance in progress");
 					this.cooperativeRebalanceHandler(err, topicPartitions);
 				} else {
@@ -569,10 +574,6 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		return Promise.resolve();
 	}
 
-	public isCooperativeRebalancing(): boolean {
-		return this.consumer?.rebalanceProtocol() === this.cooperativeRebalanceProtocol;
-	}
-
 	/**
 	 * Saves the latest offset for the partition and emits the data event with the message.
 	 * If we are in the middle of rebalancing and the message was sent for a partition we will own,
@@ -679,7 +680,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 				}
 
-				if (consumer.rebalanceProtocol() === this.cooperativeRebalanceProtocol) {
+				if (this.isCooperativeRebalancingStrategy) {
 					// FIXME
 					Lumberjack.info("cooperative rebalance reassign: ", assignments);
 					consumer.incrementalAssign(assignments);
@@ -688,7 +689,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					consumer.assign(assignments);
 				}
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
-				if (consumer.rebalanceProtocol() === this.cooperativeRebalanceProtocol) {
+				if (this.isCooperativeRebalancingStrategy) {
 					// FIXME
 					Lumberjack.info("cooperative rebalance revoke: ", assignments);
 					consumer.incrementalUnassign(assignments);
@@ -782,6 +783,12 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		err: kafkaTypes.LibrdKafkaError,
 		partitions: kafkaTypes.TopicPartition[],
 	) {
+		if (partitions.length === 0) {
+			// FIXME
+			Lumberjack.info("cooperative rebalance: no partitions assigned");
+			return;
+		}
+
 		this.isRebalancing = true;
 		try {
 			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
