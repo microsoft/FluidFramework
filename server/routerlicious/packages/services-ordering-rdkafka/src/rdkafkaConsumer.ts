@@ -330,7 +330,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					Lumberjack.info("Cooperative rebalance in progress");
 					this.cooperativeRebalanceHandler(err, topicPartitions);
 				} else {
-					Lumberjack.info("Eager rebalance in progress");
+					Lumberjack.info(
+						`Eager rebalance in progress, protocol: "${consumer.rebalanceProtocol()}", isConnected: ${consumer.isConnected()}`,
+					);
 					this.eagerRebalanceHandler(err, topicPartitions);
 				}
 			} else {
@@ -678,16 +680,20 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				}
 
 				if (consumer.rebalanceProtocol() === this.cooperativeRebalanceProtocol) {
-					Lumberjack.debug("cooperative rebalance reassign: ", assignments);
+					// FIXME
+					Lumberjack.info("cooperative rebalance reassign: ", assignments);
 					consumer.incrementalAssign(assignments);
 				} else {
+					Lumberjack.info("eager rebalance assign: ", assignments);
 					consumer.assign(assignments);
 				}
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
 				if (consumer.rebalanceProtocol() === this.cooperativeRebalanceProtocol) {
-					Lumberjack.debug("cooperative rebalance revoke: ", assignments);
+					// FIXME
+					Lumberjack.info("cooperative rebalance revoke: ", assignments);
 					consumer.incrementalUnassign(assignments);
 				} else {
+					Lumberjack.info("eager rebalance unassign: ", assignments);
 					consumer.unassign();
 				}
 			}
@@ -787,10 +793,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				Lumberjack.info("cooperative rebalance revoke: ", partitions);
 				this.emit("coop.rebalance.revoke", this.convertPartitions(partitions), err.code);
 
-				// cleanup things left over from the lost partitions
+				// clean up things left over from the lost partitions
 				partitions.forEach((tp) => {
 					const partition = tp.partition;
-					// clear latest offset
+					// clear the latest offset
 					this.latestOffsets.delete(partition);
 
 					// clear paused offset if it exists
