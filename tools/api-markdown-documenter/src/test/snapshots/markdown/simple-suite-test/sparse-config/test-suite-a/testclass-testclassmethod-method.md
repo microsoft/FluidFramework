@@ -16,7 +16,7 @@ Here are some remarks about the method
 ### Parameters {#testclassmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | input | TTypeParameterA |  |
 
 ### Returns {#testclassmethod-returns}
