@@ -1,6 +1,6 @@
 # testFunctionReturningUnionType
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [testFunctionReturningUnionType()](/test-suite-a/testfunctionreturninguniontype-function)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [testFunctionReturningUnionType()](/test-suite-a/testfunctionreturninguniontype-function)
 
 Test function that returns an inline type
 

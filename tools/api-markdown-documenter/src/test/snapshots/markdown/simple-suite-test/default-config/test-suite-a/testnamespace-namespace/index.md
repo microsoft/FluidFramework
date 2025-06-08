@@ -1,6 +1,6 @@
 # TestNamespace
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/)
 
 Test Namespace
 

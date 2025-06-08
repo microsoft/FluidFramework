@@ -31,7 +31,7 @@ Here are some remarks about the class
 
 | Property | Type | Description |
 | --- | --- | --- |
-| [testClassStaticProperty](docs/test-suite-a/testclass-testclassstaticproperty-property) | (foo: number) =&gt; string | Test static class property |
+| [testClassStaticProperty](docs/test-suite-a/testclass-testclassstaticproperty-property) | (foo: number) => string | Test static class property |
 
 ### Static Methods
 
@@ -43,7 +43,7 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [testClassEventProperty](docs/test-suite-a/testclass-testclasseventproperty-property) | `readonly` | () =&gt; void | Test class event property |
+| [testClassEventProperty](docs/test-suite-a/testclass-testclasseventproperty-property) | `readonly` | () => void | Test class event property |
 
 ### Properties
 
