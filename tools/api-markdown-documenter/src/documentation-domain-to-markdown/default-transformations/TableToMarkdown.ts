@@ -11,7 +11,7 @@ import type { TransformationContext } from "../TransformationContext.js";
 // TODO: transform as HTML when in table context
 
 /**
- * Transform a {@link TableNode} to HTML.
+ * Transform a {@link TableNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

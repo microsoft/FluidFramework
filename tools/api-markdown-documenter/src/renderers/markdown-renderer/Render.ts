@@ -14,7 +14,7 @@ import {
 } from "../../documentation-domain-to-markdown/index.js";
 
 /**
- * Configuration for rendering HTML.
+ * Configuration for rendering Markdown.
  *
  * @sealed
  * @public
@@ -35,10 +35,10 @@ export interface RenderDocumentConfiguration
 		RenderMarkdownConfiguration {}
 
 /**
- * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a string.
+ * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
- * @param config - HTML transformation configuration.
+ * @param config - Markdown transformation configuration.
  *
  * @public
  */
@@ -51,10 +51,10 @@ export function renderDocument(
 }
 
 /**
- * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a string.
+ * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
- * @param config - HTML transformation configuration.
+ * @param config - Markdown transformation configuration.
  *
  * @public
  */

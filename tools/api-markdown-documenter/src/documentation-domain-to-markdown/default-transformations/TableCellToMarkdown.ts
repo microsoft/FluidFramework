@@ -19,7 +19,7 @@ import type { TransformationContext } from "../TransformationContext.js";
 import { transformAsHtml } from "./Utilities.js";
 
 /**
- * Transform a {@link TableCellNode} to HTML.
+ * Transform a {@link TableCellNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

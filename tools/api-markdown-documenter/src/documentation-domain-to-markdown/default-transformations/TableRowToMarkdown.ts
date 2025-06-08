@@ -9,7 +9,7 @@ import type { TableRowNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
- * Transform a {@link TableRowNode} to HTML.
+ * Transform a {@link TableRowNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

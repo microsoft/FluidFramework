@@ -10,7 +10,7 @@ import { sectionContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
- * Transform a {@link SectionNode} to HTML.
+ * Transform a {@link SectionNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

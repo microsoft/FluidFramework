@@ -9,7 +9,7 @@ import type { FencedCodeBlockNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
- * Transform a {@link FencedCodeBlockNode} to HTML.
+ * Transform a {@link FencedCodeBlockNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

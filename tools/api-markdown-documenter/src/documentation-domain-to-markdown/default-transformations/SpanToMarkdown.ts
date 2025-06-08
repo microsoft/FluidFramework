@@ -10,7 +10,7 @@ import { phrasingContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
- * Transform a {@link SpanNode} to HTML.
+ * Transform a {@link SpanNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

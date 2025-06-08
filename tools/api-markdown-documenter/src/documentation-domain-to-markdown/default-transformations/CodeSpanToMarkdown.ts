@@ -9,7 +9,7 @@ import type { CodeSpanNode } from "../../index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
- * Transform a {@link BlockQuoteNode} to HTML.
+ * Transform a {@link BlockQuoteNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

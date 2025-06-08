@@ -35,15 +35,6 @@ export interface TransformationConfiguration extends LoggingConfiguration {
 	 * Optional formatting to apply to the root of the document.
 	 */
 	readonly rootFormatting?: TextFormatting;
-
-	/**
-	 * HTML language attribute.
-	 *
-	 * @defaultValue "en"
-	 *
-	 * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/lang}
-	 */
-	readonly language?: string;
 }
 
 /**

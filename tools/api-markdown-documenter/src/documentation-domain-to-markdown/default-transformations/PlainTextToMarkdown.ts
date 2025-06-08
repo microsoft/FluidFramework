@@ -11,7 +11,7 @@ import type { TransformationContext } from "../TransformationContext.js";
 import { applyFormatting } from "./Utilities.js";
 
 /**
- * Transform a {@link PlainTextNode} to HTML.
+ * Transform a {@link PlainTextNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

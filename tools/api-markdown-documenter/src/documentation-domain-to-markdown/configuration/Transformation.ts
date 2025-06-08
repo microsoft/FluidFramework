@@ -43,7 +43,8 @@ import {
 } from "../default-transformations/index.js";
 
 /**
- * TODO
+ * Transformations from {@link BlockContent} to {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}s.
+ *
  * @public
  */
 export type BlockContentTransformations = {
@@ -54,7 +55,8 @@ export type BlockContentTransformations = {
 };
 
 /**
- * TODO
+ * Transformations from {@link PhrasingContent} to {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}s.
+ *
  * @public
  */
 export type PhrasingContentTransformations = {
@@ -65,7 +67,8 @@ export type PhrasingContentTransformations = {
 };
 
 /**
- * TODO
+ * Transformations from {@link DocumentationNode}s to {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}s.
+ *
  * @public
  */
 export type Transformations = BlockContentTransformations &
@@ -77,7 +80,7 @@ export type Transformations = BlockContentTransformations &
 	};
 
 /**
- * Transformation from a {@link DocumentationNode} to a {@link https://github.com/syntax-tree/hast | HTML syntax tree}.
+ * Transformation from a {@link DocumentationNode} to a {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}.
  *
  * @param node - The input node to be transformed.
  * @param context - Transformation context, including custom transformation implementations.
@@ -90,7 +93,7 @@ export type Transformation<
 > = (node: TIn, context: TransformationContext) => TOut;
 
 /**
- * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
+ * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/mdast | mdast} transformations.
  */
 export const defaultTransformations: Transformations = {
 	blockQuote: blockQuoteToMarkdown,

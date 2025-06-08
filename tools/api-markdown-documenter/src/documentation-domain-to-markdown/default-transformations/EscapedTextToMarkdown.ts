@@ -10,7 +10,7 @@ import type { EscapedTextNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
- * Transform a {@link PlainTextNode} to HTML.
+ * Transform a {@link PlainTextNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

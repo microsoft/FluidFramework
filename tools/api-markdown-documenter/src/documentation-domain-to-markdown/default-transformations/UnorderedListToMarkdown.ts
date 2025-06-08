@@ -12,7 +12,7 @@ import type { TransformationContext } from "../TransformationContext.js";
 import { createList } from "./Utilities.js";
 
 /**
- * Transform a {@link OrderedListNode} to HTML.
+ * Transform a {@link OrderedListNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

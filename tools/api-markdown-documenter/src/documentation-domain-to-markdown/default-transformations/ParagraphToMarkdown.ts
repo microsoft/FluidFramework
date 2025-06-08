@@ -13,7 +13,7 @@ import { phrasingContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
- * Transform a {@link ParagraphNode} to HTML.
+ * Transform a {@link ParagraphNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.

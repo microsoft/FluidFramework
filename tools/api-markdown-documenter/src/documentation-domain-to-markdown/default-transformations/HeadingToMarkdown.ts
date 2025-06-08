@@ -22,7 +22,7 @@ function isInHeadingRange(level: number): level is 1 | 2 | 3 | 4 | 5 | 6 {
 }
 
 /**
- * Transforms a {@link HeadingNode} to HTML.
+ * Transforms a {@link HeadingNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
