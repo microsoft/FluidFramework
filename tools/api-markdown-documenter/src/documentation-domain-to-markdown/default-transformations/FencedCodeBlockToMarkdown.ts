@@ -32,12 +32,13 @@ export function fencedCodeBlockToMarkdown(
 			currentLine = "";
 		}
 	}
+	lines.push(currentLine);
 
 	return [
 		{
 			type: "code",
 			value: lines.join("\n"),
-			meta: node.language,
+			lang: node.language,
 		},
 	];
 }
