@@ -20,7 +20,8 @@
 		"enabled": true,
 		"reportFileName": "<unscopedPackageName>",
 		"reportFolder": "<projectFolder>/api-report/",
-		"reportTempFolder": "<projectFolder>/_api-extractor-temp/"
+		"reportTempFolder": "<projectFolder>/_api-extractor-temp/",
+		"reportVariants": ["public", "beta"]
 	},
 
 	/**
@@ -35,7 +36,9 @@
 	 * Configures how the .d.ts rollup file will be generated.
 	 */
 	"dtsRollup": {
-		"enabled": false
+		"enabled": true,
+		"untrimmedFilePath": "<projectFolder>/lib/<unscopedPackageName>.d.ts",
+		"betaTrimmedFilePath": "<projectFolder>/lib/<unscopedPackageName>-beta.d.ts"
 	},
 
 	/**
