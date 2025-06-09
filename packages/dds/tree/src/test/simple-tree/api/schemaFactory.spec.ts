@@ -416,9 +416,7 @@ describe("schemaFactory", () => {
 		it("Node schema persisted metadata", () => {
 			const factory = new SchemaFactoryAlpha("com.example");
 
-			const fooMetadata = {
-				persistedMetadata: { "a": 2 },
-			};
+			const fooMetadata = { "a": 2 };
 
 			class Foo extends factory.objectAlpha(
 				"Foo",
@@ -431,9 +429,7 @@ describe("schemaFactory", () => {
 
 		it("Field schema persisted metadata", () => {
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
-			const fooMetadata = {
-				persistedMetadata: { "a": 2 },
-			};
+			const fooMetadata = { "a": 2 };
 
 			class Foo extends schemaFactory.objectAlpha("Foo", {
 				bar: schemaFactory.requiredAlpha(schemaFactory.number, {
