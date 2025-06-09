@@ -75,6 +75,8 @@ export enum HttpProperties {
 	scheme = "scheme",
 	httpVersion = "httpVersion",
 	hostName = "hostName",
+	tenantId = "tenantId",
+	documentId = "documentId",
 }
 
 /**
