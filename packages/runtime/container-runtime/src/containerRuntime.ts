@@ -2110,7 +2110,18 @@ export class ContainerRuntime
 			this.sessionSchema.idCompressorMode === "on" ||
 			(this.sessionSchema.idCompressorMode === "delayed" && this.connected)
 		) {
-			this._idCompressor = this.createIdCompressorFn();
+			PerformanceEvent.timedExec(
+				this.mc.logger,
+				{ eventName: "CreateIdCompressor" },
+				(event) => {
+					this._idCompressor = this.createIdCompressorFn();
+					event.end({
+						details: {
+							idCompressorMode: this.sessionSchema.idCompressorMode,
+						},
+					});
+				},
+			);
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
@@ -2712,25 +2723,26 @@ export class ContainerRuntime
 			this._idCompressor === undefined &&
 			this.sessionSchema.idCompressorMode !== undefined
 		) {
-			const perfEvent = {
-				eventName: "LoadIdCompressor",
-			};
-			PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) => {
-				this._idCompressor = this.createIdCompressorFn();
-				// Finalize any ranges we received while the compressor was turned off.
-				const ops = this.pendingIdCompressorOps;
-				this.pendingIdCompressorOps = [];
-				const trace = Trace.start();
-				for (const range of ops) {
-					this._idCompressor.finalizeCreationRange(range);
-				}
-				event.end({
-					details: {
-						finalizeCreationRangeDuration: trace.trace().duration,
-						idCompressorMode: this.sessionSchema.idCompressorMode,
-					},
-				});
-			});
+			PerformanceEvent.timedExec(
+				this.mc.logger,
+				{ eventName: "LoadIdCompressor" },
+				(event) => {
+					this._idCompressor = this.createIdCompressorFn();
+					// Finalize any ranges we received while the compressor was turned off.
+					const ops = this.pendingIdCompressorOps;
+					this.pendingIdCompressorOps = [];
+					const trace = Trace.start();
+					for (const range of ops) {
+						this._idCompressor.finalizeCreationRange(range);
+					}
+					event.end({
+						details: {
+							finalizeCreationRangeDuration: trace.trace().duration,
+							idCompressorMode: this.sessionSchema.idCompressorMode,
+						},
+					});
+				},
+			);
 			assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
 		}
 	}
