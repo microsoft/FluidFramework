@@ -595,15 +595,11 @@ export class DocumentsSchemaController {
 			// TODO: This can be removed after ADO:41351
 			!isDevBuild(pkgVersion)
 		) {
-			const parsed = parse(pkgVersion);
-			if (parsed === null || !parsed.prerelease.includes("test")) {
-				// We only
-				const warnMsg = `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${existingMinVersionForCollab} or later to ensure compatibility.`;
-				logger.sendTelemetryEvent({
-					eventName: "MinVersionForCollabWarning",
-					message: warnMsg,
-				});
-			}
+			const warnMsg = `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${existingMinVersionForCollab} or later to ensure compatibility.`;
+			logger.sendTelemetryEvent({
+				eventName: "MinVersionForCollabWarning",
+				message: warnMsg,
+			});
 		}
 
 		// Desired schema by this session - almost all props are coming from arguments
