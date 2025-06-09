@@ -22,6 +22,7 @@ export {
 	HydratedContext,
 	SimpleContextSlot,
 	getOrCreateInnerNode,
+	getOrCreateNodeFromInnerNode,
 	getKernel,
 } from "./core/index.js";
 export {
@@ -120,7 +121,6 @@ export {
 	type FixRecursiveRecursionLimit,
 	schemaStatics,
 	type TreeChangeEvents,
-	createFromMapTree,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -132,6 +132,7 @@ export type {
 	SimpleObjectNodeSchema,
 	SimpleNodeSchemaBase,
 	SimpleObjectFieldSchema,
+	SimpleRecordNodeSchema,
 } from "./simpleSchema.js";
 export {
 	type NodeFromSchema,

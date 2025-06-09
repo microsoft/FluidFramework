@@ -206,6 +206,7 @@ export {
 	type SimpleArrayNodeSchema,
 	type SimpleObjectNodeSchema,
 	type SimpleObjectFieldSchema,
+	type SimpleRecordNodeSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
 	type ReadonlyArrayNode,

@@ -1270,7 +1270,7 @@ export class MergeTree {
 			segment,
 			(node) => {
 				if (node.isLeaf()) {
-					if (Marker.is(node) && refHasTileLabel(node, markerLabel)) {
+					if (!isRemoved(node) && Marker.is(node) && refHasTileLabel(node, markerLabel)) {
 						foundMarker = node;
 					}
 				} else {

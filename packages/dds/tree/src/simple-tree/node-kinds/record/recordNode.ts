@@ -4,7 +4,6 @@
  */
 
 import { Lazy } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	FlexibleNodeContent,
@@ -31,7 +30,7 @@ import {
 	type TreeNode,
 	typeSchemaSymbol,
 	type Context,
-	UnhydratedFlexTreeNode,
+	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
 } from "../../core/index.js";
@@ -246,9 +245,9 @@ export function recordSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
+			return mapTreeFromNodeData(
+				input as FactoryContent,
+				this as unknown as ImplicitAllowedTypes,
 			);
 		}
 

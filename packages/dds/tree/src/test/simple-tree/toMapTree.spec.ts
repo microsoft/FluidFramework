@@ -10,14 +10,10 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	EmptyKey,
-	type ExclusiveMapTree,
-	type FieldKey,
-	type MapTree,
-} from "../../core/index.js";
+import { deepCopyMapTree, EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 import {
 	booleanSchema,
+	getTreeNodeForField,
 	handleSchema,
 	nullSchema,
 	numberSchema,
@@ -26,19 +22,15 @@ import {
 	stringSchema,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
+	getKernel,
 } from "../../simple-tree/index.js";
 import {
-	type ContextualFieldProvider,
-	type ConstantFieldProvider,
-	type FieldProvider,
-	type FieldProps,
 	createFieldSchema,
 	FieldKind,
 	getDefaultProvider,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
-	addDefaultsToMapTree,
 	getPossibleTypes,
 	mapTreeFromNodeData,
 	type InsertableContent,
@@ -47,18 +39,20 @@ import {
 import { brand } from "../../util/index.js";
 import {
 	MockNodeIdentifierManager,
-	type NodeIdentifierManager,
+	type FlexTreeHydratedContextMinimal,
 } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
+// eslint-disable-next-line import/no-internal-modules
+import { prepareContentForHydration } from "../../simple-tree/prepareForInsertion.js";
+import { hydrate } from "./utils.js";
 
 // TODO: Record node tests
 
 describe("toMapTree", () => {
-	let nodeKeyManager: MockNodeIdentifierManager;
-	beforeEach(() => {
-		nodeKeyManager = new MockNodeIdentifierManager();
-	});
-
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const tree = "Hello world";
@@ -71,7 +65,7 @@ describe("toMapTree", () => {
 			fields: new Map(),
 		};
 
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
 	it("null", () => {
@@ -86,7 +80,7 @@ describe("toMapTree", () => {
 			fields: new Map(),
 		};
 
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
 	it("handle", () => {
@@ -103,7 +97,7 @@ describe("toMapTree", () => {
 			fields: new Map(),
 		};
 
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
 	it("recursive", () => {
@@ -153,7 +147,7 @@ describe("toMapTree", () => {
 			]),
 		};
 
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
 	it("Fails when referenced schema has not yet been instantiated", () => {
@@ -204,7 +198,7 @@ describe("toMapTree", () => {
 				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Simple array", () => {
@@ -245,7 +239,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Complex array", () => {
@@ -311,7 +305,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Recursive array", () => {
@@ -366,7 +360,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Throws on `undefined` entries when null is not allowed", () => {
@@ -409,7 +403,7 @@ describe("toMapTree", () => {
 				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Simple map", () => {
@@ -449,7 +443,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Complex Map", () => {
@@ -529,7 +523,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Undefined map entries are omitted", () => {
@@ -559,7 +553,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Throws on schema-incompatible entries", () => {
@@ -812,7 +806,7 @@ describe("toMapTree", () => {
 				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Simple object", () => {
@@ -855,7 +849,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Complex object", () => {
@@ -934,7 +928,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Undefined properties are omitted", () => {
@@ -963,7 +957,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Object with stored field keys specified", () => {
@@ -1012,10 +1006,11 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Populates identifier field with the default identifier provider", () => {
+			const nodeKeyManager = new MockNodeIdentifierManager();
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {
 				a: schemaFactory.identifier,
@@ -1023,7 +1018,16 @@ describe("toMapTree", () => {
 
 			const tree = {};
 
-			const actual = mapTreeFromNodeData(tree, schema, nodeKeyManager);
+			const actual = mapTreeFromNodeData(tree, schema);
+			const dummy = hydrate(schema, {});
+			const dummyContext = getKernel(dummy).context.flexContext;
+			assert(dummyContext.isHydrated());
+			// Do the default allocation using this context
+			const context: FlexTreeHydratedContextMinimal = {
+				checkout: dummyContext.checkout,
+				nodeKeyManager,
+			};
+			prepareContentForHydration([actual], context.checkout.forest, context);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -1041,7 +1045,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Populates optional field with the default optional provider.", () => {
@@ -1059,90 +1063,7 @@ describe("toMapTree", () => {
 				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
-			assert.deepEqual(actual, expected);
-		});
-
-		it("Populates a tree with defaults", () => {
-			const defaultValue = 3;
-			const constantProvider: ConstantFieldProvider = () => {
-				return defaultValue;
-			};
-			const contextualProvider: ContextualFieldProvider = (context: NodeIdentifierManager) => {
-				assert.equal(context, nodeKeyManager);
-				return defaultValue;
-			};
-			function createDefaultFieldProps(provider: FieldProvider): FieldProps {
-				return {
-					// By design, the public `DefaultProvider` type cannot be casted to, so we must disable type checking with `any`.
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					defaultProvider: provider as any,
-				};
-			}
-
-			const schemaFactory = new SchemaFactory("test");
-			class LeafObject extends schemaFactory.object("Leaf", {
-				constantValue: schemaFactory.optional(
-					schemaFactory.number,
-					createDefaultFieldProps(constantProvider),
-				),
-				contextualValue: schemaFactory.optional(
-					schemaFactory.number,
-					createDefaultFieldProps(contextualProvider),
-				),
-			}) {}
-			class RootObject extends schemaFactory.object("Root", {
-				object: schemaFactory.required(LeafObject),
-				array: schemaFactory.array(LeafObject),
-				map: schemaFactory.map(LeafObject),
-			}) {}
-
-			const nodeData = {
-				object: {},
-				array: [{}, {}],
-				map: new Map([
-					["a", {}],
-					["b", {}],
-				]),
-			};
-
-			// Don't pass in a context
-			let mapTree = mapTreeFromNodeData(nodeData, RootObject);
-
-			const getObject = () => mapTree.fields.get(brand("object"))?.[0];
-			const getArray = () => mapTree.fields.get(brand("array"))?.[0].fields.get(EmptyKey);
-			const getMap = () => mapTree.fields.get(brand("map"))?.[0];
-			const getConstantValue = (leafObject: MapTree | undefined) =>
-				leafObject?.fields.get(brand("constantValue"))?.[0].value;
-			const getContextualValue = (leafObject: MapTree | undefined) =>
-				leafObject?.fields.get(brand("contextualValue"))?.[0].value;
-
-			// Assert that we've populated the constant defaults...
-			assert.equal(getConstantValue(getObject()), defaultValue);
-			assert.equal(getConstantValue(getArray()?.[0]), defaultValue);
-			assert.equal(getConstantValue(getArray()?.[1]), defaultValue);
-			assert.equal(getConstantValue(getMap()?.fields.get(brand("a"))?.[0]), defaultValue);
-			assert.equal(getConstantValue(getMap()?.fields.get(brand("b"))?.[0]), defaultValue);
-			// ...but not the contextual ones
-			assert.equal(getContextualValue(getObject()), undefined);
-			assert.equal(getContextualValue(getArray()?.[0]), undefined);
-			assert.equal(getContextualValue(getArray()?.[1]), undefined);
-			assert.equal(getContextualValue(getMap()?.fields.get(brand("a"))?.[0]), undefined);
-			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), undefined);
-
-			// This time, pass the context in
-			mapTree = mapTreeFromNodeData(nodeData, RootObject, nodeKeyManager);
-
-			// Assert that all defaults are populated
-			assert.equal(getConstantValue(getObject()), defaultValue);
-			assert.equal(getConstantValue(getArray()?.[0]), defaultValue);
-			assert.equal(getConstantValue(getArray()?.[1]), defaultValue);
-			assert.equal(getConstantValue(getMap()?.fields.get(brand("a"))?.[0]), defaultValue);
-			assert.equal(getConstantValue(getMap()?.fields.get(brand("b"))?.[0]), defaultValue);
-			assert.equal(getContextualValue(getObject()), defaultValue);
-			assert.equal(getContextualValue(getArray()?.[0]), defaultValue);
-			assert.equal(getContextualValue(getArray()?.[1]), defaultValue);
-			assert.equal(getContextualValue(getMap()?.fields.get(brand("a"))?.[0]), defaultValue);
-			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), defaultValue);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 	});
 
@@ -1324,7 +1245,7 @@ describe("toMapTree", () => {
 			]),
 		};
 
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
 	it("ambiguous unions", () => {
@@ -1444,7 +1365,7 @@ describe("toMapTree", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Array containing `undefined` (throws if fallback type when not allowed by the schema)", () => {
@@ -1533,22 +1454,88 @@ describe("toMapTree", () => {
 		});
 	});
 
-	describe("addDefaultsToMapTree", () => {
-		it("custom stored key", () => {
-			const f = new SchemaFactory("test");
+	describe("defaults", () => {
+		const f = new SchemaFactory("test");
 
+		it("ConstantFieldProvider", () => {
 			class Test extends f.object("test", {
-				api: createFieldSchema(FieldKind.Required, [f.number], {
+				api: createFieldSchema(FieldKind.Required, [f.string], {
 					key: "stored",
-					defaultProvider: getDefaultProvider(() => 5),
+					defaultProvider: getDefaultProvider(() => [
+						new UnhydratedFlexTreeNode(
+							{
+								type: brand(stringSchema.identifier),
+								value: "x",
+							},
+							new Map(),
+							getUnhydratedContext(SchemaFactory.string),
+						),
+					]),
 				}),
 			}) {}
-			const m: ExclusiveMapTree = { type: brand(Test.identifier), fields: new Map() };
-			addDefaultsToMapTree(m, Test, undefined);
-			assert.deepEqual(
-				m.fields,
-				new Map([["stored", [{ type: f.number.identifier, fields: new Map(), value: 5 }]]]),
-			);
+
+			const node = mapTreeFromNodeData({}, Test);
+			const field = node.getBoxed("stored");
+			assert(!field.pendingDefault);
+			const read = getTreeNodeForField(field);
+			assert.equal(read, "x");
+		});
+
+		describe("ContextualFieldProvider", () => {
+			class Test extends f.object("test", {
+				api: createFieldSchema(FieldKind.Required, [f.string], {
+					key: "stored",
+					defaultProvider: getDefaultProvider((context) => [
+						new UnhydratedFlexTreeNode(
+							{
+								type: brand(stringSchema.identifier),
+								value: context === "UseGlobalContext" ? "global" : "contextual",
+							},
+							new Map(),
+							getUnhydratedContext(SchemaFactory.string),
+						),
+					]),
+				}),
+			}) {}
+
+			it("Implicit read with global context", () => {
+				const node = mapTreeFromNodeData({}, Test);
+				const field = node.getBoxed("stored");
+				assert(field.pendingDefault);
+				const read = getTreeNodeForField(field);
+				assert(!field.pendingDefault);
+				assert.equal(read, "global");
+			});
+
+			it("Explicit populate with valid context", () => {
+				const node = mapTreeFromNodeData({}, Test);
+				const field = node.getBoxed("stored");
+				assert(field.pendingDefault);
+				const dummy = hydrate(Test, new Test({ api: "dummy" }));
+				const context = getKernel(dummy).context.flexContext;
+				assert(context.isHydrated());
+				field.fillPendingDefaults(context);
+				const read = getTreeNodeForField(field);
+				assert(!field.pendingDefault);
+				assert.equal(read, "contextual");
+			});
+
+			// Uses a context which does not know about the schema being used.
+			// This helps ensure that creation of invalid defaults won't assert (a usage error would be fine).
+			// This test does not run the schema validation, which happens after defaults are populated, so it simply must either usage error or complete.
+			it("Explicit populate with invalid context", () => {
+				const node = mapTreeFromNodeData({}, Test);
+				const field = node.getBoxed("stored");
+				assert(field.pendingDefault);
+				class Test2 extends f.object("test2", {}) {}
+				const dummy = hydrate(Test2, new Test2({}));
+				const context = getKernel(dummy).context.flexContext;
+				assert(context.isHydrated());
+				field.fillPendingDefaults(context);
+				const read = getTreeNodeForField(field);
+				assert(!field.pendingDefault);
+				assert.equal(read, "contextual");
+			});
 		});
 	});
 });

@@ -39,8 +39,8 @@ import {
 	getOrCreateInnerNode,
 	type TreeNodeSchemaClass,
 	getKernel,
-	UnhydratedFlexTreeNode,
-	UnhydratedTreeSequenceField,
+	type UnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
 } from "../../core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "../../toMapTree.js";
 import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
@@ -1013,7 +1013,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		const movedCount = sourceEnd - sourceStart;
 		if (!destinationField.context.isHydrated()) {
-			if (!(sourceField instanceof UnhydratedTreeSequenceField)) {
+			if (!(sourceField instanceof UnhydratedSequenceField)) {
 				throw new UsageError(
 					"Cannot move elements from a hydrated array to an unhydrated array.",
 				);
@@ -1138,10 +1138,7 @@ export function arraySchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
-			);
+			return mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {

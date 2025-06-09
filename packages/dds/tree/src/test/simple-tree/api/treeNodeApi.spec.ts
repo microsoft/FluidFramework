@@ -1789,7 +1789,9 @@ describe("treeNodeApi", () => {
 				// Input using schema not included in the context
 				assert.throws(
 					() => TreeAlpha.importVerbose(SchemaFactory.number, "x"),
-					validateUsageError(/Tree does not conform to schema/),
+					validateUsageError(
+						/type "com.fluidframework.leaf.string" which is not defined in this context/,
+					),
 				);
 			});
 
@@ -1800,7 +1802,7 @@ describe("treeNodeApi", () => {
 				// Input using schema not included in the context
 				assert.throws(
 					() => TreeAlpha.importVerbose(A, { type: B.identifier, fields: {} }),
-					validateUsageError(/Tree does not conform to schema/),
+					validateUsageError(/type "Test.B" which is not defined/),
 				);
 			});
 
@@ -1835,7 +1837,7 @@ describe("treeNodeApi", () => {
 				// Undefined required, not provided
 				assert.throws(
 					() => TreeAlpha.importVerbose(schema.optional([]), 1),
-					validateUsageError(/Tree does not conform to schema/),
+					validateUsageError(/Failed to parse tree/),
 				);
 			});
 
@@ -1845,7 +1847,7 @@ describe("treeNodeApi", () => {
 				// invalid
 				assert.throws(
 					() => TreeAlpha.importVerbose([schema.null, schema.number], "x"),
-					validateUsageError(/Tree does not conform to schema/),
+					validateUsageError(/Failed to parse tree/),
 				);
 			});
 
