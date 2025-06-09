@@ -32,11 +32,12 @@ export function discardSharedStringRevertibles(sharedString: ISharedString, reve
 
 // @alpha @legacy
 export interface IInterval {
-    // (undocumented)
+    // @deprecated (undocumented)
     clone(): IInterval;
     compare(b: IInterval): number;
     compareEnd(b: IInterval): number;
     compareStart(b: IInterval): number;
+    // @deprecated
     modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
@@ -128,7 +129,7 @@ export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequence
         end: SequencePlace;
         props?: PropertySet;
     }): SequenceInterval;
-    // (undocumented)
+    // @deprecated (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)
     readonly attached: boolean;
@@ -179,7 +180,7 @@ export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalInde
 export interface ISerializableInterval extends IInterval {
     getIntervalId(): string;
     properties: PropertySet;
-    // (undocumented)
+    // @deprecated (undocumented)
     serialize(): ISerializedInterval;
 }
 
@@ -302,8 +303,9 @@ export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes =
 
 // @alpha @legacy
 export interface SequenceInterval extends ISerializableInterval {
+    // @deprecated
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     clone(): SequenceInterval;
     compare(b: SequenceInterval): number;
     compareEnd(b: SequenceInterval): number;
@@ -313,11 +315,13 @@ export interface SequenceInterval extends ISerializableInterval {
     readonly endSide: Side;
     // (undocumented)
     readonly intervalType: IntervalType;
+    // @deprecated
     modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval | undefined;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     overlapsPos(bstart: number, bend: number): boolean;
+    // @deprecated
     removePositionChangeListeners(): void;
     // (undocumented)
     readonly start: LocalReferencePosition;

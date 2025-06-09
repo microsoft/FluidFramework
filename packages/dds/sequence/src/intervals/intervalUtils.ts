@@ -21,6 +21,8 @@ import {
 export interface IInterval {
 	/**
 	 * @returns a new interval object with identical semantics.
+	 *
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
 	 */
 	clone(): IInterval;
 	/**
@@ -45,6 +47,8 @@ export interface IInterval {
 	compareEnd(b: IInterval): number;
 	/**
 	 * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
+	 *
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
 	 */
 	modify(
 		label: string,
@@ -157,7 +161,9 @@ export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
 
-	/***/
+	/**
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+	 */
 	serialize(): ISerializedInterval;
 
 	/**

@@ -142,6 +142,7 @@ export interface SequenceInterval extends ISerializableInterval {
 
 	/**
 	 * @returns a new interval object with identical semantics.
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
 	 */
 	clone(): SequenceInterval;
 	/**
@@ -166,6 +167,7 @@ export interface SequenceInterval extends ISerializableInterval {
 	compareEnd(b: SequenceInterval): number;
 	/**
 	 * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
 	 */
 	modify(
 		label: string,
@@ -189,6 +191,7 @@ export interface SequenceInterval extends ISerializableInterval {
 
 	/**
 	 * Subscribes to position change events on this interval if there are no current listeners.
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
 	 */
 	addPositionChangeListeners(
 		beforePositionChange: () => void,
@@ -197,6 +200,7 @@ export interface SequenceInterval extends ISerializableInterval {
 
 	/**
 	 * Removes the currently subscribed position change listeners.
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
 	 */
 	removePositionChangeListeners(): void;
 
