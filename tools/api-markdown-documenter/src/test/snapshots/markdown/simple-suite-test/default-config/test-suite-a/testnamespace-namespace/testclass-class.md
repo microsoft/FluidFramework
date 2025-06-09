@@ -1,6 +1,6 @@
 # TestClass
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestClass](/test-suite-a/testnamespace-namespace/testclass-class)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestNamespace](/test-suite-a/testnamespace-namespace/) \> [TestClass](/test-suite-a/testnamespace-namespace/testclass-class)
 
 Test class
 
@@ -26,7 +26,7 @@ class TestClass
 
 | Method | Return Type | Description |
 | - | - | - |
-| [testClassMethod(testParameter)](/test-suite-a/testnamespace-namespace/testclass-class#testclassmethod-method) | Promise&lt;string&gt; | Test class method |
+| [testClassMethod(testParameter)](/test-suite-a/testnamespace-namespace/testclass-class#testclassmethod-method) | Promise\<string\> | Test class method |
 
 ## Constructor Details
 
@@ -82,7 +82,7 @@ testClassMethod(testParameter: string): Promise<string>;
 
 A Promise
 
-**Return type:** Promise&lt;string&gt;
+**Return type:** Promise\<string\>
 
 #### Throws {#testclassmethod-throws}
 
