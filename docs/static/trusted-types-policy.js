@@ -7,15 +7,30 @@ if (
 	typeof window !== "undefined" &&
 	window.trustedTypes &&
 	typeof window.trustedTypes.createPolicy === "function"
-) {
+  ) {
 	if (
-		typeof window.trustedTypes.getPolicy !== "function" ||
-		!window.trustedTypes.getPolicy("default")
+	  typeof window.trustedTypes.getPolicy !== "function" ||
+	  !window.trustedTypes.getPolicy("default")
 	) {
-		window.trustedTypes.createPolicy("default", {
-			createHTML: (input) => input,
-			createScript: (input) => input,
-			createScriptURL: (input) => input,
-		});
+	  console.log("Creating default Trusted Types policy");
+	  const createHTML = (input) => {
+		try {
+		  if (typeof DOMPurify !== "undefined") {
+			return DOMPurify.sanitize(input, { RETURN_TRUSTED_TYPE: false });
+		  } else {
+			console.warn("DOMPurify is not available. Returning unsanitized HTML.");
+			return input;
+		  }
+		} catch (e) {
+		  console.error("DOMPurify sanitization error:", e);
+		  return "";
+		}
+	  };
+
+	  window.trustedTypes.createPolicy("default", {
+		createHTML,
+		createScript: (input) => input,
+		createScriptURL: (input) => input,
+	  });
 	}
-}
+  }
