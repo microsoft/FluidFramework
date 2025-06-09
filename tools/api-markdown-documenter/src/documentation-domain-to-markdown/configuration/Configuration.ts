@@ -20,7 +20,7 @@ export interface TransformationConfiguration extends LoggingConfiguration {
 	 *
 	 * @remarks May override default behaviors or add transformation capabilities for custom {@link DocumentationNode}s.
 	 */
-	readonly customTransformations?: Transformations;
+	readonly customTransformations?: Partial<Transformations>;
 
 	/**
 	 * Optional override for the starting heading level of a document.
