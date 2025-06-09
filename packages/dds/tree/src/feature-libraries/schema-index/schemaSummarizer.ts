@@ -53,7 +53,7 @@ export class SchemaSummarizer implements Summarizable {
 
 	public summarize(props: {
 		stringify: SummaryElementStringifier;
-		fullTree: boolean;
+		fullTree?: boolean;
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
