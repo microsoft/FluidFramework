@@ -158,6 +158,7 @@
 
 			// Require documentation on all package-exported API items.
 			"ae-undocumented": {
+				// TODO: fix violations and re-enable this rule
 				"logLevel": "none"
 			},
 
