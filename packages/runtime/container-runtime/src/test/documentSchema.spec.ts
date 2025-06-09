@@ -10,7 +10,7 @@ import {
 	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { defaultMinVersionForCollab } from "../compatUtils.js";
+import { defaultMinVersionForCollab, type SemanticVersion } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
 	DocumentsSchemaController,
@@ -418,118 +418,53 @@ describe("Runtime", () => {
 	});
 
 	it("Existing document with existing schema, no existing minVersionForCollab", () => {
-		const controller = new DocumentsSchemaController(
-			true, // existing,
-			0, // snapshotSequenceNumber
-			{ ...validConfig, info: undefined }, // old schema,
-			features, // features
-			() => {}, // onSchemaChange
-			{ minVersionForCollab: "2.20.0" }, // info
-			logger,
-		);
-		const message = controller.maybeGenerateSchemaMessage();
-		assert(message !== undefined);
-		assert.strictEqual(message.info?.minVersionForCollab, "2.20.0");
-		assert(
-			controller.processDocumentSchemaMessages(
-				[message],
-				true, // local
-				200,
-			) === true,
-		);
-		const schema = controller.summarizeDocumentSchema(300);
-		assert(schema !== undefined);
-		assert.strictEqual(schema.info?.minVersionForCollab, "2.20.0");
+		testMinVersionForCollabUpdateProcess({
+			description: "Existing document with existing schema, no existing minVersionForCollab",
+			initialSchema: { ...validConfig, info: undefined },
+			targetMinVersionForCollab: "2.20.0",
+			expectedFinalMinVersionForCollab: "2.20.0",
+			expectSchemaChangeMessage: true,
+		});
 	});
 
 	it("Existing document with existing schema, change to minVersionForCollab", () => {
-		const controller = new DocumentsSchemaController(
-			true, // existing,
-			0, // snapshotSequenceNumber
-			validConfig, // old schema,
-			features, // features
-			() => {}, // onSchemaChange
-			{ minVersionForCollab: "2.20.0" }, // info
-			logger,
-		);
-		const message = controller.maybeGenerateSchemaMessage();
-		assert(message !== undefined);
-		assert.strictEqual(message.info?.minVersionForCollab, "2.20.0");
-		assert(
-			controller.processDocumentSchemaMessages(
-				[message],
-				true, // local
-				200,
-			) === true,
-		);
-		const schema = controller.summarizeDocumentSchema(300);
-		assert(schema !== undefined);
-		assert.strictEqual(schema.info?.minVersionForCollab, "2.20.0");
+		testMinVersionForCollabUpdateProcess({
+			description: "Existing document with existing schema, change to minVersionForCollab",
+			initialSchema: validConfig,
+			targetMinVersionForCollab: "2.20.0",
+			expectedFinalMinVersionForCollab: "2.20.0",
+			expectSchemaChangeMessage: true,
+		});
 	});
 
 	it("Existing document with existing schema, multiple changes to minVersionForCollab", () => {
-		// minVersionForCollab = 2.20.0 (schema change)
-		const controller1 = new DocumentsSchemaController(
-			true, // existing,
-			0, // snapshotSequenceNumber
-			validConfig, // old schema,
-			features, // features
-			() => {}, // onSchemaChange
-			{ minVersionForCollab: "2.20.0" }, // info
-			logger,
-		);
-		const message1 = controller1.maybeGenerateSchemaMessage();
-		assert(message1 !== undefined);
-		assert(
-			controller1.processDocumentSchemaMessages(
-				[message1],
-				true, // local
-				200,
-			) === true,
-		);
-		const schema1 = controller1.summarizeDocumentSchema(300);
-		assert(schema1 !== undefined);
-		assert.strictEqual(schema1.info?.minVersionForCollab, "2.20.0");
+		const schema1 = testMinVersionForCollabUpdateProcess({
+			description:
+				"Stage 1: Existing document with existing schema, multiple changes to minVersionForCollab",
+			initialSchema: validConfig,
+			targetMinVersionForCollab: "2.20.0",
+			expectedFinalMinVersionForCollab: "2.20.0",
+			expectSchemaChangeMessage: true,
+		});
 
-		// minVersionForCollab = 2.0.0 (no schema change)
-		const controller2 = new DocumentsSchemaController(
-			true, // existing,
-			300, // snapshotSequenceNumber
-			schema1, // old schema,
-			features, // features
-			() => {}, // onSchemaChange
-			{ minVersionForCollab: "2.0.0" }, // info
-			logger,
-		);
-		const message2 = controller2.maybeGenerateSchemaMessage();
-		// Should be undefined since there is no update to the schema
-		assert(message2 === undefined);
-		const schema2 = controller2.summarizeDocumentSchema(600);
-		assert(schema2 !== undefined);
-		assert.strictEqual(schema2.info?.minVersionForCollab, "2.20.0");
+		// It should stay at 2.20.0 since 2.0.0 is lower than the existing minVersionForCollab (2.20.0)
+		const schema2 = testMinVersionForCollabUpdateProcess({
+			description:
+				"Stage 2: Existing document with existing schema, multiple changes to minVersionForCollab",
+			initialSchema: schema1,
+			targetMinVersionForCollab: "2.0.0",
+			expectedFinalMinVersionForCollab: "2.20.0",
+			expectSchemaChangeMessage: false,
+		});
 
-		// minVersionForCollab = 2.30.0 (schema change)
-		const controller3 = new DocumentsSchemaController(
-			true, // existing,
-			600, // snapshotSequenceNumber
-			schema2, // old schema,
-			features, // featur
-			() => {}, // onSchemaChange
-			{ minVersionForCollab: "2.30.0" }, // info
-			logger,
-		);
-		const message3 = controller3.maybeGenerateSchemaMessage();
-		assert(message3 !== undefined);
-		assert(
-			controller3.processDocumentSchemaMessages(
-				[message3],
-				true, // local
-				800,
-			) === true,
-		);
-		const schema3 = controller3.summarizeDocumentSchema(300);
-		assert(schema3 !== undefined);
-		assert.strictEqual(schema3.info?.minVersionForCollab, "2.30.0");
+		testMinVersionForCollabUpdateProcess({
+			description:
+				"Stage 3: Existing document with existing schema, multiple changes to minVersionForCollab",
+			initialSchema: schema2,
+			targetMinVersionForCollab: "2.30.0",
+			expectedFinalMinVersionForCollab: "2.30.0",
+			expectSchemaChangeMessage: true,
+		});
 	});
 
 	it("Existing document, changes required; race conditions", () => {
@@ -783,4 +718,90 @@ describe("Runtime", () => {
 		const event = logger.events().find((e) => e.eventName === "MinVersionForCollabWarning");
 		assert.deepStrictEqual(event, expectedEvent, "telemetry warning event should be logged");
 	});
+
+	/**
+	 * Helper function for testing minVersionForCollab updates.
+	 */
+	function testMinVersionForCollabUpdateProcess({
+		description,
+		initialSchema,
+		targetMinVersionForCollab,
+		expectedFinalMinVersionForCollab,
+		expectSchemaChangeMessage,
+	}: {
+		description: string;
+		initialSchema: IDocumentSchema;
+		targetMinVersionForCollab: SemanticVersion;
+		expectedFinalMinVersionForCollab: SemanticVersion;
+		expectSchemaChangeMessage: boolean;
+	}): IDocumentSchema | IDocumentSchemaCurrent {
+		let schemaChangedCalled = false;
+		const onSchemaChange = (): void => {
+			schemaChangedCalled = true;
+		};
+
+		const currentSnapshotSeqNum = initialSchema.refSeq;
+		const messageProcessingSeqNumIfGenerated = currentSnapshotSeqNum + 100;
+		const summarySeqNum = currentSnapshotSeqNum + 200;
+		const controller = new DocumentsSchemaController(
+			true, // existing
+			currentSnapshotSeqNum, // snapshotSequenceNumber
+			initialSchema,
+			features,
+			onSchemaChange,
+			{ minVersionForCollab: targetMinVersionForCollab },
+			logger,
+		);
+
+		const message = controller.maybeGenerateSchemaMessage();
+		if (expectSchemaChangeMessage) {
+			assert(
+				message !== undefined,
+				`${description}: Schema change message should be generated`,
+			);
+			assert.strictEqual(
+				message.info?.minVersionForCollab,
+				targetMinVersionForCollab,
+				`${description}: Message should contain the target minVersionForCollab (${targetMinVersionForCollab})`,
+			);
+			assert(
+				controller.processDocumentSchemaMessages(
+					[message],
+					true, // local
+					messageProcessingSeqNumIfGenerated,
+				) === true,
+				`${description}: Processing schema message should succeed`,
+			);
+		} else {
+			assert(
+				message === undefined,
+				`${description}: Schema change message should not be generated`,
+			);
+		}
+
+		if (expectSchemaChangeMessage) {
+			assert(schemaChangedCalled, `${description}: onSchemaChange should have been called`);
+		} else {
+			assert(
+				!schemaChangedCalled,
+				`${description}: onSchemaChange should NOT have been called`,
+			);
+		}
+
+		const resultingSchema = controller.summarizeDocumentSchema(summarySeqNum);
+		assert(
+			resultingSchema !== undefined,
+			`${description}: Resulting schema should be defined`,
+		);
+		assert(
+			resultingSchema.info?.minVersionForCollab !== undefined,
+			`${description}: Resulting schema should have minVersionForCollab defined`,
+		);
+		assert.strictEqual(
+			resultingSchema.info?.minVersionForCollab,
+			expectedFinalMinVersionForCollab,
+			`${description}: Resulting schema's minVersionForCollab should be ${expectedFinalMinVersionForCollab}, but was ${resultingSchema.info.minVersionForCollab}`,
+		);
+		return resultingSchema;
+	}
 });
