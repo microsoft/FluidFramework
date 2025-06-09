@@ -186,7 +186,7 @@ export const currentDocumentVersionSchema = 1;
 export interface IDocumentSchemaCurrent extends Required<IDocumentSchema> {
 	// This is the version of the schema that we currently understand.
 	version: typeof currentDocumentVersionSchema;
-	// We currently understand the runtime features in IDocumentSchemaFeatures
+	// This narrows the runtime property to only include the properties in IDocumentSchemaFeatures (all as optional)
 	runtime: {
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
@@ -195,14 +195,14 @@ export interface IDocumentSchemaCurrent extends Required<IDocumentSchema> {
 }
 
 /**
- * Current document schema with the info property optional.
+ * Document schema that is incoming from another client but validated to be "current".
  *
- * This interface is represents when we have validated that an incoming IDocumentSchema object
+ * This interface represents when we have validated that an incoming IDocumentSchema object
  * is compatible with the current runtime (by calling `checkRuntimeCompatibility()`).
  * However, the `info` property is optional because some older documents may not have this property, but
  * `info` is not required to be understood by all clients to be compatible.
  */
-interface IDocumentSchemaCurrentWithOptionalInfo extends Omit<IDocumentSchemaCurrent, "info"> {
+interface IDocumentSchemaCurrentIncoming extends Omit<IDocumentSchemaCurrent, "info"> {
 	info?: IDocumentSchemaInfo;
 }
 
@@ -310,7 +310,7 @@ const documentSchemaSupportedConfigs = {
 function checkRuntimeCompatibility(
 	documentSchema: IDocumentSchema | undefined,
 	schemaName: string,
-): asserts documentSchema is IDocumentSchemaCurrentWithOptionalInfo {
+): asserts documentSchema is IDocumentSchemaCurrentIncoming {
 	// Back-compat - we can't do anything about legacy documents.
 	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
 	// do not run into compat problems.
@@ -368,7 +368,7 @@ function checkRuntimeCompatibility(
 }
 
 function and(
-	persistedSchema: IDocumentSchemaCurrentWithOptionalInfo,
+	persistedSchema: IDocumentSchemaCurrentIncoming,
 	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -396,7 +396,7 @@ function and(
 }
 
 function or(
-	persistedSchema: IDocumentSchemaCurrentWithOptionalInfo,
+	persistedSchema: IDocumentSchemaCurrentIncoming,
 	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -427,7 +427,7 @@ function or(
 }
 
 function same(
-	persistedSchema: IDocumentSchemaCurrentWithOptionalInfo,
+	persistedSchema: IDocumentSchemaCurrentIncoming,
 	providedSchema: IDocumentSchemaCurrent,
 ): boolean {
 	if (
@@ -773,7 +773,7 @@ export class DocumentsSchemaController {
 			const schema = {
 				...content,
 				refSeq: sequenceNumber,
-			} satisfies IDocumentSchemaCurrentWithOptionalInfo;
+			} satisfies IDocumentSchemaCurrentIncoming;
 			this.documentSchema = schema;
 			this.sessionSchema = and(schema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
