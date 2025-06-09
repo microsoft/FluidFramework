@@ -2739,6 +2739,7 @@ export class ContainerRuntime
 						details: {
 							finalizeCreationRangeDuration: trace.trace().duration,
 							idCompressorMode: this.sessionSchema.idCompressorMode,
+							pendingIdCompressorOps: ops.length,
 						},
 					});
 				},
