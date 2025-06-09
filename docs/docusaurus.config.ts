@@ -192,7 +192,7 @@ const config: Config = {
 	},
 	scripts: [
 		{
-			src: "/lib/purify.min.js",
+			src: "/dompurify/purify.min.js",
 			async: false
 		},
 		{
