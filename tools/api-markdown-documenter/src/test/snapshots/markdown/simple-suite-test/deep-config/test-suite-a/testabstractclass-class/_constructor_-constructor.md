@@ -1,6 +1,6 @@
 # (constructor)
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestAbstractClass](/test-suite-a/testabstractclass-class/) &gt; [(constructor)(privateProperty, protectedProperty)](/test-suite-a/testabstractclass-class/_constructor_-constructor)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestAbstractClass](/test-suite-a/testabstractclass-class/) \> [(constructor)(privateProperty, protectedProperty)](/test-suite-a/testabstractclass-class/_constructor_-constructor)
 
 This is a _{@customTag constructor}_.
 

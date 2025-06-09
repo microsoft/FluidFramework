@@ -1,6 +1,6 @@
 # TestInterface
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestInterface](/test-suite-a/testinterface-interface/)
 
 Test interface
 
@@ -24,7 +24,7 @@ Here are some remarks about the interface
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [testClassEventProperty](/test-suite-a/testinterface-interface/testclasseventproperty-propertysignature) | `readonly` | () =&gt; void | Test interface event property |
+| [testClassEventProperty](/test-suite-a/testinterface-interface/testclasseventproperty-propertysignature) | `readonly` | () =\> void | Test interface event property |
 
 ## Properties
 
@@ -46,8 +46,8 @@ Here are some remarks about the interface
 
 | CallSignature | Description |
 | - | - |
-| [(event: 'testCallSignature', listener: (input: unknown) =&gt; void): any](/test-suite-a/testinterface-interface/_call_-callsignature) | Test interface event call signature |
-| [(event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number](/test-suite-a/testinterface-interface/_call__1-callsignature) | Another example call signature |
+| [(event: 'testCallSignature', listener: (input: unknown) =\> void): any](/test-suite-a/testinterface-interface/_call_-callsignature) | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) =\> string): number](/test-suite-a/testinterface-interface/_call__1-callsignature) | Another example call signature |
 
 ## See Also {#testinterface-see-also}
 
