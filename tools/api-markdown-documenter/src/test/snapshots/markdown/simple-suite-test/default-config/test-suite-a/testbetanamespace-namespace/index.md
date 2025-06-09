@@ -1,6 +1,6 @@
 # TestBetaNamespace
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestBetaNamespace](/test-suite-a/testbetanamespace-namespace/)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestBetaNamespace](/test-suite-a/testbetanamespace-namespace/)
 
 A namespace tagged as `@beta`.
 

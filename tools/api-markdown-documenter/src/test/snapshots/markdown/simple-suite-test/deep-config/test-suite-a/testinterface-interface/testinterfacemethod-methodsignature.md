@@ -1,6 +1,6 @@
 # testInterfaceMethod
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/) &gt; [testInterfaceMethod()](/test-suite-a/testinterface-interface/testinterfacemethod-methodsignature)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestInterface](/test-suite-a/testinterface-interface/) \> [testInterfaceMethod()](/test-suite-a/testinterface-interface/testinterfacemethod-methodsignature)
 
 Test interface method
 
