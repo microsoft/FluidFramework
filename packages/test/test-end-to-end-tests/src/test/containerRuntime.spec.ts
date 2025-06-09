@@ -306,9 +306,10 @@ describeCompat(
 		 * TODO: This test should be unskipped after the next release. We need to wait
 		 * because we need two different runtime versions that both have the
 		 * minVersionForCollab warning logic.
+		 * See ADO:41353
 		 */
 		it.skip("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
-			const releaseMinVersionForCollabWarningAdded = "2.42.0";
+			const releaseMinVersionForCollabWarningAdded = "2.43.0";
 			if (
 				apis.containerRuntimeForLoading === undefined ||
 				semverGte(
