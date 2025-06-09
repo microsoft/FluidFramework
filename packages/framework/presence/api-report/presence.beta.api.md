@@ -141,7 +141,7 @@ export interface LatestArguments<T extends object | null> {
 }
 
 // @beta @sealed
-export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> extends LatestData<T, TValueAccessor> {
+export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> extends LatestData<T, TValueAccessor> {
     attendee: Attendee;
 }
 
@@ -271,6 +271,8 @@ export type RawValueAccessor<_T> = "raw";
 
 // @beta
 export const StateFactory: {
+    latest: typeof latest;
+    latestMap: typeof latestMap;
 };
 
 // @beta @sealed

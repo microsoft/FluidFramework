@@ -173,7 +173,7 @@ export function checkCompiles(): void {
 	function logRemoteValue<T>({
 		attendee,
 		value,
-	}: Pick<LatestClientData<T, ProxiedValueAccessor<T>>, "attendee" | "value">): void {
+	}: Pick<LatestClientData<T>, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value());
 	}
 

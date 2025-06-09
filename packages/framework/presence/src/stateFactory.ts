@@ -14,15 +14,11 @@ import { latest } from "./latestValueManager.js";
 export const StateFactory = {
 	/**
 	 * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
-	 *
-	 * @alpha
 	 */
 	latest,
 
 	/**
 	 * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
-	 *
-	 * @alpha
 	 */
 	latestMap,
 };

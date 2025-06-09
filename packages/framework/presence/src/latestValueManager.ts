@@ -235,6 +235,9 @@ export interface LatestArguments<T extends object | null> {
 /**
  * Factory for creating a {@link Latest} State object.
  *
+ * @remarks
+ * This overload
+ *
  * @beta
  */
 export function latest<T extends object | null, Key extends string = string>(

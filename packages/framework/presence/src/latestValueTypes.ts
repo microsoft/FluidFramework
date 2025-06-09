@@ -53,7 +53,7 @@ export type ProxiedValueAccessor<_T> = "proxied";
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
 /**
- * Utility type that conditionally represents an accesstor type based on the base accessor type.
+ * Utility type that conditionally represents an accessor type based on the base accessor type.
  *
  * @beta
  */
@@ -95,7 +95,7 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
  * @sealed
  * @beta
  */
-export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>>
+export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>>
 	extends LatestData<T, TValueAccessor> {
 	/**
 	 * Associated {@link Attendee}.

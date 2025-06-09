@@ -168,7 +168,7 @@ export interface LatestArguments<T extends object | null> {
 }
 
 // @beta @sealed
-export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> extends LatestData<T, TValueAccessor> {
+export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> extends LatestData<T, TValueAccessor> {
     attendee: Attendee;
 }
 
