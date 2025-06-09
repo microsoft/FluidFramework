@@ -500,6 +500,15 @@ export function requireSchema(
 	return view;
 }
 
+/**
+ * Adds constraints to a `checkout`'s pending transaction.
+ *
+ * @param checkout - The checkout's who's transaction will have the constraints added to it.
+ * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
+ * @param constraints - The constraints to add to the transaction.
+ *
+ * @see {@link RunTransactionParams.preconditions}.
+ */
 export function addConstraintsToTransaction(
 	checkout: ITreeCheckout,
 	constraintsOnRevert: boolean,
