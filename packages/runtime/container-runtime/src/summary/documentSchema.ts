@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
-import { eq, gt, parse } from "semver-ts";
+import { gt, lt, parse } from "semver-ts";
 
 import type { SemanticVersion } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
@@ -432,9 +432,10 @@ function same(
 ): boolean {
 	if (
 		persistedSchema.info === undefined ||
-		!eq(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
+		lt(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
 	) {
-		// If the current/desired minVersionForCollab are not equal, then we need a schema change
+		// If the persisted schema's minVersionForCollab is undefined or less than the provided schema's
+		// minVersionForCollab, then we consider the schemas to be different and we should send a schema change op.
 		return false;
 	}
 	for (const key of new Set([
