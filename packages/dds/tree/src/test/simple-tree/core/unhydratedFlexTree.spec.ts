@@ -208,10 +208,10 @@ describe("unhydratedFlexTree", () => {
 			assert.equal(object.context.isHydrated(), false);
 		});
 
-		it("get their anchor node", () => {
-			assert.throws(() => map.anchorNode);
-			assert.throws(() => arrayNode.anchorNode);
-			assert.throws(() => object.anchorNode);
+		it("is unhydrated", () => {
+			assert(map.isHydrated() === false);
+			assert(arrayNode.isHydrated() === false);
+			assert(object.isHydrated() === false);
 		});
 	});
 

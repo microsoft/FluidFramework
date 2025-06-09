@@ -247,28 +247,7 @@ export class SchematizingSimpleTreeView<
 			constraintsOnRevert: boolean,
 			constraints: readonly TransactionConstraint[] = [],
 		): void => {
-			for (const constraint of constraints) {
-				switch (constraint.type) {
-					case "nodeInDocument": {
-						const node = getOrCreateInnerNode(constraint.node);
-						const nodeStatus = getKernel(constraint.node).getStatus();
-						if (nodeStatus !== TreeStatus.InDocument) {
-							const revertText = constraintsOnRevert ? " on revert" : "";
-							throw new UsageError(
-								`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
-							);
-						}
-						if (constraintsOnRevert) {
-							this.checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
-						} else {
-							this.checkout.editor.addNodeExistsConstraint(node.anchorNode);
-						}
-						break;
-					}
-					default:
-						unreachableCase(constraint.type);
-				}
-			}
+			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
 		};
 
 		this.checkout.transaction.start();
@@ -519,4 +498,34 @@ export function requireSchema(
 	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
 
 	return view;
+}
+
+export function addConstraintsToTransaction(
+	checkout: ITreeCheckout,
+	constraintsOnRevert: boolean,
+	constraints: readonly TransactionConstraint[] = [],
+): void {
+	for (const constraint of constraints) {
+		switch (constraint.type) {
+			case "nodeInDocument": {
+				const node = getOrCreateInnerNode(constraint.node);
+				const nodeStatus = getKernel(constraint.node).getStatus();
+				if (nodeStatus !== TreeStatus.InDocument) {
+					const revertText = constraintsOnRevert ? " on revert" : "";
+					throw new UsageError(
+						`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+					);
+				}
+				assert(node.isHydrated(), "In document node must be hydrated.");
+				if (constraintsOnRevert) {
+					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
+				} else {
+					checkout.editor.addNodeExistsConstraint(node.anchorNode);
+				}
+				break;
+			}
+			default:
+				unreachableCase(constraint.type);
+		}
+	}
 }
