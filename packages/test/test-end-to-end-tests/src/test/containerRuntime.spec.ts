@@ -358,7 +358,7 @@ describeCompat(
 					{
 						eventName: "fluid:telemetry:ContainerRuntime:MinVersionForCollabWarning",
 						category: "generic",
-						msg: `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${apis.containerRuntimeForLoading?.version} or later to ensure compatibility.`,
+						msg: `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${apis.containerRuntimeForLoading.version} or later to ensure compatibility.`,
 					},
 				],
 				"MinVersionForCollabWarning should be logged",
@@ -381,7 +381,56 @@ describeCompat("minVersionForCollab (NoCompat)", "NoCompat", (getTestObjectProvi
 	 * minVersionForCollab loads the document. If it's lower than the current minVersionForCollab,
 	 * then we will continue to use the existing minVersionForCollab.
 	 */
-	it("minVersionForCollab is updated properly", async function () {
+	it("minVersionForCollab is set on creation", async function () {
+		const options1: ITestContainerConfig = {
+			loaderProps: {
+				logger,
+			},
+			minVersionForCollab: "2.0.0",
+		};
+		await provider.makeTestContainer(options1);
+		logger.assertMatchAny([
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+				category: "generic",
+				minVersionForCollab: "2.0.0",
+			},
+		]);
+	});
+
+	it("minVersionForCollab is not updated if new version is lower", async function () {
+		const options1: ITestContainerConfig = {
+			loaderProps: {
+				logger,
+			},
+			minVersionForCollab: "2.40.0",
+		};
+		await provider.makeTestContainer(options1);
+		logger.assertMatchAny([
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+				category: "generic",
+				minVersionForCollab: "2.40.0",
+			},
+		]);
+
+		const options2: ITestContainerConfig = {
+			loaderProps: {
+				logger,
+			},
+			minVersionForCollab: "2.0.0",
+		};
+		await provider.loadTestContainer(options2);
+		logger.assertMatchAny([
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+				category: "generic",
+				minVersionForCollab: "2.40.0",
+			},
+		]);
+	});
+
+	it("minVersionForCollab is updated if new version is higher", async function () {
 		const options1: ITestContainerConfig = {
 			loaderProps: {
 				logger,
@@ -401,39 +450,9 @@ describeCompat("minVersionForCollab (NoCompat)", "NoCompat", (getTestObjectProvi
 			loaderProps: {
 				logger,
 			},
-			minVersionForCollab: "1.0.0",
-		};
-		await provider.loadTestContainer(options2);
-		logger.assertMatchAny([
-			{
-				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
-				category: "generic",
-				minVersionForCollab: "2.0.0",
-			},
-		]);
-
-		const options3: ITestContainerConfig = {
-			loaderProps: {
-				logger,
-			},
 			minVersionForCollab: "2.35.0",
 		};
-		await provider.loadTestContainer(options3);
-		logger.assertMatchAny([
-			{
-				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
-				category: "generic",
-				minVersionForCollab: "2.35.0",
-			},
-		]);
-
-		const options4: ITestContainerConfig = {
-			loaderProps: {
-				logger,
-			},
-			minVersionForCollab: "2.30.0",
-		};
-		await provider.loadTestContainer(options3);
+		await provider.loadTestContainer(options2);
 		logger.assertMatchAny([
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
