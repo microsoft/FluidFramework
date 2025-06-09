@@ -178,6 +178,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// This branch deals with the 2+1=3 cases where `newChange` is (A _) or (_▲_).
 				// `newChange` represent an intention to clear the field.
 				// This is unaffected by anything that `overChange` may do.
+				if (!overReplace.isEmpty) {
+					nodeManager.rebaseOverDetach(overReplace.dst, 1, undefined, newChange.childChange);
+				}
 			} else {
 				// This branch deals with the remaining 5 cases:
 				// (A▼A) ↷ (A C)
