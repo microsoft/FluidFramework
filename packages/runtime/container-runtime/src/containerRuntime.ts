@@ -2112,7 +2112,7 @@ export class ContainerRuntime
 		) {
 			PerformanceEvent.timedExec(
 				this.mc.logger,
-				{ eventName: "CreateIdCompressor" },
+				{ eventName: "CreateIdCompressorOnBoot" },
 				(event) => {
 					this._idCompressor = this.createIdCompressorFn();
 					event.end({
@@ -2725,7 +2725,7 @@ export class ContainerRuntime
 		) {
 			PerformanceEvent.timedExec(
 				this.mc.logger,
-				{ eventName: "LoadIdCompressor" },
+				{ eventName: "CreateIdCompressorOnDelayedLoad" },
 				(event) => {
 					this._idCompressor = this.createIdCompressorFn();
 					// Finalize any ranges we received while the compressor was turned off.
