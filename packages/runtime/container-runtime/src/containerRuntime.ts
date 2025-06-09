@@ -2712,13 +2712,25 @@ export class ContainerRuntime
 			this._idCompressor === undefined &&
 			this.sessionSchema.idCompressorMode !== undefined
 		) {
-			this._idCompressor = this.createIdCompressorFn();
-			// Finalize any ranges we received while the compressor was turned off.
-			const ops = this.pendingIdCompressorOps;
-			this.pendingIdCompressorOps = [];
-			for (const range of ops) {
-				this._idCompressor.finalizeCreationRange(range);
-			}
+			const perfEvent = {
+				eventName: "LoadIdCompressor",
+			};
+			PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) => {
+				this._idCompressor = this.createIdCompressorFn();
+				// Finalize any ranges we received while the compressor was turned off.
+				const ops = this.pendingIdCompressorOps;
+				this.pendingIdCompressorOps = [];
+				const trace = Trace.start();
+				for (const range of ops) {
+					this._idCompressor.finalizeCreationRange(range);
+				}
+				event.end({
+					details: {
+						finalizeCreationRangeDuration: trace.trace().duration,
+						idCompressorMode: this.sessionSchema.idCompressorMode,
+					},
+				});
+			});
 			assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
 		}
 	}
