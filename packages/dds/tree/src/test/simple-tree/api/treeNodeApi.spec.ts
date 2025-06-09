@@ -320,6 +320,15 @@ describe("treeNodeApi", () => {
 				assert.equal(TreeAlpha.child(tree, "2"), undefined);
 			});
 
+			it("IDs of unhydrated nodes are considered", () => {
+				class TestObject extends schema.object("TestObject", {
+					id: schema.identifier,
+				}) {}
+				const tree: TestObject = new TestObject({});
+
+				assert(TreeAlpha.child(tree, "id") !== undefined);
+			});
+
 			it("Extra optional properties not considered", () => {
 				class TestObject extends schema.objectAlpha(
 					"TestObject",
@@ -657,6 +666,18 @@ describe("treeNodeApi", () => {
 				);
 				assert.equal(children.size, 2);
 				assert.equal(children.get("bar"), undefined); // The extra property should not be included
+			});
+
+			it("ID fields of unhydrated nodes are included", () => {
+				class TestObject extends schema.object("TestObject", {
+					id: schema.identifier,
+				}) {}
+				const tree: TestObject = new TestObject({});
+
+				const children = [...TreeAlpha.children(tree)];
+				assert(children.length === 1);
+				assert(children[0][0] === "id");
+				assert(children[0][1] !== undefined);
 			});
 
 			it("Subclass properties are not included", () => {
