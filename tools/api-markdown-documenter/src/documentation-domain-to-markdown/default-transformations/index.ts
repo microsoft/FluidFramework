@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { blockQuoteToMarkdown } from "./BlockQuoteToMarkdown.js";
 export { codeSpanToMarkdown } from "./CodeSpanToMarkdown.js";
 export { escapedTextToMarkdown } from "./EscapedTextToMarkdown.js";
 export { fencedCodeBlockToMarkdown } from "./FencedCodeBlockToMarkdown.js";
