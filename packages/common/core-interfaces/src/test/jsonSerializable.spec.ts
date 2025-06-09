@@ -174,6 +174,9 @@ import {
 	opaqueSerializableObject,
 	opaqueDeserializedObject,
 	opaqueSerializableAndDeserializedObject,
+	opaqueSerializableUnknown,
+	opaqueDeserializedUnknown,
+	opaqueSerializableAndDeserializedUnknown,
 	opaqueSerializableObjectRequiringBigintSupport,
 	opaqueDeserializedObjectRequiringBigintSupport,
 	opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
@@ -767,6 +770,23 @@ describe("JsonSerializable", () => {
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(filteredIn, out);
 				});
+				it("opaque serializable unknown", () => {
+					const { filteredIn, out } = passThru(opaqueSerializableUnknown);
+					assertIdenticalTypes(filteredIn, opaqueSerializableUnknown);
+					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("opaque deserialized unknown", () => {
+					const { filteredIn, out } = passThru(opaqueDeserializedUnknown);
+					assertIdenticalTypes(filteredIn, opaqueDeserializedUnknown);
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("opaque serializable and deserialized unknown", () => {
+					const { filteredIn, out } = passThru(opaqueSerializableAndDeserializedUnknown);
+					assertIdenticalTypes(filteredIn, opaqueSerializableAndDeserializedUnknown);
+					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
 			});
 		});
 
@@ -922,10 +942,13 @@ describe("JsonSerializable", () => {
 			});
 			it("`unknown`", () => {
 				const { filteredIn } = passThru(
-					// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never>`)
+					// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never> | OpaqueJsonSerializable<unknown>`)
 					{} as unknown,
 				); // {} value is actually supported; so, no runtime error.
-				assertIdenticalTypes(filteredIn, createInstanceOf<JsonTypeWith<never>>());
+				assertIdenticalTypes(
+					filteredIn,
+					createInstanceOf<JsonTypeWith<never> | OpaqueJsonSerializable<unknown>>(),
+				);
 			});
 			it("`symbol`", () => {
 				const { filteredIn } = passThruThrows(
@@ -1144,10 +1167,13 @@ describe("JsonSerializable", () => {
 				});
 				it("array of `unknown`", () => {
 					const { filteredIn } = passThru(
-						// @ts-expect-error 'unknown[]' is not assignable to parameter of type 'JsonTypeWith<never>[]'
+						// @ts-expect-error 'unknown[]' is not assignable to parameter of type '(JsonTypeWith<never> | OpaqueJsonSerializable<unknown>)[]'
 						arrayOfUnknown,
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<JsonTypeWith<never>[]>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<(JsonTypeWith<never> | OpaqueJsonSerializable<unknown>)[]>(),
+					);
 				});
 				it("array of functions", () => {
 					const { filteredIn } = passThru(
@@ -1321,12 +1347,14 @@ describe("JsonSerializable", () => {
 				});
 				it("object with array of `unknown`", () => {
 					const { filteredIn } = passThru(
-						// @ts-expect-error 'unknown[]' is not assignable to parameter of type 'JsonTypeWith<never>[]'
+						// @ts-expect-error 'unknown[]' is not assignable to parameter of type '(JsonTypeWith<never> | OpaqueJsonSerializable<unknown>)[]'
 						objectWithArrayOfUnknown,
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<{ arrayOfUnknown: JsonTypeWith<never>[] }>(),
+						createInstanceOf<{
+							arrayOfUnknown: (JsonTypeWith<never> | OpaqueJsonSerializable<unknown>)[];
+						}>(),
 					);
 				});
 				it("object with array of functions", () => {
@@ -1432,19 +1460,23 @@ describe("JsonSerializable", () => {
 				});
 
 				it("`string` indexed record of `unknown`", () => {
-					// @ts-expect-error not assignable to parameter of type '{ [x: string]: JsonTypeWith<never>; }'.
+					// @ts-expect-error not assignable to parameter of type '{ [x: string]: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>; }'.
 					const { filteredIn } = passThru(stringRecordOfUnknown);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<{ [x: string]: JsonTypeWith<never> }>(),
+						createInstanceOf<{
+							[x: string]: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>;
+						}>(),
 					);
 				});
 				it("`Partial<>` `string` indexed record of `unknown`", () => {
-					// @ts-expect-error not assignable to parameter of type '{ [x: string]: JsonTypeWith<never>; }'.
+					// @ts-expect-error not assignable to parameter of type '{ [x: string]: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>; }'.
 					const { filteredIn } = passThru(partialStringRecordOfUnknown);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<{ [x: string]: JsonTypeWith<never> }>(),
+						createInstanceOf<{
+							[x: string]: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>;
+						}>(),
 					);
 				});
 
@@ -1801,37 +1833,37 @@ describe("JsonSerializable", () => {
 			describe("opaque Json types requiring extra allowed types", () => {
 				it("opaque serializable object with `bigint`", () => {
 					const { filteredIn } = passThruThrows(
-						// @ts-expect-error `bigint` is not supported (becomes `never`)
+						// @ts-expect-error `bigint` is not supported and `AllowExactly` parameters are incompatible
 						opaqueSerializableObjectRequiringBigintSupport,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<OpaqueJsonSerializable<{ bigint: never }>>(),
+						createInstanceOf<OpaqueJsonSerializable<{ bigint: bigint }>>(),
 					);
 				});
 				it("opaque deserialized object with `bigint`", () => {
 					const { filteredIn } = passThruThrows(
-						// @ts-expect-error `bigint` is not supported (becomes `never`)
+						// @ts-expect-error `bigint` is not supported and `AllowExactly` parameters are incompatible
 						opaqueDeserializedObjectRequiringBigintSupport,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<OpaqueJsonDeserialized<{ bigint: never }>>(),
+						createInstanceOf<OpaqueJsonDeserialized<{ bigint: bigint }>>(),
 					);
 				});
 				it("opaque serializable and deserialized object with `bigint`", () => {
 					const { filteredIn } = passThruThrows(
-						// @ts-expect-error `bigint` is not supported (becomes `never`)
+						// @ts-expect-error `bigint` is not supported and `AllowExactly` parameters are incompatible
 						opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<
-							OpaqueJsonSerializable<{ bigint: never }> &
-								OpaqueJsonDeserialized<{ bigint: never }>
+							OpaqueJsonSerializable<{ bigint: bigint }> &
+								OpaqueJsonDeserialized<{ bigint: bigint }>
 						>(),
 					);
 				});
@@ -1970,11 +2002,14 @@ describe("JsonSerializable", () => {
 		it("explicit `any` generic still limits allowed types", () => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const { filteredIn } = passThruThrows<any>(
-				// @ts-expect-error `any` is not an open door (expects `JsonTypeWith<never>`)
+				// @ts-expect-error `any` is not an open door (expects `JsonTypeWith<never> | OpaqueJsonSerializable<unknown>`)
 				undefined,
 				new Error("JSON.stringify returned undefined"),
 			);
-			assertIdenticalTypes(filteredIn, createInstanceOf<JsonTypeWith<never>>());
+			assertIdenticalTypes(
+				filteredIn,
+				createInstanceOf<JsonTypeWith<never> | OpaqueJsonSerializable<unknown>>(),
+			);
 		});
 
 		describe("`number` edge cases", () => {
@@ -2162,19 +2197,29 @@ describe("JsonSerializable", () => {
 			describe("continue rejecting unsupported that are not alternately allowed", () => {
 				it("`unknown` (simple object) expects `JsonTypeWith<bigint>`", () => {
 					const { filteredIn } = passThruHandlingBigint(
-						// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<bigint>`)
+						// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<bigint> | OpaqueJsonSerializable<unknown, [bigint]>`)
 						unknownValueOfSimpleRecord,
 						// value is actually supported; so, no runtime error.
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<JsonTypeWith<bigint>>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<
+							JsonTypeWith<bigint> | OpaqueJsonSerializable<unknown, [bigint]>
+						>(),
+					);
 				});
 				it("`unknown` (with bigint) expects `JsonTypeWith<bigint>`", () => {
 					const { filteredIn } = passThruHandlingBigint(
-						// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<bigint>`)
+						// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<bigint> | OpaqueJsonSerializable<unknown, [bigint]>`)
 						unknownValueWithBigint,
 						// value is actually supported; so, no runtime error.
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<JsonTypeWith<bigint>>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<
+							JsonTypeWith<bigint> | OpaqueJsonSerializable<unknown, [bigint]>
+						>(),
+					);
 				});
 				it("`symbol` still becomes `never`", () => {
 					passThruHandlingBigintThrows(

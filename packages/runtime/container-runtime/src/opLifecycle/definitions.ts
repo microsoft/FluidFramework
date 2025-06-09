@@ -7,6 +7,9 @@ import type { IBatchMessage } from "@fluidframework/container-definitions/intern
 
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
+import type { IEmptyBatchMetadata } from "../metadata.js";
+
+import type { EmptyGroupedBatch } from "./opGroupingManager.js";
 
 /**
  * Local Batch message, before it is virtualized and sent to the ordering service
@@ -34,7 +37,7 @@ export interface LocalBatchMessage {
 	staged?: boolean;
 
 	/**
-	 * @deprecated Use serializedOp
+	 * @deprecated Use runtimeOp
 	 */
 	contents?: never; // To ensure we don't leave this one when converting from OutboundBatchMessage
 }
@@ -44,8 +47,9 @@ export interface LocalBatchMessage {
  */
 export interface LocalEmptyBatchPlaceholder {
 	metadata?: Record<string, unknown>;
-	localOpMetadata: { emptyBatch: true };
+	localOpMetadata: Required<IEmptyBatchMetadata>;
 	referenceSequenceNumber: number;
+	runtimeOp: EmptyGroupedBatch;
 }
 
 /**
@@ -59,7 +63,7 @@ export type OutboundBatchMessage = IBatchMessage & {
 	/**
 	 * @deprecated Use contents
 	 */
-	serializedOp?: never; // To ensure we don't leave this one when converting from LocalBatchMessage
+	runtimeOp?: never; // To ensure we don't leave this one when converting from LocalBatchMessage
 };
 
 /**

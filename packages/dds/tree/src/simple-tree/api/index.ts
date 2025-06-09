@@ -52,10 +52,7 @@ export {
 	type TreeNodeApi,
 	tryGetSchema,
 } from "./treeNodeApi.js";
-export {
-	createFromCursor,
-	createFromMapTree,
-} from "./create.js";
+export { createFromCursor } from "./create.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,

@@ -1,5 +1,12 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.21.0
+
+### `LineBreakNode` removed from `BlockContent`
+
+Block Content items are implicitly separated by a line break, so allowing `LineBreakNode`s in that context is redundant.
+Support for `LineBreakNode`s in `BlockContent` contexts has been removed.
+
 ## 0.20.0
 
 ### Add stronger type restrictions to Documentation Domain

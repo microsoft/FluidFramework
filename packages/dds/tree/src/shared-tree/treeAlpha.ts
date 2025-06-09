@@ -45,11 +45,11 @@ import {
 	treeNodeApi,
 	getIdentifierFromNode,
 	mapTreeFromNodeData,
-	getOrCreateInnerNode,
 	getOrCreateNodeFromInnerNode,
+	getOrCreateInnerNode,
+	NodeKind,
 	tryGetTreeNodeForField,
 	FieldSchema,
-	NodeKind,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -76,7 +76,6 @@ import {
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { createFromMapTree } from "../simple-tree/index.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");
@@ -430,7 +429,7 @@ export const TreeAlpha: TreeAlpha = {
 			: TreeNode | TreeLeafValue | undefined
 	> {
 		const mapTree = mapTreeFromNodeData(data as InsertableField<UnsafeUnknownSchema>, schema);
-		const result = mapTree === undefined ? undefined : createFromMapTree(schema, mapTree);
+		const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
 		return result as Unhydrated<
 			TSchema extends ImplicitFieldSchema
 				? TreeFieldFromImplicitField<TSchema>
