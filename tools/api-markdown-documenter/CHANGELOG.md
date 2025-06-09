@@ -13,6 +13,13 @@ String literal types makes typing much simpler to reason about, and more inline 
 Block Content items are implicitly separated by a line break, so allowing `LineBreakNode`s in that context is redundant.
 Support for `LineBreakNode`s in `BlockContent` contexts has been removed.
 
+### Update `LinkNode`, `HeadingNode`, and `CodeSpanNode` to take `string`s rather than `PlainTextNode`s
+
+Each of the above types accepted only a single `PlainTextNode` as a child value.
+These have been updated to accept `string`s instead, which greatly simplifies their use.
+
+Their `createFromPlainText` static factory functions have also been removed, as they are now redundant with their constructors.
+
 ### `BlockQuoteNode` was removed
 
 This `DocumentationNode` implementation was not used by the library.

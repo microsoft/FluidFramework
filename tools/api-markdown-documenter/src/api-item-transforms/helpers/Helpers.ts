@@ -317,10 +317,7 @@ export function createTypeParametersSection(
 		config,
 	);
 
-	return new SectionNode(
-		[typeParametersTable],
-		HeadingNode.createFromPlainText("Type Parameters"),
-	);
+	return new SectionNode([typeParametersTable], new HeadingNode("Type Parameters"));
 }
 
 /**

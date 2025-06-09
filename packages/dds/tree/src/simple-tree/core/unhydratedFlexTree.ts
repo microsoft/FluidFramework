@@ -10,7 +10,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type AnchorEvents,
-	type AnchorNode,
 	EmptyKey,
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -49,6 +48,7 @@ import {
 	type FlexibleFieldContent,
 	type MapTreeFieldViewGeneric,
 	type MapTreeNodeViewGeneric,
+	type HydratedFlexTreeNode,
 } from "../../feature-libraries/index.js";
 import { brand, filterIterable, getOrCreate } from "../../util/index.js";
 
@@ -73,6 +73,10 @@ interface LocationInField {
 export class UnhydratedFlexTreeNode
 	implements FlexTreeNode, MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>
 {
+	public isHydrated(): this is HydratedFlexTreeNode {
+		return false;
+	}
+
 	private location = unparentedLocation;
 
 	public get storedSchema(): TreeNodeStoredSchema {
@@ -245,12 +249,6 @@ export class UnhydratedFlexTreeNode
 
 	public get value(): Value {
 		return this.data.value;
-	}
-
-	public get anchorNode(): AnchorNode {
-		// This API is relevant to `LazyTreeNode`s, but not `UnhydratedFlexTreeNode`s.
-		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
-		return fail(0xb47 /* UnhydratedFlexTreeNode does not implement anchorNode */);
 	}
 
 	public emitChangedEvent(key: FieldKey): void {
@@ -459,7 +457,10 @@ export class UnhydratedOptionalField
 	public readonly editor = {
 		set: (newContent: FlexibleNodeContent | undefined): void => {
 			if (newContent !== undefined) {
-				assert(newContent instanceof UnhydratedFlexTreeNode, "Expected unhydrated node");
+				assert(
+					newContent instanceof UnhydratedFlexTreeNode,
+					0xbb7 /* Expected unhydrated node */,
+				);
 			}
 
 			this.edit((mapTrees) => {
@@ -508,7 +509,7 @@ export class UnhydratedSequenceField
 		insert: (index, newContent): void => {
 			for (const c of newContent) {
 				assert(c !== undefined, 0xa0a /* Unexpected sparse array content */);
-				assert(c instanceof UnhydratedFlexTreeNode, "Expected unhydrated node");
+				assert(c instanceof UnhydratedFlexTreeNode, 0xbb8 /* Expected unhydrated node */);
 			}
 			const newContentChecked = newContent as readonly UnhydratedFlexTreeNode[];
 			this.edit((mapTrees) => {
