@@ -903,8 +903,7 @@ export interface ToHtmlTransformations {
 
 // @public
 export interface ToMarkdownConfiguration extends LoggingConfiguration {
-    readonly customTransformations?: ToMarkdownTransformations;
-    readonly language?: string;
+    readonly customTransformations?: Partial<ToMarkdownTransformations>;
     readonly rootFormatting?: TextFormatting;
     readonly startingHeadingLevel?: number;
 }
@@ -912,7 +911,6 @@ export interface ToMarkdownConfiguration extends LoggingConfiguration {
 // @public
 export interface ToMarkdownContext extends TextFormatting {
     readonly headingLevel: number;
-    readonly insideTable: boolean;
     readonly logger: Logger;
     readonly transformations: ToMarkdownTransformations;
 }
