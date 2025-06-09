@@ -24,7 +24,7 @@ echo "Extracted Hashes:"
 cat "$generatedHashes"
 
 echo "Reading configured hashes from $configFile"
-grep -oE "sha256-[A-Za-z0-9+/=]{43,45}" "$configFile" | sort | uniq > $expectedHashes
+grep -oE "sha256-[A-Za-z0-9+/=]{43,45}" "$configFile" | sort | uniq > "$expectedHashes"
 cat $expectedHashes
 
 echo "Validating..."
