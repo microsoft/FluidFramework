@@ -2638,6 +2638,10 @@ class InvertNodeManagerI implements InvertNodeManager {
 					attachEntry.value,
 					nodeChange,
 				);
+
+				this.table.invertedNodeToParent.set([nodeChange.revision, nodeChange.localId], {
+					root: attachEntry.value,
+				});
 			}
 		}
 	}
