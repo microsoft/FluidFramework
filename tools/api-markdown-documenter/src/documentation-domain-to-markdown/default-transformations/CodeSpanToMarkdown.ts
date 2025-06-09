@@ -21,7 +21,7 @@ export function codeSpanToMarkdown(
 	return [
 		{
 			type: "inlineCode",
-			value: node.value.text,
+			value: node.value,
 		},
 	];
 }

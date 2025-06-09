@@ -4,11 +4,12 @@
  */
 
 import type {
-	Heading as MdastHeading,
 	BlockContent as MdastBlockContent,
-	Paragraph as MdastParagraph,
+	Break as MdastBreak,
+	Heading as MdastHeading,
 	Html as MdastHtml,
-	Break,
+	Paragraph as MdastParagraph,
+	PhrasingContent as MdastPhrasingContent,
 } from "mdast";
 
 import type { HeadingNode } from "../../documentation-domain/index.js";
@@ -38,45 +39,46 @@ export function headingToMarkdown(
 	// Markdown only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple
 	// bold text, with an accompanying HTML anchor to ensure we can still link to the text.
 	return isInHeadingRange(context.headingLevel)
-		? transformAsHeading(headingNode, context, context.headingLevel)
-		: transformAsBoldText(headingNode, context);
+		? transformAsHeading(headingNode, context.headingLevel)
+		: transformAsBoldText(headingNode);
 }
 
 function transformAsHeading(
 	headingNode: HeadingNode,
-	context: TransformationContext,
 	headingLevel: 1 | 2 | 3 | 4 | 5 | 6,
 ): MdastBlockContent[] {
-	const { transformations } = context;
-
-	const transformedTitle = transformations[headingNode.title.type](headingNode.title, context);
+	const transformedChildren: MdastPhrasingContent[] = [
+		{
+			type: "text",
+			value: headingNode.title,
+		},
+	];
 
 	if (headingNode.id !== undefined) {
-		transformedTitle.push({ type: "text", value: ` {#${headingNode.id}}` });
+		transformedChildren.push({ type: "text", value: ` {#${headingNode.id}}` });
 	}
 
 	const heading: MdastHeading = {
 		type: "heading",
 		depth: headingLevel,
-		children: transformedTitle,
+		children: transformedChildren,
 	};
+
 	return [heading];
 }
 
-function transformAsBoldText(
-	headingNode: HeadingNode,
-	context: TransformationContext,
-): MdastBlockContent[] {
-	const { transformations } = context;
-
-	const transformedTitle = transformations[headingNode.title.type](headingNode.title, context);
-
+function transformAsBoldText(headingNode: HeadingNode): MdastBlockContent[] {
 	const boldTitle: MdastParagraph = {
 		type: "paragraph",
 		children: [
 			{
 				type: "strong",
-				children: transformedTitle,
+				children: [
+					{
+						type: "text",
+						value: headingNode.title,
+					},
+				],
 			},
 		],
 	};
@@ -89,7 +91,7 @@ function transformAsBoldText(
 		type: "html",
 		value: `<a id="${headingNode.id ?? ""}"></a>`,
 	};
-	const lineBreak: Break = { type: "break" };
+	const lineBreak: MdastBreak = { type: "break" };
 	return [
 		{
 			type: "paragraph",

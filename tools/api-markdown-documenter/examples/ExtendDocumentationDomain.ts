@@ -34,7 +34,7 @@ declare module "@fluid-tools/api-markdown-documenter" {
 // Use the custom node!
 const sectionNode: SectionNode = new SectionNode(
 	[new CustomDocumentationNode([new PlainTextNode("Hello world!")])],
-	HeadingNode.createFromPlainText("Section with custom children!"),
+	new HeadingNode("Section with custom children!"),
 );
 
 const document = new DocumentNode({
