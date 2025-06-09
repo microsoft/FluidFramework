@@ -35,9 +35,9 @@ describe("TreeNodeValid", () => {
 	class MockFlexNode extends UnhydratedFlexTreeNode {
 		public constructor(public readonly simpleSchema: TreeNodeSchema) {
 			super(
+				{ type: brand(simpleSchema.identifier) },
+				new Map(),
 				getUnhydratedContext(simpleSchema),
-				{ fields: new Map(), type: brand(simpleSchema.identifier) },
-				undefined,
 			);
 		}
 	}
