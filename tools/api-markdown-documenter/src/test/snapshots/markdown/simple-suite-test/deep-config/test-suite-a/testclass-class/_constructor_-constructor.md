@@ -17,7 +17,7 @@ Here are some remarks about the constructor
 ## Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | privateProperty | number | See [TestAbstractClass](/test-suite-a/testabstractclass-class/)'s constructor. |
 | protectedProperty | [TestEnum](/test-suite-a/testenum-enum/) | <p>Some notes about the parameter.</p><p>See <a href="/test-suite-a/testabstractclass-class/protectedproperty-property">protectedProperty</a>.</p> |
 | testClassProperty | TTypeParameterB | See [testClassProperty](/test-suite-a/testclass-class/testclassproperty-property). |

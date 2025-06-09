@@ -36,7 +36,7 @@ import { inPrototypeChain } from "./core/index.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import type { SimpleFieldSchema, SimpleObjectFieldSchema } from "./simpleSchema.js";
-import type { InsertableContent } from "./toMapTree.js";
+import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
 import { TreeNodeValid } from "./treeNodeValid.js";
 
 /**
