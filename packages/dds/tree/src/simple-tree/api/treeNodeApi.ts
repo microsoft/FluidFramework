@@ -315,9 +315,9 @@ export function getIdentifierFromNode(
 		case 1: {
 			const key = identifierFieldKeys[0] ?? oob();
 			const identifierField = flexNode.tryGetField(key);
-			assert(identifierField !== undefined, "missing identifier field");
+			assert(identifierField !== undefined, 0xbb5 /* missing identifier field */);
 			const identifierValue = getTreeNodeForField(identifierField);
-			assert(typeof identifierValue === "string", "identifier not a string");
+			assert(typeof identifierValue === "string", 0xbb6 /* identifier not a string */);
 
 			const context = flexNode.context;
 			switch (compression) {

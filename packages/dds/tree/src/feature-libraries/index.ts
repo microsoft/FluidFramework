@@ -182,6 +182,7 @@ export {
 	type FlexibleNodeContent,
 	type FlexibleFieldContent,
 	type FlexTreeHydratedContextMinimal,
+	type HydratedFlexTreeNode,
 } from "./flex-tree/index.js";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";

@@ -1304,7 +1304,7 @@ export class IntervalCollection
 		}
 		assert(
 			(serializedInterval.start === undefined) === (serializedInterval.end === undefined),
-			"both start and end must be set or unset",
+			0xbb0 /* both start and end must be set or unset */,
 		);
 		if (serializedInterval.start !== undefined || serializedInterval.end !== undefined) {
 			const entries = this.pendingChanges.get(id) ?? [];
