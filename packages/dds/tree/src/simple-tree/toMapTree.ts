@@ -385,14 +385,15 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): FlexCont
 		if (value === undefined) {
 			const defaultProvider =
 				fieldInfo.schema.props?.defaultProvider ??
-				fail("missing field has no default provider");
+				fail(0xbb1 /* missing field has no default provider */);
 			const fieldProvider = extractFieldProvider(defaultProvider);
 			children = isConstant(fieldProvider) ? fieldProvider() : fieldProvider;
 		} else {
 			children = [nodeDataToMapTree(value, fieldInfo.schema.allowedTypeSet)];
 		}
 
-		const kind = convertFieldKind.get(fieldInfo.schema.kind) ?? fail("Invalid field kind");
+		const kind =
+			convertFieldKind.get(fieldInfo.schema.kind) ?? fail(0xbb2 /* Invalid field kind */);
 		fields.set(
 			fieldInfo.storedKey,
 			createField(context, kind.identifier, fieldInfo.storedKey, children),

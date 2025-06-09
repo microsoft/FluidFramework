@@ -4527,7 +4527,7 @@ export class ContainerRuntime
 
 			assert(
 				!staged || canStageMessageOfType(type),
-				"Unexpected message type submitted in Staging Mode",
+				0xbba /* Unexpected message type submitted in Staging Mode */,
 			);
 
 			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
@@ -4699,7 +4699,7 @@ export class ContainerRuntime
 		const message = resubmitData.runtimeOp;
 		assert(
 			canStageMessageOfType(message.type),
-			"Expected message type to be compatible with staging",
+			0xbbb /* Expected message type to be compatible with staging */,
 		);
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp: {
@@ -4790,7 +4790,7 @@ export class ContainerRuntime
 		{ type, contents }: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 	): void {
-		assert(canStageMessageOfType(type), "Unexpected message type to be rolled back");
+		assert(canStageMessageOfType(type), 0xbbc /* Unexpected message type to be rolled back */);
 
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
